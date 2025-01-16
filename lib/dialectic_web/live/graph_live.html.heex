@@ -1,17 +1,10 @@
 <div class="h-screen relative">
   <!-- Main content with conditional width -->
   <div class={[
-    "h-full transition-all duration-300 ease-in-out relative",
+    "h-full relative",
     (@drawer_open && "w-1/2") || "w-full"
   ]}>
-    <div
-      id="cy"
-      class="transition-all duration-300 ease-in-out"
-      data-graph={@f_graph}
-      phx-hook="Graph"
-      style="height: 100%; width: 100%; position: absolute; top: 0; left: 0;"
-    >
-    </div>
+    <div id="cy" class="h-full w-full" data-graph={@f_graph} phx-hook="Graph"></div>
   </div>
   
 <!-- Drawer panel -->

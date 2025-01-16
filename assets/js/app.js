@@ -36,13 +36,6 @@ hooks.Graph = {
     const graph = document.getElementById("cy");
     const elements = JSON.parse(graph.dataset.graph);
     draw_graph(graph, context, elements);
-    setTimeout(() => {
-      if (window.cy) {
-        window.cy.resize();
-        window.cy.fit();
-        window.cy.center();
-      }
-    }, 300);
   },
 };
 
