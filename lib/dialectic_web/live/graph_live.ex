@@ -2,6 +2,7 @@ defmodule DialecticWeb.GraphLive do
   use DialecticWeb, :live_view
   alias Dialectic.Graph.Vertex
   alias Dialectic.Graph.Sample
+  alias DialecticWeb.NodeComponent
 
   def mount(_params, _session, socket) do
     graph = Dialectic.Graph.Sample.run()

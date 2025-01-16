@@ -17,7 +17,7 @@ defmodule Dialectic.Graph.Vertex do
     nodes =
       Enum.map(vertices, fn vertex ->
         # Get the vertex label/data from the digraph
-        vertex_data = :digraph.vertex(graph, vertex) |> elem(0)
+        {vertex_data, _} = :digraph.vertex(graph, vertex)
 
         # Create cytoscape node format
         %{
@@ -33,8 +33,8 @@ defmodule Dialectic.Graph.Vertex do
         {_, v1, v2, _} = :digraph.edge(graph, edge)
 
         # Get vertex data for source and target
-        source_data = :digraph.vertex(graph, v1) |> elem(0)
-        target_data = :digraph.vertex(graph, v2) |> elem(0)
+        {source_data, _} = :digraph.vertex(graph, v1)
+        {target_data, _} = :digraph.vertex(graph, v2)
 
         # Create edge ID from source and target names
         edge_id = source_data.name <> target_data.name
