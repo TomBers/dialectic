@@ -41,7 +41,11 @@
       </div>
       <div class="mt-4">
         <!-- Add your node details content here -->
-        <p>Node details will appear here</p>
+        <%= if @node do %>
+          <h1>{@node.name}</h1>
+          <p>{@node.description}</p>
+          <btn phx-click="generate_thesis" class="btn btn-primary">Generate Theis</btn>
+        <% end %>
       </div>
     </div>
   </div>

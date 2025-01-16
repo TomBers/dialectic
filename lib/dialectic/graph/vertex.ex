@@ -1,6 +1,12 @@
 defmodule Dialectic.Graph.Vertex do
   defstruct name: nil, description: nil, data: nil
 
+  def find_node_by_id(graph, id) do
+    node = :digraph.vertices(graph) |> Enum.find(&(&1.name == id))
+    {parent, _} = :digraph.vertex(graph, node)
+    parent
+  end
+
   def to_cytoscape_format(graph) do
     # Get all vertices and edges from the digraph
     vertices = :digraph.vertices(graph)

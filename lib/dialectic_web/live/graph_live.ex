@@ -5,15 +5,34 @@ defmodule DialecticWeb.GraphLive do
 
   def mount(_params, _session, socket) do
     graph = Dialectic.Graph.Sample.run()
-    {:ok, assign(socket, graph: graph, f_graph: format_graph(graph), drawer_open: false)}
+
+    {:ok,
+     assign(socket,
+       graph: graph,
+       f_graph: format_graph(graph),
+       drawer_open: false,
+       node: nil
+     )}
   end
 
   def handle_event("node_clicked", %{"id" => id}, socket) do
-    # IO.inspect(id, label: "Node ID")
-    # IO.inspect(socket.assigns.graph)
-    graph = Sample.add_child(socket.assigns.graph, id)
-    IO.inspect(graph |> Vertex.to_cytoscape_format(), label: "Updated")
-    {:noreply, assign(socket, graph: graph, f_graph: format_graph(graph), drawer_open: true)}
+    node = Vertex.find_node_by_id(socket.assigns.graph, id) |> IO.inspect(label: "Node")
+
+    {:noreply,
+     assign(socket,
+       drawer_open: true,
+       node: node
+     )}
+  end
+
+  def handle_event("generate_thesis", _, socket) do
+    graph = Sample.add_child(socket.assigns.graph, socket.assigns.node)
+
+    {:noreply,
+     assign(socket,
+       graph: graph,
+       f_graph: format_graph(graph)
+     )}
   end
 
   def handle_event("close_drawer", _, socket) do

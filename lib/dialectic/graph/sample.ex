@@ -4,7 +4,7 @@ defmodule Dialectic.Graph.Sample do
   # To test - Graph A -> B, A -> C, B -> D and C -> D
   def run do
     graph = :digraph.new()
-    a = %Vertex{name: "A"}
+    a = %Vertex{name: "A", description: "A description"}
     # b = %Vertex{name: "Bb"}
     # c = %Vertex{name: "Cc"}
     # d = %Vertex{name: "Dd"}
@@ -23,10 +23,7 @@ defmodule Dialectic.Graph.Sample do
     graph
   end
 
-  def add_child(graph, id) do
-    node = :digraph.vertices(graph) |> Enum.find(&(&1.name == id))
-    {parent, _} = :digraph.vertex(graph, node)
-
+  def add_child(graph, parent) do
     thesis = %Vertex{name: "Thesis"}
     theis_child = :digraph.add_vertex(graph, thesis)
 
