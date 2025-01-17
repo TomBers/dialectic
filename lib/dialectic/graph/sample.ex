@@ -20,16 +20,22 @@ defmodule Dialectic.Graph.Sample do
   end
 
   def add_node(graph, name, description) do
-    vertex = %Vertex{name: name, description: description}
-    :digraph.add_vertex(graph, vertex)
+    vertex = %Vertex{id: name, description: description}
+    :digraph.add_vertex(graph, name, vertex)
   end
 
   def add_child(graph, parent) do
-    theis_child = add_node(graph, "#{parent.name}_Thesis")
-    antithesis_child = add_node(graph, "#{parent.name}_Antithesis")
+    thesis_id = "#{parent.id}_Thesis"
+    antithesis_id = "#{parent.id}_Antithesis"
 
-    :digraph.add_edge(graph, parent, theis_child)
-    :digraph.add_edge(graph, parent, antithesis_child)
+    # Add nodes using IDs
+    add_node(graph, thesis_id)
+    add_node(graph, antithesis_id)
+
+    # Add edges using IDs
+    :digraph.add_edge(graph, parent.id, thesis_id)
+    :digraph.add_edge(graph, parent.id, antithesis_id)
+
     graph
   end
 end
