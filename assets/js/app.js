@@ -28,21 +28,17 @@ hooks.Graph = {
   mounted() {
     const context = this;
     const graph = document.getElementById("cy");
+
     const elements = JSON.parse(graph.dataset.graph);
-    draw_graph(graph, context, elements);
+    const node = graph.dataset.node;
+    draw_graph(graph, context, elements, node);
   },
   updated() {
     const context = this;
     const graph = document.getElementById("cy");
     const elements = JSON.parse(graph.dataset.graph);
-    draw_graph(graph, context, elements);
-    setTimeout(() => {
-      if (window.cy) {
-        window.cy.resize();
-        window.cy.fit();
-        window.cy.center();
-      }
-    }, 300);
+    const node = graph.dataset.node;
+    draw_graph(graph, context, elements, node);
   },
 };
 

@@ -1,16 +1,10 @@
 <div class="h-screen relative">
   <!-- Main content with conditional width -->
   <div class={[
-    "h-full transition-all duration-300 ease-in-out relative",
+    "h-full relative",
     (@drawer_open && "w-1/2") || "w-full"
   ]}>
-    <div
-      id="cy"
-      class="transition-all duration-300 ease-in-out"
-      data-graph={@f_graph}
-      phx-hook="Graph"
-      style="height: 100%; width: 100%; position: absolute; top: 0; left: 0;"
-    >
+    <div id="cy" class="h-full w-full" data-graph={@f_graph} data-node={@node.id} phx-hook="Graph">
     </div>
   </div>
   
@@ -42,9 +36,7 @@
       <div class="mt-4">
         <!-- Add your node details content here -->
         <%= if @node do %>
-          <h1>{@node.name}</h1>
-          <p>{@node.description}</p>
-          <btn phx-click="generate_thesis" class="btn btn-primary">Generate Theis</btn>
+          <.live_component module={NodeComponent} id="nodeComp" node={@node} form={@form} />
         <% end %>
       </div>
     </div>

@@ -1,10 +1,55 @@
 defmodule Dialectic.Graph.Vertex do
-  defstruct name: nil, description: nil, data: nil
+  defstruct id: nil, description: nil, data: nil, parent: %{}, children: []
+
+  def changeset(vertex, params \\ %{}) do
+    types = %{id: :string, description: :string, data: :integer}
+
+    {vertex, types}
+    |> Ecto.Changeset.cast(params, Map.keys(types))
+  end
+
+  def update_vertex(graph, v, new_v) do
+    # |> IO.inspect(label: "Update Vertex")
+    :digraph.add_vertex(graph, v.id, new_v)
+    graph
+  end
+
+  def add_relatives(graph, node) do
+    parent = find_parent(graph, node)
+    children = find_children(graph, node)
+    %{node | parent: parent, children: children}
+  end
 
   def find_node_by_id(graph, id) do
-    node = :digraph.vertices(graph) |> Enum.find(&(&1.name == id))
-    {parent, _} = :digraph.vertex(graph, node)
-    parent
+    case :digraph.vertex(graph, id) do
+      # Returns the vertex struct
+      {_id, vertex} -> vertex
+      # Return nil if vertex not found
+      false -> nil
+    end
+  end
+
+  def find_parent(graph, vertex) do
+    case :digraph.in_edges(graph, vertex.id) do
+      # No parent found
+      [] ->
+        %{}
+
+      # Get first (and should be only) edge
+      [edge_id | _] ->
+        {_edge, parent_id, _child_id, _label} = :digraph.edge(graph, edge_id)
+        {_id, vertex} = :digraph.vertex(graph, parent_id)
+        vertex
+    end
+  end
+
+  def find_children(graph, vertex) do
+    :digraph.out_edges(graph, vertex.id)
+    |> Enum.map(fn edge_id ->
+      {_edge, _parent_id, child_id, _label} = :digraph.edge(graph, edge_id)
+      {_id, vertex} = :digraph.vertex(graph, child_id)
+      vertex
+    end)
   end
 
   def to_cytoscape_format(graph) do
@@ -17,12 +62,12 @@ defmodule Dialectic.Graph.Vertex do
     nodes =
       Enum.map(vertices, fn vertex ->
         # Get the vertex label/data from the digraph
-        vertex_data = :digraph.vertex(graph, vertex) |> elem(0)
+        {vertex_data, _} = :digraph.vertex(graph, vertex)
 
         # Create cytoscape node format
         %{
           data: %{
-            id: vertex_data.name
+            id: vertex_data
           }
         }
       end)
@@ -33,18 +78,18 @@ defmodule Dialectic.Graph.Vertex do
         {_, v1, v2, _} = :digraph.edge(graph, edge)
 
         # Get vertex data for source and target
-        source_data = :digraph.vertex(graph, v1) |> elem(0)
-        target_data = :digraph.vertex(graph, v2) |> elem(0)
+        {source_data, _} = :digraph.vertex(graph, v1)
+        {target_data, _} = :digraph.vertex(graph, v2)
 
         # Create edge ID from source and target names
-        edge_id = source_data.name <> target_data.name
+        edge_id = source_data <> target_data
 
         # Create cytoscape edge format
         %{
           data: %{
             id: edge_id,
-            source: source_data.name,
-            target: target_data.name
+            source: source_data,
+            target: target_data
           }
         }
       end)
