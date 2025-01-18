@@ -1,6 +1,5 @@
 defmodule DialecticWeb.NodeComponent do
   use DialecticWeb, :live_component
-  alias Dialectic.Graph.Vertex
 
   def render(assigns) do
     ~H"""
