@@ -1,5 +1,5 @@
 defmodule Dialectic.Graph.Vertex do
-  defstruct id: nil, description: nil, data: nil
+  defstruct id: nil, description: nil, data: nil, parent: %{}, children: []
 
   def changeset(vertex, params \\ %{}) do
     types = %{id: :string, description: :string, data: :integer}
@@ -12,6 +12,12 @@ defmodule Dialectic.Graph.Vertex do
     # |> IO.inspect(label: "Update Vertex")
     :digraph.add_vertex(graph, v.id, new_v)
     graph
+  end
+
+  def add_relatives(graph, node) do
+    parent = find_parent(graph, node)
+    children = find_children(graph, node)
+    %{node | parent: parent, children: children}
   end
 
   def find_node_by_id(graph, id) do

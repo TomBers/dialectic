@@ -15,13 +15,13 @@ defmodule DialecticWeb.GraphLive do
        f_graph: format_graph(graph),
        drawer_open: true,
        node: %Vertex{},
-       form: to_form(changeset),
-       time: DateTime.utc_now()
+       form: to_form(changeset)
      )}
   end
 
   def handle_event("node_clicked", %{"id" => id}, socket) do
     node = Vertex.find_node_by_id(socket.assigns.graph, id)
+    node = Vertex.add_relatives(socket.assigns.graph, node)
     changeset = Vertex.changeset(node)
 
     {:noreply,
@@ -34,7 +34,7 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event("generate_thesis", _, socket) do
     graph = Sample.add_child(socket.assigns.graph, socket.assigns.node)
-    node = Vertex.find_node_by_id(graph, socket.assigns.node.id)
+    node = Vertex.add_relatives(graph, socket.assigns.node)
     changeset = Vertex.changeset(node)
 
     {:noreply,
