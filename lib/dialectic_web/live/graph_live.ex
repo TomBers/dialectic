@@ -15,7 +15,7 @@ defmodule DialecticWeb.GraphLive do
        graph: graph,
        f_graph: format_graph(graph),
        drawer_open: true,
-       node: nil,
+       node: %Vertex{},
        form: to_form(changeset)
      )}
   end

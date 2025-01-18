@@ -1,6 +1,6 @@
 import cytoscape from "cytoscape";
 
-export function draw_graph(graph, context, elements) {
+export function draw_graph(graph, context, elements, node_clicked) {
   window.cy = cytoscape({
     container: graph, // container to render in
     elements: elements,
@@ -14,7 +14,10 @@ export function draw_graph(graph, context, elements) {
           label: "data(id)",
         },
       },
-
+      {
+        selector: `#${node_clicked}`,
+        css: { "border-width": 3, "border-color": "black" },
+      },
       {
         selector: "edge",
         style: {

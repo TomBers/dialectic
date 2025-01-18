@@ -28,14 +28,17 @@ hooks.Graph = {
   mounted() {
     const context = this;
     const graph = document.getElementById("cy");
+
     const elements = JSON.parse(graph.dataset.graph);
-    draw_graph(graph, context, elements);
+    const node = graph.dataset.node;
+    draw_graph(graph, context, elements, node);
   },
   updated() {
     const context = this;
     const graph = document.getElementById("cy");
     const elements = JSON.parse(graph.dataset.graph);
-    draw_graph(graph, context, elements);
+    const node = graph.dataset.node;
+    draw_graph(graph, context, elements, node);
   },
 };
 
