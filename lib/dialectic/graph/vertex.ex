@@ -1,5 +1,4 @@
 defmodule Dialectic.Graph.Vertex do
-  alias Dialectic.Graph.Vertex
   defstruct id: nil, description: nil, data: nil
 
   def changeset(vertex, params \\ %{}) do
@@ -10,7 +9,8 @@ defmodule Dialectic.Graph.Vertex do
   end
 
   def update_vertex(graph, v, new_v) do
-    :digraph.add_vertex(graph, v.id, new_v) |> IO.inspect(label: "Update Vertex")
+    # |> IO.inspect(label: "Update Vertex")
+    :digraph.add_vertex(graph, v.id, new_v)
     graph
   end
 
@@ -21,6 +21,29 @@ defmodule Dialectic.Graph.Vertex do
       # Return nil if vertex not found
       false -> nil
     end
+  end
+
+  def find_parent(graph, vertex) do
+    case :digraph.in_edges(graph, vertex.id) do
+      # No parent found
+      [] ->
+        %{}
+
+      # Get first (and should be only) edge
+      [edge_id | _] ->
+        {_edge, parent_id, _child_id, _label} = :digraph.edge(graph, edge_id)
+        {_id, vertex} = :digraph.vertex(graph, parent_id)
+        vertex
+    end
+  end
+
+  def find_children(graph, vertex) do
+    :digraph.out_edges(graph, vertex.id)
+    |> Enum.map(fn edge_id ->
+      {_edge, _parent_id, child_id, _label} = :digraph.edge(graph, edge_id)
+      {_id, vertex} = :digraph.vertex(graph, child_id)
+      vertex
+    end)
   end
 
   def to_cytoscape_format(graph) do

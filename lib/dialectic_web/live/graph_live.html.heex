@@ -36,7 +36,13 @@
       <div class="mt-4">
         <!-- Add your node details content here -->
         <%= if @node do %>
-          <.live_component module={NodeComponent} id="nodeComp" node={@node} form={@form} />
+          <.live_component
+            module={NodeComponent}
+            id="nodeComp"
+            graph={@graph}
+            node={@node}
+            form={@form}
+          />
         <% end %>
       </div>
     </div>
