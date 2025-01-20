@@ -3,17 +3,51 @@ defmodule DialecticWeb.NodeComponent do
 
   def update(assigns, socket) do
     tabs = %{
-      "A" => ~H"""
-      <div>Content for Tab A</div>
+      "Answer" => ~H"""
+      <div>
+        <.form for={@form} phx-submit="answer">
+          <div>
+            <.input field={@form[:answer]} type="textarea" label="Name" />
+          </div>
+
+          <div>
+            <.button type="submit">Answer</.button>
+          </div>
+        </.form>
+      </div>
       """,
-      "B" => ~H"""
-      <div>Content for Tab B</div>
+      "Branch" => ~H"""
+      <div>
+        <.form for={@form} phx-submit="branch">
+          <div>
+            <.input field={@form[:answer]} type="textarea" label="Name" />
+          </div>
+
+          <div>
+            <.button type="submit">Branch</.button>
+          </div>
+        </.form>
+      </div>
       """,
-      "C" => ~H"""
-      <div>Content for Tab C</div>
-      """,
-      "D" => ~H"""
-      <div>Content for Tab D</div>
+      "Combine" => ~H"""
+      <div>
+        <.form for={@form} phx-submit="combine">
+          <div>
+            <.input
+              type="select"
+              name="combine_node"
+              label="Nodes"
+              options={Enum.map(@vertices, &{&1, &1})}
+              value={@selected_vertex}
+            />
+            <.input field={@form[:answer]} type="textarea" label="Name" />
+          </div>
+
+          <div>
+            <.button type="submit">Combine</.button>
+          </div>
+        </.form>
+      </div>
       """
     }
 
@@ -21,7 +55,7 @@ defmodule DialecticWeb.NodeComponent do
      socket
      |> assign(assigns)
      |> assign(:tabs, tabs)
-     |> assign(:active_tab, "A")}
+     |> assign(:active_tab, "Answer")}
   end
 
   def handle_event("change_tab", %{"tab" => tab}, socket) do
@@ -31,7 +65,6 @@ defmodule DialecticWeb.NodeComponent do
   def render(assigns) do
     ~H"""
     <div class="node">
-      <p><strong>ID:</strong> {@node.id}</p>
       <p>
         Parent:
         <%= if Map.has_key?(@node.parent, :id) do %>
@@ -42,14 +75,10 @@ defmodule DialecticWeb.NodeComponent do
           None
         <% end %>
       </p>
-      <p>
-        Children:
-        <%= for child <- assigns.node.children do %>
-          <a href="#" class="text-blue-600 px-2" phx-click="node_clicked" phx-value-id={child.id}>
-            {child.id}
-          </a>
-        <% end %>
-      </p>
+
+      <div class="w-full text-gray-300 bg-gray-800 rounded-lg p-4">
+        {raw(@node.proposition)}
+      </div>
       <nav class="flex -mb-px" role="tablist">
         <%= for tab <- Map.keys(@tabs) do %>
           <button
@@ -71,22 +100,14 @@ defmodule DialecticWeb.NodeComponent do
       <div class="mt-4">
         {Map.get(@tabs, @active_tab)}
       </div>
-      <.form for={@form} phx-submit="save">
-        <div>
-          <.input field={@form[:description]} type="textarea" label="Name" />
-        </div>
-
-        <div>
-          <.button type="submit">Save</.button>
-        </div>
-      </.form>
-      <br />
-      <btn
-        phx-click="generate_thesis"
-        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-      >
-        Generate Theis
-      </btn>
+      <p>
+        Children:
+        <%= for child <- assigns.node.children do %>
+          <a href="#" class="text-blue-600 px-2" phx-click="node_clicked" phx-value-id={child.id}>
+            {child.id}
+          </a>
+        <% end %>
+      </p>
     </div>
     """
   end

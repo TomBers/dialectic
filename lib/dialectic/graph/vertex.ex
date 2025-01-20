@@ -1,8 +1,23 @@
 defmodule Dialectic.Graph.Vertex do
-  defstruct id: nil, description: nil, data: nil, parent: %{}, children: []
+  defstruct id: nil, proposition: nil, answer: nil, parent: %{}, children: []
+
+  # IMPORTANT - defines fields that should be serialised
+  def serialize(vertex) do
+    %{id: vertex.id, proposition: vertex.proposition, answer: vertex.answer}
+  end
+
+  def deserialize(data) do
+    %Dialectic.Graph.Vertex{
+      id: data["id"],
+      proposition: data["proposition"],
+      answer: data["answer"]
+    }
+  end
+
+  # ----------------------------
 
   def changeset(vertex, params \\ %{}) do
-    types = %{id: :string, description: :string, data: :integer}
+    types = %{id: :string, proposition: :string, answer: :string}
 
     {vertex, types}
     |> Ecto.Changeset.cast(params, Map.keys(types))
@@ -55,7 +70,6 @@ defmodule Dialectic.Graph.Vertex do
   def to_cytoscape_format(graph) do
     # Get all vertices and edges from the digraph
     vertices = :digraph.vertices(graph)
-    # IO.inspect(vertices, label: "Vertices")
     edges = :digraph.edges(graph)
 
     # Convert vertices to cytoscape nodes format

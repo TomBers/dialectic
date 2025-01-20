@@ -15,7 +15,8 @@
   ]}>
     <div class="p-4">
       <div class="flex justify-between items-center">
-        <h2 class="text-xl font-semibold">Node Details</h2>
+        <h2 class="text-xl font-semibold">{@node.id} Node Details</h2>
+        <button phx-click="save_graph" class="text-gray-500 hover:text-gray-700">Save</button>
         <button phx-click="close_drawer" class="text-gray-500 hover:text-gray-700">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -35,8 +36,15 @@
       </div>
       <div class="mt-4">
         <!-- Add your node details content here -->
-        <%= if @node do %>
-          <.live_component module={NodeComponent} id="nodeComp" node={@node} form={@form} />
+        <%= if @node.id do %>
+          <.live_component
+            module={NodeComponent}
+            id="nodeComp"
+            node={@node}
+            vertices={:digraph.vertices(@graph)}
+            selected_vertex={hd(:digraph.vertices(@graph))}
+            form={@form}
+          />
         <% end %>
       </div>
     </div>
