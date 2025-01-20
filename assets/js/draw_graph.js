@@ -16,7 +16,7 @@ export function draw_graph(graph, context, elements, node_clicked) {
       },
       {
         selector: `#${node_clicked}`,
-        css: { "border-width": 3, "border-color": "black" },
+        css: { "border-width": 3, "border-color": "red" },
       },
       {
         selector: "edge",
