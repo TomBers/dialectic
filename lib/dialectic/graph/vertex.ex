@@ -1,6 +1,17 @@
 defmodule Dialectic.Graph.Vertex do
   defstruct id: nil, description: nil, data: nil, parent: %{}, children: []
 
+  # IMPORTANT - defines fields that should be serialised
+  def serialize(vertex) do
+    %{id: vertex.id, description: vertex.description}
+  end
+
+  def deserialize(data) do
+    %Dialectic.Graph.Vertex{id: data["id"], description: data["description"]}
+  end
+
+  # ----------------------------
+
   def changeset(vertex, params \\ %{}) do
     types = %{id: :string, description: :string, data: :integer}
 

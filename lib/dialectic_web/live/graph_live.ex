@@ -3,9 +3,10 @@ defmodule DialecticWeb.GraphLive do
   alias Dialectic.Graph.Vertex
   alias Dialectic.Graph.Sample
   alias DialecticWeb.NodeComponent
+  alias Dialectic.Graph.Serialise
 
   def mount(_params, _session, socket) do
-    graph = Dialectic.Graph.Sample.run()
+    graph = Serialise.load_graph()
 
     changeset = Vertex.changeset(%Vertex{})
 
@@ -57,6 +58,11 @@ defmodule DialecticWeb.GraphLive do
        f_graph: format_graph(graph),
        form: to_form(changeset)
      )}
+  end
+
+  def handle_event("save_graph", _, socket) do
+    Serialise.save_graph(socket.assigns.graph)
+    {:noreply, socket |> put_flash(:info, "Saved!")}
   end
 
   def handle_event("close_drawer", _, socket) do

@@ -3,17 +3,14 @@ defmodule DialecticWeb.NodeComponent do
 
   def update(assigns, socket) do
     tabs = %{
-      "A" => ~H"""
-      <div>Content for Tab A</div>
+      "Answer" => ~H"""
+      <div>Content for Answer</div>
       """,
-      "B" => ~H"""
-      <div>Content for Tab B</div>
+      "Branch" => ~H"""
+      <div>Content for Branch</div>
       """,
-      "C" => ~H"""
-      <div>Content for Tab C</div>
-      """,
-      "D" => ~H"""
-      <div>Content for Tab D</div>
+      "Combine" => ~H"""
+      <div>Content for Combine</div>
       """
     }
 
@@ -21,7 +18,7 @@ defmodule DialecticWeb.NodeComponent do
      socket
      |> assign(assigns)
      |> assign(:tabs, tabs)
-     |> assign(:active_tab, "A")}
+     |> assign(:active_tab, "Answer")}
   end
 
   def handle_event("change_tab", %{"tab" => tab}, socket) do
