@@ -1,5 +1,5 @@
 defmodule Dialectic.Graph.Vertex do
-  defstruct id: nil, proposition: nil, answer: nil, parent: %{}, children: []
+  defstruct id: nil, proposition: nil, answer: nil, parents: [], children: []
 
   # IMPORTANT - defines fields that should be serialised
   def serialize(vertex) do
@@ -30,9 +30,9 @@ defmodule Dialectic.Graph.Vertex do
   end
 
   def add_relatives(graph, node) do
-    parent = find_parent(graph, node)
+    parents = find_parents(graph, node)
     children = find_children(graph, node)
-    %{node | parent: parent, children: children}
+    %{node | parents: parents, children: children}
   end
 
   def find_node_by_id(graph, id) do
@@ -44,18 +44,13 @@ defmodule Dialectic.Graph.Vertex do
     end
   end
 
-  def find_parent(graph, vertex) do
-    case :digraph.in_edges(graph, vertex.id) do
-      # No parent found
-      [] ->
-        %{}
-
-      # Get first (and should be only) edge
-      [edge_id | _] ->
-        {_edge, parent_id, _child_id, _label} = :digraph.edge(graph, edge_id)
-        {_id, vertex} = :digraph.vertex(graph, parent_id)
-        vertex
-    end
+  def find_parents(graph, vertex) do
+    :digraph.in_edges(graph, vertex.id)
+    |> Enum.map(fn edge_id ->
+      {_edge, parent_id, _child_id, _label} = :digraph.edge(graph, edge_id)
+      {_id, vertex} = :digraph.vertex(graph, parent_id)
+      vertex
+    end)
   end
 
   def find_children(graph, vertex) do

@@ -6,8 +6,8 @@ defmodule DialecticWeb.GraphLive do
   alias Dialectic.Graph.Serialise
 
   def mount(_params, _session, socket) do
-    graph = Serialise.load_graph()
-    # graph = Sample.run()
+    # graph = Serialise.load_graph()
+    graph = Sample.run()
 
     changeset = Vertex.changeset(%Vertex{})
 
