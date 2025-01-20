@@ -7,34 +7,35 @@ defmodule Dialectic.Graph.Sample do
 
     v1 = add_node(graph, "A")
     v2 = add_node(graph, "B")
-    v3 = add_node(graph, "C")
+    # v3 = add_node(graph, "C")
 
     :digraph.add_edge(graph, v1, v2)
-    :digraph.add_edge(graph, v1, v3)
+    # :digraph.add_edge(graph, v1, v3)
 
     graph
   end
 
   def add_node(graph, name) do
-    add_node(graph, name, "#{name} description")
+    add_node(graph, name, Dialectic.Responses.LlmInterface.gen_response("BOB"))
+  end
+
+  def add_answer(graph, vertex, answer) do
+    node = %{vertex | answer: answer}
+    :digraph.add_vertex(graph, vertex.id, node)
+    node
   end
 
   def add_node(graph, name, description) do
-    vertex = %Vertex{id: name, description: description}
+    vertex = %Vertex{id: name, proposition: description}
     :digraph.add_vertex(graph, name, vertex)
   end
 
-  def add_child(graph, parent) do
-    thesis_id = "#{parent.id}_Thesis"
-    antithesis_id = "#{parent.id}_Antithesis"
-
+  def add_child(graph, parent, child_id, description) do
     # Add nodes using IDs
-    add_node(graph, thesis_id)
-    add_node(graph, antithesis_id)
+    add_node(graph, child_id, description)
 
     # Add edges using IDs
-    :digraph.add_edge(graph, parent.id, thesis_id)
-    :digraph.add_edge(graph, parent.id, antithesis_id)
+    :digraph.add_edge(graph, parent.id, child_id)
 
     graph
   end

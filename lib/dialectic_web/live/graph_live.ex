@@ -6,7 +6,8 @@ defmodule DialecticWeb.GraphLive do
   alias Dialectic.Graph.Serialise
 
   def mount(_params, _session, socket) do
-    graph = Serialise.load_graph()
+    # graph = Serialise.load_graph()
+    graph = Sample.run()
 
     changeset = Vertex.changeset(%Vertex{})
 
@@ -33,8 +34,21 @@ defmodule DialecticWeb.GraphLive do
      )}
   end
 
-  def handle_event("generate_thesis", _, socket) do
-    graph = Sample.add_child(socket.assigns.graph, socket.assigns.node)
+  def handle_event("branch", %{"vertex" => %{"answer" => answer}}, socket) do
+    node =
+      Sample.add_answer(socket.assigns.graph, socket.assigns.node, answer)
+
+    graph = Vertex.update_vertex(socket.assigns.graph, socket.assigns.node, node)
+
+    theis_id = "#{node.id}_thesis"
+    description = Dialectic.Responses.LlmInterface.gen_response(answer)
+    graph = Sample.add_child(graph, node, theis_id, description)
+
+    antithesis_id = "#{node.id}_antithesis"
+    description = Dialectic.Responses.LlmInterface.gen_response(answer)
+    graph = Sample.add_child(graph, node, antithesis_id, description)
+
+    # graph = Sample.add_child(socket.assigns.graph, socket.assigns.node)
     node = Vertex.add_relatives(graph, socket.assigns.node)
     changeset = Vertex.changeset(node)
 
@@ -47,17 +61,37 @@ defmodule DialecticWeb.GraphLive do
      )}
   end
 
-  def handle_event("save", %{"vertex" => %{"description" => description}}, socket) do
-    new_node = %{socket.assigns.node | description: description}
-    graph = Vertex.update_vertex(socket.assigns.graph, socket.assigns.node, new_node)
+  def handle_event("answer", %{"vertex" => %{"answer" => answer}}, socket) do
+    # Update Node with answer
+    node =
+      Sample.add_answer(socket.assigns.graph, socket.assigns.node, answer)
+
+    graph = Vertex.update_vertex(socket.assigns.graph, socket.assigns.node, node)
+
+    # Generate a new node
+    child_id = "#{node.id}_child"
+    description = Dialectic.Responses.LlmInterface.gen_response(answer)
+    graph = Sample.add_child(graph, node, child_id, description)
+
+    new_node = Vertex.add_relatives(graph, Vertex.find_node_by_id(graph, child_id))
     changeset = Vertex.changeset(new_node)
 
     {:noreply,
      assign(socket,
        graph: graph,
        f_graph: format_graph(graph),
-       form: to_form(changeset)
+       form: to_form(changeset),
+       node: new_node
      )}
+  end
+
+  def handle_event(
+        "combine",
+        %{"combine_node" => "B_antithesis", "vertex" => %{"answer" => answer}},
+        socket
+      ) do
+    IO.inspect("Combine")
+    {:noreply, socket}
   end
 
   def handle_event("save_graph", _, socket) do
