@@ -4,6 +4,7 @@ defmodule DialecticWeb.GraphLive do
   alias Dialectic.Graph.Sample
   alias DialecticWeb.NodeComponent
   alias Dialectic.Graph.Serialise
+  alias Dialectic.Graph.GraphActions
 
   def mount(_params, _session, socket) do
     # graph = Serialise.load_graph()
@@ -21,14 +22,41 @@ defmodule DialecticWeb.GraphLive do
      )}
   end
 
+  def handle_event("KeyBoardInterface", %{"key" => key}, socket) do
+    case key do
+      "b" ->
+        graph = Sample.branch(socket.assigns.graph, socket.assigns.node)
+
+        node = Vertex.add_relatives(graph, socket.assigns.node)
+        changeset = Vertex.changeset(node)
+
+        {:noreply,
+         assign(socket,
+           graph: graph,
+           f_graph: format_graph(graph),
+           form: to_form(changeset),
+           node: node
+         )}
+
+      "h" ->
+        {:noreply, assign(socket, drawer_open: false)}
+
+      _ ->
+        {node, changeset} = GraphActions.find_node(socket.assigns.graph, key)
+
+        {:noreply,
+         assign(socket,
+           node: node,
+           form: to_form(changeset)
+         )}
+    end
+  end
+
   def handle_event("node_clicked", %{"id" => id}, socket) do
-    node = Vertex.find_node_by_id(socket.assigns.graph, id)
-    node = Vertex.add_relatives(socket.assigns.graph, node)
-    changeset = Vertex.changeset(node)
+    {node, changeset} = GraphActions.find_node(socket.assigns.graph, id)
 
     {:noreply,
      assign(socket,
-       drawer_open: true,
        node: node,
        form: to_form(changeset)
      )}

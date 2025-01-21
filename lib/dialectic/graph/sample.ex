@@ -6,8 +6,8 @@ defmodule Dialectic.Graph.Sample do
   def run do
     graph = :digraph.new()
 
-    v1 = add_node(graph, "A")
-    v2 = add_node(graph, "B")
+    v1 = add_node(graph, "1")
+    v2 = add_node(graph, "2")
     # v3 = add_node(graph, "C")
 
     :digraph.add_edge(graph, v1, v2)
@@ -32,8 +32,9 @@ defmodule Dialectic.Graph.Sample do
   end
 
   def branch(graph, node) do
-    theis_id = "#{node.id}_thesis"
-    antithesis_id = "#{node.id}_antithesis"
+    v = :digraph.vertices(graph)
+    theis_id = "#{length(v) + 1}"
+    antithesis_id = "#{length(v) + 2}"
 
     graph
     |> add_child(node, theis_id, LlmInterface.gen_response(node.proposition))
