@@ -20,10 +20,6 @@ defmodule DialecticWeb.NodeComponent do
       <div>
         <.form for={@form} phx-submit="branch">
           <div>
-            <.input field={@form[:answer]} type="textarea" label="Name" />
-          </div>
-
-          <div>
             <.button type="submit">Branch</.button>
           </div>
         </.form>
@@ -40,7 +36,6 @@ defmodule DialecticWeb.NodeComponent do
               options={Enum.map(@vertices, &{&1, &1})}
               value={@selected_vertex}
             />
-            <.input field={@form[:answer]} type="textarea" label="Name" />
           </div>
 
           <div>
@@ -67,12 +62,11 @@ defmodule DialecticWeb.NodeComponent do
     <div class="node">
       <p>
         Parent:
-        <%= if Map.has_key?(@node.parent, :id) do %>
-          <a href="#" class="text-blue-600" phx-click="node_clicked" phx-value-id={@node.parent.id}>
-            {@node.parent.id}
+        <%= for parent <- @node.parents do %>
+          <a href="#" class="text-blue-600" phx-click="node_clicked" phx-value-id={parent.id}>
+            {parent.id}
           </a>
-        <% else %>
-          None
+          |
         <% end %>
       </p>
 

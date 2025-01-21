@@ -1,5 +1,6 @@
 defmodule Dialectic.Graph.Sample do
   alias Dialectic.Graph.Vertex
+  alias Dialectic.Responses.LlmInterface
 
   # To test - Graph A -> B, A -> C, B -> D and C -> D
   def run do
@@ -28,6 +29,27 @@ defmodule Dialectic.Graph.Sample do
   def add_node(graph, name, description) do
     vertex = %Vertex{id: name, proposition: description}
     :digraph.add_vertex(graph, name, vertex)
+  end
+
+  def branch(graph, node) do
+    theis_id = "#{node.id}_thesis"
+    antithesis_id = "#{node.id}_antithesis"
+
+    graph
+    |> add_child(node, theis_id, LlmInterface.gen_response(node.proposition))
+    |> add_child(node, antithesis_id, LlmInterface.gen_response(node.proposition))
+  end
+
+  def combine(graph, node1, node2) do
+    synthesis_id = "#{node1.id}_#{node2.id}_synthesis"
+
+    promposition = "#{node1.proposition} and #{node2.proposition}"
+
+    add_node(graph, synthesis_id, LlmInterface.gen_response(promposition))
+    :digraph.add_edge(graph, node1.id, synthesis_id)
+    :digraph.add_edge(graph, node2.id, synthesis_id)
+
+    {synthesis_id, graph}
   end
 
   def add_child(graph, parent, child_id, description) do

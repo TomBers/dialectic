@@ -34,21 +34,9 @@ defmodule DialecticWeb.GraphLive do
      )}
   end
 
-  def handle_event("branch", %{"vertex" => %{"answer" => answer}}, socket) do
-    node =
-      Sample.add_answer(socket.assigns.graph, socket.assigns.node, answer)
+  def handle_event("branch", _, socket) do
+    graph = Sample.branch(socket.assigns.graph, socket.assigns.node)
 
-    graph = Vertex.update_vertex(socket.assigns.graph, socket.assigns.node, node)
-
-    theis_id = "#{node.id}_thesis"
-    description = Dialectic.Responses.LlmInterface.gen_response(answer)
-    graph = Sample.add_child(graph, node, theis_id, description)
-
-    antithesis_id = "#{node.id}_antithesis"
-    description = Dialectic.Responses.LlmInterface.gen_response(answer)
-    graph = Sample.add_child(graph, node, antithesis_id, description)
-
-    # graph = Sample.add_child(socket.assigns.graph, socket.assigns.node)
     node = Vertex.add_relatives(graph, socket.assigns.node)
     changeset = Vertex.changeset(node)
 
@@ -87,11 +75,26 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event(
         "combine",
-        %{"combine_node" => "B_antithesis", "vertex" => %{"answer" => answer}},
+        %{"combine_node" => combine_node},
         socket
       ) do
-    IO.inspect("Combine")
-    {:noreply, socket}
+    {node_id, graph} =
+      Sample.combine(
+        socket.assigns.graph,
+        socket.assigns.node,
+        Vertex.find_node_by_id(socket.assigns.graph, combine_node)
+      )
+
+    node = Vertex.find_node_by_id(graph, node_id)
+    changeset = Vertex.changeset(node)
+
+    {:noreply,
+     assign(socket,
+       graph: graph,
+       f_graph: format_graph(graph),
+       form: to_form(changeset),
+       node: node
+     )}
   end
 
   def handle_event("save_graph", _, socket) do
