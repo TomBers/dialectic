@@ -16,44 +16,51 @@ defmodule DialecticWeb.GraphLive do
      assign(socket,
        graph: graph,
        f_graph: format_graph(graph),
-       drawer_open: true,
        node: %Vertex{},
-       form: to_form(changeset)
+       form: to_form(changeset),
+       show_combine: false
      )}
   end
 
-  def handle_event("KeyBoardInterface", %{"key" => key}, socket) do
-    case key do
-      "b" ->
-        graph = Sample.branch(socket.assigns.graph, socket.assigns.node)
+  def handle_event("KeyBoardInterface", %{"key" => key, "cmdKey" => isCmd} = params, socket) do
+    IO.inspect(params, label: "KeyBoardInterface")
 
-        node = Vertex.add_relatives(graph, socket.assigns.node)
-        changeset = Vertex.changeset(node)
+    if isCmd do
+      case key do
+        "b" ->
+          graph = Sample.branch(socket.assigns.graph, socket.assigns.node)
 
-        {:noreply,
-         assign(socket,
-           graph: graph,
-           f_graph: format_graph(graph),
-           form: to_form(changeset),
-           node: node
-         )}
+          node = Vertex.add_relatives(graph, socket.assigns.node)
+          changeset = Vertex.changeset(node)
 
-      "h" ->
-        {:noreply, assign(socket, drawer_open: false)}
+          {:noreply,
+           assign(socket,
+             graph: graph,
+             f_graph: format_graph(graph),
+             form: to_form(changeset),
+             node: node
+           )}
 
-      _ ->
-        {node, changeset} = GraphActions.find_node(socket.assigns.graph, key)
+        "c" ->
+          {:noreply, assign(socket, show_combine: true)}
 
-        {:noreply,
-         assign(socket,
-           node: node,
-           form: to_form(changeset)
-         )}
+        _ ->
+          {node, changeset} =
+            GraphActions.find_node(socket.assigns.graph, key, socket.assigns.node)
+
+          {:noreply,
+           assign(socket,
+             node: node,
+             form: to_form(changeset)
+           )}
+      end
+    else
+      {:noreply, socket}
     end
   end
 
   def handle_event("node_clicked", %{"id" => id}, socket) do
-    {node, changeset} = GraphActions.find_node(socket.assigns.graph, id)
+    {node, changeset} = GraphActions.find_node(socket.assigns.graph, id, socket.assigns.node)
 
     {:noreply,
      assign(socket,
@@ -84,8 +91,9 @@ defmodule DialecticWeb.GraphLive do
 
     graph = Vertex.update_vertex(socket.assigns.graph, socket.assigns.node, node)
 
+    v = :digraph.vertices(graph)
     # Generate a new node
-    child_id = "#{node.id}_child"
+    child_id = "#{length(v) + 1}"
     description = Dialectic.Responses.LlmInterface.gen_response(answer)
     graph = Sample.add_child(graph, node, child_id, description)
 
@@ -130,8 +138,8 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, socket |> put_flash(:info, "Saved!")}
   end
 
-  def handle_event("close_drawer", _, socket) do
-    {:noreply, assign(socket, drawer_open: false)}
+  def handle_event("modal_closed", _, socket) do
+    {:noreply, assign(socket, show_combine: false)}
   end
 
   def format_graph(graph) do

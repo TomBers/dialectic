@@ -1,52 +1,30 @@
-<div class="h-screen relative" phx-window-keydown="KeyBoardInterface">
-  <!-- Main content with conditional width -->
-  <div class={[
-    "h-full relative",
-    (@drawer_open && "w-1/2") || "w-full"
-  ]}>
+<div class="h-screen relative">
+  <!-- Main content taking up most of the vertical space -->
+  <div class="h-[75vh]" phx-window-keydown="KeyBoardInterface">
     <div id="cy" class="h-full w-full" data-graph={@f_graph} data-node={@node.id} phx-hook="Graph">
     </div>
   </div>
-  
-<!-- Drawer panel -->
-  <div class={[
-    "h-full bg-white shadow-lg transition-all duration-300 ease-in-out absolute top-0 right-0",
-    (@drawer_open && "w-1/2") || "w-0 invisible"
-  ]}>
-    <div class="p-4">
-      <div class="flex justify-between items-center">
-        <h2 class="text-xl font-semibold">{@node.id} Node Details</h2>
-        <button phx-click="save_graph" class="text-gray-500 hover:text-gray-700">Save</button>
-        <button phx-click="close_drawer" class="text-gray-500 hover:text-gray-700">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
-        </button>
+  <.modal :if={@show_combine} on_cancel={JS.push("modal_closed")} id="confirm-modal" show>
+    <div class="w-full text-gray-300 bg-gray-800 rounded-lg p-2">Modal</div>
+  </.modal>
+  <!-- Fixed bottom panel -->
+  <%= if @node.id do %>
+    <div class="h-[25vh] w-full bg-white shadow-lg fixed bottom-0 left-0 border-t border-gray-200">
+      <div class="w-full text-gray-300 bg-gray-800 rounded-lg p-2">
+        {raw(@node.proposition)}
       </div>
-      <div class="mt-4">
-        <!-- Add your node details content here -->
-        <%= if @node.id do %>
-          <.live_component
-            module={NodeComponent}
-            id="nodeComp"
-            node={@node}
-            vertices={:digraph.vertices(@graph)}
-            selected_vertex={hd(:digraph.vertices(@graph))}
-            form={@form}
-          />
-        <% end %>
+      <div>
+        <.form for={@form} phx-submit="answer">
+          <div class="flex gap-2 items-center">
+            <div class="flex-1">
+              <.input field={@form[:answer]} type="text" />
+            </div>
+            <div>
+              <.button type="submit">Answer</.button>
+            </div>
+          </div>
+        </.form>
       </div>
     </div>
-  </div>
+  <% end %>
 </div>

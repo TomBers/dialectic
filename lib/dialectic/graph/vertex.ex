@@ -91,7 +91,7 @@ defmodule Dialectic.Graph.Vertex do
         {target_data, _} = :digraph.vertex(graph, v2)
 
         # Create edge ID from source and target names
-        edge_id = source_data <> target_data
+        edge_id = source_data <> "_" <> target_data
 
         # Create cytoscape edge format
         %{
