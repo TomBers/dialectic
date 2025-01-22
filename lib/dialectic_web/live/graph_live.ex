@@ -10,14 +10,14 @@ defmodule DialecticWeb.GraphLive do
   def mount(_params, _session, socket) do
     # graph = Serialise.load_graph()
     graph = Sample.run()
-
-    changeset = Vertex.changeset(%Vertex{})
+    node = graph |> Vertex.find_node_by_id("1")
+    changeset = Vertex.changeset(node)
 
     {:ok,
      assign(socket,
        graph: graph,
        f_graph: format_graph(graph),
-       node: %Vertex{},
+       node: node,
        form: to_form(changeset),
        show_combine: false
      )}

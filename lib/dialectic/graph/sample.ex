@@ -8,10 +8,10 @@ defmodule Dialectic.Graph.Sample do
 
     v1 = add_node(graph, "1")
     v2 = add_node(graph, "2")
-    # v3 = add_node(graph, "C")
+    v3 = add_node(graph, "3")
 
     :digraph.add_edge(graph, v1, v2)
-    # :digraph.add_edge(graph, v1, v3)
+    :digraph.add_edge(graph, v2, v3)
 
     graph
   end

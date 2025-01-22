@@ -14,11 +14,11 @@ defmodule DialecticWeb.CombineComp do
 
   def render(assigns) do
     ~H"""
-    <div>
+    <div class="node-list">
       <%= for node <- @possible_nodes do %>
         <div class="node">
           <h2>{node.id}</h2>
-          {raw(node.proposition)}
+          <div class="proposition">{raw(node.proposition)}</div>
         </div>
       <% end %>
     </div>

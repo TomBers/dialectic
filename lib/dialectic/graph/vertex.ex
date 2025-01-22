@@ -1,16 +1,32 @@
 defmodule Dialectic.Graph.Vertex do
-  defstruct id: nil, proposition: nil, answer: nil, parents: [], children: []
+  @valid_classes [
+    "thesis",
+    "antithesis",
+    "syntheis",
+    "answer",
+    "assumption",
+    "premise",
+    "conclusion"
+  ]
+  # Define a custom type for class validation
+  # @type class :: "assumption" | "premise" | "conclusion"
+  defstruct id: nil, proposition: nil, answer: nil, class: "", parents: [], children: []
+
+  # Add a function to validate the class
+  def validate_class(class) when class in @valid_classes, do: {:ok, class}
+  def validate_class(_), do: {:error, "Invalid class. Must be one of: #{inspect(@valid_classes)}"}
 
   # IMPORTANT - defines fields that should be serialised
   def serialize(vertex) do
-    %{id: vertex.id, proposition: vertex.proposition, answer: vertex.answer}
+    %{id: vertex.id, proposition: vertex.proposition, answer: vertex.answer, class: vertex.class}
   end
 
   def deserialize(data) do
     %Dialectic.Graph.Vertex{
       id: data["id"],
       proposition: data["proposition"],
-      answer: data["answer"]
+      answer: data["answer"],
+      class: data["class"]
     }
   end
 
