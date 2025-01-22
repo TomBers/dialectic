@@ -23,7 +23,7 @@ defmodule DialecticWeb.GraphLive do
      )}
   end
 
-  def handle_event("KeyBoardInterface", %{"key" => key, "cmdKey" => isCmd} = params, socket) do
+  def handle_event("KeyBoardInterface", %{"key" => key, "cmdKey" => isCmd}, socket) do
     # IO.inspect(params, label: "KeyBoardInterface")
 
     if isCmd do
@@ -76,18 +76,26 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def combine_interface(socket, key) do
-    update_graph(socket, GraphActions.combine(socket, key))
+    update_graph(socket, GraphActions.combine(socket, key), true)
   end
 
-  def update_graph(socket, {graph, node}) do
+  def update_graph(socket, {graph, node}, invert_modal \\ false) do
     changeset = Vertex.changeset(node)
+
+    show_combine =
+      if invert_modal do
+        !socket.assigns.show_combine
+      else
+        socket.assigns.show_combine
+      end
 
     {:noreply,
      assign(socket,
        graph: graph,
        f_graph: format_graph(graph),
        form: to_form(changeset),
-       node: node
+       node: node,
+       show_combine: show_combine
      )}
   end
 end
