@@ -2,9 +2,10 @@ defmodule DialecticWeb.GraphLive do
   use DialecticWeb, :live_view
   alias Dialectic.Graph.Vertex
   alias Dialectic.Graph.Sample
-  alias DialecticWeb.NodeComponent
   alias Dialectic.Graph.Serialise
   alias Dialectic.Graph.GraphActions
+
+  alias DialecticWeb.CombineComp
 
   def mount(_params, _session, socket) do
     # graph = Serialise.load_graph()
@@ -42,7 +43,8 @@ defmodule DialecticWeb.GraphLive do
            )}
 
         "c" ->
-          {:noreply, assign(socket, show_combine: true)}
+          com = Map.get(socket.assigns.node, :id)
+          {:noreply, assign(socket, show_combine: !is_nil(com))}
 
         _ ->
           {node, changeset} =
