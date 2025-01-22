@@ -24,37 +24,13 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("KeyBoardInterface", %{"key" => key, "cmdKey" => isCmd} = params, socket) do
-    IO.inspect(params, label: "KeyBoardInterface")
+    # IO.inspect(params, label: "KeyBoardInterface")
 
     if isCmd do
-      case key do
-        "b" ->
-          graph = Sample.branch(socket.assigns.graph, socket.assigns.node)
-
-          node = Vertex.add_relatives(graph, socket.assigns.node)
-          changeset = Vertex.changeset(node)
-
-          {:noreply,
-           assign(socket,
-             graph: graph,
-             f_graph: format_graph(graph),
-             form: to_form(changeset),
-             node: node
-           )}
-
-        "c" ->
-          com = Map.get(socket.assigns.node, :id)
-          {:noreply, assign(socket, show_combine: !is_nil(com))}
-
-        _ ->
-          {node, changeset} =
-            GraphActions.find_node(socket.assigns.graph, key, socket.assigns.node)
-
-          {:noreply,
-           assign(socket,
-             node: node,
-             form: to_form(changeset)
-           )}
+      if socket.assigns.show_combine do
+        combine_interface(socket, key)
+      else
+        main_keybaord_interface(socket, key)
       end
     else
       {:noreply, socket}
@@ -62,77 +38,11 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("node_clicked", %{"id" => id}, socket) do
-    {node, changeset} = GraphActions.find_node(socket.assigns.graph, id, socket.assigns.node)
-
-    {:noreply,
-     assign(socket,
-       node: node,
-       form: to_form(changeset)
-     )}
-  end
-
-  def handle_event("branch", _, socket) do
-    graph = Sample.branch(socket.assigns.graph, socket.assigns.node)
-
-    node = Vertex.add_relatives(graph, socket.assigns.node)
-    changeset = Vertex.changeset(node)
-
-    {:noreply,
-     assign(socket,
-       graph: graph,
-       f_graph: format_graph(graph),
-       form: to_form(changeset),
-       node: node
-     )}
+    update_graph(socket, GraphActions.find_node(socket.assigns.graph, id, socket.assigns.node))
   end
 
   def handle_event("answer", %{"vertex" => %{"answer" => answer}}, socket) do
-    # Update Node with answer
-    node =
-      Sample.add_answer(socket.assigns.graph, socket.assigns.node, answer)
-
-    graph = Vertex.update_vertex(socket.assigns.graph, socket.assigns.node, node)
-
-    v = :digraph.vertices(graph)
-    # Generate a new node
-    child_id = "#{length(v) + 1}"
-    description = Dialectic.Responses.LlmInterface.gen_response(answer)
-    graph = Sample.add_child(graph, node, child_id, description)
-
-    new_node = Vertex.add_relatives(graph, Vertex.find_node_by_id(graph, child_id))
-    changeset = Vertex.changeset(new_node)
-
-    {:noreply,
-     assign(socket,
-       graph: graph,
-       f_graph: format_graph(graph),
-       form: to_form(changeset),
-       node: new_node
-     )}
-  end
-
-  def handle_event(
-        "combine",
-        %{"combine_node" => combine_node},
-        socket
-      ) do
-    {node_id, graph} =
-      Sample.combine(
-        socket.assigns.graph,
-        socket.assigns.node,
-        Vertex.find_node_by_id(socket.assigns.graph, combine_node)
-      )
-
-    node = Vertex.find_node_by_id(graph, node_id)
-    changeset = Vertex.changeset(node)
-
-    {:noreply,
-     assign(socket,
-       graph: graph,
-       f_graph: format_graph(graph),
-       form: to_form(changeset),
-       node: node
-     )}
+    update_graph(socket, GraphActions.answer(socket, answer))
   end
 
   def handle_event("save_graph", _, socket) do
@@ -146,5 +56,38 @@ defmodule DialecticWeb.GraphLive do
 
   def format_graph(graph) do
     graph |> Vertex.to_cytoscape_format() |> Jason.encode!()
+  end
+
+  def main_keybaord_interface(socket, key) do
+    case key do
+      "b" ->
+        update_graph(socket, GraphActions.branch(socket))
+
+      "c" ->
+        com = Map.get(socket.assigns.node, :id)
+        {:noreply, assign(socket, show_combine: !is_nil(com))}
+
+      _ ->
+        update_graph(
+          socket,
+          GraphActions.find_node(socket.assigns.graph, key, socket.assigns.node)
+        )
+    end
+  end
+
+  def combine_interface(socket, key) do
+    update_graph(socket, GraphActions.combine(socket, key))
+  end
+
+  def update_graph(socket, {graph, node}) do
+    changeset = Vertex.changeset(node)
+
+    {:noreply,
+     assign(socket,
+       graph: graph,
+       f_graph: format_graph(graph),
+       form: to_form(changeset),
+       node: node
+     )}
   end
 end
