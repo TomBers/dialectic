@@ -6,18 +6,19 @@ defmodule Dialectic.Graph.Sample do
   def run do
     graph = :digraph.new()
 
-    v1 = add_node(graph, "1")
-    v2 = add_node(graph, "2")
-    v3 = add_node(graph, "3")
+    # v1 =
+    add_node(graph, "1")
+    # v2 = add_node(graph, "2")
+    # v3 = add_node(graph, "3")
 
-    :digraph.add_edge(graph, v1, v2)
-    :digraph.add_edge(graph, v2, v3)
+    # :digraph.add_edge(graph, v1, v2)
+    # :digraph.add_edge(graph, v2, v3)
 
     graph
   end
 
   def add_node(graph, name) do
-    add_node(graph, name, Dialectic.Responses.LlmInterface.gen_response("BOB"))
+    add_node(graph, name, Dialectic.Responses.LlmInterface.gen_response("BOB"), "answer")
   end
 
   def add_answer(graph, vertex, answer) do
@@ -26,8 +27,8 @@ defmodule Dialectic.Graph.Sample do
     node
   end
 
-  def add_node(graph, name, description) do
-    vertex = %Vertex{id: name, proposition: description}
+  def add_node(graph, name, description, class \\ "") do
+    vertex = %Vertex{id: name, proposition: description, class: class}
     :digraph.add_vertex(graph, name, vertex)
   end
 
@@ -36,14 +37,14 @@ defmodule Dialectic.Graph.Sample do
     antithesis_id = gen_id(graph, 1)
 
     graph
-    |> add_child(node, theis_id, LlmInterface.gen_thesis(node))
-    |> add_child(node, antithesis_id, LlmInterface.gen_antithesis(node))
+    |> add_child(node, theis_id, LlmInterface.gen_thesis(node), "thesis")
+    |> add_child(node, antithesis_id, LlmInterface.gen_antithesis(node), "antithesis")
   end
 
   def combine(graph, node1, node2) do
     synthesis_id = gen_id(graph)
 
-    add_node(graph, synthesis_id, LlmInterface.gen_synthesis(node1, node2))
+    add_node(graph, synthesis_id, LlmInterface.gen_synthesis(node1, node2), "syntheis")
     :digraph.add_edge(graph, node1.id, synthesis_id)
     :digraph.add_edge(graph, node2.id, synthesis_id)
 
@@ -55,9 +56,9 @@ defmodule Dialectic.Graph.Sample do
     "#{length(v) + 1 + offset}"
   end
 
-  def add_child(graph, parent, child_id, description) do
+  def add_child(graph, parent, child_id, description, class \\ "") do
     # Add nodes using IDs
-    add_node(graph, child_id, description)
+    add_node(graph, child_id, description, class)
 
     # Add edges using IDs
     :digraph.add_edge(graph, parent.id, child_id)

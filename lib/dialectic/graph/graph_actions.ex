@@ -41,9 +41,11 @@ defmodule Dialectic.Graph.GraphActions do
     # Generate a new node
     child_id = "#{length(v) + 1}"
     description = Dialectic.Responses.LlmInterface.gen_response(answer)
-    graph = Sample.add_child(graph, node, child_id, description)
+    graph = Sample.add_child(graph, node, child_id, description, "answer")
 
-    new_node = Vertex.add_relatives(graph, Vertex.find_node_by_id(graph, child_id))
+    new_node =
+      Vertex.find_node_by_id(graph, child_id)
+      |> IO.inspect(label: "New Node")
 
     {graph, new_node}
   end

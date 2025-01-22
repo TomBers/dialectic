@@ -19,6 +19,22 @@ export function draw_graph(graph, context, elements, node_clicked) {
         css: { "border-width": 3, "border-color": "red" },
       },
       {
+        selector: `node[class = "thesis"]`,
+        css: { "background-color": "blue" },
+      },
+      {
+        selector: `node[class = "antithesis"]`,
+        css: { "background-color": "green" },
+      },
+      {
+        selector: `node[class = "syntheis"]`,
+        css: { "background-color": "#99B8A5" },
+      },
+      {
+        selector: `node[class = "answer"]`,
+        css: { "background-color": "#F27417" },
+      },
+      {
         selector: "edge",
         style: {
           width: 3,

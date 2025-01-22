@@ -87,12 +87,13 @@ defmodule Dialectic.Graph.Vertex do
     nodes =
       Enum.map(vertices, fn vertex ->
         # Get the vertex label/data from the digraph
-        {vertex_data, _} = :digraph.vertex(graph, vertex)
+        {vid, dat} = :digraph.vertex(graph, vertex)
 
         # Create cytoscape node format
         %{
           data: %{
-            id: vertex_data
+            id: vid,
+            class: dat.class
           }
         }
       end)

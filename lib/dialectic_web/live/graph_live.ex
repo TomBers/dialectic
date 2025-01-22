@@ -80,7 +80,7 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def update_graph(socket, {graph, node}, invert_modal \\ false) do
-    changeset = Vertex.changeset(node)
+    changeset = Vertex.changeset(node) |> IO.inspect(label: "Changeset")
 
     show_combine =
       if invert_modal do
@@ -93,7 +93,7 @@ defmodule DialecticWeb.GraphLive do
      assign(socket,
        graph: graph,
        f_graph: format_graph(graph),
-       form: to_form(changeset),
+       form: to_form(changeset, id: node.id),
        node: node,
        show_combine: show_combine
      )}
