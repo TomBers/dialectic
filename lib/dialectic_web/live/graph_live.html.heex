@@ -1,5 +1,5 @@
-<div class="h-screen flex flex-col relative">
-  <!-- Top section with fixed height -->
+<div class="h-screen flex flex-col">
+  <!-- Top section -->
   <div class="flex-none">
     <div class="top-right">
       <div class="node">
@@ -13,38 +13,35 @@
     </div>
   </div>
   
-<!-- Main content section that takes remaining space minus bottom form -->
-  <div class="flex-1 overflow-hidden" phx-window-keydown="KeyBoardInterface">
-    <div id="cy" class="h-full w-full" data-graph={@f_graph} data-node={@node.id} phx-hook="Graph">
+<!-- Main content with 50-50 split -->
+  <div class="flex-1 flex">
+    <!-- Left side: Graph -->
+    <div class="w-1/2" phx-window-keydown="KeyBoardInterface">
+      <div
+        id="cy"
+        class="h-full w-full"
+        data-graph={@f_graph}
+        data-node={@node.id}
+        phx-hook="Graph"
+      >
+      </div>
+      <.modal
+        :if={@show_combine && @node.id}
+        on_cancel={JS.push("modal_closed")}
+        id="confirm-modal"
+        show
+      >
+        <.live_component module={CombineComp} graph={@graph} node={@node} id="Modal" />
+      </.modal>
+    </div>
+    
+<!-- Right side: Chat -->
+    <div class="w-1/2 h-full flex flex-col">
+      <%= if @node.id do %>
+        <div class="flex-1 overflow-y-auto">
+          <.live_component module={ChatComp} form={@form} node={@node} id="Chat" />
+        </div>
+      <% end %>
     </div>
   </div>
-
-  <.modal
-    :if={@show_combine && @node.id}
-    on_cancel={JS.push("modal_closed")}
-    id="confirm-modal"
-    show
-  >
-    <.live_component module={CombineComp} graph={@graph} node={@node} id="Modal" />
-  </.modal>
-  
-<!-- Bottom form section with fixed height -->
-  <%= if @node.id do %>
-    <div class="flex-none h-32 bg-white shadow-lg border-t border-gray-200">
-      <div class="w-full text-gray-300 bg-gray-800 rounded-lg p-2 mb-2">
-        <%= for parent <- @node.parents do %>
-          {parent.id}
-        <% end %>
-      </div>
-      <div class="px-2">
-        <.form for={@form} phx-submit="answer">
-          <div class="flex gap-2 items-center">
-            <div class="flex-1">
-              <.input field={@form[:content]} type="text" />
-            </div>
-          </div>
-        </.form>
-      </div>
-    </div>
-  <% end %>
 </div>

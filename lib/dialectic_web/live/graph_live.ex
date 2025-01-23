@@ -5,6 +5,7 @@ defmodule DialecticWeb.GraphLive do
   alias Dialectic.Graph.GraphActions
 
   alias DialecticWeb.CombineComp
+  alias DialecticWeb.ChatComp
 
   def mount(_params, _session, socket) do
     # graph = Serialise.load_graph()
