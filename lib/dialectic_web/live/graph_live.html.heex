@@ -32,13 +32,13 @@
   <%= if @node.id do %>
     <div class="flex-none h-32 bg-white shadow-lg border-t border-gray-200">
       <div class="w-full text-gray-300 bg-gray-800 rounded-lg p-2 mb-2">
-        {raw(@node.proposition)}
+        TODO - this is going to be parents content
       </div>
       <div class="px-2">
         <.form for={@form} phx-submit="answer">
           <div class="flex gap-2 items-center">
             <div class="flex-1">
-              <.input field={@form[:answer]} type="text" />
+              <.input field={@form[:content]} type="text" />
             </div>
           </div>
         </.form>

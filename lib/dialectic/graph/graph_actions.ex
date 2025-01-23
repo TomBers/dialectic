@@ -29,11 +29,8 @@ defmodule Dialectic.Graph.GraphActions do
   end
 
   def answer(socket, answer) do
-    node =
-      Sample.add_answer(socket.assigns.graph, socket.assigns.node, answer)
-
-    graph = Vertex.update_vertex(socket.assigns.graph, socket.assigns.node, node)
-
+    graph = socket.assigns.graph
+    node = socket.assigns.node
     v = :digraph.vertices(graph)
     # Generate a new node
     child_id = "#{length(v) + 1}"

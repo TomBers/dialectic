@@ -6,28 +6,25 @@ defmodule Dialectic.Graph.Sample do
   def run do
     graph = :digraph.new()
 
-    v1 = add_node(graph, "1")
-    v2 = add_node(graph, "2")
-    v3 = add_node(graph, "3")
+    # v1 =
+    add_node(graph, "1", Dialectic.Responses.LlmInterface.gen_response("First"), "answer")
+    # v2 = add_node(graph, "2")
+    # v3 = add_node(graph, "3")
 
-    :digraph.add_edge(graph, v1, v2)
-    :digraph.add_edge(graph, v1, v3)
+    # :digraph.add_edge(graph, v1, v2)
+    # :digraph.add_edge(graph, v1, v3)
 
     graph
   end
 
-  def add_node(graph, name) do
-    add_node(graph, name, Dialectic.Responses.LlmInterface.gen_response("BOB"), "answer")
-  end
+  # def add_answer(graph, vertex, answer) do
+  #   node = %{vertex | answer: answer}
+  #   :digraph.add_vertex(graph, vertex.id, node)
+  #   node
+  # end
 
-  def add_answer(graph, vertex, answer) do
-    node = %{vertex | answer: answer}
-    :digraph.add_vertex(graph, vertex.id, node)
-    node
-  end
-
-  def add_node(graph, name, description, class \\ "") do
-    vertex = %Vertex{id: name, proposition: description, class: class}
+  def add_node(graph, name, content, class \\ "") do
+    vertex = %Vertex{id: name, content: content, class: class}
     :digraph.add_vertex(graph, name, vertex)
   end
 

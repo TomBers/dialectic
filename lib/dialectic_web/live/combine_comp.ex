@@ -18,7 +18,7 @@ defmodule DialecticWeb.CombineComp do
       <%= for node <- @possible_nodes do %>
         <div class="node">
           <h2>{node.id}</h2>
-          <div class="proposition">{raw(node.proposition)}</div>
+          <div class="proposition">{raw(node.content)}</div>
         </div>
       <% end %>
     </div>
