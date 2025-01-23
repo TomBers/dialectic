@@ -35,3 +35,20 @@
     font-size: 1rem;
     line-height: 1.5;
 }
+
+.answer {
+    border: 1px solid red;
+}
+
+.thesis {
+    border: 1px solid green;
+}
+
+.antithesis {
+    border: 1px solid blue;
+    flex-direction: row-reverse;
+}
+
+.synthesis {
+    border: 1px solid purple;
+}

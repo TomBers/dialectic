@@ -9,11 +9,12 @@ defmodule DialecticWeb.ChatComp do
     ~H"""
     <div class="h-full flex flex-col">
       <div class="flex-1 overflow-y-auto">
-        <div class="text-gray-300 bg-gray-800 rounded-lg p-2 mb-2">
-          <%= for parent <- @node.parents do %>
-            {parent.id}
-          <% end %>
-        </div>
+        <%= for parent <- @node.parents do %>
+          <div class={"node mb-2 " <> parent.class}>
+            <h2>{parent.id}</h2>
+            <div class="proposition">{raw(parent.content)}</div>
+          </div>
+        <% end %>
       </div>
       <div class="bg-white shadow-lg border-t border-gray-200 p-2">
         <.form for={@form} phx-submit="answer">

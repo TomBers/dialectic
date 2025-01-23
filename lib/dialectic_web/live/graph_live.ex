@@ -8,9 +8,9 @@ defmodule DialecticWeb.GraphLive do
   alias DialecticWeb.ChatComp
 
   def mount(_params, _session, socket) do
-    # graph = Serialise.load_graph()
-    graph = GraphActions.run()
-    node = graph |> Vertex.find_node_by_id("1")
+    graph = Serialise.load_graph()
+    # graph = GraphActions.run()
+    node = graph |> Vertex.find_node_by_id("5")
     changeset = Vertex.changeset(node)
 
     {:ok,
@@ -64,6 +64,10 @@ defmodule DialecticWeb.GraphLive do
     case key do
       "b" ->
         update_graph(socket, GraphActions.branch(socket))
+
+      "s" ->
+        Serialise.save_graph(socket.assigns.graph)
+        {:noreply, socket |> put_flash(:info, "Saved!")}
 
       "c" ->
         com = Map.get(socket.assigns.node, :id)

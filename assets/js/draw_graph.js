@@ -27,7 +27,7 @@ export function draw_graph(graph, context, elements, node_clicked) {
         css: { "background-color": "green" },
       },
       {
-        selector: `node[class = "syntheis"]`,
+        selector: `node[class = "synthesis"]`,
         css: { "background-color": "#99B8A5" },
       },
       {
