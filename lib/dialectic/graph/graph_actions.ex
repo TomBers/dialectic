@@ -2,6 +2,10 @@ defmodule Dialectic.Graph.GraphActions do
   alias Dialectic.Graph.Sample
   alias Dialectic.Graph.Vertex
 
+  def answer(socket, answer) do
+    Sample.answer(socket.assigns.graph, socket.assigns.node, answer)
+  end
+
   def branch(socket) do
     graph = Sample.branch(socket.assigns.graph, socket.assigns.node)
     node = Vertex.add_relatives(graph, socket.assigns.node)
@@ -24,24 +28,8 @@ defmodule Dialectic.Graph.GraphActions do
 
         node = Vertex.find_node_by_id(graph, node_id)
 
-        {graph, node}
+        {graph, Vertex.add_relatives(graph, node)}
     end
-  end
-
-  def answer(socket, answer) do
-    graph = socket.assigns.graph
-    node = socket.assigns.node
-    v = :digraph.vertices(graph)
-    # Generate a new node
-    child_id = "#{length(v) + 1}"
-    description = Dialectic.Responses.LlmInterface.gen_response(answer)
-    graph = Sample.add_child(graph, node, child_id, description, "answer")
-
-    new_node =
-      Vertex.find_node_by_id(graph, child_id)
-      |> IO.inspect(label: "New Node")
-
-    {graph, new_node}
   end
 
   def find_node(graph, id) do

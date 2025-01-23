@@ -28,6 +28,17 @@ defmodule Dialectic.Graph.Sample do
     :digraph.add_vertex(graph, name, vertex)
   end
 
+  def answer(graph, node, answer) do
+    new_node_id = gen_id(graph)
+
+    updated_graph =
+      graph
+      |> add_child(node, new_node_id, answer, "answer")
+
+    nn = Vertex.find_node_by_id(updated_graph, new_node_id)
+    {updated_graph, Vertex.add_relatives(updated_graph, nn)}
+  end
+
   def branch(graph, node) do
     theis_id = gen_id(graph)
     antithesis_id = gen_id(graph, 1)
