@@ -10,24 +10,21 @@ defmodule Dialectic.Graph.GraphActions do
   end
 
   def combine(socket, combine_node_id) do
-    combine_node =
-      Vertex.find_node_by_id(socket.assigns.graph, combine_node_id)
+    case Vertex.find_node_by_id(socket.assigns.graph, combine_node_id) do
+      nil ->
+        nil
 
-    # |> IO.inspect(label: "Combine Node")
+      combine_node ->
+        {node_id, graph} =
+          Sample.combine(
+            socket.assigns.graph,
+            socket.assigns.node,
+            combine_node
+          )
 
-    if combine_node == nil do
-      {socket.assigns.graph, socket.assigns.node}
-    else
-      {node_id, graph} =
-        Sample.combine(
-          socket.assigns.graph,
-          socket.assigns.node,
-          combine_node
-        )
+        node = Vertex.find_node_by_id(graph, node_id)
 
-      node = Vertex.find_node_by_id(graph, node_id)
-
-      {graph, node}
+        {graph, node}
     end
   end
 
@@ -50,10 +47,10 @@ defmodule Dialectic.Graph.GraphActions do
     {graph, new_node}
   end
 
-  def find_node(graph, id, default_node) do
+  def find_node(graph, id) do
     case Vertex.find_node_by_id(graph, id) do
       nil ->
-        {graph, default_node}
+        nil
 
       node ->
         {graph, Vertex.add_relatives(graph, node)}

@@ -10,7 +10,7 @@ defmodule DialecticWeb.GraphLive do
   def mount(_params, _session, socket) do
     # graph = Serialise.load_graph()
     graph = Sample.run()
-    node = graph |> Vertex.find_node_by_id("1")
+    node = graph |> Vertex.find_node_by_id("10")
     changeset = Vertex.changeset(node)
 
     {:ok,
@@ -19,12 +19,14 @@ defmodule DialecticWeb.GraphLive do
        f_graph: format_graph(graph),
        node: node,
        form: to_form(changeset),
-       show_combine: false
+       show_combine: false,
+       key_buffer: ""
      )}
   end
 
-  def handle_event("KeyBoardInterface", %{"key" => key, "cmdKey" => isCmd}, socket) do
+  def handle_event("KeyBoardInterface", %{"key" => last_key, "cmdKey" => isCmd}, socket) do
     # IO.inspect(params, label: "KeyBoardInterface")
+    key = (socket.assigns.key_buffer <> last_key) |> String.replace_prefix("Control", "")
 
     if isCmd do
       if socket.assigns.show_combine do
@@ -38,7 +40,7 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("node_clicked", %{"id" => id}, socket) do
-    update_graph(socket, GraphActions.find_node(socket.assigns.graph, id, socket.assigns.node))
+    update_graph(socket, GraphActions.find_node(socket.assigns.graph, id))
   end
 
   def handle_event("answer", %{"vertex" => %{"answer" => answer}}, socket) do
@@ -68,15 +70,24 @@ defmodule DialecticWeb.GraphLive do
         {:noreply, assign(socket, show_combine: !is_nil(com))}
 
       _ ->
-        update_graph(
-          socket,
-          GraphActions.find_node(socket.assigns.graph, key, socket.assigns.node)
-        )
+        case GraphActions.find_node(socket.assigns.graph, key) do
+          {graph, node} ->
+            update_graph(socket, {graph, node}, false)
+
+          _ ->
+            {:noreply, assign(socket, key_buffer: key)}
+        end
     end
   end
 
   def combine_interface(socket, key) do
-    update_graph(socket, GraphActions.combine(socket, key), true)
+    case GraphActions.combine(socket, key) do
+      {graph, node} ->
+        update_graph(socket, {graph, node}, true)
+
+      _ ->
+        {:noreply, assign(socket, key_buffer: key)}
+    end
   end
 
   def update_graph(socket, {graph, node}, invert_modal \\ false) do
@@ -95,7 +106,8 @@ defmodule DialecticWeb.GraphLive do
        f_graph: format_graph(graph),
        form: to_form(changeset, id: node.id),
        node: node,
-       show_combine: show_combine
+       show_combine: show_combine,
+       key_buffer: ""
      )}
   end
 end
