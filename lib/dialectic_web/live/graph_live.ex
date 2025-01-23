@@ -1,7 +1,6 @@
 defmodule DialecticWeb.GraphLive do
   use DialecticWeb, :live_view
   alias Dialectic.Graph.Vertex
-  alias Dialectic.Graph.Sample
   alias Dialectic.Graph.Serialise
   alias Dialectic.Graph.GraphActions
 
@@ -9,7 +8,7 @@ defmodule DialecticWeb.GraphLive do
 
   def mount(_params, _session, socket) do
     # graph = Serialise.load_graph()
-    graph = Sample.run()
+    graph = GraphActions.run()
     node = graph |> Vertex.find_node_by_id("1")
     changeset = Vertex.changeset(node)
 
@@ -91,7 +90,7 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def update_graph(socket, {graph, node}, invert_modal \\ false) do
-    changeset = Vertex.changeset(node) |> IO.inspect(label: "Changeset")
+    changeset = Vertex.changeset(node)
 
     show_combine =
       if invert_modal do
