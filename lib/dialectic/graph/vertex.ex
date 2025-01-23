@@ -44,7 +44,7 @@ defmodule Dialectic.Graph.Vertex do
     graph
   end
 
-  def add_relatives(graph, node) do
+  def add_relatives(node, graph) do
     parents = find_parents(graph, node)
     children = find_children(graph, node)
     %{node | parents: parents, children: children}

@@ -7,10 +7,7 @@ defmodule Dialectic.Graph.GraphActions do
   end
 
   def branch(socket) do
-    graph = Sample.branch(socket.assigns.graph, socket.assigns.node)
-    node = Vertex.add_relatives(graph, socket.assigns.node)
-
-    {graph, node}
+    Sample.branch(socket.assigns.graph, socket.assigns.node)
   end
 
   def combine(socket, combine_node_id) do
@@ -19,16 +16,11 @@ defmodule Dialectic.Graph.GraphActions do
         nil
 
       combine_node ->
-        {node_id, graph} =
-          Sample.combine(
-            socket.assigns.graph,
-            socket.assigns.node,
-            combine_node
-          )
-
-        node = Vertex.find_node_by_id(graph, node_id)
-
-        {graph, Vertex.add_relatives(graph, node)}
+        Sample.combine(
+          socket.assigns.graph,
+          socket.assigns.node,
+          combine_node
+        )
     end
   end
 
@@ -38,7 +30,7 @@ defmodule Dialectic.Graph.GraphActions do
         nil
 
       node ->
-        {graph, Vertex.add_relatives(graph, node)}
+        {graph, Vertex.add_relatives(node, graph)}
     end
   end
 end
