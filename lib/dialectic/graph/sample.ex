@@ -6,9 +6,9 @@ defmodule Dialectic.Graph.Sample do
   def run do
     graph = :digraph.new()
 
-    v1 = add_node(graph, "10")
-    v2 = add_node(graph, "20")
-    v3 = add_node(graph, "30")
+    v1 = add_node(graph, "1")
+    v2 = add_node(graph, "2")
+    v3 = add_node(graph, "3")
 
     :digraph.add_edge(graph, v1, v2)
     :digraph.add_edge(graph, v1, v3)

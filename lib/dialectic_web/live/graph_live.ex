@@ -10,7 +10,7 @@ defmodule DialecticWeb.GraphLive do
   def mount(_params, _session, socket) do
     # graph = Serialise.load_graph()
     graph = Sample.run()
-    node = graph |> Vertex.find_node_by_id("10")
+    node = graph |> Vertex.find_node_by_id("1")
     changeset = Vertex.changeset(node)
 
     {:ok,
