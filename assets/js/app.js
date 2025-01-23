@@ -37,6 +37,7 @@ hooks.Graph = {
     const context = this;
     const graph = document.getElementById("cy");
     const elements = JSON.parse(graph.dataset.graph);
+    console.log(elements);
     const node = graph.dataset.node;
     draw_graph(graph, context, elements, node);
   },
@@ -49,6 +50,18 @@ let liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
   hooks: hooks,
   params: { _csrf_token: csrfToken },
+  metadata: {
+    keydown: (e, el) => {
+      // console.log(e);
+      // console.log(el);
+      return {
+        key: e.key,
+        cmdKey: e.ctrlKey,
+        metaKey: e.metaKey,
+        repeat: e.repeat,
+      };
+    },
+  },
 });
 
 // Show progress bar on live navigation and form submits

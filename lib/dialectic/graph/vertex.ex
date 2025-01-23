@@ -1,23 +1,38 @@
 defmodule Dialectic.Graph.Vertex do
-  defstruct id: nil, proposition: nil, answer: nil, parents: [], children: []
+  @valid_classes [
+    "thesis",
+    "antithesis",
+    "syntheis",
+    "answer",
+    "assumption",
+    "premise",
+    "conclusion"
+  ]
+  # Define a custom type for class validation
+  # @type class :: "assumption" | "premise" | "conclusion"
+  defstruct id: nil, content: "", class: "", parents: [], children: []
+
+  # Add a function to validate the class
+  def validate_class(class) when class in @valid_classes, do: {:ok, class}
+  def validate_class(_), do: {:error, "Invalid class. Must be one of: #{inspect(@valid_classes)}"}
 
   # IMPORTANT - defines fields that should be serialised
   def serialize(vertex) do
-    %{id: vertex.id, proposition: vertex.proposition, answer: vertex.answer}
+    %{id: vertex.id, content: vertex.content, class: vertex.class}
   end
 
   def deserialize(data) do
     %Dialectic.Graph.Vertex{
       id: data["id"],
-      proposition: data["proposition"],
-      answer: data["answer"]
+      content: data["content"],
+      class: data["class"]
     }
   end
 
   # ----------------------------
 
   def changeset(vertex, params \\ %{}) do
-    types = %{id: :string, proposition: :string, answer: :string}
+    types = %{id: :string, content: :string, class: :string}
 
     {vertex, types}
     |> Ecto.Changeset.cast(params, Map.keys(types))
@@ -29,7 +44,7 @@ defmodule Dialectic.Graph.Vertex do
     graph
   end
 
-  def add_relatives(graph, node) do
+  def add_relatives(node, graph) do
     parents = find_parents(graph, node)
     children = find_children(graph, node)
     %{node | parents: parents, children: children}
@@ -71,12 +86,13 @@ defmodule Dialectic.Graph.Vertex do
     nodes =
       Enum.map(vertices, fn vertex ->
         # Get the vertex label/data from the digraph
-        {vertex_data, _} = :digraph.vertex(graph, vertex)
+        {vid, dat} = :digraph.vertex(graph, vertex)
 
         # Create cytoscape node format
         %{
           data: %{
-            id: vertex_data
+            id: vid,
+            class: dat.class
           }
         }
       end)
@@ -91,7 +107,7 @@ defmodule Dialectic.Graph.Vertex do
         {target_data, _} = :digraph.vertex(graph, v2)
 
         # Create edge ID from source and target names
-        edge_id = source_data <> target_data
+        edge_id = source_data <> "_" <> target_data
 
         # Create cytoscape edge format
         %{

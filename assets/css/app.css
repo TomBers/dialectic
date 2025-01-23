@@ -3,3 +3,35 @@
 @import "tailwindcss/utilities";
 
 /* This file is for your main application CSS */
+.top-right {
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+
+.node {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.5rem;
+    border-bottom: 1px solid #eee;
+}
+
+.node h2 {
+    margin: 0;
+    padding: 0.25rem 0.5rem;
+    background-color: #f4f4f4;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 0 #ccc;
+    min-width: 2rem;
+    text-align: center;
+}
+
+.node .proposition {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.5;
+}

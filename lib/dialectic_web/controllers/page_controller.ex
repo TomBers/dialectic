@@ -4,7 +4,7 @@ defmodule DialecticWeb.PageController do
   def home(conn, _params) do
     # The home page is often custom made,
     # so skip the default app layout.
-    dat = Dialectic.Graph.Sample.run() |> Jason.encode!()
-    render(conn, :home, data: dat, layout: false)
+    # dat = Dialectic.Graph.Sample.run() |> Jason.encode!()
+    render(conn, :home, layout: false)
   end
 end

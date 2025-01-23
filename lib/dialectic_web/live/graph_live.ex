@@ -1,100 +1,49 @@
 defmodule DialecticWeb.GraphLive do
   use DialecticWeb, :live_view
   alias Dialectic.Graph.Vertex
-  alias Dialectic.Graph.Sample
-  alias DialecticWeb.NodeComponent
   alias Dialectic.Graph.Serialise
+  alias Dialectic.Graph.GraphActions
+
+  alias DialecticWeb.CombineComp
 
   def mount(_params, _session, socket) do
     # graph = Serialise.load_graph()
-    graph = Sample.run()
-
-    changeset = Vertex.changeset(%Vertex{})
+    graph = GraphActions.run()
+    node = graph |> Vertex.find_node_by_id("1")
+    changeset = Vertex.changeset(node)
 
     {:ok,
      assign(socket,
        graph: graph,
        f_graph: format_graph(graph),
-       drawer_open: true,
-       node: %Vertex{},
-       form: to_form(changeset)
+       node: node,
+       form: to_form(changeset),
+       show_combine: false,
+       key_buffer: ""
      )}
+  end
+
+  def handle_event("KeyBoardInterface", %{"key" => last_key, "cmdKey" => isCmd}, socket) do
+    # IO.inspect(params, label: "KeyBoardInterface")
+    key = (socket.assigns.key_buffer <> last_key) |> String.replace_prefix("Control", "")
+
+    if isCmd do
+      if socket.assigns.show_combine do
+        combine_interface(socket, key)
+      else
+        main_keybaord_interface(socket, key)
+      end
+    else
+      {:noreply, socket}
+    end
   end
 
   def handle_event("node_clicked", %{"id" => id}, socket) do
-    node = Vertex.find_node_by_id(socket.assigns.graph, id)
-    node = Vertex.add_relatives(socket.assigns.graph, node)
-    changeset = Vertex.changeset(node)
-
-    {:noreply,
-     assign(socket,
-       drawer_open: true,
-       node: node,
-       form: to_form(changeset)
-     )}
+    update_graph(socket, GraphActions.find_node(socket.assigns.graph, id))
   end
 
-  def handle_event("branch", _, socket) do
-    graph = Sample.branch(socket.assigns.graph, socket.assigns.node)
-
-    node = Vertex.add_relatives(graph, socket.assigns.node)
-    changeset = Vertex.changeset(node)
-
-    {:noreply,
-     assign(socket,
-       graph: graph,
-       f_graph: format_graph(graph),
-       form: to_form(changeset),
-       node: node
-     )}
-  end
-
-  def handle_event("answer", %{"vertex" => %{"answer" => answer}}, socket) do
-    # Update Node with answer
-    node =
-      Sample.add_answer(socket.assigns.graph, socket.assigns.node, answer)
-
-    graph = Vertex.update_vertex(socket.assigns.graph, socket.assigns.node, node)
-
-    # Generate a new node
-    child_id = "#{node.id}_child"
-    description = Dialectic.Responses.LlmInterface.gen_response(answer)
-    graph = Sample.add_child(graph, node, child_id, description)
-
-    new_node = Vertex.add_relatives(graph, Vertex.find_node_by_id(graph, child_id))
-    changeset = Vertex.changeset(new_node)
-
-    {:noreply,
-     assign(socket,
-       graph: graph,
-       f_graph: format_graph(graph),
-       form: to_form(changeset),
-       node: new_node
-     )}
-  end
-
-  def handle_event(
-        "combine",
-        %{"combine_node" => combine_node},
-        socket
-      ) do
-    {node_id, graph} =
-      Sample.combine(
-        socket.assigns.graph,
-        socket.assigns.node,
-        Vertex.find_node_by_id(socket.assigns.graph, combine_node)
-      )
-
-    node = Vertex.find_node_by_id(graph, node_id)
-    changeset = Vertex.changeset(node)
-
-    {:noreply,
-     assign(socket,
-       graph: graph,
-       f_graph: format_graph(graph),
-       form: to_form(changeset),
-       node: node
-     )}
+  def handle_event("answer", %{"vertex" => %{"content" => answer}}, socket) do
+    update_graph(socket, GraphActions.answer(socket, answer))
   end
 
   def handle_event("save_graph", _, socket) do
@@ -102,11 +51,62 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, socket |> put_flash(:info, "Saved!")}
   end
 
-  def handle_event("close_drawer", _, socket) do
-    {:noreply, assign(socket, drawer_open: false)}
+  def handle_event("modal_closed", _, socket) do
+    {:noreply, assign(socket, show_combine: false)}
   end
 
   def format_graph(graph) do
     graph |> Vertex.to_cytoscape_format() |> Jason.encode!()
+  end
+
+  def main_keybaord_interface(socket, key) do
+    case key do
+      "b" ->
+        update_graph(socket, GraphActions.branch(socket))
+
+      "c" ->
+        com = Map.get(socket.assigns.node, :id)
+        {:noreply, assign(socket, show_combine: !is_nil(com))}
+
+      _ ->
+        case GraphActions.find_node(socket.assigns.graph, key) do
+          {graph, node} ->
+            update_graph(socket, {graph, node}, false)
+
+          _ ->
+            {:noreply, assign(socket, key_buffer: key)}
+        end
+    end
+  end
+
+  def combine_interface(socket, key) do
+    case GraphActions.combine(socket, key) do
+      {graph, node} ->
+        update_graph(socket, {graph, node}, true)
+
+      _ ->
+        {:noreply, assign(socket, key_buffer: key)}
+    end
+  end
+
+  def update_graph(socket, {graph, node}, invert_modal \\ false) do
+    changeset = Vertex.changeset(node)
+
+    show_combine =
+      if invert_modal do
+        !socket.assigns.show_combine
+      else
+        socket.assigns.show_combine
+      end
+
+    {:noreply,
+     assign(socket,
+       graph: graph,
+       f_graph: format_graph(graph),
+       form: to_form(changeset, id: node.id),
+       node: node,
+       show_combine: show_combine,
+       key_buffer: ""
+     )}
   end
 end
