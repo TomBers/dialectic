@@ -15,6 +15,16 @@ defmodule DialecticWeb.ChatComp do
             <div class="proposition">{raw(parent.content)}</div>
           </div>
         <% end %>
+        <%= if @node.content != "" do %>
+          <div class={"node mb-2 " <> @node.class}>
+            <h2>{@node.id}</h2>
+            <div class="proposition">{raw(@node.content)}</div>
+          </div>
+        <% else %>
+          <div class="node mb-2">
+            <h2>Enter Question</h2>
+          </div>
+        <% end %>
       </div>
       <div class="bg-white shadow-lg border-t border-gray-200 p-2">
         <.form for={@form} phx-submit="answer">

@@ -8,9 +8,10 @@ defmodule DialecticWeb.GraphLive do
   alias DialecticWeb.ChatComp
 
   def mount(_params, _session, socket) do
-    graph = Serialise.load_graph()
-    # graph = GraphActions.run()
-    node = graph |> Vertex.find_node_by_id("5")
+    # graph = Serialise.load_graph()
+    graph = GraphActions.run()
+    # node = graph |> Vertex.find_node_by_id("5")
+    node = GraphActions.create_new_node(graph)
     changeset = Vertex.changeset(node)
 
     {:ok,
@@ -95,7 +96,9 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def update_graph(socket, {graph, node}, invert_modal \\ false) do
-    changeset = Vertex.changeset(node)
+    # Changeset needs to be a new node
+    new_node = GraphActions.create_new_node(graph)
+    changeset = Vertex.changeset(new_node)
 
     show_combine =
       if invert_modal do
@@ -108,7 +111,7 @@ defmodule DialecticWeb.GraphLive do
      assign(socket,
        graph: graph,
        f_graph: format_graph(graph),
-       form: to_form(changeset, id: node.id),
+       form: to_form(changeset, id: new_node.id),
        node: node,
        show_combine: show_combine,
        key_buffer: ""

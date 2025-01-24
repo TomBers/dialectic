@@ -37,7 +37,7 @@
 }
 
 .answer {
-    border: 1px solid red;
+    border: 1px solid greenyellow;
 }
 
 .thesis {
@@ -51,4 +51,8 @@
 
 .synthesis {
     border: 1px solid purple;
+}
+
+.user {
+    border: 2px solid red;
 }

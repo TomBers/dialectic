@@ -32,7 +32,11 @@ export function draw_graph(graph, context, elements, node_clicked) {
       },
       {
         selector: `node[class = "answer"]`,
-        css: { "background-color": "#F27417" },
+        css: { "background-color": "greenyellow" },
+      },
+      {
+        selector: `node[class = "user"]`,
+        css: { "background-color": "red" },
       },
       {
         selector: "edge",

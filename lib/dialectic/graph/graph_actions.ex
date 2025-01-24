@@ -3,9 +3,15 @@ defmodule Dialectic.Graph.GraphActions do
   alias Dialectic.Responses.LlmInterface
 
   def run do
-    graph = :digraph.new()
-    add_node(graph, "1", Dialectic.Responses.LlmInterface.gen_response("First"), "answer")
-    graph
+    # graph =
+    :digraph.new()
+    # add_node(graph, "1", Dialectic.Responses.LlmInterface.gen_response("First"), "answer")
+    # graph
+  end
+
+  def create_new_node(graph) do
+    new_node_id = gen_id(graph)
+    %Vertex{id: new_node_id} |> Vertex.add_relatives(graph)
   end
 
   def add_node(graph, name, content, class \\ "") do
@@ -18,11 +24,19 @@ defmodule Dialectic.Graph.GraphActions do
     answer(socket.assigns.graph, socket.assigns.node, answer)
   end
 
-  def answer(graph, node, answer) do
-    new_node_id = gen_id(graph)
+  def answer(graph, node, question) do
+    parents = if length(node.parents) == 0, do: [], else: [node]
 
-    graph
-    |> add_child([node], new_node_id, answer, "answer")
+    {graph_with_question, question_node} =
+      add_child(graph, parents, gen_id(graph), question, "user")
+
+    add_child(
+      graph_with_question,
+      [question_node],
+      gen_id(graph_with_question),
+      LlmInterface.gen_response(question),
+      "answer"
+    )
   end
 
   def branch(socket) when is_map(socket) do

@@ -1,7 +1,7 @@
 defmodule Dialectic.Responses.LlmInterface do
-  def gen_response(answer) do
+  def gen_response(qn) do
     """
-    <p>#{answer}</p>
+    <p>Answer to : #{qn}</p>
     """
   end
 
