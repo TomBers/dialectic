@@ -8,8 +8,8 @@ defmodule DialecticWeb.GraphLive do
   alias DialecticWeb.ChatComp
 
   def mount(_params, _session, socket) do
-    graph = Serialise.load_graph()
-    # graph = GraphActions.run()
+    # graph = Serialise.load_graph()
+    graph = GraphActions.new_graph()
     # node = graph |> Vertex.find_node_by_id("5")
     node = GraphActions.create_new_node(graph)
     changeset = Vertex.changeset(node)
@@ -45,7 +45,7 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("answer", %{"vertex" => %{"content" => answer}}, socket) do
-    update_graph(socket, GraphActions.answer(socket, answer))
+    update_graph(socket, GraphActions.answer(socket.assigns.graph, socket.assigns.node, answer))
   end
 
   def handle_event("save_graph", _, socket) do
@@ -64,7 +64,7 @@ defmodule DialecticWeb.GraphLive do
   def main_keybaord_interface(socket, key) do
     case key do
       "b" ->
-        update_graph(socket, GraphActions.branch(socket))
+        update_graph(socket, GraphActions.branch(socket.assigns.graph, socket.assigns.node))
 
       "s" ->
         Serialise.save_graph(socket.assigns.graph)
@@ -86,7 +86,7 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def combine_interface(socket, key) do
-    case GraphActions.combine(socket, key) do
+    case GraphActions.combine(socket.assigns.graph, socket.assigns.node, key) do
       {graph, node} ->
         update_graph(socket, {graph, node}, true)
 

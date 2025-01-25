@@ -2,11 +2,8 @@ defmodule Dialectic.Graph.GraphActions do
   alias Dialectic.Graph.Vertex
   alias Dialectic.Responses.LlmInterface
 
-  def run do
-    # graph =
+  def new_graph do
     :digraph.new()
-    # add_node(graph, "1", Dialectic.Responses.LlmInterface.gen_response("First"), "answer")
-    # graph
   end
 
   def create_new_node(graph) do
@@ -18,10 +15,6 @@ defmodule Dialectic.Graph.GraphActions do
     vertex = %Vertex{id: name, content: content, class: class}
     :digraph.add_vertex(graph, name, vertex)
     vertex
-  end
-
-  def answer(socket, answer) when is_map(socket) do
-    answer(socket.assigns.graph, socket.assigns.node, answer)
   end
 
   def answer(graph, node, question) do
@@ -37,10 +30,6 @@ defmodule Dialectic.Graph.GraphActions do
       LlmInterface.gen_response(question),
       "answer"
     )
-  end
-
-  def branch(socket) when is_map(socket) do
-    branch(socket.assigns.graph, socket.assigns.node)
   end
 
   def branch(graph, node) do
@@ -64,16 +53,22 @@ defmodule Dialectic.Graph.GraphActions do
     end
   end
 
-  def combine(graph, node1, node2) do
-    synthesis_id = gen_id(graph)
+  def combine(graph, node1, combine_node_id) do
+    case Vertex.find_node_by_id(graph, combine_node_id) do
+      nil ->
+        nil
 
-    add_child(
-      graph,
-      [node1, node2],
-      synthesis_id,
-      LlmInterface.gen_synthesis(node1, node2),
-      "synthesis"
-    )
+      node2 ->
+        synthesis_id = gen_id(graph)
+
+        add_child(
+          graph,
+          [node1, node2],
+          synthesis_id,
+          LlmInterface.gen_synthesis(node1, node2),
+          "synthesis"
+        )
+    end
   end
 
   def find_node(graph, id) do
