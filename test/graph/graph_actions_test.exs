@@ -8,104 +8,114 @@ defmodule Dialectic.Graph.GraphActionsTest do
     {:ok, graph: graph}
   end
 
-  # Test 1: Adding an answer from an empty graph
+  def inital_qa(graph) do
+    root_node = GraphActions.create_new_node(graph)
+    GraphActions.answer(graph, root_node, "What is the meaning of life?")
+  end
+
+  def branched_graph(graph) do
+    {graph, answer} = inital_qa(graph)
+    GraphActions.branch(graph, answer)
+  end
+
+  # Example of a full graph, with a question, answer, thesis, antithesis, and synthesis
+  def full_graph(graph) do
+    {graph, branched_node} = branched_graph(graph)
+    {graph, synth_node} = GraphActions.combine(graph, branched_node, "3")
+    GraphActions.answer(graph, synth_node, "Synthesis question")
+  end
+
+  test "full graph has expected properties", %{graph: graph} do
+    {graph, _} = full_graph(graph)
+    # q1, a1, thesis, antithesis, synthesis, synthesis question, synthesis answer
+    assert length(:digraph.vertices(graph)) == 7
+
+    # q1 -> a1, a1 -> thesis, a1 -> antithesis, thesis -> synthesis, antithesis -> synthesis, synthesis -> synthesis question, synthesis question -> synthesis answer
+    assert length(:digraph.edges(graph)) == 7
+
+    assert Vertex.find_node_by_id(graph, "1").class == "user"
+    assert Vertex.find_node_by_id(graph, "2").class == "answer"
+    assert Vertex.find_node_by_id(graph, "3").class == "thesis"
+    assert Vertex.find_node_by_id(graph, "4").class == "antithesis"
+    assert Vertex.find_node_by_id(graph, "5").class == "synthesis"
+    assert Vertex.find_node_by_id(graph, "6").class == "user"
+    assert Vertex.find_node_by_id(graph, "7").class == "answer"
+  end
+
   test "answer/3 adds a question and answer node to an empty graph", %{graph: graph} do
-    # Create a root node
-    root_node = GraphActions.add_node(graph, "root", "root content", "root class")
-
-    # Add an answer to the root node
-    {graph, _} = GraphActions.answer(graph, root_node, "What is the meaning of life?")
-
-    # Verify the graph structure
+    root_node = GraphActions.create_new_node(graph)
+    {graph, answer_node} = GraphActions.answer(graph, root_node, "What is the meaning of life?")
     # Root, question, answer
-    assert length(:digraph.vertices(graph)) == 3
+    assert length(:digraph.vertices(graph)) == 2
     # Root -> question, question -> answer
-    assert length(:digraph.edges(graph)) == 2
+    assert length(:digraph.edges(graph)) == 1
+    assert answer_node.content =~ "What is the meaning of life?"
+    assert answer_node.class == "answer"
   end
 
-  # Test 2: Adding an answer from an existing graph
   test "answer/3 adds a question and answer node to an existing graph", %{graph: graph} do
-    # Create a root node and an initial answer
-    root_node = GraphActions.add_node(graph, "root", "root content", "root class")
-    {graph, _} = GraphActions.answer(graph, root_node, "Initial question")
-
-    # Add another answer to the root node
-    {graph, _} = GraphActions.answer(graph, root_node, "Follow-up question")
-
-    # Verify the graph structure
-    # Root, 2 questions, 2 answers
-    assert length(:digraph.vertices(graph)) == 5
-    # Root -> Q1, Q1 -> A1, Root -> Q2, Q2 -> A2
-    assert length(:digraph.edges(graph)) == 4
-  end
-
-  # Test 3: Branching from a node
-  test "branch/2 adds a thesis and antithesis node", %{graph: graph} do
-    # Create a root node
-    root_node = GraphActions.add_node(graph, "root", "root content", "root class")
-
-    # Branch from the root node
-    {graph, _} = GraphActions.branch(graph, root_node)
-
-    # Verify the graph structure
-    # Root, thesis, antithesis
-    assert length(:digraph.vertices(graph)) == 3
-    # Root -> thesis, Root -> antithesis
-    assert length(:digraph.edges(graph)) == 2
-  end
-
-  # Test 4: Combining two nodes
-  test "combine/3 adds a synthesis node", %{graph: graph} do
-    # Create two nodes to combine
-    node1 = GraphActions.add_node(graph, "node1", "content1", "class1")
-    node2 = GraphActions.add_node(graph, "node2", "content2", "class2")
-
-    # Combine the two nodes
-    {graph, _} = GraphActions.combine(graph, node1, node2.id)
-
-    # Verify the graph structure
-    # node1, node2, synthesis
+    root_node = GraphActions.create_new_node(graph)
+    {graph, n1} = GraphActions.answer(graph, root_node, "Initial question")
+    {graph, an} = GraphActions.answer(graph, n1, "Follow-up question")
+    # 2 questions, 2 answers
     assert length(:digraph.vertices(graph)) == 4
-    # node1 -> synthesis, node2 -> synthesis
-    assert length(:digraph.edges(graph)) == 2
+    # Q1 -> A1, A1 -> Q2, Q2 -> A2
+    assert length(:digraph.edges(graph)) == 3
+
+    assert n1.class == "answer"
+    assert an.class == "answer"
   end
 
-  # Test 5: Adding answers from a branched node
-  test "answer/3 adds a question and answer node from a branched node", %{graph: graph} do
-    # Create a root node and branch from it
-    root_node = GraphActions.add_node(graph, "root", "root content", "root class")
-    {graph, _} = GraphActions.branch(graph, root_node)
+  test "branch/2 adds a thesis and antithesis node", %{graph: graph} do
+    root_node = GraphActions.create_new_node(graph)
+    {graph, n1} = GraphActions.answer(graph, root_node, "What is the meaning of life?")
+    {graph, tn} = GraphActions.branch(graph, n1)
+    # Root, Answer, thesis, antithesis
+    assert length(:digraph.vertices(graph)) == 4
+    # Root -> Answer, Answer -> thesis, Answer -> antithesis
+    assert length(:digraph.edges(graph)) == 3
 
-    # Find the thesis node
-    thesis_node = Vertex.find_node_by_id(graph, "1")
+    assert tn.class == "antithesis"
+  end
 
-    # Add an answer to the thesis node
-    {graph, _} = GraphActions.answer(graph, thesis_node, "Question about thesis")
+  test "combine/3 adds a synthesis node", %{graph: graph} do
+    {graph, branched_node} = branched_graph(graph)
+    assert length(:digraph.vertices(graph)) == 4
+    assert length(:digraph.edges(graph)) == 3
 
-    # Verify the graph structure
-    # Root, thesis, antithesis, question, answer
+    {graph, synth_node} = GraphActions.combine(graph, branched_node, "3")
+    # q1, a1, thesis, antithesis, synthesis
     assert length(:digraph.vertices(graph)) == 5
-    # Root -> thesis, Root -> antithesis, thesis -> question, question -> answer
-    assert length(:digraph.edges(graph)) == 4
+    # q1 -> a1, a1 -> thesis, a1 -> antithesis, thesis -> synthesis, antithesis -> synthesis
+    assert length(:digraph.edges(graph)) == 5
+
+    assert synth_node.class == "synthesis"
+
+    # Test you can also answer the synthesis question
+    {_, an} = GraphActions.answer(graph, synth_node, "Synthesis question")
+    # q1, a1, thesis, antithesis, synthesis, synthesis question, synthesis answer
+    assert length(:digraph.vertices(graph)) == 7
+
+    # q1 -> a1, a1 -> thesis, a1 -> antithesis, thesis -> synthesis, antithesis -> synthesis, synthesis -> synthesis question, synthesis question -> synthesis answer
+    assert length(:digraph.edges(graph)) == 7
+    assert an.class == "answer"
   end
 
-  # Test 6: Adding answers from a synthesis node
-  test "answer/3 adds a question and answer node from a synthesis node", %{graph: graph} do
-    # Create two nodes and combine them
-    node1 = GraphActions.add_node(graph, "node1", "content1", "class1")
-    node2 = GraphActions.add_node(graph, "node2", "content2", "class2")
-    {graph, _} = GraphActions.combine(graph, node1, node2.id)
+  test "answer/3 adds a question and answer node from a branched node", %{graph: graph} do
+    {graph, root_node} = inital_qa(graph)
+    assert length(:digraph.vertices(graph)) == 2
+    assert length(:digraph.edges(graph)) == 1
 
-    # Find the synthesis node
-    synthesis_node = Vertex.find_node_by_id(graph, "3")
+    {graph, _} = GraphActions.branch(graph, root_node)
+    assert length(:digraph.vertices(graph)) == 4
+    assert length(:digraph.edges(graph)) == 3
 
-    # Add an answer to the synthesis node
-    {graph, _} = GraphActions.answer(graph, synthesis_node, "Question about synthesis")
-
-    # Verify the graph structure
-    # node1, node2, synthesis, question, answer
+    thesis_node = Vertex.find_node_by_id(graph, "3")
+    {graph, _} = GraphActions.answer(graph, thesis_node, "Question about thesis")
+    # # Root, answer, thesis, antithesis, theis question, answer
     assert length(:digraph.vertices(graph)) == 6
-    # node1 -> synthesis, node2 -> synthesis, synthesis -> question, question -> answer
+
+    # # Root -> answer, answer -> thesis, answer -> antithesis, thesis -> theis question, thesis question -> thesis answer
     assert length(:digraph.edges(graph)) == 4
   end
 end
