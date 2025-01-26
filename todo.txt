@@ -1,7 +1,11 @@
-Fix KeyBuffer - how to handle when nodes match - eg. Node 1 and Node 10 - as 1 matches
+Done - Fix KeyBuffer - how to handle when nodes match - eg. Node 1 and Node 10 - as 1 matches
 The basic node chat interface - how to handle the node discussion - proposition, LLM answer
 Idea - the first 1 - 9, then AA - 1-9, then AB - 1-9, But we cannot use B,C or S
 !!you can represent 4,770 unique commands with this approach
+
+Done - Test R1 API to get the answer to a question
+
+Make the Chat boxes more - chat like - with the user on the left and the computer on the right, make a chat bubble with a max size, with a read more button to expand the chat bubble
 
 Conversation example:
 
