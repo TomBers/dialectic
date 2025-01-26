@@ -1,9 +1,6 @@
 defmodule DialecticWeb.ChatMsgComp do
   use DialecticWeb, :live_component
 
-  # You can tweak this number
-  # @truncate_length 200
-
   @impl true
   def update(assigns, socket) do
     socket =
@@ -11,6 +8,7 @@ defmodule DialecticWeb.ChatMsgComp do
       |> assign(assigns)
       # Default `:expanded` to false if not explicitly set
       |> assign_new(:expanded, fn -> false end)
+      # Default cutoff length
       |> assign_new(:cut_off, fn -> 200 end)
 
     {:ok, socket}
@@ -22,6 +20,7 @@ defmodule DialecticWeb.ChatMsgComp do
   end
 
   defp truncated_html(content, cut_off) do
+    # If content is already under the cutoff, just return the full text
     if String.length(content) <= cut_off do
       full_html(content)
     else
@@ -39,33 +38,22 @@ defmodule DialecticWeb.ChatMsgComp do
     ~H"""
     <div class={"node mb-2 " <> @node.class}>
       <h2>{@node.id}</h2>
-      
-    <!-- Inline text + show more/less -->
+
       <div class="proposition">
+        <!-- If expanded, show full content; otherwise show truncated. -->
         <%= if @expanded do %>
-          <!-- Show full content -->
           {full_html(@node.content || "")}
-          
-    <!-- Inline link at the end -->
-          <%= if String.length(@node.content || "") > @cut_off do %>
-            <span>
-              <a href="#" phx-click="toggle-expand" phx-target={@myself} class="text-blue-600 text-sm">
-                Show less
-              </a>
-            </span>
-          <% end %>
         <% else %>
-          <!-- Show truncated content -->
           {truncated_html(@node.content || "", @cut_off)}
-          
-    <!-- Inline link at the end -->
-          <%= if String.length(@node.content || "") > @cut_off do %>
-            <span>
-              <a href="#" phx-click="toggle-expand" phx-target={@myself} class="text-blue-600 text-sm">
-                Show more
-              </a>
-            </span>
-          <% end %>
+        <% end %>
+        
+    <!-- Only render the toggle link if content is longer than the cutoff. -->
+        <%= if String.length(@node.content || "") > @cut_off do %>
+          <span>
+            <a href="#" phx-click="toggle-expand" phx-target={@myself} class="text-blue-600 text-sm">
+              {if @expanded, do: "Show less", else: "Show more"}
+            </a>
+          </span>
         <% end %>
       </div>
     </div>
