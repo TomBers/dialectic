@@ -83,7 +83,7 @@ defmodule Dialectic.Graph.GraphActions do
 
   defp gen_id(graph, offset \\ 0) do
     v = :digraph.vertices(graph)
-    "#{length(v) + 1 + offset}"
+    Labeler.label(length(v) + 1 + offset)
   end
 
   defp add_child(graph, parents, child_id, description, class) do

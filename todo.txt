@@ -1,5 +1,7 @@
 Fix KeyBuffer - how to handle when nodes match - eg. Node 1 and Node 10 - as 1 matches
 The basic node chat interface - how to handle the node discussion - proposition, LLM answer
+Idea - the first 1 - 9, then AA - 1-9, then AB - 1-9, But we cannot use B,C or S
+!!you can represent 4,770 unique commands with this approach
 
 Conversation example:
 

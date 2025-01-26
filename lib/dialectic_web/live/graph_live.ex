@@ -8,8 +8,8 @@ defmodule DialecticWeb.GraphLive do
   alias DialecticWeb.ChatComp
 
   def mount(_params, _session, socket) do
-    # graph = Serialise.load_graph()
-    graph = GraphActions.new_graph()
+    graph = Serialise.load_graph()
+    # graph = GraphActions.new_graph()
     # node = graph |> Vertex.find_node_by_id("5")
     node = GraphActions.create_new_node(graph)
     changeset = Vertex.changeset(node)
@@ -27,13 +27,20 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event("KeyBoardInterface", %{"key" => last_key, "cmdKey" => isCmd}, socket) do
     # IO.inspect(params, label: "KeyBoardInterface")
-    key = (socket.assigns.key_buffer <> last_key) |> String.replace_prefix("Control", "")
+    key =
+      (socket.assigns.key_buffer <> last_key)
+      |> String.replace_prefix("Control", "")
+      |> IO.inspect(label: "KeyBuffer")
 
     if isCmd do
       if socket.assigns.show_combine do
         combine_interface(socket, key)
       else
-        main_keybaord_interface(socket, key)
+        if last_key == "Control" do
+          {:noreply, assign(socket, key_buffer: "")}
+        else
+          main_keybaord_interface(socket, key)
+        end
       end
     else
       {:noreply, socket}
