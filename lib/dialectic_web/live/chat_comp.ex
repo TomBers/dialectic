@@ -1,6 +1,8 @@
 defmodule DialecticWeb.ChatComp do
   use DialecticWeb, :live_component
 
+  alias DialecticWeb.ChatMsgComp
+
   def update(assigns, socket) do
     {:ok, socket |> assign(assigns)}
   end
@@ -10,16 +12,10 @@ defmodule DialecticWeb.ChatComp do
     <div class="h-full flex flex-col">
       <div class="flex-1 overflow-y-auto">
         <%= for parent <- @node.parents do %>
-          <div class={"node mb-2 " <> parent.class}>
-            <h2>{parent.id}</h2>
-            <div class="proposition">{raw(parent.content)}</div>
-          </div>
+          <.live_component module={ChatMsgComp} node={parent} id={parent.id <>"_chatMsg" } />
         <% end %>
         <%= if @node.content != "" do %>
-          <div class={"node mb-2 " <> @node.class}>
-            <h2>{@node.id}</h2>
-            <div class="proposition">{raw(@node.content)}</div>
-          </div>
+          <.live_component module={ChatMsgComp} node={@node} id={@node.id <>"_chatMsg" } />
         <% else %>
           <div class="node mb-2">
             <h2>Enter Question</h2>

@@ -56,3 +56,21 @@
 .user {
     border: 2px solid red;
 }
+
+.node h2 {
+    background-color: #f4f4f4;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 2px 0 #ccc;
+    font-family: monospace;
+    font-size: 0.9rem;
+    margin: 0;
+    min-width: 2rem;
+    padding: 0.25rem 0.5rem;
+    text-align: center;
+}
+
+.node h3 {
+    font-size: 1.25rem;
+    margin: 0;
+}
