@@ -1,0 +1,35 @@
+defmodule DialecticWeb.ChatComp do
+  use DialecticWeb, :live_component
+
+  alias DialecticWeb.ChatMsgComp
+
+  def update(assigns, socket) do
+    {:ok, socket |> assign(assigns)}
+  end
+
+  def render(assigns) do
+    ~H"""
+    <div class="h-full flex flex-col">
+      <div class="flex-1 overflow-y-auto">
+        <%= for parent <- @node.parents do %>
+          <.live_component module={ChatMsgComp} node={parent} id={parent.id <>"_chatMsg" } />
+        <% end %>
+        <%= if @node.content != "" do %>
+          <.live_component module={ChatMsgComp} node={@node} id={@node.id <>"_chatMsg" } />
+        <% else %>
+          <div class="node mb-2">
+            <h2>Enter Question</h2>
+          </div>
+        <% end %>
+      </div>
+      <div class="bg-white shadow-lg border-t border-gray-200 p-2">
+        <.form for={@form} phx-submit="answer">
+          <div class="flex-1">
+            <.input field={@form[:content]} type="text" />
+          </div>
+        </.form>
+      </div>
+    </div>
+    """
+  end
+end

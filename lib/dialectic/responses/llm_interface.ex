@@ -1,25 +1,45 @@
 defmodule Dialectic.Responses.LlmInterface do
-  def gen_response(answer) do
-    """
-    <p>#{answer}</p>
-    """
+  alias Dialectic.Models.DeepSeekAPI
+  alias Dialectic.Models.Claude
+
+  @model Application.compile_env(:dialectic, :model_to_use, "local")
+
+  def gen_response(user_qn, node) do
+    qn = "#{node.content} \n #{user_qn}"
+    IO.inspect(qn, label: "GenResponse")
+    ask_model(qn)
   end
 
   def gen_synthesis(n1, n2) do
-    """
-    <p>Synthesis: #{n1.content} & #{n2.content}</p>
-    """
+    qn =
+      """
+      Please produce a synthesis of #{n1.content} & #{n2.content}
+      """
+
+    ask_model(qn)
   end
 
   def gen_thesis(n) do
+    qn = """
+    Please write a short argument in support of #{n.content}
     """
-    <p>Theis: #{n.content}</p>
-    """
+
+    ask_model(qn)
   end
 
   def gen_antithesis(n) do
+    qn = """
+    Please write a short argument against #{n.content}
     """
-    <p>Antithesis: #{n.content}</p>
-    """
+
+    ask_model(qn)
+  end
+
+  def ask_model(question) do
+    case @model do
+      "deepseek" -> DeepSeekAPI.ask(question)
+      "claude" -> Claude.ask(question)
+      _ -> question
+    end
   end
 end

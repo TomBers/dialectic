@@ -1,11 +1,8 @@
-Fix KeyBuffer - how to handle when nodes match - eg. Node 1 and Node 10 - as 1 matches
-The basic node chat interface - how to handle the node discussion - proposition, LLM answer
+Think about passing parents when asking a question.  See the existing Graph.
+When asking - tell me more on a branch, need to have the parent to esablish context.
 
-Conversation example:
+Current Error - seems like there is a timeout error! See if the Req Timeout can be improved.
 
-User: Can a computer pass the Turing test?
-Answer: Ipsolurum
-Theis - the computer can pass the Turing test
-Antithesis - the computer cannot pass the Turing test
-
-Synthesis: Arguments for and against the computer passing the Turing test
+TODO - the Interface needs to reflect loading state - make more responsive
+Make each call Async and load the graph on result - this will make the interface more responsive.
+Is there a simple way to wrap existing fncs to make them async?
