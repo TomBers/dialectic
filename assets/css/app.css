@@ -30,13 +30,13 @@
     text-align: center;
 }
 
-.node .proposition {
+/* .node .proposition {
     margin: 0;
     font-size: 1rem;
-    line-height: 1.5;
-}
+    line-height: 1.2;
+} */
 
-.answer {
+/* .answer {
     border: 1px solid greenyellow;
 }
 
@@ -55,8 +55,8 @@
 
 .user {
     border: 2px solid red;
-}
-
+} */
+/*
 .node h2 {
     background-color: #f4f4f4;
     border: 1px solid #ddd;
@@ -73,4 +73,4 @@
 .node h3 {
     font-size: 1.25rem;
     margin: 0;
-}
+} */
