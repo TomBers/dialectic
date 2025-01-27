@@ -23,7 +23,9 @@ defmodule Dialectic.Models.DeepSeekAPI do
     Req.post(url,
       headers: [{"Authorization", "Bearer #{@api_key}"}, {"Content-Type", "application/json"}],
       body: body,
-      connect_options: [timeout: 10_000]
+      connect_options: [timeout: 30_000],
+      # How long to wait to receive the response once connected
+      receive_timeout: 30_000
     )
     |> handle_response()
     |> extract_content()
