@@ -27,7 +27,7 @@ defmodule Dialectic.Graph.GraphActions do
       graph_with_question,
       [question_node],
       gen_id(graph_with_question),
-      LlmInterface.gen_response(question),
+      LlmInterface.gen_response(question, node),
       "answer"
     )
   end

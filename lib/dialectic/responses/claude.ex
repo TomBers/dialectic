@@ -1,4 +1,4 @@
-defmodule Dialectic.Responses.Claude do
+defmodule Dialectic.Models.Claude do
   @api_url "https://api.anthropic.com/v1/messages"
   @model "claude-3-sonnet-20240229"
 

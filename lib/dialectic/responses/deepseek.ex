@@ -1,4 +1,4 @@
-defmodule DeepSeekAPI do
+defmodule Dialectic.Models.DeepSeekAPI do
   # Replace with your actual API key
   @api_key System.get_env("DEEPSEEK_API_KEY")
   # Replace with the actual DeepSeek API base URL
@@ -10,17 +10,20 @@ defmodule DeepSeekAPI do
     # Replace with the correct endpoint for asking questions
     url = "#{@base_url}/chat/completions"
 
+    body =
+      Jason.encode!(%{
+        model: @model,
+        stream: false,
+        messages: [
+          %{role: "system", content: "You are a helpful assistant."},
+          %{role: "user", content: question}
+        ]
+      })
+
     Req.post(url,
       headers: [{"Authorization", "Bearer #{@api_key}"}, {"Content-Type", "application/json"}],
-      body:
-        Jason.encode!(%{
-          model: @model,
-          stream: false,
-          messages: [
-            %{role: "system", content: "You are a helpful assistant."},
-            %{role: "user", content: question}
-          ]
-        })
+      body: body,
+      connect_options: [timeout: 10_000]
     )
     |> handle_response()
     |> extract_content()
