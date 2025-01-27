@@ -8,8 +8,8 @@ defmodule DialecticWeb.GraphLive do
   alias DialecticWeb.ChatComp
 
   def mount(_params, _session, socket) do
-    graph = Serialise.load_graph()
-    # graph = GraphActions.new_graph()
+    # graph = Serialise.load_graph()
+    graph = GraphActions.new_graph()
     # node = graph |> Vertex.find_node_by_id("2") |> Vertex.add_relatives(graph)
     node = GraphActions.create_new_node(graph)
     changeset = Vertex.changeset(node)

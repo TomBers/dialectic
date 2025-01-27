@@ -33,6 +33,7 @@ defmodule DialecticWeb.ChatMsgComp do
     Earmark.as_html!(content) |> Phoenix.HTML.raw()
   end
 
+  @impl true
   def render(assigns) do
     ~H"""
     <div class={[
