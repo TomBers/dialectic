@@ -1,6 +1,6 @@
 defmodule Dialectic.Responses.LlmInterface do
   alias Dialectic.Models.DeepSeekAPI
-  alias Dialectic.Models.Claude
+  # alias Dialectic.Models.Claude
 
   @model Application.compile_env(:dialectic, :model_to_use, "local")
 
@@ -10,29 +10,29 @@ defmodule Dialectic.Responses.LlmInterface do
     ask_model(qn, child_id, pid)
   end
 
-  def gen_synthesis(n1, n2, n3_id, pid) do
+  def gen_synthesis(n1, n2, child_id, pid) do
     qn =
       """
       Please produce a synthesis of #{n1.content} & #{n2.content}
       """
 
-    ask_model(qn, n3_id, pid)
+    ask_model(qn, child_id, pid)
   end
 
-  def gen_thesis(n, pid) do
+  def gen_thesis(n, child_id, pid) do
     qn = """
     Please write a short argument in support of #{n.content}
     """
 
-    ask_model(qn, n.id, pid)
+    ask_model(qn, child_id, pid)
   end
 
-  def gen_antithesis(n, pid) do
+  def gen_antithesis(n, child_id, pid) do
     qn = """
     Please write a short argument against #{n.content}
     """
 
-    ask_model(qn, n.id, pid)
+    ask_model(qn, child_id, pid)
   end
 
   def ask_model(question, node_id, pid) do

@@ -15,7 +15,11 @@ defmodule Dialectic.Models.DeepSeekAPI do
         model: @model,
         stream: true,
         messages: [
-          %{role: "system", content: "You are a helpful assistant."},
+          %{
+            role: "system",
+            content:
+              "You are an expert philosopher, helping the user better understand key philosophical points. Please keep your answers concise and to the point."
+          },
           %{role: "user", content: question}
         ]
       })

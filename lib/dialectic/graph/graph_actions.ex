@@ -40,9 +40,15 @@ defmodule Dialectic.Graph.GraphActions do
 
     {g1, _} =
       graph
-      |> add_child([node], thesis_id, LlmInterface.gen_thesis(node, pid), "thesis")
+      |> add_child([node], thesis_id, LlmInterface.gen_thesis(node, thesis_id, pid), "thesis")
 
-    add_child(g1, [node], antithesis_id, LlmInterface.gen_antithesis(node, pid), "antithesis")
+    add_child(
+      g1,
+      [node],
+      antithesis_id,
+      LlmInterface.gen_antithesis(node, antithesis_id, pid),
+      "antithesis"
+    )
   end
 
   # def combine(socket, combine_node_id) when is_map(socket) do
