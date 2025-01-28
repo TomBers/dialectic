@@ -7,9 +7,20 @@ defmodule DialecticWeb.GraphLive do
   alias DialecticWeb.CombineComp
   alias DialecticWeb.ChatComp
 
-  def mount(_params, _session, socket) do
-    graph = Serialise.load_graph()
-    # graph = GraphActions.new_graph()
+  def mount(params, _session, socket) do
+    socket = stream(socket, :presences, [])
+
+    socket =
+      if connected?(socket) do
+        DialecticWeb.Presence.track_user(params["name"], %{id: params["name"]})
+        DialecticWeb.Presence.subscribe()
+        stream(socket, :presences, DialecticWeb.Presence.list_online_users())
+      else
+        socket
+      end
+
+    # graph = Serialise.load_graph()
+    graph = GraphActions.new_graph()
     # node = graph |> Vertex.find_node_by_id("2") |> Vertex.add_relatives(graph)
     node = GraphActions.create_new_node(graph)
     changeset = Vertex.changeset(node)
@@ -62,6 +73,18 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event("modal_closed", _, socket) do
     {:noreply, assign(socket, show_combine: false)}
+  end
+
+  def handle_info({DialecticWeb.Presence, {:join, presence}}, socket) do
+    {:noreply, stream_insert(socket, :presences, presence)}
+  end
+
+  def handle_info({DialecticWeb.Presence, {:leave, presence}}, socket) do
+    if presence.metas == [] do
+      {:noreply, stream_delete(socket, :presences, presence)}
+    else
+      {:noreply, stream_insert(socket, :presences, presence)}
+    end
   end
 
   def format_graph(graph) do
