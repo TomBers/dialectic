@@ -6,17 +6,10 @@ defmodule DialecticWeb.ChatMsgComp do
     socket =
       socket
       |> assign(assigns)
-      # Default `:expanded` to false if not explicitly set
-      |> assign_new(:expanded, fn -> false end)
       # Default cutoff length
       |> assign_new(:cut_off, fn -> 200 end)
 
     {:ok, socket}
-  end
-
-  @impl true
-  def handle_event("toggle-expand", _params, socket) do
-    {:noreply, assign(socket, :expanded, not socket.assigns.expanded)}
   end
 
   defp truncated_html(content, cut_off) do
@@ -48,25 +41,19 @@ defmodule DialecticWeb.ChatMsgComp do
       </div>
 
       <div class="proposition flex-1 max-w-none">
+        <.modal on_cancel={JS.push("modal_closed")} id={"modal-" <> @node.id}>
+          {full_html(@node.content || "")}
+        </.modal>
         <article class="prose prose-stone prose-sm">
-          <%= if @expanded do %>
-            {full_html(@node.content || "")}
-          <% else %>
-            {truncated_html(@node.content || "", @cut_off)}
-          <% end %>
+          {truncated_html(@node.content || "", @cut_off)}
         </article>
 
         <%= if String.length(@node.content || "") > @cut_off do %>
           <button
-            phx-click="toggle-expand"
-            phx-target={@myself}
+            phx-click={show_modal("modal-" <> @node.id)}
             class="mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium focus:outline-none"
           >
-            <%= if @expanded do %>
-              Show less
-            <% else %>
-              Show more
-            <% end %>
+            Show more
           </button>
         <% end %>
       </div>
