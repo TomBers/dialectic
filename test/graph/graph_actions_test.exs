@@ -10,19 +10,19 @@ defmodule Dialectic.Graph.GraphActionsTest do
 
   def inital_qa(graph) do
     root_node = GraphActions.create_new_node(graph)
-    GraphActions.answer(graph, root_node, "What is the meaning of life?")
+    GraphActions.answer(graph, root_node, "What is the meaning of life?", self())
   end
 
   def branched_graph(graph) do
     {graph, answer} = inital_qa(graph)
-    GraphActions.branch(graph, answer)
+    GraphActions.branch(graph, answer, self())
   end
 
   # Example of a full graph, with a question, answer, thesis, antithesis, and synthesis
   def full_graph(graph) do
     {graph, branched_node} = branched_graph(graph)
-    {graph, synth_node} = GraphActions.combine(graph, branched_node, "3")
-    GraphActions.answer(graph, synth_node, "Synthesis question")
+    {graph, synth_node} = GraphActions.combine(graph, branched_node, "3", self())
+    GraphActions.answer(graph, synth_node, "Synthesis question", self())
   end
 
   test "full graph has expected properties", %{graph: graph} do
@@ -44,7 +44,10 @@ defmodule Dialectic.Graph.GraphActionsTest do
 
   test "answer/3 adds a question and answer node to an empty graph", %{graph: graph} do
     root_node = GraphActions.create_new_node(graph)
-    {graph, answer_node} = GraphActions.answer(graph, root_node, "What is the meaning of life?")
+
+    {graph, answer_node} =
+      GraphActions.answer(graph, root_node, "What is the meaning of life?", self())
+
     # Root, question, answer
     assert length(:digraph.vertices(graph)) == 2
     # Root -> question, question -> answer
@@ -55,8 +58,8 @@ defmodule Dialectic.Graph.GraphActionsTest do
 
   test "answer/3 adds a question and answer node to an existing graph", %{graph: graph} do
     root_node = GraphActions.create_new_node(graph)
-    {graph, n1} = GraphActions.answer(graph, root_node, "Initial question")
-    {graph, an} = GraphActions.answer(graph, n1, "Follow-up question")
+    {graph, n1} = GraphActions.answer(graph, root_node, "Initial question", self())
+    {graph, an} = GraphActions.answer(graph, n1, "Follow-up question", self())
     # 2 questions, 2 answers
     assert length(:digraph.vertices(graph)) == 4
     # Q1 -> A1, A1 -> Q2, Q2 -> A2
@@ -68,8 +71,8 @@ defmodule Dialectic.Graph.GraphActionsTest do
 
   test "branch/2 adds a thesis and antithesis node", %{graph: graph} do
     root_node = GraphActions.create_new_node(graph)
-    {graph, n1} = GraphActions.answer(graph, root_node, "What is the meaning of life?")
-    {graph, tn} = GraphActions.branch(graph, n1)
+    {graph, n1} = GraphActions.answer(graph, root_node, "What is the meaning of life?", self())
+    {graph, tn} = GraphActions.branch(graph, n1, self())
     # Root, Answer, thesis, antithesis
     assert length(:digraph.vertices(graph)) == 4
     # Root -> Answer, Answer -> thesis, Answer -> antithesis
@@ -83,7 +86,7 @@ defmodule Dialectic.Graph.GraphActionsTest do
     assert length(:digraph.vertices(graph)) == 4
     assert length(:digraph.edges(graph)) == 3
 
-    {graph, synth_node} = GraphActions.combine(graph, branched_node, "3")
+    {graph, synth_node} = GraphActions.combine(graph, branched_node, "3", self())
     # q1, a1, thesis, antithesis, synthesis
     assert length(:digraph.vertices(graph)) == 5
     # q1 -> a1, a1 -> thesis, a1 -> antithesis, thesis -> synthesis, antithesis -> synthesis
@@ -92,7 +95,7 @@ defmodule Dialectic.Graph.GraphActionsTest do
     assert synth_node.class == "synthesis"
 
     # Test you can also answer the synthesis question
-    {_, an} = GraphActions.answer(graph, synth_node, "Synthesis question")
+    {_, an} = GraphActions.answer(graph, synth_node, "Synthesis question", self())
     # q1, a1, thesis, antithesis, synthesis, synthesis question, synthesis answer
     assert length(:digraph.vertices(graph)) == 7
 
@@ -106,12 +109,12 @@ defmodule Dialectic.Graph.GraphActionsTest do
     assert length(:digraph.vertices(graph)) == 2
     assert length(:digraph.edges(graph)) == 1
 
-    {graph, _} = GraphActions.branch(graph, root_node)
+    {graph, _} = GraphActions.branch(graph, root_node, self())
     assert length(:digraph.vertices(graph)) == 4
     assert length(:digraph.edges(graph)) == 3
 
     thesis_node = Vertex.find_node_by_id(graph, "3")
-    {graph, _} = GraphActions.answer(graph, thesis_node, "Question about thesis")
+    {graph, _} = GraphActions.answer(graph, thesis_node, "Question about thesis", self())
     # # Root, answer, thesis, antithesis, theis question, answer
     assert length(:digraph.vertices(graph)) == 6
 
