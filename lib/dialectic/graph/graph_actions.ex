@@ -17,43 +17,45 @@ defmodule Dialectic.Graph.GraphActions do
     vertex
   end
 
-  def answer(graph, node, question) do
+  def answer(graph, node, question, pid) do
     parents = if length(node.parents) == 0, do: [], else: [node]
 
     {graph_with_question, question_node} =
       add_child(graph, parents, gen_id(graph), question, "user")
 
+    child_id = gen_id(graph_with_question)
+
     add_child(
       graph_with_question,
       [question_node],
-      gen_id(graph_with_question),
-      LlmInterface.gen_response(question, node),
+      child_id,
+      LlmInterface.gen_response(question, node, child_id, pid),
       "answer"
     )
   end
 
-  def branch(graph, node) do
+  def branch(graph, node, pid) do
     thesis_id = gen_id(graph)
     antithesis_id = gen_id(graph, 1)
 
     {g1, _} =
       graph
-      |> add_child([node], thesis_id, LlmInterface.gen_thesis(node), "thesis")
+      |> add_child([node], thesis_id, LlmInterface.gen_thesis(node, pid), "thesis")
 
-    add_child(g1, [node], antithesis_id, LlmInterface.gen_antithesis(node), "antithesis")
+    add_child(g1, [node], antithesis_id, LlmInterface.gen_antithesis(node, pid), "antithesis")
   end
 
-  def combine(socket, combine_node_id) when is_map(socket) do
-    case Vertex.find_node_by_id(socket.assigns.graph, combine_node_id) do
-      nil ->
-        nil
+  # def combine(socket, combine_node_id) when is_map(socket) do
+  #   case Vertex.find_node_by_id(socket.assigns.graph, combine_node_id) do
+  #     nil ->
+  #       nil
 
-      combine_node ->
-        combine(socket.assigns.graph, socket.assigns.node, combine_node)
-    end
-  end
+  #     combine_node ->
+  #       combine(socket.assigns.graph, socket.assigns.node, combine_node)
+  #   end
+  # end
 
-  def combine(graph, node1, combine_node_id) do
+  def combine(graph, node1, combine_node_id, pid) do
     case Vertex.find_node_by_id(graph, combine_node_id) do
       nil ->
         nil
@@ -65,7 +67,7 @@ defmodule Dialectic.Graph.GraphActions do
           graph,
           [node1, node2],
           synthesis_id,
-          LlmInterface.gen_synthesis(node1, node2),
+          LlmInterface.gen_synthesis(node1, node2, synthesis_id, pid),
           "synthesis"
         )
     end

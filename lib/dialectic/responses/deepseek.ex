@@ -5,8 +5,8 @@ defmodule Dialectic.Models.DeepSeekAPI do
   @base_url "https://api.deepseek.com"
   @model "deepseek-chat"
 
-  def ask(question) do
-    IO.inspect(@api_key, label: "API Key")
+  def ask(question, node_id, pid) do
+    # IO.inspect(@api_key, label: "API Key")
     # Replace with the correct endpoint for asking questions
     url = "#{@base_url}/chat/completions"
 
@@ -20,17 +20,35 @@ defmodule Dialectic.Models.DeepSeekAPI do
         ]
       })
 
-    Req.post(url,
-      headers: [{"Authorization", "Bearer #{@api_key}"}, {"Content-Type", "application/json"}],
-      body: body,
-      into: fn {:data, data}, context ->
-        Enum.each(parse(data), fn data -> IO.inspect(data, label: "Parsed Data") end)
-        {:cont, context}
-      end,
-      connect_options: [timeout: 30_000],
-      # How long to wait to receive the response once connected
-      receive_timeout: 30_000
-    )
+    spawn(fn ->
+      Req.post(url,
+        headers: [{"Authorization", "Bearer #{@api_key}"}, {"Content-Type", "application/json"}],
+        body: body,
+        into: fn {:data, data}, context ->
+          Enum.each(parse(data), fn data -> send_chunk(data, pid, node_id) end)
+          {:cont, context}
+        end,
+        connect_options: [timeout: 30_000],
+        # How long to wait to receive the response once connected
+        receive_timeout: 30_000
+      )
+    end)
+
+    ""
+  end
+
+  defp send_chunk(
+         %{
+           "choices" => [
+             %{
+               "delta" => %{"content" => data}
+             }
+           ]
+         },
+         pid,
+         node_id
+       ) do
+    send(pid, {:steam_chunk, data, :node_id, node_id})
   end
 
   defp parse(chunk) do
