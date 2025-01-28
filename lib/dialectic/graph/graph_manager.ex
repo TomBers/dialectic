@@ -1,17 +1,28 @@
 defmodule GraphManager do
   alias Dialectic.Graph.Vertex
+  alias Dialectic.Graph.Serialise
   use GenServer
 
   def get_graph(path) do
-    case exists?(path) do
-      true ->
-        GenServer.call(via_tuple(path), :get_graph)
-
+    case GraphManager.exists?(path) do
       false ->
-        start_link(path)
+        DynamicSupervisor.start_child(GraphSupervisor, {GraphManager, path})
+
+      true ->
         GenServer.call(via_tuple(path), :get_graph)
     end
   end
+
+  # def get_graph(path) do
+  #   case exists?(path) do
+  #     true ->
+  #       GenServer.call(via_tuple(path), :get_graph)
+
+  #     false ->
+  #       start_link(path)
+  #       GenServer.call(via_tuple(path), :get_graph)
+  #   end
+  # end
 
   # Client API
   def start_link(path) do
@@ -31,7 +42,8 @@ defmodule GraphManager do
 
   # Server callbacks
   def init(path) do
-    graph = :digraph.new()
+    # graph = :digraph.new()
+    graph = Serialise.load_graph()
     # TODO - look to read from File
     {:ok, {path, graph}}
   end

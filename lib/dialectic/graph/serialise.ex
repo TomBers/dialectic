@@ -7,7 +7,8 @@ defmodule Dialectic.Graph.Serialise do
   end
 
   def load_graph do
-    json = File.read!("graph.json")
+    # json = File.read!("graph.json")
+    json = File.read!("satre.json")
 
     json
     |> Jason.decode!()

@@ -28,7 +28,15 @@ defmodule DialecticWeb.GraphLive do
     # graph = Serialise.load_graph()
     graph = GraphManager.get_graph(graph_id)
     # node = graph |> Vertex.find_node_by_id("2") |> Vertex.add_relatives(graph)
-    node = GraphActions.create_new_node(user)
+    node =
+      case GraphActions.find_node(graph_id, "1") do
+        {_graph, n} ->
+          n
+
+        _ ->
+          GraphActions.create_new_node(user)
+      end
+
     changeset = Vertex.changeset(node)
 
     {:ok,
@@ -73,7 +81,12 @@ defmodule DialecticWeb.GraphLive do
   def handle_event("answer", %{"vertex" => %{"content" => answer}}, socket) do
     update_graph(
       socket,
-      GraphActions.answer(socket.assigns.graph_id, socket.assigns.node, answer)
+      GraphActions.answer(
+        socket.assigns.graph_id,
+        socket.assigns.node,
+        answer,
+        socket.assigns.user
+      )
     )
   end
 
@@ -109,7 +122,10 @@ defmodule DialecticWeb.GraphLive do
   def main_keybaord_interface(socket, key) do
     case key do
       "b" ->
-        update_graph(socket, GraphActions.branch(socket.assigns.graph_id, socket.assigns.node))
+        update_graph(
+          socket,
+          GraphActions.branch(socket.assigns.graph_id, socket.assigns.node, socket.assigns.user)
+        )
 
       "s" ->
         Serialise.save_graph(socket.assigns.graph)
@@ -131,7 +147,12 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def combine_interface(socket, key) do
-    case GraphActions.combine(socket.assigns.graph_id, socket.assigns.node, key) do
+    case GraphActions.combine(
+           socket.assigns.graph_id,
+           socket.assigns.node,
+           key,
+           socket.assigns.user
+         ) do
       {graph, node} ->
         update_graph(socket, {graph, node}, true)
 
