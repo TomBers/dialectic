@@ -1,4 +1,5 @@
 defmodule DialecticWeb.GraphLive do
+  alias Mix.PubSub
   use DialecticWeb, :live_view
   alias Dialectic.Graph.Vertex
   alias Dialectic.Graph.Serialise
@@ -7,12 +8,16 @@ defmodule DialecticWeb.GraphLive do
   alias DialecticWeb.CombineComp
   alias DialecticWeb.ChatComp
 
+  alias Phoenix.PubSub
+
   def mount(params, _session, socket) do
+    PubSub.subscribe(Dialectic.PubSub, "graph_update")
     socket = stream(socket, :presences, [])
+    user = params["name"]
 
     socket =
       if connected?(socket) do
-        DialecticWeb.Presence.track_user(params["name"], %{id: params["name"]})
+        DialecticWeb.Presence.track_user(user, %{id: user})
         DialecticWeb.Presence.subscribe()
         stream(socket, :presences, DialecticWeb.Presence.list_online_users())
       else
@@ -22,7 +27,7 @@ defmodule DialecticWeb.GraphLive do
     # graph = Serialise.load_graph()
     graph = GraphActions.new_graph()
     # node = graph |> Vertex.find_node_by_id("2") |> Vertex.add_relatives(graph)
-    node = GraphActions.create_new_node(graph)
+    node = GraphActions.create_new_node(graph, user)
     changeset = Vertex.changeset(node)
 
     {:ok,
@@ -32,7 +37,8 @@ defmodule DialecticWeb.GraphLive do
        node: node,
        form: to_form(changeset),
        show_combine: false,
-       key_buffer: ""
+       key_buffer: "",
+       user: user
      )}
   end
 
@@ -87,6 +93,10 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
+  def handle_info(%{graph: graph}, socket) do
+    {:noreply, assign(socket, graph: graph, f_graph: format_graph(graph))}
+  end
+
   def format_graph(graph) do
     graph |> Vertex.to_cytoscape_format() |> Jason.encode!()
   end
@@ -127,7 +137,7 @@ defmodule DialecticWeb.GraphLive do
 
   def update_graph(socket, {graph, node}, invert_modal \\ false) do
     # Changeset needs to be a new node
-    new_node = GraphActions.create_new_node(graph)
+    new_node = GraphActions.create_new_node(graph, socket.assigns.user)
     changeset = Vertex.changeset(new_node)
 
     show_combine =
@@ -136,6 +146,8 @@ defmodule DialecticWeb.GraphLive do
       else
         socket.assigns.show_combine
       end
+
+    PubSub.broadcast(Dialectic.PubSub, "graph_update", %{graph: graph})
 
     {:noreply,
      assign(socket,

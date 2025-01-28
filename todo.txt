@@ -1,8 +1,4 @@
-Think about passing parents when asking a question.  See the existing Graph.
-When asking - tell me more on a branch, need to have the parent to esablish context.
+After adding presence there is an issue with only the process creating the :digraph can edit it.
+Going to Wrap the :digraph in a :gen_server to handle the state of the digraph and the process that can edit it.
 
-Current Error - seems like there is a timeout error! See if the Req Timeout can be improved.
-
-TODO - the Interface needs to reflect loading state - make more responsive
-Make each call Async and load the graph on result - this will make the interface more responsive.
-Is there a simple way to wrap existing fncs to make them async?
+TODO

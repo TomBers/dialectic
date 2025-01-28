@@ -10,7 +10,7 @@ defmodule Dialectic.Graph.Vertex do
   ]
   # Define a custom type for class validation
   # @type class :: "assumption" | "premise" | "conclusion"
-  defstruct id: nil, content: "", class: "", parents: [], children: []
+  defstruct id: nil, content: "", class: "", user: "", parents: [], children: []
 
   # Add a function to validate the class
   def validate_class(class) when class in @valid_classes, do: {:ok, class}
@@ -18,21 +18,22 @@ defmodule Dialectic.Graph.Vertex do
 
   # IMPORTANT - defines fields that should be serialised
   def serialize(vertex) do
-    %{id: vertex.id, content: vertex.content, class: vertex.class}
+    %{id: vertex.id, content: vertex.content, class: vertex.class, user: vertex.user}
   end
 
   def deserialize(data) do
     %Dialectic.Graph.Vertex{
       id: data["id"],
       content: data["content"],
-      class: data["class"]
+      class: data["class"],
+      user: data["user"]
     }
   end
 
   # ----------------------------
 
   def changeset(vertex, params \\ %{}) do
-    types = %{id: :string, content: :string, class: :string}
+    types = %{id: :string, content: :string, class: :string, user: :string}
 
     {vertex, types}
     |> Ecto.Changeset.cast(params, Map.keys(types))

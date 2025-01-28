@@ -23,6 +23,7 @@ defmodule DialecticWeb.ChatComp do
         <% end %>
       </div>
       <div class="bg-white shadow-lg border-t border-gray-200 p-2">
+        {@node.user}
         <.form for={@form} phx-submit="answer">
           <div class="flex-1">
             <.input field={@form[:content]} type="text" />
