@@ -23,10 +23,25 @@ defmodule Dialectic.Models.DeepSeekAPI do
     Req.post(url,
       headers: [{"Authorization", "Bearer #{@api_key}"}, {"Content-Type", "application/json"}],
       body: body,
-      into: &StreamParser.process_stream/2,
+      into: fn {:data, data}, context ->
+        Enum.each(parse(data), fn data -> IO.inspect(data, label: "Parsed Data") end)
+        {:cont, context}
+      end,
       connect_options: [timeout: 30_000],
       # How long to wait to receive the response once connected
       receive_timeout: 30_000
     )
   end
+
+  defp parse(chunk) do
+    chunk
+    |> String.split("data: ")
+    |> Enum.map(&String.trim/1)
+    |> Enum.map(&decode/1)
+    |> Enum.reject(&is_nil/1)
+  end
+
+  defp decode(""), do: nil
+  defp decode("[DONE]"), do: nil
+  defp decode(data), do: Jason.decode!(data)
 end
