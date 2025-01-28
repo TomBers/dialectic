@@ -76,12 +76,6 @@ defmodule GraphManager do
     GenServer.call(via_tuple(path), {:find_node_by_id, combine_node_id})
   end
 
-  # def gen_id(graph_id, offset \\ 0) do
-  #   graph = get_graph(graph_id)
-  #   v = :digraph.vertices(graph)
-  #   Labeler.label(length(v) + 1 + offset)
-  # end
-
   def add_child(graph_id, parents, description, class, user) do
     node =
       add_node(graph_id, %Vertex{content: description, class: class, user: user})

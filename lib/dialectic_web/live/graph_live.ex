@@ -98,8 +98,8 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_info(%{graph: graph}, socket) do
-    {:noreply, assign(socket, graph: graph, f_graph: format_graph(graph))}
+  def handle_info(%{graph: graph, node: node}, socket) do
+    {:noreply, assign(socket, node: node, graph: graph, f_graph: format_graph(graph))}
   end
 
   def format_graph(graph) do
@@ -152,7 +152,7 @@ defmodule DialecticWeb.GraphLive do
         socket.assigns.show_combine
       end
 
-    PubSub.broadcast(Dialectic.PubSub, "graph_update", %{graph: graph})
+    PubSub.broadcast(Dialectic.PubSub, "graph_update", %{graph: graph, node: node})
 
     {:noreply,
      assign(socket,
