@@ -2,77 +2,58 @@ defmodule Dialectic.Graph.GraphActions do
   alias Dialectic.Graph.Vertex
   alias Dialectic.Responses.LlmInterface
 
-  def new_graph do
-    :digraph.new()
+  def create_new_node(user) do
+    %Vertex{user: user, id: "NewNode"}
   end
 
-  def create_new_node(graph, user) do
-    new_node_id = gen_id(graph)
-    %Vertex{id: new_node_id, user: user} |> Vertex.add_relatives(graph)
-  end
-
-  def add_node(graph, name, content, class, user) do
-    vertex = %Vertex{id: name, content: content, class: class, user: user}
-    :digraph.add_vertex(graph, name, vertex)
-    vertex
-  end
-
-  def answer(graph, node, question) do
+  def answer(graph_id, node, question) do
     parents = if length(node.parents) == 0, do: [], else: [node]
 
-    {graph_with_question, question_node} =
-      add_child(graph, parents, gen_id(graph), question, "user", node.user)
+    {_g, question_node} =
+      GraphManager.add_child(
+        graph_id,
+        parents,
+        question,
+        "user",
+        node.user
+      )
 
-    add_child(
-      graph_with_question,
+    GraphManager.add_child(
+      graph_id,
       [question_node],
-      gen_id(graph_with_question),
       LlmInterface.gen_response(question, node),
       "answer",
       node.user
     )
   end
 
-  def branch(graph, node) do
-    thesis_id = gen_id(graph)
-    antithesis_id = gen_id(graph, 1)
-
-    {g1, _} =
-      graph
-      |> add_child([node], thesis_id, LlmInterface.gen_thesis(node), "thesis", node.user)
-
-    add_child(
-      g1,
+  def branch(graph_id, node) do
+    GraphManager.add_child(
+      graph_id,
       [node],
-      antithesis_id,
+      LlmInterface.gen_thesis(node),
+      "thesis",
+      node.user
+    )
+
+    GraphManager.add_child(
+      graph_id,
+      [node],
       LlmInterface.gen_antithesis(node),
       "antithesis",
       node.user
     )
   end
 
-  # def combine(socket, combine_node_id) when is_map(socket) do
-  #   case Vertex.find_node_by_id(socket.assigns.graph, combine_node_id) do
-  #     nil ->
-  #       nil
-
-  #     combine_node ->
-  #       combine(socket.assigns.graph, socket.assigns.node, combine_node)
-  #   end
-  # end
-
-  def combine(graph, node1, combine_node_id) do
-    case Vertex.find_node_by_id(graph, combine_node_id) do
+  def combine(graph_id, node1, combine_node_id) do
+    case GraphManager.find_node_by_id(graph_id, combine_node_id) do
       nil ->
         nil
 
-      node2 ->
-        synthesis_id = gen_id(graph)
-
-        add_child(
-          graph,
+      {_g, node2} ->
+        GraphManager.add_child(
+          graph_id,
           [node1, node2],
-          synthesis_id,
           LlmInterface.gen_synthesis(node1, node2),
           "synthesis",
           node1.user
@@ -80,24 +61,7 @@ defmodule Dialectic.Graph.GraphActions do
     end
   end
 
-  def find_node(graph, id) do
-    case Vertex.find_node_by_id(graph, id) do
-      nil ->
-        nil
-
-      node ->
-        {graph, Vertex.add_relatives(node, graph)}
-    end
-  end
-
-  defp gen_id(graph, offset \\ 0) do
-    v = :digraph.vertices(graph)
-    Labeler.label(length(v) + 1 + offset)
-  end
-
-  defp add_child(graph, parents, child_id, description, class, user) do
-    node = add_node(graph, child_id, description, class, user)
-    Enum.each(parents, fn parent -> :digraph.add_edge(graph, parent.id, child_id) end)
-    {graph, node |> Vertex.add_relatives(graph)}
+  def find_node(graph_id, id) do
+    GraphManager.find_node_by_id(graph_id, id)
   end
 end

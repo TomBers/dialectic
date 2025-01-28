@@ -1,5 +1,17 @@
 defmodule GraphManager do
+  alias Dialectic.Graph.Vertex
   use GenServer
+
+  def get_graph(path) do
+    case exists?(path) do
+      true ->
+        GenServer.call(via_tuple(path), :get_graph)
+
+      false ->
+        start_link(path)
+        GenServer.call(via_tuple(path), :get_graph)
+    end
+  end
 
   # Client API
   def start_link(path) do
@@ -17,27 +29,63 @@ defmodule GraphManager do
     {:via, Registry, {GraphRegistry, path}}
   end
 
-  def add_vertex(path, vertex) do
-    GenServer.call(via_tuple(path), {:add_vertex, vertex})
-  end
-
-  def add_edge(path, v1, v2) do
-    GenServer.call(via_tuple(path), {:add_edge, v1, v2})
-  end
-
   # Server callbacks
   def init(path) do
     graph = :digraph.new()
+    # TODO - look to read from File
     {:ok, {path, graph}}
   end
 
-  def handle_call({:add_vertex, vertex}, _from, {path, graph}) do
-    result = :digraph.add_vertex(graph, vertex)
-    {:reply, result, {path, graph}}
+  def handle_call(:get_graph, _from, {path, graph}) do
+    {:reply, graph, {path, graph}}
   end
 
-  def handle_call({:add_edge, v1, v2}, _from, {path, graph}) do
-    result = :digraph.add_edge(graph, v1, v2)
-    {:reply, result, {path, graph}}
+  def handle_call({:add_vertex, vertex}, _from, {path, graph}) do
+    v = :digraph.vertices(graph)
+    v_id = Labeler.label(length(v) + 1)
+    vertex = %{vertex | id: v_id}
+    :digraph.add_vertex(graph, v_id, vertex)
+    {:reply, vertex, {path, graph}}
+  end
+
+  def handle_call({:add_edge, vertex, parents}, _from, {path, graph}) do
+    Enum.each(parents, fn parent ->
+      :digraph.add_edge(graph, parent.id, vertex.id)
+    end)
+
+    {:reply, {graph, Vertex.add_relatives(vertex, graph)}, {path, graph}}
+  end
+
+  def handle_call({:find_node_by_id, combine_node_id}, _from, {path, graph}) do
+    case :digraph.vertex(graph, combine_node_id) do
+      {_id, vertex} -> {:reply, {graph, Vertex.add_relatives(vertex, graph)}, {path, graph}}
+      false -> {:reply, nil, {path, graph}}
+    end
+  end
+
+  # Client API
+  def add_node(path, vertex) do
+    GenServer.call(via_tuple(path), {:add_vertex, vertex})
+  end
+
+  def add_edges(path, node, parents) do
+    GenServer.call(via_tuple(path), {:add_edge, node, parents})
+  end
+
+  def find_node_by_id(path, combine_node_id) do
+    GenServer.call(via_tuple(path), {:find_node_by_id, combine_node_id})
+  end
+
+  # def gen_id(graph_id, offset \\ 0) do
+  #   graph = get_graph(graph_id)
+  #   v = :digraph.vertices(graph)
+  #   Labeler.label(length(v) + 1 + offset)
+  # end
+
+  def add_child(graph_id, parents, description, class, user) do
+    node =
+      add_node(graph_id, %Vertex{content: description, class: class, user: user})
+
+    add_edges(graph_id, node, parents)
   end
 end

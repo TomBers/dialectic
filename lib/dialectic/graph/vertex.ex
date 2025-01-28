@@ -51,14 +51,14 @@ defmodule Dialectic.Graph.Vertex do
     %{node | parents: parents, children: children}
   end
 
-  def find_node_by_id(graph, id) do
-    case :digraph.vertex(graph, id) do
-      # Returns the vertex struct
-      {_id, vertex} -> vertex
-      # Return nil if vertex not found
-      false -> nil
-    end
-  end
+  # def find_node_by_id(graph_id, id) do
+  #   case :digraph.vertex(graph, id) do
+  #     # Returns the vertex struct
+  #     {_id, vertex} -> vertex
+  #     # Return nil if vertex not found
+  #     false -> nil
+  #   end
+  # end
 
   def find_parents(graph, vertex) do
     :digraph.in_edges(graph, vertex.id)
