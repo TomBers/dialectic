@@ -1,5 +1,6 @@
 <div class="h-screen flex flex-col">
-  <!-- Top section -->
+  
+<!-- Top section -->
   <div class="flex-none">
     <div class="top-right">
       <div class="node">
@@ -41,6 +42,11 @@
     
 <!-- Right side: Chat -->
     <div class="w-1/2 h-full flex flex-col">
+      <ul id="online_users" phx-update="stream">
+        <li :for={{dom_id, %{id: id, metas: metas}} <- @streams.presences} id={dom_id}>
+          {id} ({length(metas)})
+        </li>
+      </ul>
       <%= if @node.id do %>
         <div class="flex-1 overflow-y-auto">
           <.live_component module={ChatComp} form={@form} node={@node} id="Chat" />

@@ -10,7 +10,7 @@ defmodule Dialectic.Graph.Vertex do
   ]
   # Define a custom type for class validation
   # @type class :: "assumption" | "premise" | "conclusion"
-  defstruct id: nil, content: "", class: "", parents: [], children: []
+  defstruct id: nil, content: "", class: "", user: "", parents: [], children: []
 
   # Add a function to validate the class
   def validate_class(class) when class in @valid_classes, do: {:ok, class}
@@ -18,21 +18,22 @@ defmodule Dialectic.Graph.Vertex do
 
   # IMPORTANT - defines fields that should be serialised
   def serialize(vertex) do
-    %{id: vertex.id, content: vertex.content, class: vertex.class}
+    %{id: vertex.id, content: vertex.content, class: vertex.class, user: vertex.user}
   end
 
   def deserialize(data) do
     %Dialectic.Graph.Vertex{
       id: data["id"],
       content: data["content"],
-      class: data["class"]
+      class: data["class"],
+      user: data["user"]
     }
   end
 
   # ----------------------------
 
   def changeset(vertex, params \\ %{}) do
-    types = %{id: :string, content: :string, class: :string}
+    types = %{id: :string, content: :string, class: :string, user: :string}
 
     {vertex, types}
     |> Ecto.Changeset.cast(params, Map.keys(types))
@@ -50,14 +51,14 @@ defmodule Dialectic.Graph.Vertex do
     %{node | parents: parents, children: children}
   end
 
-  def find_node_by_id(graph, id) do
-    case :digraph.vertex(graph, id) do
-      # Returns the vertex struct
-      {_id, vertex} -> vertex
-      # Return nil if vertex not found
-      false -> nil
-    end
-  end
+  # def find_node_by_id(graph_id, id) do
+  #   case :digraph.vertex(graph, id) do
+  #     # Returns the vertex struct
+  #     {_id, vertex} -> vertex
+  #     # Return nil if vertex not found
+  #     false -> nil
+  #   end
+  # end
 
   def find_parents(graph, vertex) do
     :digraph.in_edges(graph, vertex.id)

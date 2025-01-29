@@ -17,7 +17,7 @@ defmodule DialecticWeb.Router do
   scope "/", DialecticWeb do
     pipe_through :browser
 
-    live "/", GraphLive
+    live "/:graph_name", GraphLive
   end
 
   # Other scopes may use custom stacks.
