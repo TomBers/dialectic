@@ -84,11 +84,8 @@ defmodule DialecticWeb.GraphLive do
     update_graph(
       socket,
       GraphActions.answer(
-        socket.assigns.graph_id,
-        socket.assigns.node,
-        answer,
-        socket.assigns.user,
-        self()
+        graph_action_params(socket),
+        answer
       )
     )
   end
@@ -139,9 +136,8 @@ defmodule DialecticWeb.GraphLive do
            metas: [%{graph_id: user_graph_id}]
          },
          graph_id
-       ) do
-    user_graph_id == graph_id
-  end
+       ),
+       do: user_graph_id == graph_id
 
   def format_graph(graph) do
     graph |> Vertex.to_cytoscape_format() |> Jason.encode!()
@@ -152,12 +148,7 @@ defmodule DialecticWeb.GraphLive do
       "b" ->
         update_graph(
           socket,
-          GraphActions.branch(
-            socket.assigns.graph_id,
-            socket.assigns.node,
-            socket.assigns.user,
-            self()
-          )
+          GraphActions.branch(graph_action_params(socket))
         )
 
       "s" ->
@@ -181,11 +172,8 @@ defmodule DialecticWeb.GraphLive do
 
   def combine_interface(socket, key) do
     case GraphActions.combine(
-           socket.assigns.graph_id,
-           socket.assigns.node,
-           key,
-           socket.assigns.user,
-           self()
+           graph_action_params(socket),
+           key
          ) do
       {graph, node} ->
         update_graph(socket, {graph, node}, true)
@@ -193,6 +181,10 @@ defmodule DialecticWeb.GraphLive do
       _ ->
         {:noreply, assign(socket, key_buffer: key)}
     end
+  end
+
+  defp graph_action_params(socket) do
+    {socket.assigns.graph_id, socket.assigns.node, socket.assigns.user, self()}
   end
 
   def update_graph(socket, {graph, node}, invert_modal \\ false) do

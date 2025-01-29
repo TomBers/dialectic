@@ -6,7 +6,7 @@ defmodule Dialectic.Graph.GraphActions do
     %Vertex{user: user, id: "NewNode"}
   end
 
-  def answer(graph_id, node, question, user, pid) do
+  def answer({graph_id, node, user, pid}, question) do
     parents = if length(node.parents) == 0, do: [], else: [node]
 
     {_g, question_node} =
@@ -27,7 +27,7 @@ defmodule Dialectic.Graph.GraphActions do
     )
   end
 
-  def branch(graph_id, node, user, pid) do
+  def branch({graph_id, node, user, pid}) do
     GraphManager.add_child(
       graph_id,
       [node],
@@ -45,7 +45,7 @@ defmodule Dialectic.Graph.GraphActions do
     )
   end
 
-  def combine(graph_id, node1, combine_node_id, user, pid) do
+  def combine({graph_id, node1, user, pid}, combine_node_id) do
     case GraphManager.find_node_by_id(graph_id, combine_node_id) do
       nil ->
         nil
