@@ -110,15 +110,6 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  defp is_connected_to_graph?(
-         %{
-           metas: [%{graph_id: user_graph_id}]
-         },
-         graph_id
-       ) do
-    user_graph_id == graph_id
-  end
-
   def handle_info({DialecticWeb.Presence, {:leave, presence}}, socket) do
     if presence.metas == [] do
       {:noreply, stream_delete(socket, :presences, presence)}
@@ -132,6 +123,8 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_info({:steam_chunk, chunk, :node_id, node_id}, socket) do
+    # This is the streamed LLM response into a node
+    # TODO - broadcast to all users??? - only want to update the node that is being worked on, just rerender the others
     updated_vertex = GraphManager.update_vertex(socket.assigns.graph_id, node_id, chunk)
 
     if node_id == Map.get(socket.assigns.node, :id) do
@@ -139,6 +132,15 @@ defmodule DialecticWeb.GraphLive do
     else
       {:noreply, socket}
     end
+  end
+
+  defp is_connected_to_graph?(
+         %{
+           metas: [%{graph_id: user_graph_id}]
+         },
+         graph_id
+       ) do
+    user_graph_id == graph_id
   end
 
   def format_graph(graph) do
