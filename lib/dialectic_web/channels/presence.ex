@@ -43,8 +43,20 @@ defmodule DialecticWeb.Presence do
     {:ok, state}
   end
 
-  def list_online_users(),
-    do: list("online_users") |> Enum.map(fn {_id, presence} -> presence end)
+  def list_online_users(graph_id) do
+    list("online_users")
+    |> Enum.filter(fn {_id, presence} -> is_connected_to_graph?(presence, graph_id) end)
+    |> Enum.map(fn {_id, presence} -> presence end)
+  end
+
+  defp is_connected_to_graph?(
+         %{
+           metas: [%{graph_id: user_graph_id}]
+         },
+         graph_id
+       ) do
+    user_graph_id == graph_id
+  end
 
   def track_user(name, params), do: track(self(), "online_users", name, params)
 

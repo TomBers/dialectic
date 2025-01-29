@@ -60,7 +60,11 @@ socket.connect();
 //  ---------------------
 // TODO - need to base the topic based on GraphId
 // -----------
-let channel = socket.channel("graph_users:lobby", {});
+
+let channel = socket.channel(
+  `graph_users:${window.location.pathname.replace(/^\/+/, "")}`,
+  {},
+);
 channel
   .join()
   .receive("ok", (resp) => {

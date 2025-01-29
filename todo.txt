@@ -3,7 +3,7 @@ At the moment it is hard coded, so that every user will join every graph.
 
 Make a path for the graph based on the URL of the page.
 
-Add more tests for Graph Actions and Graph Manager.
+Add more tests for Graph Actions and Graph Manager. - DONE
 
 Integrate the DeepSeek streaming.
 

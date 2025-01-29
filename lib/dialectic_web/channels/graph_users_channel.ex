@@ -3,9 +3,9 @@ defmodule DialecticWeb.GraphUsersChannel do
   alias DialecticWeb.Presence
 
   @impl true
-  def join("graph_users:lobby", payload, socket) do
+  def join("graph_users:" <> graph_id, payload, socket) do
     if authorized?(payload) do
-      {:ok, socket}
+      {:ok, assign(socket, graph_id: graph_id)}
     else
       {:error, %{reason: "unauthorized"}}
     end
@@ -15,7 +15,8 @@ defmodule DialecticWeb.GraphUsersChannel do
   def handle_info(:after_join, socket) do
     {:ok, _} =
       Presence.track(socket, socket.assigns.name, %{
-        online_at: inspect(System.system_time(:second))
+        online_at: inspect(System.system_time(:second)),
+        graph_id: socket.assigns.graph_id
       })
 
     push(socket, "presence_state", Presence.list(socket))

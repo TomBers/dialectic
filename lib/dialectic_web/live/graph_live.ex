@@ -10,21 +10,23 @@ defmodule DialecticWeb.GraphLive do
 
   alias Phoenix.PubSub
 
-  def mount(params, _session, socket) do
+  def mount(%{"graph_name" => graph_id, "name" => user}, _session, socket) do
     PubSub.subscribe(Dialectic.PubSub, "graph_update")
     socket = stream(socket, :presences, [])
-    user = params["name"]
 
     socket =
       if connected?(socket) do
-        DialecticWeb.Presence.track_user(user, %{id: user})
+        DialecticWeb.Presence.track_user(user, %{id: user, graph_id: graph_id})
         DialecticWeb.Presence.subscribe()
-        stream(socket, :presences, DialecticWeb.Presence.list_online_users())
+
+        presences =
+          DialecticWeb.Presence.list_online_users(graph_id) |> IO.inspect(label: "Users")
+
+        stream(socket, :presences, presences)
       else
         socket
       end
 
-    graph_id = "Test"
     # graph = Serialise.load_graph()
     graph = GraphManager.get_graph(graph_id)
     # node = graph |> Vertex.find_node_by_id("2") |> Vertex.add_relatives(graph)
@@ -100,7 +102,20 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_info({DialecticWeb.Presence, {:join, presence}}, socket) do
-    {:noreply, stream_insert(socket, :presences, presence)}
+    if is_connected_to_graph?(presence, socket.assigns.graph_id) do
+      {:noreply, stream_insert(socket, :presences, presence)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  defp is_connected_to_graph?(
+         %{
+           metas: [%{graph_id: user_graph_id}]
+         },
+         graph_id
+       ) do
+    user_graph_id == graph_id
   end
 
   def handle_info({DialecticWeb.Presence, {:leave, presence}}, socket) do
