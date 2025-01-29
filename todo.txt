@@ -1,10 +1,3 @@
-Make sure the Presence passes in the correct path to the graph.
-At the moment it is hard coded, so that every user will join every graph.
-
-Make a path for the graph based on the URL of the page.
-
-Add more tests for Graph Actions and Graph Manager. - DONE
-
 Integrate the DeepSeek streaming.
 
 Users - think about Authentification and Authorization.
