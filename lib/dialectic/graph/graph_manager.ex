@@ -6,24 +6,13 @@ defmodule GraphManager do
   def get_graph(path) do
     case GraphManager.exists?(path) do
       false ->
-        {:ok, child} = DynamicSupervisor.start_child(GraphSupervisor, {GraphManager, path})
-        child
+        DynamicSupervisor.start_child(GraphSupervisor, {GraphManager, path})
+        GenServer.call(via_tuple(path), :get_graph)
 
       true ->
         GenServer.call(via_tuple(path), :get_graph)
     end
   end
-
-  # def get_graph(path) do
-  #   case exists?(path) do
-  #     true ->
-  #       GenServer.call(via_tuple(path), :get_graph)
-
-  #     false ->
-  #       start_link(path)
-  #       GenServer.call(via_tuple(path), :get_graph)
-  #   end
-  # end
 
   # Client API
   def start_link(path) do
@@ -81,6 +70,18 @@ defmodule GraphManager do
     {:reply, graph, {path, :digraph.new()}}
   end
 
+  def handle_call({:update_node, {node_id, data}}, _from, {path, graph}) do
+    case :digraph.vertex(graph, node_id) do
+      {_id, vertex} ->
+        updated_vertex = %{vertex | content: vertex.content <> data}
+        :digraph.add_vertex(graph, node_id, updated_vertex)
+        {:reply, Vertex.add_relatives(updated_vertex, graph), {path, graph}}
+
+      false ->
+        {:reply, nil, {path, graph}}
+    end
+  end
+
   # Client API
   def reset_graph(path) do
     if GraphManager.exists?(path) do
@@ -98,14 +99,21 @@ defmodule GraphManager do
     GenServer.call(via_tuple(path), {:add_edge, node, parents})
   end
 
-  def find_node_by_id(path, combine_node_id) do
-    GenServer.call(via_tuple(path), {:find_node_by_id, combine_node_id})
+  def find_node_by_id(path, node_id) do
+    GenServer.call(via_tuple(path), {:find_node_by_id, node_id})
   end
 
-  def add_child(graph_id, parents, description, class, user) do
+  def add_child(graph_id, parents, llm_fn, class, user) do
     node =
-      add_node(graph_id, %Vertex{content: description, class: class, user: user})
+      add_node(graph_id, %Vertex{content: "", class: class, user: user})
+
+    # Stream response to the Node
+    spawn(fn -> llm_fn.(node) end)
 
     add_edges(graph_id, node, parents)
+  end
+
+  def update_vertex(path, node_id, data) do
+    GenServer.call(via_tuple(path), {:update_node, {node_id, data}})
   end
 end

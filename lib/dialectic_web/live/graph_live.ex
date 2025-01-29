@@ -20,7 +20,7 @@ defmodule DialecticWeb.GraphLive do
         DialecticWeb.Presence.subscribe()
 
         presences =
-          DialecticWeb.Presence.list_online_users(graph_id) |> IO.inspect(label: "Users")
+          DialecticWeb.Presence.list_online_users(graph_id)
 
         stream(socket, :presences, presences)
       else
@@ -87,7 +87,8 @@ defmodule DialecticWeb.GraphLive do
         socket.assigns.graph_id,
         socket.assigns.node,
         answer,
-        socket.assigns.user
+        socket.assigns.user,
+        self()
       )
     )
   end
@@ -130,6 +131,16 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, assign(socket, node: node, graph: graph, f_graph: format_graph(graph))}
   end
 
+  def handle_info({:steam_chunk, chunk, :node_id, node_id}, socket) do
+    updated_vertex = GraphManager.update_vertex(socket.assigns.graph_id, node_id, chunk)
+
+    if node_id == Map.get(socket.assigns.node, :id) do
+      {:noreply, assign(socket, node: updated_vertex)}
+    else
+      {:noreply, socket}
+    end
+  end
+
   def format_graph(graph) do
     graph |> Vertex.to_cytoscape_format() |> Jason.encode!()
   end
@@ -139,7 +150,12 @@ defmodule DialecticWeb.GraphLive do
       "b" ->
         update_graph(
           socket,
-          GraphActions.branch(socket.assigns.graph_id, socket.assigns.node, socket.assigns.user)
+          GraphActions.branch(
+            socket.assigns.graph_id,
+            socket.assigns.node,
+            socket.assigns.user,
+            self()
+          )
         )
 
       "s" ->
@@ -166,7 +182,8 @@ defmodule DialecticWeb.GraphLive do
            socket.assigns.graph_id,
            socket.assigns.node,
            key,
-           socket.assigns.user
+           socket.assigns.user,
+           self()
          ) do
       {graph, node} ->
         update_graph(socket, {graph, node}, true)
