@@ -1,4 +1,10 @@
-After adding presence there is an issue with only the process creating the :digraph can edit it.
-Going to Wrap the :digraph in a :gen_server to handle the state of the digraph and the process that can edit it.
+Make sure the Presence passes in the correct path to the graph.
+At the moment it is hard coded, so that every user will join every graph.
 
-TODO
+Make a path for the graph based on the URL of the page.
+
+Add more tests for Graph Actions and Graph Manager.
+
+Integrate the DeepSeek streaming.
+
+Users - think about Authentification and Authorization.

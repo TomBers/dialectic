@@ -6,7 +6,8 @@ defmodule GraphManager do
   def get_graph(path) do
     case GraphManager.exists?(path) do
       false ->
-        DynamicSupervisor.start_child(GraphSupervisor, {GraphManager, path})
+        {:ok, child} = DynamicSupervisor.start_child(GraphSupervisor, {GraphManager, path})
+        child
 
       true ->
         GenServer.call(via_tuple(path), :get_graph)
@@ -43,7 +44,7 @@ defmodule GraphManager do
   # Server callbacks
   def init(path) do
     # graph = :digraph.new()
-    graph = Serialise.load_graph()
+    graph = Serialise.load_graph(path)
     # TODO - look to read from File
     {:ok, {path, graph}}
   end
@@ -75,7 +76,20 @@ defmodule GraphManager do
     end
   end
 
+  # In handle_call
+  def handle_call({:reset_graph}, _from, {path, graph}) do
+    {:reply, graph, {path, :digraph.new()}}
+  end
+
   # Client API
+  def reset_graph(path) do
+    if GraphManager.exists?(path) do
+      GenServer.call(via_tuple(path), {:reset_graph})
+    end
+
+    :ok
+  end
+
   def add_node(path, vertex) do
     GenServer.call(via_tuple(path), {:add_vertex, vertex})
   end

@@ -6,13 +6,12 @@ defmodule Dialectic.Graph.Serialise do
     File.write!("graph.json", Jason.encode!(json))
   end
 
-  def load_graph do
+  def load_graph(file_path \\ "graph.json") do
     # json = File.read!("graph.json")
-    json = File.read!("satre.json")
-
-    json
-    |> Jason.decode!()
-    |> json_to_graph()
+    case File.read(file_path) do
+      {:ok, json} -> json |> Jason.decode!() |> json_to_graph()
+      {:error, _} -> :digraph.new()
+    end
   end
 
   def graph_to_json(graph) do

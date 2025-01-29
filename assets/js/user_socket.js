@@ -56,6 +56,10 @@ socket.connect();
 // Now that you are connected, you can join channels with a topic.
 // Let's assume you have a channel with a topic named `room` and the
 // subtopic is its id - in this case 42:
+
+//  ---------------------
+// TODO - need to base the topic based on GraphId
+// -----------
 let channel = socket.channel("graph_users:lobby", {});
 channel
   .join()
