@@ -104,8 +104,17 @@ defmodule GraphManager do
   end
 
   def add_child(graph_id, parents, llm_fn, class, user) do
+    content =
+      case class do
+        "user" ->
+          llm_fn.(class)
+
+        _ ->
+          ""
+      end
+
     node =
-      add_node(graph_id, %Vertex{content: "", class: class, user: user})
+      add_node(graph_id, %Vertex{content: content, class: class, user: user})
 
     # Stream response to the Node
     spawn(fn -> llm_fn.(node) end)

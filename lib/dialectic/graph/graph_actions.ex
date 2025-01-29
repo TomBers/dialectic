@@ -13,7 +13,7 @@ defmodule Dialectic.Graph.GraphActions do
       GraphManager.add_child(
         graph_id,
         parents,
-        fn n -> LlmInterface.add_question(question, n, pid) end,
+        fn _ -> question end,
         "user",
         user
       )
@@ -21,7 +21,7 @@ defmodule Dialectic.Graph.GraphActions do
     GraphManager.add_child(
       graph_id,
       [question_node],
-      fn n -> LlmInterface.gen_response(question, question_node, n, pid) end,
+      fn n -> LlmInterface.gen_response(question, n, pid) end,
       "answer",
       user
     )

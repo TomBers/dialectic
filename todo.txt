@@ -1,3 +1,5 @@
 Integrate the DeepSeek streaming.
 
+- Test the DeepSeek streaming.
+
 Users - think about Authentification and Authorization.

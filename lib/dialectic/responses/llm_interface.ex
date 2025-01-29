@@ -5,14 +5,11 @@ defmodule Dialectic.Responses.LlmInterface do
   @model Application.compile_env(:dialectic, :model_to_use, "local")
 
   def add_question(data, n, pid) do
-    IO.inspect("Sending back Data")
-    :timer.sleep(2000)
+    :timer.sleep(200)
     send(pid, {:steam_chunk, data, :node_id, n.id})
   end
 
-  def gen_response(user_qn, parent, child, pid) do
-    qn = "#{parent.content} \n #{user_qn}"
-    # IO.inspect(qn, label: "GenResponse")
+  def gen_response(qn, child, pid) do
     ask_model(qn, child, pid)
   end
 
@@ -45,7 +42,7 @@ defmodule Dialectic.Responses.LlmInterface do
     case @model do
       "deepseek" -> DeepSeekAPI.ask(question, to_node, pid)
       # "claude" -> Claude.ask(question)
-      _ -> add_question(question, to_node, pid)
+      _ -> add_question("reply to: " <> question, to_node, pid)
     end
   end
 end

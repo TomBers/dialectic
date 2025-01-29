@@ -18,14 +18,14 @@ defmodule DialecticWeb.ChatComp do
           <.live_component module={ChatMsgComp} node={@node} id={@node.id <>"_chatMsg" } />
         <% else %>
           <div class="node mb-2">
-            <h2>Enter Question</h2>
+            <h2>Waiting ...</h2>
           </div>
         <% end %>
       </div>
       <div class="bg-white shadow-lg border-t border-gray-200 p-2">
         <.form for={@form} phx-submit="answer">
           <div class="flex-1">
-            <.input field={@form[:content]} type="text" />
+            <.input field={@form[:content]} type="text" placeholder="Enter Question" />
           </div>
         </.form>
       </div>
