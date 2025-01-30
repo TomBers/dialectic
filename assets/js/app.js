@@ -27,16 +27,10 @@ let hooks = {};
 hooks.Graph = {
   mounted() {
     const div_id = document.getElementById("cy");
-    const context = this;
+
     const { graph, node } = this.el.dataset;
     const elements = JSON.parse(graph);
-    this.cy = draw_graph(div_id, elements);
-    this.cy.on("tap", "node", function () {
-      var n = this;
-      context.pushEvent("node_clicked", { id: n.id() });
-    });
-    this.cy.elements().removeClass("selected");
-
+    this.cy = draw_graph(div_id, this, elements);
     this.cy.$(`#${node}`).addClass("selected");
   },
   updated() {
@@ -46,9 +40,10 @@ hooks.Graph = {
     // Update the existing Cytoscape instance
     // Option A: Update by setting new JSON (overwrites the entire set of elements)
     this.cy.json({ elements: newElements });
-    this.cy.elements().removeClass("selected");
 
+    this.cy.elements().removeClass("selected");
     this.cy.$(`#${node}`).addClass("selected");
+
     this.cy.layout({ name: "dagre" }).run();
   },
 };

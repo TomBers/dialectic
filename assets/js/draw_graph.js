@@ -2,7 +2,7 @@ import cytoscape from "cytoscape";
 import dagre from "cytoscape-dagre";
 cytoscape.use(dagre);
 
-export function draw_graph(graph, elements) {
+export function draw_graph(graph, context, elements) {
   const cy = cytoscape({
     container: graph, // container to render in
     elements: elements,
@@ -88,5 +88,11 @@ export function draw_graph(graph, elements) {
       name: "dagre",
     },
   });
+  cy.on("tap", "node", function () {
+    var n = this;
+    context.pushEvent("node_clicked", { id: n.id() });
+  });
+  cy.elements().removeClass("selected");
+
   return cy;
 }
