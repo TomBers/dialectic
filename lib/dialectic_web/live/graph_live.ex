@@ -27,17 +27,17 @@ defmodule DialecticWeb.GraphLive do
         socket
       end
 
-    # graph = Serialise.load_graph()
     graph = GraphManager.get_graph(graph_id)
-    # node = graph |> Vertex.find_node_by_id("2") |> Vertex.add_relatives(graph)
-    node =
-      case GraphActions.find_node(graph_id, "1") do
-        {_graph, n} ->
-          n
 
-        _ ->
-          GraphActions.create_new_node(user)
-      end
+    node = GraphActions.create_new_node(user)
+    # node =
+    #   case GraphActions.find_node(graph_id, "1") do
+    #     {_graph, n} ->
+    #       n
+
+    #     _ ->
+    #       GraphActions.create_new_node(user)
+    #   end
 
     changeset = Vertex.changeset(node)
 
@@ -83,10 +83,7 @@ defmodule DialecticWeb.GraphLive do
   def handle_event("answer", %{"vertex" => %{"content" => answer}}, socket) do
     update_graph(
       socket,
-      GraphActions.answer(
-        graph_action_params(socket),
-        answer
-      )
+      GraphActions.comment(graph_action_params(socket), answer)
     )
   end
 
@@ -149,6 +146,12 @@ defmodule DialecticWeb.GraphLive do
         update_graph(
           socket,
           GraphActions.branch(graph_action_params(socket))
+        )
+
+      "r" ->
+        update_graph(
+          socket,
+          GraphActions.answer(graph_action_params(socket))
         )
 
       "s" ->

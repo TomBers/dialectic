@@ -6,22 +6,21 @@ defmodule Dialectic.Graph.GraphActions do
     %Vertex{user: user, id: "NewNode"}
   end
 
-  def answer({graph_id, node, user, pid}, question) do
-    parents = if length(node.parents) == 0, do: [], else: [node]
-
-    {_g, question_node} =
-      GraphManager.add_child(
-        graph_id,
-        parents,
-        fn _ -> question end,
-        "user",
-        user
-      )
-
+  def comment({graph_id, node, user, _pid}, question) do
     GraphManager.add_child(
       graph_id,
-      [question_node],
-      fn n -> LlmInterface.gen_response(question, n, pid) end,
+      [node],
+      fn _ -> question end,
+      "user",
+      user
+    )
+  end
+
+  def answer({graph_id, node, user, pid}) do
+    GraphManager.add_child(
+      graph_id,
+      [node],
+      fn n -> LlmInterface.gen_response(node.content, n, pid) end,
       "answer",
       user
     )
