@@ -30,14 +30,8 @@ defmodule DialecticWeb.GraphLive do
 
     graph = GraphManager.get_graph(graph_id)
 
-    {node, changeset} =
-      if length(:digraph.vertices(graph)) == 1 do
-        {_, v} = :digraph.vertex(graph, "1")
-        {v, GraphActions.create_new_node(user) |> Vertex.changeset()}
-      else
-        node = GraphActions.create_new_node(user)
-        {node, Vertex.changeset(node)}
-      end
+    {_, node} = :digraph.vertex(graph, "1")
+    changeset = GraphActions.create_new_node(user) |> Vertex.changeset()
 
     {:ok,
      assign(socket,
