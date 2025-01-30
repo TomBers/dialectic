@@ -10,7 +10,8 @@ defmodule DialecticWeb.GraphLive do
 
   alias Phoenix.PubSub
 
-  def mount(%{"graph_name" => graph_id, "name" => user}, _session, socket) do
+  def mount(%{"graph_name" => graph_id} = params, _session, socket) do
+    user = Map.get(params, "name", "anon")
     PubSub.subscribe(Dialectic.PubSub, "graph_update")
     socket = stream(socket, :presences, [])
 

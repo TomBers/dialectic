@@ -17,10 +17,9 @@ defmodule Dialectic.Graph.GraphActionsTest do
   def inital_qa() do
     node = GraphActions.create_new_node(@test_user)
 
-    GraphActions.answer(
-      graph_param(node),
-      "What is the meaning of life?"
-    )
+    GraphActions.comment(graph_param(node), "What is the meaning of life?")
+
+    GraphActions.answer(graph_param(node))
   end
 
   def branched_graph() do
@@ -32,7 +31,11 @@ defmodule Dialectic.Graph.GraphActionsTest do
   def full_graph() do
     {_, branched_node} = branched_graph()
     {_, synth_node} = GraphActions.combine(graph_param(branched_node), "3")
-    GraphActions.answer(graph_param(synth_node), "Synthesis question")
+
+    {_, comment_node} =
+      GraphActions.comment(graph_param(synth_node), "What is the meaning of life?")
+
+    GraphActions.answer(graph_param(comment_node))
   end
 
   test "full graph has expected properties", %{graph: graph} do
@@ -63,8 +66,10 @@ defmodule Dialectic.Graph.GraphActionsTest do
   test "answer creates question and answer nodes", %{graph: graph} do
     root_node = GraphActions.create_new_node(@test_user)
 
+    {_, cnode} = GraphActions.comment(graph_param(root_node), "Test question?")
+
     {updated_graph, _answer_node} =
-      GraphActions.answer(graph_param(root_node), "Test question?")
+      GraphActions.answer(graph_param(cnode))
 
     vertices = :digraph.vertices(updated_graph)
     # root, question, and answer nodes
@@ -159,7 +164,7 @@ defmodule Dialectic.Graph.GraphActionsTest do
 
     # Add another QA to synthesis
     {g4, _} =
-      GraphActions.answer(graph_param(synthesis), "Follow-up question?")
+      GraphActions.answer(graph_param(synthesis))
 
     assert length(:digraph.vertices(g4)) == 7
 

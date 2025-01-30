@@ -15,4 +15,9 @@ defmodule DialecticWeb.PageController do
     # Update this path to match your routes
     |> redirect(to: ~p"/#{conversation}?name=System")
   end
+
+  def graph(conn, %{"graph_name" => graph_name}) do
+    graph = Serialise.load_graph_as_json(graph_name)
+    json(conn, graph)
+  end
 end
