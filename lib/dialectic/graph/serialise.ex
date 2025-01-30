@@ -1,14 +1,35 @@
 defmodule Dialectic.Graph.Serialise do
   alias Dialectic.Graph.Vertex
 
-  def save_graph(graph) do
-    json = graph_to_json(graph)
-    File.write!("graph.json", Jason.encode!(json))
+  @base_path "priv/static/graphs/"
+
+  def calc_path(name) do
+    @base_path <> name <> ".json"
   end
 
-  def load_graph(file_path \\ "graph.json") do
-    # json = File.read!("graph.json")
-    case File.read(file_path <> ".json") do
+  def save_graph(name, graph) do
+    json = graph_to_json(graph)
+    File.write!(calc_path(name), Jason.encode!(json))
+  end
+
+  def save_new_graph(name) do
+    template = %{
+      nodes: [%{id: "1", content: name}],
+      edges: []
+    }
+
+    File.write(calc_path(name), Jason.encode!(template))
+  end
+
+  def load_graph_as_json(name) do
+    case File.read(calc_path(name)) do
+      {:ok, json} -> json |> Jason.decode!()
+      {:error, _} -> %{}
+    end
+  end
+
+  def load_graph(name \\ "graph.json") do
+    case File.read(calc_path(name)) do
       {:ok, json} -> json |> Jason.decode!() |> json_to_graph()
       {:error, _} -> :digraph.new()
     end

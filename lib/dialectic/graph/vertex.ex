@@ -73,7 +73,7 @@ defmodule Dialectic.Graph.Vertex do
   end
 
   def to_cytoscape_format(graph) do
-    IO.inspect(graph, label: "Cytoscape graph")
+    # IO.inspect(graph, label: "Cytoscape graph")
     # Get all vertices and edges from the digraph
     vertices = :digraph.vertices(graph)
     edges = :digraph.edges(graph)

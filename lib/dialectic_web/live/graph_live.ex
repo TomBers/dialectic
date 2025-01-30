@@ -10,7 +10,8 @@ defmodule DialecticWeb.GraphLive do
 
   alias Phoenix.PubSub
 
-  def mount(%{"graph_name" => graph_id, "name" => user}, _session, socket) do
+  def mount(%{"graph_name" => graph_id} = params, _session, socket) do
+    user = Map.get(params, "name", "anon")
     PubSub.subscribe(Dialectic.PubSub, "graph_update")
     socket = stream(socket, :presences, [])
 
@@ -27,19 +28,10 @@ defmodule DialecticWeb.GraphLive do
         socket
       end
 
-    # graph = Serialise.load_graph()
     graph = GraphManager.get_graph(graph_id)
-    # node = graph |> Vertex.find_node_by_id("2") |> Vertex.add_relatives(graph)
-    node =
-      case GraphActions.find_node(graph_id, "1") do
-        {_graph, n} ->
-          n
 
-        _ ->
-          GraphActions.create_new_node(user)
-      end
-
-    changeset = Vertex.changeset(node)
+    {_, node} = :digraph.vertex(graph, "1")
+    changeset = GraphActions.create_new_node(user) |> Vertex.changeset()
 
     {:ok,
      assign(socket,
@@ -83,16 +75,8 @@ defmodule DialecticWeb.GraphLive do
   def handle_event("answer", %{"vertex" => %{"content" => answer}}, socket) do
     update_graph(
       socket,
-      GraphActions.answer(
-        graph_action_params(socket),
-        answer
-      )
+      GraphActions.comment(graph_action_params(socket), answer)
     )
-  end
-
-  def handle_event("save_graph", _, socket) do
-    Serialise.save_graph(socket.assigns.graph)
-    {:noreply, socket |> put_flash(:info, "Saved!")}
   end
 
   def handle_event("modal_closed", _, socket) do
@@ -151,8 +135,14 @@ defmodule DialecticWeb.GraphLive do
           GraphActions.branch(graph_action_params(socket))
         )
 
+      "r" ->
+        update_graph(
+          socket,
+          GraphActions.answer(graph_action_params(socket))
+        )
+
       "s" ->
-        Serialise.save_graph(socket.assigns.graph)
+        Serialise.save_graph(socket.assigns.graph_id, socket.assigns.graph)
         {:noreply, socket |> put_flash(:info, "Saved!")}
 
       "c" ->

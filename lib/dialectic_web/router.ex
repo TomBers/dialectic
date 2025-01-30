@@ -16,7 +16,9 @@ defmodule DialecticWeb.Router do
 
   scope "/", DialecticWeb do
     pipe_through :browser
-
+    get "/", PageController, :home
+    post "/conversation", PageController, :create
+    get "/graphs/:graph_name", PageController, :graph
     live "/:graph_name", GraphLive
   end
 

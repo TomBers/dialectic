@@ -33,8 +33,9 @@ defmodule GraphManager do
   # Server callbacks
   def init(path) do
     # graph = :digraph.new()
+    # :digraph.add_vertex(graph, "1", %Vertex{id: "1", content: "Root Node"})
     graph = Serialise.load_graph(path)
-    # TODO - look to read from File
+
     {:ok, {path, graph}}
   end
 
