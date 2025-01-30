@@ -1,5 +1,10 @@
-Integrate the DeepSeek streaming.
+To think about -
 
-- Test the DeepSeek streaming.
+1) Allow comments without sending to the LLM?
+
+2) Personas - ask the LLM to answer the question as a particular thinker
+Answer as Plato, Aristotle, etc.
+
+Overview - a multiplayer where any player can answer questions.  The players are either real people online, or LLM agents.  The LLM agents are trained to answer questions as a particular thinker.
 
 Users - think about Authentification and Authorization.
