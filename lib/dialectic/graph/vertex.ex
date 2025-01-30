@@ -39,12 +39,6 @@ defmodule Dialectic.Graph.Vertex do
     |> Ecto.Changeset.cast(params, Map.keys(types))
   end
 
-  def update_vertex(graph, v, new_v) do
-    # |> IO.inspect(label: "Update Vertex")
-    :digraph.add_vertex(graph, v.id, new_v)
-    graph
-  end
-
   def add_relatives(node, graph) do
     parents = find_parents(graph, node)
     children = find_children(graph, node)
@@ -79,6 +73,7 @@ defmodule Dialectic.Graph.Vertex do
   end
 
   def to_cytoscape_format(graph) do
+    IO.inspect(graph, label: "Cytoscape graph")
     # Get all vertices and edges from the digraph
     vertices = :digraph.vertices(graph)
     edges = :digraph.edges(graph)

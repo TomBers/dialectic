@@ -1,6 +1,7 @@
 defmodule GraphManagerTest do
   use ExUnit.Case
   alias Dialectic.Graph.Vertex
+  alias Dialectic.Responses.LlmInterface
 
   @test_path "test_graph"
   @test_user "test_user"
@@ -122,13 +123,15 @@ defmodule GraphManagerTest do
         GraphManager.add_child(
           @test_path,
           [parent],
-          "child content",
+          fn n -> LlmInterface.add_question("child content", n, self()) end,
           "child_class",
           @test_user
         )
 
       # Verify node properties
-      assert child.content == "child content"
+      # assert child.content == "child content"
+      # TODO - How to test the streaming function?
+      assert child.content == ""
       assert child.class == "child_class"
       assert child.user == @test_user
 
@@ -156,7 +159,7 @@ defmodule GraphManagerTest do
         GraphManager.add_child(
           @test_path,
           [parent],
-          "child content",
+          fn n -> LlmInterface.add_question("child content", n, self()) end,
           "child_class",
           @test_user
         )
@@ -187,10 +190,22 @@ defmodule GraphManagerTest do
 
       # Add multiple children
       {graph1, child1} =
-        GraphManager.add_child(@test_path, [parent], "child1", "test", @test_user)
+        GraphManager.add_child(
+          @test_path,
+          [parent],
+          fn n -> LlmInterface.add_question("child1", n, self()) end,
+          "test",
+          @test_user
+        )
 
       {graph2, child2} =
-        GraphManager.add_child(@test_path, [parent], "child2", "test", @test_user)
+        GraphManager.add_child(
+          @test_path,
+          [parent],
+          fn n -> LlmInterface.add_question("child2", n, self()) end,
+          "test",
+          @test_user
+        )
 
       # Verify all nodes exist
       vertices = :digraph.vertices(graph2)

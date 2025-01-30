@@ -6,14 +6,14 @@ defmodule Dialectic.Graph.GraphActions do
     %Vertex{user: user, id: "NewNode"}
   end
 
-  def answer(graph_id, node, question, user) do
+  def answer({graph_id, node, user, pid}, question) do
     parents = if length(node.parents) == 0, do: [], else: [node]
 
     {_g, question_node} =
       GraphManager.add_child(
         graph_id,
         parents,
-        question,
+        fn _ -> question end,
         "user",
         user
       )
@@ -21,17 +21,17 @@ defmodule Dialectic.Graph.GraphActions do
     GraphManager.add_child(
       graph_id,
       [question_node],
-      LlmInterface.gen_response(question, node),
+      fn n -> LlmInterface.gen_response(question, n, pid) end,
       "answer",
       user
     )
   end
 
-  def branch(graph_id, node, user) do
+  def branch({graph_id, node, user, pid}) do
     GraphManager.add_child(
       graph_id,
       [node],
-      LlmInterface.gen_thesis(node),
+      fn n -> LlmInterface.gen_thesis(node, n, pid) end,
       "thesis",
       user
     )
@@ -39,13 +39,13 @@ defmodule Dialectic.Graph.GraphActions do
     GraphManager.add_child(
       graph_id,
       [node],
-      LlmInterface.gen_antithesis(node),
+      fn n -> LlmInterface.gen_antithesis(node, n, pid) end,
       "antithesis",
       user
     )
   end
 
-  def combine(graph_id, node1, combine_node_id, user) do
+  def combine({graph_id, node1, user, pid}, combine_node_id) do
     case GraphManager.find_node_by_id(graph_id, combine_node_id) do
       nil ->
         nil
@@ -54,7 +54,7 @@ defmodule Dialectic.Graph.GraphActions do
         GraphManager.add_child(
           graph_id,
           [node1, node2],
-          LlmInterface.gen_synthesis(node1, node2),
+          fn n -> LlmInterface.gen_synthesis(node1, node2, n, pid) end,
           "synthesis",
           user
         )

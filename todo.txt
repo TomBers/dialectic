@@ -1,10 +1,10 @@
-Make sure the Presence passes in the correct path to the graph.
-At the moment it is hard coded, so that every user will join every graph.
+To think about -
 
-Make a path for the graph based on the URL of the page.
+1) Allow comments without sending to the LLM?
 
-Add more tests for Graph Actions and Graph Manager. - DONE
+2) Personas - ask the LLM to answer the question as a particular thinker
+Answer as Plato, Aristotle, etc.
 
-Integrate the DeepSeek streaming.
+Overview - a multiplayer where any player can answer questions.  The players are either real people online, or LLM agents.  The LLM agents are trained to answer questions as a particular thinker.
 
 Users - think about Authentification and Authorization.

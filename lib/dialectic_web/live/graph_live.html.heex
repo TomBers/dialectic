@@ -47,11 +47,10 @@
           {id} ({length(metas)})
         </li>
       </ul>
-      <%= if @node.id do %>
-        <div class="flex-1 overflow-y-auto">
-          <.live_component module={ChatComp} form={@form} node={@node} id="Chat" />
-        </div>
-      <% end %>
+
+      <div class="flex-1 overflow-y-auto">
+        <.live_component module={ChatComp} form={@form} node={@node} id="Chat" />
+      </div>
     </div>
   </div>
 </div>

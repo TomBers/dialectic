@@ -5,45 +5,65 @@ defmodule Dialectic.Models.DeepSeekAPI do
   @base_url "https://api.deepseek.com"
   @model "deepseek-chat"
 
-  def ask(question) do
-    IO.inspect(@api_key, label: "API Key")
+  def ask(question, to_node, pid) do
+    # IO.inspect(@api_key, label: "API Key")
     # Replace with the correct endpoint for asking questions
     url = "#{@base_url}/chat/completions"
 
     body =
       Jason.encode!(%{
         model: @model,
-        stream: false,
+        stream: true,
         messages: [
-          %{role: "system", content: "You are a helpful assistant."},
+          %{
+            role: "system",
+            content:
+              "You are an expert philosopher, helping the user better understand key philosophical points. Please keep your answers concise and to the point."
+          },
           %{role: "user", content: question}
         ]
       })
 
-    Req.post(url,
-      headers: [{"Authorization", "Bearer #{@api_key}"}, {"Content-Type", "application/json"}],
-      body: body,
-      connect_options: [timeout: 30_000],
-      # How long to wait to receive the response once connected
-      receive_timeout: 30_000
-    )
-    |> handle_response()
-    |> extract_content()
+    spawn(fn ->
+      Req.post(url,
+        headers: [{"Authorization", "Bearer #{@api_key}"}, {"Content-Type", "application/json"}],
+        body: body,
+        into: fn {:data, data}, context ->
+          Enum.each(parse(data), fn data -> send_chunk(data, pid, to_node) end)
+          {:cont, context}
+        end,
+        connect_options: [timeout: 30_000],
+        # How long to wait to receive the response once connected
+        receive_timeout: 30_000
+      )
+    end)
+
+    ""
   end
 
-  defp extract_content({:ok, body}) do
-    Map.get(body, "choices") |> hd() |> Map.get("message") |> Map.get("content")
+  defp send_chunk(
+         %{
+           "choices" => [
+             %{
+               "delta" => %{"content" => data}
+             }
+           ]
+         },
+         pid,
+         to_node
+       ) do
+    send(pid, {:steam_chunk, data, :node_id, to_node.id})
   end
 
-  defp handle_response({:ok, %{status: status, body: body}}) when status in 200..299 do
-    {:ok, body}
+  defp parse(chunk) do
+    chunk
+    |> String.split("data: ")
+    |> Enum.map(&String.trim/1)
+    |> Enum.map(&decode/1)
+    |> Enum.reject(&is_nil/1)
   end
 
-  defp handle_response({:ok, %{status: status, body: body}}) do
-    {:error, "API request failed with status #{status}: #{inspect(body)}"}
-  end
-
-  defp handle_response({:error, reason}) do
-    {:error, "API request failed: #{inspect(reason)}"}
-  end
+  defp decode(""), do: nil
+  defp decode("[DONE]"), do: nil
+  defp decode(data), do: Jason.decode!(data)
 end

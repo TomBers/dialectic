@@ -20,7 +20,7 @@ defmodule DialecticWeb.GraphLive do
         DialecticWeb.Presence.subscribe()
 
         presences =
-          DialecticWeb.Presence.list_online_users(graph_id) |> IO.inspect(label: "Users")
+          DialecticWeb.Presence.list_online_users(graph_id)
 
         stream(socket, :presences, presences)
       else
@@ -84,10 +84,8 @@ defmodule DialecticWeb.GraphLive do
     update_graph(
       socket,
       GraphActions.answer(
-        socket.assigns.graph_id,
-        socket.assigns.node,
-        answer,
-        socket.assigns.user
+        graph_action_params(socket),
+        answer
       )
     )
   end
@@ -109,15 +107,6 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  defp is_connected_to_graph?(
-         %{
-           metas: [%{graph_id: user_graph_id}]
-         },
-         graph_id
-       ) do
-    user_graph_id == graph_id
-  end
-
   def handle_info({DialecticWeb.Presence, {:leave, presence}}, socket) do
     if presence.metas == [] do
       {:noreply, stream_delete(socket, :presences, presence)}
@@ -130,6 +119,26 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, assign(socket, node: node, graph: graph, f_graph: format_graph(graph))}
   end
 
+  def handle_info({:steam_chunk, chunk, :node_id, node_id}, socket) do
+    # This is the streamed LLM response into a node
+    # TODO - broadcast to all users??? - only want to update the node that is being worked on, just rerender the others
+    updated_vertex = GraphManager.update_vertex(socket.assigns.graph_id, node_id, chunk)
+
+    if node_id == Map.get(socket.assigns.node, :id) do
+      {:noreply, assign(socket, node: updated_vertex)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  defp is_connected_to_graph?(
+         %{
+           metas: [%{graph_id: user_graph_id}]
+         },
+         graph_id
+       ),
+       do: user_graph_id == graph_id
+
   def format_graph(graph) do
     graph |> Vertex.to_cytoscape_format() |> Jason.encode!()
   end
@@ -139,7 +148,7 @@ defmodule DialecticWeb.GraphLive do
       "b" ->
         update_graph(
           socket,
-          GraphActions.branch(socket.assigns.graph_id, socket.assigns.node, socket.assigns.user)
+          GraphActions.branch(graph_action_params(socket))
         )
 
       "s" ->
@@ -163,10 +172,8 @@ defmodule DialecticWeb.GraphLive do
 
   def combine_interface(socket, key) do
     case GraphActions.combine(
-           socket.assigns.graph_id,
-           socket.assigns.node,
-           key,
-           socket.assigns.user
+           graph_action_params(socket),
+           key
          ) do
       {graph, node} ->
         update_graph(socket, {graph, node}, true)
@@ -174,6 +181,10 @@ defmodule DialecticWeb.GraphLive do
       _ ->
         {:noreply, assign(socket, key_buffer: key)}
     end
+  end
+
+  defp graph_action_params(socket) do
+    {socket.assigns.graph_id, socket.assigns.node, socket.assigns.user, self()}
   end
 
   def update_graph(socket, {graph, node}, invert_modal \\ false) do

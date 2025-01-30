@@ -12,21 +12,27 @@ defmodule Dialectic.Graph.GraphActionsTest do
     {:ok, graph: graph}
   end
 
+  def graph_param(node), do: {@graph_id, node, @test_user, self()}
+
   def inital_qa() do
-    root_node = GraphActions.create_new_node(@test_user)
-    GraphActions.answer(@graph_id, root_node, "What is the meaning of life?", @test_user)
+    node = GraphActions.create_new_node(@test_user)
+
+    GraphActions.answer(
+      graph_param(node),
+      "What is the meaning of life?"
+    )
   end
 
   def branched_graph() do
     {_graph, answer} = inital_qa()
-    GraphActions.branch(@graph_id, answer, @test_user)
+    GraphActions.branch(graph_param(answer))
   end
 
   # Example of a full graph, with a question, answer, thesis, antithesis, and synthesis
   def full_graph() do
     {_, branched_node} = branched_graph()
-    {_, synth_node} = GraphActions.combine(@graph_id, branched_node, "3", @test_user)
-    GraphActions.answer(@graph_id, synth_node, "Synthesis question", @test_user)
+    {_, synth_node} = GraphActions.combine(graph_param(branched_node), "3")
+    GraphActions.answer(graph_param(synth_node), "Synthesis question")
   end
 
   test "full graph has expected properties", %{graph: graph} do
@@ -58,7 +64,7 @@ defmodule Dialectic.Graph.GraphActionsTest do
     root_node = GraphActions.create_new_node(@test_user)
 
     {updated_graph, _answer_node} =
-      GraphActions.answer(@graph_id, root_node, "Test question?", @test_user)
+      GraphActions.answer(graph_param(root_node), "Test question?")
 
     vertices = :digraph.vertices(updated_graph)
     # root, question, and answer nodes
@@ -74,7 +80,7 @@ defmodule Dialectic.Graph.GraphActionsTest do
 
   test "branch creates thesis and antithesis nodes", %{graph: graph} do
     {_graph, answer_node} = inital_qa()
-    {updated_graph, _} = GraphActions.branch(@graph_id, answer_node, @test_user)
+    {updated_graph, _} = GraphActions.branch(graph_param(answer_node))
 
     vertices = :digraph.vertices(updated_graph)
     # initial QA (2) + thesis + antithesis
@@ -90,7 +96,9 @@ defmodule Dialectic.Graph.GraphActionsTest do
 
   test "combine creates synthesis node with two parents", %{graph: graph} do
     {_, node1} = branched_graph()
-    {updated_graph, synthesis_node} = GraphActions.combine(@graph_id, node1, "3", @test_user)
+
+    {updated_graph, synthesis_node} =
+      GraphActions.combine(graph_param(node1), "3")
 
     # Verify synthesis node properties
     assert synthesis_node.class == "synthesis"
@@ -105,7 +113,7 @@ defmodule Dialectic.Graph.GraphActionsTest do
 
   test "combine returns nil for non-existent node" do
     {_, node1} = inital_qa()
-    result = GraphActions.combine(@graph_id, node1, "non-existent", @test_user)
+    result = GraphActions.combine(graph_param(node1), "non-existent")
     assert result == nil
   end
 
@@ -142,15 +150,17 @@ defmodule Dialectic.Graph.GraphActionsTest do
     assert length(:digraph.vertices(g1)) == 2
 
     # Branch from answer
-    {g2, _} = GraphActions.branch(@graph_id, answer1, @test_user)
+    {g2, _} = GraphActions.branch(graph_param(answer1))
     assert length(:digraph.vertices(g2)) == 4
 
     # Create synthesis
-    {g3, synthesis} = GraphActions.combine(@graph_id, answer1, "3", @test_user)
+    {g3, synthesis} = GraphActions.combine(graph_param(answer1), "3")
     assert length(:digraph.vertices(g3)) == 5
 
     # Add another QA to synthesis
-    {g4, _} = GraphActions.answer(@graph_id, synthesis, "Follow-up question?", @test_user)
+    {g4, _} =
+      GraphActions.answer(graph_param(synthesis), "Follow-up question?")
+
     assert length(:digraph.vertices(g4)) == 7
 
     # Verify final structure
