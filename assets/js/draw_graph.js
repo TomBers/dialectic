@@ -1,9 +1,7 @@
 import cytoscape from "cytoscape";
 
-export function draw_graph(graph, context, elements, node_clicked) {
-  console.log("Node Clicked");
-  console.log(node_clicked);
-  window.cy = cytoscape({
+export function draw_graph(graph, elements) {
+  const cy = cytoscape({
     container: graph, // container to render in
     elements: elements,
 
@@ -28,7 +26,7 @@ export function draw_graph(graph, context, elements, node_clicked) {
       },
       // Clicked node highlight
       {
-        selector: `#${node_clicked}`,
+        selector: "node.selected",
         css: {
           "font-weight": "800",
           color: "red",
@@ -90,10 +88,5 @@ export function draw_graph(graph, context, elements, node_clicked) {
       padding: 10,
     },
   });
-  cy.on("tap", "node", function () {
-    // console.log(this);
-    var node = this;
-    context.pushEvent("node_clicked", { id: node.id() });
-  });
-  window.cy = cy;
+  return cy;
 }

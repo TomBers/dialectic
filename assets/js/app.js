@@ -26,19 +26,31 @@ import topbar from "../vendor/topbar";
 let hooks = {};
 hooks.Graph = {
   mounted() {
+    const div_id = document.getElementById("cy");
     const context = this;
-    const graph = document.getElementById("cy");
+    const { graph, node } = this.el.dataset;
+    const elements = JSON.parse(graph);
+    this.cy = draw_graph(div_id, elements);
+    this.cy.on("tap", "node", function () {
+      var n = this;
+      context.pushEvent("node_clicked", { id: n.id() });
+    });
+    this.cy.elements().removeClass("selected");
 
-    const elements = JSON.parse(graph.dataset.graph);
-    const node = graph.dataset.node;
-    draw_graph(graph, context, elements, node);
+    this.cy.$(`#${node}`).addClass("selected");
   },
   updated() {
     const context = this;
-    const graph = document.getElementById("cy");
-    const elements = JSON.parse(graph.dataset.graph);
-    const node = graph.dataset.node;
-    draw_graph(graph, context, elements, node);
+    const { graph, node } = this.el.dataset;
+    const newElements = JSON.parse(graph);
+
+    // Update the existing Cytoscape instance
+    // Option A: Update by setting new JSON (overwrites the entire set of elements)
+    this.cy.json({ elements: newElements });
+    this.cy.elements().removeClass("selected");
+
+    this.cy.$(`#${node}`).addClass("selected");
+    this.cy.center();
   },
 };
 
