@@ -29,17 +29,14 @@ defmodule DialecticWeb.GraphLive do
 
     graph = GraphManager.get_graph(graph_id)
 
-    node = GraphActions.create_new_node(user)
-    # node =
-    #   case GraphActions.find_node(graph_id, "1") do
-    #     {_graph, n} ->
-    #       n
-
-    #     _ ->
-    #       GraphActions.create_new_node(user)
-    #   end
-
-    changeset = Vertex.changeset(node)
+    {node, changeset} =
+      if length(:digraph.vertices(graph)) == 1 do
+        {_, v} = :digraph.vertex(graph, "1")
+        {v, GraphActions.create_new_node(user) |> Vertex.changeset()}
+      else
+        node = GraphActions.create_new_node(user)
+        {node, Vertex.changeset(node)}
+      end
 
     {:ok,
      assign(socket,
@@ -85,11 +82,6 @@ defmodule DialecticWeb.GraphLive do
       socket,
       GraphActions.comment(graph_action_params(socket), answer)
     )
-  end
-
-  def handle_event("save_graph", _, socket) do
-    Serialise.save_graph(socket.assigns.graph)
-    {:noreply, socket |> put_flash(:info, "Saved!")}
   end
 
   def handle_event("modal_closed", _, socket) do
@@ -155,7 +147,7 @@ defmodule DialecticWeb.GraphLive do
         )
 
       "s" ->
-        Serialise.save_graph(socket.assigns.graph)
+        Serialise.save_graph(socket.assigns.graph_id, socket.assigns.graph)
         {:noreply, socket |> put_flash(:info, "Saved!")}
 
       "c" ->

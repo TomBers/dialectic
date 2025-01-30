@@ -1,1 +1,33 @@
-<h1>Graph demo</h1>
+<div class="max-w-4xl mx-auto p-8">
+  <.form
+    :let={f}
+    for={%{}}
+    action={~p"/conversation"}
+    class="mb-8 bg-white shadow-md rounded-lg p-6"
+  >
+    <div class="space-y-4">
+      <.input field={f[:conversation]} type="text" label="Start a conversation" class="w-full" />
+      <.button
+        type="submit"
+        class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md transition duration-150 ease-in-out"
+      >
+        Submit
+      </.button>
+    </div>
+  </.form>
+
+  <div class="bg-white shadow-md rounded-lg overflow-hidden">
+    <ul class="divide-y divide-gray-200">
+      <%= for graph <- @graphs do %>
+        <li class="hover:bg-gray-50 transition duration-150 ease-in-out">
+          <a
+            href={~p"/#{graph}?name=System"}
+            class="block px-6 py-4 text-indigo-600 hover:text-indigo-800"
+          >
+            {graph}
+          </a>
+        </li>
+      <% end %>
+    </ul>
+  </div>
+</div>

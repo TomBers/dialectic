@@ -1,10 +1,18 @@
 defmodule DialecticWeb.PageController do
   use DialecticWeb, :controller
+  alias Dialectic.Graph.Serialise
 
   def home(conn, _params) do
-    # The home page is often custom made,
-    # so skip the default app layout.
-    # dat = Dialectic.Graph.Sample.run() |> Jason.encode!()
-    render(conn, :home, layout: false)
+    graphs = File.ls!("priv/static/graphs") |> Enum.map(&Path.basename(&1, ".json"))
+    render(conn, :home, graphs: graphs, layout: false)
+  end
+
+  def create(conn, %{"conversation" => conversation}) do
+    Serialise.save_new_graph(conversation)
+
+    conn
+    |> put_flash(:info, "Conversation processed successfully!")
+    # Update this path to match your routes
+    |> redirect(to: ~p"/#{conversation}?name=System")
   end
 end
