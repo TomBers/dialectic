@@ -1,4 +1,6 @@
 import cytoscape from "cytoscape";
+import dagre from "cytoscape-dagre";
+cytoscape.use(dagre);
 
 export function draw_graph(graph, elements) {
   const cy = cytoscape({
@@ -83,9 +85,7 @@ export function draw_graph(graph, elements) {
     ],
 
     layout: {
-      name: "breadthfirst",
-      directed: true,
-      padding: 10,
+      name: "dagre",
     },
   });
   return cy;

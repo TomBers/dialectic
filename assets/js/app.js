@@ -40,7 +40,6 @@ hooks.Graph = {
     this.cy.$(`#${node}`).addClass("selected");
   },
   updated() {
-    const context = this;
     const { graph, node } = this.el.dataset;
     const newElements = JSON.parse(graph);
 
@@ -50,7 +49,7 @@ hooks.Graph = {
     this.cy.elements().removeClass("selected");
 
     this.cy.$(`#${node}`).addClass("selected");
-    this.cy.center();
+    this.cy.layout({ name: "dagre" }).run();
   },
 };
 
