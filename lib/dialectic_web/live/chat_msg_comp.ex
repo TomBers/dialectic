@@ -1,5 +1,6 @@
 defmodule DialecticWeb.ChatMsgComp do
   use DialecticWeb, :live_component
+  alias Dialectic.Consts.Colours
 
   @impl true
   def update(assigns, socket) do
@@ -32,7 +33,7 @@ defmodule DialecticWeb.ChatMsgComp do
     <div class={[
       "node mb-4 rounded-lg shadow-sm",
       "flex items-start gap-3",
-      message_border_class(@node.class)
+      Colours.get_tailwind_class(@node.class)
     ]}>
       <div class="shrink-0">
         <h2 class="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 text-gray-700 font-mono text-sm">
@@ -59,17 +60,5 @@ defmodule DialecticWeb.ChatMsgComp do
       </div>
     </div>
     """
-  end
-
-  # Add this helper function to handle message border styling
-  defp message_border_class(class) do
-    case class do
-      "user" -> "border-l-4 border-red-400 bg-white"
-      "answer" -> "border-l-4 border-green-400 bg-white"
-      "thesis" -> "border-l-4 border-green-600 bg-white"
-      "antithesis" -> "border-l-4 border-blue-600 bg-white"
-      "synthesis" -> "border-l-4 border-purple-600 bg-white"
-      _ -> "border border-gray-200 bg-white"
-    end
   end
 end

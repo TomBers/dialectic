@@ -28,9 +28,9 @@ hooks.Graph = {
   mounted() {
     const div_id = document.getElementById("cy");
 
-    const { graph, node } = this.el.dataset;
+    const { graph, node, cols } = this.el.dataset;
     const elements = JSON.parse(graph);
-    this.cy = draw_graph(div_id, this, elements);
+    this.cy = draw_graph(div_id, this, elements, cols);
     this.cy.$(`#${node}`).addClass("selected");
   },
   updated() {

@@ -2,13 +2,10 @@ import cytoscape from "cytoscape";
 import dagre from "cytoscape-dagre";
 cytoscape.use(dagre);
 
-export function draw_graph(graph, context, elements) {
-  const cy = cytoscape({
-    container: graph, // container to render in
-    elements: elements,
-
-    style: [
-      // Base node style
+function style_graph(cols_str) {
+  const base_style =
+    // Base node style
+    [
       {
         selector: "node",
         style: {
@@ -34,42 +31,6 @@ export function draw_graph(graph, context, elements) {
           color: "red",
         },
       },
-      // Node types matching our chat interface
-      {
-        selector: `node[class = "thesis"]`,
-        css: {
-          "border-color": "#34d399", // green-400
-          "background-color": "#f0fdf4", // green-50
-        },
-      },
-      {
-        selector: `node[class = "antithesis"]`,
-        css: {
-          "border-color": "#60a5fa", // blue-400
-          "background-color": "#eff6ff", // blue-50
-        },
-      },
-      {
-        selector: `node[class = "synthesis"]`,
-        css: {
-          "border-color": "#c084fc", // purple-400
-          "background-color": "#faf5ff", // purple-50
-        },
-      },
-      {
-        selector: `node[class = "answer"]`,
-        css: {
-          "border-color": "#4ade80", // green-400
-          "background-color": "#f0fdf4", // green-50
-        },
-      },
-      {
-        selector: `node[class = "user"]`,
-        css: {
-          "border-color": "#f87171", // red-400
-          "background-color": "#fef2f2", // red-50
-        },
-      },
       // Edge styling
       {
         selector: "edge",
@@ -82,8 +43,26 @@ export function draw_graph(graph, context, elements) {
           "arrow-scale": 1.2,
         },
       },
-    ],
+    ];
 
+  const cols = JSON.parse(cols_str);
+  for (const nodeType in cols) {
+    base_style.push({
+      selector: `node[class = "${nodeType}"]`,
+      css: {
+        "border-color": cols[nodeType].border,
+        "background-color": cols[nodeType].background,
+      },
+    });
+  }
+  return base_style;
+}
+
+export function draw_graph(graph, context, elements, cols) {
+  const cy = cytoscape({
+    container: graph, // container to render in
+    elements: elements,
+    style: style_graph(cols),
     layout: {
       name: "dagre",
     },

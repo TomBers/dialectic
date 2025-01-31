@@ -72,6 +72,8 @@ defmodule DialecticWeb.GraphLive do
     update_graph(socket, GraphActions.find_node(socket.assigns.graph_id, id))
   end
 
+  def handle_event("answer", %{"vertex" => %{"content" => ""}}, socket), do: {:noreply, socket}
+
   def handle_event("answer", %{"vertex" => %{"content" => answer}}, socket) do
     update_graph(
       socket,
