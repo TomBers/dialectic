@@ -27,6 +27,12 @@ defmodule DialecticWeb.ChatMsgComp do
     Earmark.as_html!(content) |> Phoenix.HTML.raw()
   end
 
+  defp modal_title(nil), do: ""
+
+  defp modal_title(class) do
+    String.upcase(class) <> ":"
+  end
+
   @impl true
   def render(assigns) do
     ~H"""
@@ -43,7 +49,10 @@ defmodule DialecticWeb.ChatMsgComp do
 
       <div class="proposition flex-1 max-w-none">
         <.modal on_cancel={JS.push("modal_closed")} id={"modal-" <> @node.id}>
-          {full_html(@node.content || "")}
+          <article class="prose prose-stone prose-sm">
+            <h1 class="">{modal_title(@node.class)}</h1>
+            {full_html(@node.content || "")}
+          </article>
         </.modal>
         <article class="prose prose-stone prose-sm">
           {truncated_html(@node.content || "", @cut_off)}
