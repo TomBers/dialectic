@@ -1,6 +1,5 @@
 defmodule DialecticWeb.ChatMsgComp do
   use DialecticWeb, :live_component
-  alias Dialectic.Consts.Colours
 
   @impl true
   def update(assigns, socket) do
