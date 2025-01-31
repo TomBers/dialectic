@@ -12,6 +12,7 @@ defmodule DialecticWeb.GraphLive do
 
   def mount(%{"graph_name" => graph_id} = params, _session, socket) do
     user = Map.get(params, "name", "anon")
+    node_id = Map.get(params, "node", "1")
     PubSub.subscribe(Dialectic.PubSub, "graph_update")
     socket = stream(socket, :presences, [])
 
@@ -30,7 +31,7 @@ defmodule DialecticWeb.GraphLive do
 
     graph = GraphManager.get_graph(graph_id)
 
-    {_, node} = :digraph.vertex(graph, "1")
+    {_, node} = :digraph.vertex(graph, node_id)
     changeset = GraphActions.create_new_node(user) |> Vertex.changeset()
 
     {:ok,
@@ -38,7 +39,7 @@ defmodule DialecticWeb.GraphLive do
        graph_id: graph_id,
        graph: graph,
        f_graph: format_graph(graph),
-       node: node,
+       node: Vertex.add_relatives(node, graph),
        form: to_form(changeset),
        show_combine: false,
        key_buffer: "",

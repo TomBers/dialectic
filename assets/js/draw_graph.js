@@ -58,7 +58,7 @@ function style_graph(cols_str) {
   return base_style;
 }
 
-export function draw_graph(graph, context, elements, cols) {
+export function draw_graph(graph, context, elements, cols, node) {
   const cy = cytoscape({
     container: graph, // container to render in
     elements: elements,
@@ -70,8 +70,21 @@ export function draw_graph(graph, context, elements, cols) {
   cy.on("tap", "node", function () {
     var n = this;
     context.pushEvent("node_clicked", { id: n.id() });
+    cy.animate({
+      center: {
+        eles: n,
+      },
+      duration: 500, // duration in milliseconds for the animation
+    });
   });
   cy.elements().removeClass("selected");
+  cy.$(`#${node}`).addClass("selected");
+  cy.animate({
+    center: {
+      eles: `#${node}`,
+    },
+    duration: 500, // duration in milliseconds for the animation
+  });
 
   return cy;
 }

@@ -24,14 +24,15 @@ defmodule Dialectic.Consts.Colours do
     }
   end
 
-  def get_tailwind_class(class) do
-    case class do
-      "user" -> "border-l-4 border-red-400 bg-white"
-      "answer" -> "border-l-4 border-green-400 bg-white"
-      "thesis" -> "border-l-4 border-green-600 bg-white"
-      "antithesis" -> "border-l-4 border-blue-600 bg-white"
-      "synthesis" -> "border-l-4 border-purple-600 bg-white"
-      _ -> "border border-gray-200 bg-white"
-    end
-  end
+  # For some reason this doens't work, but does work as a func in the comp!!
+  # def get_tailwind_class(class) do
+  #   case class do
+  #     "user" -> "border-red-400"
+  #     "answer" -> "border-green-400"
+  #     "thesis" -> "border-green-600"
+  #     "antithesis" -> "border-blue-600"
+  #     "synthesis" -> "border-purple-600"
+  #     _ -> "border-gray-200"
+  #   end
+  # end
 end

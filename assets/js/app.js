@@ -30,8 +30,7 @@ hooks.Graph = {
 
     const { graph, node, cols } = this.el.dataset;
     const elements = JSON.parse(graph);
-    this.cy = draw_graph(div_id, this, elements, cols);
-    this.cy.$(`#${node}`).addClass("selected");
+    this.cy = draw_graph(div_id, this, elements, cols, node);
   },
   updated() {
     const { graph, node } = this.el.dataset;

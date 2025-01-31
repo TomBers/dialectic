@@ -38,8 +38,8 @@ defmodule DialecticWeb.ChatMsgComp do
     ~H"""
     <div class={[
       "node mb-4 rounded-lg shadow-sm",
-      "flex items-start gap-3",
-      Colours.get_tailwind_class(@node.class)
+      "flex items-start gap-3 bg-white border-l-4",
+      message_border_class(@node.class)
     ]}>
       <div class="shrink-0">
         <h2 class="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 text-gray-700 font-mono text-sm">
@@ -69,5 +69,17 @@ defmodule DialecticWeb.ChatMsgComp do
       </div>
     </div>
     """
+  end
+
+  # Add this helper function to handle message border styling
+  defp message_border_class(class) do
+    case class do
+      "user" -> "border-red-400"
+      "answer" -> "border-green-400"
+      "thesis" -> "border-green-600"
+      "antithesis" -> "border-blue-600"
+      "synthesis" -> "border-purple-600"
+      _ -> "border border-gray-200 bg-white"
+    end
   end
 end
