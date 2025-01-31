@@ -66,6 +66,9 @@ defmodule DialecticWeb.ChatMsgComp do
             Show more
           </button>
         <% end %>
+        <div :if={@node.class == "user"} class="prose prose-stone prose-sm">
+          User:{@node.user} | 56 ⭐
+        </div>
       </div>
     </div>
     """
