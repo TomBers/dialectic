@@ -26,12 +26,18 @@ defmodule DialecticWeb.ChatMsgComp do
     Earmark.as_html!(content) |> Phoenix.HTML.raw()
   end
 
+  defp modal_title(nil), do: ""
+
+  defp modal_title(class) do
+    String.upcase(class) <> ":"
+  end
+
   @impl true
   def render(assigns) do
     ~H"""
     <div class={[
       "node mb-4 rounded-lg shadow-sm",
-      "flex items-start gap-3",
+      "flex items-start gap-3 bg-white border-l-4",
       message_border_class(@node.class)
     ]}>
       <div class="shrink-0">
@@ -42,7 +48,10 @@ defmodule DialecticWeb.ChatMsgComp do
 
       <div class="proposition flex-1 max-w-none">
         <.modal on_cancel={JS.push("modal_closed")} id={"modal-" <> @node.id}>
-          {full_html(@node.content || "")}
+          <article class="prose prose-stone prose-sm">
+            <h1 class="">{modal_title(@node.class)}</h1>
+            {full_html(@node.content || "")}
+          </article>
         </.modal>
         <article class="prose prose-stone prose-sm">
           {truncated_html(@node.content || "", @cut_off)}
@@ -56,6 +65,9 @@ defmodule DialecticWeb.ChatMsgComp do
             Show more
           </button>
         <% end %>
+        <div :if={@node.class == "user"} class="prose prose-stone prose-sm">
+          User:{@node.user} | 56 ⭐
+        </div>
       </div>
     </div>
     """
@@ -64,11 +76,11 @@ defmodule DialecticWeb.ChatMsgComp do
   # Add this helper function to handle message border styling
   defp message_border_class(class) do
     case class do
-      "user" -> "border-l-4 border-red-400 bg-white"
-      "answer" -> "border-l-4 border-green-400 bg-white"
-      "thesis" -> "border-l-4 border-green-600 bg-white"
-      "antithesis" -> "border-l-4 border-blue-600 bg-white"
-      "synthesis" -> "border-l-4 border-purple-600 bg-white"
+      "user" -> "border-red-400"
+      "answer" -> "border-green-400"
+      "thesis" -> "border-green-600"
+      "antithesis" -> "border-blue-600"
+      "synthesis" -> "border-purple-600"
       _ -> "border border-gray-200 bg-white"
     end
   end

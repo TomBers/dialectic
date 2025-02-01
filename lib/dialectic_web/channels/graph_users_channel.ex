@@ -39,7 +39,9 @@ defmodule DialecticWeb.GraphUsersChannel do
   end
 
   # Add authorization logic here as required.
+  @spec authorized?(map()) :: boolean()
   defp authorized?(_payload) do
+    # TODO: Implement your own authorization logic here
     true
   end
 end

@@ -1,6 +1,7 @@
 {
   "dependencies": {
-    "cytoscape": "^3.31.0"
+    "cytoscape": "^3.31.0",
+    "cytoscape-dagre": "^2.5.0"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.16"

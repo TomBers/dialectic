@@ -9,7 +9,10 @@ defmodule Dialectic.Responses.LlmInterface do
     send(pid, {:steam_chunk, data, :node_id, n.id})
   end
 
-  def gen_response(qn, child, pid) do
+  def gen_response(node, child, pid) do
+    parents = Enum.reduce(node.parents, "", fn parent, acc -> acc <> parent.content <> "\n" end)
+    qn = parents <> node.content
+    # IO.inspect(qn, label: "GenResponse qn")
     ask_model(qn, child, pid)
   end
 

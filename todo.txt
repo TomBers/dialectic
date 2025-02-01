@@ -5,6 +5,7 @@ Answer as Plato, Aristotle, etc.
 
 2) An User inbox - where they can see queestions that they have not answered yet ?? Or maybe just a list of questions that they have asked.
 
+3) User Authentication - how to do this?
 
 Overview - a multiplayer where any player can answer questions.  The players are either real people online, or LLM agents.  The LLM agents are trained to answer questions as a particular thinker.
 
