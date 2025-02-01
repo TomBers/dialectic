@@ -1,14 +1,10 @@
 defmodule DialecticWeb.GraphLive do
-  alias Mix.PubSub
   use DialecticWeb, :live_view
-  alias Dialectic.Graph.Vertex
-  alias Dialectic.Graph.Serialise
-  alias Dialectic.Graph.GraphActions
 
-  alias DialecticWeb.CombineComp
-  alias DialecticWeb.ChatComp
-
+  alias Dialectic.Graph.{Vertex, Serialise, GraphActions}
+  alias DialecticWeb.{CombineComp, ChatComp}
   alias Phoenix.PubSub
+
   on_mount {DialecticWeb.UserAuth, :mount_current_user}
 
   def mount(%{"graph_name" => graph_id} = params, _session, socket) do
