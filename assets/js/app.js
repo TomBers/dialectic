@@ -40,10 +40,19 @@ hooks.Graph = {
     // Option A: Update by setting new JSON (overwrites the entire set of elements)
     this.cy.json({ elements: newElements });
 
-    this.cy.elements().removeClass("selected");
-    this.cy.$(`#${node}`).addClass("selected");
-
     this.cy.layout({ name: "dagre" }).run();
+
+    setTimeout(() => {
+      this.cy.elements().removeClass("selected");
+      this.cy.$(`#${node}`).addClass("selected");
+      this.cy.animate({
+        center: {
+          eles: `#${node}`,
+        },
+        zoom: 2,
+        duration: 500, // duration in milliseconds for the animation
+      });
+    }, 100);
   },
 };
 
