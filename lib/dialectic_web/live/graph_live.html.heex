@@ -50,7 +50,7 @@
     <div class="w-1/2 h-full flex flex-col items-end">
       <ul id="online_users" phx-update="stream" class="space-y-1">
         <li
-          :for={{dom_id, %{id: id, metas: metas}} <- @streams.presences}
+          :for={{dom_id, %{id: id, metas: _metas}} <- @streams.presences}
           id={dom_id}
           class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 rounded text-xs"
         >

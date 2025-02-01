@@ -1,13 +1,6 @@
 defmodule DialecticWeb.GraphLive do
   use DialecticWeb, :live_view
 
-  # Support live_isolated tests which call mount/3 with :not_mounted_at_router as the params argument.
-  def mount(:not_mounted_at_router, session, socket) do
-    params = Map.get(socket.assigns, :params, %{})
-    mount(params, session, socket)
-  end
-  use DialecticWeb, :live_view
-
   alias Dialectic.Graph.{Vertex, Serialise, GraphActions}
   alias DialecticWeb.{CombineComp, ChatComp}
   alias Phoenix.PubSub

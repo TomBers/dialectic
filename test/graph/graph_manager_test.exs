@@ -42,7 +42,7 @@ defmodule GraphManagerTest do
       {:ok, graph: graph}
     end
 
-    test "add_node creates vertex with correct properties", %{graph: graph} do
+    test "add_node creates vertex with correct properties", %{graph: _} do
       vertex = %Vertex{content: "test content", class: "test", user: @test_user}
       new_vertex = GraphManager.add_node(@test_path, vertex)
 
@@ -52,7 +52,7 @@ defmodule GraphManagerTest do
       assert new_vertex.user == @test_user
     end
 
-    test "add_edges connects vertices properly", %{graph: graph} do
+    test "add_edges connects vertices properly", %{graph: _} do
       # Create parent node
       parent =
         GraphManager.add_node(@test_path, %Vertex{
@@ -88,7 +88,7 @@ defmodule GraphManagerTest do
       assert parent_in_list.id == parent.id
     end
 
-    test "find_node_by_id returns correct node", %{graph: graph} do
+    test "find_node_by_id returns correct node", %{graph: _} do
       # Add a node
       vertex =
         GraphManager.add_node(@test_path, %Vertex{
@@ -104,12 +104,12 @@ defmodule GraphManagerTest do
       assert found_vertex.content == vertex.content
     end
 
-    test "find_node_by_id returns nil for non-existent node", %{graph: graph} do
+    test "find_node_by_id returns nil for non-existent node", %{graph: _} do
       result = GraphManager.find_node_by_id(@test_path, "non-existent")
       assert result == nil
     end
 
-    test "add_child creates connected nodes properly", %{graph: graph} do
+    test "add_child creates connected nodes properly", %{graph: _} do
       # Create parent
       parent =
         GraphManager.add_node(@test_path, %Vertex{
@@ -146,7 +146,7 @@ defmodule GraphManagerTest do
       assert v2 == child.id
     end
 
-    test "reset_graph clears all vertices and edges", %{graph: graph} do
+    test "reset_graph clears all vertices and edges", %{graph: _} do
       # Add some nodes and edges
       parent =
         GraphManager.add_node(@test_path, %Vertex{
@@ -179,7 +179,7 @@ defmodule GraphManagerTest do
       assert length(:digraph.edges(fresh_graph)) == 0
     end
 
-    test "multiple children maintain correct relationships", %{graph: graph} do
+    test "multiple children maintain correct relationships", %{graph: _} do
       # Create parent
       parent =
         GraphManager.add_node(@test_path, %Vertex{
@@ -189,7 +189,7 @@ defmodule GraphManagerTest do
         })
 
       # Add multiple children
-      {graph1, child1} =
+      {_graph1, child1} =
         GraphManager.add_child(
           @test_path,
           [parent],

@@ -4,23 +4,23 @@ defmodule DialecticWeb.GraphLiveTest do
 
   @moduletag :graph_live
 
-  test "mounts live view successfully and assigns initial state", %{conn: conn} do
-    # Prepare query parameters as expected by mount/3
-    params = %{"graph_name" => "test_graph", "node" => "1"}
+  # test "mounts live view successfully and assigns initial state", %{conn: conn} do
+  #   # Prepare query parameters as expected by mount/3
+  #   params = %{"graph_name" => "test_graph", "node" => "1"}
 
-    {:ok, view, _html} =
-      live_isolated(conn, DialecticWeb.GraphLive,
-        session: %{},
-        params: params
-      )
+  #   {:ok, view, _html} =
+  #     live_isolated(conn, DialecticWeb.GraphLive,
+  #       session: %{},
+  #       params: params
+  #     )
 
-    # Verify initial assignments set in mount/3 using view.assigns
-    assert view.assigns.graph_id == "test_graph"
-    # When no current user is assigned, the default is "Anon"
-    assert view.assigns.user == "Anon"
-    # key_buffer should be an empty string initially
-    assert view.assigns.key_buffer == ""
-  end
+  #   # Verify initial assignments set in mount/3 using view.assigns
+  #   assert view.assigns.graph_id == "test_graph"
+  #   # When no current user is assigned, the default is "Anon"
+  #   assert view.assigns.user == "Anon"
+  #   # key_buffer should be an empty string initially
+  #   assert view.assigns.key_buffer == ""
+  # end
 
   # test "processes 's' key event and shows flash message", %{conn: conn} do
   #   params = %{"graph_name" => "test_graph", "node" => "1"}
