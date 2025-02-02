@@ -9,7 +9,7 @@ defmodule DialecticWeb.ChatComp do
 
   def render(assigns) do
     ~H"""
-    <div class="h-full flex flex-col">
+    <div class="flex flex-col">
       <div class="flex-1 overflow-y-auto">
         <%= for parent <- @node.parents do %>
           <.live_component module={ChatMsgComp} node={parent} id={parent.id <>"_chatMsg" } />

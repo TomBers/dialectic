@@ -32,11 +32,18 @@ defmodule GraphManager do
 
   # Server callbacks
   def init(path) do
+    Process.flag(:trap_exit, true)
     # graph = :digraph.new()
     # :digraph.add_vertex(graph, "1", %Vertex{id: "1", content: "Root Node"})
     graph = Serialise.load_graph(path)
 
     {:ok, {path, graph}}
+  end
+
+  def terminate(_reason, {path, graph}) do
+    IO.inspect("Shutting Down: " <> path)
+    Serialise.save_graph(path, graph)
+    :ok
   end
 
   def handle_call(:get_graph, _from, {path, graph}) do

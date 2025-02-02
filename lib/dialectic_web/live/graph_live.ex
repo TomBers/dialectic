@@ -146,10 +146,6 @@ defmodule DialecticWeb.GraphLive do
           GraphActions.answer(graph_action_params(socket))
         )
 
-      "s" ->
-        Serialise.save_graph(socket.assigns.graph_id, socket.assigns.graph)
-        {:noreply, socket |> put_flash(:info, "Saved!")}
-
       "c" ->
         com = Map.get(socket.assigns.node, :id)
         {:noreply, assign(socket, show_combine: !is_nil(com))}

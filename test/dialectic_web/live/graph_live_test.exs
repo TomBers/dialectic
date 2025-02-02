@@ -51,22 +51,6 @@ defmodule DialecticWeb.GraphLiveTest do
     #   assert state.assigns.key_buffer == ""
     # end
 
-    # test "KeyBoardInterface with key 's' saves the graph and puts flash info", %{conn: conn} do
-    #   {:ok, view, _html} = setup_live(conn)
-
-    #   # When key "s" is pressed with cmdKey true, main_keybaord_interface
-    #   # calls Serialise.save_graph and then puts a flash message.
-    #   render_keydown(view, "KeyBoardInterface", %{"key" => "s", "cmdKey" => true})
-
-    #   # Check for the flash message.
-    #   state = :sys.get_state(view.pid).socket
-
-    #   # Depending on your LiveView version the flash may be stored in
-    #   # state.private.phoenix_flash.
-    #   flash = state.private.phoenix_flash || %{}
-    #   assert flash["info"] == "Saved!"
-    # end
-
     # test "modal_closed sets show_combine to false", %{conn: conn} do
     #   {:ok, view, _html} = setup_live(conn)
 
