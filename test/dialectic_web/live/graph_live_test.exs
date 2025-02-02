@@ -37,33 +37,73 @@ defmodule DialecticWeb.GraphLiveTest do
       assert state_before == state_after
     end
 
-    # test "KeyBoardInterface with key 'Control' resets key_buffer", %{conn: conn} do
+    test "KeyBoardInterface with key 'Control' resets key_buffer", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      # First, simulate a non-empty key_buffer by sending a key that triggers the fallback branch.
+      render_keydown(view, "KeyBoardInterface", %{"key" => "x", "cmdKey" => true})
+      state_mid = :sys.get_state(view.pid).socket.assigns
+      assert state_mid.key_buffer == "x"
+
+      # Now, sending the "Control" key should reset the key_buffer.
+      render_keydown(view, "KeyBoardInterface", %{"key" => "Control", "cmdKey" => true})
+      state = :sys.get_state(view.pid).socket.assigns
+      assert state.key_buffer == ""
+    end
+
+    test "modal_closed sets show_combine to false", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      # Enable show_combine by simulating a "c" key event.
+      render_keydown(view, "KeyBoardInterface", %{"key" => "c", "cmdKey" => true})
+      state_mid = :sys.get_state(view.pid).socket.assigns
+      assert state_mid.show_combine
+
+      render_click(view, "modal_closed", %{})
+      state = :sys.get_state(view.pid).socket.assigns
+      refute state.show_combine
+    end
+
+    # test "KeyBoardInterface calls combine_interface when show_combine is true", %{conn: conn} do
     #   {:ok, view, _html} = setup_live(conn)
 
-    #   # Pre-set a non-empty key_buffer.
-    #   :sys.replace_state(view.pid, fn state ->
-    #     socket = Phoenix.LiveView.assign(state.socket, :key_buffer, "somevalue")
-    #     %{state | socket: socket}
-    #   end)
-
-    #   render_keydown(view, "KeyBoardInterface", %{"key" => "Control", "cmdKey" => true})
-    #   state = :sys.get_state(view.pid).socket
-    #   assert state.assigns.key_buffer == ""
-    # end
-
-    # test "modal_closed sets show_combine to false", %{conn: conn} do
-    #   {:ok, view, _html} = setup_live(conn)
-
-    #   # First, force show_combine to true.
+    #   # Force show_combine to true so that combine_interface is used.
     #   :sys.replace_state(view.pid, fn state ->
     #     socket = Phoenix.LiveView.assign(state.socket, :show_combine, true)
     #     %{state | socket: socket}
     #   end)
 
-    #   render_click(view, "modal_closed", %{})
+    #   # Send an event with a key that doesn’t result in an immediate update.
+    #   render_keydown(view, "KeyBoardInterface", %{"key" => "x", "cmdKey" => true})
     #   state = :sys.get_state(view.pid).socket
-    #   refute state.assigns.show_combine
+
+    #   # In the fallback branch of combine_interface, the key_buffer is assigned the key.
+    #   assert state.assigns.key_buffer == "x"
     # end
+
+    test "KeyBoardInterface with key 'c' toggles show_combine", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+      render_keydown(view, "KeyBoardInterface", %{"key" => "c", "cmdKey" => true})
+      state = :sys.get_state(view.pid).socket
+      # Since the current node is expected to have an id, show_combine is set to true.
+      assert state.assigns.show_combine
+    end
+
+    test "KeyBoardInterface with key 'b' triggers branch and resets key_buffer", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+      render_keydown(view, "KeyBoardInterface", %{"key" => "b", "cmdKey" => true})
+      state = :sys.get_state(view.pid).socket
+      # update_graph resets key_buffer to an empty binary.
+      assert state.assigns.key_buffer == ""
+    end
+
+    test "KeyBoardInterface with key 'r' triggers answer and resets key_buffer", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+      render_keydown(view, "KeyBoardInterface", %{"key" => "r", "cmdKey" => true})
+      state = :sys.get_state(view.pid).socket
+      # Expect the key_buffer to be reset after update_graph is called.
+      assert state.assigns.key_buffer == ""
+    end
 
     test "answer event with empty content does nothing", %{conn: conn} do
       {:ok, view, _html} = setup_live(conn)
