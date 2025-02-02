@@ -1,7 +1,7 @@
 defmodule DialecticWeb.GraphLive do
   use DialecticWeb, :live_view
 
-  alias Dialectic.Graph.{Vertex, Serialise, GraphActions}
+  alias Dialectic.Graph.{Vertex, GraphActions}
   alias DialecticWeb.{CombineComp, ChatComp}
   alias Phoenix.PubSub
 
