@@ -12,10 +12,15 @@ defmodule DialecticWeb.ChatComp do
     <div class="flex flex-col">
       <div class="flex-1 overflow-y-auto">
         <%= for parent <- @node.parents do %>
-          <.live_component module={ChatMsgComp} node={parent} id={parent.id <>"_chatMsg" } />
+          <.live_component
+            module={ChatMsgComp}
+            node={parent}
+            user={@user}
+            id={parent.id <>"_chatMsg" }
+          />
         <% end %>
         <%= if @node.content != "" do %>
-          <.live_component module={ChatMsgComp} node={@node} id={@node.id <>"_chatMsg" } />
+          <.live_component module={ChatMsgComp} node={@node} user={@user} id={@node.id <>"_chatMsg" } />
         <% else %>
           <div class="node mb-2">
             <h2>Waiting ...</h2>

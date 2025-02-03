@@ -49,6 +49,14 @@ defmodule DialecticWeb.GraphLive do
      )}
   end
 
+  def handle_event("note", %{"node" => node_id}, socket) do
+    update_graph(socket, GraphActions.add_noted_by(graph_action_params(socket), node_id))
+  end
+
+  def handle_event("unnote", %{"node" => node_id}, socket) do
+    update_graph(socket, GraphActions.remove_noted_by(graph_action_params(socket), node_id))
+  end
+
   def handle_event("KeyBoardInterface", %{"key" => last_key, "cmdKey" => isCmd}, socket) do
     # IO.inspect(params, label: "KeyBoardInterface")
     key =
@@ -104,6 +112,7 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
+  # TODO - figer out best way of dealing with updates - can just not pass new node.
   def handle_info(%{graph: graph, node: node}, socket) do
     {:noreply, assign(socket, node: node, graph: graph, f_graph: format_graph(graph))}
   end
