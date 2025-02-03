@@ -11,11 +11,12 @@ Zen the Art of Motorcycle Maintenance - Pirsig,
 Small is Beautiful - Schumacher,
 The Art of War - Sun Tzu,
 
+To Fix :-
+Dont redraw graph on updates from other users.
+
 To think about -
-1) Add Social features - thumbs up, thumbs down, etc. ??
-Associate a user with a question. (Done)
-Allow a user to star a question. (TODO) - Add a list of users to a Vertex star list (new field on the struct)
-Show start count on question. (TODO)
+1) Add Social features - Done
+
 
 
 2) Personas - ask the LLM to answer the question as a particular thinker

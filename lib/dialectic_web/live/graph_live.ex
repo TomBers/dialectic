@@ -112,6 +112,7 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
+  # TODO - figer out best way of dealing with updates - can just not pass new node.
   def handle_info(%{graph: graph, node: node}, socket) do
     {:noreply, assign(socket, node: node, graph: graph, f_graph: format_graph(graph))}
   end
