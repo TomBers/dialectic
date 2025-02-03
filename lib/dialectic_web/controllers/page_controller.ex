@@ -11,7 +11,7 @@ defmodule DialecticWeb.PageController do
     Serialise.save_new_graph(conversation)
 
     conn
-    |> put_flash(:info, "Conversation processed successfully!")
+    # |> put_flash(:info, "Conversation processed successfully!")
     # Update this path to match your routes
     |> redirect(to: ~p"/#{conversation}")
   end

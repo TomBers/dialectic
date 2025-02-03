@@ -1,4 +1,5 @@
 defmodule Dialectic.Graph.Vertex do
+  @derive {Jason.Encoder, only: [:id, :content, :class, :user, :noted_by]}
   @valid_classes [
     "thesis",
     "antithesis",

@@ -69,8 +69,13 @@ defmodule DialecticWeb.ChatMsgComp do
             Show more
           </button>
         <% end %>
-        <div :if={@node.class == "user"} class="prose prose-stone prose-sm">
-          User:{@node.user} | {length(@node.noted_by)} ⭐ |
+        <div class="prose prose-stone prose-sm">
+          <%= if @node.class == "user" do %>
+            By:{@node.user}
+          <% else %>
+            Generated
+          <% end %>
+          | {length(@node.noted_by)} ⭐ |
           <%= if Enum.any?(@node.noted_by, fn u -> u == @user end) do %>
             <button
               phx-click="unnote"

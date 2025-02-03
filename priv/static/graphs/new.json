@@ -1,1 +1,1 @@
-{"nodes":[{"id":"1","content":"new"}],"edges":[]}
+{"nodes":[{"id":"3","user":"Anon","class":"user","content":"Anon","noted_by":["test@example.com"]},{"id":"1","user":null,"class":null,"content":"new","noted_by":[]},{"id":"2","user":"test@example.com","class":"user","content":"comment 1","noted_by":["test@example.com"]}],"edges":[{"data":{"id":"12","source":"1","target":"2"}},{"data":{"id":"23","source":"2","target":"3"}}]}
