@@ -41,20 +41,6 @@ defmodule Dialectic.Models.DeepSeekAPI do
     ""
   end
 
-  defp send_chunk(
-         %{
-           "choices" => [
-             %{
-               "delta" => %{"content" => data}
-             }
-           ]
-         },
-         pid,
-         to_node
-       ) do
-    send(pid, {:steam_chunk, data, :node_id, to_node.id})
-  end
-
   defp parse(chunk) do
     chunk
     |> String.split("data: ")
@@ -65,5 +51,29 @@ defmodule Dialectic.Models.DeepSeekAPI do
 
   defp decode(""), do: nil
   defp decode("[DONE]"), do: nil
-  defp decode(data), do: Jason.decode!(data)
+
+  defp decode(data) do
+    try do
+      Jason.decode!(data)
+    rescue
+      _ -> nil
+    end
+  end
+
+  defp send_chunk(
+         %{
+           "choices" => [
+             %{
+               "delta" => %{"content" => data}
+             }
+           ]
+         },
+         pid,
+         to_node
+       )
+       when is_binary(data) do
+    send(pid, {:steam_chunk, data, :node_id, to_node.id})
+  end
+
+  defp send_chunk(_invalid_chunk, _pid, _to_node), do: nil
 end
