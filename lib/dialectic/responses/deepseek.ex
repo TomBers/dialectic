@@ -1,17 +1,31 @@
 defmodule Dialectic.Models.DeepSeekAPI do
-  # Replace with your actual API key
+  require Logger
+
   @api_key System.get_env("DEEPSEEK_API_KEY")
-  # Replace with the actual DeepSeek API base URL
   @base_url "https://api.deepseek.com"
   @model "deepseek-chat"
+  @timeout 30_000
 
-  def ask(question, to_node, pid) do
-    # IO.inspect(@api_key, label: "API Key")
-    # Replace with the correct endpoint for asking questions
-    url = "#{@base_url}/chat/completions"
+  def ask(question, to_node, pid) when is_binary(question) do
+    with {:ok, body} <- build_request_body(question),
+         {:ok, url} <- build_url() do
+      spawn_request(url, body, pid, to_node)
+      ""
+    else
+      {:error, reason} ->
+        Logger.error("Failed to initiate DeepSeek request: #{inspect(reason)}")
+        {:error, "Failed to process request"}
+    end
+  end
 
-    body =
-      Jason.encode!(%{
+  def ask(_question, _to_node, _pid) do
+    Logger.error("Invalid question format provided")
+    {:error, "Invalid input format"}
+  end
+
+  defp build_request_body(question) do
+    try do
+      body = %{
         model: @model,
         stream: true,
         messages: [
@@ -22,31 +36,82 @@ defmodule Dialectic.Models.DeepSeekAPI do
           },
           %{role: "user", content: question}
         ]
-      })
+      }
 
+      {:ok, Jason.encode!(body)}
+    rescue
+      e ->
+        Logger.error("Failed to encode request body: #{inspect(e)}")
+        {:error, "Failed to encode request"}
+    end
+  end
+
+  defp build_url do
+    case @api_key do
+      nil ->
+        Logger.error("DeepSeek API key not configured")
+        {:error, "API key not configured"}
+
+      _ ->
+        {:ok, "#{@base_url}/chat/completions"}
+    end
+  end
+
+  defp spawn_request(url, body, pid, to_node) do
     spawn(fn ->
-      Req.post(url,
-        headers: [{"Authorization", "Bearer #{@api_key}"}, {"Content-Type", "application/json"}],
-        body: body,
-        into: fn {:data, data}, context ->
-          Enum.each(parse(data), fn data -> send_chunk(data, pid, to_node) end)
-          {:cont, context}
-        end,
-        connect_options: [timeout: 30_000],
-        # How long to wait to receive the response once connected
-        receive_timeout: 30_000
-      )
-    end)
+      headers = [
+        {"Authorization", "Bearer #{@api_key}"},
+        {"Content-Type", "application/json"}
+      ]
 
-    ""
+      options = [
+        headers: headers,
+        body: body,
+        into: &handle_stream_chunk(&1, &2, pid, to_node),
+        connect_options: [timeout: @timeout],
+        receive_timeout: @timeout
+      ]
+
+      case Req.post(url, options) do
+        {:ok, _response} ->
+          Logger.info("Request completed successfully")
+
+        # send(pid, {:stream_complete, :node_id, to_node.id})
+
+        {:error, reason} ->
+          Logger.error("Request failed: #{inspect(reason)}")
+          # send(pid, {:stream_error, "Request failed", :node_id, to_node.id})
+      end
+    end)
+  end
+
+  defp handle_stream_chunk({:data, data}, context, pid, to_node) do
+    case parse(data) do
+      {:ok, chunks} ->
+        Enum.each(chunks, &send_chunk(&1, pid, to_node))
+        {:cont, context}
+
+      {:error, reason} ->
+        Logger.warn("Failed to parse chunk: #{inspect(reason)}")
+        {:cont, context}
+    end
   end
 
   defp parse(chunk) do
-    chunk
-    |> String.split("data: ")
-    |> Enum.map(&String.trim/1)
-    |> Enum.map(&decode/1)
-    |> Enum.reject(&is_nil/1)
+    try do
+      chunks =
+        chunk
+        |> String.split("data: ")
+        |> Enum.map(&String.trim/1)
+        |> Enum.map(&decode/1)
+        |> Enum.reject(&is_nil/1)
+
+      {:ok, chunks}
+    rescue
+      e ->
+        Logger.error("Error parsing chunk: #{inspect(e)}")
+        {:error, "Failed to parse chunk"}
+    end
   end
 
   defp decode(""), do: nil
