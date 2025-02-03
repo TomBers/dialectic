@@ -90,6 +90,30 @@ defmodule GraphManager do
     end
   end
 
+  def handle_call({:add_noted_by, {node_id, user}}, _from, {path, graph}) do
+    case :digraph.vertex(graph, node_id) do
+      {_id, vertex} ->
+        updated_vertex = Vertex.add_noted_by(vertex, user)
+        :digraph.add_vertex(graph, node_id, updated_vertex)
+        {:reply, {graph, Vertex.add_relatives(updated_vertex, graph)}, {path, graph}}
+
+      false ->
+        {:reply, nil, {path, graph}}
+    end
+  end
+
+  def handle_call({:remove_noted_by, {node_id, user}}, _from, {path, graph}) do
+    case :digraph.vertex(graph, node_id) do
+      {_id, vertex} ->
+        updated_vertex = Vertex.remove_noted_by(vertex, user)
+        :digraph.add_vertex(graph, node_id, updated_vertex)
+        {:reply, {graph, Vertex.add_relatives(updated_vertex, graph)}, {path, graph}}
+
+      false ->
+        {:reply, nil, {path, graph}}
+    end
+  end
+
   # Client API
   def reset_graph(path) do
     if GraphManager.exists?(path) do
@@ -132,5 +156,13 @@ defmodule GraphManager do
 
   def update_vertex(path, node_id, data) do
     GenServer.call(via_tuple(path), {:update_node, {node_id, data}})
+  end
+
+  def add_noted_by(path, node_id, user) do
+    GenServer.call(via_tuple(path), {:add_noted_by, {node_id, user}})
+  end
+
+  def remove_noted_by(path, node_id, user) do
+    GenServer.call(via_tuple(path), {:remove_noted_by, {node_id, user}})
   end
 end
