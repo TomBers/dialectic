@@ -80,6 +80,7 @@ defmodule Dialectic.Models.DeepSeekAPI do
 
         {:error, reason} ->
           Logger.error("Request failed: #{inspect(reason)}")
+          # TODO - Handle error - add retry logic??
           # send(pid, {:stream_error, "Request failed", :node_id, to_node.id})
       end
     end)
