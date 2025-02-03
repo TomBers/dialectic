@@ -17,9 +17,9 @@ defmodule Dialectic.Graph.GraphActionsTest do
   def inital_qa() do
     node = GraphActions.create_new_node(@test_user)
 
-    GraphActions.comment(graph_param(node), "What is the meaning of life?")
+    {_, new_node} = GraphActions.comment(graph_param(node), "What is the meaning of life?")
 
-    GraphActions.answer(graph_param(node))
+    GraphActions.answer(graph_param(new_node))
   end
 
   def branched_graph() do
@@ -38,7 +38,7 @@ defmodule Dialectic.Graph.GraphActionsTest do
     GraphActions.answer(graph_param(comment_node))
   end
 
-  test "full graph has expected properties", %{graph: graph} do
+  test "full graph has expected properties", %{graph: _} do
     {graph, _} = full_graph()
     # q1, a1, thesis, antithesis, synthesis, synthesis question, synthesis answer
     assert length(:digraph.vertices(graph)) == 7
@@ -63,7 +63,7 @@ defmodule Dialectic.Graph.GraphActionsTest do
     assert node.parents == []
   end
 
-  test "answer creates question and answer nodes", %{graph: graph} do
+  test "answer creates question and answer nodes", %{graph: _} do
     root_node = GraphActions.create_new_node(@test_user)
 
     {_, cnode} = GraphActions.comment(graph_param(root_node), "Test question?")
@@ -83,7 +83,7 @@ defmodule Dialectic.Graph.GraphActionsTest do
     assert answer_node.class == "answer"
   end
 
-  test "branch creates thesis and antithesis nodes", %{graph: graph} do
+  test "branch creates thesis and antithesis nodes", %{graph: _} do
     {_graph, answer_node} = inital_qa()
     {updated_graph, _} = GraphActions.branch(graph_param(answer_node))
 
@@ -99,7 +99,7 @@ defmodule Dialectic.Graph.GraphActionsTest do
     assert antithesis_node.class == "antithesis"
   end
 
-  test "combine creates synthesis node with two parents", %{graph: graph} do
+  test "combine creates synthesis node with two parents", %{graph: _} do
     {_, node1} = branched_graph()
 
     {updated_graph, synthesis_node} =
@@ -123,7 +123,7 @@ defmodule Dialectic.Graph.GraphActionsTest do
   end
 
   test "find_node returns correct node" do
-    {_graph, answer_node} = inital_qa()
+    inital_qa()
     {_graph, found_node} = GraphActions.find_node(@graph_id, "2")
     assert found_node.id == "2"
     assert found_node.class == "answer"
@@ -134,7 +134,7 @@ defmodule Dialectic.Graph.GraphActionsTest do
     assert result == nil
   end
 
-  test "answer maintains correct parent relationships", %{graph: graph} do
+  test "answer maintains correct parent relationships", %{graph: _} do
     {updated_graph, answer_node} = inital_qa()
     {_, question_node} = GraphActions.find_node(@graph_id, "1")
 
@@ -149,7 +149,7 @@ defmodule Dialectic.Graph.GraphActionsTest do
     assert parent.id == question_node.id
   end
 
-  test "graph maintains correct structure through multiple operations", %{graph: graph} do
+  test "graph maintains correct structure through multiple operations", %{graph: _} do
     # Create initial QA
     {g1, answer1} = inital_qa()
     assert length(:digraph.vertices(g1)) == 2
@@ -166,9 +166,9 @@ defmodule Dialectic.Graph.GraphActionsTest do
     {g4, _} =
       GraphActions.answer(graph_param(synthesis))
 
-    assert length(:digraph.vertices(g4)) == 7
+    assert length(:digraph.vertices(g4)) == 6
 
     # Verify final structure
-    assert length(:digraph.edges(g4)) == 7
+    assert length(:digraph.edges(g4)) == 6
   end
 end

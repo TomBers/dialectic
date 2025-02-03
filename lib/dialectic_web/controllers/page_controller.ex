@@ -13,7 +13,7 @@ defmodule DialecticWeb.PageController do
     conn
     |> put_flash(:info, "Conversation processed successfully!")
     # Update this path to match your routes
-    |> redirect(to: ~p"/#{conversation}?name=System")
+    |> redirect(to: ~p"/#{conversation}")
   end
 
   def graph(conn, %{"graph_name" => graph_name}) do

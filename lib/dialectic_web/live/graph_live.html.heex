@@ -15,10 +15,6 @@
         <h2>Ctrl + C</h2>
         <div class="proposition">Combine</div>
       </div>
-      <div class="node">
-        <h2>Ctrl + S</h2>
-        <div class="proposition">Save</div>
-      </div>
     </div>
   </div>
   
@@ -47,10 +43,17 @@
     </div>
     
 <!-- Right side: Chat -->
-    <div class="w-1/2 h-full flex flex-col">
-      <ul id="online_users" phx-update="stream">
-        <li :for={{dom_id, %{id: id, metas: metas}} <- @streams.presences} id={dom_id}>
-          {id} ({length(metas)})
+    <div class="w-1/2 h-full flex flex-col items-end">
+      <ul id="online_users" phx-update="stream" class="space-y-1">
+        <li
+          :for={{dom_id, %{id: id, metas: _metas}} <- @streams.presences}
+          id={dom_id}
+          class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 rounded text-xs"
+        >
+          <!-- Online status indicator -->
+          <span class="w-2.5 h-2.5 bg-green-500 rounded-full border border-white"></span>
+          <!-- Username -->
+          <span>{id}</span>
         </li>
       </ul>
 

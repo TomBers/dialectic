@@ -1,6 +1,6 @@
 defmodule Labeler do
-  # Define our allowed letters (excluding B, C, and S)
-  @allowed_letters ~w(A D E F G H I J K L M N O P Q R T U V W X Y Z)s
+  # Define our allowed letters (excluding B, C, and R)
+  @allowed_letters ~w(A D E F G H I J K L M N O P Q S T U V W X Y Z)s
   # Precompute all 2-letter prefixes in a list
 
   def prefixes do

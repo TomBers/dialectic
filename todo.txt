@@ -1,12 +1,28 @@
-To think about -
+TODO -
 
-1) Personas - ask the LLM to answer the question as a particular thinker
+Use the system to have interesting conversations - does it help comprehension?
+Ideas -
+Being and Time,
+German Idealism,
+The Republic - Plato,
+The Prince - Machiavelli,
+The Tao Te Ching - Lao Tzu,
+Zen the Art of Motorcycle Maintenance - Pirsig,
+Small is Beautiful - Schumacher,
+The Art of War - Sun Tzu,
+
+To think about -
+1) Add Social features - thumbs up, thumbs down, etc. ??
+Associate a user with a question. (Done)
+Allow a user to star a question. (TODO) - Add a list of users to a Vertex star list (new field on the struct)
+Show start count on question. (TODO)
+
+
+2) Personas - ask the LLM to answer the question as a particular thinker
 Answer as Plato, Aristotle, etc.
 
-2) An User inbox - where they can see queestions that they have not answered yet ?? Or maybe just a list of questions that they have asked.
+3) An User inbox - where they can see queestions that they have not answered yet ?? Or maybe just a list of questions that they have asked.
 
-3) User Authentication - how to do this?
+
 
 Overview - a multiplayer where any player can answer questions.  The players are either real people online, or LLM agents.  The LLM agents are trained to answer questions as a particular thinker.
-
-Users - think about Authentification and Authorization.

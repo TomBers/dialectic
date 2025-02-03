@@ -1,17 +1,19 @@
 defmodule DialecticWeb.GraphLive do
-  alias Mix.PubSub
   use DialecticWeb, :live_view
-  alias Dialectic.Graph.Vertex
-  alias Dialectic.Graph.Serialise
-  alias Dialectic.Graph.GraphActions
 
-  alias DialecticWeb.CombineComp
-  alias DialecticWeb.ChatComp
-
+  alias Dialectic.Graph.{Vertex, GraphActions}
+  alias DialecticWeb.{CombineComp, ChatComp}
   alias Phoenix.PubSub
 
+  on_mount {DialecticWeb.UserAuth, :mount_current_user}
+
   def mount(%{"graph_name" => graph_id} = params, _session, socket) do
-    user = Map.get(params, "name", "anon")
+    user =
+      case socket.assigns.current_user do
+        nil -> "Anon"
+        _ -> socket.assigns.current_user.email
+      end
+
     node_id = Map.get(params, "node", "1")
     PubSub.subscribe(Dialectic.PubSub, "graph_update")
     socket = stream(socket, :presences, [])
@@ -143,10 +145,6 @@ defmodule DialecticWeb.GraphLive do
           socket,
           GraphActions.answer(graph_action_params(socket))
         )
-
-      "s" ->
-        Serialise.save_graph(socket.assigns.graph_id, socket.assigns.graph)
-        {:noreply, socket |> put_flash(:info, "Saved!")}
 
       "c" ->
         com = Map.get(socket.assigns.node, :id)
