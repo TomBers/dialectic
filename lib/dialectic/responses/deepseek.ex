@@ -84,7 +84,8 @@ defmodule Dialectic.Models.DeepSeekAPI do
       case Req.post(url, options) do
         {:ok, _response} ->
           Logger.info("Request completed successfully")
-          send(pid, {:stream_complete, :node_id, to_node.id})
+
+        # send(pid, {:stream_complete, :node_id, to_node.id})
 
         {:error, reason} ->
           Logger.error("Request failed: #{inspect(reason)}. Retrying...")
@@ -108,7 +109,7 @@ defmodule Dialectic.Models.DeepSeekAPI do
 
   defp calculate_backoff(attempt) do
     base = 1000
-    max_delay = 60_000
+    max_delay = 120_000
     delay = (base * :math.pow(2, attempt)) |> round
     if delay > max_delay, do: max_delay, else: delay
   end
