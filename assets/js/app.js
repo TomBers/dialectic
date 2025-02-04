@@ -43,15 +43,15 @@ hooks.Graph = {
       this.cy.json({ elements: newElements });
       this.cy.layout({ name: "dagre" }).run();
 
-      setTimeout(() => {
-        this.cy.animate({
-          center: {
-            eles: `#${node}`,
-          },
-          zoom: 2,
-          duration: 500, // duration in milliseconds for the animation
-        });
-      }, 100);
+      // setTimeout(() => {
+      //   this.cy.animate({
+      //     center: {
+      //       eles: `#${node}`,
+      //     },
+      //     zoom: 2,
+      //     duration: 500, // duration in milliseconds for the animation
+      //   });
+      // }, 100);
     }
     this.cy.elements().removeClass("selected");
     this.cy.$(`#${node}`).addClass("selected");
