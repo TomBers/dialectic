@@ -1,4 +1,5 @@
 defmodule Dialectic.Graph.Vertex do
+  @derive {Jason.Encoder, only: [:id, :content, :class, :user, :noted_by]}
   @valid_classes [
     "thesis",
     "antithesis",
@@ -10,7 +11,7 @@ defmodule Dialectic.Graph.Vertex do
   ]
   # Define a custom type for class validation
   # @type class :: "assumption" | "premise" | "conclusion"
-  defstruct id: nil, content: "", class: "", user: "", parents: [], children: []
+  defstruct id: nil, content: "", class: "", user: "", parents: [], children: [], noted_by: []
 
   # Add a function to validate the class
   def validate_class(class) when class in @valid_classes, do: {:ok, class}
@@ -18,7 +19,13 @@ defmodule Dialectic.Graph.Vertex do
 
   # IMPORTANT - defines fields that should be serialised
   def serialize(vertex) do
-    %{id: vertex.id, content: vertex.content, class: vertex.class, user: vertex.user}
+    %{
+      id: vertex.id,
+      content: vertex.content,
+      class: vertex.class,
+      user: vertex.user,
+      noted_by: vertex.noted_by
+    }
   end
 
   def deserialize(data) do
@@ -26,14 +33,29 @@ defmodule Dialectic.Graph.Vertex do
       id: data["id"],
       content: data["content"],
       class: data["class"],
-      user: data["user"]
+      user: data["user"],
+      noted_by: data["noted_by"]
     }
+  end
+
+  def add_noted_by(vertex, user) do
+    %{vertex | noted_by: [user | vertex.noted_by]}
+  end
+
+  def remove_noted_by(vertex, user) do
+    %{vertex | noted_by: vertex.noted_by -- [user]}
   end
 
   # ----------------------------
 
   def changeset(vertex, params \\ %{}) do
-    types = %{id: :string, content: :string, class: :string, user: :string}
+    types = %{
+      id: :string,
+      content: :string,
+      class: :string,
+      user: :string,
+      noted_by: {:array, :string}
+    }
 
     {vertex, types}
     |> Ecto.Changeset.cast(params, Map.keys(types))

@@ -14,7 +14,7 @@ defmodule Dialectic.Graph.Serialise do
 
   def save_new_graph(name) do
     template = %{
-      nodes: [%{id: "1", content: name}],
+      nodes: [%Vertex{id: "1", content: name}],
       edges: []
     }
 
