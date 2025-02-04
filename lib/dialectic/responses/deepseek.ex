@@ -57,36 +57,60 @@ defmodule Dialectic.Models.DeepSeekAPI do
     end
   end
 
+  # Spawn a task that attempts the request (with retries) until it succeeds.
   defp spawn_request(url, body, pid, to_node) do
     Task.start(fn ->
-      try do
-        headers = [
-          {"Authorization", "Bearer #{@api_key}"},
-          {"Content-Type", "application/json"}
-        ]
-
-        options = [
-          headers: headers,
-          body: body,
-          into: &handle_stream_chunk(&1, &2, pid, to_node),
-          connect_options: [timeout: @timeout],
-          receive_timeout: @timeout
-        ]
-
-        case Req.post(url, options) do
-          {:ok, _response} ->
-            Logger.info("Request completed successfully")
-
-          {:error, reason} ->
-            Logger.error("Request failed: #{inspect(reason)}")
-            send(pid, {:stream_error, "Request failed", :node_id, to_node.id})
-        end
-      rescue
-        exception ->
-          Logger.error("Exception during request: #{inspect(exception)}")
-          send(pid, {:stream_error, "Request exception", :node_id, to_node.id})
-      end
+      do_request(url, body, pid, to_node)
     end)
+  end
+
+  # Recursively perform the request, waiting with an exponentially increasing delay
+  # on failure.
+  defp do_request(url, body, pid, to_node, attempt \\ 0) do
+    try do
+      headers = [
+        {"Authorization", "Bearer #{@api_key}"},
+        {"Content-Type", "application/json"}
+      ]
+
+      options = [
+        headers: headers,
+        body: body,
+        into: &handle_stream_chunk(&1, &2, pid, to_node),
+        connect_options: [timeout: @timeout],
+        receive_timeout: @timeout
+      ]
+
+      case Req.post(url, options) do
+        {:ok, _response} ->
+          Logger.info("Request completed successfully")
+          send(pid, {:stream_complete, :node_id, to_node.id})
+
+        {:error, reason} ->
+          Logger.error("Request failed: #{inspect(reason)}. Retrying...")
+          retry_after(attempt)
+          do_request(url, body, pid, to_node, attempt + 1)
+      end
+    rescue
+      exception ->
+        Logger.error("Exception during request: #{inspect(exception)}. Retrying...")
+        retry_after(attempt)
+        do_request(url, body, pid, to_node, attempt + 1)
+    end
+  end
+
+  # Calculate an exponential backoff delay (with a max) and sleep for that duration.
+  defp retry_after(attempt) do
+    delay = calculate_backoff(attempt)
+    Logger.info("Waiting #{delay} ms before retrying (attempt #{attempt + 1})")
+    :timer.sleep(delay)
+  end
+
+  defp calculate_backoff(attempt) do
+    base = 1000
+    max_delay = 60_000
+    delay = (base * :math.pow(2, attempt)) |> round
+    if delay > max_delay, do: max_delay, else: delay
   end
 
   defp handle_stream_chunk({:data, data}, context, pid, to_node) do
@@ -141,10 +165,9 @@ defmodule Dialectic.Models.DeepSeekAPI do
          to_node
        )
        when is_binary(data) do
-    # Corrected atom name from :steam_chunk to :stream_chunk
+    # Corrected the atom from :steam_chunk to :stream_chunk.
     send(pid, {:stream_chunk, data, :node_id, to_node.id})
   end
 
-  defp send_chunk(invalid_chunk, _pid, _to_node),
-    do: Logger.info("Invalid Chunk: #{invalid_chunk}")
+  defp send_chunk(_invalid_chunk, _pid, _to_node), do: nil
 end
