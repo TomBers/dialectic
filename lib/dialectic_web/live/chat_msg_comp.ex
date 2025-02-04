@@ -7,7 +7,7 @@ defmodule DialecticWeb.ChatMsgComp do
       socket
       |> assign(assigns)
       # Default cutoff length
-      |> assign_new(:cut_off, fn -> 200 end)
+      |> assign_new(:cut_off, fn -> 500 end)
 
     {:ok, socket}
   end

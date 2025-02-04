@@ -123,8 +123,8 @@ defmodule DialecticWeb.GraphLive do
   end
 
   # TODO - figer out best way of dealing with updates - can just not pass new node.
-  def handle_info(%{graph: graph, node: node}, socket) do
-    {:noreply, assign(socket, node: node, graph: graph, f_graph: format_graph(graph))}
+  def handle_info(graph, socket) do
+    {:noreply, assign(socket, graph: graph, f_graph: format_graph(graph))}
   end
 
   def handle_info({:stream_chunk, chunk, :node_id, node_id}, socket) do
@@ -221,7 +221,7 @@ defmodule DialecticWeb.GraphLive do
         socket.assigns.show_combine
       end
 
-    PubSub.broadcast(Dialectic.PubSub, "graph_update", %{graph: graph, node: node})
+    PubSub.broadcast(Dialectic.PubSub, "graph_update", graph)
 
     {:noreply,
      assign(socket,
