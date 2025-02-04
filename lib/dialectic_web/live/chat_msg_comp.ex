@@ -69,7 +69,7 @@ defmodule DialecticWeb.ChatMsgComp do
             Show more
           </button>
         <% end %>
-        <div class="prose prose-stone prose-sm">
+        <div class="prose prose-stone prose-sm tiny-text">
           <%= if @node.class == "user" do %>
             By:{@node.user}
           <% else %>
@@ -80,7 +80,7 @@ defmodule DialecticWeb.ChatMsgComp do
             <button
               phx-click="unnote"
               phx-value-node={@node.id}
-              class="text-red-600 hover:text-red-800 text-sm font-medium focus:outline-none"
+              class="text-red-600 hover:text-red-800 font-medium focus:outline-none"
             >
               Unnote
             </button>
@@ -88,7 +88,7 @@ defmodule DialecticWeb.ChatMsgComp do
             <button
               phx-click="note"
               phx-value-node={@node.id}
-              class="text-green-600 hover:text-green-800 text-sm font-medium focus:outline-none"
+              class="text-green-600 hover:text-green-800 font-medium focus:outline-none"
             >
               Note
             </button>
