@@ -58,30 +58,33 @@ defmodule Dialectic.Models.DeepSeekAPI do
   end
 
   defp spawn_request(url, body, pid, to_node) do
-    spawn(fn ->
-      headers = [
-        {"Authorization", "Bearer #{@api_key}"},
-        {"Content-Type", "application/json"}
-      ]
+    Task.start(fn ->
+      try do
+        headers = [
+          {"Authorization", "Bearer #{@api_key}"},
+          {"Content-Type", "application/json"}
+        ]
 
-      options = [
-        headers: headers,
-        body: body,
-        into: &handle_stream_chunk(&1, &2, pid, to_node),
-        connect_options: [timeout: @timeout],
-        receive_timeout: @timeout
-      ]
+        options = [
+          headers: headers,
+          body: body,
+          into: &handle_stream_chunk(&1, &2, pid, to_node),
+          connect_options: [timeout: @timeout],
+          receive_timeout: @timeout
+        ]
 
-      case Req.post(url, options) do
-        {:ok, _response} ->
-          Logger.info("Request completed successfully")
+        case Req.post(url, options) do
+          {:ok, _response} ->
+            Logger.info("Request completed successfully")
 
-        # send(pid, {:stream_complete, :node_id, to_node.id})
-
-        {:error, reason} ->
-          Logger.error("Request failed: #{inspect(reason)}")
-          # TODO - Handle error - add retry logic??
-          # send(pid, {:stream_error, "Request failed", :node_id, to_node.id})
+          {:error, reason} ->
+            Logger.error("Request failed: #{inspect(reason)}")
+            send(pid, {:stream_error, "Request failed", :node_id, to_node.id})
+        end
+      rescue
+        exception ->
+          Logger.error("Exception during request: #{inspect(exception)}")
+          send(pid, {:stream_error, "Request exception", :node_id, to_node.id})
       end
     end)
   end
@@ -93,7 +96,7 @@ defmodule Dialectic.Models.DeepSeekAPI do
         {:cont, context}
 
       {:error, reason} ->
-        Logger.warn("Failed to parse chunk: #{inspect(reason)}")
+        Logger.error("Failed to parse chunk: #{inspect(reason)}")
         {:cont, context}
     end
   end
@@ -138,8 +141,10 @@ defmodule Dialectic.Models.DeepSeekAPI do
          to_node
        )
        when is_binary(data) do
-    send(pid, {:steam_chunk, data, :node_id, to_node.id})
+    # Corrected atom name from :steam_chunk to :stream_chunk
+    send(pid, {:stream_chunk, data, :node_id, to_node.id})
   end
 
-  defp send_chunk(_invalid_chunk, _pid, _to_node), do: nil
+  defp send_chunk(invalid_chunk, _pid, _to_node),
+    do: Logger.info("Invalid Chunk: #{invalid_chunk}")
 end

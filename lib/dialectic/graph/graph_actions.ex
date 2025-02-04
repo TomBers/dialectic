@@ -6,6 +6,10 @@ defmodule Dialectic.Graph.GraphActions do
     %Vertex{user: user, id: "NewNode", noted_by: []}
   end
 
+  def delete_node({graph_id, _node, _user, _pid}, node_id) do
+    GraphManager.delete_node(graph_id, node_id)
+  end
+
   def change_noted_by({graph_id, _node, user, _pid}, node_id, change_fn) do
     GraphManager.change_noted_by(graph_id, node_id, user, change_fn)
   end

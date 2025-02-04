@@ -13,6 +13,8 @@ The Art of War - Sun Tzu,
 
 To Fix :-
 Dont redraw graph on updates from other users.
+Think about deleting Nodes - if the request fails, do you delete the node from the graph?
+If so, then the naming breaks, as it is based on the number of nodes, so it would be better to keep the node, and just not display it.
 
 To think about -
 1) Add Social features - Done

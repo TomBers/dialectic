@@ -49,6 +49,13 @@ defmodule DialecticWeb.GraphLive do
      )}
   end
 
+  def handle_event("delete_node", %{"node" => node_id}, socket) do
+    update_graph(
+      socket,
+      GraphActions.delete_node(graph_action_params(socket), node_id)
+    )
+  end
+
   def handle_event("note", %{"node" => node_id}, socket) do
     update_graph(
       socket,
@@ -127,10 +134,22 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, assign(socket, node: node, graph: graph, f_graph: format_graph(graph))}
   end
 
-  def handle_info({:steam_chunk, chunk, :node_id, node_id}, socket) do
+  def handle_info({:stream_chunk, chunk, :node_id, node_id}, socket) do
     # This is the streamed LLM response into a node
     # TODO - broadcast to all users??? - only want to update the node that is being worked on, just rerender the others
     updated_vertex = GraphManager.update_vertex(socket.assigns.graph_id, node_id, chunk)
+
+    if node_id == Map.get(socket.assigns.node, :id) do
+      {:noreply, assign(socket, node: updated_vertex)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_info({:stream_error, error, :node_id, node_id}, socket) do
+    # This is the streamed LLM response into a node
+    # TODO - broadcast to all users??? - only want to update the node that is being worked on, just rerender the others
+    updated_vertex = GraphManager.update_vertex(socket.assigns.graph_id, node_id, error)
 
     if node_id == Map.get(socket.assigns.node, :id) do
       {:noreply, assign(socket, node: updated_vertex)}

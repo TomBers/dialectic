@@ -102,6 +102,19 @@ defmodule GraphManager do
     end
   end
 
+  def handle_call({:delete_node, node_id}, _, {path, graph}) do
+    case :digraph.vertex(graph, node_id) do
+      {id, vertex} ->
+        v = Vertex.add_relatives(vertex, graph)
+        parent = v.parents |> hd()
+        :digraph.del_vertex(graph, id)
+        {:reply, {graph, Vertex.add_relatives(parent, graph)}, {path, graph}}
+
+      false ->
+        {:reply, nil, {path, graph}}
+    end
+  end
+
   # Client API
   def reset_graph(path) do
     if GraphManager.exists?(path) do
@@ -148,5 +161,9 @@ defmodule GraphManager do
 
   def change_noted_by(path, node_id, user, change_fn) do
     GenServer.call(via_tuple(path), {:change_noted_by, {node_id, user, change_fn}})
+  end
+
+  def delete_node(path, node_id) do
+    GenServer.call(via_tuple(path), {:delete_node, node_id})
   end
 end

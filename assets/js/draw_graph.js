@@ -70,12 +70,12 @@ export function draw_graph(graph, context, elements, cols, node) {
   cy.on("tap", "node", function () {
     var n = this;
     context.pushEvent("node_clicked", { id: n.id() });
-    cy.animate({
-      center: {
-        eles: n,
-      },
-      duration: 500, // duration in milliseconds for the animation
-    });
+    // cy.animate({
+    //   center: {
+    //     eles: n,
+    //   },
+    //   duration: 500, // duration in milliseconds for the animation
+    // });
   });
   cy.elements().removeClass("selected");
   cy.$(`#${node}`).addClass("selected");

@@ -24,6 +24,8 @@ defmodule DialecticWeb.ChatComp do
         <% else %>
           <div class="node mb-2">
             <h2>Waiting ...</h2>
+            
+            <.button phx-click="delete_node" phx-value-node={@node.id}>Delete</.button>
           </div>
         <% end %>
       </div>
