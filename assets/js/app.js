@@ -23,7 +23,7 @@ import { LiveSocket } from "phoenix_live_view";
 import { draw_graph } from "./draw_graph";
 import topbar from "../vendor/topbar";
 
-let num_nodes = null;
+let numNodes = null;
 
 let hooks = {};
 hooks.Graph = {
@@ -32,17 +32,15 @@ hooks.Graph = {
 
     const { graph, node, cols } = this.el.dataset;
     const elements = JSON.parse(graph);
-    num_nodes = elements;
-    console.log("nodes", num_nodes.length);
+    numNodes = elements;
     this.cy = draw_graph(div_id, this, elements, cols, node);
   },
   updated() {
     const { graph, node } = this.el.dataset;
     const newElements = JSON.parse(graph);
 
-    this.cy.json({ elements: newElements });
-
-    if (newElements.length != num_nodes.length) {
+    if (newElements.length != numNodes.length) {
+      this.cy.json({ elements: newElements });
       this.cy.layout({ name: "dagre" }).run();
 
       setTimeout(() => {
@@ -57,7 +55,7 @@ hooks.Graph = {
     }
     this.cy.elements().removeClass("selected");
     this.cy.$(`#${node}`).addClass("selected");
-    num_nodes = newElements;
+    numNodes = newElements;
   },
 };
 
