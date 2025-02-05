@@ -1,6 +1,6 @@
 defmodule GraphManager do
-  alias Dialectic.Graph.Vertex
-  alias Dialectic.Graph.Serialise
+  alias Dialectic.Graph.{Vertex, Serialise, Siblings}
+
   use GenServer
 
   def get_graph(path) do
@@ -106,69 +106,19 @@ defmodule GraphManager do
     updated_vertex =
       case direction do
         "up" ->
-          new_node_or_self(node, fn node -> node.parents |> List.first() end)
+          Siblings.up(node)
 
         "down" ->
-          new_node_or_self(node, fn node -> node.children |> List.first() end)
+          Siblings.down(node)
 
         "left" ->
-          new_node_or_self(
-            node,
-            &(&1.parents
-              |> Enum.map(fn p -> Vertex.add_relatives(p, graph) end)
-              |> Enum.map(fn p -> node_siblings(p.children, node.id, fn indx -> indx - 1 end) end)
-              |> List.first())
-          )
+          Siblings.left(node, graph)
 
         "right" ->
-          new_node_or_self(
-            node,
-            &(&1.parents
-              |> Enum.map(fn p -> Vertex.add_relatives(p, graph) end)
-              |> Enum.map(fn p -> node_siblings(p.children, node.id, fn indx -> indx + 1 end) end)
-              |> List.first())
-          )
+          Siblings.right(node, graph)
       end
 
     {:reply, {graph, Vertex.add_relatives(updated_vertex, graph)}, {path, graph}}
-  end
-
-  def node_siblings(nodes, node_id, order_fn) do
-    sortred =
-      Enum.sort(nodes, fn a, b ->
-        case {Integer.parse(a.id), Integer.parse(b.id)} do
-          # Both are pure numbers
-          {{num_a, ""}, {num_b, ""}} ->
-            num_a <= num_b
-
-          # Only a is a pure number
-          {{_, ""}, _} ->
-            true
-
-          # Only b is a pure number
-          {_, {_, ""}} ->
-            false
-
-          # Neither is a pure number (both are strings or mixed)
-          _ ->
-            a <= b
-        end
-      end)
-
-    {n, indx} =
-      sortred
-      |> Enum.with_index()
-      |> Enum.find(fn {node, _} -> node.id == node_id end)
-
-    IO.inspect(indx, label: "Index")
-    Enum.at(sortred, order_fn.(indx), n)
-  end
-
-  def new_node_or_self(node, search_fn) do
-    case search_fn.(node) do
-      nil -> node
-      relative -> relative
-    end
   end
 
   # Client API

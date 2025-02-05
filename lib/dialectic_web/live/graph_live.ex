@@ -3,7 +3,6 @@ defmodule DialecticWeb.GraphLive do
 
   alias Dialectic.Graph.{Vertex, GraphActions}
   alias DialecticWeb.{CombineComp, ChatComp}
-  alias Phoenix.PubSub
 
   on_mount {DialecticWeb.UserAuth, :mount_current_user}
 
