@@ -19,6 +19,7 @@ defmodule DialecticWeb.GraphLive do
 
     socket =
       if connected?(socket) do
+        Phoenix.PubSub.subscribe(Dialectic.PubSub, graph_id)
         DialecticWeb.Presence.track_user(user, %{id: user, graph_id: graph_id})
         DialecticWeb.Presence.subscribe()
 
@@ -228,7 +229,7 @@ defmodule DialecticWeb.GraphLive do
   end
 
   defp graph_action_params(socket) do
-    {socket.assigns.graph_id, socket.assigns.node, socket.assigns.user, self()}
+    {socket.assigns.graph_id, socket.assigns.node, socket.assigns.user}
   end
 
   def update_graph(socket, {graph, node}, invert_modal \\ false, update_view \\ true) do
