@@ -49,7 +49,7 @@ defmodule DialecticWeb.ChatMsgComp do
       <div class="proposition flex-1 max-w-none">
         <.modal
           on_cancel={JS.push("modal_closed")}
-          class={["border-4", message_border_class(@node.class)]}
+          class={message_border_class(@node.class)}
           id={"modal-" <> @node.id}
         >
           <article class="prose prose-stone prose-sm">
