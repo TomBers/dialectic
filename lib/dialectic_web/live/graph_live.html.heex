@@ -28,6 +28,7 @@
         data-graph={@f_graph}
         data-node={@node.id}
         data-cols={Jason.encode!(Dialectic.Consts.Colours.graph_cols())}
+        data-updateview={Jason.encode!(@update_view)}
         phx-hook="Graph"
         phx-update="ignore"
       >

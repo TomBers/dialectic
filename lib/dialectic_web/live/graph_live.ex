@@ -45,7 +45,8 @@ defmodule DialecticWeb.GraphLive do
        form: to_form(changeset),
        show_combine: false,
        key_buffer: "",
-       user: user
+       user: user,
+       update_view: true
      )}
   end
 
@@ -90,7 +91,7 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("node_clicked", %{"id" => id}, socket) do
-    update_graph(socket, GraphActions.find_node(socket.assigns.graph_id, id))
+    update_graph(socket, GraphActions.find_node(socket.assigns.graph_id, id), false, false)
   end
 
   def handle_event("answer", %{"vertex" => %{"content" => ""}}, socket), do: {:noreply, socket}
@@ -209,7 +210,7 @@ defmodule DialecticWeb.GraphLive do
     {socket.assigns.graph_id, socket.assigns.node, socket.assigns.user, self()}
   end
 
-  def update_graph(socket, {graph, node}, invert_modal \\ false) do
+  def update_graph(socket, {graph, node}, invert_modal \\ false, update_view \\ true) do
     # Changeset needs to be a new node
     new_node = GraphActions.create_new_node(socket.assigns.user)
     changeset = Vertex.changeset(new_node)
@@ -230,7 +231,8 @@ defmodule DialecticWeb.GraphLive do
        form: to_form(changeset, id: new_node.id),
        node: node,
        show_combine: show_combine,
-       key_buffer: ""
+       key_buffer: "",
+       update_view: update_view
      )}
   end
 end
