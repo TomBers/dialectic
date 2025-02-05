@@ -43,7 +43,9 @@ hooks.Graph = {
 
     if (newElements.length != numNodes.length) {
       this.cy.json({ elements: newElements });
-      this.cy.layout({ name: "dagre" }).run();
+      this.cy
+        .layout({ name: "dagre", nodeSep: 20, edgeSep: 15, rankSep: 30 })
+        .run();
     }
     if (node != nodeId && updateview == "true") {
       this.cy.animate({
