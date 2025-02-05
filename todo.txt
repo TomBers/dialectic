@@ -14,8 +14,6 @@ The Art of War - Sun Tzu,
 To Fix :-
 Dont redraw graph on updates from other users.
 
-To think about -
-1) Add Social features - Done
 
 
 

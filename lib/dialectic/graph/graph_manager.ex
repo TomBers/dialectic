@@ -1,6 +1,6 @@
 defmodule GraphManager do
-  alias Dialectic.Graph.Vertex
-  alias Dialectic.Graph.Serialise
+  alias Dialectic.Graph.{Vertex, Serialise, Siblings}
+
   use GenServer
 
   def get_graph(path) do
@@ -102,6 +102,25 @@ defmodule GraphManager do
     end
   end
 
+  def handle_call({:move, {node, direction}}, _, {path, graph}) do
+    updated_vertex =
+      case direction do
+        "up" ->
+          Siblings.up(node)
+
+        "down" ->
+          Siblings.down(node)
+
+        "left" ->
+          Siblings.left(node, graph)
+
+        "right" ->
+          Siblings.right(node, graph)
+      end
+
+    {:reply, {graph, Vertex.add_relatives(updated_vertex, graph)}, {path, graph}}
+  end
+
   # Client API
   def reset_graph(path) do
     if GraphManager.exists?(path) do
@@ -148,5 +167,9 @@ defmodule GraphManager do
 
   def change_noted_by(path, node_id, user, change_fn) do
     GenServer.call(via_tuple(path), {:change_noted_by, {node_id, user, change_fn}})
+  end
+
+  def move(path, node, direction) do
+    GenServer.call(via_tuple(path), {:move, {node, direction}})
   end
 end

@@ -7,7 +7,7 @@ defmodule DialecticWeb.ChatMsgComp do
       socket
       |> assign(assigns)
       # Default cutoff length
-      |> assign_new(:cut_off, fn -> 200 end)
+      |> assign_new(:cut_off, fn -> 500 end)
 
     {:ok, socket}
   end
@@ -49,7 +49,7 @@ defmodule DialecticWeb.ChatMsgComp do
       <div class="proposition flex-1 max-w-none">
         <.modal
           on_cancel={JS.push("modal_closed")}
-          class={["border-4", message_border_class(@node.class)]}
+          class={message_border_class(@node.class)}
           id={"modal-" <> @node.id}
         >
           <article class="prose prose-stone prose-sm">

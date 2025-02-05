@@ -3,7 +3,6 @@ defmodule DialecticWeb.GraphLive do
 
   alias Dialectic.Graph.{Vertex, GraphActions}
   alias DialecticWeb.{CombineComp, ChatComp}
-  alias Phoenix.PubSub
 
   on_mount {DialecticWeb.UserAuth, :mount_current_user}
 
@@ -15,7 +14,7 @@ defmodule DialecticWeb.GraphLive do
       end
 
     node_id = Map.get(params, "node", "1")
-    PubSub.subscribe(Dialectic.PubSub, "graph_update")
+
     socket = stream(socket, :presences, [])
 
     socket =
@@ -45,7 +44,8 @@ defmodule DialecticWeb.GraphLive do
        form: to_form(changeset),
        show_combine: false,
        key_buffer: "",
-       user: user
+       user: user,
+       update_view: true
      )}
   end
 
@@ -85,12 +85,39 @@ defmodule DialecticWeb.GraphLive do
         end
       end
     else
-      {:noreply, socket}
+      case key do
+        "ArrowDown" ->
+          update_graph(
+            socket,
+            GraphActions.move(graph_action_params(socket), "down")
+          )
+
+        "ArrowUp" ->
+          update_graph(
+            socket,
+            GraphActions.move(graph_action_params(socket), "up")
+          )
+
+        "ArrowRight" ->
+          update_graph(
+            socket,
+            GraphActions.move(graph_action_params(socket), "right")
+          )
+
+        "ArrowLeft" ->
+          update_graph(
+            socket,
+            GraphActions.move(graph_action_params(socket), "left")
+          )
+
+        _ ->
+          {:noreply, socket}
+      end
     end
   end
 
   def handle_event("node_clicked", %{"id" => id}, socket) do
-    update_graph(socket, GraphActions.find_node(socket.assigns.graph_id, id))
+    update_graph(socket, GraphActions.find_node(socket.assigns.graph_id, id), false, false)
   end
 
   def handle_event("answer", %{"vertex" => %{"content" => ""}}, socket), do: {:noreply, socket}
@@ -122,15 +149,22 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  # TODO - figer out best way of dealing with updates - can just not pass new node.
-  def handle_info(%{graph: graph, node: node}, socket) do
-    {:noreply, assign(socket, node: node, graph: graph, f_graph: format_graph(graph))}
-  end
-
-  def handle_info({:steam_chunk, chunk, :node_id, node_id}, socket) do
+  def handle_info({:stream_chunk, chunk, :node_id, node_id}, socket) do
     # This is the streamed LLM response into a node
     # TODO - broadcast to all users??? - only want to update the node that is being worked on, just rerender the others
     updated_vertex = GraphManager.update_vertex(socket.assigns.graph_id, node_id, chunk)
+
+    if node_id == Map.get(socket.assigns.node, :id) do
+      {:noreply, assign(socket, node: updated_vertex)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_info({:stream_error, error, :node_id, node_id}, socket) do
+    # This is the streamed LLM response into a node
+    # TODO - broadcast to all users??? - only want to update the node that is being worked on, just rerender the others
+    updated_vertex = GraphManager.update_vertex(socket.assigns.graph_id, node_id, error)
 
     if node_id == Map.get(socket.assigns.node, :id) do
       {:noreply, assign(socket, node: updated_vertex)}
@@ -197,7 +231,7 @@ defmodule DialecticWeb.GraphLive do
     {socket.assigns.graph_id, socket.assigns.node, socket.assigns.user, self()}
   end
 
-  def update_graph(socket, {graph, node}, invert_modal \\ false) do
+  def update_graph(socket, {graph, node}, invert_modal \\ false, update_view \\ true) do
     # Changeset needs to be a new node
     new_node = GraphActions.create_new_node(socket.assigns.user)
     changeset = Vertex.changeset(new_node)
@@ -209,7 +243,7 @@ defmodule DialecticWeb.GraphLive do
         socket.assigns.show_combine
       end
 
-    PubSub.broadcast(Dialectic.PubSub, "graph_update", %{graph: graph, node: node})
+    # PubSub.broadcast(Dialectic.PubSub, "graph_update", graph)
 
     {:noreply,
      assign(socket,
@@ -218,7 +252,8 @@ defmodule DialecticWeb.GraphLive do
        form: to_form(changeset, id: new_node.id),
        node: node,
        show_combine: show_combine,
-       key_buffer: ""
+       key_buffer: "",
+       update_view: update_view
      )}
   end
 end

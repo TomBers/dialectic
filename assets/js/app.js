@@ -23,6 +23,9 @@ import { LiveSocket } from "phoenix_live_view";
 import { draw_graph } from "./draw_graph";
 import topbar from "../vendor/topbar";
 
+let numNodes = null;
+let nodeId = null;
+
 let hooks = {};
 hooks.Graph = {
   mounted() {
@@ -30,21 +33,21 @@ hooks.Graph = {
 
     const { graph, node, cols } = this.el.dataset;
     const elements = JSON.parse(graph);
+    numNodes = elements;
+    nodeId = node;
     this.cy = draw_graph(div_id, this, elements, cols, node);
   },
   updated() {
-    const { graph, node } = this.el.dataset;
+    const { graph, node, updateview } = this.el.dataset;
     const newElements = JSON.parse(graph);
 
-    // Update the existing Cytoscape instance
-    // Option A: Update by setting new JSON (overwrites the entire set of elements)
-    this.cy.json({ elements: newElements });
-
-    this.cy.layout({ name: "dagre" }).run();
-
-    setTimeout(() => {
-      this.cy.elements().removeClass("selected");
-      this.cy.$(`#${node}`).addClass("selected");
+    if (newElements.length != numNodes.length) {
+      this.cy.json({ elements: newElements });
+      this.cy
+        .layout({ name: "dagre", nodeSep: 20, edgeSep: 15, rankSep: 30 })
+        .run();
+    }
+    if (node != nodeId && updateview == "true") {
       this.cy.animate({
         center: {
           eles: `#${node}`,
@@ -52,7 +55,13 @@ hooks.Graph = {
         zoom: 2,
         duration: 500, // duration in milliseconds for the animation
       });
-    }, 100);
+    }
+
+    this.cy.elements().removeClass("selected");
+    this.cy.$(`#${node}`).addClass("selected");
+
+    nodeId = node;
+    numNodes = newElements;
   },
 };
 

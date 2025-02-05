@@ -65,6 +65,9 @@ export function draw_graph(graph, context, elements, cols, node) {
     style: style_graph(cols),
     layout: {
       name: "dagre",
+      nodeSep: 20,
+      edgeSep: 15,
+      rankSep: 30,
     },
   });
   cy.on("tap", "node", function () {
@@ -74,6 +77,7 @@ export function draw_graph(graph, context, elements, cols, node) {
       center: {
         eles: n,
       },
+      zoom: 2,
       duration: 500, // duration in milliseconds for the animation
     });
   });
