@@ -15,7 +15,7 @@ defmodule DialecticWeb.GraphLive do
       end
 
     node_id = Map.get(params, "node", "1")
-    PubSub.subscribe(Dialectic.PubSub, "graph_update")
+
     socket = stream(socket, :presences, [])
 
     socket =
@@ -149,11 +149,6 @@ defmodule DialecticWeb.GraphLive do
       {:noreply, stream_insert(socket, :presences, presence)}
     end
   end
-
-  # TODO - figer out best way of dealing with updates - can just not pass new node.
-  # def handle_info(graph, socket) do
-  #   {:noreply, assign(socket, graph: graph, f_graph: format_graph(graph))}
-  # end
 
   def handle_info({:stream_chunk, chunk, :node_id, node_id}, socket) do
     # This is the streamed LLM response into a node

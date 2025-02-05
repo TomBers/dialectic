@@ -166,7 +166,6 @@ defmodule Dialectic.Models.DeepSeekAPI do
          to_node
        )
        when is_binary(data) do
-    # Corrected the atom from :steam_chunk to :stream_chunk.
     send(pid, {:stream_chunk, data, :node_id, to_node.id})
   end
 

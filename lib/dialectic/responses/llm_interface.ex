@@ -6,7 +6,7 @@ defmodule Dialectic.Responses.LlmInterface do
 
   def add_question(data, n, pid) do
     :timer.sleep(200)
-    send(pid, {:steam_chunk, data, :node_id, n.id})
+    send(pid, {:stream_chunk, data, :node_id, n.id})
   end
 
   def gen_response(node, child, pid) do

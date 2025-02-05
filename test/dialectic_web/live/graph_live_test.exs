@@ -165,7 +165,7 @@ defmodule DialecticWeb.GraphLiveTest do
   end
 
   describe "handle_info/2" do
-    test "steam_chunk info updates the node if node_id matches", %{conn: conn} do
+    test "stream_chunk info updates the node if node_id matches", %{conn: conn} do
       {:ok, view, _html} = setup_live(conn)
       state = :sys.get_state(view.pid).socket
 
@@ -175,7 +175,7 @@ defmodule DialecticWeb.GraphLiveTest do
       # For testing, assume GraphManager.update_vertex/3 will return a node map with an :updated flag.
       # In real tests, you’d stub GraphManager.update_vertex/3 to return this value.
       # Here, we simulate by sending the info message.
-      send(view.pid, {:steam_chunk, "new content", :node_id, current_node_id})
+      send(view.pid, {:stream_chunk, "new content", :node_id, current_node_id})
       # Allow the LiveView process time to process the message.
       :timer.sleep(50)
       state_after = :sys.get_state(view.pid).socket
@@ -184,11 +184,11 @@ defmodule DialecticWeb.GraphLiveTest do
       assert String.ends_with?(state_after.assigns.node.content, "new content")
     end
 
-    test "steam_chunk info does not update the node if node_id does not match", %{conn: conn} do
+    test "stream_chunk info does not update the node if node_id does not match", %{conn: conn} do
       {:ok, view, _html} = setup_live(conn)
       state = :sys.get_state(view.pid).socket
 
-      send(view.pid, {:steam_chunk, "new content", :node_id, "non_matching_id"})
+      send(view.pid, {:stream_chunk, "new content", :node_id, "non_matching_id"})
       :timer.sleep(50)
       state_after = :sys.get_state(view.pid).socket
 
@@ -196,24 +196,25 @@ defmodule DialecticWeb.GraphLiveTest do
       assert state_after.assigns.node == state.assigns.node
     end
 
-    test "graph update info updates graph, node, and f_graph", %{conn: conn} do
-      {:ok, view, _html} = setup_live(conn)
+    # Removed the broadcasting of graph updates as it only adds complexity.
+    # test "graph update info updates graph, node, and f_graph", %{conn: conn} do
+    #   {:ok, view, _html} = setup_live(conn)
 
-      # Create a dummy new graph and node.
-      new_graph = :digraph.new()
-      new_node = %Dialectic.Graph.Vertex{id: "2", content: "New Node", class: "user"}
-      :digraph.add_vertex(new_graph, "2", new_node)
+    #   # Create a dummy new graph and node.
+    #   new_graph = :digraph.new()
+    #   new_node = %Dialectic.Graph.Vertex{id: "2", content: "New Node", class: "user"}
+    #   :digraph.add_vertex(new_graph, "2", new_node)
 
-      send(view.pid, %{graph: new_graph, node: new_node})
-      :timer.sleep(50)
-      state = :sys.get_state(view.pid).socket
+    #   send(view.pid, %{graph: new_graph, node: new_node})
+    #   :timer.sleep(50)
+    #   state = :sys.get_state(view.pid).socket
 
-      assert state.assigns.graph == new_graph
-      assert state.assigns.node == new_node
+    #   assert state.assigns.graph == new_graph
+    #   assert state.assigns.node == new_node
 
-      expected_f_graph = Jason.encode!(Dialectic.Graph.Vertex.to_cytoscape_format(new_graph))
-      assert state.assigns.f_graph == expected_f_graph
-    end
+    #   expected_f_graph = Jason.encode!(Dialectic.Graph.Vertex.to_cytoscape_format(new_graph))
+    #   assert state.assigns.f_graph == expected_f_graph
+    # end
 
     test "presence join and leave info are handled without error", %{conn: conn} do
       {:ok, view, _html} = setup_live(conn)
