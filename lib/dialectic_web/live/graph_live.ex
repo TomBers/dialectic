@@ -86,7 +86,34 @@ defmodule DialecticWeb.GraphLive do
         end
       end
     else
-      {:noreply, socket}
+      case key do
+        "ArrowDown" ->
+          update_graph(
+            socket,
+            GraphActions.move(graph_action_params(socket), "down")
+          )
+
+        "ArrowUp" ->
+          update_graph(
+            socket,
+            GraphActions.move(graph_action_params(socket), "up")
+          )
+
+        "ArrowRight" ->
+          update_graph(
+            socket,
+            GraphActions.move(graph_action_params(socket), "right")
+          )
+
+        "ArrowLeft" ->
+          update_graph(
+            socket,
+            GraphActions.move(graph_action_params(socket), "left")
+          )
+
+        _ ->
+          {:noreply, socket}
+      end
     end
   end
 

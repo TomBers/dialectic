@@ -6,6 +6,10 @@ defmodule Dialectic.Graph.GraphActions do
     %Vertex{user: user, id: "NewNode", noted_by: []}
   end
 
+  def move({graph_id, node, _user, _pid}, direction) do
+    GraphManager.move(graph_id, node, direction)
+  end
+
   # def delete_node({graph_id, _node, _user, _pid}, node_id) do
   #   GraphManager.delete_node(graph_id, node_id)
   # end
