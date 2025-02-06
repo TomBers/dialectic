@@ -60,7 +60,9 @@ defmodule Dialectic.MixProject do
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.5"},
       {:req, "~> 0.5.8"},
-      {:earmark, "~> 1.4"}
+      {:earmark, "~> 1.4"},
+      {:igniter, "~> 0.5"},
+      {:oban, "~> 2.19"}
     ]
   end
 

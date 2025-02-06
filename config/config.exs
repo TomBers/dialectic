@@ -7,6 +7,12 @@
 # General application configuration
 import Config
 
+config :dialectic, Oban,
+  engine: Oban.Engines.Basic,
+  notifier: Oban.Notifiers.Postgres,
+  queues: [api_request: 10],
+  repo: Dialectic.Repo
+
 config :dialectic,
   ecto_repos: [Dialectic.Repo],
   generators: [timestamp_type: :utc_datetime]

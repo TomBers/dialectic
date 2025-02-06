@@ -11,6 +11,7 @@ defmodule Dialectic.Application do
       DialecticWeb.Telemetry,
       Dialectic.Repo,
       {DNSCluster, query: Application.get_env(:dialectic, :dns_cluster_query) || :ignore},
+      {Oban, Application.fetch_env!(:dialectic, Oban)},
       {Phoenix.PubSub, name: Dialectic.PubSub},
       # Start the Finch HTTP client for sending emails
       {Finch, name: Dialectic.Finch},

@@ -1,0 +1,153 @@
+defmodule Dialectic.Workers.DeepSeekWorker do
+  use Oban.Worker,
+    queue: :api_request,
+    max_attempts: 5
+
+  require Logger
+
+  @api_key System.get_env("DEEPSEEK_API_KEY")
+  @base_url "https://api.deepseek.com"
+  @model "deepseek-chat"
+  @timeout 30_000
+
+  @impl Oban.Worker
+  def perform(%Oban.Job{
+        args: %{"question" => question, "to_node" => to_node, "graph" => graph}
+      }) do
+    with {:ok, body} <- build_request_body(question),
+         {:ok, url} <- build_url() do
+      do_request(url, body, graph, to_node)
+      :ok
+    else
+      {:error, reason} ->
+        Logger.error("Failed to initiate DeepSeek request: #{inspect(reason)}")
+        {:error, reason}
+    end
+  end
+
+  defp build_request_body(question) do
+    try do
+      body = %{
+        model: @model,
+        stream: true,
+        messages: [
+          %{
+            role: "system",
+            content:
+              "You are an expert philosopher, helping the user better understand key philosophical points. Please keep your answers concise and to the point."
+          },
+          %{role: "user", content: question}
+        ]
+      }
+
+      {:ok, Jason.encode!(body)}
+    rescue
+      e ->
+        Logger.error("Failed to encode request body: #{inspect(e)}")
+        {:error, "Failed to encode request"}
+    end
+  end
+
+  defp build_url do
+    case @api_key do
+      nil ->
+        Logger.error("DeepSeek API key not configured")
+        {:error, "API key not configured"}
+
+      _ ->
+        {:ok, "#{@base_url}/chat/completions"}
+    end
+  end
+
+  defp do_request(url, body, graph, to_node) do
+    headers = [
+      {"Authorization", "Bearer #{@api_key}"},
+      {"Content-Type", "application/json"}
+    ]
+
+    options = [
+      headers: headers,
+      body: body,
+      # As chunks stream in, process them with our callback.
+      into: &handle_stream_chunk(&1, &2, graph, to_node),
+      connect_options: [timeout: @timeout],
+      receive_timeout: @timeout
+    ]
+
+    case Req.post(url, options) do
+      {:ok, _response} ->
+        Logger.info("Request completed successfully")
+        :ok
+
+      {:error, reason} ->
+        Logger.error("Request failed: #{inspect(reason)}")
+        # Raise an error so Oban will trigger a retry.
+        raise "DeepSeek request failed: #{inspect(reason)}"
+    end
+  rescue
+    exception ->
+      Logger.error("Exception during request: #{inspect(exception)}")
+      raise exception
+  end
+
+  defp handle_stream_chunk({:data, data}, context, graph, to_node) do
+    case parse(data) do
+      {:ok, chunks} ->
+        Enum.each(chunks, &send_chunk(&1, graph, to_node))
+        {:cont, context}
+
+      {:error, reason} ->
+        Logger.error("Failed to parse chunk: #{inspect(reason)}")
+        {:cont, context}
+    end
+  end
+
+  defp parse(chunk) do
+    try do
+      chunks =
+        chunk
+        |> String.split("data: ")
+        |> Enum.map(&String.trim/1)
+        |> Enum.map(&decode/1)
+        |> Enum.reject(&is_nil/1)
+
+      {:ok, chunks}
+    rescue
+      e ->
+        Logger.error("Error parsing chunk: #{inspect(e)}")
+        {:error, "Failed to parse chunk"}
+    end
+  end
+
+  defp decode(""), do: nil
+  defp decode("[DONE]"), do: nil
+
+  defp decode(data) do
+    try do
+      Jason.decode!(data)
+    rescue
+      _ -> nil
+    end
+  end
+
+  defp send_chunk(
+         %{
+           "choices" => [
+             %{
+               "delta" => %{"content" => data}
+             }
+           ]
+         },
+         graph_id,
+         to_node
+       )
+       when is_binary(data) do
+    Phoenix.PubSub.broadcast(
+      Dialectic.PubSub,
+      graph_id,
+      {:stream_chunk, data, :node_id, to_node}
+    )
+  end
+
+  defp send_chunk(_invalid_chunk, _callback, _to_node), do: nil
+end

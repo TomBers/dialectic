@@ -12,7 +12,7 @@ defmodule Dialectic.Graph.GraphActionsTest do
     {:ok, graph: graph}
   end
 
-  def graph_param(node), do: {@graph_id, node, @test_user, self()}
+  def graph_param(node), do: {@graph_id, node, @test_user}
 
   def inital_qa() do
     node = GraphActions.create_new_node(@test_user)
