@@ -87,6 +87,7 @@ export function draw_graph(graph, context, elements, cols, node) {
     center: {
       eles: `#${node}`,
     },
+    zoom: 2,
     duration: 500, // duration in milliseconds for the animation
   });
 

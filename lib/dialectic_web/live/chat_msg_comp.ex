@@ -93,6 +93,10 @@ defmodule DialecticWeb.ChatMsgComp do
               Note
             </button>
           <% end %>
+          |
+          <.link navigate={"?node=" <> @node.id} class="text-blue-600 hover:text-blue-400">
+            Link
+          </.link>
         </div>
       </div>
     </div>
