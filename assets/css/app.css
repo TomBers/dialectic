@@ -35,6 +35,10 @@
     font-size: 0.6em;
 }
 
+.info-graph {
+    min-height: 320px;
+}
+
 /* .node .proposition {
     margin: 0;
     font-size: 1rem;

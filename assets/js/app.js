@@ -29,9 +29,8 @@ let nodeId = null;
 let hooks = {};
 hooks.Graph = {
   mounted() {
-    const div_id = document.getElementById("cy");
-
-    const { graph, node, cols } = this.el.dataset;
+    const { graph, node, cols, div } = this.el.dataset;
+    const div_id = document.getElementById(div);
     const elements = JSON.parse(graph);
     numNodes = elements;
     nodeId = node;
