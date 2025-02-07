@@ -16,6 +16,14 @@
     </div>
   </.form>
 
+  <.link
+    navigate={~p"/intro/what"}
+    class="text-xl text-blue-600 hover:text-blue-400"
+    target="_blank"
+  >
+    What is this?
+  </.link>
+  <br /><br />
   <div class="bg-white shadow-md rounded-lg overflow-hidden">
     <ul class="divide-y divide-gray-200">
       <%= for graph <- @graphs do %>
