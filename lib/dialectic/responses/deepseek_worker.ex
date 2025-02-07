@@ -47,12 +47,11 @@ defmodule Dialectic.Workers.DeepSeekWorker do
         to_node
       )
       when is_binary(data) do
-    IO.inspect(data)
-    # Phoenix.PubSub.broadcast(
-    #   Dialectic.PubSub,
-    #   graph_id,
-    #   {:stream_chunk, data, :node_id, to_node}
-    # )
+    Phoenix.PubSub.broadcast(
+      Dialectic.PubSub,
+      graph_id,
+      {:stream_chunk, data, :node_id, to_node}
+    )
   end
 
   @impl true

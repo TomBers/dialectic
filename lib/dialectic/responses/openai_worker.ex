@@ -1,25 +1,25 @@
-defmodule Dialectic.Workers.ClaudeWorker do
+defmodule Dialectic.Workers.OpenAIWorker do
   @moduledoc """
-  Worker for the Claude AI model.
+  Worker for the OpenAI Chat API.
   """
   use Oban.Worker, queue: :api_request, max_attempts: 5
+
   @behaviour Dialectic.Workers.BaseAPIWorker
 
-  @model "claude-3-sonnet-20240229"
-
+  @model "gpt-3.5-turbo"
   # Model-specific configuration:
-  @impl true
-  def api_key, do: System.get_env("ANTHROPIC_API_KEY")
 
   @impl true
-  def request_url, do: "https://api.anthropic.com/v1/messages"
+  def api_key, do: System.get_env("OPENAI_API_KEY")
+
+  @impl true
+  def request_url, do: "https://api.openai.com/v1/chat/completions"
 
   @impl true
   def headers(api_key) do
     [
-      {"x-api-key", api_key},
-      {"content-type", "application/json"},
-      {"anthropic-version", "2023-06-01"}
+      {"Authorization", "Bearer #{api_key}"},
+      {"Content-Type", "application/json"}
     ]
   end
 
@@ -27,13 +27,14 @@ defmodule Dialectic.Workers.ClaudeWorker do
   def build_request_body(question) do
     %{
       model: @model,
-      max_tokens: 1024,
       stream: true,
       messages: [
         %{
-          role: "user",
-          content: question
-        }
+          role: "system",
+          content:
+            "You are an expert philosopher, helping the user better understand key philosophical points. Please keep your answers concise and to the point."
+        },
+        %{role: "user", content: question}
       ]
     }
   end
@@ -41,9 +42,9 @@ defmodule Dialectic.Workers.ClaudeWorker do
   @impl true
   def handle_result(
         %{
-          "delta" => %{
-            "text" => data
-          }
+          "choices" => [
+            %{"delta" => %{"content" => data}}
+          ]
         },
         graph_id,
         to_node

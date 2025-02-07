@@ -61,7 +61,7 @@ defmodule Dialectic.Workers.BaseAPIWorker do
 
   defp do_request(module, url, body, graph, to_node) do
     options = [
-      headers: module.headers(module.api_key),
+      headers: module.headers(module.api_key()),
       body: body,
       into: &handle_stream_chunk(module, &1, &2, graph, to_node),
       connect_options: [timeout: @timeout],
@@ -85,11 +85,13 @@ defmodule Dialectic.Workers.BaseAPIWorker do
   end
 
   defp handle_stream_chunk(module, {:data, data}, context, graph, to_node) do
-    # Logger.info("Stream chunk")
-    # Logger.info(data)
+    Logger.info("Stream chunk")
+    Logger.info(data)
 
     case parse(data) do
       {:ok, chunks} ->
+        Logger.info("Parsed chunks: #{inspect(chunks)}")
+
         Enum.each(chunks, fn chunk ->
           module.handle_result(chunk, graph, to_node)
         end)
@@ -97,6 +99,7 @@ defmodule Dialectic.Workers.BaseAPIWorker do
         {:cont, context}
 
       {:error, reason} ->
+        Logger.info("Failed to parse chunk: #{inspect(reason)}")
         Logger.error("Failed to parse chunk: #{inspect(reason)}")
         {:cont, context}
     end
