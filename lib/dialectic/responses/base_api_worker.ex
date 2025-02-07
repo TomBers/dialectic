@@ -7,8 +7,8 @@ defmodule Dialectic.Workers.BaseAPIWorker do
   @timeout 30_000
 
   @callback api_key() :: String.t() | nil
-  @callback base_url() :: String.t()
-  @callback request_path() :: String.t()
+  @callback request_url() :: String.t()
+  @callback headers(String.t()) :: list()
   @callback build_request_body(String.t()) :: map()
   @callback handle_result(map(), graph_id :: any(), to_node :: any()) :: any()
 
@@ -55,18 +55,13 @@ defmodule Dialectic.Workers.BaseAPIWorker do
 
       _ ->
         # Use passed module
-        {:ok, "#{module.base_url()}/#{module.request_path()}"}
+        {:ok, module.request_url()}
     end
   end
 
   defp do_request(module, url, body, graph, to_node) do
-    headers = [
-      {"Authorization", "Bearer #{module.api_key()}"},
-      {"Content-Type", "application/json"}
-    ]
-
     options = [
-      headers: headers,
+      headers: module.headers(module.api_key),
       body: body,
       into: &handle_stream_chunk(module, &1, &2, graph, to_node),
       connect_options: [timeout: @timeout],
@@ -74,8 +69,9 @@ defmodule Dialectic.Workers.BaseAPIWorker do
     ]
 
     case Req.post(url, options) do
-      {:ok, _response} ->
+      {:ok, response} ->
         Logger.info("Request completed successfully")
+        Logger.info(response)
         :ok
 
       {:error, reason} ->
@@ -89,6 +85,9 @@ defmodule Dialectic.Workers.BaseAPIWorker do
   end
 
   defp handle_stream_chunk(module, {:data, data}, context, graph, to_node) do
+    # Logger.info("Stream chunk")
+    # Logger.info(data)
+
     case parse(data) do
       {:ok, chunks} ->
         Enum.each(chunks, fn chunk ->

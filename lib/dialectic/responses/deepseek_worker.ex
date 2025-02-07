@@ -10,9 +10,15 @@ defmodule Dialectic.Workers.DeepSeekWorker do
   @impl true
   def api_key, do: System.get_env("DEEPSEEK_API_KEY")
   @impl true
-  def base_url, do: "https://api.deepseek.com"
+  def request_url, do: "https://api.deepseek.com/chat/completions"
+
   @impl true
-  def request_path, do: "chat/completions"
+  def headers(api_key) do
+    [
+      {"Authorization", "Bearer #{api_key}"},
+      {"Content-Type", "application/json"}
+    ]
+  end
 
   @impl true
   def build_request_body(question) do
@@ -41,15 +47,19 @@ defmodule Dialectic.Workers.DeepSeekWorker do
         to_node
       )
       when is_binary(data) do
-    Phoenix.PubSub.broadcast(
-      Dialectic.PubSub,
-      graph_id,
-      {:stream_chunk, data, :node_id, to_node}
-    )
+    IO.inspect(data)
+    # Phoenix.PubSub.broadcast(
+    #   Dialectic.PubSub,
+    #   graph_id,
+    #   {:stream_chunk, data, :node_id, to_node}
+    # )
   end
 
   @impl true
-  def handle_result(_other, _graph, _to_node), do: :ok
+  def handle_result(other, _graph, _to_node) do
+    IO.inspect(other, label: "Error")
+    :ok
+  end
 
   @impl Oban.Worker
   defdelegate perform(job), to: Dialectic.Workers.BaseAPIWorker
