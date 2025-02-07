@@ -1,4 +1,6 @@
 defmodule Dialectic.Workers.GeminiWorker do
+  alias Dialectic.Responses.Utils
+
   @moduledoc """
   Worker for the Google Gemini AI model.
   """
@@ -46,6 +48,12 @@ defmodule Dialectic.Workers.GeminiWorker do
   end
 
   @impl true
+  def parse_chunk(chunk) do
+    {:ok,
+     [chunk |> String.replace_prefix(",", "") |> String.replace_prefix("[", "") |> Utils.decode()]}
+  end
+
+  @impl true
   def handle_result(
         %{
           "candidates" => [
@@ -63,15 +71,8 @@ defmodule Dialectic.Workers.GeminiWorker do
         graph_id,
         to_node
       )
-      when is_binary(data) do
-    IO.inspect(data, label: "GeminiWorker")
-
-    Phoenix.PubSub.broadcast(
-      Dialectic.PubSub,
-      graph_id,
-      {:stream_chunk, data, :node_id, to_node}
-    )
-  end
+      when is_binary(data),
+      do: Utils.process_chunk(graph_id, to_node, data, __MODULE__)
 
   @impl true
   def handle_result(other, _graph, _to_node) do

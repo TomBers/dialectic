@@ -1,7 +1,10 @@
 defmodule Dialectic.Workers.ClaudeWorker do
+  alias Dialectic.Responses.Utils
+
   @moduledoc """
   Worker for the Claude AI model.
   """
+  require Logger
   use Oban.Worker, queue: :api_request, max_attempts: 5
   @behaviour Dialectic.Workers.BaseAPIWorker
 
@@ -39,6 +42,26 @@ defmodule Dialectic.Workers.ClaudeWorker do
   end
 
   @impl true
+  def parse_chunk(chunk) do
+    Logger.info("Claude Parser: #{chunk}")
+
+    try do
+      chunks =
+        chunk
+        |> String.split("data: ")
+        |> Enum.map(&String.trim/1)
+        |> Enum.map(&Utils.decode/1)
+        |> Enum.reject(&is_nil/1)
+
+      {:ok, chunks}
+    rescue
+      e ->
+        Logger.error("Error parsing chunk: #{inspect(e)}")
+        {:error, "Failed to parse chunk"}
+    end
+  end
+
+  @impl true
   def handle_result(
         %{
           "delta" => %{
@@ -48,17 +71,12 @@ defmodule Dialectic.Workers.ClaudeWorker do
         graph_id,
         to_node
       )
-      when is_binary(data) do
-    Phoenix.PubSub.broadcast(
-      Dialectic.PubSub,
-      graph_id,
-      {:stream_chunk, data, :node_id, to_node}
-    )
-  end
+      when is_binary(data),
+      do: Utils.process_chunk(graph_id, to_node, data, __MODULE__)
 
   @impl true
   def handle_result(other, _graph, _to_node) do
-    IO.inspect(other, label: "Error")
+    IO.inspect(other, label: "handle_result Error")
     :ok
   end
 

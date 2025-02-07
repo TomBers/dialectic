@@ -11,6 +11,7 @@ defmodule Dialectic.Workers.BaseAPIWorker do
   @callback request_url() :: String.t()
   @callback headers(String.t()) :: list()
   @callback build_request_body(String.t()) :: map()
+  @callback parse_chunk(String.t()) :: {:ok, list()} | {:error, String.t()}
   @callback handle_result(map(), graph_id :: any(), to_node :: any()) :: any()
 
   @impl Oban.Worker
@@ -86,12 +87,9 @@ defmodule Dialectic.Workers.BaseAPIWorker do
   end
 
   defp handle_stream_chunk(module, {:data, data}, context, graph, to_node) do
-    # Logger.info("Stream chunk")
-    # Logger.info(data)
-
-    case parse(data) do
+    case module.parse_chunk(data) do
       {:ok, chunks} ->
-        # Logger.info("Parsed chunks: #{inspect(chunks)}")
+        Logger.info("Parsed chunks: #{inspect(chunks)}")
 
         Enum.each(chunks, fn chunk ->
           module.handle_result(chunk, graph, to_node)
@@ -103,41 +101,6 @@ defmodule Dialectic.Workers.BaseAPIWorker do
         Logger.info("Failed to parse chunk: #{inspect(reason)}")
         Logger.error("Failed to parse chunk: #{inspect(reason)}")
         {:cont, context}
-    end
-  end
-
-  defp parse("data: " <> chunk) do
-    try do
-      chunks =
-        chunk
-        |> String.split("data: ")
-        |> Enum.map(&String.trim/1)
-        |> Enum.map(&decode/1)
-        |> Enum.reject(&is_nil/1)
-
-      {:ok, chunks}
-    rescue
-      e ->
-        Logger.error("Error parsing chunk: #{inspect(e)}")
-        {:error, "Failed to parse chunk"}
-    end
-  end
-
-  # Used for GeminiWorker, for some reason it has a different format, the first response prefixed with [
-  # subsequent have leading comma
-
-  defp parse(chunk) do
-    {:ok, [chunk |> String.replace_prefix(",", "") |> String.replace_prefix("[", "") |> decode()]}
-  end
-
-  defp decode(""), do: nil
-  defp decode("[DONE]"), do: nil
-
-  defp decode(data) do
-    try do
-      Jason.decode!(data)
-    rescue
-      _ -> nil
     end
   end
 end

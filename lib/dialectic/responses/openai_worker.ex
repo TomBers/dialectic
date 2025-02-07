@@ -1,4 +1,6 @@
 defmodule Dialectic.Workers.OpenAIWorker do
+  alias Dialectic.Responses.Utils
+
   @moduledoc """
   Worker for the OpenAI Chat API.
   """
@@ -41,6 +43,26 @@ defmodule Dialectic.Workers.OpenAIWorker do
   end
 
   @impl true
+  def parse_chunk(chunk) do
+    Logger.info("OpenAI  Parser: #{chunk}")
+
+    try do
+      chunks =
+        chunk
+        |> String.split("data: ")
+        |> Enum.map(&String.trim/1)
+        |> Enum.map(&Utils.decode/1)
+        |> Enum.reject(&is_nil/1)
+
+      {:ok, chunks}
+    rescue
+      e ->
+        Logger.error("Error parsing chunk: #{inspect(e)}")
+        {:error, "Failed to parse chunk"}
+    end
+  end
+
+  @impl true
   def handle_result(
         %{
           "choices" => [
@@ -50,15 +72,8 @@ defmodule Dialectic.Workers.OpenAIWorker do
         graph_id,
         to_node
       )
-      when is_binary(data) do
-    Logger.info(data, label: "OpenAI Response")
-
-    Phoenix.PubSub.broadcast(
-      Dialectic.PubSub,
-      graph_id,
-      {:stream_chunk, data, :node_id, to_node}
-    )
-  end
+      when is_binary(data),
+      do: Utils.process_chunk(graph_id, to_node, data, __MODULE__)
 
   @impl true
   def handle_result(other, _graph, _to_node) do
