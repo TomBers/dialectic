@@ -2,6 +2,7 @@ defmodule Dialectic.Workers.BaseAPIWorker do
   @moduledoc """
   A generic API worker which delegates model-specific behavior via callbacks.
   """
+
   use Oban.Worker, queue: :api_request, max_attempts: 5
   require Logger
   @timeout 30_000
@@ -85,12 +86,12 @@ defmodule Dialectic.Workers.BaseAPIWorker do
   end
 
   defp handle_stream_chunk(module, {:data, data}, context, graph, to_node) do
-    Logger.info("Stream chunk")
-    Logger.info(data)
+    # Logger.info("Stream chunk")
+    # Logger.info(data)
 
     case parse(data) do
       {:ok, chunks} ->
-        Logger.info("Parsed chunks: #{inspect(chunks)}")
+        # Logger.info("Parsed chunks: #{inspect(chunks)}")
 
         Enum.each(chunks, fn chunk ->
           module.handle_result(chunk, graph, to_node)
@@ -105,7 +106,7 @@ defmodule Dialectic.Workers.BaseAPIWorker do
     end
   end
 
-  defp parse(chunk) do
+  defp parse("data: " <> chunk) do
     try do
       chunks =
         chunk
@@ -120,6 +121,13 @@ defmodule Dialectic.Workers.BaseAPIWorker do
         Logger.error("Error parsing chunk: #{inspect(e)}")
         {:error, "Failed to parse chunk"}
     end
+  end
+
+  # Used for GeminiWorker, for some reason it has a different format, the first response prefixed with [
+  # subsequent have leading comma
+
+  defp parse(chunk) do
+    {:ok, [chunk |> String.replace_prefix(",", "") |> String.replace_prefix("[", "") |> decode()]}
   end
 
   defp decode(""), do: nil

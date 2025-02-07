@@ -2,6 +2,7 @@ defmodule Dialectic.Workers.OpenAIWorker do
   @moduledoc """
   Worker for the OpenAI Chat API.
   """
+  require Logger
   use Oban.Worker, queue: :api_request, max_attempts: 5
 
   @behaviour Dialectic.Workers.BaseAPIWorker
@@ -50,6 +51,8 @@ defmodule Dialectic.Workers.OpenAIWorker do
         to_node
       )
       when is_binary(data) do
+    Logger.info(data, label: "OpenAI Response")
+
     Phoenix.PubSub.broadcast(
       Dialectic.PubSub,
       graph_id,

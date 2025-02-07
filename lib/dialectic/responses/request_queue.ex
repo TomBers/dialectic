@@ -1,17 +1,17 @@
 defmodule Dialectic.Responses.RequestQueue do
-  alias Dialectic.Workers.DeepSeekWorker
-  alias Dialectic.Workers.ClaudeWorker
+  # alias Dialectic.Workers.DeepSeekWorker
+  # alias Dialectic.Workers.ClaudeWorker
   alias Dialectic.Workers.GeminiWorker
-  alias Dialectic.Workers.OpenAIWorker
+  # alias Dialectic.Workers.OpenAIWorker
 
   def add(question, to_node, graph) do
     %{
       question: question,
       to_node: to_node.id,
       graph: graph,
-      module: Dialectic.Workers.OpenAIWorker
+      module: Dialectic.Workers.GeminiWorker
     }
-    |> OpenAIWorker.new()
+    |> GeminiWorker.new()
     |> Oban.insert()
   end
 
@@ -19,7 +19,7 @@ defmodule Dialectic.Responses.RequestQueue do
     IO.puts("Hello, world!")
 
     %{
-      question: "What is dialectival materialism",
+      question: "What is the Gemini model?",
       to_node: "1",
       graph: "Bob",
       module: Dialectic.Workers.GeminiWorker
