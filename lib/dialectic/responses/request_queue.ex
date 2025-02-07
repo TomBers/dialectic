@@ -73,7 +73,7 @@ defmodule Dialectic.Responses.RequestQueue do
 
   def test() do
     params = %{
-      question: "Can you write a short summary of Anti-Oedipus?",
+      question: "What is a Body without organs?",
       to_node: "1",
       graph: "Bob",
       module: nil

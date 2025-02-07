@@ -42,24 +42,7 @@ defmodule Dialectic.Workers.ClaudeWorker do
   end
 
   @impl true
-  def parse_chunk(chunk) do
-    Logger.info("Claude Parser: #{chunk}")
-
-    try do
-      chunks =
-        chunk
-        |> String.split("data: ")
-        |> Enum.map(&String.trim/1)
-        |> Enum.map(&Utils.decode/1)
-        |> Enum.reject(&is_nil/1)
-
-      {:ok, chunks}
-    rescue
-      e ->
-        Logger.error("Error parsing chunk: #{inspect(e)}")
-        {:error, "Failed to parse chunk"}
-    end
-  end
+  def parse_chunk(chunk), do: Utils.parse_chunk(chunk)
 
   @impl true
   def handle_result(

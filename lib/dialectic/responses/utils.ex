@@ -1,11 +1,30 @@
 defmodule Dialectic.Responses.Utils do
-  def process_chunk(graph, node, data, module) do
-    File.write("#{module}.txt", "#{data}\n", [:append])
-    # Phoenix.PubSub.broadcast(
-    #   Dialectic.PubSub,
-    #   graph,
-    #   {:stream_chunk, data, :node_id, node}
-    # )
+  require Logger
+
+  def process_chunk(graph, node, data, _module) do
+    # File.write("#{module}.txt", "#{data}\n", [:append])
+    Phoenix.PubSub.broadcast(
+      Dialectic.PubSub,
+      graph,
+      {:stream_chunk, data, :node_id, node}
+    )
+  end
+
+  def parse_chunk(chunk) do
+    try do
+      chunks =
+        chunk
+        |> String.split("data: ")
+        |> Enum.map(&String.trim/1)
+        |> Enum.map(&decode/1)
+        |> Enum.reject(&is_nil/1)
+
+      {:ok, chunks}
+    rescue
+      e ->
+        Logger.error("Error parsing chunk: #{inspect(e)}")
+        {:error, "Failed to parse chunk"}
+    end
   end
 
   def decode(""), do: nil
