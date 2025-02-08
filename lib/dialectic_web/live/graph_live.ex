@@ -46,7 +46,8 @@ defmodule DialecticWeb.GraphLive do
        show_combine: false,
        key_buffer: "",
        user: user,
-       update_view: true
+       update_view: true,
+       edit: false
      )}
   end
 
@@ -77,6 +78,17 @@ defmodule DialecticWeb.GraphLive do
         socket,
         GraphActions.delete_node(graph_action_params(socket), node_id)
       )
+    else
+      {:noreply, socket |> put_flash(:error, "You don't own this node")}
+    end
+  end
+
+  def handle_event("edit", %{"node" => node_id}, socket) do
+    {_graph, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+    if node.user == socket.assigns.user &&
+         length(node.children |> Enum.reject(fn v -> v.deleted end)) == 0 do
+      {:noreply, socket |> assign(node: node, form: to_form(Vertex.changeset(node)), edit: true)}
     else
       {:noreply, socket |> put_flash(:error, "You don't own this node")}
     end
@@ -138,10 +150,11 @@ defmodule DialecticWeb.GraphLive do
   def handle_event("answer", %{"vertex" => %{"content" => ""}}, socket), do: {:noreply, socket}
 
   def handle_event("answer", %{"vertex" => %{"content" => answer}}, socket) do
-    update_graph(
-      socket,
-      GraphActions.comment(graph_action_params(socket), answer)
-    )
+    if socket.assigns.edit do
+      update_graph(socket, GraphActions.edit_node(graph_action_params(socket), answer))
+    else
+      update_graph(socket, GraphActions.comment(graph_action_params(socket), answer))
+    end
   end
 
   def handle_event("modal_closed", _, socket) do
@@ -166,7 +179,6 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_info({:stream_chunk, chunk, :node_id, node_id}, socket) do
     # This is the streamed LLM response into a node
-    # TODO - broadcast to all users??? - only want to update the node that is being worked on, just rerender the others
     updated_vertex = GraphManager.update_vertex(socket.assigns.graph_id, node_id, chunk)
 
     if node_id == Map.get(socket.assigns.node, :id) do
@@ -268,7 +280,8 @@ defmodule DialecticWeb.GraphLive do
        node: node,
        show_combine: show_combine,
        key_buffer: "",
-       update_view: update_view
+       update_view: update_view,
+       edit: false
      )}
   end
 end

@@ -18,6 +18,10 @@ defmodule Dialectic.Graph.GraphActions do
     GraphManager.change_noted_by(graph_id, node_id, user, change_fn)
   end
 
+  def edit_node({graph_id, node, _user}, question) do
+    GraphManager.edit_vertex(graph_id, node.id, question)
+  end
+
   def comment({graph_id, node, user}, question) do
     GraphManager.add_child(
       graph_id,
