@@ -97,6 +97,15 @@ defmodule DialecticWeb.ChatMsgComp do
           <.link navigate={"?node=" <> @node.id} class="text-blue-600 hover:text-blue-400">
             Link
           </.link>
+          |
+          <button
+            phx-click="delete"
+            phx-confirm="Are you sure?"
+            phx-value-node={@node.id}
+            class="text-red-600 hover:text-red-800 font-medium focus:outline-none"
+          >
+            Delete
+          </button>
         </div>
       </div>
     </div>

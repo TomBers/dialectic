@@ -102,6 +102,18 @@ defmodule GraphManager do
     end
   end
 
+  def handle_call({:delete_node, node_id}, _from, {path, graph}) do
+    case :digraph.vertex(graph, node_id) do
+      {_id, vertex} ->
+        updated_vertex = Vertex.add_relatives(vertex, graph) |> Vertex.delete_vertex()
+        :digraph.add_vertex(graph, node_id, updated_vertex)
+        {:reply, {graph, List.first(updated_vertex.parents)}, {path, graph}}
+
+      false ->
+        {:reply, nil, {path, graph}}
+    end
+  end
+
   def handle_call({:move, {node, direction}}, _, {path, graph}) do
     updated_vertex =
       case direction do
@@ -171,5 +183,9 @@ defmodule GraphManager do
 
   def move(path, node, direction) do
     GenServer.call(via_tuple(path), {:move, {node, direction}})
+  end
+
+  def delete_node(path, node_id) do
+    GenServer.call(via_tuple(path), {:delete_node, node_id})
   end
 end

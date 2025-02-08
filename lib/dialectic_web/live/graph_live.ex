@@ -68,6 +68,13 @@ defmodule DialecticWeb.GraphLive do
     )
   end
 
+  def handle_event("delete", %{"node" => node_id}, socket) do
+    update_graph(
+      socket,
+      GraphActions.delete_node(graph_action_params(socket), node_id)
+    )
+  end
+
   def handle_event("KeyBoardInterface", %{"key" => last_key, "cmdKey" => isCmd}, socket) do
     # IO.inspect(params, label: "KeyBoardInterface")
     key =
