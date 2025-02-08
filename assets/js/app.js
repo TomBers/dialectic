@@ -29,6 +29,9 @@ let nodeId = null;
 let hooks = {};
 hooks.Graph = {
   mounted() {
+    // Hide the user header
+    document.getElementById("userHeader").style.display = "none";
+
     const { graph, node, cols, div } = this.el.dataset;
     const div_id = document.getElementById(div);
     const elements = JSON.parse(graph);
