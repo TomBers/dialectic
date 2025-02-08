@@ -1,5 +1,5 @@
 defmodule Dialectic.Graph.Vertex do
-  @derive {Jason.Encoder, only: [:id, :content, :class, :user, :noted_by]}
+  @derive {Jason.Encoder, only: [:id, :content, :class, :user, :noted_by, :deleted]}
   @valid_classes [
     "thesis",
     "antithesis",
@@ -11,7 +11,14 @@ defmodule Dialectic.Graph.Vertex do
   ]
   # Define a custom type for class validation
   # @type class :: "assumption" | "premise" | "conclusion"
-  defstruct id: nil, content: "", class: "", user: "", parents: [], children: [], noted_by: []
+  defstruct id: nil,
+            content: "",
+            class: "",
+            user: "",
+            parents: [],
+            children: [],
+            noted_by: [],
+            deleted: false
 
   # Add a function to validate the class
   def validate_class(class) when class in @valid_classes, do: {:ok, class}
@@ -24,7 +31,8 @@ defmodule Dialectic.Graph.Vertex do
       content: vertex.content,
       class: vertex.class,
       user: vertex.user,
-      noted_by: vertex.noted_by
+      noted_by: vertex.noted_by,
+      deleted: vertex.deleted
     }
   end
 
@@ -34,7 +42,8 @@ defmodule Dialectic.Graph.Vertex do
       content: data["content"],
       class: data["class"],
       user: data["user"],
-      noted_by: data["noted_by"]
+      noted_by: data["noted_by"],
+      deleted: data["deleted"]
     }
   end
 
@@ -44,6 +53,10 @@ defmodule Dialectic.Graph.Vertex do
 
   def remove_noted_by(vertex, user) do
     %{vertex | noted_by: vertex.noted_by -- [user]}
+  end
+
+  def delete_vertex(vertex) do
+    %{vertex | deleted: true}
   end
 
   # ----------------------------
@@ -102,39 +115,57 @@ defmodule Dialectic.Graph.Vertex do
 
     # Convert vertices to cytoscape nodes format
     nodes =
-      Enum.map(vertices, fn vertex ->
+      Enum.reduce(vertices, [], fn vertex, acc ->
         # Get the vertex label/data from the digraph
         {vid, dat} = :digraph.vertex(graph, vertex)
 
         # Create cytoscape node format
-        %{
-          data: %{
-            id: vid,
-            class: dat.class
-          }
-        }
+        case dat.deleted do
+          true ->
+            acc
+
+          false ->
+            acc ++
+              [
+                %{
+                  data: %{
+                    id: vid,
+                    class: dat.class
+                  }
+                }
+              ]
+        end
       end)
 
     # Convert edges to cytoscape edges format
     edges =
-      Enum.map(edges, fn edge ->
+      Enum.reduce(edges, [], fn edge, acc ->
         {_, v1, v2, _} = :digraph.edge(graph, edge)
 
         # Get vertex data for source and target
-        {source_data, _} = :digraph.vertex(graph, v1)
-        {target_data, _} = :digraph.vertex(graph, v2)
+        {source_id, s_dat} = :digraph.vertex(graph, v1)
+        {target_id, t_dat} = :digraph.vertex(graph, v2)
 
         # Create edge ID from source and target names
-        edge_id = source_data <> "_" <> target_data
+        edge_id = source_id <> "_" <> target_id
 
         # Create cytoscape edge format
-        %{
-          data: %{
-            id: edge_id,
-            source: source_data,
-            target: target_data
-          }
-        }
+        case !(s_dat.deleted or t_dat.deleted) do
+          true ->
+            acc ++
+              [
+                %{
+                  data: %{
+                    id: edge_id,
+                    source: source_id,
+                    target: target_id
+                  }
+                }
+              ]
+
+          false ->
+            acc
+        end
       end)
 
     # Combine nodes and edges into final format

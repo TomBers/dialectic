@@ -123,7 +123,7 @@ defmodule GraphManagerTest do
         GraphManager.add_child(
           @test_path,
           [parent],
-          fn n -> LlmInterface.add_question("child content", n, self()) end,
+          fn n -> LlmInterface.ask_model("child content", n, self()) end,
           "child_class",
           @test_user
         )
@@ -159,7 +159,7 @@ defmodule GraphManagerTest do
         GraphManager.add_child(
           @test_path,
           [parent],
-          fn n -> LlmInterface.add_question("child content", n, self()) end,
+          fn n -> LlmInterface.ask_model("child content", n, self()) end,
           "child_class",
           @test_user
         )
@@ -193,7 +193,7 @@ defmodule GraphManagerTest do
         GraphManager.add_child(
           @test_path,
           [parent],
-          fn n -> LlmInterface.add_question("child1", n, self()) end,
+          fn n -> LlmInterface.ask_model("child1", n, @test_path) end,
           "test",
           @test_user
         )
@@ -202,7 +202,7 @@ defmodule GraphManagerTest do
         GraphManager.add_child(
           @test_path,
           [parent],
-          fn n -> LlmInterface.add_question("child2", n, self()) end,
+          fn n -> LlmInterface.ask_model("child2", n, @test_path) end,
           "test",
           @test_user
         )
