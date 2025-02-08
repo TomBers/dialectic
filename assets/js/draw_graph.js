@@ -10,16 +10,16 @@ function style_graph(cols_str) {
         selector: "node",
         style: {
           "background-color": "#f3f4f6", // gray-100
-          "border-width": 2,
+          "border-width": 1,
           "border-color": "#d1d5db", // gray-300
           label: "data(id)",
           "text-valign": "center",
           "text-halign": "center",
           "font-family": "monospace",
           // "font-size": "18px",
-          "font-weight": "600",
+          "font-weight": "400",
           color: "#374151", // gray-700
-          // padding: "4px",
+          padding: "4px",
           shape: "round-rectangle",
         },
       },
@@ -28,6 +28,7 @@ function style_graph(cols_str) {
         selector: "node.selected",
         css: {
           "font-weight": "800",
+          "border-color": "red",
           color: "red",
         },
       },
@@ -36,11 +37,11 @@ function style_graph(cols_str) {
         selector: "edge",
         style: {
           width: 2,
-          "line-color": "#9ca3af", // gray-400
-          "target-arrow-color": "#9ca3af", // gray-400
+          "line-color": "#f3f4f6",
+          "target-arrow-color": "#d1d5db", // gray-400
           "target-arrow-shape": "triangle",
           "curve-style": "bezier",
-          "arrow-scale": 1.2,
+          "arrow-scale": 1.0,
         },
       },
     ];
@@ -52,6 +53,15 @@ function style_graph(cols_str) {
       css: {
         "border-color": cols[nodeType].border,
         "background-color": cols[nodeType].background,
+        color: cols[nodeType].text,
+      },
+    });
+    base_style.push({
+      selector: `node[class = "${nodeType}"].selected`,
+      css: {
+        "font-weight": "800",
+        "border-color": "red",
+        color: "red",
       },
     });
   }

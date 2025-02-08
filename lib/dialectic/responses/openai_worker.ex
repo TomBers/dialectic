@@ -1,19 +1,22 @@
-defmodule Dialectic.Workers.DeepSeekWorker do
+defmodule Dialectic.Workers.OpenAIWorker do
   alias Dialectic.Responses.Utils
 
   @moduledoc """
-  Worker for the DeepSeek model.
+  Worker for the OpenAI Chat API.
   """
   require Logger
   use Oban.Worker, queue: :api_request, max_attempts: 5
 
   @behaviour Dialectic.Workers.BaseAPIWorker
 
+  @model "gpt-3.5-turbo"
   # Model-specific configuration:
+
   @impl true
-  def api_key, do: System.get_env("DEEPSEEK_API_KEY")
+  def api_key, do: System.get_env("OPENAI_API_KEY")
+
   @impl true
-  def request_url, do: "https://api.deepseek.com/chat/completions"
+  def request_url, do: "https://api.openai.com/v1/chat/completions"
 
   @impl true
   def headers(api_key) do
@@ -26,7 +29,7 @@ defmodule Dialectic.Workers.DeepSeekWorker do
   @impl true
   def build_request_body(question) do
     %{
-      model: "deepseek-chat",
+      model: @model,
       stream: true,
       messages: [
         %{

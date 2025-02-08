@@ -28,7 +28,7 @@ config :dialectic, DialecticWeb.Endpoint,
   pubsub_server: Dialectic.PubSub,
   live_view: [signing_salt: "qRvt+kFw"]
 
-config :dialectic, model_to_use: "deepseek"
+config :dialectic, model_to_use: "Claude"
 # config :dialectic, model_to_use: "local"
 
 # Configures the mailer
