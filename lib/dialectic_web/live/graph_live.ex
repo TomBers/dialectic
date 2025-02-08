@@ -69,10 +69,17 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("delete", %{"node" => node_id}, socket) do
-    update_graph(
-      socket,
-      GraphActions.delete_node(graph_action_params(socket), node_id)
-    )
+    {_graph, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+    if node.user == socket.assigns.user &&
+         length(node.children |> Enum.reject(fn v -> v.deleted end)) == 0 do
+      update_graph(
+        socket,
+        GraphActions.delete_node(graph_action_params(socket), node_id)
+      )
+    else
+      {:noreply, socket |> put_flash(:error, "You don't own this node")}
+    end
   end
 
   def handle_event("KeyBoardInterface", %{"key" => last_key, "cmdKey" => isCmd}, socket) do
