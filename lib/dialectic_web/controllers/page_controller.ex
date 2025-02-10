@@ -27,25 +27,29 @@ defmodule DialecticWeb.PageController do
         graph: "reply",
         title: "Respond",
         description: "Add a response to any node",
-        url: "/reply?node=2"
+        url: "/reply?node=2",
+        node: "2"
       },
       %{
         graph: "answer",
         title: "Answer",
         description: "The system will respond to the node",
-        url: "/answer?node=3"
+        url: "/answer?node=3",
+        node: "3"
       },
       %{
         graph: "branch",
         title: "Branch",
         description: "Create a thesis / antithesis (for / against) argument for a node",
-        url: "/branch?node=1"
+        url: "/branch?node=1",
+        node: "1"
       },
       %{
         graph: "combine",
         title: "Combine",
         description: "Create a synthesis from 2 nodes",
-        url: "/combine?node=4"
+        url: "/combine?node=4",
+        node: "4"
       }
     ]
 

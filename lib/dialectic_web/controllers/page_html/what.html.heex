@@ -19,7 +19,7 @@
             id={"graph-" <> Integer.to_string(index)}
             class="w-full h-full info-graph"
             data-graph={instruction.graph}
-            data-node=""
+            data-node={instruction.node}
             data-cols={Jason.encode!(Dialectic.Consts.Colours.graph_cols())}
             data-updateview="false"
             data-div={"graph-" <> Integer.to_string(index)}

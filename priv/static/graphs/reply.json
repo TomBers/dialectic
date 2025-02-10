@@ -1,1 +1,21 @@
-{"nodes":[{"id":"1","user":"","class":"","noted_by":[],"content":"reply"},{"id":"2","user":"test@example.com","class":"user","noted_by":[],"content":"A reply"}],"edges":[{"data":{"id":"12","source":"1","target":"2"}}]}
+{
+  "nodes": [
+    {
+      "id": "1",
+      "user": "",
+      "class": "",
+      "noted_by": [],
+      "deleted": false,
+      "content": "reply"
+    },
+    {
+      "id": "2",
+      "user": "test@example.com",
+      "class": "user",
+      "noted_by": [],
+      "deleted": false,
+      "content": "A reply"
+    }
+  ],
+  "edges": [{ "data": { "id": "12", "source": "1", "target": "2" } }]
+}
