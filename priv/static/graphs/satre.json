@@ -10,7 +10,7 @@
     },
     {
       "id": "6",
-      "user": null,
+      "user": "tester@example.com",
       "noted_by": [],
       "deleted": false,
       "class": "answer",
@@ -18,7 +18,7 @@
     },
     {
       "id": "5",
-      "user": null,
+      "user": "tester@example.com",
       "noted_by": [],
       "deleted": false,
       "class": "user",
