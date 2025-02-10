@@ -147,6 +147,9 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
+  # Handle event when user clicks autocorrect
+  def handle_event("KeyBoardInterface", %{}, socket), do: {:noreply, socket}
+
   def handle_event("node_clicked", %{"id" => id}, socket) do
     update_graph(socket, GraphActions.find_node(socket.assigns.graph_id, id), false, false)
   end
