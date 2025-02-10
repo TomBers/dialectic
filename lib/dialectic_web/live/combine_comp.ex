@@ -20,7 +20,7 @@ defmodule DialecticWeb.CombineComp do
       <%= for node <- @possible_nodes do %>
         <.live_component
           module={ChatMsgComp}
-          show_edit={false}
+          show_user_controls={false}
           node={node}
           id={node.id <>"_combine" }
         />

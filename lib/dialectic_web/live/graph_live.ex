@@ -79,7 +79,7 @@ defmodule DialecticWeb.GraphLive do
         GraphActions.delete_node(graph_action_params(socket), node_id)
       )
     else
-      {:noreply, socket |> put_flash(:error, "You don't own this node")}
+      {:noreply, socket |> put_flash(:error, "You cannot delete this node")}
     end
   end
 
@@ -90,7 +90,7 @@ defmodule DialecticWeb.GraphLive do
          length(node.children |> Enum.reject(fn v -> v.deleted end)) == 0 do
       {:noreply, socket |> assign(node: node, form: to_form(Vertex.changeset(node)), edit: true)}
     else
-      {:noreply, socket |> put_flash(:error, "You don't own this node")}
+      {:noreply, socket |> put_flash(:error, "Cannot edit node")}
     end
   end
 
@@ -112,33 +112,37 @@ defmodule DialecticWeb.GraphLive do
         end
       end
     else
-      case key do
-        "ArrowDown" ->
-          update_graph(
-            socket,
-            GraphActions.move(graph_action_params(socket), "down")
-          )
+      if socket.assigns.edit do
+        {:noreply, socket}
+      else
+        case key do
+          "ArrowDown" ->
+            update_graph(
+              socket,
+              GraphActions.move(graph_action_params(socket), "down")
+            )
 
-        "ArrowUp" ->
-          update_graph(
-            socket,
-            GraphActions.move(graph_action_params(socket), "up")
-          )
+          "ArrowUp" ->
+            update_graph(
+              socket,
+              GraphActions.move(graph_action_params(socket), "up")
+            )
 
-        "ArrowRight" ->
-          update_graph(
-            socket,
-            GraphActions.move(graph_action_params(socket), "right")
-          )
+          "ArrowRight" ->
+            update_graph(
+              socket,
+              GraphActions.move(graph_action_params(socket), "right")
+            )
 
-        "ArrowLeft" ->
-          update_graph(
-            socket,
-            GraphActions.move(graph_action_params(socket), "left")
-          )
+          "ArrowLeft" ->
+            update_graph(
+              socket,
+              GraphActions.move(graph_action_params(socket), "left")
+            )
 
-        _ ->
-          {:noreply, socket}
+          _ ->
+            {:noreply, socket}
+        end
       end
     end
   end
