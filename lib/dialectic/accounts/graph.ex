@@ -2,8 +2,9 @@ defmodule Dialectic.Accounts.Graph do
   use Ecto.Schema
   import Ecto.Changeset
 
+  @primary_key {:title, :string, []}
+
   schema "graphs" do
-    field :title, :string
     field :data, :map
     field :is_public, :boolean
     field :is_published, :boolean

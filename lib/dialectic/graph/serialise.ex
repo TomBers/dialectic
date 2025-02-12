@@ -28,12 +28,12 @@ defmodule Dialectic.Graph.Serialise do
   #   end
   # end
 
-  # def load_graph(name \\ "graph.json") do
-  #   case File.read(calc_path(name)) do
-  #     {:ok, json} -> json |> Jason.decode!() |> json_to_graph()
-  #     {:error, _} -> :digraph.new()
-  #   end
-  # end
+  def load_graph(name \\ "graph.json") do
+    case File.read(calc_path(name)) do
+      {:ok, json} -> json |> Jason.decode!() |> json_to_graph()
+      {:error, _} -> :digraph.new()
+    end
+  end
 
   def graph_to_json(graph) do
     # Get all vertices and edges from the digraph

@@ -1,37 +1,31 @@
 defmodule Dialectic.DbActions.Notes do
   alias Dialectic.Repo
-  # alias Dialectic.Accounts.Graph
   alias Dialectic.Accounts.Note
 
   import Ecto.Query
 
-  def tst do
-    user =
-      Repo.get(Dialectic.Accounts.User, "1")
-
-    # |> IO.inspect(label: "User")
-
-    # add_note("Bill", "1", user)
-    remove_note("Bill", "1", user)
+  def get_my_stats(user_id) do
+    Repo.get(Dialectic.Accounts.User, user_id) |> Repo.preload([:notes, graphs: [:notes]])
   end
 
-  def count_notes_for_user(user_id) do
+  def top_graphs do
     query =
-      from n in Note,
-        join: g in assoc(n, :graph),
-        where: g.user_id == ^user_id,
-        preload: [graph: g]
+      from g in Dialectic.Accounts.Graph,
+        left_join: n in assoc(g, :notes),
+        group_by: g.title,
+        order_by: [desc: count(n.id)],
+        limit: 10,
+        select: {g, count(n.id)}
 
-    notes = Repo.all(query)
-    IO.inspect(notes)
+    Dialectic.Repo.all(query)
   end
 
   # Marks a note as active (noted)
   def add_note(graph, node, user) do
-    case Repo.get_by(Note, graph_id: graph, node_id: node, user_id: user.id) do
+    case Repo.get_by(Note, graph_title: graph, node_id: node, user_id: user.id) do
       nil ->
         %Note{}
-        |> Note.changeset(%{graph_id: graph, node_id: node, user_id: user.id, is_noted: true})
+        |> Note.changeset(%{graph_title: graph, node_id: node, user_id: user.id, is_noted: true})
         |> Repo.insert()
 
       note ->
@@ -43,7 +37,7 @@ defmodule Dialectic.DbActions.Notes do
 
   # Instead of deleting the note, mark it as inactive (unnoted)
   def remove_note(graph, node, user) do
-    case Repo.get_by(Note, graph_id: graph, node_id: node, user_id: user.id) do
+    case Repo.get_by(Note, graph_title: graph, node_id: node, user_id: user.id) do
       nil ->
         {:error, :not_found}
 

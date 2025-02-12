@@ -3,6 +3,8 @@ defmodule Dialectic.DbActions.Graph do
   alias Dialectic.Accounts.Graph
   alias Dialectic.Graph.Vertex
 
+  import Ecto.Query
+
   @doc """
   Creates a new graph with the given title.
   """
@@ -27,7 +29,11 @@ defmodule Dialectic.DbActions.Graph do
   end
 
   def list_graphs do
-    Repo.all(Graph)
+    query =
+      from p in Graph,
+        select: p.title
+
+    Repo.all(query)
   end
 
   @doc """

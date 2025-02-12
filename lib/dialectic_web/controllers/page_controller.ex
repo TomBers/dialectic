@@ -3,7 +3,7 @@ defmodule DialecticWeb.PageController do
   alias Dialectic.Graph.{Vertex, Serialise}
 
   def home(conn, _params) do
-    graphs = Dialectic.DbActions.Graph.list_graphs() |> Enum.map(& &1.title)
+    graphs = Dialectic.DbActions.Graph.list_graphs()
     render(conn, :home, graphs: graphs, layout: false)
   end
 
@@ -16,8 +16,16 @@ defmodule DialecticWeb.PageController do
     |> redirect(to: ~p"/#{conversation}")
   end
 
+  def stats(conn, _params) do
+    user = conn.assigns.current_user
+    stats = Dialectic.DbActions.Notes.get_my_stats(user.id)
+    top_graphs = Dialectic.DbActions.Notes.top_graphs()
+    # IO.inspect(stats, label: "Stats")
+    render(conn, :stats, stats: stats, top_graphs: top_graphs, layout: false)
+  end
+
   def graph(conn, %{"graph_name" => graph_name}) do
-    graph = Serialise.load_graph_as_json(graph_name)
+    graph = Dialectic.DbActions.Graph.get_graph_by_title(graph_name).data
     json(conn, graph)
   end
 
