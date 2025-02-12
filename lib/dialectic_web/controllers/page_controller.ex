@@ -3,12 +3,12 @@ defmodule DialecticWeb.PageController do
   alias Dialectic.Graph.{Vertex, Serialise}
 
   def home(conn, _params) do
-    graphs = File.ls!("priv/static/graphs") |> Enum.map(&Path.basename(&1, ".json"))
+    graphs = Dialectic.DbActions.Graph.list_graphs() |> Enum.map(& &1.title)
     render(conn, :home, graphs: graphs, layout: false)
   end
 
   def create(conn, %{"conversation" => conversation}) do
-    Serialise.save_new_graph(conversation)
+    Dialectic.DbActions.Graph.create_new_graph(conversation, conn.assigns.current_user)
 
     conn
     # |> put_flash(:info, "Conversation processed successfully!")

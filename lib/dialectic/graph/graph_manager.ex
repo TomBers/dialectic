@@ -33,16 +33,17 @@ defmodule GraphManager do
   # Server callbacks
   def init(path) do
     Process.flag(:trap_exit, true)
-    # graph = :digraph.new()
-    # :digraph.add_vertex(graph, "1", %Vertex{id: "1", content: "Root Node"})
-    graph = Serialise.load_graph(path)
+
+    graph = Dialectic.DbActions.Graph.get_graph_by_title(path).data |> Serialise.json_to_graph()
 
     {:ok, {path, graph}}
   end
 
   def terminate(_reason, {path, graph}) do
     IO.inspect("Shutting Down: " <> path)
-    Serialise.save_graph(path, graph)
+    json = Serialise.graph_to_json(graph)
+    Dialectic.DbActions.Graph.save_graph(path, json)
+    # Serialise.save_graph(path, graph)
     :ok
   end
 
