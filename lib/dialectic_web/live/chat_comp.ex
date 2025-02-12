@@ -16,11 +16,18 @@ defmodule DialecticWeb.ChatComp do
             module={ChatMsgComp}
             node={parent}
             user={@user}
+            show_user_controls={false}
             id={parent.id <>"_chatMsg" }
           />
         <% end %>
         <%= if @node.content != "" do %>
-          <.live_component module={ChatMsgComp} node={@node} user={@user} id={@node.id <>"_chatMsg" } />
+          <.live_component
+            module={ChatMsgComp}
+            node={@node}
+            user={@user}
+            show_user_controls={true}
+            id={@node.id <>"_chatMsg" }
+          />
         <% else %>
           <div class="node mb-2">
             <h2>Waiting ...</h2>

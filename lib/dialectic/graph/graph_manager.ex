@@ -90,12 +90,36 @@ defmodule GraphManager do
     end
   end
 
+  def handle_call({:edit_node, {node_id, data}}, _from, {path, graph}) do
+    case :digraph.vertex(graph, node_id) do
+      {_id, vertex} ->
+        updated_vertex = %{vertex | content: data}
+        :digraph.add_vertex(graph, node_id, updated_vertex)
+        {:reply, {graph, Vertex.add_relatives(updated_vertex, graph)}, {path, graph}}
+
+      false ->
+        {:reply, nil, {path, graph}}
+    end
+  end
+
   def handle_call({:change_noted_by, {node_id, user, change_fn}}, _from, {path, graph}) do
     case :digraph.vertex(graph, node_id) do
       {_id, vertex} ->
         updated_vertex = change_fn.(vertex, user)
         :digraph.add_vertex(graph, node_id, updated_vertex)
         {:reply, {graph, Vertex.add_relatives(updated_vertex, graph)}, {path, graph}}
+
+      false ->
+        {:reply, nil, {path, graph}}
+    end
+  end
+
+  def handle_call({:delete_node, node_id}, _from, {path, graph}) do
+    case :digraph.vertex(graph, node_id) do
+      {_id, vertex} ->
+        updated_vertex = Vertex.add_relatives(vertex, graph) |> Vertex.delete_vertex()
+        :digraph.add_vertex(graph, node_id, updated_vertex)
+        {:reply, {graph, List.first(updated_vertex.parents)}, {path, graph}}
 
       false ->
         {:reply, nil, {path, graph}}
@@ -165,11 +189,19 @@ defmodule GraphManager do
     GenServer.call(via_tuple(path), {:update_node, {node_id, data}})
   end
 
+  def edit_vertex(path, node_id, data) do
+    GenServer.call(via_tuple(path), {:edit_node, {node_id, data}})
+  end
+
   def change_noted_by(path, node_id, user, change_fn) do
     GenServer.call(via_tuple(path), {:change_noted_by, {node_id, user, change_fn}})
   end
 
   def move(path, node, direction) do
     GenServer.call(via_tuple(path), {:move, {node, direction}})
+  end
+
+  def delete_node(path, node_id) do
+    GenServer.call(via_tuple(path), {:delete_node, node_id})
   end
 end

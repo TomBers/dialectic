@@ -10,12 +10,16 @@ defmodule Dialectic.Graph.GraphActions do
     GraphManager.move(graph_id, node, direction)
   end
 
-  # def delete_node({graph_id, _node, _user}, node_id) do
-  #   GraphManager.delete_node(graph_id, node_id)
-  # end
+  def delete_node({graph_id, _node, _user}, node_id) do
+    GraphManager.delete_node(graph_id, node_id)
+  end
 
   def change_noted_by({graph_id, _node, user}, node_id, change_fn) do
     GraphManager.change_noted_by(graph_id, node_id, user, change_fn)
+  end
+
+  def edit_node({graph_id, node, _user}, question) do
+    GraphManager.edit_vertex(graph_id, node.id, question)
   end
 
   def comment({graph_id, node, user}, question) do

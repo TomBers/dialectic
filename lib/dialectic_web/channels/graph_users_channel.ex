@@ -3,12 +3,13 @@ defmodule DialecticWeb.GraphUsersChannel do
   alias DialecticWeb.Presence
 
   @impl true
-  def join("graph_users:" <> graph_id, payload, socket) do
-    if authorized?(payload) do
-      {:ok, assign(socket, graph_id: graph_id)}
-    else
-      {:error, %{reason: "unauthorized"}}
-    end
+  def join("graph_users:" <> graph_id, _payload, socket) do
+    {:ok, assign(socket, graph_id: graph_id)}
+    # if authorized?(payload) do
+    #   {:ok, assign(socket, graph_id: graph_id)}
+    # else
+    #   {:error, %{reason: "unauthorized"}}
+    # end
   end
 
   @impl true
@@ -39,9 +40,9 @@ defmodule DialecticWeb.GraphUsersChannel do
   end
 
   # Add authorization logic here as required.
-  @spec authorized?(map()) :: boolean()
-  defp authorized?(_payload) do
-    # TODO: Implement your own authorization logic here
-    true
-  end
+  # @spec authorized?(map()) :: boolean()
+  # defp authorized?(_payload) do
+  #   # TODO: Implement your own authorization logic here
+  #   true
+  # end
 end

@@ -12,10 +12,11 @@ Small is Beautiful - Schumacher,
 The Art of War - Sun Tzu,
 
 To Fix :-
-Dont redraw graph on updates from other users.
 
 
+Ideas:
 
+1) Edit the question - allow the user to edit the question before it is answered.
 
 2) Personas - ask the LLM to answer the question as a particular thinker
 Answer as Plato, Aristotle, etc.

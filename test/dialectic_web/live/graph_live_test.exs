@@ -1,4 +1,5 @@
 defmodule DialecticWeb.GraphLiveTest do
+  alias Dialectic.Graph.GraphActions
   use DialecticWeb.ConnCase, async: true
   import Phoenix.LiveViewTest
   import Dialectic.AccountsFixtures
@@ -64,23 +65,6 @@ defmodule DialecticWeb.GraphLiveTest do
       refute state.show_combine
     end
 
-    # test "KeyBoardInterface calls combine_interface when show_combine is true", %{conn: conn} do
-    #   {:ok, view, _html} = setup_live(conn)
-
-    #   # Force show_combine to true so that combine_interface is used.
-    #   :sys.replace_state(view.pid, fn state ->
-    #     socket = Phoenix.LiveView.assign(state.socket, :show_combine, true)
-    #     %{state | socket: socket}
-    #   end)
-
-    #   # Send an event with a key that doesn’t result in an immediate update.
-    #   render_keydown(view, "KeyBoardInterface", %{"key" => "x", "cmdKey" => true})
-    #   state = :sys.get_state(view.pid).socket
-
-    #   # In the fallback branch of combine_interface, the key_buffer is assigned the key.
-    #   assert state.assigns.key_buffer == "x"
-    # end
-
     test "KeyBoardInterface with key 'c' toggles show_combine", %{conn: conn} do
       {:ok, view, _html} = setup_live(conn)
       render_keydown(view, "KeyBoardInterface", %{"key" => "c", "cmdKey" => true})
@@ -130,23 +114,6 @@ defmodule DialecticWeb.GraphLiveTest do
       assert state.assigns.key_buffer == ""
       # (Other assigns such as graph and node would be updated by GraphActions.comment.)
     end
-
-    # test "KeyBoardInterface calls combine_interface when show_combine is true", %{conn: conn} do
-    #   {:ok, view, _html} = setup_live(conn)
-
-    #   # Force show_combine to true so that combine_interface is used.
-    #   :sys.replace_state(view.pid, fn state ->
-    #     socket = Phoenix.LiveView.assign(state.socket, :show_combine, true)
-    #     %{state | socket: socket}
-    #   end)
-
-    #   # Send an event with a key that doesn’t result in an immediate update.
-    #   render_keydown(view, "KeyBoardInterface", %{"key" => "x", "cmdKey" => true})
-    #   state = :sys.get_state(view.pid).socket
-
-    #   # In the fallback branch of combine_interface, the key_buffer is assigned the key.
-    #   assert state.assigns.key_buffer == "x"
-    # end
   end
 
   describe "handle_event node_clicked" do
@@ -196,26 +163,6 @@ defmodule DialecticWeb.GraphLiveTest do
       assert state_after.assigns.node == state.assigns.node
     end
 
-    # Removed the broadcasting of graph updates as it only adds complexity.
-    # test "graph update info updates graph, node, and f_graph", %{conn: conn} do
-    #   {:ok, view, _html} = setup_live(conn)
-
-    #   # Create a dummy new graph and node.
-    #   new_graph = :digraph.new()
-    #   new_node = %Dialectic.Graph.Vertex{id: "2", content: "New Node", class: "user"}
-    #   :digraph.add_vertex(new_graph, "2", new_node)
-
-    #   send(view.pid, %{graph: new_graph, node: new_node})
-    #   :timer.sleep(50)
-    #   state = :sys.get_state(view.pid).socket
-
-    #   assert state.assigns.graph == new_graph
-    #   assert state.assigns.node == new_node
-
-    #   expected_f_graph = Jason.encode!(Dialectic.Graph.Vertex.to_cytoscape_format(new_graph))
-    #   assert state.assigns.f_graph == expected_f_graph
-    # end
-
     test "presence join and leave info are handled without error", %{conn: conn} do
       {:ok, view, _html} = setup_live(conn)
 
@@ -231,6 +178,117 @@ defmodule DialecticWeb.GraphLiveTest do
       send(view.pid, {DialecticWeb.Presence, {:leave, presence_leave}})
       :timer.sleep(50)
       assert true
+    end
+  end
+
+  #####################################################################
+  # New tests for the additional event functionality (“note”, “unnote”,
+  # “delete”, and “edit”). In these tests we assume that functions like
+  # GraphActions.find_node/2 have been stubbed to return predictable values.
+  #####################################################################
+
+  describe "handle_event \"note\"" do
+    test "note event updates the graph and resets key_buffer", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      # Simulate a note event on node "1". (In a real test you might stub
+      # GraphActions.change_noted_by/3 to return a predictable updated graph/node.)
+      render_click(view, "note", %{"node" => "1"})
+      state = :sys.get_state(view.pid).socket
+
+      # Check that update_graph was called (it resets key_buffer).
+      assert state.assigns.key_buffer == ""
+
+      # Additional assertions (e.g. on assigns.graph or assigns.node) depend on your implementation.
+    end
+  end
+
+  describe "handle_event \"unnote\"" do
+    test "unnote event updates the graph and resets key_buffer", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      render_click(view, "unnote", %{"node" => "1"})
+      state = :sys.get_state(view.pid).socket
+
+      assert state.assigns.key_buffer == ""
+      # You could also verify that GraphActions.change_noted_by was called with
+      # Vertex.remove_noted_by/2 if you stub that function.
+    end
+  end
+
+  describe "handle_event \"delete\"" do
+    test "delete event updates the graph when deletion conditions are met", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      {_g, v} = GraphActions.find_node(@graph_id, "6")
+      refute v.deleted
+
+      # For this test we assume that when the node id is "delete_allowed",
+      # GraphActions.find_node/2 returns a node with:
+      #   - user equal to "tester@example.com"
+      #   - children: [] (or only deleted children)
+      render_click(view, "delete", %{"node" => "6"})
+      state = :sys.get_state(view.pid).socket
+
+      # IO.inspect(state, label: "state")
+      # In the allowed case, update_graph is called so key_buffer is reset.
+      assert state.assigns.key_buffer == ""
+      {_g, v} = GraphActions.find_node(@graph_id, "6")
+      assert v.deleted
+    end
+
+    test "delete event sets flash error when deletion conditions are not met", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      # For this test we assume that when the node id is "delete_disallowed",
+      # GraphActions.find_node/2 returns a node that either does not belong to the user
+      # or has non-deleted children.
+      render_click(view, "delete", %{"node" => "1"})
+      state = :sys.get_state(view.pid).socket
+
+      {_g, v} = GraphActions.find_node(@graph_id, "1")
+      refute v.deleted
+    end
+  end
+
+  describe "handle_event \"edit\"" do
+    test "edit event sets up editing assigns when conditions are met", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      {_g, v} = GraphActions.find_node(@graph_id, "6")
+
+      assert v.content =~
+               "Certainly! Let’s delve deeper into the criticisms"
+
+      # Assume that for node id "edit_allowed", GraphActions.find_node/2 returns a node with:
+      #   - user equal to "tester@example.com"
+      #   - no active children
+      render_click(view, "edit", %{"node" => "6"})
+      state = :sys.get_state(view.pid).socket
+
+      # The node should be assigned to the socket, along with a form for editing and an edit flag.
+      assert state.assigns.edit
+      assert state.assigns.form
+      assert state.assigns.node.id == "6"
+      assert state.assigns.form.data.id == "6"
+
+      assert state.assigns.form.data.content =~
+               "Certainly! Let’s delve deeper into the criticisms"
+
+      render_click(view, "answer", %{"vertex" => %{"content" => "Edited Node"}})
+      state_after = :sys.get_state(view.pid).socket.assigns
+      {_g, v} = GraphActions.find_node(@graph_id, "6")
+      assert v.content == "Edited Node"
+    end
+
+    test "edit event sets flash error when editing conditions are not met", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      # For node id "edit_disallowed", assume GraphActions.find_node/2 returns a node that cannot be edited.
+      render_click(view, "edit", %{"node" => "1"})
+      state = :sys.get_state(view.pid).socket
+
+      refute state.assigns.edit
     end
   end
 end

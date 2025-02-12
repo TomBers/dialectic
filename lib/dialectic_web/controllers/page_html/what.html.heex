@@ -1,11 +1,11 @@
 <div class="container mx-auto p-4">
   <article class="prose prose-stone prose-md">
-    <h1>Dialectics</h1>
+    <h1>Dialectix</h1>
     <p>
       Dialectics is a method of reasoning that seeks to understand things in their movement and change. It is a way of thinking that is based on the idea that everything is interconnected and that change is constant. Dialectics is a powerful tool for understanding complex systems and for making sense of the world around us.
     </p>
     <p>
-      As such Dialectics is a tool for thought.  A multiplayer chat interface to allow the full reasoning behind an argument to be followed.  Many people can think together to build out a masssive knowledge graph, interacting with LLM's to integrate the knowledge into the whole.
+      As such Dialectix is a tool for thought.  A multiplayer chat interface to allow the full reasoning behind an argument to be followed.  Many people can think together to build out a masssive knowledge graph, interacting with LLM's to integrate the knowledge into the whole.
     </p>
   </article>
   <!-- Grid: on small screens, one per row; on md+ screens, two per row -->
@@ -19,7 +19,7 @@
             id={"graph-" <> Integer.to_string(index)}
             class="w-full h-full info-graph"
             data-graph={instruction.graph}
-            data-node=""
+            data-node={instruction.node}
             data-cols={Jason.encode!(Dialectic.Consts.Colours.graph_cols())}
             data-updateview="false"
             data-div={"graph-" <> Integer.to_string(index)}
