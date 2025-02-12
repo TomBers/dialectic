@@ -52,33 +52,41 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("note", %{"node" => node_id}, socket) do
-    Dialectic.DbActions.Notes.add_note(
-      socket.assigns.graph_id,
-      node_id,
-      socket.assigns.current_user
-    )
+    if socket.assigns.current_user == nil do
+      {:noreply, socket |> put_flash(:error, "You must be logged in to note")}
+    else
+      Dialectic.DbActions.Notes.add_note(
+        socket.assigns.graph_id,
+        node_id,
+        socket.assigns.current_user
+      )
 
-    update_graph(
-      socket,
-      GraphActions.change_noted_by(graph_action_params(socket), node_id, &Vertex.add_noted_by/2)
-    )
+      update_graph(
+        socket,
+        GraphActions.change_noted_by(graph_action_params(socket), node_id, &Vertex.add_noted_by/2)
+      )
+    end
   end
 
   def handle_event("unnote", %{"node" => node_id}, socket) do
-    Dialectic.DbActions.Notes.remove_note(
-      socket.assigns.graph_id,
-      node_id,
-      socket.assigns.current_user
-    )
-
-    update_graph(
-      socket,
-      GraphActions.change_noted_by(
-        graph_action_params(socket),
+    if socket.assigns.current_user == nil do
+      {:noreply, socket |> put_flash(:error, "You must be logged in to unnote")}
+    else
+      Dialectic.DbActions.Notes.remove_note(
+        socket.assigns.graph_id,
         node_id,
-        &Vertex.remove_noted_by/2
+        socket.assigns.current_user
       )
-    )
+
+      update_graph(
+        socket,
+        GraphActions.change_noted_by(
+          graph_action_params(socket),
+          node_id,
+          &Vertex.remove_noted_by/2
+        )
+      )
+    end
   end
 
   def handle_event("delete", %{"node" => node_id}, socket) do

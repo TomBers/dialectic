@@ -13,15 +13,16 @@ The Art of War - Sun Tzu,
 
 To Fix :-
 
+Add test data to the test database. - at the moment 41 tests are failing as we are trying to load non-existent data.
+
+Add tests around new Db structures
 
 Ideas:
 
-1) Edit the question - allow the user to edit the question before it is answered.
-
-2) Personas - ask the LLM to answer the question as a particular thinker
+1) Personas - ask the LLM to answer the question as a particular thinker
 Answer as Plato, Aristotle, etc.
 
-3) An User inbox - where they can see queestions that they have not answered yet ?? Or maybe just a list of questions that they have asked.
+2) An User inbox - where they can see queestions that they have not answered yet ?? Or maybe just a list of questions that they have asked.
 
 
 
