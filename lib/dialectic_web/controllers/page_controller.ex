@@ -3,12 +3,12 @@ defmodule DialecticWeb.PageController do
   alias Dialectic.Graph.{Vertex, Serialise}
 
   def home(conn, _params) do
-    graphs = Dialectic.DbActions.Graph.list_graphs()
+    graphs = Dialectic.DbActions.Graphs.list_graphs()
     render(conn, :home, graphs: graphs, layout: false)
   end
 
   def create(conn, %{"conversation" => conversation}) do
-    Dialectic.DbActions.Graph.create_new_graph(conversation, conn.assigns.current_user)
+    Dialectic.DbActions.Graphs.create_new_graph(conversation, conn.assigns.current_user)
 
     conn
     # |> put_flash(:info, "Conversation processed successfully!")
@@ -25,7 +25,7 @@ defmodule DialecticWeb.PageController do
   end
 
   def graph(conn, %{"graph_name" => graph_name}) do
-    graph = Dialectic.DbActions.Graph.get_graph_by_title(graph_name).data
+    graph = Dialectic.DbActions.Graphs.get_graph_by_title(graph_name).data
     json(conn, graph)
   end
 

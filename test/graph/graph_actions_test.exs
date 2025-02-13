@@ -1,5 +1,5 @@
 defmodule Dialectic.Graph.GraphActionsTest do
-  use ExUnit.Case
+  use DialecticWeb.ConnCase, async: false
   alias Dialectic.Graph.GraphActions
   alias Dialectic.Graph.Vertex
 
@@ -8,6 +8,8 @@ defmodule Dialectic.Graph.GraphActionsTest do
 
   setup do
     GraphManager.reset_graph(@graph_id)
+    Dialectic.GraphFixtures.insert_graph_fixture(@graph_id)
+
     graph = GraphManager.get_graph(@graph_id)
     {:ok, graph: graph}
   end

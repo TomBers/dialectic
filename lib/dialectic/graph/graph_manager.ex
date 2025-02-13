@@ -34,7 +34,7 @@ defmodule GraphManager do
   def init(path) do
     Process.flag(:trap_exit, true)
 
-    graph = Dialectic.DbActions.Graph.get_graph_by_title(path).data |> Serialise.json_to_graph()
+    graph = Dialectic.DbActions.Graphs.get_graph_by_title(path).data |> Serialise.json_to_graph()
 
     {:ok, {path, graph}}
   end
@@ -42,7 +42,7 @@ defmodule GraphManager do
   def terminate(_reason, {path, graph}) do
     IO.inspect("Shutting Down: " <> path)
     json = Serialise.graph_to_json(graph)
-    Dialectic.DbActions.Graph.save_graph(path, json)
+    Dialectic.DbActions.Graphs.save_graph(path, json)
     # Serialise.save_graph(path, graph)
     :ok
   end

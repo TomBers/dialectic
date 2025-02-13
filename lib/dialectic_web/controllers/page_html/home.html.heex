@@ -28,8 +28,11 @@
     <ul class="divide-y divide-gray-200">
       <%= for graph <- @graphs do %>
         <li class="hover:bg-gray-50 transition duration-150 ease-in-out">
-          <a href={~p"/#{graph}"} class="block px-6 py-4 text-indigo-600 hover:text-indigo-800">
-            {graph}
+          <a
+            href={~p"/#{graph.title}"}
+            class="block px-6 py-4 text-indigo-600 hover:text-indigo-800"
+          >
+            {graph.title}
           </a>
         </li>
       <% end %>

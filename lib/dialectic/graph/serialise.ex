@@ -7,10 +7,10 @@ defmodule Dialectic.Graph.Serialise do
     @base_path <> name <> ".json"
   end
 
-  def save_graph(name, graph) do
-    json = graph_to_json(graph)
-    File.write!(calc_path(name), Jason.encode!(json))
-  end
+  # def save_graph(name, graph) do
+  #   json = graph_to_json(graph)
+  #   File.write!(calc_path(name), Jason.encode!(json))
+  # end
 
   # def save_new_graph(name) do
   #   template = %{
@@ -21,12 +21,12 @@ defmodule Dialectic.Graph.Serialise do
   #   File.write(calc_path(name), Jason.encode!(template))
   # end
 
-  # def load_graph_as_json(name) do
-  #   case File.read(calc_path(name)) do
-  #     {:ok, json} -> json |> Jason.decode!()
-  #     {:error, _} -> %{}
-  #   end
-  # end
+  def load_graph_as_json(name) do
+    case File.read(calc_path(name)) do
+      {:ok, json} -> json |> Jason.decode!()
+      {:error, _} -> %{}
+    end
+  end
 
   def load_graph(name \\ "graph.json") do
     case File.read(calc_path(name)) do

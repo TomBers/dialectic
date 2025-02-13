@@ -1,6 +1,6 @@
 defmodule DialecticWeb.GraphLiveTest do
   alias Dialectic.Graph.GraphActions
-  use DialecticWeb.ConnCase, async: true
+  use DialecticWeb.ConnCase, async: false
   import Phoenix.LiveViewTest
   import Dialectic.AccountsFixtures
 
@@ -10,6 +10,9 @@ defmodule DialecticWeb.GraphLiveTest do
     conn =
       conn
       |> log_in_user(user_fixture(%{email: "tester@example.com"}))
+
+    # Also create test database
+    Dialectic.GraphFixtures.insert_graph_fixture(@graph_id)
 
     live(conn, ~p"/#{@graph_id}?node=1")
   end
