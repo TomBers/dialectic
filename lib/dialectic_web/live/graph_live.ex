@@ -37,6 +37,9 @@ defmodule DialecticWeb.GraphLive do
     {_, node} = :digraph.vertex(graph, node_id)
     changeset = GraphActions.create_new_node(user) |> Vertex.changeset()
 
+    # TODO - can edit is going to be expaned to be more complex, but for the time being, just is not protected
+    can_edit = graph_struct.is_public
+
     {:ok,
      assign(socket,
        graph_id: graph_id,
@@ -48,7 +51,8 @@ defmodule DialecticWeb.GraphLive do
        key_buffer: "",
        user: user,
        update_view: true,
-       edit: false
+       edit: false,
+       can_edit: can_edit
      )}
   end
 
@@ -94,7 +98,8 @@ defmodule DialecticWeb.GraphLive do
     {_graph, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
 
     if node.user == socket.assigns.user &&
-         length(node.children |> Enum.reject(fn v -> v.deleted end)) == 0 do
+         length(node.children |> Enum.reject(fn v -> v.deleted end)) == 0 &&
+         socket.assigns.can_edit do
       update_graph(
         socket,
         GraphActions.delete_node(graph_action_params(socket), node_id)
@@ -108,7 +113,8 @@ defmodule DialecticWeb.GraphLive do
     {_graph, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
 
     if node.user == socket.assigns.user &&
-         length(node.children |> Enum.reject(fn v -> v.deleted end)) == 0 do
+         length(node.children |> Enum.reject(fn v -> v.deleted end)) == 0 &&
+         socket.assigns.can_edit do
       {:noreply, socket |> assign(node: node, form: to_form(Vertex.changeset(node)), edit: true)}
     else
       {:noreply, socket |> put_flash(:error, "Cannot edit node")}
@@ -117,52 +123,56 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event("KeyBoardInterface", %{"key" => last_key, "cmdKey" => isCmd}, socket) do
     # IO.inspect(params, label: "KeyBoardInterface")
-    key =
-      (socket.assigns.key_buffer <> last_key)
-      |> String.replace_prefix("Control", "")
-      |> IO.inspect(label: "KeyBuffer")
-
-    if isCmd do
-      if socket.assigns.show_combine do
-        combine_interface(socket, key)
-      else
-        if last_key == "Control" do
-          {:noreply, assign(socket, key_buffer: "")}
-        else
-          main_keybaord_interface(socket, key)
-        end
-      end
+    if !socket.assigns.can_edit do
+      {:noreply, socket |> put_flash(:info, "This graph is locked")}
     else
-      if socket.assigns.edit do
-        {:noreply, socket}
+      key =
+        (socket.assigns.key_buffer <> last_key)
+        |> String.replace_prefix("Control", "")
+        |> IO.inspect(label: "KeyBuffer")
+
+      if isCmd do
+        if socket.assigns.show_combine do
+          combine_interface(socket, key)
+        else
+          if last_key == "Control" do
+            {:noreply, assign(socket, key_buffer: "")}
+          else
+            main_keybaord_interface(socket, key)
+          end
+        end
       else
-        case key do
-          "ArrowDown" ->
-            update_graph(
-              socket,
-              GraphActions.move(graph_action_params(socket), "down")
-            )
+        if socket.assigns.edit do
+          {:noreply, socket}
+        else
+          case key do
+            "ArrowDown" ->
+              update_graph(
+                socket,
+                GraphActions.move(graph_action_params(socket), "down")
+              )
 
-          "ArrowUp" ->
-            update_graph(
-              socket,
-              GraphActions.move(graph_action_params(socket), "up")
-            )
+            "ArrowUp" ->
+              update_graph(
+                socket,
+                GraphActions.move(graph_action_params(socket), "up")
+              )
 
-          "ArrowRight" ->
-            update_graph(
-              socket,
-              GraphActions.move(graph_action_params(socket), "right")
-            )
+            "ArrowRight" ->
+              update_graph(
+                socket,
+                GraphActions.move(graph_action_params(socket), "right")
+              )
 
-          "ArrowLeft" ->
-            update_graph(
-              socket,
-              GraphActions.move(graph_action_params(socket), "left")
-            )
+            "ArrowLeft" ->
+              update_graph(
+                socket,
+                GraphActions.move(graph_action_params(socket), "left")
+              )
 
-          _ ->
-            {:noreply, socket}
+            _ ->
+              {:noreply, socket}
+          end
         end
       end
     end
@@ -178,10 +188,14 @@ defmodule DialecticWeb.GraphLive do
   def handle_event("answer", %{"vertex" => %{"content" => ""}}, socket), do: {:noreply, socket}
 
   def handle_event("answer", %{"vertex" => %{"content" => answer}}, socket) do
-    if socket.assigns.edit do
-      update_graph(socket, GraphActions.edit_node(graph_action_params(socket), answer))
+    if socket.assigns.can_edit do
+      if socket.assigns.edit do
+        update_graph(socket, GraphActions.edit_node(graph_action_params(socket), answer))
+      else
+        update_graph(socket, GraphActions.comment(graph_action_params(socket), answer))
+      end
     else
-      update_graph(socket, GraphActions.comment(graph_action_params(socket), answer))
+      {:noreply, socket |> put_flash(:info, "This graph is locked")}
     end
   end
 
