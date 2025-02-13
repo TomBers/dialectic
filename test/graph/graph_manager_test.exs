@@ -173,7 +173,12 @@ defmodule GraphManagerTest do
       GraphManager.reset_graph(@graph_id)
 
       # Get fresh graph
-      fresh_graph = GraphManager.get_graph(@graph_id)
+      {graph_struct, fresh_graph} = GraphManager.get_graph(@graph_id)
+
+      assert graph_struct.title == @graph_id
+      assert graph_struct.is_public == true
+      assert graph_struct.is_deleted == false
+      assert graph_struct.is_published == true
 
       # Verify graph is empty
       assert length(:digraph.vertices(fresh_graph)) == 0

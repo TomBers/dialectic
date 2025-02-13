@@ -31,7 +31,8 @@ defmodule DialecticWeb.GraphLive do
         socket
       end
 
-    graph = GraphManager.get_graph(graph_id)
+    {graph_struct, graph} = GraphManager.get_graph(graph_id)
+    # IO.inspect(graph_struct)
 
     {_, node} = :digraph.vertex(graph, node_id)
     changeset = GraphActions.create_new_node(user) |> Vertex.changeset()
