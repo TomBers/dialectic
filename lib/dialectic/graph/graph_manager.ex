@@ -33,100 +33,105 @@ defmodule GraphManager do
   # Server callbacks
   def init(path) do
     Process.flag(:trap_exit, true)
-    # graph = :digraph.new()
-    # :digraph.add_vertex(graph, "1", %Vertex{id: "1", content: "Root Node"})
-    graph = Serialise.load_graph(path)
 
-    {:ok, {path, graph}}
+    graph_struct = Dialectic.DbActions.Graphs.get_graph_by_title(path)
+    graph = graph_struct.data |> Serialise.json_to_graph()
+    {:ok, {graph_struct, graph}}
   end
 
-  def terminate(_reason, {path, graph}) do
+  def terminate(_reason, {graph_struct, graph}) do
+    path = graph_struct.title
     IO.inspect("Shutting Down: " <> path)
-    Serialise.save_graph(path, graph)
+    json = Serialise.graph_to_json(graph)
+    Dialectic.DbActions.Graphs.save_graph(path, json)
+    # Serialise.save_graph(path, graph)
     :ok
   end
 
-  def handle_call(:get_graph, _from, {path, graph}) do
-    {:reply, graph, {path, graph}}
+  def handle_call(:get_graph, _from, {graph_struct, graph}) do
+    {:reply, {graph_struct, graph}, {graph_struct, graph}}
   end
 
-  def handle_call({:add_vertex, vertex}, _from, {path, graph}) do
+  def handle_call({:add_vertex, vertex}, _from, {graph_struct, graph}) do
     v = :digraph.vertices(graph)
     v_id = Labeler.label(length(v) + 1)
     vertex = %{vertex | id: v_id}
     :digraph.add_vertex(graph, v_id, vertex)
-    {:reply, vertex, {path, graph}}
+    {:reply, vertex, {graph_struct, graph}}
   end
 
-  def handle_call({:add_edge, vertex, parents}, _from, {path, graph}) do
+  def handle_call({:add_edge, vertex, parents}, _from, {graph_struct, graph}) do
     Enum.each(parents, fn parent ->
       :digraph.add_edge(graph, parent.id, vertex.id)
     end)
 
-    {:reply, {graph, Vertex.add_relatives(vertex, graph)}, {path, graph}}
+    {:reply, {graph, Vertex.add_relatives(vertex, graph)}, {graph_struct, graph}}
   end
 
-  def handle_call({:find_node_by_id, combine_node_id}, _from, {path, graph}) do
+  def handle_call({:find_node_by_id, combine_node_id}, _from, {graph_struct, graph}) do
     case :digraph.vertex(graph, combine_node_id) do
-      {_id, vertex} -> {:reply, {graph, Vertex.add_relatives(vertex, graph)}, {path, graph}}
-      false -> {:reply, nil, {path, graph}}
+      {_id, vertex} ->
+        {:reply, {graph, Vertex.add_relatives(vertex, graph)}, {graph_struct, graph}}
+
+      false ->
+        {:reply, nil, {graph_struct, graph}}
     end
   end
 
   # In handle_call
-  def handle_call({:reset_graph}, _from, {path, graph}) do
-    {:reply, graph, {path, :digraph.new()}}
+  def handle_call({:reset_graph}, _from, {graph_struct, graph}) do
+    {:reply, graph, {graph_struct, :digraph.new()}}
   end
 
-  def handle_call({:update_node, {node_id, data}}, _from, {path, graph}) do
+  def handle_call({:update_node, {node_id, data}}, _from, {graph_struct, graph}) do
     case :digraph.vertex(graph, node_id) do
       {_id, vertex} ->
         updated_vertex = %{vertex | content: vertex.content <> data}
         :digraph.add_vertex(graph, node_id, updated_vertex)
-        {:reply, Vertex.add_relatives(updated_vertex, graph), {path, graph}}
+        {:reply, Vertex.add_relatives(updated_vertex, graph), {graph_struct, graph}}
 
       false ->
-        {:reply, nil, {path, graph}}
+        {:reply, nil, {graph_struct, graph}}
     end
   end
 
-  def handle_call({:edit_node, {node_id, data}}, _from, {path, graph}) do
+  def handle_call({:edit_node, {node_id, data}}, _from, {graph_struct, graph}) do
     case :digraph.vertex(graph, node_id) do
       {_id, vertex} ->
         updated_vertex = %{vertex | content: data}
         :digraph.add_vertex(graph, node_id, updated_vertex)
-        {:reply, {graph, Vertex.add_relatives(updated_vertex, graph)}, {path, graph}}
+        {:reply, {graph, Vertex.add_relatives(updated_vertex, graph)}, {graph_struct, graph}}
 
       false ->
-        {:reply, nil, {path, graph}}
+        {:reply, nil, {graph_struct, graph}}
     end
   end
 
-  def handle_call({:change_noted_by, {node_id, user, change_fn}}, _from, {path, graph}) do
+  def handle_call({:change_noted_by, {node_id, user, change_fn}}, _from, {graph_struct, graph}) do
     case :digraph.vertex(graph, node_id) do
       {_id, vertex} ->
         updated_vertex = change_fn.(vertex, user)
         :digraph.add_vertex(graph, node_id, updated_vertex)
-        {:reply, {graph, Vertex.add_relatives(updated_vertex, graph)}, {path, graph}}
+        {:reply, {graph, Vertex.add_relatives(updated_vertex, graph)}, {graph_struct, graph}}
 
       false ->
-        {:reply, nil, {path, graph}}
+        {:reply, nil, {graph_struct, graph}}
     end
   end
 
-  def handle_call({:delete_node, node_id}, _from, {path, graph}) do
+  def handle_call({:delete_node, node_id}, _from, {graph_struct, graph}) do
     case :digraph.vertex(graph, node_id) do
       {_id, vertex} ->
         updated_vertex = Vertex.add_relatives(vertex, graph) |> Vertex.delete_vertex()
         :digraph.add_vertex(graph, node_id, updated_vertex)
-        {:reply, {graph, List.first(updated_vertex.parents)}, {path, graph}}
+        {:reply, {graph, List.first(updated_vertex.parents)}, {graph_struct, graph}}
 
       false ->
-        {:reply, nil, {path, graph}}
+        {:reply, nil, {graph_struct, graph}}
     end
   end
 
-  def handle_call({:move, {node, direction}}, _, {path, graph}) do
+  def handle_call({:move, {node, direction}}, _, {graph_struct, graph}) do
     updated_vertex =
       case direction do
         "up" ->
@@ -142,7 +147,7 @@ defmodule GraphManager do
           Siblings.right(node, graph)
       end
 
-    {:reply, {graph, Vertex.add_relatives(updated_vertex, graph)}, {path, graph}}
+    {:reply, {graph, Vertex.add_relatives(updated_vertex, graph)}, {graph_struct, graph}}
   end
 
   # Client API

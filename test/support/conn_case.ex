@@ -46,6 +46,7 @@ defmodule DialecticWeb.ConnCase do
   """
   def register_and_log_in_user(%{conn: conn}) do
     user = Dialectic.AccountsFixtures.user_fixture()
+
     %{conn: log_in_user(conn, user), user: user}
   end
 

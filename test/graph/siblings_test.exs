@@ -1,12 +1,14 @@
 defmodule Graph.SiblingsTest do
   alias Dialectic.Graph.Siblings
-  use ExUnit.Case
+  use DialecticWeb.ConnCase, async: false
 
   @graph_id "bob"
 
   setup do
     # Ensure graph is removed from registry before each test
     GraphManager.reset_graph(@graph_id)
+    # Also create test database
+    Dialectic.GraphFixtures.insert_graph_fixture(@graph_id)
     :ok
   end
 

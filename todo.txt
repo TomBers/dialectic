@@ -1,5 +1,22 @@
 TODO -
 
+Outstanding for alpha version:
+
+1) Sort out the selecting of the text box, make it more highlighted and selected on tab, and provide a clear visual indication of the selected text.
+
+2) Test plan
+    A) Load / Save graphs - logged in / not logged in
+    B) Create a new graph
+    C) Reply, Answer, Branch, Combine
+    D) Note / Unnote
+    E) Edit / Delete node
+    F) Test different LLM's -> Look at Deepseek V3?
+    G) Test Locking function
+
+3) Writing - what it is, why?
+4) Look to Deployment - Fly - how to have a data migration, data backup etc
+
+
 Use the system to have interesting conversations - does it help comprehension?
 Ideas -
 Being and Time,
@@ -11,17 +28,16 @@ Zen the Art of Motorcycle Maintenance - Pirsig,
 Small is Beautiful - Schumacher,
 The Art of War - Sun Tzu,
 
-To Fix :-
+
+
 
 
 Ideas:
 
-1) Edit the question - allow the user to edit the question before it is answered.
-
-2) Personas - ask the LLM to answer the question as a particular thinker
+1) Personas - ask the LLM to answer the question as a particular thinker
 Answer as Plato, Aristotle, etc.
 
-3) An User inbox - where they can see queestions that they have not answered yet ?? Or maybe just a list of questions that they have asked.
+2) An User inbox - where they can see queestions that they have not answered yet ?? Or maybe just a list of questions that they have asked.
 
 
 

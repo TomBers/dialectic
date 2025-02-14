@@ -10,7 +10,7 @@
     },
     {
       "id": "2",
-      "user": "test@example.com",
+      "user": null,
       "class": "user",
       "noted_by": [],
       "deleted": false,

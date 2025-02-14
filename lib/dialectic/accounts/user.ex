@@ -9,6 +9,9 @@ defmodule Dialectic.Accounts.User do
     field :current_password, :string, virtual: true, redact: true
     field :confirmed_at, :utc_datetime
 
+    has_many :graphs, Dialectic.Accounts.Graph, on_delete: :delete_all
+    has_many :notes, Dialectic.Accounts.Note, on_delete: :delete_all
+
     timestamps(type: :utc_datetime)
   end
 
