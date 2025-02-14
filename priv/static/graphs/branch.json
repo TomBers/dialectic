@@ -2,7 +2,7 @@
   "nodes": [
     {
       "id": "3",
-      "user": "test@example.com",
+      "user": null,
       "class": "antithesis",
       "noted_by": [],
       "deleted": false,
@@ -18,7 +18,7 @@
     },
     {
       "id": "2",
-      "user": "test@example.com",
+      "user": null,
       "class": "thesis",
       "noted_by": [],
       "deleted": false,

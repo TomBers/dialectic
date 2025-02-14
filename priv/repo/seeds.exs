@@ -13,8 +13,22 @@ alias Dialectic.Repo
 alias Dialectic.Accounts.Graph
 alias Dialectic.Graph.Serialise
 
-# TODO - curate a list of graphs to seed
-["satre", "bob"]
+[
+  "satre",
+  "bob",
+  "German Idealism",
+  "Small is Beautiful - Schumacher",
+  "The Republic - Plato",
+  "branch",
+  "What is ethics?",
+  "narcissus",
+  "What is good and what is evil?",
+  "combine",
+  "normative ethical theories",
+  "Why do we dream?",
+  "reply",
+  "answer"
+]
 |> Enum.each(fn graph_name ->
   data = Serialise.load_graph_as_json(graph_name)
 
