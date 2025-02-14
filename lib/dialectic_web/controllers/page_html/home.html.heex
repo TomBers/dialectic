@@ -1,41 +1,105 @@
-<div class="max-w-4xl mx-auto p-8">
-  <.form
-    :let={f}
-    for={%{}}
-    action={~p"/conversation"}
-    class="mb-8 bg-white shadow-md rounded-lg p-6"
-  >
-    <div class="space-y-4">
-      <.input field={f[:conversation]} type="text" label="Start a conversation" class="w-full" />
-      <.button
-        type="submit"
-        class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md transition duration-150 ease-in-out"
-      >
-        Submit
-      </.button>
-    </div>
-  </.form>
-
-  <.link
-    navigate={~p"/intro/what"}
-    class="text-xl text-blue-600 hover:text-blue-400"
-    target="_blank"
-  >
-    What is this?
-  </.link>
-  <br /><br />
-  <div class="bg-white shadow-md rounded-lg overflow-hidden">
-    <ul class="divide-y divide-gray-200">
-      <%= for graph <- @graphs do %>
-        <li class="hover:bg-gray-50 transition duration-150 ease-in-out">
-          <a
-            href={~p"/#{graph.title}"}
-            class="block px-6 py-4 text-indigo-600 hover:text-indigo-800"
-          >
-            {graph.title}
-          </a>
-        </li>
-      <% end %>
+<div class="container mx-auto p-6">
+  <!-- Header -->
+  <header class="mb-8">
+    <h1 class="text-4xl font-extrabold text-gray-800">Dialectix</h1>
+    <p class="text-lg text-gray-600">Welcome!</p>
+    <ul>
+      <li>The problem you face</li>
+      <li>Heres what fixing it would change</li>
+      <li>Here is clear proof it can be fixed</li>
+      <li>Here is a simple step-by-step to make it happen</li>
+      <li>Here is our promise to you (and we will deliver on it)</li>
     </ul>
+    <.link
+      navigate={~p"/intro/what"}
+      class="text-xl text-blue-600 hover:text-blue-400"
+      target="_blank"
+    >
+      More
+    </.link>
+  </header>
+  <div class="max-w-4xl mx-auto p-8">
+    <.form
+      :let={f}
+      for={%{}}
+      action={~p"/conversation"}
+      class="mb-8 bg-white shadow-md rounded-lg p-6"
+    >
+      <div class="space-y-4">
+        <.input field={f[:conversation]} type="text" label="Start a conversation" class="w-full" />
+        <.button
+          type="submit"
+          class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md transition duration-150 ease-in-out"
+        >
+          Submit
+        </.button>
+      </div>
+    </.form>
+    <section class="mb-12">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- My Graphs Card -->
+        <div class="bg-white shadow rounded-lg p-6">
+          <h3 class="text-xl font-semibold text-gray-800 mb-4">
+            My Graphs ({@stats.graphs |> length()})
+          </h3>
+          <ul class="space-y-3">
+            <%= for g <- @stats.graphs do %>
+              <li>
+                <.link
+                  navigate={~p"/" <> g.title}
+                  class="block p-4 bg-blue-50 hover:bg-blue-100 rounded transition"
+                  target="_blank"
+                >
+                  <span class="font-bold text-blue-700">{g.title}</span>
+                  <span class="ml-2 text-sm text-gray-500">
+                    ({g.notes |> Enum.filter(& &1.is_noted) |> length()} notes)
+                  </span>
+                </.link>
+              </li>
+            <% end %>
+          </ul>
+        </div>
+        
+<!-- My Noted Items Card -->
+        <div class="bg-white shadow rounded-lg p-6">
+          <h3 class="text-xl font-semibold text-gray-800 mb-4">
+            My Notes ({@stats.notes |> Enum.filter(& &1.is_noted) |> length()})
+          </h3>
+          <ul class="space-y-3">
+            <%= for note <- @stats.notes |> Enum.filter(& &1.is_noted) do %>
+              <li>
+                <.link
+                  navigate={~p"/" <> note.graph_title <> "?node=" <> note.node_id}
+                  class="block p-4 bg-green-50 hover:bg-green-100 rounded transition"
+                  target="_blank"
+                >
+                  <span class="font-bold text-green-700">{note.graph_title}</span>
+                  <span class="ml-2 text-sm text-gray-500">Node {note.node_id}</span>
+                </.link>
+              </li>
+            <% end %>
+          </ul>
+        </div>
+      </div>
+    </section>
+    
+<!-- Top Graphs Section -->
+    <section>
+      <h2 class="text-2xl font-bold text-gray-700 mb-4">Top Graphs</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <%= for {g, count} <- @top_graphs do %>
+          <div class="bg-white shadow rounded-lg p-6">
+            <.link
+              navigate={~p"/" <> g.title}
+              class="block hover:shadow-lg transition"
+              target="_blank"
+            >
+              <h3 class="font-bold text-xl text-gray-800 mb-1">{g.title}</h3>
+              <p class="text-sm text-gray-500">({count} notes)</p>
+            </.link>
+          </div>
+        <% end %>
+      </div>
+    </section>
   </div>
 </div>

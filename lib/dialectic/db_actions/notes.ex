@@ -4,8 +4,10 @@ defmodule Dialectic.DbActions.Notes do
 
   import Ecto.Query
 
-  def get_my_stats(user_id) do
-    Repo.get(Dialectic.Accounts.User, user_id) |> Repo.preload([:notes, graphs: [:notes]])
+  def get_my_stats(nil), do: %{graphs: [], notes: []}
+
+  def get_my_stats(user) do
+    Repo.get(Dialectic.Accounts.User, user.id) |> Repo.preload([:notes, graphs: [:notes]])
   end
 
   def top_graphs do

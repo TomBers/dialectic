@@ -3,8 +3,10 @@ defmodule DialecticWeb.PageController do
   alias Dialectic.Graph.{Vertex, Serialise}
 
   def home(conn, _params) do
-    graphs = Dialectic.DbActions.Graphs.list_graphs()
-    render(conn, :home, graphs: graphs, layout: false)
+    stats = Dialectic.DbActions.Notes.get_my_stats(conn.assigns.current_user)
+    top_graphs = Dialectic.DbActions.Notes.top_graphs()
+    # IO.inspect(stats, label: "Stats")
+    render(conn, :home, stats: stats, top_graphs: top_graphs, layout: false)
   end
 
   def create(conn, %{"conversation" => conversation}) do
@@ -14,14 +16,6 @@ defmodule DialecticWeb.PageController do
     # |> put_flash(:info, "Conversation processed successfully!")
     # Update this path to match your routes
     |> redirect(to: ~p"/#{conversation}")
-  end
-
-  def stats(conn, _params) do
-    user = conn.assigns.current_user
-    stats = Dialectic.DbActions.Notes.get_my_stats(user.id)
-    top_graphs = Dialectic.DbActions.Notes.top_graphs()
-    # IO.inspect(stats, label: "Stats")
-    render(conn, :stats, stats: stats, top_graphs: top_graphs, layout: false)
   end
 
   def graph(conn, %{"graph_name" => graph_name}) do
