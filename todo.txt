@@ -2,7 +2,7 @@ TODO -
 
 Outstanding for alpha version:
 
-1) Make some example graphs, and add them to the database
+1) Sort out the selecting of the text box, make it more highlighted and selected on tab, and provide a clear visual indication of the selected text.
 
 2) Test plan
     A) Load / Save graphs - logged in / not logged in
