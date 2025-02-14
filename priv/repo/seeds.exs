@@ -15,18 +15,14 @@ alias Dialectic.Graph.Serialise
 
 [
   "Satre",
-  "bob",
+  "Big graph",
   "German Idealism",
   "Small is Beautiful - Schumacher",
   "The Republic - Plato",
-  "branch",
   "What is ethics?",
   "Narcissus",
   "What is good and what is evil?",
-  "combine",
-  "Normative ethical theories",
-  "reply",
-  "answer"
+  "Normative ethical theories"
 ]
 |> Enum.each(fn graph_name ->
   data = Serialise.load_graph_as_json(graph_name)

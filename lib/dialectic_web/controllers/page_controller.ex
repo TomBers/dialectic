@@ -1,16 +1,17 @@
 defmodule DialecticWeb.PageController do
   use DialecticWeb, :controller
   alias Dialectic.Graph.{Vertex, Serialise}
+  alias Dialectic.DbActions.{Notes, Graphs}
 
   def home(conn, _params) do
-    stats = Dialectic.DbActions.Notes.get_my_stats(conn.assigns.current_user)
-    top_graphs = Dialectic.DbActions.Notes.top_graphs()
+    stats = Notes.get_my_stats(conn.assigns.current_user)
+    top_graphs = Notes.top_graphs()
     # IO.inspect(stats, label: "Stats")
     render(conn, :home, stats: stats, top_graphs: top_graphs, layout: false)
   end
 
   def create(conn, %{"conversation" => conversation}) do
-    Dialectic.DbActions.Graphs.create_new_graph(conversation, conn.assigns.current_user)
+    Graphs.create_new_graph(conversation, conn.assigns.current_user)
 
     conn
     # |> put_flash(:info, "Conversation processed successfully!")
@@ -19,7 +20,7 @@ defmodule DialecticWeb.PageController do
   end
 
   def graph(conn, %{"graph_name" => graph_name}) do
-    graph = Dialectic.DbActions.Graphs.get_graph_by_title(graph_name).data
+    graph = Graphs.get_graph_by_title(graph_name).data
     json(conn, graph)
   end
 
