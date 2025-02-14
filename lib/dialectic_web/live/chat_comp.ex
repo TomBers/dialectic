@@ -40,6 +40,7 @@ defmodule DialecticWeb.ChatComp do
             <.input
               :if={@node.id != "NewNode"}
               field={@form[:content]}
+              tabindex="0"
               type="text"
               placeholder="Enter Question"
             />
