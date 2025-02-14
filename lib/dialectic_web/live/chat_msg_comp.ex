@@ -81,6 +81,7 @@ defmodule DialecticWeb.ChatMsgComp do
               <button
                 phx-click="unnote"
                 phx-value-node={@node.id}
+                tabindex="-1"
                 class="text-red-600 hover:text-red-800 font-medium focus:outline-none"
               >
                 Unnote
@@ -89,13 +90,18 @@ defmodule DialecticWeb.ChatMsgComp do
               <button
                 phx-click="note"
                 phx-value-node={@node.id}
+                tabindex="-1"
                 class="text-green-600 hover:text-green-800 font-medium focus:outline-none"
               >
                 Note
               </button>
             <% end %>
             |
-            <.link navigate={"?node=" <> @node.id} class="text-blue-600 hover:text-blue-400">
+            <.link
+              navigate={"?node=" <> @node.id}
+              tabindex="-1"
+              class="text-blue-600 hover:text-blue-400"
+            >
               Link
             </.link>
             |
@@ -103,6 +109,7 @@ defmodule DialecticWeb.ChatMsgComp do
               phx-click="delete"
               data-confirm="Are you sure?"
               phx-value-node={@node.id}
+              tabindex="-1"
               class="text-red-600 hover:text-red-800 font-medium focus:outline-none"
             >
               Delete
@@ -112,6 +119,7 @@ defmodule DialecticWeb.ChatMsgComp do
               phx-click="edit"
               phx-confirm="Are you sure?"
               phx-value-node={@node.id}
+              tabindex="-1"
               class="text-red-600 hover:text-red-800 font-medium focus:outline-none"
             >
               Edit

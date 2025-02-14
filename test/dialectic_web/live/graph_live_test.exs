@@ -4,7 +4,7 @@ defmodule DialecticWeb.GraphLiveTest do
   import Phoenix.LiveViewTest
   import Dialectic.AccountsFixtures
 
-  @graph_id "satre"
+  @graph_id "Satre"
 
   defp setup_live(conn) do
     conn =
