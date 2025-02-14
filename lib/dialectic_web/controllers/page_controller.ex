@@ -7,16 +7,18 @@ defmodule DialecticWeb.PageController do
     stats = Notes.get_my_stats(conn.assigns.current_user)
     top_graphs = Notes.top_graphs()
     # IO.inspect(stats, label: "Stats")
-    render(conn, :home, stats: stats, top_graphs: top_graphs, layout: false)
+    render(conn, :home, stats: stats, top_graphs: top_graphs)
   end
 
   def create(conn, %{"conversation" => conversation}) do
-    Graphs.create_new_graph(conversation, conn.assigns.current_user)
+    case Graphs.create_new_graph(conversation, conn.assigns.current_user) do
+      {:ok, _} ->
+        conn
+        |> redirect(to: ~p"/#{conversation}")
 
-    conn
-    # |> put_flash(:info, "Conversation processed successfully!")
-    # Update this path to match your routes
-    |> redirect(to: ~p"/#{conversation}")
+      _ ->
+        conn |> put_flash(:error, "Graph already exits") |> redirect(to: ~p"/")
+    end
   end
 
   def graph(conn, %{"graph_name" => graph_name}) do

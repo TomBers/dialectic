@@ -20,5 +20,6 @@ defmodule Dialectic.Accounts.Graph do
     graph
     |> cast(attrs, [:title, :data, :is_public, :is_published, :is_deleted, :user_id])
     |> validate_required([:title, :data])
+    |> unique_constraint(:title, name: :graphs_pkey)
   end
 end
