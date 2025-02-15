@@ -59,6 +59,20 @@ defmodule DialecticWeb.PageController do
     render(conn, :what, instructions: graphs, layout: false)
   end
 
+  def deploy_dashboard(conn, _params) do
+    keys = ["ANTHROPIC_API_KEY", "DEEPSEEK_API_KEY", "GEMINI_API_KEY", "OPENAI_API_KEY"]
+
+    seeds = Dialectic.DbActions.Init.seed()
+    render(conn, :deploy_dashboard, seeds: seeds, keys: Enum.map(keys, &check_key(&1)))
+  end
+
+  defp check_key(key) do
+    case System.get_env(key) do
+      nil -> "Missing #{key}"
+      _ -> "Found #{key}"
+    end
+  end
+
   defp encode_graph(n) do
     Serialise.load_graph(n) |> Vertex.to_cytoscape_format() |> Jason.encode!()
   end
