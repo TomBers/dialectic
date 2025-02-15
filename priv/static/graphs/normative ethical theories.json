@@ -61,6 +61,7 @@
       "user": "",
       "class": "",
       "content": "Normative ethical theories",
+      "deleted": false,
       "noted_by": ["test@example.com", "Anon"]
     },
     {
@@ -140,6 +141,7 @@
       "user": null,
       "class": "user",
       "content": "Let talk about Deontological Ethics",
+      "deleted": false,
       "noted_by": ["test@example.com"]
     },
     {

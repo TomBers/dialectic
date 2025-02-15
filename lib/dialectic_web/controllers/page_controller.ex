@@ -1,31 +1,29 @@
 defmodule DialecticWeb.PageController do
   use DialecticWeb, :controller
+
   alias Dialectic.Graph.{Vertex, Serialise}
+  alias Dialectic.DbActions.{Notes, Graphs}
 
   def home(conn, _params) do
-    graphs = Dialectic.DbActions.Graphs.list_graphs()
-    render(conn, :home, graphs: graphs, layout: false)
+    stats = Notes.get_my_stats(conn.assigns.current_user)
+    top_graphs = Notes.top_graphs()
+    # IO.inspect(stats, label: "Stats")
+    render(conn, :home, stats: stats, top_graphs: top_graphs)
   end
 
   def create(conn, %{"conversation" => conversation}) do
-    Dialectic.DbActions.Graphs.create_new_graph(conversation, conn.assigns.current_user)
+    case Graphs.create_new_graph(conversation, conn.assigns.current_user) do
+      {:ok, _} ->
+        conn
+        |> redirect(to: ~p"/#{conversation}")
 
-    conn
-    # |> put_flash(:info, "Conversation processed successfully!")
-    # Update this path to match your routes
-    |> redirect(to: ~p"/#{conversation}")
-  end
-
-  def stats(conn, _params) do
-    user = conn.assigns.current_user
-    stats = Dialectic.DbActions.Notes.get_my_stats(user.id)
-    top_graphs = Dialectic.DbActions.Notes.top_graphs()
-    # IO.inspect(stats, label: "Stats")
-    render(conn, :stats, stats: stats, top_graphs: top_graphs, layout: false)
+      _ ->
+        conn |> put_flash(:error, "Graph already exits") |> redirect(to: ~p"/")
+    end
   end
 
   def graph(conn, %{"graph_name" => graph_name}) do
-    graph = Dialectic.DbActions.Graphs.get_graph_by_title(graph_name).data
+    graph = Graphs.get_graph_by_title(graph_name).data
     json(conn, graph)
   end
 
@@ -35,28 +33,24 @@ defmodule DialecticWeb.PageController do
         graph: "reply",
         title: "Answer",
         description: "Add a response to any node",
-        url: "/reply?node=2",
         node: "2"
       },
       %{
         graph: "answer",
         title: "Reply",
         description: "The system will reply to the node",
-        url: "/answer?node=3",
         node: "3"
       },
       %{
         graph: "branch",
         title: "Branch",
         description: "Create a thesis / antithesis (for / against) argument for a node",
-        url: "/branch?node=1",
         node: "1"
       },
       %{
         graph: "combine",
         title: "Combine",
         description: "Create a synthesis from 2 nodes",
-        url: "/combine?node=4",
         node: "4"
       }
     ]

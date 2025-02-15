@@ -23,6 +23,7 @@ defmodule Dialectic.Workers.DeepSeekWorker do
     ]
   end
 
+  # model - deepseek-chat points to Deepseek-V3 https://api-docs.deepseek.com/
   @impl true
   def build_request_body(question) do
     %{

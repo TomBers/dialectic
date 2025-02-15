@@ -2,7 +2,7 @@ defmodule Graph.SiblingsTest do
   alias Dialectic.Graph.Siblings
   use DialecticWeb.ConnCase, async: false
 
-  @graph_id "bob"
+  @graph_id "Big graph"
 
   setup do
     # Ensure graph is removed from registry before each test
