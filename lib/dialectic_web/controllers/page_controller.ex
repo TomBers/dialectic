@@ -1,5 +1,7 @@
 defmodule DialecticWeb.PageController do
   use DialecticWeb, :controller
+
+  alias Ecto.Query.DynamicExpr
   alias Dialectic.Graph.{Vertex, Serialise}
   alias Dialectic.DbActions.{Notes, Graphs}
 
@@ -32,28 +34,24 @@ defmodule DialecticWeb.PageController do
         graph: "reply",
         title: "Answer",
         description: "Add a response to any node",
-        url: "/reply?node=2",
         node: "2"
       },
       %{
         graph: "answer",
         title: "Reply",
         description: "The system will reply to the node",
-        url: "/answer?node=3",
         node: "3"
       },
       %{
         graph: "branch",
         title: "Branch",
         description: "Create a thesis / antithesis (for / against) argument for a node",
-        url: "/branch?node=1",
         node: "1"
       },
       %{
         graph: "combine",
         title: "Combine",
         description: "Create a synthesis from 2 nodes",
-        url: "/combine?node=4",
         node: "4"
       }
     ]
