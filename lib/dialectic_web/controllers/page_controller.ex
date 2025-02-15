@@ -1,7 +1,6 @@
 defmodule DialecticWeb.PageController do
   use DialecticWeb, :controller
 
-  alias Ecto.Query.DynamicExpr
   alias Dialectic.Graph.{Vertex, Serialise}
   alias Dialectic.DbActions.{Notes, Graphs}
 
