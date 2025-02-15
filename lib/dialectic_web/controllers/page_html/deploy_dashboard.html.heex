@@ -1,0 +1,8 @@
+<h1>Deploy Dashboard</h1>
+<%= for key <- @keys do %>
+  <p>{key}</p>
+<% end %>
+
+<%= for {name, msg} <- @seeds do %>
+  <p>{name} - {msg}</p>
+<% end %>
