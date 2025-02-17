@@ -78,13 +78,13 @@ defmodule GraphManager do
     end
   end
 
-  def handle_call({:build_context, node}, _from, {graph_struct, graph}) do
-    {:reply, Vertex.build_context(node, graph), {graph_struct, graph}}
+  def handle_call({:build_context, node, limit}, _from, {graph_struct, graph}) do
+    {:reply, Vertex.build_context(node, graph, limit), {graph_struct, graph}}
   end
 
   # In handle_call
-  def handle_call({:reset_graph}, _from, {graph_struct, graph}) do
-    {:reply, graph, {graph_struct, :digraph.new()}}
+  def handle_call({:reset_graph}, _from, {graph_struct, _graph}) do
+    {:reply, :digraph.new(), {graph_struct, :digraph.new()}}
   end
 
   def handle_call({:update_node, {node_id, data}}, _from, {graph_struct, graph}) do
@@ -214,7 +214,9 @@ defmodule GraphManager do
     GenServer.call(via_tuple(path), {:delete_node, node_id})
   end
 
-  def build_context(path, node) do
-    GenServer.call(via_tuple(path), {:build_context, node})
+  # Deepseek context window 128,000 tokens
+  # So for the time being set it to a quarter of the window size.
+  def build_context(path, node, limit \\ 25_000) do
+    GenServer.call(via_tuple(path), {:build_context, node, limit})
   end
 end

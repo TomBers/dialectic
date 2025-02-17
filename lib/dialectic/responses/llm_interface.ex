@@ -14,11 +14,13 @@ defmodule Dialectic.Responses.LlmInterface do
 
   def gen_synthesis(n1, n2, child, graph_id) do
     # TODO - Add n2 context ?? need to enforce limit??
-    context = GraphManager.build_context(graph_id, n1)
+    context1 = GraphManager.build_context(graph_id, n1)
+    context2 = GraphManager.build_context(graph_id, n2)
 
     qn =
       """
-      Context: #{context} \n\n
+      Context of first argument: #{context1} \n\n
+      Context of second argument: #{context2} \n\n
       Please produce a synthesis of #{n1.content} & #{n2.content}
       """
 

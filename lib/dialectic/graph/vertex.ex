@@ -80,9 +80,7 @@ defmodule Dialectic.Graph.Vertex do
     %{node | parents: parents, children: children}
   end
 
-  # Deepseek context window 128,000 tokens
-  # So for the time being set it to a quarter of the window size.
-  def build_context(node, graph, limit \\ 25_000) do
+  def build_context(node, graph, limit) do
     context =
       collect_parents(graph, node.id)
       |> Enum.map(&add_node_context(&1, graph))
