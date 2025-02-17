@@ -80,10 +80,32 @@ defmodule Dialectic.Graph.Vertex do
     %{node | parents: parents, children: children}
   end
 
-  def build_context(node, graph) do
-    collect_parents(graph, node.id, fn _v -> false end)
-    |> Enum.map(&add_node_context(&1, graph))
-    |> Enum.reverse()
+  # Deepseek context window 128,000 tokens
+  # So for the time being set it to a quarter of the window size.
+  def build_context(node, graph, limit \\ 25_000) do
+    context =
+      collect_parents(graph, node.id)
+      |> Enum.map(&add_node_context(&1, graph))
+      |> Enum.reverse()
+      |> enforce_limit(limit)
+      |> Enum.join("\n\n")
+
+    {estimate_tokens(context), context}
+  end
+
+  defp enforce_limit([_ | t] = list, limit) do
+    cnt = Enum.reduce(list, 0, fn x, acc -> acc + estimate_tokens(x) end)
+
+    if cnt <= limit do
+      list
+    else
+      enforce_limit(t, limit)
+    end
+  end
+
+  defp estimate_tokens(text) do
+    # For example, assume 1 token per 4 characters.
+    String.length(text) |> Kernel./(4) |> Float.ceil() |> trunc()
   end
 
   def add_node_context(node_id, graph) do
@@ -91,12 +113,12 @@ defmodule Dialectic.Graph.Vertex do
     dat.content
   end
 
-  def collect_parents(graph, vertex, stop_fun) do
-    collect_parents(graph, vertex, stop_fun, [])
+  def collect_parents(graph, vertex) do
+    collect_parents(graph, vertex, [])
   end
 
   # Private recursive function that carries along a list of visited vertices.
-  defp collect_parents(graph, vertex, stop_fun, visited) do
+  defp collect_parents(graph, vertex, visited) do
     # Get immediate parents that haven't been visited yet.
     parents =
       :digraph.in_neighbours(graph, vertex)
@@ -106,13 +128,8 @@ defmodule Dialectic.Graph.Vertex do
       # Mark the parent as visited.
       new_visited = [parent | visited]
 
-      if stop_fun.(parent) do
-        # If the stop condition is met, add the parent and do not traverse further.
-        acc ++ [parent]
-      else
-        # Otherwise, add the parent and recursively traverse its parents.
-        acc ++ [parent] ++ collect_parents(graph, parent, stop_fun, new_visited)
-      end
+      # add the parent and recursively traverse its parents.
+      acc ++ [parent] ++ collect_parents(graph, parent, new_visited)
     end)
   end
 
