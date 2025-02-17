@@ -11,11 +11,13 @@ defmodule DialecticWeb.PageController do
     render(conn, :home, stats: stats, top_graphs: top_graphs)
   end
 
-  def create(conn, %{"conversation" => conversation}) do
-    case Graphs.create_new_graph(conversation, conn.assigns.current_user) do
+  def create(conn, %{"conversation" => usr_graph_title}) do
+    title = String.replace_suffix(usr_graph_title, "?", "")
+
+    case Graphs.create_new_graph(title, conn.assigns.current_user) do
       {:ok, _} ->
         conn
-        |> redirect(to: ~p"/#{conversation}")
+        |> redirect(to: ~p"/#{title}")
 
       _ ->
         conn |> put_flash(:error, "Graph already exits") |> redirect(to: ~p"/")

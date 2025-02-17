@@ -4,7 +4,7 @@ defmodule GraphManager do
   use GenServer
 
   def get_graph(path) do
-    case GraphManager.exists?(path) do
+    case exists?(path) do
       false ->
         DynamicSupervisor.start_child(GraphSupervisor, {GraphManager, path})
         GenServer.call(via_tuple(path), :get_graph)
@@ -34,7 +34,9 @@ defmodule GraphManager do
   def init(path) do
     Process.flag(:trap_exit, true)
 
-    graph_struct = Dialectic.DbActions.Graphs.get_graph_by_title(path)
+    graph_struct =
+      Dialectic.DbActions.Graphs.get_graph_by_title(path)
+
     graph = graph_struct.data |> Serialise.json_to_graph()
     {:ok, {graph_struct, graph}}
   end
@@ -44,7 +46,7 @@ defmodule GraphManager do
     IO.inspect("Shutting Down: " <> path)
     json = Serialise.graph_to_json(graph)
     Dialectic.DbActions.Graphs.save_graph(path, json)
-    # Serialise.save_graph(path, graph)
+
     :ok
   end
 
