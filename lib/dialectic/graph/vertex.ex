@@ -90,8 +90,10 @@ defmodule Dialectic.Graph.Vertex do
       |> enforce_limit(limit)
       |> Enum.join("\n\n")
 
-    {estimate_tokens(context), context}
+    context
   end
+
+  defp enforce_limit([], _limit), do: []
 
   defp enforce_limit([_ | t] = list, limit) do
     cnt = Enum.reduce(list, 0, fn x, acc -> acc + estimate_tokens(x) end)

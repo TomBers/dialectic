@@ -78,8 +78,8 @@ defmodule GraphManager do
     end
   end
 
-  def handle_call({:build_context, node_id}, _from, {graph_struct, graph}) do
-    {:reply, Vertex.build_context(node_id, graph), {graph_struct, graph}}
+  def handle_call({:build_context, node}, _from, {graph_struct, graph}) do
+    {:reply, Vertex.build_context(node, graph), {graph_struct, graph}}
   end
 
   # In handle_call
@@ -214,7 +214,7 @@ defmodule GraphManager do
     GenServer.call(via_tuple(path), {:delete_node, node_id})
   end
 
-  def build_context(path, node_id) do
-    GenServer.call(via_tuple(path), {:build_context, node_id})
+  def build_context(path, node) do
+    GenServer.call(via_tuple(path), {:build_context, node})
   end
 end
