@@ -1,7 +1,7 @@
 defmodule Graph.ContextTest do
   use DialecticWeb.ConnCase, async: false
 
-  @graph_id "What is ethics"
+  @graph_id "What is ethics?"
 
   setup do
     # Setup the graph, used for subsequent tests
