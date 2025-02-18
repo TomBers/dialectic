@@ -1,0 +1,6 @@
+fly postgres connect -a mudg-db
+
+\l - list databases
+\c mudg - connect to database mudg
+\dt - list tables
+select * from graphs; - normal SQL commands
