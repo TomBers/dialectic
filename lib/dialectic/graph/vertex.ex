@@ -80,6 +80,59 @@ defmodule Dialectic.Graph.Vertex do
     %{node | parents: parents, children: children}
   end
 
+  def build_context(node, graph, limit) do
+    context =
+      collect_parents(graph, node.id)
+      |> Enum.map(&add_node_context(&1, graph))
+      |> Enum.reverse()
+      |> enforce_limit(limit)
+      |> Enum.join("\n\n")
+
+    context
+  end
+
+  defp enforce_limit([], _limit), do: []
+
+  defp enforce_limit([_ | t] = list, limit) do
+    cnt = Enum.reduce(list, 0, fn x, acc -> acc + estimate_tokens(x) end)
+
+    if cnt <= limit do
+      list
+    else
+      enforce_limit(t, limit)
+    end
+  end
+
+  defp estimate_tokens(text) do
+    # For example, assume 1 token per 4 characters.
+    String.length(text) |> Kernel./(4) |> Float.ceil() |> trunc()
+  end
+
+  def add_node_context(node_id, graph) do
+    {_, dat} = :digraph.vertex(graph, node_id)
+    dat.content
+  end
+
+  def collect_parents(graph, vertex) do
+    collect_parents(graph, vertex, [])
+  end
+
+  # Private recursive function that carries along a list of visited vertices.
+  defp collect_parents(graph, vertex, visited) do
+    # Get immediate parents that haven't been visited yet.
+    parents =
+      :digraph.in_neighbours(graph, vertex)
+      |> Enum.reject(&(&1 in visited))
+
+    Enum.reduce(parents, [], fn parent, acc ->
+      # Mark the parent as visited.
+      new_visited = [parent | visited]
+
+      # add the parent and recursively traverse its parents.
+      acc ++ [parent] ++ collect_parents(graph, parent, new_visited)
+    end)
+  end
+
   # def find_node_by_id(graph_id, id) do
   #   case :digraph.vertex(graph, id) do
   #     # Returns the vertex struct

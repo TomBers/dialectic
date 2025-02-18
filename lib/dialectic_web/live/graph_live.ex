@@ -6,7 +6,9 @@ defmodule DialecticWeb.GraphLive do
 
   on_mount {DialecticWeb.UserAuth, :mount_current_user}
 
-  def mount(%{"graph_name" => graph_id} = params, _session, socket) do
+  def mount(%{"graph_name" => graph_id_uri} = params, _session, socket) do
+    graph_id = URI.decode(graph_id_uri)
+
     user =
       case socket.assigns.current_user do
         nil -> "Anon"

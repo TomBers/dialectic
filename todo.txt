@@ -2,7 +2,11 @@ TODO -
 
 Outstanding for alpha version:
 
-1) Do a large example of a big graph, with real answers and real questions.
+1) Expand out the Dialectics graph a few more steps
+2) Test graph naming with various prefixes and suffixes lots of weird characters
+3) Ready to Deploy???
+
+
 
 2) Test plan
     A) Load / Save graphs - logged in / not logged in

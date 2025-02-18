@@ -2,32 +2,48 @@ defmodule Dialectic.Responses.LlmInterface do
   alias Dialectic.Responses.RequestQueue
 
   def gen_response(node, child, graph_id) do
-    parents = Enum.reduce(node.parents, "", fn parent, acc -> acc <> parent.content <> "\n" end)
-    qn = parents <> node.content
-    # IO.inspect(qn, label: "GenResponse qn")
+    context = GraphManager.build_context(graph_id, node)
+
+    qn = """
+    Context: #{context} \n\n
+    Question: #{node.content}
+    """
+
     ask_model(qn, child, graph_id)
   end
 
   def gen_synthesis(n1, n2, child, graph_id) do
+    # TODO - Add n2 context ?? need to enforce limit??
+    context1 = GraphManager.build_context(graph_id, n1)
+    context2 = GraphManager.build_context(graph_id, n2)
+
     qn =
       """
+      Context of first argument: #{context1} \n\n
+      Context of second argument: #{context2} \n\n
       Please produce a synthesis of #{n1.content} & #{n2.content}
       """
 
     ask_model(qn, child, graph_id)
   end
 
-  def gen_thesis(n, child, graph_id) do
+  def gen_thesis(node, child, graph_id) do
+    context = GraphManager.build_context(graph_id, node)
+
     qn = """
-    Please write a short argument in support of #{n.content}
+    Context: #{context} \n\n
+    Please write a short argument in support of #{node.content}
     """
 
     ask_model(qn, child, graph_id)
   end
 
-  def gen_antithesis(n, child, graph_id) do
+  def gen_antithesis(node, child, graph_id) do
+    context = GraphManager.build_context(graph_id, node)
+
     qn = """
-    Please write a short argument against #{n.content}
+    Context: #{context} \n\n
+    Please write a short argument against #{node.content}
     """
 
     ask_model(qn, child, graph_id)

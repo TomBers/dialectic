@@ -4,7 +4,7 @@ defmodule GraphManager do
   use GenServer
 
   def get_graph(path) do
-    case GraphManager.exists?(path) do
+    case exists?(path) do
       false ->
         DynamicSupervisor.start_child(GraphSupervisor, {GraphManager, path})
         GenServer.call(via_tuple(path), :get_graph)
@@ -34,7 +34,9 @@ defmodule GraphManager do
   def init(path) do
     Process.flag(:trap_exit, true)
 
-    graph_struct = Dialectic.DbActions.Graphs.get_graph_by_title(path)
+    graph_struct =
+      Dialectic.DbActions.Graphs.get_graph_by_title(path)
+
     graph = graph_struct.data |> Serialise.json_to_graph()
     {:ok, {graph_struct, graph}}
   end
@@ -44,7 +46,7 @@ defmodule GraphManager do
     IO.inspect("Shutting Down: " <> path)
     json = Serialise.graph_to_json(graph)
     Dialectic.DbActions.Graphs.save_graph(path, json)
-    # Serialise.save_graph(path, graph)
+
     :ok
   end
 
@@ -78,9 +80,13 @@ defmodule GraphManager do
     end
   end
 
+  def handle_call({:build_context, node, limit}, _from, {graph_struct, graph}) do
+    {:reply, Vertex.build_context(node, graph, limit), {graph_struct, graph}}
+  end
+
   # In handle_call
-  def handle_call({:reset_graph}, _from, {graph_struct, graph}) do
-    {:reply, graph, {graph_struct, :digraph.new()}}
+  def handle_call({:reset_graph}, _from, {graph_struct, _graph}) do
+    {:reply, :digraph.new(), {graph_struct, :digraph.new()}}
   end
 
   def handle_call({:update_node, {node_id, data}}, _from, {graph_struct, graph}) do
@@ -208,5 +214,11 @@ defmodule GraphManager do
 
   def delete_node(path, node_id) do
     GenServer.call(via_tuple(path), {:delete_node, node_id})
+  end
+
+  # Deepseek context window 128,000 tokens
+  # So for the time being set it to a quarter of the window size.
+  def build_context(path, node, limit \\ 25_000) do
+    GenServer.call(via_tuple(path), {:build_context, node, limit})
   end
 end

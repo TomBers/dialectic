@@ -14,7 +14,8 @@ defmodule Dialectic.DbActions.Init do
       "Narcissus",
       "What is good and what is evil?",
       "Normative ethical theories",
-      "Girard - Scapegoat"
+      "Girard - Scapegoat",
+      "What is Dialectics?"
     ]
     |> Enum.map(fn graph_name ->
       data = Serialise.load_graph_as_json(graph_name)
