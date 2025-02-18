@@ -7,4 +7,11 @@ defmodule DialecticWeb.PageHTML do
   use DialecticWeb, :html
 
   embed_templates "page_html/*"
+
+  def gen_link(graph, node \\ nil) do
+    case node do
+      nil -> ~p"/#{URI.encode(graph, &URI.char_unreserved?/1)}"
+      _ -> ~p"/#{URI.encode(graph, &URI.char_unreserved?/1)}?node=#{node}"
+    end
+  end
 end
