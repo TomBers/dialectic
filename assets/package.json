@@ -1,9 +1,10 @@
 {
   "dependencies": {
     "cytoscape": "^3.31.0",
-    "cytoscape-dagre": "^2.5.0"
-  },
-  "devDependencies": {
+    "cytoscape-dagre": "^2.5.0",
     "@tailwindcss/typography": "^0.5.16"
+  },
+  "scripts": {
+    "deploy": "npm install && npm run build"
   }
 }
