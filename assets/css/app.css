@@ -39,6 +39,20 @@
     min-height: 320px;
 }
 
+#question-container {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 1.5rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    padding: 20px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    margin: 20px auto;
+    width: 80%;
+    background: #f9f9f9;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
 /* .node .proposition {
     margin: 0;
     font-size: 1rem;
