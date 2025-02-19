@@ -22,7 +22,7 @@ defmodule DialecticWeb.Router do
     get "/", PageController, :home
     post "/conversation", PageController, :create
     get "/intro/what", PageController, :what
-    # get "/graphs/:graph_name", PageController, :graph
+    get "/graphs/:graph_name", PageController, :graph
     get "/deploy/dashboard", PageController, :deploy_dashboard
     live "/:graph_name", GraphLive
   end

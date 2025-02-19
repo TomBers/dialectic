@@ -1,10 +1,10 @@
 defmodule Dialectic.Graph.Serialise do
   alias Dialectic.Graph.Vertex
 
-  @base_path "priv/static/graphs/"
-
   def calc_path(name) do
-    @base_path <> name <> ".json"
+    :code.priv_dir(:dialectic)
+    |> Path.join("/static/graphs/")
+    |> Path.join(name <> ".json")
   end
 
   # def save_graph(name, graph) do
