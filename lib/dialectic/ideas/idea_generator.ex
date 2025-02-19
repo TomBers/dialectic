@@ -126,6 +126,7 @@ defmodule Dialectic.Ideas.IdeaGenerator do
     "Negative Freedom",
     "Equality",
     "Justice",
+    "Dadaism",
     "The evolution of music in the digital era",
     "Blood Meridian by Cormac McCarthy",
     "Zen and the Art of Motorcycle Maintenance by Robert M. Pirsig",
