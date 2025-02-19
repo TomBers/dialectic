@@ -2,9 +2,8 @@ TODO -
 
 Outstanding for alpha version:
 
-1) Expand out the Dialectics graph a few more steps
-2) Test graph naming with various prefixes and suffixes lots of weird characters
-3) Ready to Deploy???
+0) Initial idea generator
+1) Test full functionality live - ensure that the save function operates as expected!
 
 
 
