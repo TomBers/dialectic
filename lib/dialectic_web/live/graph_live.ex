@@ -244,13 +244,9 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  defp is_connected_to_graph?(
-         %{
-           metas: [%{graph_id: user_graph_id}]
-         },
-         graph_id
-       ),
-       do: user_graph_id == graph_id
+  defp is_connected_to_graph?(%{metas: metas}, graph_id) do
+    Enum.any?(metas, fn %{graph_id: gid} -> gid == graph_id end)
+  end
 
   def format_graph(graph) do
     graph |> Vertex.to_cytoscape_format() |> Jason.encode!()
