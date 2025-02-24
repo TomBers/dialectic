@@ -80,6 +80,10 @@ export function draw_graph(graph, context, elements, cols, node) {
       rankSep: 30,
     },
   });
+
+  cy.minZoom(0.5);
+  cy.maxZoom(10);
+
   cy.on("tap", "node", function () {
     var n = this;
     context.pushEvent("node_clicked", { id: n.id() });
