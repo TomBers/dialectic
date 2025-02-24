@@ -28,9 +28,11 @@ defmodule DialecticWeb.Router do
   end
 
   # Other scopes may use custom stacks.
-  # scope "/api", DialecticWeb do
-  #   pipe_through :api
-  # end
+  scope "/api", DialecticWeb do
+    pipe_through :api
+
+    get "/random_question", PageController, :random_question
+  end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
   if Application.compile_env(:dialectic, :dev_routes) do

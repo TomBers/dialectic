@@ -68,6 +68,11 @@ defmodule DialecticWeb.PageController do
     render(conn, :deploy_dashboard, seeds: seeds, keys: Enum.map(keys, &check_key(&1)))
   end
 
+  def random_question(conn, _params) do
+    question = Dialectic.Ideas.IdeaGenerator.run()
+    json(conn, %{question: question})
+  end
+
   defp check_key(key) do
     case System.get_env(key) do
       nil -> "Missing #{key}"
