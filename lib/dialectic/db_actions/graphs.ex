@@ -22,9 +22,24 @@ defmodule Dialectic.DbActions.Graphs do
   end
 
   defp default_graph_data(content) do
+    ans_node = %Vertex{id: "2", content: "", class: "answer"}
+
+    spawn(fn ->
+      :timer.sleep(2000)
+      Dialectic.Responses.RequestQueue.add(content, ans_node, content)
+    end)
+
     %{
-      "nodes" => [%Vertex{id: "1", content: content}],
-      "edges" => []
+      "nodes" => [%Vertex{id: "1", content: content}, ans_node],
+      "edges" => [
+        %{
+          data: %{
+            id: "12",
+            source: "1",
+            target: "2"
+          }
+        }
+      ]
     }
   end
 
