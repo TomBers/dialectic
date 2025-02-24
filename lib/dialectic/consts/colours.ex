@@ -2,24 +2,28 @@ defmodule Dialectic.Consts.Colours do
   def graph_cols do
     %{
       thesis: %{
+        # Green
+        border: "#4ade80",
+        background: "#f0fdf4",
+        text: "#4ade80"
+      },
+      antithesis: %{
+        # Red
         border: "#f84b71",
         background: "#f6e4e4",
         text: "#f84b71"
       },
-      antithesis: %{
-        border: "#60a5fa",
-        background: "#eff6ff",
-        text: "#60a5fa"
-      },
       synthesis: %{
+        # Purple
         border: "#c084fc",
         background: "#faf5ff",
         text: "#c084fc"
       },
       answer: %{
-        border: "#4ade80",
-        background: "#f0fdf4",
-        text: "#4ade80"
+        # BLue
+        border: "#60a5fa",
+        background: "#eff6ff",
+        text: "#60a5fa"
       },
       user: %{
         border: "#d1d5db",
