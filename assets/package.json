@@ -1,8 +1,9 @@
 {
   "dependencies": {
+    "@floating-ui/dom": "^1.6.13",
+    "@tailwindcss/typography": "^0.5.16",
     "cytoscape": "^3.31.0",
-    "cytoscape-dagre": "^2.5.0",
-    "@tailwindcss/typography": "^0.5.16"
+    "cytoscape-dagre": "^2.5.0"
   },
   "scripts": {
     "deploy": "npm install && npm run build"

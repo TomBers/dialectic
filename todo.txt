@@ -30,7 +30,7 @@ Further testing:
 Gui improvements:
 
 1) Make graph full screen and overlay the responses - Made it 2/3
-2) Generate first response on Graph generation
+2) Generate first response on Graph generation - Done
 3) Colour swap - Green - Pro, Red - Con, Blue answer - Done
 4) Node Context menu - add controls on the graph
 5) Put summary of text in Node
