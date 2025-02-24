@@ -8,21 +8,19 @@ Must fix:
 0) Add a view all option - Done
 1) Fix Graph crash when multiple windows are open - Done
 
-<<<<<<< Updated upstream
+
 ** Scary - might be to do with the Pubsub Broadcast
-=======
 ** Scary - maybe due to out of order of broadcast messages??
->>>>>>> Stashed changes
+
 2) LLM response was sometimes mangled - see https://mudg.fly.dev/Should%2520Ireland%2520join%2520Nato
  -  (Improve debugability and consider swapping to OpenAI??)
 
 
 3) Broadcast Graph changes to all connected clients - Done
 4) Cap map zoom level - Ronan kept zooming out too far - Done
-<<<<<<< Updated upstream
-=======
+
 5) Fix error on Keyboard left and right over shortcut on original node
->>>>>>> Stashed changes
+
 
 Further testing:
 
