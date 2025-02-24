@@ -5,6 +5,7 @@ First Public Demo (with Ronan)
 Technical issues:
 
 Must fix:
+0) Add a view all option
 1) Fix Graph crash when multiple windows are open
 2) LLM response was sometimes mangled - see https://mudg.fly.dev/Should%2520Ireland%2520join%2520Nato
  -  (Improve debugability and consider swapping to OpenAI??)
