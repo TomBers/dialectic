@@ -15,7 +15,7 @@ defmodule Dialectic.Graph.Siblings do
     {_n, indx} =
       sorted
       |> Enum.with_index()
-      |> Enum.find(fn {n, _} -> n.id == node.id end)
+      |> Enum.find({nil, 1}, fn {n, _} -> n.id == node.id end)
 
     case indx do
       0 -> List.first(sorted)
@@ -29,7 +29,7 @@ defmodule Dialectic.Graph.Siblings do
     {_n, indx} =
       sorted
       |> Enum.with_index()
-      |> Enum.find(fn {n, _} -> n.id == node.id end)
+      |> Enum.find({nil, -1}, fn {n, _} -> n.id == node.id end)
 
     IO.inspect(indx, label: "Right Indx")
     Enum.at(sorted, indx + 1, List.last(sorted))

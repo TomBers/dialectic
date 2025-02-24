@@ -4,10 +4,14 @@ defmodule DialecticWeb.GraphLive do
   alias Dialectic.Graph.{Vertex, GraphActions}
   alias DialecticWeb.{CombineComp, ChatComp}
 
+  alias Phoenix.PubSub
+
   on_mount {DialecticWeb.UserAuth, :mount_current_user}
 
   def mount(%{"graph_name" => graph_id_uri} = params, _session, socket) do
     graph_id = URI.decode(graph_id_uri)
+
+    PubSub.subscribe(Dialectic.PubSub, "graph_update")
 
     user =
       case socket.assigns.current_user do
@@ -221,6 +225,10 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
+  def handle_info(graph, socket) do
+    {:noreply, assign(socket, graph: graph, f_graph: format_graph(graph))}
+  end
+
   def handle_info({:stream_chunk, chunk, :node_id, node_id}, socket) do
     # This is the streamed LLM response into a node
     updated_vertex = GraphManager.update_vertex(socket.assigns.graph_id, node_id, chunk)
@@ -310,7 +318,7 @@ defmodule DialecticWeb.GraphLive do
         socket.assigns.show_combine
       end
 
-    # PubSub.broadcast(Dialectic.PubSub, "graph_update", graph)
+    PubSub.broadcast(Dialectic.PubSub, "graph_update", graph)
 
     {:noreply,
      assign(socket,
