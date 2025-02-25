@@ -2,7 +2,8 @@ defmodule Dialectic.Responses.Utils do
   require Logger
 
   def process_chunk(graph, node, data, _module) do
-    # File.write("#{module}.txt", "#{data}\n", [:append])
+    Logger.info("Processing chunk for graph #{graph} and node #{node}. Data: #{data}")
+
     Phoenix.PubSub.broadcast(
       Dialectic.PubSub,
       graph,

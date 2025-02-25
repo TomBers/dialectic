@@ -1,23 +1,40 @@
 TODO -
 
-Outstanding for alpha version:
+First Public Demo (with Ronan)
 
-0) Initial idea generator
-1) Test full functionality live - ensure that the save function operates as expected!
+Technical issues:
+
+Must fix:
+0) Add a view all option - Done
+1) Fix Graph crash when multiple windows are open - Done
 
 
+** Scary - might be to do with the Pubsub Broadcast
+** Scary - maybe due to out of order of broadcast messages??
 
-2) Test plan
-    A) Load / Save graphs - logged in / not logged in
-    B) Create a new graph
-    C) Reply, Answer, Branch, Combine
-    D) Note / Unnote
-    E) Edit / Delete node
-    F) Test different LLM's -> Look at Deepseek V3?
-    G) Test Locking function
+2) LLM response was sometimes mangled - see https://mudg.fly.dev/Should%2520Ireland%2520join%2520Nato
+ -  (Improve debugability and consider swapping to OpenAI??)
 
-3) Writing - what it is, why?
-4) Look to Deployment - Fly - how to have a data migration, data backup etc
+
+3) Broadcast Graph changes to all connected clients - Done
+4) Cap map zoom level - Ronan kept zooming out too far - Done
+
+5) Fix error on Keyboard left and right over shortcut on original node
+
+
+Further testing:
+
+1) Some issue with Keyboard shortcuts on Windows - some sort of key lock
+
+
+Gui improvements:
+
+1) Make graph full screen and overlay the responses - Made it 2/3
+2) Generate first response on Graph generation - Done
+3) Colour swap - Green - Pro, Red - Con, Blue answer - Done
+4) Node Context menu - add controls on the graph - Done
+5) Put summary of text in Node
+6) Think about showing the text conversation in a Modal window
 
 
 Use the system to have interesting conversations - does it help comprehension?

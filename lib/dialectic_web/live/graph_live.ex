@@ -4,10 +4,14 @@ defmodule DialecticWeb.GraphLive do
   alias Dialectic.Graph.{Vertex, GraphActions}
   alias DialecticWeb.{CombineComp, ChatComp}
 
+  alias Phoenix.PubSub
+
   on_mount {DialecticWeb.UserAuth, :mount_current_user}
 
   def mount(%{"graph_name" => graph_id_uri} = params, _session, socket) do
     graph_id = URI.decode(graph_id_uri)
+
+    PubSub.subscribe(Dialectic.PubSub, "graph_update")
 
     user =
       case socket.assigns.current_user do
@@ -123,6 +127,48 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
+  def handle_event("node_reply", %{"action" => "reply", "id" => node_id}, socket) do
+    {_, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
+    # Ensure replying to the correct node
+    update_graph(
+      socket,
+      GraphActions.answer(graph_action_params(socket, node))
+    )
+  end
+
+  def handle_event("node_branch", %{"action" => "branch", "id" => node_id}, socket) do
+    {_, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
+    # Ensure branching from the correct node
+    update_graph(
+      socket,
+      GraphActions.branch(graph_action_params(socket, node))
+    )
+  end
+
+  def handle_event("node_combine", %{"action" => "combine", "id" => node_id}, socket) do
+    {_, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
+    {:noreply, assign(socket, show_combine: true, node: node)}
+  end
+
+  def handle_event("combine_node_select", %{"selected_node" => node_id}, socket) do
+    {graph, node} =
+      GraphActions.combine(
+        graph_action_params(socket),
+        node_id
+      )
+
+    update_graph(socket, {graph, node}, true)
+  end
+
+  def handle_event("node_delete", %{"action" => "delete", "id" => node_id}, socket) do
+    node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+    # Ensure deleting the correct node
+    update_graph(
+      socket,
+      GraphActions.delete(graph_action_params(socket, node))
+    )
+  end
+
   def handle_event("KeyBoardInterface", %{"key" => last_key, "cmdKey" => isCmd}, socket) do
     # IO.inspect(params, label: "KeyBoardInterface")
     if !socket.assigns.can_edit do
@@ -131,7 +177,6 @@ defmodule DialecticWeb.GraphLive do
       key =
         (socket.assigns.key_buffer <> last_key)
         |> String.replace_prefix("Control", "")
-        |> IO.inspect(label: "KeyBuffer")
 
       if isCmd do
         if socket.assigns.show_combine do
@@ -221,6 +266,10 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
+  def handle_info({:other_user_change, graph}, socket) do
+    {:noreply, assign(socket, graph: graph, f_graph: format_graph(graph))}
+  end
+
   def handle_info({:stream_chunk, chunk, :node_id, node_id}, socket) do
     # This is the streamed LLM response into a node
     updated_vertex = GraphManager.update_vertex(socket.assigns.graph_id, node_id, chunk)
@@ -244,13 +293,9 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  defp is_connected_to_graph?(
-         %{
-           metas: [%{graph_id: user_graph_id}]
-         },
-         graph_id
-       ),
-       do: user_graph_id == graph_id
+  defp is_connected_to_graph?(%{metas: metas}, graph_id) do
+    Enum.any?(metas, fn %{graph_id: gid} -> gid == graph_id end)
+  end
 
   def format_graph(graph) do
     graph |> Vertex.to_cytoscape_format() |> Jason.encode!()
@@ -298,8 +343,8 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  defp graph_action_params(socket) do
-    {socket.assigns.graph_id, socket.assigns.node, socket.assigns.user}
+  defp graph_action_params(socket, node \\ nil) do
+    {socket.assigns.graph_id, node || socket.assigns.node, socket.assigns.user}
   end
 
   def update_graph(socket, {graph, node}, invert_modal \\ false, update_view \\ true) do
@@ -314,7 +359,12 @@ defmodule DialecticWeb.GraphLive do
         socket.assigns.show_combine
       end
 
-    # PubSub.broadcast(Dialectic.PubSub, "graph_update", graph)
+    PubSub.broadcast(Dialectic.PubSub, "graph_update", {:other_user_change, graph})
+
+    # Save mutation to database
+    spawn(fn ->
+      GraphManager.save_graph_to_db(socket.assigns.graph_id, graph)
+    end)
 
     {:noreply,
      assign(socket,

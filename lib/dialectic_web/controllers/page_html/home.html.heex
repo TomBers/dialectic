@@ -32,6 +32,7 @@
       <script>
         // Global variable to hold the typing interval ID.
         let currentInterval = null;
+        updateQuestion();
 
         // Function to display text letter by letter.
         function typeText(text, element, delay = 50) {
@@ -132,7 +133,12 @@
     
 <!-- Top Graphs Section -->
     <section>
-      <h2 class="text-2xl font-bold text-gray-700 mb-4">Top Graphs</h2>
+      <h2 class="text-2xl font-bold text-gray-700 mb-4">
+        Top Graphs (<.link
+          navigate={~p"/view_all/graphs"}
+          class="text-xl text-blue-600 hover:text-blue-400"
+        >All Graphs</.link>)
+      </h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         <%= for {g, count} <- @top_graphs do %>
           <.link navigate={gen_link(g.title)} class="block">

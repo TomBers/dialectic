@@ -21,7 +21,7 @@
 <!-- Main content with 50-50 split -->
   <div class="flex-1 flex">
     <!-- Left side: Graph -->
-    <div class="w-1/2" phx-window-keydown="KeyBoardInterface">
+    <div class="w-2/3" phx-window-keydown="KeyBoardInterface">
       <div
         id="cy"
         class="h-full w-full"
@@ -45,7 +45,7 @@
     </div>
     
 <!-- Right side: Chat -->
-    <div class="w-1/2 h-full flex flex-col items-end">
+    <div class="w-1/3 h-full flex flex-col items-end">
       <ul id="online_users" phx-update="stream" class="space-y-1">
         <li
           :for={{dom_id, %{id: id, metas: _metas}} <- @streams.presences}

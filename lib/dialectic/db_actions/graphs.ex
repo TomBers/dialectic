@@ -3,6 +3,8 @@ defmodule Dialectic.DbActions.Graphs do
   alias Dialectic.Accounts.Graph
   alias Dialectic.Graph.Vertex
 
+  import Ecto.Query
+
   @doc """
   Creates a new graph with the given title.
   """
@@ -20,9 +22,24 @@ defmodule Dialectic.DbActions.Graphs do
   end
 
   defp default_graph_data(content) do
+    ans_node = %Vertex{id: "2", content: "", class: "answer"}
+
+    spawn(fn ->
+      :timer.sleep(2000)
+      Dialectic.Responses.RequestQueue.add(content, ans_node, content)
+    end)
+
     %{
-      "nodes" => [%Vertex{id: "1", content: content}],
-      "edges" => []
+      "nodes" => [%Vertex{id: "1", content: content}, ans_node],
+      "edges" => [
+        %{
+          data: %{
+            id: "12",
+            source: "1",
+            target: "2"
+          }
+        }
+      ]
     }
   end
 
@@ -32,6 +49,17 @@ defmodule Dialectic.DbActions.Graphs do
     #     select: p.title
 
     Repo.all(Graph)
+  end
+
+  def all_graphs_with_notes() do
+    query =
+      from g in Dialectic.Accounts.Graph,
+        left_join: n in assoc(g, :notes),
+        group_by: g.title,
+        order_by: [desc: count(n.id)],
+        select: {g, count(n.id)}
+
+    Dialectic.Repo.all(query)
   end
 
   @doc """
