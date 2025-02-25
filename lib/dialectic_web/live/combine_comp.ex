@@ -1,7 +1,7 @@
 defmodule DialecticWeb.CombineComp do
   use DialecticWeb, :live_component
 
-  alias DialecticWeb.ChatMsgComp
+  alias DialecticWeb.CombinetMsgComp
 
   def update(assigns, socket) do
     # IO.inspect(assigns)
@@ -18,12 +18,7 @@ defmodule DialecticWeb.CombineComp do
     ~H"""
     <div class="node-list">
       <%= for node <- @possible_nodes do %>
-        <.live_component
-          module={ChatMsgComp}
-          show_user_controls={false}
-          node={node}
-          id={node.id <>"_combine" }
-        />
+        <.live_component module={CombinetMsgComp} node={node} id={node.id <>"_combine" } />
       <% end %>
     </div>
     """

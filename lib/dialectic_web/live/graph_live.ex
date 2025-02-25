@@ -127,6 +127,48 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
+  def handle_event("node_reply", %{"action" => "reply", "id" => node_id}, socket) do
+    {_, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
+    # Ensure replying to the correct node
+    update_graph(
+      socket,
+      GraphActions.answer(graph_action_params(socket, node))
+    )
+  end
+
+  def handle_event("node_branch", %{"action" => "branch", "id" => node_id}, socket) do
+    {_, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
+    # Ensure branching from the correct node
+    update_graph(
+      socket,
+      GraphActions.branch(graph_action_params(socket, node))
+    )
+  end
+
+  def handle_event("node_combine", %{"action" => "combine", "id" => node_id}, socket) do
+    {_, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
+    {:noreply, assign(socket, show_combine: true, node: node)}
+  end
+
+  def handle_event("combine_node_select", %{"selected_node" => node_id}, socket) do
+    {graph, node} =
+      GraphActions.combine(
+        graph_action_params(socket),
+        node_id
+      )
+
+    update_graph(socket, {graph, node}, true)
+  end
+
+  def handle_event("node_delete", %{"action" => "delete", "id" => node_id}, socket) do
+    node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+    # Ensure deleting the correct node
+    update_graph(
+      socket,
+      GraphActions.delete(graph_action_params(socket, node))
+    )
+  end
+
   def handle_event("KeyBoardInterface", %{"key" => last_key, "cmdKey" => isCmd}, socket) do
     # IO.inspect(params, label: "KeyBoardInterface")
     if !socket.assigns.can_edit do
@@ -135,7 +177,6 @@ defmodule DialecticWeb.GraphLive do
       key =
         (socket.assigns.key_buffer <> last_key)
         |> String.replace_prefix("Control", "")
-        |> IO.inspect(label: "KeyBuffer")
 
       if isCmd do
         if socket.assigns.show_combine do
@@ -302,8 +343,8 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  defp graph_action_params(socket) do
-    {socket.assigns.graph_id, socket.assigns.node, socket.assigns.user}
+  defp graph_action_params(socket, node \\ nil) do
+    {socket.assigns.graph_id, node || socket.assigns.node, socket.assigns.user}
   end
 
   def update_graph(socket, {graph, node}, invert_modal \\ false, update_view \\ true) do
