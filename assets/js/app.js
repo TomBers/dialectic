@@ -35,6 +35,7 @@ hooks.Graph = {
     const { graph, node, cols, div } = this.el.dataset;
     const div_id = document.getElementById(div);
     const elements = JSON.parse(graph);
+
     numNodes = elements;
     nodeId = node;
     this.cy = draw_graph(div_id, this, elements, cols, node);
