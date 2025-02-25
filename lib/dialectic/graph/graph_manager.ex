@@ -44,10 +44,14 @@ defmodule GraphManager do
   def terminate(_reason, {graph_struct, graph}) do
     path = graph_struct.title
     IO.inspect("Shutting Down: " <> path)
+    save_graph_to_db(path, graph)
+    :ok
+  end
+
+  def save_graph_to_db(path, graph) do
+    IO.inspect("Saving: " <> path)
     json = Serialise.graph_to_json(graph)
     Dialectic.DbActions.Graphs.save_graph(path, json)
-
-    :ok
   end
 
   def handle_call(:get_graph, _from, {graph_struct, graph}) do

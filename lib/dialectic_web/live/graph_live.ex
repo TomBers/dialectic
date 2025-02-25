@@ -361,6 +361,11 @@ defmodule DialecticWeb.GraphLive do
 
     PubSub.broadcast(Dialectic.PubSub, "graph_update", {:other_user_change, graph})
 
+    # Save mutation to database
+    spawn(fn ->
+      GraphManager.save_graph_to_db(socket.assigns.graph_id, graph)
+    end)
+
     {:noreply,
      assign(socket,
        graph: graph,
