@@ -105,15 +105,11 @@ hooks.TextSelectionHook = {
     // Set up the button to send the selected text to the server
     const actionButton = selectionActionsEl.querySelector("button");
     actionButton.onclick = () => {
-      if (selectedText != "") {
-        this.pushEvent("handle_selection", {
-          node_id: this.nodeId,
-          selected_text: selectedText,
-          is_modal: isInModal,
-        });
-      } else {
-        alert("No text selected");
-      }
+      // Match the parameter names expected by your existing handler
+      this.pushEvent("handle_selection", {
+        node: this.nodeId,
+        value: selectedText,
+      });
 
       // Hide the action button after clicking
       this.hideSelectionActions();

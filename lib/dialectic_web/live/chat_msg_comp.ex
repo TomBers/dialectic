@@ -68,11 +68,7 @@ defmodule DialecticWeb.ChatMsgComp do
             
     <!-- Modal selection action button (hidden by default) -->
             <div class="selection-actions hidden absolute bg-white shadow-md rounded-md p-1 z-10">
-              <button
-                phx-click="handle_selection"
-                phx-value-node={@node.id}
-                class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded"
-              >
+              <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded">
                 Quote Selection
               </button>
             </div>
@@ -91,11 +87,7 @@ defmodule DialecticWeb.ChatMsgComp do
           
     <!-- Summary selection action button (hidden by default) -->
           <div class="selection-actions hidden absolute bg-white shadow-md rounded-md p-1 z-10">
-            <button
-              phx-click="handle_selection"
-              phx-value-node={@node.id}
-              class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded"
-            >
+            <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded">
               Quote Selection
             </button>
           </div>

@@ -138,7 +138,7 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event(
         "handle_selection",
-        %{"node_id" => node_id, "selected_text" => selected_text},
+        %{"node" => node_id, "value" => selected_text},
         socket
       ) do
     {_, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
