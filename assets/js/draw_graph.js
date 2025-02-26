@@ -42,6 +42,11 @@ function createSharedMenu(context) {
       icon: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M12 11h4"></path><path d="M12 16h4"></path><path d="M8 11h.01"></path><path d="M8 16h.01"></path></svg>`,
       label: "Combine",
     },
+    {
+      name: "showfull",
+      icon: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`,
+      label: "Full Text",
+    },
   ];
 
   // Create the menu HTML
@@ -67,7 +72,7 @@ function createSharedMenu(context) {
     buttonEl.style.color = "#333";
     buttonEl.style.transition = "background-color 0.2s";
 
-    // Add hover effect
+    // Add hover effect only for regular buttons
     buttonEl.addEventListener("mouseenter", () => {
       buttonEl.style.backgroundColor = "#f0f0f0";
     });
@@ -101,11 +106,20 @@ function createSharedMenu(context) {
     if (target.classList.contains("menu-button")) {
       const action = target.getAttribute("data-action");
       // Send LiveView event with node ID and action
-      if (currentNodeId && action) {
-        context.pushEvent(`node_${action}`, {
-          id: currentNodeId,
-          action: action,
-        });
+      if (action == "showfull") {
+        const btns = document.getElementsByClassName("show_more_modal");
+        console.log(btns);
+
+        if (btns.length > 0) {
+          btns[btns.length - 1].click();
+        }
+      } else {
+        if (currentNodeId && action) {
+          context.pushEvent(`node_${action}`, {
+            id: currentNodeId,
+            action: action,
+          });
+        }
       }
 
       // Hide the menu after action
@@ -228,40 +242,13 @@ export function draw_graph(graph, context, elements, cols, node) {
   const nodeMenu = createSharedMenu(context);
 
   // Set up event handlers using event delegation (works for dynamically added nodes)
-  cy.on("mouseover", "node", function (event) {
-    const node = event.target;
-    const nodeId = node.id();
 
-    // Create a virtual reference element based on the node's rendered bounding box
-    const virtualReference = {
-      getBoundingClientRect: () => {
-        const bb = node.renderedBoundingBox();
-        return {
-          width: bb.x2 - bb.x1,
-          height: bb.y2 - bb.y1,
-          top: bb.y1,
-          bottom: bb.y2,
-          left: bb.x1,
-          right: bb.x2,
-        };
-      },
-    };
-
-    // Use Floating UI to position the menu below the node
-    computePosition(virtualReference, nodeMenu.element, {
-      placement: "bottom",
-      middleware: [offset(10)], // Adds a 10px offset
-    }).then(({ x, y }) => {
-      nodeMenu.show(nodeId, { x, y });
-    });
-  });
-
-  cy.on("mouseout", "node", function () {
-    nodeMenu.hide();
-  });
+  // cy.on("mouseout", "node", function () {
+  //   nodeMenu.hide();
+  // });
 
   // Node selection handling (kept from your original code)
-  cy.on("tap", "node", function () {
+  cy.on("tap", "node", function (event) {
     var n = this;
     context.pushEvent("node_clicked", { id: n.id() });
     cy.animate({
@@ -271,6 +258,34 @@ export function draw_graph(graph, context, elements, cols, node) {
       zoom: 2,
       duration: 500, // duration in milliseconds for the animation
     });
+
+    setTimeout(() => {
+      const node = event.target;
+      const nodeId = node.id();
+
+      // Create a virtual reference element based on the node's rendered bounding box
+      const virtualReference = {
+        getBoundingClientRect: () => {
+          const bb = node.renderedBoundingBox();
+          return {
+            width: bb.x2 - bb.x1,
+            height: bb.y2 - bb.y1,
+            top: bb.y1,
+            bottom: bb.y2,
+            left: bb.x1,
+            right: bb.x2,
+          };
+        },
+      };
+
+      // Use Floating UI to position the menu below the node
+      computePosition(virtualReference, nodeMenu.element, {
+        placement: "bottom",
+        middleware: [offset(10)], // Adds a 10px offset
+      }).then(({ x, y }) => {
+        nodeMenu.show(nodeId, { x, y });
+      });
+    }, 500);
   });
 
   cy.elements().removeClass("selected");

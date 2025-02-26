@@ -64,7 +64,7 @@ defmodule DialecticWeb.ChatMsgComp do
         <%= if String.length(@node.content || "") > @cut_off do %>
           <button
             phx-click={show_modal("modal-" <> @node.id)}
-            class="mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium focus:outline-none"
+            class="show_more_modal mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium focus:outline-none"
           >
             Show more
           </button>

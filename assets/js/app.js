@@ -27,6 +27,7 @@ let numNodes = null;
 let nodeId = null;
 
 let hooks = {};
+
 hooks.Graph = {
   mounted() {
     // Hide the user header
