@@ -95,6 +95,12 @@ defmodule DialecticWeb.GraphLive do
      |> assign(:node_menu_position, normalized_position)}
   end
 
+  def handle_event("hide_node_menu", _, socket) do
+    {:noreply,
+     socket
+     |> assign(:node_menu_visible, false)}
+  end
+
   def handle_event("unnote", %{"node" => node_id}, socket) do
     if socket.assigns.current_user == nil do
       {:noreply, socket |> put_flash(:error, "You must be logged in to unnote")}
@@ -143,7 +149,7 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_event("node_reply", %{"action" => "reply", "id" => node_id}, socket) do
+  def handle_event("node_reply", %{"id" => node_id}, socket) do
     {_, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
     # Ensure replying to the correct node
     update_graph(
@@ -165,7 +171,7 @@ defmodule DialecticWeb.GraphLive do
     )
   end
 
-  def handle_event("node_branch", %{"action" => "branch", "id" => node_id}, socket) do
+  def handle_event("node_branch", %{"id" => node_id}, socket) do
     {_, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
     # Ensure branching from the correct node
     update_graph(
@@ -174,7 +180,7 @@ defmodule DialecticWeb.GraphLive do
     )
   end
 
-  def handle_event("node_combine", %{"action" => "combine", "id" => node_id}, socket) do
+  def handle_event("node_combine", %{"id" => node_id}, socket) do
     {_, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
     {:noreply, assign(socket, show_combine: true, node: node)}
   end

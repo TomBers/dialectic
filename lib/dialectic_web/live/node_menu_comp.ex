@@ -1,9 +1,21 @@
 defmodule DialecticWeb.NodeMenuComp do
-  use Phoenix.LiveComponent
+  use DialecticWeb, :live_component
 
   def render(assigns) do
     ~H"""
     <div id="node-menu" class="graph-tooltip" style={get_styles(@visible, @position)}>
+      <.form for={@form} phx-submit="answer">
+        <div class="flex-1 mb-4">
+          <.input
+            :if={@node_id != "NewNode"}
+            field={@form[:content]}
+            tabindex="0"
+            type="text"
+            placeholder="Add comment"
+          />
+        </div>
+      </.form>
+
       <div class="menu-buttons">
         <button class="menu-button" phx-click="node_reply" phx-value-id={@node_id}>
           <span class="icon">
@@ -72,7 +84,7 @@ defmodule DialecticWeb.NodeMenuComp do
           <span class="label">Combine and Summarise</span>
         </button>
 
-        <button class="menu-button show_more_modal" phx-click="node_showfull" phx-value-id={@node_id}>
+        <button class="menu-button show_more_modal" phx-click={show_modal("modal-" <> @node_id)}>
           <span class="icon">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -140,7 +152,8 @@ defmodule DialecticWeb.NodeMenuComp do
      assign(socket,
        visible: Map.get(assigns, :visible, false),
        position: Map.get(assigns, :position, %{x: 0, y: 0}),
-       node_id: Map.get(assigns, :node_id, nil)
+       node_id: Map.get(assigns, :node_id, nil),
+       form: Map.get(assigns, :form, nil)
      )}
   end
 end

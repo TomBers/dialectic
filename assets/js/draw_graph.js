@@ -97,7 +97,7 @@ export function draw_graph(graph, context, elements, cols, node) {
         eles: n,
       },
       zoom: 2,
-      duration: 500,
+      duration: 200,
     });
 
     setTimeout(() => {
@@ -116,9 +116,8 @@ export function draw_graph(graph, context, elements, cols, node) {
       context.pushEvent("show_node_menu", {
         id: nodeId,
         position: position,
-        node_class: node.data("class"), // Send node class if available
       });
-    }, 500);
+    }, 300);
   });
 
   // Click elsewhere to hide menu
