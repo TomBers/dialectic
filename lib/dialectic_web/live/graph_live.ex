@@ -2,7 +2,7 @@ defmodule DialecticWeb.GraphLive do
   use DialecticWeb, :live_view
 
   alias Dialectic.Graph.{Vertex, GraphActions}
-  alias DialecticWeb.{CombineComp, ChatComp}
+  alias DialecticWeb.{CombineComp, ChatComp, NodeMenuComp}
 
   alias Phoenix.PubSub
 
@@ -58,7 +58,9 @@ defmodule DialecticWeb.GraphLive do
        user: user,
        update_view: true,
        edit: false,
-       can_edit: can_edit
+       can_edit: can_edit,
+       node_menu_visible: false,
+       node_menu_position: nil
      )}
   end
 
@@ -77,6 +79,20 @@ defmodule DialecticWeb.GraphLive do
         GraphActions.change_noted_by(graph_action_params(socket), node_id, &Vertex.add_noted_by/2)
       )
     end
+  end
+
+  def handle_event("show_node_menu", %{"id" => _node_id, "position" => position}, socket) do
+    normalized_position = %{
+      x: position["x"] || Map.get(position, :x, 0),
+      y: position["y"] || Map.get(position, :y, 0),
+      width: position["width"] || Map.get(position, :width, 0),
+      height: position["height"] || Map.get(position, :height, 0)
+    }
+
+    {:noreply,
+     socket
+     |> assign(:node_menu_visible, true)
+     |> assign(:node_menu_position, normalized_position)}
   end
 
   def handle_event("unnote", %{"node" => node_id}, socket) do

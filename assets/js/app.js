@@ -28,6 +28,22 @@ let nodeId = null;
 
 let hooks = {};
 
+hooks.NodeMenuHook = {
+  mounted() {
+    // You could add additional behavior here if needed
+    // For example, handling mouse enter/leave events
+    this.el.addEventListener("mouseenter", () => {
+      // Keep menu visible when mouse is over it
+      // this.pushEvent("keep_menu_visible", {});
+    });
+
+    this.el.addEventListener("mouseleave", () => {
+      // Optionally auto-hide when mouse leaves
+      // this.pushEvent("hide_node_menu", {});
+    });
+  },
+};
+
 hooks.TextSelectionHook = {
   mounted() {
     this.handleSelection = this.handleSelection.bind(this);

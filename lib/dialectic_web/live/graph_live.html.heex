@@ -34,6 +34,13 @@
         phx-update="ignore"
       >
       </div>
+      <.live_component
+        module={NodeMenuComp}
+        id="node-menu"
+        visible={@node_menu_visible}
+        position={@node_menu_position}
+        node_id={@node.id}
+      />
       <.modal
         :if={@show_combine && @node.id}
         on_cancel={JS.push("modal_closed")}
