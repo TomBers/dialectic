@@ -35,31 +35,71 @@ defmodule DialecticWeb.ChatMsgComp do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class={[
-      "node mb-4 rounded-lg shadow-sm",
-      "flex items-start gap-3 bg-white border-l-4",
-      message_border_class(@node.class)
-    ]}>
+    <div
+      class={[
+        "node mb-4 rounded-lg shadow-sm",
+        "flex items-start gap-3 bg-white border-l-4",
+        message_border_class(@node.class)
+      ]}
+      id={"node-" <> @node.id}
+    >
       <div class="shrink-0">
         <h2 class="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 text-gray-700 font-mono text-sm">
           {@node.id}
         </h2>
       </div>
 
-      <div class="proposition flex-1 max-w-none">
+      <div class="proposition flex-1 max-w-none relative">
         <.modal
           on_cancel={JS.push("modal_closed")}
           class={message_border_class(@node.class)}
           id={"modal-" <> @node.id}
         >
-          <article class="prose prose-stone prose-sm">
-            <h1 class="">{modal_title(@node.class)}</h1>
-            {full_html(@node.content || "")}
-          </article>
+          <div
+            class="modal-content"
+            id={"modal-content-" <> @node.id}
+            phx-hook="TextSelectionHook"
+            data-node-id={@node.id}
+          >
+            <article class="prose prose-stone prose-sm selection-content">
+              <h1 class="">{modal_title(@node.class)}</h1>
+              {full_html(@node.content || "")}
+            </article>
+            
+    <!-- Modal selection action button (hidden by default) -->
+            <div class="selection-actions hidden absolute bg-white shadow-md rounded-md p-1 z-10">
+              <button
+                phx-click="handle_selection"
+                phx-value-node={@node.id}
+                class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded"
+              >
+                Quote Selection
+              </button>
+            </div>
+          </div>
         </.modal>
-        <article class="prose prose-stone prose-sm">
-          {truncated_html(@node.content || "", @cut_off)}
-        </article>
+
+        <div
+          class="summary-content"
+          id={"summary-content-" <> @node.id}
+          phx-hook="TextSelectionHook"
+          data-node-id={@node.id}
+        >
+          <article class="prose prose-stone prose-sm selection-content">
+            {truncated_html(@node.content || "", @cut_off)}
+          </article>
+          
+    <!-- Summary selection action button (hidden by default) -->
+          <div class="selection-actions hidden absolute bg-white shadow-md rounded-md p-1 z-10">
+            <button
+              phx-click="handle_selection"
+              phx-value-node={@node.id}
+              class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded"
+            >
+              Quote Selection
+            </button>
+          </div>
+        </div>
 
         <%= if String.length(@node.content || "") > @cut_off do %>
           <button

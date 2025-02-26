@@ -12,6 +12,17 @@ defmodule Dialectic.Responses.LlmInterface do
     ask_model(qn, child, graph_id)
   end
 
+  def gen_selection_response(node, child, graph_id, selection) do
+    context = GraphManager.build_context(graph_id, node)
+
+    qn = """
+    Context: #{context} \n\n
+    Question: #{selection}
+    """
+
+    ask_model(qn, child, graph_id)
+  end
+
   def gen_synthesis(n1, n2, child, graph_id) do
     # TODO - Add n2 context ?? need to enforce limit??
     context1 = GraphManager.build_context(graph_id, n1)

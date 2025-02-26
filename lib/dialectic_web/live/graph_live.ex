@@ -136,6 +136,19 @@ defmodule DialecticWeb.GraphLive do
     )
   end
 
+  def handle_event(
+        "handle_selection",
+        %{"node_id" => node_id, "selected_text" => selected_text},
+        socket
+      ) do
+    {_, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
+    # Ensure replying to the correct node
+    update_graph(
+      socket,
+      GraphActions.answer_selection(graph_action_params(socket, node), selected_text)
+    )
+  end
+
   def handle_event("node_branch", %{"action" => "branch", "id" => node_id}, socket) do
     {_, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
     # Ensure branching from the correct node

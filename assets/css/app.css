@@ -53,6 +53,27 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* Add to your app.css */
+.selection-actions {
+    transition: opacity 0.2s ease;
+}
+
+.selection-actions button {
+    white-space: nowrap;
+}
+
+/* For touch devices */
+@media (max-width: 768px) {
+    .selection-actions {
+        padding: 4px 8px;
+    }
+
+    .selection-actions button {
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+}
+
 /* .node .proposition {
     margin: 0;
     font-size: 1rem;

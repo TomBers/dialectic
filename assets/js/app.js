@@ -28,6 +28,116 @@ let nodeId = null;
 
 let hooks = {};
 
+hooks.TextSelectionHook = {
+  mounted() {
+    this.handleSelection = this.handleSelection.bind(this);
+    this.hideSelectionActions = this.hideSelectionActions.bind(this);
+
+    // Get node ID from data attribute
+    this.nodeId = this.el.dataset.nodeId;
+
+    // Add event listeners for this specific container
+    this.el.addEventListener("mouseup", this.handleSelection);
+    this.el.addEventListener("touchend", this.handleSelection);
+
+    // Handle clicks outside the selection
+    document.addEventListener("mousedown", (e) => {
+      if (!this.el.contains(e.target)) {
+        this.hideSelectionActions();
+      }
+    });
+
+    // Handle selection clearing
+    document.addEventListener("selectionchange", () => {
+      const selection = window.getSelection();
+      if (selection.isCollapsed) {
+        this.hideSelectionActions();
+      }
+    });
+  },
+
+  destroyed() {
+    this.el.removeEventListener("mouseup", this.handleSelection);
+    this.el.removeEventListener("touchend", this.handleSelection);
+  },
+
+  handleSelection(event) {
+    const selection = window.getSelection();
+    const selectionActionsEl = this.el.querySelector(".selection-actions");
+
+    if (!selectionActionsEl) return;
+
+    // Check if selection is empty or not within this component
+    if (selection.isCollapsed || !this.isSelectionInComponent(selection)) {
+      this.hideSelectionActions();
+      return;
+    }
+
+    const selectedText = selection.toString().trim();
+    if (selectedText.length === 0) {
+      this.hideSelectionActions();
+      return;
+    }
+
+    // Display the action button near the selection
+    const range = selection.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+
+    selectionActionsEl.classList.remove("hidden");
+
+    // Get the position of the element with the selection
+    const elRect = this.el.getBoundingClientRect();
+
+    // Check if we're in a modal to adjust positioning
+    const isInModal = this.el.id.includes("modal-content");
+
+    // Calculate position relative to the container
+    // For modal content, we need to account for modal scroll position
+    const containerScrollTop = isInModal ? this.el.scrollTop : 0;
+
+    const top = rect.bottom - elRect.top + window.scrollY - containerScrollTop;
+    const left = rect.right - elRect.left + window.scrollX;
+
+    // Position the button below and at the end of the selection
+    selectionActionsEl.style.top = `${top}px`;
+    selectionActionsEl.style.left = `${Math.max(0, left - selectionActionsEl.offsetWidth / 2)}px`;
+
+    // Set up the button to send the selected text to the server
+    const actionButton = selectionActionsEl.querySelector("button");
+    actionButton.onclick = () => {
+      if (selectedText != "") {
+        this.pushEvent("handle_selection", {
+          node_id: this.nodeId,
+          selected_text: selectedText,
+          is_modal: isInModal,
+        });
+      } else {
+        alert("No text selected");
+      }
+
+      // Hide the action button after clicking
+      this.hideSelectionActions();
+    };
+  },
+
+  isSelectionInComponent(selection) {
+    if (selection.rangeCount === 0) return false;
+
+    const range = selection.getRangeAt(0);
+    const selectionContainer = range.commonAncestorContainer;
+
+    // Check if the selection is within this component
+    return this.el.contains(selectionContainer);
+  },
+
+  hideSelectionActions() {
+    const selectionActionsEl = this.el.querySelector(".selection-actions");
+    if (selectionActionsEl) {
+      selectionActionsEl.classList.add("hidden");
+    }
+  },
+};
+
 hooks.Graph = {
   mounted() {
     // Hide the user header

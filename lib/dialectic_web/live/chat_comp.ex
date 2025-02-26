@@ -42,7 +42,7 @@ defmodule DialecticWeb.ChatComp do
               field={@form[:content]}
               tabindex="0"
               type="text"
-              placeholder="Enter Question"
+              placeholder="Add comment"
             />
           </div>
         </.form>
