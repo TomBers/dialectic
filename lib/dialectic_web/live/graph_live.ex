@@ -2,7 +2,7 @@ defmodule DialecticWeb.GraphLive do
   use DialecticWeb, :live_view
 
   alias Dialectic.Graph.{Vertex, GraphActions}
-  alias DialecticWeb.{CombineComp, ChatComp}
+  alias DialecticWeb.{CombineComp, ChatComp, NodeMenuComp}
 
   alias Phoenix.PubSub
 
@@ -58,8 +58,23 @@ defmodule DialecticWeb.GraphLive do
        user: user,
        update_view: true,
        edit: false,
-       can_edit: can_edit
+       can_edit: can_edit,
+       node_menu_visible: false,
+       node_menu_position: nil
      )}
+  end
+
+  def handle_event("show_node_menu", %{"id" => node_id, "node_position" => position}, socket) do
+    {:noreply,
+     assign(socket,
+       node_menu_visible: true,
+       selected_node_id: node_id,
+       node_menu_position: position
+     )}
+  end
+
+  def handle_event("update_tooltip_position", %{"position" => position}, socket) do
+    {:noreply, assign(socket, node_menu_position: position)}
   end
 
   def handle_event("note", %{"node" => node_id}, socket) do
@@ -77,6 +92,12 @@ defmodule DialecticWeb.GraphLive do
         GraphActions.change_noted_by(graph_action_params(socket), node_id, &Vertex.add_noted_by/2)
       )
     end
+  end
+
+  def handle_event("hide_node_menu", _, socket) do
+    {:noreply,
+     socket
+     |> assign(:node_menu_visible, false)}
   end
 
   def handle_event("unnote", %{"node" => node_id}, socket) do
@@ -127,7 +148,7 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_event("node_reply", %{"action" => "reply", "id" => node_id}, socket) do
+  def handle_event("node_reply", %{"id" => node_id}, socket) do
     {_, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
     # Ensure replying to the correct node
     update_graph(
@@ -136,7 +157,20 @@ defmodule DialecticWeb.GraphLive do
     )
   end
 
-  def handle_event("node_branch", %{"action" => "branch", "id" => node_id}, socket) do
+  def handle_event(
+        "handle_selection",
+        %{"node" => node_id, "value" => selected_text},
+        socket
+      ) do
+    {_, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
+    # Ensure replying to the correct node
+    update_graph(
+      socket,
+      GraphActions.answer_selection(graph_action_params(socket, node), selected_text)
+    )
+  end
+
+  def handle_event("node_branch", %{"id" => node_id}, socket) do
     {_, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
     # Ensure branching from the correct node
     update_graph(
@@ -145,7 +179,7 @@ defmodule DialecticWeb.GraphLive do
     )
   end
 
-  def handle_event("node_combine", %{"action" => "combine", "id" => node_id}, socket) do
+  def handle_event("node_combine", %{"id" => node_id}, socket) do
     {_, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
     {:noreply, assign(socket, show_combine: true, node: node)}
   end
@@ -158,15 +192,6 @@ defmodule DialecticWeb.GraphLive do
       )
 
     update_graph(socket, {graph, node}, true)
-  end
-
-  def handle_event("node_delete", %{"action" => "delete", "id" => node_id}, socket) do
-    node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-    # Ensure deleting the correct node
-    update_graph(
-      socket,
-      GraphActions.delete(graph_action_params(socket, node))
-    )
   end
 
   def handle_event("KeyBoardInterface", %{"key" => last_key, "cmdKey" => isCmd}, socket) do
@@ -281,6 +306,15 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
+  def handle_info({:llm_request_complete}, socket) do
+    # Make sure that the graph is saved to the database
+    spawn(fn ->
+      GraphManager.save_graph_to_db(socket.assigns.graph_id, socket.assigns.graph)
+    end)
+
+    {:noreply, socket}
+  end
+
   def handle_info({:stream_error, error, :node_id, node_id}, socket) do
     # This is the streamed LLM response into a node
     # TODO - broadcast to all users??? - only want to update the node that is being worked on, just rerender the others
@@ -359,12 +393,13 @@ defmodule DialecticWeb.GraphLive do
         socket.assigns.show_combine
       end
 
-    PubSub.broadcast(Dialectic.PubSub, "graph_update", {:other_user_change, graph})
-
-    # Save mutation to database
-    spawn(fn ->
-      GraphManager.save_graph_to_db(socket.assigns.graph_id, graph)
-    end)
+    if update_view do
+      PubSub.broadcast(Dialectic.PubSub, "graph_update", {:other_user_change, graph})
+      # Save mutation to database
+      spawn(fn ->
+        GraphManager.save_graph_to_db(socket.assigns.graph_id, graph)
+      end)
+    end
 
     {:noreply,
      assign(socket,

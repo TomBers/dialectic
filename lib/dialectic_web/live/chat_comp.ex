@@ -35,14 +35,15 @@ defmodule DialecticWeb.ChatComp do
         <% end %>
       </div>
       <div class="bg-white shadow-lg border-t border-gray-200 p-2">
-        <.form for={@form} phx-submit="answer">
+        <.form for={@form} phx-submit="answer" id={"chat-comp-form-" <> @node.id}>
           <div class="flex-1">
             <.input
               :if={@node.id != "NewNode"}
               field={@form[:content]}
               tabindex="0"
               type="text"
-              placeholder="Enter Question"
+              id={"chat-comp-input-" <> @node.id}
+              placeholder="Add comment"
             />
           </div>
         </.form>

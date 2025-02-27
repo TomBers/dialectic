@@ -5,15 +5,15 @@
     <div class="top-right">
       <div class="node">
         <h2>Ctrl + R</h2>
-        <div class="proposition">Reply</div>
+        <div class="proposition">Ask Question</div>
       </div>
       <div class="node">
         <h2>Ctrl + B</h2>
-        <div class="proposition">Branch</div>
+        <div class="proposition">Pros and Cons</div>
       </div>
       <div class="node">
         <h2>Ctrl + C</h2>
-        <div class="proposition">Combine</div>
+        <div class="proposition">Combine and Summarise</div>
       </div>
     </div>
   </div>
@@ -34,6 +34,15 @@
         phx-update="ignore"
       >
       </div>
+      <.live_component
+        module={NodeMenuComp}
+        id="node-menu"
+        visible={@node_menu_visible}
+        position={@node_menu_position}
+        node={@node}
+        user={@user}
+        form={@form}
+      />
       <.modal
         :if={@show_combine && @node.id}
         on_cancel={JS.push("modal_closed")}
