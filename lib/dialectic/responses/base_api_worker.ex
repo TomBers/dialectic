@@ -73,6 +73,13 @@ defmodule Dialectic.Workers.BaseAPIWorker do
     case Req.post(url, options) do
       {:ok, response} ->
         Logger.info("Request completed successfully")
+
+        Phoenix.PubSub.broadcast(
+          Dialectic.PubSub,
+          graph,
+          {:llm_request_complete}
+        )
+
         Logger.info(response)
         :ok
 

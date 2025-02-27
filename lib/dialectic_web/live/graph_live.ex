@@ -306,6 +306,15 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
+  def handle_info({:llm_request_complete}, socket) do
+    # Make sure that the graph is saved to the database
+    spawn(fn ->
+      GraphManager.save_graph_to_db(socket.assigns.graph_id, socket.assigns.graph)
+    end)
+
+    {:noreply, socket}
+  end
+
   def handle_info({:stream_error, error, :node_id, node_id}, socket) do
     # This is the streamed LLM response into a node
     # TODO - broadcast to all users??? - only want to update the node that is being worked on, just rerender the others
