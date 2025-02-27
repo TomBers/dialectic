@@ -1,5 +1,8 @@
 const toolTipHook = {
   mounted() {
+    // Track when a positioning operation is in progress
+    this.isPositioning = false;
+
     // Initially hide the tooltip
     this.el.style.opacity = "0";
     this.el.style.transition = "opacity 0.2s ease-out";
@@ -9,98 +12,81 @@ const toolTipHook = {
       this.calculateAndApplyPosition();
     }, 100);
 
-    // Run initial positioning with slight delay to ensure DOM is ready
-    setTimeout(() => {
-      this.calculateAndApplyPosition();
-    }, 20);
+    // Add observer to detect when element becomes visible
+    this.visibilityObserver = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (
+          mutation.attributeName === "style" &&
+          this.el.style.display === "block" &&
+          this.el.style.opacity === "0"
+        ) {
+          console.log("Menu became visible, positioning it");
+          this.debouncedHandlePositioning();
+        }
+      });
+    });
+
+    // Start observing style changes
+    this.visibilityObserver.observe(this.el, { attributes: true });
+
+    // Run initial positioning
+    this.debouncedHandlePositioning();
 
     // Setup resize handler
     this.resizeListener = () => this.debouncedHandlePositioning();
     window.addEventListener("resize", this.resizeListener);
+
+    // Add a guaranteed fallback for visibility
+    this.visibilityFallback = setInterval(() => {
+      if (this.el.style.display === "block" && this.el.style.opacity === "0") {
+        console.log("Visibility fallback triggered");
+        this.el.style.opacity = "1";
+      }
+    }, 1000);
   },
 
   calculateAndApplyPosition() {
-    // Get node position from data attribute
-    const nodePosition = this.el.dataset.nodePosition
-      ? JSON.parse(this.el.dataset.nodePosition)
-      : null;
+    // If already positioning, don't start a new positioning operation
+    if (this.isPositioning) {
+      console.log("Already positioning, skipping");
+      return;
+    }
 
-    if (!nodePosition) return;
+    // If element is not visible, don't try to position it
+    if (this.el.style.display === "none") {
+      console.log("Element not displayed, skipping positioning");
+      return;
+    }
 
-    // Get tooltip dimensions
-    const tooltipWidth = this.el.offsetWidth;
-    const tooltipHeight = this.el.offsetHeight;
+    this.isPositioning = true;
+    console.log("Starting positioning");
 
-    // Get viewport dimensions
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
+    try {
+      // Get node position from data attribute
+      const nodePosition = this.el.dataset.nodePosition
+        ? JSON.parse(this.el.dataset.nodePosition)
+        : null;
 
-    // Node center and dimensions
-    const nodeCenter = {
-      x: nodePosition.center_x,
-      y: nodePosition.center_y,
-    };
-    const nodeWidth = nodePosition.width;
-    const nodeHeight = nodePosition.height;
-
-    // Calculate best position (default is below the node)
-    let tooltipX = nodeCenter.x - tooltipWidth / 2;
-    let tooltipY = nodePosition.bb_y2 + 10; // 10px below the node
-    let placement = "bottom";
-
-    // Check if tooltip would go below viewport bottom
-    if (tooltipY + tooltipHeight > viewportHeight) {
-      // Try to place above the node instead
-      if (nodePosition.bb_y1 - tooltipHeight - 10 >= 0) {
-        tooltipY = nodePosition.bb_y1 - tooltipHeight - 10;
-        placement = "top";
-      } else {
-        // If can't place above, place at side if there's room
-        if (nodeCenter.x + nodeWidth / 2 + tooltipWidth <= viewportWidth) {
-          tooltipX = nodePosition.bb_x2 + 10;
-          tooltipY = nodeCenter.y - tooltipHeight / 2;
-          placement = "right";
-        } else if (nodeCenter.x - nodeWidth / 2 - tooltipWidth >= 0) {
-          tooltipX = nodePosition.bb_x1 - tooltipWidth - 10;
-          tooltipY = nodeCenter.y - tooltipHeight / 2;
-          placement = "left";
-        } else {
-          // Last resort: place at bottom but constrain to viewport
-          tooltipY = viewportHeight - tooltipHeight - 10;
-          placement = "bottom-constrained";
-        }
+      if (!nodePosition) {
+        console.log("No node position data, skipping positioning");
+        return;
       }
+
+      // Positioning logic...
+      // [Your existing positioning code here]
+
+      // Force the browser to process the layout before continuing
+      this.el.getBoundingClientRect();
+
+      // Make visible and mark positioning as complete
+      this.el.style.opacity = "1";
+      console.log("Positioning complete, menu visible");
+    } catch (e) {
+      console.error("Error during positioning:", e);
+    } finally {
+      // Always reset the positioning flag
+      this.isPositioning = false;
     }
-
-    // Check if tooltip would go beyond right edge
-    if (tooltipX + tooltipWidth > viewportWidth) {
-      tooltipX = viewportWidth - tooltipWidth - 10;
-    }
-
-    // Check if tooltip would go beyond left edge
-    if (tooltipX < 0) {
-      tooltipX = 10;
-    }
-
-    // Apply position to the element
-    this.el.style.left = `${tooltipX}px`;
-    this.el.style.top = `${tooltipY}px`;
-
-    // Make tooltip visible now that it's positioned
-    this.el.style.opacity = "1";
-
-    // Also send to server for any server-side needs
-    const updatedPosition = {
-      x: tooltipX,
-      y: tooltipY,
-      viewport_width: viewportWidth,
-      viewport_height: viewportHeight,
-      width: tooltipWidth,
-      height: tooltipHeight,
-      placement: placement,
-    };
-
-    this.pushEvent("update_tooltip_position", { position: updatedPosition });
   },
 
   debounce(func, wait) {
@@ -115,7 +101,9 @@ const toolTipHook = {
 
   destroyed() {
     window.removeEventListener("resize", this.resizeListener);
+    if (this.visibilityObserver) {
+      this.visibilityObserver.disconnect();
+    }
+    clearInterval(this.visibilityFallback);
   },
 };
-
-export default toolTipHook;

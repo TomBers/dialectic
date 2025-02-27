@@ -32,7 +32,6 @@ const graphHook = {
           eles: `#${node}`,
         },
         zoom: 2,
-        duration: 500, // duration in milliseconds for the animation
       });
     }
 
