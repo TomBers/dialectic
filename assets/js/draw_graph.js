@@ -83,6 +83,20 @@ export function draw_graph(graph, context, elements, cols, node) {
   cy.minZoom(0.5);
   cy.maxZoom(10);
 
+  cy.on("mouseover", "node", function (e) {
+    this.animate({
+      style: { width: this.width() * 1.1, height: this.height() * 1.1 },
+      duration: 100,
+    });
+  });
+
+  // Reset scale on mouseout
+  cy.on("mouseout", "node", function (e) {
+    this.animate({
+      style: { width: this.width() / 1.1, height: this.height() / 1.1 },
+      duration: 100,
+    });
+  });
   // Node selection handling
   cy.on("tap", "node", function (event) {
     const n = this;
