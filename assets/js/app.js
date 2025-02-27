@@ -22,9 +22,9 @@ import { Socket } from "phoenix";
 import { LiveSocket } from "phoenix_live_view";
 
 import topbar from "../vendor/topbar";
-import toolTipHook from "./toolTipHook.js";
-import textSelectionHook from "./textSelectionHook.js";
-import graphHook from "./graphHook.js";
+import toolTipHook from "./tool_tip_hook.js";
+import textSelectionHook from "./text_selection_hook.js";
+import graphHook from "./graph_hook.js";
 
 let hooks = {};
 
