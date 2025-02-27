@@ -29,7 +29,7 @@ defmodule DialecticWeb.NodeMenuComp do
           </article>
         </div>
       </div>
-      <.form for={@form} phx-submit="answer">
+      <.form for={@form} phx-submit="answer" id={"tt-form-" <> @node.id}>
         <div class="flex-1 mb-4">
           <.input
             :if={@node_id != "NewNode"}
@@ -43,7 +43,12 @@ defmodule DialecticWeb.NodeMenuComp do
       </.form>
 
       <div class="menu-buttons">
-        <button class="menu-button" phx-click="node_reply" phx-value-id={@node_id}>
+        <button
+          class="menu-button"
+          phx-click="node_reply"
+          phx-value-id={@node_id}
+          id={"reply-button-" <> @node_id}
+        >
           <span class="icon">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -63,7 +68,12 @@ defmodule DialecticWeb.NodeMenuComp do
           <span class="label">Ask Question</span>
         </button>
 
-        <button class="menu-button" phx-click="node_branch" phx-value-id={@node_id}>
+        <button
+          class="menu-button"
+          phx-click="node_branch"
+          phx-value-id={@node_id}
+          id={"branch-button-" <> @node_id}
+        >
           <span class="icon">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -85,7 +95,12 @@ defmodule DialecticWeb.NodeMenuComp do
           <span class="label">Pros and Cons</span>
         </button>
 
-        <button class="menu-button" phx-click="node_combine" phx-value-id={@node_id}>
+        <button
+          class="menu-button"
+          phx-click="node_combine"
+          phx-value-id={@node_id}
+          id={"combine-button-" <> @node_id}
+        >
           <span class="icon">
             <svg
               xmlns="http://www.w3.org/2000/svg"

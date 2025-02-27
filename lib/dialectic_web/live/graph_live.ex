@@ -64,6 +64,15 @@ defmodule DialecticWeb.GraphLive do
      )}
   end
 
+  def handle_event("show_node_menu", %{"id" => node_id, "node_position" => position}, socket) do
+    {:noreply,
+     assign(socket,
+       node_menu_visible: true,
+       selected_node_id: node_id,
+       node_menu_position: position
+     )}
+  end
+
   def handle_event("update_tooltip_position", %{"position" => position}, socket) do
     {:noreply, assign(socket, node_menu_position: position)}
   end
@@ -83,20 +92,6 @@ defmodule DialecticWeb.GraphLive do
         GraphActions.change_noted_by(graph_action_params(socket), node_id, &Vertex.add_noted_by/2)
       )
     end
-  end
-
-  def handle_event("show_node_menu", %{"id" => _node_id, "position" => position}, socket) do
-    normalized_position = %{
-      x: position["x"] || Map.get(position, :x, 0),
-      y: position["y"] || Map.get(position, :y, 0),
-      width: position["width"] || Map.get(position, :width, 0),
-      height: position["height"] || Map.get(position, :height, 0)
-    }
-
-    {:noreply,
-     socket
-     |> assign(:node_menu_visible, true)
-     |> assign(:node_menu_position, normalized_position)}
   end
 
   def handle_event("hide_node_menu", _, socket) do
@@ -389,12 +384,13 @@ defmodule DialecticWeb.GraphLive do
         socket.assigns.show_combine
       end
 
-    PubSub.broadcast(Dialectic.PubSub, "graph_update", {:other_user_change, graph})
-
-    # Save mutation to database
-    spawn(fn ->
-      GraphManager.save_graph_to_db(socket.assigns.graph_id, graph)
-    end)
+    if update_view do
+      PubSub.broadcast(Dialectic.PubSub, "graph_update", {:other_user_change, graph})
+      # Save mutation to database
+      spawn(fn ->
+        GraphManager.save_graph_to_db(socket.assigns.graph_id, graph)
+      end)
+    end
 
     {:noreply,
      assign(socket,

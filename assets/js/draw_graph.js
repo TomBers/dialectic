@@ -112,26 +112,27 @@ export function draw_graph(graph, context, elements, cols, node) {
       },
       zoom: 2,
       duration: 200,
+      complete: function () {
+        // This runs after animation completes
+        const node = n;
+        const bb = node.renderedBoundingBox();
+
+        // Just send node position data, no tooltip positioning logic here
+        context.pushEvent("show_node_menu", {
+          id: nodeId,
+          node_position: {
+            center_x: (bb.x1 + bb.x2) / 2,
+            center_y: (bb.y1 + bb.y2) / 2,
+            width: bb.x2 - bb.x1,
+            height: bb.y2 - bb.y1,
+            bb_x1: bb.x1,
+            bb_y1: bb.y1,
+            bb_x2: bb.x2,
+            bb_y2: bb.y2,
+          },
+        });
+      },
     });
-
-    setTimeout(() => {
-      const node = event.target;
-
-      // Get node position in screen coordinates
-      const bb = node.renderedBoundingBox();
-      const position = {
-        x: (bb.x1 + bb.x2) / 2,
-        y: bb.y2 + 10, // Position below the node
-        width: bb.x2 - bb.x1,
-        height: bb.y2 - bb.y1,
-      };
-
-      // Show menu with position information
-      context.pushEvent("show_node_menu", {
-        id: nodeId,
-        position: position,
-      });
-    }, 300);
   });
 
   // Click elsewhere to hide menu
