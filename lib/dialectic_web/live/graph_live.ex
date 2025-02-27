@@ -64,6 +64,10 @@ defmodule DialecticWeb.GraphLive do
      )}
   end
 
+  def handle_event("update_tooltip_position", %{"position" => position}, socket) do
+    {:noreply, assign(socket, node_menu_position: position)}
+  end
+
   def handle_event("note", %{"node" => node_id}, socket) do
     if socket.assigns.current_user == nil do
       {:noreply, socket |> put_flash(:error, "You must be logged in to note")}
@@ -193,15 +197,6 @@ defmodule DialecticWeb.GraphLive do
       )
 
     update_graph(socket, {graph, node}, true)
-  end
-
-  def handle_event("node_delete", %{"action" => "delete", "id" => node_id}, socket) do
-    node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-    # Ensure deleting the correct node
-    update_graph(
-      socket,
-      GraphActions.delete(graph_action_params(socket, node))
-    )
   end
 
   def handle_event("KeyBoardInterface", %{"key" => last_key, "cmdKey" => isCmd}, socket) do

@@ -28,6 +28,42 @@ let nodeId = null;
 
 let hooks = {};
 
+hooks.NodeMenuHook = {
+  mounted() {
+    this.handlePositioning();
+    window.addEventListener("resize", () => this.handlePositioning());
+  },
+  updated() {
+    this.handlePositioning();
+  },
+  handlePositioning() {
+    // Get viewport dimensions
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    // Get the current position
+    const currentPos = this.el.dataset.position
+      ? JSON.parse(this.el.dataset.position)
+      : { x: 0, y: 0 };
+
+    // Add viewport dimensions to position data
+    const enhancedPos = {
+      ...currentPos,
+      viewport_width: viewportWidth,
+      viewport_height: viewportHeight,
+      // Add estimated tooltip dimensions
+      estimated_width: 300, // Adjust based on your actual tooltip width
+      estimated_height: Math.min(this.el.scrollHeight, viewportHeight * 0.8),
+    };
+
+    // Send updated position to the server
+    this.pushEvent("update_tooltip_position", { position: enhancedPos });
+  },
+  destroyed() {
+    window.removeEventListener("resize", () => this.handlePositioning());
+  },
+};
+
 hooks.TextSelectionHook = {
   mounted() {
     this.handleSelection = this.handleSelection.bind(this);

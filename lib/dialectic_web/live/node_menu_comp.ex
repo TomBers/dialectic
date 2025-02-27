@@ -3,7 +3,32 @@ defmodule DialecticWeb.NodeMenuComp do
 
   def render(assigns) do
     ~H"""
-    <div id="node-menu" class="graph-tooltip" style={get_styles(@visible, @position)}>
+    <div
+      id={"node-menu-" <> @node_id}
+      class="graph-tooltip overflow-auto"
+      style={get_styles(@visible, @position)}
+      data-position={Jason.encode!(@position)}
+      phx-hook="NodeMenuHook"
+    >
+      <div
+        class={[
+          "p-2 rounded-lg shadow-sm",
+          "flex items-start gap-3 bg-white border-4",
+          message_border_class(@node.class)
+        ]}
+        id={"tt-node-" <> @node.id}
+      >
+        <div
+          class="summary-content"
+          id={"tt-summary-content-" <> @node.id}
+          phx-hook="TextSelectionHook"
+          data-node-id={@node.id}
+        >
+          <article class="prose prose-stone prose-sm selection-content">
+            {truncated_html(@node.content || "", @cut_off)}
+          </article>
+        </div>
+      </div>
       <.form for={@form} phx-submit="answer">
         <div class="flex-1 mb-4">
           <.input
@@ -11,6 +36,7 @@ defmodule DialecticWeb.NodeMenuComp do
             field={@form[:content]}
             tabindex="0"
             type="text"
+            id={"tt-input-" <> @node.id}
             placeholder="Add comment"
           />
         </div>
@@ -120,6 +146,8 @@ defmodule DialecticWeb.NodeMenuComp do
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
     padding: 5px;
     transition: opacity 0.2s;
+    max-width: 400px;
+    max-height: 80vh;
     """
 
     visibility = if visible, do: "display: block;", else: "display: none;"
@@ -127,33 +155,91 @@ defmodule DialecticWeb.NodeMenuComp do
     position_style =
       case position do
         %{x: x, y: y} when is_number(x) and is_number(y) ->
-          # Center the menu horizontally on the node
-          # x represents the center of the node
-          x_val =
-            if is_map_key(position, "width") or is_map_key(position, :width) do
-              width = position["width"] || position[:width] || 0
-              "left: #{x - width / 2}px;"
-            else
-              # Assume 80px menu width if not provided
-              "left: #{x - 40}px;"
+          # Get estimated dimensions
+          estimated_width = position[:estimated_width] || position["estimated_width"] || 300
+          estimated_height = position[:estimated_height] || position["estimated_height"] || 300
+
+          # Get viewport dimensions from JS or use sensible defaults
+          viewport_width = position[:viewport_width] || position["viewport_width"] || 1920
+          viewport_height = position[:viewport_height] || position["viewport_height"] || 1080
+
+          # Calculate initial position (centered on node)
+          node_width = position[:width] || position["width"] || 0
+          initial_x = x - node_width / 2
+          initial_y = y
+
+          # Adjust if the tooltip would go off-screen
+          adjusted_x =
+            cond do
+              initial_x + estimated_width > viewport_width ->
+                viewport_width - estimated_width - 20
+
+              initial_x < 20 ->
+                20
+
+              true ->
+                initial_x
             end
 
-          "#{x_val} top: #{y}px;"
+          adjusted_y =
+            cond do
+              initial_y + estimated_height > viewport_height ->
+                viewport_height - estimated_height - 20
+
+              initial_y < 20 ->
+                20
+
+              true ->
+                initial_y
+            end
+
+          "left: #{adjusted_x}px; top: #{adjusted_y}px;"
 
         _ ->
-          ""
+          "left: 50%; top: 50%; transform: translate(-50%, -50%);"
       end
 
     base_styles <> visibility <> position_style
   end
 
   def update(assigns, socket) do
+    node = Map.get(assigns, :node, %{})
+    node_id = Map.get(node, :id)
+
     {:ok,
      assign(socket,
        visible: Map.get(assigns, :visible, false),
        position: Map.get(assigns, :position, %{x: 0, y: 0}),
-       node_id: Map.get(assigns, :node_id, nil),
-       form: Map.get(assigns, :form, nil)
+       node_id: node_id,
+       node: node,
+       user: Map.get(assigns, :user, nil),
+       form: Map.get(assigns, :form, nil),
+       cut_off: Map.get(assigns, :cut_off, 500)
      )}
+  end
+
+  defp message_border_class(class) do
+    case class do
+      # "user" -> "border-red-400"
+      "answer" -> "border-blue-400"
+      "thesis" -> "border-green-400"
+      "antithesis" -> "border-red-400"
+      "synthesis" -> "border-purple-600"
+      _ -> "border border-gray-200 bg-white"
+    end
+  end
+
+  defp truncated_html(content, cut_off) do
+    # If content is already under the cutoff, just return the full text
+    if String.length(content) <= cut_off do
+      full_html(content)
+    else
+      truncated = String.slice(content, 0, cut_off) <> "..."
+      Earmark.as_html!(truncated) |> Phoenix.HTML.raw()
+    end
+  end
+
+  defp full_html(content) do
+    Earmark.as_html!(content) |> Phoenix.HTML.raw()
   end
 end

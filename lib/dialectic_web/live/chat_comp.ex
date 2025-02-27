@@ -42,6 +42,7 @@ defmodule DialecticWeb.ChatComp do
               field={@form[:content]}
               tabindex="0"
               type="text"
+              id={"chat-comp-input-" <> @node.id}
               placeholder="Add comment"
             />
           </div>
