@@ -1,6 +1,5 @@
 import cytoscape from "cytoscape";
 import dagre from "cytoscape-dagre";
-import { computePosition, autoUpdate, offset } from "@floating-ui/dom";
 
 cytoscape.use(dagre);
 
