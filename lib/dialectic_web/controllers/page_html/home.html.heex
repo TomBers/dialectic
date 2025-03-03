@@ -25,69 +25,51 @@
   </header>
   <div class="max-w-4xl mx-auto">
     <div class="flex flex-col space-y-4">
-      <div id="question-container">
-        Thinking...
-      </div>
-      <.link navigate={~p"/ideas/all"} class="text-xl text-blue-600 hover:text-blue-400">
-        More ideas
-      </.link>
-
       <script>
-        // Global variable to hold the typing interval ID.
-        let currentInterval = null;
-        updateQuestion();
-
-        // Function to display text letter by letter.
-        function typeText(text, element, delay = 50) {
-          // If an animation is already running, clear it.
-          if (currentInterval) {
-            clearInterval(currentInterval);
-            currentInterval = null;
-          }
-          let i = 0;
-          element.innerText = "";
-          currentInterval = setInterval(() => {
-            if (i < text.length) {
-              element.innerText += text.charAt(i);
-              i++;
-            } else {
-              clearInterval(currentInterval);
-              currentInterval = null;
-            }
-          }, delay);
-        }
-
         // Function to fetch a new question and display it with the typing effect.
         function updateQuestion() {
+          const container = document.getElementById("conversation-input");
+
           fetch("/api/random_question")
             .then(response => response.json())
             .then(data => {
-              const container = document.getElementById("question-container");
-              typeText(data.question, container, 50); // 50ms delay between letters
+              container.value = data.question;
             })
             .catch(error => console.error('Error fetching new question:', error));
         }
-
-        // Update the question every 10 seconds (10000ms)
-        setInterval(updateQuestion, 10000);
       </script>
     </div>
-    <.form
-      :let={f}
-      for={%{}}
-      action={~p"/conversation"}
-      class="mb-8 bg-white shadow-md rounded-lg p-6"
-    >
-      <div class="space-y-4">
-        <.input field={f[:conversation]} type="text" label="Start a conversation" class="w-full" />
-        <.button
-          type="submit"
-          class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md transition duration-150 ease-in-out"
+    <div class="mb-8 bg-white shadow-md rounded-lg p-6">
+      <.form :let={f} for={%{}} action={~p"/conversation"} class="">
+        <div class="space-y-4">
+          <.input
+            field={f[:conversation]}
+            type="text"
+            label="Start a conversation"
+            class="w-full"
+            id="conversation-input"
+          />
+          <.button
+            type="submit"
+            class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md transition duration-150 ease-in-out"
+          >
+            Submit
+          </.button>
+        </div>
+      </.form>
+      <div class="flex justify-end items-center mt-4">
+        <button
+          id="inspire-button"
+          class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+          onclick="updateQuestion()"
         >
-          Submit
-        </.button>
+          Inspire Me
+        </button>
+        <.link navigate={~p"/ideas/all"} class="text-xl text-blue-600 ml-4 hover:text-blue-400">
+          More ideas
+        </.link>
       </div>
-    </.form>
+    </div>
     <section class="mb-12">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
         <!-- My Graphs Card -->
