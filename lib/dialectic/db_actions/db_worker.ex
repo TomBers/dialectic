@@ -9,8 +9,10 @@ defmodule Dialectic.DbActions.DbWorker do
   end
 
   def save_graph(path) do
+    # TODO: Think about the timeout period.  Should it be 10 seconds?
+    # I.e the save queue should unique for 10 secs needs to balance writes to vs performance
     %{id: path}
-    |> new(unique: [period: 30, keys: [:id]])
+    |> new(unique: [period: 10, keys: [:id]])
     |> Oban.insert()
   end
 end
