@@ -316,7 +316,7 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_info({:llm_request_complete}, socket) do
     # Make sure that the graph is saved to the database
-    DbWorker.save_graph(socket.assigns.graph_id)
+    DbWorker.save_graph(socket.assigns.graph_id, false)
     {:noreply, socket}
   end
 
