@@ -272,6 +272,14 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
+  def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}} = params, socket) do
+    IO.inspect(params, label: "Answer Params")
+    # TODO - Add a Reply Node and an Answer node
+    # {graph, _} = GraphActions.comment(graph_action_params(socket), answer)
+
+    {:noreply, socket}
+  end
+
   def handle_event("modal_closed", _, socket) do
     {:noreply, assign(socket, show_combine: false)}
   end
