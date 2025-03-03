@@ -61,8 +61,13 @@ defmodule DialecticWeb.GraphLive do
        edit: false,
        can_edit: can_edit,
        node_menu_visible: false,
-       node_menu_position: nil
+       node_menu_position: nil,
+       auto_reply: false
      )}
+  end
+
+  def handle_event("toggle_auto_reply", _, socket) do
+    {:noreply, socket |> assign(auto_reply: !socket.assigns.auto_reply)}
   end
 
   def handle_event("show_node_menu", %{"id" => node_id, "node_position" => position}, socket) do
