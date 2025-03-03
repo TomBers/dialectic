@@ -97,12 +97,14 @@ defmodule DialecticWeb.ChatMsgComp do
         </div>
 
         <%= if String.length(@node.content || "") > @cut_off do %>
-          <button
-            phx-click={show_modal("modal-" <> @node.id)}
-            class="show_more_modal mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium focus:outline-none"
-          >
-            Show more
-          </button>
+          <div class="flex justify-end">
+            <button
+              phx-click={show_modal("modal-" <> @node.id)}
+              class="show_more_modal mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium focus:outline-none"
+            >
+              Show more
+            </button>
+          </div>
         <% end %>
         <div class="prose prose-stone prose-sm tiny-text">
           <%= if @node.class == "user"  do %>

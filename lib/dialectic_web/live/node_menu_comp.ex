@@ -27,13 +27,20 @@ defmodule DialecticWeb.NodeMenuComp do
           <article class="prose prose-stone prose-sm selection-content">
             {truncated_html(@node.content || "", @cut_off)}
           </article>
-          <%= if String.length(@node.content || "") > @cut_off do %>
-            <button
-              phx-click={show_modal("modal-" <> @node.id)}
-              class="show_more_modal mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium focus:outline-none"
-            >
-              Show more
+          <div class="selection-actions hidden absolute bg-white shadow-md rounded-md p-1 z-10">
+            <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded">
+              Ask about selection
             </button>
+          </div>
+          <%= if String.length(@node.content || "") > @cut_off do %>
+            <div class="flex justify-end">
+              <button
+                phx-click={show_modal("modal-" <> @node.id)}
+                class="show_more_modal mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium focus:outline-none"
+              >
+                Show more
+              </button>
+            </div>
           <% end %>
         </div>
       </div>
@@ -130,7 +137,7 @@ defmodule DialecticWeb.NodeMenuComp do
               <path d="M8 16h.01"></path>
             </svg>
           </span>
-          <span class="label">Combine and Summarise</span>
+          <span class="label">Combine</span>
         </button>
       </div>
     </div>

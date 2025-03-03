@@ -87,6 +87,8 @@
 .menu-buttons {
     display: flex;
     gap: 8px;
+    flex-direction: row;
+    justify-content: center;
 }
 
 .menu-button {
