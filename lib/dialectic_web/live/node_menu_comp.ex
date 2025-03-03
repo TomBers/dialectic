@@ -44,25 +44,41 @@ defmodule DialecticWeb.NodeMenuComp do
           <% end %>
         </div>
       </div>
-      <.form for={@form} phx-submit="answer" id={"tt-form-" <> @node.id}>
-        <div class="flex-1 mb-4">
-          <.input
-            :if={@node_id != "NewNode"}
-            field={@form[:content]}
-            tabindex="0"
-            type="text"
-            id={"tt-input-" <> @node.id}
-            placeholder="Add comment"
-          />
-        </div>
-      </.form>
+      <%= if @ask_question do %>
+        <.form for={@form} phx-submit="reply-and-answer" id={"tt-reply-form-" <> @node.id}>
+          <div class="flex-1 mb-4">
+            <.input
+              :if={@node_id != "NewNode"}
+              field={@form[:content]}
+              tabindex="0"
+              type="text"
+              id={"tt-input-" <> @node.id}
+              placeholder="Ask question"
+            />
+          </div>
+        </.form>
+      <% else %>
+        <.form for={@form} phx-submit="answer" id={"tt-form-" <> @node.id}>
+          <div class="flex-1 mb-4">
+            <.input
+              :if={@node_id != "NewNode"}
+              field={@form[:content]}
+              tabindex="0"
+              type="text"
+              id={"tt-input-" <> @node.id}
+              placeholder="Add comment"
+            />
+          </div>
+        </.form>
+      <% end %>
 
       <div class="menu-buttons">
         <button
           class="menu-button"
-          phx-click="node_reply"
+          phx-click="reply_mode"
           phx-value-id={@node_id}
           id={"reply-button-" <> @node_id}
+          phx-target={@myself}
         >
           <span class="icon">
             <svg
@@ -71,7 +87,7 @@ defmodule DialecticWeb.NodeMenuComp do
               height="16"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="currentColor"
+              stroke={if @ask_question, do: "blue", else: "currentColor"}
               stroke-width="2"
               stroke-linecap="round"
               stroke-linejoin="round"
@@ -80,7 +96,7 @@ defmodule DialecticWeb.NodeMenuComp do
               </path>
             </svg>
           </span>
-          <span class="label">Ask Question</span>
+          <span class={if @ask_question, do: "label text-blue-400", else: "label"}>Ask Question</span>
         </button>
 
         <button
@@ -209,6 +225,10 @@ defmodule DialecticWeb.NodeMenuComp do
     base_styles <> visibility <> position_style
   end
 
+  def handle_event("reply_mode", _, socket) do
+    {:noreply, assign(socket, ask_question: !socket.assigns.ask_question)}
+  end
+
   def update(assigns, socket) do
     node = Map.get(assigns, :node, %{})
     node_id = Map.get(node, :id)
@@ -221,7 +241,8 @@ defmodule DialecticWeb.NodeMenuComp do
        node: node,
        user: Map.get(assigns, :user, nil),
        form: Map.get(assigns, :form, nil),
-       cut_off: Map.get(assigns, :cut_off, 500)
+       cut_off: Map.get(assigns, :cut_off, 500),
+       ask_question: Map.get(assigns, :ask_question, false)
      )}
   end
 

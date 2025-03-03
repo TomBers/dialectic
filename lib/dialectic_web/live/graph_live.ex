@@ -61,8 +61,13 @@ defmodule DialecticWeb.GraphLive do
        edit: false,
        can_edit: can_edit,
        node_menu_visible: false,
-       node_menu_position: nil
+       node_menu_position: nil,
+       auto_reply: false
      )}
+  end
+
+  def handle_event("toggle_auto_reply", _, socket) do
+    {:noreply, socket |> assign(auto_reply: !socket.assigns.auto_reply)}
   end
 
   def handle_event("show_node_menu", %{"id" => node_id, "node_position" => position}, socket) do
@@ -147,15 +152,6 @@ defmodule DialecticWeb.GraphLive do
     else
       {:noreply, socket |> put_flash(:error, "Cannot edit node")}
     end
-  end
-
-  def handle_event("node_reply", %{"id" => node_id}, socket) do
-    {_, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
-    # Ensure replying to the correct node
-    update_graph(
-      socket,
-      GraphActions.answer(graph_action_params(socket, node))
-    )
   end
 
   def handle_event(
@@ -272,6 +268,17 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
+  def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}} = params, socket) do
+    IO.inspect(params, label: "Answer Params")
+    #  Add a Reply Node and an Answer node
+    {_graph, node} = GraphActions.comment(graph_action_params(socket), answer)
+
+    update_graph(
+      socket,
+      GraphActions.answer(graph_action_params(socket, node))
+    )
+  end
+
   def handle_event("modal_closed", _, socket) do
     {:noreply, assign(socket, show_combine: false)}
   end
@@ -309,7 +316,8 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_info({:llm_request_complete}, socket) do
     # Make sure that the graph is saved to the database
-    DbWorker.save_graph(socket.assigns.graph_id)
+    # We pass false so that it does not respect the queue exlusion period and stores the response immediately.
+    DbWorker.save_graph(socket.assigns.graph_id, false)
     {:noreply, socket}
   end
 

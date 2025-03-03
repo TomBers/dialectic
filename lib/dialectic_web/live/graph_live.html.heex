@@ -69,7 +69,14 @@
       </ul>
 
       <div class="flex-1 overflow-y-auto">
-        <.live_component module={ChatComp} form={@form} node={@node} user={@user} id="Chat" />
+        <.live_component
+          module={ChatComp}
+          form={@form}
+          node={@node}
+          user={@user}
+          auto_reply={@auto_reply}
+          id="Chat"
+        />
       </div>
     </div>
   </div>

@@ -35,18 +35,41 @@ defmodule DialecticWeb.ChatComp do
         <% end %>
       </div>
       <div class="bg-white shadow-lg border-t border-gray-200 p-2">
-        <.form for={@form} phx-submit="answer" id={"chat-comp-form-" <> @node.id}>
-          <div class="flex-1">
-            <.input
-              :if={@node.id != "NewNode"}
-              field={@form[:content]}
-              tabindex="0"
-              type="text"
-              id={"chat-comp-input-" <> @node.id}
-              placeholder="Add comment"
-            />
-          </div>
-        </.form>
+        <.input
+          type="checkbox"
+          label="Reply to question"
+          checked={@auto_reply}
+          name="auto_reply"
+          phx-click="toggle_auto_reply"
+          id="auto-reply-checkbox"
+        />
+        <%= if @auto_reply do %>
+          <.form for={@form} phx-submit="reply-and-answer" id={"chat-reply-answer-form-" <> @node.id}>
+            <div class="flex-1">
+              <.input
+                :if={@node.id != "NewNode"}
+                field={@form[:content]}
+                tabindex="0"
+                type="text"
+                id={"chat--reply-answer-input-" <> @node.id}
+                placeholder="Ask question"
+              />
+            </div>
+          </.form>
+        <% else %>
+          <.form for={@form} phx-submit="answer" id={"chat-comp-form-" <> @node.id}>
+            <div class="flex-1">
+              <.input
+                :if={@node.id != "NewNode"}
+                field={@form[:content]}
+                tabindex="0"
+                type="text"
+                id={"chat-comp-input-" <> @node.id}
+                placeholder="Add comment"
+              />
+            </div>
+          </.form>
+        <% end %>
       </div>
     </div>
     """
