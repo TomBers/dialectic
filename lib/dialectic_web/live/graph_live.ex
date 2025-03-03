@@ -149,15 +149,6 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_event("node_reply", %{"id" => node_id}, socket) do
-    {_, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
-    # Ensure replying to the correct node
-    update_graph(
-      socket,
-      GraphActions.answer(graph_action_params(socket, node))
-    )
-  end
-
   def handle_event(
         "handle_selection",
         %{"node" => node_id, "value" => selected_text},
@@ -274,10 +265,13 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}} = params, socket) do
     IO.inspect(params, label: "Answer Params")
-    # TODO - Add a Reply Node and an Answer node
-    # {graph, _} = GraphActions.comment(graph_action_params(socket), answer)
+    #  Add a Reply Node and an Answer node
+    {_graph, node} = GraphActions.comment(graph_action_params(socket), answer)
 
-    {:noreply, socket}
+    update_graph(
+      socket,
+      GraphActions.answer(graph_action_params(socket, node))
+    )
   end
 
   def handle_event("modal_closed", _, socket) do

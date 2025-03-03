@@ -53,7 +53,7 @@ defmodule DialecticWeb.NodeMenuComp do
               tabindex="0"
               type="text"
               id={"tt-input-" <> @node.id}
-              placeholder="Add question"
+              placeholder="Ask question"
             />
           </div>
         </.form>
