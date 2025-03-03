@@ -3,6 +3,7 @@ defmodule DialecticWeb.GraphLive do
 
   alias Dialectic.Graph.{Vertex, GraphActions}
   alias DialecticWeb.{CombineComp, ChatComp, NodeMenuComp}
+  alias Dialectic.DbActions.DbWorker
 
   alias Phoenix.PubSub
 
@@ -308,10 +309,7 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_info({:llm_request_complete}, socket) do
     # Make sure that the graph is saved to the database
-    spawn(fn ->
-      GraphManager.save_graph_to_db(socket.assigns.graph_id, socket.assigns.graph)
-    end)
-
+    DbWorker.save_graph(socket.assigns.graph_id)
     {:noreply, socket}
   end
 
@@ -396,9 +394,7 @@ defmodule DialecticWeb.GraphLive do
     if update_view do
       PubSub.broadcast(Dialectic.PubSub, "graph_update", {:other_user_change, graph})
       # Save mutation to database
-      spawn(fn ->
-        GraphManager.save_graph_to_db(socket.assigns.graph_id, graph)
-      end)
+      DbWorker.save_graph(socket.assigns.graph_id)
     end
 
     {:noreply,
