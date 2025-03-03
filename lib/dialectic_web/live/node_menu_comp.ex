@@ -27,6 +27,21 @@ defmodule DialecticWeb.NodeMenuComp do
           <article class="prose prose-stone prose-sm selection-content">
             {truncated_html(@node.content || "", @cut_off)}
           </article>
+          <div class="selection-actions hidden absolute bg-white shadow-md rounded-md p-1 z-10">
+            <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded">
+              Ask about selection
+            </button>
+          </div>
+          <%= if String.length(@node.content || "") > @cut_off do %>
+            <div class="flex justify-end">
+              <button
+                phx-click={show_modal("modal-" <> @node.id)}
+                class="show_more_modal mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium focus:outline-none"
+              >
+                Show more
+              </button>
+            </div>
+          <% end %>
         </div>
       </div>
       <.form for={@form} phx-submit="answer" id={"tt-form-" <> @node.id}>
@@ -122,30 +137,7 @@ defmodule DialecticWeb.NodeMenuComp do
               <path d="M8 16h.01"></path>
             </svg>
           </span>
-          <span class="label">Combine and Summarise</span>
-        </button>
-
-        <button class="menu-button show_more_modal" phx-click={show_modal("modal-" <> @node_id)}>
-          <span class="icon">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <line x1="16" y1="13" x2="8" y2="13"></line>
-              <line x1="16" y1="17" x2="8" y2="17"></line>
-              <polyline points="10 9 9 9 8 9"></polyline>
-            </svg>
-          </span>
-          <span class="label">Full Text</span>
+          <span class="label">Combine</span>
         </button>
       </div>
     </div>

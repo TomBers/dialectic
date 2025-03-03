@@ -100,7 +100,6 @@ const textSelectionHook = {
     // Set up the button to send the selected text to the server
     const actionButton = selectionActionsEl.querySelector("button");
     actionButton.onclick = () => {
-      // Match the parameter names expected by your existing handler
       this.pushEvent("handle_selection", {
         node: this.nodeId,
         value: selectedText,

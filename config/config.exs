@@ -10,7 +10,7 @@ import Config
 config :dialectic, Oban,
   engine: Oban.Engines.Basic,
   notifier: Oban.Notifiers.Postgres,
-  queues: [api_request: 10],
+  queues: [api_request: 10, db_write: 5],
   repo: Dialectic.Repo
 
 config :dialectic,

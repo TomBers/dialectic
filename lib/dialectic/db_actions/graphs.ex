@@ -9,27 +9,31 @@ defmodule Dialectic.DbActions.Graphs do
   Creates a new graph with the given title.
   """
   def create_new_graph(title, user \\ nil) do
-    %Graph{}
-    |> Graph.changeset(%{
-      title: title,
-      user_id: user && user.id,
-      data: default_graph_data(title),
-      is_public: true,
-      is_deleted: false,
-      is_published: true
-    })
-    |> Repo.insert()
+    {data, ans_node} = default_graph_data(title)
+
+    graph =
+      %Graph{}
+      |> Graph.changeset(%{
+        title: title,
+        user_id: user && user.id,
+        data: data,
+        is_public: true,
+        is_deleted: false,
+        is_published: true
+      })
+      |> Repo.insert()
+
+    spawn(fn ->
+      Dialectic.Responses.RequestQueue.add(title, ans_node, title)
+    end)
+
+    graph
   end
 
   defp default_graph_data(content) do
     ans_node = %Vertex{id: "2", content: "", class: "answer"}
 
-    spawn(fn ->
-      :timer.sleep(2000)
-      Dialectic.Responses.RequestQueue.add(content, ans_node, content)
-    end)
-
-    %{
+    data = %{
       "nodes" => [%Vertex{id: "1", content: content}, ans_node],
       "edges" => [
         %{
@@ -41,6 +45,8 @@ defmodule Dialectic.DbActions.Graphs do
         }
       ]
     }
+
+    {data, ans_node}
   end
 
   def list_graphs do

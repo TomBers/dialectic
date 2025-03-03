@@ -68,7 +68,10 @@ defmodule DialecticWeb.ChatMsgComp do
             
     <!-- Modal selection action button (hidden by default) -->
             <div class="selection-actions hidden absolute bg-white shadow-md rounded-md p-1 z-10">
-              <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded">
+              <button
+                phx-click={JS.hide(transition: "fade-out-scale", to: "#modal-" <> @node.id)}
+                class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded"
+              >
                 Ask about selection
               </button>
             </div>
@@ -94,12 +97,14 @@ defmodule DialecticWeb.ChatMsgComp do
         </div>
 
         <%= if String.length(@node.content || "") > @cut_off do %>
-          <button
-            phx-click={show_modal("modal-" <> @node.id)}
-            class="show_more_modal mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium focus:outline-none"
-          >
-            Show more
-          </button>
+          <div class="flex justify-end">
+            <button
+              phx-click={show_modal("modal-" <> @node.id)}
+              class="show_more_modal mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium focus:outline-none"
+            >
+              Show more
+            </button>
+          </div>
         <% end %>
         <div class="prose prose-stone prose-sm tiny-text">
           <%= if @node.class == "user"  do %>

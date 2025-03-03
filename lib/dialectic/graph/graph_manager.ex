@@ -1,6 +1,8 @@
 defmodule GraphManager do
   alias Dialectic.Graph.{Vertex, Serialise, Siblings}
 
+  require Logger
+
   use GenServer
 
   def get_graph(path) do
@@ -43,13 +45,13 @@ defmodule GraphManager do
 
   def terminate(_reason, {graph_struct, graph}) do
     path = graph_struct.title
-    IO.inspect("Shutting Down: " <> path)
+    Logger.info("Shutting Down: " <> path)
     save_graph_to_db(path, graph)
     :ok
   end
 
   def save_graph_to_db(path, graph) do
-    IO.inspect("Saving: " <> path)
+    Logger.info("Saving: " <> path)
     json = Serialise.graph_to_json(graph)
     Dialectic.DbActions.Graphs.save_graph(path, json)
   end
@@ -91,6 +93,10 @@ defmodule GraphManager do
   # In handle_call
   def handle_call({:reset_graph}, _from, {graph_struct, _graph}) do
     {:reply, :digraph.new(), {graph_struct, :digraph.new()}}
+  end
+
+  def handle_call({:save_graph, path}, _from, {graph_struct, graph}) do
+    {:reply, save_graph_to_db(path, graph), {graph_struct, graph}}
   end
 
   def handle_call({:update_node, {node_id, data}}, _from, {graph_struct, graph}) do
@@ -224,5 +230,9 @@ defmodule GraphManager do
   # So for the time being set it to a quarter of the window size.
   def build_context(path, node, limit \\ 25_000) do
     GenServer.call(via_tuple(path), {:build_context, node, limit})
+  end
+
+  def save_graph(path) do
+    GenServer.call(via_tuple(path), {:save_graph, path})
   end
 end

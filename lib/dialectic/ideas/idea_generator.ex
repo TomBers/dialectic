@@ -190,6 +190,10 @@ defmodule Dialectic.Ideas.IdeaGenerator do
     generate_question(Enum.random(@topics))
   end
 
+  def all do
+    Enum.map(@topics, &generate_question/1)
+  end
+
   @doc """
   Generates a single question based on the provided topic.
   """
