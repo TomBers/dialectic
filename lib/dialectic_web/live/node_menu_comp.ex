@@ -81,6 +81,7 @@ defmodule DialecticWeb.NodeMenuComp do
       <div class="menu-buttons">
         <button
           class="menu-button"
+          title="Ask a question about this topic.  You will get a response to your question."
           phx-click="reply_mode"
           phx-value-id={@node_id}
           id={"reply-button-" <> @node_id}
@@ -111,6 +112,7 @@ defmodule DialecticWeb.NodeMenuComp do
         <button
           class="menu-button"
           phx-click="reply_mode"
+          title="Add a comment about this topic. You will not get an answer"
           phx-value-id={@node_id}
           id={"comment-button-" <> @node_id}
           phx-target={@myself}
@@ -140,6 +142,7 @@ defmodule DialecticWeb.NodeMenuComp do
         <button
           class="menu-button"
           phx-click="node_branch"
+          title="Generate arguments for and against the above point."
           phx-value-id={@node_id}
           id={"branch-button-" <> @node_id}
         >
@@ -168,6 +171,7 @@ defmodule DialecticWeb.NodeMenuComp do
         <button
           class="menu-button"
           phx-click="node_combine"
+          title="Combine this with another point; trying to find a compromise between the two."
           phx-value-id={@node_id}
           id={"combine-button-" <> @node_id}
         >
