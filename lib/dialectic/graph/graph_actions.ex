@@ -22,11 +22,11 @@ defmodule Dialectic.Graph.GraphActions do
     GraphManager.edit_vertex(graph_id, node.id, question)
   end
 
-  def comment({graph_id, node, user}, question) do
+  def comment({graph_id, node, user}, question, prefix \\ "") do
     GraphManager.add_child(
       graph_id,
       [node],
-      fn _ -> question end,
+      fn _ -> prefix <> question end,
       "user",
       user
     )

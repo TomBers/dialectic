@@ -17,7 +17,7 @@ defmodule Dialectic.Responses.LlmInterface do
 
     qn = """
     Context: #{context} \n\n
-    Question: #{selection}
+    Explain: #{selection}
     """
 
     ask_model(qn, child, graph_id)
