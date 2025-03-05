@@ -30,7 +30,7 @@ defmodule DialecticWeb.ChatComp do
           />
         <% else %>
           <div class="node mb-2">
-            <h2>Waiting ...</h2>
+            <h2>Loading ...</h2>
           </div>
         <% end %>
       </div>

@@ -10,40 +10,46 @@ defmodule DialecticWeb.NodeMenuComp do
       data-position={Jason.encode!(@position)}
       phx-hook="NodeMenuHook"
     >
-      <div
-        class={[
-          "p-2 rounded-lg shadow-sm",
-          "flex items-start gap-3 bg-white border-4",
-          message_border_class(@node.class)
-        ]}
-        id={"tt-node-" <> @node.id}
-      >
+      <%= if String.length(@node.content) > 0 do %>
         <div
-          class="summary-content"
-          id={"tt-summary-content-" <> @node.id}
-          phx-hook="TextSelectionHook"
-          data-node-id={@node.id}
+          class={[
+            "p-2 rounded-lg shadow-sm",
+            "flex items-start gap-3 bg-white border-4",
+            message_border_class(@node.class)
+          ]}
+          id={"tt-node-" <> @node.id}
         >
-          <article class="prose prose-stone prose-sm selection-content">
-            {truncated_html(@node.content || "", @cut_off)}
-          </article>
-          <div class="selection-actions hidden absolute bg-white shadow-md rounded-md p-1 z-10">
-            <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded">
-              Ask about selection
-            </button>
-          </div>
-          <%= if String.length(@node.content || "") > @cut_off do %>
-            <div class="flex justify-end">
-              <button
-                phx-click={show_modal("modal-" <> @node.id)}
-                class="show_more_modal mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium focus:outline-none"
-              >
-                Show more
+          <div
+            class="summary-content"
+            id={"tt-summary-content-" <> @node.id}
+            phx-hook="TextSelectionHook"
+            data-node-id={@node.id}
+          >
+            <article class="prose prose-stone prose-sm selection-content">
+              {truncated_html(@node.content || "", @cut_off)}
+            </article>
+            <div class="selection-actions hidden absolute bg-white shadow-md rounded-md p-1 z-10">
+              <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded">
+                Ask about selection
               </button>
             </div>
-          <% end %>
+            <%= if String.length(@node.content || "") > @cut_off do %>
+              <div class="flex justify-end">
+                <button
+                  phx-click={show_modal("modal-" <> @node.id)}
+                  class="show_more_modal mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium focus:outline-none"
+                >
+                  Show more
+                </button>
+              </div>
+            <% end %>
+          </div>
         </div>
-      </div>
+      <% else %>
+        <div class="node mb-2">
+          <h2>Loading ...</h2>
+        </div>
+      <% end %>
       <%= if @ask_question do %>
         <.form for={@form} phx-submit="reply-and-answer" id={"tt-reply-form-" <> @node.id}>
           <div class="flex-1 mb-4">
@@ -73,6 +79,31 @@ defmodule DialecticWeb.NodeMenuComp do
       <% end %>
 
       <div class="menu-buttons">
+        <button
+          class="menu-button"
+          phx-click="reply_mode"
+          phx-value-id={@node_id}
+          id={"comment-button-" <> @node_id}
+          phx-target={@myself}
+        >
+          <span class="icon">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke={if !@ask_question, do: "blue", else: "currentColor"}
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z">
+              </path>
+            </svg>
+          </span>
+          <span class={if !@ask_question, do: "label text-blue-400", else: "label"}>Add Comment</span>
+        </button>
         <button
           class="menu-button"
           phx-click="reply_mode"

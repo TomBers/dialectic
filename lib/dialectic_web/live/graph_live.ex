@@ -62,7 +62,7 @@ defmodule DialecticWeb.GraphLive do
        can_edit: can_edit,
        node_menu_visible: false,
        node_menu_position: nil,
-       auto_reply: false
+       auto_reply: true
      )}
   end
 
