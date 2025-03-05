@@ -59,8 +59,7 @@ defmodule DialecticWeb.ChatComp do
             name="hero-information-circle"
             class="ml-2 h-5 w-5 text-gray-500"
             tooltip="When enabled, the system will automatically respond to incoming questions.  When disabled, just your comment will be added."
-          >
-          </.icon>
+          />
         </div>
         <%= if @auto_reply do %>
           <.form for={@form} phx-submit="reply-and-answer" id={"chat-reply-answer-form-" <> @node.id}>
