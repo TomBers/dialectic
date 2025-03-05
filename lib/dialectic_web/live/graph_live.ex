@@ -256,9 +256,9 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}} = params, socket) do
-    IO.inspect(params, label: "Answer Params")
+    prefix = params["prefix"] || ""
     #  Add a Reply Node and an Answer node
-    {_graph, node} = GraphActions.comment(graph_action_params(socket), answer, "Explain: ")
+    {_graph, node} = GraphActions.comment(graph_action_params(socket), answer, prefix)
 
     update_graph(
       socket,
