@@ -101,10 +101,6 @@ const textSelectionHook = {
     const actionButton = selectionActionsEl.querySelector("button");
     actionButton.onclick = () => {
       this.pushEvent("reply-and-answer", { vertex: { content: selectedText } });
-      // this.pushEvent("handle_selection", {
-      //   node: this.nodeId,
-      //   value: selectedText,
-      // });
 
       // Hide the action button after clicking
       this.hideSelectionActions();
