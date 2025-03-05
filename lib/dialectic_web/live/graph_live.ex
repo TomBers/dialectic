@@ -62,7 +62,7 @@ defmodule DialecticWeb.GraphLive do
        can_edit: can_edit,
        node_menu_visible: false,
        node_menu_position: nil,
-       auto_reply: false
+       auto_reply: true
      )}
   end
 
@@ -152,19 +152,6 @@ defmodule DialecticWeb.GraphLive do
     else
       {:noreply, socket |> put_flash(:error, "Cannot edit node")}
     end
-  end
-
-  def handle_event(
-        "handle_selection",
-        %{"node" => node_id, "value" => selected_text},
-        socket
-      ) do
-    {_, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
-    # Ensure replying to the correct node
-    update_graph(
-      socket,
-      GraphActions.answer_selection(graph_action_params(socket, node), selected_text)
-    )
   end
 
   def handle_event("node_branch", %{"id" => node_id}, socket) do
@@ -269,9 +256,9 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}} = params, socket) do
-    IO.inspect(params, label: "Answer Params")
+    prefix = params["prefix"] || ""
     #  Add a Reply Node and an Answer node
-    {_graph, node} = GraphActions.comment(graph_action_params(socket), answer)
+    {_graph, node} = GraphActions.comment(graph_action_params(socket), answer, prefix)
 
     update_graph(
       socket,

@@ -100,9 +100,9 @@ const textSelectionHook = {
     // Set up the button to send the selected text to the server
     const actionButton = selectionActionsEl.querySelector("button");
     actionButton.onclick = () => {
-      this.pushEvent("handle_selection", {
-        node: this.nodeId,
-        value: selectedText,
+      this.pushEvent("reply-and-answer", {
+        vertex: { content: selectedText },
+        prefix: "Explain: ",
       });
 
       // Hide the action button after clicking
