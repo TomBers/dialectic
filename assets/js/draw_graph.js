@@ -26,8 +26,8 @@ function style_graph(cols_str) {
       selector: "node.selected",
       css: {
         "font-weight": "800",
-        "border-color": "red",
-        color: "red",
+        "border-color": "#D2042D",
+        color: "#F88379",
       },
     },
     // Edge styling
@@ -36,10 +36,7 @@ function style_graph(cols_str) {
       style: {
         width: 2,
         "line-color": "#f3f4f6",
-        "target-arrow-color": "#d1d5db", // gray-400
-        "target-arrow-shape": "triangle",
         "curve-style": "bezier",
-        "arrow-scale": 1.0,
       },
     },
   ];
@@ -58,8 +55,8 @@ function style_graph(cols_str) {
       selector: `node[class = "${nodeType}"].selected`,
       css: {
         "font-weight": "800",
-        "border-color": "red",
-        color: "red",
+        "border-color": "#D2042D",
+        color: "#F88379",
       },
     });
   }

@@ -65,7 +65,7 @@ defmodule DialecticWeb.ChatMsgComp do
               <h1 class="">{modal_title(@node.class)}</h1>
               {full_html(@node.content || "")}
             </article>
-
+            
     <!-- Modal selection action button (hidden by default) -->
             <div class="selection-actions hidden absolute bg-white shadow-md rounded-md p-1 z-10">
               <button
@@ -87,7 +87,7 @@ defmodule DialecticWeb.ChatMsgComp do
           <article class="prose prose-stone prose-sm selection-content">
             {truncated_html(@node.content || "", @cut_off)}
           </article>
-
+          
     <!-- Summary selection action button (hidden by default) -->
           <div class="selection-actions hidden absolute bg-white shadow-md rounded-md p-1 z-10">
             <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded">
