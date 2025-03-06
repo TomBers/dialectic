@@ -3,6 +3,13 @@ import dagre from "cytoscape-dagre";
 
 cytoscape.use(dagre);
 
+const selectState = {
+  "font-weight": "800",
+  "border-color": "white", // Dark green border
+  color: "#FFFFFF", // White text
+  "background-color": "#14e37c", // Bright mint green (very vibrant)
+};
+
 function style_graph(cols_str) {
   const base_style = [
     {
@@ -24,11 +31,7 @@ function style_graph(cols_str) {
     // Clicked node highlight
     {
       selector: "node.selected",
-      css: {
-        "font-weight": "800",
-        "border-color": "#D2042D",
-        color: "#F88379",
-      },
+      css: selectState,
     },
     // Edge styling
     {
@@ -53,11 +56,7 @@ function style_graph(cols_str) {
     });
     base_style.push({
       selector: `node[class = "${nodeType}"].selected`,
-      css: {
-        "font-weight": "800",
-        "border-color": "#D2042D",
-        color: "#F88379",
-      },
+      css: selectState,
     });
   }
   return base_style;

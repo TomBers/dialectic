@@ -18,7 +18,7 @@
     border-bottom: 1px solid #eee;
 }
 
-.node h2 {
+/* .node h2 {
     margin: 0;
     padding: 0.25rem 0.5rem;
     background-color: #f4f4f4;
@@ -29,7 +29,7 @@
     box-shadow: 0 2px 0 #ccc;
     min-width: 2rem;
     text-align: center;
-}
+} */
 
 .tiny-text {
     font-size: 0.6em;
