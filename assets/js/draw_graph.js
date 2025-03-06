@@ -16,7 +16,7 @@ function style_graph(cols_str) {
       selector: "node",
       style: {
         "background-color": "#f3f4f6", // gray-100
-        "border-width": 1,
+        "border-width": 2,
         "border-color": "#d1d5db", // gray-300
         label: "data(id)",
         "text-valign": "center",
@@ -24,8 +24,8 @@ function style_graph(cols_str) {
         "font-family": "monospace",
         "font-weight": "400",
         color: "#374151", // gray-700
-        padding: "4px",
-        shape: "round-rectangle",
+        padding: "10px",
+        shape: "round-diamond",
       },
     },
     // Clicked node highlight
