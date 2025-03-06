@@ -44,8 +44,8 @@ defmodule DialecticWeb.ChatMsgComp do
       id={"node-" <> @node.id}
     >
       <div class="shrink-0">
-        <h2 class="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 text-gray-700 font-mono text-sm">
-          {@node.id}
+        <h2 class={keyboard_shortcut(@node.class)}>
+          <span class="transform rotate-45">{@node.id}</span>
         </h2>
       </div>
 
@@ -61,7 +61,7 @@ defmodule DialecticWeb.ChatMsgComp do
             phx-hook="TextSelectionHook"
             data-node-id={@node.id}
           >
-            <article class="prose prose-stone prose-sm selection-content">
+            <article class="prose prose-stone prose-lg selection-content">
               <h1 class="">{modal_title(@node.class)}</h1>
               {full_html(@node.content || "")}
             </article>
@@ -178,5 +178,20 @@ defmodule DialecticWeb.ChatMsgComp do
       "synthesis" -> "border-purple-600"
       _ -> "border border-gray-200 bg-white"
     end
+  end
+
+  defp keyboard_shortcut(class) do
+    cols =
+      case class do
+        # "user" -> "border-red-400"
+        "answer" -> "border-blue-400 bg-blue-100 text-blue-700"
+        "thesis" -> "border-green-400 bg-green-100 text-green-700"
+        "antithesis" -> "border-red-400 bg-red-100 text-red-700"
+        "synthesis" -> "border-purple-600 bg-purple-100 text-purple-700"
+        _ -> "border border-gray-200 bg-white"
+      end
+
+    "w-8 h-8 flex items-center p-4 justify-center rounded-lg font-mono text-sm border-2 transform -rotate-45 " <>
+      cols
   end
 end

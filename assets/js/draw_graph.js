@@ -3,13 +3,20 @@ import dagre from "cytoscape-dagre";
 
 cytoscape.use(dagre);
 
+const selectState = {
+  "font-weight": "800",
+  "border-color": "white", // Dark green border
+  color: "#FFFFFF", // White text
+  "background-color": "#14e37c", // Bright mint green (very vibrant)
+};
+
 function style_graph(cols_str) {
   const base_style = [
     {
       selector: "node",
       style: {
         "background-color": "#f3f4f6", // gray-100
-        "border-width": 1,
+        "border-width": 2,
         "border-color": "#d1d5db", // gray-300
         label: "data(id)",
         "text-valign": "center",
@@ -17,18 +24,14 @@ function style_graph(cols_str) {
         "font-family": "monospace",
         "font-weight": "400",
         color: "#374151", // gray-700
-        padding: "4px",
-        shape: "round-rectangle",
+        padding: "10px",
+        shape: "round-diamond",
       },
     },
     // Clicked node highlight
     {
       selector: "node.selected",
-      css: {
-        "font-weight": "800",
-        "border-color": "red",
-        color: "red",
-      },
+      css: selectState,
     },
     // Edge styling
     {
@@ -36,10 +39,7 @@ function style_graph(cols_str) {
       style: {
         width: 2,
         "line-color": "#f3f4f6",
-        "target-arrow-color": "#d1d5db", // gray-400
-        "target-arrow-shape": "triangle",
         "curve-style": "bezier",
-        "arrow-scale": 1.0,
       },
     },
   ];
@@ -56,11 +56,7 @@ function style_graph(cols_str) {
     });
     base_style.push({
       selector: `node[class = "${nodeType}"].selected`,
-      css: {
-        "font-weight": "800",
-        "border-color": "red",
-        color: "red",
-      },
+      css: selectState,
     });
   }
   return base_style;
