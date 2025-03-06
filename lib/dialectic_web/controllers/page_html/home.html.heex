@@ -1,28 +1,36 @@
 <div class="container mx-auto p-6">
   <!-- Header -->
-  <header class="">
-    <h1 class="text-4xl font-extrabold text-gray-800">MuDG</h1>
-    <article class="prose prose-stone prose-sm">
-      A dissatisfaction with the quality of debates and discussions that often go off-topic or bypass interesting questions.
-
-      ||
-      Recognition that conversations are inherently structured like graphs.
-
-      ||
-      Using AI to augment and refine concepts and explore interesting directions.
-
-      ||
-      Enabling collaboration through building knowledge and fostering productive debate together.
-
-      ||
-      Creating a way to follow conversations based on shared axioms and definitions - bringing clarity to complex issues.
-
-      ||  Developing visualization and traversal tools to explore and understand conversation structures and their underlying concepts.
-    </article>
-    <.link navigate={~p"/intro/what"} class="text-xl text-blue-600 hover:text-blue-400">
-      More
-    </.link>
+  <header class="max-w-3xl py-8 px-4">
+    <h1 class="text-4xl font-extrabold text-gray-800 mb-4">MuDG</h1>
+    <button
+      phx-click={show_modal("pitch-modal")}
+      class="show_more_modal mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium focus:outline-none"
+    >
+      WTF?
+    </button>
+    <.modal id="pitch-modal">
+      <article class="text-gray-700 text-md leading-relaxed space-y-4">
+        <p>
+          Conversations today often wander off-topic, lose depth, and fail to truly explore intriguing ideas. Our platform transforms discussions into structured, dynamic explorations using AI-powered graphs, allowing users to visually navigate complex arguments, collaboratively build clear knowledge pathways, and uncover insights through interactive visualization.
+        </p>
+        <p>
+          Educators, writers, learners, and debaters come together to define shared axioms, easily traverse conversation structures, and delve deeper into the topics they care about most.
+        </p>
+        <p class="font-semibold">
+          Experience multiplayer environment designed to nurture learning, curiosity, foster meaningful debate, and visually clarify ideas together.
+        </p>
+      </article>
+      <div class="mt-6">
+        <a
+          href="/intro/what"
+          class="text-xl text-blue-600 hover:text-blue-400 transition-colors duration-200"
+        >
+          More &rarr;
+        </a>
+      </div>
+    </.modal>
   </header>
+
   <div class="max-w-4xl mx-auto">
     <div class="flex flex-col space-y-4">
       <script>
@@ -66,7 +74,7 @@
           Inspire Me
         </button>
         <.link navigate={~p"/ideas/all"} class="text-xl text-blue-600 ml-4 hover:text-blue-400">
-          More ideas
+          More ideas &rarr;
         </.link>
       </div>
     </div>

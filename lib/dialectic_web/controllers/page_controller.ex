@@ -46,13 +46,13 @@ defmodule DialecticWeb.PageController do
         graph: "answer",
         title: "Reply",
         description: "The system will reply to the node",
-        node: "3"
+        node: "2"
       },
       %{
         graph: "branch",
         title: "Branch",
         description: "Create a thesis / antithesis (for / against) argument for a node",
-        node: "1"
+        node: "2"
       },
       %{
         graph: "combine",
