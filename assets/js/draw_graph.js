@@ -78,20 +78,74 @@ export function draw_graph(graph, context, elements, cols, node) {
   cy.minZoom(0.5);
   cy.maxZoom(10);
 
+  const originalDimensions = {};
+
+  // Enhanced hover effect
   cy.on("mouseover", "node", function (e) {
-    this.animate({
-      style: { width: this.width() * 1.1, height: this.height() * 1.1 },
-      duration: 100,
+    const node = this;
+    const id = node.id();
+
+    // Store original dimensions if not already saved
+    if (!originalDimensions[id]) {
+      originalDimensions[id] = {
+        width: node.width(),
+        height: node.height(),
+      };
+    }
+
+    // Apply highlight class instead of animating border directly
+    node.addClass("node-hover");
+    node.connectedEdges().addClass("edge-hover");
+
+    // Only animate the size
+    node.stop().animate({
+      style: {
+        width: originalDimensions[id].width * 1.2,
+        height: originalDimensions[id].height * 1.2,
+      },
+      duration: 200,
+      easing: "ease-out-cubic",
     });
   });
 
-  // Reset scale on mouseout
+  // Reset on mouseout
   cy.on("mouseout", "node", function (e) {
-    this.animate({
-      style: { width: this.width() / 1.1, height: this.height() / 1.1 },
-      duration: 100,
-    });
+    const node = this;
+    const id = node.id();
+
+    // Remove the highlight classes
+    node.removeClass("node-hover");
+    node.connectedEdges().removeClass("edge-hover");
+
+    // Only animate back to original size
+    if (originalDimensions[id]) {
+      node.stop().animate({
+        style: {
+          width: originalDimensions[id].width,
+          height: originalDimensions[id].height,
+        },
+        duration: 150,
+        easing: "ease-in-cubic",
+      });
+    }
   });
+
+  const selectColor = "#83f28f"; // Orange color
+
+  cy.style()
+    .selector(".node-hover")
+    .css({
+      "border-width": 3,
+      "border-color": selectColor, // Orange border
+      "z-index": 9999,
+    })
+    .selector(".edge-hover")
+    .css({
+      width: 3,
+      "line-color": selectColor, // Orange edges
+      "z-index": 9998,
+    })
+    .update();
   // Node selection handling
   cy.on("tap", "node", function (event) {
     const n = this;

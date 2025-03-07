@@ -184,10 +184,10 @@ defmodule DialecticWeb.ChatMsgComp do
     cols =
       case class do
         # "user" -> "border-red-400"
-        "answer" -> "border-blue-400 bg-blue-100 text-blue-700"
-        "thesis" -> "border-green-400 bg-green-100 text-green-700"
-        "antithesis" -> "border-red-400 bg-red-100 text-red-700"
-        "synthesis" -> "border-purple-600 bg-purple-100 text-purple-700"
+        "answer" -> "border-blue-400 text-blue-700"
+        "thesis" -> "border-green-400 text-green-700"
+        "antithesis" -> "border-red-400 text-red-700"
+        "synthesis" -> "border-purple-600 text-purple-700"
         _ -> "border border-gray-200 bg-white"
       end
 
