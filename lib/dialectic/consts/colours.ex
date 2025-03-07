@@ -4,30 +4,30 @@ defmodule Dialectic.Consts.Colours do
       thesis: %{
         # Green
         border: "#4ade80",
-        background: "#f0fdf4",
+        background: "white",
         text: "#4ade80"
       },
       antithesis: %{
         # Red
         border: "#f84b71",
-        background: "#f6e4e4",
+        background: "white",
         text: "#f84b71"
       },
       synthesis: %{
         # Purple
         border: "#c084fc",
-        background: "#faf5ff",
+        background: "white",
         text: "#c084fc"
       },
       answer: %{
         # BLue
         border: "#60a5fa",
-        background: "#eff6ff",
+        background: "white",
         text: "#60a5fa"
       },
       user: %{
         border: "#d1d5db",
-        background: "#f3f4f6",
+        background: "white",
         text: "#374151"
       }
     }

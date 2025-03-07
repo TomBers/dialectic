@@ -2,6 +2,18 @@
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 
+:root {
+    font-family: Inter, sans-serif;
+    font-feature-settings:
+        "liga" 1,
+        "calt" 1; /* fix for Chrome */
+}
+@supports (font-variation-settings: normal) {
+    :root {
+        font-family: InterVariable, sans-serif;
+    }
+}
+
 /* This file is for your main application CSS */
 .top-right {
     position: absolute;
