@@ -21,7 +21,7 @@ function style_graph(cols_str) {
         label: "data(id)",
         "text-valign": "center",
         "text-halign": "center",
-        "font-family": "monospace",
+        "font-family": "InterVariable, sans-serif",
         "font-weight": "400",
         color: "#374151", // gray-700
         padding: "10px",
