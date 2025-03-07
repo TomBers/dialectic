@@ -96,22 +96,23 @@ export function draw_graph(graph, context, elements, cols, node) {
     node.connectedEdges().removeClass("edge-hover");
   });
 
-  const selectColor = "#83f28f"; // Orange color
+  const selectColor = "#83f28f"; // Light green color
 
   cy.style()
     .selector(".node-hover")
     .css({
       "border-width": 3,
-      "border-color": selectColor, // Orange border
+      // "border-color": selectColor,
       "z-index": 9999,
     })
     .selector(".edge-hover")
     .css({
       width: 3,
-      "line-color": selectColor, // Orange edges
+      "line-color": selectColor,
       "z-index": 9998,
     })
     .update();
+
   // Node selection handling
   cy.on("tap", "node", function (event) {
     const n = this;
