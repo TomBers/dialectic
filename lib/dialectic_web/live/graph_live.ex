@@ -66,6 +66,13 @@ defmodule DialecticWeb.GraphLive do
      )}
   end
 
+  @impl true
+  def handle_info({:new_chat, _chat}, socket) do
+    # Just ignore the message - it's handled by the component
+    {:noreply, socket}
+  end
+
+  @impl true
   def handle_event("toggle_auto_reply", _, socket) do
     {:noreply, socket |> assign(auto_reply: !socket.assigns.auto_reply)}
   end
