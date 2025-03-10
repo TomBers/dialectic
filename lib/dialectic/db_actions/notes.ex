@@ -16,7 +16,7 @@ defmodule Dialectic.DbActions.Notes do
         left_join: n in assoc(g, :notes),
         group_by: g.title,
         order_by: [desc: count(n.id)],
-        limit: 10,
+        limit: 12,
         select: {g, count(n.id)}
 
     Dialectic.Repo.all(query)
