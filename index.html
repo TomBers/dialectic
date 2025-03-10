@@ -4,13 +4,20 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>MuDG - Collaborative Learning Platform</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
         <style>
             :root {
                 --primary-color: #3a86ff;
                 --secondary-color: #8338ec;
                 --accent-color: #ff006e;
                 --bg-color: #f8f9fa;
-                --text-color: #212529;
+                --text-color: #2d3748;
+                --light-text: #4a5568;
             }
 
             * {
@@ -25,9 +32,10 @@
                     -apple-system,
                     BlinkMacSystemFont,
                     sans-serif;
-                line-height: 1.6;
+                line-height: 1.8;
                 color: var(--text-color);
                 background-color: var(--bg-color);
+                font-size: 16px;
             }
 
             header {
@@ -57,25 +65,29 @@
             }
 
             .hero h1 {
-                font-size: 3rem;
-                margin-bottom: 1rem;
+                font-size: 3.5rem;
+                margin-bottom: 1.5rem;
+                font-weight: 700;
+                line-height: 1.2;
             }
 
             .hero p {
-                font-size: 1.2rem;
+                font-size: 1.4rem;
                 max-width: 800px;
-                margin-bottom: 2rem;
+                margin-bottom: 2.5rem;
+                line-height: 1.6;
             }
 
             .btn {
                 display: inline-block;
                 background-color: var(--accent-color);
                 color: white;
-                padding: 0.8rem 1.5rem;
+                padding: 0.8rem 1.8rem;
                 border-radius: 30px;
                 text-decoration: none;
                 font-weight: 600;
                 transition: all 0.3s ease;
+                font-size: 1.1rem;
             }
 
             .btn:hover {
@@ -93,20 +105,21 @@
 
             .section-title {
                 text-align: center;
-                margin-bottom: 3rem;
+                margin-bottom: 3.5rem;
             }
 
             .section-title h2 {
-                font-size: 2.5rem;
-                margin-bottom: 1rem;
+                font-size: 2.6rem;
+                margin-bottom: 1.2rem;
                 color: var(--primary-color);
+                font-weight: 700;
             }
 
             .feature {
                 display: flex;
                 flex-direction: row;
                 align-items: center;
-                margin-bottom: 4rem;
+                margin-bottom: 5rem;
             }
 
             .feature:nth-child(even) {
@@ -115,13 +128,23 @@
 
             .feature-text {
                 flex: 1;
-                padding: 0 2rem;
+                padding: 0 2.5rem;
             }
 
             .feature-text h3 {
-                font-size: 1.8rem;
-                margin-bottom: 1rem;
+                font-size: 2rem;
+                margin-bottom: 1.2rem;
                 color: var(--secondary-color);
+                font-weight: 600;
+            }
+
+            .feature-text p {
+                font-size: 1.1rem;
+                margin-bottom: 1.5rem;
+                line-height: 1.8;
+                color: var(--light-text);
+                max-width: 90%;
+                letter-spacing: 0.01em;
             }
 
             .feature-image {
@@ -140,10 +163,15 @@
                 background-color: #343a40;
                 color: white;
                 text-align: center;
-                padding: 2rem 0;
+                padding: 2.5rem 0;
+                font-size: 1rem;
             }
 
             @media (max-width: 768px) {
+                body {
+                    font-size: 15px;
+                }
+
                 .feature {
                     flex-direction: column;
                 }
@@ -156,7 +184,35 @@
                 .feature-image {
                     flex: none;
                     width: 100%;
-                    padding: 1rem 0;
+                    padding: 1.5rem 0;
+                }
+
+                .feature-text {
+                    order: 2;
+                }
+
+                .feature-image {
+                    order: 1;
+                }
+
+                .feature-text p {
+                    max-width: 100%;
+                }
+
+                .hero h1 {
+                    font-size: 2.5rem;
+                }
+
+                .hero p {
+                    font-size: 1.2rem;
+                }
+
+                .section-title h2 {
+                    font-size: 2.2rem;
+                }
+
+                .feature-text h3 {
+                    font-size: 1.6rem;
                 }
             }
         </style>
@@ -196,10 +252,9 @@
                             in the world, and they are only improving.
                         </p>
                         <p>
-                            While tools such as Chat GPT and Claude are very
-                            useful, they are not everything they could be.
-                            Currently they are inherently private, disposable
-                            chats where knowledge is lost or hard to find.
+                            While tools such as ChatGPT and Claude are very
+                            useful,they are inherently private, disposable
+                            chats, where knowledge is lost or hard to find.
                         </p>
                         <p>
                             Imagine a platform where you can actively learn with
@@ -236,19 +291,19 @@
                             As we can see we have 4 main approaches to ethical
                             decisions. We can explore any path through the idea,
                             whatever approach seems most interesting at the
-                            time. We can come back whenever we want to other
-                            paths and pick up where we left off.
+                            time.
                         </p>
                         <p>
-                            Now we can explore each approach in detail, asking
-                            for an example, and branching through between the
-                            Pros and Cons.
+                            We can come back whenever we want to other paths and
+                            pick up where we left off. Now we can explore each
+                            approach in detail, asking for an example, and
+                            branching through between the Pros and Cons.
                         </p>
                     </div>
                     <div class="feature-image">
                         <img
                             src="media/images/Ethics2.png"
-                            alt="AI Learning Concept"
+                            alt="Ethics Knowledge Graph"
                         />
                     </div>
                 </div>
@@ -296,9 +351,11 @@
                             Each graph can be edited by any person on the site.
                             Each change is shared with everyone in real time.
                             Each node can be noted for later reading and to
-                            surface the most interesting points. You can lock a
-                            graph when you feel it is a finished idea, for easy
-                            sharing to students.
+                            surface the most interesting points.
+                        </p>
+                        <p>
+                            You can lock a graph when you feel it is a finished
+                            idea, for easy sharing to students.
                         </p>
                     </div>
                     <div class="feature-image">
@@ -325,16 +382,20 @@
                         <h3>Clean Interface, Maximum Focus</h3>
                         <p>
                             The interface has been designed with two things in
-                            mind. Simple, clean interface and speed. We do not
-                            track users or have advertising, your data is not
-                            sold to 3rd Parties. This extends to the interface,
-                            aiming for clean, non-distracting allowing you to
-                            focus on the content of what you are thinking about.
+                            mind: simple, clean design and speed. We do not
+                            track users or have advertising; your data is not
+                            sold to 3rd parties.
                         </p>
                         <p>
-                            We also have built the interface to allow quick
-                            navigation, keyboard and mouse interface that aims
-                            to be a seamless experience of moving through ideas.
+                            This extends to the interface, aiming for a clean,
+                            non-distracting experience allowing you to focus on
+                            the content of what you are thinking about.
+                        </p>
+                        <p>
+                            We have built the interface to allow quick
+                            navigation, with keyboard and mouse controls that
+                            aim to provide a seamless experience of moving
+                            through ideas.
                         </p>
                     </div>
                     <div class="feature-image">
@@ -360,12 +421,15 @@
                     <div class="feature-text">
                         <h3>Explore New Ideas</h3>
                         <p>
-                            This starts from the landing page, not sure what
+                            This starts from the landing page. Not sure what
                             interests you? The ideas pages give you a starting
-                            point, with many interesting topics to explore. The
-                            interaction with the Language model inspires new
-                            ideas and generate debate points for any idea or
-                            find the balance between opposing ideas.
+                            point, with many interesting topics to explore.
+                        </p>
+                        <p>
+                            The interaction with the language model inspires new
+                            ideas and generates debate points for any topic or
+                            helps find the balance between opposing
+                            perspectives.
                         </p>
                     </div>
                     <div class="feature-image">
