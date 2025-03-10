@@ -3,11 +3,12 @@ defmodule Dialectic.Responses.Utils do
 
   def process_chunk(graph, node, data, _module) do
     Logger.info("Processing chunk for graph #{graph} and node #{node}. Data: #{data}")
+    updated_vertex = GraphManager.update_vertex(graph, node, data)
 
     Phoenix.PubSub.broadcast(
       Dialectic.PubSub,
       graph,
-      {:stream_chunk, data, :node_id, node}
+      {:stream_chunk, updated_vertex, :node_id, node}
     )
   end
 
