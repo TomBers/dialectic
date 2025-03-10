@@ -290,11 +290,11 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, assign(socket, graph: graph, f_graph: format_graph(graph))}
   end
 
-  def handle_info({:stream_chunk, chunk, :node_id, node_id}, socket) do
+  def handle_info({:stream_chunk, :node_id, node_id}, socket) do
     # This is the streamed LLM response into a node
-    updated_vertex = GraphManager.update_vertex(socket.assigns.graph_id, node_id, chunk)
 
     if node_id == Map.get(socket.assigns.node, :id) do
+      {_, updated_vertex} = GraphActions.find_node(socket.assigns.graph_id, node_id)
       {:noreply, assign(socket, node: updated_vertex)}
     else
       {:noreply, socket}
