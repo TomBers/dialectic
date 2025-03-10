@@ -9,6 +9,7 @@ defmodule DialecticWeb.GraphLive do
 
   on_mount {DialecticWeb.UserAuth, :mount_current_user}
 
+  @impl true
   def mount(%{"graph_name" => graph_id_uri} = params, _session, socket) do
     graph_id = URI.decode(graph_id_uri)
 
@@ -26,7 +27,8 @@ defmodule DialecticWeb.GraphLive do
 
     socket =
       if connected?(socket) do
-        Phoenix.PubSub.subscribe(Dialectic.PubSub, graph_id)
+        PubSub.subscribe(Dialectic.PubSub, graph_id)
+        PubSub.subscribe(Dialectic.PubSub, "chat:#{graph_id}")
         DialecticWeb.Presence.track_user(user, %{id: user, graph_id: graph_id})
         DialecticWeb.Presence.subscribe()
 
@@ -64,12 +66,6 @@ defmodule DialecticWeb.GraphLive do
        node_menu_position: nil,
        auto_reply: true
      )}
-  end
-
-  @impl true
-  def handle_info({:new_chat, _chat}, socket) do
-    # Just ignore the message - it's handled by the component
-    {:noreply, socket}
   end
 
   @impl true
@@ -291,6 +287,12 @@ defmodule DialecticWeb.GraphLive do
     else
       {:noreply, stream_insert(socket, :presences, presence)}
     end
+  end
+
+  @impl true
+  def handle_info({:new_chat, chat}, socket) do
+    send_update(DialecticWeb.MetaChatComp, id: "meta-chat", data: chat)
+    {:noreply, socket}
   end
 
   def handle_info({:other_user_change, graph}, socket) do

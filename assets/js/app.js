@@ -32,6 +32,95 @@ let hooks = {};
 hooks.NodeMenuHook = toolTipHook;
 hooks.TextSelectionHook = textSelectionHook;
 hooks.Graph = graphHook;
+hooks.InfiniteScroll = {
+  mounted() {
+    const container = this.el;
+    let loading = false;
+
+    // Save initial scroll position to maintain it when new messages come in
+    const saveScrollPosition = () => {
+      this.scrollTop = container.scrollTop;
+      this.scrollHeight = container.scrollHeight;
+    };
+
+    // Restore scroll position after new content is loaded
+    const restoreScrollPosition = () => {
+      if (this.scrollTop) {
+        const newScrollTop =
+          container.scrollHeight - this.scrollHeight + this.scrollTop;
+        container.scrollTop = newScrollTop;
+      }
+    };
+
+    // Auto-scroll to bottom when the user is already at the bottom
+    const autoScrollToBottom = () => {
+      const isAtBottom =
+        container.scrollHeight - container.scrollTop - container.clientHeight <
+        30;
+      if (isAtBottom) {
+        setTimeout(() => {
+          container.scrollTop = container.scrollHeight;
+        }, 50);
+      }
+    };
+
+    // Event handler for scrolling
+    container.addEventListener("scroll", () => {
+      if (loading) return;
+
+      // When user scrolls to top, load more messages
+      if (container.scrollTop < 50) {
+        saveScrollPosition();
+        loading = true;
+
+        this.pushEvent("load_more", {}, (reply) => {
+          loading = false;
+          // If there are no more messages, don't try to load more
+          if (!reply || !reply.has_more) {
+            container.removeEventListener("scroll", this);
+          }
+
+          setTimeout(() => {
+            restoreScrollPosition();
+          }, 100);
+        });
+      }
+    });
+
+    // Scroll to the bottom initially when component is mounted
+    setTimeout(() => {
+      container.scrollTop = container.scrollHeight;
+    }, 100);
+
+    // Handle scrolling when new messages come in
+    this.handleEvent("chat_updated", () => {
+      autoScrollToBottom();
+    });
+  },
+};
+
+hooks.ChatScroll = {
+  mounted() {
+    this.scrollToBottom();
+
+    // Listen for chat updates
+    this.handleEvent("chat_updated", () => {
+      this.scrollToBottom();
+    });
+  },
+  updated() {
+    this.scrollToBottom();
+  },
+  scrollToBottom() {
+    // Only auto-scroll if the user is already near the bottom
+    // const isNearBottom =
+    //   this.el.scrollHeight - this.el.clientHeight - this.el.scrollTop < 100;
+
+    // if (isNearBottom) {
+    this.el.scrollTop = this.el.scrollHeight;
+    // }
+  },
+};
 
 let csrfToken = document
   .querySelector("meta[name='csrf-token']")

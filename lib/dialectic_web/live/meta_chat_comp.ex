@@ -40,6 +40,31 @@ defmodule DialecticWeb.MetaChatComp do
   end
 
   @impl true
+  def update(%{data: data} = _assigns, socket) do
+    chat = Repo.preload(data, :user)
+
+    # Check if this chat is already in our list (to avoid duplication)
+    already_exists = Enum.any?(socket.assigns.chats, fn existing -> existing.id == chat.id end)
+
+    # Only add the chat if it doesn't already exist in our list
+    chats = if already_exists, do: socket.assigns.chats, else: socket.assigns.chats ++ [chat]
+
+    # Increment unread count if chat is closed
+    unread_count =
+      if socket.assigns.is_open do
+        socket.assigns.unread_count
+      else
+        socket.assigns.unread_count + 1
+      end
+
+    {:ok,
+     socket
+     |> assign(:chats, chats)
+     |> assign(:unread_count, unread_count)
+     |> push_event("chat_updated", %{})}
+  end
+
+  @impl true
   def handle_event("send_message", %{"chat" => chat_params}, socket) do
     %{current_user: current_user, graph_id: graph_id} = socket.assigns
 
@@ -119,26 +144,6 @@ defmodule DialecticWeb.MetaChatComp do
      |> assign(:chats, current_chats ++ more_chats)}
   end
 
-  @impl true
-  def handle_info({:new_chat, chat}, socket) do
-    chat = Repo.preload(chat, :user)
-    chats = socket.assigns.chats ++ [chat]
-
-    # Increment unread count if chat is closed
-    unread_count =
-      if socket.assigns.is_open do
-        socket.assigns.unread_count
-      else
-        socket.assigns.unread_count + 1
-      end
-
-    {:noreply,
-     socket
-     |> assign(:chats, chats)
-     |> assign(:unread_count, unread_count)
-     |> push_event("chat_updated", %{})}
-  end
-
   defp chats_count(graph_id) do
     Chat
     |> where([c], c.graph_title == ^graph_id)
@@ -167,7 +172,7 @@ defmodule DialecticWeb.MetaChatComp do
         <% end %>
       </button>
 
-      <div class={"chat-container #{if @is_open, do: 'open', else: 'closed'}"}>
+      <div class={"chat-container #{if @is_open, do: "open", else: "closed"}"}>
         <div class="chat-header">
           <h3>Chat</h3>
           <button class="close-button" phx-click="toggle_chat" phx-target={@myself}>
@@ -186,10 +191,10 @@ defmodule DialecticWeb.MetaChatComp do
           </button>
         </div>
 
-        <div class="chat-messages" id="chat-messages" phx-hook="InfiniteScroll" phx-update="append">
+        <div class="chat-messages" id="chat-messages" phx-hook="ChatScroll" phx-update="append">
           <%= for chat <- @chats do %>
             <div
-              class={"message #{if @current_user && chat.user_id == @current_user.id, do: 'message-self', else: ''}"}
+              class={"message #{if @current_user && chat.user_id == @current_user.id, do: "message-self", else: ""}"}
               id={"chat-#{chat.id}"}
             >
               <div class="message-header">
@@ -204,7 +209,12 @@ defmodule DialecticWeb.MetaChatComp do
         </div>
 
         <.form for={@chat_form} phx-submit="send_message" phx-target={@myself} class="chat-form">
-          <.input field={@chat_form[:message]} type="text" placeholder="Type your message..." />
+          <.input
+            field={@chat_form[:message]}
+            phx-reset
+            type="text"
+            placeholder="Type your message..."
+          />
           <.button type="submit">Send</.button>
         </.form>
       </div>
