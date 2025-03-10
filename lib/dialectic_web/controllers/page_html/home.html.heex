@@ -1,7 +1,9 @@
 <div class="container mx-auto p-6">
   <!-- Header -->
   <header class="max-w-3xl py-8 px-4">
-    <h1 class="text-4xl font-extrabold text-gray-800 mb-4">MuDG</h1>
+    <h1 class="text-4xl font-extrabold text-gray-800 mb-4">
+      MuDG - Collaborative Learning Platform
+    </h1>
     <button
       phx-click={show_modal("pitch-modal")}
       class="show_more_modal mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium focus:outline-none"
@@ -135,8 +137,8 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         <%= for {g, count} <- @top_graphs do %>
           <.link navigate={gen_link(g.title)} class="block">
-            <div class="bg-white shadow rounded-lg p-6 hover:shadow-lg transition">
-              <h3 class="font-bold text-xl text-gray-800 mb-1">
+            <div class="bg-white text-gray-800 shadow rounded-lg p-6 hover:shadow-lg hover:bg-black hover:text-white transition">
+              <h3 class="font-bold text-xl  mb-1">
                 <span :if={!g.is_public}>🔒</span>{g.title}
               </h3>
               <p class="text-sm text-gray-500">({count} notes)</p>
@@ -146,18 +148,50 @@
       </div>
     </section>
   </div>
-  <footer class="w-full bg-gray-100 py-4 mt-auto">
-    <div class="container mx-auto px-4">
-      <div class="flex justify-center items-center">
+  <footer class="w-full bg-gray-800 py-4 mt-4">
+    <section
+      id="call-to-action"
+      style="
+          background-color: var(--primary-color);
+          color: black;
+          text-align: center;
+          padding: 4rem 0;
+      "
+    >
+      <div class="container">
+        <h2 style="
+                  color: white;
+                  margin-bottom: 1.5rem;
+                  font-size: 2.2rem;
+              ">
+          Want to know more?
+        </h2>
+        <p style="
+                  font-size: 1.2rem;
+                  color: white;
+                  margin-bottom: 2rem;
+                  max-width: 800px;
+                  margin-left: auto;
+                  margin-right: auto;
+              ">
+          Follow us on Twitter for updates, insights, and to join our
+          growing community of collaborative learners.
+        </p>
         <a
-          href="https://twitter.com/TJCBerman"
+          href="https://x.com/TJCBerman"
           target="_blank"
-          rel="noopener noreferrer"
-          class="text-gray-600 hover:text-blue-500 transition-colors duration-200"
+          class="btn"
+          style="
+                  background-color: white;
+                  color: var(--primary-color);
+                  font-weight: 700;
+                  padding: 1rem 2rem;
+                  font-size: 1.2rem;
+              "
         >
-          Follow on Twitter
+          Follow @TJCBerman
         </a>
       </div>
-    </div>
+    </section>
   </footer>
 </div>
