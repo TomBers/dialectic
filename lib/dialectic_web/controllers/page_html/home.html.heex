@@ -53,76 +53,171 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
           <!-- My Graphs Card - Enhanced with icons and better visual hierarchy -->
           <div class="bg-white shadow-lg rounded-xl p-6 border-t-4 border-blue-500 transform transition-all duration-300 hover:shadow-xl">
-            <div class="flex items-center mb-5">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-8 w-8 text-blue-500 mr-3"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
+            <div class="flex items-center justify-between mb-5">
+              <div class="flex items-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-8 w-8 text-blue-500 mr-3"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+                  />
+                </svg>
+                <h3 class="text-xl font-semibold text-gray-800">
+                  My Graphs
+                  <span class="bg-blue-100 text-blue-800 text-sm font-semibold py-1 px-2 rounded-full">
+                    ({@stats.graphs |> length()})
+                  </span>
+                </h3>
+              </div>
+              
+<!-- Toggle Button using Phoenix JS commands -->
+              <button
+                phx-click={
+                  JS.toggle(to: "#graphs-content")
+                  |> JS.toggle(to: "#chevron-down")
+                  |> JS.toggle(to: "#chevron-up")
+                }
+                class="flex items-center justify-center p-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-full transition-colors duration-200 focus:outline-none"
+                aria-controls="graphs-content"
               >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
-                />
-              </svg>
-              <h3 class="text-xl font-semibold text-gray-800">
-                My Graphs
-                <span class="bg-blue-100 text-blue-800 text-sm font-semibold py-1 px-2 rounded-full">
-                  ({@stats.graphs |> length()})
-                </span>
-              </h3>
+                <svg
+                  id="chevron-down"
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+                <svg
+                  id="chevron-up"
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5 hidden"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 15l7-7 7 7"
+                  />
+                </svg>
+              </button>
             </div>
-
-            <%= for g <- @stats.graphs do %>
-              <DialecticWeb.PageHtml.GraphComp.render
-                graph={g}
-                count={g.notes |> Enum.filter(& &1.is_noted) |> length()}
-                id={"my-graph-comp-#{g.title}"}
-              />
-            <% end %>
+            
+<!-- Content - hidden by default -->
+            <div id="graphs-content" class="hidden mt-4 space-y-4" phx-update="replace">
+              <%= for g <- @stats.graphs do %>
+                <DialecticWeb.PageHtml.GraphComp.render
+                  graph={g}
+                  count={g.notes |> Enum.filter(& &1.is_noted) |> length()}
+                  id={"my-graph-comp-#{g.title}"}
+                />
+              <% end %>
+            </div>
           </div>
           
 <!-- My Noted Items Card - Enhanced with icons and better visual hierarchy -->
           <div class="bg-white shadow-lg rounded-xl p-6 border-t-4 border-green-500 transform transition-all duration-300 hover:shadow-xl">
-            <div class="flex items-center mb-5">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-8 w-8 text-green-500 mr-3"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
+            <div class="flex items-center justify-between mb-5">
+              <div class="flex items-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-8 w-8 text-green-500 mr-3"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                  />
+                </svg>
+                <h3 class="text-xl font-semibold text-gray-800">
+                  My Notes
+                  <span class="bg-green-100 text-green-800 text-sm font-semibold py-1 px-2 rounded-full">
+                    ({@stats.notes |> Enum.filter(& &1.is_noted) |> length()})
+                  </span>
+                </h3>
+              </div>
+              
+<!-- Toggle Button using Phoenix JS commands -->
+              <button
+                phx-click={
+                  JS.toggle(to: "#notes-content")
+                  |> JS.toggle(to: "#notes-chevron-down")
+                  |> JS.toggle(to: "#notes-chevron-up")
+                }
+                class="flex items-center justify-center p-2 bg-green-100 hover:bg-green-200 text-green-700 rounded-full transition-colors duration-200 focus:outline-none"
+                aria-controls="notes-content"
               >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                />
-              </svg>
-              <h3 class="text-xl font-semibold text-gray-800">
-                My Notes
-                <span class="bg-green-100 text-green-800 text-sm font-semibold py-1 px-2 rounded-full">
-                  ({@stats.notes |> Enum.filter(& &1.is_noted) |> length()})
-                </span>
-              </h3>
+                <svg
+                  id="notes-chevron-down"
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+                <svg
+                  id="notes-chevron-up"
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5 hidden"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 15l7-7 7 7"
+                  />
+                </svg>
+              </button>
             </div>
-            <ul class="space-y-3">
-              <%= for note <- @stats.notes |> Enum.filter(& &1.is_noted) do %>
-                <li>
-                  <.link
-                    navigate={gen_link(note.graph_title, note.node_id)}
-                    class="p-4 bg-green-50 hover:bg-green-100 rounded-lg transition transform hover:translate-x-1 flex justify-between items-center"
-                  >
-                    <span class="font-bold text-green-700">
-                      {note.graph_title} | Node: {note.node_id}
-                    </span>
-                  </.link>
-                </li>
-              <% end %>
-            </ul>
+            
+<!-- Content - hidden by default -->
+            <div id="notes-content" class="hidden mt-4" phx-update="replace">
+              <ul class="space-y-3">
+                <%= for note <- @stats.notes |> Enum.filter(& &1.is_noted) do %>
+                  <li>
+                    <.link
+                      navigate={gen_link(note.graph_title, note.node_id)}
+                      class="block p-4 bg-green-50 hover:bg-green-100 rounded-lg transition transform hover:translate-x-1 flex justify-between items-center"
+                    >
+                      <span class="font-bold text-green-700">
+                        {note.graph_title} | Node: {note.node_id}
+                      </span>
+                    </.link>
+                  </li>
+                <% end %>
+              </ul>
+            </div>
           </div>
         </div>
       </section>
