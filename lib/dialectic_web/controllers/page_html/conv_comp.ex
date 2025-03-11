@@ -17,12 +17,13 @@ defmodule DialecticWeb.PageHtml.ConvComp do
           />
           <.button
             type="submit"
-            class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-medium py-2 px-6 rounded-lg transition duration-150 ease-in-out"
+            class="phx-submit-loading:opacity-75 w-full bg-indigo-500 hover:bg-indigo-600 text-white font-medium py-2 px-6 rounded-lg transition duration-150 ease-in-out"
           >
-            <span class="flex items-center justify-center whitespace-nowrap">
+            <div class="flex items-center justify-center">
+              <span>Start Conversation</span>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                class="h-5 w-5 mr-2"
+                class="h-5 w-5 ml-2"
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >
@@ -32,8 +33,7 @@ defmodule DialecticWeb.PageHtml.ConvComp do
                   clip-rule="evenodd"
                 />
               </svg>
-            </span>
-            Start Conversation
+            </div>
           </.button>
         </div>
       </.form>

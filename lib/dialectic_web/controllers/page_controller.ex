@@ -25,7 +25,7 @@ defmodule DialecticWeb.PageController do
         |> redirect(to: ~p"/#{title}")
 
       _ ->
-        conn |> put_flash(:error, "Graph already exits") |> redirect(to: ~p"/")
+        conn |> put_flash(:error, "Error creating graph") |> redirect(to: ~p"/")
     end
   end
 
