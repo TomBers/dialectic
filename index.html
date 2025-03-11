@@ -159,6 +159,44 @@
                 box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
             }
 
+            .about-section {
+                background-color: #f8f9fa;
+                padding: 5rem 0;
+            }
+
+            .about-content {
+                max-width: 900px;
+                margin: 0 auto;
+                font-size: 1.05rem;
+                line-height: 1.7;
+                color: #374151;
+            }
+
+            .about-content h3 {
+                font-size: 1.8rem;
+                color: var(--secondary-color);
+                margin: 2.5rem 0 1rem 0;
+                font-weight: 600;
+            }
+
+            .about-content h3:first-child {
+                margin-top: 0;
+            }
+
+            .about-content p {
+                margin-bottom: 1.5rem;
+                text-align: justify;
+            }
+
+            .about-content ul {
+                margin-bottom: 2rem;
+                padding-left: 2rem;
+            }
+
+            .about-content li {
+                margin-bottom: 0.8rem;
+            }
+
             footer {
                 background-color: #343a40;
                 color: white;
@@ -214,6 +252,15 @@
                 .feature-text h3 {
                     font-size: 1.6rem;
                 }
+
+                .about-content {
+                    font-size: 1rem;
+                    text-align: left;
+                }
+
+                .about-content p {
+                    text-align: left;
+                }
             }
         </style>
     </head>
@@ -224,17 +271,6 @@
                 <p>Collaborative Learning Platform</p>
             </div>
         </header>
-
-        <div class="hero">
-            <div class="container">
-                <h1>Welcome to MuDG</h1>
-                <p>
-                    A collaborative learning platform where knowledge grows
-                    through connection.
-                </p>
-                <a href="#learn-more" class="btn">Learn More</a>
-            </div>
-        </div>
 
         <section id="learn-more">
             <div class="container">
@@ -248,22 +284,30 @@
                             Language models have the potential to be the most
                             effective learning tools to ever exist. Giving
                             personalised specific answers to a wide range of
-                            topics. A teacher who has read every published book
-                            in the world, and they are only improving.
+                            topics.
                         </p>
                         <p>
                             While tools such as ChatGPT and Claude are very
-                            useful,they are inherently private, disposable
+                            useful, they are inherently private, disposable
                             chats, where knowledge is lost or hard to find.
                         </p>
                         <p>
                             Imagine a platform where you can actively learn with
                             friends, creating a durable, sharable graph as you
-                            explore an idea. Take the exploration in any
-                            direction you want. We fully believe that learning
-                            is an active, creative process.
+                            explore an idea. Find like-minded people and
+                            community through shared exploration.
                         </p>
+                        <div
+                            style="
+                                display: flex;
+                                justify-content: right;
+                                gap: 1rem;
+                            "
+                        >
+                            <a href="#about" class="btn">About</a>
+                        </div>
                     </div>
+
                     <div class="feature-image">
                         <video autoplay muted loop playsinline>
                             <source
@@ -277,6 +321,53 @@
             </div>
         </section>
 
+        <section
+            id="call-to-action"
+            style="
+                background-color: var(--primary-color);
+                color: white;
+                text-align: center;
+            "
+        >
+            <div class="container">
+                <h2
+                    style="
+                        color: white;
+                        margin-bottom: 1.5rem;
+                        font-size: 2.2rem;
+                    "
+                >
+                    Want to know more?
+                </h2>
+                <p
+                    style="
+                        font-size: 1.2rem;
+                        margin-bottom: 2rem;
+                        max-width: 800px;
+                        margin-left: auto;
+                        margin-right: auto;
+                    "
+                >
+                    Follow us on Twitter for updates, insights, and to join our
+                    growing community of collaborative learners.
+                </p>
+                <a
+                    href="https://x.com/TJCBerman"
+                    target="_blank"
+                    class="btn"
+                    style="
+                        background-color: white;
+                        color: var(--primary-color);
+                        font-weight: 700;
+                        padding: 1rem 2rem;
+                        font-size: 1.2rem;
+                    "
+                >
+                    Follow @TJCBerman
+                </a>
+            </div>
+        </section>
+
         <section id="outcomes">
             <div class="container">
                 <div class="section-title">
@@ -287,11 +378,11 @@
                     <div class="feature-text">
                         <h3>Knowledge Graphs</h3>
                         <p>
-                            What you see on screen is a graph exploring ethics.
-                            As we can see we have 4 main approaches to ethical
-                            decisions. We can explore any path through the idea,
-                            whatever approach seems most interesting at the
-                            time.
+                            This screenshot is a graph exploring ethics. As we
+                            can see we have several approaches to ethical
+                            decision making. We can explore any path through the
+                            idea, whatever approach seems most interesting at
+                            the time.
                         </p>
                         <p>
                             We can come back whenever we want to other paths and
@@ -299,40 +390,17 @@
                             approach in detail, asking for an example, and
                             branching through between the Pros and Cons.
                         </p>
+                        <p>
+                            Ideas have clear relation to others, with parents
+                            and children, showing how differing conclusions come
+                            from earlier decisions.
+                        </p>
                     </div>
                     <div class="feature-image">
                         <img
                             src="media/images/Ethics2.webp"
                             alt="Ethics Knowledge Graph"
                         />
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="sharable">
-            <div class="container">
-                <div class="section-title">
-                    <h2>Sharable</h2>
-                </div>
-
-                <div class="feature">
-                    <div class="feature-text">
-                        <h3>Share Any Node</h3>
-                        <p>
-                            Each node has a link associated with it. So you can
-                            have a unique URL for any node on the page, that can
-                            be shared with anyone else.
-                        </p>
-                    </div>
-                    <div class="feature-image">
-                        <video autoplay muted loop playsinline>
-                            <source
-                                src="media/videos/Sharing.mp4"
-                                type="video/mp4"
-                            />
-                            Your browser does not support the video tag.
-                        </video>
                     </div>
                 </div>
             </div>
@@ -371,6 +439,34 @@
             </div>
         </section>
 
+        <section id="sharable">
+            <div class="container">
+                <div class="section-title">
+                    <h2>Shareable</h2>
+                </div>
+
+                <div class="feature">
+                    <div class="feature-text">
+                        <h3>Share Any Node</h3>
+                        <p>
+                            Each node has a link associated with it. So you can
+                            have a unique URL for any node on the page, that can
+                            be shared with anyone else.
+                        </p>
+                    </div>
+                    <div class="feature-image">
+                        <video autoplay muted loop playsinline>
+                            <source
+                                src="media/videos/Sharing.mp4"
+                                type="video/mp4"
+                            />
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <section id="fast-simple">
             <div class="container">
                 <div class="section-title">
@@ -381,15 +477,16 @@
                     <div class="feature-text">
                         <h3>Clean Interface, Maximum Focus</h3>
                         <p>
-                            The interface has been designed with two things in
-                            mind: simple, clean design and speed. We do not
-                            track users or have advertising; your data is not
-                            sold to 3rd parties.
+                            The interface has been designed from the ground up
+                            to be simple, clean and fast. We do not track users
+                            or have advertising; your data is not sold to 3rd
+                            parties.
                         </p>
                         <p>
-                            This extends to the interface, aiming for a clean,
-                            non-distracting experience allowing you to focus on
-                            the content of what you are thinking about.
+                            We aim to have a non-distracting experience. No ads,
+                            or interruptions. Allowing you to focus on the
+                            content of what you are thinking about; a more
+                            reflective environment.
                         </p>
                         <p>
                             We have built the interface to allow quick
@@ -426,9 +523,9 @@
                             point, with many interesting topics to explore.
                         </p>
                         <p>
-                            The interaction with the language model inspires new
-                            ideas and generates debate points for any topic or
-                            helps find the balance between opposing
+                            The interaction with the language model hopefully
+                            inspires new ideas and generates debate points for
+                            any topic or helps find the balance between opposing
                             perspectives.
                         </p>
                     </div>
@@ -440,6 +537,175 @@
                             />
                             Your browser does not support the video tag.
                         </video>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="about" class="about-section">
+            <div class="container">
+                <div class="section-title">
+                    <h2>About MuDG</h2>
+                </div>
+
+                <div class="about-content">
+                    <h3>Our Vision</h3>
+                    <p>
+                        MuDG began with a simple observation: the revolutionary
+                        potential of large language models for education remains
+                        largely untapped. While today's AI assistants offer
+                        impressive capabilities, they exist primarily as
+                        isolated, ephemeral exchanges. Our vision is to
+                        transform these interactions into persistent, evolving
+                        knowledge structures that grow richer with each
+                        exploration.
+                    </p>
+
+                    <h3>The Knowledge Graph Paradigm</h3>
+                    <p>
+                        At MuDG, we believe the future of learning isn't
+                        linear—it's networked. Traditional educational paths
+                        often follow predetermined sequences, but human
+                        curiosity rarely operates this way. We naturally branch,
+                        connect, and integrate ideas across domains. Our
+                        knowledge graph approach mirrors this natural thought
+                        process, allowing learners to move freely between
+                        concepts while maintaining coherent connections.
+                    </p>
+                    <p>
+                        Each node in a MuDG graph represents a discrete concept,
+                        question, or insight. Unlike traditional learning
+                        materials that might bury important connections in
+                        paragraphs of text, our graph structure makes
+                        relationships explicit and navigable. This visualization
+                        of knowledge helps learners identify patterns and
+                        connections they might otherwise miss.
+                    </p>
+
+                    <h3>Collaborative Intelligence</h3>
+                    <p>
+                        MuDG combines the analytical power of language models
+                        with the creative, contextual understanding of human
+                        minds. While AI excels at retrieving and synthesizing
+                        information across vast knowledge domains, humans excel
+                        at determining relevance, identifying novel connections,
+                        and applying insights to real-world contexts. By
+                        designing a platform where these complementary
+                        intelligences work together, we create learning
+                        experiences greater than either could produce alone.
+                    </p>
+                    <p>
+                        Collaboration extends beyond the human-AI relationship
+                        to encompass peer-to-peer learning as well. When
+                        multiple users explore and expand a knowledge graph
+                        together, they contribute diverse perspectives and
+                        expertise. This multiplayer aspect transforms learning
+                        from a solitary activity into a social one, where
+                        discovery is shared and insights are collectively
+                        refined.
+                    </p>
+
+                    <h3>Technical Philosophy</h3>
+                    <p>
+                        Our technical approach is guided by several core
+                        principles:
+                    </p>
+                    <ul>
+                        <li>
+                            <strong>Speed matters.</strong> Cognitive flow is
+                            easily disrupted by technical friction. We've
+                            optimized every aspect of the interface to minimize
+                            latency and maximize responsiveness.
+                        </li>
+                        <li>
+                            <strong>Simplicity enables depth.</strong> Complex
+                            ideas don't require complex interfaces. By
+                            eliminating unnecessary elements and focusing on
+                            conceptual clarity, we allow deeper engagement with
+                            content.
+                        </li>
+                        <li>
+                            <strong>Privacy is foundational.</strong> Learning
+                            requires experimentation and vulnerability. We've
+                            designed a platform where users can explore ideas
+                            freely without concerns about data harvesting or
+                            surveillance.
+                        </li>
+                        <li>
+                            <strong>Persistence creates value.</strong> Unlike
+                            ephemeral chats that disappear, MuDG knowledge
+                            graphs persist, accumulating value over time as they
+                            grow and connect.
+                        </li>
+                    </ul>
+
+                    <h3>The Future of MuDG</h3>
+                    <p>
+                        We're just beginning our journey to reimagine how humans
+                        and AI can learn together. Future developments will
+                        include specialized tools for educators, expanded
+                        visualization options, and deeper integration
+                        capabilities with existing knowledge bases and learning
+                        resources. The goal remains constant: creating the most
+                        effective collaborative learning environment possible,
+                        where the boundaries between teaching and learning blur,
+                        and where knowledge isn't just consumed but actively
+                        constructed.
+                    </p>
+
+                    <h3>MuDG - today</h3>
+                    <p>
+                        This has been a personal project, that in many ways is a
+                        cumulation of my different interests. Understanding /
+                        learning, design, (quasi) mathematical, AI and
+                        programming.
+                    </p>
+                    <p>
+                        The inspiration of the idea came from three distinct
+                        locations.
+                    </p>
+                    <ul>
+                        <li>
+                            <strong>The rise of AI / LLM’s</strong> - back in my
+                            undergraduate degree (too many years ago!) I
+                            remember learning about neural networks,
+                            implementing an MLP in C and other less popular
+                            networks such as Kohonen Map (Self Organizing Map).
+                            To capabilities of the deep learning revolution
+                            happen in real time has been inspiring.
+                        </li>
+                        <li>
+                            <strong>Dialectics</strong> - going back to the very
+                            birth of philosophy,  form of reasoning based upon
+                            dialogue of arguments and counter-arguments.
+                        </li>
+                        <li>
+                            <strong>The Elixir community</strong> - Since
+                            working with Elixir and Phoenix LiveView, it has
+                            made building interactive websites a pleasure and
+                            made alot of what the project is possible.
+                        </li>
+                    </ul>
+                    <p>
+                        As a solo developer, I try and do all things on the
+                        project with varying levels of success. I am sure there
+                        is not one area that could not be improved, and my
+                        intention is to build the basis of a useful tool and
+                        incorporate ideas wherever they come from. So if
+                        anything here has sparked any ideas I would love to hear
+                        them.
+                    </p>
+
+                    <div
+                        style="
+                            display: flex;
+                            justify-content: center;
+                            gap: 1rem;
+                        "
+                    >
+                        <a href="https://mudg.fly.dev" class="btn"
+                            >Give it a try</a
+                        >
                     </div>
                 </div>
             </div>
