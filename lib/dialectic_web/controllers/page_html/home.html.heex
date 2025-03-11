@@ -125,6 +125,7 @@
               <%= for g <- @stats.graphs do %>
                 <DialecticWeb.PageHtml.GraphComp.render
                   graph={g}
+                  link={gen_link(g.title)}
                   count={g.notes |> Enum.filter(& &1.is_noted) |> length()}
                   id={"my-graph-comp-#{g.title}"}
                 />
@@ -208,7 +209,7 @@
                   <li>
                     <.link
                       navigate={gen_link(note.graph_title, note.node_id)}
-                      class="block p-4 bg-green-50 hover:bg-green-100 rounded-lg transition transform hover:translate-x-1 flex justify-between items-center"
+                      class="p-4 bg-green-50 hover:bg-green-100 rounded-lg transition transform hover:translate-x-1 flex justify-between items-center"
                     >
                       <span class="font-bold text-green-700">
                         {note.graph_title} | Node: {note.node_id}
@@ -267,6 +268,7 @@
             <div class="transform transition duration-300 hover:scale-105">
               <DialecticWeb.PageHtml.GraphComp.render
                 graph={g}
+                link={gen_link(g.title)}
                 count={count}
                 id={"graph-comp-#{g.title}"}
               />

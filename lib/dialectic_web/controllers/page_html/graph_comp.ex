@@ -1,21 +1,9 @@
 defmodule DialecticWeb.PageHtml.GraphComp do
   use DialecticWeb, :live_component
 
-  def gen_link(graph, node \\ nil) do
-    case node do
-      nil -> ~p"/#{URI.encode(graph, &URI.char_unreserved?/1)}"
-      _ -> ~p"/#{URI.encode(graph, &URI.char_unreserved?/1)}?node=#{node}"
-    end
-  end
-
   def render(assigns) do
-    node_id = assigns[:node_id] || nil
-
     ~H"""
-    <.link
-      navigate={gen_link(@graph.title, node_id)}
-      class="block transition hover:transform hover:scale-102"
-    >
+    <.link navigate={@link} class="block transition hover:transform hover:scale-102">
       <div class="bg-white text-gray-800 shadow-md rounded-lg p-6 hover:shadow-xl hover:bg-gradient-to-r hover:from-indigo-500 hover:to-purple-600 hover:text-white transition-all">
         <h3 class="font-bold text-xl mb-2">
           <span :if={!@graph.is_public} class="mr-2 text-amber-500 hover:text-amber-300">

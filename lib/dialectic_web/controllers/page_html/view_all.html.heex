@@ -4,6 +4,7 @@
     <%= for {g, count} <- @graphs do %>
       <DialecticWeb.PageHtml.GraphComp.render
         graph={g}
+        link={gen_link(g.title)}
         count={count}
         id={"graph-comp-#{g.title}"}
       />
