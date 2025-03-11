@@ -9,12 +9,14 @@ defmodule DialecticWeb.PageHtml.GraphComp do
   end
 
   def render(assigns) do
+    node_id = assigns[:node_id] || nil
+
     ~H"""
     <.link
-      navigate={gen_link(@graph.title)}
-      class="block transition duration-200 hover:transform hover:scale-102"
+      navigate={gen_link(@graph.title, node_id)}
+      class="block transition hover:transform hover:scale-102"
     >
-      <div class="bg-white text-gray-800 shadow-md rounded-lg p-6 hover:shadow-xl hover:bg-gradient-to-r hover:from-indigo-500 hover:to-purple-600 hover:text-white transition-all duration-300">
+      <div class="bg-white text-gray-800 shadow-md rounded-lg p-6 hover:shadow-xl hover:bg-gradient-to-r hover:from-indigo-500 hover:to-purple-600 hover:text-white transition-all">
         <h3 class="font-bold text-xl mb-2">
           <span :if={!@graph.is_public} class="mr-2 text-amber-500 hover:text-amber-300">
             <svg
@@ -30,7 +32,7 @@ defmodule DialecticWeb.PageHtml.GraphComp do
               />
             </svg>
           </span>
-          <span class="transition-colors duration-300">
+          <span class="transition-colors">
             {@graph.title}
           </span>
         </h3>
@@ -40,7 +42,7 @@ defmodule DialecticWeb.PageHtml.GraphComp do
           </div>
         </div>
 
-        <p class="mt-3 text-sm text-gray-500 hover:text-white transition-colors duration-300">
+        <p class="mt-3 text-sm text-gray-500 hover:text-white transition-colors">
           {@count} notes
         </p>
       </div>
