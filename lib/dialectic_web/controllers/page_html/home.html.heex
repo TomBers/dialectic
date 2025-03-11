@@ -1,149 +1,222 @@
-<div class="container mx-auto p-6">
-  <!-- Header -->
-  <header class="max-w-3xl py-8 px-4">
-    <h1 class="text-4xl font-extrabold text-gray-800 mb-4">
-      MuDG - Collaborative Learning Platform
-    </h1>
-    <button
-      phx-click={show_modal("pitch-modal")}
-      class="show_more_modal mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium focus:outline-none"
-    >
-      WTF?
-    </button>
-    <.modal id="pitch-modal">
-      <article class="text-gray-700 text-md leading-relaxed space-y-4">
-        <p>
-          Conversations today often wander off-topic, lose depth, and fail to truly explore intriguing ideas. Our platform transforms discussions into structured, dynamic explorations using AI-powered graphs, allowing users to visually navigate complex arguments, collaboratively build clear knowledge pathways, and uncover insights through interactive visualization.
-        </p>
-        <p>
-          Educators, writers, learners, and debaters come together to define shared axioms, easily traverse conversation structures, and delve deeper into the topics they care about most.
-        </p>
-        <p class="font-semibold">
-          Experience multiplayer environment designed to nurture learning, curiosity, foster meaningful debate, and visually clarify ideas together.
-        </p>
-      </article>
-      <div class="mt-6">
-        <a
-          href="/intro/what"
-          class="text-xl text-blue-600 hover:text-blue-400 transition-colors duration-200"
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
+  <div class="container mx-auto p-6">
+    <!-- Enhanced Header with gradient background -->
+    <header class="max-w-4xl mx-auto rounded-xl bg-gradient-to-r from-indigo-600 to-blue-500 shadow-lg py-10 px-8 mb-10">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-4xl font-extrabold text-white mb-3">
+            MuDG
+          </h1>
+          <p class="text-blue-100 text-xl mb-4">Collaborative Learning Platform</p>
+        </div>
+        <button
+          phx-click={show_modal("pitch-modal")}
+          class="show_more_modal bg-white text-indigo-600 hover:bg-indigo-50 transition-colors duration-300 font-bold py-2 px-5 rounded-full shadow-md hover:shadow-lg transform hover:scale-105"
         >
-          More &rarr;
-        </a>
+          Learn More
+        </button>
+      </div>
+    </header>
+
+    <.modal id="pitch-modal">
+      <div class="bg-white p-6 rounded-lg">
+        <h3 class="text-2xl font-bold text-indigo-700 mb-4">Transform Your Discussions</h3>
+        <article class="text-gray-700 text-md leading-relaxed space-y-4">
+          <p>
+            Conversations today often wander off-topic, lose depth, and fail to truly explore intriguing ideas. Our platform transforms discussions into structured, dynamic explorations using AI-powered graphs, allowing users to visually navigate complex arguments, collaboratively build clear knowledge pathways, and uncover insights through interactive visualization.
+          </p>
+          <p>
+            Educators, writers, learners, and debaters come together to define shared axioms, easily traverse conversation structures, and delve deeper into the topics they care about most.
+          </p>
+          <p class="font-semibold text-indigo-700">
+            Experience multiplayer environment designed to nurture learning, curiosity, foster meaningful debate, and visually clarify ideas together.
+          </p>
+        </article>
+        <div class="mt-6">
+          <a
+            href="/intro/what"
+            class="inline-block bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-indigo-700 transition-colors duration-200"
+          >
+            Explore More &rarr;
+          </a>
+        </div>
       </div>
     </.modal>
-  </header>
 
-  <div class="max-w-4xl mx-auto">
-    <DialecticWeb.PageHtml.ConvComp.create id="create-conv" />
-    <section class="mb-12">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <!-- My Graphs Card -->
-        <div class="bg-white shadow rounded-lg p-6">
-          <h3 class="text-xl font-semibold text-gray-800 mb-4">
-            My Graphs ({@stats.graphs |> length()})
-          </h3>
-          <ul class="space-y-3">
-            <%= for g <- @stats.graphs do %>
-              <li>
-                <.link
-                  navigate={gen_link(g.title)}
-                  class="block p-4 bg-blue-50 hover:bg-blue-100 rounded transition"
-                >
-                  <span class="font-bold text-blue-700">{g.title}</span>
-                  <span class="ml-2 text-sm text-gray-500">
-                    ({g.notes |> Enum.filter(& &1.is_noted) |> length()} notes)
-                  </span>
-                </.link>
-              </li>
-            <% end %>
-          </ul>
-        </div>
-        
-<!-- My Noted Items Card -->
-        <div class="bg-white shadow rounded-lg p-6">
-          <h3 class="text-xl font-semibold text-gray-800 mb-4">
-            My Notes ({@stats.notes |> Enum.filter(& &1.is_noted) |> length()})
-          </h3>
-          <ul class="space-y-3">
-            <%= for note <- @stats.notes |> Enum.filter(& &1.is_noted) do %>
-              <li>
-                <.link
-                  navigate={gen_link(note.graph_title, note.node_id)}
-                  class="block p-4 bg-green-50 hover:bg-green-100 rounded transition"
-                >
-                  <span class="font-bold text-green-700">{note.graph_title}</span>
-                  <span class="ml-2 text-sm text-gray-500">Node {note.node_id}</span>
-                </.link>
-              </li>
-            <% end %>
-          </ul>
-        </div>
+    <div class="max-w-5xl mx-auto">
+      <!-- Create conversation component with improved styling -->
+      <div class="mb-12 bg-white rounded-xl shadow-lg p-6 border-l-4 border-indigo-500 transform transition-all duration-300 hover:shadow-xl">
+        <DialecticWeb.PageHtml.ConvComp.create id="create-conv" />
       </div>
-    </section>
+
+      <section class="mb-12">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <!-- My Graphs Card - Enhanced with icons and better visual hierarchy -->
+          <div class="bg-white shadow-lg rounded-xl p-6 border-t-4 border-blue-500 transform transition-all duration-300 hover:shadow-xl">
+            <div class="flex items-center mb-5">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-8 w-8 text-blue-500 mr-3"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+                />
+              </svg>
+              <h3 class="text-xl font-semibold text-gray-800">
+                My Graphs
+                <span class="bg-blue-100 text-blue-800 text-sm font-semibold py-1 px-2 rounded-full">
+                  ({@stats.graphs |> length()})
+                </span>
+              </h3>
+            </div>
+            <ul class="space-y-3">
+              <%= for g <- @stats.graphs do %>
+                <li>
+                  <.link
+                    navigate={gen_link(g.title)}
+                    class="block p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition transform hover:translate-x-1 flex justify-between items-center"
+                  >
+                    <span class="font-bold text-blue-700">{g.title}</span>
+                    <span class="text-sm bg-blue-200 text-blue-800 py-1 px-3 rounded-full">
+                      {g.notes |> Enum.filter(& &1.is_noted) |> length()} notes
+                    </span>
+                  </.link>
+                </li>
+              <% end %>
+            </ul>
+          </div>
+          
+<!-- My Noted Items Card - Enhanced with icons and better visual hierarchy -->
+          <div class="bg-white shadow-lg rounded-xl p-6 border-t-4 border-green-500 transform transition-all duration-300 hover:shadow-xl">
+            <div class="flex items-center mb-5">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-8 w-8 text-green-500 mr-3"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                />
+              </svg>
+              <h3 class="text-xl font-semibold text-gray-800">
+                My Notes
+                <span class="bg-green-100 text-green-800 text-sm font-semibold py-1 px-2 rounded-full">
+                  ({@stats.notes |> Enum.filter(& &1.is_noted) |> length()})
+                </span>
+              </h3>
+            </div>
+            <ul class="space-y-3">
+              <%= for note <- @stats.notes |> Enum.filter(& &1.is_noted) do %>
+                <li>
+                  <.link
+                    navigate={gen_link(note.graph_title, note.node_id)}
+                    class="block p-4 bg-green-50 hover:bg-green-100 rounded-lg transition transform hover:translate-x-1 flex justify-between items-center"
+                  >
+                    <span class="font-bold text-green-700">{note.graph_title}</span>
+                    <span class="text-sm bg-green-200 text-green-800 py-1 px-3 rounded-full">
+                      Node {note.node_id}
+                    </span>
+                  </.link>
+                </li>
+              <% end %>
+            </ul>
+          </div>
+        </div>
+      </section>
+      
+<!-- Top Graphs Section - Enhanced with better card design -->
+      <section class="mb-12">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-2xl font-bold text-gray-800 flex items-center">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-8 w-8 text-indigo-500 mr-3"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+              />
+            </svg>
+            Top Graphs
+          </h2>
+          <.link
+            navigate={~p"/view_all/graphs"}
+            class="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-medium"
+          >
+            View All Graphs
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5 ml-1"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </.link>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <%= for {g, count} <- @top_graphs do %>
+            <!-- Modified to use your existing component but with a wrapper for animation -->
+            <div class="transform transition duration-300 hover:scale-105">
+              <DialecticWeb.PageHtml.GraphComp.render
+                graph={g}
+                count={count}
+                id={"graph-comp-#{g.title}"}
+              />
+            </div>
+          <% end %>
+        </div>
+      </section>
+    </div>
     
-<!-- Top Graphs Section -->
-    <section>
-      <h2 class="text-2xl font-bold text-gray-700 mb-4">
-        Top Graphs (<.link
-          navigate={~p"/view_all/graphs"}
-          class="text-xl text-blue-600 hover:text-blue-400"
-        >All Graphs</.link>)
-      </h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <%= for {g, count} <- @top_graphs do %>
-          <DialecticWeb.PageHtml.GraphComp.render
-            graph={g}
-            count={count}
-            id={"graph-comp-#{g.title}"}
-          />
-        <% end %>
-      </div>
-    </section>
+<!-- Enhanced Footer -->
+    <footer class="w-full bg-gradient-to-r from-gray-800 to-gray-900 rounded-t-xl mt-12 overflow-hidden">
+      <section id="call-to-action" class="py-16 px-4 text-center">
+        <div class="container mx-auto max-w-3xl">
+          <h2 class="text-3xl font-bold text-white mb-6">
+            Join Our Learning Community
+          </h2>
+          <p class="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+            Follow us on Twitter for updates, insights, and to join our
+            growing community of collaborative learners.
+          </p>
+          <a
+            href="https://x.com/TJCBerman"
+            target="_blank"
+            class="inline-flex items-center bg-white hover:bg-blue-50 text-indigo-700 font-bold py-3 px-8 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-6 w-6 mr-2"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+            </svg>
+            Follow @TJCBerman
+          </a>
+        </div>
+      </section>
+    </footer>
   </div>
-  <footer class="w-full bg-gray-800 py-4 mt-4">
-    <section
-      id="call-to-action"
-      style="
-          background-color: var(--primary-color);
-          color: black;
-          text-align: center;
-          padding: 4rem 0;
-      "
-    >
-      <div class="container">
-        <h2 style="
-                  color: white;
-                  margin-bottom: 1.5rem;
-                  font-size: 2.2rem;
-              ">
-          Want to know more?
-        </h2>
-        <p style="
-                  font-size: 1.2rem;
-                  color: white;
-                  margin-bottom: 2rem;
-                  max-width: 800px;
-                  margin-left: auto;
-                  margin-right: auto;
-              ">
-          Follow us on Twitter for updates, insights, and to join our
-          growing community of collaborative learners.
-        </p>
-        <a
-          href="https://x.com/TJCBerman"
-          target="_blank"
-          class="btn"
-          style="
-                  background-color: white;
-                  color: var(--primary-color);
-                  font-weight: 700;
-                  padding: 1rem 2rem;
-                  font-size: 1.2rem;
-              "
-        >
-          Follow @TJCBerman
-        </a>
-      </div>
-    </section>
-  </footer>
 </div>
