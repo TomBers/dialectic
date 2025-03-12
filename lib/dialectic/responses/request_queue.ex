@@ -30,7 +30,6 @@ defmodule Dialectic.Responses.RequestQueue do
       | module: Dialectic.Workers.LocalWorker
     }
     |> LocalWorker.new()
-    |> IO.inspect(label: "Local Worker")
     |> Oban.insert()
   end
 
