@@ -39,6 +39,7 @@ defmodule DialecticWeb.GraphLive do
       end
 
     {graph_struct, graph} = GraphManager.get_graph(graph_id)
+    IO.inspect(graph_struct, label: "Graph Struct")
     # IO.inspect(graph_struct)
 
     {_, node} = :digraph.vertex(graph, node_id)
@@ -49,6 +50,7 @@ defmodule DialecticWeb.GraphLive do
 
     {:ok,
      assign(socket,
+       graph_struct: graph_struct,
        graph_id: graph_id,
        graph: graph,
        f_graph: format_graph(graph),
@@ -68,6 +70,11 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event("toggle_auto_reply", _, socket) do
     {:noreply, socket |> assign(auto_reply: !socket.assigns.auto_reply)}
+  end
+
+  def handle_event("toggle_lock_graph", _, socket) do
+    graph_struct = GraphActions.toggle_graph_locked(graph_action_params(socket))
+    {:noreply, socket |> assign(graph_struct: graph_struct)}
   end
 
   def handle_event("show_node_menu", %{"id" => node_id, "node_position" => position}, socket) do

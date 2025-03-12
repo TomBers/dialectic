@@ -123,6 +123,11 @@ defmodule GraphManager do
     end
   end
 
+  def handle_call({:toggle_graph_locked}, _from, {graph_struct, graph}) do
+    updated_graph_struct = Dialectic.DbActions.Graphs.toggle_graph_locked(graph_struct)
+    {:reply, updated_graph_struct, {updated_graph_struct, graph}}
+  end
+
   def handle_call({:change_noted_by, {node_id, user, change_fn}}, _from, {graph_struct, graph}) do
     case :digraph.vertex(graph, node_id) do
       {_id, vertex} ->
@@ -212,6 +217,10 @@ defmodule GraphManager do
 
   def edit_vertex(path, node_id, data) do
     GenServer.call(via_tuple(path), {:edit_node, {node_id, data}})
+  end
+
+  def toggle_graph_locked(path) do
+    GenServer.call(via_tuple(path), {:toggle_graph_locked})
   end
 
   def change_noted_by(path, node_id, user, change_fn) do

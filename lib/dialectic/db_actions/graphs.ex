@@ -91,4 +91,10 @@ defmodule Dialectic.DbActions.Graphs do
         |> Repo.update()
     end
   end
+
+  def toggle_graph_locked(graph) do
+    graph
+    |> Graph.changeset(%{is_public: !graph.is_public})
+    |> Repo.update!()
+  end
 end

@@ -22,6 +22,10 @@ defmodule Dialectic.Graph.GraphActions do
     GraphManager.edit_vertex(graph_id, node.id, question)
   end
 
+  def toggle_graph_locked({graph_id, _node, _user}) do
+    GraphManager.toggle_graph_locked(graph_id)
+  end
+
   def comment({graph_id, node, user}, question, prefix \\ "") do
     GraphManager.add_child(
       graph_id,
