@@ -3,7 +3,8 @@
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
     <%= for {g, count} <- @graphs do %>
       <DialecticWeb.PageHtml.GraphComp.render
-        graph={g}
+        title={g.title}
+        is_public={g.is_public}
         link={gen_link(g.title)}
         count={count}
         id={"graph-comp-#{g.title}"}

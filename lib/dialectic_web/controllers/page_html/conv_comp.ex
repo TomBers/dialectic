@@ -11,6 +11,7 @@ defmodule DialecticWeb.PageHtml.ConvComp do
             field={f[:conversation]}
             type="text"
             label=""
+            value={@topic}
             id="conversation-input"
             class="w-full text-xl font-medium rounded-lg border-indigo-200 focus:border-indigo-500 focus:ring-indigo-500"
             placeholder="Enter your topic or question..."

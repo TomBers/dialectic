@@ -46,7 +46,7 @@
     <div class="max-w-5xl mx-auto">
       <!-- Create conversation component with improved styling -->
       <div class="mb-12 bg-white rounded-xl shadow-lg p-6 border-l-4 border-indigo-500 transform transition-all duration-300 hover:shadow-xl">
-        <DialecticWeb.PageHtml.ConvComp.create id="create-conv" />
+        <DialecticWeb.PageHtml.ConvComp.create id="create-conv" topic={@topic} />
       </div>
 
       <section class="mb-12">
@@ -124,7 +124,8 @@
             <div id="graphs-content" class="hidden mt-4 space-y-4" phx-update="replace">
               <%= for g <- @stats.graphs do %>
                 <DialecticWeb.PageHtml.GraphComp.render
-                  graph={g}
+                  title={g.title}
+                  is_public={g.is_public}
                   link={gen_link(g.title)}
                   count={g.notes |> Enum.filter(& &1.is_noted) |> length()}
                   id={"my-graph-comp-#{g.title}"}
@@ -204,20 +205,15 @@
             
 <!-- Content - hidden by default -->
             <div id="notes-content" class="hidden mt-4" phx-update="replace">
-              <ul class="space-y-3">
-                <%= for note <- @stats.notes |> Enum.filter(& &1.is_noted) do %>
-                  <li>
-                    <.link
-                      navigate={gen_link(note.graph_title, note.node_id)}
-                      class="p-4 bg-green-50 hover:bg-green-100 rounded-lg transition transform hover:translate-x-1 flex justify-between items-center"
-                    >
-                      <span class="font-bold text-green-700">
-                        {note.graph_title} | Node: {note.node_id}
-                      </span>
-                    </.link>
-                  </li>
-                <% end %>
-              </ul>
+              <%= for note <- @stats.notes |> Enum.filter(& &1.is_noted) do %>
+                <DialecticWeb.PageHtml.GraphComp.render
+                  title={"#{note.graph_title} | Node: #{note.node_id}"}
+                  is_public={false}
+                  link={gen_link(note.graph_title, note.node_id)}
+                  count={0}
+                  id={"notes-graph-comp-#{note.graph_title}"}
+                />
+              <% end %>
             </div>
           </div>
         </div>
@@ -267,7 +263,8 @@
             <!-- Modified to use your existing component but with a wrapper for animation -->
             <div class="transform transition duration-300 hover:scale-105">
               <DialecticWeb.PageHtml.GraphComp.render
-                graph={g}
+                title={g.title}
+                is_public={g.is_public}
                 link={gen_link(g.title)}
                 count={count}
                 id={"graph-comp-#{g.title}"}

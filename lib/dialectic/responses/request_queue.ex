@@ -5,6 +5,7 @@ defmodule Dialectic.Responses.RequestQueue do
   alias Dialectic.Workers.ClaudeWorker
   alias Dialectic.Workers.GeminiWorker
   alias Dialectic.Workers.OpenAIWorker
+  alias Dialectic.Workers.LocalWorker
 
   def add(question, to_node, graph) do
     params = %{
@@ -23,16 +24,14 @@ defmodule Dialectic.Responses.RequestQueue do
     end
   end
 
-  def run_local(%{
-        question: question,
-        to_node: to_node,
-        graph: graph
-      }) do
-    Phoenix.PubSub.broadcast(
-      Dialectic.PubSub,
-      graph,
-      {:stream_chunk, question, :node_id, to_node}
-    )
+  def run_local(params) do
+    %{
+      params
+      | module: Dialectic.Workers.LocalWorker
+    }
+    |> LocalWorker.new()
+    |> IO.inspect(label: "Local Worker")
+    |> Oban.insert()
   end
 
   def run_deepseek(params) do

@@ -28,7 +28,8 @@ config :dialectic, DialecticWeb.Endpoint,
   pubsub_server: Dialectic.PubSub,
   live_view: [signing_salt: "qRvt+kFw"]
 
-config :dialectic, model_to_use: "Deepseek"
+config :dialectic, model_to_use: "Local"
+# config :dialectic, model_to_use: "Deepseek"
 # Configures the mailer
 #
 # By default it uses the "Local" adapter which stores the emails
