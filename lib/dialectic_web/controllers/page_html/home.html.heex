@@ -208,7 +208,7 @@
               <%= for note <- @stats.notes |> Enum.filter(& &1.is_noted) do %>
                 <DialecticWeb.PageHtml.GraphComp.render
                   title={"#{note.graph_title} | Node: #{note.node_id}"}
-                  is_public={false}
+                  is_public={true}
                   link={gen_link(note.graph_title, note.node_id)}
                   count={0}
                   id={"notes-graph-comp-#{note.graph_title}"}

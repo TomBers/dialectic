@@ -39,8 +39,6 @@ defmodule DialecticWeb.GraphLive do
       end
 
     {graph_struct, graph} = GraphManager.get_graph(graph_id)
-    IO.inspect(graph_struct, label: "Graph Struct")
-    # IO.inspect(graph_struct)
 
     {_, node} = :digraph.vertex(graph, node_id)
     changeset = GraphActions.create_new_node(user) |> Vertex.changeset()
@@ -74,7 +72,8 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event("toggle_lock_graph", _, socket) do
     graph_struct = GraphActions.toggle_graph_locked(graph_action_params(socket))
-    {:noreply, socket |> assign(graph_struct: graph_struct)}
+    can_edit = graph_struct.is_public
+    {:noreply, socket |> assign(graph_struct: graph_struct, can_edit: can_edit)}
   end
 
   def handle_event("show_node_menu", %{"id" => node_id, "node_position" => position}, socket) do
@@ -162,12 +161,16 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("node_branch", %{"id" => node_id}, socket) do
-    {_, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
-    # Ensure branching from the correct node
-    update_graph(
-      socket,
-      GraphActions.branch(graph_action_params(socket, node))
-    )
+    if !socket.assigns.can_edit do
+      {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    else
+      {_, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
+      # Ensure branching from the correct node
+      update_graph(
+        socket,
+        GraphActions.branch(graph_action_params(socket, node))
+      )
+    end
   end
 
   def handle_event("node_combine", %{"id" => node_id}, socket) do
@@ -176,19 +179,23 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("combine_node_select", %{"selected_node" => node_id}, socket) do
-    {graph, node} =
-      GraphActions.combine(
-        graph_action_params(socket),
-        node_id
-      )
+    if !socket.assigns.can_edit do
+      {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    else
+      {graph, node} =
+        GraphActions.combine(
+          graph_action_params(socket),
+          node_id
+        )
 
-    update_graph(socket, {graph, node}, true)
+      update_graph(socket, {graph, node}, true)
+    end
   end
 
   def handle_event("KeyBoardInterface", %{"key" => last_key, "cmdKey" => isCmd}, socket) do
     # IO.inspect(params, label: "KeyBoardInterface")
     if !socket.assigns.can_edit do
-      {:noreply, socket |> put_flash(:info, "This graph is locked")}
+      {:noreply, socket |> put_flash(:error, "This graph is locked")}
     else
       key =
         (socket.assigns.key_buffer <> last_key)
@@ -258,19 +265,23 @@ defmodule DialecticWeb.GraphLive do
         update_graph(socket, GraphActions.comment(graph_action_params(socket), answer))
       end
     else
-      {:noreply, socket |> put_flash(:info, "This graph is locked")}
+      {:noreply, socket |> put_flash(:error, "This graph is locked")}
     end
   end
 
   def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}} = params, socket) do
-    prefix = params["prefix"] || ""
-    #  Add a Reply Node and an Answer node
-    {_graph, node} = GraphActions.comment(graph_action_params(socket), answer, prefix)
+    if !socket.assigns.can_edit do
+      {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    else
+      prefix = params["prefix"] || ""
+      #  Add a Reply Node and an Answer node
+      {_graph, node} = GraphActions.comment(graph_action_params(socket), answer, prefix)
 
-    update_graph(
-      socket,
-      GraphActions.answer(graph_action_params(socket, node))
-    )
+      update_graph(
+        socket,
+        GraphActions.answer(graph_action_params(socket, node))
+      )
+    end
   end
 
   def handle_event("modal_closed", _, socket) do

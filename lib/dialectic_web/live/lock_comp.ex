@@ -9,14 +9,14 @@ defmodule DialecticWeb.LockComp do
     ~H"""
     <div class="p-4">
       <div class="flex items-center">
-        <label for="auto-reply-toggle" class="flex items-center cursor-pointer">
+        <label for="toggle_lock_graph" class="flex items-center cursor-pointer">
           <div class="relative">
             <input
               type="checkbox"
-              id="auto-reply-toggle"
+              id="toggle_lock_graph"
               class="sr-only"
               checked={!@graph_struct.is_public}
-              name="auto_reply"
+              name="toggle_lock_graph"
               phx-click="toggle_lock_graph"
             />
             <div class={"w-10 h-6 rounded-full transition #{if !@graph_struct.is_public, do: "bg-green-500", else: "bg-gray-300"}"}>
