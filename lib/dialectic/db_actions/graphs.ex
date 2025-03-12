@@ -9,44 +9,21 @@ defmodule Dialectic.DbActions.Graphs do
   Creates a new graph with the given title.
   """
   def create_new_graph(title, user \\ nil) do
-    {data, ans_node} = default_graph_data(title)
-
-    graph =
-      %Graph{}
-      |> Graph.changeset(%{
-        title: title,
-        user_id: user && user.id,
-        data: data,
-        is_public: true,
-        is_deleted: false,
-        is_published: true
-      })
-      |> Repo.insert()
-
-    spawn(fn ->
-      Dialectic.Responses.RequestQueue.add(title, ans_node, title)
-    end)
-
-    graph
-  end
-
-  defp default_graph_data(content) do
-    ans_node = %Vertex{id: "2", content: "", class: "answer"}
-
     data = %{
-      "nodes" => [%Vertex{id: "1", content: content}, ans_node],
-      "edges" => [
-        %{
-          data: %{
-            id: "12",
-            source: "1",
-            target: "2"
-          }
-        }
-      ]
+      "nodes" => [%Vertex{id: "1", content: title}],
+      "edges" => []
     }
 
-    {data, ans_node}
+    %Graph{}
+    |> Graph.changeset(%{
+      title: title,
+      user_id: user && user.id,
+      data: data,
+      is_public: true,
+      is_deleted: false,
+      is_published: true
+    })
+    |> Repo.insert()
   end
 
   def list_graphs do
@@ -90,5 +67,11 @@ defmodule Dialectic.DbActions.Graphs do
         |> Graph.changeset(%{data: data})
         |> Repo.update()
     end
+  end
+
+  def toggle_graph_locked(graph) do
+    graph
+    |> Graph.changeset(%{is_public: !graph.is_public})
+    |> Repo.update!()
   end
 end

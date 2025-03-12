@@ -4,11 +4,12 @@ defmodule DialecticWeb.PageController do
   alias Dialectic.Graph.{Vertex, Serialise}
   alias Dialectic.DbActions.{Notes, Graphs}
 
-  def home(conn, _params) do
+  def home(conn, params) do
     stats = Notes.get_my_stats(conn.assigns.current_user)
     top_graphs = Notes.top_graphs()
+    topic = Map.get(params, "topic", "")
     # IO.inspect(stats, label: "Stats")
-    render(conn, :home, stats: stats, top_graphs: top_graphs)
+    render(conn, :home, stats: stats, top_graphs: top_graphs, topic: topic)
   end
 
   def view_all(conn, _params) do
@@ -25,7 +26,7 @@ defmodule DialecticWeb.PageController do
         |> redirect(to: ~p"/#{title}")
 
       _ ->
-        conn |> put_flash(:error, "Graph already exits") |> redirect(to: ~p"/")
+        conn |> put_flash(:error, "Error creating graph") |> redirect(to: ~p"/")
     end
   end
 
