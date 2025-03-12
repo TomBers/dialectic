@@ -179,8 +179,12 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("node_combine", %{"id" => node_id}, socket) do
-    {_, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
-    {:noreply, assign(socket, show_combine: true, node: node)}
+    if !socket.assigns.can_edit do
+      {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    else
+      {_, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
+      {:noreply, assign(socket, show_combine: true, node: node)}
+    end
   end
 
   def handle_event("combine_node_select", %{"selected_node" => node_id}, socket) do
