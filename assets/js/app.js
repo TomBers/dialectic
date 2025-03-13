@@ -25,6 +25,7 @@ import topbar from "../vendor/topbar";
 import toolTipHook from "./tool_tip_hook.js";
 import textSelectionHook from "./text_selection_hook.js";
 import graphHook from "./graph_hook.js";
+import mermaidHook from "./mermaid_hook.js";
 
 let hooks = {};
 
@@ -32,6 +33,7 @@ let hooks = {};
 hooks.NodeMenuHook = toolTipHook;
 hooks.TextSelectionHook = textSelectionHook;
 hooks.Graph = graphHook;
+hooks.MermaidInit = mermaidHook;
 
 let csrfToken = document
   .querySelector("meta[name='csrf-token']")
