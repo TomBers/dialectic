@@ -1,0 +1,24 @@
+<div class="conversation-thread">
+  <.link
+    href={~p"/#{@graph_id}"}
+    class="text-xs leading-6 text-zinc-900 font-semibold hover:text-zinc-700"
+  >
+    Read as graph
+  </.link>
+  <%= for node <- @conv do %>
+    <%= unless node.deleted do %>
+      <div
+        class={[
+          "node mb-4 rounded-lg",
+          "flex items-start gap-3 bg-white border-l-4",
+          message_border_class(node.class)
+        ]}
+        style={"margin-left: #{node.indent * 4}rem;"}
+      >
+        <article class="prose prose-stone prose-lg p-4">
+          {full_html(node.content || "")}
+        </article>
+      </div>
+    <% end %>
+  <% end %>
+</div>
