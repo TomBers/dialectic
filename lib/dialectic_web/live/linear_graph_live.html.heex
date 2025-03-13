@@ -1,4 +1,10 @@
 <div class="conversation-thread">
+  <.link
+    href={~p"/#{@graph_id}"}
+    class="text-xs leading-6 text-zinc-900 font-semibold hover:text-zinc-700"
+  >
+    Read as graph
+  </.link>
   <%= for node <- @conv do %>
     <%= unless node.deleted do %>
       <div

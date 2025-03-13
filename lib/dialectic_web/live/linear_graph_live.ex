@@ -3,11 +3,11 @@ defmodule DialecticWeb.LinearGraphLive do
 
   def mount(%{"graph_name" => graph_id_uri}, _session, socket) do
     graph_id = URI.decode(graph_id_uri)
-    {graph_struct, graph} = GraphManager.get_graph(graph_id)
+    {_graph_struct, graph} = GraphManager.get_graph(graph_id)
 
     conv = Dialectic.Linear.ThreadedConv.prepare_conversation(graph)
 
-    {:ok, assign(socket, conv: conv, graph_struct: graph_struct)}
+    {:ok, assign(socket, conv: conv, graph_id: graph_id)}
   end
 
   defp full_html(content) do

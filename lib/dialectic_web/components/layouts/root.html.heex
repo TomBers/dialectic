@@ -16,6 +16,12 @@
   <body class="bg-white">
     <header class="relative z-10" id="userHeader">
       <nav class="flex items-center justify-end gap-4 px-4 sm:px-6 lg:px-8">
+        <.link
+          href={~p"/"}
+          class="text-xs leading-6 text-zinc-900 font-semibold hover:text-zinc-700"
+        >
+          Home
+        </.link>
         <%= if @current_user do %>
           <span class="text-xs leading-6 text-zinc-900">
             {@current_user.email}
