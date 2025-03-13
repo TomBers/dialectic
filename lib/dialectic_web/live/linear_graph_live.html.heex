@@ -1,0 +1,16 @@
+<div class="conversation-thread">
+  <%= for node <- @conv do %>
+    <%= unless node.deleted do %>
+      <div class="message-container" style={"margin-left: #{node.indent * 2}rem;"}>
+        <div class={"message #{node.class}"}>
+          <div class="message-header">
+            {if node.user, do: node.user, else: "Anonymous"}
+          </div>
+          <div class="message-content">
+            {raw(node.content)}
+          </div>
+        </div>
+      </div>
+    <% end %>
+  <% end %>
+</div>
