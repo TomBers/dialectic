@@ -30,15 +30,6 @@ defmodule DialecticWeb.LinearGraphLive do
     {:noreply, socket |> assign(hidden: hidden)}
   end
 
-  def handle_event("toggle_all", _, socket) do
-    hidden =
-      if length(socket.assigns.hidden) != 0,
-        do: [],
-        else: Enum.map(socket.assigns.conv, & &1.id)
-
-    {:noreply, socket |> assign(hidden: hidden)}
-  end
-
   defp full_html(content) do
     Earmark.as_html!(content) |> Phoenix.HTML.raw()
   end

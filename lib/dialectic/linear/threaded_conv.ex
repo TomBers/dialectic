@@ -58,7 +58,7 @@ defmodule Dialectic.Linear.ThreadedConv do
 
   Updated accumulator with the current node and its descendants added
   """
-  defp process_thread(graph, node, indent, acc) do
+  def process_thread(graph, node, indent, acc) do
     # Get node data from the Dialectic.Graph.Vertex structure
     node_data =
       case :digraph.vertex(graph, node) do
