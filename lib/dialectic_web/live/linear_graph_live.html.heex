@@ -6,6 +6,14 @@
     Read as graph
   </.link>
 
+  <button
+    phx-click="toggle_all"
+    aria-label={if length(@hidden) != 0, do: "Expand all", else: "Collapse all"}
+    class="text-xs font-semibold px-2 py-1 rounded hover:bg-gray-100"
+  >
+    {if length(@hidden) != 0, do: "Expand all", else: "Collapse all"}
+  </button>
+
   <%= for node <- @conv do %>
     <%= unless node.deleted do %>
       <div
@@ -30,6 +38,8 @@
 
             <%= unless Enum.member?(@hidden, node.id) do %>
               <h3 class="m-0">{modal_title(node.class)}</h3>
+            <% else %>
+              {truncated_summary(node.content || "")}
             <% end %>
           </div>
 
