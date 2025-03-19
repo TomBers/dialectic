@@ -1,33 +1,44 @@
 <div class="conversation-thread">
   <.link
     href={~p"/#{@graph_id}"}
-    class="text-xs leading-6 text-zinc-900 font-semibold hover:text-zinc-700"
+    class="text-xs leading-6 font-semibold text-zinc-900 hover:text-zinc-700"
   >
     Read as graph
   </.link>
+
   <%= for node <- @conv do %>
     <%= unless node.deleted do %>
       <div
         class={[
-          "node mb-4 rounded-lg",
-          "flex items-start gap-3 bg-white border-l-4",
+          "node mb-4 rounded-lg flex items-start gap-3 bg-white border-l-4",
           message_border_class(node.class)
         ]}
         style={"margin-left: #{node.indent * 4}rem;"}
       >
-        <%= if Enum.any?(@hidden, fn id -> id == node.id end) do %>
-          <article class="prose prose-stone prose-lg p-4">
-            <.button phx-click="toggle_node" phx-value-node-id={node.id}>+</.button>
-          </article>
-        <% else %>
-          <article class="prose prose-stone prose-lg p-4">
-            <h3 class="">
-              <.button phx-click="toggle_node" phx-value-node-id={node.id}>-</.button>
-               {modal_title(node.class)}
-            </h3>
-            {full_html(node.content || "")}
-          </article>
-        <% end %>
+        <article class="prose prose-stone prose-lg p-4 w-full">
+          <div class="flex items-center gap-2">
+            <button
+              phx-click="toggle_node"
+              phx-value-node-id={node.id}
+              aria-label={
+                if Enum.member?(@hidden, node.id), do: "Expand node", else: "Collapse node"
+              }
+              class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100"
+            >
+              {if Enum.member?(@hidden, node.id), do: "+", else: "-"}
+            </button>
+
+            <%= unless Enum.member?(@hidden, node.id) do %>
+              <h3 class="m-0">{modal_title(node.class)}</h3>
+            <% end %>
+          </div>
+
+          <%= unless Enum.member?(@hidden, node.id) do %>
+            <div class="mt-2">
+              {full_html(node.content || "")}
+            </div>
+          <% end %>
+        </article>
       </div>
     <% end %>
   <% end %>
