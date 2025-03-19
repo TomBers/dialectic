@@ -7,11 +7,26 @@ defmodule DialecticWeb.LinearGraphLive do
 
     conv = Dialectic.Linear.ThreadedConv.prepare_conversation(graph)
 
-    {:ok, assign(socket, conv: conv, graph_id: graph_id)}
+    {:ok, assign(socket, conv: conv, graph_id: graph_id, hidden: [])}
+  end
+
+  def handle_event("toggle_node", %{"node-id" => node_id}, socket) do
+    hidden =
+      if Enum.any?(socket.assigns.hidden, fn id -> id == node_id end),
+        do: Enum.filter(socket.assigns.hidden, fn id -> id != node_id end),
+        else: [node_id | socket.assigns.hidden]
+
+    {:noreply, socket |> assign(hidden: hidden)}
   end
 
   defp full_html(content) do
     Earmark.as_html!(content) |> Phoenix.HTML.raw()
+  end
+
+  defp modal_title(nil), do: ""
+
+  defp modal_title(class) do
+    String.upcase(class) <> ":"
   end
 
   defp message_border_class(class) do

@@ -15,9 +15,19 @@
         ]}
         style={"margin-left: #{node.indent * 4}rem;"}
       >
-        <article class="prose prose-stone prose-lg p-4">
-          {full_html(node.content || "")}
-        </article>
+        <%= if Enum.any?(@hidden, fn id -> id == node.id end) do %>
+          <article class="prose prose-stone prose-lg p-4">
+            <.button phx-click="toggle_node" phx-value-node-id={node.id}>+</.button>
+          </article>
+        <% else %>
+          <article class="prose prose-stone prose-lg p-4">
+            <h3 class="">
+              <.button phx-click="toggle_node" phx-value-node-id={node.id}>-</.button>
+               {modal_title(node.class)}
+            </h3>
+            {full_html(node.content || "")}
+          </article>
+        <% end %>
       </div>
     <% end %>
   <% end %>
