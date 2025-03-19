@@ -9,7 +9,7 @@ defmodule DialecticWeb.LinearGraphLive do
 
     conv = Dialectic.Linear.ThreadedConv.prepare_conversation(graph)
 
-    {:ok, assign(socket, conv: conv, graph_id: graph_id, hidden: [])}
+    {:ok, assign(socket, conv: conv, graph_id: graph_id, hidden: Enum.map(conv, & &1.id))}
   end
 
   def handle_event("toggle_node", %{"node-id" => node_id}, socket) do
