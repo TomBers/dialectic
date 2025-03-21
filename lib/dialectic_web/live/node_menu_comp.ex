@@ -33,16 +33,32 @@ defmodule DialecticWeb.NodeMenuComp do
                 Ask about selection
               </button>
             </div>
-            <%= if String.length(@node.content || "") > @cut_off do %>
-              <div class="flex justify-end">
-                <button
-                  phx-click={show_modal("modal-" <> @node.id)}
-                  class="show_more_modal mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium focus:outline-none"
+
+            <div class="flex justify-end">
+              <button
+                phx-click={show_modal("modal-#{@node.id}")}
+                class="mt-2 text-blue-600 hover:text-blue-800 p-1.5 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                aria-label="Open in modal"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="feather feather-maximize-2"
                 >
-                  Show more
-                </button>
-              </div>
-            <% end %>
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <polyline points="9 21 3 21 3 15"></polyline>
+                  <line x1="21" y1="3" x2="14" y2="10"></line>
+                  <line x1="3" y1="21" x2="10" y2="14"></line>
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       <% else %>
