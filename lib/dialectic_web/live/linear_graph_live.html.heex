@@ -62,15 +62,17 @@
             </button>
 
             <%= unless Enum.member?(@hidden, node.id) do %>
-              <h3 class="m-0">{modal_title(node.class)}</h3>
+              <h3 class="m-0">{TextUtils.modal_title(node.content, node.class)}</h3>
             <% else %>
-              {truncated_summary(node.content || "")}
+              <h2 class="text-lg font-semibold leading-8 text-zinc-800">
+                {TextUtils.linear_summary(node.content || "")}
+              </h2>
             <% end %>
           </div>
 
           <%= unless Enum.member?(@hidden, node.id) do %>
             <div class="mt-2">
-              {full_html(node.content || "")}
+              {TextUtils.full_html(node.content || "")}
             </div>
           <% end %>
         </article>

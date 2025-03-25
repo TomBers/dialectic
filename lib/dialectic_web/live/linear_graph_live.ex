@@ -1,5 +1,6 @@
 defmodule DialecticWeb.LinearGraphLive do
   use DialecticWeb, :live_view
+  alias DialecticWeb.Live.TextUtils
 
   @cut_off 50
 
@@ -28,31 +29,6 @@ defmodule DialecticWeb.LinearGraphLive do
         else: Enum.map(socket.assigns.conv, & &1.id)
 
     {:noreply, socket |> assign(hidden: hidden)}
-  end
-
-  defp full_html(content) do
-    Earmark.as_html!(content) |> Phoenix.HTML.raw()
-  end
-
-  defp modal_title(nil), do: ""
-
-  defp modal_title(class) do
-    String.upcase(class) <> ":"
-  end
-
-  defp truncated_summary(content) do
-    title =
-      if String.starts_with?(content, "title") || String.starts_with?(content, "Title") do
-        content
-        |> String.split("\n", parts: 2)
-        |> List.first()
-        |> String.replace(~r/^title[:]?\s*|^Title[:]?\s*/i, "")
-        |> String.trim()
-      else
-        content
-      end
-
-    String.slice(title, 0, @cut_off) <> "..."
   end
 
   defp message_border_class(class) do
