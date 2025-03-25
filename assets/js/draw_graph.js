@@ -69,6 +69,7 @@ export function draw_graph(graph, context, elements, cols, node) {
     style: style_graph(cols),
     layout: {
       name: "dagre",
+      rankDir: "BT",
       nodeSep: 20,
       edgeSep: 15,
       rankSep: 30,
