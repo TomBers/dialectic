@@ -23,13 +23,27 @@ defmodule DialecticWeb.ChatMsgComp do
   end
 
   defp full_html(content) do
-    Earmark.as_html!(content) |> Phoenix.HTML.raw()
+    if String.starts_with?(content, "title") || String.starts_with?(content, "Title") do
+      content
+      |> String.split("\n", parts: 2)
+      |> List.last()
+      |> Earmark.as_html!()
+      |> Phoenix.HTML.raw()
+    else
+      content |> Earmark.as_html!() |> Phoenix.HTML.raw()
+    end
   end
 
-  defp modal_title(nil), do: ""
-
-  defp modal_title(class) do
-    String.upcase(class) <> ":"
+  defp modal_title(content, class) do
+    if String.starts_with?(content, "title") || String.starts_with?(content, "Title") do
+      content
+      |> String.split("\n", parts: 2)
+      |> List.first()
+      |> String.replace(~r/^title[:]?\s*|^Title[:]?\s*/i, "")
+      |> String.trim()
+    else
+      String.upcase(class)
+    end
   end
 
   @impl true
@@ -62,7 +76,7 @@ defmodule DialecticWeb.ChatMsgComp do
             data-node-id={@node.id}
           >
             <article class="prose prose-stone prose-lg selection-content">
-              <h1 class="">{modal_title(@node.class)}</h1>
+              <h1 class="">{modal_title(@node.content, @node.class)}</h1>
               {full_html(@node.content || "")}
             </article>
             
