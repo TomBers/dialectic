@@ -36,13 +36,21 @@ defmodule DialecticWeb.ChatMsgComp do
 
   defp modal_title(content, class) do
     if String.starts_with?(content, "title") || String.starts_with?(content, "Title") do
+      extract_title(content)
+    else
+      String.upcase(class)
+    end
+  end
+
+  defp extract_title(content) do
+    if String.starts_with?(content, "title") || String.starts_with?(content, "Title") do
       content
       |> String.split("\n", parts: 2)
       |> List.first()
       |> String.replace(~r/^title[:]?\s*|^Title[:]?\s*/i, "")
       |> String.trim()
     else
-      String.upcase(class)
+      content
     end
   end
 

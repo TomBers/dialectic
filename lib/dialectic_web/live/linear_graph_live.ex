@@ -41,7 +41,18 @@ defmodule DialecticWeb.LinearGraphLive do
   end
 
   defp truncated_summary(content) do
-    String.slice(content, 0, @cut_off) <> "..."
+    title =
+      if String.starts_with?(content, "title") || String.starts_with?(content, "Title") do
+        content
+        |> String.split("\n", parts: 2)
+        |> List.first()
+        |> String.replace(~r/^title[:]?\s*|^Title[:]?\s*/i, "")
+        |> String.trim()
+      else
+        content
+      end
+
+    String.slice(title, 0, @cut_off) <> "..."
   end
 
   defp message_border_class(class) do
