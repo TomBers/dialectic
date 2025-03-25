@@ -1,7 +1,6 @@
 defmodule DialecticWeb.LinearGraphLive do
   use DialecticWeb, :live_view
-
-  @cut_off 50
+  alias DialecticWeb.Live.TextUtils
 
   def mount(%{"graph_name" => graph_id_uri}, _session, socket) do
     graph_id = URI.decode(graph_id_uri)
@@ -28,20 +27,6 @@ defmodule DialecticWeb.LinearGraphLive do
         else: Enum.map(socket.assigns.conv, & &1.id)
 
     {:noreply, socket |> assign(hidden: hidden)}
-  end
-
-  defp full_html(content) do
-    Earmark.as_html!(content) |> Phoenix.HTML.raw()
-  end
-
-  defp modal_title(nil), do: ""
-
-  defp modal_title(class) do
-    String.upcase(class) <> ":"
-  end
-
-  defp truncated_summary(content) do
-    String.slice(content, 0, @cut_off) <> "..."
   end
 
   defp message_border_class(class) do

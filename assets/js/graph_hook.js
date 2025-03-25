@@ -23,7 +23,13 @@ const graphHook = {
     if (newElements.length != numNodes.length) {
       this.cy.json({ elements: newElements });
       this.cy
-        .layout({ name: "dagre", nodeSep: 20, edgeSep: 15, rankSep: 30 })
+        .layout({
+          name: "dagre",
+          rankDir: "BT",
+          nodeSep: 20,
+          edgeSep: 15,
+          rankSep: 30,
+        })
         .run();
     }
     if (node != nodeId && updateview == "true") {

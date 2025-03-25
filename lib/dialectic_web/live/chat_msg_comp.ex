@@ -1,5 +1,6 @@
 defmodule DialecticWeb.ChatMsgComp do
   use DialecticWeb, :live_component
+  alias DialecticWeb.Live.TextUtils
 
   @impl true
   def update(assigns, socket) do
@@ -10,26 +11,6 @@ defmodule DialecticWeb.ChatMsgComp do
       |> assign_new(:cut_off, fn -> 500 end)
 
     {:ok, socket}
-  end
-
-  defp truncated_html(content, cut_off) do
-    # If content is already under the cutoff, just return the full text
-    if String.length(content) <= cut_off do
-      full_html(content)
-    else
-      truncated = String.slice(content, 0, cut_off) <> "..."
-      Earmark.as_html!(truncated) |> Phoenix.HTML.raw()
-    end
-  end
-
-  defp full_html(content) do
-    Earmark.as_html!(content) |> Phoenix.HTML.raw()
-  end
-
-  defp modal_title(nil), do: ""
-
-  defp modal_title(class) do
-    String.upcase(class) <> ":"
   end
 
   @impl true
@@ -62,8 +43,8 @@ defmodule DialecticWeb.ChatMsgComp do
             data-node-id={@node.id}
           >
             <article class="prose prose-stone prose-lg selection-content">
-              <h1 class="">{modal_title(@node.class)}</h1>
-              {full_html(@node.content || "")}
+              <h1 class="">{TextUtils.modal_title(@node.content, @node.class)}</h1>
+              {TextUtils.full_html(@node.content || "")}
             </article>
             
     <!-- Modal selection action button (hidden by default) -->
@@ -85,7 +66,7 @@ defmodule DialecticWeb.ChatMsgComp do
           data-node-id={@node.id}
         >
           <article class="prose prose-stone prose-sm selection-content">
-            {truncated_html(@node.content || "", @cut_off)}
+            {TextUtils.truncated_html(@node.content || "", @cut_off)}
           </article>
           
     <!-- Summary selection action button (hidden by default) -->

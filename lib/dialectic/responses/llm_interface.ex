@@ -61,6 +61,11 @@ defmodule Dialectic.Responses.LlmInterface do
   end
 
   def ask_model(question, to_node, graph_id) do
-    RequestQueue.add(question, to_node, graph_id)
+    RequestQueue.add(
+      question <>
+        "\n Make sure to add a title in the response.",
+      to_node,
+      graph_id
+    )
   end
 end
