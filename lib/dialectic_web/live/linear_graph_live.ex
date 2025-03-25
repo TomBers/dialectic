@@ -2,8 +2,6 @@ defmodule DialecticWeb.LinearGraphLive do
   use DialecticWeb, :live_view
   alias DialecticWeb.Live.TextUtils
 
-  @cut_off 50
-
   def mount(%{"graph_name" => graph_id_uri}, _session, socket) do
     graph_id = URI.decode(graph_id_uri)
     {_graph_struct, graph} = GraphManager.get_graph(graph_id)
