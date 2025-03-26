@@ -47,6 +47,7 @@
 
     <.button
       phx-click="prepare_for_print"
+      data-graph-name={@graph_id}
       phx-hook="PrintConversation"
       id="print-button"
       class="inline-flex items-center text-xs font-semibold px-2 py-1 rounded bg-white border border-zinc-200 text-zinc-900 hover:bg-zinc-50 hover:text-zinc-700 transition-colors"
@@ -78,6 +79,7 @@
         ]}
         style={"margin-left: #{node.indent * 4}rem;"}
         id={node.id}
+        data-indent={node.indent}
         phx-hook="HighlightNode"
       >
         <article class="prose prose-stone prose-lg p-4 w-full">
@@ -143,9 +145,18 @@
     }
 
     /* Ensure proper page breaks */
-    .node {
-      page-break-inside: avoid;
-    }
+
+    button, .link, .flex.flex-wrap.items-center.gap-2 {
+       display: none !important;
+     }
+
+     /* Override dynamic indentation for print to ensure content fits on page */
+     .node {
+       margin-left: 0 !important; /* Reset all indents */
+       padding-left: 1cm !important; /* Base padding for all nodes */
+       page-break-inside: avoid;
+       border-left-width: 2px !important; /* Thinner border for print */
+     }
 
     /* Add page margins */
     @page {

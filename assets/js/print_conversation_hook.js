@@ -2,6 +2,10 @@ const printConversationHook = {
   mounted() {
     this.el.addEventListener("click", () => {
       // Set current date/time as a data attribute on body for the print header
+      const graphName = this.el.getAttribute("data-graph-name");
+
+      document.body.setAttribute("data-graph-name", graphName);
+      document.title = graphName;
       document.body.setAttribute(
         "data-print-date",
         new Date().toLocaleString(),
