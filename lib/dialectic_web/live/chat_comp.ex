@@ -4,14 +4,16 @@ defmodule DialecticWeb.ChatComp do
   alias DialecticWeb.ChatMsgComp
 
   def update(assigns, socket) do
-    {:ok, socket |> assign(assigns)}
+    conv = Dialectic.Linear.ThreadedConv.process_graph(assigns.graph)
+    IO.inspect(conv)
+    {:ok, socket |> assign(assigns) |> assign(conv: conv)}
   end
 
   def render(assigns) do
     ~H"""
     <div class="flex flex-col">
       <div class="flex-1 overflow-y-auto">
-        <%= for parent <- @node.parents do %>
+        <%= for {_, _, parent} <- @conv do %>
           <.live_component
             module={ChatMsgComp}
             node={parent}
@@ -20,7 +22,7 @@ defmodule DialecticWeb.ChatComp do
             id={parent.id <>"_chatMsg" }
           />
         <% end %>
-        <%= if @node.content != "" do %>
+        <%!-- <%= if @node.content != "" do %>
           <.live_component
             module={ChatMsgComp}
             node={@node}
@@ -32,7 +34,7 @@ defmodule DialecticWeb.ChatComp do
           <div class="node mb-2">
             <h2>Loading ...</h2>
           </div>
-        <% end %>
+        <% end %> --%>
       </div>
       <div class="bg-white shadow-lg border-t border-gray-200 p-2">
         <div class="flex items-center">
