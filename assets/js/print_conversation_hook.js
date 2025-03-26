@@ -18,15 +18,18 @@ const printConversationHook = {
         node.style.display = "flex"; // Make visible for printing
       });
 
-      // Call browser print function
-      window.print();
-
-      // After print dialog closes, restore collapsed nodes
+      // Add a small delay to ensure nodes have time to expand before printing
       setTimeout(() => {
-        wasExpanded.forEach((node) => {
-          node.style.display = "none";
-        });
-      }, 500);
+        // Call browser print function
+        window.print();
+
+        // After print dialog closes, restore collapsed nodes
+        setTimeout(() => {
+          wasExpanded.forEach((node) => {
+            node.style.display = "none";
+          });
+        }, 500);
+      }, 300); // 300ms delay should be enough for the DOM to update
     });
   },
 };
