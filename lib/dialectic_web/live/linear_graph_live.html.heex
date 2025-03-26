@@ -1,6 +1,7 @@
 <div class="conversation-thread">
   <.link
     href={~p"/#{@graph_id}"}
+    id="graph-link"
     class="text-xs leading-6 font-semibold text-zinc-900 hover:text-zinc-700"
   >
     Read as graph
@@ -13,6 +14,31 @@
   >
     {if length(@hidden) != 0, do: "Expand all", else: "Collapse all"}
   </button>
+
+  <.button
+    phx-click="prepare_for_print"
+    phx-hook="PrintConversation"
+    id="print-button"
+    class="text-xs font-semibold px-2 py-1 rounded hover:bg-gray-100"
+  >
+    <span class="flex items-center">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-4 w-4 mr-1"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+        />
+      </svg>
+      Print / Save PDF
+    </span>
+  </.button>
 
   <%= for node <- @conv do %>
     <%= unless node.deleted do %>
@@ -77,4 +103,24 @@
       </div>
     <% end %>
   <% end %>
+
+  <style id="print-styles" media="print">
+    /* Hide non-essential UI elements when printing */
+    header, a, #graph-link {
+      display: none !important;
+    }
+    button, .link {
+      display: none !important;
+    }
+
+    /* Ensure proper page breaks */
+    .node {
+      page-break-inside: avoid;
+    }
+
+    /* Add page margins */
+    @page {
+      margin: 1cm;
+    }
+  </style>
 </div>

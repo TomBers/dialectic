@@ -29,6 +29,11 @@ defmodule DialecticWeb.LinearGraphLive do
     {:noreply, socket |> assign(hidden: hidden)}
   end
 
+  def handle_event("prepare_for_print", _params, socket) do
+    # Temporarily expand all nodes
+    {:noreply, assign(socket, hidden: [])}
+  end
+
   defp message_border_class(class) do
     case class do
       # "user" -> "border-red-400"

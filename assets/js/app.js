@@ -26,6 +26,7 @@ import toolTipHook from "./tool_tip_hook.js";
 import textSelectionHook from "./text_selection_hook.js";
 import graphHook from "./graph_hook.js";
 import highlightNodeHook from "./highlight_node_hook.js";
+import printConversationHook from "./print_conversation_hook.js";
 
 let hooks = {};
 
@@ -34,6 +35,7 @@ hooks.NodeMenuHook = toolTipHook;
 hooks.TextSelectionHook = textSelectionHook;
 hooks.Graph = graphHook;
 hooks.HighlightNode = highlightNodeHook;
+hooks.PrintConversation = printConversationHook;
 
 let csrfToken = document
   .querySelector("meta[name='csrf-token']")
