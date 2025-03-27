@@ -12,6 +12,9 @@ defmodule DialecticWeb.ChatComp do
   def render(assigns) do
     ~H"""
     <div class="flex flex-col h-[80vh] max-h-[80%]">
+      <h1 class="text-lg mb-4 flex items-center">
+        <.icon name="hero-chat-bubble-left-right" class="h-5 w-5 mr-2" /> Conversation Timeline
+      </h1>
       <div class="flex-1 overflow-y-auto">
         <%= for parent <- @parents do %>
           <.live_component

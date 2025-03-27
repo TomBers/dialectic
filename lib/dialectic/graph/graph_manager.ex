@@ -163,7 +163,6 @@ defmodule GraphManager do
         end
       end)
       |> Enum.reverse()
-      |> IO.inspect(label: "Parents")
 
     {:reply, parents, {graph_struct, graph}}
   end
