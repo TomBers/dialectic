@@ -20,7 +20,7 @@ defmodule DialecticWeb.ChatComp do
             id={parent.id <>"_chatMsg" }
           />
         <% end %>
-        <%= if @node.content != "" do %>
+        <%!-- <%= if @node.content != "" do %>
           <.live_component
             module={ChatMsgComp}
             node={@node}
@@ -32,7 +32,7 @@ defmodule DialecticWeb.ChatComp do
           <div class="node mb-2">
             <h2>Loading ...</h2>
           </div>
-        <% end %>
+        <% end %> --%>
       </div>
       <div class="bg-white shadow-lg border-t border-gray-200 p-2">
         <div class="flex items-center">

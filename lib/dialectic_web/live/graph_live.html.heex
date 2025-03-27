@@ -92,6 +92,13 @@
           </svg>
           Read as text
         </.link>
+
+        <.live_component
+          module={DialecticWeb.Live.ModalComp}
+          node={@node}
+          id={"moda-comp-" <> @node.id}
+        />
+
         <.live_component
           module={ChatComp}
           form={@form}

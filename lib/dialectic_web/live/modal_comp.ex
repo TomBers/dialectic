@@ -1,6 +1,7 @@
 defmodule DialecticWeb.Live.ModalComp do
   use DialecticWeb, :live_component
   alias DialecticWeb.Live.TextUtils
+  alias DialecticWeb.ColUtils
 
   def update(assigns, socket) do
     {:ok, socket |> assign(assigns)}
@@ -11,7 +12,7 @@ defmodule DialecticWeb.Live.ModalComp do
     <div>
       <.modal
         on_cancel={JS.push("modal_closed")}
-        class={DialecticWeb.ColUtils.message_border_class(@node.class)}
+        class={ColUtils.message_border_class(@node.class)}
         id={"modal-" <> @node.id}
       >
         <div
