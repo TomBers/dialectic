@@ -172,10 +172,10 @@ defmodule GraphManager do
     updated_vertex =
       case direction do
         "up" ->
-          Siblings.up(node)
+          Siblings.down(node)
 
         "down" ->
-          Siblings.down(node)
+          Siblings.up(node)
 
         "left" ->
           Siblings.left(node, graph)
