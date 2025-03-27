@@ -1,17 +1,19 @@
 defmodule DialecticWeb.ChatComp do
   use DialecticWeb, :live_component
-
   alias DialecticWeb.ChatMsgComp
 
   def update(assigns, socket) do
-    {:ok, socket |> assign(assigns)}
+    parents =
+      GraphManager.path_to_node(assigns.graph_id, assigns.node)
+
+    {:ok, socket |> assign(assigns) |> assign(parents: parents)}
   end
 
   def render(assigns) do
     ~H"""
-    <div class="flex flex-col">
+    <div class="flex flex-col h-[80vh] max-h-[80%]">
       <div class="flex-1 overflow-y-auto">
-        <%= for parent <- @node.parents do %>
+        <%= for parent <- @parents do %>
           <.live_component
             module={ChatMsgComp}
             node={parent}
@@ -20,19 +22,6 @@ defmodule DialecticWeb.ChatComp do
             id={parent.id <>"_chatMsg" }
           />
         <% end %>
-        <%!-- <%= if @node.content != "" do %>
-          <.live_component
-            module={ChatMsgComp}
-            node={@node}
-            user={@user}
-            show_user_controls={true}
-            id={@node.id <>"_chatMsg" }
-          />
-        <% else %>
-          <div class="node mb-2">
-            <h2>Loading ...</h2>
-          </div>
-        <% end %> --%>
       </div>
       <div class="bg-white shadow-lg border-t border-gray-200 p-2">
         <div class="flex items-center">

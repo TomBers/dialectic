@@ -152,6 +152,22 @@ defmodule GraphManager do
     end
   end
 
+  def handle_call({:path_to_node, node}, _, {graph_struct, graph}) do
+    parents =
+      Vertex.collect_parents(graph, node.id)
+      |> MapSet.new()
+      |> Enum.map(fn node_index ->
+        case :digraph.vertex(graph, node_index) do
+          {_id, vertex} -> vertex
+          false -> nil
+        end
+      end)
+      |> Enum.reverse()
+      |> IO.inspect(label: "Parents")
+
+    {:reply, parents, {graph_struct, graph}}
+  end
+
   def handle_call({:move, {node, direction}}, _, {graph_struct, graph}) do
     updated_vertex =
       case direction do
@@ -239,6 +255,10 @@ defmodule GraphManager do
   # So for the time being set it to a quarter of the window size.
   def build_context(path, node, limit \\ 25_000) do
     GenServer.call(via_tuple(path), {:build_context, node, limit})
+  end
+
+  def path_to_node(path, node) do
+    GenServer.call(via_tuple(path), {:path_to_node, node})
   end
 
   def save_graph(path) do
