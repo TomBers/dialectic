@@ -1,5 +1,7 @@
 defmodule DialecticWeb.NodeMenuComp do
   use DialecticWeb, :live_component
+  alias DialecticWeb.Live.TextUtils
+  alias DialecticWeb.ColUtils
 
   def render(assigns) do
     ~H"""
@@ -15,7 +17,7 @@ defmodule DialecticWeb.NodeMenuComp do
           class={[
             "p-2 rounded-lg shadow-sm",
             "flex items-start gap-3 bg-white border-4",
-            message_border_class(@node.class)
+            ColUtils.message_border_class(@node.class)
           ]}
           id={"tt-node-" <> @node.id}
         >
@@ -26,7 +28,7 @@ defmodule DialecticWeb.NodeMenuComp do
             data-node-id={@node.id}
           >
             <article class="prose prose-stone prose-sm selection-content">
-              {truncated_html(@node.content || "", @cut_off)}
+              {TextUtils.truncated_html(@node.content || "", @cut_off)}
             </article>
             <div class="selection-actions hidden absolute bg-white shadow-md rounded-md p-1 z-10">
               <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded">
@@ -327,30 +329,5 @@ defmodule DialecticWeb.NodeMenuComp do
        ask_question: Map.get(assigns, :ask_question, true),
        graph_id: Map.get(assigns, :graph_id, "")
      )}
-  end
-
-  defp message_border_class(class) do
-    case class do
-      # "user" -> "border-red-400"
-      "answer" -> "border-blue-400"
-      "thesis" -> "border-green-400"
-      "antithesis" -> "border-red-400"
-      "synthesis" -> "border-purple-600"
-      _ -> "border border-gray-200 bg-white"
-    end
-  end
-
-  defp truncated_html(content, cut_off) do
-    # If content is already under the cutoff, just return the full text
-    if String.length(content) <= cut_off do
-      full_html(content)
-    else
-      truncated = String.slice(content, 0, cut_off) <> "..."
-      Earmark.as_html!(truncated) |> Phoenix.HTML.raw()
-    end
-  end
-
-  defp full_html(content) do
-    Earmark.as_html!(content) |> Phoenix.HTML.raw()
   end
 end
