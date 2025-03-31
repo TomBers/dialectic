@@ -7,56 +7,120 @@ defmodule DialecticWeb.NoteMenuComp do
 
   def render(assigns) do
     ~H"""
-    <div class="prose prose-stone prose-sm tiny-text">
-      <%= if @node.class == "user"  do %>
-        By:{@node.user}
-      <% else %>
-        Generated
-      <% end %>
-      | {length(@node.noted_by)} ⭐ |
-      <%= if Enum.any?(@node.noted_by, fn u -> u == @user end) do %>
-        <button
-          phx-click="unnote"
-          phx-value-node={@node.id}
-          tabindex="-1"
-          class="text-red-600 hover:text-red-800 font-medium focus:outline-none"
+    <div class="rounded-md px-3 py-2 shadow-sm inline-flex items-center space-x-3 text-xs">
+      <span class="flex items-center">
+        <%= if @node.class == "user" do %>
+          <span class="text-gray-500">By:</span>
+          <span class="font-semibold ml-1 text-gray-700">{@node.user}</span>
+        <% end %>
+      </span>
+
+      <div class="flex items-center bg-amber-50 px-2 py-0.5 rounded-full" title="Number of stars">
+        <span class="text-amber-600 mr-1">{length(@node.noted_by)}</span>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-3.5 w-3.5 text-amber-500"
+          fill="currentColor"
+          viewBox="0 0 24 24"
         >
-          Unnote
-        </button>
-      <% else %>
-        <button
-          phx-click="note"
-          phx-value-node={@node.id}
-          tabindex="-1"
-          class="text-green-600 hover:text-green-800 font-medium focus:outline-none"
-        >
-          Note
-        </button>
+          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+        </svg>
+      </div>
+
+      <%= if @show_action_btns do %>
+        <div class="flex items-center space-x-2">
+          <%= if Enum.any?(@node.noted_by, fn u -> u == @user end) do %>
+            <button
+              phx-click="unnote"
+              phx-value-node={@node.id}
+              tabindex="-1"
+              class="bg-red-50 text-red-700 hover:bg-red-100 px-2 py-0.5 rounded-full text-xs font-medium transition-colors"
+            >
+              Unnote
+            </button>
+          <% else %>
+            <button
+              phx-click="note"
+              phx-value-node={@node.id}
+              tabindex="-1"
+              class="bg-green-50 text-green-700 hover:bg-green-100 px-2 py-0.5 rounded-full text-xs font-medium transition-colors"
+            >
+              Note
+            </button>
+          <% end %>
+
+          <.link
+            navigate={"?node=" <> @node.id}
+            tabindex="-1"
+            class="bg-blue-50 text-blue-700 hover:bg-blue-100 px-2 py-0.5 rounded-full text-xs font-medium transition-colors flex items-center"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-3 w-3 mr-1"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+              />
+            </svg>
+            Link
+          </.link>
+
+          <div class="flex items-center space-x-1">
+            <button
+              phx-click="edit"
+              phx-value-node={@node.id}
+              tabindex="-1"
+              class="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-2 py-0.5 rounded-full text-xs font-medium transition-colors flex items-center"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-3 w-3 mr-1"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                />
+              </svg>
+              Edit
+            </button>
+
+            <button
+              phx-click="delete"
+              phx-confirm="Are you sure you want to delete this note?"
+              phx-value-node={@node.id}
+              tabindex="-1"
+              class="bg-red-50 text-red-700 hover:bg-red-100 px-2 py-0.5 rounded-full text-xs font-medium transition-colors flex items-center"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-3 w-3 mr-1"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                />
+              </svg>
+              Delete
+            </button>
+          </div>
+        </div>
       <% end %>
-      |
-      <.link navigate={"?node=" <> @node.id} tabindex="-1" class="text-blue-600 hover:text-blue-400">
-        Link
-      </.link>
-      |
-      <button
-        phx-click="delete"
-        data-confirm="Are you sure?"
-        phx-value-node={@node.id}
-        tabindex="-1"
-        class="text-red-600 hover:text-red-800 font-medium focus:outline-none"
-      >
-        Delete
-      </button>
-      |
-      <button
-        phx-click="edit"
-        phx-confirm="Are you sure?"
-        phx-value-node={@node.id}
-        tabindex="-1"
-        class="text-red-600 hover:text-red-800 font-medium focus:outline-none"
-      >
-        Edit
-      </button>
     </div>
     """
   end

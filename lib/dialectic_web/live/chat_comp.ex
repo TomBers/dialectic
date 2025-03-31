@@ -1,6 +1,7 @@
 defmodule DialecticWeb.ChatComp do
   use DialecticWeb, :live_component
   alias DialecticWeb.ChatMsgComp
+  alias DialecticWeb.NoteMenuComp
 
   def update(assigns, socket) do
     parents =
@@ -13,6 +14,13 @@ defmodule DialecticWeb.ChatComp do
     ~H"""
     <div class="flex flex-col h-[80vh] max-h-[80%]">
       <%= if length(@parents) > 0 do %>
+        <.live_component
+          module={NoteMenuComp}
+          node={@node}
+          user={@user}
+          show_action_btns={true}
+          id={"note-menu-" <> @node.id}
+        />
         <h1 class="text-lg mb-4 flex items-center">
           <.icon name="hero-chat-bubble-left-right" class="h-5 w-5 mr-2" /> Conversation Timeline
         </h1>

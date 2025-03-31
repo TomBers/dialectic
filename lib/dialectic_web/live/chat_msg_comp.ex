@@ -83,8 +83,6 @@ defmodule DialecticWeb.ChatMsgComp do
             </button>
           </div>
         <% end %>
-
-        <.live_component module={NoteMenuComp} node={@node} id={"note-menu-" <> @node.id} />
       </div>
     </div>
     """
