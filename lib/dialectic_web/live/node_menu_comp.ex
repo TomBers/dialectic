@@ -2,6 +2,7 @@ defmodule DialecticWeb.NodeMenuComp do
   use DialecticWeb, :live_component
   alias DialecticWeb.Live.TextUtils
   alias DialecticWeb.ColUtils
+  alias DialecticWeb.NoteMenuComp
 
   def render(assigns) do
     ~H"""
@@ -68,6 +69,7 @@ defmodule DialecticWeb.NodeMenuComp do
           <h2>Loading ...</h2>
         </div>
       <% end %>
+      <.live_component module={NoteMenuComp} node={@node} user={@user} id={"note-menu-" <> @node.id} />
       <%= if @ask_question do %>
         <.form for={@form} phx-submit="reply-and-answer" id={"tt-reply-form-" <> @node.id}>
           <div class="flex-1 mb-4">

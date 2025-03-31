@@ -37,7 +37,6 @@ defmodule DialecticWeb.ChatComp do
             module={ChatMsgComp}
             node={parent}
             user={@user}
-            show_user_controls={false}
             id={parent.id <>"_chatMsg" }
           />
         <% end %>
