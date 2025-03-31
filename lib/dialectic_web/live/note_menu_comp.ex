@@ -27,32 +27,13 @@ defmodule DialecticWeb.NoteMenuComp do
         </svg>
       </div>
 
-      <%= if @show_action_btns do %>
-        <div class="flex items-center space-x-2">
-          <%= if Enum.any?(@node.noted_by, fn u -> u == @user end) do %>
-            <button
-              phx-click="unnote"
-              phx-value-node={@node.id}
-              tabindex="-1"
-              class="bg-red-50 text-red-700 hover:bg-red-100 px-2 py-0.5 rounded-full text-xs font-medium transition-colors"
-            >
-              Unnote
-            </button>
-          <% else %>
-            <button
-              phx-click="note"
-              phx-value-node={@node.id}
-              tabindex="-1"
-              class="bg-green-50 text-green-700 hover:bg-green-100 px-2 py-0.5 rounded-full text-xs font-medium transition-colors"
-            >
-              Note
-            </button>
-          <% end %>
-
-          <.link
-            navigate={"?node=" <> @node.id}
+      <div class="flex items-center space-x-2">
+        <%= if Enum.any?(@node.noted_by, fn u -> u == @user end) do %>
+          <button
+            phx-click="unnote"
+            phx-value-node={@node.id}
             tabindex="-1"
-            class="bg-blue-50 text-blue-700 hover:bg-blue-100 px-2 py-0.5 rounded-full text-xs font-medium transition-colors flex items-center"
+            class="bg-red-50 text-red-700 hover:bg-red-100 px-2 py-0.5 rounded-full text-xs font-medium transition-colors flex items-center"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -65,12 +46,65 @@ defmodule DialecticWeb.NoteMenuComp do
                 stroke-linecap="round"
                 stroke-linejoin="round"
                 stroke-width="2"
-                d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+              />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
               />
             </svg>
-            Link
-          </.link>
+            Unnote
+          </button>
+        <% else %>
+          <button
+            phx-click="note"
+            phx-value-node={@node.id}
+            tabindex="-1"
+            class="bg-green-50 text-green-700 hover:bg-green-100 px-2 py-0.5 rounded-full text-xs font-medium transition-colors flex items-center"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-3 w-3 mr-1"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+              />
+            </svg>
+            Note
+          </button>
+        <% end %>
 
+        <.link
+          navigate={"?node=" <> @node.id}
+          tabindex="-1"
+          class="bg-blue-50 text-blue-700 hover:bg-blue-100 px-2 py-0.5 rounded-full text-xs font-medium transition-colors flex items-center"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-3 w-3 mr-1"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+            />
+          </svg>
+          Link
+        </.link>
+
+        <%= if length(@node.children) == 0 do %>
           <div class="flex items-center space-x-1">
             <button
               phx-click="edit"
@@ -119,8 +153,8 @@ defmodule DialecticWeb.NoteMenuComp do
               Delete
             </button>
           </div>
-        </div>
-      <% end %>
+        <% end %>
+      </div>
     </div>
     """
   end

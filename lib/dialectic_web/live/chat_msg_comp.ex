@@ -1,7 +1,6 @@
 defmodule DialecticWeb.ChatMsgComp do
   use DialecticWeb, :live_component
   alias DialecticWeb.Live.TextUtils
-  alias DialecticWeb.NoteMenuComp
 
   @impl true
   def update(assigns, socket) do
