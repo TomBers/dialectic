@@ -23,7 +23,7 @@ defmodule DialecticWeb.Router do
     get "/view_all/graphs", PageController, :view_all
     post "/conversation", PageController, :create
     get "/intro/what", PageController, :what
-    get "/graphs/:graph_name", PageController, :graph
+
     get "/deploy/dashboard", PageController, :deploy_dashboard
     get "/ideas/all", PageController, :ideas_all
     live "/:graph_name", GraphLive
@@ -35,6 +35,7 @@ defmodule DialecticWeb.Router do
     pipe_through :api
 
     get "/random_question", PageController, :random_question
+    get "/graphs/:graph_name", PageController, :graph
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
