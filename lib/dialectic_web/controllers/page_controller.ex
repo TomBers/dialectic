@@ -30,9 +30,28 @@ defmodule DialecticWeb.PageController do
     end
   end
 
-  def graph(conn, %{"graph_name" => graph_name}) do
+  def graph_json(conn, %{"graph_name" => graph_id_uri}) do
+    graph_name = URI.decode(graph_id_uri)
     graph = Graphs.get_graph_by_title(graph_name).data
     json(conn, graph)
+  end
+
+  def graph_md(conn, %{"graph_name" => graph_id_uri}) do
+    graph_name = URI.decode(graph_id_uri)
+    {_graph_struct, graph} = GraphManager.get_graph(graph_name)
+
+    # Convert the graph to markdown
+    markdown_content =
+      Dialectic.Linear.ThreadedConv.prepare_conversation(graph)
+      |> Enum.map(&(&1.content <> "\n\n"))
+
+    # Set filename
+    filename = "#{graph_name}.md"
+
+    conn
+    |> put_resp_content_type("text/markdown")
+    |> put_resp_header("content-disposition", "attachment; filename=#{filename}")
+    |> send_resp(200, markdown_content)
   end
 
   def what(conn, _params) do
