@@ -1,4 +1,4 @@
-<section>
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
   <h2 class="text-2xl font-bold text-gray-700 mb-4">All Graphs ({length(@graphs)})</h2>
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
     <%= for {g, count} <- @graphs do %>
@@ -11,4 +11,4 @@
       />
     <% end %>
   </div>
-</section>
+</div>
