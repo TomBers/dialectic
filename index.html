@@ -277,9 +277,17 @@
                 <div class="section-title">
                     <h2>Reimagining Learning with AI</h2>
                 </div>
-
-                <div class="feature">
-                    <div class="feature-text">
+                <div
+                    class="feature"
+                    style="
+                        display: flex;
+                        flex-direction: row;
+                        gap: 2rem;
+                        align-items: flex-start;
+                    "
+                >
+                    <!-- Text content (60%) -->
+                    <div class="feature-text" style="flex: 0 0 60%">
                         <h3>What is it?</h3>
                         <p>
                             A mind mapping tool that uses AI
@@ -313,13 +321,31 @@
                                 gap: 1rem;
                             "
                         >
-                            <a
-                                href="https://mudg.fly.dev/Normative%2520ethical%2520theories"
-                                class="btn"
+                            <a href="https://mudg.fly.dev" class="btn"
                                 >Try it</a
                             >
                             <a href="#about" class="btn">About</a>
                         </div>
+                    </div>
+
+                    <!-- Video content (40%) -->
+                    <div class="feature-video" style="flex: 0 0 40%">
+                        <div style="padding: 56.25% 0 0 0; position: relative">
+                            <iframe
+                                src="https://player.vimeo.com/video/1073545276?title=0&amp;byline=0&amp;portrait=0&amp;badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479"
+                                frameborder="0"
+                                allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"
+                                style="
+                                    position: absolute;
+                                    top: 0;
+                                    left: 0;
+                                    width: 100%;
+                                    height: 100%;
+                                "
+                                title="Demonstration Video"
+                            ></iframe>
+                        </div>
+                        <script src="https://player.vimeo.com/api/player.js"></script>
                     </div>
                 </div>
             </div>
