@@ -159,6 +159,18 @@
                 box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
             }
 
+            /* Style for the first section layout */
+            .first-section-layout {
+                display: flex;
+                flex-direction: row;
+                gap: 2rem;
+                align-items: flex-start;
+            }
+
+            .feature-video {
+                flex: 0 0 40%;
+            }
+
             .about-section {
                 background-color: #f8f9fa;
                 padding: 5rem 0;
@@ -188,12 +200,12 @@
                 text-align: justify;
             }
 
-            .about-content ul {
+            ul {
                 margin-bottom: 2rem;
                 padding-left: 2rem;
             }
 
-            .about-content li {
+            li {
                 margin-bottom: 0.8rem;
             }
 
@@ -218,11 +230,26 @@
                     flex-direction: column;
                 }
 
+                /* Updated mobile responsiveness for the first section */
+                .first-section-layout {
+                    flex-direction: column;
+                }
+
                 .feature-text,
-                .feature-image {
+                .feature-video {
                     flex: none;
                     width: 100%;
                     padding: 1.5rem 0;
+                }
+
+                /* Ensure text comes first on mobile */
+                .feature-text {
+                    order: 1;
+                }
+
+                /* Video comes after text on mobile */
+                .feature-video {
+                    order: 2;
                 }
 
                 .feature-text {
@@ -277,15 +304,7 @@
                 <div class="section-title">
                     <h2>Reimagining Learning with AI</h2>
                 </div>
-                <div
-                    class="feature"
-                    style="
-                        display: flex;
-                        flex-direction: row;
-                        gap: 2rem;
-                        align-items: flex-start;
-                    "
-                >
+                <div class="first-section-layout">
                     <!-- Text content (60%) -->
                     <div class="feature-text" style="flex: 0 0 60%">
                         <h3>What is it?</h3>
@@ -296,10 +315,13 @@
                         </p>
                         <h3>Who is it for?</h3>
                         <p>
-                            Anyone who wants to explore an idea in depth and see
-                            where it takes them. Also a chance to see how others
-                            think, seeing pathways over complex topics.
-                            <br /><br />
+                            Anyone who wants to
+                            <strong
+                                >explore an idea in depth and see where it takes
+                                them.</strong
+                            >
+                            Also a chance to see how others think, seeing
+                            pathways over complex topics. <br /><br />
                             More explicitly - students, writers or people who
                             want to have a clearer basis for their
                             understanding.
@@ -310,9 +332,11 @@
                             conclusions of others and keep unfinished or
                             incomplete notes to our self. It was built with 2
                             principles, learning can be done better together
-                            (and AI can help), and that visualising the history
-                            of this thinking is valuable not only for ourselves
-                            but others.
+                            (and AI can help), and that visualising
+                            <strong
+                                >the history of this thinking is valuable not
+                                only for ourselves but others.</strong
+                            >
                         </p>
                         <div
                             style="
@@ -329,7 +353,7 @@
                     </div>
 
                     <!-- Video content (40%) -->
-                    <div class="feature-video" style="flex: 0 0 40%">
+                    <div class="feature-video">
                         <div style="padding: 56.25% 0 0 0; position: relative">
                             <iframe
                                 src="https://player.vimeo.com/video/1073545276?title=0&amp;byline=0&amp;portrait=0&amp;badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479"
@@ -435,15 +459,15 @@
                         </p>
                         <h3>At a specific level</h3>
                         <p>
-                            The AI revolution and learning. Having a tool that
-                            can answer many specific questions and has a great
-                            deal of knowledge about wide range of topics is an
-                            unprecedented tool for learning. To make learning an
-                            active process, to ask questions that interest you
-                            and a very granular level is in itself an engrossing
-                            process.
-                            <br />
-                            However, I think it currently has a few drawbacks.
+                            <strong>The AI revolution and learning.</strong>
+                            Having a tool that can answer many specific
+                            questions and has a great deal of knowledge about
+                            wide range of topics is an unprecedented tool for
+                            learning. To make learning an active process, to ask
+                            questions that interest you and a very granular
+                            level is in itself an engrossing process.
+                            <br /><br />
+                            I think it currently has a few drawbacks:
                         </p>
                         <ul>
                             <li>
@@ -465,7 +489,7 @@
                                 >
                                 I often have very interesting discussions, but I
                                 rarely if ever return to a conversation. Meaning
-                                building bigger ideas gets lost.
+                                building bigger ideas becomes difficult.
                             </li>
                         </ul>
                     </div>
@@ -505,6 +529,28 @@
                         <script src="https://player.vimeo.com/api/player.js"></script>
                     </div>
                 </div>
+                <div class="container">
+                    <div class="feature">
+                        <div class="feature-text">
+                            <h3>Vs. ChatGPT</h3>
+                            <p>
+                                The conversation becomes a wall of text, to
+                                explore specific topics you need to scroll up
+                                and down, meaning the flow of the conversation
+                                is lost.
+                            </p>
+                        </div>
+                        <div class="feature-image">
+                            <video autoplay muted loop playsinline>
+                                <source
+                                    src="media/videos/LLM-Chat.mp4"
+                                    type="video/mp4"
+                                />
+                                Your browser does not support the video tag.
+                            </video>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
         <section id="outcomes">
@@ -537,7 +583,7 @@
                     </div>
                     <div class="feature-image">
                         <img
-                            src="media/images/Ethics2.webp"
+                            src="media/images/Ethics.webp"
                             alt="Ethics Knowledge Graph"
                         />
                     </div>
@@ -590,7 +636,9 @@
                         <p>
                             Each node has a link associated with it. So you can
                             have a unique URL for any node on the page, that can
-                            be shared with anyone else.
+                            be shared with anyone else. This means you can
+                            return to any point and continue from where you left
+                            off.
                         </p>
                     </div>
                     <div class="feature-image">
