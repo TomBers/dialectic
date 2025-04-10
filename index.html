@@ -159,6 +159,18 @@
                 box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
             }
 
+            /* Style for the first section layout */
+            .first-section-layout {
+                display: flex;
+                flex-direction: row;
+                gap: 2rem;
+                align-items: flex-start;
+            }
+
+            .feature-video {
+                flex: 0 0 40%;
+            }
+
             .about-section {
                 background-color: #f8f9fa;
                 padding: 5rem 0;
@@ -218,11 +230,26 @@
                     flex-direction: column;
                 }
 
+                /* Updated mobile responsiveness for the first section */
+                .first-section-layout {
+                    flex-direction: column;
+                }
+
                 .feature-text,
-                .feature-image {
+                .feature-video {
                     flex: none;
                     width: 100%;
                     padding: 1.5rem 0;
+                }
+
+                /* Ensure text comes first on mobile */
+                .feature-text {
+                    order: 1;
+                }
+
+                /* Video comes after text on mobile */
+                .feature-video {
+                    order: 2;
                 }
 
                 .feature-text {
@@ -277,15 +304,7 @@
                 <div class="section-title">
                     <h2>Reimagining Learning with AI</h2>
                 </div>
-                <div
-                    class="feature"
-                    style="
-                        display: flex;
-                        flex-direction: row;
-                        gap: 2rem;
-                        align-items: flex-start;
-                    "
-                >
+                <div class="first-section-layout">
                     <!-- Text content (60%) -->
                     <div class="feature-text" style="flex: 0 0 60%">
                         <h3>What is it?</h3>
@@ -329,7 +348,7 @@
                     </div>
 
                     <!-- Video content (40%) -->
-                    <div class="feature-video" style="flex: 0 0 40%">
+                    <div class="feature-video">
                         <div style="padding: 56.25% 0 0 0; position: relative">
                             <iframe
                                 src="https://player.vimeo.com/video/1073545276?title=0&amp;byline=0&amp;portrait=0&amp;badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479"
