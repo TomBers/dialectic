@@ -27,7 +27,7 @@ function style_graph(cols_str) {
         "text-valign": "center",
         "text-halign": "center",
         "font-family": "sans-serif",
-        "font-weight": "400",
+        "font-weight": "500",
         color: "#374151", // gray-700
         "text-wrap": "wrap",
         "text-max-width": "180px",
@@ -61,7 +61,7 @@ function style_graph(cols_str) {
       css: {
         "border-color": cols[nodeType].border,
         "background-color": cols[nodeType].background,
-        color: cols[nodeType].text,
+        // color: cols[nodeType].text,
       },
     });
     base_style.push({
