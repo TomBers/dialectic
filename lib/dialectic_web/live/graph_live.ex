@@ -67,8 +67,13 @@ defmodule DialecticWeb.GraphLive do
        can_edit: can_edit,
        node_menu_visible: false,
        node_menu_position: nil,
-       auto_reply: true
+       auto_reply: true,
+       drawer_open: false
      )}
+  end
+
+  def handle_event("toggle_drawer", _, socket) do
+    {:noreply, socket |> assign(drawer_open: !socket.assigns.drawer_open)}
   end
 
   def handle_event("toggle_auto_reply", _, socket) do
@@ -203,55 +208,52 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event("KeyBoardInterface", %{"key" => last_key, "cmdKey" => isCmd}, socket) do
     # IO.inspect(params, label: "KeyBoardInterface")
-    if !socket.assigns.can_edit do
-      {:noreply, socket |> put_flash(:error, "This graph is locked")}
-    else
-      key =
-        (socket.assigns.key_buffer <> last_key)
-        |> String.replace_prefix("Control", "")
 
-      if isCmd do
-        if socket.assigns.show_combine do
-          combine_interface(socket, key)
-        else
-          if last_key == "Control" do
-            {:noreply, assign(socket, key_buffer: "")}
-          else
-            main_keybaord_interface(socket, key)
-          end
-        end
+    key =
+      (socket.assigns.key_buffer <> last_key)
+      |> String.replace_prefix("Control", "")
+
+    if isCmd do
+      if socket.assigns.show_combine do
+        combine_interface(socket, key)
       else
-        if socket.assigns.edit do
-          {:noreply, socket}
+        if last_key == "Control" do
+          {:noreply, assign(socket, key_buffer: "")}
         else
-          case key do
-            "ArrowDown" ->
-              update_graph(
-                socket,
-                GraphActions.move(graph_action_params(socket), "down")
-              )
+          main_keybaord_interface(socket, key)
+        end
+      end
+    else
+      if socket.assigns.edit do
+        {:noreply, socket}
+      else
+        case key do
+          "ArrowDown" ->
+            update_graph(
+              socket,
+              GraphActions.move(graph_action_params(socket), "down")
+            )
 
-            "ArrowUp" ->
-              update_graph(
-                socket,
-                GraphActions.move(graph_action_params(socket), "up")
-              )
+          "ArrowUp" ->
+            update_graph(
+              socket,
+              GraphActions.move(graph_action_params(socket), "up")
+            )
 
-            "ArrowRight" ->
-              update_graph(
-                socket,
-                GraphActions.move(graph_action_params(socket), "right")
-              )
+          "ArrowRight" ->
+            update_graph(
+              socket,
+              GraphActions.move(graph_action_params(socket), "right")
+            )
 
-            "ArrowLeft" ->
-              update_graph(
-                socket,
-                GraphActions.move(graph_action_params(socket), "left")
-              )
+          "ArrowLeft" ->
+            update_graph(
+              socket,
+              GraphActions.move(graph_action_params(socket), "left")
+            )
 
-            _ ->
-              {:noreply, socket}
-          end
+          _ ->
+            {:noreply, socket}
         end
       end
     end
@@ -327,11 +329,12 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_info({:llm_request_complete}, socket) do
+  def handle_info({:llm_request_complete, node_id}, socket) do
     # Make sure that the graph is saved to the database
     # We pass false so that it does not respect the queue exlusion period and stores the response immediately.
     DbWorker.save_graph(socket.assigns.graph_id, false)
-    {:noreply, socket}
+
+    update_graph(socket, GraphActions.find_node(socket.assigns.graph_id, node_id), false, true)
   end
 
   def handle_info({:stream_error, error, :node_id, node_id}, socket) do
@@ -357,20 +360,32 @@ defmodule DialecticWeb.GraphLive do
   def main_keybaord_interface(socket, key) do
     case key do
       "b" ->
-        update_graph(
-          socket,
-          GraphActions.branch(graph_action_params(socket))
-        )
+        if !socket.assigns.can_edit do
+          {:noreply, socket |> put_flash(:error, "This graph is locked")}
+        else
+          update_graph(
+            socket,
+            GraphActions.branch(graph_action_params(socket))
+          )
+        end
 
       "r" ->
-        update_graph(
-          socket,
-          GraphActions.answer(graph_action_params(socket))
-        )
+        if !socket.assigns.can_edit do
+          {:noreply, socket |> put_flash(:error, "This graph is locked")}
+        else
+          update_graph(
+            socket,
+            GraphActions.answer(graph_action_params(socket))
+          )
+        end
 
       "c" ->
-        com = Map.get(socket.assigns.node, :id)
-        {:noreply, assign(socket, show_combine: !is_nil(com))}
+        if !socket.assigns.can_edit do
+          {:noreply, socket |> put_flash(:error, "This graph is locked")}
+        else
+          com = Map.get(socket.assigns.node, :id)
+          {:noreply, assign(socket, show_combine: !is_nil(com))}
+        end
 
       _ ->
         case GraphActions.find_node(socket.assigns.graph_id, key) do

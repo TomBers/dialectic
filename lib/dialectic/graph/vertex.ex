@@ -183,7 +183,8 @@ defmodule Dialectic.Graph.Vertex do
                 %{
                   data: %{
                     id: vid,
-                    class: dat.class
+                    class: dat.class,
+                    content: dat.content
                   }
                 }
               ]

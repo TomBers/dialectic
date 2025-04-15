@@ -21,8 +21,8 @@ defmodule DialecticWeb.Live.ModalComp do
           phx-hook="TextSelectionHook"
           data-node-id={@node.id}
         >
-          <article class="prose prose-stone prose-lg selection-content">
-            <h1 class="">{TextUtils.modal_title(@node.content, @node.class)}</h1>
+          <article class="prose prose-stone prose-md selection-content">
+            <h1>{TextUtils.modal_title(@node.content, @node.class)}</h1>
             {TextUtils.full_html(@node.content || "")}
           </article>
           

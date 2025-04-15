@@ -4,7 +4,7 @@ defmodule DialecticWeb.PageHtml.ConvComp do
   def create(assigns) do
     ~H"""
     <div class="mb-8 bg-white border border-gray-200 shadow-md rounded-xl p-8">
-      <h2 class="text-3xl font-bold text-gray-800 mb-6">What would you like to talk about?</h2>
+      <h2 class="text-3xl font-bold text-gray-800 mb-6">What interests you today?</h2>
       <.form :let={f} for={%{}} action={~p"/conversation"} class="">
         <div class="space-y-6">
           <.input
@@ -65,8 +65,7 @@ defmodule DialecticWeb.PageHtml.ConvComp do
             });
         }
       </script>
-      <div class="flex justify-between items-center mt-8">
-        <div class="text-sm text-gray-500 italic">Find your next great discussion</div>
+      <div class="flex justify-end items-center mt-8">
         <div class="flex items-center">
           <button
             id="inspire-button"

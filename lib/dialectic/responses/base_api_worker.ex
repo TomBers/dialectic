@@ -77,7 +77,7 @@ defmodule Dialectic.Workers.BaseAPIWorker do
         Phoenix.PubSub.broadcast(
           Dialectic.PubSub,
           graph,
-          {:llm_request_complete}
+          {:llm_request_complete, to_node}
         )
 
         Logger.info(response)

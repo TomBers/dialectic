@@ -18,14 +18,24 @@ function style_graph(cols_str) {
         "background-color": "#f3f4f6", // gray-100
         "border-width": 2,
         "border-color": "#d1d5db", // gray-300
-        label: "data(id)",
+        label: function (ele) {
+          const content = ele.data("content") || "";
+          const truncatedContent =
+            content.substring(0, 100) + (content.length > 100 ? "..." : "");
+          return ele.data("id") + "\n\n" + truncatedContent;
+        },
         "text-valign": "center",
         "text-halign": "center",
         "font-family": "InterVariable, sans-serif",
         "font-weight": "400",
         color: "#374151", // gray-700
-        padding: "10px",
-        shape: "round-diamond",
+        "text-wrap": "wrap",
+        "text-max-width": "200px",
+        shape: "roundrectangle", // Changed from round-diamond to roundrectangle
+        width: "label", // Makes the node size fit the content
+        height: "label",
+        padding: "15px",
+        "text-margin-y": 0, // Ensure text is centered vertically
       },
     },
     // Clicked node highlight
@@ -51,7 +61,7 @@ function style_graph(cols_str) {
       css: {
         "border-color": cols[nodeType].border,
         "background-color": cols[nodeType].background,
-        color: cols[nodeType].text,
+        // color: cols[nodeType].text,
       },
     });
     base_style.push({
@@ -69,7 +79,7 @@ export function draw_graph(graph, context, elements, cols, node) {
     style: style_graph(cols),
     layout: {
       name: "dagre",
-      rankDir: "BT",
+      rankDir: "TB",
       nodeSep: 20,
       edgeSep: 15,
       rankSep: 30,
