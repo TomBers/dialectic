@@ -26,11 +26,11 @@ function style_graph(cols_str) {
         },
         "text-valign": "center",
         "text-halign": "center",
-        "font-family": "sans-serif",
-        "font-weight": "500",
+        "font-family": "InterVariable, sans-serif",
+        "font-weight": "400",
         color: "#374151", // gray-700
         "text-wrap": "wrap",
-        "text-max-width": "180px",
+        "text-max-width": "200px",
         shape: "roundrectangle", // Changed from round-diamond to roundrectangle
         width: "label", // Makes the node size fit the content
         height: "label",
