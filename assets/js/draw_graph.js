@@ -18,14 +18,24 @@ function style_graph(cols_str) {
         "background-color": "#f3f4f6", // gray-100
         "border-width": 2,
         "border-color": "#d1d5db", // gray-300
-        label: "data(id)",
+        label: function (ele) {
+          const content = ele.data("content") || "";
+          const truncatedContent =
+            content.substring(0, 100) + (content.length > 100 ? "..." : "");
+          return ele.data("id") + "\n\n" + truncatedContent;
+        },
         "text-valign": "center",
         "text-halign": "center",
-        "font-family": "InterVariable, sans-serif",
+        "font-family": "sans-serif",
         "font-weight": "400",
         color: "#374151", // gray-700
-        padding: "10px",
-        shape: "round-diamond",
+        "text-wrap": "wrap",
+        "text-max-width": "180px",
+        shape: "roundrectangle", // Changed from round-diamond to roundrectangle
+        width: "label", // Makes the node size fit the content
+        height: "label",
+        padding: "15px",
+        "text-margin-y": 0, // Ensure text is centered vertically
       },
     },
     // Clicked node highlight
