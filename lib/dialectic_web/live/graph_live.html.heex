@@ -23,10 +23,13 @@
     </div>
   </div>
   
-<!-- Main content with 50-50 split -->
+<!-- Main content with drawer menu -->
   <div class="flex-1 flex">
-    <!-- Left side: Graph -->
-    <div class="w-2/3" phx-window-keydown="KeyBoardInterface">
+    <!-- Left side: Graph (expands to full width when drawer is closed) -->
+    <div
+      class={if @drawer_open, do: "w-2/3", else: "w-full"}
+      phx-window-keydown="KeyBoardInterface"
+    >
       <div
         id="cy"
         class="h-full w-full"
@@ -59,8 +62,34 @@
       </.modal>
     </div>
     
-<!-- Right side: Chat -->
-    <div class="w-1/3 h-full flex flex-col items-end">
+<!-- Toggle button for drawer -->
+    <button
+      id="drawer-toggle"
+      phx-click="toggle_drawer"
+      class="fixed right-0 top-1/2 transform -translate-y-1/2 bg-gray-200 p-2 rounded-l-md shadow-md z-10"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-6 w-6"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d={if @drawer_open, do: "M13 5l7 7-7 7", else: "M11 19l-7-7 7-7"}
+        />
+      </svg>
+    </button>
+    
+<!-- Right side: Chat (Drawer) -->
+    <div class={
+      if @drawer_open,
+        do: "w-1/3 h-full flex flex-col transition-all duration-300 ease-in-out",
+        else: "w-0 overflow-hidden transition-all duration-300 ease-in-out"
+    }>
       <ul id="online_users" phx-update="stream" class="space-y-1">
         <li
           :for={{dom_id, %{id: id, metas: _metas}} <- @streams.presences}
@@ -73,7 +102,6 @@
           <span>{id}</span>
         </li>
       </ul>
-
       <div class="flex-1 overflow-y-auto">
         <.link
           href={~p"/#{@graph_id}/linear"}
@@ -92,13 +120,11 @@
           </svg>
           Read as text
         </.link>
-
         <.live_component
           module={DialecticWeb.Live.ModalComp}
           node={@node}
           id={"moda-comp-" <> @node.id}
         />
-
         <.live_component
           module={ChatComp}
           form={@form}
