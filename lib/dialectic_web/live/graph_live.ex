@@ -332,11 +332,12 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_info({:llm_request_complete}, socket) do
+  def handle_info({:llm_request_complete, node_id}, socket) do
     # Make sure that the graph is saved to the database
     # We pass false so that it does not respect the queue exlusion period and stores the response immediately.
     DbWorker.save_graph(socket.assigns.graph_id, false)
-    {:noreply, socket}
+
+    update_graph(socket, GraphActions.find_node(socket.assigns.graph_id, node_id), false, true)
   end
 
   def handle_info({:stream_error, error, :node_id, node_id}, socket) do

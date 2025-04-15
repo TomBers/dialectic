@@ -18,10 +18,11 @@ const graphHook = {
   },
   updated() {
     const { graph, node, updateview } = this.el.dataset;
+
     const newElements = JSON.parse(graph);
+    this.cy.json({ elements: newElements });
 
     if (newElements.length != numNodes.length) {
-      this.cy.json({ elements: newElements });
       this.cy
         .layout({
           name: "dagre",
