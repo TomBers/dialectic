@@ -25,7 +25,7 @@ const graphHook = {
       this.cy
         .layout({
           name: "dagre",
-          rankDir: "BT",
+          rankDir: "TB",
           nodeSep: 20,
           edgeSep: 15,
           rankSep: 30,
