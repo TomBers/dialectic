@@ -388,7 +388,7 @@ defmodule DialecticWeb.GraphLive do
   def main_keybaord_interface(socket, key) do
     case key do
       "b" ->
-        if !socket.assigns.can_edit do
+        if !socket.assigns.can_edit or socket.assigns.node.compound do
           {:noreply, socket |> put_flash(:error, "This graph is locked")}
         else
           update_graph(
@@ -398,7 +398,7 @@ defmodule DialecticWeb.GraphLive do
         end
 
       "r" ->
-        if !socket.assigns.can_edit do
+        if !socket.assigns.can_edit or socket.assigns.node.compound do
           {:noreply, socket |> put_flash(:error, "This graph is locked")}
         else
           update_graph(
@@ -408,7 +408,7 @@ defmodule DialecticWeb.GraphLive do
         end
 
       "c" ->
-        if !socket.assigns.can_edit do
+        if !socket.assigns.can_edit or socket.assigns.node.compound do
           {:noreply, socket |> put_flash(:error, "This graph is locked")}
         else
           com = Map.get(socket.assigns.node, :id)
