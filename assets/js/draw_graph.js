@@ -39,6 +39,19 @@ function style_graph(cols_str) {
       },
     },
     {
+      selector: "node[compound]",
+      style: {
+        label: "data(id)", // ← use the id field
+        "text-halign": "center",
+        "text-valign": "top",
+        "text-margin-y": -6,
+        "font-size": 12,
+        "font-weight": 600,
+        "text-opacity": 1, // make sure it isn’t zero
+        /* …border / background… */
+      },
+    },
+    {
       selector: "node.preview",
       style: {
         "border-width": 6,

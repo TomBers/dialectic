@@ -19,7 +19,8 @@ defmodule Dialectic.Graph.Vertex do
             parents: [],
             children: [],
             noted_by: [],
-            deleted: false
+            deleted: false,
+            compound: false
 
   # Add a function to validate the class
   def validate_class(class) when class in @valid_classes, do: {:ok, class}
@@ -34,7 +35,8 @@ defmodule Dialectic.Graph.Vertex do
       user: vertex.user,
       parent: vertex.parent,
       noted_by: vertex.noted_by,
-      deleted: vertex.deleted
+      deleted: vertex.deleted,
+      compound: vertex.compound
     }
   end
 
@@ -46,7 +48,8 @@ defmodule Dialectic.Graph.Vertex do
       user: data["user"],
       parent: data["parent"],
       noted_by: data["noted_by"],
-      deleted: data["deleted"]
+      deleted: data["deleted"],
+      compound: data["compound"]
     }
   end
 
@@ -150,7 +153,7 @@ defmodule Dialectic.Graph.Vertex do
       # vertex ID == title
       title,
       # Cytoscape‑friendly payload
-      %Dialectic.Graph.Vertex{id: title}
+      %Dialectic.Graph.Vertex{id: title, compound: true}
     )
 
     # 2.  update each child so Cytoscape knows its parent
@@ -210,12 +213,16 @@ defmodule Dialectic.Graph.Vertex do
             acc ++
               [
                 %{
-                  data: %{
-                    id: vid,
-                    parent: Map.get(dat, :parent, ""),
-                    class: dat.class,
-                    content: dat.content
-                  }
+                  data:
+                    %{
+                      id: vid,
+                      parent: Map.get(dat, :parent, ""),
+                      class: dat.class,
+                      content: dat.content
+                    }
+                    |> then(fn m ->
+                      if Map.get(dat, :compound, false), do: Map.put(m, :compound, true), else: m
+                    end)
                 }
               ]
         end
