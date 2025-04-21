@@ -76,7 +76,7 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("nodes_box_selected", %{"ids" => ids}, socket) do
-    IO.inspect(ids, label: "Selected Node IDs")
+    # IO.inspect(ids, label: "Selected Node IDs")
 
     {:noreply,
      socket
@@ -86,9 +86,16 @@ defmodule DialecticWeb.GraphLive do
      |> push_event("open_group_modal", %{ids: ids})}
   end
 
+  def handle_event("cancel_group", _, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_group_modal, false)
+     |> assign(:candidate_ids, [])}
+  end
+
   def handle_event("group_nodes", %{"title" => t, "ids" => ids}, socket) do
     graph = GraphManager.create_group(socket.assigns.graph_id, t, String.split(ids, ","))
-    # DbWorker.save_graph(socket.assigns.graph_id)
+    DbWorker.save_graph(socket.assigns.graph_id)
 
     {:noreply,
      socket

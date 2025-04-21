@@ -176,7 +176,22 @@ export function draw_graph(graph, context, elements, cols, node) {
 
     cy.nodes().forEach((n) => {
       const bb = n.boundingBox({ includeLabels: false });
-      const inside = bb.x1 >= x1 && bb.x2 <= x2 && bb.y1 >= y1 && bb.y2 <= y2;
+
+      /* 1 ▸ is the *centre* inside the rectangle? */
+      const cx = (bb.x1 + bb.x2) / 2;
+      const cyy = (bb.y1 + bb.y2) / 2;
+      const centerInside = cx >= x1 && cx <= x2 && cyy >= y1 && cyy <= y2;
+
+      /* 2 ▸ otherwise, does ≥ 40 % of the area overlap? */
+      const ix1 = Math.max(bb.x1, x1);
+      const iy1 = Math.max(bb.y1, y1);
+      const ix2 = Math.min(bb.x2, x2);
+      const iy2 = Math.min(bb.y2, y2);
+      const intersectArea = Math.max(0, ix2 - ix1) * Math.max(0, iy2 - iy1);
+      const nodeArea = (bb.x2 - bb.x1) * (bb.y2 - bb.y1);
+      const enoughOverlap = intersectArea / nodeArea >= 0.4; // 40 %
+
+      const inside = centerInside || enoughOverlap;
 
       n.toggleClass("preview", inside);
     });
@@ -283,6 +298,7 @@ export function draw_graph(graph, context, elements, cols, node) {
   return cy;
 }
 
+/* ───────────────────────── collapse ───────────────────────── */
 function collapse(parent) {
   if (parent.data("collapsed") === "true") return; // already collapsed
 
@@ -290,34 +306,43 @@ function collapse(parent) {
   const intEdges = children
     .connectedEdges()
     .filter(
-      (edge) =>
-        children.contains(edge.source()) && children.contains(edge.target()),
+      (e) => children.contains(e.source()) && children.contains(e.target()),
     );
   const extEdges = children.connectedEdges().subtract(intEdges);
 
-  // stash what we’ll need for restore
+  /* 1 · save where each child sits so we can restore it */
+  children.forEach((n) => {
+    n.data("_prevPos", { x: n.position("x"), y: n.position("y") });
+  });
+
+  /* 2 · stash IDs for quick lookup */
   parent.data({
-    collapsed: true,
+    collapsed: "true",
     _children: children.map((n) => n.id()),
     _intEdges: intEdges.map((e) => e.id()),
     _extEdges: extEdges.map((e) => e.id()),
   });
 
+  /* 3 · hide kids + interior edges, reroute externals */
   children.addClass("hidden");
   intEdges.addClass("hidden");
 
-  // reroute edges that leave the group so they point to the parent
   extEdges.forEach((e) => {
+    if (!e.data("_origSource")) e.data("_origSource", e.data("source"));
+    if (!e.data("_origTarget")) e.data("_origTarget", e.data("target"));
+
     if (children.contains(e.source())) e.move({ source: parent.id() });
     if (children.contains(e.target())) e.move({ target: parent.id() });
   });
-  parent.data("collapsed", "true");
 }
 
+/* ───────────────────────── expand ───────────────────────── */
 function expand(parent) {
   if (parent.data("collapsed") !== "true") return;
 
   const cy = parent.cy();
+
+  /* collections we stashed earlier */
   const children = cy.collection(
     parent.data("_children").map((id) => cy.getElementById(id)),
   );
@@ -328,10 +353,11 @@ function expand(parent) {
     parent.data("_extEdges").map((id) => cy.getElementById(id)),
   );
 
+  /* 1 · show kids + interior edges */
   children.removeClass("hidden");
   intEdges.removeClass("hidden");
 
-  // restore edge endpoints
+  /* 2 · restore edge endpoints */
   extEdges.forEach((e) => {
     const src = e.data("_origSource");
     const tgt = e.data("_origTarget");
@@ -339,6 +365,27 @@ function expand(parent) {
     if (tgt) e.move({ target: tgt });
   });
 
+  /* 3 · restore previous coordinates *or* run a mini‑layout */
+  const anyPrev = children.some((n) => n.data("_prevPos"));
+  if (anyPrev) {
+    children.forEach((n) => {
+      const p = n.data("_prevPos");
+      if (p) n.position(p);
+    });
+  } else {
+    cy.layout({
+      name: "dagre",
+      eles: children.union(intEdges),
+      fit: false,
+      padding: 20,
+      animate: true,
+      nodeSep: 20,
+      edgeSep: 15,
+      rankSep: 30,
+    }).run();
+  }
+
+  /* 4 · clean up flags */
   parent.removeData("collapsed");
 }
 
