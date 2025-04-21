@@ -143,6 +143,10 @@ export function draw_graph(graph, context, elements, cols, node) {
   });
 
   cy.on("boxend", (e) => {
+    boxSelecting = false;
+    /* remove the live preview colours */
+    cy.nodes(".preview").removeClass("preview");
+
     requestAnimationFrame(() => {
       const selectedNodes = cy.$(":selected").filter("node");
       if (selectedNodes.length) {
