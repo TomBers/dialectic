@@ -72,6 +72,16 @@ defmodule DialecticWeb.GraphLive do
      )}
   end
 
+  def handle_event("nodes_box_selected", %{"ids" => ids}, socket) do
+    IO.inspect(ids, label: "Selected Node IDs")
+
+    {:noreply,
+     socket
+     |> assign(:candidate_ids, ids)
+     # JS.exec() helpers work too
+     |> push_event("open_group_modal", %{ids: ids})}
+  end
+
   def handle_event("toggle_drawer", _, socket) do
     {:noreply, socket |> assign(drawer_open: !socket.assigns.drawer_open)}
   end

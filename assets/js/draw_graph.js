@@ -77,6 +77,9 @@ export function draw_graph(graph, context, elements, cols, node) {
     container: graph, // container to render in
     elements: elements,
     style: style_graph(cols),
+    boxSelectionEnabled: true, // ⬅️ lets users drag‑select
+    autounselectify: false, // allow multi‑select
+    wheelSensitivity: 0.2,
     layout: {
       name: "dagre",
       rankDir: "TB",
@@ -105,6 +108,24 @@ export function draw_graph(graph, context, elements, cols, node) {
     // Remove the highlight classes
     node.removeClass("node-hover");
     node.connectedEdges().removeClass("edge-hover");
+  });
+
+  // cy.on("boxstart", () => {
+  //   cy.$(":selected").unselect();
+  // });
+
+  cy.on("boxend", (e) => {
+    requestAnimationFrame(() => {
+      const selectedNodes = cy.$(":selected").filter("node");
+      if (selectedNodes.length) {
+        const ids = selectedNodes.map((n) => n.id());
+        console.log(ids);
+        context.pushEvent("nodes_box_selected", {
+          ids: ids,
+        });
+      }
+      selectedNodes.unselect();
+    });
   });
 
   const selectColor = "#83f28f"; // Light green color
