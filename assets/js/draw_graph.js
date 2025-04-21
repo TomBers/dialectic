@@ -51,6 +51,33 @@ function style_graph(cols_str) {
         /* …border / background… */
       },
     },
+    { selector: ".hidden", style: { display: "none" } },
+
+    /* draw the parent differently when it’s collapsed --- */
+    {
+      selector: 'node[compound][collapsed = "true"]',
+      style: {
+        /* fixed badge size */
+        width: 90, // px – tweak to taste
+        height: 40,
+
+        /* look & feel */
+        shape: "roundrectangle",
+        "background-opacity": 0.6,
+        "background-color": "#E5E7EB", // slate‑200
+        "border-width": 2,
+        "border-color": "#4B5563",
+
+        /* text centred inside the badge */
+        label: "data(id)",
+        "text-valign": "center",
+        "text-halign": "center",
+        "font-size": 12,
+        "font-weight": 600,
+        "text-wrap": "wrap",
+        "text-max-width": 80,
+      },
+    },
     {
       selector: "node.preview",
       style: {
@@ -190,9 +217,14 @@ export function draw_graph(graph, context, elements, cols, node) {
     })
     .update();
 
+  cy.on("tap", "node[compound]", (e) => toggle(e.target));
+
   // Node selection handling
   cy.on("tap", "node", function (event) {
     const n = this;
+    /* exit early if it’s a parent / compound node */
+    if (n.isParent()) return; // 👈  true when the node owns children
+
     const nodeId = n.id();
 
     // Send basic click event
@@ -246,4 +278,67 @@ export function draw_graph(graph, context, elements, cols, node) {
   });
 
   return cy;
+}
+
+function collapse(parent) {
+  if (parent.data("collapsed") === "true") return; // already collapsed
+
+  const children = parent.children();
+  const intEdges = children
+    .connectedEdges()
+    .filter(
+      (edge) =>
+        children.contains(edge.source()) && children.contains(edge.target()),
+    );
+  const extEdges = children.connectedEdges().subtract(intEdges);
+
+  // stash what we’ll need for restore
+  parent.data({
+    collapsed: true,
+    _children: children.map((n) => n.id()),
+    _intEdges: intEdges.map((e) => e.id()),
+    _extEdges: extEdges.map((e) => e.id()),
+  });
+
+  children.addClass("hidden");
+  intEdges.addClass("hidden");
+
+  // reroute edges that leave the group so they point to the parent
+  extEdges.forEach((e) => {
+    if (children.contains(e.source())) e.move({ source: parent.id() });
+    if (children.contains(e.target())) e.move({ target: parent.id() });
+  });
+  parent.data("collapsed", "true");
+}
+
+function expand(parent) {
+  if (parent.data("collapsed") !== "true") return;
+
+  const cy = parent.cy();
+  const children = cy.collection(
+    parent.data("_children").map((id) => cy.getElementById(id)),
+  );
+  const intEdges = cy.collection(
+    parent.data("_intEdges").map((id) => cy.getElementById(id)),
+  );
+  const extEdges = cy.collection(
+    parent.data("_extEdges").map((id) => cy.getElementById(id)),
+  );
+
+  children.removeClass("hidden");
+  intEdges.removeClass("hidden");
+
+  // restore edge endpoints
+  extEdges.forEach((e) => {
+    const src = e.data("_origSource");
+    const tgt = e.data("_origTarget");
+    if (src) e.move({ source: src });
+    if (tgt) e.move({ target: tgt });
+  });
+
+  parent.removeData("collapsed");
+}
+
+function toggle(parent) {
+  parent.data("collapsed") ? expand(parent) : collapse(parent);
 }
