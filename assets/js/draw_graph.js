@@ -38,6 +38,13 @@ function style_graph(cols_str) {
         "text-margin-y": 0, // Ensure text is centered vertically
       },
     },
+    {
+      selector: "node.preview",
+      style: {
+        "border-width": 6,
+        opacity: 1,
+      },
+    },
     // Clicked node highlight
     {
       selector: "node.selected",
@@ -89,6 +96,9 @@ export function draw_graph(graph, context, elements, cols, node) {
     },
   });
 
+  let boxSelecting = false;
+  let dragOrigin = null;
+
   cy.minZoom(0.5);
   cy.maxZoom(10);
 
@@ -110,9 +120,27 @@ export function draw_graph(graph, context, elements, cols, node) {
     node.connectedEdges().removeClass("edge-hover");
   });
 
-  // cy.on("boxstart", () => {
-  //   cy.$(":selected").unselect();
-  // });
+  cy.on("boxstart", (e) => {
+    boxSelecting = true;
+    dragOrigin = e.position; // remembers first corner
+  });
+
+  cy.on("mousemove", (e) => {
+    if (!boxSelecting) return;
+
+    const pos = e.position;
+    const x1 = Math.min(dragOrigin.x, pos.x);
+    const y1 = Math.min(dragOrigin.y, pos.y);
+    const x2 = Math.max(dragOrigin.x, pos.x);
+    const y2 = Math.max(dragOrigin.y, pos.y);
+
+    cy.nodes().forEach((n) => {
+      const bb = n.boundingBox({ includeLabels: false });
+      const inside = bb.x1 >= x1 && bb.x2 <= x2 && bb.y1 >= y1 && bb.y2 <= y2;
+
+      n.toggleClass("preview", inside);
+    });
+  });
 
   cy.on("boxend", (e) => {
     requestAnimationFrame(() => {
