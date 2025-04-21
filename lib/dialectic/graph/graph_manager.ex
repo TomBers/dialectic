@@ -186,6 +186,13 @@ defmodule GraphManager do
     {:reply, {graph, Vertex.add_relatives(updated_vertex, graph)}, {graph_struct, graph}}
   end
 
+  def handle_call({:create_group, {group_title, child_ids}}, _, {graph_struct, graph}) do
+    updated_graph =
+      Vertex.add_group(graph, group_title, child_ids)
+
+    {:reply, updated_graph, {graph_struct, updated_graph}}
+  end
+
   # Client API
   def reset_graph(path) do
     if GraphManager.exists?(path) do
@@ -262,5 +269,9 @@ defmodule GraphManager do
 
   def save_graph(path) do
     GenServer.call(via_tuple(path), {:save_graph, path})
+  end
+
+  def create_group(path, group_title, child_ids) do
+    GenServer.call(via_tuple(path), {:create_group, {group_title, child_ids}})
   end
 end

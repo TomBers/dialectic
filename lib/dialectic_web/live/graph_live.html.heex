@@ -60,6 +60,18 @@
       >
         <.live_component module={CombineComp} graph={@graph} node={@node} id="Modal" />
       </.modal>
+
+      <.modal :if={@show_group_modal} id="group-modal" on_cancel={JS.push("cancel_group")} show>
+        <h2 class="text-xl font-semibold mb-4">Group selected nodes</h2>
+
+        <.simple_form for={@group_changeset} phx-submit="group_nodes">
+          <.input field={@group_changeset[:title]} label="Group title" required />
+          <input type="hidden" name="ids" value={Enum.join(@candidate_ids, ",")} />
+          <:actions>
+            <.button phx-disable-with="Grouping…">Create group</.button>
+          </:actions>
+        </.simple_form>
+      </.modal>
     </div>
     
 <!-- Toggle button for drawer -->

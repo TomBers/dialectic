@@ -15,6 +15,7 @@ defmodule Dialectic.Graph.Vertex do
             content: "",
             class: "",
             user: "",
+            parent: nil,
             parents: [],
             children: [],
             noted_by: [],
@@ -31,6 +32,7 @@ defmodule Dialectic.Graph.Vertex do
       content: vertex.content,
       class: vertex.class,
       user: vertex.user,
+      parent: vertex.parent,
       noted_by: vertex.noted_by,
       deleted: vertex.deleted
     }
@@ -42,6 +44,7 @@ defmodule Dialectic.Graph.Vertex do
       content: data["content"],
       class: data["class"],
       user: data["user"],
+      parent: data["parent"],
       noted_by: data["noted_by"],
       deleted: data["deleted"]
     }
@@ -133,14 +136,40 @@ defmodule Dialectic.Graph.Vertex do
     end)
   end
 
-  # def find_node_by_id(graph_id, id) do
-  #   case :digraph.vertex(graph, id) do
-  #     # Returns the vertex struct
-  #     {_id, vertex} -> vertex
-  #     # Return nil if vertex not found
-  #     false -> nil
-  #   end
-  # end
+  @doc """
+  Adds a *group* vertex whose ID **is the title string itself**
+  and tags every child vertex with `parent: title`.
+
+  Returns the same `:digraph.graph()` handle (mutated in place).
+  """
+  @spec add_group(:digraph.graph(), String.t(), [String.t()]) :: :digraph.graph()
+  def add_group(graph, title, child_ids) do
+    # 1.  create the new compound‑node vertex
+    :digraph.add_vertex(
+      graph,
+      # vertex ID == title
+      title,
+      # Cytoscape‑friendly payload
+      %Dialectic.Graph.Vertex{id: title}
+    )
+
+    # 2.  update each child so Cytoscape knows its parent
+    Enum.each(child_ids, fn id ->
+      case :digraph.vertex(graph, id) do
+        false ->
+          # skip unknown IDs (or raise)
+          :ok
+
+        {^id, old_label} ->
+          new_label = Map.put(old_label, :parent, title)
+          # replace label in place
+          :digraph.add_vertex(graph, id, new_label)
+      end
+    end)
+
+    # ← same reference, now mutated
+    graph
+  end
 
   def find_parents(graph, vertex) do
     :digraph.in_edges(graph, vertex.id)
@@ -183,6 +212,7 @@ defmodule Dialectic.Graph.Vertex do
                 %{
                   data: %{
                     id: vid,
+                    parent: Map.get(dat, :parent, ""),
                     class: dat.class,
                     content: dat.content
                   }

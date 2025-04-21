@@ -68,7 +68,10 @@ defmodule DialecticWeb.GraphLive do
        node_menu_visible: false,
        node_menu_position: nil,
        auto_reply: true,
-       drawer_open: false
+       drawer_open: false,
+       candidate_ids: [],
+       group_changeset: to_form(%{"title" => ""}),
+       show_group_modal: false
      )}
   end
 
@@ -78,8 +81,23 @@ defmodule DialecticWeb.GraphLive do
     {:noreply,
      socket
      |> assign(:candidate_ids, ids)
+     |> assign(:show_group_modal, true)
      # JS.exec() helpers work too
      |> push_event("open_group_modal", %{ids: ids})}
+  end
+
+  def handle_event("group_nodes", %{"title" => t, "ids" => ids}, socket) do
+    graph = GraphManager.create_group(socket.assigns.graph_id, t, String.split(ids, ","))
+    DbWorker.save_graph(socket.assigns.graph_id)
+
+    {:noreply,
+     socket
+     |> assign(
+       candidate_ids: [],
+       graph: graph,
+       f_graph: format_graph(graph),
+       show_group_modal: false
+     )}
   end
 
   def handle_event("toggle_drawer", _, socket) do
