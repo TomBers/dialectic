@@ -76,7 +76,7 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("nodes_box_selected", %{"ids" => ids}, socket) do
-    IO.inspect(ids, label: "Selected Node IDs")
+    # IO.inspect(ids, label: "Selected Node IDs")
 
     {:noreply,
      socket

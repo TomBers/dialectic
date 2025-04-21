@@ -44,7 +44,7 @@ function style_graph(cols_str) {
         label: "data(id)", // ← use the id field
         "text-halign": "center",
         "text-valign": "top",
-        "text-margin-y": -6,
+        "text-margin-y": 0,
         "font-size": 12,
         "font-weight": 600,
         "text-opacity": 1, // make sure it isn’t zero
@@ -58,7 +58,7 @@ function style_graph(cols_str) {
       selector: 'node[compound][collapsed = "true"]',
       style: {
         /* fixed badge size */
-        width: 90, // px – tweak to taste
+        width: 150, // px – tweak to taste
         height: 40,
 
         /* look & feel */
