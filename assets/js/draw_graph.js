@@ -188,7 +188,10 @@ export function draw_graph(graph, context, elements, cols, node) {
     cy.nodes(".preview").removeClass("preview");
 
     requestAnimationFrame(() => {
-      const selectedNodes = cy.$(":selected").filter("node");
+      const selectedNodes = cy
+        .$(":selected")
+        .filter("node")
+        .filter((n) => !n.isParent()); // ⬅️ ignore compound nodes;
       if (selectedNodes.length) {
         const ids = selectedNodes.map((n) => n.id());
         console.log(ids);
