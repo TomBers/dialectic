@@ -107,6 +107,30 @@ defmodule DialecticWeb.GraphLive do
      )}
   end
 
+  def handle_event("node:join_group", %{"node" => nid, "parent" => gid}, socket) do
+    graph = GraphManager.set_parent(socket.assigns.graph_id, nid, gid)
+    DbWorker.save_graph(socket.assigns.graph_id)
+
+    {:noreply,
+     socket
+     |> assign(
+       graph: graph,
+       f_graph: format_graph(graph)
+     )}
+  end
+
+  def handle_event("node:leave_group", %{"node" => nid}, socket) do
+    graph = GraphManager.remove_parent(socket.assigns.graph_id, nid)
+    DbWorker.save_graph(socket.assigns.graph_id)
+
+    {:noreply,
+     socket
+     |> assign(
+       graph: graph,
+       f_graph: format_graph(graph)
+     )}
+  end
+
   def handle_event("toggle_drawer", _, socket) do
     {:noreply, socket |> assign(drawer_open: !socket.assigns.drawer_open)}
   end

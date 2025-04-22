@@ -1,7 +1,9 @@
 import cytoscape from "cytoscape";
 import dagre from "cytoscape-dagre";
+import compoundDragAndDrop from "cytoscape-compound-drag-and-drop";
 
 cytoscape.use(dagre);
+cytoscape.use(compoundDragAndDrop);
 
 const selectState = {
   "font-weight": "800",
@@ -126,7 +128,6 @@ export function draw_graph(graph, context, elements, cols, node) {
     style: style_graph(cols),
     boxSelectionEnabled: true, // ⬅️ lets users drag‑select
     autounselectify: false, // allow multi‑select
-    wheelSensitivity: 0.2,
     layout: {
       name: "dagre",
       rankDir: "TB",
@@ -136,11 +137,64 @@ export function draw_graph(graph, context, elements, cols, node) {
     },
   });
 
+  const dd_options = {
+    grabbedNode: (node) => true, // filter function to specify which nodes are valid to grab and drop into other nodes
+    dropTarget: (dropTarget, grabbedNode) => true, // filter function to specify which parent nodes are valid drop targets
+    dropSibling: (dropSibling, grabbedNode) => true, // filter function to specify which orphan nodes are valid drop siblings
+    newParentNode: (grabbedNode, dropSibling) => ({}), // specifies element json for parent nodes added by dropping an orphan node on another orphan (a drop sibling). You can chose to return the dropSibling in which case it becomes the parent node and will be preserved after all its children are removed.
+    boundingBoxOptions: {
+      // same as https://js.cytoscape.org/#eles.boundingBox, used when calculating if one node is dragged over another
+      includeOverlays: false,
+      includeLabels: true,
+    },
+    overThreshold: 10, // make dragging over a drop target easier by expanding the hit area by this amount on all sides
+    outThreshold: 10, // make dragging out of a drop target a bit harder by expanding the hit area by this amount on all sides
+  };
+
+  cy.compoundDragAndDrop(dd_options);
+
   let boxSelecting = false;
   let dragOrigin = null;
 
   cy.minZoom(0.5);
   cy.maxZoom(10);
+
+  /* remember where the drag started */
+  cy.on("cdndgrab", (evt) => {
+    evt.target.scratch("_oldParent", evt.target.data("parent") || null);
+  });
+
+  /* fire after the drop */
+  cy.on("cdnddrop", (evt, dropTarget /*, dropSibling */) => {
+    const ele = evt.target; // dragged node
+    const oldParent = ele.scratch("_oldParent"); // what we saved
+    ele.removeScratch("_oldParent");
+
+    /* decide what the *new* parent should be */
+    const targetIsGroup = dropTarget && dropTarget.isParent();
+    const newParent = targetIsGroup ? dropTarget.id() : null;
+
+    /* ——— ensure the data matches that decision ——— */
+    if (!targetIsGroup) ele.move({ parent: null }); // detach from old group
+    // (If targetIsGroup, CDnD has already moved it for us.)
+
+    /* ——— skip no‑ops ——— */
+    if (oldParent === newParent) return;
+
+    /* ——— notify LiveView ——— */
+    if (newParent) {
+      context.pushEvent("node:join_group", {
+        node: ele.id(),
+        parent: newParent,
+        old: oldParent,
+      });
+    } else {
+      context.pushEvent("node:leave_group", {
+        node: ele.id(),
+        parent: oldParent,
+      });
+    }
+  });
 
   // Enhanced hover effect
   cy.on("mouseover", "node", function (e) {

@@ -174,6 +174,20 @@ defmodule Dialectic.Graph.Vertex do
     graph
   end
 
+  def change_parent(graph, node_id, parent_id) do
+    case :digraph.vertex(graph, node_id) do
+      false ->
+        # skip unknown IDs (or raise)
+        :ok
+
+      {^node_id, old_label} ->
+        new_label = Map.put(old_label, :parent, parent_id)
+        # replace label in place
+        :digraph.add_vertex(graph, node_id, new_label)
+        graph
+    end
+  end
+
   def find_parents(graph, vertex) do
     :digraph.in_edges(graph, vertex.id)
     |> Enum.map(fn edge_id ->

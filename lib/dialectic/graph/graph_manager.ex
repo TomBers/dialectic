@@ -193,6 +193,13 @@ defmodule GraphManager do
     {:reply, updated_graph, {graph_struct, updated_graph}}
   end
 
+  def handle_call({:change_parent, {node_id, parent_id}}, _, {graph_struct, graph}) do
+    updated_graph =
+      Vertex.change_parent(graph, node_id, parent_id)
+
+    {:reply, updated_graph, {graph_struct, updated_graph}}
+  end
+
   # Client API
   def reset_graph(path) do
     if GraphManager.exists?(path) do
@@ -273,5 +280,13 @@ defmodule GraphManager do
 
   def create_group(path, group_title, child_ids) do
     GenServer.call(via_tuple(path), {:create_group, {group_title, child_ids}})
+  end
+
+  def set_parent(path, node_id, parent_id) do
+    GenServer.call(via_tuple(path), {:change_parent, {node_id, parent_id}})
+  end
+
+  def remove_parent(path, node_id) do
+    GenServer.call(via_tuple(path), {:change_parent, {node_id, nil}})
   end
 end
