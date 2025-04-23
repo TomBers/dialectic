@@ -177,14 +177,50 @@ defmodule Dialectic.Graph.Vertex do
   def change_parent(graph, node_id, parent_id) do
     case :digraph.vertex(graph, node_id) do
       false ->
-        # skip unknown IDs (or raise)
+        # Skip unknown IDs (or raise)
         :ok
 
       {^node_id, old_label} ->
+        # Get the old parent ID before changing
+        old_parent_id = Map.get(old_label, :parent)
+
+        # Assign the new parent
         new_label = Map.put(old_label, :parent, parent_id)
-        # replace label in place
         :digraph.add_vertex(graph, node_id, new_label)
+
+        # Only if we are removing node from group
+        if parent_id == nil do
+          check_and_remove_if_empty(graph, old_parent_id)
+        end
+
         graph
+    end
+  end
+
+  # Simpler helper function to check if a compound node is empty and remove if needed
+  def check_and_remove_if_empty(graph, parent_id) do
+    case :digraph.vertex(graph, parent_id) do
+      false ->
+        :ok
+
+      {^parent_id, parent_label} ->
+        # Only proceed if this is a compound node
+        if Map.get(parent_label, :compound, false) do
+          # Check if any node has this parent
+          has_children =
+            Enum.any?(:digraph.vertices(graph), fn vertex_id ->
+              vertex_id != parent_id and
+                case :digraph.vertex(graph, vertex_id) do
+                  {^vertex_id, label} -> Map.get(label, :parent) == parent_id
+                  _ -> false
+                end
+            end)
+
+          # If no children found and it's a compound node, remove it
+          if not has_children do
+            :digraph.del_vertex(graph, parent_id)
+          end
+        end
     end
   end
 
