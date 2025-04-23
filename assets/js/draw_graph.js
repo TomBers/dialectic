@@ -60,7 +60,7 @@ function style_graph(cols_str) {
       selector: 'node[compound][collapsed = "true"]',
       style: {
         /* fixed badge size */
-        width: 150, // px – tweak to taste
+        width: 250, // px – tweak to taste
         height: 40,
 
         /* look & feel */
@@ -309,8 +309,8 @@ export function draw_graph(graph, context, elements, cols, node) {
       center: {
         eles: n,
       },
-      zoom: 2,
-      duration: 200,
+      zoom: 1.2,
+      duration: 100,
       complete: function () {
         // This runs after animation completes
         const node = n;

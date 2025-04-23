@@ -51,9 +51,9 @@ const graphHook = {
             center: {
               eles: `#${node}`,
             },
-            zoom: 2,
+            zoom: 1.2,
             // Optional: make this animation a bit slower to allow user to see context
-            duration: 750,
+            duration: 100,
           });
         }.bind(this), // Bind 'this' to maintain context
       });

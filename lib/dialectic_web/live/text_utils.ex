@@ -21,23 +21,17 @@ defmodule DialecticWeb.Live.TextUtils do
   Truncates content to specified length and converts to HTML.
   """
   def truncated_html(content, cut_off \\ 50) do
-    if String.length(content) <= cut_off do
-      full_html(content)
-    else
-      content
-      |> String.slice(0, cut_off)
-      |> Kernel.<>("...")
-      |> Earmark.as_html!()
-      |> Phoenix.HTML.raw()
-    end
+    content
+    |> String.slice(0, cut_off)
+    |> full_html(" ...")
   end
 
   @doc """
   Converts content to full HTML, handling title extraction if needed.
   """
-  def full_html(content) do
+  def full_html(content, end_string \\ "") do
     if has_title?(content) do
-      content
+      (content <> end_string)
       |> extract_content_body()
       |> Earmark.as_html!()
       |> Phoenix.HTML.raw()
