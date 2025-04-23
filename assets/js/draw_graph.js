@@ -158,7 +158,7 @@ export function draw_graph(graph, context, elements, cols, node) {
   let boxSelecting = false;
   let dragOrigin = null;
 
-  cy.minZoom(0.5);
+  cy.minZoom(0.1);
   cy.maxZoom(10);
 
   /* remember where the drag started */
