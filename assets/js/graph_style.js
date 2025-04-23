@@ -88,11 +88,7 @@ export function graphStyle(cols_str) {
         opacity: 1,
       },
     },
-    // Clicked node highlight
-    {
-      selector: "node.selected",
-      css: selectState,
-    },
+
     // Edge styling
     {
       selector: "edge",
@@ -119,7 +115,6 @@ export function graphStyle(cols_str) {
       css: {
         "border-color": cols[nodeType].border,
         "background-color": cols[nodeType].background,
-        // color: cols[nodeType].text,
       },
     });
     base_style.push({
