@@ -1,9 +1,12 @@
 import { draw_graph } from "./draw_graph";
+import { graphStyle } from "./graph_style";
 
 let numNodes = null;
 let nodeId = null;
 
-const layoutGraph = (cy, node_id) => {
+const layoutGraph = (cy, node_id, cols) => {
+  cy.style(graphStyle(cols)).update();
+
   const layout = cy.layout({
     name: "dagre",
     rankDir: "TB",
@@ -18,6 +21,7 @@ const layoutGraph = (cy, node_id) => {
     stop: function () {
       // console.log("Layout finished");
       // Now center on the node
+
       cy.animate({
         center: {
           eles: `#${node_id}`,
@@ -47,11 +51,11 @@ const graphHook = {
     this.cy = draw_graph(div_id, this, elements, cols, node);
 
     this.handleEvent("request_complete", ({ node_id }) => {
-      layoutGraph(this.cy, node_id);
+      layoutGraph(this.cy, node_id, cols);
     });
   },
   updated() {
-    const { graph, node } = this.el.dataset;
+    const { graph, node, cols } = this.el.dataset;
 
     const newElements = JSON.parse(graph);
     this.cy.json({ elements: newElements });
@@ -66,7 +70,9 @@ const graphHook = {
 
     // Only relayout if the number of actual nodes changed
     if (prevNodeCount.length !== newNodeCount.length) {
-      layoutGraph(this.cy, nodeId);
+      // New Node reapply styles
+
+      layoutGraph(this.cy, nodeId, cols);
     }
 
     this.cy.elements().removeClass("selected");
