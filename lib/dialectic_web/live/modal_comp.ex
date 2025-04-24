@@ -21,9 +21,13 @@ defmodule DialecticWeb.Live.ModalComp do
           phx-hook="TextSelectionHook"
           data-node-id={@node.id}
         >
-          <article class="prose prose-stone prose-md selection-content">
-            <h1>{TextUtils.modal_title(@node.content, @node.class)}</h1>
-            {TextUtils.full_html(@node.content || "")}
+          <article class="prose prose-stone prose-xl max-w-none selection-content space-y-4">
+            <h1>
+              {TextUtils.modal_title(@node.content, @node.class)}
+            </h1>
+            <div>
+              {TextUtils.full_html(@node.content || "")}
+            </div>
           </article>
           
     <!-- Modal selection action button (hidden by default) -->
