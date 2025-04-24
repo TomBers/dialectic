@@ -53,13 +53,6 @@ export function graphStyle() {
       },
     },
     {
-      selector: ".node-hover",
-      style: {
-        "border-width": 3,
-        "z-index": 9999,
-      },
-    },
-    {
       selector: "node[compound]",
       style: {
         label: "data(id)", // ← use the id field
@@ -100,7 +93,7 @@ export function graphStyle() {
       },
     },
     {
-      selector: "node.preview",
+      selector: ".preview",
       style: {
         "border-width": 6,
         opacity: 1,

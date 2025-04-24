@@ -85,8 +85,6 @@ export function draw_graph(graph, context, elements, node) {
   cy.on("mouseover", "node", function (e) {
     const node = this;
 
-    // Apply highlight class instead of animating border directly
-    node.addClass("node-hover");
     node.connectedEdges().addClass("edge-hover");
   });
 
@@ -95,7 +93,6 @@ export function draw_graph(graph, context, elements, node) {
     const node = this;
 
     // Remove the highlight classes
-    node.removeClass("node-hover");
     node.connectedEdges().removeClass("edge-hover");
   });
 
@@ -104,42 +101,8 @@ export function draw_graph(graph, context, elements, node) {
     dragOrigin = e.position; // remembers first corner
   });
 
-  cy.on("mousemove", (e) => {
-    if (!boxSelecting) return;
-
-    const pos = e.position;
-    const x1 = Math.min(dragOrigin.x, pos.x);
-    const y1 = Math.min(dragOrigin.y, pos.y);
-    const x2 = Math.max(dragOrigin.x, pos.x);
-    const y2 = Math.max(dragOrigin.y, pos.y);
-
-    cy.nodes().forEach((n) => {
-      const bb = n.boundingBox({ includeLabels: false });
-
-      /* 1 ▸ is the *centre* inside the rectangle? */
-      const cx = (bb.x1 + bb.x2) / 2;
-      const cyy = (bb.y1 + bb.y2) / 2;
-      const centerInside = cx >= x1 && cx <= x2 && cyy >= y1 && cyy <= y2;
-
-      /* 2 ▸ otherwise, does ≥ 40 % of the area overlap? */
-      const ix1 = Math.max(bb.x1, x1);
-      const iy1 = Math.max(bb.y1, y1);
-      const ix2 = Math.min(bb.x2, x2);
-      const iy2 = Math.min(bb.y2, y2);
-      const intersectArea = Math.max(0, ix2 - ix1) * Math.max(0, iy2 - iy1);
-      const nodeArea = (bb.x2 - bb.x1) * (bb.y2 - bb.y1);
-      const enoughOverlap = intersectArea / nodeArea >= 0.4; // 40 %
-
-      const inside = centerInside || enoughOverlap;
-
-      n.toggleClass("preview", inside);
-    });
-  });
-
   cy.on("boxend", (e) => {
     boxSelecting = false;
-    /* remove the live preview colours */
-    cy.nodes(".preview").removeClass("preview");
 
     requestAnimationFrame(() => {
       const selectedNodes = cy
