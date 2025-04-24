@@ -20,27 +20,36 @@ export function graphStyle() {
     {
       selector: "node",
       style: {
-        "background-color": "#f3f4f6", // gray-100
-        "border-width": 2,
-        "border-color": "#d1d5db", // gray-300
-        label: function (ele) {
-          const content = ele.data("content") || "";
-          const truncatedContent =
-            content.substring(0, 100) + (content.length > 100 ? "..." : "");
-          return ele.data("id") + "\n\n" + truncatedContent;
-        },
-        "text-valign": "center",
-        "text-halign": "center",
-        "font-family": "InterVariable, sans-serif",
-        "font-weight": "400",
-        color: "#374151", // gray-700
+        /* sizing ---------------------------------------------------------- */
+        width: 150,
+        height: (n) => Math.min(n.data("content").length, 100) + 30,
+        "min-width": 60,
+        "min-height": 30,
+        padding: "12px",
         "text-wrap": "wrap",
-        "text-max-width": "200px",
-        shape: "roundrectangle", // Changed from round-diamond to roundrectangle
-        width: "label", // Makes the node size fit the content
-        height: "label",
-        padding: "15px",
-        "text-margin-y": 0, // Ensure text is centered vertically
+        "text-max-width": 150, // interior width incl. padding
+
+        /* label ----------------------------------------------------------- */
+        label: (ele) => {
+          const full = ele.data("content") || "";
+          const text = full.slice(0, 100);
+          const suffix = full.length > 100 ? "…" : "";
+          return `${ele.data("id")}\n\n${text}${suffix}`;
+        },
+
+        /* font & layout --------------------------------------------------- */
+        "font-family": "InterVariable, sans-serif",
+        "font-size": 14,
+        "font-weight": 400,
+        "text-halign": "center",
+        "text-valign": "center",
+
+        /* aesthetics ------------------------------------------------------ */
+        shape: "roundrectangle",
+        "border-width": 2,
+        "border-color": "#d1d5db",
+        "background-color": "#f3f4f6",
+        color: "#374151",
       },
     },
     {

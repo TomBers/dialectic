@@ -31,22 +31,12 @@ const graphHook = {
 
     const newElements = JSON.parse(graph);
 
-    this.cy.batch(() => {
-      // 1 – replace the data
-      this.cy.json({ elements: newElements });
+    this.cy.json({ elements: newElements });
 
-      // 2 – update classes
-      this.cy.elements().removeClass("selected");
-      const tgt = this.cy.$(`#${node}`).addClass("selected");
+    layoutGraph(this.cy); // your Dagre call
 
-      // 3 – ***invalidate the cached body/label***
-      tgt.dirtyStyleCache(); // <-- this line
-    });
-
-    // 4 – tell the styler to rebuild the textures now
-    this.cy.style().update(); // <-- and this line
-
-    layoutGraph(this.cy); // only the layout, no extra style call
+    this.cy.elements().removeClass("selected");
+    this.cy.$(`#${node}`).addClass("selected");
   },
 };
 
