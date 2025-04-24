@@ -22,7 +22,7 @@ export function graphStyle() {
       style: {
         /* sizing ---------------------------------------------------------- */
         width: 250,
-        height: (n) => Math.min(n.data("content").length, 100) + 20,
+        height: (n) => Math.max(Math.min(n.data("content").length, 100), 50),
         "min-width": 60,
         "min-height": 30,
         padding: "12px",

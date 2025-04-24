@@ -23,7 +23,7 @@ defmodule DialecticWeb.Live.ModalComp do
         >
           <article class="prose prose-stone prose-xl max-w-none selection-content space-y-4">
             <h1>
-              {TextUtils.modal_title(@node.content, @node.class)}
+              {TextUtils.modal_title(@node.content, @node.class || "")}
             </h1>
             <div>
               {TextUtils.full_html(@node.content || "")}
