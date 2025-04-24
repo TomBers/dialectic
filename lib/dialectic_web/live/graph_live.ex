@@ -394,7 +394,7 @@ defmodule DialecticWeb.GraphLive do
     DbWorker.save_graph(socket.assigns.graph_id, false)
 
     update_graph(
-      socket,
+      socket |> push_event("llm_request_complete", %{}),
       GraphActions.find_node(socket.assigns.graph_id, node_id),
       false,
       true
