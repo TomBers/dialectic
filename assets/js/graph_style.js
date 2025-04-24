@@ -21,19 +21,24 @@ export function graphStyle() {
       selector: "node",
       style: {
         /* sizing ---------------------------------------------------------- */
-        width: 150,
-        height: (n) => Math.min(n.data("content").length, 100) + 30,
+        width: 250,
+        height: (n) => Math.min(n.data("content").length, 100) + 20,
         "min-width": 60,
         "min-height": 30,
         padding: "12px",
         "text-wrap": "wrap",
-        "text-max-width": 150, // interior width incl. padding
+        "text-max-width": 250, // interior width incl. padding
 
         /* label ----------------------------------------------------------- */
         label: (ele) => {
-          const full = ele.data("content") || "";
-          const text = full.slice(0, 100);
-          const suffix = full.length > 100 ? "…" : "";
+          const fullContent = ele.data("content") || "";
+
+          // Remove "Title:" prefix if present
+          const contentWithoutTitle = fullContent.replace(/^Title:\s*/i, "");
+
+          const text = contentWithoutTitle.slice(0, 100);
+          const suffix = contentWithoutTitle.length > 100 ? "…" : "";
+
           return `${ele.data("id")}\n\n${text}${suffix}`;
         },
 
