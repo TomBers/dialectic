@@ -66,6 +66,9 @@ const graphHook = {
     nodes = elements;
 
     this.cy = draw_graph(div_id, this, elements, node);
+    this.handleEvent("llm_request_complete", () => {
+      layoutGraph(this.cy);
+    });
   },
   updated() {
     const { graph, node } = this.el.dataset;
@@ -73,13 +76,14 @@ const graphHook = {
     const newElements = JSON.parse(graph);
 
     this.cy.json({ elements: newElements });
+
     if (hasRelevantChanges(nodes, newElements)) {
       layoutGraph(this.cy); // your Dagre call
+      nodes = newElements;
     }
 
     this.cy.elements().removeClass("selected");
     this.cy.$(`#${node}`).addClass("selected");
-    nodes = newElements;
   },
 };
 
