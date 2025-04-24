@@ -1,4 +1,5 @@
 const selectState = {
+  shape: "roundrectangle",
   "font-weight": "800",
   "border-color": "white", // Dark green border
   color: "#FFFFFF", // White text
@@ -6,7 +7,15 @@ const selectState = {
   "border-width": 2,
 };
 
-export function graphStyle(cols_str) {
+const cols = {
+  user: { text: "#374151", background: "white", border: "#d1d5db" },
+  answer: { text: "#60a5fa", background: "white", border: "#60a5fa" },
+  antithesis: { text: "#f84b71", background: "white", border: "#f84b71" },
+  synthesis: { text: "#c084fc", background: "white", border: "#c084fc" },
+  thesis: { text: "#4ade80", background: "white", border: "#4ade80" },
+};
+
+export function graphStyle() {
   const base_style = [
     {
       selector: "node",
@@ -108,7 +117,6 @@ export function graphStyle(cols_str) {
     },
   ];
 
-  const cols = JSON.parse(cols_str);
   for (const nodeType in cols) {
     base_style.push({
       selector: `node[class = "${nodeType}"]`,

@@ -6,11 +6,11 @@ import { graphStyle } from "./graph_style";
 cytoscape.use(dagre);
 cytoscape.use(compoundDragAndDrop);
 
-export function draw_graph(graph, context, elements, cols, node) {
+export function draw_graph(graph, context, elements, node) {
   const cy = cytoscape({
     container: graph, // container to render in
     elements: elements,
-    style: graphStyle(cols),
+    style: graphStyle(),
     boxSelectionEnabled: true, // ⬅️ lets users drag‑select
     autounselectify: false, // allow multi‑select
     layout: {

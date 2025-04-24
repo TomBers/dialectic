@@ -4,8 +4,8 @@ import { graphStyle } from "./graph_style";
 let numNodes = null;
 let nodeId = null;
 
-const layoutGraph = (cy, node_id, cols) => {
-  cy.style(graphStyle(cols)).update();
+const layoutGraph = (cy, node_id) => {
+  cy.style(graphStyle()).update();
 
   const layout = cy.layout({
     name: "dagre",
@@ -42,20 +42,21 @@ const graphHook = {
     // Hide the user header
     document.getElementById("userHeader").style.display = "none";
 
-    const { graph, node, cols, div } = this.el.dataset;
+    const { graph, node, div } = this.el.dataset;
+
     const div_id = document.getElementById(div);
     const elements = JSON.parse(graph);
 
     numNodes = elements;
     nodeId = node;
-    this.cy = draw_graph(div_id, this, elements, cols, node);
+    this.cy = draw_graph(div_id, this, elements, node);
 
     this.handleEvent("request_complete", ({ node_id }) => {
-      layoutGraph(this.cy, node_id, cols);
+      layoutGraph(this.cy, node_id);
     });
   },
   updated() {
-    const { graph, node, cols } = this.el.dataset;
+    const { graph, node } = this.el.dataset;
 
     const newElements = JSON.parse(graph);
     this.cy.json({ elements: newElements });
@@ -72,7 +73,7 @@ const graphHook = {
     if (prevNodeCount.length !== newNodeCount.length) {
       // New Node reapply styles
 
-      layoutGraph(this.cy, nodeId, cols);
+      layoutGraph(this.cy, nodeId);
     }
 
     this.cy.elements().removeClass("selected");
