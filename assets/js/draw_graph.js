@@ -11,6 +11,7 @@ export function draw_graph(graph, context, elements, node) {
     container: graph, // container to render in
     elements: elements,
     style: graphStyle(),
+
     boxSelectionEnabled: true, // ⬅️ lets users drag‑select
     autounselectify: false, // allow multi‑select
     layout: {
@@ -30,7 +31,7 @@ export function draw_graph(graph, context, elements, node) {
     dropSibling: () => false,
 
     /* 2 ▸ and even if the plugin tries, give it nothing to add */
-    newParentNode: () => null, // or just omit this line entirely
+    newParentNode: () => [], // or just omit this line entirely
 
     /* other tweaks stay the same */
     boundingBoxOptions: { includeLabels: true, includeOverlays: false },
@@ -42,9 +43,6 @@ export function draw_graph(graph, context, elements, node) {
 
   let boxSelecting = false;
   let dragOrigin = null;
-
-  cy.minZoom(0.1);
-  cy.maxZoom(10);
 
   /* remember where the drag started */
   cy.on("cdndgrab", (evt) => {
@@ -211,13 +209,6 @@ export function draw_graph(graph, context, elements, node) {
 
   cy.elements().removeClass("selected");
   cy.$(`#${node}`).addClass("selected");
-  cy.animate({
-    center: {
-      eles: `#${node}`,
-    },
-    zoom: 2,
-    duration: 500,
-  });
 
   return cy;
 }

@@ -13,7 +13,7 @@ const layoutGraph = (cy, node_id) => {
     rankSep: 30,
     // Add a callback for when layout is done
     ready: function () {
-      // console.log("Layout ready");
+      cy.style(graphStyle()).update();
     },
     // This gets called when the layout is done running
     stop: function () {
@@ -22,10 +22,8 @@ const layoutGraph = (cy, node_id) => {
           eles: `#${node_id}`,
         },
         zoom: 1.2,
-        // Optional: make this animation a bit slower to allow user to see context
         duration: 100,
       });
-      cy.style(graphStyle()).update();
     }.bind(this), // Bind 'this' to maintain context
   });
 
@@ -45,11 +43,13 @@ const graphHook = {
 
     numNodes = elements;
     nodeId = node;
-    this.cy = draw_graph(div_id, this, elements, node);
+    const cy = draw_graph(div_id, this, elements, node);
 
     this.handleEvent("request_complete", ({ node_id }) => {
-      layoutGraph(this.cy, node_id);
+      layoutGraph(cy, node_id);
     });
+
+    this.cy = cy;
   },
   updated() {
     const { graph, node } = this.el.dataset;
@@ -67,8 +67,6 @@ const graphHook = {
 
     // Only relayout if the number of actual nodes changed
     if (prevNodeCount.length !== newNodeCount.length) {
-      // New Node reapply styles
-
       layoutGraph(this.cy, nodeId);
     }
 
