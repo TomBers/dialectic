@@ -68,7 +68,7 @@ defmodule DialecticWeb.GraphLive do
        node_menu_visible: false,
        node_menu_position: nil,
        auto_reply: true,
-       drawer_open: false,
+       drawer_open: true,
        candidate_ids: [],
        group_changeset: to_form(%{"title" => ""}),
        show_group_modal: false
@@ -394,7 +394,7 @@ defmodule DialecticWeb.GraphLive do
     DbWorker.save_graph(socket.assigns.graph_id, false)
 
     update_graph(
-      socket |> push_event("request_complete", %{node_id: node_id}),
+      socket,
       GraphActions.find_node(socket.assigns.graph_id, node_id),
       false,
       true

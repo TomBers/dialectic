@@ -117,18 +117,20 @@ export function graphStyle() {
     },
   ];
 
-  for (const nodeType in cols) {
+  for (const nodeType of Object.keys(cols)) {
     base_style.push({
-      selector: `node[class = "${nodeType}"]`,
-      css: {
+      selector: `node.${nodeType}`, // ← has the class
+      style: {
+        //  NOT “css”
         "border-color": cols[nodeType].border,
         "background-color": cols[nodeType].background,
         "border-width": 2,
       },
     });
+
     base_style.push({
-      selector: `node[class = "${nodeType}"].selected`,
-      css: selectState,
+      selector: `node.${nodeType}.selected`, // ← has both classes
+      style: selectState,
     });
   }
   return base_style;

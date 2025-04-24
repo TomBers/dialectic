@@ -263,11 +263,11 @@ defmodule Dialectic.Graph.Vertex do
             acc ++
               [
                 %{
+                  classes: dat.class,
                   data:
                     %{
                       id: vid,
                       parent: Map.get(dat, :parent, ""),
-                      class: dat.class,
                       content: dat.content
                     }
                     |> then(fn m ->

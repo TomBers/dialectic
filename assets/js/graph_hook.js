@@ -1,10 +1,6 @@
 import { draw_graph } from "./draw_graph";
-import { graphStyle } from "./graph_style";
 
-let numNodes = null;
-let nodeId = null;
-
-const layoutGraph = (cy, node_id) => {
+const layoutGraph = (cy) => {
   const layout = cy.layout({
     name: "dagre",
     rankDir: "TB",
@@ -13,18 +9,8 @@ const layoutGraph = (cy, node_id) => {
     rankSep: 30,
     // Add a callback for when layout is done
     ready: function () {
-      cy.style(graphStyle()).update();
+      // cy.style().update();
     },
-    // This gets called when the layout is done running
-    stop: function () {
-      cy.animate({
-        center: {
-          eles: `#${node_id}`,
-        },
-        zoom: 1.2,
-        duration: 100,
-      });
-    }.bind(this), // Bind 'this' to maintain context
   });
 
   // Run the layout
@@ -33,48 +19,34 @@ const layoutGraph = (cy, node_id) => {
 
 const graphHook = {
   mounted() {
-    // Hide the user header
-    document.getElementById("userHeader").style.display = "none";
-
     const { graph, node, div } = this.el.dataset;
 
     const div_id = document.getElementById(div);
     const elements = JSON.parse(graph);
 
-    numNodes = elements;
-    nodeId = node;
-    const cy = draw_graph(div_id, this, elements, node);
-
-    this.handleEvent("request_complete", ({ node_id }) => {
-      layoutGraph(cy, node_id);
-    });
-
-    this.cy = cy;
+    this.cy = draw_graph(div_id, this, elements, node);
   },
   updated() {
     const { graph, node } = this.el.dataset;
 
     const newElements = JSON.parse(graph);
-    this.cy.json({ elements: newElements });
 
-    const prevNodeCount = numNodes.filter(
-      (n) => n.data && n.data.compound !== true,
-    );
+    this.cy.batch(() => {
+      // 1 – replace the data
+      this.cy.json({ elements: newElements });
 
-    const newNodeCount = newElements.filter(
-      (n) => n.data && n.data.compound !== true,
-    );
+      // 2 – update classes
+      this.cy.elements().removeClass("selected");
+      const tgt = this.cy.$(`#${node}`).addClass("selected");
 
-    // Only relayout if the number of actual nodes changed
-    if (prevNodeCount.length !== newNodeCount.length) {
-      layoutGraph(this.cy, nodeId);
-    }
+      // 3 – ***invalidate the cached body/label***
+      tgt.dirtyStyleCache(); // <-- this line
+    });
 
-    this.cy.elements().removeClass("selected");
-    this.cy.$(`#${node}`).addClass("selected");
+    // 4 – tell the styler to rebuild the textures now
+    this.cy.style().update(); // <-- and this line
 
-    nodeId = node;
-    numNodes = newElements;
+    layoutGraph(this.cy); // only the layout, no extra style call
   },
 };
 
