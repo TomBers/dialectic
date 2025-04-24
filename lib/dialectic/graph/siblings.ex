@@ -31,7 +31,7 @@ defmodule Dialectic.Graph.Siblings do
       |> Enum.with_index()
       |> Enum.find(fn {n, _} -> n.id == node.id end)
 
-    IO.inspect(indx, label: "Right Indx")
+    # IO.inspect(indx, label: "Right Indx")
     Enum.at(sorted, indx + 1, List.last(sorted))
   end
 

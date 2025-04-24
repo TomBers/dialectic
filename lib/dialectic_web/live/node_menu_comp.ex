@@ -28,7 +28,7 @@ defmodule DialecticWeb.NodeMenuComp do
             phx-hook="TextSelectionHook"
             data-node-id={@node.id}
           >
-            <article class="prose prose-stone prose-sm selection-content">
+            <article class="prose prose-stone prose-lg selection-content">
               {TextUtils.truncated_html(@node.content || "", @cut_off)}
             </article>
             <div class="selection-actions hidden absolute bg-white shadow-md rounded-md p-1 z-10">
@@ -69,34 +69,42 @@ defmodule DialecticWeb.NodeMenuComp do
           <h2>Loading ...</h2>
         </div>
       <% end %>
-      <.live_component module={NoteMenuComp} node={@node} user={@user} id={"note-menu-" <> @node.id} />
-      <%= if @ask_question do %>
-        <.form for={@form} phx-submit="reply-and-answer" id={"tt-reply-form-" <> @node.id}>
-          <div class="flex-1 mb-4">
-            <.input
-              :if={@node_id != "NewNode"}
-              field={@form[:content]}
-              tabindex="0"
-              type="text"
-              id={"tt-input-" <> @node.id}
-              placeholder="Ask question"
-            />
-          </div>
-        </.form>
-      <% else %>
-        <.form for={@form} phx-submit="answer" id={"tt-form-" <> @node.id}>
-          <div class="flex-1 mb-4">
-            <.input
-              :if={@node_id != "NewNode"}
-              field={@form[:content]}
-              tabindex="0"
-              type="text"
-              id={"tt-input-" <> @node.id}
-              placeholder="Add comment"
-            />
-          </div>
-        </.form>
-      <% end %>
+      <div class="mx-auto w-3/4">
+        <.live_component
+          module={NoteMenuComp}
+          node={@node}
+          user={@user}
+          id={"note-menu-" <> @node.id}
+        />
+
+        <%= if @ask_question do %>
+          <.form for={@form} phx-submit="reply-and-answer" id={"tt-reply-form-" <> @node.id}>
+            <div class="flex-1 mb-4">
+              <.input
+                :if={@node_id != "NewNode"}
+                field={@form[:content]}
+                tabindex="0"
+                type="text"
+                id={"tt-input-" <> @node.id}
+                placeholder="Ask question"
+              />
+            </div>
+          </.form>
+        <% else %>
+          <.form for={@form} phx-submit="answer" id={"tt-form-" <> @node.id}>
+            <div class="flex-1 mb-4">
+              <.input
+                :if={@node_id != "NewNode"}
+                field={@form[:content]}
+                tabindex="0"
+                type="text"
+                id={"tt-input-" <> @node.id}
+                placeholder="Add comment"
+              />
+            </div>
+          </.form>
+        <% end %>
+      </div>
 
       <div class="menu-buttons">
         <button
@@ -255,8 +263,8 @@ defmodule DialecticWeb.NodeMenuComp do
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
     padding: 5px;
     transition: opacity 0.2s;
-    max-width: 400px;
-    max-height: 80vh;
+    max-width: 750px;
+    max-height: 120vh;
     """
 
     visibility = if visible, do: "display: block;", else: "display: none;"

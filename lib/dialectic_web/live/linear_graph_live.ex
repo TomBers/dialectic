@@ -6,7 +6,9 @@ defmodule DialecticWeb.LinearGraphLive do
     graph_id = URI.decode(graph_id_uri)
     {_graph_struct, graph} = GraphManager.get_graph(graph_id)
 
-    conv = Dialectic.Linear.ThreadedConv.prepare_conversation(graph)
+    conv =
+      Dialectic.Linear.ThreadedConv.prepare_conversation(graph)
+      |> Enum.reject(&(Map.get(&1, :compound, false) == true))
 
     {:ok, assign(socket, conv: conv, graph_id: graph_id, hidden: Enum.map(conv, & &1.id))}
   end

@@ -68,7 +68,66 @@ defmodule DialecticWeb.GraphLive do
        node_menu_visible: false,
        node_menu_position: nil,
        auto_reply: true,
-       drawer_open: false
+       drawer_open: true,
+       candidate_ids: [],
+       group_changeset: to_form(%{"title" => ""}),
+       show_group_modal: false
+     )}
+  end
+
+  def handle_event("nodes_box_selected", %{"ids" => ids}, socket) do
+    # IO.inspect(ids, label: "Selected Node IDs")
+
+    {:noreply,
+     socket
+     |> assign(:candidate_ids, ids)
+     |> assign(:show_group_modal, true)
+     # JS.exec() helpers work too
+     |> push_event("open_group_modal", %{ids: ids})}
+  end
+
+  def handle_event("cancel_group", _, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_group_modal, false)
+     |> assign(:candidate_ids, [])}
+  end
+
+  def handle_event("group_nodes", %{"title" => t, "ids" => ids}, socket) do
+    graph = GraphManager.create_group(socket.assigns.graph_id, t, String.split(ids, ","))
+    DbWorker.save_graph(socket.assigns.graph_id)
+
+    {:noreply,
+     socket
+     |> assign(
+       candidate_ids: [],
+       graph: graph,
+       f_graph: format_graph(graph),
+       show_group_modal: false
+     )}
+  end
+
+  def handle_event("node:join_group", %{"node" => nid, "parent" => gid}, socket) do
+    graph = GraphManager.set_parent(socket.assigns.graph_id, nid, gid)
+    DbWorker.save_graph(socket.assigns.graph_id)
+
+    {:noreply,
+     socket
+     |> assign(
+       graph: graph,
+       f_graph: format_graph(graph)
+     )}
+  end
+
+  def handle_event("node:leave_group", %{"node" => nid}, socket) do
+    graph = GraphManager.remove_parent(socket.assigns.graph_id, nid)
+    DbWorker.save_graph(socket.assigns.graph_id)
+
+    {:noreply,
+     socket
+     |> assign(
+       graph: graph,
+       f_graph: format_graph(graph)
      )}
   end
 
@@ -334,7 +393,12 @@ defmodule DialecticWeb.GraphLive do
     # We pass false so that it does not respect the queue exlusion period and stores the response immediately.
     DbWorker.save_graph(socket.assigns.graph_id, false)
 
-    update_graph(socket, GraphActions.find_node(socket.assigns.graph_id, node_id), false, true)
+    update_graph(
+      socket,
+      GraphActions.find_node(socket.assigns.graph_id, node_id),
+      false,
+      true
+    )
   end
 
   def handle_info({:stream_error, error, :node_id, node_id}, socket) do
@@ -360,7 +424,7 @@ defmodule DialecticWeb.GraphLive do
   def main_keybaord_interface(socket, key) do
     case key do
       "b" ->
-        if !socket.assigns.can_edit do
+        if !socket.assigns.can_edit or socket.assigns.node.compound do
           {:noreply, socket |> put_flash(:error, "This graph is locked")}
         else
           update_graph(
@@ -370,7 +434,7 @@ defmodule DialecticWeb.GraphLive do
         end
 
       "r" ->
-        if !socket.assigns.can_edit do
+        if !socket.assigns.can_edit or socket.assigns.node.compound do
           {:noreply, socket |> put_flash(:error, "This graph is locked")}
         else
           update_graph(
@@ -380,7 +444,7 @@ defmodule DialecticWeb.GraphLive do
         end
 
       "c" ->
-        if !socket.assigns.can_edit do
+        if !socket.assigns.can_edit or socket.assigns.node.compound do
           {:noreply, socket |> put_flash(:error, "This graph is locked")}
         else
           com = Map.get(socket.assigns.node, :id)

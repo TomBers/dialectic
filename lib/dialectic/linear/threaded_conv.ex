@@ -97,7 +97,8 @@ defmodule Dialectic.Linear.ThreadedConv do
         content: data && data.content,
         class: (data && data.class) || "default",
         user: data && data.user,
-        deleted: data && data.deleted
+        deleted: data && data.deleted,
+        compound: data && data.compound
       }
     end)
   end

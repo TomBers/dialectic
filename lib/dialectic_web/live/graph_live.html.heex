@@ -20,6 +20,10 @@
         <h2>Ctrl + C</h2>
         <div class="proposition">Combine</div>
       </div>
+      <div class="node">
+        <h2>Shift + Drag</h2>
+        <div class="proposition">Group Nodes</div>
+      </div>
     </div>
   </div>
   
@@ -35,8 +39,6 @@
         class="h-full w-full"
         data-graph={@f_graph}
         data-node={@node.id}
-        data-cols={Jason.encode!(Dialectic.Consts.Colours.graph_cols())}
-        data-updateview={Jason.encode!(@update_view)}
         data-div="cy"
         phx-hook="Graph"
         phx-update="ignore"
@@ -60,13 +62,25 @@
       >
         <.live_component module={CombineComp} graph={@graph} node={@node} id="Modal" />
       </.modal>
+
+      <.modal :if={@show_group_modal} id="group-modal" on_cancel={JS.push("cancel_group")} show>
+        <h2 class="text-xl font-semibold mb-4">Group selected nodes</h2>
+
+        <.simple_form for={@group_changeset} phx-submit="group_nodes">
+          <.input field={@group_changeset[:title]} label="Group title" required />
+          <input type="hidden" name="ids" value={Enum.join(@candidate_ids, ",")} />
+          <:actions>
+            <.button phx-disable-with="Grouping…">Create group</.button>
+          </:actions>
+        </.simple_form>
+      </.modal>
     </div>
     
 <!-- Toggle button for drawer -->
     <button
       id="drawer-toggle"
       phx-click="toggle_drawer"
-      class="fixed right-0 top-1/2 transform -translate-y-1/2 bg-gray-200 p-2 rounded-l-md shadow-md z-10"
+      class="fixed right-0 top-1/2 transform -translate-y-1/2 m-4 p-4 rounded-l-md shadow-md z-50 cursor-pointer hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400 transition-colors"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -74,6 +88,7 @@
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
+        aria-hidden="true"
       >
         <path
           stroke-linecap="round"
@@ -82,6 +97,7 @@
           d={if @drawer_open, do: "M13 5l7 7-7 7", else: "M11 19l-7-7 7-7"}
         />
       </svg>
+      <span class="sr-only">{if @drawer_open, do: "Close", else: "Open"} drawer</span>
     </button>
     
 <!-- Right side: Chat (Drawer) -->

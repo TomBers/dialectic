@@ -15,10 +15,12 @@ defmodule Dialectic.Graph.Vertex do
             content: "",
             class: "",
             user: "",
+            parent: nil,
             parents: [],
             children: [],
             noted_by: [],
-            deleted: false
+            deleted: false,
+            compound: false
 
   # Add a function to validate the class
   def validate_class(class) when class in @valid_classes, do: {:ok, class}
@@ -31,8 +33,10 @@ defmodule Dialectic.Graph.Vertex do
       content: vertex.content,
       class: vertex.class,
       user: vertex.user,
+      parent: vertex.parent,
       noted_by: vertex.noted_by,
-      deleted: vertex.deleted
+      deleted: vertex.deleted,
+      compound: vertex.compound
     }
   end
 
@@ -42,8 +46,10 @@ defmodule Dialectic.Graph.Vertex do
       content: data["content"],
       class: data["class"],
       user: data["user"],
+      parent: data["parent"],
       noted_by: data["noted_by"],
-      deleted: data["deleted"]
+      deleted: data["deleted"],
+      compound: data["compound"]
     }
   end
 
@@ -133,14 +139,90 @@ defmodule Dialectic.Graph.Vertex do
     end)
   end
 
-  # def find_node_by_id(graph_id, id) do
-  #   case :digraph.vertex(graph, id) do
-  #     # Returns the vertex struct
-  #     {_id, vertex} -> vertex
-  #     # Return nil if vertex not found
-  #     false -> nil
-  #   end
-  # end
+  @doc """
+  Adds a *group* vertex whose ID **is the title string itself**
+  and tags every child vertex with `parent: title`.
+
+  Returns the same `:digraph.graph()` handle (mutated in place).
+  """
+  @spec add_group(:digraph.graph(), String.t(), [String.t()]) :: :digraph.graph()
+  def add_group(graph, title, child_ids) do
+    # 1.  create the new compound‑node vertex
+    :digraph.add_vertex(
+      graph,
+      # vertex ID == title
+      title,
+      # Cytoscape‑friendly payload
+      %Dialectic.Graph.Vertex{id: title, compound: true}
+    )
+
+    # 2.  update each child so Cytoscape knows its parent
+    Enum.each(child_ids, fn id ->
+      case :digraph.vertex(graph, id) do
+        false ->
+          # skip unknown IDs (or raise)
+          :ok
+
+        {^id, old_label} ->
+          new_label = Map.put(old_label, :parent, title)
+          # replace label in place
+          :digraph.add_vertex(graph, id, new_label)
+      end
+    end)
+
+    # ← same reference, now mutated
+    graph
+  end
+
+  def change_parent(graph, node_id, parent_id) do
+    case :digraph.vertex(graph, node_id) do
+      false ->
+        # Skip unknown IDs (or raise)
+        :ok
+
+      {^node_id, old_label} ->
+        # Get the old parent ID before changing
+        old_parent_id = Map.get(old_label, :parent)
+
+        # Assign the new parent
+        new_label = Map.put(old_label, :parent, parent_id)
+        :digraph.add_vertex(graph, node_id, new_label)
+
+        # Only if we are removing node from group
+        if parent_id == nil do
+          check_and_remove_if_empty(graph, old_parent_id)
+        end
+
+        graph
+    end
+  end
+
+  # Simpler helper function to check if a compound node is empty and remove if needed
+  def check_and_remove_if_empty(graph, parent_id) do
+    case :digraph.vertex(graph, parent_id) do
+      false ->
+        :ok
+
+      {^parent_id, parent_label} ->
+        # Only proceed if this is a compound node
+        if Map.get(parent_label, :compound, false) do
+          # Check if any node has this parent
+          has_children =
+            Enum.any?(:digraph.vertices(graph), fn vertex_id ->
+              vertex_id != parent_id and
+                case :digraph.vertex(graph, vertex_id) do
+                  {^vertex_id, label} -> Map.get(label, :parent) == parent_id
+                  _ -> false
+                end
+            end)
+
+          # If no children found and it's a compound node, remove it
+          if not has_children do
+            :digraph.del_vertex(graph, parent_id)
+          end
+        end
+    end
+  end
 
   def find_parents(graph, vertex) do
     :digraph.in_edges(graph, vertex.id)
@@ -181,11 +263,16 @@ defmodule Dialectic.Graph.Vertex do
             acc ++
               [
                 %{
-                  data: %{
-                    id: vid,
-                    class: dat.class,
-                    content: dat.content
-                  }
+                  classes: dat.class,
+                  data:
+                    %{
+                      id: vid,
+                      parent: Map.get(dat, :parent, ""),
+                      content: dat.content
+                    }
+                    |> then(fn m ->
+                      if Map.get(dat, :compound, false), do: Map.put(m, :compound, true), else: m
+                    end)
                 }
               ]
         end
