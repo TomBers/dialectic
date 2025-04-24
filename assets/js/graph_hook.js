@@ -5,8 +5,6 @@ let numNodes = null;
 let nodeId = null;
 
 const layoutGraph = (cy, node_id) => {
-  cy.style(graphStyle()).update();
-
   const layout = cy.layout({
     name: "dagre",
     rankDir: "TB",
@@ -19,9 +17,6 @@ const layoutGraph = (cy, node_id) => {
     },
     // This gets called when the layout is done running
     stop: function () {
-      // console.log("Layout finished");
-      // Now center on the node
-
       cy.animate({
         center: {
           eles: `#${node_id}`,
@@ -30,6 +25,7 @@ const layoutGraph = (cy, node_id) => {
         // Optional: make this animation a bit slower to allow user to see context
         duration: 100,
       });
+      cy.style(graphStyle()).update();
     }.bind(this), // Bind 'this' to maintain context
   });
 

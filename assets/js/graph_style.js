@@ -123,6 +123,7 @@ export function graphStyle() {
       css: {
         "border-color": cols[nodeType].border,
         "background-color": cols[nodeType].background,
+        "border-width": 2,
       },
     });
     base_style.push({
