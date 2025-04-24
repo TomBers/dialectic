@@ -71,7 +71,8 @@ defmodule DialecticWeb.GraphLive do
        drawer_open: true,
        candidate_ids: [],
        group_changeset: to_form(%{"title" => ""}),
-       show_group_modal: false
+       show_group_modal: false,
+       graph_operation: ""
      )}
   end
 
