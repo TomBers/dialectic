@@ -19,19 +19,23 @@ const graphHook = {
   mounted() {
     const { graph, node, div } = this.el.dataset;
 
-    const div_id = document.getElementById(div);
-    const elements = JSON.parse(graph);
-
-    this.cy = draw_graph(div_id, this, elements, node);
+    this.cy = draw_graph(
+      document.getElementById(div),
+      this,
+      JSON.parse(graph),
+      node,
+    );
   },
   updated() {
     const { graph, node, operation } = this.el.dataset;
 
-    const newElements = JSON.parse(graph);
+    console.log(operation);
 
-    this.cy.json({ elements: newElements });
-    const reorderOerations = new Set([
+    this.cy.json({ elements: JSON.parse(graph) });
+
+    const reorderOperations = new Set([
       "delete_node",
+      "edit_node",
       "branch",
       "combine",
       "answer",
@@ -40,7 +44,7 @@ const graphHook = {
       "comment",
     ]);
 
-    if (reorderOerations.has(operation)) {
+    if (reorderOperations.has(operation)) {
       layoutGraph(this.cy); // your Dagre call
     }
 

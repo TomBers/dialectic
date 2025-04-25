@@ -394,13 +394,17 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_info({:other_user_change, graph}, socket) do
-    {:noreply,
-     assign(socket,
-       graph: graph,
-       f_graph: format_graph(graph),
-       graph_operation: "other_user_change"
-     )}
+  def handle_info({:other_user_change, graph, sender_pid}, socket) do
+    if self() != sender_pid do
+      {:noreply,
+       assign(socket,
+         graph: graph,
+         f_graph: format_graph(graph),
+         graph_operation: "other_user_change"
+       )}
+    else
+      {:noreply, socket}
+    end
   end
 
   def handle_info({:stream_chunk, updated_vertex, :node_id, node_id}, socket) do
@@ -520,7 +524,7 @@ defmodule DialecticWeb.GraphLive do
     non_broadcast_operations = MapSet.new(["find_node", "move"])
 
     if !MapSet.member?(non_broadcast_operations, operation) do
-      PubSub.broadcast(Dialectic.PubSub, "graph_update", {:other_user_change, graph})
+      PubSub.broadcast(Dialectic.PubSub, "graph_update", {:other_user_change, graph, self()})
       # Save mutation to database
       DbWorker.save_graph(socket.assigns.graph_id)
     end
@@ -533,7 +537,8 @@ defmodule DialecticWeb.GraphLive do
        node: node,
        show_combine: show_combine,
        key_buffer: "",
-       edit: false
+       edit: false,
+       graph_operation: operation
      )}
   end
 end

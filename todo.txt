@@ -1,37 +1,21 @@
-Technical issues:
+graph_operations:
 
-Must fix:
-0) Double check lock func - add to combine button
-1) Don't close modal on select - add success message on text select.
+create_group
+join_group
+leave_group
 
+note
+unnote
 
+delete_node
+edit_node
+branch
+combine
+comment
+answer
+llm_request_complete
 
-Further testing:
+move
+node_clicked
 
-
-
-Use the system to have interesting conversations - does it help comprehension?
-Ideas -
-Being and Time,
-German Idealism,
-The Republic - Plato,
-The Prince - Machiavelli,
-The Tao Te Ching - Lao Tzu,
-Zen the Art of Motorcycle Maintenance - Pirsig,
-Small is Beautiful - Schumacher,
-The Art of War - Sun Tzu,
-
-
-
-
-
-Ideas:
-
-1) Personas - ask the LLM to answer the question as a particular thinker
-Answer as Plato, Aristotle, etc.
-
-2) An User inbox - where they can see queestions that they have not answered yet ?? Or maybe just a list of questions that they have asked.
-
-
-
-Overview - a multiplayer where any player can answer questions.  The players are either real people online, or LLM agents.  The LLM agents are trained to answer questions as a particular thinker.
+other_user_change
