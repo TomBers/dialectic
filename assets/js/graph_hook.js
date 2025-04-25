@@ -29,7 +29,7 @@ const graphHook = {
   updated() {
     const { graph, node, operation } = this.el.dataset;
 
-    console.log(operation);
+    // console.log(operation);
 
     this.cy.json({ elements: JSON.parse(graph) });
 
@@ -40,7 +40,7 @@ const graphHook = {
       "combine",
       "answer",
       "llm_request_complete",
-      "other_user_change",
+      // "other_user_change",
       "comment",
     ]);
 

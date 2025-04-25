@@ -521,7 +521,7 @@ defmodule DialecticWeb.GraphLive do
         socket.assigns.show_combine
       end
 
-    non_broadcast_operations = MapSet.new(["find_node", "move"])
+    non_broadcast_operations = MapSet.new(["find_node", "move", "note", "unnote"])
 
     if !MapSet.member?(non_broadcast_operations, operation) do
       PubSub.broadcast(Dialectic.PubSub, "graph_update", {:other_user_change, graph, self()})
