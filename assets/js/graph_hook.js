@@ -29,8 +29,6 @@ const graphHook = {
   updated() {
     const { graph, node, operation } = this.el.dataset;
 
-    // console.log(operation);
-
     this.cy.json({ elements: JSON.parse(graph) });
 
     const reorderOperations = new Set([
@@ -40,7 +38,6 @@ const graphHook = {
       "combine",
       "answer",
       "llm_request_complete",
-      // "other_user_change",
       "comment",
     ]);
 
