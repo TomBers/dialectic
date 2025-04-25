@@ -62,7 +62,6 @@ defmodule DialecticWeb.GraphLive do
        show_combine: false,
        key_buffer: "",
        user: user,
-       update_view: true,
        edit: false,
        can_edit: can_edit,
        node_menu_visible: false,
@@ -104,7 +103,8 @@ defmodule DialecticWeb.GraphLive do
        candidate_ids: [],
        graph: graph,
        f_graph: format_graph(graph),
-       show_group_modal: false
+       show_group_modal: false,
+       graph_operation: "create_group"
      )}
   end
 
@@ -116,7 +116,8 @@ defmodule DialecticWeb.GraphLive do
      socket
      |> assign(
        graph: graph,
-       f_graph: format_graph(graph)
+       f_graph: format_graph(graph),
+       graph_operation: "join_group"
      )}
   end
 
@@ -128,7 +129,8 @@ defmodule DialecticWeb.GraphLive do
      socket
      |> assign(
        graph: graph,
-       f_graph: format_graph(graph)
+       f_graph: format_graph(graph),
+       graph_operation: "leave_group"
      )}
   end
 
@@ -171,7 +173,12 @@ defmodule DialecticWeb.GraphLive do
 
       update_graph(
         socket,
-        GraphActions.change_noted_by(graph_action_params(socket), node_id, &Vertex.add_noted_by/2)
+        GraphActions.change_noted_by(
+          graph_action_params(socket),
+          node_id,
+          &Vertex.add_noted_by/2
+        ),
+        "note"
       )
     end
   end
@@ -198,7 +205,8 @@ defmodule DialecticWeb.GraphLive do
           graph_action_params(socket),
           node_id,
           &Vertex.remove_noted_by/2
-        )
+        ),
+        "unnote"
       )
     end
   end
@@ -211,7 +219,8 @@ defmodule DialecticWeb.GraphLive do
          socket.assigns.can_edit do
       update_graph(
         socket,
-        GraphActions.delete_node(graph_action_params(socket), node_id)
+        GraphActions.delete_node(graph_action_params(socket), node_id),
+        "delete_node"
       )
     else
       {:noreply, socket |> put_flash(:error, "You cannot delete this node")}
@@ -238,7 +247,8 @@ defmodule DialecticWeb.GraphLive do
       # Ensure branching from the correct node
       update_graph(
         socket,
-        GraphActions.branch(graph_action_params(socket, node))
+        GraphActions.branch(graph_action_params(socket, node)),
+        "branch"
       )
     end
   end
@@ -262,7 +272,7 @@ defmodule DialecticWeb.GraphLive do
           node_id
         )
 
-      update_graph(socket, {graph, node}, true)
+      update_graph(socket, {graph, node}, "combine")
     end
   end
 
@@ -291,25 +301,29 @@ defmodule DialecticWeb.GraphLive do
           "ArrowDown" ->
             update_graph(
               socket,
-              GraphActions.move(graph_action_params(socket), "down")
+              GraphActions.move(graph_action_params(socket), "down"),
+              "move"
             )
 
           "ArrowUp" ->
             update_graph(
               socket,
-              GraphActions.move(graph_action_params(socket), "up")
+              GraphActions.move(graph_action_params(socket), "up"),
+              "move"
             )
 
           "ArrowRight" ->
             update_graph(
               socket,
-              GraphActions.move(graph_action_params(socket), "right")
+              GraphActions.move(graph_action_params(socket), "right"),
+              "move"
             )
 
           "ArrowLeft" ->
             update_graph(
               socket,
-              GraphActions.move(graph_action_params(socket), "left")
+              GraphActions.move(graph_action_params(socket), "left"),
+              "move"
             )
 
           _ ->
@@ -323,7 +337,7 @@ defmodule DialecticWeb.GraphLive do
   def handle_event("KeyBoardInterface", %{}, socket), do: {:noreply, socket}
 
   def handle_event("node_clicked", %{"id" => id}, socket) do
-    update_graph(socket, GraphActions.find_node(socket.assigns.graph_id, id), false, false)
+    update_graph(socket, GraphActions.find_node(socket.assigns.graph_id, id), "node_clicked")
   end
 
   def handle_event("answer", %{"vertex" => %{"content" => ""}}, socket), do: {:noreply, socket}
@@ -331,9 +345,13 @@ defmodule DialecticWeb.GraphLive do
   def handle_event("answer", %{"vertex" => %{"content" => answer}}, socket) do
     if socket.assigns.can_edit do
       if socket.assigns.edit do
-        update_graph(socket, GraphActions.edit_node(graph_action_params(socket), answer))
+        update_graph(
+          socket,
+          GraphActions.edit_node(graph_action_params(socket), answer),
+          "edit_node"
+        )
       else
-        update_graph(socket, GraphActions.comment(graph_action_params(socket), answer))
+        update_graph(socket, GraphActions.comment(graph_action_params(socket), answer), "comment")
       end
     else
       {:noreply, socket |> put_flash(:error, "This graph is locked")}
@@ -350,7 +368,8 @@ defmodule DialecticWeb.GraphLive do
 
       update_graph(
         socket,
-        GraphActions.answer(graph_action_params(socket, node))
+        GraphActions.answer(graph_action_params(socket, node)),
+        "answer"
       )
     end
   end
@@ -376,7 +395,12 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_info({:other_user_change, graph}, socket) do
-    {:noreply, assign(socket, graph: graph, f_graph: format_graph(graph))}
+    {:noreply,
+     assign(socket,
+       graph: graph,
+       f_graph: format_graph(graph),
+       graph_operation: "other_user_change"
+     )}
   end
 
   def handle_info({:stream_chunk, updated_vertex, :node_id, node_id}, socket) do
@@ -395,10 +419,9 @@ defmodule DialecticWeb.GraphLive do
     DbWorker.save_graph(socket.assigns.graph_id, false)
 
     update_graph(
-      socket |> push_event("llm_request_complete", %{}),
+      socket,
       GraphActions.find_node(socket.assigns.graph_id, node_id),
-      false,
-      true
+      "llm_request_complete"
     )
   end
 
@@ -430,7 +453,8 @@ defmodule DialecticWeb.GraphLive do
         else
           update_graph(
             socket,
-            GraphActions.branch(graph_action_params(socket))
+            GraphActions.branch(graph_action_params(socket)),
+            "branch"
           )
         end
 
@@ -440,7 +464,8 @@ defmodule DialecticWeb.GraphLive do
         else
           update_graph(
             socket,
-            GraphActions.answer(graph_action_params(socket))
+            GraphActions.answer(graph_action_params(socket)),
+            "answer"
           )
         end
 
@@ -455,7 +480,7 @@ defmodule DialecticWeb.GraphLive do
       _ ->
         case GraphActions.find_node(socket.assigns.graph_id, key) do
           {graph, node} ->
-            update_graph(socket, {graph, node}, false)
+            update_graph(socket, {graph, node}, "find_node")
 
           _ ->
             {:noreply, assign(socket, key_buffer: key)}
@@ -469,7 +494,7 @@ defmodule DialecticWeb.GraphLive do
            key
          ) do
       {graph, node} ->
-        update_graph(socket, {graph, node}, true)
+        update_graph(socket, {graph, node}, "combine")
 
       _ ->
         {:noreply, assign(socket, key_buffer: key)}
@@ -480,19 +505,21 @@ defmodule DialecticWeb.GraphLive do
     {socket.assigns.graph_id, node || socket.assigns.node, socket.assigns.user}
   end
 
-  def update_graph(socket, {graph, node}, invert_modal \\ false, update_view \\ true) do
+  def update_graph(socket, {graph, node}, operation) do
     # Changeset needs to be a new node
     new_node = GraphActions.create_new_node(socket.assigns.user)
     changeset = Vertex.changeset(new_node)
 
     show_combine =
-      if invert_modal do
+      if operation == "combine" do
         !socket.assigns.show_combine
       else
         socket.assigns.show_combine
       end
 
-    if update_view do
+    non_broadcast_operations = MapSet.new(["find_node", "move"])
+
+    if !MapSet.member?(non_broadcast_operations, operation) do
       PubSub.broadcast(Dialectic.PubSub, "graph_update", {:other_user_change, graph})
       # Save mutation to database
       DbWorker.save_graph(socket.assigns.graph_id)
@@ -506,7 +533,6 @@ defmodule DialecticWeb.GraphLive do
        node: node,
        show_combine: show_combine,
        key_buffer: "",
-       update_view: update_view,
        edit: false
      )}
   end

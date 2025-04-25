@@ -21,12 +21,8 @@ const graphHook = {
 
     const div_id = document.getElementById(div);
     const elements = JSON.parse(graph);
-    nodes = elements;
 
     this.cy = draw_graph(div_id, this, elements, node);
-    this.handleEvent("llm_request_complete", () => {
-      layoutGraph(this.cy);
-    });
   },
   updated() {
     const { graph, node, operation } = this.el.dataset;
@@ -35,10 +31,13 @@ const graphHook = {
 
     this.cy.json({ elements: newElements });
     const reorderOerations = new Set([
-      "grouping",
-      "ungrouping",
-      "move",
-      "colorchange",
+      "delete_node",
+      "branch",
+      "combine",
+      "answer",
+      "llm_request_complete",
+      "other_user_change",
+      "comment",
     ]);
 
     if (reorderOerations.has(operation)) {
