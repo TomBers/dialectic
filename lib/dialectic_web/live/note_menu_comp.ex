@@ -5,15 +5,35 @@ defmodule DialecticWeb.NoteMenuComp do
     {:ok, socket |> assign(assigns)}
   end
 
+  defp keyboard_shortcut(class) do
+    cols =
+      case class do
+        # "user" -> "border-red-400"
+        "answer" -> "border-blue-400 text-blue-700"
+        "thesis" -> "border-green-400 text-green-700"
+        "antithesis" -> "border-red-400 text-red-700"
+        "synthesis" -> "border-purple-600 text-purple-700"
+        _ -> "border border-gray-200 bg-white"
+      end
+
+    "w-8 h-8 flex items-center p-4 justify-center rounded-lg font-mono text-sm border-2 " <>
+      cols
+  end
+
   def render(assigns) do
     ~H"""
-    <div class="rounded-md px-3 py-2 shadow-sm inline-flex items-center space-x-3 text-xs">
+    <div class="rounded-md px-3 py-2 shadow-sm inline-flex space-x-3 text-xs">
       <span class="flex items-center">
         <%= if @node.class == "user" do %>
           <span class="text-gray-500">By:</span>
           <span class="font-semibold ml-1 text-gray-700">{@node.user}</span>
         <% end %>
       </span>
+      <div class="shrink-0">
+        <h2 class={keyboard_shortcut(@node.class)}>
+          <span class="transform">{@node.id}</span>
+        </h2>
+      </div>
 
       <div class="flex items-center bg-amber-50 px-2 py-0.5 rounded-full" title="Number of stars">
         <span class="text-amber-600 mr-1">{length(@node.noted_by)}</span>

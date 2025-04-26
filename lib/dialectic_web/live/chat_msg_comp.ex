@@ -26,7 +26,7 @@ defmodule DialecticWeb.ChatMsgComp do
     >
       <div class="shrink-0">
         <h2 class={keyboard_shortcut(@node.class)}>
-          <span class="transform rotate-45">{@node.id}</span>
+          <span class="transform">{@node.id}</span>
         </h2>
       </div>
 
@@ -98,7 +98,7 @@ defmodule DialecticWeb.ChatMsgComp do
         _ -> "border border-gray-200 bg-white"
       end
 
-    "w-8 h-8 flex items-center p-4 justify-center rounded-lg font-mono text-sm border-2 transform -rotate-45 " <>
+    "w-8 h-8 flex items-center p-4 justify-center rounded-lg font-mono text-sm border-2 transform " <>
       cols
   end
 end

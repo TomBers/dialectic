@@ -69,7 +69,7 @@ defmodule DialecticWeb.NodeMenuComp do
           <h2>Loading ...</h2>
         </div>
       <% end %>
-      <div class="mx-auto w-3/4">
+      <div class="">
         <.live_component
           module={NoteMenuComp}
           node={@node}
@@ -77,33 +77,35 @@ defmodule DialecticWeb.NodeMenuComp do
           id={"note-menu-" <> @node.id}
         />
 
-        <%= if @ask_question do %>
-          <.form for={@form} phx-submit="reply-and-answer" id={"tt-reply-form-" <> @node.id}>
-            <div class="flex-1 mb-4">
-              <.input
-                :if={@node_id != "NewNode"}
-                field={@form[:content]}
-                tabindex="0"
-                type="text"
-                id={"tt-input-" <> @node.id}
-                placeholder="Ask question"
-              />
-            </div>
-          </.form>
-        <% else %>
-          <.form for={@form} phx-submit="answer" id={"tt-form-" <> @node.id}>
-            <div class="flex-1 mb-4">
-              <.input
-                :if={@node_id != "NewNode"}
-                field={@form[:content]}
-                tabindex="0"
-                type="text"
-                id={"tt-input-" <> @node.id}
-                placeholder="Add comment"
-              />
-            </div>
-          </.form>
-        <% end %>
+        <div class="mx-auto w-3/4">
+          <%= if @ask_question do %>
+            <.form for={@form} phx-submit="reply-and-answer" id={"tt-reply-form-" <> @node.id}>
+              <div class="flex-1 mb-4">
+                <.input
+                  :if={@node_id != "NewNode"}
+                  field={@form[:content]}
+                  tabindex="0"
+                  type="text"
+                  id={"tt-input-" <> @node.id}
+                  placeholder="Ask question"
+                />
+              </div>
+            </.form>
+          <% else %>
+            <.form for={@form} phx-submit="answer" id={"tt-form-" <> @node.id}>
+              <div class="flex-1 mb-4">
+                <.input
+                  :if={@node_id != "NewNode"}
+                  field={@form[:content]}
+                  tabindex="0"
+                  type="text"
+                  id={"tt-input-" <> @node.id}
+                  placeholder="Add comment"
+                />
+              </div>
+            </.form>
+          <% end %>
+        </div>
       </div>
 
       <div class="menu-buttons">
