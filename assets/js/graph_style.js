@@ -15,7 +15,7 @@ const cols = {
   thesis: { text: "#4ade80", background: "white", border: "#4ade80" },
 };
 
-const cutoff = 200;
+const cutoff = 140;
 
 export function graphStyle() {
   const base_style = [
@@ -25,7 +25,7 @@ export function graphStyle() {
         /* sizing ---------------------------------------------------------- */
         width: 250,
         height: (n) =>
-          Math.max(Math.min(n.data("content").length, cutoff) - 80, 40),
+          Math.max(Math.min(n.data("content").length, cutoff) - 60, 40),
         "min-width": 60,
         "min-height": 40,
         padding: "12px",
