@@ -46,7 +46,7 @@ export function graphStyle() {
         },
 
         /* font & layout --------------------------------------------------- */
-        "font-family": "InterVariable, sans-serif",
+        "font-family": "sans-serif",
         "font-size": 14,
         "font-weight": 400,
         "text-halign": "center",

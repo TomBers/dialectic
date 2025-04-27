@@ -1,12 +1,13 @@
 import { draw_graph } from "./draw_graph";
 
 const layoutGraph = (cy) => {
+  const sep = 50;
   const layout = cy.layout({
     name: "dagre",
     rankDir: "TB",
-    nodeSep: 20,
-    edgeSep: 15,
-    rankSep: 30,
+    nodeSep: sep,
+    edgeSep: sep,
+    rankSep: sep,
     // Add a callback for when layout is done
     ready: function () {},
   });
