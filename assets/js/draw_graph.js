@@ -7,6 +7,7 @@ cytoscape.use(dagre);
 cytoscape.use(compoundDragAndDrop);
 
 export function draw_graph(graph, context, elements, node) {
+  const sep = 50;
   const cy = cytoscape({
     container: graph, // container to render in
     elements: elements,
@@ -17,9 +18,9 @@ export function draw_graph(graph, context, elements, node) {
     layout: {
       name: "dagre",
       rankDir: "TB",
-      nodeSep: 20,
-      edgeSep: 15,
-      rankSep: 30,
+      nodeSep: sep,
+      edgeSep: sep,
+      rankSep: sep,
     },
   });
 

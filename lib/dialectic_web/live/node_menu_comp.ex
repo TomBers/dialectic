@@ -8,7 +8,10 @@ defmodule DialecticWeb.NodeMenuComp do
     ~H"""
     <div
       id={"node-menu-" <> @node_id}
-      class="graph-tooltip overflow-auto"
+      class={[
+        "graph-tooltip max-h-full overflow-auto border-4",
+        ColUtils.message_border_class(@node.class)
+      ]}
       style={get_styles(@visible, @position)}
       data-position={Jason.encode!(@position)}
       phx-hook="NodeMenuHook"
@@ -16,9 +19,7 @@ defmodule DialecticWeb.NodeMenuComp do
       <%= if String.length(@node.content) > 0 do %>
         <div
           class={[
-            "p-2 rounded-lg shadow-sm",
-            "flex items-start gap-3 bg-white border-4",
-            ColUtils.message_border_class(@node.class)
+            "flex p-2 items-start gap-3 bg-white"
           ]}
           id={"tt-node-" <> @node.id}
         >
@@ -28,38 +29,17 @@ defmodule DialecticWeb.NodeMenuComp do
             phx-hook="TextSelectionHook"
             data-node-id={@node.id}
           >
-            <article class="prose prose-stone prose-lg selection-content">
-              {TextUtils.truncated_html(@node.content || "", @cut_off)}
+            <article class="prose prose-stone prose-xl max-w-none selection-content space-y-4">
+              <h3>
+                {TextUtils.modal_title(@node.content, @node.class || "")}
+              </h3>
+              <div>
+                {TextUtils.full_html(@node.content || "")}
+              </div>
             </article>
             <div class="selection-actions hidden absolute bg-white shadow-md rounded-md p-1 z-10">
               <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded">
                 Ask about selection
-              </button>
-            </div>
-
-            <div class="flex justify-end">
-              <button
-                phx-click={show_modal("modal-#{@node.id}")}
-                class="mt-2 text-blue-600 hover:text-blue-800 p-1.5 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300"
-                aria-label="Open in modal"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  class="feather feather-maximize-2"
-                >
-                  <polyline points="15 3 21 3 21 9"></polyline>
-                  <polyline points="9 21 3 21 3 15"></polyline>
-                  <line x1="21" y1="3" x2="14" y2="10"></line>
-                  <line x1="3" y1="21" x2="10" y2="14"></line>
-                </svg>
               </button>
             </div>
           </div>
@@ -69,7 +49,7 @@ defmodule DialecticWeb.NodeMenuComp do
           <h2>Loading ...</h2>
         </div>
       <% end %>
-      <div class="mx-auto w-3/4">
+      <div class="">
         <.live_component
           module={NoteMenuComp}
           node={@node}
@@ -77,33 +57,35 @@ defmodule DialecticWeb.NodeMenuComp do
           id={"note-menu-" <> @node.id}
         />
 
-        <%= if @ask_question do %>
-          <.form for={@form} phx-submit="reply-and-answer" id={"tt-reply-form-" <> @node.id}>
-            <div class="flex-1 mb-4">
-              <.input
-                :if={@node_id != "NewNode"}
-                field={@form[:content]}
-                tabindex="0"
-                type="text"
-                id={"tt-input-" <> @node.id}
-                placeholder="Ask question"
-              />
-            </div>
-          </.form>
-        <% else %>
-          <.form for={@form} phx-submit="answer" id={"tt-form-" <> @node.id}>
-            <div class="flex-1 mb-4">
-              <.input
-                :if={@node_id != "NewNode"}
-                field={@form[:content]}
-                tabindex="0"
-                type="text"
-                id={"tt-input-" <> @node.id}
-                placeholder="Add comment"
-              />
-            </div>
-          </.form>
-        <% end %>
+        <div class="mx-auto w-3/4">
+          <%= if @ask_question do %>
+            <.form for={@form} phx-submit="reply-and-answer" id={"tt-reply-form-" <> @node.id}>
+              <div class="flex-1 mb-4">
+                <.input
+                  :if={@node_id != "NewNode"}
+                  field={@form[:content]}
+                  tabindex="0"
+                  type="text"
+                  id={"tt-input-" <> @node.id}
+                  placeholder="Ask question"
+                />
+              </div>
+            </.form>
+          <% else %>
+            <.form for={@form} phx-submit="answer" id={"tt-form-" <> @node.id}>
+              <div class="flex-1 mb-4">
+                <.input
+                  :if={@node_id != "NewNode"}
+                  field={@form[:content]}
+                  tabindex="0"
+                  type="text"
+                  id={"tt-input-" <> @node.id}
+                  placeholder="Add comment"
+                />
+              </div>
+            </.form>
+          <% end %>
+        </div>
       </div>
 
       <div class="menu-buttons">
@@ -260,11 +242,10 @@ defmodule DialecticWeb.NodeMenuComp do
     z-index: 10;
     background-color: white;
     border-radius: 4px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-    padding: 5px;
+
+    padding: 10px;
     transition: opacity 0.2s;
-    max-width: 750px;
-    max-height: 120vh;
+
     """
 
     visibility = if visible, do: "display: block;", else: "display: none;"

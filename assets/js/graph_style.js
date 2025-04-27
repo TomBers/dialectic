@@ -15,6 +15,8 @@ const cols = {
   thesis: { text: "#4ade80", background: "white", border: "#4ade80" },
 };
 
+const cutoff = 140;
+
 export function graphStyle() {
   const base_style = [
     {
@@ -22,9 +24,10 @@ export function graphStyle() {
       style: {
         /* sizing ---------------------------------------------------------- */
         width: 250,
-        height: (n) => Math.max(Math.min(n.data("content").length, 100), 50),
+        height: (n) =>
+          Math.max(Math.min(n.data("content").length, cutoff) - 60, 40),
         "min-width": 60,
-        "min-height": 30,
+        "min-height": 40,
         padding: "12px",
         "text-wrap": "wrap",
         "text-max-width": 250, // interior width incl. padding
@@ -36,14 +39,14 @@ export function graphStyle() {
           // Remove "Title:" prefix if present
           const contentWithoutTitle = fullContent.replace(/^Title:\s*/i, "");
 
-          const text = contentWithoutTitle.slice(0, 100);
-          const suffix = contentWithoutTitle.length > 100 ? "…" : "";
+          const text = contentWithoutTitle.slice(0, cutoff);
+          const suffix = contentWithoutTitle.length > cutoff ? "…" : "";
 
-          return `${ele.data("id")}\n\n${text}${suffix}`;
+          return `${text}${suffix}`;
         },
 
         /* font & layout --------------------------------------------------- */
-        "font-family": "InterVariable, sans-serif",
+        "font-family": "sans-serif",
         "font-size": 14,
         "font-weight": 400,
         "text-halign": "center",
