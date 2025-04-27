@@ -26,38 +26,17 @@ defmodule DialecticWeb.NodeMenuComp do
             phx-hook="TextSelectionHook"
             data-node-id={@node.id}
           >
-            <article class="prose prose-stone prose-xl selection-content">
-              {TextUtils.truncated_html(@node.content || "", @cut_off)}
+            <article class="prose prose-stone prose-xl max-w-none selection-content space-y-4">
+              <h2>
+                {TextUtils.modal_title(@node.content, @node.class || "")}
+              </h2>
+              <div>
+                {TextUtils.full_html(@node.content || "")}
+              </div>
             </article>
             <div class="selection-actions hidden absolute bg-white shadow-md rounded-md p-1 z-10">
               <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded">
                 Ask about selection
-              </button>
-            </div>
-
-            <div class="flex justify-end">
-              <button
-                phx-click={show_modal("modal-#{@node.id}")}
-                class="mt-2 text-blue-600 hover:text-blue-800 p-1.5 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300"
-                aria-label="Open in modal"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  class="feather feather-maximize-2"
-                >
-                  <polyline points="15 3 21 3 21 9"></polyline>
-                  <polyline points="9 21 3 21 3 15"></polyline>
-                  <line x1="21" y1="3" x2="14" y2="10"></line>
-                  <line x1="3" y1="21" x2="10" y2="14"></line>
-                </svg>
               </button>
             </div>
           </div>
