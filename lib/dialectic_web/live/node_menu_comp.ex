@@ -8,7 +8,7 @@ defmodule DialecticWeb.NodeMenuComp do
     ~H"""
     <div
       id={"node-menu-" <> @node_id}
-      class="graph-tooltip overflow-auto"
+      class={["graph-tooltip overflow-auto border-4", ColUtils.message_border_class(@node.class)]}
       style={get_styles(@visible, @position)}
       data-position={Jason.encode!(@position)}
       phx-hook="NodeMenuHook"
@@ -16,9 +16,7 @@ defmodule DialecticWeb.NodeMenuComp do
       <%= if String.length(@node.content) > 0 do %>
         <div
           class={[
-            "p-2 rounded-lg shadow-sm",
-            "flex items-start gap-3 bg-white border-4",
-            ColUtils.message_border_class(@node.class)
+            "flex p-2 items-start gap-3 bg-white"
           ]}
           id={"tt-node-" <> @node.id}
         >
@@ -28,7 +26,7 @@ defmodule DialecticWeb.NodeMenuComp do
             phx-hook="TextSelectionHook"
             data-node-id={@node.id}
           >
-            <article class="prose prose-stone prose-lg selection-content">
+            <article class="prose prose-stone prose-xl selection-content">
               {TextUtils.truncated_html(@node.content || "", @cut_off)}
             </article>
             <div class="selection-actions hidden absolute bg-white shadow-md rounded-md p-1 z-10">
@@ -262,11 +260,10 @@ defmodule DialecticWeb.NodeMenuComp do
     z-index: 10;
     background-color: white;
     border-radius: 4px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-    padding: 5px;
+
+    padding: 10px;
     transition: opacity 0.2s;
-    max-width: 750px;
-    max-height: 120vh;
+
     """
 
     visibility = if visible, do: "display: block;", else: "display: none;"

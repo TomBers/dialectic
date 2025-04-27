@@ -7,7 +7,7 @@ defmodule DialecticWeb.ColUtils do
       "thesis" -> "border-green-400"
       "antithesis" -> "border-red-400"
       "synthesis" -> "border-purple-600"
-      _ -> "border border-gray-200 bg-white"
+      _ -> "border-gray-200"
     end
   end
 end
