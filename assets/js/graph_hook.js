@@ -35,7 +35,7 @@ const graphHook = {
     const reorderOperations = new Set([
       "delete_node",
       "edit_node",
-      "branch",
+      // "branch",
       "combine",
       "answer",
       "llm_request_complete",
