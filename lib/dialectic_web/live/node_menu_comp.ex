@@ -8,7 +8,10 @@ defmodule DialecticWeb.NodeMenuComp do
     ~H"""
     <div
       id={"node-menu-" <> @node_id}
-      class={["graph-tooltip overflow-auto border-4", ColUtils.message_border_class(@node.class)]}
+      class={[
+        "graph-tooltip max-h-full overflow-auto border-4",
+        ColUtils.message_border_class(@node.class)
+      ]}
       style={get_styles(@visible, @position)}
       data-position={Jason.encode!(@position)}
       phx-hook="NodeMenuHook"
@@ -27,9 +30,9 @@ defmodule DialecticWeb.NodeMenuComp do
             data-node-id={@node.id}
           >
             <article class="prose prose-stone prose-xl max-w-none selection-content space-y-4">
-              <h2>
+              <h3>
                 {TextUtils.modal_title(@node.content, @node.class || "")}
-              </h2>
+              </h3>
               <div>
                 {TextUtils.full_html(@node.content || "")}
               </div>
