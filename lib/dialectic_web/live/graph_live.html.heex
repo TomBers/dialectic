@@ -111,23 +111,63 @@
         </li>
       </ul>
       <div class="flex-1 overflow-y-auto">
-        <.link
-          href={~p"/#{@graph_id}/linear"}
-          id="text-link"
-          class="inline-flex items-center text-xs font-semibold px-2 py-1 rounded bg-white border border-zinc-200 text-zinc-900 hover:bg-zinc-50 hover:text-zinc-700 transition-colors"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-4 w-4 mr-1"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="2"
+        <!-- Two-button menu with consistent styling -->
+        <div class="flex space-x-2 items-center mb-2">
+          <!-- Toggle Button with dynamic text and icon -->
+          <.button
+            phx-click="toggle_node_menu"
+            class="inline-flex items-center text-xs font-semibold px-2 py-1 rounded bg-white border border-zinc-200 text-zinc-900 hover:bg-zinc-50 hover:text-zinc-700 transition-colors"
           >
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7" />
-          </svg>
-          Read as text
-        </.link>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4 mr-1"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <%= if @node_menu_visible do %>
+                <!-- History icon -->
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              <% else %>
+                <!-- Node icon -->
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6z"
+                />
+              <% end %>
+            </svg>
+            <%= if @node_menu_visible do %>
+              Show History
+            <% else %>
+              Show Node
+            <% end %>
+          </.button>
+          
+<!-- Read as text link -->
+          <.link
+            href={~p"/#{@graph_id}/linear"}
+            id="text-link"
+            class="inline-flex items-center text-xs font-semibold px-2 py-1 rounded bg-white border border-zinc-200 text-zinc-900 hover:bg-zinc-50 hover:text-zinc-700 transition-colors"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4 mr-1"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7" />
+            </svg>
+            Read as text
+          </.link>
+        </div>
         <.live_component
           module={DialecticWeb.Live.ModalComp}
           node={@node}
