@@ -133,7 +133,7 @@
           node={@node}
           id={"moda-comp-" <> @node.id}
         />
-        <%= if false do %>
+        <%= if @node_menu_visible do %>
           <.live_component
             module={NodeComp}
             id="node-comp"

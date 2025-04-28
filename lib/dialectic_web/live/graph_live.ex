@@ -64,8 +64,7 @@ defmodule DialecticWeb.GraphLive do
        user: user,
        edit: false,
        can_edit: can_edit,
-       node_menu_visible: false,
-       node_menu_position: nil,
+       node_menu_visible: true,
        auto_reply: true,
        drawer_open: true,
        candidate_ids: [],
@@ -148,19 +147,6 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, socket |> assign(graph_struct: graph_struct, can_edit: can_edit)}
   end
 
-  def handle_event("show_node_menu", %{"id" => node_id, "node_position" => position}, socket) do
-    {:noreply,
-     assign(socket,
-       node_menu_visible: true,
-       selected_node_id: node_id,
-       node_menu_position: position
-     )}
-  end
-
-  def handle_event("update_tooltip_position", %{"position" => position}, socket) do
-    {:noreply, assign(socket, node_menu_position: position)}
-  end
-
   def handle_event("note", %{"node" => node_id}, socket) do
     if socket.assigns.current_user == nil do
       {:noreply, socket |> put_flash(:error, "You must be logged in to note")}
@@ -183,10 +169,10 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_event("hide_node_menu", _, socket) do
+  def handle_event("toggle_node_menu", _, socket) do
     {:noreply,
      socket
-     |> assign(:node_menu_visible, false)}
+     |> assign(:node_menu_visible, !socket.assigns.node_menu_visible)}
   end
 
   def handle_event("unnote", %{"node" => node_id}, socket) do

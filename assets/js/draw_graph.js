@@ -141,34 +141,7 @@ export function draw_graph(graph, context, elements, node) {
       },
       zoom: 1.2,
       duration: 100,
-      complete: function () {
-        // This runs after animation completes
-        const node = n;
-        const bb = node.renderedBoundingBox();
-
-        // Just send node position data, no tooltip positioning logic here
-        context.pushEvent("show_node_menu", {
-          id: nodeId,
-          node_position: {
-            center_x: (bb.x1 + bb.x2) / 2,
-            center_y: (bb.y1 + bb.y2) / 2,
-            width: bb.x2 - bb.x1,
-            height: bb.y2 - bb.y1,
-            bb_x1: bb.x1,
-            bb_y1: bb.y1,
-            bb_x2: bb.x2,
-            bb_y2: bb.y2,
-          },
-        });
-      },
     });
-  });
-
-  // Click elsewhere to hide menu
-  cy.on("tap", function (event) {
-    if (event.target === cy) {
-      context.pushEvent("hide_node_menu", {});
-    }
   });
 
   cy.elements().removeClass("selected");
