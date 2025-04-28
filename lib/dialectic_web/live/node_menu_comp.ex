@@ -1,91 +1,40 @@
 defmodule DialecticWeb.NodeMenuComp do
   use DialecticWeb, :live_component
-  alias DialecticWeb.Live.TextUtils
-  alias DialecticWeb.ColUtils
   alias DialecticWeb.NoteMenuComp
 
   def render(assigns) do
     ~H"""
-    <div
-      id={"node-menu-" <> @node_id}
-      class={[
-        "graph-tooltip max-h-full overflow-auto border-4",
-        ColUtils.message_border_class(@node.class)
-      ]}
-      style={get_styles(@visible, @position)}
-      data-position={Jason.encode!(@position)}
-      phx-hook="NodeMenuHook"
-    >
-      <%= if String.length(@node.content) > 0 do %>
-        <div
-          class={[
-            "flex p-2 items-start gap-3 bg-white"
-          ]}
-          id={"tt-node-" <> @node.id}
-        >
-          <div
-            class="summary-content"
-            id={"tt-summary-content-" <> @node.id}
-            phx-hook="TextSelectionHook"
-            data-node-id={@node.id}
-          >
-            <article class="prose prose-stone prose-xl max-w-none selection-content space-y-4">
-              <h3>
-                {TextUtils.modal_title(@node.content, @node.class || "")}
-              </h3>
-              <div>
-                {TextUtils.full_html(@node.content || "")}
-              </div>
-            </article>
-            <div class="selection-actions hidden absolute bg-white shadow-md rounded-md p-1 z-10">
-              <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded">
-                Ask about selection
-              </button>
-            </div>
-          </div>
-        </div>
-      <% else %>
-        <div class="node mb-2">
-          <h2>Loading ...</h2>
-        </div>
-      <% end %>
-      <div class="">
-        <.live_component
-          module={NoteMenuComp}
-          node={@node}
-          user={@user}
-          id={"note-menu-" <> @node.id}
-        />
+    <div>
+      <.live_component module={NoteMenuComp} node={@node} user={@user} id={"note-menu-" <> @node.id} />
 
-        <div class="mx-auto w-3/4">
-          <%= if @ask_question do %>
-            <.form for={@form} phx-submit="reply-and-answer" id={"tt-reply-form-" <> @node.id}>
-              <div class="flex-1 mb-4">
-                <.input
-                  :if={@node_id != "NewNode"}
-                  field={@form[:content]}
-                  tabindex="0"
-                  type="text"
-                  id={"tt-input-" <> @node.id}
-                  placeholder="Ask question"
-                />
-              </div>
-            </.form>
-          <% else %>
-            <.form for={@form} phx-submit="answer" id={"tt-form-" <> @node.id}>
-              <div class="flex-1 mb-4">
-                <.input
-                  :if={@node_id != "NewNode"}
-                  field={@form[:content]}
-                  tabindex="0"
-                  type="text"
-                  id={"tt-input-" <> @node.id}
-                  placeholder="Add comment"
-                />
-              </div>
-            </.form>
-          <% end %>
-        </div>
+      <div class="mx-auto w-3/4">
+        <%= if @ask_question do %>
+          <.form for={@form} phx-submit="reply-and-answer" id={"tt-reply-form-" <> @node.id}>
+            <div class="flex-1 mb-4">
+              <.input
+                :if={@node_id != "NewNode"}
+                field={@form[:content]}
+                tabindex="0"
+                type="text"
+                id={"tt-input-" <> @node.id}
+                placeholder="Ask question"
+              />
+            </div>
+          </.form>
+        <% else %>
+          <.form for={@form} phx-submit="answer" id={"tt-form-" <> @node.id}>
+            <div class="flex-1 mb-4">
+              <.input
+                :if={@node_id != "NewNode"}
+                field={@form[:content]}
+                tabindex="0"
+                type="text"
+                id={"tt-input-" <> @node.id}
+                placeholder="Add comment"
+              />
+            </div>
+          </.form>
+        <% end %>
       </div>
 
       <div class="menu-buttons">
@@ -236,70 +185,6 @@ defmodule DialecticWeb.NodeMenuComp do
     """
   end
 
-  defp get_styles(visible, position) do
-    base_styles = """
-    position: fixed;
-    z-index: 10;
-    background-color: white;
-    border-radius: 4px;
-
-    padding: 10px;
-    transition: opacity 0.2s;
-
-    """
-
-    visibility = if visible, do: "display: block;", else: "display: none;"
-
-    position_style =
-      case position do
-        %{x: x, y: y} when is_number(x) and is_number(y) ->
-          # Get estimated dimensions
-          estimated_width = position[:estimated_width] || position["estimated_width"] || 300
-          estimated_height = position[:estimated_height] || position["estimated_height"] || 300
-
-          # Get viewport dimensions from JS or use sensible defaults
-          viewport_width = position[:viewport_width] || position["viewport_width"] || 1920
-          viewport_height = position[:viewport_height] || position["viewport_height"] || 1080
-
-          # Calculate initial position (centered on node)
-          node_width = position[:width] || position["width"] || 0
-          initial_x = x - node_width / 2
-          initial_y = y
-
-          # Adjust if the tooltip would go off-screen
-          adjusted_x =
-            cond do
-              initial_x + estimated_width > viewport_width ->
-                viewport_width - estimated_width - 20
-
-              initial_x < 20 ->
-                20
-
-              true ->
-                initial_x
-            end
-
-          adjusted_y =
-            cond do
-              initial_y + estimated_height > viewport_height ->
-                viewport_height - estimated_height - 20
-
-              initial_y < 20 ->
-                20
-
-              true ->
-                initial_y
-            end
-
-          "left: #{adjusted_x}px; top: #{adjusted_y}px;"
-
-        _ ->
-          "left: 50%; top: 50%; transform: translate(-50%, -50%);"
-      end
-
-    base_styles <> visibility <> position_style
-  end
-
   def handle_event("reply_mode", _, socket) do
     {:noreply, assign(socket, ask_question: !socket.assigns.ask_question)}
   end
@@ -310,8 +195,6 @@ defmodule DialecticWeb.NodeMenuComp do
 
     {:ok,
      assign(socket,
-       visible: Map.get(assigns, :visible, false),
-       position: Map.get(assigns, :position, %{x: 0, y: 0}),
        node_id: node_id,
        node: node,
        user: Map.get(assigns, :user, nil),

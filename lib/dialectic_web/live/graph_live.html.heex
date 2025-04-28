@@ -45,16 +45,7 @@
         phx-update="ignore"
       >
       </div>
-      <.live_component
-        module={NodeMenuComp}
-        id="node-menu"
-        visible={@node_menu_visible}
-        position={@node_menu_position}
-        node={@node}
-        user={@user}
-        form={@form}
-        graph_id={@graph_id}
-      />
+
       <.modal
         :if={@show_combine && @node.id}
         on_cancel={JS.push("modal_closed")}
@@ -123,7 +114,7 @@
         <.link
           href={~p"/#{@graph_id}/linear"}
           id="text-link"
-          class="inline-flex items-center text-xs font-semibold px-2 py-1 mb-4 rounded bg-white border border-zinc-200 text-zinc-900 hover:bg-zinc-50 hover:text-zinc-700 transition-colors"
+          class="inline-flex items-center text-xs font-semibold px-2 py-1 rounded bg-white border border-zinc-200 text-zinc-900 hover:bg-zinc-50 hover:text-zinc-700 transition-colors"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -142,15 +133,25 @@
           node={@node}
           id={"moda-comp-" <> @node.id}
         />
-        <.live_component
-          module={ChatComp}
-          form={@form}
-          node={@node}
-          user={@user}
-          graph_id={@graph_id}
-          auto_reply={@auto_reply}
-          id="Chat"
-        />
+        <%= if false do %>
+          <.live_component
+            module={NodeComp}
+            id="node-comp"
+            node={@node}
+            user={@user}
+            form={@form}
+            graph_id={@graph_id}
+          />
+        <% else %>
+          <.live_component
+            module={ChatComp}
+            form={@form}
+            node={@node}
+            user={@user}
+            graph_id={@graph_id}
+            id="Chat"
+          />
+        <% end %>
       </div>
     </div>
   </div>
