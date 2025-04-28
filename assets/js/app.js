@@ -31,7 +31,6 @@ import printConversationHook from "./print_conversation_hook.js";
 let hooks = {};
 
 // Hook - handles all positioning logic
-hooks.NodeMenuHook = toolTipHook;
 hooks.TextSelectionHook = textSelectionHook;
 hooks.Graph = graphHook;
 hooks.HighlightNode = highlightNodeHook;

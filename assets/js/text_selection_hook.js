@@ -66,9 +66,9 @@ const textSelectionHook = {
     // Get the container's bounding rectangle
     const containerRect = this.el.getBoundingClientRect();
 
-    // Check if we're in a modal to adjust positioning
-    const isInModal = this.el.id.includes("modal-content");
-    const containerScrollTop = isInModal ? this.el.scrollTop : 0;
+    // Always consider the container's scroll position
+    const containerScrollTop = this.el.scrollTop || 0;
+    const containerScrollLeft = this.el.scrollLeft || 0;
 
     // Make the button visible so we can measure its width
     selectionActionsEl.classList.remove("hidden");
@@ -82,7 +82,8 @@ const textSelectionHook = {
       rect.bottom - containerRect.top + window.scrollY - containerScrollTop;
 
     // Calculate initial horizontal position (centered on selection end)
-    let leftPos = rect.right - containerRect.left - buttonWidth / 2;
+    let leftPos =
+      rect.right - containerRect.left - buttonWidth / 2 + containerScrollLeft;
 
     // Ensure button stays within container bounds
     // First, make sure it doesn't go off the left edge
