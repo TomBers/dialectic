@@ -11,6 +11,7 @@ defmodule Dialectic.Graph.Siblings do
 
   def left(node, graph) do
     sorted = sort_siblings(node, graph)
+    IO.inspect(sorted, label: "Sorted Siblings")
 
     {_n, indx} =
       sorted
@@ -18,6 +19,7 @@ defmodule Dialectic.Graph.Siblings do
       |> Enum.find(fn {n, _} -> n.id == node.id end)
 
     case indx do
+      nil -> List.first(sorted)
       0 -> List.first(sorted)
       _ -> Enum.at(sorted, indx - 1, List.first(sorted))
     end
