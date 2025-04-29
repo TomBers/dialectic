@@ -22,7 +22,6 @@ import { Socket } from "phoenix";
 import { LiveSocket } from "phoenix_live_view";
 
 import topbar from "../vendor/topbar";
-import toolTipHook from "./tool_tip_hook.js";
 import textSelectionHook from "./text_selection_hook.js";
 import graphHook from "./graph_hook.js";
 import highlightNodeHook from "./highlight_node_hook.js";
@@ -31,7 +30,6 @@ import printConversationHook from "./print_conversation_hook.js";
 let hooks = {};
 
 // Hook - handles all positioning logic
-hooks.NodeMenuHook = toolTipHook;
 hooks.TextSelectionHook = textSelectionHook;
 hooks.Graph = graphHook;
 hooks.HighlightNode = highlightNodeHook;

@@ -12,27 +12,37 @@ defmodule Dialectic.Graph.Siblings do
   def left(node, graph) do
     sorted = sort_siblings(node, graph)
 
-    {_n, indx} =
-      sorted
-      |> Enum.with_index()
-      |> Enum.find(fn {n, _} -> n.id == node.id end)
+    if Enum.empty?(sorted) do
+      # Return the original node if no siblings
+      node
+    else
+      {_n, indx} =
+        sorted
+        |> Enum.with_index()
+        |> Enum.find(fn {n, _} -> n.id == node.id end)
 
-    case indx do
-      0 -> List.first(sorted)
-      _ -> Enum.at(sorted, indx - 1, List.first(sorted))
+      case indx do
+        0 -> List.first(sorted)
+        _ -> Enum.at(sorted, indx - 1, List.first(sorted))
+      end
     end
   end
 
   def right(node, graph) do
     sorted = sort_siblings(node, graph)
 
-    {_n, indx} =
-      sorted
-      |> Enum.with_index()
-      |> Enum.find(fn {n, _} -> n.id == node.id end)
+    if Enum.empty?(sorted) do
+      # Return the original node if no siblings
+      node
+    else
+      {_n, indx} =
+        sorted
+        |> Enum.with_index()
+        |> Enum.find(fn {n, _} -> n.id == node.id end)
 
-    # IO.inspect(indx, label: "Right Indx")
-    Enum.at(sorted, indx + 1, List.last(sorted))
+      # IO.inspect(indx, label: "Right Indx")
+      Enum.at(sorted, indx + 1, List.last(sorted))
+    end
   end
 
   defp new_node_or_self(node, search_fn) do

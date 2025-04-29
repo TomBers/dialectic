@@ -2,7 +2,7 @@ defmodule DialecticWeb.GraphLive do
   use DialecticWeb, :live_view
 
   alias Dialectic.Graph.{Vertex, GraphActions}
-  alias DialecticWeb.{CombineComp, ChatComp, NodeMenuComp}
+  alias DialecticWeb.{CombineComp, HistoryComp, NodeComp}
   alias Dialectic.DbActions.DbWorker
 
   alias Phoenix.PubSub
@@ -64,8 +64,7 @@ defmodule DialecticWeb.GraphLive do
        user: user,
        edit: false,
        can_edit: can_edit,
-       node_menu_visible: false,
-       node_menu_position: nil,
+       node_menu_visible: true,
        auto_reply: true,
        drawer_open: true,
        candidate_ids: [],
@@ -148,19 +147,6 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, socket |> assign(graph_struct: graph_struct, can_edit: can_edit)}
   end
 
-  def handle_event("show_node_menu", %{"id" => node_id, "node_position" => position}, socket) do
-    {:noreply,
-     assign(socket,
-       node_menu_visible: true,
-       selected_node_id: node_id,
-       node_menu_position: position
-     )}
-  end
-
-  def handle_event("update_tooltip_position", %{"position" => position}, socket) do
-    {:noreply, assign(socket, node_menu_position: position)}
-  end
-
   def handle_event("note", %{"node" => node_id}, socket) do
     if socket.assigns.current_user == nil do
       {:noreply, socket |> put_flash(:error, "You must be logged in to note")}
@@ -183,10 +169,10 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_event("hide_node_menu", _, socket) do
+  def handle_event("toggle_node_menu", _, socket) do
     {:noreply,
      socket
-     |> assign(:node_menu_visible, false)}
+     |> assign(:node_menu_visible, !socket.assigns.node_menu_visible)}
   end
 
   def handle_event("unnote", %{"node" => node_id}, socket) do
@@ -394,8 +380,8 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_info({:other_user_change, graph, sender_pid}, socket) do
-    if self() != sender_pid do
+  def handle_info({:other_user_change, graph, graph_id, sender_pid}, socket) do
+    if graph_id == socket.assigns.graph_id && self() != sender_pid do
       {:noreply,
        assign(socket,
          graph: graph,
@@ -521,10 +507,15 @@ defmodule DialecticWeb.GraphLive do
         socket.assigns.show_combine
       end
 
-    non_broadcast_operations = MapSet.new(["find_node", "move", "note", "unnote"])
+    non_broadcast_operations = MapSet.new(["find_node", "move", "note", "unnote", "node_clicked"])
 
     if !MapSet.member?(non_broadcast_operations, operation) do
-      PubSub.broadcast(Dialectic.PubSub, "graph_update", {:other_user_change, graph, self()})
+      PubSub.broadcast(
+        Dialectic.PubSub,
+        "graph_update",
+        {:other_user_change, graph, socket.assigns.graph_id, self()}
+      )
+
       # Save mutation to database
       DbWorker.save_graph(socket.assigns.graph_id)
     end
