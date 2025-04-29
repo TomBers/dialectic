@@ -1,4 +1,4 @@
-defmodule DialecticWeb.ChatComp do
+defmodule DialecticWeb.HistoryComp do
   use DialecticWeb, :live_component
   alias DialecticWeb.ChatMsgComp
 
