@@ -1,5 +1,6 @@
 defmodule Dialectic.Responses.RequestQueue do
-  @model Application.compile_env(:dialectic, :model_to_use, "local")
+  @type model_name :: :deepseek | :claude | :gemini | :openai | :local
+  @model_name Application.compile_env(:dialectic, :model_to_use, :local)
 
   alias Dialectic.Workers.DeepSeekWorker
   alias Dialectic.Workers.ClaudeWorker
@@ -15,11 +16,11 @@ defmodule Dialectic.Responses.RequestQueue do
       module: nil
     }
 
-    case @model do
-      "Deepseek" -> run_deepseek(params)
-      "Claude" -> run_claude(params)
-      "Gemini" -> run_gemini(params)
-      "OpenAI" -> run_openai(params)
+    case @model_name do
+      :deepseek -> run_deepseek(params)
+      :claude -> run_claude(params)
+      :gemini -> run_gemini(params)
+      :openai -> run_openai(params)
       _ -> run_local(params)
     end
   end

@@ -62,7 +62,6 @@ defmodule DialecticWeb.GraphLive do
        show_combine: false,
        key_buffer: "",
        user: user,
-       edit: false,
        can_edit: can_edit,
        node_menu_visible: true,
        auto_reply: true,
@@ -200,7 +199,7 @@ defmodule DialecticWeb.GraphLive do
   def handle_event("delete", %{"node" => node_id}, socket) do
     {_graph, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
 
-    if node.user == socket.assigns.user &&
+    if socket.assigns.user && node.user == socket.assigns.user &&
          length(node.children |> Enum.reject(fn v -> v.deleted end)) == 0 &&
          socket.assigns.can_edit do
       update_graph(
@@ -210,18 +209,6 @@ defmodule DialecticWeb.GraphLive do
       )
     else
       {:noreply, socket |> put_flash(:error, "You cannot delete this node")}
-    end
-  end
-
-  def handle_event("edit", %{"node" => node_id}, socket) do
-    {_graph, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
-
-    if node.user == socket.assigns.user &&
-         length(node.children |> Enum.reject(fn v -> v.deleted end)) == 0 &&
-         socket.assigns.can_edit do
-      {:noreply, socket |> assign(node: node, form: to_form(Vertex.changeset(node)), edit: true)}
-    else
-      {:noreply, socket |> put_flash(:error, "Cannot edit node")}
     end
   end
 
@@ -280,41 +267,37 @@ defmodule DialecticWeb.GraphLive do
         end
       end
     else
-      if socket.assigns.edit do
-        {:noreply, socket}
-      else
-        case key do
-          "ArrowDown" ->
-            update_graph(
-              socket,
-              GraphActions.move(graph_action_params(socket), "down"),
-              "move"
-            )
+      case key do
+        "ArrowDown" ->
+          update_graph(
+            socket,
+            GraphActions.move(graph_action_params(socket), "down"),
+            "move"
+          )
 
-          "ArrowUp" ->
-            update_graph(
-              socket,
-              GraphActions.move(graph_action_params(socket), "up"),
-              "move"
-            )
+        "ArrowUp" ->
+          update_graph(
+            socket,
+            GraphActions.move(graph_action_params(socket), "up"),
+            "move"
+          )
 
-          "ArrowRight" ->
-            update_graph(
-              socket,
-              GraphActions.move(graph_action_params(socket), "right"),
-              "move"
-            )
+        "ArrowRight" ->
+          update_graph(
+            socket,
+            GraphActions.move(graph_action_params(socket), "right"),
+            "move"
+          )
 
-          "ArrowLeft" ->
-            update_graph(
-              socket,
-              GraphActions.move(graph_action_params(socket), "left"),
-              "move"
-            )
+        "ArrowLeft" ->
+          update_graph(
+            socket,
+            GraphActions.move(graph_action_params(socket), "left"),
+            "move"
+          )
 
-          _ ->
-            {:noreply, socket}
-        end
+        _ ->
+          {:noreply, socket}
       end
     end
   end
@@ -330,15 +313,7 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event("answer", %{"vertex" => %{"content" => answer}}, socket) do
     if socket.assigns.can_edit do
-      if socket.assigns.edit do
-        update_graph(
-          socket,
-          GraphActions.edit_node(graph_action_params(socket), answer),
-          "edit_node"
-        )
-      else
-        update_graph(socket, GraphActions.comment(graph_action_params(socket), answer), "comment")
-      end
+      update_graph(socket, GraphActions.comment(graph_action_params(socket), answer), "comment")
     else
       {:noreply, socket |> put_flash(:error, "This graph is locked")}
     end
@@ -528,7 +503,6 @@ defmodule DialecticWeb.GraphLive do
        node: node,
        show_combine: show_combine,
        key_buffer: "",
-       edit: false,
        graph_operation: operation
      )}
   end

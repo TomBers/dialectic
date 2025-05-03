@@ -18,10 +18,6 @@ defmodule Dialectic.Graph.GraphActions do
     GraphManager.change_noted_by(graph_id, node_id, user, change_fn)
   end
 
-  def edit_node({graph_id, node, _user}, question) do
-    GraphManager.edit_vertex(graph_id, node.id, question)
-  end
-
   def toggle_graph_locked({graph_id, _node, _user}) do
     GraphManager.toggle_graph_locked(graph_id)
   end

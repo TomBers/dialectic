@@ -1,3 +1,12 @@
+Remove Edit button completely
+Double check the delete node functionalality - check for null user
+Change font weight of selcted node to be the same.
+Combine the Note button so it is simpler.
+
+
+
+
+
 graph_operations:
 
 create_group

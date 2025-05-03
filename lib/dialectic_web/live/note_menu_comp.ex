@@ -35,54 +35,38 @@ defmodule DialecticWeb.NoteMenuComp do
         </h2>
       </div>
 
-      <div class="flex items-center bg-amber-50 px-2 py-0.5 rounded-full" title="Number of stars">
-        <span class="text-amber-600 mr-1">{length(@node.noted_by)}</span>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-3.5 w-3.5 text-amber-500"
-          fill="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-        </svg>
-      </div>
-
       <div class="flex items-center space-x-2">
+        <!-- Improved version with clearer purpose -->
+        <!-- Redesigned with clearer visual states -->
         <%= if Enum.any?(@node.noted_by, fn u -> u == @user end) do %>
           <button
             phx-click="unnote"
             phx-value-node={@node.id}
             tabindex="-1"
-            class="bg-red-50 text-red-700 hover:bg-red-100 px-2 py-0.5 rounded-full text-xs font-medium transition-colors flex items-center"
+            class="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-2 py-0.5 rounded-full text-xs font-medium transition-colors flex items-center"
+            title="Remove from your notes"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               class="h-3 w-3 mr-1"
-              fill="none"
               viewBox="0 0 24 24"
-              stroke="currentColor"
+              fill="currentColor"
             >
               <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-              />
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M6 18L18 6M6 6l12 12"
+                fill-rule="evenodd"
+                d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z"
+                clip-rule="evenodd"
               />
             </svg>
-            Unnote
+            Noted ({length(@node.noted_by)})
           </button>
         <% else %>
           <button
             phx-click="note"
             phx-value-node={@node.id}
             tabindex="-1"
-            class="bg-green-50 text-green-700 hover:bg-green-100 px-2 py-0.5 rounded-full text-xs font-medium transition-colors flex items-center"
+            class="bg-gray-50 text-gray-600 hover:bg-gray-100 px-2 py-0.5 rounded-full text-xs font-medium transition-colors flex items-center"
+            title="Add to your notes"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -99,6 +83,9 @@ defmodule DialecticWeb.NoteMenuComp do
               />
             </svg>
             Note
+            <%= if length(@node.noted_by) > 0 do %>
+              ({length(@node.noted_by)})
+            <% end %>
           </button>
         <% end %>
 
@@ -124,31 +111,8 @@ defmodule DialecticWeb.NoteMenuComp do
           Link
         </.link>
 
-        <%= if length(@node.children) == 0 do %>
+        <%= if @user && @node.user == @user && length(@node.children) == 0  do %>
           <div class="flex items-center space-x-1">
-            <button
-              phx-click="edit"
-              phx-value-node={@node.id}
-              tabindex="-1"
-              class="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-2 py-0.5 rounded-full text-xs font-medium transition-colors flex items-center"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-3 w-3 mr-1"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                />
-              </svg>
-              Edit
-            </button>
-
             <button
               phx-click="delete"
               phx-confirm="Are you sure you want to delete this note?"
