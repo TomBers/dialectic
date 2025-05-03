@@ -3,893 +3,375 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>MuDG - Augmented Collaborative Idea Exploration</title>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link
-            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-            rel="stylesheet"
-        />
+        <title>MuDG - Professional Landing Page</title>
         <style>
             :root {
-                --primary-color: #3a86ff;
-                --secondary-color: #8338ec;
-                --accent-color: #ff006e;
-                --bg-color: #f8f9fa;
-                --text-color: #2d3748;
-                --light-text: #4a5568;
-            }
-
-            * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-            }
-
-            body {
-                font-family:
-                    "Inter",
-                    -apple-system,
-                    BlinkMacSystemFont,
-                    sans-serif;
-                line-height: 1.8;
-                color: var(--text-color);
-                background-color: var(--bg-color);
+                --color-bg: #f5f7fa;
+                --color-primary: #2c3e50;
+                --color-secondary: #34495e;
+                --color-accent: #2980b9;
+                --color-white: #ffffff;
+                --color-gray-light: #bdc3c7;
+                --spacing: 1.5rem;
+                --radius: 0.5rem;
+                --transition: 0.3s;
                 font-size: 16px;
             }
-
-            header {
-                background: linear-gradient(
-                    135deg,
-                    var(--primary-color),
-                    var(--secondary-color)
-                );
-                color: white;
-                padding: 2rem 0;
-                text-align: center;
+            *,
+            *::before,
+            *::after {
+                box-sizing: border-box;
             }
-
+            body {
+                margin: 0;
+                font-family: "Inter", sans-serif;
+                background: var(--color-bg);
+                color: var(--color-primary);
+                line-height: 1.6;
+            }
+            a {
+                text-decoration: none;
+                color: inherit;
+            }
             .container {
                 max-width: 1200px;
                 margin: 0 auto;
-                padding: 0 2rem;
+                padding: 0 var(--spacing);
             }
-
+            header {
+                background: var(--color-white);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                position: sticky;
+                top: 0;
+                z-index: 10;
+            }
+            nav {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: var(--spacing) 0;
+            }
+            .nav-links {
+                display: flex;
+                gap: var(--spacing);
+            }
+            .nav-links a {
+                font-weight: 500;
+                color: var(--color-secondary);
+                transition: color var(--transition);
+            }
+            .nav-links a:hover {
+                color: var(--color-accent);
+            }
+            .btn {
+                background: var(--color-accent);
+                color: var(--color-white);
+                padding: 0.75rem 1.5rem;
+                border-radius: var(--radius);
+                font-weight: 600;
+                transition: background var(--transition);
+            }
+            .btn:hover {
+                background: darken(var(--color-accent), 10%);
+            }
+            /* Hero */
             .hero {
                 display: flex;
-                flex-direction: column;
                 align-items: center;
-                justify-content: center;
-                padding: 4rem 2rem;
-                text-align: center;
+                justify-content: space-between;
+                padding: 4rem 0;
             }
-
-            .hero h1 {
-                font-size: 3.5rem;
-                margin-bottom: 1.5rem;
-                font-weight: 700;
-                line-height: 1.2;
+            .hero-text {
+                max-width: 600px;
             }
-
-            .hero p {
-                font-size: 1.4rem;
-                max-width: 800px;
-                margin-bottom: 2.5rem;
-                line-height: 1.6;
+            .hero-text h1 {
+                font-size: 2.75rem;
+                margin-bottom: 1rem;
             }
-
-            .btn {
-                display: inline-block;
-                background-color: var(--accent-color);
-                color: white;
-                padding: 0.8rem 1.8rem;
-                border-radius: 30px;
-                text-decoration: none;
-                font-weight: 600;
-                transition: all 0.3s ease;
-                font-size: 1.1rem;
+            .hero-text p {
+                font-size: 1.125rem;
+                margin-bottom: 2rem;
+                color: var(--color-secondary);
             }
-
-            .btn:hover {
-                transform: translateY(-3px);
-                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            .hero-image img {
+                max-width: 100%;
+                border-radius: var(--radius);
             }
-
+            /* Sections */
             section {
-                padding: 5rem 0;
+                padding: 4rem 0;
             }
-
-            section:nth-child(even) {
-                background-color: white;
-            }
-
             .section-title {
                 text-align: center;
-                margin-bottom: 3.5rem;
-            }
-
-            .section-title h2 {
-                font-size: 2.6rem;
-                margin-bottom: 1.2rem;
-                color: var(--primary-color);
-                font-weight: 700;
-            }
-
-            .feature {
-                display: flex;
-                flex-direction: row;
-                align-items: center;
-                margin-bottom: 5rem;
-            }
-
-            .feature:nth-child(even) {
-                flex-direction: row-reverse;
-            }
-
-            .feature-text {
-                flex: 1;
-                padding: 0 2.5rem;
-            }
-
-            .feature-text h3 {
-                font-size: 2rem;
-                margin-bottom: 1.2rem;
-                color: var(--secondary-color);
-                font-weight: 600;
-            }
-
-            .feature-text p {
-                font-size: 1.1rem;
-                margin-bottom: 1.5rem;
-                line-height: 1.8;
-                color: var(--light-text);
-                max-width: 90%;
-                letter-spacing: 0.01em;
-            }
-
-            .feature-image {
-                flex: 1;
-                text-align: center;
-            }
-
-            .feature-image img,
-            .feature-image video {
-                max-width: 100%;
-                border-radius: 10px;
-                box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
-            }
-
-            /* Style for the first section layout */
-            .first-section-layout {
-                display: flex;
-                flex-direction: row;
-                gap: 2rem;
-                align-items: flex-start;
-            }
-
-            .feature-video {
-                flex: 0 0 40%;
-            }
-
-            .about-section {
-                background-color: #f8f9fa;
-                padding: 5rem 0;
-            }
-
-            .about-content {
-                max-width: 900px;
-                margin: 0 auto;
-                font-size: 1.05rem;
-                line-height: 1.7;
-                color: #374151;
-            }
-
-            .about-content h3 {
-                font-size: 1.8rem;
-                color: var(--secondary-color);
-                margin: 2.5rem 0 1rem 0;
-                font-weight: 600;
-            }
-
-            .about-content h3:first-child {
-                margin-top: 0;
-            }
-
-            .about-content p {
-                margin-bottom: 1.5rem;
-                text-align: justify;
-            }
-
-            ul {
                 margin-bottom: 2rem;
-                padding-left: 2rem;
             }
-
-            li {
-                margin-bottom: 0.8rem;
+            .section-title h2 {
+                font-size: 2rem;
+                color: var(--color-primary);
             }
-
-            footer {
-                background-color: #343a40;
-                color: white;
+            /* Features Grid */
+            .features-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                gap: var(--spacing);
+            }
+            .feature-card {
+                background: var(--color-white);
+                padding: var(--spacing);
+                border-radius: var(--radius);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
                 text-align: center;
-                padding: 2.5rem 0;
-                font-size: 1rem;
             }
-
+            .feature-card img {
+                width: 60px;
+                margin-bottom: 1rem;
+            }
+            .feature-card h3 {
+                margin-bottom: 0.5rem;
+                color: var(--color-secondary);
+            }
+            .feature-card p {
+                font-size: 0.95rem;
+                color: var(--color-secondary);
+            }
+            /* Testimonials */
+            .testimonials {
+                background: var(--color-white);
+            }
+            .testimonial {
+                display: flex;
+                gap: var(--spacing);
+                align-items: center;
+                padding: var(--spacing) 0;
+            }
+            .testimonial img {
+                width: 80px;
+                height: 80px;
+                border-radius: 50%;
+                object-fit: cover;
+            }
+            .testimonial-content {
+                max-width: 800px;
+            }
+            .testimonial-content p {
+                font-style: italic;
+                margin-bottom: 0.5rem;
+            }
+            .testimonial-content h4 {
+                margin: 0;
+                font-weight: 600;
+            }
+            /* CTA */
+            .cta {
+                background: var(--color-accent);
+                color: var(--color-white);
+                text-align: center;
+                padding: 3rem 0;
+            }
+            .cta h2 {
+                margin-bottom: 1rem;
+            }
+            /* Footer */
+            footer {
+                background: var(--color-secondary);
+                color: var(--color-white);
+                text-align: center;
+                padding: 2rem 0;
+                font-size: 0.875rem;
+            }
+            /* Responsive */
             @media (max-width: 768px) {
-                body {
-                    font-size: 15px;
+                .hero {
+                    flex-direction: column-reverse;
+                    text-align: center;
                 }
-
-                .feature {
-                    flex-direction: column;
-                }
-
-                .feature:nth-child(even) {
-                    flex-direction: column;
-                }
-
-                /* Updated mobile responsiveness for the first section */
-                .first-section-layout {
-                    flex-direction: column;
-                }
-
-                .feature-text,
-                .feature-video {
-                    flex: none;
+                .hero-text,
+                .hero-image {
                     width: 100%;
-                    padding: 1.5rem 0;
                 }
-
-                /* Ensure text comes first on mobile */
-                .feature-text {
-                    order: 1;
-                }
-
-                /* Video comes after text on mobile */
-                .feature-video {
-                    order: 2;
-                }
-
-                .feature-text {
-                    order: 2;
-                }
-
-                .feature-image {
-                    order: 1;
-                }
-
-                .feature-text p {
-                    max-width: 100%;
-                }
-
-                .hero h1 {
-                    font-size: 2.5rem;
-                }
-
-                .hero p {
-                    font-size: 1.2rem;
-                }
-
-                .section-title h2 {
-                    font-size: 2.2rem;
-                }
-
-                .feature-text h3 {
-                    font-size: 1.6rem;
-                }
-
-                .about-content {
-                    font-size: 1rem;
-                    text-align: left;
-                }
-
-                .about-content p {
-                    text-align: left;
+                .hero-text h1 {
+                    font-size: 2.25rem;
                 }
             }
         </style>
     </head>
     <body>
+        <!-- Header -->
         <header>
             <div class="container">
-                <h1>MuDG</h1>
-                <p>Augmented Collaborative Idea Exploration</p>
+                <nav>
+                    <a href="#" class="logo"><strong>MuDG</strong></a>
+                    <div class="nav-links">
+                        <a href="#features">Features</a>
+                        <a href="#why">Why</a>
+                        <a href="#testimonials">Testimonials</a>
+                        <a href="#about">About</a>
+                        <a href="https://mudg.fly.dev" class="btn"
+                            >Get Started</a
+                        >
+                    </div>
+                </nav>
             </div>
         </header>
 
-        <section id="learn-more">
-            <div class="container">
-                <div class="first-section-layout">
-                    <!-- Text content (60%) -->
-                    <div class="feature-text" style="flex: 0 0 60%">
-                        <h3>What is it?</h3>
-                        <p>
-                            A mind mapping tool that uses AI
-                            <strong>alongside other people</strong> to explore
-                            and learn; visualising the learning process.
-                        </p>
-                        <h3>Who is it for?</h3>
-                        <p>
-                            Anyone who wants to
-                            <strong
-                                >explore an idea in depth and see where it takes
-                                them.</strong
-                            >
-                            Also a chance to see how others think, seeing
-                            pathways over complex topics. <br /><br />
-                            More explicitly - students, writers or people who
-                            want to have a clearer basis for their
-                            understanding.
-                        </p>
-                        <h3>Why should I care?</h3>
-                        <p>
-                            Much learning is personal, often we see the
-                            conclusions of others and keep unfinished or
-                            incomplete notes to our self. It was built with 2
-                            principles, learning can be done better together
-                            (and AI can help), and that visualising
-                            <strong
-                                >the history of this thinking is valuable not
-                                only for ourselves but others.</strong
-                            >
-                        </p>
-                        <div
-                            style="
-                                display: flex;
-                                justify-content: space-between;
-                                gap: 1rem;
-                            "
-                        >
-                            <a href="https://mudg.fly.dev" class="btn"
-                                >Try it</a
-                            >
-                            <a href="#about" class="btn">About</a>
-                        </div>
-                    </div>
-
-                    <!-- Video content (40%) -->
-                    <div class="feature-video">
-                        <div style="padding: 56.25% 0 0 0; position: relative">
-                            <iframe
-                                src="https://player.vimeo.com/video/1073545276?title=0&amp;byline=0&amp;portrait=0&amp;badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479"
-                                frameborder="0"
-                                allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"
-                                style="
-                                    position: absolute;
-                                    top: 0;
-                                    left: 0;
-                                    width: 100%;
-                                    height: 100%;
-                                "
-                                title="Demonstration Video"
-                            ></iframe>
-                        </div>
-                        <script src="https://player.vimeo.com/api/player.js"></script>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section
-            id="call-to-action"
-            style="
-                background-color: var(--primary-color);
-                color: white;
-                text-align: center;
-            "
-        >
-            <div class="container">
-                <h2
-                    style="
-                        color: white;
-                        margin-bottom: 1.5rem;
-                        font-size: 2.2rem;
-                    "
-                >
-                    Want to know more?
-                </h2>
-                <p
-                    style="
-                        font-size: 1.2rem;
-                        margin-bottom: 2rem;
-                        max-width: 800px;
-                        margin-left: auto;
-                        margin-right: auto;
-                    "
-                >
-                    Follow us on Twitter for updates, insights, and to join our
-                    growing community of collaborative learners.
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="container hero-text">
+                <h1>Collaborative Idea Mapping, Powered by AI</h1>
+                <p>
+                    Organize, visualize, and grow your ideas with your team in
+                    real-time. Turn complex thoughts into clear, shareable
+                    graphs.
                 </p>
-                <a
-                    href="https://x.com/TJCBerman"
-                    target="_blank"
-                    class="btn"
-                    style="
-                        background-color: white;
-                        color: var(--primary-color);
-                        font-weight: 700;
-                        padding: 1rem 2rem;
-                        font-size: 1.2rem;
-                    "
-                >
-                    Follow @TJCBerman
-                </a>
+                <a href="https://mudg.fly.dev" class="btn">Try for Free</a>
+            </div>
+            <div class="container hero-image">
+                <img
+                    src="media/images/hero-graph.png"
+                    alt="Idea graph preview"
+                />
             </div>
         </section>
 
-        <section id="why">
+        <!-- Features -->
+        <section id="features">
             <div class="container">
-                <div class="section-title">
-                    <h2>Why did I build it?</h2>
-                </div>
-                <div class="feature">
-                    <div class="feature-text">
-                        <h3>At a principle level</h3>
+                <div class="section-title"><h2>Key Features</h2></div>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <img src="media/icons/graph.svg" alt="Graph Icon" />
+                        <h3>Interactive Graphs</h3>
                         <p>
-                            I have lost track of the number of times when I sit
-                            to listen to a speaker / lecture and within a few
-                            mins says something I believe raises a huge
-                            question. This casts a shadow over the rest of what
-                            they are saying.
-                            <br /><br />
-                            We live in the Information Age. There is no shortage
-                            of information, but at the same time, there is a
-                            frustration at the general quality of discussion /
-                            debate. It has been called “Echo” chambers or
-                            motivated reasoning. Most discussions between
-                            opposing viewpoints completely talk past each other.
-                            <br /><br />
-                            I believe this happens because, much like a magic
-                            trick, it happens outside of your awareness / the
-                            parameters of the discussion.
-                            <br /><br />
-                            Different assumptions lead to completely different
-                            conclusions. For example debating if an action is
-                            ethical entirely depends on the ethical framework
-                            you are using.
-                            <br /><br />
-                            Without the ability to question at word level and
-                            question these assumptions, then we miss out on
-                            productive exchanges.
-                        </p>
-                        <h3>At a specific level</h3>
-                        <p>
-                            <strong>The AI revolution and learning.</strong>
-                            Having a tool that can answer many specific
-                            questions and has a great deal of knowledge about
-                            wide range of topics is an unprecedented tool for
-                            learning. To make learning an active process, to ask
-                            questions that interest you and a very granular
-                            level is in itself an engrossing process.
-                            <br /><br />
-                            I think it currently has a few drawbacks:
-                        </p>
-                        <ul>
-                            <li>
-                                <strong>Linear walls of text</strong> make it
-                                challenging to take the conversation in several
-                                directions at once.
-                            </li>
-                            <li>
-                                <strong
-                                    >They are inherently single player</strong
-                                >
-                                - it is you talking to the tool. I think
-                                bringing in other people can lead to more
-                                interesting directions.
-                            </li>
-                            <li>
-                                <strong
-                                    >The conversations seem disposable.</strong
-                                >
-                                I often have very interesting discussions, but I
-                                rarely if ever return to a conversation. Meaning
-                                building bigger ideas becomes difficult.
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </section>
-        <section id="example">
-            <div class="container">
-                <div class="section-title">
-                    <h2>Example</h2>
-                </div>
-                <div class="feature">
-                    <div class="feature-text">
-                        <h3>Exploring different ethical frameworks</h3>
-                        <p>
-                            The example shows a graph looking at different
-                            ethical frameworks. We can define different
-                            frameworks and explore their implications. For
-                            instance, we can explore the implications of
-                            utilitarianism, deontology, and virtue ethics.
-                        </p>
-                        <div style="padding: 40% 0 0 0; position: relative">
-                            <iframe
-                                src="https://player.vimeo.com/video/1073515238?title=0&amp;byline=0&amp;portrait=0&amp;badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479"
-                                frameborder="0"
-                                allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"
-                                style="
-                                    position: absolute;
-                                    top: 0;
-                                    left: 0;
-                                    width: 100%;
-                                    height: 100%;
-                                "
-                                title="exploring_ethics"
-                            ></iframe>
-                        </div>
-                        <script src="https://player.vimeo.com/api/player.js"></script>
-                    </div>
-                </div>
-                <div class="container">
-                    <div class="feature">
-                        <div class="feature-text">
-                            <h3>Vs. ChatGPT</h3>
-                            <p>
-                                The conversation becomes a wall of text, to
-                                explore specific topics you need to scroll up
-                                and down, meaning the flow of the conversation
-                                is lost.
-                            </p>
-                        </div>
-                        <div class="feature-image">
-                            <video autoplay muted loop playsinline>
-                                <source
-                                    src="media/videos/LLM-Chat.mp4"
-                                    type="video/mp4"
-                                />
-                                Your browser does not support the video tag.
-                            </video>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-        <section id="outcomes">
-            <div class="container">
-                <div class="section-title">
-                    <h2>1) Idea graph</h2>
-                </div>
-
-                <div class="feature">
-                    <div class="feature-text">
-                        <h3>Visualise the paths through an idea</h3>
-                        <p>
-                            This screenshot is a graph exploring ethics. As we
-                            can see we have several approaches to ethical
-                            decision making. We can explore any path through the
-                            idea, whatever approach seems most interesting at
-                            the time.
-                        </p>
-                        <p>
-                            We can come back whenever we want to other paths and
-                            pick up where we left off. Now we can explore each
-                            approach in detail, asking for an example, and
-                            branching through between the Pros and Cons.
-                        </p>
-                        <p>
-                            Ideas have clear relation to others, with parents
-                            and children, showing how differing conclusions come
-                            from earlier decisions.
+                            Visualize and navigate complex ideas with an
+                            intuitive node-based interface.
                         </p>
                     </div>
-                    <div class="feature-image">
+                    <div class="feature-card">
                         <img
-                            src="media/images/Ethics.webp"
-                            alt="Ethics Knowledge Graph"
+                            src="media/icons/collaboration.svg"
+                            alt="Collaboration Icon"
                         />
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="multiplayer">
-            <div class="container">
-                <div class="section-title">
-                    <h2>2) Multiplayer</h2>
-                </div>
-
-                <div class="feature">
-                    <div class="feature-text">
                         <h3>Real-time Collaboration</h3>
                         <p>
-                            Each graph can be edited by any person on the site.
-                            Each change is shared with everyone in real time.
-                            Each node can be noted for later reading and to
-                            surface the most interesting points.
-                        </p>
-                        <p>
-                            You can lock a graph when you feel it is a finished
-                            idea, for easy sharing to students.
+                            Work alongside peers and AI simultaneously, with
+                            changes reflected instantly.
                         </p>
                     </div>
-                    <div class="feature-image">
-                        <video autoplay muted loop playsinline>
-                            <source
-                                src="media/videos/Multiplayer.mp4"
-                                type="video/mp4"
-                            />
-                            Your browser does not support the video tag.
-                        </video>
+                    <div class="feature-card">
+                        <img src="media/icons/share.svg" alt="Share Icon" />
+                        <h3>Shareable Links</h3>
+                        <p>
+                            Generate unique links for any node to share specific
+                            ideas easily.
+                        </p>
+                    </div>
+                    <div class="feature-card">
+                        <img src="media/icons/history.svg" alt="History Icon" />
+                        <h3>Persistent History</h3>
+                        <p>
+                            Revisit past branches and track the evolution of
+                            your thought process over time.
+                        </p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section id="sharable">
+        <!-- Why Section -->
+        <section id="why">
             <div class="container">
-                <div class="section-title">
-                    <h2>3) Shareable</h2>
-                </div>
-
-                <div class="feature">
-                    <div class="feature-text">
-                        <h3>Share Any Node</h3>
+                <div class="section-title"><h2>Why Choose MuDG?</h2></div>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <h3>Clarity</h3>
                         <p>
-                            Each node has a link associated with it. So you can
-                            have a unique URL for any node on the page, that can
-                            be shared with anyone else. This means you can
-                            return to any point and continue from where you left
-                            off.
+                            Break down complex topics into manageable, visual
+                            components.
                         </p>
                     </div>
-                    <div class="feature-image">
-                        <video autoplay muted loop playsinline>
-                            <source
-                                src="media/videos/Sharing.mp4"
-                                type="video/mp4"
-                            />
-                            Your browser does not support the video tag.
-                        </video>
+                    <div class="feature-card">
+                        <h3>Collaboration</h3>
+                        <p>
+                            Engage your team and tap into collective
+                            intelligence.
+                        </p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Productivity</h3>
+                        <p>
+                            Stay organized and focused with structured idea
+                            maps.
+                        </p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Insight</h3>
+                        <p>
+                            Leverage AI suggestions to discover new connections
+                            and angles.
+                        </p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section id="creative">
+        <!-- Testimonials -->
+        <section id="testimonials" class="testimonials">
             <div class="container">
-                <div class="section-title">
-                    <h2>4) Creative Inspiration</h2>
-                </div>
-
-                <div class="feature">
-                    <div class="feature-text">
-                        <h3>Explore New Ideas</h3>
+                <div class="section-title"><h2>What Our Users Say</h2></div>
+                <div class="testimonial">
+                    <img src="media/users/user1.jpg" alt="User 1" />
+                    <div class="testimonial-content">
                         <p>
-                            This starts from the landing page. Not sure what
-                            interests you? The ideas pages give you a starting
-                            point, with many interesting topics to explore.
+                            "MuDG transformed how our team brainstorms—and the
+                            AI suggestions are game-changers!"
                         </p>
-                        <p>
-                            The interaction with the language model hopefully
-                            inspires new ideas and generates debate points for
-                            any topic or helps find the balance between opposing
-                            perspectives.
-                        </p>
+                        <h4>Jane Doe, Product Manager</h4>
                     </div>
-                    <div class="feature-image">
-                        <img src="media/images/Ideas.webp" alt="Ideas" />
+                </div>
+                <div class="testimonial">
+                    <img src="media/users/user2.jpg" alt="User 2" />
+                    <div class="testimonial-content">
+                        <p>
+                            "We can now map out research topics in minutes
+                            instead of hours."
+                        </p>
+                        <h4>John Smith, Research Lead</h4>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section id="about" class="about-section">
+        <!-- Call to Action -->
+        <section class="cta">
             <div class="container">
-                <div class="section-title">
-                    <h2>About MuDG</h2>
-                </div>
-
-                <div class="about-content">
-                    <h3>Our Vision</h3>
-                    <p>
-                        <strong>Muti-user Dialectical Graph (MuDG)</strong>
-                        began with a simple observation: the revolutionary
-                        potential of large language models for education remains
-                        largely untapped. While today's AI assistants offer
-                        impressive capabilities, they exist primarily as
-                        isolated, ephemeral exchanges. Our vision is to
-                        transform these interactions into persistent, evolving
-                        idea structures that grow richer with each exploration.
-                    </p>
-
-                    <h3>The Knowledge Graph Paradigm</h3>
-                    <p>
-                        At MuDG, we believe the future of learning isn't
-                        linear—it's networked. Traditional educational paths
-                        often follow predetermined sequences, but human
-                        curiosity rarely operates this way. We naturally branch,
-                        connect, and integrate ideas across domains. Our
-                        knowledge graph approach mirrors this natural thought
-                        process, allowing learners to move freely between
-                        concepts while maintaining coherent connections.
-                    </p>
-                    <p>
-                        Each node in a MuDG graph represents a discrete concept,
-                        question, or insight. Unlike traditional learning
-                        materials that might bury important connections in
-                        paragraphs of text, our graph structure makes
-                        relationships explicit and navigable. This visualization
-                        of knowledge helps learners identify patterns and
-                        connections they might otherwise miss.
-                    </p>
-
-                    <h3>Collaborative Intelligence</h3>
-                    <p>
-                        MuDG combines the analytical power of language models
-                        with the creative, contextual understanding of human
-                        minds. While AI excels at retrieving and synthesizing
-                        information across vast knowledge domains, humans excel
-                        at determining relevance, identifying novel connections,
-                        and applying insights to real-world contexts. By
-                        designing a platform where these complementary
-                        intelligences work together, we create learning
-                        experiences greater than either could produce alone.
-                    </p>
-                    <p>
-                        Collaboration extends beyond the human-AI relationship
-                        to encompass peer-to-peer learning as well. When
-                        multiple users explore and expand a knowledge graph
-                        together, they contribute diverse perspectives and
-                        expertise. This multiplayer aspect transforms learning
-                        from a solitary activity into a social one, where
-                        discovery is shared and insights are collectively
-                        refined.
-                    </p>
-
-                    <h3>Technical Philosophy</h3>
-                    <p>
-                        Our technical approach is guided by several core
-                        principles:
-                    </p>
-                    <ul>
-                        <li>
-                            <strong>Speed matters.</strong> Cognitive flow is
-                            easily disrupted by technical friction. We've
-                            optimized every aspect of the interface to minimize
-                            latency and maximize responsiveness.
-                        </li>
-                        <li>
-                            <strong>Simplicity enables depth.</strong> Complex
-                            ideas don't require complex interfaces. By
-                            eliminating unnecessary elements and focusing on
-                            conceptual clarity, we allow deeper engagement with
-                            content.
-                        </li>
-                        <li>
-                            <strong>Privacy is foundational.</strong> Learning
-                            requires experimentation and vulnerability. We've
-                            designed a platform where users can explore ideas
-                            freely without concerns about data harvesting or
-                            surveillance.
-                        </li>
-                        <li>
-                            <strong>Persistence creates value.</strong> Unlike
-                            ephemeral chats that disappear, MuDG knowledge
-                            graphs persist, accumulating value over time as they
-                            grow and connect.
-                        </li>
-                    </ul>
-
-                    <h3>The Future of MuDG</h3>
-                    <p>
-                        We're just beginning our journey to reimagine how humans
-                        and AI can learn together. Future developments will
-                        include specialized tools for educators, expanded
-                        visualization options, and deeper integration
-                        capabilities with existing knowledge bases and learning
-                        resources. The goal remains constant: creating the most
-                        effective collaborative learning environment possible,
-                        where the boundaries between teaching and learning
-                        dissolve, and where knowledge isn't just consumed but
-                        actively constructed.
-                    </p>
-
-                    <h3>MuDG - today</h3>
-                    <p>
-                        This has been a personal project, that in many ways is a
-                        cumulation of my different interests. Understanding /
-                        learning, design, (quasi) mathematical, AI and
-                        programming.
-                    </p>
-                    <p>
-                        The inspiration of the idea came from three distinct
-                        locations.
-                    </p>
-                    <ul>
-                        <li>
-                            <strong>The rise of AI / LLM’s</strong> - back in my
-                            undergraduate degree (too many years ago!) I
-                            remember learning about neural networks,
-                            implementing an MLP in C and other less popular
-                            networks such as Kohonen Map (Self Organizing Map).
-                            To capabilities of the deep learning revolution
-                            happen in real time has been inspiring.
-                        </li>
-                        <li>
-                            <strong>Dialectics</strong> - going back to the very
-                            birth of philosophy,  form of reasoning based upon
-                            dialogue of arguments and counter-arguments.
-                        </li>
-                        <li>
-                            <strong>The Elixir community</strong> - Since
-                            working with Elixir and Phoenix LiveView, it has
-                            made building interactive websites a pleasure and
-                            made alot of what the project is possible.
-                        </li>
-                    </ul>
-
-                    <div
-                        style="
-                            display: flex;
-                            justify-content: center;
-                            gap: 1rem;
-                        "
-                    >
-                        <a href="https://mudg.fly.dev" class="btn"
-                            >Give it a try</a
-                        >
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section
-            id="call-to-action"
-            style="
-                background-color: var(--primary-color);
-                color: white;
-                text-align: center;
-                padding: 4rem 0;
-            "
-        >
-            <div class="container">
-                <h2
-                    style="
-                        color: white;
-                        margin-bottom: 1.5rem;
-                        font-size: 2.2rem;
-                    "
+                <h2>Ready to Elevate Your Thinking?</h2>
+                <a href="https://mudg.fly.dev" class="btn"
+                    >Get Started for Free</a
                 >
-                    Want to know more?
-                </h2>
-                <p
-                    style="
-                        font-size: 1.2rem;
-                        margin-bottom: 2rem;
-                        max-width: 800px;
-                        margin-left: auto;
-                        margin-right: auto;
-                    "
-                >
-                    Follow us on Twitter for updates, insights, and to join our
-                    growing community of collaborative learners.
+            </div>
+        </section>
+
+        <!-- About -->
+        <section id="about">
+            <div class="container">
+                <div class="section-title"><h2>About MuDG</h2></div>
+                <p>
+                    <strong>MuDG</strong> blends AI and collaborative tools to
+                    create an enduring, visual knowledge platform. Whether
+                    you’re a student, writer, or team lead, organize and expand
+                    your ideas with clarity and depth.
                 </p>
-                <a
-                    href="https://x.com/TJCBerman"
-                    target="_blank"
-                    class="btn"
-                    style="
-                        background-color: white;
-                        color: var(--primary-color);
-                        font-weight: 700;
-                        padding: 1rem 2rem;
-                        font-size: 1.2rem;
-                    "
-                >
-                    Follow @TJCBerman
-                </a>
             </div>
         </section>
 
+        <!-- Footer -->
         <footer>
             <div class="container">
-                <p>&copy; 2025 MuDG - Collaborative Learning Platform</p>
+                <p>&copy; 2025 MuDG. All rights reserved.</p>
+                <p>
+                    <a href="#">Privacy Policy</a> |
+                    <a href="#">Terms of Service</a>
+                </p>
             </div>
         </footer>
     </body>
