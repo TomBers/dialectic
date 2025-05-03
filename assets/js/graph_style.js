@@ -1,6 +1,6 @@
 const selectState = {
   shape: "roundrectangle",
-  "font-weight": "800",
+  "font-weight": "400",
   "border-color": "white", // Dark green border
   color: "#FFFFFF", // White text
   "background-color": "#14e37c", // Bright mint green (very vibrant)
