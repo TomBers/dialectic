@@ -196,21 +196,21 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_event("delete", %{"node" => node_id}, socket) do
-    {_graph, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
+  # def handle_event("delete", %{"node" => node_id}, socket) do
+  #   {_graph, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
 
-    if socket.assigns.user && node.user == socket.assigns.user &&
-         length(node.children |> Enum.reject(fn v -> v.deleted end)) == 0 &&
-         socket.assigns.can_edit do
-      update_graph(
-        socket,
-        GraphActions.delete_node(graph_action_params(socket), node_id),
-        "delete_node"
-      )
-    else
-      {:noreply, socket |> put_flash(:error, "You cannot delete this node")}
-    end
-  end
+  #   if socket.assigns.user && node.user == socket.assigns.user &&
+  #        length(node.children |> Enum.reject(fn v -> v.deleted end)) == 0 &&
+  #        socket.assigns.can_edit do
+  #     update_graph(
+  #       socket,
+  #       GraphActions.delete_node(graph_action_params(socket), node_id),
+  #       "delete_node"
+  #     )
+  #   else
+  #     {:noreply, socket |> put_flash(:error, "You cannot delete this node")}
+  #   end
+  # end
 
   def handle_event("node_branch", %{"id" => node_id}, socket) do
     if !socket.assigns.can_edit do

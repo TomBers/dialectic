@@ -33,8 +33,8 @@ const graphHook = {
     this.cy.json({ elements: JSON.parse(graph) });
 
     const reorderOperations = new Set([
-      "delete_node",
-      "edit_node",
+      // "delete_node",
+      // "edit_node",
       // "branch",
       "combine",
       "answer",
