@@ -30,7 +30,7 @@ config :dialectic, DialecticWeb.Endpoint,
 
 # config :dialectic, model_to_use: "Local"
 # config :dialectic, model_to_use: "Deepseek"
-config :dialectic, model_to_use: "OpenAI"
+config :dialectic, model_to_use: :openai
 # Configures the mailer
 #
 # By default it uses the "Local" adapter which stores the emails

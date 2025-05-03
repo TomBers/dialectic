@@ -124,31 +124,8 @@ defmodule DialecticWeb.NoteMenuComp do
           Link
         </.link>
 
-        <%= if length(@node.children) == 0 do %>
+        <%= if @user && @node.user == @user && length(@node.children) == 0  do %>
           <div class="flex items-center space-x-1">
-            <button
-              phx-click="edit"
-              phx-value-node={@node.id}
-              tabindex="-1"
-              class="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-2 py-0.5 rounded-full text-xs font-medium transition-colors flex items-center"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-3 w-3 mr-1"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                />
-              </svg>
-              Edit
-            </button>
-
             <button
               phx-click="delete"
               phx-confirm="Are you sure you want to delete this note?"
