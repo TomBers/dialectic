@@ -1,32 +1,32 @@
 defmodule Dialectic.Responses.RequestQueue do
-  @type model_name :: :deepseek | :claude | :gemini | :openai | :local
-  
-  # Use an explicit function to get the model name to help Dialyzer understand the possible values
-  @spec get_model_name() :: model_name()
-  def get_model_name do
-    Application.get_env(:dialectic, :model_to_use, :local)
-  end
-
   alias Dialectic.Workers.DeepSeekWorker
   alias Dialectic.Workers.ClaudeWorker
   alias Dialectic.Workers.GeminiWorker
   alias Dialectic.Workers.OpenAIWorker
   alias Dialectic.Workers.LocalWorker
 
-  def add(question, to_node, graph) do
-    params = %{
-      question: question,
-      to_node: to_node.id,
-      graph: graph,
-      module: nil
-    }
-
-    case get_model_name() do
-      :deepseek -> run_deepseek(params)
-      :claude -> run_claude(params)
-      :gemini -> run_gemini(params)
-      :openai -> run_openai(params)
-      _ -> run_local(params)
+  # Define the implementation based on compile-time environment
+  if Mix.env() == :test do
+    # Test environment uses local model
+    def add(question, to_node, graph) do
+      params = %{
+        question: question,
+        to_node: to_node.id,
+        graph: graph,
+        module: nil
+      }
+      run_local(params)
+    end
+  else
+    # Non-test environments use OpenAI
+    def add(question, to_node, graph) do
+      params = %{
+        question: question,
+        to_node: to_node.id,
+        graph: graph,
+        module: nil
+      }
+      run_openai(params)
     end
   end
 
