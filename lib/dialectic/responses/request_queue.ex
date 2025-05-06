@@ -1,6 +1,11 @@
 defmodule Dialectic.Responses.RequestQueue do
   @type model_name :: :deepseek | :claude | :gemini | :openai | :local
-  @model_name Application.compile_env(:dialectic, :model_to_use, :local)
+  
+  # Use an explicit function to get the model name to help Dialyzer understand the possible values
+  @spec get_model_name() :: model_name()
+  def get_model_name do
+    Application.get_env(:dialectic, :model_to_use, :local)
+  end
 
   alias Dialectic.Workers.DeepSeekWorker
   alias Dialectic.Workers.ClaudeWorker
@@ -16,7 +21,7 @@ defmodule Dialectic.Responses.RequestQueue do
       module: nil
     }
 
-    case @model_name do
+    case get_model_name() do
       :deepseek -> run_deepseek(params)
       :claude -> run_claude(params)
       :gemini -> run_gemini(params)
