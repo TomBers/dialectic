@@ -3,21 +3,112 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>MuDG - Augmented Collaborative Idea Exploration</title>
+        <title>Dialectic - Collaborative Knowledge Exploration</title>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
-            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
             rel="stylesheet"
         />
         <style>
+            /* Video expansion styles */
+            .expandable-video {
+                cursor: pointer;
+                transition: all 0.3s ease;
+                position: relative;
+                z-index: 1;
+                box-shadow: 0 0 0 transparent;
+                border: 2px solid transparent;
+            }
+
+            .expandable-video:hover {
+                /* transform: scale(1.02); */
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+                border: 4px solid var(--primary-color);
+            }
+
+            .video-overlay {
+                position: absolute;
+                bottom: 10px;
+                right: 10px;
+                background: rgba(0, 0, 0, 0.7);
+                color: white;
+                padding: 8px 12px;
+                border-radius: 4px;
+                font-size: 0.9rem;
+                opacity: 0;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                pointer-events: none;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+            }
+
+            .video-overlay::before {
+                content: "⤢";
+                font-size: 1.2rem;
+            }
+
+            .showcase-media {
+                position: relative;
+                overflow: visible;
+            }
+
+            .showcase-media:hover .video-overlay {
+                opacity: 1;
+                transform: translateY(-5px);
+            }
+
+            .modal-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.8);
+                z-index: 1000;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .modal-content {
+                position: relative;
+                width: 80%;
+                max-width: 1200px;
+            }
+
+            .modal-content video {
+                width: 100%;
+                height: auto;
+            }
+
+            .close-modal {
+                position: absolute;
+                top: -40px;
+                right: 0;
+                color: white;
+                font-size: 30px;
+                cursor: pointer;
+                background: none;
+                border: none;
+            }
+
             :root {
-                --primary-color: #3a86ff;
-                --secondary-color: #8338ec;
-                --accent-color: #ff006e;
+                --primary-color: #4361ee;
+                --secondary-color: #3a0ca3;
+                --accent-color: #7209b7;
+                --light-accent: #f72585;
                 --bg-color: #f8f9fa;
+                --dark-bg: #121212;
                 --text-color: #2d3748;
                 --light-text: #4a5568;
+                --white: #ffffff;
+                --card-bg: #ffffff;
+                --border-radius: 12px;
+                --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
             }
 
             * {
@@ -36,58 +127,109 @@
                 color: var(--text-color);
                 background-color: var(--bg-color);
                 font-size: 16px;
+                overflow-x: hidden;
             }
 
-            header {
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 0 1.5rem;
+                position: relative;
+            }
+
+            /* Hero Section */
+            .hero-section {
+                position: relative;
                 background: linear-gradient(
                     135deg,
                     var(--primary-color),
                     var(--secondary-color)
                 );
                 color: white;
-                padding: 2rem 0;
-                text-align: center;
+                padding: 8rem 0 6rem;
+                overflow: hidden;
             }
 
-            .container {
-                max-width: 1200px;
-                margin: 0 auto;
-                padding: 0 2rem;
+            .hero-pattern {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+                opacity: 0.2;
             }
 
-            .hero {
+            .hero-content {
                 display: flex;
-                flex-direction: column;
                 align-items: center;
-                justify-content: center;
-                padding: 4rem 2rem;
-                text-align: center;
+                position: relative;
+                z-index: 2;
             }
 
-            .hero h1 {
+            .hero-text {
+                flex: 1;
+                padding-right: 3rem;
+            }
+
+            .hero-image {
+                flex: 1;
+                position: relative;
+            }
+
+            .hero-image img {
+                width: 100%;
+                border-radius: var(--border-radius);
+                box-shadow: var(--box-shadow);
+            }
+
+            .hero-title {
                 font-size: 3.5rem;
-                margin-bottom: 1.5rem;
                 font-weight: 700;
                 line-height: 1.2;
+                margin-bottom: 1.5rem;
+                background: linear-gradient(to right, #fff, #e0e0ff);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
             }
 
-            .hero p {
-                font-size: 1.4rem;
-                max-width: 800px;
-                margin-bottom: 2.5rem;
-                line-height: 1.6;
+            .hero-subtitle {
+                font-size: 1.5rem;
+                margin-bottom: 2rem;
+                opacity: 0.9;
             }
 
+            .hero-buttons {
+                display: flex;
+                gap: 1rem;
+                margin-top: 2rem;
+            }
+
+            /* Button Styles */
             .btn {
-                display: inline-block;
-                background-color: var(--accent-color);
-                color: white;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
                 padding: 0.8rem 1.8rem;
                 border-radius: 30px;
                 text-decoration: none;
                 font-weight: 600;
+                font-size: 1rem;
                 transition: all 0.3s ease;
-                font-size: 1.1rem;
+                cursor: pointer;
+            }
+
+            .btn-primary {
+                background-color: var(--light-accent);
+                color: white;
+                border: none;
+            }
+
+            .btn-secondary {
+                background-color: rgba(255, 255, 255, 0.15);
+                color: white;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                backdrop-filter: blur(10px);
             }
 
             .btn:hover {
@@ -95,754 +237,720 @@
                 box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
             }
 
-            section {
-                padding: 5rem 0;
+            .btn-primary:hover {
+                background-color: var(--accent-color);
             }
 
-            section:nth-child(even) {
+            .btn-secondary:hover {
+                background-color: rgba(255, 255, 255, 0.25);
+            }
+
+            /* Navigation */
+            .navbar {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                padding: 1.5rem 0;
+                z-index: 100;
+            }
+
+            .nav-container {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .logo {
+                font-size: 1.8rem;
+                font-weight: 700;
+                color: white;
+                text-decoration: none;
+            }
+
+            .nav-links {
+                display: flex;
+                list-style: none;
+                gap: 2rem;
+                transition: all 0.3s ease;
+            }
+
+            .mobile-menu-toggle {
+                display: none;
+                background: transparent;
+                border: none;
+                color: white;
+                font-size: 1.5rem;
+                cursor: pointer;
+                z-index: 1000;
+            }
+
+            .nav-link {
+                color: white;
+                text-decoration: none;
+                font-weight: 500;
+                font-size: 1rem;
+                transition: all 0.3s ease;
+                opacity: 0.8;
+            }
+
+            .nav-link:hover {
+                opacity: 1;
+            }
+
+            /* Features Section */
+            .section {
+                padding: 6rem 0;
+            }
+
+            .section:nth-child(even) {
                 background-color: white;
             }
 
-            .section-title {
+            .section-header {
                 text-align: center;
-                margin-bottom: 3.5rem;
+                max-width: 800px;
+                margin: 0 auto 4rem;
             }
 
-            .section-title h2 {
+            .section-title {
                 font-size: 2.6rem;
-                margin-bottom: 1.2rem;
                 color: var(--primary-color);
+                margin-bottom: 1.2rem;
                 font-weight: 700;
+                line-height: 1.2;
             }
 
-            .feature {
-                display: flex;
-                flex-direction: row;
+            .section-subtitle {
+                font-size: 1.2rem;
+                color: var(--light-text);
+                max-width: 600px;
+                margin: 0 auto;
+            }
+
+            .feature-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 2rem;
+                margin-top: 3rem;
+            }
+
+            .feature-card {
+                background: var(--card-bg);
+                border-radius: var(--border-radius);
+                padding: 2rem;
+                box-shadow: var(--box-shadow);
+                transition: transform 0.3s ease;
+            }
+
+            .feature-card:hover {
+                transform: translateY(-5px);
+            }
+
+            .feature-icon {
+                display: inline-flex;
                 align-items: center;
-                margin-bottom: 5rem;
+                justify-content: center;
+                width: 60px;
+                height: 60px;
+                background: linear-gradient(
+                    135deg,
+                    var(--primary-color),
+                    var(--secondary-color)
+                );
+                border-radius: 50%;
+                margin-bottom: 1.5rem;
             }
 
-            .feature:nth-child(even) {
-                flex-direction: row-reverse;
+            .feature-icon svg {
+                width: 30px;
+                height: 30px;
+                color: white;
+            }
+
+            .feature-title {
+                font-size: 1.5rem;
+                margin-bottom: 1rem;
+                color: var(--secondary-color);
             }
 
             .feature-text {
-                flex: 1;
-                padding: 0 2.5rem;
+                color: var(--light-text);
+                font-size: 1rem;
+                line-height: 1.7;
             }
 
-            .feature-text h3 {
+            /* Showcase Section */
+            .showcase {
+                display: flex;
+                align-items: center;
+                margin-bottom: 4rem;
+                gap: 4rem;
+            }
+
+            .showcase:nth-child(even) {
+                flex-direction: row-reverse;
+            }
+
+            .showcase-content {
+                flex: 1;
+            }
+
+            .showcase-title {
                 font-size: 2rem;
                 margin-bottom: 1.2rem;
                 color: var(--secondary-color);
-                font-weight: 600;
             }
 
-            .feature-text p {
-                font-size: 1.1rem;
+            .showcase-text {
                 margin-bottom: 1.5rem;
-                line-height: 1.8;
                 color: var(--light-text);
-                max-width: 90%;
-                letter-spacing: 0.01em;
             }
 
-            .feature-image {
+            .showcase-media {
                 flex: 1;
-                text-align: center;
+                border-radius: var(--border-radius);
+                overflow: hidden;
+                box-shadow: var(--box-shadow);
             }
 
-            .feature-image img,
-            .feature-image video {
-                max-width: 100%;
-                border-radius: 10px;
-                box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            .showcase-media img,
+            .showcase-media video {
+                width: 100%;
+                border-radius: var(--border-radius);
+                display: block;
             }
 
-            /* Style for the first section layout */
-            .first-section-layout {
-                display: flex;
-                flex-direction: row;
-                gap: 2rem;
-                align-items: flex-start;
-            }
+            /* Media Queries */
+            @media (max-width: 992px) {
+                .hero-content {
+                    flex-direction: column;
+                    text-align: center;
+                }
 
-            .feature-video {
-                flex: 0 0 40%;
-            }
+                .hero-text {
+                    padding-right: 0;
+                    margin-bottom: 3rem;
+                }
 
-            .about-section {
-                background-color: #f8f9fa;
-                padding: 5rem 0;
-            }
+                .hero-buttons {
+                    justify-content: center;
+                }
 
-            .about-content {
-                max-width: 900px;
-                margin: 0 auto;
-                font-size: 1.05rem;
-                line-height: 1.7;
-                color: #374151;
-            }
+                .showcase {
+                    flex-direction: column !important;
+                    gap: 2rem;
+                }
 
-            .about-content h3 {
-                font-size: 1.8rem;
-                color: var(--secondary-color);
-                margin: 2.5rem 0 1rem 0;
-                font-weight: 600;
-            }
-
-            .about-content h3:first-child {
-                margin-top: 0;
-            }
-
-            .about-content p {
-                margin-bottom: 1.5rem;
-                text-align: justify;
-            }
-
-            ul {
-                margin-bottom: 2rem;
-                padding-left: 2rem;
-            }
-
-            li {
-                margin-bottom: 0.8rem;
-            }
-
-            footer {
-                background-color: #343a40;
-                color: white;
-                text-align: center;
-                padding: 2.5rem 0;
-                font-size: 1rem;
+                .feature-grid {
+                    grid-template-columns: 1fr 1fr;
+                }
             }
 
             @media (max-width: 768px) {
-                body {
-                    font-size: 15px;
+                .hero-section {
+                    padding: 6rem 0 4rem;
                 }
 
-                .feature {
-                    flex-direction: column;
-                }
-
-                .feature:nth-child(even) {
-                    flex-direction: column;
-                }
-
-                /* Updated mobile responsiveness for the first section */
-                .first-section-layout {
-                    flex-direction: column;
-                }
-
-                .feature-text,
-                .feature-video {
-                    flex: none;
-                    width: 100%;
-                    padding: 1.5rem 0;
-                }
-
-                /* Ensure text comes first on mobile */
-                .feature-text {
-                    order: 1;
-                }
-
-                /* Video comes after text on mobile */
-                .feature-video {
-                    order: 2;
-                }
-
-                .feature-text {
-                    order: 2;
-                }
-
-                .feature-image {
-                    order: 1;
-                }
-
-                .feature-text p {
-                    max-width: 100%;
-                }
-
-                .hero h1 {
+                .hero-title {
                     font-size: 2.5rem;
                 }
 
-                .hero p {
+                .hero-subtitle {
                     font-size: 1.2rem;
                 }
 
-                .section-title h2 {
+                .section-title {
                     font-size: 2.2rem;
                 }
 
-                .feature-text h3 {
+                .feature-grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .nav-links {
+                    position: fixed;
+                    top: 0;
+                    right: -100%;
+                    width: 80%;
+                    max-width: 300px;
+                    height: 100vh;
+                    background: var(--primary-color);
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    padding: 2rem;
+                    z-index: 999;
+                    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+                }
+
+                .nav-links.active {
+                    right: 0;
+                }
+
+                .nav-links li {
+                    margin: 1rem 0;
+                }
+
+                .mobile-menu-toggle {
+                    display: block;
+                }
+            }
+
+            @media (max-width: 576px) {
+                .feature-grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .hero-title {
+                    font-size: 2.2rem;
+                }
+
+                .hero-subtitle {
+                    font-size: 1.1rem;
+                }
+
+                .section-title {
+                    font-size: 1.8rem;
+                }
+
+                .showcase-title {
                     font-size: 1.6rem;
                 }
+            }
 
-                .about-content {
-                    font-size: 1rem;
-                    text-align: left;
-                }
-
-                .about-content p {
-                    text-align: left;
+            @media (min-width: 769px) and (max-width: 992px) {
+                .feature-grid {
+                    grid-template-columns: repeat(2, 1fr);
                 }
             }
         </style>
     </head>
     <body>
-        <header>
-            <div class="container">
-                <h1>MuDG</h1>
-                <p>Augmented Collaborative Idea Exploration</p>
-            </div>
-        </header>
-
-        <section id="learn-more">
-            <div class="container">
-                <div class="first-section-layout">
-                    <!-- Text content (60%) -->
-                    <div class="feature-text" style="flex: 0 0 60%">
-                        <h3>What is it?</h3>
-                        <p>
-                            A mind mapping tool that uses AI
-                            <strong>alongside other people</strong> to explore
-                            and learn; visualising the learning process.
-                        </p>
-                        <h3>Who is it for?</h3>
-                        <p>
-                            Anyone who wants to
-                            <strong
-                                >explore an idea in depth and see where it takes
-                                them.</strong
-                            >
-                            Also a chance to see how others think, seeing
-                            pathways over complex topics. <br /><br />
-                            More explicitly - students, writers or people who
-                            want to have a clearer basis for their
-                            understanding.
-                        </p>
-                        <h3>Why should I care?</h3>
-                        <p>
-                            Much learning is personal, often we see the
-                            conclusions of others and keep unfinished or
-                            incomplete notes to our self. It was built with 2
-                            principles, learning can be done better together
-                            (and AI can help), and that visualising
-                            <strong
-                                >the history of this thinking is valuable not
-                                only for ourselves but others.</strong
-                            >
-                        </p>
-                        <div
-                            style="
-                                display: flex;
-                                justify-content: space-between;
-                                gap: 1rem;
-                            "
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="container nav-container">
+                <a href="#" class="logo">Dialectic</a>
+                <ul class="nav-links" id="nav-menu">
+                    <li><a href="#showcase" class="nav-link">Learn More</a></li>
+                    <li><a href="#why" class="nav-link">Why</a></li>
+                    <li><a href="#about" class="nav-link">About</a></li>
+                    <li>
+                        <a
+                            href="https://mudg.fly.dev"
+                            class="nav-link btn btn-primary"
+                            >Try It</a
                         >
-                            <a href="https://mudg.fly.dev" class="btn"
-                                >Try it</a
+                    </li>
+                </ul>
+                <button class="mobile-menu-toggle" id="menu-toggle">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-pattern"></div>
+            <div class="container">
+                <div class="hero-content">
+                    <div class="hero-text">
+                        <h1 class="hero-title">
+                            Explore Ideas Collaboratively
+                        </h1>
+                        <p class="hero-subtitle">
+                            Dialectic is a mind mapping tool that combines AI
+                            assistance with human collaboration to explore
+                            complex ideas and visualize the learning process.
+                        </p>
+                        <div class="hero-buttons">
+                            <a
+                                href="https://mudg.fly.dev"
+                                class="btn btn-primary"
+                                >Start Exploring</a
                             >
-                            <a href="#about" class="btn">About</a>
+                            <a href="#showcase" class="btn btn-secondary"
+                                >Learn More</a
+                            >
                         </div>
                     </div>
-
-                    <!-- Video content (40%) -->
-                    <div class="feature-video">
-                        <div style="padding: 56.25% 0 0 0; position: relative">
-                            <iframe
-                                src="https://player.vimeo.com/video/1073545276?title=0&amp;byline=0&amp;portrait=0&amp;badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479"
-                                frameborder="0"
-                                allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"
-                                style="
-                                    position: absolute;
-                                    top: 0;
-                                    left: 0;
-                                    width: 100%;
-                                    height: 100%;
-                                "
-                                title="Demonstration Video"
-                            ></iframe>
-                        </div>
-                        <script src="https://player.vimeo.com/api/player.js"></script>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section
-            id="call-to-action"
-            style="
-                background-color: var(--primary-color);
-                color: white;
-                text-align: center;
-            "
-        >
-            <div class="container">
-                <h2
-                    style="
-                        color: white;
-                        margin-bottom: 1.5rem;
-                        font-size: 2.2rem;
-                    "
-                >
-                    Want to know more?
-                </h2>
-                <p
-                    style="
-                        font-size: 1.2rem;
-                        margin-bottom: 2rem;
-                        max-width: 800px;
-                        margin-left: auto;
-                        margin-right: auto;
-                    "
-                >
-                    Follow us on Twitter for updates, insights, and to join our
-                    growing community of collaborative learners.
-                </p>
-                <a
-                    href="https://x.com/TJCBerman"
-                    target="_blank"
-                    class="btn"
-                    style="
-                        background-color: white;
-                        color: var(--primary-color);
-                        font-weight: 700;
-                        padding: 1rem 2rem;
-                        font-size: 1.2rem;
-                    "
-                >
-                    Follow @TJCBerman
-                </a>
-            </div>
-        </section>
-
-        <section id="why">
-            <div class="container">
-                <div class="section-title">
-                    <h2>Why did I build it?</h2>
-                </div>
-                <div class="feature">
-                    <div class="feature-text">
-                        <h3>At a principle level</h3>
-                        <p>
-                            I have lost track of the number of times when I sit
-                            to listen to a speaker / lecture and within a few
-                            mins says something I believe raises a huge
-                            question. This casts a shadow over the rest of what
-                            they are saying.
-                            <br /><br />
-                            We live in the Information Age. There is no shortage
-                            of information, but at the same time, there is a
-                            frustration at the general quality of discussion /
-                            debate. It has been called “Echo” chambers or
-                            motivated reasoning. Most discussions between
-                            opposing viewpoints completely talk past each other.
-                            <br /><br />
-                            I believe this happens because, much like a magic
-                            trick, it happens outside of your awareness / the
-                            parameters of the discussion.
-                            <br /><br />
-                            Different assumptions lead to completely different
-                            conclusions. For example debating if an action is
-                            ethical entirely depends on the ethical framework
-                            you are using.
-                            <br /><br />
-                            Without the ability to question at word level and
-                            question these assumptions, then we miss out on
-                            productive exchanges.
-                        </p>
-                        <h3>At a specific level</h3>
-                        <p>
-                            <strong>The AI revolution and learning.</strong>
-                            Having a tool that can answer many specific
-                            questions and has a great deal of knowledge about
-                            wide range of topics is an unprecedented tool for
-                            learning. To make learning an active process, to ask
-                            questions that interest you and a very granular
-                            level is in itself an engrossing process.
-                            <br /><br />
-                            I think it currently has a few drawbacks:
-                        </p>
-                        <ul>
-                            <li>
-                                <strong>Linear walls of text</strong> make it
-                                challenging to take the conversation in several
-                                directions at once.
-                            </li>
-                            <li>
-                                <strong
-                                    >They are inherently single player</strong
-                                >
-                                - it is you talking to the tool. I think
-                                bringing in other people can lead to more
-                                interesting directions.
-                            </li>
-                            <li>
-                                <strong
-                                    >The conversations seem disposable.</strong
-                                >
-                                I often have very interesting discussions, but I
-                                rarely if ever return to a conversation. Meaning
-                                building bigger ideas becomes difficult.
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </section>
-        <section id="example">
-            <div class="container">
-                <div class="section-title">
-                    <h2>Example</h2>
-                </div>
-                <div class="feature">
-                    <div class="feature-text">
-                        <h3>Exploring different ethical frameworks</h3>
-                        <p>
-                            The example shows a graph looking at different
-                            ethical frameworks. We can define different
-                            frameworks and explore their implications. For
-                            instance, we can explore the implications of
-                            utilitarianism, deontology, and virtue ethics.
-                        </p>
-                        <div style="padding: 40% 0 0 0; position: relative">
-                            <iframe
-                                src="https://player.vimeo.com/video/1073515238?title=0&amp;byline=0&amp;portrait=0&amp;badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479"
-                                frameborder="0"
-                                allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"
-                                style="
-                                    position: absolute;
-                                    top: 0;
-                                    left: 0;
-                                    width: 100%;
-                                    height: 100%;
-                                "
-                                title="exploring_ethics"
-                            ></iframe>
-                        </div>
-                        <script src="https://player.vimeo.com/api/player.js"></script>
-                    </div>
-                </div>
-                <div class="container">
-                    <div class="feature">
-                        <div class="feature-text">
-                            <h3>Vs. ChatGPT</h3>
-                            <p>
-                                The conversation becomes a wall of text, to
-                                explore specific topics you need to scroll up
-                                and down, meaning the flow of the conversation
-                                is lost.
-                            </p>
-                        </div>
-                        <div class="feature-image">
-                            <video autoplay muted loop playsinline>
-                                <source
-                                    src="media/videos/LLM-Chat.mp4"
-                                    type="video/mp4"
-                                />
-                                Your browser does not support the video tag.
-                            </video>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-        <section id="outcomes">
-            <div class="container">
-                <div class="section-title">
-                    <h2>1) Idea graph</h2>
-                </div>
-
-                <div class="feature">
-                    <div class="feature-text">
-                        <h3>Visualise the paths through an idea</h3>
-                        <p>
-                            This screenshot is a graph exploring ethics. As we
-                            can see we have several approaches to ethical
-                            decision making. We can explore any path through the
-                            idea, whatever approach seems most interesting at
-                            the time.
-                        </p>
-                        <p>
-                            We can come back whenever we want to other paths and
-                            pick up where we left off. Now we can explore each
-                            approach in detail, asking for an example, and
-                            branching through between the Pros and Cons.
-                        </p>
-                        <p>
-                            Ideas have clear relation to others, with parents
-                            and children, showing how differing conclusions come
-                            from earlier decisions.
-                        </p>
-                    </div>
-                    <div class="feature-image">
+                    <div class="hero-image">
                         <img
-                            src="media/images/Ethics.webp"
-                            alt="Ethics Knowledge Graph"
+                            src="media/images/graph.webp"
+                            alt="Knowledge Graph Example"
                         />
                     </div>
                 </div>
             </div>
         </section>
 
-        <section id="multiplayer">
+        <!-- Features Section -->
+        <section id="features" class="section">
             <div class="container">
-                <div class="section-title">
-                    <h2>2) Multiplayer</h2>
+                <div class="section-header">
+                    <h2 class="section-title">Why Dialectic?</h2>
+                    <p class="section-subtitle">
+                        Discover how our platform transforms the way you explore
+                        and understand complex ideas
+                    </p>
                 </div>
 
-                <div class="feature">
-                    <div class="feature-text">
-                        <h3>Real-time Collaboration</h3>
-                        <p>
-                            Each graph can be edited by any person on the site.
-                            Each change is shared with everyone in real time.
-                            Each node can be noted for later reading and to
-                            surface the most interesting points.
-                        </p>
-                        <p>
-                            You can lock a graph when you feel it is a finished
-                            idea, for easy sharing to students.
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                                />
+                            </svg>
+                        </div>
+                        <h3 class="feature-title">Visualized Knowledge</h3>
+                        <p class="feature-text">
+                            Transform complex ideas into visual knowledge graphs
+                            that make connections explicit and easy to navigate.
                         </p>
                     </div>
-                    <div class="feature-image">
-                        <video autoplay muted loop playsinline>
-                            <source
-                                src="media/videos/Multiplayer.mp4"
-                                type="video/mp4"
-                            />
-                            Your browser does not support the video tag.
-                        </video>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                                />
+                            </svg>
+                        </div>
+                        <h3 class="feature-title">Collaborative Learning</h3>
+                        <p class="feature-text">
+                            Invite others to join your exploration in real-time,
+                            sharing different perspectives and building
+                            knowledge together.
+                        </p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                                />
+                            </svg>
+                        </div>
+                        <h3 class="feature-title">AI-Powered Insights</h3>
+                        <p class="feature-text">
+                            Leverage the analytical power of language models to
+                            explore ideas in depth while maintaining human
+                            guidance.
+                        </p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                />
+                            </svg>
+                        </div>
+                        <h3 class="feature-title">Persistent Knowledge</h3>
+                        <p class="feature-text">
+                            Unlike ephemeral chats, your knowledge graphs
+                            persist and grow over time, becoming valuable
+                            resources.
+                        </p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section id="sharable">
+        <!-- Showcase Section -->
+        <section id="showcase" class="section" style="background-color: white">
             <div class="container">
-                <div class="section-title">
-                    <h2>3) Shareable</h2>
+                <div class="section-header">
+                    <h2 class="section-title">See It In Action</h2>
+                    <p class="section-subtitle">
+                        Explore how Dialectic transforms knowledge
+                        representation and collaborative learning
+                    </p>
                 </div>
 
-                <div class="feature">
-                    <div class="feature-text">
-                        <h3>Share Any Node</h3>
-                        <p>
-                            Each node has a link associated with it. So you can
-                            have a unique URL for any node on the page, that can
-                            be shared with anyone else. This means you can
-                            return to any point and continue from where you left
-                            off.
+                <div class="showcase">
+                    <div class="showcase-content">
+                        <h3 class="showcase-title">
+                            Interactive Knowledge Graphs
+                        </h3>
+                        <p class="showcase-text">
+                            Transform complex ideas into intuitive visual
+                            networks. Unlike linear conversations, knowledge
+                            graphs let you explore multiple paths simultaneously
+                            and see relationships at a glance.
                         </p>
-                    </div>
-                    <div class="feature-image">
-                        <video autoplay muted loop playsinline>
-                            <source
-                                src="media/videos/Sharing.mp4"
-                                type="video/mp4"
-                            />
-                            Your browser does not support the video tag.
-                        </video>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="creative">
-            <div class="container">
-                <div class="section-title">
-                    <h2>4) Creative Inspiration</h2>
-                </div>
-
-                <div class="feature">
-                    <div class="feature-text">
-                        <h3>Explore New Ideas</h3>
-                        <p>
-                            This starts from the landing page. Not sure what
-                            interests you? The ideas pages give you a starting
-                            point, with many interesting topics to explore.
+                        <p class="showcase-text">
+                            Each node can be expanded to reveal more details or
+                            branch into new directions, creating a rich web of
+                            connected knowledge.
                         </p>
-                        <p>
-                            The interaction with the language model hopefully
-                            inspires new ideas and generates debate points for
-                            any topic or helps find the balance between opposing
-                            perspectives.
-                        </p>
-                    </div>
-                    <div class="feature-image">
-                        <img src="media/images/Ideas.webp" alt="Ideas" />
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="about" class="about-section">
-            <div class="container">
-                <div class="section-title">
-                    <h2>About MuDG</h2>
-                </div>
-
-                <div class="about-content">
-                    <h3>Our Vision</h3>
-                    <p>
-                        <strong>Muti-user Dialectical Graph (MuDG)</strong>
-                        began with a simple observation: the revolutionary
-                        potential of large language models for education remains
-                        largely untapped. While today's AI assistants offer
-                        impressive capabilities, they exist primarily as
-                        isolated, ephemeral exchanges. Our vision is to
-                        transform these interactions into persistent, evolving
-                        idea structures that grow richer with each exploration.
-                    </p>
-
-                    <h3>The Knowledge Graph Paradigm</h3>
-                    <p>
-                        At MuDG, we believe the future of learning isn't
-                        linear—it's networked. Traditional educational paths
-                        often follow predetermined sequences, but human
-                        curiosity rarely operates this way. We naturally branch,
-                        connect, and integrate ideas across domains. Our
-                        knowledge graph approach mirrors this natural thought
-                        process, allowing learners to move freely between
-                        concepts while maintaining coherent connections.
-                    </p>
-                    <p>
-                        Each node in a MuDG graph represents a discrete concept,
-                        question, or insight. Unlike traditional learning
-                        materials that might bury important connections in
-                        paragraphs of text, our graph structure makes
-                        relationships explicit and navigable. This visualization
-                        of knowledge helps learners identify patterns and
-                        connections they might otherwise miss.
-                    </p>
-
-                    <h3>Collaborative Intelligence</h3>
-                    <p>
-                        MuDG combines the analytical power of language models
-                        with the creative, contextual understanding of human
-                        minds. While AI excels at retrieving and synthesizing
-                        information across vast knowledge domains, humans excel
-                        at determining relevance, identifying novel connections,
-                        and applying insights to real-world contexts. By
-                        designing a platform where these complementary
-                        intelligences work together, we create learning
-                        experiences greater than either could produce alone.
-                    </p>
-                    <p>
-                        Collaboration extends beyond the human-AI relationship
-                        to encompass peer-to-peer learning as well. When
-                        multiple users explore and expand a knowledge graph
-                        together, they contribute diverse perspectives and
-                        expertise. This multiplayer aspect transforms learning
-                        from a solitary activity into a social one, where
-                        discovery is shared and insights are collectively
-                        refined.
-                    </p>
-
-                    <h3>Technical Philosophy</h3>
-                    <p>
-                        Our technical approach is guided by several core
-                        principles:
-                    </p>
-                    <ul>
-                        <li>
-                            <strong>Speed matters.</strong> Cognitive flow is
-                            easily disrupted by technical friction. We've
-                            optimized every aspect of the interface to minimize
-                            latency and maximize responsiveness.
-                        </li>
-                        <li>
-                            <strong>Simplicity enables depth.</strong> Complex
-                            ideas don't require complex interfaces. By
-                            eliminating unnecessary elements and focusing on
-                            conceptual clarity, we allow deeper engagement with
-                            content.
-                        </li>
-                        <li>
-                            <strong>Privacy is foundational.</strong> Learning
-                            requires experimentation and vulnerability. We've
-                            designed a platform where users can explore ideas
-                            freely without concerns about data harvesting or
-                            surveillance.
-                        </li>
-                        <li>
-                            <strong>Persistence creates value.</strong> Unlike
-                            ephemeral chats that disappear, MuDG knowledge
-                            graphs persist, accumulating value over time as they
-                            grow and connect.
-                        </li>
-                    </ul>
-
-                    <h3>The Future of MuDG</h3>
-                    <p>
-                        We're just beginning our journey to reimagine how humans
-                        and AI can learn together. Future developments will
-                        include specialized tools for educators, expanded
-                        visualization options, and deeper integration
-                        capabilities with existing knowledge bases and learning
-                        resources. The goal remains constant: creating the most
-                        effective collaborative learning environment possible,
-                        where the boundaries between teaching and learning
-                        dissolve, and where knowledge isn't just consumed but
-                        actively constructed.
-                    </p>
-
-                    <h3>MuDG - today</h3>
-                    <p>
-                        This has been a personal project, that in many ways is a
-                        cumulation of my different interests. Understanding /
-                        learning, design, (quasi) mathematical, AI and
-                        programming.
-                    </p>
-                    <p>
-                        The inspiration of the idea came from three distinct
-                        locations.
-                    </p>
-                    <ul>
-                        <li>
-                            <strong>The rise of AI / LLM’s</strong> - back in my
-                            undergraduate degree (too many years ago!) I
-                            remember learning about neural networks,
-                            implementing an MLP in C and other less popular
-                            networks such as Kohonen Map (Self Organizing Map).
-                            To capabilities of the deep learning revolution
-                            happen in real time has been inspiring.
-                        </li>
-                        <li>
-                            <strong>Dialectics</strong> - going back to the very
-                            birth of philosophy,  form of reasoning based upon
-                            dialogue of arguments and counter-arguments.
-                        </li>
-                        <li>
-                            <strong>The Elixir community</strong> - Since
-                            working with Elixir and Phoenix LiveView, it has
-                            made building interactive websites a pleasure and
-                            made alot of what the project is possible.
-                        </li>
-                    </ul>
-
-                    <div
-                        style="
-                            display: flex;
-                            justify-content: center;
-                            gap: 1rem;
-                        "
-                    >
-                        <a href="https://mudg.fly.dev" class="btn"
-                            >Give it a try</a
+                        <a href="https://mudg.fly.dev" class="btn btn-primary"
+                            >Try It Now</a
                         >
                     </div>
+                    <div class="showcase-media">
+                        <video
+                            id="expandableVideo"
+                            autoplay
+                            muted
+                            loop
+                            playsinline
+                            class="expandable-video"
+                        >
+                            <source
+                                src="media/videos/MuDG_nav.mp4"
+                                type="video/mp4"
+                            />
+                            Your browser does not support the video tag.
+                        </video>
+                        <div class="video-overlay">Click to expand</div>
+                    </div>
+                </div>
+
+                <div class="showcase">
+                    <div class="showcase-content">
+                        <h3 class="showcase-title">Beyond Traditional Chat</h3>
+                        <p class="showcase-text">
+                            Traditional AI chat interfaces present knowledge as
+                            linear walls of text, making it difficult to explore
+                            multiple directions at once or revisit specific
+                            points.
+                        </p>
+                        <p class="showcase-text">
+                            Dialectic's graph-based approach solves this problem
+                            by structuring information spatially, allowing for
+                            non-linear exploration while maintaining context.
+                        </p>
+                    </div>
+                    <div class="showcase-media">
+                        <video autoplay muted loop playsinline>
+                            <source
+                                src="media/videos/LLM-Chat.mp4"
+                                type="video/mp4"
+                            />
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
                 </div>
             </div>
         </section>
 
+        <!-- Why Section -->
+        <section id="why" class="section">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">Why We Built It</h2>
+                    <p class="section-subtitle">
+                        Our motivation for developing a new approach to
+                        collaborative learning and knowledge exploration
+                    </p>
+                </div>
+
+                <div class="showcase">
+                    <div class="showcase-content">
+                        <h3 class="showcase-title">
+                            The Information Age Paradox
+                        </h3>
+                        <p class="showcase-text">
+                            We live in an era of unprecedented information
+                            access, yet the quality of discourse often feels
+                            lacking. Echo chambers and motivated reasoning lead
+                            to people talking past each other rather than
+                            engaging meaningfully.
+                        </p>
+                        <p class="showcase-text">
+                            We built Dialectic because we believe that
+                            meaningful exchanges happen when we can explore
+                            assumptions at a fundamental level and see how
+                            different starting points lead to different
+                            conclusions.
+                        </p>
+                    </div>
+                    <div class="showcase-media">
+                        <img
+                            src="media/images/graph.webp"
+                            alt="Knowledge Graph"
+                        />
+                    </div>
+                </div>
+
+                <div class="showcase">
+                    <div class="showcase-content">
+                        <h3 class="showcase-title">
+                            AI Revolution & Active Learning
+                        </h3>
+                        <p class="showcase-text">
+                            Language models provide unprecedented access to
+                            knowledge, but traditional chat interfaces limit
+                            their potential for deep learning. Linear
+                            conversations make it difficult to explore multiple
+                            directions simultaneously or revisit specific points
+                            of interest.
+                        </p>
+                        <p class="showcase-text">
+                            Dialectic transforms AI interaction into an active,
+                            exploratory process where learners can branch out in
+                            multiple directions, creating a personalized
+                            knowledge map that evolves with their curiosity.
+                        </p>
+                    </div>
+                    <div class="showcase-media">
+                        <img
+                            src="media/images/Ideas.webp"
+                            alt="Idea Explorer"
+                        />
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about" class="section" style="background-color: white">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">About Dialectic</h2>
+                    <p class="section-subtitle">
+                        Our vision, philosophy, and the story behind the project
+                    </p>
+                </div>
+
+                <div style="max-width: 900px; margin: 0 auto">
+                    <div class="feature-card" style="margin-bottom: 2rem">
+                        <h3 class="feature-title">Our Vision</h3>
+                        <p class="feature-text">
+                            <strong>Multi-user Dialectical Graph (MuDG)</strong>
+                            began with a simple observation: the revolutionary
+                            potential of large language models for education
+                            remains largely untapped. While today's AI
+                            assistants offer impressive capabilities, they exist
+                            primarily as isolated, ephemeral exchanges. Our
+                            vision is to transform these interactions into
+                            persistent, evolving idea structures that grow
+                            richer with each exploration.
+                        </p>
+                    </div>
+
+                    <div class="feature-card" style="margin-bottom: 2rem">
+                        <h3 class="feature-title">
+                            The Knowledge Graph Paradigm
+                        </h3>
+                        <p class="feature-text">
+                            At Dialectic, we believe the future of learning
+                            isn't linear—it's networked. Traditional educational
+                            paths often follow predetermined sequences, but
+                            human curiosity rarely operates this way. We
+                            naturally branch, connect, and integrate ideas
+                            across domains. Our knowledge graph approach mirrors
+                            this natural thought process, allowing learners to
+                            move freely between concepts while maintaining
+                            coherent connections.
+                        </p>
+                        <p class="feature-text">
+                            Each node in a Dialectic graph represents a discrete
+                            concept, question, or insight. Unlike traditional
+                            learning materials that might bury important
+                            connections in paragraphs of text, our graph
+                            structure makes relationships explicit and
+                            navigable.
+                        </p>
+                    </div>
+
+                    <div class="feature-card">
+                        <h3 class="feature-title">Our Technical Philosophy</h3>
+                        <p class="feature-text">
+                            Our technical approach is guided by several core
+                            principles:
+                        </p>
+                        <ul
+                            style="
+                                list-style-type: disc;
+                                padding-left: 2rem;
+                                margin: 1rem 0;
+                            "
+                        >
+                            <li style="margin-bottom: 0.5rem">
+                                <strong>Speed matters.</strong> Cognitive flow
+                                is easily disrupted by technical friction. We've
+                                optimized every aspect of the interface to
+                                minimize latency.
+                            </li>
+                            <li style="margin-bottom: 0.5rem">
+                                <strong>Simplicity enables depth.</strong>
+                                Complex ideas don't require complex interfaces.
+                                By eliminating unnecessary elements, we allow
+                                deeper engagement with content.
+                            </li>
+                            <li style="margin-bottom: 0.5rem">
+                                <strong>Persistence creates value.</strong>
+                                Unlike ephemeral chats that disappear, Dialectic
+                                knowledge graphs persist, accumulating value
+                                over time.
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Call to Action Section -->
         <section
-            id="call-to-action"
             style="
-                background-color: var(--primary-color);
+                background: linear-gradient(
+                    135deg,
+                    var(--primary-color),
+                    var(--secondary-color)
+                );
                 color: white;
                 text-align: center;
                 padding: 4rem 0;
@@ -851,46 +959,134 @@
             <div class="container">
                 <h2
                     style="
-                        color: white;
+                        font-size: 2.5rem;
                         margin-bottom: 1.5rem;
-                        font-size: 2.2rem;
+                        color: white;
                     "
                 >
-                    Want to know more?
+                    Ready to Transform Your Learning?
                 </h2>
                 <p
                     style="
                         font-size: 1.2rem;
                         margin-bottom: 2rem;
-                        max-width: 800px;
+                        max-width: 700px;
                         margin-left: auto;
                         margin-right: auto;
                     "
                 >
-                    Follow us on Twitter for updates, insights, and to join our
-                    growing community of collaborative learners.
+                    Join our growing community of collaborative thinkers and
+                    discover a new way to explore ideas.
                 </p>
-                <a
-                    href="https://x.com/TJCBerman"
-                    target="_blank"
-                    class="btn"
+                <div
                     style="
-                        background-color: white;
-                        color: var(--primary-color);
-                        font-weight: 700;
-                        padding: 1rem 2rem;
-                        font-size: 1.2rem;
+                        display: flex;
+                        justify-content: center;
+                        gap: 1rem;
+                        flex-wrap: wrap;
                     "
                 >
-                    Follow @TJCBerman
-                </a>
+                    <a
+                        href="https://mudg.fly.dev"
+                        class="btn btn-primary"
+                        style="
+                            background-color: white;
+                            color: var(--primary-color);
+                            font-weight: 700;
+                        "
+                    >
+                        Try it Now
+                    </a>
+                    <a
+                        href="https://x.com/TJCBerman"
+                        target="_blank"
+                        class="btn btn-secondary"
+                    >
+                        Follow @TJCBerman
+                    </a>
+                </div>
             </div>
         </section>
 
-        <footer>
+        <!-- Footer -->
+        <footer
+            style="
+                background-color: var(--dark-bg);
+                color: white;
+                padding: 2rem 0;
+                text-align: center;
+            "
+        >
             <div class="container">
-                <p>&copy; 2025 MuDG - Collaborative Learning Platform</p>
+                <p>&copy; 2025 Dialectic - Multi-user Dialectical Graph</p>
             </div>
         </footer>
+        <div id="videoModal" class="modal-overlay">
+            <div class="modal-content">
+                <button class="close-modal">&times;</button>
+                <video id="modalVideo" controls>
+                    <source src="media/videos/MuDG_nav.mp4" type="video/mp4" />
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const originalVideo =
+                    document.getElementById("expandableVideo");
+                const videoModal = document.getElementById("videoModal");
+                const modalVideo = document.getElementById("modalVideo");
+                const closeBtn = document.querySelector(".close-modal");
+
+                // Function to open modal and play video
+                function openVideoModal() {
+                    videoModal.style.display = "flex";
+                    modalVideo.currentTime = originalVideo.currentTime;
+                    modalVideo.play();
+                    originalVideo.pause();
+                }
+
+                // Function to close modal
+                function closeVideoModal() {
+                    videoModal.style.display = "none";
+                    modalVideo.pause();
+                    originalVideo.play();
+                }
+
+                // Add click event listeners
+                originalVideo.addEventListener("click", openVideoModal);
+                originalVideo.parentElement
+                    .querySelector(".video-overlay")
+                    .addEventListener("click", openVideoModal);
+                closeBtn.addEventListener("click", closeVideoModal);
+
+                // Add hover class for better visual indication
+                originalVideo.addEventListener("mouseover", function () {
+                    this.classList.add("video-hover");
+                });
+
+                originalVideo.addEventListener("mouseout", function () {
+                    this.classList.remove("video-hover");
+                });
+
+                // Close modal when clicking outside the video
+                videoModal.addEventListener("click", function (event) {
+                    if (event.target === videoModal) {
+                        closeVideoModal();
+                    }
+                });
+
+                // Close modal with Escape key
+                document.addEventListener("keydown", function (event) {
+                    if (
+                        event.key === "Escape" &&
+                        videoModal.style.display === "flex"
+                    ) {
+                        closeVideoModal();
+                    }
+                });
+            });
+        </script>
     </body>
 </html>
