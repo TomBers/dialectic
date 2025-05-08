@@ -11,6 +11,91 @@
             rel="stylesheet"
         />
         <style>
+            /* Video expansion styles */
+            .expandable-video {
+                cursor: pointer;
+                transition: all 0.3s ease;
+                position: relative;
+                z-index: 1;
+                box-shadow: 0 0 0 transparent;
+                border: 2px solid transparent;
+            }
+
+            .expandable-video:hover {
+                /* transform: scale(1.02); */
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+                border: 4px solid var(--primary-color);
+            }
+
+            .video-overlay {
+                position: absolute;
+                bottom: 10px;
+                right: 10px;
+                background: rgba(0, 0, 0, 0.7);
+                color: white;
+                padding: 8px 12px;
+                border-radius: 4px;
+                font-size: 0.9rem;
+                opacity: 0;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                pointer-events: none;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+            }
+
+            .video-overlay::before {
+                content: "⤢";
+                font-size: 1.2rem;
+            }
+
+            .showcase-media {
+                position: relative;
+                overflow: visible;
+            }
+
+            .showcase-media:hover .video-overlay {
+                opacity: 1;
+                transform: translateY(-5px);
+            }
+
+            .modal-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.8);
+                z-index: 1000;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .modal-content {
+                position: relative;
+                width: 80%;
+                max-width: 1200px;
+            }
+
+            .modal-content video {
+                width: 100%;
+                height: auto;
+            }
+
+            .close-modal {
+                position: absolute;
+                top: -40px;
+                right: 0;
+                color: white;
+                font-size: 30px;
+                cursor: pointer;
+                background: none;
+                border: none;
+            }
+
             :root {
                 --primary-color: #4361ee;
                 --secondary-color: #3a0ca3;
@@ -655,13 +740,21 @@
                         >
                     </div>
                     <div class="showcase-media">
-                        <video autoplay muted loop playsinline>
+                        <video
+                            id="expandableVideo"
+                            autoplay
+                            muted
+                            loop
+                            playsinline
+                            class="expandable-video"
+                        >
                             <source
                                 src="media/videos/MuDG_nav.mp4"
                                 type="video/mp4"
                             />
                             Your browser does not support the video tag.
                         </video>
+                        <div class="video-overlay">Click to expand</div>
                     </div>
                 </div>
 
@@ -928,5 +1021,72 @@
                 <p>&copy; 2025 Dialectic - Multi-user Dialectical Graph</p>
             </div>
         </footer>
+        <div id="videoModal" class="modal-overlay">
+            <div class="modal-content">
+                <button class="close-modal">&times;</button>
+                <video id="modalVideo" controls>
+                    <source src="media/videos/MuDG_nav.mp4" type="video/mp4" />
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const originalVideo =
+                    document.getElementById("expandableVideo");
+                const videoModal = document.getElementById("videoModal");
+                const modalVideo = document.getElementById("modalVideo");
+                const closeBtn = document.querySelector(".close-modal");
+
+                // Function to open modal and play video
+                function openVideoModal() {
+                    videoModal.style.display = "flex";
+                    modalVideo.currentTime = originalVideo.currentTime;
+                    modalVideo.play();
+                    originalVideo.pause();
+                }
+
+                // Function to close modal
+                function closeVideoModal() {
+                    videoModal.style.display = "none";
+                    modalVideo.pause();
+                    originalVideo.play();
+                }
+
+                // Add click event listeners
+                originalVideo.addEventListener("click", openVideoModal);
+                originalVideo.parentElement
+                    .querySelector(".video-overlay")
+                    .addEventListener("click", openVideoModal);
+                closeBtn.addEventListener("click", closeVideoModal);
+
+                // Add hover class for better visual indication
+                originalVideo.addEventListener("mouseover", function () {
+                    this.classList.add("video-hover");
+                });
+
+                originalVideo.addEventListener("mouseout", function () {
+                    this.classList.remove("video-hover");
+                });
+
+                // Close modal when clicking outside the video
+                videoModal.addEventListener("click", function (event) {
+                    if (event.target === videoModal) {
+                        closeVideoModal();
+                    }
+                });
+
+                // Close modal with Escape key
+                document.addEventListener("keydown", function (event) {
+                    if (
+                        event.key === "Escape" &&
+                        videoModal.style.display === "flex"
+                    ) {
+                        closeVideoModal();
+                    }
+                });
+            });
+        </script>
     </body>
 </html>
