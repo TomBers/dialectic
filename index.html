@@ -33,7 +33,11 @@
             }
 
             body {
-                font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+                font-family:
+                    "Inter",
+                    -apple-system,
+                    BlinkMacSystemFont,
+                    sans-serif;
                 line-height: 1.8;
                 color: var(--text-color);
                 background-color: var(--bg-color);
@@ -185,7 +189,7 @@
                 gap: 2rem;
                 transition: all 0.3s ease;
             }
-            
+
             .mobile-menu-toggle {
                 display: none;
                 background: transparent;
@@ -352,7 +356,7 @@
                     flex-direction: column !important;
                     gap: 2rem;
                 }
-                
+
                 .feature-grid {
                     grid-template-columns: 1fr 1fr;
                 }
@@ -394,42 +398,42 @@
                     z-index: 999;
                     box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
                 }
-                
+
                 .nav-links.active {
                     right: 0;
                 }
-                
+
                 .nav-links li {
                     margin: 1rem 0;
                 }
-                
+
                 .mobile-menu-toggle {
                     display: block;
                 }
             }
-            
+
             @media (max-width: 576px) {
                 .feature-grid {
                     grid-template-columns: 1fr;
                 }
-                
+
                 .hero-title {
                     font-size: 2.2rem;
                 }
-                
+
                 .hero-subtitle {
                     font-size: 1.1rem;
                 }
-                
+
                 .section-title {
                     font-size: 1.8rem;
                 }
-                
+
                 .showcase-title {
                     font-size: 1.6rem;
                 }
             }
-            
+
             @media (min-width: 769px) and (max-width: 992px) {
                 .feature-grid {
                     grid-template-columns: repeat(2, 1fr);
@@ -456,7 +460,17 @@
                     </li>
                 </ul>
                 <button class="mobile-menu-toggle" id="menu-toggle">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
                         <line x1="3" y1="12" x2="21" y2="12"></line>
                         <line x1="3" y1="6" x2="21" y2="6"></line>
                         <line x1="3" y1="18" x2="21" y2="18"></line>
@@ -492,7 +506,7 @@
                     </div>
                     <div class="hero-image">
                         <img
-                            src="media/images/Ethics.webp"
+                            src="media/images/graph.webp"
                             alt="Knowledge Graph Example"
                         />
                     </div>
@@ -716,17 +730,23 @@
                     <div class="showcase-content">
                         <h3 class="showcase-title">Beyond Traditional Chat</h3>
                         <p class="showcase-text">
-                            Traditional AI chat interfaces present knowledge as linear walls of text, making 
-                            it difficult to explore multiple directions at once or revisit specific points.
+                            Traditional AI chat interfaces present knowledge as
+                            linear walls of text, making it difficult to explore
+                            multiple directions at once or revisit specific
+                            points.
                         </p>
                         <p class="showcase-text">
-                            Dialectic's graph-based approach solves this problem by structuring information 
-                            spatially, allowing for non-linear exploration while maintaining context.
+                            Dialectic's graph-based approach solves this problem
+                            by structuring information spatially, allowing for
+                            non-linear exploration while maintaining context.
                         </p>
                     </div>
                     <div class="showcase-media">
                         <video autoplay muted loop playsinline>
-                            <source src="media/videos/LLM-Chat.mp4" type="video/mp4" />
+                            <source
+                                src="media/videos/LLM-Chat.mp4"
+                                type="video/mp4"
+                            />
                             Your browser does not support the video tag.
                         </video>
                     </div>
@@ -740,49 +760,71 @@
                 <div class="section-header">
                     <h2 class="section-title">Why We Built It</h2>
                     <p class="section-subtitle">
-                        Our motivation for developing a new approach to collaborative learning and knowledge exploration
+                        Our motivation for developing a new approach to
+                        collaborative learning and knowledge exploration
                     </p>
                 </div>
-                
+
                 <div class="showcase">
                     <div class="showcase-content">
-                        <h3 class="showcase-title">The Information Age Paradox</h3>
+                        <h3 class="showcase-title">
+                            The Information Age Paradox
+                        </h3>
                         <p class="showcase-text">
-                            We live in an era of unprecedented information access, yet the quality of discourse often feels lacking.
-                            Echo chambers and motivated reasoning lead to people talking past each other rather than engaging meaningfully.
+                            We live in an era of unprecedented information
+                            access, yet the quality of discourse often feels
+                            lacking. Echo chambers and motivated reasoning lead
+                            to people talking past each other rather than
+                            engaging meaningfully.
                         </p>
                         <p class="showcase-text">
-                            We built Dialectic because we believe that meaningful exchanges happen when we can explore 
-                            assumptions at a fundamental level and see how different starting points lead to different conclusions.
+                            We built Dialectic because we believe that
+                            meaningful exchanges happen when we can explore
+                            assumptions at a fundamental level and see how
+                            different starting points lead to different
+                            conclusions.
                         </p>
                     </div>
                     <div class="showcase-media">
-                        <img src="media/images/Ethics.webp" alt="Ethics Knowledge Graph">
+                        <img
+                            src="media/images/graph.webp"
+                            alt="Knowledge Graph"
+                        />
                     </div>
                 </div>
-                
+
                 <div class="showcase">
                     <div class="showcase-content">
-                        <h3 class="showcase-title">AI Revolution & Active Learning</h3>
+                        <h3 class="showcase-title">
+                            AI Revolution & Active Learning
+                        </h3>
                         <p class="showcase-text">
-                            Language models provide unprecedented access to knowledge, but traditional chat interfaces limit their
-                            potential for deep learning. Linear conversations make it difficult to explore multiple directions
-                            simultaneously or revisit specific points of interest.
+                            Language models provide unprecedented access to
+                            knowledge, but traditional chat interfaces limit
+                            their potential for deep learning. Linear
+                            conversations make it difficult to explore multiple
+                            directions simultaneously or revisit specific points
+                            of interest.
                         </p>
                         <p class="showcase-text">
-                            Dialectic transforms AI interaction into an active, exploratory process where learners can
-                            branch out in multiple directions, creating a personalized knowledge map that evolves with their curiosity.
+                            Dialectic transforms AI interaction into an active,
+                            exploratory process where learners can branch out in
+                            multiple directions, creating a personalized
+                            knowledge map that evolves with their curiosity.
                         </p>
                     </div>
                     <div class="showcase-media">
-                        <img src="media/images/Ideas.webp" alt="Idea Explorer">
+                        <img
+                            src="media/images/Ideas.webp"
+                            alt="Idea Explorer"
+                        />
                     </div>
                 </div>
             </div>
         </section>
 
         <!-- About Section -->
-        <section id="about" class="section" style="background-color: white;">
+        <section id="about" class="section" style="background-color: white">
             <div class="container">
                 <div class="section-header">
                     <h2 class="section-title">About Dialectic</h2>
@@ -790,71 +832,144 @@
                         Our vision, philosophy, and the story behind the project
                     </p>
                 </div>
-                
-                <div style="max-width: 900px; margin: 0 auto;">
-                    <div class="feature-card" style="margin-bottom: 2rem;">
+
+                <div style="max-width: 900px; margin: 0 auto">
+                    <div class="feature-card" style="margin-bottom: 2rem">
                         <h3 class="feature-title">Our Vision</h3>
                         <p class="feature-text">
-                            <strong>Multi-user Dialectical Graph (MuDG)</strong> began with a simple observation: 
-                            the revolutionary potential of large language models for education remains largely untapped. 
-                            While today's AI assistants offer impressive capabilities, they exist primarily as isolated, 
-                            ephemeral exchanges. Our vision is to transform these interactions into persistent, evolving 
-                            idea structures that grow richer with each exploration.
+                            <strong>Multi-user Dialectical Graph (MuDG)</strong>
+                            began with a simple observation: the revolutionary
+                            potential of large language models for education
+                            remains largely untapped. While today's AI
+                            assistants offer impressive capabilities, they exist
+                            primarily as isolated, ephemeral exchanges. Our
+                            vision is to transform these interactions into
+                            persistent, evolving idea structures that grow
+                            richer with each exploration.
                         </p>
                     </div>
-                    
-                    <div class="feature-card" style="margin-bottom: 2rem;">
-                        <h3 class="feature-title">The Knowledge Graph Paradigm</h3>
+
+                    <div class="feature-card" style="margin-bottom: 2rem">
+                        <h3 class="feature-title">
+                            The Knowledge Graph Paradigm
+                        </h3>
                         <p class="feature-text">
-                            At Dialectic, we believe the future of learning isn't linear—it's networked. Traditional 
-                            educational paths often follow predetermined sequences, but human curiosity rarely operates 
-                            this way. We naturally branch, connect, and integrate ideas across domains. Our knowledge 
-                            graph approach mirrors this natural thought process, allowing learners to move freely 
-                            between concepts while maintaining coherent connections.
+                            At Dialectic, we believe the future of learning
+                            isn't linear—it's networked. Traditional educational
+                            paths often follow predetermined sequences, but
+                            human curiosity rarely operates this way. We
+                            naturally branch, connect, and integrate ideas
+                            across domains. Our knowledge graph approach mirrors
+                            this natural thought process, allowing learners to
+                            move freely between concepts while maintaining
+                            coherent connections.
                         </p>
                         <p class="feature-text">
-                            Each node in a Dialectic graph represents a discrete concept, question, or insight. Unlike 
-                            traditional learning materials that might bury important connections in paragraphs of text, 
-                            our graph structure makes relationships explicit and navigable.
+                            Each node in a Dialectic graph represents a discrete
+                            concept, question, or insight. Unlike traditional
+                            learning materials that might bury important
+                            connections in paragraphs of text, our graph
+                            structure makes relationships explicit and
+                            navigable.
                         </p>
                     </div>
-                    
+
                     <div class="feature-card">
                         <h3 class="feature-title">Our Technical Philosophy</h3>
-                        <p class="feature-text">Our technical approach is guided by several core principles:</p>
-                        <ul style="list-style-type: disc; padding-left: 2rem; margin: 1rem 0;">
-                            <li style="margin-bottom: 0.5rem;">
-                                <strong>Speed matters.</strong> Cognitive flow is easily disrupted by technical friction. 
-                                We've optimized every aspect of the interface to minimize latency.
+                        <p class="feature-text">
+                            Our technical approach is guided by several core
+                            principles:
+                        </p>
+                        <ul
+                            style="
+                                list-style-type: disc;
+                                padding-left: 2rem;
+                                margin: 1rem 0;
+                            "
+                        >
+                            <li style="margin-bottom: 0.5rem">
+                                <strong>Speed matters.</strong> Cognitive flow
+                                is easily disrupted by technical friction. We've
+                                optimized every aspect of the interface to
+                                minimize latency.
                             </li>
-                            <li style="margin-bottom: 0.5rem;">
-                                <strong>Simplicity enables depth.</strong> Complex ideas don't require complex interfaces. 
-                                By eliminating unnecessary elements, we allow deeper engagement with content.
+                            <li style="margin-bottom: 0.5rem">
+                                <strong>Simplicity enables depth.</strong>
+                                Complex ideas don't require complex interfaces.
+                                By eliminating unnecessary elements, we allow
+                                deeper engagement with content.
                             </li>
-                            <li style="margin-bottom: 0.5rem;">
-                                <strong>Persistence creates value.</strong> Unlike ephemeral chats that disappear, 
-                                Dialectic knowledge graphs persist, accumulating value over time.
+                            <li style="margin-bottom: 0.5rem">
+                                <strong>Persistence creates value.</strong>
+                                Unlike ephemeral chats that disappear, Dialectic
+                                knowledge graphs persist, accumulating value
+                                over time.
                             </li>
                         </ul>
                     </div>
                 </div>
             </div>
         </section>
-        
+
         <!-- Call to Action Section -->
-        <section style="background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white; text-align: center; padding: 4rem 0;">
+        <section
+            style="
+                background: linear-gradient(
+                    135deg,
+                    var(--primary-color),
+                    var(--secondary-color)
+                );
+                color: white;
+                text-align: center;
+                padding: 4rem 0;
+            "
+        >
             <div class="container">
-                <h2 style="font-size: 2.5rem; margin-bottom: 1.5rem; color: white;">
+                <h2
+                    style="
+                        font-size: 2.5rem;
+                        margin-bottom: 1.5rem;
+                        color: white;
+                    "
+                >
                     Ready to Transform Your Learning?
                 </h2>
-                <p style="font-size: 1.2rem; margin-bottom: 2rem; max-width: 700px; margin-left: auto; margin-right: auto;">
-                    Join our growing community of collaborative thinkers and discover a new way to explore ideas.
+                <p
+                    style="
+                        font-size: 1.2rem;
+                        margin-bottom: 2rem;
+                        max-width: 700px;
+                        margin-left: auto;
+                        margin-right: auto;
+                    "
+                >
+                    Join our growing community of collaborative thinkers and
+                    discover a new way to explore ideas.
                 </p>
-                <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
-                    <a href="https://mudg.fly.dev" class="btn btn-primary" style="background-color: white; color: var(--primary-color); font-weight: 700;">
+                <div
+                    style="
+                        display: flex;
+                        justify-content: center;
+                        gap: 1rem;
+                        flex-wrap: wrap;
+                    "
+                >
+                    <a
+                        href="https://mudg.fly.dev"
+                        class="btn btn-primary"
+                        style="
+                            background-color: white;
+                            color: var(--primary-color);
+                            font-weight: 700;
+                        "
+                    >
                         Try it Now
                     </a>
-                    <a href="https://x.com/TJCBerman" target="_blank" class="btn btn-secondary">
+                    <a
+                        href="https://x.com/TJCBerman"
+                        target="_blank"
+                        class="btn btn-secondary"
+                    >
                         Follow @TJCBerman
                     </a>
                 </div>
@@ -862,27 +977,34 @@
         </section>
 
         <!-- Footer -->
-        <footer style="background-color: var(--dark-bg); color: white; padding: 2rem 0; text-align: center;">
+        <footer
+            style="
+                background-color: var(--dark-bg);
+                color: white;
+                padding: 2rem 0;
+                text-align: center;
+            "
+        >
             <div class="container">
                 <p>&copy; 2024 Dialectic - Multi-user Dialectical Graph</p>
             </div>
         </footer>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const menuToggle = document.getElementById('menu-toggle');
-            const navMenu = document.getElementById('nav-menu');
-            
-            menuToggle.addEventListener('click', function() {
-                navMenu.classList.toggle('active');
-            });
-            
-            // Close menu when clicking on a nav link
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.addEventListener('click', function() {
-                    navMenu.classList.remove('active');
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const menuToggle = document.getElementById("menu-toggle");
+                const navMenu = document.getElementById("nav-menu");
+
+                menuToggle.addEventListener("click", function () {
+                    navMenu.classList.toggle("active");
+                });
+
+                // Close menu when clicking on a nav link
+                document.querySelectorAll(".nav-link").forEach((link) => {
+                    link.addEventListener("click", function () {
+                        navMenu.classList.remove("active");
+                    });
                 });
             });
-        });
-    </script>
+        </script>
     </body>
 </html>
