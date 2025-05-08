@@ -33,11 +33,7 @@
             }
 
             body {
-                font-family:
-                    "Inter",
-                    -apple-system,
-                    BlinkMacSystemFont,
-                    sans-serif;
+                font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
                 line-height: 1.8;
                 color: var(--text-color);
                 background-color: var(--bg-color);
@@ -187,6 +183,17 @@
                 display: flex;
                 list-style: none;
                 gap: 2rem;
+                transition: all 0.3s ease;
+            }
+            
+            .mobile-menu-toggle {
+                display: none;
+                background: transparent;
+                border: none;
+                color: white;
+                font-size: 1.5rem;
+                cursor: pointer;
+                z-index: 1000;
             }
 
             .nav-link {
@@ -234,7 +241,7 @@
 
             .feature-grid {
                 display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                grid-template-columns: repeat(2, 1fr);
                 gap: 2rem;
                 margin-top: 3rem;
             }
@@ -345,6 +352,10 @@
                     flex-direction: column !important;
                     gap: 2rem;
                 }
+                
+                .feature-grid {
+                    grid-template-columns: 1fr 1fr;
+                }
             }
 
             @media (max-width: 768px) {
@@ -369,7 +380,59 @@
                 }
 
                 .nav-links {
-                    display: none;
+                    position: fixed;
+                    top: 0;
+                    right: -100%;
+                    width: 80%;
+                    max-width: 300px;
+                    height: 100vh;
+                    background: var(--primary-color);
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    padding: 2rem;
+                    z-index: 999;
+                    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+                }
+                
+                .nav-links.active {
+                    right: 0;
+                }
+                
+                .nav-links li {
+                    margin: 1rem 0;
+                }
+                
+                .mobile-menu-toggle {
+                    display: block;
+                }
+            }
+            
+            @media (max-width: 576px) {
+                .feature-grid {
+                    grid-template-columns: 1fr;
+                }
+                
+                .hero-title {
+                    font-size: 2.2rem;
+                }
+                
+                .hero-subtitle {
+                    font-size: 1.1rem;
+                }
+                
+                .section-title {
+                    font-size: 1.8rem;
+                }
+                
+                .showcase-title {
+                    font-size: 1.6rem;
+                }
+            }
+            
+            @media (min-width: 769px) and (max-width: 992px) {
+                .feature-grid {
+                    grid-template-columns: repeat(2, 1fr);
                 }
             }
         </style>
@@ -379,9 +442,10 @@
         <nav class="navbar">
             <div class="container nav-container">
                 <a href="#" class="logo">Dialectic</a>
-                <ul class="nav-links">
+                <ul class="nav-links" id="nav-menu">
                     <li><a href="#features" class="nav-link">Features</a></li>
                     <li><a href="#showcase" class="nav-link">Showcase</a></li>
+                    <li><a href="#why" class="nav-link">Why</a></li>
                     <li><a href="#about" class="nav-link">About</a></li>
                     <li>
                         <a
@@ -391,6 +455,13 @@
                         >
                     </li>
                 </ul>
+                <button class="mobile-menu-toggle" id="menu-toggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
             </div>
         </nav>
 
@@ -640,13 +711,6 @@
                         </video>
                     </div>
                 </div>
-            </div>
-        </section>
-    </body>
-</html>
-</video>
-                    </div>
-                </div>
 
                 <div class="showcase">
                     <div class="showcase-content">
@@ -803,5 +867,22 @@
                 <p>&copy; 2024 Dialectic - Multi-user Dialectical Graph</p>
             </div>
         </footer>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuToggle = document.getElementById('menu-toggle');
+            const navMenu = document.getElementById('nav-menu');
+            
+            menuToggle.addEventListener('click', function() {
+                navMenu.classList.toggle('active');
+            });
+            
+            // Close menu when clicking on a nav link
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', function() {
+                    navMenu.classList.remove('active');
+                });
+            });
+        });
+    </script>
     </body>
 </html>
