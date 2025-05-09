@@ -3,8 +3,8 @@ defmodule DialecticWeb.PageHtml.GraphComp do
 
   def render(assigns) do
     ~H"""
-    <.link navigate={@link} class="block transition hover:transform hover:scale-102 group">
-      <div class="bg-white text-gray-800 shadow-md rounded-lg p-6 hover:shadow-xl hover:bg-gradient-to-r hover:from-indigo-500 hover:to-purple-600 hover:text-white flex justify-between items-center">
+    <.link navigate={@link} class="block transition hover:transform hover:scale-102 group h-full">
+      <div class="bg-white text-gray-800 shadow-md rounded-lg p-6 hover:shadow-xl hover:bg-gradient-to-r hover:from-[#4361ee] hover:to-[#7209b7] hover:text-white flex justify-between items-center h-full">
         <div>
           <h3 class="font-bold text-xl mb-2">
             <span :if={!@is_public} class="mr-2 text-amber-500 hover:text-amber-300">
