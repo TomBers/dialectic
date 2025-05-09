@@ -2,13 +2,16 @@
   <!-- Hero Section -->
   <header class="relative overflow-hidden bg-gradient-to-r from-[#4361ee] to-[#3a0ca3] py-16 px-8">
     <!-- Hero Pattern Background -->
-    <div class="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.05\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]"></div>
+    <div class="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.05\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]">
+    </div>
     <div class="container mx-auto flex flex-col md:flex-row items-center justify-between relative z-10">
       <div class="md:w-1/2 mb-8 md:mb-0">
         <h1 class="text-4xl md:text-5xl font-bold text-white mb-4 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
           MuDG
         </h1>
-        <p class="text-xl text-blue-100 mb-6 opacity-90">Augmented Collaborative Idea Exploration</p>
+        <p class="text-xl text-blue-100 mb-6 opacity-90">
+          Augmented Collaborative Idea Exploration
+        </p>
         <div class="flex gap-4">
           <.link
             href="https://tombers.github.io/dialectic/"
@@ -25,15 +28,14 @@
         </div>
       </div>
       <div class="md:w-1/2">
-        <img src="https://placehold.it/600x400?text=MuDG+Visual" alt="MuDG Platform" class="w-full rounded-xl shadow-2xl">
+        <img src="images/graph.webp" alt="MuDG Platform" class="w-full rounded-xl shadow-2xl" />
       </div>
     </div>
   </header>
 
   <div class="mx-auto">
     <!-- Create conversation component with improved styling -->
-    <div class="container mx-auto py-12 px-6">
-      <h2 class="text-3xl font-bold text-[#2d3748] mb-8 text-center">Create New Conversation</h2>
+    <div class="container mx-auto py-12 px-6" id="create-conv">
       <DialecticWeb.PageHtml.ConvComp.create id="create-conv" topic={@topic} />
     </div>
 
@@ -67,7 +69,7 @@
                 </h3>
               </div>
               
-              <!-- Toggle Button using Phoenix JS commands -->
+<!-- Toggle Button using Phoenix JS commands -->
               <button
                 phx-click={
                   JS.toggle(to: "#graphs-content")
@@ -110,7 +112,7 @@
               </button>
             </div>
             
-            <!-- Content - hidden by default -->
+<!-- Content - hidden by default -->
             <div id="graphs-content" class="hidden mt-4 space-y-4" phx-update="replace">
               <%= for g <- @stats.graphs do %>
                 <DialecticWeb.PageHtml.GraphComp.render
@@ -124,7 +126,7 @@
             </div>
           </div>
           
-          <!-- My Noted Items Card -->
+<!-- My Noted Items Card -->
           <div class="bg-white shadow-[0_10px_30px_rgba(0,0,0,0.08)] rounded-xl p-6 border-t-4 border-[#7209b7] transform transition-all duration-300 hover:shadow-xl">
             <div class="flex items-center justify-between mb-5">
               <div class="flex items-center">
@@ -150,7 +152,7 @@
                 </h3>
               </div>
               
-              <!-- Toggle Button using Phoenix JS commands -->
+<!-- Toggle Button using Phoenix JS commands -->
               <button
                 phx-click={
                   JS.toggle(to: "#notes-content")
@@ -183,12 +185,17 @@
                   viewBox="0 0 24 24"
                   stroke="currentColor"
                 >
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 15l7-7 7 7"
+                  />
                 </svg>
               </button>
             </div>
             
-            <!-- Content - hidden by default -->
+<!-- Content - hidden by default -->
             <div id="notes-content" class="hidden mt-4" phx-update="replace">
               <%= for note <- @stats.notes |> Enum.filter(& &1.is_noted) do %>
                 <DialecticWeb.PageHtml.GraphComp.render
@@ -204,7 +211,7 @@
         </div>
       </section>
       
-      <!-- Top Graphs Section with updated styling -->
+<!-- Top Graphs Section with updated styling -->
       <section class="py-16 bg-[#f8f9fa] rounded-xl mb-16">
         <div class="container mx-auto px-6">
           <div class="flex items-center justify-between mb-10">
@@ -246,8 +253,8 @@
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             <%= for {g, count} <- @top_graphs do %>
-              <!-- Modified to use your existing component but with a wrapper for animation -->
-              <div class="transform transition-all duration-300 hover:-translate-y-2 hover:shadow-xl">
+              <!-- Modified component wrapper with bg-[#f8f9fa] to match section background -->
+              <div class="transform transition-all duration-300 hover:-translate-y-2 hover:shadow-xl bg-[#f8f9fa]">
                 <DialecticWeb.PageHtml.GraphComp.render
                   title={g.title}
                   is_public={g.is_public}
@@ -262,10 +269,11 @@
       </section>
     </div>
     
-    <!-- Footer with gradient and pattern to match index.html -->
+<!-- Footer with gradient and pattern to match index.html -->
     <footer class="w-full bg-gradient-to-r from-[#3a0ca3] to-[#4361ee] relative overflow-hidden rounded-t-xl mt-16">
       <!-- Pattern overlay -->
-      <div class="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.05\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]"></div>
+      <div class="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.05\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]">
+      </div>
       <section id="call-to-action" class="py-20 px-6 text-center relative z-10">
         <div class="container mx-auto max-w-3xl">
           <h2 class="text-3xl md:text-4xl font-bold text-white mb-6 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
