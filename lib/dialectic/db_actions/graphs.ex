@@ -37,6 +37,7 @@ defmodule Dialectic.DbActions.Graphs do
   def all_graphs_with_notes() do
     query =
       from g in Dialectic.Accounts.Graph,
+        where: g.is_published == true,
         left_join: n in assoc(g, :notes),
         group_by: g.title,
         order_by: [desc: count(n.id)],
