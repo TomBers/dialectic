@@ -9,6 +9,9 @@
         count={count}
         id={"graph-comp-#{g.title}"}
       />
+      <%= if @is_admin do %>
+        <button type="button" phx-click="hide_graph" phx-value-graph-title={g.title}>Hide</button>
+      <% end %>
     <% end %>
   </div>
 </div>
