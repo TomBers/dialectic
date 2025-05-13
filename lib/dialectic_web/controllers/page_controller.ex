@@ -14,8 +14,7 @@ defmodule DialecticWeb.PageController do
 
   def view_all(conn, _params) do
     graphs = Dialectic.DbActions.Graphs.all_graphs_with_notes()
-    is_admin = conn.assigns.current_user && conn.assigns.current_user.id == 1 # Simple admin check
-    render(conn, :view_all, graphs: graphs, is_admin: is_admin)
+    render(conn, :view_all, graphs: graphs)
   end
 
   def create(conn, %{"conversation" => usr_graph_title}) do
