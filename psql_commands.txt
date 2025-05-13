@@ -4,3 +4,7 @@ fly postgres connect -a mudg-db
 \c mudg - connect to database mudg
 \dt - list tables
 select * from graphs; - normal SQL commands
+
+UPDATE "Graph"
+SET is_published = false
+WHERE title = '<graph_title>';
