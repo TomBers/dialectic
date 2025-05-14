@@ -5,8 +5,6 @@ const layoutGraph = (cy) => {
   const layout = cy.layout({
     ...layoutConfig.baseLayout,
     // Add callback for when layout is done
-    ready: function () {},
-    // Make sure animation settings are applied
   });
 
   // Run the layout
@@ -37,14 +35,11 @@ const graphHook = {
     ]);
 
     if (reorderOperations.has(operation)) {
-      layoutGraph(this.cy, () => {
-        this.cy.elements().removeClass("selected");
-        this.cy.$(`#${node}`).addClass("selected");
-      });
-    } else {
-      this.cy.elements().removeClass("selected");
-      this.cy.$(`#${node}`).addClass("selected");
+      layoutGraph(this.cy);
     }
+    
+    this.cy.elements().removeClass("selected");
+    this.cy.$(`#${node}`).addClass("selected");
   },
 };
 
