@@ -1,16 +1,8 @@
 import { draw_graph } from "./draw_graph";
+import { layoutConfig } from "./layout_config.js";
 
 const layoutGraph = (cy) => {
-  const sep = 50;
-  const layout = cy.layout({
-    name: "dagre",
-    rankDir: "TB",
-    nodeSep: sep,
-    edgeSep: sep,
-    rankSep: sep,
-    // Add a callback for when layout is done
-    ready: function () {},
-  });
+  const layout = cy.layout(layoutConfig.baseLayout);
 
   // Run the layout
   layout.run();
