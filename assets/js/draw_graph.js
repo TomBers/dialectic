@@ -16,7 +16,6 @@ export function draw_graph(graph, context, elements, node) {
     boxSelectionEnabled: true, // ⬅️ lets users drag‑select
     autounselectify: false, // allow multi‑select
     layout: layoutConfig.baseLayout,
-    wheelSensitivity: 0.3, // smoother zooming
   });
 
   const dd_options = layoutConfig.compoundDragDropOptions;
@@ -122,7 +121,7 @@ export function draw_graph(graph, context, elements, node) {
       },
       zoom: 1.2,
       duration: 300,
-      easing: 'ease-in-out-quad',
+      easing: "ease-in-out-quad",
     });
   });
 

@@ -95,7 +95,6 @@ export function graphStyle() {
         "border-width": 2,
         "border-color": "#4B5563",
         "border-style": "solid",
-        "box-shadow": "0px 2px 5px rgba(0, 0, 0, 0.1)",
 
         /* text centred inside the badge */
         label: "data(id)",
@@ -140,9 +139,6 @@ export function graphStyle() {
         "line-color": "#83f28f", // Light green color
         "z-index": 9998,
         opacity: 1,
-        "shadow-blur": 10,
-        "shadow-color": "#83f28f",
-        "shadow-opacity": 0.3,
       },
     },
   ];
@@ -155,7 +151,6 @@ export function graphStyle() {
         "border-color": cols[nodeType].border,
         "background-color": cols[nodeType].background,
         "border-width": 2,
-        "box-shadow": "0px 2px 4px rgba(0, 0, 0, 0.08)",
       },
     });
 
