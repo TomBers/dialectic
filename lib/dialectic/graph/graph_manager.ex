@@ -219,8 +219,18 @@ defmodule GraphManager do
           ""
       end
 
+    # Check if any parent has a parent field (group membership) set
+    parent_group = 
+      parents 
+      |> Enum.find_value(nil, fn parent ->
+        case :digraph.vertex(get_graph(graph_id) |> elem(1), parent.id) do
+          {_id, vertex} -> Map.get(vertex, :parent)
+          _ -> nil
+        end
+      end)
+
     node =
-      add_node(graph_id, %Vertex{content: content, class: class, user: user})
+      add_node(graph_id, %Vertex{content: content, class: class, user: user, parent: parent_group})
 
     # Stream response to the Node
     spawn(fn -> llm_fn.(node) end)
