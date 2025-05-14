@@ -7,7 +7,6 @@ const layoutGraph = (cy) => {
     // Add callback for when layout is done
     ready: function () {},
     // Make sure animation settings are applied
-    animate: true,
   });
 
   // Run the layout
@@ -31,9 +30,6 @@ const graphHook = {
     this.cy.json({ elements: JSON.parse(graph) });
 
     const reorderOperations = new Set([
-      // "delete_node",
-      // "edit_node",
-      // "branch",
       "combine",
       "answer",
       "llm_request_complete",
@@ -41,12 +37,14 @@ const graphHook = {
     ]);
 
     if (reorderOperations.has(operation)) {
-      // Apply layout with minor delay to ensure nodes are ready
-      setTimeout(() => layoutGraph(this.cy), 50);
+      layoutGraph(this.cy, () => {
+        this.cy.elements().removeClass("selected");
+        this.cy.$(`#${node}`).addClass("selected");
+      });
+    } else {
+      this.cy.elements().removeClass("selected");
+      this.cy.$(`#${node}`).addClass("selected");
     }
-
-    this.cy.elements().removeClass("selected");
-    this.cy.$(`#${node}`).addClass("selected");
   },
 };
 

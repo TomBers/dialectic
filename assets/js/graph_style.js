@@ -124,7 +124,6 @@ export function graphStyle() {
       style: {
         width: 2,
         "line-color": "#d1d5db",
-        "curve-style": "bezier",
         "edge-distances": "node-position",
         "curve-style": "bezier",
         "control-point-step-size": 40,
