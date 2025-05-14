@@ -20,7 +20,17 @@ export function draw_graph(graph, context, elements, node) {
       rankDir: "TB",
       nodeSep: sep,
       edgeSep: sep,
-      rankSep: sep,
+      rankSep: sep * 0.4,
+      spacingFactor: 1.5,
+      padding: 30,
+      // Consider parent nodes in layout calculation
+      weaveToward: "leaves",
+      fit: true,
+      nestingFactor: 0.8,
+      // Handle compound nodes more intelligently
+      ranker: "network-simplex",
+      // Improve alignment within compounds
+      align: "UL", // Upper left alignment
     },
   });
 
