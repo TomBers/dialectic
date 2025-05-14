@@ -2,7 +2,13 @@ import { draw_graph } from "./draw_graph";
 import { layoutConfig } from "./layout_config.js";
 
 const layoutGraph = (cy) => {
-  const layout = cy.layout(layoutConfig.baseLayout);
+  const layout = cy.layout({
+    ...layoutConfig.baseLayout,
+    // Add callback for when layout is done
+    ready: function () {},
+    // Make sure animation settings are applied
+    animate: true,
+  });
 
   // Run the layout
   layout.run();
@@ -35,7 +41,8 @@ const graphHook = {
     ]);
 
     if (reorderOperations.has(operation)) {
-      layoutGraph(this.cy); // your Dagre call
+      // Apply layout with minor delay to ensure nodes are ready
+      setTimeout(() => layoutGraph(this.cy), 50);
     }
 
     this.cy.elements().removeClass("selected");

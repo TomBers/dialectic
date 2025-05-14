@@ -16,23 +16,10 @@ export function draw_graph(graph, context, elements, node) {
     boxSelectionEnabled: true, // ⬅️ lets users drag‑select
     autounselectify: false, // allow multi‑select
     layout: layoutConfig.baseLayout,
+    wheelSensitivity: 0.3, // smoother zooming
   });
 
-  const dd_options = {
-    grabbedNode: () => true,
-    dropTarget: () => true,
-
-    /* 1 ▸ never treat an orphan-on-orphan drop as a “make new group” */
-    dropSibling: () => false,
-
-    /* 2 ▸ and even if the plugin tries, give it nothing to add */
-    newParentNode: () => [], // or just omit this line entirely
-
-    /* other tweaks stay the same */
-    boundingBoxOptions: { includeLabels: true, includeOverlays: false },
-    overThreshold: 10,
-    outThreshold: 10,
-  };
+  const dd_options = layoutConfig.compoundDragDropOptions;
 
   cy.compoundDragAndDrop(dd_options);
 
@@ -134,7 +121,8 @@ export function draw_graph(graph, context, elements, node) {
         eles: n,
       },
       zoom: 1.2,
-      duration: 100,
+      duration: 300,
+      easing: 'ease-in-out-quad',
     });
   });
 
@@ -220,14 +208,8 @@ function expand(parent) {
     });
   } else {
     cy.layout({
-      name: "dagre",
+      ...layoutConfig.expandLayout,
       eles: children.union(intEdges),
-      fit: false,
-      padding: 20,
-      animate: true,
-      nodeSep: 20,
-      edgeSep: 15,
-      rankSep: 30,
     }).run();
   }
 
