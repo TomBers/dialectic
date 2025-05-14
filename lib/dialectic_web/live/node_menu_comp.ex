@@ -100,6 +100,36 @@ defmodule DialecticWeb.NodeMenuComp do
 
         <button
           class="menu-button"
+          phx-click={
+            JS.push("reply-and-answer", value: %{vertex: %{content: "Give Examples"}, prefix: ""})
+          }
+          title="Generate examples for this topic."
+          id={"examples-button-" <> @node_id}
+        >
+          <span class="icon">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"
+              />
+            </svg>
+          </span>
+          <span class="label">Examples</span>
+        </button>
+
+        <button
+          class="menu-button"
           phx-click="node_branch"
           title="Generate arguments for and against the above point."
           phx-value-id={@node_id}

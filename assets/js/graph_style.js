@@ -66,11 +66,16 @@ export function graphStyle() {
         label: "data(id)", // ← use the id field
         "text-halign": "center",
         "text-valign": "top",
-        "text-margin-y": 0,
-        "font-size": 12,
+        "text-margin-y": 5,
+        "font-size": 13,
         "font-weight": 600,
-        "text-opacity": 1, // make sure it isn’t zero
-        /* …border / background… */
+        "text-opacity": 1, // make sure it isn't zero
+        padding: "20px",
+        "background-opacity": 0.15,
+        "background-color": "#4B5563",
+        "border-width": 1,
+        "border-style": "dashed",
+        "border-color": "#4B5563",
       },
     },
     { selector: ".hidden", style: { display: "none" } },
@@ -85,19 +90,24 @@ export function graphStyle() {
 
         /* look & feel */
         shape: "roundrectangle",
-        "background-opacity": 0.6,
+        "background-opacity": 0.7,
         "background-color": "#E5E7EB", // slate‑200
         "border-width": 2,
         "border-color": "#4B5563",
+        "border-style": "solid",
 
         /* text centred inside the badge */
         label: "data(id)",
         "text-valign": "center",
         "text-halign": "center",
-        "font-size": 12,
+        "font-size": 13,
         "font-weight": 600,
         "text-wrap": "wrap",
-        "text-max-width": 80,
+        "text-max-width": 200,
+        color: "#374151",
+        "text-outline-width": 1,
+        "text-outline-color": "#ffffff",
+        "text-outline-opacity": 0.8,
       },
     },
     {
@@ -113,8 +123,12 @@ export function graphStyle() {
       selector: "edge",
       style: {
         width: 2,
-        "line-color": "#f3f4f6",
+        "line-color": "#d1d5db",
+        "edge-distances": "node-position",
         "curve-style": "bezier",
+        "control-point-step-size": 40,
+        "control-point-weight": 0.5,
+        opacity: 0.8,
       },
     },
     {
@@ -123,6 +137,7 @@ export function graphStyle() {
         width: 3,
         "line-color": "#83f28f", // Light green color
         "z-index": 9998,
+        opacity: 1,
       },
     },
   ];
@@ -131,7 +146,7 @@ export function graphStyle() {
     base_style.push({
       selector: `node.${nodeType}`, // ← has the class
       style: {
-        //  NOT “css”
+        //  NOT "css"
         "border-color": cols[nodeType].border,
         "background-color": cols[nodeType].background,
         "border-width": 2,

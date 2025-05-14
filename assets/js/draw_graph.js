@@ -2,12 +2,12 @@ import cytoscape from "cytoscape";
 import dagre from "cytoscape-dagre";
 import compoundDragAndDrop from "cytoscape-compound-drag-and-drop";
 import { graphStyle } from "./graph_style";
+import { layoutConfig } from "./layout_config.js";
 
 cytoscape.use(dagre);
 cytoscape.use(compoundDragAndDrop);
 
 export function draw_graph(graph, context, elements, node) {
-  const sep = 50;
   const cy = cytoscape({
     container: graph, // container to render in
     elements: elements,
@@ -15,30 +15,10 @@ export function draw_graph(graph, context, elements, node) {
 
     boxSelectionEnabled: true, // ⬅️ lets users drag‑select
     autounselectify: false, // allow multi‑select
-    layout: {
-      name: "dagre",
-      rankDir: "TB",
-      nodeSep: sep,
-      edgeSep: sep,
-      rankSep: sep,
-    },
+    layout: layoutConfig.baseLayout,
   });
 
-  const dd_options = {
-    grabbedNode: () => true,
-    dropTarget: () => true,
-
-    /* 1 ▸ never treat an orphan-on-orphan drop as a “make new group” */
-    dropSibling: () => false,
-
-    /* 2 ▸ and even if the plugin tries, give it nothing to add */
-    newParentNode: () => [], // or just omit this line entirely
-
-    /* other tweaks stay the same */
-    boundingBoxOptions: { includeLabels: true, includeOverlays: false },
-    overThreshold: 10,
-    outThreshold: 10,
-  };
+  const dd_options = layoutConfig.compoundDragDropOptions;
 
   cy.compoundDragAndDrop(dd_options);
 
@@ -140,7 +120,8 @@ export function draw_graph(graph, context, elements, node) {
         eles: n,
       },
       zoom: 1.2,
-      duration: 100,
+      duration: 300,
+      easing: "ease-in-out-quad",
     });
   });
 
@@ -226,14 +207,8 @@ function expand(parent) {
     });
   } else {
     cy.layout({
-      name: "dagre",
+      ...layoutConfig.expandLayout,
       eles: children.union(intEdges),
-      fit: false,
-      padding: 20,
-      animate: true,
-      nodeSep: 20,
-      edgeSep: 15,
-      rankSep: 30,
     }).run();
   }
 

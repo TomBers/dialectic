@@ -1,15 +1,10 @@
 import { draw_graph } from "./draw_graph";
+import { layoutConfig } from "./layout_config.js";
 
 const layoutGraph = (cy) => {
-  const sep = 50;
   const layout = cy.layout({
-    name: "dagre",
-    rankDir: "TB",
-    nodeSep: sep,
-    edgeSep: sep,
-    rankSep: sep,
-    // Add a callback for when layout is done
-    ready: function () {},
+    ...layoutConfig.baseLayout,
+    // Add callback for when layout is done
   });
 
   // Run the layout
@@ -33,9 +28,6 @@ const graphHook = {
     this.cy.json({ elements: JSON.parse(graph) });
 
     const reorderOperations = new Set([
-      // "delete_node",
-      // "edit_node",
-      // "branch",
       "combine",
       "answer",
       "llm_request_complete",
@@ -43,9 +35,9 @@ const graphHook = {
     ]);
 
     if (reorderOperations.has(operation)) {
-      layoutGraph(this.cy); // your Dagre call
+      layoutGraph(this.cy);
     }
-
+    
     this.cy.elements().removeClass("selected");
     this.cy.$(`#${node}`).addClass("selected");
   },
