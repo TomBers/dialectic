@@ -72,7 +72,7 @@ export function graphStyle() {
         "text-opacity": 1, // make sure it isn't zero
         padding: "20px",
         "background-opacity": 0.15,
-        "background-color": "#4B5563",
+        "background-color": "#f2f4f5",
         "border-width": 1,
         "border-style": "dashed",
         "border-color": "#4B5563",
