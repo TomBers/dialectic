@@ -60,32 +60,40 @@
                 position: relative;
                 z-index: 1;
                 box-shadow: 0 0 0 transparent;
-                border: 2px solid transparent;
+                border: none;
+                display: block;
+                margin: 0;
+                padding: 0;
+                object-fit: cover;
+                object-position: center;
             }
 
             .expandable-video:hover {
                 /* transform: scale(1.02); */
-                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-                border: 4px solid var(--primary-color);
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+                outline: 3px solid var(--primary-color);
+                filter: brightness(1.05);
             }
 
             .video-overlay {
                 position: absolute;
                 bottom: 10px;
                 right: 10px;
-                background: rgba(0, 0, 0, 0.7);
+                background: rgba(0, 0, 0, 0.8);
                 color: white;
-                padding: 8px 12px;
+                padding: 10px 15px;
                 border-radius: 4px;
-                font-size: 0.9rem;
+                font-size: 1rem;
                 opacity: 0;
                 cursor: pointer;
                 transition: all 0.3s ease;
-                pointer-events: none;
+                pointer-events: auto;
                 display: flex;
                 align-items: center;
                 gap: 5px;
-                border: 1px solid rgba(255, 255, 255, 0.3);
+                border: 1px solid rgba(255, 255, 255, 0.5);
+                font-weight: 500;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             }
 
             .video-overlay::before {
@@ -95,10 +103,13 @@
 
             .showcase-media {
                 position: relative;
-                overflow: visible;
+                overflow: hidden;
+                font-size: 0;
+                line-height: 0;
             }
 
-            .showcase-media:hover .video-overlay {
+            .showcase-media:hover .video-overlay,
+            .hero-image:hover .video-overlay {
                 opacity: 1;
                 transform: translateY(-5px);
             }
@@ -207,11 +218,12 @@
                 align-items: center;
                 position: relative;
                 z-index: 2;
+                gap: 2rem;
             }
 
             .hero-text {
                 flex: 1;
-                padding-right: 3rem;
+                padding-right: 0;
             }
 
             .hero-image {
@@ -219,10 +231,26 @@
                 position: relative;
             }
 
-            .hero-image img {
+            .hero-image {
+                flex: 1.5;
+                position: relative;
+                overflow: hidden;
+                border-radius: var(--border-radius);
+                max-width: 750px;
+                box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+                font-size: 0;
+                line-height: 0;
+                background-color: #000;
+            }
+            
+            .hero-image video {
                 width: 100%;
                 border-radius: var(--border-radius);
-                box-shadow: var(--box-shadow);
+                display: block;
+                margin: 0;
+                padding: 0;
+                line-height: 0;
+                vertical-align: top;
             }
 
             .hero-title {
@@ -461,6 +489,12 @@
                 width: 100%;
                 border-radius: var(--border-radius);
                 display: block;
+                margin: 0;
+                padding: 0;
+                border: none;
+                vertical-align: top;
+                object-fit: cover;
+                background-color: #000;
             }
 
             /* Media Queries */
@@ -473,6 +507,11 @@
                 .hero-text {
                     padding-right: 0;
                     margin-bottom: 3rem;
+                }
+                
+                .hero-image {
+                    max-width: 90%;
+                    margin: 0 auto;
                 }
 
                 .hero-buttons {
@@ -638,13 +677,22 @@
                         </div>
                     </div>
                     <div class="hero-image">
-                        <img
-                            src="media/images/graph.webp"
-                            alt="Knowledge Graph Example in Dialectic Platform"
-                            width="600"
-                            height="400"
-                            loading="eager"
-                        />
+                        <video
+                            id="heroVideo"
+                            autoplay
+                            muted
+                            loop
+                            playsinline
+                            class="expandable-video"
+                            style="height: auto; min-height: 420px; display: block; margin: 0; padding: 0; border: none; vertical-align: top; object-fit: cover; background-color: #000;"
+                        >
+                            <source
+                                src="media/videos/MuDG_nav.mp4"
+                                type="video/mp4"
+                            />
+                            Your browser does not support the video tag.
+                        </video>
+                        <div class="video-overlay" style="z-index: 10; opacity: 0.9;">Click to expand</div>
                     </div>
                 </div>
             </div>
@@ -912,6 +960,7 @@
                             loop
                             playsinline
                             class="expandable-video"
+                            style="background-color: #000; object-fit: cover;"
                         >
                             <source
                                 src="media/videos/MuDG_nav.mp4"
@@ -1264,6 +1313,8 @@
             document.addEventListener("DOMContentLoaded", function () {
                 const originalVideo =
                     document.getElementById("expandableVideo");
+                const heroVideo =
+                    document.getElementById("heroVideo");
                 const videoModal = document.getElementById("videoModal");
                 const modalVideo = document.getElementById("modalVideo");
                 const closeBtn = document.querySelector(".close-modal");
@@ -1297,7 +1348,20 @@
                 function closeVideoModal() {
                     videoModal.style.display = "none";
                     modalVideo.pause();
-                    originalVideo.play();
+                    // Determine which video was playing before and resume it
+                    if (originalVideo.paused) {
+                        originalVideo.play();
+                    } else if (heroVideo.paused) {
+                        heroVideo.play();
+                    }
+                }
+
+                // Function to open modal for hero video
+                function openHeroVideoModal() {
+                    videoModal.style.display = "flex";
+                    modalVideo.currentTime = heroVideo.currentTime;
+                    modalVideo.play();
+                    heroVideo.pause();
                 }
 
                 // Add click event listeners
@@ -1305,7 +1369,23 @@
                 originalVideo.parentElement
                     .querySelector(".video-overlay")
                     .addEventListener("click", openVideoModal);
-                closeBtn.addEventListener("click", closeVideoModal);
+                
+                heroVideo.addEventListener("click", openHeroVideoModal);
+                heroVideo.parentElement
+                    .querySelector(".video-overlay")
+                    .addEventListener("click", openHeroVideoModal);
+                
+                closeBtn.addEventListener("click", function() {
+                    videoModal.style.display = "none";
+                    modalVideo.pause();
+                    // Check which video was playing and resume it
+                    if (heroVideo.paused) {
+                        heroVideo.play();
+                    }
+                    if (originalVideo.paused) {
+                        originalVideo.play();
+                    }
+                });
 
                 // Add hover class for better visual indication
                 originalVideo.addEventListener("mouseover", function () {
@@ -1315,11 +1395,35 @@
                 originalVideo.addEventListener("mouseout", function () {
                     this.classList.remove("video-hover");
                 });
+                
+                heroVideo.addEventListener("mouseover", function () {
+                    this.classList.add("video-hover");
+                });
+
+                heroVideo.addEventListener("mouseout", function () {
+                    this.classList.remove("video-hover");
+                });
+                
+                heroVideo.addEventListener("mouseover", function () {
+                    this.classList.add("video-hover");
+                });
+
+                heroVideo.addEventListener("mouseout", function () {
+                    this.classList.remove("video-hover");
+                });
 
                 // Close modal when clicking outside the video
                 videoModal.addEventListener("click", function (event) {
                     if (event.target === videoModal) {
-                        closeVideoModal();
+                        videoModal.style.display = "none";
+                        modalVideo.pause();
+                        // Resume whichever video was playing before
+                        if (heroVideo.paused) {
+                            heroVideo.play();
+                        }
+                        if (originalVideo.paused) {
+                            originalVideo.play();
+                        }
                     }
                 });
 
@@ -1355,6 +1459,30 @@
                     ) {
                         closeVideoModal();
                     }
+                });
+                
+                // Make sure the video source in modal matches the video that was clicked
+                heroVideo.addEventListener("click", function() {
+                    const modalVideoSource = document.querySelector("#modalVideo source");
+                    modalVideoSource.src = "media/videos/MuDG_nav.mp4";
+                    modalVideo.load();
+                });
+                
+                originalVideo.addEventListener("click", function() {
+                    const modalVideoSource = document.querySelector("#modalVideo source");
+                    modalVideoSource.src = "media/videos/MuDG_nav.mp4";
+                    modalVideo.load();
+                });
+                heroVideo.addEventListener("click", function() {
+                    const modalVideoSource = document.querySelector("#modalVideo source");
+                    modalVideoSource.src = "media/videos/MuDG_nav.mp4";
+                    modalVideo.load();
+                });
+                
+                originalVideo.addEventListener("click", function() {
+                    const modalVideoSource = document.querySelector("#modalVideo source");
+                    modalVideoSource.src = "media/videos/MuDG_nav.mp4";
+                    modalVideo.load();
                 });
             });
         </script>
