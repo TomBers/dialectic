@@ -1,9 +1,51 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" itemscope itemtype="http://schema.org/WebPage">
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Dialectic - Collaborative Knowledge Exploration</title>
+        <title>
+            Dialectic - Collaborative Knowledge Exploration Platform | MuDG
+        </title>
+        <meta
+            name="description"
+            content="Dialectic is a mind mapping tool that combines AI assistance with human collaboration to explore complex ideas and visualize the learning process."
+        />
+        <meta
+            name="keywords"
+            content="knowledge graph, collaborative learning, AI-powered insights, idea exploration, mind mapping, dialectic"
+        />
+        <meta name="author" content="Dialectic" />
+        <meta name="robots" content="index, follow" />
+
+        <!-- Open Graph / Facebook -->
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://mudg.fly.dev/" />
+        <meta
+            property="og:title"
+            content="Dialectic - Collaborative Knowledge Exploration"
+        />
+        <meta
+            property="og:description"
+            content="Transform complex ideas into visual knowledge graphs with AI-powered collaboration."
+        />
+        <meta property="og:image" content="media/images/graph.webp" />
+
+        <!-- Twitter -->
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content="https://mudg.fly.dev/" />
+        <meta
+            property="twitter:title"
+            content="Dialectic - Collaborative Knowledge Exploration"
+        />
+        <meta
+            property="twitter:description"
+            content="Transform complex ideas into visual knowledge graphs with AI-powered collaboration."
+        />
+        <meta property="twitter:image" content="media/images/graph.webp" />
+
+        <!-- Canonical URL -->
+        <link rel="canonical" href="https://mudg.fly.dev/" />
+
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
@@ -528,17 +570,20 @@
     </head>
     <body>
         <!-- Navigation -->
-        <nav class="navbar">
+        <nav class="navbar" aria-label="Main Navigation">
             <div class="container nav-container">
-                <a href="#" class="logo">Dialectic</a>
+                <a href="#" class="logo" aria-label="Dialectic Home"
+                    >Dialectic</a
+                >
                 <ul class="nav-links" id="nav-menu">
                     <li><a href="#showcase" class="nav-link">Learn More</a></li>
-                    <li><a href="#why" class="nav-link">Why</a></li>
+                    <li><a href="#features" class="nav-link">Why</a></li>
                     <li><a href="#about" class="nav-link">About</a></li>
                     <li>
                         <a
                             href="https://mudg.fly.dev"
                             class="nav-link btn btn-primary"
+                            aria-label="Try Dialectic Platform"
                             >Try It</a
                         >
                     </li>
@@ -581,9 +626,13 @@
                             <a
                                 href="https://mudg.fly.dev"
                                 class="btn btn-primary"
+                                aria-label="Start using Dialectic"
                                 >Start Exploring</a
                             >
-                            <a href="#showcase" class="btn btn-secondary"
+                            <a
+                                href="#showcase"
+                                class="btn btn-secondary"
+                                aria-label="Learn more about Dialectic"
                                 >Learn More</a
                             >
                         </div>
@@ -591,8 +640,103 @@
                     <div class="hero-image">
                         <img
                             src="media/images/graph.webp"
-                            alt="Knowledge Graph Example"
+                            alt="Knowledge Graph Example in Dialectic Platform"
+                            width="600"
+                            height="400"
+                            loading="eager"
                         />
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Testimonials Section -->
+        <section id="testimonials" class="section">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">What Our Users Say</h2>
+                </div>
+
+                <div
+                    class="feature-grid"
+                    style="display: flex; justify-content: center"
+                >
+                    <!-- Single Testimonial -->
+                    <div
+                        class="feature-card"
+                        style="
+                            position: relative;
+                            padding-top: 2.5rem;
+                            max-width: 600px;
+                        "
+                    >
+                        <div
+                            style="
+                                position: absolute;
+                                top: -1rem;
+                                left: 1.5rem;
+                                font-size: 4rem;
+                                color: var(--primary-color);
+                                opacity: 0.3;
+                            "
+                        >
+                            "
+                        </div>
+                        <p
+                            class="feature-text"
+                            style="
+                                font-style: italic;
+                                margin-bottom: 1.5rem;
+                                font-size: 1.2rem;
+                            "
+                        >
+                            An amazing free specialised AI tool to explore
+                            philosophical ideas around pretty much anything -
+                            from academic questions to films to... hamsters! All
+                            at one's fingertips, in a matter of seconds, with
+                            in-built tools for a sophisticated, yet accessible
+                            dialectic. Bravo!
+                        </p>
+                        <div
+                            style="
+                                display: flex;
+                                align-items: center;
+                                margin-top: auto;
+                            "
+                        >
+                            <div
+                                style="
+                                    width: 50px;
+                                    height: 50px;
+                                    border-radius: 50%;
+                                    background-color: var(--primary-color);
+                                    display: flex;
+                                    justify-content: center;
+                                    align-items: center;
+                                    margin-right: 1rem;
+                                    color: white;
+                                    font-weight: bold;
+                                "
+                            >
+                                AK
+                            </div>
+                            <div>
+                                <h4 style="font-weight: 600; margin: 0">
+                                    Alexandra Konoplyanik
+                                </h4>
+                                <p style="margin: 0; color: #666">
+                                    <a
+                                        href="https://pfalondon.org/"
+                                        target="_blank"
+                                        style="
+                                            color: var(--primary-color);
+                                            text-decoration: none;
+                                        "
+                                        >Philosophy for All</a
+                                    >
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -608,6 +752,26 @@
                         and understand complex ideas
                     </p>
                 </div>
+                <!-- LD+JSON Structured Data -->
+                <script type="application/ld+json">
+                    {
+                        "@context": "https://schema.org",
+                        "@type": "SoftwareApplication",
+                        "name": "Dialectic",
+                        "applicationCategory": "Knowledge Management",
+                        "operatingSystem": "Web",
+                        "offers": {
+                            "@type": "Offer",
+                            "price": "0",
+                            "priceCurrency": "USD"
+                        },
+                        "description": "A collaborative mind mapping tool that combines AI assistance with human collaboration to explore complex ideas.",
+                        "creator": {
+                            "@type": "Organization",
+                            "name": "Dialectic"
+                        }
+                    }
+                </script>
 
                 <div class="feature-grid">
                     <div class="feature-card">
@@ -701,7 +865,8 @@
                         <p class="feature-text">
                             Unlike ephemeral chats, your knowledge graphs
                             persist and grow over time, becoming valuable
-                            resources.
+                            resources. Export to PDF, JSON, or Markdown - the
+                            data is yours!
                         </p>
                     </div>
                 </div>
@@ -945,6 +1110,7 @@
 
         <!-- Call to Action Section -->
         <section
+            id="cta"
             style="
                 background: linear-gradient(
                     135deg,
@@ -1019,6 +1185,46 @@
         >
             <div class="container">
                 <p>&copy; 2025 Dialectic - Multi-user Dialectical Graph</p>
+                <div style="margin-top: 1rem">
+                    <nav aria-label="Footer Navigation">
+                        <a
+                            href="#"
+                            style="
+                                color: white;
+                                margin: 0 10px;
+                                text-decoration: none;
+                            "
+                            >Home</a
+                        >
+                        <a
+                            href="#features"
+                            style="
+                                color: white;
+                                margin: 0 10px;
+                                text-decoration: none;
+                            "
+                            >Features</a
+                        >
+                        <a
+                            href="#testimonials"
+                            style="
+                                color: white;
+                                margin: 0 10px;
+                                text-decoration: none;
+                            "
+                            >Testimonials</a
+                        >
+                        <a
+                            href="https://x.com/TJCBerman"
+                            style="
+                                color: white;
+                                margin: 0 10px;
+                                text-decoration: none;
+                            "
+                            >Twitter</a
+                        >
+                    </nav>
+                </div>
             </div>
         </footer>
         <div id="videoModal" class="modal-overlay">
@@ -1038,6 +1244,23 @@
                 const videoModal = document.getElementById("videoModal");
                 const modalVideo = document.getElementById("modalVideo");
                 const closeBtn = document.querySelector(".close-modal");
+
+                // Add meta description based on content if user scrolls
+                const updateMetaDescription = () => {
+                    if (window.scrollY > 300) {
+                        const metaDescription = document.querySelector(
+                            'meta[name="description"]',
+                        );
+                        if (metaDescription) {
+                            metaDescription.setAttribute(
+                                "content",
+                                "Dialectic MuDG - Visualize knowledge graphs, collaborate in real-time, and leverage AI-powered insights to explore complex ideas.",
+                            );
+                        }
+                    }
+                };
+
+                window.addEventListener("scroll", updateMetaDescription);
 
                 // Function to open modal and play video
                 function openVideoModal() {
@@ -1076,6 +1299,30 @@
                         closeVideoModal();
                     }
                 });
+
+                // Add lazy loading to images that aren't in the viewport
+                const lazyLoadImages = () => {
+                    const images = document.querySelectorAll(
+                        'img[loading="lazy"]',
+                    );
+                    if ("IntersectionObserver" in window) {
+                        const imageObserver = new IntersectionObserver(
+                            (entries) => {
+                                entries.forEach((entry) => {
+                                    if (entry.isIntersecting) {
+                                        const image = entry.target;
+                                        image.src = image.dataset.src;
+                                        imageObserver.unobserve(image);
+                                    }
+                                });
+                            },
+                        );
+
+                        images.forEach((image) => imageObserver.observe(image));
+                    }
+                };
+
+                lazyLoadImages();
 
                 // Close modal with Escape key
                 document.addEventListener("keydown", function (event) {
