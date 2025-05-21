@@ -8,3 +8,16 @@ select * from graphs; - normal SQL commands
 UPDATE "Graph"
 SET is_published = false
 WHERE title = '<graph_title>';
+
+
+To delete:
+
+update graphs set is_published = false where title = 'hello there';
+update graphs set is_published = false where title = 'Hamsters';
+update graphs set is_published = false where title = 'is beauty in the eye of the beholder';
+update graphs set is_published = false where title = 'What is the purpose of life';
+update graphs set is_published = false where title = 'Cure for cellulite';
+update graphs set is_published = false where title = 'is le guin the most underrated author ever';
+update graphs set is_published = false where title = 'Can you find some nice summer tops under £15';
+update graphs set is_published = false where title = 'film';
+update graphs set is_published = false where title = 'How best to ski turn';
