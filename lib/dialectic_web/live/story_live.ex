@@ -23,8 +23,6 @@ defmodule DialecticWeb.StoryLive do
         0
       end
 
-    IO.inspect(p_indx, label: "P Index")
-
     return_path(
       socket,
       p_indx
@@ -39,8 +37,6 @@ defmodule DialecticWeb.StoryLive do
         length(socket.assigns.leaf_nodes) - 1
       end
 
-    IO.inspect(p_indx, label: "P Index")
-
     return_path(
       socket,
       p_indx
@@ -49,7 +45,6 @@ defmodule DialecticWeb.StoryLive do
 
   defp return_path(socket, p_index) do
     leaf = Enum.at(socket.assigns.leaf_nodes, p_index)
-    IO.inspect(leaf)
 
     path =
       GraphManager.path_to_node(socket.assigns.graph_id, leaf)

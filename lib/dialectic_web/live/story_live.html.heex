@@ -1,9 +1,61 @@
-<h1>Story</h1>
-<%= for node <- @path do %>
-  <div>
-    {node.id} | {node.content}
-  </div>
-<% end %>
+<h1>Conversation</h1>
+<div class="conversation">
+  <%= for {node, idx} <- Enum.with_index(@path) do %>
+    <div class={"message " <> if rem(idx, 2) == 0, do: "left", else: "right"}>
+      <div class="speaker"><%= node.user || "Speaker" %>:</div>
+      <div class="bubble"><%= DialecticWeb.Live.TextUtils.full_html(node.content || "") %></div>
+    </div>
+  <% end %>
+</div>
 
 <.button phx-click="next">Next</.button>
 <.button phx-click="previous">Previous</.button>
+
+<style>
+.conversation {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  margin-bottom: 1em;
+}
+.message {
+  display: flex;
+  flex-direction: column;
+  max-width: 60%;
+  margin-bottom: 1.2em;
+  padding-left: 0.2em;
+  padding-right: 0.2em;
+}
+.message.left {
+  align-self: flex-start;
+  background: #f0f0f0;
+  border-radius: 1em 1em 1em 0.2em;
+  padding: 1.1em 1.5em;
+  margin-left: 0.5em;
+}
+.message.right {
+  align-self: flex-end;
+  background: #d0eaff;
+  border-radius: 1em 1em 0.2em 1em;
+  padding: 1.1em 1.5em;
+  margin-right: 0.5em;
+}
+.speaker {
+  font-size: 0.95em;
+  font-weight: bold;
+  margin-bottom: 0.5em;
+  color: #555;
+  letter-spacing: 0.01em;
+}
+.bubble {
+  font-size: 1.15em;
+  line-height: 2.0;
+  padding-top: 0.2em;
+  padding-bottom: 0.2em;
+  word-break: break-word;
+}
+.bubble p {
+  margin-top: 0.7em;
+  margin-bottom: 0.7em;
+}
+</style>
