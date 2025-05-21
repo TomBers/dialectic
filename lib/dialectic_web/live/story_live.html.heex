@@ -1,0 +1,9 @@
+<h1>Story</h1>
+<%= for node <- @path do %>
+  <div>
+    {node.id} | {node.content}
+  </div>
+<% end %>
+
+<.button phx-click="next">Next</.button>
+<.button phx-click="previous">Previous</.button>
