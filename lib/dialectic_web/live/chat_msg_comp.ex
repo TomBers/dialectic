@@ -33,7 +33,7 @@ defmodule DialecticWeb.ChatMsgComp do
       <.live_component
         module={DialecticWeb.Live.ModalComp}
         node={@node}
-        id={"moda-comp-" <> @node.id}
+        id={"chat-msg-modal-comp-" <> @node.id}
       />
 
       <div class="proposition flex-1 max-w-none relative">
