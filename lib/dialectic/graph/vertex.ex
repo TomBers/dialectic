@@ -132,8 +132,8 @@ defmodule Dialectic.Graph.Vertex do
       {_, dat} = :digraph.vertex(graph, node_id)
       add_relatives(dat, graph)
     end)
-    |> Enum.filter(fn node ->
-      node.parent == nil
+    |> Enum.reject(fn node ->
+      node.compound == true
     end)
   end
 

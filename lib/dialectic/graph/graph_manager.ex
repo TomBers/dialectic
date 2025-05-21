@@ -152,7 +152,7 @@ defmodule GraphManager do
       end)
       |> Enum.reverse()
 
-    {:reply, parents, {graph_struct, graph}}
+    {:reply, [node] ++ parents, {graph_struct, graph}}
   end
 
   def handle_call({:move, {node, direction}}, _, {graph_struct, graph}) do

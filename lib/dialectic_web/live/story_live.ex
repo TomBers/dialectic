@@ -4,7 +4,7 @@ defmodule DialecticWeb.StoryLive do
   def mount(%{"graph_name" => graph_id_uri}, _session, socket) do
     graph_id = URI.decode(graph_id_uri)
 
-    leaf_nodes = GraphManager.find_leaf_nodes(graph_id)
+    leaf_nodes = GraphManager.find_leaf_nodes(graph_id) |> IO.inspect()
 
     ln = List.first(leaf_nodes)
 
@@ -49,6 +49,7 @@ defmodule DialecticWeb.StoryLive do
 
   defp return_path(socket, p_index) do
     leaf = Enum.at(socket.assigns.leaf_nodes, p_index)
+    IO.inspect(leaf)
 
     path =
       GraphManager.path_to_node(socket.assigns.graph_id, leaf)
