@@ -8,8 +8,10 @@
   <% end %>
 </div>
 
-<.button phx-click="next">Next</.button>
-<.button phx-click="previous">Previous</.button>
+<div class="nav-buttons">
+  <button phx-click="previous" class="nav-btn prev-btn" type="button">&#8592; Previous</button>
+  <button phx-click="next" class="nav-btn next-btn" type="button">Next &#8594;</button>
+</div>
 
 <style>
 .conversation {
@@ -58,4 +60,39 @@
   margin-top: 0.7em;
   margin-bottom: 0.7em;
 }
+.nav-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1.5em;
+  margin-top: 2em;
+}
+
+.nav-btn {
+  background: linear-gradient(90deg, #4361ee 0%, #4895ef 100%);
+  color: #fff;
+  border: none;
+  border-radius: 2em;
+  padding: 0.7em 2.2em;
+  font-size: 1.1em;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(67, 97, 238, 0.08);
+  transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+  outline: none;
+}
+
+.nav-btn:hover, .nav-btn:focus {
+  background: linear-gradient(90deg, #4895ef 0%, #4361ee 100%);
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 4px 16px rgba(67, 97, 238, 0.13);
+}
+
+.prev-btn {
+  background: linear-gradient(90deg, #b5179e 0%, #7209b7 100%);
+}
+
+.prev-btn:hover, .prev-btn:focus {
+  background: linear-gradient(90deg, #7209b7 0%, #b5179e 100%);
+}
+
 </style>
