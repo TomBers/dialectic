@@ -1,10 +1,12 @@
 <h1>Conversation</h1>
-<div class="readability-controls" style="display:flex;gap:0.7em;margin-bottom:1em;justify-content:flex-end;">
+<div
+  class="readability-controls"
+  style="display:flex;gap:0.7em;margin-bottom:1em;justify-content:flex-end;"
+>
   <button id="toggle-bionic" type="button">Bionic Reading</button>
   <button id="toggle-focus" type="button">Focus Mode</button>
 </div>
 <div class="conversation">
-
   <%= for {node, idx} <- Enum.with_index(@path) do %>
     <div class={"message " <> if rem(idx, 2) == 0, do: "left", else: "right"}>
       <div class="speaker">{node.user || "Speaker"}:</div>
@@ -88,6 +90,8 @@
     font-family: Inter, Roboto, "Open Sans", Arial, sans-serif;
     transition: background 0.3s;
     position: relative;
+    text-align: left;
+    text-justify: auto;
   }
   .bubble p {
     margin-top: 0.7em;
@@ -180,9 +184,7 @@
       });
     }
 
-
-
-    let bionicActive = false, focusActive = false, guidedActive = false;
+    let bionicActive = false, focusActive = false;
 
     document.getElementById("toggle-bionic").addEventListener("click", function() {
       bionicActive = !bionicActive;
@@ -198,28 +200,50 @@
       focusActive = !focusActive;
       this.classList.toggle("active", focusActive);
       setFocusMode(focusActive);
+      if (focusActive) setTimeout(revealOnScroll, 100);
     });
 
-
-
-   // Keyboard navigation for focus mode (global, sequential)
-   document.addEventListener("keydown", function(e) {
+   // Scroll-based progressive reveal for focus mode
+   function revealOnScroll() {
      if (!focusActive) return;
      const allParagraphs = Array.from(document.querySelectorAll('.bubble p'));
      if (!allParagraphs.length) return;
-     let idx = typeof window._focusGlobalIdx === "number" ? window._focusGlobalIdx : 0;
-     if (e.key === "ArrowDown" && idx < allParagraphs.length - 1) {
-       allParagraphs[idx].classList.remove("focus-global-current");
-       allParagraphs[idx + 1].classList.add("focus-global-current");
-       window._focusGlobalIdx = idx + 1;
-       e.preventDefault();
-     } else if (e.key === "ArrowUp" && idx > 0) {
-       allParagraphs[idx].classList.remove("focus-global-current");
-       allParagraphs[idx - 1].classList.add("focus-global-current");
-       window._focusGlobalIdx = idx - 1;
-       e.preventDefault();
+     const winHeight = window.innerHeight;
+     const winCenter = winHeight / 2;
+
+     let toHighlight = allParagraphs[0];
+     let minDist = Math.abs(((toHighlight.getBoundingClientRect().top + toHighlight.getBoundingClientRect().bottom) / 2) - winCenter);
+
+     // If scroll position is 0, always highlight the first paragraph
+     if (window.scrollY === 0) {
+       toHighlight = allParagraphs[0];
+     } 
+     // If scrolled to the bottom of the page, always highlight the last paragraph
+     else if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 2) {
+       toHighlight = allParagraphs[allParagraphs.length - 1];
      }
-   });
+     else {
+       allParagraphs.forEach((p) => {
+         const rect = p.getBoundingClientRect();
+         const paraCenter = (rect.top + rect.bottom) / 2;
+         const dist = Math.abs(paraCenter - winCenter);
+         if (dist < minDist) {
+           minDist = dist;
+           toHighlight = p;
+         }
+       });
+     }
+
+     allParagraphs.forEach(p => {
+       if (p === toHighlight) {
+         p.classList.add("focus-global-current");
+       } else {
+         p.classList.remove("focus-global-current");
+       }
+     });
+   }
+   window.addEventListener("scroll", revealOnScroll, { passive: true });
+   window.addEventListener("resize", revealOnScroll);
 
     // Initial bionic if toggled
     if (bionicActive) applyBionicToAll();
@@ -281,34 +305,6 @@
     }
   }
 
-  /**
-   * Guided Reading: Highlight one paragraph at a time, auto-advance.
-   */
-  function setGuidedReading(el, enabled) {
-    if (!el) return;
-    if (enabled) {
-      el.classList.add("guided-reading");
-      let ps = el.querySelectorAll("p");
-      ps.forEach(p => p.classList.remove("guided-current"));
-      if (ps.length > 0) ps[0].classList.add("guided-current");
-    } else {
-      el.classList.remove("guided-reading");
-      let ps = el.querySelectorAll("p");
-      ps.forEach(p => p.classList.remove("guided-current"));
-    }
-  }
-  function guidedAdvance(el) {
-    if (!el) return;
-    let ps = el.querySelectorAll("p");
-    let idx = Array.from(ps).findIndex(p => p.classList.contains("guided-current"));
-    if (idx >= 0 && idx < ps.length - 1) {
-      ps[idx].classList.remove("guided-current");
-      ps[idx+1].classList.add("guided-current");
-      return true;
-    }
-    return false;
-  }
-
   document.addEventListener("DOMContentLoaded", function() {
     // Button states
     let bionicActive = false;
@@ -352,15 +348,5 @@
       }
     });
 
-    // Keyboard navigation for focus mode
-    document.addEventListener("keydown", function(e) {
-      if (!focusActive) return;
-      let bubbles = getBubbles();
-      if (e.key === "ArrowDown") {
-        bubbles.forEach(bubble => focusNextParagraph(bubble));
-      } else if (e.key === "ArrowUp") {
-        bubbles.forEach(bubble => focusPrevParagraph(bubble));
-      }
-    });
   });
 </script>
