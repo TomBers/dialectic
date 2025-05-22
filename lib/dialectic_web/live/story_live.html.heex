@@ -20,6 +20,7 @@
     </div>
   <% end %>
 </div>
+<div class="scroll-spacer" style="height: 70vh;"></div>
 
 <style>
   :root {
@@ -363,17 +364,27 @@
       // Handle special scroll cases
       if (window.scrollY === 0) {
         toHighlight = allParagraphs[0];
-      } else if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 2) {
-        toHighlight = allParagraphs[allParagraphs.length - 1];
       } else {
         // Find paragraph closest to screen center
         allParagraphs.forEach(p => {
           const rect = p.getBoundingClientRect();
           const paraCenter = (rect.top + rect.bottom) / 2;
-          const dist = Math.abs(paraCenter - winCenter);
-          if (dist < minDist) {
-            minDist = dist;
-            toHighlight = p;
+          
+          // Adjust distance calculation to prioritize paragraphs that are fully visible
+          let dist = Math.abs(paraCenter - winCenter);
+          
+          // If paragraph is in viewport, consider it a candidate
+          if (rect.top < winHeight && rect.bottom > 0) {
+            // If we're near bottom of page and this is the last paragraph, prioritize it
+            if (window.scrollY + winHeight >= document.body.scrollHeight - 50 && 
+                p === allParagraphs[allParagraphs.length - 1]) {
+              dist = 0; // Force selection of last paragraph
+            }
+            
+            if (dist < minDist) {
+              minDist = dist;
+              toHighlight = p;
+            }
           }
         });
       }
@@ -425,6 +436,9 @@
     // Scroll events for focus mode
     window.addEventListener("scroll", highlightCenterParagraph, { passive: true });
     window.addEventListener("resize", highlightCenterParagraph);
+    
+    // Initial highlighting and ensure bottom paragraphs are selectable
+    setTimeout(highlightCenterParagraph, 200);
 
     // Keyboard navigation
     document.addEventListener("keydown", (e) => {
