@@ -1,7 +1,7 @@
 <h1 class="page-title">Conversation</h1>
 <div class="readability-controls">
   <button id="toggle-dark" type="button">Dark Mode</button>
-  <button id="toggle-bionic" type="button">Bionic Reading</button>
+  <button id="toggle-bionic" type="button">Low Fixation Reading</button>
   <button id="toggle-focus" type="button">Focus Mode</button>
   <div class="font-size-controls">
     <button id="decrease-font" type="button">A-</button>
@@ -13,7 +13,7 @@
   <%= for {node, idx} <- Enum.with_index(@path) do %>
     <div class={"message " <> if rem(idx, 2) == 0, do: "left", else: "right"}>
       <div class="speaker">{node.user || "Speaker"}</div>
-      <div class="bubble" phx-hook="ReadabilityBubble" id={"bubble-#{idx}"}>
+      <div class="bubble" id={"bubble-#{idx}"}>
         <%= for paragraph <- Regex.split(~r/(?:\r?\n){2,}|(?<=\.|\!|\?)\s{2,}/, node.content || "", trim: true) do %>
           <p class="bionic">{paragraph}</p>
         <% end %>
@@ -22,22 +22,18 @@
   <% end %>
 </div>
 
-<div class="nav-buttons">
-  <button phx-click="previous" class="nav-btn prev-btn" type="button">&#8592; Previous</button>
-  <button phx-click="next" class="nav-btn next-btn" type="button">Next &#8594;</button>
-</div>
-
 <style>
   :root {
-    --text-color: #333;
+    --text-color: #222;
     --bg-color: #fff;
-    --left-bg: #f7f7f7;
-    --right-bg: #e6f2ff;
-    --accent-color: #4361ee;
-    --secondary-accent: #7209b7;
-    --focus-highlight: #fffbe6;
+    --bubble-bg: #ffffff;
+    --left-border: #0747a6;
+    --right-border: #5f0b87;
+    --accent-color: #0747a6;
+    --secondary-accent: #5f0b87;
+    --focus-highlight: #fff6d6;
     --border-radius: 1rem;
-    --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+    --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     --header-font: 'Georgia', serif;
     --body-font: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     --font-size-base: 18px;
@@ -46,14 +42,15 @@
   }
 
   .dark-mode {
-    --text-color: #e6e6e6;
-    --bg-color: #222;
-    --left-bg: #2d2d2d;
-    --right-bg: #1a3152;
-    --accent-color: #5e7ce2;
-    --secondary-accent: #a742c6;
-    --focus-highlight: #4d4a2d;
-    --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --text-color: #ffffff;
+    --bg-color: #121212;
+    --bubble-bg: #1e1e1e;
+    --left-border: #82b1ff;
+    --right-border: #cf9fff;
+    --accent-color: #82b1ff;
+    --secondary-accent: #cf9fff;
+    --focus-highlight: #584e1b;
+    --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
   }
 
   body {
@@ -98,19 +95,20 @@
     font-size: 1rem;
     padding: 0.5rem 1.2rem;
     border-radius: 2rem;
-    border: 1px solid #bbb;
+    border: 1px solid #999;
     background: var(--bg-color);
-    color: var(--text-color);
+    color: var(--accent-color);
     cursor: pointer;
     transition: all var(--transition-speed);
     box-shadow: var(--card-shadow);
-    font-weight: 500;
+    font-weight: 600;
   }
 
   .readability-controls button.active {
     background: var(--accent-color);
     color: white;
     border-color: var(--accent-color);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   }
 
   .font-size-controls {
@@ -130,19 +128,23 @@
     max-width: 600px;
     margin-bottom: 1.5rem;
     border-radius: var(--border-radius);
+    background: var(--bubble-bg);
     box-shadow: var(--card-shadow);
     transition: all var(--transition-speed);
+    border: 2px solid transparent;
   }
 
   .message.left {
     align-self: flex-start;
-    background: var(--left-bg);
+    border-left: 4px solid var(--left-border);
+    border-bottom: 1px solid var(--left-border);
     border-radius: var(--border-radius) var(--border-radius) var(--border-radius) 0.2rem;
   }
 
   .message.right {
     align-self: flex-end;
-    background: var(--right-bg);
+    border-right: 4px solid var(--right-border);
+    border-bottom: 1px solid var(--right-border);
     border-radius: var(--border-radius) var(--border-radius) 0.2rem var(--border-radius);
   }
 
@@ -165,10 +167,11 @@
   .bubble p {
     margin: 0.9rem 0;
     transition: opacity var(--transition-speed), filter var(--transition-speed);
+    color: var(--text-color);
   }
 
   .bubble.focus-fade p {
-    opacity: 0.3;
+    opacity: 0.25;
     filter: blur(1px);
   }
 
@@ -179,6 +182,8 @@
     padding: 0.5rem;
     border-radius: 0.4rem;
     box-shadow: var(--card-shadow);
+    border-left: 3px solid var(--accent-color);
+    margin: 0.9rem 0.3rem;
   }
 
   .nav-buttons {
@@ -198,14 +203,16 @@
     font-size: 1.1rem;
     font-weight: 600;
     cursor: pointer;
-    box-shadow: var(--card-shadow);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
     transition: all 0.2s;
     outline: none;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
   }
 
   .nav-btn:hover, .nav-btn:focus {
     transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(67, 97, 238, 0.2);
+    box-shadow: 0 5px 16px rgba(0, 0, 0, 0.25);
+    filter: brightness(1.1);
   }
 
   .prev-btn {
@@ -216,20 +223,20 @@
     :root {
       --font-size-base: 16px;
     }
-    
+
     .message {
       width: 95%;
     }
-    
+
     .readability-controls {
       flex-direction: column;
       align-items: center;
     }
-    
+
     .nav-buttons {
       gap: 1rem;
     }
-    
+
     .nav-btn {
       padding: 0.7rem 1.5rem;
       font-size: 1rem;
@@ -249,36 +256,48 @@
     const increaseFontBtn = document.getElementById("increase-font");
     const decreaseFontBtn = document.getElementById("decrease-font");
     const resetFontBtn = document.getElementById("reset-font");
-    
+
     // State
     let bionicActive = localStorage.getItem("bionicActive") === "true";
     let focusActive = localStorage.getItem("focusActive") === "true";
     let darkMode = localStorage.getItem("darkMode") === "true";
     let fontSize = parseInt(localStorage.getItem("fontSize") || "18");
-    
+
     // Initialize states from localStorage
     if (bionicActive) {
       bionicToggle.classList.add("active");
       toggleBionic(true);
     }
-    
+
     if (focusActive) {
       focusToggle.classList.add("active");
       toggleFocus(true);
     }
-    
+
     if (darkMode) {
       darkModeToggle.classList.add("active");
       document.body.classList.add("dark-mode");
     }
-    
+
     updateFontSize(fontSize);
 
-    // Bionic Reading function
+    // Low Fixation Bionic Reading function
     function bionicizeText(text) {
-      return text.replace(/\b(\w{1,3})(\w*)\b/g, (match, p1, p2) => 
-        `<b style='font-weight:700'>${p1}</b>${p2}`
-      );
+      return text.replace(/\b(\w+)\b/g, (match) => {
+        const len = match.length;
+        if (len <= 3) {
+          // Short words: bold only the first letter
+          return `<b style='font-weight:800'>${match.substring(0, 1)}</b>${match.substring(1)}`;
+        } else if (len <= 6) {
+          // Medium words: bold ~half of the word
+          const boldPart = Math.ceil(len * 0.5);
+          return `<b style='font-weight:800'>${match.substring(0, boldPart)}</b>${match.substring(boldPart)}`;
+        } else {
+          // Long words: bold ~third of the word
+          const boldPart = Math.ceil(len * 0.33);
+          return `<b style='font-weight:800'>${match.substring(0, boldPart)}</b>${match.substring(boldPart)}`;
+        }
+      });
     }
 
     // Apply/remove bionic reading to all paragraphs
@@ -302,7 +321,7 @@
       document.querySelectorAll('.bubble').forEach(bubble => {
         const paragraphs = bubble.querySelectorAll("p");
         bubble.classList.toggle("focus-fade", active);
-        
+
         if (active && paragraphs.length > 0) {
           // If no paragraph is focused, focus the first
           if (![...paragraphs].some(p => p.classList.contains("focus-global-current"))) {
@@ -315,13 +334,13 @@
       });
       localStorage.setItem("focusActive", active);
     }
-    
+
     // Dark mode toggle
     function toggleDarkMode(active) {
       document.body.classList.toggle("dark-mode", active);
       localStorage.setItem("darkMode", active);
     }
-    
+
     // Font size adjustment
     function updateFontSize(size) {
       document.documentElement.style.setProperty('--font-size-base', `${size}px`);
@@ -331,10 +350,10 @@
     // Highlight paragraph closest to center when scrolling
     function highlightCenterParagraph() {
       if (!focusActive) return;
-      
+
       const allParagraphs = Array.from(document.querySelectorAll('.bubble p'));
       if (!allParagraphs.length) return;
-      
+
       const winHeight = window.innerHeight;
       const winCenter = winHeight / 2;
       let toHighlight = allParagraphs[0];
@@ -376,27 +395,27 @@
       focusToggle.classList.toggle("active", focusActive);
       toggleFocus(focusActive);
     });
-    
+
     darkModeToggle.addEventListener("click", () => {
       darkMode = !darkMode;
       darkModeToggle.classList.toggle("active", darkMode);
       toggleDarkMode(darkMode);
     });
-    
+
     increaseFontBtn.addEventListener("click", () => {
       if (fontSize < 28) {
         fontSize += 2;
         updateFontSize(fontSize);
       }
     });
-    
+
     decreaseFontBtn.addEventListener("click", () => {
       if (fontSize > 14) {
         fontSize -= 2;
         updateFontSize(fontSize);
       }
     });
-    
+
     resetFontBtn.addEventListener("click", () => {
       fontSize = 18;
       updateFontSize(fontSize);
@@ -405,7 +424,7 @@
     // Scroll events for focus mode
     window.addEventListener("scroll", highlightCenterParagraph, { passive: true });
     window.addEventListener("resize", highlightCenterParagraph);
-    
+
     // Keyboard navigation
     document.addEventListener("keydown", (e) => {
       // Arrow keys for navigation between messages
@@ -414,10 +433,10 @@
       } else if (e.key === "ArrowLeft") {
         document.querySelector(".prev-btn").click();
       }
-      
+
       // Toggle features with keyboard shortcuts
       if (e.ctrlKey || e.metaKey) {
-        if (e.key === "b") { // Ctrl+B for bionic reading
+        if (e.key === "b") { // Ctrl+B for low fixation reading
           bionicToggle.click();
           e.preventDefault();
         } else if (e.key === "f") { // Ctrl+F for focus mode

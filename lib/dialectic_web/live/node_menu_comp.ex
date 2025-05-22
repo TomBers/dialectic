@@ -5,7 +5,13 @@ defmodule DialecticWeb.NodeMenuComp do
   def render(assigns) do
     ~H"""
     <div>
-      <.live_component module={NoteMenuComp} node={@node} user={@user} id={"note-menu-" <> @node.id} />
+      <.live_component
+        module={NoteMenuComp}
+        graph_id={@graph_id}
+        node={@node}
+        user={@user}
+        id={"note-menu-" <> @node.id}
+      />
 
       <div class="mx-auto w-3/4">
         <%= if @ask_question do %>
