@@ -1,12 +1,18 @@
-<h1>Conversation</h1>
+<h1 class="page-title">Conversation</h1>
 <div class="readability-controls">
+  <button id="toggle-dark" type="button">Dark Mode</button>
   <button id="toggle-bionic" type="button">Bionic Reading</button>
   <button id="toggle-focus" type="button">Focus Mode</button>
+  <div class="font-size-controls">
+    <button id="decrease-font" type="button">A-</button>
+    <button id="reset-font" type="button">A</button>
+    <button id="increase-font" type="button">A+</button>
+  </div>
 </div>
 <div class="conversation">
   <%= for {node, idx} <- Enum.with_index(@path) do %>
     <div class={"message " <> if rem(idx, 2) == 0, do: "left", else: "right"}>
-      <div class="speaker">{node.user || "Speaker"}:</div>
+      <div class="speaker">{node.user || "Speaker"}</div>
       <div class="bubble" phx-hook="ReadabilityBubble" id={"bubble-#{idx}"}>
         <%= for paragraph <- Regex.split(~r/(?:\r?\n){2,}|(?<=\.|\!|\?)\s{2,}/, node.content || "", trim: true) do %>
           <p class="bionic">{paragraph}</p>
@@ -22,116 +28,212 @@
 </div>
 
 <style>
+  :root {
+    --text-color: #333;
+    --bg-color: #fff;
+    --left-bg: #f7f7f7;
+    --right-bg: #e6f2ff;
+    --accent-color: #4361ee;
+    --secondary-accent: #7209b7;
+    --focus-highlight: #fffbe6;
+    --border-radius: 1rem;
+    --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+    --header-font: 'Georgia', serif;
+    --body-font: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    --font-size-base: 18px;
+    --line-height: 1.6;
+    --transition-speed: 0.3s;
+  }
+
+  .dark-mode {
+    --text-color: #e6e6e6;
+    --bg-color: #222;
+    --left-bg: #2d2d2d;
+    --right-bg: #1a3152;
+    --accent-color: #5e7ce2;
+    --secondary-accent: #a742c6;
+    --focus-highlight: #4d4a2d;
+    --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: var(--body-font);
+    font-size: var(--font-size-base);
+    line-height: var(--line-height);
+    transition: background-color var(--transition-speed), color var(--transition-speed);
+    padding: 1rem;
+  }
+
+  .page-title {
+    font-family: var(--header-font);
+    font-size: 2rem;
+    font-weight: 700;
+    text-align: center;
+    margin: 1.5rem 0;
+    color: var(--accent-color);
+  }
+
   .conversation {
     display: flex;
     flex-direction: column;
-    gap: 0.5em;
-    max-width: 960px;
-    margin: 0 auto 1em;
+    gap: 1.2rem;
+    width: 100%;
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
   }
+
   .readability-controls {
     display: flex;
-    gap: 0.7em;
-    margin-bottom: 1em;
-    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+    margin: 1.5rem auto;
+    justify-content: center;
+    max-width: 800px;
   }
+
   .readability-controls button {
-    font-size: 0.95em;
-    padding: 0.3em 1.1em;
-    border-radius: 1.2em;
+    font-size: 1rem;
+    padding: 0.5rem 1.2rem;
+    border-radius: 2rem;
     border: 1px solid #bbb;
-    background: #f8f8fa;
+    background: var(--bg-color);
+    color: var(--text-color);
     cursor: pointer;
-    transition: background 0.2s;
+    transition: all var(--transition-speed);
+    box-shadow: var(--card-shadow);
+    font-weight: 500;
   }
+
   .readability-controls button.active {
-    background: #4895ef;
-    color: #fff;
-    border-color: #4895ef;
+    background: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
   }
+
+  .font-size-controls {
+    display: flex;
+    gap: 0.3rem;
+    margin-left: 0.5rem;
+  }
+
+  .font-size-controls button {
+    padding: 0.5rem 0.8rem;
+  }
+
   .message {
     display: flex;
     flex-direction: column;
-    max-width: 60%;
-    margin-bottom: 1.2em;
-    padding: 1.1em 1.5em;
-    border-radius: 1em;
+    width: 85%;
+    max-width: 600px;
+    margin-bottom: 1.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    transition: all var(--transition-speed);
   }
+
   .message.left {
     align-self: flex-start;
-    background: #f0f0f0;
-    border-radius: 1em 1em 1em 0.2em;
-    margin-left: 0.5em;
+    background: var(--left-bg);
+    border-radius: var(--border-radius) var(--border-radius) var(--border-radius) 0.2rem;
   }
+
   .message.right {
     align-self: flex-end;
-    background: #d0eaff;
-    border-radius: 1em 1em 0.2em 1em;
-    margin-right: 0.5em;
+    background: var(--right-bg);
+    border-radius: var(--border-radius) var(--border-radius) 0.2rem var(--border-radius);
   }
+
   .speaker {
-    font-size: 0.95em;
-    font-weight: bold;
-    margin-bottom: 0.5em;
-    color: #555;
+    font-size: 1rem;
+    font-weight: 700;
+    padding: 0.8rem 1.5rem 0.2rem;
+    color: var(--accent-color);
     letter-spacing: 0.01em;
   }
+
   .bubble {
-    font-size: 1.15em;
-    line-height: 1.7;
-    padding: 0.2em 0;
+    padding: 0.5rem 1.5rem 1.2rem;
     word-break: break-word;
-    max-width: 75ch;
-    font-family: Inter, Roboto, "Open Sans", Arial, sans-serif;
-    transition: background 0.3s;
-    position: relative;
+    font-family: var(--body-font);
+    transition: all var(--transition-speed);
     text-align: left;
   }
+
   .bubble p {
-    margin: 0.7em 0;
+    margin: 0.9rem 0;
+    transition: opacity var(--transition-speed), filter var(--transition-speed);
   }
+
   .bubble.focus-fade p {
-    opacity: 0.25;
+    opacity: 0.3;
     filter: blur(1px);
-    transition: opacity 0.3s, filter 0.3s;
   }
+
   .bubble.focus-fade p.focus-global-current {
     opacity: 1;
     filter: none;
-    background: #fffbe6;
-    border-radius: 0.4em;
-    box-shadow: 0 2px 8px rgba(67, 97, 238, 0.07);
-    transition: background 0.3s, opacity 0.3s, filter 0.3s;
+    background: var(--focus-highlight);
+    padding: 0.5rem;
+    border-radius: 0.4rem;
+    box-shadow: var(--card-shadow);
   }
+
   .nav-buttons {
     display: flex;
     justify-content: center;
-    gap: 1.5em;
-    margin-top: 2em;
+    gap: 2rem;
+    margin: 2.5rem auto;
+    max-width: 800px;
   }
+
   .nav-btn {
-    background: linear-gradient(90deg, #4361ee 0%, #4895ef 100%);
-    color: #fff;
+    background: var(--accent-color);
+    color: white;
     border: none;
-    border-radius: 2em;
-    padding: 0.7em 2.2em;
-    font-size: 1.1em;
+    border-radius: 2rem;
+    padding: 0.8rem 2.2rem;
+    font-size: 1.1rem;
     font-weight: 600;
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(67, 97, 238, 0.08);
+    box-shadow: var(--card-shadow);
     transition: all 0.2s;
     outline: none;
   }
+
   .nav-btn:hover, .nav-btn:focus {
-    background: linear-gradient(90deg, #4895ef 0%, #4361ee 100%);
-    transform: translateY(-2px) scale(1.04);
-    box-shadow: 0 4px 16px rgba(67, 97, 238, 0.13);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(67, 97, 238, 0.2);
   }
+
   .prev-btn {
-    background: linear-gradient(90deg, #b5179e 0%, #7209b7 100%);
+    background: var(--secondary-accent);
   }
-  .prev-btn:hover, .prev-btn:focus {
-    background: linear-gradient(90deg, #7209b7 0%, #b5179e 100%);
+
+  @media (max-width: 768px) {
+    :root {
+      --font-size-base: 16px;
+    }
+    
+    .message {
+      width: 95%;
+    }
+    
+    .readability-controls {
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .nav-buttons {
+      gap: 1rem;
+    }
+    
+    .nav-btn {
+      padding: 0.7rem 1.5rem;
+      font-size: 1rem;
+    }
   }
 </style>
 
@@ -143,13 +245,39 @@
     // DOM elements
     const bionicToggle = document.getElementById("toggle-bionic");
     const focusToggle = document.getElementById("toggle-focus");
-    let bionicActive = false;
-    let focusActive = false;
+    const darkModeToggle = document.getElementById("toggle-dark");
+    const increaseFontBtn = document.getElementById("increase-font");
+    const decreaseFontBtn = document.getElementById("decrease-font");
+    const resetFontBtn = document.getElementById("reset-font");
+    
+    // State
+    let bionicActive = localStorage.getItem("bionicActive") === "true";
+    let focusActive = localStorage.getItem("focusActive") === "true";
+    let darkMode = localStorage.getItem("darkMode") === "true";
+    let fontSize = parseInt(localStorage.getItem("fontSize") || "18");
+    
+    // Initialize states from localStorage
+    if (bionicActive) {
+      bionicToggle.classList.add("active");
+      toggleBionic(true);
+    }
+    
+    if (focusActive) {
+      focusToggle.classList.add("active");
+      toggleFocus(true);
+    }
+    
+    if (darkMode) {
+      darkModeToggle.classList.add("active");
+      document.body.classList.add("dark-mode");
+    }
+    
+    updateFontSize(fontSize);
 
     // Bionic Reading function
     function bionicizeText(text) {
-      return text.replace(/\b(\w{1,3})(\w*)\b/g, (match, p1, p2) =>
-        `<b style='font-weight:600'>${p1}</b>${p2}`
+      return text.replace(/\b(\w{1,3})(\w*)\b/g, (match, p1, p2) => 
+        `<b style='font-weight:700'>${p1}</b>${p2}`
       );
     }
 
@@ -166,32 +294,47 @@
           p.dataset.bionicized = "";
         }
       });
+      localStorage.setItem("bionicActive", active);
     }
 
     // Focus Mode function
     function toggleFocus(active) {
       document.querySelectorAll('.bubble').forEach(bubble => {
         const paragraphs = bubble.querySelectorAll("p");
-        if (active) {
-          bubble.classList.add("focus-fade");
+        bubble.classList.toggle("focus-fade", active);
+        
+        if (active && paragraphs.length > 0) {
           // If no paragraph is focused, focus the first
-          if (![...paragraphs].some(p => p.classList.contains("focus-global-current")) && paragraphs.length > 0) {
+          if (![...paragraphs].some(p => p.classList.contains("focus-global-current"))) {
             paragraphs[0].classList.add("focus-global-current");
           }
+          setTimeout(highlightCenterParagraph, 100);
         } else {
-          bubble.classList.remove("focus-fade");
           paragraphs.forEach(p => p.classList.remove("focus-global-current"));
         }
       });
+      localStorage.setItem("focusActive", active);
+    }
+    
+    // Dark mode toggle
+    function toggleDarkMode(active) {
+      document.body.classList.toggle("dark-mode", active);
+      localStorage.setItem("darkMode", active);
+    }
+    
+    // Font size adjustment
+    function updateFontSize(size) {
+      document.documentElement.style.setProperty('--font-size-base', `${size}px`);
+      localStorage.setItem("fontSize", size);
     }
 
     // Highlight paragraph closest to center when scrolling
     function highlightCenterParagraph() {
       if (!focusActive) return;
-
+      
       const allParagraphs = Array.from(document.querySelectorAll('.bubble p'));
       if (!allParagraphs.length) return;
-
+      
       const winHeight = window.innerHeight;
       const winCenter = winHeight / 2;
       let toHighlight = allParagraphs[0];
@@ -232,11 +375,59 @@
       focusActive = !focusActive;
       focusToggle.classList.toggle("active", focusActive);
       toggleFocus(focusActive);
-      if (focusActive) setTimeout(highlightCenterParagraph, 100);
+    });
+    
+    darkModeToggle.addEventListener("click", () => {
+      darkMode = !darkMode;
+      darkModeToggle.classList.toggle("active", darkMode);
+      toggleDarkMode(darkMode);
+    });
+    
+    increaseFontBtn.addEventListener("click", () => {
+      if (fontSize < 28) {
+        fontSize += 2;
+        updateFontSize(fontSize);
+      }
+    });
+    
+    decreaseFontBtn.addEventListener("click", () => {
+      if (fontSize > 14) {
+        fontSize -= 2;
+        updateFontSize(fontSize);
+      }
+    });
+    
+    resetFontBtn.addEventListener("click", () => {
+      fontSize = 18;
+      updateFontSize(fontSize);
     });
 
     // Scroll events for focus mode
     window.addEventListener("scroll", highlightCenterParagraph, { passive: true });
     window.addEventListener("resize", highlightCenterParagraph);
+    
+    // Keyboard navigation
+    document.addEventListener("keydown", (e) => {
+      // Arrow keys for navigation between messages
+      if (e.key === "ArrowRight") {
+        document.querySelector(".next-btn").click();
+      } else if (e.key === "ArrowLeft") {
+        document.querySelector(".prev-btn").click();
+      }
+      
+      // Toggle features with keyboard shortcuts
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === "b") { // Ctrl+B for bionic reading
+          bionicToggle.click();
+          e.preventDefault();
+        } else if (e.key === "f") { // Ctrl+F for focus mode
+          focusToggle.click();
+          e.preventDefault();
+        } else if (e.key === "d") { // Ctrl+D for dark mode
+          darkModeToggle.click();
+          e.preventDefault();
+        }
+      }
+    });
   });
 </script>
