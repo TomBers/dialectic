@@ -4,7 +4,7 @@ defmodule DialecticWeb.StoryLive do
   def mount(%{"graph_name" => graph_id_uri}, _session, socket) do
     graph_id = URI.decode(graph_id_uri)
 
-    leaf_nodes = GraphManager.find_leaf_nodes(graph_id) |> IO.inspect()
+    leaf_nodes = GraphManager.find_leaf_nodes(graph_id)
 
     ln = List.first(leaf_nodes)
 

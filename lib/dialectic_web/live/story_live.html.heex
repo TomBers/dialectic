@@ -1,9 +1,18 @@
 <h1>Conversation</h1>
+<div class="readability-controls" style="display:flex;gap:0.7em;margin-bottom:1em;justify-content:flex-end;">
+  <button id="toggle-bionic" type="button">Bionic Reading</button>
+  <button id="toggle-focus" type="button">Focus Mode</button>
+</div>
 <div class="conversation">
+
   <%= for {node, idx} <- Enum.with_index(@path) do %>
     <div class={"message " <> if rem(idx, 2) == 0, do: "left", else: "right"}>
-      <div class="speaker"><%= node.user || "Speaker" %>:</div>
-      <div class="bubble"><%= DialecticWeb.Live.TextUtils.full_html(node.content || "") %></div>
+      <div class="speaker">{node.user || "Speaker"}:</div>
+      <div class="bubble" phx-hook="ReadabilityBubble" id="bubble">
+        <%= for paragraph <- Regex.split(~r/(?:\r?\n){2,}|(?<=\.|\!|\?)\s{2,}/, node.content || "", trim: true) do %>
+          <p class="bionic">{paragraph}</p>
+        <% end %>
+      </div>
     </div>
   <% end %>
 </div>
@@ -14,85 +23,344 @@
 </div>
 
 <style>
-.conversation {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5em;
-  margin-bottom: 1em;
-}
-.message {
-  display: flex;
-  flex-direction: column;
-  max-width: 60%;
-  margin-bottom: 1.2em;
-  padding-left: 0.2em;
-  padding-right: 0.2em;
-}
-.message.left {
-  align-self: flex-start;
-  background: #f0f0f0;
-  border-radius: 1em 1em 1em 0.2em;
-  padding: 1.1em 1.5em;
-  margin-left: 0.5em;
-}
-.message.right {
-  align-self: flex-end;
-  background: #d0eaff;
-  border-radius: 1em 1em 0.2em 1em;
-  padding: 1.1em 1.5em;
-  margin-right: 0.5em;
-}
-.speaker {
-  font-size: 0.95em;
-  font-weight: bold;
-  margin-bottom: 0.5em;
-  color: #555;
-  letter-spacing: 0.01em;
-}
-.bubble {
-  font-size: 1.15em;
-  line-height: 2.0;
-  padding-top: 0.2em;
-  padding-bottom: 0.2em;
-  word-break: break-word;
-}
-.bubble p {
-  margin-top: 0.7em;
-  margin-bottom: 0.7em;
-}
-.nav-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 1.5em;
-  margin-top: 2em;
-}
+  .conversation {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+    margin-bottom: 1em;
+  }
+  .readability-controls {
+    display: flex;
+    gap: 0.7em;
+    margin-bottom: 1em;
+    justify-content: flex-end;
+  }
+  .readability-controls button {
+    font-size: 0.95em;
+    padding: 0.3em 1.1em;
+    border-radius: 1.2em;
+    border: 1px solid #bbb;
+    background: #f8f8fa;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .readability-controls button.active {
+    background: #4895ef;
+    color: #fff;
+    border-color: #4895ef;
+  }
+  .message {
+    display: flex;
+    flex-direction: column;
+    max-width: 60%;
+    margin-bottom: 1.2em;
+    padding-left: 0.2em;
+    padding-right: 0.2em;
+  }
+  .message.left {
+    align-self: flex-start;
+    background: #f0f0f0;
+    border-radius: 1em 1em 1em 0.2em;
+    padding: 1.1em 1.5em;
+    margin-left: 0.5em;
+  }
+  .message.right {
+    align-self: flex-end;
+    background: #d0eaff;
+    border-radius: 1em 1em 0.2em 1em;
+    padding: 1.1em 1.5em;
+    margin-right: 0.5em;
+  }
+  .speaker {
+    font-size: 0.95em;
+    font-weight: bold;
+    margin-bottom: 0.5em;
+    color: #555;
+    letter-spacing: 0.01em;
+  }
+  .bubble {
+    font-size: 1.15em;
+    line-height: 1.7;
+    padding-top: 0.2em;
+    padding-bottom: 0.2em;
+    word-break: break-word;
+    max-width: 75ch;
+    font-family: Inter, Roboto, "Open Sans", Arial, sans-serif;
+    transition: background 0.3s;
+    position: relative;
+  }
+  .bubble p {
+    margin-top: 0.7em;
+    margin-bottom: 0.7em;
+  }
+  .bubble.focus-fade p {
+    opacity: 0.25;
+    filter: blur(1px);
+    transition: opacity 0.3s, filter 0.3s;
+  }
+  .bubble.focus-fade p.focus-global-current {
+    opacity: 1;
+    filter: none;
+    background: #fffbe6;
+    border-radius: 0.4em;
+    box-shadow: 0 2px 8px rgba(67, 97, 238, 0.07);
+    transition: background 0.3s, opacity 0.3s, filter 0.3s;
+  }
 
-.nav-btn {
-  background: linear-gradient(90deg, #4361ee 0%, #4895ef 100%);
-  color: #fff;
-  border: none;
-  border-radius: 2em;
-  padding: 0.7em 2.2em;
-  font-size: 1.1em;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(67, 97, 238, 0.08);
-  transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
-  outline: none;
-}
+  .nav-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1.5em;
+    margin-top: 2em;
+  }
 
-.nav-btn:hover, .nav-btn:focus {
-  background: linear-gradient(90deg, #4895ef 0%, #4361ee 100%);
-  transform: translateY(-2px) scale(1.04);
-  box-shadow: 0 4px 16px rgba(67, 97, 238, 0.13);
-}
+  .nav-btn {
+    background: linear-gradient(90deg, #4361ee 0%, #4895ef 100%);
+    color: #fff;
+    border: none;
+    border-radius: 2em;
+    padding: 0.7em 2.2em;
+    font-size: 1.1em;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(67, 97, 238, 0.08);
+    transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+    outline: none;
+  }
 
-.prev-btn {
-  background: linear-gradient(90deg, #b5179e 0%, #7209b7 100%);
-}
+  .nav-btn:hover, .nav-btn:focus {
+    background: linear-gradient(90deg, #4895ef 0%, #4361ee 100%);
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 4px 16px rgba(67, 97, 238, 0.13);
+  }
 
-.prev-btn:hover, .prev-btn:focus {
-  background: linear-gradient(90deg, #7209b7 0%, #b5179e 100%);
-}
+  .prev-btn {
+    background: linear-gradient(90deg, #b5179e 0%, #7209b7 100%);
+  }
 
+  .prev-btn:hover, .prev-btn:focus {
+    background: linear-gradient(90deg, #7209b7 0%, #b5179e 100%);
+  }
 </style>
+<script>
+  window.addEventListener("phx:page-loading-stop", () => {
+    if (window.ReadabilityBubbleHookInitialized) return;
+    window.ReadabilityBubbleHookInitialized = true;
+
+    function bionicizeText(text) {
+      return text.replace(/\b(\w{1,3})(\w*)\b/g, function(match, p1, p2) {
+        return "<b style='font-weight:600'>" + p1 + "</b>" + p2;
+      });
+    }
+
+    function applyBionicToAll() {
+      document.querySelectorAll('.bubble .bionic').forEach(p => {
+        if (!p.dataset.bionicized) {
+          p.innerHTML = bionicizeText(p.textContent);
+          p.dataset.bionicized = "true";
+        }
+      });
+    }
+
+    // Focus Mode logic
+    function setFocusMode(enabled) {
+      document.querySelectorAll('.bubble').forEach(bubble => {
+        let ps = bubble.querySelectorAll("p");
+        if (enabled) {
+          bubble.classList.add("focus-fade");
+          // If no paragraph is focused, focus the first
+          if (![...ps].some(p => p.classList.contains("focus-current")) && ps.length > 0) {
+            ps.forEach(p => p.classList.remove("focus-current"));
+            ps[0].classList.add("focus-current");
+          }
+        } else {
+          bubble.classList.remove("focus-fade");
+          ps.forEach(p => p.classList.remove("focus-current"));
+        }
+      });
+    }
+
+
+
+    let bionicActive = false, focusActive = false, guidedActive = false;
+
+    document.getElementById("toggle-bionic").addEventListener("click", function() {
+      bionicActive = !bionicActive;
+      this.classList.toggle("active", bionicActive);
+      if (bionicActive) applyBionicToAll();
+      else document.querySelectorAll('.bubble .bionic').forEach(p => {
+        p.innerHTML = p.textContent;
+        p.dataset.bionicized = "";
+      });
+    });
+
+    document.getElementById("toggle-focus").addEventListener("click", function() {
+      focusActive = !focusActive;
+      this.classList.toggle("active", focusActive);
+      setFocusMode(focusActive);
+    });
+
+
+
+   // Keyboard navigation for focus mode (global, sequential)
+   document.addEventListener("keydown", function(e) {
+     if (!focusActive) return;
+     const allParagraphs = Array.from(document.querySelectorAll('.bubble p'));
+     if (!allParagraphs.length) return;
+     let idx = typeof window._focusGlobalIdx === "number" ? window._focusGlobalIdx : 0;
+     if (e.key === "ArrowDown" && idx < allParagraphs.length - 1) {
+       allParagraphs[idx].classList.remove("focus-global-current");
+       allParagraphs[idx + 1].classList.add("focus-global-current");
+       window._focusGlobalIdx = idx + 1;
+       e.preventDefault();
+     } else if (e.key === "ArrowUp" && idx > 0) {
+       allParagraphs[idx].classList.remove("focus-global-current");
+       allParagraphs[idx - 1].classList.add("focus-global-current");
+       window._focusGlobalIdx = idx - 1;
+       e.preventDefault();
+     }
+   });
+
+    // Initial bionic if toggled
+    if (bionicActive) applyBionicToAll();
+  });
+</script>
+<script>
+  /**
+   * Bionic Reading: Bold first 1-3 letters of each word.
+   */
+  function bionicizeElement(el) {
+    if (!el) return;
+    // Only bionicize if not already done
+    if (el.dataset.bionicized === "true") return;
+    el.innerHTML = el.innerHTML.replace(/\\b(\\w{1,3})(\\w*)\\b/g, function(match, p1, p2) {
+      // Don't bionicize inside HTML tags
+      if (/<.*?>/.test(match)) return match;
+      return "<b style='font-weight:600'>" + p1 + "</b>" + p2;
+    });
+    el.dataset.bionicized = "true";
+  }
+  function debionicizeElement(el) {
+    if (!el) return;
+    el.innerHTML = el.innerHTML.replace(/<b style=['\\w\\-:; ]+>(\\w{1,3})<\\/b>(\\w*)/g, '$1$2');
+    el.dataset.bionicized = "false";
+  }
+
+  /**
+   * Focus Mode: Fade out all but current paragraph.
+   */
+  function setFocusMode(el, enabled) {
+    if (!el) return;
+    if (enabled) {
+      el.classList.add("focus-fade");
+      let ps = el.querySelectorAll("p");
+      ps.forEach(p => p.classList.remove("focus-current"));
+      if (ps.length > 0) ps[0].classList.add("focus-current");
+    } else {
+      el.classList.remove("focus-fade");
+      let ps = el.querySelectorAll("p");
+      ps.forEach(p => p.classList.remove("focus-current"));
+    }
+  }
+  function focusNextParagraph(el) {
+    if (!el) return;
+    let ps = el.querySelectorAll("p");
+    let idx = Array.from(ps).findIndex(p => p.classList.contains("focus-current"));
+    if (idx >= 0 && idx < ps.length - 1) {
+      ps[idx].classList.remove("focus-current");
+      ps[idx+1].classList.add("focus-current");
+    }
+  }
+  function focusPrevParagraph(el) {
+    if (!el) return;
+    let ps = el.querySelectorAll("p");
+    let idx = Array.from(ps).findIndex(p => p.classList.contains("focus-current"));
+    if (idx > 0) {
+      ps[idx].classList.remove("focus-current");
+      ps[idx-1].classList.add("focus-current");
+    }
+  }
+
+  /**
+   * Guided Reading: Highlight one paragraph at a time, auto-advance.
+   */
+  function setGuidedReading(el, enabled) {
+    if (!el) return;
+    if (enabled) {
+      el.classList.add("guided-reading");
+      let ps = el.querySelectorAll("p");
+      ps.forEach(p => p.classList.remove("guided-current"));
+      if (ps.length > 0) ps[0].classList.add("guided-current");
+    } else {
+      el.classList.remove("guided-reading");
+      let ps = el.querySelectorAll("p");
+      ps.forEach(p => p.classList.remove("guided-current"));
+    }
+  }
+  function guidedAdvance(el) {
+    if (!el) return;
+    let ps = el.querySelectorAll("p");
+    let idx = Array.from(ps).findIndex(p => p.classList.contains("guided-current"));
+    if (idx >= 0 && idx < ps.length - 1) {
+      ps[idx].classList.remove("guided-current");
+      ps[idx+1].classList.add("guided-current");
+      return true;
+    }
+    return false;
+  }
+
+  document.addEventListener("DOMContentLoaded", function() {
+    // Button states
+    let bionicActive = false;
+    let focusActive = false;
+    let guidedActive = false;
+
+    // Get all bubbles
+    function getBubbles() {
+      return document.querySelectorAll(".bubble");
+    }
+
+    // Bionic Reading Toggle
+    document.getElementById("toggle-bionic").addEventListener("click", function() {
+      bionicActive = !bionicActive;
+      this.classList.toggle("active", bionicActive);
+      getBubbles().forEach(bubble => {
+        if (bionicActive) bionicizeElement(bubble);
+        else debionicizeElement(bubble);
+      });
+    });
+
+    // Focus Mode Toggle
+    document.getElementById("toggle-focus").addEventListener("click", function() {
+      focusActive = !focusActive;
+      this.classList.toggle("active", focusActive);
+      getBubbles().forEach(bubble => setFocusMode(bubble, focusActive));
+    });
+
+    // Guided Reading Toggle
+    document.getElementById("toggle-guided").addEventListener("click", function() {
+      guidedActive = !guidedActive;
+      this.classList.toggle("active", guidedActive);
+      getBubbles().forEach(bubble => setGuidedReading(bubble, guidedActive));
+      if (guidedActive) {
+        // Start auto-advance
+        getBubbles().forEach(bubble => {
+          let interval = setInterval(() => {
+            if (!guidedAdvance(bubble)) clearInterval(interval);
+          }, 1200);
+        });
+      }
+    });
+
+    // Keyboard navigation for focus mode
+    document.addEventListener("keydown", function(e) {
+      if (!focusActive) return;
+      let bubbles = getBubbles();
+      if (e.key === "ArrowDown") {
+        bubbles.forEach(bubble => focusNextParagraph(bubble));
+      } else if (e.key === "ArrowUp") {
+        bubbles.forEach(bubble => focusPrevParagraph(bubble));
+      }
+    });
+  });
+</script>
