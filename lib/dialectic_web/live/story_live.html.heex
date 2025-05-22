@@ -30,6 +30,8 @@
     flex-direction: column;
     gap: 0.5em;
     margin-bottom: 1em;
+    max-width: 960px;
+    margin: auto;
   }
   .readability-controls {
     display: flex;
@@ -217,7 +219,7 @@
      // If scroll position is 0, always highlight the first paragraph
      if (window.scrollY === 0) {
        toHighlight = allParagraphs[0];
-     } 
+     }
      // If scrolled to the bottom of the page, always highlight the last paragraph
      else if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 2) {
        toHighlight = allParagraphs[allParagraphs.length - 1];
