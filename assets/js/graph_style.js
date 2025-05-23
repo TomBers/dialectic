@@ -24,8 +24,13 @@ export function graphStyle() {
       style: {
         /* sizing ---------------------------------------------------------- */
         width: 250,
-        height: (n) =>
-          Math.max(Math.min(n.data("content").length, cutoff) - 60, 40),
+        height: (n) => {
+          let content = n.data("content") || "";
+          content = content.replace(/\*\*/g, ""); // Remove all **
+          const base = Math.max(Math.min(content.length, cutoff) - 60, 40);
+          const extra = (content.match(/\n/g) || []).length * 4;
+          return base + extra;
+        },
         "min-width": 60,
         "min-height": 40,
         padding: "12px",
@@ -34,7 +39,8 @@ export function graphStyle() {
 
         /* label ----------------------------------------------------------- */
         label: (ele) => {
-          const fullContent = ele.data("content") || "";
+          let fullContent = ele.data("content") || "";
+          fullContent = fullContent.replace(/\*\*/g, ""); // Remove all **
 
           // Remove "Title:" prefix if present
           const contentWithoutTitle = fullContent.replace(/^Title:\s*/i, "");
