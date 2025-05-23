@@ -123,6 +123,20 @@ defmodule Dialectic.Graph.Vertex do
     collect_parents(graph, vertex, [])
   end
 
+  def find_leaf_nodes(graph) do
+    :digraph.vertices(graph)
+    |> Enum.filter(fn vertex ->
+      :digraph.out_degree(graph, vertex) == 0
+    end)
+    |> Enum.map(fn node_id ->
+      {_, dat} = :digraph.vertex(graph, node_id)
+      add_relatives(dat, graph)
+    end)
+    |> Enum.reject(fn node ->
+      node.compound == true
+    end)
+  end
+
   # Private recursive function that carries along a list of visited vertices.
   defp collect_parents(graph, vertex, visited) do
     # Get immediate parents that haven't been visited yet.

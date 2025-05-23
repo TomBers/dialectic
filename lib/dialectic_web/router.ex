@@ -28,6 +28,7 @@ defmodule DialecticWeb.Router do
     get "/ideas/all", PageController, :ideas_all
     live "/:graph_name", GraphLive
     live "/:graph_name/linear", LinearGraphLive
+    live "/:graph_name/story/:node_id", StoryLive
   end
 
   # Other scopes may use custom stacks.

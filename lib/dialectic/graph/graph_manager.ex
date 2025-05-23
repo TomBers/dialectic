@@ -152,7 +152,7 @@ defmodule GraphManager do
       end)
       |> Enum.reverse()
 
-    {:reply, parents, {graph_struct, graph}}
+    {:reply, [node] ++ parents, {graph_struct, graph}}
   end
 
   def handle_call({:move, {node, direction}}, _, {graph_struct, graph}) do
@@ -188,6 +188,10 @@ defmodule GraphManager do
     {:reply, updated_graph, {graph_struct, updated_graph}}
   end
 
+  def handle_call(:find_leaf_nodes, _, {graph_struct, graph}) do
+    {:reply, Vertex.find_leaf_nodes(graph), {graph_struct, graph}}
+  end
+
   # Client API
   def reset_graph(path) do
     if GraphManager.exists?(path) do
@@ -220,8 +224,8 @@ defmodule GraphManager do
       end
 
     # Check if any parent has a parent field (group membership) set
-    parent_group = 
-      parents 
+    parent_group =
+      parents
       |> Enum.find_value(nil, fn parent ->
         case :digraph.vertex(get_graph(graph_id) |> elem(1), parent.id) do
           {_id, vertex} -> Map.get(vertex, :parent)
@@ -282,5 +286,9 @@ defmodule GraphManager do
 
   def remove_parent(path, node_id) do
     GenServer.call(via_tuple(path), {:change_parent, {node_id, nil}})
+  end
+
+  def find_leaf_nodes(path) do
+    GenServer.call(via_tuple(path), :find_leaf_nodes)
   end
 end

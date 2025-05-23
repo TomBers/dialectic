@@ -168,11 +168,7 @@
             Read as text
           </.link>
         </div>
-        <.live_component
-          module={DialecticWeb.Live.ModalComp}
-          node={@node}
-          id={"moda-comp-" <> @node.id}
-        />
+
         <%= if @node_menu_visible do %>
           <.live_component
             module={NodeComp}
