@@ -80,7 +80,7 @@
 
           <%= for {paragraph, p_idx} <- Enum.with_index(chunked_paragraphs) do %>
             <p class={"bionic #{if p_idx > 0 && rem(p_idx, 3) == 0, do: "paragraph-break", else: ""}"}>
-              {paragraph}
+              {String.replace(paragraph || "", "**", "")}
             </p>
           <% end %>
         <% end %>
