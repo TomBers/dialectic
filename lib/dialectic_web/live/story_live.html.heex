@@ -10,11 +10,79 @@
 </div>
 <div class="conversation">
   <%= for {node, idx} <- Enum.with_index(@path) do %>
-    <div class={"message " <> if rem(idx, 2) == 0, do: "left", else: "right"}>
-      <div class="speaker">{node.user || "Speaker"}</div>
+    <% is_explanation = node.content && String.starts_with?(String.trim(node.content), "Explain:")
+    is_title = node.content && String.starts_with?(String.trim(node.content), "Title:")
+
+    # Extract title and content for title messages
+    {title_text, remaining_content} =
+      if is_title && node.content do
+        trimmed = String.trim(node.content)
+        title_without_prefix = String.replace(trimmed, ~r/^Title:\s*/, "", global: false)
+
+        # Split by first newline
+        case String.split(title_without_prefix, ~r/\r?\n/, parts: 2) do
+          [title_part, content_part] -> {title_part, content_part}
+          # No newline found
+          [only_title] -> {only_title, ""}
+        end
+      else
+        {nil, nil}
+      end
+
+    # Process content to remove prefixes if present
+    processed_content =
+      cond do
+        is_explanation && node.content ->
+          String.replace(String.trim(node.content), ~r/^Explain:\s*/, "", global: false)
+
+        is_title && node.content ->
+          remaining_content
+
+        true ->
+          node.content
+      end %>
+    <div class={"message " <> (if rem(idx, 2) == 0, do: "left", else: "right") <> (if is_explanation, do: " explanation", else: "")}>
+      <div class="speaker">
+        {cond do
+          is_explanation -> "Explanation"
+          is_title -> node.user || "Speaker"
+          true -> node.user || "Speaker"
+        end}
+      </div>
       <div class="bubble" id={"bubble-#{idx}"}>
-        <%= for paragraph <- Regex.split(~r/(?:\r?\n){2,}|(?<=\.|\!|\?)\s{2,}/, node.content || "", trim: true) do %>
-          <p class="bionic">{paragraph}</p>
+        <%= if is_title do %>
+          <h3 class="message-title">{title_text}</h3>
+        <% end %>
+
+        <%= if !is_title || (is_title && String.length(processed_content) > 0) do %>
+          <% # Split content into initial paragraphs
+          initial_paragraphs =
+            Regex.split(~r/(?:\r?\n){2,}|(?<=\.|\!|\?)\s{2,}/, processed_content || "",
+              trim: true
+            )
+
+          # Further chunk paragraphs that are too long
+          chunked_paragraphs =
+            Enum.flat_map(initial_paragraphs, fn paragraph ->
+              # Count sentences in paragraph
+              sentences = Regex.split(~r/(?<=\.|\!|\?)\s+/, paragraph, trim: true)
+              sentence_count = length(sentences)
+
+              if sentence_count > 3 do
+                # Chunk into smaller paragraphs (2-3 sentences each)
+                sentences
+                |> Enum.chunk_every(2)
+                |> Enum.map(fn chunk -> Enum.join(chunk, " ") end)
+              else
+                [paragraph]
+              end
+            end) %>
+
+          <%= for {paragraph, p_idx} <- Enum.with_index(chunked_paragraphs) do %>
+            <p class={"bionic #{if p_idx > 0 && rem(p_idx, 3) == 0, do: "paragraph-break", else: ""}"}>
+              {paragraph}
+            </p>
+          <% end %>
         <% end %>
       </div>
     </div>
@@ -31,6 +99,11 @@
     --right-border: #5f0b87;
     --accent-color: #0747a6;
     --secondary-accent: #5f0b87;
+    --explanation-color: #f5c842;
+    --explanation-text: #845a00;
+    --title-color: #3a5cff;
+    --title-text: #333;
+    --title-bg: transparent;
     --focus-highlight: #fff6d6;
     --border-radius: 1rem;
     --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -49,6 +122,11 @@
     --right-border: #cf9fff;
     --accent-color: #82b1ff;
     --secondary-accent: #cf9fff;
+    --explanation-color: #d4af37;
+    --explanation-text: #f0d078;
+    --title-color: #5c9eff;
+    --title-text: #e0e0e0;
+    --title-bg: transparent;
     --focus-highlight: #584e1b;
     --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
   }
@@ -150,6 +228,38 @@
     # var(--border-radius) var(--border-radius) 0.2rem var(--border-radius);
   }
 
+  .message.explanation {
+    background: linear-gradient(to right, rgba(245, 200, 66, 0.05), transparent);
+    border-left: 4px solid var(--explanation-color);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(245, 200, 66, 0.15);
+  }
+
+  .message.explanation::before {
+    content: "📝";
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    font-size: 1.2rem;
+    opacity: 0.7;
+  }
+
+  .message.explanation .bubble p:first-child {
+    font-weight: 600;
+    color: var(--explanation-text);
+  }
+
+  /* Title message styling */
+  .message-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--title-text);
+    margin: 0.3rem 0 0.8rem 0;
+    padding-bottom: 0.3rem;
+    border-bottom: 1px solid var(--title-color);
+  }
+
   .speaker {
     font-size: 1rem;
     font-weight: 700;
@@ -167,9 +277,14 @@
   }
 
   .bubble p {
-    margin: 0.9rem 0;
+    margin: 0.7rem 0;
     transition: opacity var(--transition-speed), filter var(--transition-speed);
     color: var(--text-color);
+    line-height: 1.5;
+  }
+
+  .paragraph-break {
+    margin-top: 1.2rem;
   }
 
   .bubble.focus-fade p {
