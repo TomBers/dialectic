@@ -242,7 +242,7 @@
                 line-height: 0;
                 background-color: #000;
             }
-            
+
             .hero-image video {
                 width: 100%;
                 border-radius: var(--border-radius);
@@ -508,7 +508,7 @@
                     padding-right: 0;
                     margin-bottom: 3rem;
                 }
-                
+
                 .hero-image {
                     max-width: 90%;
                     margin: 0 auto;
@@ -684,7 +684,17 @@
                             loop
                             playsinline
                             class="expandable-video"
-                            style="height: auto; min-height: 420px; display: block; margin: 0; padding: 0; border: none; vertical-align: top; object-fit: cover; background-color: #000;"
+                            style="
+                                height: auto;
+                                min-height: 420px;
+                                display: block;
+                                margin: 0;
+                                padding: 0;
+                                border: none;
+                                vertical-align: top;
+                                object-fit: cover;
+                                background-color: #000;
+                            "
                         >
                             <source
                                 src="media/videos/MuDG_nav.mp4"
@@ -692,7 +702,12 @@
                             />
                             Your browser does not support the video tag.
                         </video>
-                        <div class="video-overlay" style="z-index: 10; opacity: 0.9;">Click to expand</div>
+                        <div
+                            class="video-overlay"
+                            style="z-index: 10; opacity: 0.9"
+                        >
+                            Click to expand
+                        </div>
                     </div>
                 </div>
             </div>
@@ -960,7 +975,7 @@
                             loop
                             playsinline
                             class="expandable-video"
-                            style="background-color: #000; object-fit: cover;"
+                            style="background-color: #000; object-fit: cover"
                         >
                             <source
                                 src="media/videos/MuDG_nav.mp4"
@@ -995,6 +1010,25 @@
                             />
                             Your browser does not support the video tag.
                         </video>
+                    </div>
+                </div>
+                <div class="showcase">
+                    <div class="showcase-content">
+                        <h3 class="showcase-title">Enhanced Readability</h3>
+                        <p class="showcase-text">
+                            Deep dive on particular conversations within the
+                            graph. Any node can be shown as a conversation.
+                        </p>
+                        <p class="showcase-text">
+                            Adding Focus mode, Low fixation reading and
+                            accessibility features to improve comprehension.
+                        </p>
+                        <a href="https://mudg.fly.dev" class="btn btn-primary"
+                            >Try It Now</a
+                        >
+                    </div>
+                    <div class="showcase-media">
+                        <img src="media/images/conv.webp" alt="Idea Explorer" />
                     </div>
                 </div>
             </div>
@@ -1313,8 +1347,7 @@
             document.addEventListener("DOMContentLoaded", function () {
                 const originalVideo =
                     document.getElementById("expandableVideo");
-                const heroVideo =
-                    document.getElementById("heroVideo");
+                const heroVideo = document.getElementById("heroVideo");
                 const videoModal = document.getElementById("videoModal");
                 const modalVideo = document.getElementById("modalVideo");
                 const closeBtn = document.querySelector(".close-modal");
@@ -1369,13 +1402,13 @@
                 originalVideo.parentElement
                     .querySelector(".video-overlay")
                     .addEventListener("click", openVideoModal);
-                
+
                 heroVideo.addEventListener("click", openHeroVideoModal);
                 heroVideo.parentElement
                     .querySelector(".video-overlay")
                     .addEventListener("click", openHeroVideoModal);
-                
-                closeBtn.addEventListener("click", function() {
+
+                closeBtn.addEventListener("click", function () {
                     videoModal.style.display = "none";
                     modalVideo.pause();
                     // Check which video was playing and resume it
@@ -1395,7 +1428,7 @@
                 originalVideo.addEventListener("mouseout", function () {
                     this.classList.remove("video-hover");
                 });
-                
+
                 heroVideo.addEventListener("mouseover", function () {
                     this.classList.add("video-hover");
                 });
@@ -1403,7 +1436,7 @@
                 heroVideo.addEventListener("mouseout", function () {
                     this.classList.remove("video-hover");
                 });
-                
+
                 heroVideo.addEventListener("mouseover", function () {
                     this.classList.add("video-hover");
                 });
@@ -1460,27 +1493,31 @@
                         closeVideoModal();
                     }
                 });
-                
+
                 // Make sure the video source in modal matches the video that was clicked
-                heroVideo.addEventListener("click", function() {
-                    const modalVideoSource = document.querySelector("#modalVideo source");
+                heroVideo.addEventListener("click", function () {
+                    const modalVideoSource =
+                        document.querySelector("#modalVideo source");
                     modalVideoSource.src = "media/videos/MuDG_nav.mp4";
                     modalVideo.load();
                 });
-                
-                originalVideo.addEventListener("click", function() {
-                    const modalVideoSource = document.querySelector("#modalVideo source");
+
+                originalVideo.addEventListener("click", function () {
+                    const modalVideoSource =
+                        document.querySelector("#modalVideo source");
                     modalVideoSource.src = "media/videos/MuDG_nav.mp4";
                     modalVideo.load();
                 });
-                heroVideo.addEventListener("click", function() {
-                    const modalVideoSource = document.querySelector("#modalVideo source");
+                heroVideo.addEventListener("click", function () {
+                    const modalVideoSource =
+                        document.querySelector("#modalVideo source");
                     modalVideoSource.src = "media/videos/MuDG_nav.mp4";
                     modalVideo.load();
                 });
-                
-                originalVideo.addEventListener("click", function() {
-                    const modalVideoSource = document.querySelector("#modalVideo source");
+
+                originalVideo.addEventListener("click", function () {
+                    const modalVideoSource =
+                        document.querySelector("#modalVideo source");
                     modalVideoSource.src = "media/videos/MuDG_nav.mp4";
                     modalVideo.load();
                 });
