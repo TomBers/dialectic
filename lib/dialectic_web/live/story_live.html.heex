@@ -369,18 +369,18 @@
         allParagraphs.forEach(p => {
           const rect = p.getBoundingClientRect();
           const paraCenter = (rect.top + rect.bottom) / 2;
-          
+
           // Adjust distance calculation to prioritize paragraphs that are fully visible
           let dist = Math.abs(paraCenter - winCenter);
-          
+
           // If paragraph is in viewport, consider it a candidate
           if (rect.top < winHeight && rect.bottom > 0) {
             // If we're near bottom of page and this is the last paragraph, prioritize it
-            if (window.scrollY + winHeight >= document.body.scrollHeight - 50 && 
+            if (window.scrollY + winHeight >= document.body.scrollHeight - 50 &&
                 p === allParagraphs[allParagraphs.length - 1]) {
               dist = 0; // Force selection of last paragraph
             }
-            
+
             if (dist < minDist) {
               minDist = dist;
               toHighlight = p;
@@ -415,14 +415,13 @@
     });
 
     increaseFontBtn.addEventListener("click", () => {
-      if (fontSize < 28) {
         fontSize += 2;
         updateFontSize(fontSize);
-      }
+
     });
 
     decreaseFontBtn.addEventListener("click", () => {
-      if (fontSize > 14) {
+      if (fontSize > 8) {
         fontSize -= 2;
         updateFontSize(fontSize);
       }
@@ -436,7 +435,7 @@
     // Scroll events for focus mode
     window.addEventListener("scroll", highlightCenterParagraph, { passive: true });
     window.addEventListener("resize", highlightCenterParagraph);
-    
+
     // Initial highlighting and ensure bottom paragraphs are selectable
     setTimeout(highlightCenterParagraph, 200);
 
