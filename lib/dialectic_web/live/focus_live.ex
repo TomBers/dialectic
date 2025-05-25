@@ -12,6 +12,8 @@ defmodule DialecticWeb.FocusLive do
     # Ensure graph is started
     {graph_struct, graph} = GraphManager.get_graph(graph_id)
 
+    leaf_nodes = GraphManager.find_leaf_nodes(graph_id)
+
     {_, node} = GraphManager.find_node_by_id(graph_id, "aa3")
 
     path =
@@ -39,7 +41,8 @@ defmodule DialecticWeb.FocusLive do
        user: user,
        form: form,
        sending_message: false,
-       message_text: ""
+       message_text: "",
+       leaf_nodes: leaf_nodes
      )}
   end
 
@@ -77,6 +80,22 @@ defmodule DialecticWeb.FocusLive do
   def handle_event("form_change", %{"message" => %{"message" => message}}, socket) do
     form = to_form(%{"message" => message}, as: :message)
     {:noreply, assign(socket, form: form, message_text: message)}
+  end
+
+  def handle_event("change-path", %{"leaf" => leaf_id}, socket) do
+    graph_id = socket.assigns.graph_id
+    {_, node} = GraphManager.find_node_by_id(graph_id, leaf_id)
+
+    path =
+      GraphManager.path_to_node(graph_id, node)
+      |> Enum.reverse()
+
+    {:noreply,
+     assign(socket,
+       path: path,
+       sending_message: false,
+       current_node: node
+     )}
   end
 
   def handle_info({:stream_chunk, updated_vertex, :node_id, _node_id}, socket) do
