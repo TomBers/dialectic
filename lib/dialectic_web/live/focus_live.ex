@@ -12,7 +12,7 @@ defmodule DialecticWeb.FocusLive do
     # Ensure graph is started
     {graph_struct, graph} = GraphManager.get_graph(graph_id)
 
-    {_, node} = GraphManager.find_node_by_id(graph_id, "2")
+    {_, node} = GraphManager.find_node_by_id(graph_id, "aa3")
 
     path =
       GraphManager.path_to_node(graph_id, node)

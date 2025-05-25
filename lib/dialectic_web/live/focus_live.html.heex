@@ -54,14 +54,16 @@
   <div class="chat-input-container">
     <.form for={@form} phx-submit="send_message" phx-change="form_change" class="chat-form">
       <div class="input-wrapper">
-        <.input
-          field={@form[:message]}
-          type="textarea"
-          placeholder="Ask a question or share your thoughts... (Press Enter to send)"
-          class="chat-input"
+        <input
+          type="text"
+          name="message[message]"
+          id="message_message"
+          value=""
+          class="chat-input border-zinc-300 focus:border-zinc-800"
           rows="1"
+          placeholder="Ask a question or share your thoughts... (Press Enter to send)"
           phx-hook="AutoResize"
-          value={@message_text}
+          style="height: 56px; overflow-y: hidden;"
         />
         <button
           type="submit"
