@@ -1,8 +1,8 @@
 defmodule DialecticWeb.FocusLive do
   use DialecticWeb, :live_view
-  alias DialecticWeb.Live.TextUtils
   alias Dialectic.Graph.GraphActions
   alias Dialectic.DbActions.DbWorker
+  alias DialecticWeb.ConvComp
 
   on_mount {DialecticWeb.UserAuth, :mount_current_user}
 
@@ -14,7 +14,8 @@ defmodule DialecticWeb.FocusLive do
 
     leaf_nodes = GraphManager.find_leaf_nodes(graph_id)
 
-    {_, node} = GraphManager.find_node_by_id(graph_id, "aa3")
+    {_, node} =
+      GraphManager.find_node_by_id(graph_id, List.first(leaf_nodes) |> Map.get(:id))
 
     path =
       GraphManager.path_to_node(graph_id, node)
@@ -41,7 +42,6 @@ defmodule DialecticWeb.FocusLive do
        user: user,
        form: form,
        sending_message: false,
-       message_text: "",
        leaf_nodes: leaf_nodes
      )}
   end
@@ -56,8 +56,6 @@ defmodule DialecticWeb.FocusLive do
     {_graph, user_node} = GraphActions.comment({graph_id, current_node, user}, message)
 
     {_graph, node} = GraphActions.answer({graph_id, user_node, user})
-
-    DbWorker.save_graph(graph_id)
 
     # Clear the form and set sending state
     form = to_form(%{"message" => ""}, as: :message)
@@ -124,6 +122,15 @@ defmodule DialecticWeb.FocusLive do
      )}
   end
 
+  def handle_info({:llm_request_complete, _node_id}, socket) do
+    # Make sure that the graph is saved to the database
+    # We pass false so that it does not respect the queue exlusion period and stores the response immediately.
+    DbWorker.save_graph(socket.assigns.graph_id, false)
+
+    leaf_nodes = GraphManager.find_leaf_nodes(socket.assigns.graph_id)
+    {:noreply, assign(socket, leaf_nodes: leaf_nodes)}
+  end
+
   def handle_info(_msg, socket) do
     {:noreply, socket}
   end
@@ -134,12 +141,4 @@ defmodule DialecticWeb.FocusLive do
   #     user -> user.email || user.id || "user"
   #   end
   # end
-
-  defp get_message_type(node, index) do
-    case node.class do
-      "user" -> "user"
-      "answer" -> "assistant"
-      _ -> if rem(index, 2) == 0, do: "user", else: "assistant"
-    end
-  end
 end
