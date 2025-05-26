@@ -1,8 +1,7 @@
 <div class="chat-container">
   <div class="chat-header">
-    <h1 class="text-xl font-semibold text-gray-800">Conversation</h1>
     <div class="text-sm text-gray-500">
-      Graph: {@graph_id} | Node: {@current_node.id}
+      {@graph_id} | Node: {@current_node.id}
     </div>
   </div>
 
@@ -59,7 +58,7 @@
           name="message[message]"
           id="message_message"
           value=""
-          class="chat-input border-zinc-300 focus:border-zinc-800"
+          class="chat-input focus:outline-none focus:ring-0 focus:border-transparent"
           rows="1"
           placeholder="Ask a question or share your thoughts... (Press Enter to send)"
           phx-hook="AutoResize"

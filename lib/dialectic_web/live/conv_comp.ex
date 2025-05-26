@@ -9,7 +9,6 @@ defmodule DialecticWeb.ConvComp do
       |> assign(assigns)
       # Default cutoff length
       |> assign_new(:cut_off, fn -> 500 end)
-      |> assign_new(:message_text, fn -> "" end)
 
     {:ok, socket}
   end

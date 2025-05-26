@@ -40,7 +40,8 @@ defmodule DialecticWeb.FocusLive do
        current_node: node,
        user: user,
        form: form,
-       sending_message: false
+       sending_message: false,
+       message_text: ""
      )}
   end
 
