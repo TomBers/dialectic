@@ -51,13 +51,6 @@
     <% end %>
   </div>
 
-  <div>
-    Leaf nodes:
-    <%= for leaf <- @leaf_nodes do %>
-      <.button phx-click="change-path" phx-value-leaf={leaf.id}>{leaf.id}</.button>
-    <% end %>
-  </div>
-
   <div class="chat-input-container">
     <.form for={@form} phx-submit="send_message" phx-change="form_change" class="chat-form">
       <div class="input-wrapper">

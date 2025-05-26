@@ -6,16 +6,15 @@ defmodule DialecticWeb.FocusLive do
 
   on_mount {DialecticWeb.UserAuth, :mount_current_user}
 
-  def mount(%{"graph_name" => graph_id_uri}, _session, socket) do
+  def mount(%{"graph_name" => graph_id_uri, "node_id" => node_id_uri}, _session, socket) do
     graph_id = URI.decode(graph_id_uri)
+    node_id = URI.decode(node_id_uri)
 
     # Ensure graph is started
     {graph_struct, graph} = GraphManager.get_graph(graph_id)
 
-    leaf_nodes = GraphManager.find_leaf_nodes(graph_id)
-
     {_, node} =
-      GraphManager.find_node_by_id(graph_id, List.first(leaf_nodes) |> Map.get(:id))
+      GraphManager.find_node_by_id(graph_id, node_id)
 
     path =
       GraphManager.path_to_node(graph_id, node)
@@ -41,8 +40,7 @@ defmodule DialecticWeb.FocusLive do
        current_node: node,
        user: user,
        form: form,
-       sending_message: false,
-       leaf_nodes: leaf_nodes
+       sending_message: false
      )}
   end
 
@@ -80,22 +78,6 @@ defmodule DialecticWeb.FocusLive do
     {:noreply, assign(socket, form: form, message_text: message)}
   end
 
-  def handle_event("change-path", %{"leaf" => leaf_id}, socket) do
-    graph_id = socket.assigns.graph_id
-    {_, node} = GraphManager.find_node_by_id(graph_id, leaf_id)
-
-    path =
-      GraphManager.path_to_node(graph_id, node)
-      |> Enum.reverse()
-
-    {:noreply,
-     assign(socket,
-       path: path,
-       sending_message: false,
-       current_node: node
-     )}
-  end
-
   def handle_info({:stream_chunk, updated_vertex, :node_id, _node_id}, socket) do
     # Refresh the conversation path when nodes are updated
     graph_id = socket.assigns.graph_id
@@ -127,8 +109,7 @@ defmodule DialecticWeb.FocusLive do
     # We pass false so that it does not respect the queue exlusion period and stores the response immediately.
     DbWorker.save_graph(socket.assigns.graph_id, false)
 
-    leaf_nodes = GraphManager.find_leaf_nodes(socket.assigns.graph_id)
-    {:noreply, assign(socket, leaf_nodes: leaf_nodes)}
+    {:noreply, socket}
   end
 
   def handle_info(_msg, socket) do
