@@ -45,49 +45,28 @@ defmodule DialecticWeb.FocusLive do
      )}
   end
 
-  def handle_event("send_message", %{"message" => %{"message" => message}}, socket)
-      when message != "" do
-    graph_id = socket.assigns.graph_id
-    current_node = socket.assigns.current_node
-    user = socket.assigns.user
-
-    # Create user message node
-    {_graph, user_node} = GraphActions.comment({graph_id, current_node, user}, message)
-
-    {_graph, node} = GraphActions.answer({graph_id, user_node, user})
-
-    # Clear the form and set sending state
-    form = to_form(%{"message" => ""}, as: :message)
-
-    # Update current_node to the user_node for proper threading
-    path =
-      GraphManager.path_to_node(graph_id, node)
-      |> Enum.reverse()
-
-    {:noreply,
-     assign(socket,
-       form: form,
-       sending_message: true,
-       current_node: node,
-       path: path,
-       message_text: ""
-     )}
-  end
-
   def handle_event("form_change", %{"message" => %{"message" => message}}, socket) do
     form = to_form(%{"message" => message}, as: :message)
     {:noreply, assign(socket, form: form, message_text: message)}
   end
 
+  def handle_event("send_message", %{"message" => %{"message" => message}}, socket)
+      when message != "" do
+    update_conversation(socket, message)
+  end
+
   def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}} = params, socket) do
+    prefix = params["prefix"] || ""
+    update_conversation(socket, answer, prefix)
+  end
+
+  def update_conversation(socket, message, prefix \\ "") do
     graph_id = socket.assigns.graph_id
     current_node = socket.assigns.current_node
     user = socket.assigns.user
 
     # Create user message node
-
-    prefix = params["prefix"] || ""
-    {_graph, user_node} = GraphActions.comment({graph_id, current_node, user}, answer, prefix)
+    {_graph, user_node} = GraphActions.comment({graph_id, current_node, user}, message, prefix)
 
     {_graph, node} = GraphActions.answer({graph_id, user_node, user})
 

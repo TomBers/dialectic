@@ -35,68 +35,21 @@ hooks.Graph = graphHook;
 hooks.HighlightNode = highlightNodeHook;
 hooks.PrintConversation = printConversationHook;
 
-// Auto-resize textarea hook
-hooks.AutoResize = {
-  mounted() {
-    this.resize();
-    
-    this.el.addEventListener("input", () => {
-      this.resize();
-    });
-    
-    // Handle enter key to submit form
-    this.el.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        const form = this.el.closest("form");
-        if (form) {
-          form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
-        }
-      }
-    });
-  },
-  
-  updated() {
-    this.resize();
-  },
-  
-  resize() {
-    // Reset height to auto to get the correct scrollHeight
-    this.el.style.height = "auto";
-    
-    // Set height based on content, with min and max constraints
-    const minHeight = 48; // matches CSS min-height
-    const maxHeight = 150; // matches CSS max-height
-    const scrollHeight = this.el.scrollHeight;
-    
-    if (scrollHeight > maxHeight) {
-      this.el.style.height = maxHeight + "px";
-      this.el.style.overflowY = "auto";
-    } else if (scrollHeight < minHeight) {
-      this.el.style.height = minHeight + "px";
-      this.el.style.overflowY = "hidden";
-    } else {
-      this.el.style.height = scrollHeight + "px";
-      this.el.style.overflowY = "hidden";
-    }
-  }
-};
-
 // Chat scroll management hook
 hooks.ChatScroll = {
   mounted() {
     this.scrollToBottom();
   },
-  
+
   updated() {
     this.scrollToBottom();
   },
-  
+
   scrollToBottom() {
     requestAnimationFrame(() => {
       this.el.scrollTop = this.el.scrollHeight;
     });
-  }
+  },
 };
 
 let csrfToken = document
