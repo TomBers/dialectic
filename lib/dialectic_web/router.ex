@@ -29,6 +29,7 @@ defmodule DialecticWeb.Router do
     live "/:graph_name", GraphLive
     live "/:graph_name/linear", LinearGraphLive
     live "/:graph_name/story/:node_id", StoryLive
+    live "/:graph_name/focus/:node_id", FocusLive
   end
 
   # Other scopes may use custom stacks.

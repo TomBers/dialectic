@@ -112,9 +112,8 @@ defmodule DialecticWeb.NoteMenuComp do
         </.link>
 
         <.link
-          navigate={ @graph_id <> "/story/" <> @node.id}
+          navigate={~p"/#{@graph_id}/story/#{@node.id}"}
           tabindex="-1"
-          target="_blank"
           class="bg-blue-50 text-blue-700 hover:bg-blue-100 px-2 py-0.5 rounded-full text-xs font-medium transition-colors flex items-center"
         >
           <svg
@@ -132,6 +131,27 @@ defmodule DialecticWeb.NoteMenuComp do
             />
           </svg>
           Conversation
+        </.link>
+        <.link
+          navigate={~p"/#{@graph_id}/focus/#{@node.id}"}
+          tabindex="-1"
+          class="bg-blue-50 text-blue-700 hover:bg-blue-100 px-2 py-0.5 rounded-full text-xs font-medium transition-colors flex items-center"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-3 w-3 mr-1"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+            />
+          </svg>
+          Focus
         </.link>
       </div>
     </div>

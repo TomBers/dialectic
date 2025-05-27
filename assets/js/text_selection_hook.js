@@ -35,29 +35,30 @@ const textSelectionHook = {
   },
 
   handleSelection(event) {
-    // Prevent double handling of the same selection
-    const selection = window.getSelection();
-    const selectionActionsEl = this.el.querySelector(".selection-actions");
+    // Add small delay to ensure selection is properly registered
+    setTimeout(() => {
+      const selection = window.getSelection();
+      const selectionActionsEl = this.el.querySelector(".selection-actions");
 
-    if (!selectionActionsEl) return;
+      if (!selectionActionsEl) return;
 
-    // Check if selection is empty or not within this component
-    if (selection.isCollapsed || !this.isSelectionInComponent(selection)) {
-      this.hideSelectionActions();
-      return;
-    }
+      // Check if selection is empty or not within this component
+      if (selection.isCollapsed || !this.isSelectionInComponent(selection)) {
+        this.hideSelectionActions();
+        return;
+      }
 
-    const selectedText = selection.toString().trim();
-    if (selectedText.length === 0) {
-      this.hideSelectionActions();
-      return;
-    }
+      const selectedText = selection.toString().trim();
+      if (selectedText.length === 0) {
+        this.hideSelectionActions();
+        return;
+      }
 
-    // If we're not the closest container to the selection, don't show our button
-    if (!this.isClosestSelectionContainer()) {
-      this.hideSelectionActions();
-      return;
-    }
+      // If we're not the closest container to the selection, don't show our button
+      if (!this.isClosestSelectionContainer()) {
+        this.hideSelectionActions();
+        return;
+      }
 
     // Get the range and its bounding rectangle
     const range = selection.getRangeAt(0);
@@ -66,10 +67,6 @@ const textSelectionHook = {
     // Get the container's bounding rectangle
     const containerRect = this.el.getBoundingClientRect();
 
-    // Always consider the container's scroll position
-    const containerScrollTop = this.el.scrollTop || 0;
-    const containerScrollLeft = this.el.scrollLeft || 0;
-
     // Make the button visible so we can measure its width
     selectionActionsEl.classList.remove("hidden");
 
@@ -77,38 +74,36 @@ const textSelectionHook = {
     const buttonWidth = selectionActionsEl.offsetWidth;
     const buttonHeight = selectionActionsEl.offsetHeight;
 
-    // Calculate vertical position (below the selection)
-    const top =
-      rect.bottom - containerRect.top + window.scrollY - containerScrollTop;
+    // Calculate position relative to the container
+    // Position below the selection with some padding
+    const top = rect.bottom - containerRect.top + 8;
 
-    // Calculate initial horizontal position (centered on selection end)
-    let leftPos =
-      rect.right - containerRect.left - buttonWidth / 2 + containerScrollLeft;
+    // Center the button on the selection, but keep it within bounds
+    let leftPos = rect.left + (rect.width / 2) - (buttonWidth / 2) - containerRect.left;
 
-    // Ensure button stays within container bounds
-    // First, make sure it doesn't go off the left edge
-    leftPos = Math.max(5, leftPos);
-
-    // Then, make sure it doesn't go off the right edge
-    // We need to consider the container's width minus button width
-    const maxLeftPos = containerRect.width - buttonWidth - 5;
-    leftPos = Math.min(maxLeftPos, leftPos);
+    // Ensure button stays within container bounds with padding
+    const padding = 8;
+    leftPos = Math.max(padding, leftPos);
+    leftPos = Math.min(this.el.clientWidth - buttonWidth - padding, leftPos);
 
     // Apply the calculated positions
     selectionActionsEl.style.top = `${top}px`;
     selectionActionsEl.style.left = `${leftPos}px`;
 
-    // Set up the button to send the selected text to the server
-    const actionButton = selectionActionsEl.querySelector("button");
-    actionButton.onclick = () => {
-      this.pushEvent("reply-and-answer", {
-        vertex: { content: selectedText },
-        prefix: "Explain: ",
-      });
+      // Set up the button to send the selected text to the server
+      const actionButton = selectionActionsEl.querySelector("button");
+      if (actionButton) {
+        actionButton.onclick = () => {
+          this.pushEvent("reply-and-answer", {
+            vertex: { content: selectedText },
+            prefix: "Explain: ",
+          });
 
-      // Hide the action button after clicking
-      this.hideSelectionActions();
-    };
+          // Hide the action button after clicking
+          this.hideSelectionActions();
+        };
+      }
+    }, 10); // 10ms delay
   },
 
   isSelectionInComponent(selection) {

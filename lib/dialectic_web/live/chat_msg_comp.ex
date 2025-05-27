@@ -38,7 +38,7 @@ defmodule DialecticWeb.ChatMsgComp do
 
       <div class="proposition flex-1 max-w-none relative">
         <div
-          class="summary-content"
+          class="summary-content relative"
           id={"summary-content-" <> @node.id}
           phx-hook="TextSelectionHook"
           data-node-id={@node.id}

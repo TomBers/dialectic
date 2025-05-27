@@ -10,17 +10,18 @@ defmodule DialecticWeb.NodeComp do
       id={"node-menu-" <> @node_id}
       class="flex flex-col relative"
       phx-hook="TextSelectionHook"
+      data-node-id={@node.id}
       style="max-height: 100vh; display: flex; flex-direction: column;"
     >
       <%= if String.length(@node.content) > 0 do %>
         <div
           class={[
-            "flex-grow overflow-auto pb-4"
+            "flex-grow overflow-auto pb-4 pt-4"
           ]}
           id={"tt-node-" <> @node.id}
           style="max-height: calc(100vh - 250px);"
         >
-          <div class="summary-content" id={"tt-summary-content-" <> @node.id} data-node-id={@node.id}>
+          <div class="summary-content" id={"tt-summary-content-" <> @node.id}>
             <article class={[
               "prose prose-stone prose-md max-w-none selection-content pl-2 border-l-4 w-full",
               ColUtils.message_border_class(@node.class)
