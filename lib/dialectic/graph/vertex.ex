@@ -8,8 +8,7 @@ defmodule Dialectic.Graph.Vertex do
     "assumption",
     "premise",
     "conclusion",
-    "user",
-    "branch"
+    "user"
   ]
   # Define a custom type for class validation
   # @type class :: "assumption" | "premise" | "conclusion"

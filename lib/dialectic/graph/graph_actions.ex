@@ -32,17 +32,6 @@ defmodule Dialectic.Graph.GraphActions do
     )
   end
 
-  # TODO - think how to track nodes
-  # def branch_node({graph_id, node, user}, b_indx) do
-  #   GraphManager.add_child(
-  #     graph_id,
-  #     [node],
-  #     fn _ -> "" <> b_indx end,
-  #     "branch",
-  #     user
-  #   )
-  # end
-
   def answer({graph_id, node, user}) do
     GraphManager.add_child(
       graph_id,
