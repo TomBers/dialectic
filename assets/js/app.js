@@ -26,6 +26,7 @@ import textSelectionHook from "./text_selection_hook.js";
 import graphHook from "./graph_hook.js";
 import highlightNodeHook from "./highlight_node_hook.js";
 import printConversationHook from "./print_conversation_hook.js";
+import storyReadabilityHook from "./story_readability_hook.js";
 
 let hooks = {};
 
@@ -34,6 +35,7 @@ hooks.TextSelectionHook = textSelectionHook;
 hooks.Graph = graphHook;
 hooks.HighlightNode = highlightNodeHook;
 hooks.PrintConversation = printConversationHook;
+hooks.StoryReadability = storyReadabilityHook;
 
 // Chat scroll management hook
 hooks.ChatScroll = {

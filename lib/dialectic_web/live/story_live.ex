@@ -14,6 +14,6 @@ defmodule DialecticWeb.StoryLive do
       GraphManager.path_to_node(graph_id, node)
       |> Enum.reverse()
 
-    {:ok, assign(socket, graph_id: graph_id, path: path)}
+    {:ok, assign(socket, graph_id: graph_id, node_id: node_id, path: path)}
   end
 end
