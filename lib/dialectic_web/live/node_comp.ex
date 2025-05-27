@@ -16,7 +16,7 @@ defmodule DialecticWeb.NodeComp do
       <%= if String.length(@node.content) > 0 do %>
         <div
           class={[
-            "flex-grow overflow-auto pb-4"
+            "flex-grow overflow-auto pb-4 pt-4"
           ]}
           id={"tt-node-" <> @node.id}
           style="max-height: calc(100vh - 250px);"
