@@ -79,6 +79,49 @@ defmodule DialecticWeb.FocusLive do
     {:noreply, assign(socket, form: form, message_text: message)}
   end
 
+  def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}} = params, socket) do
+    graph_id = socket.assigns.graph_id
+    current_node = socket.assigns.current_node
+    user = socket.assigns.user
+
+    # Create user message node
+
+    prefix = params["prefix"] || ""
+    {_graph, user_node} = GraphActions.comment({graph_id, current_node, user}, answer, prefix)
+
+    {_graph, node} = GraphActions.answer({graph_id, user_node, user})
+
+    # Clear the form and set sending state
+    form = to_form(%{"message" => ""}, as: :message)
+
+    # Update current_node to the user_node for proper threading
+    path =
+      GraphManager.path_to_node(graph_id, node)
+      |> Enum.reverse()
+
+    {:noreply,
+     assign(socket,
+       form: form,
+       sending_message: true,
+       current_node: node,
+       path: path,
+       message_text: ""
+     )}
+
+    # if !socket.assigns.can_edit do
+    #   {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    # else
+    #   prefix = params["prefix"] || ""
+    #   #  Add a Reply Node and an Answer node
+    #   {_graph, node} = GraphActions.comment(graph_action_params(socket), answer, prefix)
+
+    #   update_graph(
+    #     socket,
+    #     GraphActions.answer(graph_action_params(socket, node)),
+    #     "answer"
+    #   )
+  end
+
   def handle_info({:stream_chunk, updated_vertex, :node_id, _node_id}, socket) do
     # Refresh the conversation path when nodes are updated
     graph_id = socket.assigns.graph_id
