@@ -68,10 +68,13 @@
 /* Add to your app.css */
 .selection-actions {
     transition: opacity 0.2s ease;
+    z-index: 1000;
+    pointer-events: auto;
 }
 
 .selection-actions button {
     white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 /* For touch devices */
