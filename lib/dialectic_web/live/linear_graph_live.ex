@@ -10,7 +10,7 @@ defmodule DialecticWeb.LinearGraphLive do
       Dialectic.Linear.ThreadedConv.prepare_conversation(graph)
       |> Enum.reject(&(Map.get(&1, :compound, false) == true))
 
-    {:ok, assign(socket, conv: conv, graph_id: graph_id, hidden: Enum.map(conv, & &1.id))}
+    {:ok, assign(socket, conv: conv, graph_id: graph_id, hidden: [])}
   end
 
   def handle_event("toggle_node", %{"node-id" => node_id}, socket) do
