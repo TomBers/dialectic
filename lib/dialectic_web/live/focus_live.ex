@@ -107,19 +107,6 @@ defmodule DialecticWeb.FocusLive do
        path: path,
        message_text: ""
      )}
-
-    # if !socket.assigns.can_edit do
-    #   {:noreply, socket |> put_flash(:error, "This graph is locked")}
-    # else
-    #   prefix = params["prefix"] || ""
-    #   #  Add a Reply Node and an Answer node
-    #   {_graph, node} = GraphActions.comment(graph_action_params(socket), answer, prefix)
-
-    #   update_graph(
-    #     socket,
-    #     GraphActions.answer(graph_action_params(socket, node)),
-    #     "answer"
-    #   )
   end
 
   def handle_info({:stream_chunk, updated_vertex, :node_id, _node_id}, socket) do
