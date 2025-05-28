@@ -33,6 +33,22 @@
                 <% end %>
               </span>
               <span class="node-id">ID: {node.id}</span>
+              <%= if node.id != @current_node.id do %>
+                <span class="node-actions">
+                  <.link
+                    navigate={~p"/#{@graph_id}?node=#{node.id}"}
+                    class="text-xs font-medium text-white hover:text-gray-200 bg-gray-700 hover:bg-gray-800 px-1.5 py-0.5 rounded mr-1"
+                  >
+                    graph
+                  </.link>
+                  <.link
+                    navigate={"/#{@graph_id}/focus/#{node.id}"}
+                    class="text-xs font-medium text-white hover:text-gray-200 bg-gray-700 hover:bg-gray-800 px-1.5 py-0.5 rounded"
+                  >
+                    branch
+                  </.link>
+                </span>
+              <% end %>
             </div>
           </div>
           <div class="selection-actions hidden absolute bg-white shadow-md rounded-md p-1 z-10">
