@@ -10,8 +10,23 @@ defmodule DialecticWeb.FocusLive do
     graph_id = URI.decode(graph_id_uri)
     node_id = URI.decode(node_id_uri)
 
+    user =
+      case socket.assigns.current_user do
+        nil -> "Anon"
+        _ -> socket.assigns.current_user.email
+      end
+
     # Ensure graph is started
     {graph_struct, graph} = GraphManager.get_graph(graph_id)
+
+    sending_message =
+      if :digraph.no_vertices(graph) == 1 do
+        {_, first_node} = :digraph.vertex(graph, "1")
+        GraphActions.answer({graph_id, first_node, user})
+        true
+      else
+        false
+      end
 
     {_, node} =
       GraphManager.find_node_by_id(graph_id, node_id)
@@ -25,12 +40,6 @@ defmodule DialecticWeb.FocusLive do
 
     form = to_form(%{"message" => ""}, as: :message)
 
-    user =
-      case socket.assigns.current_user do
-        nil -> "Anon"
-        _ -> socket.assigns.current_user.email
-      end
-
     {:ok,
      assign(socket,
        graph: graph,
@@ -40,7 +49,7 @@ defmodule DialecticWeb.FocusLive do
        current_node: node,
        user: user,
        form: form,
-       sending_message: false,
+       sending_message: sending_message,
        message_text: ""
      )}
   end
@@ -109,7 +118,6 @@ defmodule DialecticWeb.FocusLive do
     {:noreply,
      assign(socket,
        path: path,
-       sending_message: false,
        current_node: updated_current_node
      )}
   end
@@ -119,7 +127,10 @@ defmodule DialecticWeb.FocusLive do
     # We pass false so that it does not respect the queue exlusion period and stores the response immediately.
     DbWorker.save_graph(socket.assigns.graph_id, false)
 
-    {:noreply, socket}
+    {:noreply,
+     assign(socket,
+       sending_message: false
+     )}
   end
 
   def handle_info(_msg, socket) do
