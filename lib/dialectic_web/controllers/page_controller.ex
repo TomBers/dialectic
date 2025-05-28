@@ -23,7 +23,7 @@ defmodule DialecticWeb.PageController do
     case Graphs.create_new_graph(title, conn.assigns.current_user) do
       {:ok, _} ->
         conn
-        |> redirect(to: ~p"/#{title}")
+        |> redirect(to: ~p"/#{title}/focus/1")
 
       _ ->
         conn |> put_flash(:error, "Error creating graph") |> redirect(to: ~p"/")

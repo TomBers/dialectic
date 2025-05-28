@@ -10,11 +10,26 @@ defmodule DialecticWeb.FocusLive do
     graph_id = URI.decode(graph_id_uri)
     node_id = URI.decode(node_id_uri)
 
+    user =
+      case socket.assigns.current_user do
+        nil -> "Anon"
+        _ -> socket.assigns.current_user.email
+      end
+
     # Ensure graph is started
     {graph_struct, graph} = GraphManager.get_graph(graph_id)
 
-    {_, node} =
-      GraphManager.find_node_by_id(graph_id, node_id)
+    {node, sending_message} =
+      if connected?(socket) && :digraph.no_vertices(graph) == 1 do
+        {_, first_node} = :digraph.vertex(graph, "1")
+        {_, node} = GraphActions.answer({graph_id, first_node, user})
+        {node, true}
+      else
+        {_, node} =
+          GraphManager.find_node_by_id(graph_id, node_id)
+
+        {node, false}
+      end
 
     path =
       GraphManager.path_to_node(graph_id, node)
@@ -25,12 +40,6 @@ defmodule DialecticWeb.FocusLive do
 
     form = to_form(%{"message" => ""}, as: :message)
 
-    user =
-      case socket.assigns.current_user do
-        nil -> "Anon"
-        _ -> socket.assigns.current_user.email
-      end
-
     {:ok,
      assign(socket,
        graph: graph,
@@ -40,7 +49,7 @@ defmodule DialecticWeb.FocusLive do
        current_node: node,
        user: user,
        form: form,
-       sending_message: false,
+       sending_message: sending_message,
        message_text: ""
      )}
   end
@@ -91,26 +100,18 @@ defmodule DialecticWeb.FocusLive do
   def handle_info({:stream_chunk, updated_vertex, :node_id, _node_id}, socket) do
     # Refresh the conversation path when nodes are updated
     graph_id = socket.assigns.graph_id
-    current_node = socket.assigns.current_node
+    # current_node = socket.assigns.current_node
 
     # Get updated path from the root conversation node
     path =
-      GraphManager.path_to_node(graph_id, current_node)
+      GraphManager.path_to_node(graph_id, updated_vertex)
       |> Enum.reverse()
-
-    # If this is the AI response we just generated, update current_node to it
-    updated_current_node =
-      if updated_vertex.class == "answer" do
-        updated_vertex
-      else
-        current_node
-      end
 
     {:noreply,
      assign(socket,
        path: path,
        sending_message: false,
-       current_node: updated_current_node
+       current_node: updated_vertex
      )}
   end
 

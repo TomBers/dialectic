@@ -40,11 +40,6 @@ defmodule DialecticWeb.GraphLive do
 
     {graph_struct, graph} = GraphManager.get_graph(graph_id)
 
-    if :digraph.no_vertices(graph) == 1 do
-      {_, first_node} = :digraph.vertex(graph, "1")
-      GraphActions.answer({graph_id, first_node, user})
-    end
-
     {_, node} = :digraph.vertex(graph, node_id)
     changeset = GraphActions.create_new_node(user) |> Vertex.changeset()
 
