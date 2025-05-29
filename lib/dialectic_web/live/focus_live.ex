@@ -19,39 +19,43 @@ defmodule DialecticWeb.FocusLive do
     # Ensure graph is started
     {graph_struct, graph} = GraphManager.get_graph(graph_id)
 
-    {node, sending_message} =
-      if connected?(socket) && :digraph.no_vertices(graph) == 1 do
-        {_, first_node} = :digraph.vertex(graph, "1")
-        {_, node} = GraphActions.answer({graph_id, first_node, user})
-        {node, true}
-      else
-        {_, node} =
-          GraphManager.find_node_by_id(graph_id, node_id)
+    if !graph_struct.is_public do
+      {:ok, socket |> put_flash(:error, "Graph is private") |> redirect(to: ~p"/#{graph_id}")}
+    else
+      {node, sending_message} =
+        if connected?(socket) && :digraph.no_vertices(graph) == 1 do
+          {_, first_node} = :digraph.vertex(graph, "1")
+          {_, node} = GraphActions.answer({graph_id, first_node, user})
+          {node, true}
+        else
+          {_, node} =
+            GraphManager.find_node_by_id(graph_id, node_id)
 
-        {node, false}
-      end
+          {node, false}
+        end
 
-    path =
-      GraphManager.path_to_node(graph_id, node)
-      |> Enum.reverse()
+      path =
+        GraphManager.path_to_node(graph_id, node)
+        |> Enum.reverse()
 
-    # Subscribe to graph updates
-    Phoenix.PubSub.subscribe(Dialectic.PubSub, graph_id)
+      # Subscribe to graph updates
+      Phoenix.PubSub.subscribe(Dialectic.PubSub, graph_id)
 
-    form = to_form(%{"message" => ""}, as: :message)
+      form = to_form(%{"message" => ""}, as: :message)
 
-    {:ok,
-     assign(socket,
-       graph: graph,
-       graph_struct: graph_struct,
-       path: path,
-       graph_id: graph_id,
-       current_node: node,
-       user: user,
-       form: form,
-       sending_message: sending_message,
-       message_text: ""
-     )}
+      {:ok,
+       assign(socket,
+         graph: graph,
+         graph_struct: graph_struct,
+         path: path,
+         graph_id: graph_id,
+         current_node: node,
+         user: user,
+         form: form,
+         sending_message: sending_message,
+         message_text: ""
+       )}
+    end
   end
 
   def handle_event("form_change", %{"message" => %{"message" => message}}, socket) do
