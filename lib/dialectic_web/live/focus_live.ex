@@ -39,7 +39,7 @@ defmodule DialecticWeb.FocusLive do
         |> Enum.reverse()
 
       # Subscribe to graph updates
-      Phoenix.PubSub.subscribe(Dialectic.PubSub, graph_id)
+      if connected?(socket), do: Phoenix.PubSub.subscribe(Dialectic.PubSub, graph_id)
 
       form = to_form(%{"message" => ""}, as: :message)
 
