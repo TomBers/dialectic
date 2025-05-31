@@ -6,45 +6,47 @@ defmodule DialecticWeb.NodeComp do
 
   def render(assigns) do
     ~H"""
-    <div
-      id={"node-menu-" <> @node_id}
-      class="flex flex-col relative"
-      phx-hook="TextSelectionHook"
-      data-node-id={@node.id}
-      style="max-height: 100vh; display: flex; flex-direction: column;"
-    >
-      <%= if String.length(@node.content) > 0 do %>
-        <div
-          class={[
-            "flex-grow overflow-auto pb-4 pt-4"
-          ]}
-          id={"tt-node-" <> @node.id}
-          style="max-height: calc(100vh - 250px);"
-        >
-          <div class="summary-content" id={"tt-summary-content-" <> @node.id}>
-            <article class={[
-              "prose prose-stone prose-md max-w-none selection-content pl-2 border-l-4 w-full",
-              ColUtils.message_border_class(@node.class)
-            ]}>
-              <h3>
-                {TextUtils.modal_title(@node.content, @node.class || "")}
-              </h3>
-              <div class="w-full min-w-full">
-                {TextUtils.full_html(@node.content || "")}
+    <div>
+      <div
+        id={"node-menu-" <> @node_id}
+        class="flex flex-col relative"
+        phx-hook="TextSelectionHook"
+        data-node-id={@node.id}
+        style="max-height: 100vh; display: flex; flex-direction: column;"
+      >
+        <%= if String.length(@node.content) > 0 do %>
+          <div
+            class={[
+              "flex-grow overflow-auto pb-4 pt-4"
+            ]}
+            id={"tt-node-" <> @node.id}
+            style="max-height: calc(100vh - 320px);"
+          >
+            <div class="summary-content" id={"tt-summary-content-" <> @node.id}>
+              <article class={[
+                "prose prose-stone prose-md max-w-none selection-content pl-2 border-l-4 w-full",
+                ColUtils.message_border_class(@node.class)
+              ]}>
+                <h3>
+                  {TextUtils.modal_title(@node.content, @node.class || "")}
+                </h3>
+                <div class="w-full min-w-full">
+                  {TextUtils.full_html(@node.content || "")}
+                </div>
+              </article>
+              <div class="selection-actions hidden absolute bg-white shadow-md rounded-md p-1 z-10">
+                <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded">
+                  Ask about selection
+                </button>
               </div>
-            </article>
-            <div class="selection-actions hidden absolute bg-white shadow-md rounded-md p-1 z-10">
-              <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded">
-                Ask about selection
-              </button>
             </div>
           </div>
-        </div>
-      <% else %>
-        <div class="node mb-2">
-          <h2>Loading ...</h2>
-        </div>
-      <% end %>
+        <% else %>
+          <div class="node mb-2">
+            <h2>Loading ...</h2>
+          </div>
+        <% end %>
+      </div>
       <div class="nodeMenuComp sticky bottom-0 bg-white w-full z-10">
         <.live_component
           module={NodeMenuComp}

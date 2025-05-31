@@ -54,6 +54,8 @@ hooks.ChatScroll = {
   },
 };
 
+
+
 let csrfToken = document
   .querySelector("meta[name='csrf-token']")
   .getAttribute("content");

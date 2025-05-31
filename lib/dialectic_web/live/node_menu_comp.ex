@@ -5,6 +5,34 @@ defmodule DialecticWeb.NodeMenuComp do
   def render(assigns) do
     ~H"""
     <div>
+      <div class="flex items-center gap-2">
+        <button
+          class="text-gray-400 hover:text-gray-600 transition-colors p-1"
+          title="Copy shareable link"
+          onclick={"navigator.clipboard.writeText('#{url(~p"/#{@graph_id}?node=#{@node.id}")}').then(() => alert('Link copied to clipboard!'))"}
+        >
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+          </svg>
+        </button>
+        <span
+          class="text-xs text-gray-400 font-mono select-all cursor-pointer ml-1"
+          title="Shareable URL path"
+        >
+          /{@graph_id}?node={@node.id}
+        </span>
+      </div>
+
       <.live_component
         module={NoteMenuComp}
         graph_id={@graph_id}
