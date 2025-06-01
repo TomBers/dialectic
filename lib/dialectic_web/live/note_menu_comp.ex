@@ -92,7 +92,8 @@ defmodule DialecticWeb.NoteMenuComp do
         <.link
           navigate={~p"/#{@graph_id}/story/#{@node.id}"}
           tabindex="-1"
-          class="bg-blue-50 text-blue-700 hover:bg-blue-100 px-2 py-0.5 rounded-full text-xs font-medium transition-colors flex items-center"
+          class="bg-amber-50 text-amber-700 hover:bg-amber-100 px-2 py-0.5 rounded-full text-xs font-medium transition-colors flex items-center"
+          title="View conversation thread from root to this node"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -105,15 +106,16 @@ defmodule DialecticWeb.NoteMenuComp do
               stroke-linecap="round"
               stroke-linejoin="round"
               stroke-width="2"
-              d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+              d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
             />
           </svg>
-          Conversation
+          Thread
         </.link>
         <.link
           navigate={~p"/#{@graph_id}/focus/#{@node.id}"}
           tabindex="-1"
-          class="bg-blue-50 text-blue-700 hover:bg-blue-100 px-2 py-0.5 rounded-full text-xs font-medium transition-colors flex items-center"
+          class="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 px-2 py-0.5 rounded-full text-xs font-medium transition-colors flex items-center"
+          title="Chat interface for rapid idea expansion"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -126,10 +128,10 @@ defmodule DialecticWeb.NoteMenuComp do
               stroke-linecap="round"
               stroke-linejoin="round"
               stroke-width="2"
-              d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
             />
           </svg>
-          Focus
+          Chat
         </.link>
       </div>
     </div>
