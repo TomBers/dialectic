@@ -28,6 +28,7 @@ defmodule DialecticWeb.NodeMenuComp do
         <span
           class="text-xs text-gray-400 font-mono select-all cursor-pointer ml-1"
           title="Shareable URL path"
+          onclick={"navigator.clipboard.writeText('#{url(~p"/#{@graph_id}?node=#{@node.id}")}').then(() => alert('Link copied to clipboard!'))"}
         >
           /{@graph_id}?node={@node.id}
         </span>
