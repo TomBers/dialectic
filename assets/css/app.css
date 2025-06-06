@@ -128,42 +128,6 @@
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
-.list-branch-button {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background: transparent;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    padding: 5px;
-    min-width: 55px;
-    color: red;
-    transition: background-color 0.2s;
-}
-
-.list-branch-button:hover {
-    background-color: #f0f0f0;
-}
-
-.list-branch-button .icon {
-    margin-bottom: 3px;
-    color: #555;
-}
-
-.list-branch-button .label {
-    font-size: 12px;
-}
-
-.list-branch-button .icon {
-    margin-bottom: 3px;
-    color: #555;
-}
-
-.list-branch-button .label {
-    font-size: 12px;
-}
-
 /* Chat Interface Styles */
 .chat-container {
     display: flex;
