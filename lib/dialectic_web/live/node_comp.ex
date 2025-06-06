@@ -20,7 +20,7 @@ defmodule DialecticWeb.NodeComp do
               "flex-grow overflow-auto pb-4 pt-4"
             ]}
             id={"tt-node-" <> @node.id}
-            style="max-height: calc(100vh - 320px);"
+            style="max-height: calc(100vh - 420px);"
           >
             <div class="summary-content" id={"tt-summary-content-" <> @node.id}>
               <article class={[
@@ -30,7 +30,12 @@ defmodule DialecticWeb.NodeComp do
                 <h3>
                   {TextUtils.modal_title(@node.content, @node.class || "")}
                 </h3>
-                <div class="w-full min-w-full">
+                <div
+                  class="w-full min-w-full"
+                  phx-hook="ListDetection"
+                  data-children={length(@node.children)}
+                  id={"list-detector-" <> @node.id}
+                >
                   {TextUtils.full_html(@node.content || "")}
                 </div>
               </article>
