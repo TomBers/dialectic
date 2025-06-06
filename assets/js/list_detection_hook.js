@@ -1,18 +1,20 @@
 const listDetectionHook = {
   mounted() {
-    this.checkForLists();
+    const { children } = this.el.dataset;
+    this.checkForLists(children == 0);
   },
 
   updated() {
-    this.checkForLists();
+    const { children } = this.el.dataset;
+    this.checkForLists(children == 0);
   },
 
-  checkForLists() {
+  checkForLists(noChildren) {
     // This hook is attached directly to the content div containing the HTML
     // Check for both ordered and unordered lists
     const lists = this.el.querySelectorAll("ul, ol");
 
-    if (lists.length > 0) {
+    if (noChildren && lists.length > 0) {
       // console.log("🎯 Lists detected!", lists.length, "list(s) found");
 
       // Extract all list items from all lists

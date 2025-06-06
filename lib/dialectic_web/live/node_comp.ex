@@ -33,6 +33,7 @@ defmodule DialecticWeb.NodeComp do
                 <div
                   class="w-full min-w-full"
                   phx-hook="ListDetection"
+                  data-children={length(@node.children)}
                   id={"list-detector-" <> @node.id}
                 >
                   {TextUtils.full_html(@node.content || "")}
