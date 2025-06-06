@@ -1,20 +1,26 @@
 const listDetectionHook = {
   mounted() {
     const { children } = this.el.dataset;
-    this.checkForLists(children == 0);
+    // Checks if node has children
+    // this is to stop someone re-running the branching leading to lots of duplicate nodes
+    if (children == 0) {
+      this.checkForLists();
+    }
   },
 
   updated() {
     const { children } = this.el.dataset;
-    this.checkForLists(children == 0);
+    if (children == 0) {
+      this.checkForLists();
+    }
   },
 
-  checkForLists(noChildren) {
+  checkForLists() {
     // This hook is attached directly to the content div containing the HTML
     // Check for both ordered and unordered lists
     const lists = this.el.querySelectorAll("ul, ol");
 
-    if (noChildren && lists.length > 0) {
+    if (lists.length > 0) {
       // console.log("🎯 Lists detected!", lists.length, "list(s) found");
 
       // Extract all list items from all lists
@@ -39,7 +45,6 @@ const listDetectionHook = {
       if (listItems.length > 0) {
         // Add a button to the page to allow the user to add a new list item
         const button = document.createElement("button");
-        // button.textContent = "Branch all items";
         button.classList.add("menu-button");
         button.innerHTML = `
           <span class="icon">
