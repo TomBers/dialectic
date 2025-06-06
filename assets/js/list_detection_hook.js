@@ -3,14 +3,14 @@ const listDetectionHook = {
     const { children } = this.el.dataset;
     // Checks if node has children
     // this is to stop someone re-running the branching leading to lots of duplicate nodes
-    if (children == 0) {
+    if (Number(children) === 0) {
       this.checkForLists();
     }
   },
 
   updated() {
     const { children } = this.el.dataset;
-    if (children == 0) {
+    if (Number(children) === 0) {
       this.checkForLists();
     }
   },
