@@ -17,7 +17,7 @@ defmodule DialecticWeb.NodeMenuComp do
             >
             </path>
           </svg>
-          Graph Actions
+          Actions
         </h3>
         <div class="menu-buttons">
           <button
