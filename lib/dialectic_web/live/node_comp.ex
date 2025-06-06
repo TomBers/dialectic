@@ -13,6 +13,7 @@ defmodule DialecticWeb.NodeComp do
         phx-hook="TextSelectionHook"
         data-node-id={@node.id}
         style="max-height: 100vh; display: flex; flex-direction: column;"
+        phx-target={@myself}
       >
         <%= if String.length(@node.content) > 0 do %>
           <div
@@ -30,7 +31,11 @@ defmodule DialecticWeb.NodeComp do
                 <h3>
                   {TextUtils.modal_title(@node.content, @node.class || "")}
                 </h3>
-                <div class="w-full min-w-full">
+                <div 
+                  class="w-full min-w-full"
+                  phx-hook="ListDetection"
+                  id={"list-detector-" <> @node.id}
+                >
                   {TextUtils.full_html(@node.content || "")}
                 </div>
               </article>
@@ -39,6 +44,31 @@ defmodule DialecticWeb.NodeComp do
                   Ask about selection
                 </button>
               </div>
+              
+              <!-- List Branching Button -->
+              <%= if @has_lists do %>
+                <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <h4 class="text-sm font-medium text-blue-900">List Detected</h4>
+                      <p class="text-xs text-blue-700">Found <%= @list_item_count %> list items that can be branched into separate nodes</p>
+                    </div>
+                    <button
+                      class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-2 rounded-md transition-colors"
+                      phx-click="branch_list_items"
+                      phx-value-node-id={@node.id}
+                      title="Create a new node for each list item"
+                    >
+                      <div class="flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path>
+                        </svg>
+                        Branch List
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              <% end %>
             </div>
           </div>
         <% else %>
@@ -62,6 +92,22 @@ defmodule DialecticWeb.NodeComp do
     """
   end
 
+  def handle_event("lists_detected", %{"items" => items, "count" => count}, socket) do
+    {:noreply, 
+     socket
+     |> assign(:has_lists, true)
+     |> assign(:list_items, items)
+     |> assign(:list_item_count, count)}
+  end
+
+  def handle_event("branch_list_items", %{"node-id" => node_id}, socket) do
+    # Send the list items to the parent LiveView to handle node creation
+    send(self(), {:branch_list_items, socket.assigns.list_items, node_id})
+    {:noreply, socket}
+  end
+
+
+
   def update(assigns, socket) do
     node = Map.get(assigns, :node, %{})
     node_id = Map.get(node, :id)
@@ -74,7 +120,10 @@ defmodule DialecticWeb.NodeComp do
        form: Map.get(assigns, :form, nil),
        cut_off: Map.get(assigns, :cut_off, 500),
        ask_question: Map.get(assigns, :ask_question, true),
-       graph_id: Map.get(assigns, :graph_id, "")
+       graph_id: Map.get(assigns, :graph_id, ""),
+       has_lists: false,
+       list_items: [],
+       list_item_count: 0
      )}
   end
 end

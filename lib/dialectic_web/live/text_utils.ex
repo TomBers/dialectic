@@ -66,6 +66,8 @@ defmodule DialecticWeb.Live.TextUtils do
     end
   end
 
+
+
   # Private helpers
 
   defp has_title?(content) do

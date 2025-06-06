@@ -70,6 +70,19 @@ defmodule Dialectic.Graph.GraphActions do
     )
   end
 
+  def branch_list_items({graph_id, node, user}, list_items) do
+    # Create a child node for each list item
+    Enum.reduce(list_items, {nil, nil}, fn item, _acc ->
+      GraphManager.add_child(
+        graph_id,
+        [node],
+        fn _ -> item end,
+        "user",
+        user
+      )
+    end)
+  end
+
   def combine({graph_id, node1, user}, combine_node_id) do
     case GraphManager.find_node_by_id(graph_id, combine_node_id) do
       nil ->

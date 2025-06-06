@@ -397,6 +397,21 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
+  def handle_info({:branch_list_items, list_items, _node_id}, socket) do
+    if !socket.assigns.can_edit do
+      {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    else
+      update_graph(
+        socket,
+        GraphActions.branch_list_items(graph_action_params(socket), list_items),
+        "branch_list_items"
+      )
+      |> elem(1)  # Extract the socket from the {:noreply, socket} tuple
+      |> put_flash(:info, "Created #{length(list_items)} new nodes from list items")
+      |> then(&{:noreply, &1})
+    end
+  end
+
   defp is_connected_to_graph?(%{metas: metas}, graph_id) do
     Enum.any?(metas, fn %{graph_id: gid} -> gid == graph_id end)
   end
