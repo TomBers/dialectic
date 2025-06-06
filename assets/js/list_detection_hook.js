@@ -19,12 +19,19 @@ const listDetectionHook = {
     // This hook is attached directly to the content div containing the HTML
     // Check for both ordered and unordered lists
     const lists = this.el.querySelectorAll("ul, ol");
+    const listItems = [];
+    // Also look for paragraphs that seem to act like lists
+    const paragraphs = this.el.querySelectorAll("p");
+    paragraphs.forEach((p) => {
+      const text = p.textContent.trim();
+      // Check if the paragraph's content starts with the bullet character
+      if (text.startsWith("•")) {
+        listItems.push(text);
+      }
+    });
 
-    if (lists.length > 0) {
+    if (lists.length > 0 || listItems.length > 0) {
       // console.log("🎯 Lists detected!", lists.length, "list(s) found");
-
-      // Extract all list items from all lists
-      const listItems = [];
 
       lists.forEach((list) => {
         // console.log("📋 Processing list:", list.tagName, list);
