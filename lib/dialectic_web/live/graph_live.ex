@@ -192,8 +192,6 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("branch_list", %{"items" => items}, socket) do
-    IO.inspect(items, label: "Lists")
-
     if !socket.assigns.can_edit do
       {:noreply, socket |> put_flash(:error, "This graph is locked")}
     else
