@@ -30,7 +30,11 @@ defmodule DialecticWeb.NodeComp do
                 <h3>
                   {TextUtils.modal_title(@node.content, @node.class || "")}
                 </h3>
-                <div class="w-full min-w-full">
+                <div
+                  class="w-full min-w-full"
+                  phx-hook="ListDetection"
+                  id={"list-detector-" <> @node.id}
+                >
                   {TextUtils.full_html(@node.content || "")}
                 </div>
               </article>
