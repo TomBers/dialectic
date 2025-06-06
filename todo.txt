@@ -1,4 +1,4 @@
-1. Make Node Link text also copy the url.
+1. Make Node Link text also copy the url. - Done
 
 2. Add a "More Details" button to the menu
 Add "Associated Ideas" - "What other ideas are associted with this"
