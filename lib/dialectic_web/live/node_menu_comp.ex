@@ -27,7 +27,7 @@ defmodule DialecticWeb.NodeMenuComp do
                 value: %{
                   vertex: %{
                     content:
-                      "Can you go into more depth on this topic.  I would like a greater understanding and more specifc information.  There is no need to be concise, return a longer response."
+                      "Can you go into more depth on this topic.  I would like a greater understanding and more specifc information. Return a longer response."
                   },
                   prefix: ""
                 }
