@@ -59,7 +59,6 @@ defmodule DialecticWeb.GraphLive do
        user: user,
        can_edit: can_edit,
        node_menu_visible: true,
-       auto_reply: true,
        drawer_open: true,
        candidate_ids: [],
        group_changeset: to_form(%{"title" => ""}),
@@ -134,10 +133,6 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event("toggle_ask_question", _, socket) do
     {:noreply, assign(socket, ask_question: !socket.assigns.ask_question)}
-  end
-
-  def handle_event("toggle_auto_reply", _, socket) do
-    {:noreply, socket |> assign(auto_reply: !socket.assigns.auto_reply)}
   end
 
   def handle_event("toggle_lock_graph", _, socket) do
