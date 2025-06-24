@@ -1,18 +1,34 @@
 const selectState = {
   shape: "roundrectangle",
-  "font-weight": "400",
-  "border-color": "white", // Dark green border
+  "font-weight": "500",
+  "border-color": "white", // White border
   color: "#FFFFFF", // White text
-  "background-color": "#14e37c", // Bright mint green (very vibrant)
-  "border-width": 2,
+  "background-color": "#0ea05a", // Slightly darker, more professional green
+  "border-width": 0,
 };
 
 const cols = {
-  user: { text: "#374151", background: "white", border: "#d1d5db" },
-  answer: { text: "#60a5fa", background: "white", border: "#60a5fa" },
-  antithesis: { text: "#f84b71", background: "white", border: "#f84b71" },
-  synthesis: { text: "#c084fc", background: "white", border: "#c084fc" },
-  thesis: { text: "#4ade80", background: "white", border: "#4ade80" },
+  user: { text: "#374151", background: "white", border: "white" },
+  answer: {
+    text: "#374151",
+    background: "white",
+    border: "#60a5fa",
+  },
+  antithesis: {
+    text: "#374151",
+    background: "white",
+    border: "#f84b71",
+  },
+  synthesis: {
+    text: "#374151",
+    background: "white",
+    border: "#c084fc",
+  },
+  thesis: {
+    text: "#374151",
+    background: "white",
+    border: "#4ade80",
+  },
 };
 
 const cutoff = 140;
@@ -23,19 +39,19 @@ export function graphStyle() {
       selector: "node",
       style: {
         /* sizing ---------------------------------------------------------- */
-        width: 250,
+        width: 230,
         height: (n) => {
           let content = n.data("content") || "";
           content = content.replace(/\*\*/g, ""); // Remove all **
-          const base = Math.max(Math.min(content.length, cutoff) - 60, 40);
-          const extra = (content.match(/\n/g) || []).length * 4;
+          const base = Math.max(Math.min(content.length, cutoff) - 65, 35);
+          const extra = (content.match(/\n/g) || []).length * 3.5;
           return base + extra;
         },
-        "min-width": 60,
-        "min-height": 40,
-        padding: "12px",
+        "min-width": 55,
+        "min-height": 35,
+        padding: "10px",
         "text-wrap": "wrap",
-        "text-max-width": 250, // interior width incl. padding
+        "text-max-width": 210, // interior width incl. padding
 
         /* label ----------------------------------------------------------- */
         label: (ele) => {
@@ -53,16 +69,16 @@ export function graphStyle() {
 
         /* font & layout --------------------------------------------------- */
         "font-family": "sans-serif",
-        "font-size": 14,
+        "font-size": 13,
         "font-weight": 400,
         "text-halign": "center",
         "text-valign": "center",
 
         /* aesthetics ------------------------------------------------------ */
         shape: "roundrectangle",
-        "border-width": 2,
-        "border-color": "#d1d5db",
-        "background-color": "#f3f4f6",
+        "border-width": 1,
+        "border-color": "#e5e7eb",
+        "background-color": "white",
         color: "#374151",
       },
     },
@@ -91,15 +107,15 @@ export function graphStyle() {
       selector: 'node[compound][collapsed = "true"]',
       style: {
         /* fixed badge size */
-        width: 250, // px – tweak to taste
-        height: 40,
+        width: 230, // px – tweak to taste
+        height: 35,
 
         /* look & feel */
         shape: "roundrectangle",
         "background-opacity": 0.7,
         "background-color": "#E5E7EB", // slate‑200
-        "border-width": 2,
-        "border-color": "#4B5563",
+        "border-width": 1,
+        "border-color": "#9ca3af",
         "border-style": "solid",
 
         /* text centred inside the badge */
@@ -119,7 +135,7 @@ export function graphStyle() {
     {
       selector: ".preview",
       style: {
-        "border-width": 6,
+        "border-width": 3,
         opacity: 1,
       },
     },
@@ -128,22 +144,24 @@ export function graphStyle() {
     {
       selector: "edge",
       style: {
-        width: 2,
-        "line-color": "#d1d5db",
+        width: 1.5,
+        "line-color": "#c0c6d0",
         "edge-distances": "node-position",
         "curve-style": "bezier",
-        "control-point-step-size": 40,
-        "control-point-weight": 0.5,
+        "control-point-step-size": 25,
+        "control-point-weight": 0.35,
         opacity: 0.8,
       },
     },
     {
       selector: ".edge-hover",
       style: {
-        width: 3,
-        "line-color": "#83f28f", // Light green color
+        width: 4, // Increased thickness for better visibility
+        "line-color": "#4ade80", // More refined green color
         "z-index": 9998,
         opacity: 1,
+        "target-arrow-color": "#4ade80", // Matching arrow color
+        "target-arrow-shape": "triangle", // Add arrow shape for highlighted edges
       },
     },
   ];
@@ -155,7 +173,9 @@ export function graphStyle() {
         //  NOT "css"
         "border-color": cols[nodeType].border,
         "background-color": cols[nodeType].background,
-        "border-width": 2,
+        "border-width": 1.5,
+        "border-opacity": 0.7,
+        color: cols[nodeType].text,
       },
     });
 
