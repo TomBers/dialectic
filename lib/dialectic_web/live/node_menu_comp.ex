@@ -5,6 +5,11 @@ defmodule DialecticWeb.NodeMenuComp do
   def render(assigns) do
     ~H"""
     <div class="space-y-3">
+      <.live_component
+        module={DialecticWeb.Live.ModalComp}
+        node={@node}
+        id={"node-menu-modal-comp-" <> @node.id}
+      />
       <!-- Graph Actions Section -->
       <div class="border-b border-gray-200 pb-2">
         <h3 class="text-xs font-medium text-gray-600 mb-1 flex items-center">
@@ -20,6 +25,33 @@ defmodule DialecticWeb.NodeMenuComp do
           Actions
         </h3>
         <div class="menu-buttons">
+          <button
+            class="menu-button"
+            phx-click={show_modal("modal-#{@node.id}")}
+            title="Read Full screen"
+            id={"reader-button-" <> @node_id}
+          >
+            <span class="icon">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"
+                />
+              </svg>
+            </span>
+            <span class="label">Read</span>
+          </button>
           <button
             class="menu-button"
             phx-click={
