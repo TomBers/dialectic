@@ -287,10 +287,9 @@ defmodule DialecticWeb.NodeMenuComp do
           <button
             class="menu-button"
             title="Ask a question about this topic.  You will get a response to your question."
-            phx-click="reply_mode"
+            phx-click="toggle_ask_question"
             phx-value-id={@node_id}
             id={"reply-button-" <> @node_id}
-            phx-target={@myself}
           >
             <span class="icon">
               <svg
@@ -318,11 +317,10 @@ defmodule DialecticWeb.NodeMenuComp do
 
           <button
             class="menu-button"
-            phx-click="reply_mode"
+            phx-click="toggle_ask_question"
             title="Add a comment about this topic. You will not get an answer"
             phx-value-id={@node_id}
             id={"comment-button-" <> @node_id}
-            phx-target={@myself}
           >
             <span class="icon">
               <svg
@@ -351,10 +349,6 @@ defmodule DialecticWeb.NodeMenuComp do
       </div>
     </div>
     """
-  end
-
-  def handle_event("reply_mode", _, socket) do
-    {:noreply, assign(socket, ask_question: !socket.assigns.ask_question)}
   end
 
   def update(assigns, socket) do

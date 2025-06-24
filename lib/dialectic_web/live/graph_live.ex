@@ -64,7 +64,8 @@ defmodule DialecticWeb.GraphLive do
        candidate_ids: [],
        group_changeset: to_form(%{"title" => ""}),
        show_group_modal: false,
-       graph_operation: ""
+       graph_operation: "",
+       ask_question: true
      )}
   end
 
@@ -129,6 +130,10 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event("toggle_drawer", _, socket) do
     {:noreply, socket |> assign(drawer_open: !socket.assigns.drawer_open)}
+  end
+
+  def handle_event("toggle_ask_question", _, socket) do
+    {:noreply, assign(socket, ask_question: !socket.assigns.ask_question)}
   end
 
   def handle_event("toggle_auto_reply", _, socket) do
