@@ -260,61 +260,59 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_event("KeyBoardInterface", %{"key" => last_key, "cmdKey" => isCmd}, socket) do
-    # IO.inspect(params, label: "KeyBoardInterface")
+  # def handle_event("KeyBoardInterface", %{"key" => last_key, "cmdKey" => isCmd}, socket) do
+  #   key =
+  #     (socket.assigns.key_buffer <> last_key)
+  #     |> String.replace_prefix("Control", "")
 
-    key =
-      (socket.assigns.key_buffer <> last_key)
-      |> String.replace_prefix("Control", "")
+  #   if isCmd do
+  #     if socket.assigns.show_combine do
+  #       combine_interface(socket, key)
+  #     else
+  #       if last_key == "Control" do
+  #         {:noreply, assign(socket, key_buffer: "")}
+  #       else
+  #         main_keybaord_interface(socket, key)
+  #       end
+  #     end
+  #   else
+  #     case key do
+  #       "ArrowDown" ->
+  #         update_graph(
+  #           socket,
+  #           GraphActions.move(graph_action_params(socket), "down"),
+  #           "move"
+  #         )
 
-    if isCmd do
-      if socket.assigns.show_combine do
-        combine_interface(socket, key)
-      else
-        if last_key == "Control" do
-          {:noreply, assign(socket, key_buffer: "")}
-        else
-          main_keybaord_interface(socket, key)
-        end
-      end
-    else
-      case key do
-        "ArrowDown" ->
-          update_graph(
-            socket,
-            GraphActions.move(graph_action_params(socket), "down"),
-            "move"
-          )
+  #       "ArrowUp" ->
+  #         update_graph(
+  #           socket,
+  #           GraphActions.move(graph_action_params(socket), "up"),
+  #           "move"
+  #         )
 
-        "ArrowUp" ->
-          update_graph(
-            socket,
-            GraphActions.move(graph_action_params(socket), "up"),
-            "move"
-          )
+  #       "ArrowRight" ->
+  #         update_graph(
+  #           socket,
+  #           GraphActions.move(graph_action_params(socket), "right"),
+  #           "move"
+  #         )
 
-        "ArrowRight" ->
-          update_graph(
-            socket,
-            GraphActions.move(graph_action_params(socket), "right"),
-            "move"
-          )
+  #       "ArrowLeft" ->
+  #         update_graph(
+  #           socket,
+  #           GraphActions.move(graph_action_params(socket), "left"),
+  #           "move"
+  #         )
 
-        "ArrowLeft" ->
-          update_graph(
-            socket,
-            GraphActions.move(graph_action_params(socket), "left"),
-            "move"
-          )
+  #       _ ->
+  #         {:noreply, socket}
+  #     end
+  #   end
+  # end
 
-        _ ->
-          {:noreply, socket}
-      end
-    end
-  end
-
-  # Handle event when user clicks autocorrect
-  def handle_event("KeyBoardInterface", %{}, socket), do: {:noreply, socket}
+  # # Handle event when user clicks autocorrect
+  # def handle_event("KeyBoardInterface", %{}, socket), do: {:noreply, socket}
 
   def handle_event("node_clicked", %{"id" => id}, socket) do
     # Determine if this was triggered from search results
