@@ -458,7 +458,7 @@ defmodule DialecticWeb.GraphLive do
   end
 
   defp valid_search_node(vertex_data) do
-    # not Map.get(vertex_data, :compound, false) and
+    # not Map.get(vertex_data, :parent_id, false) and
     vertex_data != nil and is_map(vertex_data) and
       Map.has_key?(vertex_data, :content) and is_binary(vertex_data.content) and
       Map.has_key?(vertex_data, :id) and
