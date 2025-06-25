@@ -317,7 +317,19 @@ defmodule DialecticWeb.GraphLive do
   def handle_event("KeyBoardInterface", %{}, socket), do: {:noreply, socket}
 
   def handle_event("node_clicked", %{"id" => id}, socket) do
-    update_graph(socket, GraphActions.find_node(socket.assigns.graph_id, id), "node_clicked")
+    # Determine if this was triggered from search results
+    from_search = socket.assigns.search_term != "" and length(socket.assigns.search_results) > 0
+
+    # Send the update to the graph
+    socket =
+      update_graph(socket, GraphActions.find_node(socket.assigns.graph_id, id), "node_clicked")
+
+    # Push event to center the node if coming from search
+    if from_search do
+      {:noreply, push_event(socket, "center_node", %{id: id})}
+    else
+      {:noreply, socket}
+    end
   end
 
   def handle_event("answer", %{"vertex" => %{"content" => ""}}, socket), do: {:noreply, socket}
@@ -550,23 +562,22 @@ defmodule DialecticWeb.GraphLive do
       DbWorker.save_graph(socket.assigns.graph_id)
     end
 
-    # Clear search when a node is clicked
+    # Clear search when a node is clicked from search results
     socket =
-      if operation == "node_clicked" do
+      if operation == "node_clicked" and socket.assigns.search_term != "" do
         assign(socket, search_term: "", search_results: [])
       else
         socket
       end
 
-    {:noreply,
-     assign(socket,
-       graph: graph,
-       f_graph: format_graph(graph),
-       form: to_form(changeset, id: new_node.id),
-       node: node,
-       show_combine: show_combine,
-       key_buffer: "",
-       graph_operation: operation
-     )}
+    assign(socket,
+      graph: graph,
+      f_graph: format_graph(graph),
+      form: to_form(changeset, id: new_node.id),
+      node: node,
+      show_combine: show_combine,
+      key_buffer: "",
+      graph_operation: operation
+    )
   end
 end
