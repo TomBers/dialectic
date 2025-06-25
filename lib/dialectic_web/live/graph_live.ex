@@ -424,7 +424,6 @@ defmodule DialecticWeb.GraphLive do
   # Search for nodes in the graph based on a search term
   defp search_graph_nodes(graph, search_term) do
     search_term = String.downcase(search_term)
-    results = []
 
     # Process vertices in a more defensive way
     results =
