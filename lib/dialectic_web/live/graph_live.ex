@@ -64,7 +64,9 @@ defmodule DialecticWeb.GraphLive do
        group_changeset: to_form(%{"title" => ""}),
        show_group_modal: false,
        graph_operation: "",
-       ask_question: true
+       ask_question: true,
+       search_term: "",
+       search_results: []
      )}
   end
 
@@ -129,6 +131,22 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event("toggle_drawer", _, socket) do
     {:noreply, socket |> assign(drawer_open: !socket.assigns.drawer_open)}
+  end
+
+  # Handle form submission and change events
+  def handle_event("search_nodes", params, socket) do
+    search_term = params["search_term"] || params["value"] || ""
+
+    if search_term == "" do
+      {:noreply, socket |> assign(search_term: "", search_results: [])}
+    else
+      search_results = search_graph_nodes(socket.assigns.graph, search_term)
+      {:noreply, socket |> assign(search_term: search_term, search_results: search_results)}
+    end
+  end
+
+  def handle_event("clear_search", _, socket) do
+    {:noreply, socket |> assign(search_term: "", search_results: [])}
   end
 
   def handle_event("toggle_ask_question", _, socket) do
@@ -242,64 +260,20 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_event("KeyBoardInterface", %{"key" => last_key, "cmdKey" => isCmd}, socket) do
-    # IO.inspect(params, label: "KeyBoardInterface")
-
-    key =
-      (socket.assigns.key_buffer <> last_key)
-      |> String.replace_prefix("Control", "")
-
-    if isCmd do
-      if socket.assigns.show_combine do
-        combine_interface(socket, key)
-      else
-        if last_key == "Control" do
-          {:noreply, assign(socket, key_buffer: "")}
-        else
-          main_keybaord_interface(socket, key)
-        end
-      end
-    else
-      case key do
-        "ArrowDown" ->
-          update_graph(
-            socket,
-            GraphActions.move(graph_action_params(socket), "down"),
-            "move"
-          )
-
-        "ArrowUp" ->
-          update_graph(
-            socket,
-            GraphActions.move(graph_action_params(socket), "up"),
-            "move"
-          )
-
-        "ArrowRight" ->
-          update_graph(
-            socket,
-            GraphActions.move(graph_action_params(socket), "right"),
-            "move"
-          )
-
-        "ArrowLeft" ->
-          update_graph(
-            socket,
-            GraphActions.move(graph_action_params(socket), "left"),
-            "move"
-          )
-
-        _ ->
-          {:noreply, socket}
-      end
-    end
-  end
-
-  # Handle event when user clicks autocorrect
-  def handle_event("KeyBoardInterface", %{}, socket), do: {:noreply, socket}
-
   def handle_event("node_clicked", %{"id" => id}, socket) do
-    update_graph(socket, GraphActions.find_node(socket.assigns.graph_id, id), "node_clicked")
+    # Determine if this was triggered from search results
+    from_search = socket.assigns.search_term != "" and length(socket.assigns.search_results) > 0
+
+    # Update the graph
+    {:noreply, updated_socket} =
+      update_graph(socket, GraphActions.find_node(socket.assigns.graph_id, id), "node_clicked")
+
+    # Push event to center the node if coming from search
+    if from_search do
+      {:noreply, push_event(updated_socket, "center_node", %{id: id})}
+    else
+      {:noreply, updated_socket}
+    end
   end
 
   def handle_event("answer", %{"vertex" => %{"content" => ""}}, socket), do: {:noreply, socket}
@@ -403,47 +377,48 @@ defmodule DialecticWeb.GraphLive do
     graph |> Vertex.to_cytoscape_format() |> Jason.encode!()
   end
 
-  def main_keybaord_interface(socket, key) do
-    case key do
-      "b" ->
-        if !socket.assigns.can_edit or socket.assigns.node.compound do
-          {:noreply, socket |> put_flash(:error, "This graph is locked")}
+  # Search for nodes in the graph based on a search term
+  defp search_graph_nodes(graph, search_term) do
+    search_term = String.downcase(search_term)
+
+    # Process vertices in a more defensive way
+    results =
+      Enum.reduce(:digraph.vertices(graph), [], fn vertex_id, acc ->
+        # Get vertex safely
+        vertex_data =
+          case :digraph.vertex(graph, vertex_id) do
+            {^vertex_id, vertex} -> vertex
+            _ -> nil
+          end
+
+        # Only process valid vertices with content
+        if valid_search_node(vertex_data) do
+          # Check if content contains search term
+          if String.contains?(String.downcase(vertex_data.content), search_term) do
+            # Add to results with sorting information
+            exact_match = if String.downcase(vertex_data.content) == search_term, do: 0, else: 1
+            [{exact_match, vertex_data.id, vertex_data} | acc]
+          else
+            acc
+          end
         else
-          update_graph(
-            socket,
-            GraphActions.branch(graph_action_params(socket)),
-            "branch"
-          )
+          acc
         end
+      end)
 
-      "r" ->
-        if !socket.assigns.can_edit or socket.assigns.node.compound do
-          {:noreply, socket |> put_flash(:error, "This graph is locked")}
-        else
-          update_graph(
-            socket,
-            GraphActions.answer(graph_action_params(socket)),
-            "answer"
-          )
-        end
+    # Sort by relevance and extract just the vertex data
+    results
+    |> Enum.sort()
+    |> Enum.map(fn {_, _, vertex} -> vertex end)
+    |> Enum.take(10)
+  end
 
-      "c" ->
-        if !socket.assigns.can_edit or socket.assigns.node.compound do
-          {:noreply, socket |> put_flash(:error, "This graph is locked")}
-        else
-          com = Map.get(socket.assigns.node, :id)
-          {:noreply, assign(socket, show_combine: !is_nil(com))}
-        end
-
-      _ ->
-        case GraphActions.find_node(socket.assigns.graph_id, key) do
-          {graph, node} ->
-            update_graph(socket, {graph, node}, "find_node")
-
-          _ ->
-            {:noreply, assign(socket, key_buffer: key)}
-        end
-    end
+  defp valid_search_node(vertex_data) do
+    # not Map.get(vertex_data, :parent_id, false) and
+    vertex_data != nil and is_map(vertex_data) and
+      Map.has_key?(vertex_data, :content) and is_binary(vertex_data.content) and
+      Map.has_key?(vertex_data, :id) and
+      not Map.get(vertex_data, :deleted, false)
   end
 
   def combine_interface(socket, key) do
@@ -487,6 +462,14 @@ defmodule DialecticWeb.GraphLive do
       # Save mutation to database
       DbWorker.save_graph(socket.assigns.graph_id)
     end
+
+    # Clear search when a node is clicked from search results
+    socket =
+      if operation == "node_clicked" and socket.assigns.search_term != "" do
+        assign(socket, search_term: "", search_results: [])
+      else
+        socket
+      end
 
     {:noreply,
      assign(socket,

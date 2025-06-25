@@ -21,6 +21,21 @@ const graphHook = {
       JSON.parse(graph),
       node,
     );
+
+    // Listen for the center_node event from LiveView
+    this.handleEvent("center_node", ({ id }) => {
+      const nodeToCenter = this.cy.$(`#${id}`);
+      if (nodeToCenter.length > 0) {
+        this.cy.animate({
+          center: {
+            eles: nodeToCenter,
+          },
+          zoom: 1.2,
+          duration: 250,
+          easing: "ease-in-out-quad",
+        });
+      }
+    });
   },
   updated() {
     const { graph, node, operation } = this.el.dataset;
@@ -37,7 +52,7 @@ const graphHook = {
     if (reorderOperations.has(operation)) {
       layoutGraph(this.cy);
     }
-    
+
     this.cy.elements().removeClass("selected");
     this.cy.$(`#${node}`).addClass("selected");
   },

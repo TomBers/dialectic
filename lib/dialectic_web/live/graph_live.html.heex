@@ -8,32 +8,89 @@
         id="lock-graph"
         graph_struct={@graph_struct}
       />
-      <div class="node">
-        <h2>Ctrl + R</h2>
-        <div class="proposition">Ask Question</div>
+      
+<!-- Search bar -->
+      <div class="p-2">
+        <form phx-submit="search_nodes" phx-change="search_nodes" class="flex relative">
+          <input
+            type="text"
+            name="search_term"
+            id="search_input"
+            value={@search_term}
+            placeholder="Search nodes..."
+            class="mt-5 block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6 border-zinc-300 focus:border-zinc-800"
+            autocomplete="off"
+            phx-debounce="300"
+          />
+          <%= if @search_term && @search_term != "" do %>
+            <button
+              type="button"
+              phx-click="clear_search"
+              class="absolute right-0 top-5 bottom-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          <% end %>
+        </form>
       </div>
-      <div class="node">
-        <h2>Ctrl + B</h2>
-        <div class="proposition">Pros and Cons</div>
-      </div>
-      <div class="node">
-        <h2>Ctrl + C</h2>
-        <div class="proposition">Combine</div>
-      </div>
-      <div class="node">
-        <h2>Shift + Drag</h2>
-        <div class="proposition">Group Nodes</div>
-      </div>
+      
+<!-- Search results (only visible when search_term is present) -->
+      <%= if @search_term && @search_term != "" && length(@search_results) > 0 do %>
+        <div class="bg-white p-2 max-h-60 overflow-y-auto border-b border-gray-200">
+          <h3 class="text-sm font-semibold mb-2 text-gray-700">
+            Search Results ({length(@search_results)})
+          </h3>
+          <ul class="space-y-2">
+            <%= for node <- @search_results do %>
+              <li
+                class="p-2 bg-gray-50 hover:bg-gray-100 rounded text-sm cursor-pointer"
+                phx-click="node_clicked"
+                phx-value-id={node.id}
+              >
+                <div class="font-semibold text-xs text-gray-500">
+                  {node.id} • {node.class}
+                </div>
+                <div class="truncate">
+                  {String.replace_prefix(node.content, "Title:", "")
+                  |> String.slice(0, 100)}{if String.length(node.content) >
+                                                100,
+                                              do: "...",
+                                              else: ""}
+                </div>
+              </li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+      
+<!-- No results message -->
+      <%= if @search_term && @search_term != "" && length(@search_results) == 0 do %>
+        <div class="bg-white p-2 border-b border-gray-200">
+          <p class="text-sm text-gray-500 text-center">
+            No nodes found matching "{@search_term}"
+          </p>
+        </div>
+      <% end %>
     </div>
   </div>
   
 <!-- Main content with drawer menu -->
   <div class="flex-1 flex">
     <!-- Left side: Graph (expands to full width when drawer is closed) -->
-    <div
-      class={if @drawer_open, do: "w-2/3", else: "w-full"}
-      phx-window-keydown="KeyBoardInterface"
-    >
+    <div class={if @drawer_open, do: "w-2/3", else: "w-full"}>
       <div
         id="cy"
         class="h-full w-full"

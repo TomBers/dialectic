@@ -120,7 +120,7 @@ export function draw_graph(graph, context, elements, node) {
         eles: n,
       },
       zoom: 1.2,
-      duration: 300,
+      duration: 250,
       easing: "ease-in-out-quad",
     });
   });
