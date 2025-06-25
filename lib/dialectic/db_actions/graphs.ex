@@ -36,7 +36,6 @@ defmodule Dialectic.DbActions.Graphs do
 
   def all_graphs_with_notes(search_term \\ "") do
     search_pattern = "%#{String.trim(search_term)}%"
-    IO.inspect(search_pattern, label: "Search Pattern")
 
     query =
       from g in Dialectic.Accounts.Graph,

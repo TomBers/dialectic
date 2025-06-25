@@ -260,73 +260,19 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  # def handle_event("KeyBoardInterface", %{"key" => last_key, "cmdKey" => isCmd}, socket) do
-  #   key =
-  #     (socket.assigns.key_buffer <> last_key)
-  #     |> String.replace_prefix("Control", "")
-
-  #   if isCmd do
-  #     if socket.assigns.show_combine do
-  #       combine_interface(socket, key)
-  #     else
-  #       if last_key == "Control" do
-  #         {:noreply, assign(socket, key_buffer: "")}
-  #       else
-  #         main_keybaord_interface(socket, key)
-  #       end
-  #     end
-  #   else
-  #     case key do
-  #       "ArrowDown" ->
-  #         update_graph(
-  #           socket,
-  #           GraphActions.move(graph_action_params(socket), "down"),
-  #           "move"
-  #         )
-
-  #       "ArrowUp" ->
-  #         update_graph(
-  #           socket,
-  #           GraphActions.move(graph_action_params(socket), "up"),
-  #           "move"
-  #         )
-
-  #       "ArrowRight" ->
-  #         update_graph(
-  #           socket,
-  #           GraphActions.move(graph_action_params(socket), "right"),
-  #           "move"
-  #         )
-
-  #       "ArrowLeft" ->
-  #         update_graph(
-  #           socket,
-  #           GraphActions.move(graph_action_params(socket), "left"),
-  #           "move"
-  #         )
-
-  #       _ ->
-  #         {:noreply, socket}
-  #     end
-  #   end
-  # end
-
-  # # Handle event when user clicks autocorrect
-  # def handle_event("KeyBoardInterface", %{}, socket), do: {:noreply, socket}
-
   def handle_event("node_clicked", %{"id" => id}, socket) do
     # Determine if this was triggered from search results
     from_search = socket.assigns.search_term != "" and length(socket.assigns.search_results) > 0
 
-    # Send the update to the graph
-    socket =
+    # Update the graph
+    {:noreply, updated_socket} =
       update_graph(socket, GraphActions.find_node(socket.assigns.graph_id, id), "node_clicked")
 
     # Push event to center the node if coming from search
     if from_search do
-      {:noreply, push_event(socket, "center_node", %{id: id})}
+      {:noreply, push_event(updated_socket, "center_node", %{id: id})}
     else
-      {:noreply, socket}
+      {:noreply, updated_socket}
     end
   end
 
@@ -475,49 +421,6 @@ defmodule DialecticWeb.GraphLive do
       not Map.get(vertex_data, :deleted, false)
   end
 
-  def main_keybaord_interface(socket, key) do
-    case key do
-      "b" ->
-        if !socket.assigns.can_edit or socket.assigns.node.compound do
-          {:noreply, socket |> put_flash(:error, "This graph is locked")}
-        else
-          update_graph(
-            socket,
-            GraphActions.branch(graph_action_params(socket)),
-            "branch"
-          )
-        end
-
-      "r" ->
-        if !socket.assigns.can_edit or socket.assigns.node.compound do
-          {:noreply, socket |> put_flash(:error, "This graph is locked")}
-        else
-          update_graph(
-            socket,
-            GraphActions.answer(graph_action_params(socket)),
-            "answer"
-          )
-        end
-
-      "c" ->
-        if !socket.assigns.can_edit or socket.assigns.node.compound do
-          {:noreply, socket |> put_flash(:error, "This graph is locked")}
-        else
-          com = Map.get(socket.assigns.node, :id)
-          {:noreply, assign(socket, show_combine: !is_nil(com))}
-        end
-
-      _ ->
-        case GraphActions.find_node(socket.assigns.graph_id, key) do
-          {graph, node} ->
-            update_graph(socket, {graph, node}, "find_node")
-
-          _ ->
-            {:noreply, assign(socket, key_buffer: key)}
-        end
-    end
-  end
-
   def combine_interface(socket, key) do
     case GraphActions.combine(
            graph_action_params(socket),
@@ -568,14 +471,15 @@ defmodule DialecticWeb.GraphLive do
         socket
       end
 
-    assign(socket,
-      graph: graph,
-      f_graph: format_graph(graph),
-      form: to_form(changeset, id: new_node.id),
-      node: node,
-      show_combine: show_combine,
-      key_buffer: "",
-      graph_operation: operation
-    )
+    {:noreply,
+     assign(socket,
+       graph: graph,
+       f_graph: format_graph(graph),
+       form: to_form(changeset, id: new_node.id),
+       node: node,
+       show_combine: show_combine,
+       key_buffer: "",
+       graph_operation: operation
+     )}
   end
 end

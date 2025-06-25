@@ -13,7 +13,6 @@ defmodule DialecticWeb.PageController do
   end
 
   def view_all(conn, params) do
-    IO.inspect("View ALL")
     search_term = Map.get(params, "search", "")
     graphs = Dialectic.DbActions.Graphs.all_graphs_with_notes(search_term)
     render(conn, :view_all, graphs: graphs, search_term: search_term)
