@@ -61,12 +61,14 @@
                 phx-value-id={node.id}
               >
                 <div class="font-semibold text-xs text-gray-500">
-                  ID: {node.id} • {node.class}
+                  {node.id} • {node.class}
                 </div>
                 <div class="truncate">
-                  {String.slice(node.content, 0, 100)}{if String.length(node.content) > 100,
-                    do: "...",
-                    else: ""}
+                  {String.replace_prefix(node.content, "Title:", "")
+                  |> String.slice(0, 100)}{if String.length(node.content) >
+                                                100,
+                                              do: "...",
+                                              else: ""}
                 </div>
               </li>
             <% end %>

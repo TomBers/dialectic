@@ -31,7 +31,7 @@ const graphHook = {
             eles: nodeToCenter,
           },
           zoom: 1.2,
-          duration: 300,
+          duration: 250,
           easing: "ease-in-out-quad",
         });
       }
