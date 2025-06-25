@@ -64,7 +64,9 @@ defmodule DialecticWeb.GraphLive do
        group_changeset: to_form(%{"title" => ""}),
        show_group_modal: false,
        graph_operation: "",
-       ask_question: true
+       ask_question: true,
+       search_term: "",
+       search_results: []
      )}
   end
 
@@ -129,6 +131,22 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event("toggle_drawer", _, socket) do
     {:noreply, socket |> assign(drawer_open: !socket.assigns.drawer_open)}
+  end
+
+  # Handle form submission and change events
+  def handle_event("search_nodes", params, socket) do
+    search_term = params["search_term"] || params["value"] || ""
+
+    if search_term == "" do
+      {:noreply, socket |> assign(search_term: "", search_results: [])}
+    else
+      search_results = search_graph_nodes(socket.assigns.graph, search_term)
+      {:noreply, socket |> assign(search_term: search_term, search_results: search_results)}
+    end
+  end
+
+  def handle_event("clear_search", _, socket) do
+    {:noreply, socket |> assign(search_term: "", search_results: [])}
   end
 
   def handle_event("toggle_ask_question", _, socket) do
@@ -403,6 +421,51 @@ defmodule DialecticWeb.GraphLive do
     graph |> Vertex.to_cytoscape_format() |> Jason.encode!()
   end
 
+  # Search for nodes in the graph based on a search term
+  defp search_graph_nodes(graph, search_term) do
+    search_term = String.downcase(search_term)
+    results = []
+
+    # Process vertices in a more defensive way
+    results =
+      Enum.reduce(:digraph.vertices(graph), [], fn vertex_id, acc ->
+        # Get vertex safely
+        vertex_data =
+          case :digraph.vertex(graph, vertex_id) do
+            {^vertex_id, vertex} -> vertex
+            _ -> nil
+          end
+
+        # Only process valid vertices with content
+        if valid_search_node(vertex_data) do
+          # Check if content contains search term
+          if String.contains?(String.downcase(vertex_data.content), search_term) do
+            # Add to results with sorting information
+            exact_match = if String.downcase(vertex_data.content) == search_term, do: 0, else: 1
+            [{exact_match, vertex_data.id, vertex_data} | acc]
+          else
+            acc
+          end
+        else
+          acc
+        end
+      end)
+
+    # Sort by relevance and extract just the vertex data
+    results
+    |> Enum.sort()
+    |> Enum.map(fn {_, _, vertex} -> vertex end)
+    |> Enum.take(10)
+  end
+
+  defp valid_search_node(vertex_data) do
+    # not Map.get(vertex_data, :compound, false) and
+    vertex_data != nil and is_map(vertex_data) and
+      Map.has_key?(vertex_data, :content) and is_binary(vertex_data.content) and
+      Map.has_key?(vertex_data, :id) and
+      not Map.get(vertex_data, :deleted, false)
+  end
+
   def main_keybaord_interface(socket, key) do
     case key do
       "b" ->
@@ -487,6 +550,14 @@ defmodule DialecticWeb.GraphLive do
       # Save mutation to database
       DbWorker.save_graph(socket.assigns.graph_id)
     end
+
+    # Clear search when a node is clicked
+    socket =
+      if operation == "node_clicked" do
+        assign(socket, search_term: "", search_results: [])
+      else
+        socket
+      end
 
     {:noreply,
      assign(socket,
