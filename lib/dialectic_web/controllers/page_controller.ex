@@ -12,9 +12,11 @@ defmodule DialecticWeb.PageController do
     render(conn, :home, stats: stats, top_graphs: top_graphs, topic: topic)
   end
 
-  def view_all(conn, _params) do
-    graphs = Dialectic.DbActions.Graphs.all_graphs_with_notes()
-    render(conn, :view_all, graphs: graphs)
+  def view_all(conn, params) do
+    IO.inspect("View ALL")
+    search_term = Map.get(params, "search", "")
+    graphs = Dialectic.DbActions.Graphs.all_graphs_with_notes(search_term)
+    render(conn, :view_all, graphs: graphs, search_term: search_term)
   end
 
   def create(conn, %{"conversation" => usr_graph_title}) do

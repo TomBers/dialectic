@@ -34,10 +34,14 @@ defmodule Dialectic.DbActions.Graphs do
     Repo.all(Graph)
   end
 
-  def all_graphs_with_notes() do
+  def all_graphs_with_notes(search_term \\ "") do
+    search_pattern = "%#{String.trim(search_term)}%"
+    IO.inspect(search_pattern, label: "Search Pattern")
+
     query =
       from g in Dialectic.Accounts.Graph,
         where: g.is_published == true,
+        where: ilike(g.title, ^search_pattern),
         left_join: n in assoc(g, :notes),
         group_by: g.title,
         order_by: [desc: count(n.id)],
