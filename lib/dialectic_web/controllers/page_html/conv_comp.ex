@@ -3,8 +3,7 @@ defmodule DialecticWeb.PageHtml.ConvComp do
 
   def create(assigns) do
     ~H"""
-    <div class="mb-8 bg-white border border-gray-200 shadow-md rounded-xl p-8">
-      <h2 class="text-3xl font-bold text-gray-800 mb-6">What interests you today?</h2>
+    <div class="">
       <.form :let={f} for={%{}} action={~p"/conversation"} class="">
         <div class="space-y-6">
           <.input

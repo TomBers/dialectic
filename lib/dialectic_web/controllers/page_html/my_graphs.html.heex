@@ -1,0 +1,88 @@
+<div class="container mx-auto p-6 max-w-7xl">
+  <!-- User content section - preserved from original but styled better -->
+  <section class="mb-12">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <!-- My Graphs Card -->
+      <div class="bg-white shadow-[0_10px_30px_rgba(0,0,0,0.08)] rounded-xl p-6 border-t-4 border-[#4361ee] transform transition-all duration-300 hover:shadow-xl">
+        <div class="flex items-center justify-between mb-5">
+          <div class="flex items-center">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-8 w-8 text-[#4361ee] mr-3"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+              />
+            </svg>
+            <h3 class="text-xl font-semibold text-[#2d3748]">
+              My Ideas
+              <span class="bg-[#4361ee]/10 text-[#4361ee] text-sm font-semibold py-1 px-2 rounded-full">
+                ({@stats.graphs |> length()})
+              </span>
+            </h3>
+          </div>
+        </div>
+        
+<!-- Content - hidden by default -->
+        <div id="graphs-content" class="mt-4 space-y-4" phx-update="replace">
+          <%= for g <- @stats.graphs do %>
+            <DialecticWeb.PageHtml.GraphComp.render
+              title={g.title}
+              is_public={g.is_public}
+              link={gen_link(g.title)}
+              count={g.notes |> Enum.filter(& &1.is_noted) |> length()}
+              id={"my-graph-comp-#{g.title}"}
+            />
+          <% end %>
+        </div>
+      </div>
+      
+<!-- My Noted Items Card -->
+      <div class="bg-white shadow-[0_10px_30px_rgba(0,0,0,0.08)] rounded-xl p-6 border-t-4 border-[#7209b7] transform transition-all duration-300 hover:shadow-xl">
+        <div class="flex items-center justify-between mb-5">
+          <div class="flex items-center">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-8 w-8 text-[#7209b7] mr-3"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+              />
+            </svg>
+            <h3 class="text-xl font-semibold text-[#2d3748]">
+              My Notes
+              <span class="bg-[#7209b7]/10 text-[#7209b7] text-sm font-semibold py-1 px-2 rounded-full">
+                ({@stats.notes |> Enum.filter(& &1.is_noted) |> length()})
+              </span>
+            </h3>
+          </div>
+        </div>
+        
+<!-- Content - hidden by default -->
+        <div id="notes-content" class="mt-4" phx-update="replace">
+          <%= for note <- @stats.notes |> Enum.filter(& &1.is_noted) do %>
+            <DialecticWeb.PageHtml.GraphComp.render
+              title={"#{note.graph_title} | Node: #{note.node_id}"}
+              is_public={true}
+              link={gen_link(note.graph_title, note.node_id)}
+              count={0}
+              id={"notes-graph-comp-#{note.graph_title}"}
+            />
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

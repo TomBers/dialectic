@@ -12,6 +12,13 @@ defmodule DialecticWeb.PageController do
     render(conn, :home, stats: stats, top_graphs: top_graphs, topic: topic)
   end
 
+  def my_graphs(conn, _params) do
+    stats = Notes.get_my_stats(conn.assigns.current_user)
+
+    # IO.inspect(stats, label: "Stats")
+    render(conn, :my_graphs, stats: stats)
+  end
+
   def view_all(conn, params) do
     search_term = Map.get(params, "search", "")
     graphs = Dialectic.DbActions.Graphs.all_graphs_with_notes(search_term)

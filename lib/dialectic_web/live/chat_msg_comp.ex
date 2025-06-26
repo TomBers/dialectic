@@ -43,7 +43,7 @@ defmodule DialecticWeb.ChatMsgComp do
           phx-hook="TextSelectionHook"
           data-node-id={@node.id}
         >
-          <article class="prose prose-stone prose-sm selection-content">
+          <article class="prose prose-stone prose-xl selection-content">
             {TextUtils.truncated_html(@node.content || "", @cut_off)}
           </article>
           

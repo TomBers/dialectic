@@ -24,7 +24,7 @@ defmodule DialecticWeb.NodeComp do
           >
             <div class="summary-content" id={"tt-summary-content-" <> @node.id}>
               <article class={[
-                "prose prose-stone prose-md max-w-none selection-content pl-2 border-l-4 w-full",
+                "prose prose-stone prose-xl max-w-none selection-content pl-2 border-l-4 w-full",
                 ColUtils.message_border_class(@node.class)
               ]}>
                 <h3>
