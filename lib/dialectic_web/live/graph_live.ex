@@ -324,8 +324,10 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_info({:other_user_change, graph, graph_id, sender_pid}, socket) do
-    if graph_id == socket.assigns.graph_id && self() != sender_pid do
+  def handle_info({:other_user_change, sender_pid}, socket) do
+    if self() != sender_pid do
+      {_graph_struct, graph} = GraphManager.get_graph(socket.assigns.graph_id)
+
       {:noreply,
        assign(socket,
          graph: graph,
@@ -351,6 +353,13 @@ defmodule DialecticWeb.GraphLive do
     # Make sure that the graph is saved to the database
     # We pass false so that it does not respect the queue exlusion period and stores the response immediately.
     DbWorker.save_graph(socket.assigns.graph_id, false)
+
+    # Brodcast new node to all connected users
+    PubSub.broadcast(
+      Dialectic.PubSub,
+      socket.assigns.graph_id,
+      {:other_user_change, self()}
+    )
 
     update_graph(
       socket,
@@ -452,19 +461,6 @@ defmodule DialecticWeb.GraphLive do
       else
         socket.assigns.show_combine
       end
-
-    non_broadcast_operations = MapSet.new(["find_node", "move", "note", "unnote", "node_clicked"])
-
-    if !MapSet.member?(non_broadcast_operations, operation) do
-      PubSub.broadcast(
-        Dialectic.PubSub,
-        socket.assigns.graph_id,
-        {:other_user_change, graph, socket.assigns.graph_id, self()}
-      )
-
-      # Save mutation to database
-      DbWorker.save_graph(socket.assigns.graph_id)
-    end
 
     # Clear search when a node is clicked from search results
     socket =
