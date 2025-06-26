@@ -49,12 +49,16 @@ const graphHook = {
       "comment",
     ]);
 
+    console.log("Operation:", operation, reorderOperations.has(operation));
+
     if (reorderOperations.has(operation)) {
       layoutGraph(this.cy);
     }
 
-    this.cy.elements().removeClass("selected");
-    this.cy.$(`#${node}`).addClass("selected");
+    if (operation !== "other_user_change") {
+      this.cy.elements().removeClass("selected");
+      this.cy.$(`#${node}`).addClass("selected");
+    }
   },
 };
 
