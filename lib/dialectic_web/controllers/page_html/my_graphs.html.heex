@@ -27,52 +27,10 @@
               </span>
             </h3>
           </div>
-          
-<!-- Toggle Button using Phoenix JS commands -->
-          <button
-            phx-click={
-              JS.toggle(to: "#graphs-content")
-              |> JS.toggle(to: "#chevron-down")
-              |> JS.toggle(to: "#chevron-up")
-            }
-            class="flex items-center justify-center p-2 bg-[#4361ee]/10 hover:bg-[#4361ee]/20 text-[#4361ee] rounded-full transition-all duration-300 focus:outline-none"
-            aria-controls="graphs-content"
-          >
-            <svg
-              id="chevron-down"
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-            <svg
-              id="chevron-up"
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5 hidden"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M5 15l7-7 7 7"
-              />
-            </svg>
-          </button>
         </div>
         
 <!-- Content - hidden by default -->
-        <div id="graphs-content" class="hidden mt-4 space-y-4" phx-update="replace">
+        <div id="graphs-content" class="mt-4 space-y-4" phx-update="replace">
           <%= for g <- @stats.graphs do %>
             <DialecticWeb.PageHtml.GraphComp.render
               title={g.title}
@@ -110,52 +68,10 @@
               </span>
             </h3>
           </div>
-          
-<!-- Toggle Button using Phoenix JS commands -->
-          <button
-            phx-click={
-              JS.toggle(to: "#notes-content")
-              |> JS.toggle(to: "#notes-chevron-down")
-              |> JS.toggle(to: "#notes-chevron-up")
-            }
-            class="flex items-center justify-center p-2 bg-[#7209b7]/10 hover:bg-[#7209b7]/20 text-[#7209b7] rounded-full transition-all duration-300 focus:outline-none"
-            aria-controls="notes-content"
-          >
-            <svg
-              id="notes-chevron-down"
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-            <svg
-              id="notes-chevron-up"
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5 hidden"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M5 15l7-7 7 7"
-              />
-            </svg>
-          </button>
         </div>
         
 <!-- Content - hidden by default -->
-        <div id="notes-content" class="hidden mt-4" phx-update="replace">
+        <div id="notes-content" class="mt-4" phx-update="replace">
           <%= for note <- @stats.notes |> Enum.filter(& &1.is_noted) do %>
             <DialecticWeb.PageHtml.GraphComp.render
               title={"#{note.graph_title} | Node: #{note.node_id}"}
