@@ -4,12 +4,15 @@ defmodule DialecticWeb.FocusLive do
   alias Dialectic.DbActions.DbWorker
   alias DialecticWeb.ConvComp
 
+  alias Phoenix.PubSub
+
   on_mount {DialecticWeb.UserAuth, :mount_current_user}
 
   def mount(%{"graph_name" => graph_id_uri, "node_id" => node_id_uri}, _session, socket) do
     graph_id = URI.decode(graph_id_uri)
     node_id = URI.decode(node_id_uri)
     live_view_topic = "graph_update:#{socket.id}"
+    graph_topic = "graph_update:#{graph_id}"
 
     user =
       case socket.assigns.current_user do
@@ -47,6 +50,7 @@ defmodule DialecticWeb.FocusLive do
       {:ok,
        assign(socket,
          live_view_topic: live_view_topic,
+         graph_topic: graph_topic,
          graph: graph,
          graph_struct: graph_struct,
          path: path,
@@ -127,6 +131,13 @@ defmodule DialecticWeb.FocusLive do
     # Make sure that the graph is saved to the database
     # We pass false so that it does not respect the queue exlusion period and stores the response immediately.
     DbWorker.save_graph(socket.assigns.graph_id, false)
+
+    # Broadcast new node to all connected users
+    PubSub.broadcast(
+      Dialectic.PubSub,
+      socket.assigns.graph_topic,
+      {:other_user_change, self()}
+    )
 
     {:noreply, socket}
   end
