@@ -458,7 +458,7 @@ defmodule DialecticWeb.GraphLive do
     if !MapSet.member?(non_broadcast_operations, operation) do
       PubSub.broadcast(
         Dialectic.PubSub,
-        "graph_update",
+        socket.assigns.graph_id,
         {:other_user_change, graph, socket.assigns.graph_id, self()}
       )
 
