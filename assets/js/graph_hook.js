@@ -47,6 +47,7 @@ const graphHook = {
       "answer",
       "llm_request_complete",
       "comment",
+      "other_user_change",
     ]);
 
     if (reorderOperations.has(operation)) {

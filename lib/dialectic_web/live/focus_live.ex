@@ -9,6 +9,7 @@ defmodule DialecticWeb.FocusLive do
   def mount(%{"graph_name" => graph_id_uri, "node_id" => node_id_uri}, _session, socket) do
     graph_id = URI.decode(graph_id_uri)
     node_id = URI.decode(node_id_uri)
+    live_view_topic = "graph_update:#{socket.id}"
 
     user =
       case socket.assigns.current_user do
@@ -25,7 +26,7 @@ defmodule DialecticWeb.FocusLive do
       {node, sending_message} =
         if connected?(socket) && :digraph.no_vertices(graph) == 1 do
           {_, first_node} = :digraph.vertex(graph, "1")
-          {_, node} = GraphActions.answer({graph_id, first_node, user})
+          {_, node} = GraphActions.answer({graph_id, first_node, user, live_view_topic})
           {node, true}
         else
           {_, node} =
@@ -39,12 +40,13 @@ defmodule DialecticWeb.FocusLive do
         |> Enum.reverse()
 
       # Subscribe to graph updates
-      if connected?(socket), do: Phoenix.PubSub.subscribe(Dialectic.PubSub, graph_id)
+      if connected?(socket), do: Phoenix.PubSub.subscribe(Dialectic.PubSub, live_view_topic)
 
       form = to_form(%{"message" => ""}, as: :message)
 
       {:ok,
        assign(socket,
+         live_view_topic: live_view_topic,
          graph: graph,
          graph_struct: graph_struct,
          path: path,
@@ -77,11 +79,13 @@ defmodule DialecticWeb.FocusLive do
     graph_id = socket.assigns.graph_id
     current_node = socket.assigns.current_node
     user = socket.assigns.user
+    live_view_topic = socket.assigns.live_view_topic
 
     # Create user message node
-    {_graph, user_node} = GraphActions.comment({graph_id, current_node, user}, message, prefix)
+    {_graph, user_node} =
+      GraphActions.comment({graph_id, current_node, user, live_view_topic}, message, prefix)
 
-    {_graph, node} = GraphActions.answer({graph_id, user_node, user})
+    {_graph, node} = GraphActions.answer({graph_id, user_node, user, live_view_topic})
 
     # Clear the form and set sending state
     form = to_form(%{"message" => ""}, as: :message)

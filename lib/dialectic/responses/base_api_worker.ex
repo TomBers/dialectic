@@ -12,7 +12,8 @@ defmodule Dialectic.Workers.BaseAPIWorker do
   @callback headers(String.t()) :: list()
   @callback build_request_body(String.t()) :: map()
   @callback parse_chunk(String.t()) :: {:ok, list()} | {:error, String.t()}
-  @callback handle_result(map(), graph_id :: any(), to_node :: any()) :: any()
+  @callback handle_result(map(), graph_id :: any(), to_node :: any(), live_view_topic :: any()) ::
+              any()
 
   @impl Oban.Worker
   def perform(%Oban.Job{
@@ -20,7 +21,8 @@ defmodule Dialectic.Workers.BaseAPIWorker do
           "question" => question,
           "to_node" => to_node,
           "graph" => graph,
-          "module" => worker_module
+          "module" => worker_module,
+          "live_view_topic" => live_view_topic
         }
       }) do
     # Get the implementing module from args
@@ -28,7 +30,7 @@ defmodule Dialectic.Workers.BaseAPIWorker do
 
     with {:ok, body} <- build_request_body_encoded(module, question),
          {:ok, url} <- build_url(module) do
-      do_request(module, url, body, graph, to_node)
+      do_request(module, url, body, graph, to_node, live_view_topic)
       :ok
     else
       {:error, reason} ->
@@ -61,11 +63,11 @@ defmodule Dialectic.Workers.BaseAPIWorker do
     end
   end
 
-  defp do_request(module, url, body, graph, to_node) do
+  defp do_request(module, url, body, graph, to_node, live_view_topic) do
     options = [
       headers: module.headers(module.api_key()),
       body: body,
-      into: &handle_stream_chunk(module, &1, &2, graph, to_node),
+      into: &handle_stream_chunk(module, &1, &2, graph, to_node, live_view_topic),
       connect_options: [timeout: @timeout],
       receive_timeout: @timeout
     ]
@@ -76,7 +78,7 @@ defmodule Dialectic.Workers.BaseAPIWorker do
 
         Phoenix.PubSub.broadcast(
           Dialectic.PubSub,
-          graph,
+          live_view_topic,
           {:llm_request_complete, to_node}
         )
 
@@ -93,13 +95,13 @@ defmodule Dialectic.Workers.BaseAPIWorker do
       raise exception
   end
 
-  defp handle_stream_chunk(module, {:data, data}, context, graph, to_node) do
+  defp handle_stream_chunk(module, {:data, data}, context, graph, to_node, live_view_topic) do
     case module.parse_chunk(data) do
       {:ok, chunks} ->
         Logger.info("Parsed chunks: #{inspect(chunks)}")
 
         Enum.each(chunks, fn chunk ->
-          module.handle_result(chunk, graph, to_node)
+          module.handle_result(chunk, graph, to_node, live_view_topic)
         end)
 
         {:cont, context}

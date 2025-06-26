@@ -8,24 +8,28 @@ defmodule Dialectic.Responses.RequestQueue do
   # Define the implementation based on compile-time environment
   if Mix.env() == :test do
     # Test environment uses local model
-    def add(question, to_node, graph) do
+    def add(question, to_node, graph, live_view_topic) do
       params = %{
         question: question,
         to_node: to_node.id,
         graph: graph,
-        module: nil
+        module: nil,
+        live_view_topic: live_view_topic
       }
+
       run_local(params)
     end
   else
     # Non-test environments use OpenAI
-    def add(question, to_node, graph) do
+    def add(question, to_node, graph, live_view_topic) do
       params = %{
         question: question,
         to_node: to_node.id,
         graph: graph,
-        module: nil
+        module: nil,
+        live_view_topic: live_view_topic
       }
+
       run_openai(params)
     end
   end

@@ -53,13 +53,14 @@ defmodule Dialectic.Workers.OpenAIWorker do
           ]
         },
         graph_id,
-        to_node
+        to_node,
+        live_view_topic
       )
       when is_binary(data),
-      do: Utils.process_chunk(graph_id, to_node, data, __MODULE__)
+      do: Utils.process_chunk(graph_id, to_node, data, __MODULE__, live_view_topic)
 
   @impl true
-  def handle_result(other, _graph, _to_node) do
+  def handle_result(other, _graph, _to_node, _live_view_topic) do
     IO.inspect(other, label: "Error")
     :ok
   end

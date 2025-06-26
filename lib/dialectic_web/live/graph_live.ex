@@ -12,7 +12,8 @@ defmodule DialecticWeb.GraphLive do
   def mount(%{"graph_name" => graph_id_uri} = params, _session, socket) do
     graph_id = URI.decode(graph_id_uri)
 
-    PubSub.subscribe(Dialectic.PubSub, "graph_update")
+    live_view_topic = "graph_update:#{socket.id}"
+    graph_topic = "graph_update:#{graph_id}"
 
     user =
       case socket.assigns.current_user do
@@ -26,7 +27,9 @@ defmodule DialecticWeb.GraphLive do
 
     socket =
       if connected?(socket) do
-        Phoenix.PubSub.subscribe(Dialectic.PubSub, graph_id)
+        # Subscribe to the liveview events and the graph wide events
+        Phoenix.PubSub.subscribe(Dialectic.PubSub, live_view_topic)
+        Phoenix.PubSub.subscribe(Dialectic.PubSub, graph_topic)
         DialecticWeb.Presence.track_user(user, %{id: user, graph_id: graph_id})
         DialecticWeb.Presence.subscribe()
 
@@ -48,6 +51,8 @@ defmodule DialecticWeb.GraphLive do
 
     {:ok,
      assign(socket,
+       live_view_topic: live_view_topic,
+       graph_topic: graph_topic,
        graph_struct: graph_struct,
        graph_id: graph_id,
        graph: graph,
@@ -322,8 +327,10 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_info({:other_user_change, graph, graph_id, sender_pid}, socket) do
-    if graph_id == socket.assigns.graph_id && self() != sender_pid do
+  def handle_info({:other_user_change, sender_pid}, socket) do
+    if self() != sender_pid do
+      {_graph_struct, graph} = GraphManager.get_graph(socket.assigns.graph_id)
+
       {:noreply,
        assign(socket,
          graph: graph,
@@ -349,6 +356,13 @@ defmodule DialecticWeb.GraphLive do
     # Make sure that the graph is saved to the database
     # We pass false so that it does not respect the queue exlusion period and stores the response immediately.
     DbWorker.save_graph(socket.assigns.graph_id, false)
+
+    # Broadcast new node to all connected users
+    PubSub.broadcast(
+      Dialectic.PubSub,
+      socket.assigns.graph_topic,
+      {:other_user_change, self()}
+    )
 
     update_graph(
       socket,
@@ -435,7 +449,8 @@ defmodule DialecticWeb.GraphLive do
   end
 
   defp graph_action_params(socket, node \\ nil) do
-    {socket.assigns.graph_id, node || socket.assigns.node, socket.assigns.user}
+    {socket.assigns.graph_id, node || socket.assigns.node, socket.assigns.user,
+     socket.assigns.live_view_topic}
   end
 
   def update_graph(socket, {graph, node}, operation) do
@@ -449,19 +464,6 @@ defmodule DialecticWeb.GraphLive do
       else
         socket.assigns.show_combine
       end
-
-    non_broadcast_operations = MapSet.new(["find_node", "move", "note", "unnote", "node_clicked"])
-
-    if !MapSet.member?(non_broadcast_operations, operation) do
-      PubSub.broadcast(
-        Dialectic.PubSub,
-        "graph_update",
-        {:other_user_change, graph, socket.assigns.graph_id, self()}
-      )
-
-      # Save mutation to database
-      DbWorker.save_graph(socket.assigns.graph_id)
-    end
 
     # Clear search when a node is clicked from search results
     socket =
