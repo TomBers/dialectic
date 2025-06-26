@@ -13,7 +13,7 @@ defmodule DialecticWeb.GraphLive do
     graph_id = URI.decode(graph_id_uri)
 
     live_view_topic = "graph_update:#{socket.id}"
-    Phoenix.PubSub.subscribe(Dialectic.PubSub, live_view_topic)
+    graph_topic = "graph_update:#{graph_id}"
 
     user =
       case socket.assigns.current_user do
@@ -27,7 +27,9 @@ defmodule DialecticWeb.GraphLive do
 
     socket =
       if connected?(socket) do
-        Phoenix.PubSub.subscribe(Dialectic.PubSub, graph_id)
+        # Subscribe to the liveview events and the graph wide events
+        Phoenix.PubSub.subscribe(Dialectic.PubSub, live_view_topic)
+        Phoenix.PubSub.subscribe(Dialectic.PubSub, graph_topic)
         DialecticWeb.Presence.track_user(user, %{id: user, graph_id: graph_id})
         DialecticWeb.Presence.subscribe()
 
@@ -50,6 +52,7 @@ defmodule DialecticWeb.GraphLive do
     {:ok,
      assign(socket,
        live_view_topic: live_view_topic,
+       graph_topic: graph_topic,
        graph_struct: graph_struct,
        graph_id: graph_id,
        graph: graph,
@@ -354,10 +357,10 @@ defmodule DialecticWeb.GraphLive do
     # We pass false so that it does not respect the queue exlusion period and stores the response immediately.
     DbWorker.save_graph(socket.assigns.graph_id, false)
 
-    # Brodcast new node to all connected users
+    # Broadcast new node to all connected users
     PubSub.broadcast(
       Dialectic.PubSub,
-      socket.assigns.graph_id,
+      socket.assigns.graph_topic,
       {:other_user_change, self()}
     )
 
