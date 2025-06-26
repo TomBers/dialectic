@@ -12,7 +12,8 @@ defmodule DialecticWeb.GraphLive do
   def mount(%{"graph_name" => graph_id_uri} = params, _session, socket) do
     graph_id = URI.decode(graph_id_uri)
 
-    PubSub.subscribe(Dialectic.PubSub, "graph_update")
+    live_view_topic = "graph_update:#{socket.id}"
+    Phoenix.PubSub.subscribe(Dialectic.PubSub, live_view_topic)
 
     user =
       case socket.assigns.current_user do
@@ -48,6 +49,7 @@ defmodule DialecticWeb.GraphLive do
 
     {:ok,
      assign(socket,
+       live_view_topic: live_view_topic,
        graph_struct: graph_struct,
        graph_id: graph_id,
        graph: graph,
@@ -435,7 +437,8 @@ defmodule DialecticWeb.GraphLive do
   end
 
   defp graph_action_params(socket, node \\ nil) do
-    {socket.assigns.graph_id, node || socket.assigns.node, socket.assigns.user}
+    {socket.assigns.graph_id, node || socket.assigns.node, socket.assigns.user,
+     socket.assigns.live_view_topic}
   end
 
   def update_graph(socket, {graph, node}, operation) do

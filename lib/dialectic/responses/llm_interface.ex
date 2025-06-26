@@ -1,7 +1,7 @@
 defmodule Dialectic.Responses.LlmInterface do
   alias Dialectic.Responses.RequestQueue
 
-  def gen_response(node, child, graph_id) do
+  def gen_response(node, child, graph_id, live_view_topic) do
     context = GraphManager.build_context(graph_id, node)
 
     qn = """
@@ -9,10 +9,10 @@ defmodule Dialectic.Responses.LlmInterface do
     Question: #{node.content}
     """
 
-    ask_model(qn, child, graph_id)
+    ask_model(qn, child, graph_id, live_view_topic)
   end
 
-  def gen_selection_response(node, child, graph_id, selection) do
+  def gen_selection_response(node, child, graph_id, selection, live_view_topic) do
     context = GraphManager.build_context(graph_id, node)
 
     qn = """
@@ -20,10 +20,10 @@ defmodule Dialectic.Responses.LlmInterface do
     Explain: #{selection}
     """
 
-    ask_model(qn, child, graph_id)
+    ask_model(qn, child, graph_id, live_view_topic)
   end
 
-  def gen_synthesis(n1, n2, child, graph_id) do
+  def gen_synthesis(n1, n2, child, graph_id, live_view_topic) do
     # TODO - Add n2 context ?? need to enforce limit??
     context1 = GraphManager.build_context(graph_id, n1)
     context2 = GraphManager.build_context(graph_id, n2)
@@ -35,10 +35,10 @@ defmodule Dialectic.Responses.LlmInterface do
       Please produce a synthesis of #{n1.content} & #{n2.content}
       """
 
-    ask_model(qn, child, graph_id)
+    ask_model(qn, child, graph_id, live_view_topic)
   end
 
-  def gen_thesis(node, child, graph_id) do
+  def gen_thesis(node, child, graph_id, live_view_topic) do
     context = GraphManager.build_context(graph_id, node)
 
     qn = """
@@ -46,10 +46,10 @@ defmodule Dialectic.Responses.LlmInterface do
     Please write a short argument in support of #{node.content}
     """
 
-    ask_model(qn, child, graph_id)
+    ask_model(qn, child, graph_id, live_view_topic)
   end
 
-  def gen_antithesis(node, child, graph_id) do
+  def gen_antithesis(node, child, graph_id, live_view_topic) do
     context = GraphManager.build_context(graph_id, node)
 
     qn = """
@@ -57,15 +57,16 @@ defmodule Dialectic.Responses.LlmInterface do
     Please write a short argument against #{node.content}
     """
 
-    ask_model(qn, child, graph_id)
+    ask_model(qn, child, graph_id, live_view_topic)
   end
 
-  def ask_model(question, to_node, graph_id) do
+  def ask_model(question, to_node, graph_id, live_view_topic) do
     RequestQueue.add(
       question <>
         "\n Make sure to add a title in the response.",
       to_node,
-      graph_id
+      graph_id,
+      live_view_topic
     )
   end
 end
