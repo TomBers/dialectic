@@ -141,14 +141,30 @@
     overflow: hidden;
 }
 
+/* Back button styling */
+.back-button {
+    transition: all 0.2s ease;
+}
+
+.back-button:hover {
+    transform: translateX(-2px);
+    box-shadow: 0 3px 10px rgba(59, 130, 246, 0.2);
+}
+
+.back-button:active {
+    transform: translateX(-2px) scale(0.95);
+}
+
 .chat-header {
-    padding: 1rem 1.5rem;
+    padding: 0.75rem 1rem;
     border-bottom: 1px solid #e5e7eb;
     background: #fafafa;
     flex-shrink: 0;
     position: sticky;
     top: 0;
     z-index: 10;
+    display: flex;
+    align-items: center;
 }
 
 .chat-messages {
@@ -473,6 +489,11 @@
         height: 100vh;
         border-radius: 0;
         margin: 0;
+    }
+
+    .back-button {
+        width: 36px;
+        height: 36px;
     }
 
     .message-bubble {
