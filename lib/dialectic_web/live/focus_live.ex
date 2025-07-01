@@ -100,14 +100,17 @@ defmodule DialecticWeb.FocusLive do
     if socket.assigns.graph_id do
       update_conversation(socket, message)
     else
-      case Graphs.create_new_graph(message, socket.assigns.current_user) do
+      case Graphs.create_new_graph(message, socket.assigns.user) do
         {:ok, _} ->
           {:noreply,
            socket
            |> redirect(to: ~p"/#{message}/focus/1")}
 
         _ ->
-          {:noreply, socket |> put_flash(:error, "Error creating graph") |> redirect(to: ~p"/")}
+          {:noreply,
+           socket
+           |> put_flash(:error, "Error creating graph")
+           |> redirect(to: ~p"/start/new/idea")}
       end
     end
   end

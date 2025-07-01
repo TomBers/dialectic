@@ -35,23 +35,24 @@
   <div class="container mx-auto py-8 px-6 max-w-7xl" id="create-conv">
     <div class="bg-white shadow-[0_10px_30px_rgba(0,0,0,0.08)] rounded-xl p-8 border-t-4 border-[#4361ee]">
       <h2 class="text-2xl font-bold text-[#2d3748] mb-6 flex items-center">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-8 w-8 text-[#4361ee] mr-3"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-          />
-        </svg>
-        Start a New Exploration
+        <.link navigate={~p"/start/new/idea"}>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-8 w-8 text-[#4361ee] mr-3"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+            />
+          </svg>
+          Start a New Exploration
+        </.link>
       </h2>
-      <DialecticWeb.PageHtml.ConvComp.create id="create-conv" topic={@topic} />
     </div>
   </div>
   
