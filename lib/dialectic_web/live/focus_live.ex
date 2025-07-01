@@ -20,6 +20,7 @@ defmodule DialecticWeb.FocusLive do
         _ -> socket.assigns.current_user.email
       end
 
+    # TODO - move graph creation here - if Graph does not exist.  Create it on message response
     # Ensure graph is started
     {graph_struct, graph} = GraphManager.get_graph(graph_id)
 
