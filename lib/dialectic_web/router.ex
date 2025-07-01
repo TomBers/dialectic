@@ -23,15 +23,16 @@ defmodule DialecticWeb.Router do
     get "/my/ideas", PageController, :my_graphs
     get "/view_all/graphs", PageController, :view_all
     post "/conversation", PageController, :create
-    get "/intro/what", PageController, :what
+    # get "/intro/what", PageController, :what
+    get "/intro/how", PageController, :guide
 
     get "/deploy/dashboard", PageController, :deploy_dashboard
     get "/ideas/all", PageController, :ideas_all
+    live "/start/new/idea", FocusLive
     live "/:graph_name", GraphLive
     live "/:graph_name/linear", LinearGraphLive
     live "/:graph_name/story/:node_id", StoryLive
     live "/:graph_name/focus/:node_id", FocusLive
-    live "/start/new/idea", FocusLive
   end
 
   # Other scopes may use custom stacks.

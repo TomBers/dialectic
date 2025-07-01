@@ -97,6 +97,10 @@ defmodule DialecticWeb.PageController do
     json(conn, %{question: question})
   end
 
+  def guide(conn, _params) do
+    render(conn, :how)
+  end
+
   defp check_key(key) do
     case System.get_env(key) do
       nil -> "Missing #{key}"
