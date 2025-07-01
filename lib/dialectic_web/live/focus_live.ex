@@ -4,6 +4,8 @@ defmodule DialecticWeb.FocusLive do
   alias Dialectic.DbActions.DbWorker
   alias DialecticWeb.ConvComp
 
+  alias Dialectic.DbActions.Graphs
+
   alias Phoenix.PubSub
 
   on_mount {DialecticWeb.UserAuth, :mount_current_user}
@@ -20,8 +22,6 @@ defmodule DialecticWeb.FocusLive do
         _ -> socket.assigns.current_user.email
       end
 
-    # TODO - move graph creation here - if Graph does not exist.  Create it on message response
-    # Ensure graph is started
     {graph_struct, graph} = GraphManager.get_graph(graph_id)
 
     if !graph_struct.is_public do
@@ -65,6 +65,31 @@ defmodule DialecticWeb.FocusLive do
     end
   end
 
+  def mount(_params, _session, socket) do
+    user =
+      case socket.assigns.current_user do
+        nil -> "Anon"
+        _ -> socket.assigns.current_user.email
+      end
+
+    form = to_form(%{"message" => ""}, as: :message)
+
+    {:ok,
+     assign(socket,
+       live_view_topic: nil,
+       graph_topic: nil,
+       graph: nil,
+       graph_struct: nil,
+       path: [],
+       graph_id: nil,
+       current_node: %{id: ""},
+       user: user,
+       form: form,
+       sending_message: false,
+       message_text: ""
+     )}
+  end
+
   def handle_event("form_change", %{"message" => %{"message" => message}}, socket) do
     form = to_form(%{"message" => message}, as: :message)
     {:noreply, assign(socket, form: form, message_text: message)}
@@ -72,7 +97,19 @@ defmodule DialecticWeb.FocusLive do
 
   def handle_event("send_message", %{"message" => %{"message" => message}}, socket)
       when message != "" do
-    update_conversation(socket, message)
+    if socket.assigns.graph_id do
+      update_conversation(socket, message)
+    else
+      case Graphs.create_new_graph(message, socket.assigns.current_user) do
+        {:ok, _} ->
+          {:noreply,
+           socket
+           |> redirect(to: ~p"/#{message}/focus/1")}
+
+        _ ->
+          {:noreply, socket |> put_flash(:error, "Error creating graph") |> redirect(to: ~p"/")}
+      end
+    end
   end
 
   def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}} = params, socket) do
