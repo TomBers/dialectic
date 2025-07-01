@@ -113,7 +113,7 @@ defmodule DialecticWeb.FocusLive do
     else
       Logger.info("Creating new graph with title: #{sanitized_message}")
 
-      case Graphs.create_new_graph(sanitized_message, socket.assigns.user) do
+      case Graphs.create_new_graph(sanitized_message, socket.assigns.current_user) do
         {:ok, graph} ->
           Logger.info("Successfully created graph: #{graph.title}")
 
