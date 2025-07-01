@@ -302,8 +302,24 @@
     border-top: 1px solid rgba(0, 0, 0, 0.05);
 }
 
+.node-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-left: auto;
+}
+
 .message-wrapper.user .message-meta {
     border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.message-wrapper.user .message-meta a {
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.message-wrapper.user .message-meta a:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.3);
 }
 
 .typing-indicator {
@@ -424,6 +440,14 @@
     background: #ccc;
     cursor: not-allowed;
     transform: none;
+}
+
+.message-bubble .node-id {
+    opacity: 0.6;
+}
+
+.message-bubble:hover .node-id {
+    opacity: 1;
 }
 
 /* Scrollbar styling */

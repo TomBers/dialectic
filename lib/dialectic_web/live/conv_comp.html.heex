@@ -111,11 +111,7 @@
           <%= if get_message_type(node, idx) == "user" do %>
             <div class="avatar-container hidden md:flex flex-col items-center mr-2">
               <div class="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold">
-                <%= if node.user && node.user != "" do %>
-                  {String.slice(node.user, 0, 2) |> String.upcase()}
-                <% else %>
-                  U
-                <% end %>
+                <span>U</span>
               </div>
             </div>
           <% else %>
@@ -142,20 +138,11 @@
             <div class="message-content">
               {TextUtils.full_html(node.content || "")}
             </div>
-            <div class="message-meta">
-              <span class="node-info font-medium">
-                <%= if node.user && node.user != "" do %>
-                  {node.user}
-                <% else %>
-                  {String.capitalize(get_message_type(node, idx))}
-                <% end %>
-              </span>
-              <span class="node-id text-gray-400 text-xs">ID: {node.id}</span>
-
-              <span class="node-actions opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            <div class="message-meta flex justify-end items-center">
+              <div class="flex space-x-2 node-actions opacity-0 group-hover:opacity-100 transition-opacity duration-200 ml-4">
                 <.link
                   navigate={~p"/#{@graph_id}?node=#{node.id}"}
-                  class="text-xs font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-full mr-1 ml-2 inline-flex items-center transition-colors"
+                  class="text-xs font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-full inline-flex items-center transition-colors"
                   title="View this node in graph"
                 >
                   <svg
@@ -195,7 +182,7 @@
                   </svg>
                   Branch
                 </.link>
-              </span>
+              </div>
             </div>
           </div>
           <div class="selection-actions hidden absolute bg-white shadow-lg rounded-lg p-2 z-10 border border-gray-200">
@@ -247,8 +234,8 @@
             <span></span>
             <span></span>
           </div>
-          <div class="message-meta">
-            <span class="typing-text font-medium">Assistant is thinking...</span>
+          <div class="message-meta flex items-center">
+            <span class="typing-text text-gray-500">AI is thinking...</span>
           </div>
         </div>
       </div>
