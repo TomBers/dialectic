@@ -1,135 +1,260 @@
-<div class="container mx-auto max-w-4xl p-4">
-  <article class="prose prose-stone prose-md">
-    <h1>How to Use MuDG</h1>
+<div class="mx-auto max-w-7xl p-4">
+  <!-- Header -->
+  <div class="max-w-3xl mx-auto mb-8">
+    <h1 class="text-4xl font-bold mb-2 text-center">How to Use MuDG</h1>
+    <p class="text-xl text-gray-600 text-center">
+      A powerful knowledge exploration tool that helps you navigate through complex topics,
+      discover connections between ideas, and deepen your understanding through interactive conversation.
+    </p>
+  </div>
+  
+<!-- Researchers & Students Guide -->
+  <div class="mb-12">
+    <h2 class="text-3xl font-bold mb-6">Guide for Researchers and Students</h2>
 
-    <h2>Guide for Researchers and Students</h2>
+    <div class="grid grid-cols-1 lg:grid-cols-1 gap-6">
+      <!-- Left Column -->
+      <div class="space-y-6">
+        <!-- Step 1 -->
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-2xl font-semibold mb-4">Step 1: Define Your Learning Objective</h3>
+          <p class="mb-4">
+            Begin by identifying what you want to learn about. MuDG works best when you start with:
+          </p>
+          <ul class="space-y-2 mb-4">
+            <li class="flex items-start">
+              <span class="font-semibold min-w-[100px]">Topics:</span>
+              <span>Historical periods, scientific concepts, philosophical movements</span>
+            </li>
+            <li class="flex items-start">
+              <span class="font-semibold min-w-[100px]">Books:</span>
+              <span>Literature, textbooks, research papers</span>
+            </li>
+            <li class="flex items-start">
+              <span class="font-semibold min-w-[100px]">Ideas:</span>
+              <span>Theories, methodologies, frameworks</span>
+            </li>
+            <li class="flex items-start">
+              <span class="font-semibold min-w-[100px]">Questions:</span>
+              <span>Research questions or concepts you're trying to understand</span>
+            </li>
+          </ul>
+        </div>
+        
+<!-- Step 2 -->
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-2xl font-semibold mb-4">Step 2: Start the Conversation</h3>
+          <p class="mb-4">
+            Visit
+            <a href="https://mudg.fly.dev/start/new/idea" class="text-blue-600 hover:underline">
+              mudg.fly.dev
+            </a>
+            and enter your initial query in the search box.
+          </p>
+          <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 mb-4">
+            <div class="aspect-video bg-gray-100">
+              <img src="/images/empty_chat.webp" alt="Empty Knowledge Graph Visualization" />
+            </div>
+          </div>
+          <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
+            <div class="aspect-video bg-gray-100">
+              <img src="/images/chat.webp" alt="Empty Knowledge Graph Visualization" />
+            </div>
+          </div>
+        </div>
+      </div>
+      
+<!-- Right Column -->
+      <div class="space-y-6">
+        <!-- Step 3 -->
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-2xl font-semibold mb-4">Step 3: Navigate the Knowledge Graph</h3>
+          <p class="mb-4">The interface is divided into several key areas:</p>
 
-    <div class="bg-white rounded-lg shadow p-4 mb-6">
-      <h3>Introduction</h3>
-      <p>
-        MuDG is a powerful knowledge exploration tool that helps you navigate through complex topics,
-        discover connections between ideas, and deepen your understanding through interactive conversation.
-      </p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
+              <h4 class="font-semibold mb-2">Graph Visualization</h4>
+              <div class="aspect-video bg-gray-100 mb-2">
+                <img src="/images/graph.webp" alt="Empty Knowledge Graph Visualization" />
+              </div>
+              <p class="text-sm text-gray-600">
+                The interactive graph shows connections between ideas. Nodes represent concepts, and edges show relationships.
+              </p>
+            </div>
+
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
+              <h4 class="font-semibold mb-2">Conversation Panel</h4>
+              <div class="aspect-video bg-gray-100 mb-2">
+                <img src="/images/ask-question.webp" alt="Empty Knowledge Graph Visualization" />
+              </div>
+              <p class="text-sm text-gray-600">
+                Where you interact with MuDG, ask questions, and see responses.
+              </p>
+            </div>
+
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
+              <h4 class="font-semibold mb-2">Action Tools</h4>
+              <div class="aspect-video bg-gray-100 mb-2">
+                <img src="/images/graph_controls.webp" alt="Empty Knowledge Graph Visualization" />
+              </div>
+              <p class="text-sm text-gray-600">
+                Tools for combining nodes, exploring relationships, and managing your graph.
+              </p>
+            </div>
+
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
+              <h4 class="font-semibold mb-2">Responses</h4>
+              <div class="aspect-video bg-gray-100 mb-2">
+                <img src="/images/answer.webp" alt="Empty Knowledge Graph Visualization" />
+              </div>
+              <p class="text-sm text-gray-600">
+                Zoom, pan, and focus controls for exploring your knowledge graph.
+              </p>
+            </div>
+          </div>
+
+          <h4 class="font-semibold mb-2">Interaction Options:</h4>
+          <ul class="space-y-2 mb-4">
+            <li class="flex items-start gap-2">
+              <span class="font-semibold min-w-[160px]">Follow-up Questions:</span>
+              <span>Dig deeper into specific aspects of the topic</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="font-semibold min-w-[160px]">Define Terms:</span>
+              <span>Request clear explanations of unfamiliar concepts</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="font-semibold min-w-[160px]">Pros and Cons:</span>
+              <span>Understand different perspectives on debates</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="font-semibold min-w-[160px]">Combine Nodes:</span>
+              <span>Select two concepts and ask MuDG to synthesize them</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="font-semibold min-w-[160px]">Related Ideas:</span>
+              <span>Discover adjacent concepts that enhance understanding</span>
+            </li>
+          </ul>
+        </div>
+        
+<!-- Step 4 -->
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-2xl font-semibold mb-4">Step 4: Save and Share Your Research</h3>
+          <ul class="space-y-2">
+            <li class="flex items-start gap-2">
+              <span class="font-semibold min-w-[160px]">Download:</span>
+              <span>Export your research as PDF or Markdown</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="font-semibold min-w-[160px]">Share:</span>
+              <span>Send your graph to colleagues to build upon your work</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="font-semibold min-w-[160px]">Extend:</span>
+              <span>Continue your research session later or allow others to contribute</span>
+            </li>
+          </ul>
+        </div>
+      </div>
     </div>
+  </div>
+  
+<!-- Teachers Guide -->
+  <div class="mb-12">
+    <h2 class="text-3xl font-bold mb-6">Guide for Teachers</h2>
 
-    <div class="space-y-6 mb-8">
-      <div class="bg-white rounded-lg shadow p-4">
-        <h3>Step 1: Define Your Learning Objective</h3>
-        <p class="mb-3">
-          Begin by identifying what you want to learn about. MuDG works best when you start with:
-        </p>
-        <ul class="list-disc pl-6 mb-3">
-          <li>
-            <strong>Topics:</strong>
-            Historical periods, scientific concepts, philosophical movements
-          </li>
-          <li><strong>Books:</strong> Literature, textbooks, research papers</li>
-          <li><strong>Ideas:</strong> Theories, methodologies, frameworks</li>
-          <li>
-            <strong>Questions:</strong> Research questions or concepts you're trying to understand
-          </li>
-        </ul>
-      </div>
-
-      <div class="bg-white rounded-lg shadow p-4">
-        <h3>Step 2: Start the Conversation</h3>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Introduction -->
+      <div class="lg:col-span-3 bg-white rounded-lg shadow p-6">
+        <h3 class="text-2xl font-semibold mb-4">Creating Learning Experiences with MuDG</h3>
         <p>
-          Visit
-          <a href="https://mudg.fly.dev/start/new/idea" class="text-blue-600 hover:underline">
-            mudg.fly.dev
-          </a>
-          and enter your initial query in the search box.
-        </p>
-        <p>
-          Once you've entered your query, MuDG will generate an initial response and begin building your knowledge graph. This is your entry point into exploring the topic.
-        </p>
-      </div>
-
-      <div class="bg-white rounded-lg shadow p-4">
-        <h3>Step 3: Navigate the Knowledge Graph</h3>
-        <p class="mb-3">
-          This is where MuDG truly shines. You can explore your topic in multiple ways:
-        </p>
-        <ul class="list-disc pl-6">
-          <li>
-            <strong>Ask follow-up questions:</strong>
-            Dig deeper into specific aspects of the topic
-          </li>
-          <li>
-            <strong>Define terms:</strong> Request clear explanations of unfamiliar concepts
-          </li>
-          <li>
-            <strong>Get pros and cons:</strong>
-            Understand different perspectives on debates within the topic
-          </li>
-          <li>
-            <strong>Combine nodes:</strong>
-            Select two concepts in the graph and ask MuDG to synthesize them
-          </li>
-          <li>
-            <strong>Explore related ideas:</strong>
-            Discover adjacent concepts that enhance understanding
-          </li>
-        </ul>
-      </div>
-
-      <div class="bg-white rounded-lg shadow p-4">
-        <h3>Step 4: Save and Share Your Research</h3>
-        <ul class="list-disc pl-6">
-          <li><strong>Download your research:</strong> Export as PDF or Markdown</li>
-          <li><strong>Share with collaborators:</strong> Send your graph to colleagues</li>
-          <li><strong>Extend the graph:</strong> Continue your research later</li>
-        </ul>
-      </div>
-    </div>
-
-    <h2>Guide for Teachers</h2>
-
-    <div class="space-y-6">
-      <div class="bg-white rounded-lg shadow p-4">
-        <h3>Creating Learning Experiences with MuDG</h3>
-        <p class="mb-4">
           MuDG offers unique opportunities for creating guided learning experiences for your students.
           Here's how to use it effectively in your teaching:
         </p>
       </div>
-
-      <div class="bg-white rounded-lg shadow p-4">
-        <h3>Step 1: Create a Learning Path</h3>
-        <ol class="list-decimal pl-6">
-          <li>Enter your topic or learning objective</li>
-          <li>Build out the knowledge graph through conversation</li>
-          <li>Navigate and expand the graph to cover key concepts</li>
+      
+<!-- Step 1 -->
+      <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-2xl font-semibold mb-4">Step 1: Create a Learning Path</h3>
+        <ol class="space-y-2">
+          <li class="flex items-start gap-2">
+            <span class="font-semibold min-w-[24px]">1.</span>
+            <span>Enter your topic or learning objective</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="font-semibold min-w-[24px]">2.</span>
+            <span>Build out the knowledge graph through conversation</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="font-semibold min-w-[24px]">3.</span>
+            <span>Navigate and expand the graph to cover key concepts</span>
+          </li>
         </ol>
       </div>
-
-      <div class="bg-white rounded-lg shadow p-4">
-        <h3>Step 2: Lock the Graph</h3>
-        <ul class="list-disc pl-6">
-          <li>Use the "Lock Graph" feature to prevent unintended modifications</li>
-          <li>This ensures students follow the learning path you've designed</li>
-          <li>The locked graph will maintain all your curated connections</li>
+      
+<!-- Step 2 -->
+      <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-2xl font-semibold mb-4">Step 2: Lock the Graph</h3>
+        <ul class="space-y-2">
+          <li class="flex items-start gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-gray-800 mt-2"></span>
+            <span>Use the "Lock Graph" feature to prevent unintended modifications</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-gray-800 mt-2"></span>
+            <span>This ensures students follow the learning path you've designed</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-gray-800 mt-2"></span>
+            <span>The locked graph will maintain all your curated connections</span>
+          </li>
         </ul>
       </div>
-
-      <div class="bg-white rounded-lg shadow p-4">
-        <h3>Step 3: Share with Your Students</h3>
-        <ul class="list-disc pl-6">
-          <li>Generate a shareable URL for your graph</li>
-          <li>Distribute this URL to your students</li>
-          <li>Provide guided questions for exploration</li>
+      
+<!-- Step 3 -->
+      <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-2xl font-semibold mb-4">Step 3: Share with Students</h3>
+        <ul class="space-y-2">
+          <li class="flex items-start gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-gray-800 mt-2"></span>
+            <span>Generate a shareable URL for your graph</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-gray-800 mt-2"></span>
+            <span>Distribute this URL to your students</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-gray-800 mt-2"></span>
+            <span>Provide guided questions for exploration</span>
+          </li>
         </ul>
       </div>
-
-      <div class="bg-white rounded-lg shadow p-4">
-        <h3>Teaching Tips</h3>
-        <ul class="list-disc pl-6">
-          <li>Create multiple graphs for different units or difficulty levels</li>
-          <li>Use MuDG as a collaborative tool during class discussions</li>
-          <li>Have students present their explorations of specific paths</li>
-          <li>Compare student-created graphs for assessment purposes</li>
-        </ul>
+      
+<!-- Teaching Tips -->
+      <div class="lg:col-span-3 bg-white rounded-lg shadow p-6">
+        <h3 class="text-2xl font-semibold mb-4">Teaching Tips</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="p-4 bg-gray-50 rounded-lg">
+            <h4 class="font-semibold mb-2">Multiple Graphs</h4>
+            <p class="text-sm text-gray-600">
+              Create different graphs for various units or difficulty levels
+            </p>
+          </div>
+          <div class="p-4 bg-gray-50 rounded-lg">
+            <h4 class="font-semibold mb-2">Collaborative Learning</h4>
+            <p class="text-sm text-gray-600">Use MuDG as a tool during class discussions</p>
+          </div>
+          <div class="p-4 bg-gray-50 rounded-lg">
+            <h4 class="font-semibold mb-2">Student Presentations</h4>
+            <p class="text-sm text-gray-600">Have students present their path explorations</p>
+          </div>
+          <div class="p-4 bg-gray-50 rounded-lg">
+            <h4 class="font-semibold mb-2">Assessment</h4>
+            <p class="text-sm text-gray-600">Compare student-created graphs for evaluation</p>
+          </div>
+        </div>
       </div>
     </div>
-  </article>
+  </div>
 </div>
