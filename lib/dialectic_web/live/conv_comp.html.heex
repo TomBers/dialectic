@@ -1,4 +1,4 @@
-<div class="chat-container">
+<div class="chat-container flex flex-col h-[calc(100vh-6rem)]">
   <div class="chat-header flex items-center justify-between px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100">
     <div class="flex items-center space-x-3">
       <%= if @graph_id do %>
@@ -31,7 +31,7 @@
     </div>
   </div>
 
-  <div class="chat-messages" id="chat-messages" phx-hook="ChatScroll">
+  <div class="chat-messages flex-1 overflow-y-auto" id="chat-messages" phx-hook="ChatScroll">
     <%= if Enum.empty?(@path) do %>
       <div class="empty-state">
         <div class="empty-icon bg-blue-50 rounded-full p-6 mb-4">
@@ -242,7 +242,7 @@
     <% end %>
   </div>
 
-  <div class="chat-input-container bg-white border-t border-gray-100 shadow-sm">
+  <div class="chat-input-container bg-white border-t border-gray-100 shadow-sm fixed bottom-0 left-0 right-0">
     <.form for={@form} phx-submit="send_message" phx-change="form_change" class="chat-form">
       <div class="input-wrapper">
         <div class="flex items-center pr-3">
