@@ -90,37 +90,312 @@
 }
 
 .menu-buttons {
-    display: flex;
-    gap: 8px;
-    flex-direction: row;
+    display: grid;
+    gap: 10px;
     justify-content: center;
+    margin: 8px 0;
+    padding: 5px;
+    position: relative;
+}
+
+.menu-buttons::before {
+    content: "Click an option";
+    position: absolute;
+    top: -18px;
+    right: 10px;
+    font-size: 11px;
+    color: #6b7280;
+    opacity: 0.8;
+    pointer-events: none;
 }
 
 .menu-button {
     display: flex;
     flex-direction: column;
     align-items: center;
-    background: transparent;
-    border: none;
-    border-radius: 4px;
+    justify-content: center;
+    background: #f8f8f8;
+    border: 1px solid #ddd;
+    border-radius: 8px;
     cursor: pointer;
-    padding: 5px;
-    min-width: 55px;
+    padding: 10px 5px;
+    width: 100%;
     color: #333;
-    transition: background-color 0.2s;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.05);
+    position: relative;
+    overflow: hidden;
 }
 
 .menu-button:hover {
-    background-color: #f0f0f0;
+    background-color: #f0f7ff;
+    border-color: #c0d6f0;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.menu-button:hover::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #4f8cf2, #75acff);
+    border-radius: 8px 8px 0 0;
+    animation: buttonGlow 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes buttonGlow {
+    from {
+        opacity: 0.7;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.menu-button:active {
+    background-color: #e0e9f5;
+    border-color: #aabfd0;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15) inset;
+    transform: translateY(0);
+    transition: all 0.1s;
 }
 
 .menu-button .icon {
-    margin-bottom: 3px;
-    color: #555;
+    margin-bottom: 6px;
+    color: #444;
+    font-size: 1.1em;
+    transition:
+        transform 0.2s ease,
+        color 0.2s ease;
+    position: relative;
+}
+
+.menu-button .icon::after {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background-color: rgba(37, 99, 235, 0.1);
+    border-radius: 50%;
+    transform: scale(0);
+    opacity: 0;
+    transition:
+        transform 0.3s ease,
+        opacity 0.3s ease;
+    z-index: -1;
+}
+
+.menu-button:hover .icon::after {
+    transform: scale(1.5);
+    opacity: 1;
+}
+
+.menu-button:hover .icon {
+    transform: scale(1.1);
+    color: #2563eb;
 }
 
 .menu-button .label {
     font-size: 12px;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.menu-button:hover .label {
+    color: #2563eb;
+}
+
+.menu-button[data-active="true"],
+.menu-button[data-selected="true"] {
+    background-color: #e0f0ff;
+    border-color: #acd0ff;
+    box-shadow: 0 1px 3px rgba(0, 100, 255, 0.1);
+    position: relative;
+}
+
+.menu-button[data-active="true"]::before,
+.menu-button[data-selected="true"]::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+    border-radius: 8px 8px 0 0;
+}
+
+.menu-button[data-active="true"] .icon,
+.menu-button[data-selected="true"] .icon {
+    color: #2563eb;
+}
+
+.menu-button[data-active="true"] .label,
+.menu-button[data-selected="true"] .label {
+    color: #2563eb;
+    font-weight: 600;
+}
+
+/* Add a "click me" effect for first-time users */
+.action-grid .menu-button:nth-child(3) {
+    animation: pulseAttention 2s ease-in-out 1s;
+}
+
+@keyframes pulseAttention {
+    0%,
+    100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+        background-color: #e0f0ff;
+    }
+}
+
+/* Tab-based interface for questions and comments */
+.rounded-tl-md {
+    border-top-left-radius: 0.375rem;
+}
+
+.rounded-tr-md {
+    border-top-right-radius: 0.375rem;
+}
+
+.rounded-b-md {
+    border-bottom-left-radius: 0.375rem;
+    border-bottom-right-radius: 0.375rem;
+}
+
+.rounded-md {
+    border-radius: 0.375rem;
+}
+
+/* Form shadow */
+.shadow-sm {
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+/* Input field focus styles */
+.focus\:border-blue-400:focus {
+    border-color: #60a5fa;
+}
+
+.focus\:border-gray-400:focus {
+    border-color: #9ca3af;
+}
+
+.focus\:ring:focus {
+    box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.25);
+}
+
+.focus\:ring-blue-200:focus {
+    box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.25);
+}
+
+.focus\:ring-gray-200:focus {
+    box-shadow: 0 0 0 2px rgba(156, 163, 175, 0.25);
+}
+
+.focus\:ring-opacity-50:focus {
+    --tw-ring-opacity: 0.5;
+}
+
+/* Button transitions */
+.transition-all {
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+}
+
+.transition-colors {
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+}
+
+/* Special styling for form tabs */
+button[id^="tab-"] {
+    position: relative;
+    overflow: hidden;
+}
+
+button[id^="tab-"]:hover:not([class*="bg-white"]) {
+    background-color: #f0f0f0;
+}
+
+button[id^="tab-"] .text-xs {
+    transition: opacity 0.2s ease;
+}
+
+button[id^="tab-"]:hover .text-xs {
+    opacity: 1;
+}
+
+/* Add arrow to active tab */
+button[id^="tab-"][class*="bg-white"]::after {
+    content: "";
+    position: absolute;
+    bottom: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 6px solid white;
+    z-index: 1;
+}
+
+/* Hover states */
+.hover\:bg-blue-600:hover {
+    background-color: #2563eb;
+}
+
+.hover\:bg-gray-600:hover {
+    background-color: #4b5563;
+}
+
+.hover\:bg-gray-100:hover {
+    background-color: #f3f4f6;
+}
+
+/* Input field with icon */
+div.relative .absolute.left-3 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    top: 0;
+    pointer-events: none;
+}
+
+/* Submit button styling */
+button[type="submit"] {
+    transition: all 0.2s ease;
+}
+
+button[type="submit"]:hover {
+    transform: translateX(2px);
+}
+
+button[type="submit"]:active {
+    transform: translateX(0);
+}
+
+/* Media query for mobile */
+@media (max-width: 768px) {
+    .menu-button {
+        padding: 8px 4px;
+    }
+
+    .menu-button .label {
+        font-size: 11px;
+    }
 }
 
 .selected-node {
