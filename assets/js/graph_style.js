@@ -41,11 +41,19 @@ export function graphStyle() {
         /* sizing ---------------------------------------------------------- */
         width: 230,
         height: (n) => {
-          let content = n.data("content") || "";
-          content = content.replace(/\*\*/g, ""); // Remove all **
+          const processedContent = processNodeContent(
+            n.data("content") || "",
+            false,
+          );
 
           // Base height calculation
-          const base = Math.max(Math.min(content.length, cutoff) - 65, 35);
+          const base = Math.max(
+            Math.min(processedContent.length, cutoff) - 65,
+            35,
+          );
+
+          // Get the original content for counting elements that affect height
+          const content = processedContent || "";
 
           // Count newlines for vertical spacing
           const newlineCount = (content.match(/\n/g) || []).length;
@@ -73,16 +81,7 @@ export function graphStyle() {
 
         /* label ----------------------------------------------------------- */
         label: (ele) => {
-          let fullContent = ele.data("content") || "";
-          fullContent = fullContent.replace(/\*\*/g, ""); // Remove all **
-
-          // Remove "Title:" prefix if present
-          const contentWithoutTitle = fullContent.replace(/^Title:\s*/i, "");
-
-          const text = contentWithoutTitle.slice(0, cutoff);
-          const suffix = contentWithoutTitle.length > cutoff ? "…" : "";
-
-          return `${text}${suffix}`;
+          return processNodeContent(ele.data("content") || "");
         },
 
         /* font & layout --------------------------------------------------- */
@@ -203,4 +202,18 @@ export function graphStyle() {
     });
   }
   return base_style;
+}
+
+// Function to process node content for display and size calculation
+function processNodeContent(content, addEllipsis = true) {
+  let fullContent = content || "";
+  fullContent = fullContent.replace(/\*\*/g, ""); // Remove all **
+
+  // Remove "Title:" prefix if present
+  const contentWithoutTitle = fullContent.replace(/^Title:\s*/i, "");
+
+  const text = contentWithoutTitle.slice(0, cutoff);
+  const suffix = addEllipsis && contentWithoutTitle.length > cutoff ? "…" : "";
+
+  return `${text}${suffix}`;
 }

@@ -1,161 +1,191 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Graph Node Height Test</title>
-  <script src="https://unpkg.com/cytoscape@3.26.0/dist/cytoscape.min.js"></script>
-  <style>
-    body {
-      font-family: 'Arial', sans-serif;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    h1 {
-      margin: 20px 0;
-    }
-
-    .container {
-      display: flex;
-      width: 100%;
-      max-width: 1200px;
-      margin-bottom: 40px;
-    }
-
-    .test-case {
-      flex: 1;
-      margin: 10px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-
-    .test-title {
-      background-color: #f5f5f5;
-      padding: 10px;
-      font-weight: bold;
-      border-bottom: 1px solid #ddd;
-    }
-
-    .graph-container {
-      height: 400px;
-      width: 100%;
-    }
-
-    .test-content {
-      padding: 10px;
-      border-bottom: 1px solid #ddd;
-      background-color: #f9f9f9;
-      white-space: pre-wrap;
-      font-family: monospace;
-      max-height: 200px;
-      overflow-y: auto;
-    }
-  </style>
-</head>
-<body>
-  <h1>Graph Node Height Calculation Test</h1>
-
-  <div class="container">
-    <div class="test-case">
-      <div class="test-title">Regular Text Content</div>
-      <div class="test-content" id="regular-content">This is a regular text content without any special formatting or bullet points. The height should be calculated based primarily on content length.</div>
-      <div class="graph-container" id="regular-graph"></div>
-    </div>
-
-    <div class="test-case">
-      <div class="test-title">Content with Line Breaks</div>
-      <div class="test-content" id="line-break-content">This is a text with line breaks.
-Line two.
-Line three.
-Line four.</div>
-      <div class="graph-container" id="line-break-graph"></div>
-    </div>
-  </div>
-
-  <div class="container">
-    <div class="test-case">
-      <div class="test-title">Content with Bullet Points</div>
-      <div class="test-content" id="bullet-content">• Item one
-• Item two
-• Item three
-• Item four
-• Item five</div>
-      <div class="graph-container" id="bullet-graph"></div>
-    </div>
-
-    <div class="test-case">
-      <div class="test-title">Content with Bullet Points and BR Tags</div>
-      <div class="test-content" id="bullet-br-content"><p>
-• Macbeth  <br>
-• Lady Macbeth  <br>
-• Banquo  <br>
-• King Duncan  <br>
-• Macduff  <br>
-• Malcolm  <br>
-• Donalbain  <br>
-• The Three Witches  <br>
-• Fleance  </p></div>
-      <div class="graph-container" id="bullet-br-graph"></div>
-    </div>
-  </div>
-
-  <script type="module">
-    import { graphStyle } from '../../assets/js/graph_style.js';
-
-    // Function to create a graph with the given content
-    function createGraph(containerId, content) {
-      const cy = cytoscape({
-        container: document.getElementById(containerId),
-        style: graphStyle(),
-        layout: {
-          name: 'grid'
-        },
-        elements: [
-          {
-            data: {
-              id: 'node1',
-              content: content
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Graph Node Height Test</title>
+        <script src="https://unpkg.com/cytoscape@3.26.0/dist/cytoscape.min.js"></script>
+        <style>
+            body {
+                font-family: "Arial", sans-serif;
+                margin: 0;
+                padding: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
             }
-          }
-        ]
-      });
 
-      // Add a label showing the calculated height
-      const node = cy.getElementById('node1');
-      const height = node.style('height');
+            h1 {
+                margin: 20px 0;
+            }
 
-      const label = document.createElement('div');
-      label.style.position = 'absolute';
-      label.style.bottom = '10px';
-      label.style.right = '10px';
-      label.style.backgroundColor = 'rgba(0,0,0,0.7)';
-      label.style.color = 'white';
-      label.style.padding = '5px 10px';
-      label.style.borderRadius = '4px';
-      label.style.fontSize = '12px';
-      label.textContent = `Height: ${height}`;
+            .container {
+                display: flex;
+                width: 100%;
+                max-width: 1200px;
+                margin-bottom: 40px;
+            }
 
-      document.getElementById(containerId).appendChild(label);
+            .test-case {
+                flex: 1;
+                margin: 10px;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                overflow: hidden;
+            }
 
-      return cy;
-    }
+            .test-title {
+                background-color: #f5f5f5;
+                padding: 10px;
+                font-weight: bold;
+                border-bottom: 1px solid #ddd;
+            }
 
-    // Get content from the HTML elements
-    const regularContent = document.getElementById('regular-content').textContent;
-    const lineBreakContent = document.getElementById('line-break-content').textContent;
-    const bulletContent = document.getElementById('bullet-content').textContent;
-    const bulletBrContent = document.getElementById('bullet-br-content').innerHTML;
+            .graph-container {
+                height: 400px;
+                width: 100%;
+            }
 
-    // Create the graphs
-    createGraph('regular-graph', regularContent);
-    createGraph('line-break-graph', lineBreakContent);
-    createGraph('bullet-graph', bulletContent);
-    createGraph('bullet-br-graph', bulletBrContent);
-  </script>
-</body>
+            .test-content {
+                padding: 10px;
+                border-bottom: 1px solid #ddd;
+                background-color: #f9f9f9;
+                white-space: pre-wrap;
+                font-family: monospace;
+                max-height: 200px;
+                overflow-y: auto;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Graph Node Height Calculation Test</h1>
+
+        <div class="container">
+            <div class="test-case">
+                <div class="test-title">Regular Text Content</div>
+                <div class="test-content" id="regular-content">
+                    This is a regular text content without any special
+                    formatting or bullet points. The height should be calculated
+                    based primarily on content length.
+                </div>
+                <div class="graph-container" id="regular-graph"></div>
+            </div>
+
+            <div class="test-case">
+                <div class="test-title">Content with Line Breaks</div>
+                <div class="test-content" id="line-break-content">
+                    This is a text with line breaks. Line two. Line three. Line
+                    four.
+                </div>
+                <div class="graph-container" id="line-break-graph"></div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="test-case">
+                <div class="test-title">Content with Bullet Points</div>
+                <div class="test-content" id="bullet-content">
+                    • Item one • Item two • Item three • Item four • Item five
+                </div>
+                <div class="graph-container" id="bullet-graph"></div>
+            </div>
+
+            <div class="test-case">
+                <div class="test-title">
+                    Content with Bullet Points and BR Tags
+                </div>
+                <div class="test-content" id="bullet-br-content">
+                    <p>
+                        • Macbeth <br />
+                        • Lady Macbeth <br />
+                        • Banquo <br />
+                        • King Duncan <br />
+                        • Macduff <br />
+                        • Malcolm <br />
+                        • Donalbain <br />
+                        • The Three Witches <br />
+                        • Fleance
+                    </p>
+                </div>
+                <div class="graph-container" id="bullet-br-graph"></div>
+            </div>
+        </div>
+
+        <script type="module">
+            import { graphStyle } from "../../assets/js/graph_style.js";
+
+            // Function to create a graph with the given content
+            function createGraph(containerId, content) {
+                const cy = cytoscape({
+                    container: document.getElementById(containerId),
+                    style: graphStyle(),
+                    layout: {
+                        name: "grid",
+                    },
+                    elements: [
+                        {
+                            data: {
+                                id: "node1",
+                                content: content,
+                            },
+                        },
+                    ],
+                    // Center the node in the viewport
+                    zoom: 1.2,
+                    pan: { x: 150, y: 150 },
+                });
+
+                // Add a label showing the calculated height
+                const node = cy.getElementById("node1");
+                const height = node.style("height");
+
+                const label = document.createElement("div");
+                label.style.position = "absolute";
+                label.style.bottom = "10px";
+                label.style.right = "10px";
+                label.style.backgroundColor = "rgba(0,0,0,0.7)";
+                label.style.color = "white";
+                label.style.padding = "5px 10px";
+                label.style.borderRadius = "4px";
+                label.style.fontSize = "12px";
+                label.textContent = `Height: ${height}`;
+
+                // Also show the rendered content
+                const contentLabel = document.createElement("div");
+                contentLabel.style.position = "absolute";
+                contentLabel.style.bottom = "40px";
+                contentLabel.style.right = "10px";
+                contentLabel.style.backgroundColor = "rgba(0,0,0,0.7)";
+                contentLabel.style.color = "white";
+                contentLabel.style.padding = "5px 10px";
+                contentLabel.style.borderRadius = "4px";
+                contentLabel.style.fontSize = "12px";
+                contentLabel.style.maxWidth = "300px";
+                contentLabel.style.overflow = "hidden";
+                contentLabel.style.textOverflow = "ellipsis";
+                contentLabel.textContent = `Label: "${cy.getElementById("node1").style("label")}"`;
+
+                document.getElementById(containerId).appendChild(label);
+                document.getElementById(containerId).appendChild(contentLabel);
+
+                return cy;
+            }
+
+            // Get content from the HTML elements
+            const regularContent =
+                document.getElementById("regular-content").textContent;
+            const lineBreakContent =
+                document.getElementById("line-break-content").textContent;
+            const bulletContent =
+                document.getElementById("bullet-content").textContent;
+            const bulletBrContent =
+                document.getElementById("bullet-br-content").innerHTML;
+
+            // Create the graphs
+            createGraph("regular-graph", regularContent);
+            createGraph("line-break-graph", lineBreakContent);
+            createGraph("bullet-graph", bulletContent);
+            createGraph("bullet-br-graph", bulletBrContent);
+        </script>
+    </body>
 </html>
