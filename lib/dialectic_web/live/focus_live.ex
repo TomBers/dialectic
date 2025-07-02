@@ -119,7 +119,7 @@ defmodule DialecticWeb.FocusLive do
 
           {:noreply,
            socket
-           |> put_flash(:info, "New exploration started!")
+           # |> put_flash(:info, "New exploration started!")
            |> redirect(to: ~p"/#{sanitized_message}/focus/1")}
 
         {:error, changeset} ->
@@ -247,8 +247,8 @@ defmodule DialecticWeb.FocusLive do
   defp sanitize_graph_title(title) do
     title
     |> String.trim()
-    # Remove special characters
-    |> String.replace(~r/[^\w\s-]/, "")
+    # Remove any character that is not a letter, number, or space
+    |> String.replace(~r/[^a-zA-Z0-9\s]/, "")
     # Replace multiple spaces with single space
     |> String.replace(~r/\s+/, " ")
   end
