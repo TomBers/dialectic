@@ -101,7 +101,7 @@
         </script>
       </div>
     <% else %>
-      <%= for {node, idx} <- Enum.with_index(@path) do %>
+      <%= for {node, idx} <- Enum.with_index(@path) |> Enum.filter(fn {node, _} -> node.content != "" end) do %>
         <div
           class={["message-wrapper relative group", get_message_type(node, idx)]}
           id={"conv-com-" <> node.id}
