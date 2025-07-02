@@ -43,9 +43,27 @@ export function graphStyle() {
         height: (n) => {
           let content = n.data("content") || "";
           content = content.replace(/\*\*/g, ""); // Remove all **
+
+          // Base height calculation
           const base = Math.max(Math.min(content.length, cutoff) - 65, 35);
-          const extra = (content.match(/\n/g) || []).length * 3.5;
-          return base + extra;
+
+          // Count newlines for vertical spacing
+          const newlineCount = (content.match(/\n/g) || []).length;
+
+          // Count bullet points (• character)
+          const bulletCount = (content.match(/•/g) || []).length;
+
+          // Extra height for newlines
+          const newlineExtra = newlineCount * 3.5;
+
+          // Extra height for bullet points (add more space per bullet)
+          const bulletExtra = bulletCount * 7;
+
+          // For content with both <br> tags and bullet points
+          const brTagCount = (content.match(/<br>/g) || []).length;
+          const brExtra = brTagCount * 3;
+
+          return base + newlineExtra + bulletExtra + brExtra;
         },
         "min-width": 55,
         "min-height": 35,
