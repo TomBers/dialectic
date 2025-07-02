@@ -1,0 +1,29 @@
+How Does MuDG work?
+
+Step 1 - What do you want to learn about
+Topics
+Books
+Ideas
+etc (Pick good examples)
+
+Enter question at mudg.fly.dev
+
+Step 2 - Start the conversation
+
+Step 3 - Navigate the Graph
+- Ask follow up questions
+- Define terms
+- Get Pros and Cons
+- Combine 2 nodes to produce a synthesis
+- Related Ideas
+
+Step 4 - Revise Information
+Download Info as PDF, or Markdown
+Share with others to build or extend
+
+
+For Teachers
+
+Produce guide as above
+Lock graph
+Share URL

@@ -1,65 +1,206 @@
 <div class="chat-container">
-  <div class="chat-header">
-    <div class="text-sm text-gray-500">
-      {@graph_id} | Node: {@current_node.id}
+  <div class="chat-header flex items-center justify-between px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100">
+    <div class="flex items-center space-x-3">
+      <%= if @graph_id do %>
+        <.link
+          navigate={~p"/#{@graph_id}"}
+          class="back-button h-8 w-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-blue-500 hover:text-blue-700 hover:bg-blue-50 transition-all shadow-sm group"
+          title="Back to graph view"
+          aria-label="Return to graph view"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5 group-hover:-translate-x-0.5 transition-transform"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            />
+          </svg>
+        </.link>
+      <% end %>
+      <div>
+        <div class="font-medium text-gray-700">Conversation</div>
+        <div class="text-xs text-gray-500">{@graph_id}</div>
+      </div>
     </div>
   </div>
 
   <div class="chat-messages" id="chat-messages" phx-hook="ChatScroll">
     <%= if Enum.empty?(@path) do %>
       <div class="empty-state">
-        <div class="empty-icon">💬</div>
-        <h3>Start a conversation</h3>
-        <p>Ask a question or share your thoughts to begin exploring ideas with AI.</p>
+        <div class="empty-icon bg-blue-50 rounded-full p-6 mb-4">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-12 w-12 text-blue-500"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.5"
+              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+            />
+          </svg>
+        </div>
+        <h3 class="text-xl font-semibold text-gray-800 mb-2">Start a conversation</h3>
+        <p class="mb-6 text-gray-600 max-w-md mx-auto">
+          Ask a question or share your thoughts to begin exploring ideas with AI.
+        </p>
+        <button
+          id="inspire-button"
+          class="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-medium py-3 px-6 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+          onclick="updateQuestion()"
+        >
+          <span class="flex items-center">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5 mr-2"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z">
+              </path>
+            </svg>
+            Inspire Me
+          </span>
+        </button>
+        <script>
+          function updateQuestion() {
+            const container = document.getElementById("message_message");
+            const button = document.getElementById("inspire-button");
+
+            button.disabled = true;
+            button.innerHTML = '<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+
+            fetch("/api/random_question")
+              .then(response => response.json())
+              .then(data => {
+                container.value = data.question;
+                container.focus();
+
+                // Re-enable button and restore text after brief delay
+                setTimeout(() => {
+                  button.disabled = false;
+                  button.innerHTML = '<span class="flex items-center whitespace-nowrap"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z"></path></svg>Inspire Me</span>';
+                }, 600);
+              })
+              .catch(error => {
+                console.error('Error fetching new question:', error);
+                button.disabled = false;
+                button.innerHTML = 'Inspire Me';
+              });
+          }
+        </script>
       </div>
     <% else %>
-      <%= for {node, idx} <- Enum.with_index(@path) do %>
+      <%= for {node, idx} <- Enum.with_index(@path) |> Enum.filter(fn {node, _} -> node.content != "" end) do %>
         <div
-          class={["message-wrapper relative", get_message_type(node, idx)]}
+          class={["message-wrapper relative group", get_message_type(node, idx)]}
           id={"conv-com-" <> node.id}
           phx-hook="TextSelectionHook"
           data-node-id={@current_node.id}
         >
+          <%= if get_message_type(node, idx) == "user" do %>
+            <div class="avatar-container hidden md:flex flex-col items-center mr-2">
+              <div class="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold">
+                <span>U</span>
+              </div>
+            </div>
+          <% else %>
+            <div class="avatar-container hidden md:flex flex-col items-center mr-2">
+              <div class="h-8 w-8 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-white">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                  />
+                </svg>
+              </div>
+            </div>
+          <% end %>
           <div class="message-bubble">
             <div class="message-content">
               {TextUtils.full_html(node.content || "")}
             </div>
-            <div class="message-meta">
-              <span class="node-info">
-                <%= if node.user && node.user != "" do %>
-                  {node.user}
-                <% else %>
-                  {get_message_type(node, idx)}
-                <% end %>
-              </span>
-              <span class="node-id">ID: {node.id}</span>
-
-              <span class="node-actions">
+            <div class="message-meta flex justify-end items-center">
+              <div class="flex space-x-2 node-actions opacity-0 group-hover:opacity-100 transition-opacity duration-200 ml-4">
                 <.link
                   navigate={~p"/#{@graph_id}?node=#{node.id}"}
-                  class="text-xs font-medium text-white hover:text-gray-200 bg-blue-600 hover:bg-blue-700 px-1.5 py-0.5 rounded mr-1 ml-2 inline-flex items-center"
+                  class="text-xs font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-full inline-flex items-center transition-colors"
                   title="View this node in graph"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-3 w-3 mr-1"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                    />
                   </svg>
-                  View
+                  Graph
                 </.link>
                 <.link
                   navigate={"/#{@graph_id}/focus/#{node.id}"}
-                  class="text-xs font-medium text-white hover:text-gray-200 bg-emerald-600 hover:bg-emerald-700 px-1.5 py-0.5 rounded inline-flex items-center"
+                  class="text-xs font-medium text-emerald-600 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded-full inline-flex items-center transition-colors"
                   title="Start new conversation branch from this point"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-3 w-3 mr-1"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                    />
                   </svg>
                   Branch
                 </.link>
-              </span>
+              </div>
             </div>
           </div>
-          <div class="selection-actions hidden absolute bg-white shadow-md rounded-md p-1 z-10">
-            <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded">
+          <div class="selection-actions hidden absolute bg-white shadow-lg rounded-lg p-2 z-10 border border-gray-200">
+            <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1.5 px-3 rounded-full flex items-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-3 w-3 mr-1"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
               Ask about selection
             </button>
           </div>
@@ -69,23 +210,59 @@
 
     <%= if @sending_message do %>
       <div class="message-wrapper assistant">
+        <div class="avatar-container hidden md:flex flex-col items-center mr-2">
+          <div class="h-8 w-8 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-white">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+              />
+            </svg>
+          </div>
+        </div>
         <div class="message-bubble typing">
           <div class="typing-indicator">
             <span></span>
             <span></span>
             <span></span>
           </div>
-          <div class="message-meta">
-            <span class="typing-text">Assistant is thinking...</span>
+          <div class="message-meta flex items-center">
+            <span class="typing-text text-gray-500">AI is thinking...</span>
           </div>
         </div>
       </div>
     <% end %>
   </div>
 
-  <div class="chat-input-container">
+  <div class="chat-input-container bg-white border-t border-gray-100 shadow-sm">
     <.form for={@form} phx-submit="send_message" phx-change="form_change" class="chat-form">
       <div class="input-wrapper">
+        <div class="flex items-center pr-3">
+          <button type="button" class="text-gray-400 hover:text-blue-500 transition-colors">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </button>
+        </div>
         <input
           type="text"
           name="message[message]"
@@ -98,7 +275,7 @@
         />
         <button
           type="submit"
-          class="send-button"
+          class="send-button flex items-center justify-center transition-all"
           disabled={@sending_message || @message_text == ""}
           title="Send message (Enter)"
           aria-label="Send message"

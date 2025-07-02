@@ -14,10 +14,10 @@
         </p>
         <div class="flex flex-wrap justify-center gap-4">
           <.link
-            href="#create-conv"
+            navigate={~p"/intro/how"}
             class="inline-flex items-center px-5 py-2 rounded-full font-semibold bg-[#f72585] text-white hover:bg-[#7209b7] transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg"
           >
-            Start Exploring
+            Guide
           </.link>
           <.link
             href="https://tombers.github.io/dialectic/"
@@ -34,24 +34,49 @@
 <!-- Create conversation component - moved above features section -->
   <div class="container mx-auto py-8 px-6 max-w-7xl" id="create-conv">
     <div class="bg-white shadow-[0_10px_30px_rgba(0,0,0,0.08)] rounded-xl p-8 border-t-4 border-[#4361ee]">
-      <h2 class="text-2xl font-bold text-[#2d3748] mb-6 flex items-center">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-8 w-8 text-[#4361ee] mr-3"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
+      <h2 class="text-2xl font-bold text-[#2d3748] mb-6">
+        <.link
+          navigate={~p"/start/new/idea"}
+          class="flex items-center bg-gradient-to-r from-[#f72585] to-[#7209b7] text-white px-6 py-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-2 border-transparent hover:border-[#f72585]/30 group"
         >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-          />
-        </svg>
-        Start a New Exploration
+          <span class="bg-white/20 rounded-full p-2 mr-4 group-hover:bg-white/30 transition-all duration-300">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-8 w-8 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+              />
+            </svg>
+          </span>
+          <span class="text-xl font-bold flex flex-col items-start">
+            Start a New Exploration
+            <span class="group-hover:translate-x-1 transition-transform duration-300 flex items-center text-sm mt-1 opacity-90">
+              Begin your journey
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4 ml-1"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M14 5l7 7m0 0l-7 7m7-7H3"
+                />
+              </svg>
+            </span>
+          </span>
+        </.link>
       </h2>
-      <DialecticWeb.PageHtml.ConvComp.create id="create-conv" topic={@topic} />
     </div>
   </div>
   

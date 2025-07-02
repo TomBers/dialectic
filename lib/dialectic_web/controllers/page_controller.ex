@@ -24,19 +24,6 @@ defmodule DialecticWeb.PageController do
     render(conn, :view_all, graphs: graphs, search_term: search_term)
   end
 
-  def create(conn, %{"conversation" => usr_graph_title}) do
-    title = String.replace_suffix(usr_graph_title, "?", "")
-
-    case Graphs.create_new_graph(title, conn.assigns.current_user) do
-      {:ok, _} ->
-        conn
-        |> redirect(to: ~p"/#{title}/focus/1")
-
-      _ ->
-        conn |> put_flash(:error, "Error creating graph") |> redirect(to: ~p"/")
-    end
-  end
-
   def graph_json(conn, %{"graph_name" => graph_id_uri}) do
     graph_name = URI.decode(graph_id_uri)
     graph = Graphs.get_graph_by_title(graph_name).data
@@ -108,6 +95,10 @@ defmodule DialecticWeb.PageController do
   def random_question(conn, _params) do
     question = Dialectic.Ideas.IdeaGenerator.run()
     json(conn, %{question: question})
+  end
+
+  def guide(conn, _params) do
+    render(conn, :how)
   end
 
   defp check_key(key) do
