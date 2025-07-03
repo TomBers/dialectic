@@ -244,7 +244,7 @@ defmodule DialecticWeb.FocusLive do
   # Sanitizes a string to be used as a graph title.
   #
   # Removes any characters that would cause issues when used in URLs or as graph identifiers.
-  defp sanitize_graph_title(title) do
+  def sanitize_graph_title(title) do
     title
     |> String.trim()
     # Only allow letters, numbers, spaces, dashes and apostrophes
