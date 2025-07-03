@@ -2,6 +2,7 @@ defmodule DialecticWeb.GraphCreationTest do
   use DialecticWeb.ConnCase, async: true
   alias Dialectic.DbActions.Graphs
   alias Dialectic.Repo
+  alias DialecticWeb.FocusLive
 
   @moduledoc """
   Tests for handling apostrophes in graph titles, particularly with titles like "Shakespeare's Macbeth".
@@ -18,7 +19,7 @@ defmodule DialecticWeb.GraphCreationTest do
       ]
 
       Enum.each(test_titles, fn title ->
-        sanitized = sanitize_graph_title(title)
+        sanitized = FocusLive.sanitize_graph_title(title)
         assert title == sanitized, "Apostrophes should be preserved in '#{title}'"
 
         # Check apostrophe count is maintained
@@ -42,15 +43,15 @@ defmodule DialecticWeb.GraphCreationTest do
       ]
 
       Enum.each(test_cases, fn {input, expected} ->
-        assert sanitize_graph_title(input) == expected
+        assert FocusLive.sanitize_graph_title(input) == expected
       end)
     end
 
     test "handles edge cases properly" do
-      assert sanitize_graph_title("") == ""
-      assert sanitize_graph_title("@#$%^&*()!") == ""
-      assert sanitize_graph_title("   ") == ""
-      assert sanitize_graph_title("MiXeD cAsE tItLe") == "MiXeD cAsE tItLe"
+      assert FocusLive.sanitize_graph_title("") == ""
+      assert FocusLive.sanitize_graph_title("@#$%^&*()!") == ""
+      assert FocusLive.sanitize_graph_title("   ") == ""
+      assert FocusLive.sanitize_graph_title("MiXeD cAsE tItLe") == "MiXeD cAsE tItLe"
     end
   end
 
@@ -104,7 +105,7 @@ defmodule DialecticWeb.GraphCreationTest do
       test_title = "Shakespeare's Macbeth to pass A-Level Exam"
 
       # 1. Sanitize
-      sanitized = sanitize_graph_title(test_title)
+      sanitized = FocusLive.sanitize_graph_title(test_title)
       assert sanitized == test_title, "Sanitization should preserve the original title"
 
       # 2-3. URL encode/decode cycle
@@ -123,16 +124,6 @@ defmodule DialecticWeb.GraphCreationTest do
       # Just verify that we can do the HTML escaping without errors
       assert is_binary(html_escaped), "HTML escaping should return a binary string"
     end
-  end
-
-  # Implementation of sanitize_graph_title for testing
-  defp sanitize_graph_title(title) do
-    title
-    |> String.trim()
-    # Only allow letters, numbers, spaces, dashes and apostrophes
-    |> String.replace(~r/[^a-zA-Z0-9\s'-]/, "")
-    # Replace multiple spaces with single space
-    |> String.replace(~r/\s+/, " ")
   end
 
   # Helper to count apostrophes
