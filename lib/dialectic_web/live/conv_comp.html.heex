@@ -1,4 +1,4 @@
-<div class="chat-container flex flex-col h-[calc(100vh-6rem)]">
+<div class="chat-container flex flex-col h-[calc(100vh-4rem)] max-w-full overflow-hidden">
   <div class="chat-header flex items-center justify-between px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100">
     <div class="flex items-center space-x-3">
       <%= if @graph_id do %>
@@ -31,7 +31,11 @@
     </div>
   </div>
 
-  <div class="chat-messages flex-1 overflow-y-auto" id="chat-messages" phx-hook="ChatScroll">
+  <div
+    class="chat-messages flex-1 overflow-y-auto overflow-x-hidden"
+    id="chat-messages"
+    phx-hook="ChatScroll"
+  >
     <%= if Enum.empty?(@path) do %>
       <div class="empty-state">
         <div class="empty-icon bg-blue-50 rounded-full p-6 mb-4">
@@ -59,7 +63,7 @@
           class="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-medium py-3 px-6 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
           onclick="updateQuestion()"
         >
-          <span class="flex items-center">
+          <span class="flex items-center whitespace-normal">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               class="h-5 w-5 mr-2"
@@ -134,9 +138,9 @@
               </div>
             </div>
           <% end %>
-          <div class="message-bubble">
+          <div class="message-bubble max-w-[85vw] sm:max-w-[70%]">
             <div class="message-content">
-              {TextUtils.full_html(node.content || "")}
+              <div class="overflow-x-auto">{TextUtils.full_html(node.content || "")}</div>
             </div>
             <div class="message-meta flex justify-end items-center">
               <div class="flex space-x-2 node-actions opacity-0 group-hover:opacity-100 transition-opacity duration-200 ml-4">
@@ -228,7 +232,7 @@
             </svg>
           </div>
         </div>
-        <div class="message-bubble typing">
+        <div class="message-bubble typing max-w-[85vw] sm:max-w-[70%]">
           <div class="typing-indicator">
             <span></span>
             <span></span>
@@ -242,9 +246,9 @@
     <% end %>
   </div>
 
-  <div class="chat-input-container bg-white border-t border-gray-100 shadow-sm fixed bottom-0 left-0 right-0">
+  <div class="chat-input-container bg-white border-t border-gray-100 shadow-sm w-full sticky bottom-0 left-0 right-0">
     <.form for={@form} phx-submit="send_message" phx-change="form_change" class="chat-form">
-      <div class="input-wrapper">
+      <div class="input-wrapper max-w-full mx-auto">
         <div class="flex items-center pr-3">
           <button type="button" class="text-gray-400 hover:text-blue-500 transition-colors">
             <svg
@@ -270,8 +274,8 @@
           value=""
           class="chat-input focus:outline-none focus:ring-0 focus:border-transparent"
           rows="1"
-          placeholder="Ask a question or share your thoughts... (Press Enter to send)"
-          style="height: 56px; overflow-y: hidden;"
+          placeholder="Ask a question... (Press Enter to send)"
+          style="height: 46px; overflow-y: hidden;"
         />
         <button
           type="submit"

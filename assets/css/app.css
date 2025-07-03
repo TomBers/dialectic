@@ -407,8 +407,9 @@ button[type="submit"]:active {
 .chat-container {
     display: flex;
     flex-direction: column;
-    height: 95vh;
+    height: calc(100vh - 4rem);
     max-width: 800px;
+    width: 100%;
     margin: 0 auto;
     background: #fff;
     border-radius: 12px;
@@ -486,6 +487,8 @@ button[type="submit"]:active {
     position: relative;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
     transition: box-shadow 0.2s ease;
+    word-break: break-word;
+    overflow-wrap: anywhere;
 }
 
 .message-wrapper:hover .message-bubble {
@@ -656,8 +659,9 @@ button[type="submit"]:active {
     border-radius: 28px;
     padding: 6px 6px 6px 12px;
     transition: all 0.2s ease;
-    min-height: 60px;
+    min-height: 50px;
     max-width: 100%;
+    width: 100%;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
 }
 
@@ -675,9 +679,9 @@ button[type="submit"]:active {
     outline: none;
     font-size: 15px;
     line-height: 24px;
-    max-height: 150px;
-    min-height: 46px;
-    padding: 12px 0;
+    max-height: 100px;
+    min-height: 36px;
+    padding: 8px 0;
     font-family: inherit;
     width: 100%;
     box-sizing: border-box;
@@ -690,8 +694,8 @@ button[type="submit"]:active {
 }
 
 .send-button {
-    width: 46px;
-    height: 46px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     border: none;
     background: linear-gradient(135deg, #3b82f6, #2563eb);
@@ -785,9 +789,11 @@ button[type="submit"]:active {
 /* Mobile responsiveness */
 @media (max-width: 768px) {
     .chat-container {
-        height: 100vh;
+        height: calc(100vh - 4rem);
         border-radius: 0;
         margin: 0;
+        width: 100vw;
+        max-width: 100%;
     }
 
     .back-button {
@@ -800,7 +806,10 @@ button[type="submit"]:active {
     }
 
     .chat-input-container {
-        padding: 0.75rem 1rem;
+        padding: 0.5rem 0.75rem;
+        width: 100%;
+        background: #fff;
+        border-top: 1px solid #e5e7eb;
     }
 
     .chat-messages {
@@ -825,12 +834,13 @@ button[type="submit"]:active {
     }
 
     .input-wrapper {
-        min-height: 54px;
+        min-height: 44px;
         padding: 4px 4px 4px 10px;
+        width: 100%;
     }
 
     .send-button {
-        width: 42px;
-        height: 42px;
+        width: 36px;
+        height: 36px;
     }
 }
