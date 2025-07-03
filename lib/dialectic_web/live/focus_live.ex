@@ -247,8 +247,8 @@ defmodule DialecticWeb.FocusLive do
   def sanitize_graph_title(title) do
     title
     |> String.trim()
-    # Only allow letters, numbers, spaces, dashes and apostrophes
-    |> String.replace(~r/[^a-zA-Z0-9\s'-]/, "")
+    # Only allow letters, numbers, spaces, ASCII and Unicode dashes and apostrophes
+    |> String.replace(~r/[^a-zA-Z0-9\s"'’,“”\-–—]/u, "")
     # Replace multiple spaces with single space
     |> String.replace(~r/\s+/, " ")
   end
