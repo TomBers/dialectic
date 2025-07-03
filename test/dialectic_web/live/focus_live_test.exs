@@ -13,8 +13,10 @@ defmodule DialecticWeb.FocusLiveTest do
                "Shakespeare's Macbeth to pass A-Level Exam"
 
       # Test specific example with apostrophes and dashes
-      assert FocusLive.sanitize_graph_title("Shakespeare's Macbeth to pass A-Level Exam") ==
-               "Shakespeare's Macbeth to pass A-Level Exam"
+      assert FocusLive.sanitize_graph_title(
+               "Shakespeare's Midsummer night's dream to pass A-Level Exam"
+             ) ==
+               "Shakespeare's Midsummer night's dream to pass A-Level Exam"
 
       # Test with disallowed characters
       assert FocusLive.sanitize_graph_title("Title with @#$%^&*()!") == "Title with "
