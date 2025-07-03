@@ -18,6 +18,9 @@ defmodule DialecticWeb.FocusLiveTest do
              ) ==
                "Shakespeare's Midsummer night's dream to pass A-Level Exam"
 
+      assert FocusLive.sanitize_graph_title("Robert Nozick’s “Anarchy, State, and Utopia”") ==
+               "Robert Nozick’s “Anarchy, State, and Utopia”"
+
       # Test with disallowed characters
       assert FocusLive.sanitize_graph_title("Title with @#$%^&*()!") == "Title with "
 
