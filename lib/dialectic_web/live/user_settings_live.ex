@@ -10,6 +10,15 @@ defmodule DialecticWeb.UserSettingsLive do
       <:subtitle>Manage your account email address and password settings</:subtitle>
     </.header>
 
+    <br /><br />
+    <.link
+      href={~p"/users/log_out"}
+      method="delete"
+      class="phx-submit-loading:opacity-75 rounded-lg bg-zinc-900 hover:bg-zinc-700 py-2 px-3 text-sm font-semibold leading-6 text-white active:text-white/80"
+    >
+      Log out
+    </.link>
+
     <div class="space-y-12 divide-y">
       <div>
         <.simple_form

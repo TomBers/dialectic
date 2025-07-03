@@ -41,11 +41,37 @@ export function graphStyle() {
         /* sizing ---------------------------------------------------------- */
         width: 230,
         height: (n) => {
-          let content = n.data("content") || "";
-          content = content.replace(/\*\*/g, ""); // Remove all **
-          const base = Math.max(Math.min(content.length, cutoff) - 65, 35);
-          const extra = (content.match(/\n/g) || []).length * 3.5;
-          return base + extra;
+          const processedContent = processNodeContent(
+            n.data("content") || "",
+            false,
+          );
+
+          // Base height calculation
+          const base = Math.max(
+            Math.min(processedContent.length, cutoff) - 65,
+            35,
+          );
+
+          // Get the original content for counting elements that affect height
+          const content = processedContent || "";
+
+          // Count newlines for vertical spacing
+          const newlineCount = (content.match(/\n/g) || []).length;
+
+          // Count bullet points (• character)
+          const bulletCount = (content.match(/•/g) || []).length;
+
+          // Extra height for newlines
+          const newlineExtra = newlineCount * 3.5;
+
+          // Extra height for bullet points (add more space per bullet)
+          const bulletExtra = bulletCount * 7;
+
+          // For content with both <br> tags and bullet points
+          const brTagCount = (content.match(/<br>/g) || []).length;
+          const brExtra = brTagCount * 3;
+
+          return base + newlineExtra + bulletExtra + brExtra;
         },
         "min-width": 55,
         "min-height": 35,
@@ -55,16 +81,7 @@ export function graphStyle() {
 
         /* label ----------------------------------------------------------- */
         label: (ele) => {
-          let fullContent = ele.data("content") || "";
-          fullContent = fullContent.replace(/\*\*/g, ""); // Remove all **
-
-          // Remove "Title:" prefix if present
-          const contentWithoutTitle = fullContent.replace(/^Title:\s*/i, "");
-
-          const text = contentWithoutTitle.slice(0, cutoff);
-          const suffix = contentWithoutTitle.length > cutoff ? "…" : "";
-
-          return `${text}${suffix}`;
+          return processNodeContent(ele.data("content") || "");
         },
 
         /* font & layout --------------------------------------------------- */
@@ -185,4 +202,18 @@ export function graphStyle() {
     });
   }
   return base_style;
+}
+
+// Function to process node content for display and size calculation
+function processNodeContent(content, addEllipsis = true) {
+  let fullContent = content || "";
+  fullContent = fullContent.replace(/\*\*/g, ""); // Remove all **
+
+  // Remove "Title:" prefix if present
+  const contentWithoutTitle = fullContent.replace(/^Title:\s*/i, "");
+
+  const text = contentWithoutTitle.slice(0, cutoff);
+  const suffix = addEllipsis && contentWithoutTitle.length > cutoff ? "…" : "";
+
+  return `${text}${suffix}`;
 }

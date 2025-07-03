@@ -247,8 +247,8 @@ defmodule DialecticWeb.FocusLive do
   defp sanitize_graph_title(title) do
     title
     |> String.trim()
-    # Remove any character that is not a letter, number, or space
-    |> String.replace(~r/[^a-zA-Z0-9\s]/, "")
+    # Only allow letters, numbers, spaces, dashes and apostrophes
+    |> String.replace(~r/[^a-zA-Z0-9\s'-]/, "")
     # Replace multiple spaces with single space
     |> String.replace(~r/\s+/, " ")
   end
