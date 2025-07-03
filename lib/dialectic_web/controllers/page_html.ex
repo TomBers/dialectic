@@ -10,8 +10,8 @@ defmodule DialecticWeb.PageHTML do
 
   def gen_link(graph, node \\ nil) do
     case node do
-      nil -> ~p"/#{URI.encode(graph, &URI.char_unreserved?/1)}"
-      _ -> ~p"/#{URI.encode(graph, &URI.char_unreserved?/1)}?node=#{node}"
+      nil -> ~p"/#{URI.encode(graph)}"
+      _ -> ~p"/#{URI.encode(graph)}?node=#{node}"
     end
   end
 end
