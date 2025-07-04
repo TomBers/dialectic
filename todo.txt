@@ -1,8 +1,8 @@
-1. Make Node Link text also copy the url. - Done
+Update images on guide and landing page
 
-2. Add a "More Details" button to the menu
-Add "Associated Ideas" - "What other ideas are associted with this"
-Move graph action buttons above the link.
+Imgs:
 
-3. If there are List items in the response - add a branch for each??
-i.e if 4 points - add a branch all button that creates 4 branches.
+1) Full screen of graph
+2) Conv panel
+3) Action tools
+3 Responses
