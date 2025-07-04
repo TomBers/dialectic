@@ -85,78 +85,50 @@
     <div class="text-center mb-8">
       <h2 class="text-3xl font-bold text-[#2d3748] mb-4">Why?</h2>
       <p class="text-lg text-[#4a5568] max-w-3xl mx-auto">
-        Discover how our platform transforms the way you explore and understand complex ideas
+        While typical chat captures messages sequentially, a graph reveals the hidden structure of how ideas connect and branch within a conversation.
       </p>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-      <div class="bg-white shadow-[0_10px_30px_rgba(0,0,0,0.08)] rounded-xl p-6 border-t-4 border-[#4361ee] transform transition-all duration-300 hover:shadow-xl hover:-translate-y-2">
-        <div class="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-r from-[#4361ee] to-[#3a0ca3] text-white mb-5">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-7 w-7"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M13 10V3L4 14h7v7l9-11h-7z"
-            />
-          </svg>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+      <!-- MuDG Card (landscape image) -->
+      <div class="flex flex-col items-stretch bg-white shadow-lg rounded-2xl px-2 pt-4 pb-6 border-t-4 border-[#4361ee] transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 h-full">
+        <div class="flex items-center justify-center w-full">
+          <img
+            src="/images/home_graph.webp"
+            alt="Visualized Knowledge"
+            class="w-full max-w-[500px] h-auto aspect-[2/1] rounded-xl border-2 border-[#4361ee] bg-white shadow-xl object-contain"
+            style="background: white;"
+          />
         </div>
-        <h3 class="text-xl font-semibold text-[#2d3748] mb-3">Visualized Knowledge</h3>
-        <p class="text-[#4a5568]">
-          Transform complex ideas into visual knowledge graphs that make connections explicit and easy to navigate.
+        <p class="text-base text-gray-700 font-medium text-center my-4">
+          (Example MuDG Graph)
         </p>
+        <div class="flex-1 text-center md:text-left w-full">
+          <h3 class="text-2xl font-bold text-[#2d3748] mb-2">MuDG</h3>
+          <p class="text-base leading-relaxed text-[#495163]">
+            The path to the topic is clear, the context is kept clean <span class="font-medium">(and visible)</span>. Controls allow you to quickly build up knowledge and insights.
+          </p>
+        </div>
       </div>
-
-      <div class="bg-white shadow-[0_10px_30px_rgba(0,0,0,0.08)] rounded-xl p-6 border-t-4 border-[#7209b7] transform transition-all duration-300 hover:shadow-xl hover:-translate-y-2">
-        <div class="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-r from-[#7209b7] to-[#4361ee] text-white mb-5">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-7 w-7"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-            />
-          </svg>
+      <!-- ChatGPT Card (portrait image) -->
+      <div class="flex flex-col items-stretch bg-white shadow-lg rounded-2xl px-2 pt-4 pb-6 border-t-4 border-[#7209b7] transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 h-full">
+        <div class="flex items-center justify-center w-full">
+          <img
+            src="/images/chatgpt.webp"
+            alt="Collaborative Learning"
+            class="h-[340px] w-auto max-h-[420px] max-w-[320px] rounded-xl border-2 border-[#7209b7] bg-white shadow-xl object-contain mx-auto"
+            style="background: white;"
+          />
         </div>
-        <h3 class="text-xl font-semibold text-[#2d3748] mb-3">Collaborative Learning</h3>
-        <p class="text-[#4a5568]">
-          Invite others to join your exploration in real-time, sharing different perspectives and building knowledge together.
+        <p class="text-base text-gray-700 font-medium text-center my-4">
+          (Example ChatGPT Conversation)
         </p>
-      </div>
-
-      <div class="bg-white shadow-[0_10px_30px_rgba(0,0,0,0.08)] rounded-xl p-6 border-t-4 border-[#f72585] transform transition-all duration-300 hover:shadow-xl hover:-translate-y-2">
-        <div class="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-r from-[#f72585] to-[#7209b7] text-white mb-5">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-7 w-7"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-            />
-          </svg>
+        <div class="flex-1 text-center md:text-left w-full">
+          <h3 class="text-2xl font-bold text-[#2d3748] mb-2">ChatGPT</h3>
+          <p class="text-base leading-relaxed text-[#495163]">
+            Conversation must refer to context in a looped way, making it harder to dig deeper on a particular topic.
+          </p>
         </div>
-        <h3 class="text-xl font-semibold text-[#2d3748] mb-3">AI-Powered Insights</h3>
-        <p class="text-[#4a5568]">
-          Leverage the analytical power of language models to explore ideas in depth while maintaining human guidance.
-        </p>
       </div>
     </div>
   </section>
