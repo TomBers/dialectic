@@ -1,6 +1,9 @@
 <div class="h-screen flex flex-col">
   <!-- Top section -->
-  <div class="flex-none fixed top-0 max-w-md left-0 right-0 bg-white z-50 border-b border-gray-200">
+  <div
+    class="flex-none fixed left-0 right-0 max-w-md bg-white border-b border-gray-200"
+    style="top:56px;z-index:11;"
+  >
     <div class="p-2">
       <div class="flex items-center gap-4">
         <DialecticWeb.LockComp.render
@@ -17,7 +20,7 @@
               name="search_term"
               id="search_input"
               value={@search_term}
-              placeholder="Search nodes..."
+              placeholder="Search ..."
               class="block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6 border-zinc-300 focus:border-zinc-800"
               autocomplete="off"
               phx-debounce="300"
