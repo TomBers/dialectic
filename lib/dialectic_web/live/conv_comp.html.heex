@@ -244,7 +244,7 @@
         </div>
       </div>
     <% end %>
-    <%= if length(@path) == 2 do %>
+    <%= if length(@path) >= 2 do %>
       <div class="flex justify-center my-4">
         <.link
           navigate={~p"/#{@graph_id}"}
