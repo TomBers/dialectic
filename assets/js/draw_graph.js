@@ -134,7 +134,7 @@ export function draw_graph(graph, context, elements, node) {
       center: {
         eles: n,
       },
-      zoom: 1.2,
+      zoom: 1.6,
       duration: 150,
       easing: "ease-in-out-quad",
     });

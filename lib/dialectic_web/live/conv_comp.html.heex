@@ -247,7 +247,7 @@
     <%= if length(@path) >= 2 do %>
       <div class="flex justify-center my-4">
         <.link
-          navigate={~p"/#{@graph_id}"}
+          navigate={~p"/#{@graph_id}?node=#{last_node(@path)}"}
           class="px-5 py-2.5 rounded-full bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-500 text-white font-medium flex items-center justify-center hover:shadow-lg transform hover:scale-105 transition-all duration-200 shadow-md"
           title="View conversation as a graph"
           aria-label="View conversation as a graph"
