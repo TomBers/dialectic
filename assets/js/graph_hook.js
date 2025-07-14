@@ -30,8 +30,8 @@ const graphHook = {
           center: {
             eles: nodeToCenter,
           },
-          zoom: 1.2,
-          duration: 250,
+          zoom: 1.6,
+          duration: 150,
           easing: "ease-in-out-quad",
         });
       }

@@ -93,7 +93,7 @@
     display: grid;
     gap: 10px;
     justify-content: center;
-    margin: 8px 0;
+    margin: 0;
     padding: 5px;
     position: relative;
 }
@@ -118,7 +118,7 @@
     border: 1px solid #ddd;
     border-radius: 8px;
     cursor: pointer;
-    padding: 10px 5px;
+    padding: 6px;
     width: 100%;
     color: #333;
     transition: all 0.2s ease;
@@ -164,7 +164,7 @@
 }
 
 .menu-button .icon {
-    margin-bottom: 6px;
+    margin-bottom: 2px;
     color: #444;
     font-size: 1.1em;
     transition:
@@ -390,7 +390,7 @@ button[type="submit"]:active {
 /* Media query for mobile */
 @media (max-width: 768px) {
     .menu-button {
-        padding: 8px 4px;
+        padding: 4px 4px;
     }
 
     .menu-button .label {

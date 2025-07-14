@@ -221,58 +221,6 @@ defmodule DialecticWeb.NodeMenuComp do
         </div>
       </div>
       
-    <!-- Node Information Section -->
-      <div class="border-b border-gray-200 pb-2">
-        <h3 class="text-xs font-medium text-gray-600 mb-1 flex items-center">
-          <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            >
-            </path>
-          </svg>
-          Node Information
-        </h3>
-        <div class="flex items-center gap-2 mb-2">
-          <button
-            class="text-gray-400 hover:text-gray-600 transition-colors p-1"
-            title="Copy shareable link"
-            onclick={"navigator.clipboard.writeText('#{url(~p"/#{@graph_id}?node=#{@node.id}")}').then(() => alert('Link copied to clipboard!'))"}
-          >
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-            </svg>
-          </button>
-          <span
-            class="text-xs text-gray-400 font-mono select-all cursor-pointer ml-1"
-            title="Shareable URL path"
-            onclick={"navigator.clipboard.writeText('#{url(~p"/#{@graph_id}?node=#{@node.id}")}').then(() => alert('Link copied to clipboard!'))"}
-          >
-            /{@graph_id}?node={@node.id}
-          </span>
-        </div>
-
-        <.live_component
-          module={NoteMenuComp}
-          graph_id={@graph_id}
-          node={@node}
-          user={@user}
-          id={"note-menu-" <> @node.id}
-        />
-      </div>
-      
     <!-- Question & Comment Section -->
       <div>
         <h3 class="text-xs font-medium text-gray-600 mb-2 flex items-center">
@@ -288,7 +236,7 @@ defmodule DialecticWeb.NodeMenuComp do
           Ask a Question or Add a Comment
         </h3>
 
-        <div class="mx-auto w-full mb-4 relative">
+        <div class="mx-auto w-full mb-2 relative">
           <div class="flex rounded-t-md border border-b-0 border-gray-300 overflow-hidden">
             <button
               type="button"
@@ -313,7 +261,7 @@ defmodule DialecticWeb.NodeMenuComp do
                 </svg>
                 <span>Ask a Question</span>
               </div>
-              <div class="mt-1 text-xs opacity-75">AI will respond</div>
+              <div class="mt-1 text-xs opacity-75">(AI will respond)</div>
             </button>
             <button
               type="button"
@@ -338,7 +286,7 @@ defmodule DialecticWeb.NodeMenuComp do
                 </svg>
                 <span>Add a Comment</span>
               </div>
-              <div class="mt-1 text-xs opacity-75">No AI response</div>
+              <div class="mt-1 text-xs opacity-75">(No AI response)</div>
             </button>
           </div>
 
@@ -383,9 +331,6 @@ defmodule DialecticWeb.NodeMenuComp do
                   Ask →
                 </button>
               </div>
-              <div class="mt-2 text-xs text-gray-500">
-                Your question will receive an AI-generated response
-              </div>
             </.form>
           <% else %>
             <.form
@@ -426,11 +371,60 @@ defmodule DialecticWeb.NodeMenuComp do
                   Post
                 </button>
               </div>
-              <div class="mt-2 text-xs text-gray-500">
-                Add a comment without generating an AI response
-              </div>
             </.form>
           <% end %>
+        </div>
+        
+    <!-- Node Information Section -->
+        <div class="border-b border-gray-200 pb-2">
+          <h3 class="text-xs font-medium text-gray-600 mb-1 flex items-center">
+            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              >
+              </path>
+            </svg>
+            Node Information
+          </h3>
+          <div class="flex items-center gap-2 mb-2">
+            <button
+              class="text-gray-400 hover:text-gray-600 transition-colors p-1"
+              title="Copy shareable link"
+              onclick={"navigator.clipboard.writeText('#{url(~p"/#{@graph_id}?node=#{@node.id}")}').then(() => alert('Link copied to clipboard!'))"}
+            >
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+              </svg>
+            </button>
+            <span
+              class="text-xs text-gray-400 font-mono select-all cursor-pointer ml-1"
+              title="Shareable URL path"
+              onclick={"navigator.clipboard.writeText('#{url(~p"/#{@graph_id}?node=#{@node.id}")}').then(() => alert('Link copied to clipboard!'))"}
+            >
+              /{@graph_id}?node={@node.id}
+            </span>
+          </div>
+
+          <.live_component
+            module={NoteMenuComp}
+            graph_id={@graph_id}
+            node={@node}
+            user={@user}
+            id={"note-menu-" <> @node.id}
+          />
         </div>
       </div>
     </div>

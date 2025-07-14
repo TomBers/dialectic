@@ -9,7 +9,7 @@ defmodule Dialectic.Workers.OpenAIWorker do
 
   @behaviour Dialectic.Workers.BaseAPIWorker
 
-  @model "o3-mini"
+  @model "o4-mini-2025-04-16"
   # Model-specific configuration:
 
   @impl true
@@ -35,7 +35,7 @@ defmodule Dialectic.Workers.OpenAIWorker do
         %{
           role: "system",
           content:
-            "You are an expert philosopher, helping the user better understand key philosophical points. Please keep your answers concise and to the point."
+            "You are an expert philosopher, helping the user better understand key philosophical points. Please keep your answers concise and to the point. Add references to sources when appropriate."
         },
         %{role: "user", content: question}
       ]

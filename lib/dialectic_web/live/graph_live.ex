@@ -2,7 +2,7 @@ defmodule DialecticWeb.GraphLive do
   use DialecticWeb, :live_view
 
   alias Dialectic.Graph.{Vertex, GraphActions}
-  alias DialecticWeb.{CombineComp, HistoryComp, NodeComp}
+  alias DialecticWeb.{CombineComp, NodeComp}
   alias Dialectic.DbActions.DbWorker
 
   alias Phoenix.PubSub
@@ -224,7 +224,7 @@ defmodule DialecticWeb.GraphLive do
         GraphActions.answer(graph_action_params(socket, node))
       end)
 
-      {:noreply, socket |> put_flash(:info, "Processing list")}
+      {:noreply, socket}
     end
   end
 

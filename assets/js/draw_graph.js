@@ -8,6 +8,21 @@ cytoscape.use(dagre);
 cytoscape.use(compoundDragAndDrop);
 
 export function draw_graph(graph, context, elements, node) {
+  // Check if we have a small graph (2 nodes)
+
+  const edgeCount = elements.filter((ele) =>
+    ele.data.hasOwnProperty("source"),
+  ).length;
+
+  const isSmallGraph = edgeCount === 1;
+
+  // Create a modified layout config for small graphs
+  const layoutOptions = {
+    ...layoutConfig.baseLayout,
+    // For small graphs, use a larger padding to prevent excessive zoom
+    padding: isSmallGraph ? 200 : layoutConfig.baseLayout.padding,
+  };
+
   const cy = cytoscape({
     container: graph, // container to render in
     elements: elements,
@@ -15,7 +30,7 @@ export function draw_graph(graph, context, elements, node) {
 
     boxSelectionEnabled: true, // ⬅️ lets users drag‑select
     autounselectify: false, // allow multi‑select
-    layout: layoutConfig.baseLayout,
+    layout: layoutOptions,
   });
 
   const dd_options = layoutConfig.compoundDragDropOptions;
@@ -119,8 +134,8 @@ export function draw_graph(graph, context, elements, node) {
       center: {
         eles: n,
       },
-      zoom: 1.2,
-      duration: 250,
+      zoom: 1.6,
+      duration: 150,
       easing: "ease-in-out-quad",
     });
   });
