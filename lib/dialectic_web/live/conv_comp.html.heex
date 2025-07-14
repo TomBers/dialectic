@@ -90,6 +90,10 @@
                 container.value = data.question;
                 container.focus();
 
+                // Trigger change event to update @message_text in LiveView
+                const event = new Event('input', { bubbles: true });
+                container.dispatchEvent(event);
+
                 // Re-enable button and restore text after brief delay
                 setTimeout(() => {
                   button.disabled = false;
@@ -244,7 +248,7 @@
         </div>
       </div>
     <% end %>
-    <%= if length(@path) >= 2 do %>
+    <%= if !@sending_message && length(@path) >= 2 do %>
       <div class="flex justify-center my-4">
         <.link
           navigate={~p"/#{@graph_id}?node=#{last_node(@path)}"}
