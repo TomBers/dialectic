@@ -224,7 +224,7 @@ defmodule DialecticWeb.GraphLive do
         GraphActions.answer(graph_action_params(socket, node))
       end)
 
-      {:noreply, socket |> put_flash(:info, "Processing list")}
+      {:noreply, socket}
     end
   end
 

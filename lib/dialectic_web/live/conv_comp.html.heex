@@ -244,6 +244,32 @@
         </div>
       </div>
     <% end %>
+    <%= if length(@path) == 2 do %>
+      <div class="flex justify-center my-4">
+        <.link
+          navigate={~p"/#{@graph_id}"}
+          class="px-5 py-2.5 rounded-full bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-500 text-white font-medium flex items-center justify-center hover:shadow-lg transform hover:scale-105 transition-all duration-200 shadow-md"
+          title="View conversation as a graph"
+          aria-label="View conversation as a graph"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5 mr-2 animate-pulse"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M13 10V3L4 14h7v7l9-11h-7z"
+            />
+          </svg>
+          View As Graph
+        </.link>
+      </div>
+    <% end %>
   </div>
 
   <div class="chat-input-container bg-white border-t border-gray-100 shadow-sm w-full sticky bottom-0 left-0 right-0">
