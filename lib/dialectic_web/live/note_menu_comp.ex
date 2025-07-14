@@ -7,8 +7,9 @@ defmodule DialecticWeb.NoteMenuComp do
 
   def render(assigns) do
     ~H"""
-    <div class="rounded-md px-3 py-2 shadow-sm inline-flex space-x-3 text-xs">
-      <div class="flex items-center space-x-2">
+    <div class="rounded-md px-4 py-3 shadow-sm inline-flex space-x-4 text-xs">
+      <div class="flex items-center space-x-3 border border-gray-200 rounded-md px-3 py-2 bg-gray-50">
+        <div class="text-xs font-semibold text-gray-500 mr-2">Actions:</div>
         <!-- Improved version with clearer purpose -->
         <!-- Redesigned with clearer visual states -->
         <%= if Enum.any?(@node.noted_by, fn u -> u == @user end) do %>
@@ -106,10 +107,13 @@ defmodule DialecticWeb.NoteMenuComp do
           </svg>
           Chat
         </.link>
-        <.button
-          phx-click="prepare_for_print"
-          data-graph-name={@graph_id}
-          phx-hook="PrintConversation"
+      </div>
+
+      <div class="flex items-center space-x-2 border border-gray-200 rounded-md px-2 py-2 bg-gray-50">
+        <div class="text-xs font-semibold text-gray-500 mr-1">Export:</div>
+        <.link
+          navigate={~p"/#{@graph_id}/linear"}
+          target="_blank"
           id="print-button"
           class="inline-flex items-center text-xs font-semibold px-3 py-1.5 rounded-md bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 hover:text-red-800 transition-colors shadow-sm"
         >
@@ -128,7 +132,7 @@ defmodule DialecticWeb.NoteMenuComp do
             />
           </svg>
           PDF
-        </.button>
+        </.link>
 
         <.link
           href={"/api/graphs/json/#{@graph_id}"}
