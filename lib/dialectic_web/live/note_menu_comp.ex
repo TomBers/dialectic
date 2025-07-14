@@ -114,7 +114,8 @@ defmodule DialecticWeb.NoteMenuComp do
         <.link
           navigate={~p"/#{@graph_id}/linear"}
           target="_blank"
-          id="print-button"
+          rel="noopener noreferrer"
+          id="link-to-pdf-print"
           class="inline-flex items-center text-xs font-semibold px-3 py-1.5 rounded-md bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 hover:text-red-800 transition-colors shadow-sm"
         >
           <svg
