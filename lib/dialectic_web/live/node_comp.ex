@@ -22,8 +22,8 @@ defmodule DialecticWeb.NodeComp do
             id={"tt-node-" <> @node.id}
             style={
               if @menu_visible,
-                do: "max-height: calc(50vh - 100px);",
-                else: "max-height: calc(100vh - 100px);"
+                do: "max-height: calc(50vh - 100px); transition: max-height 0.3s ease-in-out;",
+                else: "max-height: calc(100vh - 50px); transition: max-height 0.3s ease-in-out;"
             }
           >
             <div class="summary-content" id={"tt-summary-content-" <> @node.id}>
@@ -77,30 +77,22 @@ defmodule DialecticWeb.NodeComp do
         >
           <span>{if @menu_visible, do: "Hide Menu", else: "Show Menu"}</span>
           <svg
-            class="ml-2 h-4 w-4"
+            class={"ml-2 h-4 w-4 transition-transform duration-300 #{if @menu_visible, do: "rotate-0", else: "rotate-180"}"}
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 20 20"
             fill="currentColor"
           >
-            <%= if @menu_visible do %>
-              <path
-                fill-rule="evenodd"
-                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                clip-rule="evenodd"
-              />
-            <% else %>
-              <path
-                fill-rule="evenodd"
-                d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"
-                clip-rule="evenodd"
-              />
-            <% end %>
+            <path
+              fill-rule="evenodd"
+              d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+              clip-rule="evenodd"
+            />
           </svg>
         </button>
       </div>
       <div
-        class={["nodeMenuComp sticky bottom-0 bg-white w-full z-10", if(!@menu_visible, do: "hidden")]}
-        style="transition: height 0.3s ease-in-out;"
+        class="nodeMenuComp sticky bottom-0 bg-white w-full z-10 overflow-hidden"
+        style={"max-height: #{if @menu_visible, do: "1000px", else: "0"}; opacity: #{if @menu_visible, do: "1", else: "0"}; transition: max-height 0.3s ease-in-out, opacity 0.2s ease-in-out;"}
       >
         <.live_component
           module={NodeMenuComp}
