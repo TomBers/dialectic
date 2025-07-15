@@ -72,8 +72,7 @@ defmodule DialecticWeb.NodeComp do
       </div>
       <div class="flex justify-center mb-2">
         <button
-          phx-click="toggle_menu"
-          phx-target={@myself}
+          phx-click="toggle_node_menu"
           class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-1 px-4 rounded inline-flex items-center"
         >
           <span>{if @menu_visible, do: "Hide Menu", else: "Show Menu"}</span>
@@ -130,11 +129,7 @@ defmodule DialecticWeb.NodeComp do
        cut_off: Map.get(assigns, :cut_off, 500),
        ask_question: Map.get(assigns, :ask_question, true),
        graph_id: Map.get(assigns, :graph_id, ""),
-       menu_visible: true
+       menu_visible: Map.get(assigns, :menu_visible, true)
      )}
-  end
-
-  def handle_event("toggle_menu", _, socket) do
-    {:noreply, assign(socket, menu_visible: !socket.assigns.menu_visible)}
   end
 end
