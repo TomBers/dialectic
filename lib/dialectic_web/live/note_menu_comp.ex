@@ -7,7 +7,7 @@ defmodule DialecticWeb.NoteMenuComp do
 
   def render(assigns) do
     ~H"""
-    <div class="rounded-md px-2 sm:px-4 py-3 shadow-sm flex items-center gap-2 text-xs overflow-x-auto whitespace-nowrap">
+    <div class="rounded-md shadow-sm flex items-center gap-2 text-xs overflow-x-auto whitespace-nowrap">
       <div class="flex flex-col border border-gray-200 rounded-md px-2 py-2 bg-gray-50">
         <div class="text-xs font-semibold text-gray-500 mb-1.5">Actions</div>
         <div class="flex items-center gap-2">
