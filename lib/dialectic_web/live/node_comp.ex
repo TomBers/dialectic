@@ -20,7 +20,11 @@ defmodule DialecticWeb.NodeComp do
               "flex-grow overflow-auto pb-4 pt-4"
             ]}
             id={"tt-node-" <> @node.id}
-            style="max-height: calc(100vh - 450px);"
+            style={
+              if @menu_visible,
+                do: "max-height: calc(50vh - 100px); transition: max-height 0.3s ease-in-out;",
+                else: "max-height: calc(100vh - 50px); transition: max-height 0.3s ease-in-out;"
+            }
           >
             <div class="summary-content" id={"tt-summary-content-" <> @node.id}>
               <article class={[
@@ -39,8 +43,22 @@ defmodule DialecticWeb.NodeComp do
                   {TextUtils.full_html(@node.content || "")}
                 </div>
               </article>
-              <div class="selection-actions hidden absolute bg-white shadow-md rounded-md p-1 z-10">
-                <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded">
+              <div class="selection-actions hidden absolute bg-white shadow-lg rounded-lg p-2 z-10 border border-gray-200">
+                <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1.5 px-3 rounded-full flex items-center">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-3 w-3 mr-1"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
                   Ask about selection
                 </button>
               </div>
@@ -52,7 +70,30 @@ defmodule DialecticWeb.NodeComp do
           </div>
         <% end %>
       </div>
-      <div class="nodeMenuComp sticky bottom-0 bg-white w-full z-10">
+      <div class="flex justify-center mb-2">
+        <button
+          phx-click="toggle_node_menu"
+          class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-1 px-4 rounded inline-flex items-center"
+        >
+          <span>{if @menu_visible, do: "Hide Menu", else: "Show Menu"}</span>
+          <svg
+            class={"ml-2 h-4 w-4 transition-transform duration-300 #{if @menu_visible, do: "rotate-0", else: "rotate-180"}"}
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+              clip-rule="evenodd"
+            />
+          </svg>
+        </button>
+      </div>
+      <div
+        class="nodeMenuComp sticky bottom-0 bg-white w-full z-10 overflow-hidden"
+        style={"max-height: #{if @menu_visible, do: "1000px", else: "0"}; opacity: #{if @menu_visible, do: "1", else: "0"}; transition: max-height 0.3s ease-in-out, opacity 0.2s ease-in-out;"}
+      >
         <.live_component
           module={NodeMenuComp}
           id="node-menu-comp"
@@ -79,7 +120,8 @@ defmodule DialecticWeb.NodeComp do
        form: Map.get(assigns, :form, nil),
        cut_off: Map.get(assigns, :cut_off, 500),
        ask_question: Map.get(assigns, :ask_question, true),
-       graph_id: Map.get(assigns, :graph_id, "")
+       graph_id: Map.get(assigns, :graph_id, ""),
+       menu_visible: Map.get(assigns, :menu_visible, true)
      )}
   end
 end

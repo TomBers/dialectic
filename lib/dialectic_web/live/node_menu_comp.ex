@@ -90,7 +90,7 @@ defmodule DialecticWeb.NodeMenuComp do
                 />
               </svg>
             </span>
-            <span class="label">More Details</span>
+            <span class="label">Details</span>
           </button>
           <button
             class="menu-button"
@@ -148,7 +148,7 @@ defmodule DialecticWeb.NodeMenuComp do
                 />
               </svg>
             </span>
-            <span class="label">Pros and Cons</span>
+            <span class="label">Pros / Cons</span>
           </button>
 
           <button
@@ -216,7 +216,7 @@ defmodule DialecticWeb.NodeMenuComp do
                 />
               </svg>
             </span>
-            <span class="label">Associated Ideas</span>
+            <span class="label">Related</span>
           </button>
         </div>
       </div>
@@ -261,7 +261,6 @@ defmodule DialecticWeb.NodeMenuComp do
                 </svg>
                 <span>Ask a Question</span>
               </div>
-              <div class="mt-1 text-xs opacity-75">(AI will respond)</div>
             </button>
             <button
               type="button"
@@ -286,7 +285,6 @@ defmodule DialecticWeb.NodeMenuComp do
                 </svg>
                 <span>Add a Comment</span>
               </div>
-              <div class="mt-1 text-xs opacity-75">(No AI response)</div>
             </button>
           </div>
 
