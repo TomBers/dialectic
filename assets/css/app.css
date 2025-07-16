@@ -75,6 +75,7 @@
 .selection-actions button {
     white-space: nowrap;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    font-size: 0.75rem;
 }
 
 /* For touch devices */
@@ -84,8 +85,13 @@
     }
 
     .selection-actions button {
-        padding: 8px 12px;
-        font-size: 14px;
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+
+    .selection-actions svg {
+        width: 10px;
+        height: 10px;
     }
 }
 
@@ -387,6 +393,32 @@ button[type="submit"]:active {
     transform: translateX(0);
 }
 
+/* Modal responsive styles */
+.modal-responsive article img {
+    max-width: 100%;
+    height: auto;
+}
+
+.modal-responsive pre {
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-x: auto;
+    max-width: 100%;
+    font-size: 0.9em;
+}
+
+.modal-responsive pre code {
+    font-size: 0.9em;
+}
+
+.modal-responsive table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    max-width: 100%;
+    border-collapse: collapse;
+}
+
 /* Media query for mobile */
 @media (max-width: 768px) {
     .menu-button {
@@ -395,6 +427,27 @@ button[type="submit"]:active {
 
     .menu-button .label {
         font-size: 11px;
+    }
+
+    /* Modal mobile styles */
+    .modal-responsive {
+        overflow-y: auto;
+        max-height: 100vh;
+    }
+
+    .modal-responsive h2 {
+        font-size: 1.5rem;
+        line-height: 1.3;
+        margin-bottom: 0.75rem;
+    }
+
+    .modal-responsive p {
+        font-size: 1rem;
+        line-height: 1.5;
+    }
+
+    .modal-content {
+        padding: 0.5rem !important;
     }
 }
 

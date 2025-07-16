@@ -5,12 +5,8 @@ defmodule DialecticWeb.NodeMenuComp do
   def render(assigns) do
     ~H"""
     <div class="space-y-3">
-      <.live_component
-        module={DialecticWeb.Live.ModalComp}
-        node={@node}
-        id={"node-menu-modal-comp-" <> @node.id}
-      />
-      <!-- Graph Actions Section -->
+      
+    <!-- Graph Actions Section -->
       <div class="border-b border-gray-200 pb-2">
         <h3 class="text-xs font-medium text-gray-600 mb-1 flex items-center">
           <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
