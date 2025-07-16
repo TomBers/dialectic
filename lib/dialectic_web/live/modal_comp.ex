@@ -12,30 +12,30 @@ defmodule DialecticWeb.Live.ModalComp do
     <div>
       <.modal
         on_cancel={JS.push("modal_closed")}
-        class={ColUtils.message_border_class(@node.class)}
+        class={ColUtils.message_border_class(@node.class) <> " modal-responsive"}
         id={"modal-" <> @node.id}
       >
         <div
-          class="modal-content relative"
+          class="modal-content relative px-2 sm:px-4 md:px-6"
           id={"modal-content-" <> @node.id}
           phx-hook="TextSelectionHook"
           data-node-id={@node.id}
         >
-          <article class="prose prose-stone prose-2xl max-w-none selection-content space-y-4">
-            <h2>
+          <article class="prose prose-stone prose-lg md:prose-xl lg:prose-2xl max-w-none selection-content space-y-4">
+            <h2 class="text-xl sm:text-2xl md:text-3xl">
               {TextUtils.modal_title(@node.content, @node.class || "")}
             </h2>
-            <div>
+            <div class="text-base sm:text-lg">
               {TextUtils.full_html(@node.content || "")}
             </div>
           </article>
           
     <!-- Modal selection action button (hidden by default) -->
-          <div class="selection-actions hidden absolute bg-white shadow-lg rounded-lg p-2 z-10 border border-gray-200">
-            <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1.5 px-3 rounded-full flex items-center">
+          <div class="selection-actions hidden absolute bg-white shadow-lg rounded-lg p-1 sm:p-2 z-10 border border-gray-200">
+            <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 sm:py-1.5 px-2 sm:px-3 rounded-full flex items-center">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                class="h-3 w-3 mr-1"
+                class="h-3 w-3 mr-0.5 sm:mr-1"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"

@@ -61,25 +61,25 @@ defmodule DialecticWeb.CoreComponents do
         tabindex="0"
       >
         <div class="flex min-h-full items-center justify-center">
-          <div class="w-full max-w-6xl p-4 sm:p-6 lg:py-8">
+          <div class="w-full max-w-6xl p-2 sm:p-4 lg:py-8">
             <.focus_wrap
               id={"#{@id}-container"}
               phx-window-keydown={JS.exec("data-cancel", to: "##{@id}")}
               phx-key="escape"
               phx-click-away={JS.exec("data-cancel", to: "##{@id}")}
               class={[
-                "shadow-zinc-700/10 ring-zinc-700/10 relative hidden rounded-2xl bg-white p-14 shadow-lg ring-1 transition border-4",
+                "shadow-zinc-700/10 ring-zinc-700/10 relative hidden rounded-2xl bg-white p-4 sm:p-8 md:p-10 lg:p-14 shadow-lg ring-1 transition border-4",
                 @class
               ]}
             >
-              <div class="absolute top-6 right-5">
+              <div class="absolute top-3 sm:top-4 md:top-6 right-3 sm:right-4 md:right-5">
                 <button
                   phx-click={JS.exec("data-cancel", to: "##{@id}")}
                   type="button"
-                  class="-m-3 flex-none p-3 opacity-20 hover:opacity-40"
+                  class="-m-2 sm:-m-3 flex-none p-2 sm:p-3 opacity-20 hover:opacity-40"
                   aria-label={gettext("close")}
                 >
-                  <.icon name="hero-x-mark-solid" class="h-5 w-5" />
+                  <.icon name="hero-x-mark-solid" class="h-4 w-4 sm:h-5 sm:w-5" />
                 </button>
               </div>
               <div id={"#{@id}-content"}>
