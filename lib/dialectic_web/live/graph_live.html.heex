@@ -1,9 +1,5 @@
 <div class="h-screen flex flex-col">
-  <.live_component
-    module={DialecticWeb.Live.ModalComp}
-    node={@node}
-    id={"node-menu-modal-comp-" <> @node.id}
-  />
+  <.live_component module={DialecticWeb.Live.ModalComp} node={@node} id="graph-live-modal-comp" />
   <!-- Top section -->
   <div
     class="flex-none fixed left-0 right-0 max-w-md bg-white border-b border-gray-200"
