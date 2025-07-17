@@ -43,11 +43,11 @@ defmodule DialecticWeb.Live.TextUtils do
   @doc """
   Extracts a modal title from content or uses a class-based default.
   """
-  def modal_title(content, class) do
+  def modal_title(content, _class \\ "") do
     if has_title?(content) do
       extract_title(content)
     else
-      String.upcase(class)
+      ""
     end
   end
 
