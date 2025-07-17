@@ -26,16 +26,19 @@ defmodule DialecticWeb.NodeComp do
                 else: "max-height: calc(100vh - 50px); transition: max-height 0.3s ease-in-out;"
             }
           >
-            <div class="summary-content" id={"tt-summary-content-" <> @node.id}>
+            <div
+              class="summary-content modal-responsive px-2 sm:px-4 md:px-6"
+              id={"tt-summary-content-" <> @node.id}
+            >
               <article class={[
-                "prose prose-stone prose-xl max-w-none selection-content pl-2 border-l-4 w-full",
+                "prose prose-stone prose-lg md:prose-xl max-w-none selection-content pl-2 border-l-4 w-full",
                 ColUtils.message_border_class(@node.class)
               ]}>
-                <h3>
+                <h3 class="text-lg sm:text-xl md:text-2xl mb-2 sm:mb-3">
                   {TextUtils.modal_title(@node.content, @node.class || "")}
                 </h3>
                 <div
-                  class="w-full min-w-full"
+                  class="w-full min-w-full text-base sm:text-lg"
                   phx-hook="ListDetection"
                   data-children={length(@node.children)}
                   id={"list-detector-" <> @node.id}
@@ -43,11 +46,11 @@ defmodule DialecticWeb.NodeComp do
                   {TextUtils.full_html(@node.content || "")}
                 </div>
               </article>
-              <div class="selection-actions hidden absolute bg-white shadow-lg rounded-lg p-2 z-10 border border-gray-200">
-                <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1.5 px-3 rounded-full flex items-center">
+              <div class="selection-actions hidden absolute bg-white shadow-lg rounded-lg p-1 sm:p-2 z-10 border border-gray-200">
+                <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 sm:py-1.5 px-2 sm:px-3 rounded-full flex items-center">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    class="h-3 w-3 mr-1"
+                    class="h-3 w-3 mr-0.5 sm:mr-1"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -91,7 +94,7 @@ defmodule DialecticWeb.NodeComp do
         </button>
       </div>
       <div
-        class="nodeMenuComp sticky bottom-0 bg-white w-full z-10 overflow-hidden"
+        class="nodeMenuComp sticky bottom-0 bg-white w-full z-10 overflow-hidden shadow-sm"
         style={"max-height: #{if @menu_visible, do: "1000px", else: "0"}; opacity: #{if @menu_visible, do: "1", else: "0"}; transition: max-height 0.3s ease-in-out, opacity 0.2s ease-in-out;"}
       >
         <.live_component
