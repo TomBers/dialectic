@@ -9,7 +9,7 @@ defmodule Dialectic.Workers.OpenAIWorker do
 
   @behaviour Dialectic.Workers.BaseAPIWorker
 
-  @model "gpt-5"
+  @model "gpt-5-mini-2025-08-07"
   # Model-specific configuration:
 
   @impl true
