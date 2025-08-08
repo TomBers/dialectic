@@ -1,4 +1,4 @@
-defmodule Dialectic.Graph.GraphActionsTest do
+defmodule Dialectic.Graph.IntegrationGraphActionsTest do
   use DialecticWeb.ConnCase, async: false
   alias Dialectic.Graph.GraphActions
   alias Dialectic.Graph.Vertex
@@ -14,7 +14,7 @@ defmodule Dialectic.Graph.GraphActionsTest do
     {:ok, graph: graph}
   end
 
-  def graph_param(node), do: {@graph_id, node, @test_user}
+  def graph_param(node), do: {@graph_id, node, @test_user, nil}
 
   def inital_qa() do
     node = GraphActions.create_new_node(@test_user)

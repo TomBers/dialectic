@@ -124,7 +124,7 @@ defmodule GraphManagerTest do
         GraphManager.add_child(
           @graph_id,
           [parent],
-          fn n -> LlmInterface.ask_model("child content", n, @graph_id) end,
+          fn n -> LlmInterface.ask_model("child content", n, @graph_id, nil) end,
           "child_class",
           @test_user
         )
@@ -160,7 +160,7 @@ defmodule GraphManagerTest do
         GraphManager.add_child(
           @graph_id,
           [parent],
-          fn n -> LlmInterface.ask_model("child content", n, @graph_id) end,
+          fn n -> LlmInterface.ask_model("child content", n, @graph_id, nil) end,
           "child_class",
           @test_user
         )
@@ -199,7 +199,7 @@ defmodule GraphManagerTest do
         GraphManager.add_child(
           @graph_id,
           [parent],
-          fn n -> LlmInterface.ask_model("child1", n, @graph_id) end,
+          fn n -> LlmInterface.ask_model("child content", n, @graph_id, nil) end,
           "test",
           @test_user
         )
@@ -208,7 +208,7 @@ defmodule GraphManagerTest do
         GraphManager.add_child(
           @graph_id,
           [parent],
-          fn n -> LlmInterface.ask_model("child2", n, @graph_id) end,
+          fn n -> LlmInterface.ask_model("child content", n, @graph_id, nil) end,
           "test",
           @test_user
         )
@@ -234,7 +234,7 @@ defmodule GraphManagerTest do
     test "child nodes inherit parent group membership", %{graph: _} do
       # Create a group node
       group_title = "test_group"
-      
+
       # Create a node that will be part of the group
       parent =
         GraphManager.add_node(@graph_id, %Vertex{
@@ -242,14 +242,14 @@ defmodule GraphManagerTest do
           class: "test",
           user: @test_user
         })
-      
+
       # Add the node to a group
       GraphManager.create_group(@graph_id, group_title, [parent.id])
 
       # Refresh parent node to get updated parent field
       {_, updated_parent} = GraphManager.find_node_by_id(@graph_id, parent.id)
       assert updated_parent.parent == group_title
-      
+
       # Create a child node from the parent (should inherit group)
       {_, child} =
         GraphManager.add_child(
@@ -259,11 +259,11 @@ defmodule GraphManagerTest do
           "test",
           @test_user
         )
-        
+
       # Verify child inherits parent's group
       {_, updated_child} = GraphManager.find_node_by_id(@graph_id, child.id)
       assert updated_child.parent == group_title
-      
+
       # Create a node not in any group
       standalone =
         GraphManager.add_node(@graph_id, %Vertex{
@@ -271,7 +271,7 @@ defmodule GraphManagerTest do
           class: "test",
           user: @test_user
         })
-        
+
       # Create a child from both a grouped and non-grouped parent
       {_, mixed_child} =
         GraphManager.add_child(
@@ -281,7 +281,7 @@ defmodule GraphManagerTest do
           "test",
           @test_user
         )
-        
+
       # Child should still be part of the group (inherits from at least one parent)
       {_, updated_mixed_child} = GraphManager.find_node_by_id(@graph_id, mixed_child.id)
       assert updated_mixed_child.parent == group_title

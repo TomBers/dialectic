@@ -2,7 +2,6 @@ defmodule DialecticWeb.GraphLiveTest do
   use DialecticWeb.ConnCase, async: false
   import Phoenix.LiveViewTest
   import Dialectic.AccountsFixtures
-  alias Dialectic.Graph.GraphManager
 
   @graph_id "Satre"
 
@@ -25,71 +24,26 @@ defmodule DialecticWeb.GraphLiveTest do
 
       assert socket.assigns.graph_id == @graph_id
       assert socket.assigns.user == "tester@example.com"
-      assert socket.assigns.key_buffer == ""
       refute socket.assigns.show_combine
     end
   end
 
   describe "handle_event/3" do
-    test "KeyBoardInterface does nothing when cmdKey is false", %{conn: conn} do
-      {:ok, view, _html} = setup_live(conn)
-
-      state_before = :sys.get_state(view.pid).socket.assigns
-      render_keydown(view, "KeyBoardInterface", %{"key" => "x", "cmdKey" => false})
-      state_after = :sys.get_state(view.pid).socket.assigns
-
-      assert state_before == state_after
-    end
-
-    test "KeyBoardInterface with key 'Control' resets key_buffer", %{conn: conn} do
-      {:ok, view, _html} = setup_live(conn)
-
-      # First, simulate a non-empty key_buffer by sending a key that triggers the fallback branch.
-      render_keydown(view, "KeyBoardInterface", %{"key" => "x", "cmdKey" => true})
-      state_mid = :sys.get_state(view.pid).socket.assigns
-      assert state_mid.key_buffer == "x"
-
-      # Now, sending the "Control" key should reset the key_buffer.
-      render_keydown(view, "KeyBoardInterface", %{"key" => "Control", "cmdKey" => true})
-      state = :sys.get_state(view.pid).socket.assigns
-      assert state.key_buffer == ""
-    end
-
     test "modal_closed sets show_combine to false", %{conn: conn} do
       {:ok, view, _html} = setup_live(conn)
 
-      # Enable show_combine by simulating a "c" key event.
-      render_keydown(view, "KeyBoardInterface", %{"key" => "c", "cmdKey" => true})
+      # First manually set show_combine to true
+      view.pid
+      |> :sys.replace_state(fn state ->
+        %{state | socket: Phoenix.Component.assign(state.socket, show_combine: true)}
+      end)
+
       state_mid = :sys.get_state(view.pid).socket.assigns
       assert state_mid.show_combine
 
       render_click(view, "modal_closed", %{})
       state = :sys.get_state(view.pid).socket.assigns
       refute state.show_combine
-    end
-
-    test "KeyBoardInterface with key 'c' toggles show_combine", %{conn: conn} do
-      {:ok, view, _html} = setup_live(conn)
-      render_keydown(view, "KeyBoardInterface", %{"key" => "c", "cmdKey" => true})
-      state = :sys.get_state(view.pid).socket
-      # Since the current node is expected to have an id, show_combine is set to true.
-      assert state.assigns.show_combine
-    end
-
-    test "KeyBoardInterface with key 'b' triggers branch and resets key_buffer", %{conn: conn} do
-      {:ok, view, _html} = setup_live(conn)
-      render_keydown(view, "KeyBoardInterface", %{"key" => "b", "cmdKey" => true})
-      state = :sys.get_state(view.pid).socket
-      # update_graph resets key_buffer to an empty binary.
-      assert state.assigns.key_buffer == ""
-    end
-
-    test "KeyBoardInterface with key 'r' triggers answer and resets key_buffer", %{conn: conn} do
-      {:ok, view, _html} = setup_live(conn)
-      render_keydown(view, "KeyBoardInterface", %{"key" => "r", "cmdKey" => true})
-      state = :sys.get_state(view.pid).socket
-      # Expect the key_buffer to be reset after update_graph is called.
-      assert state.assigns.key_buffer == ""
     end
 
     test "answer event with empty content does nothing", %{conn: conn} do
@@ -109,12 +63,10 @@ defmodule DialecticWeb.GraphLiveTest do
       {:ok, view, _html} = setup_live(conn)
 
       # We simulate a non-empty answer. In this case, update_graph/3 (called by handle_event)
-      # will update key_buffer to "" and may update the graph and node assigns.
+      # will update the graph and node assigns.
       render_click(view, "answer", %{"vertex" => %{"content" => "A non-empty answer"}})
 
-      state = :sys.get_state(view.pid).socket
-      # Verify key_buffer is reset.
-      assert state.assigns.key_buffer == ""
+      _state = :sys.get_state(view.pid).socket
       # (Other assigns such as graph and node would be updated by GraphActions.comment.)
     end
   end
@@ -125,10 +77,8 @@ defmodule DialecticWeb.GraphLiveTest do
 
       # We simulate a node click event.
       render_click(view, "node_clicked", %{"id" => "1"})
-      state = :sys.get_state(view.pid).socket
+      _state = :sys.get_state(view.pid).socket
 
-      # We expect key_buffer to be reset.
-      assert state.assigns.key_buffer == ""
       # Further assertions on assigns.graph or assigns.node would depend on the
       # return value of GraphActions.find_node/2 (which you might stub in a real test).
     end
@@ -213,29 +163,25 @@ defmodule DialecticWeb.GraphLiveTest do
   #####################################################################
 
   describe "handle_event \"note\"" do
-    test "note event updates the graph and resets key_buffer", %{conn: conn} do
+    test "note event updates the graph", %{conn: conn} do
       {:ok, view, _html} = setup_live(conn)
 
       # Simulate a note event on node "1". (In a real test you might stub
       # GraphActions.change_noted_by/3 to return a predictable updated graph/node.)
       render_click(view, "note", %{"node" => "1"})
-      state = :sys.get_state(view.pid).socket
-
-      # Check that update_graph was called (it resets key_buffer).
-      assert state.assigns.key_buffer == ""
+      _state = :sys.get_state(view.pid).socket
 
       # Additional assertions (e.g. on assigns.graph or assigns.node) depend on your implementation.
     end
   end
 
   describe "handle_event \"unnote\"" do
-    test "unnote event updates the graph and resets key_buffer", %{conn: conn} do
+    test "unnote event updates the graph", %{conn: conn} do
       {:ok, view, _html} = setup_live(conn)
 
       render_click(view, "unnote", %{"node" => "1"})
-      state = :sys.get_state(view.pid).socket
+      _state = :sys.get_state(view.pid).socket
 
-      assert state.assigns.key_buffer == ""
       # You could also verify that GraphActions.change_noted_by was called with
       # Vertex.remove_noted_by/2 if you stub that function.
     end
