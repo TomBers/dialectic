@@ -87,11 +87,42 @@ defmodule Dialectic.Workers.BaseAPIWorker do
 
       {:error, reason} ->
         Logger.error("Request failed: #{inspect(reason)}")
+
+        # Broadcast the error to LiveView
+        Phoenix.PubSub.broadcast(
+          Dialectic.PubSub,
+          live_view_topic,
+          {:stream_error, "API request failed: #{inspect(reason)}", :node_id, to_node}
+        )
+
+        # Ensure the request is marked as complete even when it fails
+        Phoenix.PubSub.broadcast(
+          Dialectic.PubSub,
+          live_view_topic,
+          {:llm_request_complete, to_node}
+        )
+
         raise "Request failed: #{inspect(reason)}"
     end
   rescue
     exception ->
       Logger.error("Exception during request: #{inspect(exception)}")
+
+      # Broadcast the exception to LiveView
+      Phoenix.PubSub.broadcast(
+        Dialectic.PubSub,
+        live_view_topic,
+        {:stream_error, "Error during API request: #{Exception.message(exception)}", :node_id,
+         to_node}
+      )
+
+      # Ensure the request is marked as complete even when it fails
+      Phoenix.PubSub.broadcast(
+        Dialectic.PubSub,
+        live_view_topic,
+        {:llm_request_complete, to_node}
+      )
+
       raise exception
   end
 
@@ -101,14 +132,38 @@ defmodule Dialectic.Workers.BaseAPIWorker do
         Logger.info("Parsed chunks: #{inspect(chunks)}")
 
         Enum.each(chunks, fn chunk ->
-          module.handle_result(chunk, graph, to_node, live_view_topic)
+          # Check if the chunk contains an error
+          if Map.has_key?(chunk, "error") do
+            # Log the error
+            Logger.error("Error in chunk: #{inspect(chunk)}")
+
+            # Handle the error through the module's handle_result
+            module.handle_result(chunk, graph, to_node, live_view_topic)
+          else
+            # Process normal chunk
+            module.handle_result(chunk, graph, to_node, live_view_topic)
+          end
         end)
 
         {:cont, context}
 
       {:error, reason} ->
-        Logger.info("Failed to parse chunk: #{inspect(reason)}")
         Logger.error("Failed to parse chunk: #{inspect(reason)}")
+
+        # Broadcast parse error to LiveView
+        Phoenix.PubSub.broadcast(
+          Dialectic.PubSub,
+          live_view_topic,
+          {:stream_error, "Error processing response: #{inspect(reason)}", :node_id, to_node}
+        )
+
+        # Ensure the request is marked as complete when we can't parse the chunk
+        Phoenix.PubSub.broadcast(
+          Dialectic.PubSub,
+          live_view_topic,
+          {:llm_request_complete, to_node}
+        )
+
         {:cont, context}
     end
   end

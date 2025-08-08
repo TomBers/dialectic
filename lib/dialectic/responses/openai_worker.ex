@@ -60,8 +60,59 @@ defmodule Dialectic.Workers.OpenAIWorker do
       do: Utils.process_chunk(graph_id, to_node, data, __MODULE__, live_view_topic)
 
   @impl true
+  def handle_result(
+        %{
+          "error" => %{
+            "code" => "unsupported_value",
+            "message" => _message,
+            "type" => "invalid_request_error"
+          }
+        } = error,
+        _graph_id,
+        to_node,
+        live_view_topic
+      ) do
+    Logger.error("OpenAI organization verification error: #{inspect(error)}")
+
+    # Format a user-friendly error message specific to organization verification
+    user_message =
+      "Your OpenAI organization requires verification to stream this model. Please visit https://platform.openai.com/settings/organization/general and click on 'Verify Organization'. If you just verified, it can take up to 15 minutes for access to propagate."
+
+    # Broadcast the error to the LiveView
+    Phoenix.PubSub.broadcast(
+      Dialectic.PubSub,
+      live_view_topic,
+      {:stream_error, user_message, :node_id, to_node}
+    )
+
+    :ok
+  end
+
+  @impl true
+  def handle_result(
+        %{"error" => %{"message" => message, "type" => "invalid_request_error"}} = error,
+        _graph_id,
+        to_node,
+        live_view_topic
+      ) do
+    Logger.error("OpenAI API error: #{inspect(error)}")
+
+    # Format a user-friendly error message
+    user_message = "Error from OpenAI API: #{message}"
+
+    # Broadcast the error to the LiveView
+    Phoenix.PubSub.broadcast(
+      Dialectic.PubSub,
+      live_view_topic,
+      {:stream_error, user_message, :node_id, to_node}
+    )
+
+    :ok
+  end
+
+  @impl true
   def handle_result(other, _graph, _to_node, _live_view_topic) do
-    IO.inspect(other, label: "Error")
+    Logger.error("Unhandled OpenAI response: #{inspect(other)}")
     :ok
   end
 

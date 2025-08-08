@@ -5,6 +5,7 @@ defmodule Dialectic.Workers.GeminiWorker do
   Worker for the Google Gemini AI model.
   """
 
+  require Logger
   use Oban.Worker, queue: :api_request, max_attempts: 5
   @behaviour Dialectic.Workers.BaseAPIWorker
 
@@ -76,8 +77,30 @@ defmodule Dialectic.Workers.GeminiWorker do
       do: Utils.process_chunk(graph_id, to_node, data, __MODULE__, live_view_topic)
 
   @impl true
+  def handle_result(
+        %{"error" => %{"message" => message, "status" => status}} = error,
+        _graph_id,
+        to_node,
+        live_view_topic
+      ) do
+    Logger.error("Gemini API error: #{inspect(error)}")
+
+    # Format a user-friendly error message
+    user_message = "Error from Gemini API: #{message} (#{status})"
+
+    # Broadcast the error to the LiveView
+    Phoenix.PubSub.broadcast(
+      Dialectic.PubSub,
+      live_view_topic,
+      {:stream_error, user_message, :node_id, to_node}
+    )
+
+    :ok
+  end
+
+  @impl true
   def handle_result(other, _graph, _to_node, _live_view_topic) do
-    IO.inspect(other, label: "Gemini Error")
+    Logger.error("Unhandled Gemini response: #{inspect(other)}")
     :ok
   end
 

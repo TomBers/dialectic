@@ -371,9 +371,37 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_info({:stream_error, error, :node_id, node_id}, socket) do
-    # This is the streamed LLM response into a node
-    # TODO - broadcast to all users??? - only want to update the node that is being worked on, just rerender the others
-    updated_vertex = GraphManager.update_vertex(socket.assigns.graph_id, node_id, error)
+    # This is an error message from the LLM API
+    # Format the error message to make it clear to the user
+    formatted_error =
+      cond do
+        is_binary(error) ->
+          "\n\n⚠️ Error: #{error}"
+
+        is_map(error) && Map.has_key?(error, "error") ->
+          "\n\n⚠️ Error: #{inspect(error["error"])}"
+
+        true ->
+          "\n\n⚠️ Error: #{inspect(error)}"
+      end
+
+    # Update the vertex with the error message
+    updated_vertex = GraphManager.update_vertex(socket.assigns.graph_id, node_id, formatted_error)
+
+    # Also put a flash message to ensure the user sees it
+    socket =
+      put_flash(
+        socket,
+        :error,
+        "LLM request failed. Please check verification status of your API keys."
+      )
+
+    # Notify UI that the request is complete (even though it failed)
+    Phoenix.PubSub.broadcast(
+      Dialectic.PubSub,
+      socket.assigns.live_view_topic,
+      {:llm_request_complete, node_id}
+    )
 
     if node_id == Map.get(socket.assigns.node, :id) do
       {:noreply, assign(socket, node: updated_vertex)}

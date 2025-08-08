@@ -59,8 +59,30 @@ defmodule Dialectic.Workers.ClaudeWorker do
       do: Utils.process_chunk(graph_id, to_node, data, __MODULE__, live_view_topic)
 
   @impl true
+  def handle_result(
+        %{"error" => %{"message" => message, "type" => error_type}} = error,
+        _graph_id,
+        to_node,
+        live_view_topic
+      ) do
+    Logger.error("Claude API error: #{inspect(error)}")
+
+    # Format a user-friendly error message
+    user_message = "Error from Claude API: #{message} (#{error_type})"
+
+    # Broadcast the error to the LiveView
+    Phoenix.PubSub.broadcast(
+      Dialectic.PubSub,
+      live_view_topic,
+      {:stream_error, user_message, :node_id, to_node}
+    )
+
+    :ok
+  end
+
+  @impl true
   def handle_result(other, _graph, _to_node, _live_view_topic) do
-    IO.inspect(other, label: "handle_result Error")
+    Logger.error("Unhandled Claude response: #{inspect(other)}")
     :ok
   end
 

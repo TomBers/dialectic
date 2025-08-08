@@ -12,6 +12,17 @@ defmodule Dialectic.Responses.Utils do
     )
   end
 
+  def process_error(graph, node, error_message, live_view_topic) do
+    Logger.error("Error for graph #{graph} and node #{node}: #{error_message}")
+    updated_vertex = GraphManager.update_vertex(graph, node, "\n\nError: #{error_message}")
+
+    Phoenix.PubSub.broadcast(
+      Dialectic.PubSub,
+      live_view_topic,
+      {:stream_error, updated_vertex, :node_id, node}
+    )
+  end
+
   def parse_chunk(chunk) do
     try do
       chunks =
@@ -21,11 +32,24 @@ defmodule Dialectic.Responses.Utils do
         |> Enum.map(&decode/1)
         |> Enum.reject(&is_nil/1)
 
-      {:ok, chunks}
+      # Check if any chunk contains an error
+      error_chunk =
+        Enum.find(chunks, fn
+          %{"error" => _} -> true
+          _ -> false
+        end)
+
+      if error_chunk do
+        Logger.error("Error in chunk response: #{inspect(error_chunk)}")
+        # Still return the chunks so they can be handled by the worker
+        {:ok, chunks}
+      else
+        {:ok, chunks}
+      end
     rescue
       e ->
         Logger.error("Error parsing chunk: #{inspect(e)}")
-        {:error, "Failed to parse chunk"}
+        {:error, "Failed to parse chunk: #{Exception.message(e)}"}
     end
   end
 
@@ -36,7 +60,9 @@ defmodule Dialectic.Responses.Utils do
     try do
       Jason.decode!(data)
     rescue
-      _ -> nil
+      e ->
+        Logger.error("JSON decode error: #{inspect(e)}, data: #{inspect(data)}")
+        nil
     end
   end
 end
