@@ -60,7 +60,6 @@ defmodule DialecticWeb.GraphLive do
        node: Vertex.add_relatives(node, graph),
        form: to_form(changeset),
        show_combine: false,
-       key_buffer: "",
        user: user,
        can_edit: can_edit,
        node_menu_visible: true,
@@ -435,19 +434,6 @@ defmodule DialecticWeb.GraphLive do
       not Map.get(vertex_data, :deleted, false)
   end
 
-  def combine_interface(socket, key) do
-    case GraphActions.combine(
-           graph_action_params(socket),
-           key
-         ) do
-      {graph, node} ->
-        update_graph(socket, {graph, node}, "combine")
-
-      _ ->
-        {:noreply, assign(socket, key_buffer: key)}
-    end
-  end
-
   defp graph_action_params(socket, node \\ nil) do
     {socket.assigns.graph_id, node || socket.assigns.node, socket.assigns.user,
      socket.assigns.live_view_topic}
@@ -480,7 +466,6 @@ defmodule DialecticWeb.GraphLive do
        form: to_form(changeset, id: new_node.id),
        node: node,
        show_combine: show_combine,
-       key_buffer: "",
        graph_operation: operation
      )}
   end
