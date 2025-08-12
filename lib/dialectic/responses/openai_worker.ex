@@ -9,7 +9,7 @@ defmodule Dialectic.Workers.OpenAIWorker do
 
   @behaviour Dialectic.Workers.BaseAPIWorker
 
-  @model "gpt-4o-mini"
+  @model "gpt-5-mini-2025-08-07"
   # Model-specific configuration:
 
   @impl true
@@ -32,7 +32,7 @@ defmodule Dialectic.Workers.OpenAIWorker do
       model: @model,
       stream: true,
       temperature: 0.2,
-      max_tokens: 256,
+      # max_tokens: 256,
       n: 1,
       messages: [
         %{
