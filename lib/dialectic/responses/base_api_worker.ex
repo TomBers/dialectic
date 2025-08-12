@@ -131,19 +131,31 @@ defmodule Dialectic.Workers.BaseAPIWorker do
       {:ok, chunks} ->
         Logger.info("Parsed chunks: #{inspect(chunks)}")
 
-        Enum.each(chunks, fn chunk ->
-          # Check if the chunk contains an error
-          if Map.has_key?(chunk, "error") do
-            # Log the error
-            Logger.error("Error in chunk: #{inspect(chunk)}")
+        # Process each chunk with priority for the first one
+        case chunks do
+          [first_chunk | rest_chunks] ->
+            # Process the first chunk immediately
+            if Map.has_key?(first_chunk, "error") do
+              Logger.error("Error in first chunk: #{inspect(first_chunk)}")
+              module.handle_result(first_chunk, graph, to_node, live_view_topic)
+            else
+              module.handle_result(first_chunk, graph, to_node, live_view_topic)
+            end
 
-            # Handle the error through the module's handle_result
-            module.handle_result(chunk, graph, to_node, live_view_topic)
-          else
-            # Process normal chunk
-            module.handle_result(chunk, graph, to_node, live_view_topic)
-          end
-        end)
+            # Process the rest of the chunks
+            Enum.each(rest_chunks, fn chunk ->
+              if Map.has_key?(chunk, "error") do
+                Logger.error("Error in chunk: #{inspect(chunk)}")
+                module.handle_result(chunk, graph, to_node, live_view_topic)
+              else
+                module.handle_result(chunk, graph, to_node, live_view_topic)
+              end
+            end)
+
+          [] ->
+            # No chunks to process
+            nil
+        end
 
         {:cont, context}
 

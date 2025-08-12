@@ -25,26 +25,32 @@ defmodule Dialectic.Responses.Utils do
 
   def parse_chunk(chunk) do
     try do
+      # Process each data chunk immediately to avoid buffering
       chunks =
         chunk
-        |> String.split("data: ")
+        |> String.split("data: ", trim: true)
         |> Enum.map(&String.trim/1)
         |> Enum.map(&decode/1)
         |> Enum.reject(&is_nil/1)
 
-      # Check if any chunk contains an error
-      error_chunk =
-        Enum.find(chunks, fn
-          %{"error" => _} -> true
-          _ -> false
-        end)
-
-      if error_chunk do
-        Logger.error("Error in chunk response: #{inspect(error_chunk)}")
-        # Still return the chunks so they can be handled by the worker
-        {:ok, chunks}
+      # Handle empty result case quickly
+      if chunks == [] do
+        {:ok, []}
       else
-        {:ok, chunks}
+        # Check if any chunk contains an error
+        error_chunk =
+          Enum.find(chunks, fn
+            %{"error" => _} -> true
+            _ -> false
+          end)
+
+        if error_chunk do
+          Logger.error("Error in chunk response: #{inspect(error_chunk)}")
+          # Still return the chunks so they can be handled by the worker
+          {:ok, chunks}
+        else
+          {:ok, chunks}
+        end
       end
     rescue
       e ->
