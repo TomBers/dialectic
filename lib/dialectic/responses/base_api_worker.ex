@@ -26,16 +26,25 @@ defmodule Dialectic.Workers.BaseAPIWorker do
         }
       }) do
     # Get the implementing module from args
-    module = String.to_existing_atom(worker_module)
+    module = resolve_worker_module(worker_module)
 
-    with {:ok, body} <- build_request_body_encoded(module, question),
-         {:ok, url} <- build_url(module) do
-      do_request(module, url, body, graph, to_node, live_view_topic)
-      :ok
-    else
-      {:error, reason} ->
-        Logger.error("Failed to initiate API request: #{inspect(reason)}")
-        {:error, reason}
+    case module do
+      nil ->
+        Logger.error("Unknown or unsupported worker module: #{inspect(worker_module)}")
+        {:error, "Unknown or unsupported worker module"}
+
+      _ ->
+        api_key = module.api_key()
+
+        with {:ok, body} <- build_request_body_encoded(module, question),
+             {:ok, url} <- build_url(module, api_key) do
+          do_request(module, url, api_key, body, graph, to_node, live_view_topic)
+          :ok
+        else
+          {:error, reason} ->
+            Logger.error("Failed to initiate API request: #{inspect(reason)}")
+            {:error, reason}
+        end
     end
   end
 
@@ -51,8 +60,8 @@ defmodule Dialectic.Workers.BaseAPIWorker do
     end
   end
 
-  defp build_url(module) do
-    case module.api_key() do
+  defp build_url(module, api_key) do
+    case api_key do
       nil ->
         Logger.error("API key not configured")
         {:error, "API key not configured"}
@@ -63,18 +72,20 @@ defmodule Dialectic.Workers.BaseAPIWorker do
     end
   end
 
-  defp do_request(module, url, body, graph, to_node, live_view_topic) do
+  defp do_request(module, url, api_key, body, graph, to_node, live_view_topic) do
     options = [
-      headers: module.headers(module.api_key()),
+      headers: module.headers(api_key),
       body: body,
       into: &handle_stream_chunk(module, &1, &2, graph, to_node, live_view_topic),
       connect_options: [timeout: @timeout],
       receive_timeout: @timeout
     ]
 
-    case Req.post(url, options) do
+    client = Req.new(finch: Dialectic.Finch)
+
+    case Req.post(client, Keyword.put(options, :url, url)) do
       {:ok, response} ->
-        Logger.info("Request completed successfully")
+        Logger.debug("Request completed successfully")
 
         Phoenix.PubSub.broadcast(
           Dialectic.PubSub,
@@ -82,7 +93,7 @@ defmodule Dialectic.Workers.BaseAPIWorker do
           {:llm_request_complete, to_node}
         )
 
-        Logger.info(response)
+        Logger.debug(response)
         :ok
 
       {:error, reason} ->
@@ -98,7 +109,7 @@ defmodule Dialectic.Workers.BaseAPIWorker do
   defp handle_stream_chunk(module, {:data, data}, context, graph, to_node, live_view_topic) do
     case module.parse_chunk(data) do
       {:ok, chunks} ->
-        Logger.info("Parsed chunks: #{inspect(chunks)}")
+        Logger.debug("Parsed chunks: #{inspect(chunks)}")
 
         Enum.each(chunks, fn chunk ->
           module.handle_result(chunk, graph, to_node, live_view_topic)
@@ -107,9 +118,27 @@ defmodule Dialectic.Workers.BaseAPIWorker do
         {:cont, context}
 
       {:error, reason} ->
-        Logger.info("Failed to parse chunk: #{inspect(reason)}")
+        Logger.debug("Failed to parse chunk: #{inspect(reason)}")
         Logger.error("Failed to parse chunk: #{inspect(reason)}")
         {:cont, context}
     end
   end
+
+  defp resolve_worker_module("Elixir.Dialectic.Workers.OpenAIWorker"),
+    do: Dialectic.Workers.OpenAIWorker
+
+  defp resolve_worker_module("Elixir.Dialectic.Workers.ClaudeWorker"),
+    do: Dialectic.Workers.ClaudeWorker
+
+  defp resolve_worker_module("Elixir.Dialectic.Workers.GeminiWorker"),
+    do: Dialectic.Workers.GeminiWorker
+
+  defp resolve_worker_module("Elixir.Dialectic.Workers.DeepSeekWorker"),
+    do: Dialectic.Workers.DeepSeekWorker
+
+  defp resolve_worker_module("Elixir.Dialectic.Workers.LocalWorker"),
+    do: Dialectic.Workers.LocalWorker
+
+  defp resolve_worker_module(module) when is_atom(module), do: module
+  defp resolve_worker_module(_), do: nil
 end

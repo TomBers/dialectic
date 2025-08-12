@@ -2,7 +2,7 @@ defmodule Dialectic.Responses.Utils do
   require Logger
 
   def process_chunk(graph, node, data, _module, live_view_topic) do
-    Logger.info("Processing chunk for graph #{graph} and node #{node}. Data: #{data}")
+    Logger.debug(fn -> "Processing chunk for graph #{graph} and node #{node}. Data: #{data}" end)
     updated_vertex = GraphManager.update_vertex(graph, node, data)
 
     Phoenix.PubSub.broadcast(
@@ -14,14 +14,32 @@ defmodule Dialectic.Responses.Utils do
 
   def parse_chunk(chunk) do
     try do
-      chunks =
-        chunk
-        |> String.split("data: ")
-        |> Enum.map(&String.trim/1)
-        |> Enum.map(&decode/1)
-        |> Enum.reject(&is_nil/1)
+      case :binary.match(chunk, "data: ") do
+        :nomatch ->
+          {:ok, []}
 
-      {:ok, chunks}
+        _ ->
+          segments = :binary.split(chunk, "data: ", [:global])
+
+          chunks =
+            segments
+            |> Enum.drop(1)
+            |> Enum.reduce([], fn seg, acc ->
+              first =
+                case :binary.split(seg, "\n") do
+                  [h | _] -> h
+                  [] -> seg
+                end
+
+              case decode(first) do
+                nil -> acc
+                decoded -> [decoded | acc]
+              end
+            end)
+            |> Enum.reverse()
+
+          {:ok, chunks}
+      end
     rescue
       e ->
         Logger.error("Error parsing chunk: #{inspect(e)}")
