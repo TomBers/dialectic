@@ -45,6 +45,13 @@
             >
               {@current_user.email}
             </.link>
+            <.link
+              href={~p"/users/log_out"}
+              method="delete"
+              class="text-xs sm:text-sm text-zinc-900 font-medium hover:text-zinc-700"
+            >
+              Log out
+            </.link>
           <% else %>
             <.link
               href={~p"/users/register"}

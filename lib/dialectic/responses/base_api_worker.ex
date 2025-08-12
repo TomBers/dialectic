@@ -77,7 +77,6 @@ defmodule Dialectic.Workers.BaseAPIWorker do
       headers: module.headers(api_key),
       body: body,
       into: &handle_stream_chunk(module, &1, &2, graph, to_node, live_view_topic),
-      connect_options: [timeout: @timeout],
       receive_timeout: @timeout
     ]
 

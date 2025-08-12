@@ -27,7 +27,15 @@ defmodule Dialectic.Responses.Utils do
     try do
       case :binary.match(chunk, "data: ") do
         :nomatch ->
-          {:ok, []}
+          if String.contains?(String.downcase(chunk), "error") do
+            Logger.error(
+              "Error parsing chunk: received error-like content without streaming framing: #{inspect(chunk)}"
+            )
+
+            {:error, "error-like content without framing"}
+          else
+            {:ok, []}
+          end
 
         _ ->
           segments = :binary.split(chunk, "data: ", [:global])
@@ -64,7 +72,6 @@ defmodule Dialectic.Responses.Utils do
 
             {:ok, chunks}
           end
-      end
       end
     rescue
       e ->

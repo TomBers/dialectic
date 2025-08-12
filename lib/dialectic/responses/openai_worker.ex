@@ -5,7 +5,7 @@ defmodule Dialectic.Workers.OpenAIWorker do
   Worker for the OpenAI Chat API.
   """
   require Logger
-  use Oban.Worker, queue: :openai_request, max_attempts: 5
+  use Oban.Worker, queue: :llm_request, max_attempts: 5
 
   @behaviour Dialectic.Workers.BaseAPIWorker
 
@@ -147,7 +147,6 @@ defmodule Dialectic.Workers.OpenAIWorker do
     )
 
     :ok
-  end
   end
 
   # Ignore role-only deltas in streaming

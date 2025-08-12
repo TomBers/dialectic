@@ -11,7 +11,7 @@ config :dialectic, Oban,
   engine: Oban.Engines.Basic,
   notifier: Oban.Notifiers.Postgres,
   queues: [
-    openai_request: [limit: 25, dispatch_cooldown: 0],
+    llm_request: [limit: 25, dispatch_cooldown: 0],
     api_request: [limit: 5],
     db_write: [limit: 5]
   ],
