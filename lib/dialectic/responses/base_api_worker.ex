@@ -82,18 +82,63 @@ defmodule Dialectic.Workers.BaseAPIWorker do
 
     client = Req.new(finch: Dialectic.Finch)
 
-    case Req.post(client, Keyword.put(options, :url, url)) do
-      {:ok, response} ->
-        Logger.debug("Request completed successfully")
+    # Broadcast that the request has started
+    Phoenix.PubSub.broadcast(
+      Dialectic.PubSub,
+      live_view_topic,
+      {:llm_request_started, to_node}
+    )
 
+    case Req.post(client, Keyword.put(options, :url, url)) do
+      {:ok, %Req.Response{} = response} ->
+        status = Map.get(response, :status)
+        Logger.debug("HTTP response status: #{inspect(status)}")
+
+        # Broadcast HTTP status to LiveView
         Phoenix.PubSub.broadcast(
           Dialectic.PubSub,
           live_view_topic,
-          {:llm_request_complete, to_node}
+          {:llm_request_http_status, to_node, status}
         )
 
-        Logger.debug(response)
-        :ok
+        if status && status >= 200 && status < 300 do
+          Logger.debug("Request completed successfully")
+
+          Phoenix.PubSub.broadcast(
+            Dialectic.PubSub,
+            live_view_topic,
+            {:llm_request_complete, to_node}
+          )
+
+          Logger.debug(response)
+          :ok
+        else
+          # Non-2xx status: broadcast a user-facing error
+          body_str =
+            case response.body do
+              "" -> ""
+              bin when is_binary(bin) -> " Body: #{bin}"
+              other -> " Body: #{inspect(other)}"
+            end
+
+          msg = "API request failed with status #{inspect(status)}." <> body_str
+          Logger.error(msg)
+
+          Phoenix.PubSub.broadcast(
+            Dialectic.PubSub,
+            live_view_topic,
+            {:stream_error, msg, :node_id, to_node}
+          )
+
+          # Ensure the request is marked as complete
+          Phoenix.PubSub.broadcast(
+            Dialectic.PubSub,
+            live_view_topic,
+            {:llm_request_complete, to_node}
+          )
+
+          :ok
+        end
 
       {:error, reason} ->
         Logger.error("Request failed: #{inspect(reason)}")
@@ -136,7 +181,42 @@ defmodule Dialectic.Workers.BaseAPIWorker do
       raise exception
   end
 
+  defp init_stream_context(context) do
+    case context do
+      %{buf: _} = ctx -> ctx
+      bin when is_binary(bin) -> %{buf: [bin], status: nil, headers: nil}
+      list when is_list(list) -> %{buf: list, status: nil, headers: nil}
+      _ -> %{buf: [], status: nil, headers: nil}
+    end
+  end
+
+  defp handle_stream_chunk(
+         _module,
+         {:status, status},
+         context,
+         _graph,
+         _to_node,
+         _live_view_topic
+       ) do
+    ctx = init_stream_context(context)
+    {:cont, %{ctx | status: status}}
+  end
+
+  defp handle_stream_chunk(
+         _module,
+         {:headers, headers},
+         context,
+         _graph,
+         _to_node,
+         _live_view_topic
+       ) do
+    ctx = init_stream_context(context)
+    {:cont, %{ctx | headers: headers}}
+  end
+
   defp handle_stream_chunk(module, {:data, data}, context, graph, to_node, live_view_topic) do
+    ctx = init_stream_context(context)
+
     case module.parse_chunk(data) do
       {:ok, chunks} ->
         Logger.debug("Parsed chunks: #{inspect(chunks)}")
@@ -167,7 +247,8 @@ defmodule Dialectic.Workers.BaseAPIWorker do
             nil
         end
 
-        {:cont, context}
+        # Accumulate raw body data for the final response
+        {:cont, %{ctx | buf: [data | ctx.buf]}}
 
       {:error, reason} ->
         Logger.debug("Failed to parse chunk: #{inspect(reason)}")
@@ -187,8 +268,19 @@ defmodule Dialectic.Workers.BaseAPIWorker do
           {:llm_request_complete, to_node}
         )
 
-        {:cont, context}
+        # Still accumulate the raw data to help with debugging/visibility
+        {:cont, %{ctx | buf: [data | ctx.buf]}}
     end
+  end
+
+  defp handle_stream_chunk(_module, :done, context, _graph, _to_node, _live_view_topic) do
+    ctx = init_stream_context(context)
+    body = IO.iodata_to_binary(Enum.reverse(ctx.buf))
+    {:cont, body}
+  end
+
+  defp handle_stream_chunk(_module, _other, context, _graph, _to_node, _live_view_topic) do
+    {:cont, context}
   end
 
   defp resolve_worker_module("Elixir.Dialectic.Workers.OpenAIWorker"),
