@@ -5,11 +5,11 @@ defmodule Dialectic.Workers.OpenAIWorker do
   Worker for the OpenAI Chat API.
   """
   require Logger
-  use Oban.Worker, queue: :api_request, max_attempts: 5
+  use Oban.Worker, queue: :openai_request, max_attempts: 5
 
   @behaviour Dialectic.Workers.BaseAPIWorker
 
-  @model "gpt-5-mini-2025-08-07"
+  @model "gpt-4o-mini"
   # Model-specific configuration:
 
   @impl true
@@ -31,6 +31,9 @@ defmodule Dialectic.Workers.OpenAIWorker do
     %{
       model: @model,
       stream: true,
+      temperature: 0.2,
+      max_tokens: 256,
+      n: 1,
       messages: [
         %{
           role: "system",
@@ -43,20 +46,56 @@ defmodule Dialectic.Workers.OpenAIWorker do
   end
 
   @impl true
-  def parse_chunk(chunk), do: Utils.parse_chunk(chunk)
+  def parse_chunk(chunk) do
+    try do
+      case :binary.match(chunk, "data: ") do
+        :nomatch ->
+          {:ok, []}
+
+        _ ->
+          parts = :binary.split(chunk, "data: ", [:global])
+
+          chunks =
+            parts
+            |> Enum.drop(1)
+            |> Enum.reduce([], fn seg, acc ->
+              line =
+                case :binary.split(seg, "\n") do
+                  [h | _] -> String.trim(h)
+                  [] -> String.trim(seg)
+                end
+
+              case line do
+                "" ->
+                  acc
+
+                "[DONE]" ->
+                  acc
+
+                _ ->
+                  case Jason.decode(line) do
+                    {:ok, decoded} -> [decoded | acc]
+                    _ -> acc
+                  end
+              end
+            end)
+            |> Enum.reverse()
+
+          {:ok, chunks}
+      end
+    rescue
+      _ -> {:error, "Failed to parse chunk"}
+    end
+  end
 
   @impl true
   def handle_result(
-        %{
-          "choices" => [
-            %{"delta" => %{"content" => data}}
-          ]
-        },
+        %{"choices" => [%{"delta" => %{"content" => data}}]},
         graph_id,
         to_node,
         live_view_topic
       )
-      when is_binary(data),
+      when is_binary(data) and byte_size(data) > 0,
       do: Utils.process_chunk(graph_id, to_node, data, __MODULE__, live_view_topic)
 
   @impl true
@@ -109,8 +148,46 @@ defmodule Dialectic.Workers.OpenAIWorker do
 
     :ok
   end
+  end
 
-  @impl true
+  # Ignore role-only deltas in streaming
+  def handle_result(
+        %{"choices" => [%{"delta" => %{"role" => _role}}]},
+        _graph,
+        _to_node,
+        _live_view_topic
+      ),
+      do: :ok
+
+  # Ignore tool call deltas in streaming
+  def handle_result(
+        %{"choices" => [%{"delta" => %{"tool_calls" => _tc}}]},
+        _graph,
+        _to_node,
+        _live_view_topic
+      ),
+      do: :ok
+
+  # Handle non-streaming responses (full message)
+  def handle_result(
+        %{"choices" => [%{"message" => %{"content" => data}}]},
+        graph_id,
+        to_node,
+        live_view_topic
+      )
+      when is_binary(data) and byte_size(data) > 0 do
+    Utils.process_chunk(graph_id, to_node, data, __MODULE__, live_view_topic)
+  end
+
+  # Ignore finish events with no content
+  def handle_result(
+        %{"choices" => [%{"finish_reason" => _reason}]},
+        _graph,
+        _to_node,
+        _live_view_topic
+      ),
+      do: :ok
+
   def handle_result(other, _graph, _to_node, _live_view_topic) do
     Logger.error("Unhandled OpenAI response: #{inspect(other)}")
     :ok

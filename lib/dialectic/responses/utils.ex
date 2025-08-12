@@ -2,7 +2,7 @@ defmodule Dialectic.Responses.Utils do
   require Logger
 
   def process_chunk(graph, node, data, _module, live_view_topic) do
-    Logger.info("Processing chunk for graph #{graph} and node #{node}. Data: #{data}")
+    Logger.debug(fn -> "Processing chunk for graph #{graph} and node #{node}. Data: #{data}" end)
     updated_vertex = GraphManager.update_vertex(graph, node, data)
 
     Phoenix.PubSub.broadcast(
@@ -25,32 +25,46 @@ defmodule Dialectic.Responses.Utils do
 
   def parse_chunk(chunk) do
     try do
-      # Process each data chunk immediately to avoid buffering
-      chunks =
-        chunk
-        |> String.split("data: ", trim: true)
-        |> Enum.map(&String.trim/1)
-        |> Enum.map(&decode/1)
-        |> Enum.reject(&is_nil/1)
+      case :binary.match(chunk, "data: ") do
+        :nomatch ->
+          {:ok, []}
 
-      # Handle empty result case quickly
-      if chunks == [] do
-        {:ok, []}
-      else
-        # Check if any chunk contains an error
-        error_chunk =
-          Enum.find(chunks, fn
-            %{"error" => _} -> true
-            _ -> false
-          end)
+        _ ->
+          segments = :binary.split(chunk, "data: ", [:global])
 
-        if error_chunk do
-          Logger.error("Error in chunk response: #{inspect(error_chunk)}")
-          # Still return the chunks so they can be handled by the worker
-          {:ok, chunks}
-        else
-          {:ok, chunks}
-        end
+          chunks =
+            segments
+            |> Enum.drop(1)
+            |> Enum.reduce([], fn seg, acc ->
+              first =
+                case :binary.split(seg, "\n") do
+                  [h | _] -> String.trim(h)
+                  [] -> String.trim(seg)
+                end
+
+              case decode(first) do
+                nil -> acc
+                decoded -> [decoded | acc]
+              end
+            end)
+            |> Enum.reverse()
+
+          if chunks == [] do
+            {:ok, []}
+          else
+            error_chunk =
+              Enum.find(chunks, fn
+                %{"error" => _} -> true
+                _ -> false
+              end)
+
+            if error_chunk do
+              Logger.error("Error in chunk response: #{inspect(error_chunk)}")
+            end
+
+            {:ok, chunks}
+          end
+      end
       end
     rescue
       e ->
