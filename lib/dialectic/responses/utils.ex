@@ -43,19 +43,6 @@ defmodule Dialectic.Responses.Utils do
     end
   end
 
-  # Deprecated individual decode functions - now handled inline in parse_chunk
-  # Kept for backwards compatibility
-  def decode(""), do: nil
-  def decode("[DONE]"), do: nil
-
-  def decode(data) do
-    try do
-      case Jason.decode(data) do
-        {:ok, decoded} -> decoded
-        _ -> nil
-      end
-    rescue
-      _ -> nil
-    end
-  end
+  # The individual decode functions have been removed as they are no longer needed.
+  # All parsing is now handled inline in the parse_chunk function above.
 end

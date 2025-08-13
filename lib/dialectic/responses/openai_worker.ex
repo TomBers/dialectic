@@ -29,6 +29,7 @@ defmodule Dialectic.Workers.OpenAIWorker do
     ]
   end
 
+  @impl true
   def request_options do
     [
       connect_options: [timeout: @request_timeout],
@@ -100,7 +101,7 @@ defmodule Dialectic.Workers.OpenAIWorker do
             "module" => _worker_module,
             "live_view_topic" => live_view_topic
           }
-        } = job
+        } = _job
       ) do
     # Fast path for OpenAI - optimized request handling
     with {:ok, body} <- build_request_body_encoded(question),
@@ -110,8 +111,9 @@ defmodule Dialectic.Workers.OpenAIWorker do
     else
       {:error, reason} ->
         Logger.error("Failed to initiate OpenAI request: #{inspect(reason)}")
-        # Fall back to the base worker implementation
-        Dialectic.Workers.BaseAPIWorker.perform(job)
+        # Return the error directly instead of falling back to base worker
+        # to avoid potential infinite recursion
+        {:error, reason}
     end
   end
 
