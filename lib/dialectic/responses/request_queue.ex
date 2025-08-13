@@ -76,8 +76,8 @@ defmodule Dialectic.Responses.RequestQueue do
       params
       | module: Dialectic.Workers.OpenAIWorker
     }
-    |> OpenAIWorker.new(%{priority: 0, max_attempts: 3, tags: ["openai"]})
-    |> Oban.insert!()
+    |> OpenAIWorker.new(priority: 0, max_attempts: 3, tags: ["openai"])
+    |> Oban.insert()
   end
 
   def test() do
@@ -85,12 +85,14 @@ defmodule Dialectic.Responses.RequestQueue do
       question: "What is a Body without organs?",
       to_node: "1",
       graph: "Bob",
-      module: nil
+      module: nil,
+      live_view_topic: "test_topic"
     }
 
     run_deepseek(params)
     run_claude(params)
     run_gemini(params)
     run_openai(params)
+    :ok
   end
 end
