@@ -13,8 +13,6 @@ defmodule Dialectic.Workers.OpenAIWorker do
   # Model-specific configuration:
   # Optimized timeout for OpenAI
   @request_timeout 20_000
-  # Connection pool size
-  @pool_size 20
 
   @impl true
   def api_key, do: System.get_env("OPENAI_API_KEY")
@@ -36,8 +34,8 @@ defmodule Dialectic.Workers.OpenAIWorker do
     [
       connect_options: [timeout: @request_timeout],
       receive_timeout: @request_timeout,
-      pool_size: @pool_size,
-      pool_timeout: 5000
+      retry: true,
+      max_retries: 2
     ]
   end
 
@@ -128,12 +126,15 @@ defmodule Dialectic.Workers.OpenAIWorker do
   end
 
   defp do_optimized_request(url, body, graph, to_node, live_view_topic) do
-    options =
-      [
-        headers: headers(api_key()),
-        body: body,
-        into: &handle_stream_chunk(&1, &2, graph, to_node, live_view_topic)
-      ] ++ request_options()
+    options = [
+      headers: headers(api_key()),
+      body: body,
+      into: &handle_stream_chunk(&1, &2, graph, to_node, live_view_topic),
+      connect_options: [timeout: @request_timeout],
+      receive_timeout: @request_timeout,
+      retry: true,
+      max_retries: 2
+    ]
 
     task =
       Task.async(fn ->

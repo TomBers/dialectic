@@ -26,10 +26,13 @@ defmodule Dialectic.Workers.ClaudeWorker do
     ]
   end
 
+  @impl true
   def request_options do
     [
       connect_options: [timeout: 30_000],
-      receive_timeout: 30_000
+      receive_timeout: 30_000,
+      retry: true,
+      max_retries: 2
     ]
   end
 

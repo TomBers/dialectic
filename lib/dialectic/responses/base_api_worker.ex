@@ -65,21 +65,23 @@ defmodule Dialectic.Workers.BaseAPIWorker do
   end
 
   defp do_request(module, url, body, graph, to_node, live_view_topic) do
-    base_options = [
+    # Base options always included
+    options = [
       headers: module.headers(module.api_key()),
       body: body,
-      into: &handle_stream_chunk(module, &1, &2, graph, to_node, live_view_topic)
+      into: &handle_stream_chunk(module, &1, &2, graph, to_node, live_view_topic),
+      connect_options: [timeout: @timeout],
+      receive_timeout: @timeout
     ]
 
-    # Add custom request options if the module implements them, otherwise use defaults
-    custom_options =
+    # Add custom request options if the module implements them
+    options =
       if function_exported?(module, :request_options, 0) do
-        module.request_options()
+        # Merge the options, with custom options taking precedence
+        Keyword.merge(options, module.request_options())
       else
-        [connect_options: [timeout: @timeout], receive_timeout: @timeout]
+        options
       end
-
-    options = base_options ++ custom_options
 
     case Req.post(url, options) do
       {:ok, response} ->
