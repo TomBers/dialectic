@@ -23,12 +23,11 @@ defmodule Dialectic.Workers.DeepSeekWorker do
     ]
   end
 
-  @impl true
   def request_options do
     [
       connect_options: [timeout: 30_000],
       receive_timeout: 30_000,
-      retry: true,
+      retry: :transient,
       max_retries: 2
     ]
   end

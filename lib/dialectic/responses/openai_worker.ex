@@ -29,12 +29,11 @@ defmodule Dialectic.Workers.OpenAIWorker do
     ]
   end
 
-  @impl true
   def request_options do
     [
       connect_options: [timeout: @request_timeout],
       receive_timeout: @request_timeout,
-      retry: true,
+      retry: :transient,
       max_retries: 2
     ]
   end
@@ -73,8 +72,21 @@ defmodule Dialectic.Workers.OpenAIWorker do
       do: Utils.process_chunk(graph_id, to_node, data, __MODULE__, live_view_topic)
 
   @impl true
+  def handle_result(
+        %{
+          "choices" => [
+            %{"delta" => %{}, "finish_reason" => "stop"}
+          ]
+        },
+        _graph_id,
+        _to_node,
+        _live_view_topic
+      ),
+      do: :ok
+
+  @impl true
   def handle_result(other, _graph, _to_node, _live_view_topic) do
-    IO.inspect(other, label: "Error")
+    Logger.debug("Unhandled response format: #{inspect(other)}")
     :ok
   end
 
@@ -132,7 +144,7 @@ defmodule Dialectic.Workers.OpenAIWorker do
       into: &handle_stream_chunk(&1, &2, graph, to_node, live_view_topic),
       connect_options: [timeout: @request_timeout],
       receive_timeout: @request_timeout,
-      retry: true,
+      retry: :transient,
       max_retries: 2
     ]
 
@@ -176,5 +188,11 @@ defmodule Dialectic.Workers.OpenAIWorker do
         Logger.error("Failed to parse OpenAI chunk: #{inspect(reason)}")
         {:cont, context}
     end
+  end
+
+  # Handle stream end message
+  defp handle_stream_chunk({:done, _data}, context, _graph, _to_node, _live_view_topic) do
+    Logger.debug("Stream completed")
+    {:cont, context}
   end
 end
