@@ -264,7 +264,7 @@ defmodule GraphManager do
 
   # Deepseek context window 128,000 tokens
   # So for the time being set it to a quarter of the window size.
-  def build_context(path, node, limit \\ 25_000) do
+  def build_context(path, node, limit \\ 4_000) do
     GenServer.call(via_tuple(path), {:build_context, node, limit})
   end
 

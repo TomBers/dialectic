@@ -25,7 +25,7 @@ defmodule Dialectic.Workers.OpenAIWorker do
     [
       {"Authorization", "Bearer #{api_key}"},
       {"Content-Type", "application/json"},
-      {"Accept", "application/json"}
+      {"Accept", "text/event-stream"}
     ]
   end
 
@@ -144,10 +144,10 @@ defmodule Dialectic.Workers.OpenAIWorker do
       headers: headers(api_key()),
       body: body,
       into: &handle_stream_chunk(&1, &2, graph, to_node, live_view_topic),
-      connect_options: [timeout: @request_timeout],
       receive_timeout: @request_timeout,
       retry: :transient,
-      max_retries: 2
+      max_retries: 2,
+      finch: Dialectic.Finch
     ]
 
     task =

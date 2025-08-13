@@ -2,7 +2,8 @@ defmodule Dialectic.Responses.Utils do
   require Logger
 
   def process_chunk(graph, node, data, _module, live_view_topic) do
-    Logger.info("Processing chunk for graph #{graph} and node #{node}. Data: #{data}")
+    # Reduced per-chunk logging to minimize latency
+    # Logger.debug(fn -> "Processing chunk for graph #{inspect(graph)} and node #{inspect(node)}" end)
     updated_vertex = GraphManager.update_vertex(graph, node, data)
 
     Phoenix.PubSub.broadcast(

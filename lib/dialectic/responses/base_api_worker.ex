@@ -109,7 +109,7 @@ defmodule Dialectic.Workers.BaseAPIWorker do
   defp handle_stream_chunk(module, {:data, data}, context, graph, to_node, live_view_topic) do
     case module.parse_chunk(data) do
       {:ok, chunks} ->
-        Logger.info("Parsed chunks: #{inspect(chunks)}")
+        Logger.debug(fn -> "Parsed chunks: #{inspect(chunks)}" end)
 
         Enum.each(chunks, fn chunk ->
           module.handle_result(chunk, graph, to_node, live_view_topic)
@@ -118,7 +118,7 @@ defmodule Dialectic.Workers.BaseAPIWorker do
         {:cont, context}
 
       {:error, reason} ->
-        Logger.info("Failed to parse chunk: #{inspect(reason)}")
+        # Reduced per-chunk logging to avoid overhead on parse errors
         Logger.error("Failed to parse chunk: #{inspect(reason)}")
         {:cont, context}
     end
