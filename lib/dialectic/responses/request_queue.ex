@@ -4,6 +4,7 @@ defmodule Dialectic.Responses.RequestQueue do
   alias Dialectic.Workers.GeminiWorker
   alias Dialectic.Workers.OpenAIWorker
   alias Dialectic.Workers.LocalWorker
+  alias Oban.Job
 
   # Define the implementation based on compile-time environment
   if Mix.env() == :test do
@@ -30,6 +31,7 @@ defmodule Dialectic.Responses.RequestQueue do
         live_view_topic: live_view_topic
       }
 
+      # Use optimized enqueuing for OpenAI to improve performance
       run_openai(params)
     end
   end
@@ -76,7 +78,8 @@ defmodule Dialectic.Responses.RequestQueue do
       | module: Dialectic.Workers.OpenAIWorker
     }
     |> OpenAIWorker.new()
-    |> Oban.insert()
+    |> Job.set(priority: 0, max_attempts: 3, tags: ["openai"])
+    |> Oban.insert!()
   end
 
   def test() do

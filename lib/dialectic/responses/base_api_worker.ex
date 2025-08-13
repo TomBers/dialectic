@@ -14,6 +14,7 @@ defmodule Dialectic.Workers.BaseAPIWorker do
   @callback parse_chunk(String.t()) :: {:ok, list()} | {:error, String.t()}
   @callback handle_result(map(), graph_id :: any(), to_node :: any(), live_view_topic :: any()) ::
               any()
+  @callback request_options() :: keyword()
 
   @impl Oban.Worker
   def perform(%Oban.Job{
@@ -64,13 +65,21 @@ defmodule Dialectic.Workers.BaseAPIWorker do
   end
 
   defp do_request(module, url, body, graph, to_node, live_view_topic) do
-    options = [
+    base_options = [
       headers: module.headers(module.api_key()),
       body: body,
-      into: &handle_stream_chunk(module, &1, &2, graph, to_node, live_view_topic),
-      connect_options: [timeout: @timeout],
-      receive_timeout: @timeout
+      into: &handle_stream_chunk(module, &1, &2, graph, to_node, live_view_topic)
     ]
+
+    # Add custom request options if the module implements them, otherwise use defaults
+    custom_options =
+      if function_exported?(module, :request_options, 0) do
+        module.request_options()
+      else
+        [connect_options: [timeout: @timeout], receive_timeout: @timeout]
+      end
+
+    options = base_options ++ custom_options
 
     case Req.post(url, options) do
       {:ok, response} ->
