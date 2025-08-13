@@ -14,12 +14,26 @@ defmodule Dialectic.Responses.Utils do
 
   def parse_chunk(chunk) do
     try do
+      # Optimized parsing with fewer operations
+      # Directly split, filter, and decode in one pass with pattern matching
       chunks =
         chunk
-        |> String.split("data: ")
-        |> Enum.map(&String.trim/1)
-        |> Enum.map(&decode/1)
-        |> Enum.reject(&is_nil/1)
+        |> String.split("data: ", trim: true)
+        |> Enum.flat_map(fn data ->
+          case String.trim(data) do
+            "" ->
+              []
+
+            "[DONE]" ->
+              []
+
+            valid_data ->
+              case Jason.decode(valid_data) do
+                {:ok, decoded} -> [decoded]
+                _ -> []
+              end
+          end
+        end)
 
       {:ok, chunks}
     rescue
@@ -29,14 +43,6 @@ defmodule Dialectic.Responses.Utils do
     end
   end
 
-  def decode(""), do: nil
-  def decode("[DONE]"), do: nil
-
-  def decode(data) do
-    try do
-      Jason.decode!(data)
-    rescue
-      _ -> nil
-    end
-  end
+  # The individual decode functions have been removed as they are no longer needed.
+  # All parsing is now handled inline in the parse_chunk function above.
 end

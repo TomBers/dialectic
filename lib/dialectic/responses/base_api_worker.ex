@@ -14,6 +14,7 @@ defmodule Dialectic.Workers.BaseAPIWorker do
   @callback parse_chunk(String.t()) :: {:ok, list()} | {:error, String.t()}
   @callback handle_result(map(), graph_id :: any(), to_node :: any(), live_view_topic :: any()) ::
               any()
+  @callback request_options() :: Keyword.t()
 
   @impl Oban.Worker
   def perform(%Oban.Job{
@@ -64,6 +65,7 @@ defmodule Dialectic.Workers.BaseAPIWorker do
   end
 
   defp do_request(module, url, body, graph, to_node, live_view_topic) do
+    # Base options always included
     options = [
       headers: module.headers(module.api_key()),
       body: body,
@@ -71,6 +73,15 @@ defmodule Dialectic.Workers.BaseAPIWorker do
       connect_options: [timeout: @timeout],
       receive_timeout: @timeout
     ]
+
+    # Add custom request options if the module implements them, otherwise use defaults
+    options =
+      if function_exported?(module, :request_options, 0) do
+        # Merge the options, with custom options taking precedence
+        Keyword.merge(options, module.request_options())
+      else
+        options
+      end
 
     case Req.post(url, options) do
       {:ok, response} ->

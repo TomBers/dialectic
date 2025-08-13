@@ -23,6 +23,16 @@ defmodule Dialectic.Workers.DeepSeekWorker do
     ]
   end
 
+  @impl true
+  def request_options do
+    [
+      connect_options: [timeout: 30_000],
+      receive_timeout: 30_000,
+      retry: :transient,
+      max_retries: 2
+    ]
+  end
+
   # model - deepseek-chat points to Deepseek-V3 https://api-docs.deepseek.com/
   @impl true
   def build_request_body(question) do

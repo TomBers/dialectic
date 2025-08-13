@@ -30,6 +30,16 @@ defmodule Dialectic.Workers.GeminiWorker do
   end
 
   @impl true
+  def request_options do
+    [
+      connect_options: [timeout: 30_000],
+      receive_timeout: 30_000,
+      retry: :transient,
+      max_retries: 2
+    ]
+  end
+
+  @impl true
   def build_request_body(question) do
     %{
       contents: [
@@ -49,8 +59,25 @@ defmodule Dialectic.Workers.GeminiWorker do
 
   @impl true
   def parse_chunk(chunk) do
-    {:ok,
-     [chunk |> String.replace_prefix(",", "") |> String.replace_prefix("[", "") |> Utils.decode()]}
+    cleaned_chunk =
+      chunk
+      |> String.replace_prefix(",", "")
+      |> String.replace_prefix("[", "")
+      |> String.trim()
+
+    case cleaned_chunk do
+      "" ->
+        {:ok, []}
+
+      "[DONE]" ->
+        {:ok, []}
+
+      valid_data ->
+        case Jason.decode(valid_data) do
+          {:ok, decoded} -> {:ok, [decoded]}
+          _ -> {:error, "Failed to parse Gemini chunk"}
+        end
+    end
   end
 
   @impl true
