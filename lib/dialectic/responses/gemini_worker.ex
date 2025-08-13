@@ -30,6 +30,14 @@ defmodule Dialectic.Workers.GeminiWorker do
   end
 
   @impl true
+  def request_options do
+    [
+      connect_options: [timeout: 30_000],
+      receive_timeout: 30_000
+    ]
+  end
+
+  @impl true
   def build_request_body(question) do
     %{
       contents: [

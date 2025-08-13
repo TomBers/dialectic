@@ -87,7 +87,7 @@ defmodule Dialectic.Workers.OpenAIWorker do
             "question" => question,
             "to_node" => to_node,
             "graph" => graph,
-            "module" => worker_module,
+            "module" => _worker_module,
             "live_view_topic" => live_view_topic
           }
         } = job
@@ -141,7 +141,7 @@ defmodule Dialectic.Workers.OpenAIWorker do
       end)
 
     case Task.await(task, @request_timeout + 5000) do
-      {:ok, response} ->
+      {:ok, _response} ->
         Logger.info("OpenAI request completed successfully")
 
         Phoenix.PubSub.broadcast(

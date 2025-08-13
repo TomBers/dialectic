@@ -20,9 +20,16 @@ defmodule Dialectic.Workers.ClaudeWorker do
   @impl true
   def headers(api_key) do
     [
-      {"x-api-key", api_key},
-      {"content-type", "application/json"},
-      {"anthropic-version", "2023-06-01"}
+      {"x-api-key", "#{api_key}"},
+      {"anthropic-version", "2023-06-01"},
+      {"Content-Type", "application/json"}
+    ]
+  end
+
+  def request_options do
+    [
+      connect_options: [timeout: 30_000],
+      receive_timeout: 30_000
     ]
   end
 
