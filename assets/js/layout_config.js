@@ -8,9 +8,9 @@ export const layoutConfig = {
     nodeDimensionsIncludeLabels: true,
     acyclicer: "greedy",
     // Spacing adjustments for better proportions
-    nodeSep: 60, // Increased horizontal spacing between nodes
+    nodeSep: 50, // Increased horizontal spacing between nodes
     edgeSep: 40, // Increased spacing between parallel edges
-    rankSep: 80, // Increased vertical spacing between ranks
+    rankSep: 60, // Increased vertical spacing between ranks
     // Visual enhancement settings
     spacingFactor: 1.05, // Slightly looser spacing for readability
     padding: 50, // Increased padding around the graph
@@ -18,7 +18,7 @@ export const layoutConfig = {
 
     fit: true, // Fit graph to viewport
     // Higher quality layout algorithm
-    ranker: "network-simplex", // More compact layout algorithm
+    ranker: "tight-tree", // More compact layout algorithm
     // Better alignment for hierarchical structures
     align: "UL", // Upper-Left
     // Animation settings
