@@ -5,44 +5,45 @@ export const layoutConfig = {
   baseLayout: {
     name: "dagre",
     rankDir: "TB",
+    nodeDimensionsIncludeLabels: true,
+    acyclicer: "greedy",
     // Spacing adjustments for better proportions
-    nodeSep: 35, // Horizontal spacing between nodes (further reduced)
-    edgeSep: 25, // Spacing between parallel edges (further reduced)
-    rankSep: 45, // Vertical spacing between ranks (significantly reduced)
+    nodeSep: 60, // Increased horizontal spacing between nodes
+    edgeSep: 40, // Increased spacing between parallel edges
+    rankSep: 80, // Increased vertical spacing between ranks
     // Visual enhancement settings
-    spacingFactor: 0.95, // Tighter spacing factor for more compact layout
-    padding: 25, // Minimum padding around the graph
+    spacingFactor: 1.05, // Slightly looser spacing for readability
+    padding: 50, // Increased padding around the graph
     // More natural arrangement for complex graphs
-    weaveToward: "leaves",
-    nestingFactor: 1.0, // Full size for compound nodes
+
     fit: true, // Fit graph to viewport
     // Higher quality layout algorithm
     ranker: "network-simplex", // More compact layout algorithm
     // Better alignment for hierarchical structures
-    align: "DL", // Down-Left
+    align: "UL", // Upper-Left
     // Animation settings
-    animate: true,
+    animate: false,
     animationDuration: 250, // Faster animations
     animationEasing: "ease-out-cubic",
     // Additional compactness settings
-    gravity: 1.5, // Pull nodes toward the center
   },
 
   // Layout options for expanded compound nodes
   expandLayout: {
     name: "dagre",
     fit: false,
-    padding: 25,
-    animate: true,
-    animationDuration: 300,
+    padding: 35,
+    animate: false,
+    animationDuration: 250,
+    nodeDimensionsIncludeLabels: true,
     // Spacing for expanded compound nodes
-    nodeSep: 15,
-    edgeSep: 12,
-    rankSep: 35,
+    nodeSep: 30,
+    edgeSep: 20,
+    rankSep: 60,
     // Better handling of expanded groups
-    spacingFactor: 0.8,
-    nestingFactor: 0.95,
-    align: "DL", // Down-left alignment for better compound node layout
+    spacingFactor: 0.9,
+    align: "UL", // Upper-left alignment for better compound node layout
+    acyclicer: "greedy",
   },
 
   // Compound drag and drop options
