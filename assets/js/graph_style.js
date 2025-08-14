@@ -190,8 +190,8 @@ export function graphStyle() {
         //  NOT "css"
         "border-color": cols[nodeType].border,
         "background-color": cols[nodeType].background,
-        "border-width": 1.5,
-        "border-opacity": 0.7,
+        "border-width": 3,
+        "border-opacity": 1,
         color: cols[nodeType].text,
       },
     });
