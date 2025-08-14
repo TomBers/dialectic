@@ -68,8 +68,19 @@ defmodule DialecticWeb.NodeComp do
             </div>
           </div>
         <% else %>
-          <div class="node mb-2">
-            <h2>Loading ...</h2>
+          <div class="node mb-2 p-4">
+            <div class="flex flex-col space-y-4 animate-pulse">
+              <div class="h-6 bg-gray-200 rounded-md w-3/4"></div>
+              <div class="space-y-2">
+                <div class="h-4 bg-gray-200 rounded-md w-full"></div>
+                <div class="h-4 bg-gray-200 rounded-md w-5/6"></div>
+                <div class="h-4 bg-gray-200 rounded-md w-4/6"></div>
+              </div>
+              <div class="flex items-center space-x-2 mt-2">
+                <div class="h-8 w-8 bg-gray-200 rounded-full"></div>
+                <div class="h-3 bg-gray-200 rounded-md w-24"></div>
+              </div>
+            </div>
           </div>
         <% end %>
       </div>
