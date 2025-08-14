@@ -26,10 +26,7 @@ defmodule DialecticWeb.NodeComp do
                 else: "max-height: calc(100vh - 50px); transition: max-height 0.3s ease-in-out;"
             }
           >
-            <div
-              class="summary-content modal-responsive px-2 sm:px-4 md:px-6"
-              id={"tt-summary-content-" <> @node.id}
-            >
+            <div class="summary-content modal-responsive" id={"tt-summary-content-" <> @node.id}>
               <article class={[
                 "prose prose-stone prose-lg md:prose-xl max-w-none selection-content pl-2 border-l-4 w-full",
                 ColUtils.message_border_class(@node.class)
