@@ -61,6 +61,8 @@ defmodule Dialectic.Responses.LlmInterface do
   end
 
   def ask_model(question, to_node, graph_id, live_view_topic) do
+    IO.inspect("Ask Model: #{DateTime.utc_now()}")
+
     RequestQueue.add(
       question <>
         "\n Make sure to add a title in the response.",

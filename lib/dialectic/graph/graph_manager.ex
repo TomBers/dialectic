@@ -1,5 +1,6 @@
 defmodule GraphManager do
   alias Dialectic.Graph.{Vertex, Serialise, Siblings}
+  alias Dialectic.Performance.Logger, as: PerfLogger
 
   require Logger
 
@@ -100,13 +101,49 @@ defmodule GraphManager do
   end
 
   def handle_call({:update_node, {node_id, data}}, _from, {graph_struct, graph}) do
+    lookup_start = DateTime.utc_now()
+    Dialectic.Performance.Logger.log("GraphManager update_node lookup start")
+
     case :digraph.vertex(graph, node_id) do
       {_id, vertex} ->
+        lookup_end = DateTime.utc_now()
+        lookup_time_ms = DateTime.diff(lookup_end, lookup_start, :millisecond)
+        Dialectic.Performance.Logger.log("GraphManager vertex lookup (took #{lookup_time_ms}ms)")
+
+        update_start = DateTime.utc_now()
         updated_vertex = %{vertex | content: vertex.content <> data}
         :digraph.add_vertex(graph, node_id, updated_vertex)
-        {:reply, Vertex.add_relatives(updated_vertex, graph), {graph_struct, graph}}
+
+        update_end = DateTime.utc_now()
+        update_time_ms = DateTime.diff(update_end, update_start, :millisecond)
+        Dialectic.Performance.Logger.log("GraphManager vertex update (took #{update_time_ms}ms)")
+
+        relatives_start = DateTime.utc_now()
+        result = Vertex.add_relatives(updated_vertex, graph)
+
+        relatives_end = DateTime.utc_now()
+        relatives_time_ms = DateTime.diff(relatives_end, relatives_start, :millisecond)
+
+        Dialectic.Performance.Logger.log(
+          "GraphManager add_relatives (took #{relatives_time_ms}ms)"
+        )
+
+        total_time_ms = DateTime.diff(relatives_end, lookup_start, :millisecond)
+
+        Dialectic.Performance.Logger.log(
+          "GraphManager total update processing: #{total_time_ms}ms"
+        )
+
+        {:reply, result, {graph_struct, graph}}
 
       false ->
+        lookup_end = DateTime.utc_now()
+        lookup_time_ms = DateTime.diff(lookup_end, lookup_start, :millisecond)
+
+        Dialectic.Performance.Logger.log(
+          "GraphManager vertex lookup failed (took #{lookup_time_ms}ms)"
+        )
+
         {:reply, nil, {graph_struct, graph}}
     end
   end
@@ -243,7 +280,19 @@ defmodule GraphManager do
   end
 
   def update_vertex(path, node_id, data) do
-    GenServer.call(via_tuple(path), {:update_node, {node_id, data}})
+    update_start = DateTime.utc_now()
+    Dialectic.Performance.Logger.log("GraphManager.update_vertex called")
+
+    result = GenServer.call(via_tuple(path), {:update_node, {node_id, data}})
+
+    update_end = DateTime.utc_now()
+    update_time_ms = DateTime.diff(update_end, update_start, :millisecond)
+
+    Dialectic.Performance.Logger.log(
+      "GraphManager.update_vertex completed (took #{update_time_ms}ms)"
+    )
+
+    result
   end
 
   def toggle_graph_locked(path) do

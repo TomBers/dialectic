@@ -7,6 +7,9 @@ defmodule Dialectic.Application do
 
   @impl true
   def start(_type, _args) do
+    # Initialize performance logger
+    Dialectic.Performance.Logger.init()
+
     children = [
       DialecticWeb.Telemetry,
       Dialectic.Repo,
