@@ -44,6 +44,7 @@ defmodule Dialectic.Workers.OpenAIWorker do
     %{
       model: @model,
       stream: true,
+      reasoning_effort: "minimal",
       messages: [
         %{
           role: "system",
