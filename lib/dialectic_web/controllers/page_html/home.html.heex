@@ -1,21 +1,26 @@
-<div class="min-h-screen bg-[#f8f9fa]">
-  <!-- Compact Hero Section -->
-  <header class="relative overflow-hidden bg-gradient-to-r from-[#4361ee] to-[#3a0ca3] py-8 px-6">
-    <!-- Hero Pattern Background -->
-    <div class="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.05\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]">
+<div class="min-h-screen bg-gray-50 text-gray-800">
+  <!-- Hero -->
+  <header class="relative overflow-hidden bg-gradient-to-r from-[#3a0ca3] to-[#4361ee] py-12">
+    <div class="absolute inset-0 opacity-5 bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.2\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]">
     </div>
-    <div class="container mx-auto relative z-10">
-      <div class="text-center max-w-4xl mx-auto">
-        <h1 class="text-3xl md:text-4xl font-bold text-white mb-2 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
-          Explore Ideas Collaboratively
+    <div class="relative z-10">
+      <div class="mx-auto max-w-7xl px-6 text-center">
+        <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-white">
+          Explore ideas collaboratively
         </h1>
-        <p class="text-lg text-blue-100 mb-4 opacity-90">
-          Transform the way you explore and understand complex ideas
+        <p class="mt-4 text-lg md:text-xl text-blue-100/90">
+          A clearer way to explore, connect, and deepen understanding.
         </p>
-        <div class="flex flex-wrap justify-center gap-4">
+        <div class="mt-6 flex flex-wrap justify-center gap-3">
+          <a
+            href="#create-conv"
+            class="inline-flex items-center rounded-full bg-white text-[#3a0ca3] px-5 py-2.5 font-semibold shadow-sm ring-1 ring-white/20 hover:bg-white/90 transition"
+          >
+            Start exploring
+          </a>
           <.link
             navigate={~p"/intro/how"}
-            class="inline-flex items-center px-5 py-2 rounded-full font-semibold bg-[#f72585] text-white hover:bg-[#7209b7] transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg"
+            class="inline-flex items-center rounded-full bg-white/10 text-white px-5 py-2.5 font-semibold ring-1 ring-white/20 hover:bg-white/15 transition"
           >
             Guide
           </.link>
@@ -23,132 +28,124 @@
             href="https://tombers.github.io/dialectic/"
             target="_blank"
             rel="noopener noreferrer"
-            class="inline-flex items-center px-5 py-2 rounded-full font-semibold bg-white/15 text-white border border-white/30 backdrop-blur-sm hover:bg-white/25 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg"
+            class="inline-flex items-center rounded-full bg-transparent text-white px-5 py-2.5 font-semibold ring-1 ring-white/30 hover:bg-white/10 transition"
           >
-            Learn More
+            Learn more
           </.link>
         </div>
       </div>
     </div>
   </header>
   
-<!-- Create conversation component - moved above features section -->
-  <div class="container mx-auto py-8 px-6 max-w-7xl" id="create-conv">
-    <div class="bg-white shadow-[0_10px_30px_rgba(0,0,0,0.08)] rounded-xl p-8 border-t-4 border-[#4361ee]">
-      <h2 class="text-2xl font-bold text-[#2d3748] mb-6">
-        <.link
-          navigate={~p"/start/new/idea"}
-          class="flex items-center bg-gradient-to-r from-[#f72585] to-[#7209b7] text-white px-6 py-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-2 border-transparent hover:border-[#f72585]/30 group"
-        >
-          <span class="bg-white/20 rounded-full p-2 mr-4 group-hover:bg-white/30 transition-all duration-300">
+<!-- Create conversation -->
+  <section id="create-conv" class="mx-auto max-w-7xl px-6">
+    <div class="mt-10 rounded-xl bg-white ring-1 ring-gray-200 shadow-sm">
+      <div class="p-6 sm:p-8">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 class="text-2xl font-semibold text-gray-900">Start a new exploration</h2>
+            <p class="mt-1 text-gray-600">
+              Create a MuDG to map your ideas clearly with context that stays visible.
+            </p>
+          </div>
+          <.link
+            navigate={~p"/start/new/idea"}
+            class="inline-flex items-center gap-2 rounded-lg bg-[#4361ee] px-5 py-3 font-semibold text-white shadow-sm hover:bg-[#3a56d9] transition"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              class="h-8 w-8 text-white"
+              class="h-5 w-5 -ml-0.5"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
+              aria-hidden="true"
             >
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
                 stroke-width="2"
-                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                d="M12 6v12m6-6H6"
               />
             </svg>
-          </span>
-          <span class="text-xl font-bold flex flex-col items-start">
-            Start a New Exploration
-            <span class="group-hover:translate-x-1 transition-transform duration-300 flex items-center text-sm mt-1 opacity-90">
-              Begin your journey
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-4 w-4 ml-1"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M14 5l7 7m0 0l-7 7m7-7H3"
-                />
-              </svg>
-            </span>
-          </span>
-        </.link>
-      </h2>
-    </div>
-  </div>
-  
-<!-- Features Section from landing page -->
-  <section class="container mx-auto py-8 px-6 max-w-7xl">
-    <div class="text-center mb-8">
-      <h2 class="text-3xl font-bold text-[#2d3748] mb-4">Why?</h2>
-      <p class="text-lg text-[#4a5568] max-w-3xl mx-auto">
-        While typical chat captures messages sequentially, a graph reveals the hidden structure of how ideas connect and branch within a conversation.
-      </p>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-      <!-- MuDG Card (landscape image with overlay text on hover) -->
-      <div class="relative group bg-white shadow-lg rounded-2xl overflow-hidden border-t-4 border-[#4361ee] transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 h-[320px] md:h-[410px] flex">
-        <img
-          src="/images/home_graph.webp"
-          alt="Visualized Knowledge"
-          class="absolute inset-0 w-full h-full object-cover rounded-2xl border-0"
-          style="background: white;"
-        />
-        <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-4">
-          <h3 class="text-3xl font-extrabold text-white mb-2 drop-shadow-md">MuDG</h3>
-          <p
-            class="text-lg md:text-xl font-medium text-white text-center max-w-xs md:max-w-md drop-shadow"
-            style="text-shadow:1px 1px 6px #1d1d1d;"
-          >
-            The path to the topic is clear, the context is kept clean <span class="font-semibold">(and visible)</span>. Controls allow you to quickly build up knowledge and insights.
-          </p>
-          <span class="mt-4 text-base text-white/80 text-center">(Example MuDG Graph)</span>
-        </div>
-      </div>
-      <!-- ChatGPT Card (portrait image with overlay text on hover) -->
-      <div class="relative group bg-white shadow-lg rounded-2xl overflow-hidden border-t-4 border-[#7209b7] transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 h-[320px] md:h-[410px] flex">
-        <img
-          src="/images/chatgpt.webp"
-          alt="Collaborative Learning"
-          class="absolute inset-0 w-full h-full object-contain bg-white rounded-2xl border-0"
-        />
-        <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-4">
-          <h3 class="text-3xl font-extrabold text-white mb-2 drop-shadow-md">ChatGPT</h3>
-          <p
-            class="text-lg md:text-xl font-medium text-white text-center max-w-xs md:max-w-md drop-shadow"
-            style="text-shadow:1px 1px 6px #1d1d1d;"
-          >
-            Conversation must refer to context in a looped way, making it harder to dig deeper on a particular topic.
-          </p>
-          <span class="mt-4 text-base text-white/80 text-center">
-            (Example ChatGPT Conversation)
-          </span>
+            New exploration
+          </.link>
         </div>
       </div>
     </div>
   </section>
   
-<!-- Create conversation component moved above features section -->
+<!-- Why section -->
+  <section class="mx-auto max-w-7xl px-6">
+    <div class="mt-12 text-center">
+      <h2 class="text-3xl font-bold text-gray-900">Why Dialectic</h2>
+      <p class="mt-3 text-lg text-gray-600 max-w-3xl mx-auto">
+        Typical chat is linear. A MuDG shows structure—how ideas branch, connect, and evolve—so you can zoom into what matters without losing context.
+      </p>
+    </div>
 
-
-
-<!-- Top Graphs Section with showcase styling from index.html -->
-  <div class="container mx-auto p-6 max-w-7xl">
-    <section class="py-16 bg-white rounded-xl mb-16 shadow-[0_10px_30px_rgba(0,0,0,0.05)]">
-      <div class="container mx-auto px-6">
-        <div class="flex items-center justify-between mb-10">
-          <h2 class="text-3xl font-bold text-[#2d3748] flex items-center">
+    <div class="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2">
+      <!-- MuDG card -->
+      <div class="group relative overflow-hidden rounded-2xl bg-white ring-1 ring-gray-200 shadow-sm transition hover:shadow-md">
+        <img
+          src="/images/home_graph.webp"
+          alt="MuDG graph example"
+          class="absolute inset-0 h-full w-full object-cover"
+          style="background:white;"
+        />
+        <div class="relative h-[300px] md:h-[380px]"></div>
+        <div class="relative border-t border-gray-100 bg-white p-5">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-xl font-semibold text-gray-900">MuDG</h3>
+              <p class="mt-1 text-gray-600">
+                Clear paths and visible context. Build knowledge with deliberate structure.
+              </p>
+            </div>
+            <span class="inline-flex items-center rounded-full bg-[#eef2ff] text-[#3a0ca3] px-3 py-1 text-sm font-medium">
+              Structured
+            </span>
+          </div>
+        </div>
+      </div>
+      
+<!-- ChatGPT card -->
+      <div class="group relative overflow-hidden rounded-2xl bg-white ring-1 ring-gray-200 shadow-sm transition hover:shadow-md">
+        <img
+          src="/images/chatgpt.webp"
+          alt="Chat conversation example"
+          class="absolute inset-0 h-full w-full object-contain bg-white"
+        />
+        <div class="relative h-[300px] md:h-[380px]"></div>
+        <div class="relative border-t border-gray-100 bg-white p-5">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-xl font-semibold text-gray-900">ChatGPT</h3>
+              <p class="mt-1 text-gray-600">
+                Linear threads require constant looping back to context, slowing deep dives.
+              </p>
+            </div>
+            <span class="inline-flex items-center rounded-full bg-gray-100 text-gray-700 px-3 py-1 text-sm font-medium">
+              Linear
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+<!-- Top graphs -->
+  <section class="mx-auto max-w-7xl px-6">
+    <div class="mt-16 rounded-xl bg-white ring-1 ring-gray-200 shadow-sm">
+      <div class="p-6 sm:p-8">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <h2 class="text-2xl font-semibold text-gray-900 flex items-center">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              class="h-8 w-8 text-[#4361ee] mr-3"
+              class="mr-2 h-7 w-7 text-[#4361ee]"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
+              aria-hidden="true"
             >
               <path
                 stroke-linecap="round"
@@ -157,18 +154,19 @@
                 d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
               />
             </svg>
-            Top 12 Ideas
+            Top 12 ideas
           </h2>
           <.link
             navigate={~p"/view_all/graphs"}
-            class="inline-flex items-center px-5 py-2 rounded-full bg-[#4361ee] text-white hover:bg-[#3a0ca3] transition-all duration-300 transform hover:-translate-y-1 hover:shadow-md"
+            class="inline-flex items-center gap-2 rounded-lg bg-[#4361ee] px-4 py-2.5 text-white font-medium shadow-sm hover:bg-[#3a56d9] transition"
           >
-            View All Ideas
+            View all
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5 ml-2"
+              class="h-5 w-5 -mr-0.5"
               viewBox="0 0 20 20"
               fill="currentColor"
+              aria-hidden="true"
             >
               <path
                 fill-rule="evenodd"
@@ -178,10 +176,10 @@
             </svg>
           </.link>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+
+        <div class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           <%= for {g, count} <- @top_graphs do %>
-            <!-- Modified component wrapper with enhanced styling -->
-            <div class="transform transition-all duration-300 hover:-translate-y-2 hover:shadow-xl bg-white rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.08)]">
+            <div class="rounded-xl bg-white ring-1 ring-gray-200 shadow-sm transition hover:shadow-md">
               <DialecticWeb.PageHtml.GraphComp.render
                 title={g.title}
                 is_public={g.is_public}
@@ -193,86 +191,87 @@
           <% end %>
         </div>
       </div>
-    </section>
-  </div>
+    </div>
+  </section>
   
-<!-- Testimonial section from landing page -->
-  <section class="py-12 mb-16 bg-white rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.05)]">
-    <div class="container mx-auto px-6">
-      <div class="text-center mb-10">
-        <h2 class="text-3xl font-bold text-[#2d3748] mb-4">What Our Users Say</h2>
-      </div>
-      <div class="flex justify-center">
-        <div class="bg-white shadow-[0_10px_30px_rgba(0,0,0,0.08)] rounded-xl p-8 border-t-4 border-[#4361ee] max-w-3xl relative">
-          <div class="absolute top-0 left-6 transform -translate-y-1/2 text-6xl text-[#4361ee] opacity-20">
-            "
-          </div>
-          <p class="text-lg text-[#4a5568] italic mb-6">
-            An amazing free specialised AI tool to explore philosophical ideas around pretty much anything - from academic questions to films to... hamsters! All at one's fingertips, in a matter of seconds, with in-built tools for a sophisticated, yet accessible dialectic. Bravo!
-          </p>
-          <div class="flex items-center">
-            <div class="w-12 h-12 rounded-full bg-[#4361ee] flex items-center justify-center text-white font-bold mr-4">
-              AK
-            </div>
-            <div>
-              <h4 class="font-semibold text-[#2d3748]">Alexandra Konoplyanik</h4>
-              <p class="text-[#4a5568]">
+<!-- Testimonial -->
+  <section class="mx-auto max-w-7xl px-6">
+    <div class="mt-16 rounded-xl bg-white ring-1 ring-gray-200 shadow-sm">
+      <div class="p-6 sm:p-10">
+        <div class="text-center">
+          <h2 class="text-2xl font-semibold text-gray-900">What our users say</h2>
+        </div>
+        <div class="mt-8 flex justify-center">
+          <figure class="max-w-3xl">
+            <svg
+              class="h-8 w-8 text-[#4361ee] mx-auto opacity-80"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path d="M7.17 6A5.17 5.17 0 0 0 2 11.17V21h8v-9.83A5.17 5.17 0 0 0 4.83 6H7.17zm10 0A5.17 5.17 0 0 0 12 11.17V21h8v-9.83A5.17 5.17 0 0 0 14.83 6h2.34z" />
+            </svg>
+            <blockquote class="mt-4 text-lg text-gray-700 italic">
+              An amazing free specialised AI tool to explore philosophical ideas around pretty much anything — from academic questions to films to... hamsters! All at one's fingertips, in a matter of seconds, with in-built tools for a sophisticated, yet accessible dialectic. Bravo!
+            </blockquote>
+            <figcaption class="mt-6 flex items-center justify-center gap-3">
+              <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#4361ee] text-white font-bold">
+                AK
+              </span>
+              <div class="text-left">
+                <div class="font-semibold text-gray-900">Alexandra Konoplyanik</div>
                 <a
                   href="https://pfalondon.org/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="text-[#4361ee] hover:text-[#3a0ca3]"
+                  class="text-sm text-[#4361ee] hover:text-[#3a56d9]"
                 >
                   Philosophy for All
                 </a>
-              </p>
-            </div>
-          </div>
+              </div>
+            </figcaption>
+          </figure>
         </div>
       </div>
     </div>
   </section>
 </div>
 
-<!-- Footer with gradient and pattern from landing page -->
-<footer class="w-full bg-gradient-to-r from-[#3a0ca3] to-[#4361ee] relative overflow-hidden rounded-t-xl mt-16">
-  <!-- Pattern overlay -->
-  <div class="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.05\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]">
-  </div>
-  <section id="call-to-action" class="py-20 px-6 text-center relative z-10">
-    <div class="container mx-auto max-w-3xl">
-      <h2 class="text-3xl md:text-4xl font-bold text-white mb-6 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
-        Ready to Transform Your Learning?
-      </h2>
-      <p class="text-xl text-blue-100 mb-10 max-w-2xl mx-auto opacity-90">
-        Join our growing community of collaborative thinkers and discover a new way to explore ideas.
-      </p>
-      <div class="flex flex-wrap justify-center gap-4">
-        <a
-          href="#create-conv"
-          class="inline-flex items-center bg-white text-[#4361ee] font-bold py-3 px-8 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+<!-- Footer -->
+<footer class="mt-16 w-full bg-gradient-to-r from-[#3a0ca3] to-[#4361ee]">
+  <section class="mx-auto max-w-7xl px-6 py-14 text-center text-white">
+    <h2 class="text-3xl md:text-4xl font-semibold tracking-tight">
+      Ready to transform your learning?
+    </h2>
+    <p class="mt-3 text-blue-100/90 max-w-2xl mx-auto">
+      Join a growing community of collaborative thinkers.
+    </p>
+    <div class="mt-6 flex flex-wrap justify-center gap-3">
+      <a
+        href="#create-conv"
+        class="inline-flex items-center rounded-full bg-white text-[#3a0ca3] px-5 py-2.5 font-semibold shadow-sm ring-1 ring-white/20 hover:bg-white/90 transition"
+      >
+        Start exploring
+      </a>
+      <a
+        href="https://x.com/TJCBerman"
+        target="_blank"
+        class="inline-flex items-center gap-2 rounded-full bg-white/10 text-white px-5 py-2.5 font-semibold ring-1 ring-white/20 hover:bg-white/15 transition"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5 w-5 -ml-0.5"
+          fill="currentColor"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
         >
-          Start Exploring
-        </a>
-        <a
-          href="https://x.com/TJCBerman"
-          target="_blank"
-          class="inline-flex items-center bg-[#f72585] hover:bg-[#7209b7] text-white font-bold py-3 px-8 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-6 w-6 mr-2"
-            fill="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-          </svg>
-          Follow @TJCBerman
-        </a>
-      </div>
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+        </svg>
+        Follow @TJCBerman
+      </a>
+    </div>
+    <div class="mt-10 text-white/70 text-sm">
+      &copy; 2024 Dialectic — Multi-user Dialectical Graph (MuDG)
     </div>
   </section>
-  <div class="container mx-auto py-6 text-center text-white/70">
-    <p>&copy; 2024 Dialectic - Multi-user Dialectical Graph (MuDG)</p>
-  </div>
 </footer>
