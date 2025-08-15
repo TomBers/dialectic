@@ -28,7 +28,7 @@ defmodule DialecticWeb.NodeComp do
           >
             <div class="summary-content modal-responsive" id={"tt-summary-content-" <> @node.id}>
               <article class={[
-                "prose prose-stone prose-lg md:prose-xl max-w-none selection-content pl-2 border-l-4 w-full",
+                "prose prose-stone prose-lg md:prose-xl max-w-none selection-content w-full",
                 ColUtils.message_border_class(@node.class)
               ]}>
                 <h3 class="text-lg sm:text-xl md:text-2xl mb-2 sm:mb-3">
@@ -81,12 +81,12 @@ defmodule DialecticWeb.NodeComp do
           </div>
         <% end %>
       </div>
-      <div class="flex justify-center mb-2">
+      <div class="flex justify-center mb-3 mt-1 sticky bottom-2" style="z-index: 9;">
         <button
           phx-click="toggle_node_menu"
-          class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-1 px-4 rounded inline-flex items-center"
+          class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-1.5 px-5 rounded-full inline-flex items-center shadow-md transition-all duration-200 ease-in-out transform hover:scale-105"
         >
-          <span>{if @menu_visible, do: "Hide Menu", else: "Show Menu"}</span>
+          <span class="text-sm">{if @menu_visible, do: "Hide Menu", else: "Show Menu"}</span>
           <svg
             class={"ml-2 h-4 w-4 transition-transform duration-300 #{if @menu_visible, do: "rotate-0", else: "rotate-180"}"}
             xmlns="http://www.w3.org/2000/svg"
@@ -102,8 +102,8 @@ defmodule DialecticWeb.NodeComp do
         </button>
       </div>
       <div
-        class="nodeMenuComp sticky bottom-0 bg-white w-full z-10 overflow-hidden shadow-sm"
-        style={"max-height: #{if @menu_visible, do: "1000px", else: "0"}; opacity: #{if @menu_visible, do: "1", else: "0"}; transition: max-height 0.3s ease-in-out, opacity 0.2s ease-in-out;"}
+        class="nodeMenuComp sticky bottom-0 bg-white w-full overflow-hidden shadow-md rounded-t-lg"
+        style={"max-height: #{if @menu_visible, do: "1000px", else: "0"}; opacity: #{if @menu_visible, do: "1", else: "0"}; transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out; border-top: #{if @menu_visible, do: "1px solid #e5e7eb", else: "none"}; z-index: 9;"}
       >
         <.live_component
           module={NodeMenuComp}
