@@ -2,7 +2,6 @@ defmodule DialecticWeb.NodeComp do
   alias DialecticWeb.NodeMenuComp
   use DialecticWeb, :live_component
   alias DialecticWeb.Live.TextUtils
-  alias DialecticWeb.ColUtils
 
   def render(assigns) do
     ~H"""
@@ -27,15 +26,12 @@ defmodule DialecticWeb.NodeComp do
             }
           >
             <div class="summary-content modal-responsive" id={"tt-summary-content-" <> @node.id}>
-              <article class={[
-                "prose prose-stone prose-lg md:prose-xl max-w-none selection-content w-full",
-                ColUtils.message_border_class(@node.class)
-              ]}>
+              <article class="prose prose-stone prose-lg md:prose-xl max-w-none selection-content w-full">
                 <h3 class="text-lg sm:text-xl md:text-2xl mb-2 sm:mb-3">
                   {TextUtils.modal_title(@node.content, @node.class || "")}
                 </h3>
                 <div
-                  class="w-full min-w-full text-base sm:text-lg"
+                  class="w-full min-w-full text-base sm:text-lg p-2"
                   phx-hook="ListDetection"
                   data-children={length(@node.children)}
                   id={"list-detector-" <> @node.id}
