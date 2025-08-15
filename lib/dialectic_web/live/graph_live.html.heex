@@ -1,10 +1,7 @@
 <div class="h-screen flex flex-col">
   <.live_component module={DialecticWeb.Live.ModalComp} node={@node} id="graph-live-modal-comp" />
   <!-- Top section -->
-  <div
-    class="flex-none fixed left-0 right-0 max-w-md bg-white border-b border-gray-200"
-    style="top:56px;z-index:11;"
-  >
+  <div class="flex-none fixed top-0 right-0 w-full sm:w-96 bg-white border-b border-gray-200 z-10">
     <div class="p-2">
       <div class="flex items-center gap-4">
         <DialecticWeb.LockComp.render
@@ -30,7 +27,7 @@
               <button
                 type="button"
                 phx-click="clear_search"
-                class="absolute right-0 top-5 bottom-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
+                class="absolute right-0 top-0 bottom-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -94,6 +91,28 @@
   
 <!-- Main content with drawer menu -->
   <div class="flex-1 flex">
+    <div
+      id="side-drawer"
+      class={
+        if @drawer_open,
+          do:
+            "fixed top-0 bottom-0 left-0 md:relative w-full p-4 md:p-0 md:w-2/5 flex flex-col transition-all duration-300 ease-in-out bg-white z-90",
+          else: "w-0 overflow-hidden transition-all duration-300 ease-in-out"
+      }
+    >
+      <div class="flex-1 overflow-y-auto">
+        <.live_component
+          module={NodeComp}
+          id="node-comp"
+          node={@node}
+          user={@user}
+          form={@form}
+          graph_id={@graph_id}
+          ask_question={@ask_question}
+          menu_visible={@node_menu_visible}
+        />
+      </div>
+    </div>
     <!-- Left side: Graph (expands to full width when drawer is closed) -->
     <div class={if @drawer_open, do: "w-0 md:w-3/5", else: "w-full"}>
       <div
@@ -134,7 +153,16 @@
     <button
       id="drawer-toggle"
       phx-click="toggle_drawer"
-      class="fixed top-[40px] right-4 p-2 rounded-md shadow-md z-50 cursor-pointer hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400 transition-colors bg-white"
+      aria-controls="side-drawer"
+      aria-expanded={@drawer_open}
+      aria-label={if @drawer_open, do: "Hide menu", else: "Show menu"}
+      class={
+        if @drawer_open,
+          do:
+            "fixed top-1/2 -translate-y-1/2 transform right-4 md:left-[40%] md:ml-4 md:right-auto p-2 rounded-full border border-gray-300 shadow-md z-10 cursor-pointer hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400 transition-colors bg-white",
+          else:
+            "fixed top-1/2 -translate-y-1/2 transform left-4 p-2 rounded-full border border-gray-300 shadow-md z-10 cursor-pointer hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400 transition-colors bg-white"
+      }
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -148,31 +176,13 @@
           stroke-linecap="round"
           stroke-linejoin="round"
           stroke-width="2"
-          d={if @drawer_open, do: "M13 5l7 7-7 7", else: "M11 19l-7-7 7-7"}
+          d={if @drawer_open, do: "M11 19l-7-7 7-7", else: "M13 5l7 7-7 7"}
         />
       </svg>
       <span class="sr-only">{if @drawer_open, do: "Close", else: "Open"} drawer</span>
     </button>
     
 <!-- Right side: Chat (Drawer) -->
-    <div class={
-      if @drawer_open,
-        do:
-          "fixed top-0 bottom-0 right-0 md:relative w-full p-4 md:p-0 md:w-2/5 flex flex-col transition-all duration-300 ease-in-out bg-white z-40",
-        else: "w-0 overflow-hidden transition-all duration-300 ease-in-out"
-    }>
-      <div class="flex-1 overflow-y-auto">
-        <.live_component
-          module={NodeComp}
-          id="node-comp"
-          node={@node}
-          user={@user}
-          form={@form}
-          graph_id={@graph_id}
-          ask_question={@ask_question}
-          menu_visible={@node_menu_visible}
-        />
-      </div>
-    </div>
+
   </div>
 </div>
