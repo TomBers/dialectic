@@ -212,8 +212,11 @@ function processNodeContent(content, addEllipsis = true) {
   // Remove "Title:" prefix if present
   const contentWithoutTitle = fullContent.replace(/^Title:\s*/i, "");
 
-  const text = contentWithoutTitle.slice(0, cutoff);
-  const suffix = addEllipsis && contentWithoutTitle.length > cutoff ? "…" : "";
+  // Get only the first line
+  const firstLineOnly = contentWithoutTitle.split("\n")[0];
+
+  const text = firstLineOnly.slice(0, cutoff);
+  const suffix = addEllipsis && firstLineOnly.length > cutoff ? "…" : "";
 
   return `${text}${suffix}`;
 }
