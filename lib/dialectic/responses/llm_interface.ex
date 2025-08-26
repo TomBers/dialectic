@@ -6,7 +6,7 @@ defmodule Dialectic.Responses.LlmInterface do
 
     qn = """
     Context: #{context} \n\n
-    Question: #{node.content}
+    Please answer this question, be as concise as possible: #{node.content}
     """
 
     ask_model(qn, child, graph_id, live_view_topic)

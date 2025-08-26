@@ -60,7 +60,7 @@ defmodule DialecticWeb.NodeMenuComp do
                     content:
                       "Can you go into more depth on this topic.  I would like a greater understanding and more specifc information. Return a longer response."
                   },
-                  prefix: ""
+                  prefix: "details"
                 }
               )
             }
@@ -91,7 +91,9 @@ defmodule DialecticWeb.NodeMenuComp do
           <button
             class="menu-button"
             phx-click={
-              JS.push("reply-and-answer", value: %{vertex: %{content: "Give Examples"}, prefix: ""})
+              JS.push("reply-and-answer",
+                value: %{vertex: %{content: "Give Examples"}, prefix: "examples"}
+              )
             }
             title="Click to generate examples for this topic"
             id={"examples-button-" <> @node_id}
@@ -185,7 +187,7 @@ defmodule DialecticWeb.NodeMenuComp do
                     content:
                       "Can you suggest ideas associated with this one or other people who have written about the topic."
                   },
-                  prefix: ""
+                  prefix: "ideas"
                 }
               )
             }
