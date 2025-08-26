@@ -29,6 +29,21 @@ const cols = {
     background: "white",
     border: "#4ade80",
   },
+  examples: {
+    text: "#374151",
+    background: "white",
+    border: "red",
+  },
+  ideas: {
+    text: "#374151",
+    background: "white",
+    border: "blue",
+  },
+  details: {
+    text: "#374151",
+    background: "white",
+    border: "green",
+  },
 };
 
 const cutoff = 140;
