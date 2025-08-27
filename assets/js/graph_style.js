@@ -8,41 +8,45 @@ const selectState = {
 };
 
 const cols = {
-  user: { text: "#374151", background: "white", border: "white" },
+  user: {
+    text: "#374151",
+    background: "white",
+    border: "#d1d5db", // Subtle medium gray for user messages
+  },
   answer: {
     text: "#374151",
     background: "white",
-    border: "#60a5fa",
+    border: "#3b82f6", // Strong blue for answers
   },
   antithesis: {
     text: "#374151",
     background: "white",
-    border: "#f84b71",
+    border: "#ef4444", // Vibrant red for antithesis/opposing viewpoints
   },
   synthesis: {
     text: "#374151",
     background: "white",
-    border: "#c084fc",
+    border: "#8b5cf6", // Rich purple for synthesis (combined ideas)
   },
   thesis: {
     text: "#374151",
     background: "white",
-    border: "#4ade80",
+    border: "#10b981", // Emerald green for thesis/main arguments
   },
   examples: {
     text: "#374151",
     background: "white",
-    border: "red",
+    border: "#f97316", // Warm orange for examples
   },
   ideas: {
     text: "#374151",
     background: "white",
-    border: "blue",
+    border: "#0ea5e9", // Bright sky blue for ideas
   },
   details: {
     text: "#374151",
     background: "white",
-    border: "green",
+    border: "#84cc16", // Lime green for details
   },
 };
 

@@ -29,6 +29,8 @@ defmodule DialecticWeb.NodeMenuComp do
             phx-click={show_modal("modal-#{@node.id}")}
             title="Click to open in full screen reader mode"
             id={"reader-button-" <> @node_id}
+            data-type="user"
+            style="border-color: #d1d5db;"
           >
             <span class="icon">
               <svg
@@ -66,6 +68,8 @@ defmodule DialecticWeb.NodeMenuComp do
             }
             title="Click for more detailed information on this topic"
             id={"more-depth-button-" <> @node_id}
+            data-type="details"
+            style="border-color: #84cc16;"
           >
             <span class="icon">
               <svg
@@ -97,6 +101,8 @@ defmodule DialecticWeb.NodeMenuComp do
             }
             title="Click to generate examples for this topic"
             id={"examples-button-" <> @node_id}
+            data-type="examples"
+            style="border-color: #f97316;"
           >
             <span class="icon">
               <svg
@@ -126,6 +132,8 @@ defmodule DialecticWeb.NodeMenuComp do
             title="Click to generate pros and cons for this topic"
             phx-value-id={@node_id}
             id={"branch-button-" <> @node_id}
+            data-type="antithesis"
+            style="border-color: #ef4444;"
           >
             <span class="icon">
               <svg
@@ -155,6 +163,8 @@ defmodule DialecticWeb.NodeMenuComp do
             title="Click to combine this with another point and find a compromise"
             phx-value-id={@node_id}
             id={"combine-button-" <> @node_id}
+            data-type="synthesis"
+            style="border-color: #8b5cf6;"
           >
             <span class="icon">
               <svg
@@ -194,6 +204,8 @@ defmodule DialecticWeb.NodeMenuComp do
             title="Click to find related ideas and references"
             phx-value-id={@node_id}
             id={"associated-button-" <> @node_id}
+            data-type="ideas"
+            style="border-color: #0ea5e9;"
           >
             <span class="icon">
               <svg
@@ -242,6 +254,8 @@ defmodule DialecticWeb.NodeMenuComp do
               phx-click="toggle_ask_question"
               phx-value-id={@node_id}
               id={"tab-question-" <> @node_id}
+              data-type="answer"
+              style={if @ask_question, do: "border-color: #3b82f6;", else: ""}
             >
               <div class="flex items-center justify-center gap-1.5">
                 <svg
@@ -266,6 +280,8 @@ defmodule DialecticWeb.NodeMenuComp do
               phx-click="toggle_ask_question"
               phx-value-id={@node_id}
               id={"tab-comment-" <> @node_id}
+              data-type="thesis"
+              style={if !@ask_question, do: "border-color: #10b981;", else: ""}
             >
               <div class="flex items-center justify-center gap-1.5">
                 <svg

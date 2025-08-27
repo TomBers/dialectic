@@ -134,10 +134,35 @@
 }
 
 .menu-button:hover {
-    background-color: #f0f7ff;
-    border-color: #c0d6f0;
+    background-color: #f8fafc;
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
     transform: translateY(-2px);
+}
+
+/* Type-specific hover styles */
+.menu-button[data-type="user"]:hover {
+    border-color: #9ca3af;
+}
+.menu-button[data-type="answer"]:hover {
+    border-color: #3b82f6;
+}
+.menu-button[data-type="antithesis"]:hover {
+    border-color: #ef4444;
+}
+.menu-button[data-type="synthesis"]:hover {
+    border-color: #8b5cf6;
+}
+.menu-button[data-type="thesis"]:hover {
+    border-color: #10b981;
+}
+.menu-button[data-type="examples"]:hover {
+    border-color: #f97316;
+}
+.menu-button[data-type="ideas"]:hover {
+    border-color: #0ea5e9;
+}
+.menu-button[data-type="details"]:hover {
+    border-color: #84cc16;
 }
 
 .menu-button:hover::before {
@@ -147,9 +172,34 @@
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, #4f8cf2, #75acff);
     border-radius: 8px 8px 0 0;
     animation: buttonGlow 1.5s ease-in-out infinite alternate;
+}
+
+/* Type-specific top border gradient colors */
+.menu-button[data-type="user"]:hover::before {
+    background: linear-gradient(90deg, #9ca3af, #d1d5db);
+}
+.menu-button[data-type="answer"]:hover::before {
+    background: linear-gradient(90deg, #2563eb, #3b82f6);
+}
+.menu-button[data-type="antithesis"]:hover::before {
+    background: linear-gradient(90deg, #dc2626, #ef4444);
+}
+.menu-button[data-type="synthesis"]:hover::before {
+    background: linear-gradient(90deg, #7c3aed, #8b5cf6);
+}
+.menu-button[data-type="thesis"]:hover::before {
+    background: linear-gradient(90deg, #059669, #10b981);
+}
+.menu-button[data-type="examples"]:hover::before {
+    background: linear-gradient(90deg, #ea580c, #f97316);
+}
+.menu-button[data-type="ideas"]:hover::before {
+    background: linear-gradient(90deg, #0284c7, #0ea5e9);
+}
+.menu-button[data-type="details"]:hover::before {
+    background: linear-gradient(90deg, #65a30d, #84cc16);
 }
 
 @keyframes buttonGlow {
@@ -162,11 +212,36 @@
 }
 
 .menu-button:active {
-    background-color: #e0e9f5;
-    border-color: #aabfd0;
+    background-color: #f1f5f9;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15) inset;
     transform: translateY(0);
     transition: all 0.1s;
+}
+
+/* Type-specific active styles */
+.menu-button[data-type="user"]:active {
+    border-color: #6b7280;
+}
+.menu-button[data-type="answer"]:active {
+    border-color: #1d4ed8;
+}
+.menu-button[data-type="antithesis"]:active {
+    border-color: #b91c1c;
+}
+.menu-button[data-type="synthesis"]:active {
+    border-color: #6d28d9;
+}
+.menu-button[data-type="thesis"]:active {
+    border-color: #047857;
+}
+.menu-button[data-type="examples"]:active {
+    border-color: #c2410c;
+}
+.menu-button[data-type="ideas"]:active {
+    border-color: #0369a1;
+}
+.menu-button[data-type="details"]:active {
+    border-color: #4d7c0f;
 }
 
 .menu-button .icon {
@@ -203,7 +278,32 @@
 
 .menu-button:hover .icon {
     transform: scale(1.1);
-    color: #2563eb;
+}
+
+/* Type-specific icon colors on hover */
+.menu-button[data-type="user"]:hover .icon {
+    color: #6b7280;
+}
+.menu-button[data-type="answer"]:hover .icon {
+    color: #3b82f6;
+}
+.menu-button[data-type="antithesis"]:hover .icon {
+    color: #ef4444;
+}
+.menu-button[data-type="synthesis"]:hover .icon {
+    color: #8b5cf6;
+}
+.menu-button[data-type="thesis"]:hover .icon {
+    color: #10b981;
+}
+.menu-button[data-type="examples"]:hover .icon {
+    color: #f97316;
+}
+.menu-button[data-type="ideas"]:hover .icon {
+    color: #0ea5e9;
+}
+.menu-button[data-type="details"]:hover .icon {
+    color: #84cc16;
 }
 
 .menu-button .label {
@@ -212,16 +312,71 @@
     transition: color 0.2s ease;
 }
 
-.menu-button:hover .label {
-    color: #2563eb;
+/* Type-specific label colors on hover */
+.menu-button[data-type="user"]:hover .label {
+    color: #6b7280;
+}
+.menu-button[data-type="answer"]:hover .label {
+    color: #3b82f6;
+}
+.menu-button[data-type="antithesis"]:hover .label {
+    color: #ef4444;
+}
+.menu-button[data-type="synthesis"]:hover .label {
+    color: #8b5cf6;
+}
+.menu-button[data-type="thesis"]:hover .label {
+    color: #10b981;
+}
+.menu-button[data-type="examples"]:hover .label {
+    color: #f97316;
+}
+.menu-button[data-type="ideas"]:hover .label {
+    color: #0ea5e9;
+}
+.menu-button[data-type="details"]:hover .label {
+    color: #84cc16;
 }
 
 .menu-button[data-active="true"],
 .menu-button[data-selected="true"] {
-    background-color: #e0f0ff;
-    border-color: #acd0ff;
-    box-shadow: 0 1px 3px rgba(0, 100, 255, 0.1);
+    background-color: #f8fafc;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     position: relative;
+}
+
+/* Type-specific active/selected styles */
+.menu-button[data-type="user"][data-active="true"],
+.menu-button[data-type="user"][data-selected="true"] {
+    border-color: #d1d5db;
+}
+.menu-button[data-type="answer"][data-active="true"],
+.menu-button[data-type="answer"][data-selected="true"] {
+    border-color: #3b82f6;
+}
+.menu-button[data-type="antithesis"][data-active="true"],
+.menu-button[data-type="antithesis"][data-selected="true"] {
+    border-color: #ef4444;
+}
+.menu-button[data-type="synthesis"][data-active="true"],
+.menu-button[data-type="synthesis"][data-selected="true"] {
+    border-color: #8b5cf6;
+}
+.menu-button[data-type="thesis"][data-active="true"],
+.menu-button[data-type="thesis"][data-selected="true"] {
+    border-color: #10b981;
+}
+.menu-button[data-type="examples"][data-active="true"],
+.menu-button[data-type="examples"][data-selected="true"] {
+    border-color: #f97316;
+}
+.menu-button[data-type="ideas"][data-active="true"],
+.menu-button[data-type="ideas"][data-selected="true"] {
+    border-color: #0ea5e9;
+}
+.menu-button[data-type="details"][data-active="true"],
+.menu-button[data-type="details"][data-selected="true"] {
+    border-color: #84cc16;
 }
 
 .menu-button[data-active="true"]::before,
@@ -232,19 +387,114 @@
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, #3b82f6, #60a5fa);
     border-radius: 8px 8px 0 0;
 }
 
-.menu-button[data-active="true"] .icon,
-.menu-button[data-selected="true"] .icon {
-    color: #2563eb;
+/* Type-specific top border colors for active/selected */
+.menu-button[data-type="user"][data-active="true"]::before,
+.menu-button[data-type="user"][data-selected="true"]::before {
+    background: linear-gradient(90deg, #9ca3af, #d1d5db);
+}
+.menu-button[data-type="answer"][data-active="true"]::before,
+.menu-button[data-type="answer"][data-selected="true"]::before {
+    background: linear-gradient(90deg, #2563eb, #3b82f6);
+}
+.menu-button[data-type="antithesis"][data-active="true"]::before,
+.menu-button[data-type="antithesis"][data-selected="true"]::before {
+    background: linear-gradient(90deg, #dc2626, #ef4444);
+}
+.menu-button[data-type="synthesis"][data-active="true"]::before,
+.menu-button[data-type="synthesis"][data-selected="true"]::before {
+    background: linear-gradient(90deg, #7c3aed, #8b5cf6);
+}
+.menu-button[data-type="thesis"][data-active="true"]::before,
+.menu-button[data-type="thesis"][data-selected="true"]::before {
+    background: linear-gradient(90deg, #059669, #10b981);
+}
+.menu-button[data-type="examples"][data-active="true"]::before,
+.menu-button[data-type="examples"][data-selected="true"]::before {
+    background: linear-gradient(90deg, #ea580c, #f97316);
+}
+.menu-button[data-type="ideas"][data-active="true"]::before,
+.menu-button[data-type="ideas"][data-selected="true"]::before {
+    background: linear-gradient(90deg, #0284c7, #0ea5e9);
+}
+.menu-button[data-type="details"][data-active="true"]::before,
+.menu-button[data-type="details"][data-selected="true"]::before {
+    background: linear-gradient(90deg, #65a30d, #84cc16);
+}
+
+/* Type-specific icon colors for active/selected */
+.menu-button[data-type="user"][data-active="true"] .icon,
+.menu-button[data-type="user"][data-selected="true"] .icon {
+    color: #6b7280;
+}
+.menu-button[data-type="answer"][data-active="true"] .icon,
+.menu-button[data-type="answer"][data-selected="true"] .icon {
+    color: #3b82f6;
+}
+.menu-button[data-type="antithesis"][data-active="true"] .icon,
+.menu-button[data-type="antithesis"][data-selected="true"] .icon {
+    color: #ef4444;
+}
+.menu-button[data-type="synthesis"][data-active="true"] .icon,
+.menu-button[data-type="synthesis"][data-selected="true"] .icon {
+    color: #8b5cf6;
+}
+.menu-button[data-type="thesis"][data-active="true"] .icon,
+.menu-button[data-type="thesis"][data-selected="true"] .icon {
+    color: #10b981;
+}
+.menu-button[data-type="examples"][data-active="true"] .icon,
+.menu-button[data-type="examples"][data-selected="true"] .icon {
+    color: #f97316;
+}
+.menu-button[data-type="ideas"][data-active="true"] .icon,
+.menu-button[data-type="ideas"][data-selected="true"] .icon {
+    color: #0ea5e9;
+}
+.menu-button[data-type="details"][data-active="true"] .icon,
+.menu-button[data-type="details"][data-selected="true"] .icon {
+    color: #84cc16;
 }
 
 .menu-button[data-active="true"] .label,
 .menu-button[data-selected="true"] .label {
-    color: #2563eb;
     font-weight: 600;
+}
+
+/* Type-specific label colors for active/selected */
+.menu-button[data-type="user"][data-active="true"] .label,
+.menu-button[data-type="user"][data-selected="true"] .label {
+    color: #6b7280;
+}
+.menu-button[data-type="answer"][data-active="true"] .label,
+.menu-button[data-type="answer"][data-selected="true"] .label {
+    color: #3b82f6;
+}
+.menu-button[data-type="antithesis"][data-active="true"] .label,
+.menu-button[data-type="antithesis"][data-selected="true"] .label {
+    color: #ef4444;
+}
+.menu-button[data-type="synthesis"][data-active="true"] .label,
+.menu-button[data-type="synthesis"][data-selected="true"] .label {
+    color: #8b5cf6;
+}
+.menu-button[data-type="thesis"][data-active="true"] .label,
+.menu-button[data-type="thesis"][data-selected="true"] .label {
+    color: #10b981;
+}
+.menu-button[data-type="examples"][data-active="true"] .label,
+.menu-button[data-type="examples"][data-selected="true"] .label {
+    color: #f97316;
+}
+.menu-button[data-type="ideas"][data-active="true"] .label,
+.menu-button[data-type="ideas"][data-selected="true"] .label {
+    color: #0ea5e9;
+}
+.menu-button[data-type="details"][data-active="true"] .label,
+.menu-button[data-type="details"][data-selected="true"] .label {
+    color: #84cc16;
 }
 
 /* Add a "click me" effect for first-time users */
