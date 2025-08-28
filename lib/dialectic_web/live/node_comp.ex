@@ -22,7 +22,7 @@ defmodule DialecticWeb.NodeComp do
             style={
               if @menu_visible,
                 do: "max-height: calc(55vh - 100px); transition: max-height 0.3s ease-in-out;",
-                else: "max-height: calc(100vh - 50px); transition: max-height 0.3s ease-in-out;"
+                else: "max-height: calc(100vh - 65px); transition: max-height 0.3s ease-in-out;"
             }
           >
             <div class="summary-content modal-responsive" id={"tt-summary-content-" <> @node.id}>
