@@ -148,8 +148,8 @@ defmodule DialecticWeb.FocusLive do
      |> put_flash(:error, "Message cannot be empty")}
   end
 
-  def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}} = params, socket) do
-    prefix = params["prefix"] || ""
+  def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}}, socket) do
+    prefix = "Explain: "
     process_user_message(socket, answer, prefix)
   end
 
@@ -211,7 +211,6 @@ defmodule DialecticWeb.FocusLive do
     if is_nil(updated_vertex) do
       {:noreply, socket}
     else
-      graph_id = socket.assigns.graph_id
       current_node = socket.assigns.current_node
 
       # Check if this stream chunk is for the current node

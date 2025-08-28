@@ -60,35 +60,36 @@ const textSelectionHook = {
         return;
       }
 
-    // Get the range and its bounding rectangle
-    const range = selection.getRangeAt(0);
-    const rect = range.getBoundingClientRect();
+      // Get the range and its bounding rectangle
+      const range = selection.getRangeAt(0);
+      const rect = range.getBoundingClientRect();
 
-    // Get the container's bounding rectangle
-    const containerRect = this.el.getBoundingClientRect();
+      // Get the container's bounding rectangle
+      const containerRect = this.el.getBoundingClientRect();
 
-    // Make the button visible so we can measure its width
-    selectionActionsEl.classList.remove("hidden");
+      // Make the button visible so we can measure its width
+      selectionActionsEl.classList.remove("hidden");
 
-    // Get button dimensions after making it visible
-    const buttonWidth = selectionActionsEl.offsetWidth;
-    const buttonHeight = selectionActionsEl.offsetHeight;
+      // Get button dimensions after making it visible
+      const buttonWidth = selectionActionsEl.offsetWidth;
+      const buttonHeight = selectionActionsEl.offsetHeight;
 
-    // Calculate position relative to the container
-    // Position below the selection with some padding
-    const top = rect.bottom - containerRect.top + 8;
+      // Calculate position relative to the container
+      // Position below the selection with some padding
+      const top = rect.bottom - containerRect.top + 8;
 
-    // Center the button on the selection, but keep it within bounds
-    let leftPos = rect.left + (rect.width / 2) - (buttonWidth / 2) - containerRect.left;
+      // Center the button on the selection, but keep it within bounds
+      let leftPos =
+        rect.left + rect.width / 2 - buttonWidth / 2 - containerRect.left;
 
-    // Ensure button stays within container bounds with padding
-    const padding = 8;
-    leftPos = Math.max(padding, leftPos);
-    leftPos = Math.min(this.el.clientWidth - buttonWidth - padding, leftPos);
+      // Ensure button stays within container bounds with padding
+      const padding = 8;
+      leftPos = Math.max(padding, leftPos);
+      leftPos = Math.min(this.el.clientWidth - buttonWidth - padding, leftPos);
 
-    // Apply the calculated positions
-    selectionActionsEl.style.top = `${top}px`;
-    selectionActionsEl.style.left = `${leftPos}px`;
+      // Apply the calculated positions
+      selectionActionsEl.style.top = `${top}px`;
+      selectionActionsEl.style.left = `${leftPos}px`;
 
       // Set up the button to send the selected text to the server
       const actionButton = selectionActionsEl.querySelector("button");
@@ -96,7 +97,7 @@ const textSelectionHook = {
         actionButton.onclick = () => {
           this.pushEvent("reply-and-answer", {
             vertex: { content: selectedText },
-            prefix: "Explain: ",
+            prefix: "explain",
           });
 
           // Hide the action button after clicking
