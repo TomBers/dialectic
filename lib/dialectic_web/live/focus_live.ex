@@ -209,8 +209,12 @@ defmodule DialecticWeb.FocusLive do
 
     # Get updated path from the root conversation node
     path =
-      GraphManager.path_to_node(graph_id, updated_vertex)
-      |> Enum.reverse()
+      if updated_vertex != nil do
+        GraphManager.path_to_node(graph_id, updated_vertex)
+        |> Enum.reverse()
+      else
+        socket.assigns.path
+      end
 
     {:noreply,
      assign(socket,
