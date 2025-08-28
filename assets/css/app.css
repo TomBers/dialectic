@@ -147,7 +147,19 @@
     border-color: #3b82f6;
 }
 .menu-button[data-type="antithesis"]:hover {
-    border-color: #ef4444;
+    border-image: linear-gradient(to right, #10b981 50%, #ef4444 50%) 1;
+    border-width: 1px;
+    border-style: solid;
+}
+
+.menu-button[data-type="antithesis"]:hover .pros-text {
+    color: #10b981;
+    font-weight: 500;
+}
+
+.menu-button[data-type="antithesis"]:hover .cons-text {
+    color: #ef4444;
+    font-weight: 500;
 }
 .menu-button[data-type="synthesis"]:hover {
     border-color: #8b5cf6;
@@ -184,7 +196,7 @@
     background: linear-gradient(90deg, #2563eb, #3b82f6);
 }
 .menu-button[data-type="antithesis"]:hover::before {
-    background: linear-gradient(90deg, #dc2626, #ef4444);
+    background: linear-gradient(90deg, #059669, #10b981, #dc2626, #ef4444);
 }
 .menu-button[data-type="synthesis"]:hover::before {
     background: linear-gradient(90deg, #7c3aed, #8b5cf6);

@@ -128,68 +128,6 @@ defmodule DialecticWeb.NodeMenuComp do
 
           <button
             class="menu-button"
-            phx-click="node_branch"
-            title="Click to generate pros and cons for this topic"
-            phx-value-id={@node_id}
-            id={"branch-button-" <> @node_id}
-            data-type="antithesis"
-            style="border-color: #ef4444;"
-          >
-            <span class="icon">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z"
-                />
-              </svg>
-            </span>
-            <span class="label">Pros / Cons</span>
-          </button>
-
-          <button
-            class="menu-button"
-            phx-click="node_combine"
-            title="Click to combine this with another point and find a compromise"
-            phx-value-id={@node_id}
-            id={"combine-button-" <> @node_id}
-            data-type="synthesis"
-            style="border-color: #8b5cf6;"
-          >
-            <span class="icon">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0 0 12 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 0 1-2.031.352 5.988 5.988 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.971Zm-16.5.52c.99-.203 1.99-.377 3-.52m0 0 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.989 5.989 0 0 1-2.031.352 5.989 5.989 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L5.25 4.971Z"
-                />
-              </svg>
-            </span>
-            <span class="label">Combine</span>
-          </button>
-
-          <button
-            class="menu-button"
             phx-click={
               JS.push("reply-and-answer",
                 value: %{
@@ -227,6 +165,70 @@ defmodule DialecticWeb.NodeMenuComp do
               </svg>
             </span>
             <span class="label">Related</span>
+          </button>
+
+          <button
+            class="menu-button"
+            phx-click="node_branch"
+            title="Click to generate pros and cons for this topic"
+            phx-value-id={@node_id}
+            id={"branch-button-" <> @node_id}
+            data-type="antithesis"
+            style="border-image: linear-gradient(to right, #10b981 50%, #ef4444 50%) 1; border-width: 1px; border-style: solid;"
+          >
+            <span class="icon">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z"
+                />
+              </svg>
+            </span>
+            <span class="label">
+              <span class="pros-text">Pros</span> / <span class="cons-text">Cons</span>
+            </span>
+          </button>
+
+          <button
+            class="menu-button"
+            phx-click="node_combine"
+            title="Click to combine this with another point and find a compromise"
+            phx-value-id={@node_id}
+            id={"combine-button-" <> @node_id}
+            data-type="synthesis"
+            style="border-color: #8b5cf6;"
+          >
+            <span class="icon">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0 0 12 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 0 1-2.031.352 5.988 5.988 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.971Zm-16.5.52c.99-.203 1.99-.377 3-.52m0 0 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.989 5.989 0 0 1-2.031.352 5.989 5.989 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L5.25 4.971Z"
+                />
+              </svg>
+            </span>
+            <span class="label">Combine</span>
           </button>
         </div>
       </div>
