@@ -139,6 +139,10 @@
     transform: translateY(-2px);
 }
 
+.explore-all-points-button {
+    width: 25%;
+}
+
 /* Type-specific hover styles */
 .menu-button[data-type="user"]:hover {
     border-color: #9ca3af;
