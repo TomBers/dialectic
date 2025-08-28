@@ -23,9 +23,6 @@ defmodule DialecticWeb.PageHtml.GraphComp do
             </span>
             <span class="transition-colors">
               {@title}
-              <%= if @count > 1 do %>
-                | {@count} notes
-              <% end %>
             </span>
           </h3>
         </div>

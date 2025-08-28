@@ -148,7 +148,7 @@
                 d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
               />
             </svg>
-            Top 12 ideas
+            Popular & Recent Graphs
           </h2>
           <.link
             navigate={~p"/view_all/graphs"}
@@ -171,18 +171,74 @@
           </.link>
         </div>
 
-        <div class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          <%= for {g, count} <- @top_graphs do %>
-            <div class="rounded-xl bg-white ring-1 ring-gray-200 shadow-sm transition hover:shadow-md">
-              <DialecticWeb.PageHtml.GraphComp.render
-                title={g.title}
-                is_public={g.is_public}
-                link={gen_link(g.title)}
-                count={count}
-                id={"graph-comp-#{g.title}"}
-              />
+        <div class="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
+          <!-- Popular Graphs Column -->
+          <div>
+            <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="mr-2 h-5 w-5 text-[#4361ee]"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                />
+              </svg>
+              Top 5 Popular
+            </h3>
+            <div class="grid grid-cols-1 gap-4">
+              <%= for {g, count} <- @top_graphs do %>
+                <div class="rounded-xl bg-white ring-1 ring-gray-200 shadow-sm transition hover:shadow-md">
+                  <DialecticWeb.PageHtml.GraphComp.render
+                    title={g.title}
+                    is_public={g.is_public}
+                    link={gen_link(g.title)}
+                    count={count}
+                    id={"graph-comp-#{g.title}"}
+                  />
+                </div>
+              <% end %>
             </div>
-          <% end %>
+          </div>
+          
+<!-- Recent Graphs Column -->
+          <div>
+            <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="mr-2 h-5 w-5 text-[#4361ee]"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              5 Most Recent
+            </h3>
+            <div class="grid grid-cols-1 gap-4">
+              <%= for {g, _count} <- @recent_graphs do %>
+                <div class="rounded-xl bg-white ring-1 ring-gray-200 shadow-sm transition hover:shadow-md">
+                  <DialecticWeb.PageHtml.GraphComp.render
+                    title={g.title}
+                    is_public={g.is_public}
+                    link={gen_link(g.title)}
+                    count={nil}
+                    id={"recent-graph-comp-#{g.title}"}
+                  />
+                </div>
+              <% end %>
+            </div>
+          </div>
         </div>
       </div>
     </div>
