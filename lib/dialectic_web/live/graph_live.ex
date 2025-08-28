@@ -41,37 +41,87 @@ defmodule DialecticWeb.GraphLive do
         socket
       end
 
-    {graph_struct, graph} = GraphManager.get_graph(graph_id)
+    # Check if the graph exists in the database before trying to get it
+    case Dialectic.DbActions.Graphs.get_graph_by_title(graph_id) do
+      nil ->
+        # If the graph doesn't exist, redirect to homepage with error
+        socket =
+          socket
+          |> put_flash(:error, "Graph not found: #{graph_id}")
+          |> redirect(to: ~p"/")
 
-    {_, node} = :digraph.vertex(graph, node_id)
-    changeset = GraphActions.create_new_node(user) |> Vertex.changeset()
+        {:ok, socket}
 
-    # TODO - can edit is going to be expaned to be more complex, but for the time being, just is not protected
-    can_edit = graph_struct.is_public
+      _graph_exists ->
+        # Try to get the graph safely
+        result =
+          try do
+            {:ok, GraphManager.get_graph(graph_id)}
+          rescue
+            _e ->
+              # If there's an error fetching it, redirect home instead of creating a new graph
+              require Logger
+              Logger.error("Failed to load graph: #{graph_id}")
+              {:error, "Error loading graph: #{graph_id}"}
+          end
 
-    {:ok,
-     assign(socket,
-       live_view_topic: live_view_topic,
-       graph_topic: graph_topic,
-       graph_struct: graph_struct,
-       graph_id: graph_id,
-       graph: graph,
-       f_graph: format_graph(graph),
-       node: Vertex.add_relatives(node, graph),
-       form: to_form(changeset),
-       show_combine: false,
-       user: user,
-       can_edit: can_edit,
-       node_menu_visible: true,
-       drawer_open: true,
-       candidate_ids: [],
-       group_changeset: to_form(%{"title" => ""}),
-       show_group_modal: false,
-       graph_operation: "",
-       ask_question: true,
-       search_term: "",
-       search_results: []
-     )}
+        case result do
+          {:ok, {graph_struct, graph}} ->
+            # Continue with the normal flow
+
+            # Handle case when the node might not exist
+            node =
+              case :digraph.vertex(graph, node_id) do
+                {_, vertex} ->
+                  Vertex.add_relatives(vertex, graph)
+
+                _ ->
+                  # Default to node "1" if specified node doesn't exist
+                  case :digraph.vertex(graph, "1") do
+                    {_, default_vertex} -> Vertex.add_relatives(default_vertex, graph)
+                    _ -> %{id: "1", content: "", children: [], parents: []}
+                  end
+              end
+
+            changeset = GraphActions.create_new_node(user) |> Vertex.changeset()
+
+            # TODO - can edit is going to be expaned to be more complex, but for the time being, just is not protected
+            can_edit = graph_struct.is_public
+
+            {:ok,
+             assign(socket,
+               live_view_topic: live_view_topic,
+               graph_topic: graph_topic,
+               graph_struct: graph_struct,
+               graph_id: graph_id,
+               graph: graph,
+               f_graph: format_graph(graph),
+               node: node,
+               form: to_form(changeset),
+               show_combine: false,
+               user: user,
+               can_edit: can_edit,
+               node_menu_visible: true,
+               drawer_open: true,
+               candidate_ids: [],
+               group_changeset: to_form(%{"title" => ""}),
+               show_group_modal: false,
+               graph_operation: "",
+               ask_question: true,
+               search_term: "",
+               search_results: []
+             )}
+
+          {:error, error_message} ->
+            # Redirect to home with the error message
+            socket =
+              socket
+              |> put_flash(:error, error_message)
+              |> redirect(to: ~p"/")
+
+            {:ok, socket}
+        end
+    end
   end
 
   def handle_event("nodes_box_selected", %{"ids" => ids}, socket) do
@@ -348,7 +398,7 @@ defmodule DialecticWeb.GraphLive do
   def handle_info({:stream_chunk, updated_vertex, :node_id, node_id}, socket) do
     # This is the streamed LLM response into a node
 
-    if node_id == Map.get(socket.assigns.node, :id) do
+    if socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
       {:noreply, assign(socket, node: updated_vertex)}
     else
       {:noreply, socket}
@@ -379,7 +429,7 @@ defmodule DialecticWeb.GraphLive do
     # TODO - broadcast to all users??? - only want to update the node that is being worked on, just rerender the others
     updated_vertex = GraphManager.update_vertex(socket.assigns.graph_id, node_id, error)
 
-    if node_id == Map.get(socket.assigns.node, :id) do
+    if socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
       {:noreply, assign(socket, node: updated_vertex)}
     else
       {:noreply, socket}
@@ -391,56 +441,110 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def format_graph(graph) do
-    graph |> Vertex.to_cytoscape_format() |> Jason.encode!()
+    if graph == nil do
+      # Return empty JSON array if graph is nil
+      "[]"
+    else
+      try do
+        graph |> Vertex.to_cytoscape_format() |> Jason.encode!()
+      rescue
+        # Return empty JSON array on error
+        _ -> "[]"
+      end
+    end
   end
 
   # Search for nodes in the graph based on a search term
   defp search_graph_nodes(graph, search_term) do
     search_term = String.downcase(search_term)
 
-    # Process vertices in a more defensive way
-    results =
-      Enum.reduce(:digraph.vertices(graph), [], fn vertex_id, acc ->
-        # Get vertex safely
-        vertex_data =
-          case :digraph.vertex(graph, vertex_id) do
-            {^vertex_id, vertex} -> vertex
-            _ -> nil
-          end
+    # Return empty results if graph is invalid
+    if graph == nil do
+      []
+    else
+      # Process vertices in a more defensive way
+      results =
+        try do
+          Enum.reduce(:digraph.vertices(graph), [], fn vertex_id, acc ->
+            # Get vertex safely
+            vertex_data =
+              case :digraph.vertex(graph, vertex_id) do
+                {^vertex_id, vertex} -> vertex
+                _ -> nil
+              end
 
-        # Only process valid vertices with content
-        if valid_search_node(vertex_data) do
-          # Check if content contains search term
-          if String.contains?(String.downcase(vertex_data.content), search_term) do
-            # Add to results with sorting information
-            exact_match = if String.downcase(vertex_data.content) == search_term, do: 0, else: 1
-            [{exact_match, vertex_data.id, vertex_data} | acc]
-          else
-            acc
-          end
-        else
-          acc
+            # Only process valid vertices with content
+            if valid_search_node(vertex_data) do
+              # Check if content contains search term
+              if String.contains?(String.downcase(vertex_data.content), search_term) do
+                # Add to results with sorting information
+                exact_match =
+                  if String.downcase(vertex_data.content) == search_term, do: 0, else: 1
+
+                [{exact_match, vertex_data.id, vertex_data} | acc]
+              else
+                acc
+              end
+            else
+              acc
+            end
+          end)
+        rescue
+          # Return empty list on error
+          _ -> []
         end
-      end)
 
-    # Sort by relevance and extract just the vertex data
-    results
-    |> Enum.sort()
-    |> Enum.map(fn {_, _, vertex} -> vertex end)
-    |> Enum.take(10)
+      # Sort by relevance and extract just the vertex data
+      results
+      |> Enum.sort()
+      |> Enum.map(fn {_, _, vertex} -> vertex end)
+      |> Enum.take(10)
+    end
   end
 
   defp valid_search_node(vertex_data) do
-    # not Map.get(vertex_data, :parent_id, false) and
+    # First ensure we have a vertex_data that's a map
+    # Then check if it has all required fields
+    # Make sure content is a string
+    # Ensure ID is non-nil and valid
+    # And the node isn't marked as deleted
     vertex_data != nil and is_map(vertex_data) and
-      Map.has_key?(vertex_data, :content) and is_binary(vertex_data.content) and
+      Map.has_key?(vertex_data, :content) and
       Map.has_key?(vertex_data, :id) and
+      is_binary(Map.get(vertex_data, :content, "")) and
+      Map.get(vertex_data, :id) != nil and
       not Map.get(vertex_data, :deleted, false)
   end
 
   defp graph_action_params(socket, node \\ nil) do
-    {socket.assigns.graph_id, node || socket.assigns.node, socket.assigns.user,
-     socket.assigns.live_view_topic}
+    # Make sure we have a valid node to work with
+    node_to_use =
+      cond do
+        node != nil -> node
+        is_map(socket.assigns.node) -> socket.assigns.node
+        true -> %{id: "1", content: "", children: [], parents: []}
+      end
+
+    # Make sure the graph exists before making a call
+    graph_id = socket.assigns.graph_id
+
+    if not GraphManager.exists?(graph_id) do
+      # Check if the graph exists in the database
+      case Dialectic.DbActions.Graphs.get_graph_by_title(graph_id) do
+        nil ->
+          # If graph doesn't exist in DB, we shouldn't be here
+          # This is a safety check since the user should have been redirected already
+          # Just log a warning, don't create a new graph
+          require Logger
+          Logger.warning("Attempted to access non-existent graph: #{graph_id}")
+
+        _graph ->
+          # Graph exists in DB but not in memory, initialize it
+          DynamicSupervisor.start_child(GraphSupervisor, {GraphManager, graph_id})
+      end
+    end
+
+    {graph_id, node_to_use, socket.assigns.user, socket.assigns.live_view_topic}
   end
 
   def update_graph(socket, {graph, node}, operation) do

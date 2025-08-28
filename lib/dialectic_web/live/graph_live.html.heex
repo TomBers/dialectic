@@ -119,7 +119,7 @@
         id="cy"
         class="h-full w-full"
         data-graph={@f_graph}
-        data-node={@node.id}
+        data-node={if @node, do: @node.id, else: nil}
         data-operation={@graph_operation}
         data-div="cy"
         phx-hook="Graph"
@@ -128,7 +128,7 @@
       </div>
 
       <.modal
-        :if={@show_combine && @node.id}
+        :if={@show_combine && @node && @node.id}
         on_cancel={JS.push("modal_closed")}
         id="confirm-modal"
         show
