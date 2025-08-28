@@ -48,6 +48,11 @@ const cols = {
     background: "white",
     border: "#84cc16", // Lime green for details
   },
+  explain: {
+    text: "#374151",
+    background: "white",
+    border: "#FFE135", // Bright sky blue for explanations
+  },
 };
 
 const cutoff = 140;
