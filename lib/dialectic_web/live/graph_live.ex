@@ -79,7 +79,7 @@ defmodule DialecticWeb.GraphLive do
                   # Default to node "1" if specified node doesn't exist
                   case :digraph.vertex(graph, "1") do
                     {_, default_vertex} -> Vertex.add_relatives(default_vertex, graph)
-                    _ -> %{id: "1", content: "", children: [], parents: []}
+                    _ -> default_node()
                   end
               end
 
@@ -122,6 +122,10 @@ defmodule DialecticWeb.GraphLive do
             {:ok, socket}
         end
     end
+  end
+
+  defp default_node do
+    %{id: "1", content: "", children: [], parents: []}
   end
 
   def handle_event("nodes_box_selected", %{"ids" => ids}, socket) do
@@ -269,11 +273,14 @@ defmodule DialecticWeb.GraphLive do
     else
       items
       |> Enum.reduce([], fn item, _acc ->
-        {_graph, node} = GraphActions.comment(graph_action_params(socket), item, "Explain: ")
-        GraphActions.answer(graph_action_params(socket, node))
+        GraphActions.answer_selection(
+          graph_action_params(socket, socket.assigns.node),
+          item,
+          "explain"
+        )
       end)
 
-      {:noreply, socket}
+      {:noreply, socket |> put_flash(:info, "Exploring all points")}
     end
   end
 
@@ -441,7 +448,7 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def format_graph(graph) do
-    if graph == nil do
+    if is_nil(graph) do
       # Return empty JSON array if graph is nil
       "[]"
     else
@@ -459,7 +466,7 @@ defmodule DialecticWeb.GraphLive do
     search_term = String.downcase(search_term)
 
     # Return empty results if graph is invalid
-    if graph == nil do
+    if is_nil(graph) do
       []
     else
       # Process vertices in a more defensive way
@@ -522,13 +529,13 @@ defmodule DialecticWeb.GraphLive do
       cond do
         node != nil -> node
         is_map(socket.assigns.node) -> socket.assigns.node
-        true -> %{id: "1", content: "", children: [], parents: []}
+        true -> default_node()
       end
 
     # Make sure the graph exists before making a call
     graph_id = socket.assigns.graph_id
 
-    if not GraphManager.exists?(graph_id) do
+    unless GraphManager.exists?(graph_id) do
       # Check if the graph exists in the database
       case Dialectic.DbActions.Graphs.get_graph_by_title(graph_id) do
         nil ->
