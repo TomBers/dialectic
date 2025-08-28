@@ -275,7 +275,7 @@ defmodule DialecticWeb.GraphLive do
       |> Enum.reduce([], fn item, _acc ->
         GraphActions.answer_selection(
           graph_action_params(socket, socket.assigns.node),
-          item,
+          "Please explain: #{item}",
           "explain"
         )
       end)
