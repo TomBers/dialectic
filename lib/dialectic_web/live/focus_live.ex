@@ -182,6 +182,10 @@ defmodule DialecticWeb.FocusLive do
     # Trigger AI response
     {_graph, node} = GraphActions.answer({graph_id, user_node, user, live_view_topic})
 
+    # Initialize the AI node with a space to make it visible in the path
+    # even before any content is streamed
+    GraphManager.update_vertex(graph_id, node.id, " ")
+
     # Clear the form and set sending state
     form = to_form(%{"message" => ""}, as: :message)
 
@@ -202,41 +206,73 @@ defmodule DialecticWeb.FocusLive do
      )}
   end
 
-  def handle_info({:stream_chunk, updated_vertex, :node_id, _node_id}, socket) do
-    # Refresh the conversation path when nodes are updated
-    graph_id = socket.assigns.graph_id
-    # current_node = socket.assigns.current_node
+  def handle_info({:stream_chunk, updated_vertex, :node_id, node_id}, socket) do
+    # Optimization: Only process if we have a valid vertex update
+    if is_nil(updated_vertex) do
+      {:noreply, socket}
+    else
+      graph_id = socket.assigns.graph_id
+      current_node = socket.assigns.current_node
 
-    # Get updated path from the root conversation node
-    path =
-      if updated_vertex != nil do
-        GraphManager.path_to_node(graph_id, updated_vertex)
-        |> Enum.reverse()
+      # Check if this stream chunk is for the current node
+      if current_node.id == node_id do
+        # We need to update both the current_node and the path
+        # This ensures the streamed content appears in the UI
+        path =
+          socket.assigns.path
+          |> Enum.map(fn node ->
+            if node.id == node_id, do: updated_vertex, else: node
+          end)
+
+        # Update the current node with the streamed content
+        {:noreply,
+         assign(socket,
+           current_node: updated_vertex,
+           path: path,
+           sending_message: true
+         )}
       else
-        socket.assigns.path
+        # Not for the current node, maintain state
+        {:noreply, socket}
       end
-
-    {:noreply,
-     assign(socket,
-       path: path,
-       sending_message: false,
-       current_node: updated_vertex
-     )}
+    end
   end
 
-  def handle_info({:llm_request_complete, _node_id}, socket) do
-    # Make sure that the graph is saved to the database
-    # We pass false so that it does not respect the queue exlusion period and stores the response immediately.
+  def handle_info({:llm_request_complete, node_id}, socket) do
+    # Save graph to database immediately
     DbWorker.save_graph(socket.assigns.graph_id, false)
 
-    # Broadcast new node to all connected users
-    PubSub.broadcast(
-      Dialectic.PubSub,
-      socket.assigns.graph_topic,
-      {:other_user_change, self()}
-    )
+    graph_id = socket.assigns.graph_id
 
-    {:noreply, socket}
+    # Recalculate the complete path when the response is finished
+    # This ensures we have the correct final state
+    case GraphManager.find_node_by_id(graph_id, node_id) do
+      {_g, node} ->
+        path =
+          GraphManager.path_to_node(graph_id, node)
+          |> Enum.reverse()
+
+        # Broadcast to all connected users
+        Phoenix.PubSub.broadcast(
+          Dialectic.PubSub,
+          socket.assigns.graph_topic,
+          {:graph_updated, path}
+        )
+
+        # Turn off sending_message indicator and update path
+        {:noreply, assign(socket, path: path, sending_message: false)}
+
+      _ ->
+        # Broadcast change notification
+        PubSub.broadcast(
+          Dialectic.PubSub,
+          socket.assigns.graph_topic,
+          {:other_user_change, self()}
+        )
+
+        # Just turn off sending_message indicator
+        {:noreply, assign(socket, sending_message: false)}
+    end
   end
 
   def handle_info(_msg, socket) do
