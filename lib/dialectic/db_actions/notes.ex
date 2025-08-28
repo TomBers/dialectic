@@ -10,15 +10,26 @@ defmodule Dialectic.DbActions.Notes do
     Repo.get(Dialectic.Accounts.User, user.id) |> Repo.preload([:notes, graphs: [:notes]])
   end
 
-  def top_graphs do
+  def top_graphs(limit \\ 12) do
     query =
       from g in Dialectic.Accounts.Graph,
         where: g.is_published == true,
         left_join: n in assoc(g, :notes),
         group_by: g.title,
         order_by: [desc: count(n.id)],
-        limit: 12,
+        limit: ^limit,
         select: {g, count(n.id)}
+
+    Dialectic.Repo.all(query)
+  end
+
+  def recent_graphs(limit \\ 5) do
+    query =
+      from g in Dialectic.Accounts.Graph,
+        where: g.is_published == true,
+        order_by: [desc: g.inserted_at],
+        limit: ^limit,
+        select: {g, 0}
 
     Dialectic.Repo.all(query)
   end

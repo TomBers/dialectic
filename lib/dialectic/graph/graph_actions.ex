@@ -42,14 +42,14 @@ defmodule Dialectic.Graph.GraphActions do
     )
   end
 
-  def answer_selection({graph_id, node, user, live_view_topic}, selection) do
+  def answer_selection({graph_id, node, user, live_view_topic}, selection, type) do
     GraphManager.add_child(
       graph_id,
       [node],
       fn n ->
         LlmInterface.gen_selection_response(node, n, graph_id, selection, live_view_topic)
       end,
-      "answer",
+      type,
       user
     )
   end

@@ -5,10 +5,11 @@ defmodule DialecticWeb.PageController do
   alias Dialectic.DbActions.{Notes, Graphs}
 
   def home(conn, params) do
-    top_graphs = Notes.top_graphs()
+    top_graphs = Notes.top_graphs(5)
+    recent_graphs = Notes.recent_graphs(5)
     topic = Map.get(params, "topic", "")
     # IO.inspect(stats, label: "Stats")
-    render(conn, :home, top_graphs: top_graphs, topic: topic)
+    render(conn, :home, top_graphs: top_graphs, recent_graphs: recent_graphs, topic: topic)
   end
 
   def my_graphs(conn, _params) do

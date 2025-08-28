@@ -99,7 +99,7 @@ const listDetectionHook = {
 
       // Add a button to the page to allow the user to explore all points
       const button = document.createElement("button");
-      button.classList.add("menu-button");
+      button.classList.add("menu-button", "explore-all-points-button");
       button.innerHTML = `
         <span class="icon">
           <svg
