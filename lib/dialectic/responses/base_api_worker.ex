@@ -86,7 +86,7 @@ defmodule Dialectic.Workers.BaseAPIWorker do
 
     case Req.post(url, options) do
       {:ok, response} ->
-        Logger.info("Request completed successfully")
+        Logger.info("Base Worker Request completed successfully")
 
         DbWorker.save_graph(graph, false)
 
