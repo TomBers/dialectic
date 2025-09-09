@@ -1,6 +1,8 @@
 defmodule Dialectic.Workers.OpenAIWorker do
   alias Dialectic.Responses.Utils
 
+  alias Dialectic.DbActions.DbWorker
+
   @moduledoc """
   Worker for the OpenAI Chat API.
   """
@@ -159,6 +161,8 @@ defmodule Dialectic.Workers.OpenAIWorker do
     case Task.await(task, @request_timeout + 5000) do
       {:ok, _response} ->
         Logger.info("OpenAI request completed successfully")
+
+        DbWorker.save_graph(graph, false)
 
         Phoenix.PubSub.broadcast(
           Dialectic.PubSub,

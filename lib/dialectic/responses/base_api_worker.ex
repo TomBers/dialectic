@@ -2,6 +2,7 @@ defmodule Dialectic.Workers.BaseAPIWorker do
   @moduledoc """
   A generic API worker which delegates model-specific behavior via callbacks.
   """
+  alias Dialectic.DbActions.DbWorker
 
   use Oban.Worker, queue: :api_request, max_attempts: 5
   require Logger
@@ -85,7 +86,9 @@ defmodule Dialectic.Workers.BaseAPIWorker do
 
     case Req.post(url, options) do
       {:ok, response} ->
-        Logger.info("Request completed successfully")
+        Logger.info("Base Worker Request completed successfully")
+
+        DbWorker.save_graph(graph, false)
 
         Phoenix.PubSub.broadcast(
           Dialectic.PubSub,

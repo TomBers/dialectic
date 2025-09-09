@@ -1,8 +1,4 @@
-Update images on guide and landing page
+Improve the explore all points button - It is creating too many points,
+and does not distinguish between top level and sub level points.
 
-Imgs:
-
-1) Full screen of graph
-2) Conv panel
-3) Action tools
-3 Responses
+Double check what happens to messages when the browser closes, perhaps move the database saving to before sending the message to the liveview, so that it saves wether the liveview is open or not
