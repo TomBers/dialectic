@@ -1,7 +1,7 @@
 defmodule DialecticWeb.FocusLive do
   use DialecticWeb, :live_view
   alias Dialectic.Graph.GraphActions
-  alias Dialectic.DbActions.DbWorker
+
   alias DialecticWeb.ConvComp
   alias Dialectic.DbActions.Graphs
   alias Phoenix.PubSub
@@ -238,9 +238,6 @@ defmodule DialecticWeb.FocusLive do
   end
 
   def handle_info({:llm_request_complete, node_id}, socket) do
-    # Save graph to database immediately
-    DbWorker.save_graph(socket.assigns.graph_id, false)
-
     graph_id = socket.assigns.graph_id
 
     # Recalculate the complete path when the response is finished
