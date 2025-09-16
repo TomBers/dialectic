@@ -32,6 +32,8 @@ defmodule DialecticWeb.Live.ModalComp do
       |> Map.put_new(:nav_can_down, default_down)
       |> Map.put_new(:nav_can_left, default_left)
       |> Map.put_new(:nav_can_right, default_right)
+      |> Map.put_new(:nav_parent_title, nil)
+      |> Map.put_new(:nav_child_title, nil)
 
     {:ok, assign(socket, assigns)}
   end
@@ -46,7 +48,7 @@ defmodule DialecticWeb.Live.ModalComp do
         show={@show}
       >
         <div
-          class="modal-content relative px-4 pt-14 pb-14 sm:px-14 sm:pt-16 sm:pb-16 md:px-16"
+          class="modal-content relative px-4 sm:px-14 md:px-16"
           id={"modal-" <> @id <> "-inner"}
           phx-hook="TextSelectionHook"
           data-node-id={@node.id}
@@ -60,9 +62,8 @@ defmodule DialecticWeb.Live.ModalComp do
               class={"inline-flex items-center px-3 py-1.5 text-sm rounded-md border " <>
                       if @nav_can_up, do: "bg-white hover:bg-gray-50 border-gray-300", else: "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed pointer-events-none"}
               title="Go to parent"
-              id={@node.id <> "_parent-button"}
             >
-              ↑ Parent
+              {if @nav_parent_title, do: "↑ " <> @nav_parent_title, else: "↑ Parent"}
             </button>
           </div>
           
@@ -85,9 +86,8 @@ defmodule DialecticWeb.Live.ModalComp do
               class={"inline-flex items-center px-3 py-1.5 text-sm rounded-md border " <>
                             if @nav_can_down, do: "bg-white hover:bg-gray-50 border-gray-300", else: "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed pointer-events-none"}
               title="Go to child"
-              id={@node.id <> "_child-button"}
             >
-              Child ↓
+              {if @nav_child_title, do: @nav_child_title <> " ↓", else: "Child ↓"}
             </button>
           </div>
         </div>

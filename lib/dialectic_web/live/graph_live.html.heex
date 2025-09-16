@@ -4,6 +4,26 @@
     node={@node}
     id="graph-live-modal-comp"
     show={@open_read_modal}
+    nav_can_up={@nav_can_up}
+    nav_can_down={@nav_can_down}
+    nav_parent_title={
+      if @node && is_list(@node.parents) && List.first(@node.parents) do
+        title = DialecticWeb.Live.TextUtils.extract_title(List.first(@node.parents).content || "")
+        if String.length(title) > 80, do: String.slice(title, 0, 80) <> "…", else: title
+      else
+        nil
+      end
+    }
+    nav_child_title={
+      if @node && is_list(@node.children) && List.first(@node.children) do
+        title =
+          DialecticWeb.Live.TextUtils.extract_title(List.first(@node.children).content || "")
+
+        if String.length(title) > 80, do: String.slice(title, 0, 80) <> "…", else: title
+      else
+        nil
+      end
+    }
   />
   
 <!-- Top section -->
