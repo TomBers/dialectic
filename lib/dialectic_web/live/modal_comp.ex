@@ -38,6 +38,16 @@ defmodule DialecticWeb.Live.ModalComp do
     {:ok, assign(socket, assigns)}
   end
 
+  defp nav_button_class(enabled) do
+    base = "inline-flex items-center px-3 py-1.5 text-sm rounded-md border "
+
+    if enabled do
+      base <> "bg-white hover:bg-gray-50 border-gray-300"
+    else
+      base <> "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed pointer-events-none"
+    end
+  end
+
   def render(assigns) do
     ~H"""
     <div>
@@ -64,8 +74,7 @@ defmodule DialecticWeb.Live.ModalComp do
             <button
               phx-click={JS.push("node_move", value: %{direction: "up"})}
               disabled={!@nav_can_up}
-              class={"inline-flex items-center px-3 py-1.5 text-sm rounded-md border " <>
-                      if @nav_can_up, do: "bg-white hover:bg-gray-50 border-gray-300", else: "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed pointer-events-none"}
+              class={nav_button_class(@nav_can_up)}
               title="Go to parent"
             >
               {if @nav_parent_title, do: "↑ " <> @nav_parent_title, else: "↑ Parent"}
@@ -88,8 +97,7 @@ defmodule DialecticWeb.Live.ModalComp do
             <button
               phx-click={JS.push("node_move", value: %{direction: "down"})}
               disabled={!@nav_can_down}
-              class={"inline-flex items-center px-3 py-1.5 text-sm rounded-md border " <>
-                            if @nav_can_down, do: "bg-white hover:bg-gray-50 border-gray-300", else: "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed pointer-events-none"}
+              class={nav_button_class(@nav_can_down)}
               title="Go to child"
             >
               {if @nav_child_title, do: @nav_child_title <> " ↓", else: "Child ↓"}
