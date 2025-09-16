@@ -26,7 +26,7 @@ defmodule DialecticWeb.NodeMenuComp do
         >
           <button
             class="menu-button"
-            phx-click={show_modal("modal-#{@node.id}")}
+            phx-click={show_modal("modal-graph-live-modal-comp")}
             title="Click to open in full screen reader mode"
             id={"reader-button-" <> @node_id}
             data-type="user"

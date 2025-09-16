@@ -4,7 +4,35 @@ defmodule DialecticWeb.Live.ModalComp do
   alias DialecticWeb.ColUtils
 
   def update(assigns, socket) do
-    assigns = Map.put_new(assigns, :show, false)
+    node = Map.get(assigns, :node, %{})
+    parents = Map.get(node, :parents, []) || []
+    children = Map.get(node, :children, []) || []
+
+    default_up = is_list(parents) and parents != [] and List.first(parents) != nil
+    default_down = is_list(children) and children != [] and List.first(children) != nil
+
+    siblings_count =
+      if is_list(parents) and parents != [] do
+        parents
+        |> Enum.flat_map(fn p -> Map.get(p, :children, []) || [] end)
+        |> Enum.map(& &1.id)
+        |> Enum.uniq()
+        |> length()
+      else
+        0
+      end
+
+    default_left = siblings_count > 1
+    default_right = siblings_count > 1
+
+    assigns =
+      assigns
+      |> Map.put_new(:show, false)
+      |> Map.put_new(:nav_can_up, default_up)
+      |> Map.put_new(:nav_can_down, default_down)
+      |> Map.put_new(:nav_can_left, default_left)
+      |> Map.put_new(:nav_can_right, default_right)
+
     {:ok, assign(socket, assigns)}
   end
 
@@ -14,44 +42,61 @@ defmodule DialecticWeb.Live.ModalComp do
       <.modal
         on_cancel={JS.push("modal_closed")}
         class={ColUtils.message_border_class(@node.class) <> " modal-responsive"}
-        id={"modal-" <> @node.id}
+        id={"modal-" <> @id}
         show={@show}
       >
         <div
-          class="modal-content relative px-2 sm:px-4 md:px-6"
-          id={"modal-content-" <> @node.id}
+          class="modal-content relative pl-12 pr-12 pt-12 pb-12 sm:pl-14 sm:pr-14 sm:pt-14 sm:pb-14 md:pl-16 md:pr-16 md:pt-16 md:pb-16"
+          id={"modal-" <> @id <> "-content"}
           phx-hook="TextSelectionHook"
           data-node-id={@node.id}
         >
+          <!-- Directional navigation buttons -->
+          <button
+            phx-click={JS.push("node_move", value: %{direction: "up"})}
+            disabled={!@nav_can_up}
+            class={"absolute top-2 left-1/2 -translate-x-1/2 inline-flex items-center px-2.5 py-1.5 text-xs rounded-md border " <>
+                    if @nav_can_up, do: "bg-white hover:bg-gray-50 border-gray-300", else: "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed pointer-events-none"}
+            title="Go to parent"
+          >
+            ↑
+          </button>
+          <button
+            phx-click={JS.push("node_move", value: %{direction: "down"})}
+            disabled={!@nav_can_down}
+            class={"absolute bottom-2 left-1/2 -translate-x-1/2 inline-flex items-center px-2.5 py-1.5 text-xs rounded-md border " <>
+                    if @nav_can_down, do: "bg-white hover:bg-gray-50 border-gray-300", else: "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed pointer-events-none"}
+            title="Go to child"
+          >
+            ↓
+          </button>
+          <button
+            phx-click={JS.push("node_move", value: %{direction: "left"})}
+            disabled={!@nav_can_left}
+            class={"absolute left-2 top-1/2 -translate-y-1/2 inline-flex items-center px-2.5 py-1.5 text-xs rounded-md border " <>
+                    if @nav_can_left, do: "bg-white hover:bg-gray-50 border-gray-300", else: "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed pointer-events-none"}
+            title="Go to previous sibling"
+          >
+            ←
+          </button>
+          <button
+            phx-click={JS.push("node_move", value: %{direction: "right"})}
+            disabled={!@nav_can_right}
+            class={"absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center px-2.5 py-1.5 text-xs rounded-md border " <>
+                    if @nav_can_right, do: "bg-white hover:bg-gray-50 border-gray-300", else: "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed pointer-events-none"}
+            title="Go to next sibling"
+          >
+            →
+          </button>
           <article class="prose prose-stone prose-lg md:prose-xl lg:prose-2xl max-w-none selection-content space-y-4">
             <h2 class="text-xl sm:text-2xl md:text-3xl">
               {TextUtils.modal_title(@node.content, @node.class || "")}
             </h2>
+
             <div class="text-base sm:text-lg">
               {TextUtils.full_html(@node.content || "")}
             </div>
           </article>
-          
-    <!-- Modal selection action button (hidden by default) -->
-          <div class="selection-actions hidden absolute bg-white shadow-lg rounded-lg p-1 sm:p-2 z-10 border border-gray-200">
-            <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 sm:py-1.5 px-2 sm:px-3 rounded-full flex items-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-3 w-3 mr-0.5 sm:mr-1"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              Ask about selection
-            </button>
-          </div>
         </div>
       </.modal>
     </div>
