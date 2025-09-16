@@ -1,6 +1,12 @@
 <div class="h-screen flex flex-col">
-  <.live_component module={DialecticWeb.Live.ModalComp} node={@node} id="graph-live-modal-comp" />
-  <!-- Top section -->
+  <.live_component
+    module={DialecticWeb.Live.ModalComp}
+    node={@node}
+    id="graph-live-modal-comp"
+    show={@open_read_modal}
+  />
+  
+<!-- Top section -->
   <div class="flex-none fixed top-0 right-0 w-full sm:w-96 bg-white border-b border-gray-200 z-10">
     <div class="p-2">
       <div class="flex items-center gap-4">

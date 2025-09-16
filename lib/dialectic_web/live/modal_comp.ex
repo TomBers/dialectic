@@ -4,7 +4,8 @@ defmodule DialecticWeb.Live.ModalComp do
   alias DialecticWeb.ColUtils
 
   def update(assigns, socket) do
-    {:ok, socket |> assign(assigns)}
+    assigns = Map.put_new(assigns, :show, false)
+    {:ok, assign(socket, assigns)}
   end
 
   def render(assigns) do
@@ -14,6 +15,7 @@ defmodule DialecticWeb.Live.ModalComp do
         on_cancel={JS.push("modal_closed")}
         class={ColUtils.message_border_class(@node.class) <> " modal-responsive"}
         id={"modal-" <> @node.id}
+        show={@show}
       >
         <div
           class="modal-content relative px-2 sm:px-4 md:px-6"

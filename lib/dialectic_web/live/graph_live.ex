@@ -109,7 +109,8 @@ defmodule DialecticWeb.GraphLive do
                graph_operation: "",
                ask_question: true,
                search_term: "",
-               search_results: []
+               search_results: [],
+               open_read_modal: Map.has_key?(params, "node")
              )}
 
           {:error, error_message} ->
@@ -580,7 +581,8 @@ defmodule DialecticWeb.GraphLive do
        form: to_form(changeset, id: new_node.id),
        node: node,
        show_combine: show_combine,
-       graph_operation: operation
+       graph_operation: operation,
+       open_read_modal: false
      )}
   end
 end
