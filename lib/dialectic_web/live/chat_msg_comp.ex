@@ -72,7 +72,7 @@ defmodule DialecticWeb.ChatMsgComp do
         <%= if String.length(@node.content || "") > @cut_off do %>
           <div class="flex justify-end">
             <button
-              phx-click={show_modal("modal-#{@node.id}")}
+              phx-click={show_modal("modal-chat-msg-modal-comp-#{@node.id}")}
               class="mt-2 text-blue-600 hover:text-blue-800 p-1.5 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300"
               aria-label="Open in modal"
             >

@@ -1,7 +1,7 @@
 defmodule DialecticWeb.GraphLive do
   use DialecticWeb, :live_view
 
-  alias Dialectic.Graph.{Vertex, GraphActions}
+  alias Dialectic.Graph.{Vertex, GraphActions, Siblings}
   alias DialecticWeb.{CombineComp, NodeComp}
   alias Dialectic.DbActions.DbWorker
 
@@ -87,6 +87,7 @@ defmodule DialecticWeb.GraphLive do
 
             # TODO - can edit is going to be expaned to be more complex, but for the time being, just is not protected
             can_edit = graph_struct.is_public
+            {nav_up, nav_down, nav_left, nav_right} = compute_nav_flags(graph, node)
 
             {:ok,
              assign(socket,
@@ -109,7 +110,12 @@ defmodule DialecticWeb.GraphLive do
                graph_operation: "",
                ask_question: true,
                search_term: "",
-               search_results: []
+               search_results: [],
+               nav_can_up: nav_up,
+               nav_can_down: nav_down,
+               nav_can_left: nav_left,
+               nav_can_right: nav_right,
+               open_read_modal: Map.has_key?(params, "node")
              )}
 
           {:error, error_message} ->
@@ -337,6 +343,17 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
+  def handle_event("node_move", %{"direction" => direction}, socket) do
+    {:noreply, updated_socket} =
+      update_graph(
+        socket,
+        GraphActions.move(graph_action_params(socket), direction),
+        "node_clicked"
+      )
+
+    {:noreply, push_event(updated_socket, "center_node", %{id: updated_socket.assigns.node.id})}
+  end
+
   def handle_event("answer", %{"vertex" => %{"content" => ""}}, socket), do: {:noreply, socket}
 
   def handle_event("answer", %{"vertex" => %{"content" => answer}}, socket) do
@@ -553,6 +570,28 @@ defmodule DialecticWeb.GraphLive do
     {graph_id, node_to_use, socket.assigns.user, socket.assigns.live_view_topic}
   end
 
+  defp compute_nav_flags(graph, node) do
+    can_up = node != nil and is_list(node.parents) and List.first(node.parents) != nil
+    can_down = node != nil and is_list(node.children) and List.first(node.children) != nil
+
+    siblings =
+      try do
+        Siblings.sort_siblings(node, graph)
+      rescue
+        _ -> []
+      end
+
+    {can_left, can_right} =
+      case Enum.find_index(siblings, fn n -> n.id == node.id end) do
+        nil -> {false, false}
+        0 -> {false, length(siblings) > 1}
+        idx when idx == length(siblings) - 1 -> {length(siblings) > 1, false}
+        _ -> {true, true}
+      end
+
+    {can_up, can_down, can_left, can_right}
+  end
+
   def update_graph(socket, {graph, node}, operation) do
     # Changeset needs to be a new node
     new_node = GraphActions.create_new_node(socket.assigns.user)
@@ -573,6 +612,8 @@ defmodule DialecticWeb.GraphLive do
         socket
       end
 
+    {nav_up, nav_down, nav_left, nav_right} = compute_nav_flags(graph, node)
+
     {:noreply,
      assign(socket,
        graph: graph,
@@ -580,7 +621,12 @@ defmodule DialecticWeb.GraphLive do
        form: to_form(changeset, id: new_node.id),
        node: node,
        show_combine: show_combine,
-       graph_operation: operation
+       graph_operation: operation,
+       open_read_modal: false,
+       nav_can_up: nav_up,
+       nav_can_down: nav_down,
+       nav_can_left: nav_left,
+       nav_can_right: nav_right
      )}
   end
 end
