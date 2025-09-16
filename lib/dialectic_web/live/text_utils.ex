@@ -78,4 +78,35 @@ defmodule DialecticWeb.Live.TextUtils do
       [only_content] -> only_content
     end
   end
+
+  @doc """
+  Processes content for display in labels (e.g., node titles), mirroring the
+  logic in assets/js/graph_style.js processNodeContent:
+
+  - Remove all instances of "**"
+  - Strip a leading "Title:" prefix (case-insensitive)
+  - Use only the first line
+  - Truncate to the given cutoff
+  - Optionally append an ellipsis if truncated
+  """
+  def process_node_content(content, add_ellipsis \\ true, cutoff \\ 80) do
+    full_content =
+      content
+      |> to_string()
+      |> String.replace("**", "")
+
+    # Remove "Title:" prefix if present (case-insensitive)
+    content_without_title = Regex.replace(~r/^Title:\s*/i, full_content, "")
+
+    # Use only the first line
+    first_line_only =
+      content_without_title
+      |> String.split("\n")
+      |> List.first()
+      |> to_string()
+
+    text = String.slice(first_line_only, 0, cutoff)
+    suffix = if add_ellipsis and String.length(first_line_only) > cutoff, do: "…", else: ""
+    text <> suffix
+  end
 end
