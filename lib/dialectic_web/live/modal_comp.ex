@@ -55,6 +55,9 @@ defmodule DialecticWeb.Live.ModalComp do
         >
           <span phx-window-keydown="node_move" phx-key="ArrowUp" phx-value-direction="up"></span>
           <span phx-window-keydown="node_move" phx-key="ArrowDown" phx-value-direction="down"></span>
+          <span phx-window-keydown="node_move" phx-key="ArrowLeft" phx-value-direction="left"></span>
+          <span phx-window-keydown="node_move" phx-key="ArrowRight" phx-value-direction="right">
+          </span>
           <!-- Directional navigation buttons -->
           <!-- Top sticky bar (Parent) -->
           <div class="sticky top-0 z-10 flex justify-center bg-white/90 backdrop-blur px-2 py-1 md:py-2 border-b border-gray-100">
