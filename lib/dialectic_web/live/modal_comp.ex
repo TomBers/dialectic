@@ -74,7 +74,7 @@ defmodule DialecticWeb.Live.ModalComp do
           
     <!-- Side arrows (hidden on small screens) -->
 
-          <article class="prose prose-stone prose-lg md:prose-xl lg:prose-2xl max-w-none selection-content space-y-4">
+          <article class="prose prose-stone prose-lg md:prose-xl lg:prose-2xl max-w-none selection-content space-y-4 min-h-[50vh]">
             <h2 class="text-xl sm:text-2xl md:text-3xl">
               {TextUtils.modal_title(@node.content, @node.class || "")}
             </h2>
