@@ -46,8 +46,8 @@ defmodule DialecticWeb.Live.ModalComp do
         show={@show}
       >
         <div
-          class="modal-content relative px-4 pb-14 sm:px-14 sm:pb-16 md:px-16"
-          id={"modal-" <> @id <> "-content"}
+          class="modal-content relative px-4 pt-14 pb-14 sm:px-14 sm:pt-16 sm:pb-16 md:px-16"
+          id={"modal-" <> @id <> "-inner"}
           phx-hook="TextSelectionHook"
           data-node-id={@node.id}
         >
