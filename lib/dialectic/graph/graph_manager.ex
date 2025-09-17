@@ -65,14 +65,16 @@ defmodule GraphManager do
       :digraph.vertices(graph)
       |> MapSet.new()
 
-    candidate = Integer.to_string(System.unique_integer([:positive, :monotonic]))
+    # Determine the next numeric ID as count(existing) + 1, then increment until unused
+    next_int = MapSet.size(existing_ids) + 1
 
     v_id =
-      if MapSet.member?(existing_ids, candidate) do
-        "n-" <> Ecto.UUID.generate()
-      else
-        candidate
-      end
+      Stream.iterate(next_int, &(&1 + 1))
+      |> Enum.find(fn n ->
+        id = Integer.to_string(n)
+        not MapSet.member?(existing_ids, id)
+      end)
+      |> Integer.to_string()
 
     vertex = %{vertex | id: v_id}
     :digraph.add_vertex(graph, v_id, vertex)
