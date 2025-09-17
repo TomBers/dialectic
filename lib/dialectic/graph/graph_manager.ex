@@ -61,8 +61,23 @@ defmodule GraphManager do
   end
 
   def handle_call({:add_vertex, vertex}, _from, {graph_struct, graph}) do
-    v = :digraph.vertices(graph)
-    v_id = Labeler.label(length(v) + 1)
+    _v = :digraph.vertices(graph)
+    # Compute a unique ID that does not collide with existing vertex IDs
+    existing_ids =
+      :digraph.vertices(graph)
+      |> MapSet.new()
+
+    # Fallback: generate a simple "n<number>" ID that is guaranteed unique
+    v_id =
+      Enum.find_value(1..4770, fn n ->
+        id = Labeler.label(n)
+        if not MapSet.member?(existing_ids, id), do: id, else: nil
+      end) ||
+        Enum.find_value(Stream.iterate(1, &(&1 + 1)), fn n ->
+          id = "n" <> Integer.to_string(n)
+          if not MapSet.member?(existing_ids, id), do: id, else: nil
+        end)
+
     vertex = %{vertex | id: v_id}
     :digraph.add_vertex(graph, v_id, vertex)
     {:reply, vertex, {graph_struct, graph}}
