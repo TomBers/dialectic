@@ -61,8 +61,21 @@ defmodule GraphManager do
   end
 
   def handle_call({:add_vertex, vertex}, _from, {graph_struct, graph}) do
-    v = :digraph.vertices(graph)
-    v_id = Labeler.label(length(v) + 1)
+    existing_ids =
+      :digraph.vertices(graph)
+      |> MapSet.new()
+
+    # Determine the next numeric ID as count(existing) + 1, then increment until unused
+    next_int = MapSet.size(existing_ids) + 1
+
+    v_id =
+      Stream.iterate(next_int, &(&1 + 1))
+      |> Enum.find(fn n ->
+        id = Integer.to_string(n)
+        not MapSet.member?(existing_ids, id)
+      end)
+      |> Integer.to_string()
+
     vertex = %{vertex | id: v_id}
     :digraph.add_vertex(graph, v_id, vertex)
     {:reply, vertex, {graph_struct, graph}}
