@@ -139,7 +139,7 @@
     <div class={if @drawer_open, do: "w-0 md:w-3/5", else: "w-full"}>
       <div
         id="cy"
-        class="h-full w-full"
+        class="h-full w-full relative"
         data-graph={@f_graph}
         data-node={if @node, do: @node.id, else: nil}
         data-operation={@graph_operation}
@@ -147,6 +147,34 @@
         phx-hook="Graph"
         phx-update="ignore"
       >
+        <div class="fixed bottom-4 right-4 z-50">
+          <div class="bg-white rounded-md shadow border border-gray-200 flex items-center divide-x divide-gray-200">
+            <button
+              id="zoom-out"
+              type="button"
+              class="px-2 py-1 text-gray-700 hover:bg-gray-100"
+              aria-label="Zoom out"
+            >
+              −
+            </button>
+            <button
+              id="zoom-fit"
+              type="button"
+              class="px-3 py-1 text-gray-700 hover:bg-gray-100 text-xs"
+              aria-label="Fit"
+            >
+              Fit
+            </button>
+            <button
+              id="zoom-in"
+              type="button"
+              class="px-2 py-1 text-gray-700 hover:bg-gray-100"
+              aria-label="Zoom in"
+            >
+              +
+            </button>
+          </div>
+        </div>
       </div>
 
       <.modal
