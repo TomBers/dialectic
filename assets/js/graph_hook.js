@@ -126,6 +126,52 @@ const graphHook = {
 
     this.cy.elements().removeClass("selected");
     this.cy.$(`#${node}`).addClass("selected");
+
+    // Keep the Explore button in sync with current node content and children
+    const updateExplore = (attempt = 0) => {
+      const btn = document.getElementById("explore-all-points");
+      if (!btn) return;
+
+      // The ListDetection hook decorates this element with dataset.listItems and data-children
+      const detector = document.getElementById(`list-detector-${node}`);
+      if (!detector) {
+        if (attempt < 10) setTimeout(() => updateExplore(attempt + 1), 100);
+        return;
+      }
+
+      const childrenCount = Number(detector.dataset.children || "0");
+      let items = [];
+      try {
+        if (detector.dataset.listItems) {
+          items = JSON.parse(detector.dataset.listItems) || [];
+        }
+      } catch (_e) {
+        items = [];
+      }
+
+      const canExplore =
+        childrenCount === 0 && Array.isArray(items) && items.length > 0;
+
+      // Apply enabled/disabled state and classes
+      if (canExplore) {
+        btn.disabled = false;
+        btn.className =
+          "px-3 py-1 text-sm text-gray-700 rounded-full transition-colors hover:bg-indigo-500 hover:text-white";
+        btn.onclick = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          this.pushEvent("branch_list", { items });
+        };
+      } else {
+        btn.disabled = true;
+        btn.className =
+          "px-3 py-1 text-sm text-gray-400 opacity-50 cursor-not-allowed rounded-full transition-colors";
+        btn.onclick = null;
+      }
+    };
+
+    // Initial sync (and retry if the detector element isn't mounted yet)
+    updateExplore();
   },
 };
 
