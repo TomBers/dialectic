@@ -103,11 +103,13 @@ defmodule DialecticWeb.NodeComp do
       >
         <.live_component
           module={NodeMenuComp}
-          id="node-menu-comp"
+          id={"node-menu-comp-" <> @node.id}
           node={@node}
           user={@user}
           form={@form}
           graph_id={@graph_id}
+          graph_owner_id={assigns[:graph_owner_id]}
+          current_user={assigns[:current_user]}
           ask_question={@ask_question}
         />
       </div>
@@ -128,6 +130,8 @@ defmodule DialecticWeb.NodeComp do
        cut_off: Map.get(assigns, :cut_off, 500),
        ask_question: Map.get(assigns, :ask_question, true),
        graph_id: Map.get(assigns, :graph_id, ""),
+       graph_owner_id: Map.get(assigns, :graph_owner_id, nil),
+       current_user: Map.get(assigns, :current_user, nil),
        menu_visible: Map.get(assigns, :menu_visible, true)
      )}
   end

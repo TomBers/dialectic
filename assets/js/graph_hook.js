@@ -16,7 +16,7 @@ const graphHook = {
     const { graph, node, div } = this.el.dataset;
 
     this.cy = draw_graph(
-      document.getElementById(div),
+      this.el.querySelector(`#${div}`) || document.getElementById(div),
       this,
       JSON.parse(graph),
       node,
@@ -94,16 +94,27 @@ const graphHook = {
 
     // Listen for the center_node event from LiveView
     this.handleEvent("center_node", ({ id }) => {
-      const nodeToCenter = this.cy.$(`#${id}`);
-      if (nodeToCenter.length > 0) {
-        this.cy.animate({
-          center: {
-            eles: nodeToCenter,
-          },
-          zoom: 1.6,
-          duration: 150,
-          easing: "ease-in-out-quad",
-        });
+      try {
+        // Update selected highlighting to reflect the newly selected node
+        this.cy.elements().removeClass("selected");
+        const nodeToCenter = this.cy.$(`#${id}`);
+        if (nodeToCenter.length > 0) {
+          nodeToCenter.addClass("selected");
+
+          // Keep the dataset in sync so other consumers (and hooks) can rely on it
+          this.el.dataset.node = id;
+
+          this.cy.animate({
+            center: {
+              eles: nodeToCenter,
+            },
+            zoom: 1.6,
+            duration: 150,
+            easing: "ease-in-out-quad",
+          });
+        }
+      } catch (_e) {
+        // no-op, avoid breaking on transient DOM/cy states
       }
     });
   },
@@ -129,7 +140,9 @@ const graphHook = {
 
     // Keep the Explore button in sync with current node content and children
     const updateExplore = (attempt = 0) => {
-      const btn = document.getElementById("explore-all-points");
+      const btn = document.querySelector(
+        `[id^="explore-all-points-"][id$="-${node}"]`,
+      );
       if (!btn) return;
 
       // The ListDetection hook decorates this element with dataset.listItems and data-children

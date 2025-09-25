@@ -211,7 +211,8 @@ defmodule DialecticWeb.NodeMenuComp do
             graph_id={@graph_id}
             node={@node}
             user={@user}
-            id={"note-menu-" <> @node.id}
+            current_user={assigns[:current_user]}
+            id={"note-menu-" <> @graph_id <> "-" <> @node.id}
           />
         </div>
       </div>

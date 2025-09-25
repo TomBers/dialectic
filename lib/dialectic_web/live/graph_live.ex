@@ -16,9 +16,9 @@ defmodule DialecticWeb.GraphLive do
     graph_topic = "graph_update:#{graph_id}"
 
     user =
-      case socket.assigns.current_user do
-        nil -> "Anon"
-        _ -> socket.assigns.current_user.email
+      case socket.assigns[:current_user] do
+        %{} = cu when is_binary(cu.email) -> String.downcase(cu.email)
+        _ -> "Anon"
       end
 
     node_id = Map.get(params, "node", "1")
@@ -101,6 +101,7 @@ defmodule DialecticWeb.GraphLive do
                form: to_form(changeset),
                show_combine: false,
                user: user,
+               current_user: socket.assigns[:current_user],
                can_edit: can_edit,
                node_menu_visible: true,
                drawer_open: true,
@@ -273,6 +274,91 @@ defmodule DialecticWeb.GraphLive do
         ),
         "unnote"
       )
+    end
+  end
+
+  def handle_event("delete_node", %{"node" => node_id}, socket) do
+    if !socket.assigns.can_edit do
+      {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    else
+      if socket.assigns.current_user == nil do
+        {:noreply, socket |> put_flash(:error, "You must be logged in to delete nodes")}
+      else
+        case GraphActions.find_node(socket.assigns.graph_id, node_id) do
+          nil ->
+            {:noreply, socket |> put_flash(:error, "Node not found")}
+
+          {_graph, node} ->
+            children = Map.get(node, :children, [])
+
+            norm_node_user =
+              String.downcase(String.trim(to_string(Map.get(node, :user, "") || "")))
+
+            norm_current_email =
+              String.downcase(
+                to_string(
+                  (socket.assigns.current_user && socket.assigns.current_user.email) || ""
+                )
+              )
+
+            norm_current_id =
+              to_string((socket.assigns.current_user && socket.assigns.current_user.id) || "")
+
+            norm_user = String.downcase(to_string(socket.assigns.user || ""))
+
+            owns =
+              (norm_node_user == "" and (norm_current_email != "" or norm_user != "")) or
+                norm_node_user == norm_current_email or
+                norm_node_user == norm_current_id or
+                norm_node_user == norm_user
+
+            cond do
+              not owns ->
+                {:noreply, socket |> put_flash(:error, "You can only delete nodes you created")}
+
+              Enum.any?(children, fn ch -> not Map.get(ch, :deleted, false) end) ->
+                {:noreply,
+                 socket |> put_flash(:error, "Cannot delete a node that has non-deleted children")}
+
+              true ->
+                {graph2, next_node} =
+                  GraphActions.delete_node(graph_action_params(socket), node_id)
+
+                DbWorker.save_graph(socket.assigns.graph_id)
+
+                # Ensure we navigate to a valid, non-deleted node.
+                # If no parent exists or it's invalid/deleted, pick the first non-deleted node in the graph.
+                selected_node =
+                  cond do
+                    is_map(next_node) and not Map.get(next_node, :deleted, false) ->
+                      Vertex.add_relatives(next_node, graph2)
+
+                    true ->
+                      fallback =
+                        Enum.find_value(:digraph.vertices(graph2), fn vid ->
+                          case :digraph.vertex(graph2, vid) do
+                            {^vid, v} ->
+                              if not Map.get(v, :deleted, false), do: v, else: nil
+
+                            _ ->
+                              nil
+                          end
+                        end)
+
+                      if fallback do
+                        Vertex.add_relatives(fallback, graph2)
+                      else
+                        default_node()
+                      end
+                  end
+
+                {:noreply, updated_socket} =
+                  update_graph(socket, {graph2, selected_node}, "delete")
+
+                {:noreply, updated_socket |> put_flash(:info, "Node deleted")}
+            end
+        end
+      end
     end
   end
 

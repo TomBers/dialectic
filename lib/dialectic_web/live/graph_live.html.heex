@@ -145,12 +145,25 @@
           user={@user}
           form={@form}
           graph_id={@graph_id}
+          graph_owner_id={@graph_struct && @graph_struct.user_id}
+          current_user={@current_user}
           ask_question={@ask_question}
           menu_visible={@node_menu_visible}
         />
       </div>
     </div>
-    <!-- Left side: Graph (expands to full width when drawer is closed) -->
+
+    <.live_component
+      module={DialecticWeb.ActionToolbarComp}
+      id={"action-toolbar-#{@node && @node.id}"}
+      node={@node}
+      user={@user}
+      current_user={assigns[:current_user]}
+      graph_id={@graph_id}
+      can_edit={@can_edit}
+    />
+    
+<!-- Left side: Graph (expands to full width when drawer is closed) -->
     <div class={if @drawer_open, do: "w-0 md:w-3/5", else: "w-full"}>
       <div
         id="cy"
@@ -158,259 +171,37 @@
         data-graph={@f_graph}
         data-node={if @node, do: @node.id, else: nil}
         data-operation={@graph_operation}
-        data-div="cy"
+        data-div="cy-inner"
         phx-hook="Graph"
-        phx-update="ignore"
       >
-        <div class="fixed bottom-4 right-4 z-50">
-          <div class="bg-white rounded-md shadow border border-gray-200 flex items-center divide-x divide-gray-200">
-            <button
-              id="zoom-out"
-              type="button"
-              class="px-2 py-1 text-gray-700 hover:bg-gray-100"
-              aria-label="Zoom out"
-            >
-              −
-            </button>
-            <button
-              id="zoom-fit"
-              type="button"
-              class="px-3 py-1 text-gray-700 hover:bg-gray-100 text-xs"
-              aria-label="Fit"
-            >
-              Fit
-            </button>
-            <button
-              id="zoom-in"
-              type="button"
-              class="px-2 py-1 text-gray-700 hover:bg-gray-100"
-              aria-label="Zoom in"
-            >
-              +
-            </button>
-          </div>
-        </div>
-
-        <div class="fixed bottom-4 left-1/2 -translate-x-1/2 z-20">
-          <div class="bg-white rounded-full shadow border border-gray-200 px-2 py-1 flex items-center gap-1">
-            <button
-              type="button"
-              class="px-3 py-1 text-sm text-gray-700 rounded-full transition-colors hover:bg-[#d1d5db] hover:text-gray-900"
-              phx-click={show_modal("modal-graph-live-modal-comp")}
-              title="Open reader"
-            >
-              <span class="inline-flex items-center gap-1.5">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"
-                  />
-                </svg>
-                <span>Read</span>
-              </span>
-            </button>
-            <button
-              type="button"
-              class="px-3 py-1 text-sm text-gray-700 rounded-full transition-colors hover:bg-[#84cc16] hover:text-white"
-              phx-click={
-                JS.push("reply-and-answer",
-                  value: %{
-                    vertex: %{
-                      content:
-                        "Can you go into more depth on this topic.  I would like a greater understanding and more specifc information. Return a longer response."
-                    },
-                    prefix: "details"
-                  }
-                )
-              }
-              title="More details"
-            >
-              <span class="inline-flex items-center gap-1.5">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5"
-                  />
-                </svg>
-                <span>Details</span>
-              </span>
-            </button>
-            <button
-              type="button"
-              class="px-3 py-1 text-sm text-gray-700 rounded-full transition-colors hover:bg-[#f97316] hover:text-white"
-              phx-click={
-                JS.push("reply-and-answer",
-                  value: %{vertex: %{content: "Give Examples"}, prefix: "examples"}
-                )
-              }
-              title="Generate examples"
-            >
-              <span class="inline-flex items-center gap-1.5">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M8.242 5.992h12m-12 6.003H20.24m-12 5.999h12M4.117 7.495v-3.75H2.99m1.125 3.75H2.99m1.125 0H5.24m-1.92 2.577a1.125 1.125 0 1 1 1.591 1.59l-1.83 1.83h2.16M2.99 15.745h1.125a1.125 1.125 0 0 1 0 2.25H3.74m0-.002h.375a1.125 1.125 0 0 1 0 2.25H2.99"
-                  />
-                </svg>
-                <span>Examples</span>
-              </span>
-            </button>
-            <button
-              type="button"
-              class="px-3 py-1 text-sm text-gray-700 rounded-full transition-colors hover:bg-[#0ea5e9] hover:text-white"
-              phx-click={
-                JS.push("reply-and-answer",
-                  value: %{
-                    vertex: %{
-                      content:
-                        "Can you suggest ideas associated with this one or other people who have written about the topic."
-                    },
-                    prefix: "ideas"
-                  }
-                )
-              }
-              title="Related ideas"
-            >
-              <span class="inline-flex items-center gap-1.5">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.517 0c.85.493 1.509 1.333 1.509 2.316V18"
-                  />
-                </svg>
-                <span>Related</span>
-              </span>
-            </button>
-            <button
-              type="button"
-              class="px-3 py-1 text-sm text-gray-700 rounded-full transition-colors hover:text-white"
-              onmouseover="this.style.backgroundImage='linear-gradient(to right, #10b981, #ef4444)'; this.style.color='#fff';"
-              onmouseleave="this.style.backgroundImage=''; this.style.color='';"
-              phx-click="node_branch"
-              phx-value-id={@node && @node.id}
-              title="Pros and Cons"
-            >
-              <span class="inline-flex items-center gap-1.5">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z"
-                  />
-                </svg>
-                <span>Pros/Cons</span>
-              </span>
-            </button>
-            <button
-              type="button"
-              class="px-3 py-1 text-sm text-gray-700 rounded-full transition-colors hover:bg-[#8b5cf6] hover:text-white"
-              phx-click="node_combine"
-              phx-value-id={@node && @node.id}
-              title="Combine with another"
-            >
-              <span class="inline-flex items-center gap-1.5">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0 0 12 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 0 1-2.031.352 5.988 5.988 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.971Zm-16.5.52c.99-.203 1.99-.377 3-.52m0 0 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.989 5.989 0 0 1-2.031.352 5.989 5.989 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L5.25 4.971Z"
-                  />
-                </svg>
-                <span>Combine</span>
-              </span>
-            </button>
-            <button
-              id="explore-all-points"
-              type="button"
-              class="px-3 py-1 text-sm text-gray-400 opacity-50 cursor-not-allowed rounded-full transition-colors"
-              disabled
-              title="Explore all points"
-            >
-              <span class="inline-flex items-center gap-1.5">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z"
-                  />
-                </svg>
-                <span>Explore</span>
-              </span>
-            </button>
+        <div id="cy-inner" class="h-full w-full relative" phx-update="ignore">
+          <div class="fixed bottom-4 right-4 z-50">
+            <div class="bg-white rounded-md shadow border border-gray-200 flex items-center divide-x divide-gray-200">
+              <button
+                id="zoom-out"
+                type="button"
+                class="px-2 py-1 text-gray-700 hover:bg-gray-100"
+                aria-label="Zoom out"
+              >
+                −
+              </button>
+              <button
+                id="zoom-fit"
+                type="button"
+                class="px-3 py-1 text-gray-700 hover:bg-gray-100 text-xs"
+                aria-label="Fit"
+              >
+                Fit
+              </button>
+              <button
+                id="zoom-in"
+                type="button"
+                class="px-2 py-1 text-gray-700 hover:bg-gray-100"
+                aria-label="Zoom in"
+              >
+                +
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -548,8 +339,6 @@
       </svg>
       <span class="sr-only">{if @drawer_open, do: "Close", else: "Open"} drawer</span>
     </button>
-    
-<!-- Right side: Chat (Drawer) -->
-
+    <!-- Right side: Chat (Drawer) -->
   </div>
 </div>
