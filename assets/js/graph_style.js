@@ -51,7 +51,7 @@ const cols = {
   explain: {
     text: "#374151",
     background: "white",
-    border: "#FFE135", // Bright sky blue for explanations
+    border: "#F2F0EF", // Subtle pale amber for explanations
   },
 };
 
