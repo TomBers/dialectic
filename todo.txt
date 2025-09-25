@@ -1,7 +1,3 @@
-1) Graph nav, scroll to move, in the same way the Figma app operates
-
-2) Move Graph actions to a bottom centered toolbar
-
 3) References / Appendix - pull references from nodes and display in separate component
 
 4) Export Image of graph
@@ -12,6 +8,13 @@
 
 7) Undo / delete node - just mark node as deleted in the database, need to check ownership and ensure the node does not have anyh children.
 
-8) Move the search bar so the menu is visible
+
 
 9) Allow Multiple trees on same graph
+
+Done
+
+1) Graph nav, scroll to move, in the same way the Figma app operates
+
+2) Move Graph actions to a bottom centered toolbar
+8) Move the search bar so the menu is visible
