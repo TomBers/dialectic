@@ -7,9 +7,9 @@ defmodule DialecticWeb.NoteMenuComp do
 
   def render(assigns) do
     ~H"""
-    <div class="rounded-md shadow-sm flex items-center gap-2 text-xs overflow-x-auto whitespace-nowrap">
-      <div class="flex flex-col border border-gray-200 rounded-md px-2 py-2 bg-gray-50">
-        <div class="text-xs font-semibold text-gray-500 mb-1.5">Actions</div>
+    <div class="rounded-md shadow-sm flex items-center justify-between gap-2 text-xs overflow-x-auto whitespace-nowrap w-full">
+      <div class="bg-white border border-gray-200 rounded-md shadow-sm p-3">
+        <div class="text-xs font-semibold text-gray-600 mb-2">Actions</div>
         <div class="flex items-center gap-2">
           <!-- Improved version with clearer purpose -->
         <!-- Redesigned with clearer visual states -->
@@ -18,7 +18,7 @@ defmodule DialecticWeb.NoteMenuComp do
               phx-click="unnote"
               phx-value-node={@node.id}
               tabindex="-1"
-              class="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-2 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center border border-indigo-200 shadow-sm"
+              class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-md border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-800 transition-colors shadow-sm"
               title="Remove from your notes"
             >
               <svg
@@ -40,7 +40,7 @@ defmodule DialecticWeb.NoteMenuComp do
               phx-click="note"
               phx-value-node={@node.id}
               tabindex="-1"
-              class="bg-gray-50 text-gray-600 hover:bg-gray-100 px-2 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center border border-gray-200 shadow-sm"
+              class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-md border border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100 hover:text-gray-800 transition-colors shadow-sm"
               title="Add to your notes"
             >
               <svg
@@ -67,7 +67,7 @@ defmodule DialecticWeb.NoteMenuComp do
           <.link
             navigate={~p"/#{@graph_id}/story/#{@node.id}"}
             tabindex="-1"
-            class="bg-amber-50 text-amber-700 hover:bg-amber-100 px-2 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center border border-amber-200 shadow-sm"
+            class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-md border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:text-amber-800 transition-colors shadow-sm"
             title="View conversation thread from root to this node"
           >
             <svg
@@ -89,7 +89,7 @@ defmodule DialecticWeb.NoteMenuComp do
           <.link
             navigate={~p"/#{@graph_id}/focus/#{@node.id}"}
             tabindex="-1"
-            class="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 px-2 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center border border-emerald-200 shadow-sm"
+            class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-md border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 transition-colors shadow-sm"
             title="Chat interface for rapid idea expansion"
           >
             <svg
@@ -111,15 +111,15 @@ defmodule DialecticWeb.NoteMenuComp do
         </div>
       </div>
 
-      <div class="flex flex-col border border-gray-200 rounded-md px-2 py-2 bg-gray-50">
-        <div class="text-xs font-semibold text-gray-500 mb-1.5">Export</div>
+      <div class="bg-white border border-gray-200 rounded-md shadow-sm p-3 ml-auto">
+        <div class="text-xs font-semibold text-gray-600 mb-2">Export</div>
         <div class="flex items-center gap-2">
           <.link
             navigate={~p"/#{@graph_id}/linear"}
             target="_blank"
             rel="noopener noreferrer"
             id="link-to-pdf-print"
-            class="inline-flex items-center text-xs font-semibold px-2 py-1.5 rounded-md bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 hover:text-red-800 transition-colors shadow-sm"
+            class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-md border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800 transition-colors shadow-sm"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -141,7 +141,7 @@ defmodule DialecticWeb.NoteMenuComp do
           <.link
             href={"/api/graphs/json/#{@graph_id}"}
             download={"#{@graph_id}.json"}
-            class="inline-flex items-center text-xs font-semibold px-2 py-1.5 rounded-md bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 hover:text-blue-800 transition-colors shadow-sm"
+            class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-md border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 transition-colors shadow-sm"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -163,7 +163,7 @@ defmodule DialecticWeb.NoteMenuComp do
           <.link
             href={"/api/graphs/md/#{@graph_id}"}
             download={"#{@graph_id}.md"}
-            class="inline-flex items-center text-xs font-semibold px-2 py-1.5 rounded-md bg-purple-50 border border-purple-200 text-purple-700 hover:bg-purple-100 hover:text-purple-800 transition-colors shadow-sm"
+            class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-md border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:text-purple-800 transition-colors shadow-sm"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

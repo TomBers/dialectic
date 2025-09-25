@@ -4,10 +4,10 @@ defmodule DialecticWeb.NodeMenuComp do
 
   def render(assigns) do
     ~H"""
-    <div class="space-y-3">
+    <div class="space-y-4">
       
     <!-- Question & Comment Section -->
-      <div>
+      <div class="bg-white border border-gray-200 rounded-md shadow-sm p-3">
         <h3 class="text-xs font-medium text-gray-600 mb-2 flex items-center">
           <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -21,22 +21,22 @@ defmodule DialecticWeb.NodeMenuComp do
           Ask a Question or Add a Comment
         </h3>
 
-        <div class="mx-auto w-full mb-2 relative">
+        <div class="relative">
           <div class="flex rounded-t-md border border-b-0 border-gray-300 overflow-hidden">
             <button
               type="button"
-              class={"flex-1 py-2 px-3 transition-colors font-medium text-sm " <> if @ask_question, do: "bg-white text-blue-600 border-b-2 border-blue-500", else: "text-gray-600 bg-gray-50 hover:bg-gray-100"}
+              class={"flex-1 py-2.5 px-3 transition-colors font-medium text-sm " <> if @ask_question, do: "bg-white text-blue-600 border-b-2 border-blue-500", else: "text-gray-600 bg-gray-50 hover:bg-gray-100"}
               phx-click="toggle_ask_question"
               phx-value-id={@node_id}
               id={"tab-question-" <> @node_id}
               data-type="answer"
-              style={if @ask_question, do: "border-color: #3b82f6;", else: ""}
+              style=""
             >
               <div class="flex items-center justify-center gap-1.5">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  width="14"
-                  height="14"
+                  width="16"
+                  height="16"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -51,18 +51,18 @@ defmodule DialecticWeb.NodeMenuComp do
             </button>
             <button
               type="button"
-              class={"flex-1 py-2 px-3 transition-colors font-medium text-sm " <> if !@ask_question, do: "bg-white text-blue-600 border-b-2 border-blue-500", else: "text-gray-600 bg-gray-50 hover:bg-gray-100"}
+              class={"flex-1 py-2.5 px-3 transition-colors font-medium text-sm " <> if !@ask_question, do: "bg-white text-emerald-600 border-b-2 border-emerald-500", else: "text-gray-600 bg-gray-50 hover:bg-gray-100"}
               phx-click="toggle_ask_question"
               phx-value-id={@node_id}
               id={"tab-comment-" <> @node_id}
               data-type="thesis"
-              style={if !@ask_question, do: "border-color: #10b981;", else: ""}
+              style=""
             >
               <div class="flex items-center justify-center gap-1.5">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  width="14"
-                  height="14"
+                  width="16"
+                  height="16"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -82,7 +82,7 @@ defmodule DialecticWeb.NodeMenuComp do
               for={@form}
               phx-submit="reply-and-answer"
               id={"tt-reply-form-" <> @node.id}
-              class="bg-white border border-gray-300 rounded-b-md p-3 shadow-sm"
+              class="bg-white border border-gray-300 rounded-b-md p-3"
             >
               <div class="relative">
                 <div class="absolute left-3 top-3 text-blue-500">
@@ -124,7 +124,7 @@ defmodule DialecticWeb.NodeMenuComp do
               for={@form}
               phx-submit="answer"
               id={"tt-form-" <> @node.id}
-              class="bg-white border border-gray-300 rounded-b-md p-3 shadow-sm"
+              class="bg-white border border-gray-300 rounded-b-md p-3"
             >
               <div class="relative">
                 <div class="absolute left-3 top-3 text-gray-500">
@@ -163,7 +163,7 @@ defmodule DialecticWeb.NodeMenuComp do
         </div>
         
     <!-- Node Information Section -->
-        <div class="border-b border-gray-200 pb-2">
+        <div class="bg-white border border-gray-200 rounded-md shadow-sm p-3 mt-4">
           <h3 class="text-xs font-medium text-gray-600 mb-1 flex items-center">
             <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -176,15 +176,22 @@ defmodule DialecticWeb.NodeMenuComp do
             </svg>
             Node Information
           </h3>
-          <div class="flex items-center gap-2 mb-2">
+          <div class="flex items-center justify-between gap-2 mb-2">
+            <span
+              class="flex-1 truncate text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded px-2 py-1 font-mono select-all cursor-pointer"
+              title="Shareable URL path"
+              onclick={"navigator.clipboard.writeText('#{url(~p"/#{@graph_id}?node=#{@node.id}")}').then(() => alert('Link copied to clipboard!'))"}
+            >
+              /{@graph_id}?node={@node.id}
+            </span>
             <button
-              class="text-gray-400 hover:text-gray-600 transition-colors p-1"
+              class="inline-flex items-center gap-1 text-gray-600 hover:text-gray-800 transition-colors p-1.5 border border-gray-300 rounded"
               title="Copy shareable link"
               onclick={"navigator.clipboard.writeText('#{url(~p"/#{@graph_id}?node=#{@node.id}")}').then(() => alert('Link copied to clipboard!'))"}
             >
               <svg
-                width="12"
-                height="12"
+                width="14"
+                height="14"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -195,14 +202,8 @@ defmodule DialecticWeb.NodeMenuComp do
                 <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
                 <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
               </svg>
+              <span class="sr-only">Copy link</span>
             </button>
-            <span
-              class="text-xs text-gray-400 font-mono select-all cursor-pointer ml-1"
-              title="Shareable URL path"
-              onclick={"navigator.clipboard.writeText('#{url(~p"/#{@graph_id}?node=#{@node.id}")}').then(() => alert('Link copied to clipboard!'))"}
-            >
-              /{@graph_id}?node={@node.id}
-            </span>
           </div>
 
           <.live_component
