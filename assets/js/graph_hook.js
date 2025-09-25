@@ -160,7 +160,7 @@ const graphHook = {
         btn.onclick = (e) => {
           e.preventDefault();
           e.stopPropagation();
-          this.pushEvent("branch_list", { items });
+          this.pushEvent("open_explore_modal", { items });
         };
       } else {
         btn.disabled = true;

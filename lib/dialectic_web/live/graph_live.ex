@@ -115,7 +115,10 @@ defmodule DialecticWeb.GraphLive do
                nav_can_down: nav_down,
                nav_can_left: nav_left,
                nav_can_right: nav_right,
-               open_read_modal: Map.has_key?(params, "node")
+               open_read_modal: Map.has_key?(params, "node"),
+               show_explore_modal: false,
+               explore_items: [],
+               explore_selected: []
              )}
 
           {:error, error_message} ->
@@ -287,6 +290,45 @@ defmodule DialecticWeb.GraphLive do
       end)
 
       {:noreply, socket |> put_flash(:info, "Exploring all points")}
+    end
+  end
+
+  def handle_event("open_explore_modal", %{"items" => items}, socket) do
+    if !socket.assigns.can_edit do
+      {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    else
+      {:noreply,
+       socket
+       |> assign(show_explore_modal: true, explore_items: items, explore_selected: [])}
+    end
+  end
+
+  def handle_event("close_explore_modal", _, socket) do
+    {:noreply, assign(socket, show_explore_modal: false, explore_items: [], explore_selected: [])}
+  end
+
+  def handle_event("submit_explore_modal", params, socket) do
+    if !socket.assigns.can_edit do
+      {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    else
+      selected = normalize_explore_selected(params)
+
+      if selected == [] do
+        {:noreply, socket |> put_flash(:error, "Please select at least one point")}
+      else
+        Enum.each(selected, fn item ->
+          GraphActions.answer_selection(
+            graph_action_params(socket, socket.assigns.node),
+            "Please explain: #{item}",
+            "explain"
+          )
+        end)
+
+        {:noreply,
+         socket
+         |> put_flash(:info, "Exploring selected points (#{length(selected)})")
+         |> assign(show_explore_modal: false, explore_items: [], explore_selected: [])}
+      end
     end
   end
 
@@ -537,6 +579,32 @@ defmodule DialecticWeb.GraphLive do
       is_binary(Map.get(vertex_data, :content, "")) and
       Map.get(vertex_data, :id) != nil and
       not Map.get(vertex_data, :deleted, false)
+  end
+
+  defp normalize_explore_selected(params) do
+    cond do
+      is_list(params) ->
+        Enum.filter(params, &is_binary/1)
+
+      is_map(params) and is_list(Map.get(params, "selected")) ->
+        Enum.filter(Map.get(params, "selected"), &is_binary/1)
+
+      is_map(params) and is_list(Map.get(params, "items")) ->
+        Enum.filter(Map.get(params, "items"), &is_binary/1)
+
+      is_map(params) and is_map(Map.get(params, "items")) ->
+        params["items"]
+        |> Enum.flat_map(fn {k, v} ->
+          cond do
+            v in ["on", "true", "1"] -> [k]
+            is_binary(v) -> [v]
+            true -> []
+          end
+        end)
+
+      true ->
+        []
+    end
   end
 
   defp graph_action_params(socket, node \\ nil) do
