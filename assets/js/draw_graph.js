@@ -87,6 +87,17 @@ export function draw_graph(graph, context, elements, node) {
   let prevBoxSelect = cy.boxSelectionEnabled();
 
   const keydownHandler = (e) => {
+    // Don't hijack Space when typing in form fields or contenteditable areas
+    const target = e.target;
+    const tag = (target && target.tagName) || "";
+    const isEditable =
+      tag === "INPUT" ||
+      tag === "TEXTAREA" ||
+      (target &&
+        (target.isContentEditable ||
+          target.closest('[contenteditable="true"], [contenteditable=""]')));
+    if (isEditable) return;
+
     if (e.code === "Space" && !isSpaceDown) {
       isSpaceDown = true;
       prevBoxSelect = cy.boxSelectionEnabled();
