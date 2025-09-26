@@ -17,7 +17,7 @@ defmodule DialecticWeb.GraphLive do
 
     user =
       case socket.assigns[:current_user] do
-        %{} = cu when is_binary(cu.email) -> String.downcase(cu.email)
+        %{email: email} when is_binary(email) -> String.downcase(email)
         _ -> "Anon"
       end
 

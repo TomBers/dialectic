@@ -64,28 +64,31 @@ const graphHook = {
 
     // Zoom controls (+ / − / Fit)
     const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
-    let zoomToast = null;
-    let zoomToastTimer = null;
+    this._zoomToast = this._zoomToast || null;
+    this._zoomToastTimer = this._zoomToastTimer || null;
 
     const showZoom = () => {
-      if (!zoomToast) {
-        zoomToast = document.createElement("div");
-        zoomToast.style.position = "absolute";
-        zoomToast.style.right = "12px";
-        zoomToast.style.bottom = "48px";
-        zoomToast.style.padding = "2px 6px";
-        zoomToast.style.background = "rgba(0,0,0,0.65)";
-        zoomToast.style.color = "#fff";
-        zoomToast.style.fontSize = "12px";
-        zoomToast.style.borderRadius = "4px";
-        zoomToast.style.pointerEvents = "none";
-        zoomToast.style.transition = "opacity 150ms ease";
-        container.appendChild(zoomToast);
+      if (!this._zoomToast) {
+        this._zoomToast = document.createElement("div");
+        this._zoomToast.style.position = "absolute";
+        this._zoomToast.style.right = "12px";
+        this._zoomToast.style.bottom = "48px";
+        this._zoomToast.style.padding = "2px 6px";
+        this._zoomToast.style.background = "rgba(0,0,0,0.65)";
+        this._zoomToast.style.color = "#fff";
+        this._zoomToast.style.fontSize = "12px";
+        this._zoomToast.style.borderRadius = "4px";
+        this._zoomToast.style.pointerEvents = "none";
+        this._zoomToast.style.transition = "opacity 150ms ease";
+        container.appendChild(this._zoomToast);
       }
-      zoomToast.textContent = Math.round(this.cy.zoom() * 100) + "%";
-      zoomToast.style.opacity = "1";
-      if (zoomToastTimer) clearTimeout(zoomToastTimer);
-      zoomToastTimer = setTimeout(() => (zoomToast.style.opacity = "0"), 900);
+      this._zoomToast.textContent = Math.round(this.cy.zoom() * 100) + "%";
+      this._zoomToast.style.opacity = "1";
+      if (this._zoomToastTimer) clearTimeout(this._zoomToastTimer);
+      this._zoomToastTimer = setTimeout(
+        () => (this._zoomToast.style.opacity = "0"),
+        900,
+      );
     };
 
     const centerPoint = () => {
@@ -111,29 +114,36 @@ const graphHook = {
     const btnFit = document.getElementById("zoom-fit");
 
     if (btnIn) {
-      btnIn.addEventListener("click", (e) => {
+      this._btnInEl = btnIn;
+      this._btnInHandler = (e) => {
         e.preventDefault();
         e.stopPropagation();
         zoomBy(1.2);
-      });
+      };
+      btnIn.addEventListener("click", this._btnInHandler);
     }
     if (btnOut) {
-      btnOut.addEventListener("click", (e) => {
+      this._btnOutEl = btnOut;
+      this._btnOutHandler = (e) => {
         e.preventDefault();
         e.stopPropagation();
         zoomBy(1 / 1.2);
-      });
+      };
+      btnOut.addEventListener("click", this._btnOutHandler);
     }
     if (btnFit) {
-      btnFit.addEventListener("click", (e) => {
+      this._btnFitEl = btnFit;
+      this._btnFitHandler = (e) => {
         e.preventDefault();
         e.stopPropagation();
         fitGraph();
-      });
+      };
+      btnFit.addEventListener("click", this._btnFitHandler);
     }
     if (btnPngs.length) {
+      this._btnPngHandlers = [];
       btnPngs.forEach((btnPng) => {
-        btnPng.addEventListener("click", (e) => {
+        const handler = (e) => {
           e.preventDefault();
           e.stopPropagation();
 
@@ -156,7 +166,9 @@ const graphHook = {
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
-        });
+        };
+        btnPng.addEventListener("click", handler);
+        this._btnPngHandlers.push([btnPng, handler]);
       });
     }
 
@@ -261,9 +273,46 @@ const graphHook = {
   destroyed() {
     if (this._enterStopper) {
       this.el.removeEventListener("keydown", this._enterStopper, true);
+      this._enterStopper = null;
     }
     if (this._windowKeydown) {
       window.removeEventListener("keydown", this._windowKeydown, true);
+      this._windowKeydown = null;
+    }
+    if (this._btnInEl && this._btnInHandler) {
+      this._btnInEl.removeEventListener("click", this._btnInHandler);
+      this._btnInEl = null;
+      this._btnInHandler = null;
+    }
+    if (this._btnOutEl && this._btnOutHandler) {
+      this._btnOutEl.removeEventListener("click", this._btnOutHandler);
+      this._btnOutEl = null;
+      this._btnOutHandler = null;
+    }
+    if (this._btnFitEl && this._btnFitHandler) {
+      this._btnFitEl.removeEventListener("click", this._btnFitHandler);
+      this._btnFitEl = null;
+      this._btnFitHandler = null;
+    }
+    if (Array.isArray(this._btnPngHandlers)) {
+      this._btnPngHandlers.forEach(([el, handler]) => {
+        el.removeEventListener("click", handler);
+      });
+      this._btnPngHandlers = null;
+    }
+    if (this._zoomToastTimer) {
+      clearTimeout(this._zoomToastTimer);
+      this._zoomToastTimer = null;
+    }
+    if (this._zoomToast && this._zoomToast.parentNode) {
+      this._zoomToast.parentNode.removeChild(this._zoomToast);
+      this._zoomToast = null;
+    }
+    if (this.cy && typeof this.cy.destroy === "function") {
+      try {
+        this.cy.destroy();
+      } catch (_e) {}
+      this.cy = null;
     }
   },
 };
