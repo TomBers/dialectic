@@ -114,6 +114,14 @@ defmodule DialecticWeb.NoteMenuComp do
       <div class="bg-white border border-gray-200 rounded-md shadow-sm p-3 ml-auto">
         <div class="text-xs font-semibold text-gray-600 mb-2">Export</div>
         <div class="flex items-center gap-2">
+          <button
+            type="button"
+            class="download-png inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-md border border-green-200 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 transition-colors shadow-sm"
+            aria-label="Download PNG"
+            title="Download PNG (Alt-click to capture full graph)"
+          >
+            PNG
+          </button>
           <.link
             navigate={~p"/#{@graph_id}/linear"}
             target="_blank"

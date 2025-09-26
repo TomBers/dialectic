@@ -176,7 +176,7 @@
 <!-- Shortcuts and zoom controls moved outside Cytoscape container -->
 
       <div
-        class="fixed right-4 z-30 bottom-28 sm:bottom-20 md:bottom-16"
+        class="hidden sm:block sm:fixed right-4 z-30 bottom-28 sm:bottom-20 md:bottom-16"
         style="bottom: calc(6rem + env(safe-area-inset-bottom));"
       >
         <div class="bg-white rounded-md shadow border border-gray-200 flex items-center divide-x divide-gray-200">
@@ -207,7 +207,7 @@
         </div>
       </div>
 
-      <div class="fixed right-4 z-30 bottom-48 sm:bottom-40 md:bottom-36 w-72 bg-white border border-gray-200 rounded-md shadow p-3 text-xs text-gray-700 space-y-2">
+      <div class="hidden sm:block sm:fixed right-4 z-30 bottom-48 sm:bottom-40 md:bottom-36 w-72 bg-white border border-gray-200 rounded-md shadow p-3 text-xs text-gray-700 space-y-2">
         <div class="font-semibold text-gray-900">Keyboard Shortcuts</div>
         <ul class="space-y-1">
           <li>
@@ -437,6 +437,29 @@
           </.link>
 
           <div class="my-1 border-t"></div>
+
+          <button
+            type="button"
+            class="download-png w-full text-left px-3 py-2 rounded hover:bg-gray-50 flex items-center gap-2"
+            aria-label="Download PNG"
+            title="Download PNG (Alt-click to capture full graph)"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M3 7h4l2-2h6l2 2h4v12H3zM12 17a5 5 0 100-10 5 5 0 000 10z"
+              />
+            </svg>
+            <span>PNG</span>
+          </button>
 
           <.link
             navigate={~p"/#{@graph_id}/linear"}

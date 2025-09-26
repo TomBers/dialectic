@@ -105,6 +105,7 @@ const graphHook = {
       requestAnimationFrame(showZoom);
     };
 
+    const btnPngs = Array.from(document.querySelectorAll(".download-png"));
     const btnIn = document.getElementById("zoom-in");
     const btnOut = document.getElementById("zoom-out");
     const btnFit = document.getElementById("zoom-fit");
@@ -128,6 +129,34 @@ const graphHook = {
         e.preventDefault();
         e.stopPropagation();
         fitGraph();
+      });
+    }
+    if (btnPngs.length) {
+      btnPngs.forEach((btnPng) => {
+        btnPng.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          // Alt-click to capture the full graph, otherwise export the current viewport
+          const full = !!e.altKey;
+
+          // Higher scale for sharper images
+          const scale = 2;
+
+          const dataUrl = this.cy.png({
+            full: full,
+            scale: scale,
+            bg: "#ffffff",
+          });
+
+          const ts = new Date().toISOString().replace(/[:.]/g, "-");
+          const a = document.createElement("a");
+          a.href = dataUrl;
+          a.download = full ? `graph-full-${ts}.png` : `graph-${ts}.png`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        });
       });
     }
 
