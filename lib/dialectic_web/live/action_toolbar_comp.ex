@@ -11,14 +11,11 @@ defmodule DialecticWeb.ActionToolbarComp do
   def render(assigns) do
     ~H"""
     <div>
-      <style>
-        /* Re-enable the original zoom controls inside #cy (overrides earlier rule) */
-        #cy > .fixed { display: block !important; }
-        /* Hide the duplicate external zoom controls to avoid confusion */
-        .fixed.bottom-4.right-4[data-external="true"] { display: none !important; }
-      </style>
-      <div class="fixed bottom-4 left-1/2 -translate-x-1/2 z-20" data-external="true">
-        <div class="bg-white rounded-full shadow border border-gray-200 px-2 py-1 flex items-center gap-1">
+      <div
+        class="fixed left-1/2 -translate-x-1/2 z-20 bottom-24 sm:bottom-8 md:bottom-6 pointer-events-none"
+        data-external="true"
+      >
+        <div class="bg-white rounded-full shadow border border-gray-200 px-2 py-1 flex flex-wrap items-center justify-center gap-1 pointer-events-auto">
           <%= if @can_edit == false do %>
             <span
               class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border border-amber-200 bg-amber-50 text-amber-700"
@@ -110,9 +107,7 @@ defmodule DialecticWeb.ActionToolbarComp do
 
           <button
             type="button"
-            class="px-3 py-1 text-sm text-gray-700 rounded-full transition-colors hover:text-white"
-            onmouseover="this.style.backgroundImage='linear-gradient(to right, #10b981, #ef4444)'; this.style.color='#fff';"
-            onmouseleave="this.style.backgroundImage=''; this.style.color='';"
+            class="px-3 py-1 text-sm text-gray-700 rounded-full transition-colors hover:text-white hover:bg-gradient-to-r hover:from-emerald-500 hover:to-rose-500"
             phx-click="node_branch"
             phx-value-id={@node && @node.id}
             title="Pros and Cons"

@@ -962,7 +962,9 @@ button[type="submit"]:active {
     flex-shrink: 0;
     position: sticky;
     bottom: 0;
-    z-index: 10;
+    z-index: 50;
+    /* Respect iOS/Android safe-area bottom inset */
+    padding-bottom: calc(1.25rem + env(safe-area-inset-bottom));
 }
 
 .chat-form {
@@ -1129,6 +1131,8 @@ button[type="submit"]:active {
         width: 100%;
         background: #fff;
         border-top: 1px solid #e5e7eb;
+        /* Respect safe-area bottom inset on small screens */
+        padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
     }
 
     .chat-messages {
@@ -1161,5 +1165,10 @@ button[type="submit"]:active {
     .send-button {
         width: 36px;
         height: 36px;
+    }
+
+    /* Ensure floating toolbar sits above safe area and chat input on small screens */
+    .fixed[data-external="true"] {
+        bottom: calc(5.5rem + env(safe-area-inset-bottom)) !important;
     }
 }

@@ -23,7 +23,7 @@
   />
   
 <!-- Top section -->
-  <div class="flex-none fixed top-16 right-0 w-full sm:w-96 bg-white border-b border-gray-200 z-10">
+  <div class="flex-none fixed top-16 right-0 w-full sm:w-96 bg-white border-b border-gray-200 z-10 hidden sm:block">
     <div class="p-2">
       <div class="flex items-center gap-4">
         <DialecticWeb.LockComp.render
@@ -146,6 +146,7 @@
       current_user={assigns[:current_user]}
       graph_id={@graph_id}
       can_edit={@can_edit}
+      drawer_open={@drawer_open}
     />
     
 <!-- Left side: Graph (expands to full width when drawer is closed) -->
@@ -159,8 +160,16 @@
         data-div="cy-inner"
         phx-hook="Graph"
       >
-        <div id="cy-inner" class="h-full w-full relative" phx-update="ignore">
-          <div class="fixed bottom-4 right-4 z-50">
+        <div
+          id="cy-inner"
+          class="h-full w-full relative pb-40 sm:pb-32 md:pb-24"
+          phx-update="ignore"
+        >
+          <div
+            :if={!(@show_combine || @show_group_modal || @show_explore_modal || @open_read_modal)}
+            class="fixed right-4 z-10 bottom-28 sm:bottom-20 md:bottom-16"
+            style="bottom: calc(6rem + env(safe-area-inset-bottom));"
+          >
             <div class="bg-white rounded-md shadow border border-gray-200 flex items-center divide-x divide-gray-200">
               <button
                 id="zoom-out"

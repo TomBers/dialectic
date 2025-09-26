@@ -108,7 +108,7 @@ defmodule DialecticWeb.NodeMenuComp do
                   tabindex="0"
                   type="text"
                   id={"tt-input-" <> @node.id}
-                  placeholder="What would you like to know about this topic?"
+                  placeholder="Ask"
                   class="pl-10 pr-16 py-2 rounded-md border-gray-300 w-full focus:border-blue-400 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                 />
                 <button
@@ -148,7 +148,7 @@ defmodule DialecticWeb.NodeMenuComp do
                   tabindex="0"
                   type="text"
                   id={"tt-input-" <> @node.id}
-                  placeholder="Add your thoughts or notes about this content"
+                  placeholder="Comment"
                   class="pl-10 pr-16 py-2 rounded-md border-gray-300 w-full focus:border-gray-400 focus:ring focus:ring-gray-200 focus:ring-opacity-50"
                 />
                 <button
