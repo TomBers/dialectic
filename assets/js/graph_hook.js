@@ -43,6 +43,25 @@ const graphHook = {
     // Use capture phase to intercept before LiveView's phx-keydown on container
     this.el.addEventListener("keydown", this._enterStopper, true);
 
+    // Window-level keydown filter: block Enter when typing (LiveView handles opening)
+    this._windowKeydown = (e) => {
+      if (e.key !== "Enter") return;
+
+      const t = e.target;
+      const tag = (t && t.tagName) || "";
+      const isEditable =
+        tag === "INPUT" ||
+        tag === "TEXTAREA" ||
+        (t &&
+          (t.isContentEditable ||
+            t.closest('[contenteditable="true"], [contenteditable=""]')));
+
+      if (isEditable) {
+        e.stopPropagation();
+      }
+    };
+    window.addEventListener("keydown", this._windowKeydown, true);
+
     // Zoom controls (+ / − / Fit)
     const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
     let zoomToast = null;
@@ -213,6 +232,9 @@ const graphHook = {
   destroyed() {
     if (this._enterStopper) {
       this.el.removeEventListener("keydown", this._enterStopper, true);
+    }
+    if (this._windowKeydown) {
+      window.removeEventListener("keydown", this._windowKeydown, true);
     }
   },
 };

@@ -161,8 +161,6 @@
         data-enter-shortcut="reader"
         data-ignore-inputs="true"
         phx-hook="Graph"
-        phx-keydown={show_modal("modal-graph-live-modal-comp")}
-        phx-key="enter"
         tabindex="0"
       >
         <div
@@ -172,6 +170,8 @@
         >
         </div>
       </div>
+
+      <span phx-window-keydown={show_modal("modal-graph-live-modal-comp")} phx-key="Enter"></span>
       
 <!-- Shortcuts and zoom controls moved outside Cytoscape container -->
 
