@@ -16,7 +16,7 @@ const cols = {
   answer: {
     text: "#374151",
     background: "white",
-    border: "#3b82f6", // Strong blue for answers
+    border: "#0ea5e9", // Strong blue for answers
   },
   antithesis: {
     text: "#374151",
@@ -41,7 +41,8 @@ const cols = {
   ideas: {
     text: "#374151",
     background: "white",
-    border: "#0ea5e9", // Bright sky blue for ideas
+    border: "#f97316", // Warm orange for ideas
+    // border: "#0ea5e9", // Bright sky blue for ideas
   },
   details: {
     text: "#374151",

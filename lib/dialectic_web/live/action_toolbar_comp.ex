@@ -69,7 +69,7 @@ defmodule DialecticWeb.ActionToolbarComp do
 
           <button
             type="button"
-            class="px-3 py-1 text-sm text-gray-700 rounded-full transition-colors hover:bg-[#3b82f6] hover:text-white"
+            class="px-3 py-1 text-sm text-gray-700 rounded-full transition-colors hover:bg-[#f97316] hover:text-white"
             phx-click={
               JS.push("reply-and-answer",
                 value: %{
