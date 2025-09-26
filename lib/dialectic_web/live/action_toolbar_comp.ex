@@ -12,7 +12,7 @@ defmodule DialecticWeb.ActionToolbarComp do
     ~H"""
     <div>
       <div
-        class="fixed left-1/2 -translate-x-1/2 z-20 bottom-24 sm:bottom-8 md:bottom-6 pointer-events-none"
+        class="hidden sm:block fixed left-1/2 -translate-x-1/2 z-20 bottom-24 sm:bottom-8 md:bottom-6 pointer-events-none"
         data-external="true"
       >
         <div class="bg-white rounded-full shadow border border-gray-200 px-2 py-1 flex flex-wrap items-center justify-center gap-1 pointer-events-auto">
