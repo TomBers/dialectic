@@ -1,4 +1,3 @@
-/Users/tomberman/Development/dialectic/assets/js/explore_select_all_hook.js
 /**
  * ExploreSelectAll LiveView Hook
  *
