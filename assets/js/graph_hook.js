@@ -140,10 +140,14 @@ const graphHook = {
 
     // Keep the Explore button in sync with current node content and children
     const updateExplore = (attempt = 0) => {
-      const btn = document.querySelector(
-        `[id^="explore-all-points-"][id$="-${node}"]`,
-      );
-      if (!btn) return;
+      const btn =
+        document.getElementById(`explore-all-points-${node}`) ||
+        document.getElementById("explore-all-points") ||
+        document.querySelector(`[id^="explore-all-points-"][id$="-${node}"]`);
+      if (!btn) {
+        if (attempt < 10) setTimeout(() => updateExplore(attempt + 1), 100);
+        return;
+      }
 
       // The ListDetection hook decorates this element with dataset.listItems and data-children
       const detector = document.getElementById(`list-detector-${node}`);
