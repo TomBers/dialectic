@@ -120,6 +120,20 @@ defmodule DialecticWeb.NoteMenuComp do
             aria-label="Download PNG"
             title="Download PNG (Alt-click to capture full graph)"
           >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4 mr-1.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M3 7h4l2-2h6l2 2h4v12H3zM12 17a5 5 0 100-10 5 5 0 000 10z"
+              />
+            </svg>
             PNG
           </button>
           <.link
