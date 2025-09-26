@@ -2,8 +2,6 @@
 
 4) Export Image of graph
 
-7) Undo / delete node - just mark node as deleted in the database, need to check ownership and ensure the node does not have anyh children.
-
 9) Allow Multiple trees on same graph
 
 Done
@@ -16,3 +14,5 @@ Done
 5) Colour schemes - tie colour to actions
 
 6) Node selected - the current selection is not clear make more standard.
+
+7) Undo / delete node - just mark node as deleted in the database, need to check ownership and ensure the node does not have anyh children.

@@ -1,19 +1,4 @@
 <div class="h-screen flex flex-col">
-  <style>
-    /* Hide the old Graph Actions section inside the left sidebar */
-    #side-drawer .menu-buttons.action-grid { display: none !important; }
-    #side-drawer .border-b.border-gray-200.pb-2:has(> .menu-buttons.action-grid) { display: none !important; }
-  </style>
-  <script>
-    (function() {
-      try {
-        if (!("CSS" in window) || !CSS.supports("selector(:has(*))")) {
-          var el = document.querySelector("#side-drawer .menu-buttons.action-grid");
-          if (el && el.parentElement) el.parentElement.style.display = "none";
-        }
-      } catch(e) {}
-    })();
-  </script>
   <.live_component
     module={DialecticWeb.Live.ModalComp}
     node={@node}
@@ -238,72 +223,46 @@
           Select the points you want to explore. You can uncheck any you want to skip.
         </p>
 
-        <div class="mb-2 flex items-center gap-2">
-          <label class="inline-flex items-center gap-2 text-sm">
-            <input id="explore-select-all" type="checkbox" class="rounded border-gray-300" />
-            <span>Select all</span>
-          </label>
+        <div id="explore-select-all-container" phx-hook="ExploreSelectAll">
+          <div class="mb-2 flex items-center gap-2">
+            <label class="inline-flex items-center gap-2 text-sm">
+              <input id="explore-select-all" type="checkbox" class="rounded border-gray-300" />
+              <span>Select all</span>
+            </label>
+          </div>
+
+          <form phx-submit="submit_explore_modal">
+            <div class="max-h-64 overflow-y-auto border rounded-md p-2 mb-3">
+              <%= for item <- @explore_items do %>
+                <label class="flex items-start gap-2 py-1">
+                  <input
+                    type="checkbox"
+                    name={"items[#{item}]"}
+                    value="on"
+                    class="mt-1 rounded border-gray-300"
+                  />
+                  <span class="text-sm">{item}</span>
+                </label>
+              <% end %>
+            </div>
+
+            <div class="flex justify-end gap-2">
+              <button
+                type="button"
+                phx-click="close_explore_modal"
+                class="px-3 py-1 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                class="px-3 py-1 rounded-md bg-indigo-600 text-white hover:bg-indigo-700"
+              >
+                Explore selected
+              </button>
+            </div>
+          </form>
         </div>
-
-        <form phx-submit="submit_explore_modal">
-          <div class="max-h-64 overflow-y-auto border rounded-md p-2 mb-3">
-            <%= for item <- @explore_items do %>
-              <label class="flex items-start gap-2 py-1">
-                <input
-                  type="checkbox"
-                  name={"items[#{item}]"}
-                  value="on"
-                  class="mt-1 rounded border-gray-300"
-                />
-                <span class="text-sm">{item}</span>
-              </label>
-            <% end %>
-          </div>
-
-          <div class="flex justify-end gap-2">
-            <button
-              type="button"
-              phx-click="close_explore_modal"
-              class="px-3 py-1 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              class="px-3 py-1 rounded-md bg-indigo-600 text-white hover:bg-indigo-700"
-            >
-              Explore selected
-            </button>
-          </div>
-        </form>
-
-        <script>
-          (function() {
-            var modal = document.getElementById("explore-modal");
-            if (!modal) return;
-            var selectAll = modal.querySelector("#explore-select-all");
-            var itemBoxes = modal.querySelectorAll('input[type="checkbox"][name^="items["]');
-            function syncSelectAll() {
-              if (!selectAll) return;
-              var total = itemBoxes.length;
-              var checkedCount = 0;
-              itemBoxes.forEach(function(cb){ if (cb.checked) checkedCount++; });
-              selectAll.checked = total > 0 && checkedCount === total;
-              selectAll.indeterminate = checkedCount > 0 && checkedCount < total;
-            }
-            if (selectAll) {
-              selectAll.addEventListener("change", function() {
-                itemBoxes.forEach(function(cb) { cb.checked = selectAll.checked; });
-                syncSelectAll();
-              });
-            }
-            itemBoxes.forEach(function(cb) {
-              cb.addEventListener("change", syncSelectAll);
-            });
-            // Initialize state on load
-            syncSelectAll();
-          })();
-        </script>
       </.modal>
     </div>
     
