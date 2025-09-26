@@ -53,6 +53,11 @@ const cols = {
     background: "white",
     border: "#F2F0EF", // Subtle pale amber for explanations
   },
+  origin: {
+    text: "#374151",
+    background: "white",
+    border: "#111827", // Distinct dark border for origin node
+  },
 };
 
 function normalizeToHex(c) {

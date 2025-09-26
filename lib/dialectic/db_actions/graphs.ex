@@ -10,7 +10,7 @@ defmodule Dialectic.DbActions.Graphs do
   """
   def create_new_graph(title, user \\ nil) do
     data = %{
-      "nodes" => [%Vertex{id: "1", content: title}],
+      "nodes" => [%Vertex{id: "1", content: title, class: "origin"}],
       "edges" => []
     }
 

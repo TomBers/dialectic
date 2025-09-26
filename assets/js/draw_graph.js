@@ -254,8 +254,22 @@ export function draw_graph(graph, context, elements, node) {
     });
   });
 
-  cy.elements().removeClass("selected");
-  cy.$(`#${node}`).addClass("selected");
+  requestAnimationFrame(() => {
+    cy.elements().removeClass("selected");
+    let initial = null;
+    if (node) {
+      initial = cy.getElementById(node);
+    }
+    if (!initial || initial.length === 0) {
+      initial = cy
+        .nodes()
+        .filter((n) => !n.isParent())
+        .first();
+    }
+    if (initial && initial.length > 0) {
+      initial.addClass("selected");
+    }
+  });
 
   return cy;
 }
