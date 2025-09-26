@@ -158,46 +158,52 @@
         data-node={if @node, do: @node.id, else: nil}
         data-operation={@graph_operation}
         data-div="cy-inner"
+        data-enter-shortcut="reader"
+        data-ignore-inputs="true"
         phx-hook="Graph"
+        phx-keydown={show_modal("modal-graph-live-modal-comp")}
+        phx-key="enter"
+        tabindex="0"
       >
         <div
           id="cy-inner"
           class="h-full w-full relative pb-40 sm:pb-32 md:pb-24"
           phx-update="ignore"
         >
-          <div
-            :if={!(@show_combine || @show_group_modal || @show_explore_modal || @open_read_modal)}
-            class="hidden sm:block fixed right-4 z-10 bottom-28 sm:bottom-20 md:bottom-16"
-            style="bottom: calc(6rem + env(safe-area-inset-bottom));"
+        </div>
+      </div>
+      
+<!-- Shortcuts and zoom controls moved outside Cytoscape container -->
+
+      <div
+        class="fixed right-4 z-30 bottom-28 sm:bottom-20 md:bottom-16"
+        style="bottom: calc(6rem + env(safe-area-inset-bottom));"
+      >
+        <div class="bg-white rounded-md shadow border border-gray-200 flex items-center divide-x divide-gray-200">
+          <button
+            id="zoom-out"
+            type="button"
+            class="px-2 py-1 text-gray-700 hover:bg-gray-100"
+            aria-label="Zoom out"
           >
-            <div class="bg-white rounded-md shadow border border-gray-200 flex items-center divide-x divide-gray-200">
-              <button
-                id="zoom-out"
-                type="button"
-                class="px-2 py-1 text-gray-700 hover:bg-gray-100"
-                aria-label="Zoom out"
-              >
-                −
-              </button>
-              <button
-                id="zoom-fit"
-                type="button"
-                class="px-3 py-1 text-gray-700 hover:bg-gray-100 text-xs"
-                aria-label="Fit"
-              >
-                Fit
-              </button>
-              <button
-                id="zoom-in"
-                type="button"
-                class="px-2 py-1 text-gray-700 hover:bg-gray-100"
-                aria-label="Zoom in"
-              >
-                +
-              </button>
-            </div>
-            <!-- moved mobile menu outside of zoom-controls wrapper -->
-          </div>
+            −
+          </button>
+          <button
+            id="zoom-fit"
+            type="button"
+            class="px-3 py-1 text-gray-700 hover:bg-gray-100 text-xs"
+            aria-label="Fit"
+          >
+            Fit
+          </button>
+          <button
+            id="zoom-in"
+            type="button"
+            class="px-2 py-1 text-gray-700 hover:bg-gray-100"
+            aria-label="Zoom in"
+          >
+            +
+          </button>
         </div>
       </div>
 

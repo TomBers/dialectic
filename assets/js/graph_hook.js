@@ -23,6 +23,26 @@ const graphHook = {
     );
     const container = document.getElementById(div);
 
+    // Prevent Enter shortcut from firing while typing in inputs/textareas/contenteditable
+    this._enterStopper = (e) => {
+      if (e.key === "Enter") {
+        const t = e.target;
+        const tag = (t && t.tagName) || "";
+        const isEditable =
+          tag === "INPUT" ||
+          tag === "TEXTAREA" ||
+          (t &&
+            (t.isContentEditable ||
+              t.closest('[contenteditable="true"], [contenteditable=""]')));
+        if (isEditable) {
+          // Allow default behavior (submit/newline) but stop bubbling to LiveView shortcut
+          e.stopPropagation();
+        }
+      }
+    };
+    // Use capture phase to intercept before LiveView's phx-keydown on container
+    this.el.addEventListener("keydown", this._enterStopper, true);
+
     // Zoom controls (+ / − / Fit)
     const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
     let zoomToast = null;
@@ -66,9 +86,9 @@ const graphHook = {
       requestAnimationFrame(showZoom);
     };
 
-    const btnIn = container.querySelector("#zoom-in");
-    const btnOut = container.querySelector("#zoom-out");
-    const btnFit = container.querySelector("#zoom-fit");
+    const btnIn = document.getElementById("zoom-in");
+    const btnOut = document.getElementById("zoom-out");
+    const btnFit = document.getElementById("zoom-fit");
 
     if (btnIn) {
       btnIn.addEventListener("click", (e) => {
@@ -189,6 +209,11 @@ const graphHook = {
 
     // Initial sync (and retry if the detector element isn't mounted yet)
     updateExplore();
+  },
+  destroyed() {
+    if (this._enterStopper) {
+      this.el.removeEventListener("keydown", this._enterStopper, true);
+    }
   },
 };
 
