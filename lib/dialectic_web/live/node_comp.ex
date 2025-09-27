@@ -16,7 +16,7 @@ defmodule DialecticWeb.NodeComp do
         <%= if String.length(@node.content) > 0 do %>
           <div
             class={[
-              "flex-grow overflow-auto pt-4",
+              "flex-grow overflow-auto pt-1",
               @menu_visible && "pb-28 sm:pb-24 md:pb-16",
               not @menu_visible && "pb-8"
             ]}
@@ -28,8 +28,8 @@ defmodule DialecticWeb.NodeComp do
             }
           >
             <div class="summary-content modal-responsive" id={"tt-summary-content-" <> @node.id}>
-              <article class="prose prose-stone prose-lg md:prose-xl max-w-none selection-content w-full">
-                <h3 class="text-lg sm:text-xl md:text-2xl mb-2 sm:mb-3">
+              <article class="prose prose-stone prose-lg md:prose-xl max-w-none selection-content w-full prose-headings:mt-0">
+                <h3 class="mt-0 text-lg sm:text-xl md:text-2xl mb-2 sm:mb-3">
                   {TextUtils.modal_title(@node.content, @node.class || "")}
                 </h3>
                 <div
