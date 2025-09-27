@@ -1,4 +1,18 @@
-Improve the explore all points button - It is creating too many points,
-and does not distinguish between top level and sub level points.
+3) References / Appendix - pull references from nodes and display in separate component
 
-Double check what happens to messages when the browser closes, perhaps move the database saving to before sending the message to the liveview, so that it saves wether the liveview is open or not
+4) Export Image of graph
+
+9) Allow Multiple trees on same graph
+
+Done
+
+1) Graph nav, scroll to move, in the same way the Figma app operates
+
+2) Move Graph actions to a bottom centered toolbar
+8) Move the search bar so the menu is visible
+
+5) Colour schemes - tie colour to actions
+
+6) Node selected - the current selection is not clear make more standard.
+
+7) Undo / delete node - just mark node as deleted in the database, need to check ownership and ensure the node does not have anyh children.

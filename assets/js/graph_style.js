@@ -1,10 +1,10 @@
 const selectState = {
   shape: "roundrectangle",
   "font-weight": "500",
-  "border-color": "white", // White border
-  color: "#FFFFFF", // White text
-  "background-color": "#0ea05a", // Slightly darker, more professional green
-  "border-width": 0,
+  "border-color": (ele) => darkenColor(getTypeColors(ele).border, 0.2),
+  color: (ele) => readableTextColor(getTypeColors(ele).border),
+  "background-color": (ele) => getTypeColors(ele).border,
+  "border-width": 3,
 };
 
 const cols = {
@@ -16,7 +16,7 @@ const cols = {
   answer: {
     text: "#374151",
     background: "white",
-    border: "#3b82f6", // Strong blue for answers
+    border: "#0ea5e9", // Strong blue for answers
   },
   antithesis: {
     text: "#374151",
@@ -41,7 +41,8 @@ const cols = {
   ideas: {
     text: "#374151",
     background: "white",
-    border: "#0ea5e9", // Bright sky blue for ideas
+    border: "#f97316", // Warm orange for ideas
+    // border: "#0ea5e9", // Bright sky blue for ideas
   },
   details: {
     text: "#374151",
@@ -51,9 +52,87 @@ const cols = {
   explain: {
     text: "#374151",
     background: "white",
-    border: "#FFE135", // Bright sky blue for explanations
+    border: "#F2F0EF", // Subtle pale amber for explanations
+  },
+  origin: {
+    text: "#374151",
+    background: "white",
+    border: "#111827", // Distinct dark border for origin node
   },
 };
+
+function normalizeToHex(c) {
+  const named = { white: "#ffffff", black: "#000000" };
+  if (!c) return "#000000";
+  c = c.toString().trim().toLowerCase();
+  if (named[c]) return named[c];
+  if (c.startsWith("#")) {
+    let hex = c.slice(1);
+    if (hex.length === 3) {
+      hex = hex
+        .split("")
+        .map((ch) => ch + ch)
+        .join("");
+    }
+    if (hex.length === 6) {
+      return `#${hex}`;
+    }
+  }
+  return c;
+}
+
+function invertColor(c) {
+  const hex = normalizeToHex(c).replace("#", "");
+  if (!/^[0-9a-f]{6}$/i.test(hex)) {
+    return "#000000";
+  }
+  const r = 255 - parseInt(hex.substring(0, 2), 16);
+  const g = 255 - parseInt(hex.substring(2, 4), 16);
+  const b = 255 - parseInt(hex.substring(4, 6), 16);
+  const toHex = (n) => n.toString(16).padStart(2, "0");
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+function readableTextColor(c) {
+  const hex = normalizeToHex(c).replace("#", "");
+  if (!/^[0-9a-f]{6}$/i.test(hex)) {
+    return "#000000";
+  }
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.6 ? "#000000" : "#ffffff";
+}
+
+function darkenColor(c, amount = 0.2) {
+  const hex = normalizeToHex(c).replace("#", "");
+  if (!/^[0-9a-f]{6}$/i.test(hex)) {
+    return c;
+  }
+  const r = Math.max(
+    0,
+    Math.floor(parseInt(hex.substring(0, 2), 16) * (1 - amount)),
+  );
+  const g = Math.max(
+    0,
+    Math.floor(parseInt(hex.substring(2, 4), 16) * (1 - amount)),
+  );
+  const b = Math.max(
+    0,
+    Math.floor(parseInt(hex.substring(4, 6), 16) * (1 - amount)),
+  );
+  const toHex = (n) => n.toString(16).padStart(2, "0");
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+function getTypeColors(ele) {
+  for (const type of Object.keys(cols)) {
+    if (ele.hasClass(type)) {
+      return cols[type];
+    }
+  }
+  return { text: "#374151", background: "white", border: "#e5e7eb" };
+}
 
 const cutoff = 140;
 
@@ -237,7 +316,8 @@ function processNodeContent(content, addEllipsis = true) {
   const contentWithoutTitle = fullContent.replace(/^Title:\s*/i, "");
 
   // Get only the first line
-  const firstLineOnly = contentWithoutTitle.split("\n")[0];
+  const firstLineCandidate = contentWithoutTitle.split("\n")[0];
+  const firstLineOnly = firstLineCandidate.replace(/^\s*#{1,6}\s*/, "");
 
   const text = firstLineOnly.slice(0, cutoff);
   const suffix = addEllipsis && firstLineOnly.length > cutoff ? "…" : "";

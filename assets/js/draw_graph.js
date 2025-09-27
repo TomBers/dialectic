@@ -33,6 +33,120 @@ export function draw_graph(graph, context, elements, node) {
     layout: layoutOptions,
   });
 
+  // Figma-like navigation controls
+  // - Scroll to pan (Shift for horizontal bias)
+  // - Cmd/Ctrl+Scroll or trackpad pinch to zoom at cursor
+  // - Hold Space and drag to pan; otherwise keep box selection
+  const container = graph;
+
+  // Disable Cytoscape's default wheel zoom so we fully control it
+  cy.userZoomingEnabled(false);
+
+  // Smooth, cursor-centered zoom
+  const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
+  const wheelHandler = (e) => {
+    // Zoom with Cmd/Ctrl (or trackpad pinch where ctrlKey is true)
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      const rect = container.getBoundingClientRect();
+      const renderedPosition = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      };
+
+      const current = cy.zoom();
+      // Exponential scale for smooth zooming
+      const zoomFactor = Math.pow(1.0015, -e.deltaY);
+      const next = clamp(current * zoomFactor, 0.05, 4);
+
+      cy.zoom({ level: next, renderedPosition });
+    } else {
+      // Two-finger scroll / mouse wheel pans the canvas
+      e.preventDefault();
+
+      // If Shift is pressed and the gesture is mostly vertical,
+      // bias the movement to horizontal (Figma-like)
+      let dx = e.deltaX;
+      let dy = e.deltaY;
+      if (e.shiftKey && Math.abs(e.deltaX) < Math.abs(e.deltaY)) {
+        dx = e.deltaY;
+        dy = 0;
+      }
+
+      // Natural pan (scroll right -> content moves right)
+      cy.panBy({ x: -dx, y: -dy });
+    }
+  };
+
+  container.addEventListener("wheel", wheelHandler, { passive: false });
+
+  // Space-drag to pan while preserving box selection otherwise
+  let isSpaceDown = false;
+  let isMouseDown = false;
+  let lastPos = null;
+  let prevBoxSelect = cy.boxSelectionEnabled();
+
+  const keydownHandler = (e) => {
+    // Don't hijack Space when typing in form fields or contenteditable areas
+    const target = e.target;
+    const tag = (target && target.tagName) || "";
+    const isEditable =
+      tag === "INPUT" ||
+      tag === "TEXTAREA" ||
+      (target &&
+        (target.isContentEditable ||
+          target.closest('[contenteditable="true"], [contenteditable=""]')));
+    if (isEditable) return;
+
+    if (e.code === "Space" && !isSpaceDown) {
+      isSpaceDown = true;
+      prevBoxSelect = cy.boxSelectionEnabled();
+      cy.boxSelectionEnabled(false); // disable box to allow background drag to pan
+      container.style.cursor = "grab";
+      e.preventDefault();
+    }
+  };
+
+  const keyupHandler = (e) => {
+    if (e.code === "Space") {
+      isSpaceDown = false;
+      cy.boxSelectionEnabled(prevBoxSelect);
+      container.style.cursor = "";
+    }
+  };
+
+  const mousedownHandler = (e) => {
+    if (isSpaceDown) {
+      isMouseDown = true;
+      lastPos = { x: e.clientX, y: e.clientY };
+      container.style.cursor = "grabbing";
+      e.preventDefault();
+    }
+  };
+
+  const mousemoveHandler = (e) => {
+    if (isSpaceDown && isMouseDown) {
+      const dx = e.clientX - lastPos.x;
+      const dy = e.clientY - lastPos.y;
+      cy.panBy({ x: dx, y: dy });
+      lastPos = { x: e.clientX, y: e.clientY };
+      e.preventDefault();
+    }
+  };
+
+  const mouseupHandler = () => {
+    if (isMouseDown) {
+      isMouseDown = false;
+      container.style.cursor = isSpaceDown ? "grab" : "";
+    }
+  };
+
+  document.addEventListener("keydown", keydownHandler);
+  document.addEventListener("keyup", keyupHandler);
+  container.addEventListener("mousedown", mousedownHandler);
+  window.addEventListener("mousemove", mousemoveHandler);
+  window.addEventListener("mouseup", mouseupHandler);
+
   const dd_options = layoutConfig.compoundDragDropOptions;
 
   cy.compoundDragAndDrop(dd_options);
@@ -140,8 +254,22 @@ export function draw_graph(graph, context, elements, node) {
     });
   });
 
-  cy.elements().removeClass("selected");
-  cy.$(`#${node}`).addClass("selected");
+  requestAnimationFrame(() => {
+    cy.elements().removeClass("selected");
+    let initial = null;
+    if (node) {
+      initial = cy.getElementById(node);
+    }
+    if (!initial || initial.length === 0) {
+      initial = cy
+        .nodes()
+        .filter((n) => !n.isParent())
+        .first();
+    }
+    if (initial && initial.length > 0) {
+      initial.addClass("selected");
+    }
+  });
 
   return cy;
 }

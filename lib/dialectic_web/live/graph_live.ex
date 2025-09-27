@@ -4,6 +4,7 @@ defmodule DialecticWeb.GraphLive do
   alias Dialectic.Graph.{Vertex, GraphActions, Siblings}
   alias DialecticWeb.{CombineComp, NodeComp}
   alias Dialectic.DbActions.DbWorker
+  alias DialecticWeb.Utils.UserUtils
 
   alias Phoenix.PubSub
 
@@ -15,11 +16,7 @@ defmodule DialecticWeb.GraphLive do
     live_view_topic = "graph_update:#{socket.id}"
     graph_topic = "graph_update:#{graph_id}"
 
-    user =
-      case socket.assigns.current_user do
-        nil -> "Anon"
-        _ -> socket.assigns.current_user.email
-      end
+    user = UserUtils.current_identity(socket.assigns)
 
     node_id = Map.get(params, "node", "1")
 
@@ -101,6 +98,7 @@ defmodule DialecticWeb.GraphLive do
                form: to_form(changeset),
                show_combine: false,
                user: user,
+               current_user: socket.assigns[:current_user],
                can_edit: can_edit,
                node_menu_visible: true,
                drawer_open: true,
@@ -115,7 +113,10 @@ defmodule DialecticWeb.GraphLive do
                nav_can_down: nav_down,
                nav_can_left: nav_left,
                nav_can_right: nav_right,
-               open_read_modal: Map.has_key?(params, "node")
+               open_read_modal: Map.has_key?(params, "node"),
+               show_explore_modal: false,
+               explore_items: [],
+               explore_selected: []
              )}
 
           {:error, error_message} ->
@@ -273,6 +274,72 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
+  def handle_event("delete_node", %{"node" => node_id}, socket) do
+    if !socket.assigns.can_edit do
+      {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    else
+      if socket.assigns.current_user == nil do
+        {:noreply, socket |> put_flash(:error, "You must be logged in to delete nodes")}
+      else
+        case GraphActions.find_node(socket.assigns.graph_id, node_id) do
+          nil ->
+            {:noreply, socket |> put_flash(:error, "Node not found")}
+
+          {_graph, node} ->
+            children = Map.get(node, :children, [])
+
+            owns = UserUtils.owner?(node, socket.assigns)
+
+            cond do
+              not owns ->
+                {:noreply, socket |> put_flash(:error, "You can only delete nodes you created")}
+
+              Enum.any?(children, fn ch -> not Map.get(ch, :deleted, false) end) ->
+                {:noreply,
+                 socket |> put_flash(:error, "Cannot delete a node that has non-deleted children")}
+
+              true ->
+                {graph2, next_node} =
+                  GraphActions.delete_node(graph_action_params(socket), node_id)
+
+                DbWorker.save_graph(socket.assigns.graph_id)
+
+                # Ensure we navigate to a valid, non-deleted node.
+                # If no parent exists or it's invalid/deleted, pick the first non-deleted node in the graph.
+                selected_node =
+                  cond do
+                    is_map(next_node) and not Map.get(next_node, :deleted, false) ->
+                      Vertex.add_relatives(next_node, graph2)
+
+                    true ->
+                      fallback =
+                        Enum.find_value(:digraph.vertices(graph2), fn vid ->
+                          case :digraph.vertex(graph2, vid) do
+                            {^vid, v} ->
+                              if not Map.get(v, :deleted, false), do: v, else: nil
+
+                            _ ->
+                              nil
+                          end
+                        end)
+
+                      if fallback do
+                        Vertex.add_relatives(fallback, graph2)
+                      else
+                        default_node()
+                      end
+                  end
+
+                {:noreply, updated_socket} =
+                  update_graph(socket, {graph2, selected_node}, "delete")
+
+                {:noreply, updated_socket |> put_flash(:info, "Node deleted")}
+            end
+        end
+      end
+    end
+  end
+
   def handle_event("branch_list", %{"items" => items}, socket) do
     if !socket.assigns.can_edit do
       {:noreply, socket |> put_flash(:error, "This graph is locked")}
@@ -287,6 +354,45 @@ defmodule DialecticWeb.GraphLive do
       end)
 
       {:noreply, socket |> put_flash(:info, "Exploring all points")}
+    end
+  end
+
+  def handle_event("open_explore_modal", %{"items" => items}, socket) do
+    if !socket.assigns.can_edit do
+      {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    else
+      {:noreply,
+       socket
+       |> assign(show_explore_modal: true, explore_items: items, explore_selected: [])}
+    end
+  end
+
+  def handle_event("close_explore_modal", _, socket) do
+    {:noreply, assign(socket, show_explore_modal: false, explore_items: [], explore_selected: [])}
+  end
+
+  def handle_event("submit_explore_modal", params, socket) do
+    if !socket.assigns.can_edit do
+      {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    else
+      selected = normalize_explore_selected(params)
+
+      if selected == [] do
+        {:noreply, socket |> put_flash(:error, "Please select at least one point")}
+      else
+        Enum.each(selected, fn item ->
+          GraphActions.answer_selection(
+            graph_action_params(socket, socket.assigns.node),
+            "Please explain: #{item}",
+            "explain"
+          )
+        end)
+
+        {:noreply,
+         socket
+         |> put_flash(:info, "Exploring selected points (#{length(selected)})")
+         |> assign(show_explore_modal: false, explore_items: [], explore_selected: [])}
+      end
     end
   end
 
@@ -310,6 +416,20 @@ defmodule DialecticWeb.GraphLive do
     else
       {_, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
       {:noreply, assign(socket, show_combine: true, node: node)}
+    end
+  end
+
+  def handle_event("node_related_ideas", %{"id" => node_id}, socket) do
+    if !socket.assigns.can_edit do
+      {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    else
+      {_, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+      update_graph(
+        socket,
+        GraphActions.related_ideas(graph_action_params(socket, node)),
+        "ideas"
+      )
     end
   end
 
@@ -537,6 +657,32 @@ defmodule DialecticWeb.GraphLive do
       is_binary(Map.get(vertex_data, :content, "")) and
       Map.get(vertex_data, :id) != nil and
       not Map.get(vertex_data, :deleted, false)
+  end
+
+  defp normalize_explore_selected(params) do
+    cond do
+      is_list(params) ->
+        Enum.filter(params, &is_binary/1)
+
+      is_map(params) and is_list(Map.get(params, "selected")) ->
+        Enum.filter(Map.get(params, "selected"), &is_binary/1)
+
+      is_map(params) and is_list(Map.get(params, "items")) ->
+        Enum.filter(Map.get(params, "items"), &is_binary/1)
+
+      is_map(params) and is_map(Map.get(params, "items")) ->
+        params["items"]
+        |> Enum.flat_map(fn {k, v} ->
+          cond do
+            v in ["on", "true", "1"] -> [k]
+            is_binary(v) -> [v]
+            true -> []
+          end
+        end)
+
+      true ->
+        []
+    end
   end
 
   defp graph_action_params(socket, node \\ nil) do

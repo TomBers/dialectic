@@ -3,12 +3,13 @@ defmodule Dialectic.Graph.Vertex do
   @valid_classes [
     "thesis",
     "antithesis",
-    "syntheis",
+    "synthesis",
     "answer",
     "assumption",
     "premise",
     "conclusion",
-    "user"
+    "user",
+    "origin"
   ]
   # Define a custom type for class validation
   # @type class :: "assumption" | "premise" | "conclusion"

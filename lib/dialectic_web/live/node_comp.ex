@@ -11,12 +11,14 @@ defmodule DialecticWeb.NodeComp do
         class="flex flex-col relative"
         phx-hook="TextSelectionHook"
         data-node-id={@node.id}
-        style="max-height: 100vh; display: flex; flex-direction: column;"
+        style="max-height: 100vh; display: flex; flex-direction: column; padding-bottom: env(safe-area-inset-bottom);"
       >
         <%= if String.length(@node.content) > 0 do %>
           <div
             class={[
-              "flex-grow overflow-auto pb-4 pt-4"
+              "flex-grow overflow-auto pt-1",
+              @menu_visible && "pb-28 sm:pb-24 md:pb-16",
+              not @menu_visible && "pb-8"
             ]}
             id={"tt-node-" <> @node.id}
             style={
@@ -26,8 +28,8 @@ defmodule DialecticWeb.NodeComp do
             }
           >
             <div class="summary-content modal-responsive" id={"tt-summary-content-" <> @node.id}>
-              <article class="prose prose-stone prose-lg md:prose-xl max-w-none selection-content w-full">
-                <h3 class="text-lg sm:text-xl md:text-2xl mb-2 sm:mb-3">
+              <article class="prose prose-stone prose-lg md:prose-xl max-w-none selection-content w-full prose-headings:mt-0">
+                <h3 class="mt-0 text-lg sm:text-xl md:text-2xl mb-2 sm:mb-3">
                   {TextUtils.modal_title(@node.content, @node.class || "")}
                 </h3>
                 <div
@@ -77,7 +79,14 @@ defmodule DialecticWeb.NodeComp do
           </div>
         <% end %>
       </div>
-      <div class="flex justify-center mb-3 mt-1 sticky bottom-2" style="z-index: 9;">
+      <div
+        class={[
+          "flex justify-center mb-3 mt-1 sticky",
+          @menu_visible && "bottom-24 sm:bottom-20 md:bottom-14",
+          not @menu_visible && "bottom-2"
+        ]}
+        style="z-index: 9; padding-bottom: env(safe-area-inset-bottom);"
+      >
         <button
           phx-click="toggle_node_menu"
           class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-1.5 px-5 rounded-full inline-flex items-center shadow-md transition-all duration-200 ease-in-out transform hover:scale-105"
@@ -99,15 +108,17 @@ defmodule DialecticWeb.NodeComp do
       </div>
       <div
         class="nodeMenuComp sticky bottom-0 bg-white w-full overflow-hidden shadow-md rounded-t-lg"
-        style={"max-height: #{if @menu_visible, do: "1000px", else: "0"}; opacity: #{if @menu_visible, do: "1", else: "0"}; transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out; border-top: #{if @menu_visible, do: "1px solid #e5e7eb", else: "none"}; z-index: 9;"}
+        style={"max-height: #{if @menu_visible, do: "1000px", else: "0"}; opacity: #{if @menu_visible, do: "1", else: "0"}; transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out; border-top: #{if @menu_visible, do: "1px solid #e5e7eb", else: "none"}; z-index: 9; padding-bottom: env(safe-area-inset-bottom);"}
       >
         <.live_component
           module={NodeMenuComp}
-          id="node-menu-comp"
+          id={"node-menu-comp-" <> @node.id}
           node={@node}
           user={@user}
           form={@form}
           graph_id={@graph_id}
+          graph_owner_id={assigns[:graph_owner_id]}
+          current_user={assigns[:current_user]}
           ask_question={@ask_question}
         />
       </div>
@@ -128,6 +139,8 @@ defmodule DialecticWeb.NodeComp do
        cut_off: Map.get(assigns, :cut_off, 500),
        ask_question: Map.get(assigns, :ask_question, true),
        graph_id: Map.get(assigns, :graph_id, ""),
+       graph_owner_id: Map.get(assigns, :graph_owner_id, nil),
+       current_user: Map.get(assigns, :current_user, nil),
        menu_visible: Map.get(assigns, :menu_visible, true)
      )}
   end
