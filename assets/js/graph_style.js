@@ -316,7 +316,8 @@ function processNodeContent(content, addEllipsis = true) {
   const contentWithoutTitle = fullContent.replace(/^Title:\s*/i, "");
 
   // Get only the first line
-  const firstLineOnly = contentWithoutTitle.split("\n")[0];
+  const firstLineCandidate = contentWithoutTitle.split("\n")[0];
+  const firstLineOnly = firstLineCandidate.replace(/^\s*#{1,6}\s*/, "");
 
   const text = firstLineOnly.slice(0, cutoff);
   const suffix = addEllipsis && firstLineOnly.length > cutoff ? "…" : "";

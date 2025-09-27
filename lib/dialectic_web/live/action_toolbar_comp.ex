@@ -1,6 +1,5 @@
 defmodule DialecticWeb.ActionToolbarComp do
   use DialecticWeb, :live_component
-  alias Phoenix.LiveView.JS
 
   # Computes deletion constraints and tooltip/title based on assigns
   defp delete_info(assigns) do
@@ -158,17 +157,8 @@ defmodule DialecticWeb.ActionToolbarComp do
           <button
             type="button"
             class="px-3 py-1 text-sm text-gray-700 rounded-full transition-colors hover:bg-[#f97316] hover:text-white"
-            phx-click={
-              JS.push("reply-and-answer",
-                value: %{
-                  vertex: %{
-                    content:
-                      "Generate a beginner-friendly list of related concepts to explore for breadth and diversity.\n\nOutput (markdown only; return only the list):\n- Create 3 short subsections with H3 headings:\n  ### Core ideas\n  ### Adjacent concepts\n  ### Practical applications\n- Under each heading, list 3–4 bullets.\n- Each bullet: Concept — 1 sentence on why it’s relevant.\n- Use plain language and avoid jargon.\n\nReturn only the headings and bullets; no intro or outro."
-                  },
-                  prefix: "ideas"
-                }
-              )
-            }
+            phx-click="node_related_ideas"
+            phx-value-id={@node && @node.id}
             title="Related ideas"
           >
             <span class="inline-flex items-center gap-1.5">

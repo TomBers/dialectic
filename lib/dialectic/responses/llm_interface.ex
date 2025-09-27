@@ -29,15 +29,7 @@ defmodule Dialectic.Responses.LlmInterface do
   def gen_selection_response(node, child, graph_id, selection, live_view_topic) do
     context = GraphManager.build_context(graph_id, node)
 
-    qn = """
-    Context:
-    #{context}
-
-    Instruction (apply to the context and current node):
-    #{selection}
-
-    Audience: first-time learner.
-
+    default_schema = """
     Output (markdown):
     ## [Short, descriptive title]
     - Paraphrase of the selection (1–2 sentences).
@@ -45,6 +37,23 @@ defmodule Dialectic.Responses.LlmInterface do
     - Why it matters here (2–3 bullets).
     - Follow-up questions or next steps (1–2).
     """
+
+    add_default? =
+      not Regex.match?(
+        ~r/(^|\n)Output\s*\(|(^|\n)##\s|(^|\n)###\s|Return only|Headings?:|Subsections?:/im,
+        selection
+      )
+
+    qn =
+      """
+      Context:
+      #{context}
+
+      Instruction (apply to the context and current node):
+      #{selection}
+
+      Audience: first-time learner.
+      """ <> if add_default?, do: "\n\n" <> default_schema, else: ""
 
     ask_model(qn, child, graph_id, live_view_topic)
   end
@@ -126,6 +135,50 @@ defmodule Dialectic.Responses.LlmInterface do
     ask_model(qn, child, graph_id, live_view_topic)
   end
 
+  def gen_related_ideas(node, child, graph_id, live_view_topic) do
+    context = GraphManager.build_context(graph_id, node)
+
+    content =
+      node
+      |> case do
+        nil -> ""
+        n -> to_string(n.content || "")
+      end
+
+    content1 = String.replace(content, "**", "")
+    content2 = Regex.replace(~r/^Title:\s*/i, content1, "")
+    first_line = content2 |> String.split("\n") |> Enum.at(0) |> to_string()
+    stripped = Regex.replace(~r/^\s*[#]{1,6}\s*/, first_line, "")
+    title = String.trim(stripped)
+
+    qn = """
+    Context:
+    #{context}
+
+    Generate a beginner-friendly list of related but distinct concepts to explore.
+
+    Current idea: "#{title}"
+
+    Requirements:
+    - Do not repeat or restate the current idea; prioritize diversity and contrasting schools of thought.
+    - Include at least one explicitly contrasting perspective (for example, if the topic is behaviourism, include psychodynamics).
+    - Audience: first-time learner.
+
+    Output (markdown only; return only the list):
+    - Create 3 short subsections with H3 headings:
+      ### Different/contrasting approaches
+      ### Adjacent concepts
+      ### Practical applications
+    - Under each heading, list 3–4 bullets.
+    - Each bullet: Concept — 1 sentence on why it’s relevant and how it differs from the current idea.
+    - Use plain language and avoid jargon.
+
+    Return only the headings and bullets; no intro or outro.
+    """
+
+    ask_model(qn, child, graph_id, live_view_topic)
+  end
+
   def ask_model(question, to_node, graph_id, live_view_topic) do
     style = """
     You are explaining to a curious beginner.
@@ -134,7 +187,7 @@ defmodule Dialectic.Responses.LlmInterface do
     - If context is insufficient, say what’s missing and ask one clarifying question.
     - Prefer info from the provided Context; label other info as "Background".
     - Never fabricate citations or data; if uncertain, say "not enough context."
-    Always output markdown and begin with an H2 title (## …).
+    Default to markdown and an H2 title (## …) unless the instruction specifies a different format. When there is any conflict, follow the question/selection’s format and instructions.
     """
 
     RequestQueue.add(
