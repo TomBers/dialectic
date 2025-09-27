@@ -19,8 +19,9 @@ defmodule Dialectic.Responses.LlmInterface do
     - Simple example (1–2 lines).
     - Pitfalls or nuances (1–3 bullets).
     - Next questions to explore (1–2).
+    - Further reading / references (1–3 items: Title — Source (URL) or a short search query if uncertain).
 
-    Constraints: ~150–220 words total.
+    Constraints: ~150–220 words total (excluding references).
     """
 
     ask_model(qn, child, graph_id, live_view_topic)
@@ -36,6 +37,7 @@ defmodule Dialectic.Responses.LlmInterface do
     - Key terms (term — brief definition).
     - Why it matters here (2–3 bullets).
     - Follow-up questions or next steps (1–2).
+    - Further reading / references (1–2 items: Title — Source (URL) or a short search query if uncertain).
     """
 
     add_default? =
@@ -81,8 +83,9 @@ defmodule Dialectic.Responses.LlmInterface do
       - Combined takeaway (1–2 sentences).
       - Trade-offs or unknowns (1–2 bullets).
       - Next step to test or explore (1).
+      - Further reading / references (1–3 items: Title — Source (URL) or a short search query if uncertain).
 
-      Constraints: ~150–220 words. If reconciliation is not possible, state the trade-offs clearly.
+      Constraints: ~150–220 words (excluding references). If reconciliation is not possible, state the trade-offs clearly.
       """
 
     ask_model(qn, child, graph_id, live_view_topic)
@@ -104,8 +107,9 @@ defmodule Dialectic.Responses.LlmInterface do
     - Example or evidence (1 line).
     - Caveat or limits (1 line).
     - When this holds vs. when it might not (1 line).
+    - Further reading / references (1–2 items: Title — Source (URL) or a short search query if uncertain).
 
-    Constraints: 120–150 words. Define any jargon.
+    Constraints: 120–150 words (excluding references). Define any jargon.
     """
 
     ask_model(qn, child, graph_id, live_view_topic)
@@ -128,8 +132,9 @@ defmodule Dialectic.Responses.LlmInterface do
     - Example or evidence (1 line).
     - Caveat or limits (1 line).
     - When this criticism applies vs. when it might not (1 line).
+    - Further reading / references (1–2 items: Title — Source (URL) or a short search query if uncertain).
 
-    Constraints: 120–150 words. Define any jargon.
+    Constraints: 120–150 words (excluding references). Define any jargon.
     """
 
     ask_model(qn, child, graph_id, live_view_topic)
@@ -186,7 +191,8 @@ defmodule Dialectic.Responses.LlmInterface do
     - Prefer short paragraphs and bullet lists.
     - If context is insufficient, say what’s missing and ask one clarifying question.
     - Prefer info from the provided Context; label other info as "Background".
-    - Never fabricate citations or data; if uncertain, say "not enough context."
+    - Never fabricate citations or data. Only include references you are confident in; prefer official docs, textbooks, or peer‑reviewed/authoritative sources. If unsure, provide a concise search query instead of a link and say what’s uncertain.
+    - When a schema includes "Further reading / references", provide 1–3 trustworthy items formatted as: Title — Source (URL). Keep them short.
     Default to markdown and an H2 title (## …) unless the instruction specifies a different format. When there is any conflict, follow the question/selection’s format and instructions.
     """
 
