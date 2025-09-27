@@ -75,7 +75,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                 value: %{
                   vertex: %{
                     content:
-                      "Generate a list of related concepts and themes, focused on breadth and diversity, with short explanations for each. Return only the list."
+                      "Generate a beginner-friendly list of related concepts to explore for breadth and diversity.\n\nOutput (markdown only; return only the list):\n- Create 3 short subsections with H3 headings:\n  ### Core ideas\n  ### Adjacent concepts\n  ### Practical applications\n- Under each heading, list 3–4 bullets.\n- Each bullet: Concept — 1 sentence on why it’s relevant.\n- Use plain language and avoid jargon.\n\nReturn only the headings and bullets; no intro or outro."
                   },
                   prefix: "ideas"
                 }
