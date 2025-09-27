@@ -16,6 +16,7 @@
 # If the VM crashes, it generates a dump, let's ignore it too.
 erl_crash.dump
 
+AGENTS.md
 # Also ignore archive artifacts (built via "mix archive.build").
 *.ez
 
@@ -34,4 +35,3 @@ dialectic-*.tar
 # In case you use Node.js/npm, you want to ignore these.
 npm-debug.log
 /assets/node_modules/
-
