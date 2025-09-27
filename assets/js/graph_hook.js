@@ -15,13 +15,10 @@ const graphHook = {
   mounted() {
     const { graph, node, div } = this.el.dataset;
 
-    this.cy = draw_graph(
-      this.el.querySelector(`#${div}`) || document.getElementById(div),
-      this,
-      JSON.parse(graph),
-      node,
-    );
-    const container = document.getElementById(div);
+    const container =
+      this.el.querySelector(`#${div}`) || document.getElementById(div);
+
+    this.cy = draw_graph(container, this, JSON.parse(graph), node);
 
     // Prevent Enter shortcut from firing while typing in inputs/textareas/contenteditable
     this._enterStopper = (e) => {

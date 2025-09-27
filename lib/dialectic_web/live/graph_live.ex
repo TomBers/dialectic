@@ -4,6 +4,7 @@ defmodule DialecticWeb.GraphLive do
   alias Dialectic.Graph.{Vertex, GraphActions, Siblings}
   alias DialecticWeb.{CombineComp, NodeComp}
   alias Dialectic.DbActions.DbWorker
+  alias DialecticWeb.Utils.UserUtils
 
   alias Phoenix.PubSub
 
@@ -15,11 +16,7 @@ defmodule DialecticWeb.GraphLive do
     live_view_topic = "graph_update:#{socket.id}"
     graph_topic = "graph_update:#{graph_id}"
 
-    user =
-      case socket.assigns[:current_user] do
-        %{email: email} when is_binary(email) -> String.downcase(email)
-        _ -> "Anon"
-      end
+    user = UserUtils.current_identity(socket.assigns)
 
     node_id = Map.get(params, "node", "1")
 
@@ -291,26 +288,7 @@ defmodule DialecticWeb.GraphLive do
           {_graph, node} ->
             children = Map.get(node, :children, [])
 
-            norm_node_user =
-              String.downcase(String.trim(to_string(Map.get(node, :user, "") || "")))
-
-            norm_current_email =
-              String.downcase(
-                to_string(
-                  (socket.assigns.current_user && socket.assigns.current_user.email) || ""
-                )
-              )
-
-            norm_current_id =
-              to_string((socket.assigns.current_user && socket.assigns.current_user.id) || "")
-
-            norm_user = String.downcase(to_string(socket.assigns.user || ""))
-
-            owns =
-              (norm_node_user == "" and (norm_current_email != "" or norm_user != "")) or
-                norm_node_user == norm_current_email or
-                norm_node_user == norm_current_id or
-                norm_node_user == norm_user
+            owns = UserUtils.owner?(node, socket.assigns)
 
             cond do
               not owns ->

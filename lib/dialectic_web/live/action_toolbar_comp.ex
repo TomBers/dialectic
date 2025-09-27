@@ -1,5 +1,6 @@
 defmodule DialecticWeb.ActionToolbarComp do
   use DialecticWeb, :live_component
+  alias DialecticWeb.Utils.UserUtils
 
   # Computes deletion constraints and tooltip/title based on assigns
   defp delete_info(assigns) do
@@ -8,17 +9,6 @@ defmodule DialecticWeb.ActionToolbarComp do
     current_user = assigns[:current_user]
     user = assigns[:user]
 
-    node_user_norm =
-      String.downcase(String.trim(to_string((node && node.user) || "")))
-
-    current_email_norm =
-      String.downcase(to_string((current_user && current_user.email) || ""))
-
-    current_id_str =
-      to_string((current_user && current_user.id) || "")
-
-    user_norm = String.downcase(to_string(user || ""))
-
     children_list = (node && (node.children || [])) || []
 
     live_children =
@@ -26,12 +16,7 @@ defmodule DialecticWeb.ActionToolbarComp do
 
     no_live_children? = length(live_children) == 0
 
-    owner? =
-      not is_nil(node) and
-        ((node_user_norm != "" and
-            (current_email_norm == node_user_norm or
-               current_id_str == node_user_norm or user_norm == node_user_norm)) or
-           (node_user_norm == "" and current_email_norm != ""))
+    owner? = UserUtils.owner?(node, %{current_user: current_user, user: user})
 
     locked? = can_edit == false
     deletable = owner? && no_live_children? && !locked?
@@ -53,14 +38,8 @@ defmodule DialecticWeb.ActionToolbarComp do
           "Cannot delete: graph is locked"
 
         not owner? ->
-          who =
-            if current_user && current_user.email,
-              do: current_user.email,
-              else: to_string(user || "")
-
           base =
-            "Cannot delete: you are not the author (you=" <>
-              who <> ", node.user=" <> to_string((node && node.user) || "") <> ")"
+            "Cannot delete: you are not the author"
 
           if String.trim(to_string((node && node.user) || "")) == "" do
             base <> " [blank owner assumed current user]"
