@@ -8,15 +8,18 @@ defmodule Dialectic.GraphFixtures do
   end
 
   def insert_data(data, title) do
-    %Graph{}
-    |> Graph.changeset(%{
-      title: title,
-      user_id: nil,
-      data: data,
-      is_public: true,
-      is_deleted: false,
-      is_published: true
-    })
-    |> Repo.insert()
+    graph =
+      %Graph{}
+      |> Graph.changeset(%{
+        title: title,
+        user_id: nil,
+        data: data,
+        is_public: true,
+        is_deleted: false,
+        is_published: true
+      })
+      |> Repo.insert!()
+
+    {:ok, graph}
   end
 end
