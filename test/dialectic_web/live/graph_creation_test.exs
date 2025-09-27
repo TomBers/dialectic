@@ -92,7 +92,9 @@ defmodule DialecticWeb.GraphCreationTest do
 
         # Access the first node - it's a Vertex struct
         first_node = List.first(nodes)
-        assert first_node.content == test_title, "Node content should match title"
+
+        assert first_node.content == "## " <> test_title,
+               "Node content should match origin node format"
       after
         # Clean up
         Repo.delete(graph)
