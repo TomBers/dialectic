@@ -2,6 +2,94 @@ defmodule DialecticWeb.ActionToolbarComp do
   use DialecticWeb, :live_component
   alias Phoenix.LiveView.JS
 
+  # Computes deletion constraints and tooltip/title based on assigns
+  defp delete_info(assigns) do
+    node = assigns[:node]
+    can_edit = assigns[:can_edit]
+    current_user = assigns[:current_user]
+    user = assigns[:user]
+
+    node_user_norm =
+      String.downcase(String.trim(to_string((node && node.user) || "")))
+
+    current_email_norm =
+      String.downcase(to_string((current_user && current_user.email) || ""))
+
+    current_id_str =
+      to_string((current_user && current_user.id) || "")
+
+    user_norm = String.downcase(to_string(user || ""))
+
+    children_list = (node && (node.children || [])) || []
+
+    live_children =
+      Enum.filter(children_list, fn ch -> not Map.get(ch, :deleted, false) end)
+
+    no_live_children? = length(live_children) == 0
+
+    owner? =
+      not is_nil(node) and
+        ((node_user_norm != "" and
+            (current_email_norm == node_user_norm or
+               current_id_str == node_user_norm or user_norm == node_user_norm)) or
+           (node_user_norm == "" and current_email_norm != ""))
+
+    locked? = can_edit == false
+    deletable = owner? && no_live_children? && !locked?
+
+    live_children_count = length(live_children)
+
+    live_child_ids =
+      live_children
+      |> Enum.map(fn ch -> to_string(Map.get(ch, :id, "")) end)
+      |> Enum.reject(&(&1 == ""))
+      |> Enum.join(", ")
+
+    delete_title =
+      cond do
+        deletable ->
+          "Delete this node"
+
+        locked? ->
+          "Cannot delete: graph is locked"
+
+        not owner? ->
+          who =
+            if current_user && current_user.email,
+              do: current_user.email,
+              else: to_string(user || "")
+
+          base =
+            "Cannot delete: you are not the author (you=" <>
+              who <> ", node.user=" <> to_string((node && node.user) || "") <> ")"
+
+          if String.trim(to_string((node && node.user) || "")) == "" do
+            base <> " [blank owner assumed current user]"
+          else
+            base
+          end
+
+        not no_live_children? ->
+          base =
+            "Cannot delete: this node has #{live_children_count} child" <>
+              if live_children_count == 1, do: "", else: "ren"
+
+          if live_child_ids != "" do
+            base <> " (child IDs: " <> live_child_ids <> ")"
+          else
+            base
+          end
+
+        true ->
+          "Cannot delete"
+      end
+
+    %{
+      deletable: deletable,
+      title: delete_title
+    }
+  end
+
   @impl true
   def update(assigns, socket) do
     {:ok, assign(socket, assigns)}
@@ -192,91 +280,26 @@ defmodule DialecticWeb.ActionToolbarComp do
             </span>
           </button>
 
-          <% node_user_norm =
-            String.downcase(String.trim(to_string((@node && @node.user) || ""))) %>
-          <% current_email_norm =
-            String.downcase(to_string((assigns[:current_user] && assigns[:current_user].email) || "")) %>
-          <% current_id_str =
-            to_string((assigns[:current_user] && assigns[:current_user].id) || "") %>
-          <% user_norm = String.downcase(to_string(@user || "")) %>
-
-          <% children_list = (@node && (@node.children || [])) || [] %>
-          <% no_live_children? =
-            Enum.count(children_list, fn ch -> not Map.get(ch, :deleted, false) end) == 0 %>
-
-          <% owner? =
-            not is_nil(@node) &&
-              ((node_user_norm != "" and
-                  (current_email_norm == node_user_norm or
-                     current_id_str == node_user_norm or user_norm == node_user_norm)) or
-                 (node_user_norm == "" and current_email_norm != "")) %>
-
-          <% locked? = @can_edit == false %>
-          <% deletable = owner? && no_live_children? && !locked? %>
+          <% info = delete_info(assigns) %>
 
           <button
             id={"delete-node-#{@graph_id}-#{@node && @node.id}"}
             type="button"
-            phx-click={if deletable, do: "delete_node", else: nil}
+            phx-click={if info.deletable, do: "delete_node", else: nil}
             phx-value-node={@node && @node.id}
-            phx-confirm={if deletable, do: "Are you sure you want to delete this node?", else: nil}
-            aria-disabled={not deletable}
-            data-disabled={not deletable}
+            phx-confirm={
+              if info.deletable, do: "Are you sure you want to delete this node?", else: nil
+            }
+            aria-disabled={not info.deletable}
+            data-disabled={not info.deletable}
             class={[
               "px-3 py-1 text-sm rounded-full transition-colors",
-              deletable &&
+              info.deletable &&
                 "inline-flex items-center gap-1.5 border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 hover:text-rose-800",
-              !deletable &&
+              !info.deletable &&
                 "inline-flex items-center gap-1.5 border border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed"
             ]}
-            title={
-              cond do
-                deletable ->
-                  "Delete this node"
-
-                locked? ->
-                  "Cannot delete: graph is locked"
-
-                not owner? ->
-                  "Cannot delete: you are not the author (you=" <>
-                    if(assigns[:current_user] && assigns[:current_user].email,
-                      do: assigns[:current_user].email,
-                      else: to_string(@user || "")
-                    ) <>
-                    ", node.user=" <>
-                    to_string((@node && @node.user) || "") <>
-                    if(
-                      String.trim(to_string((@node && @node.user) || "")) == "",
-                      do: " [blank owner assumed current user]",
-                      else: ""
-                    ) <> ")"
-
-                not no_live_children? ->
-                  live_children =
-                    Enum.filter(children_list, fn ch -> not Map.get(ch, :deleted, false) end)
-
-                  live_children_count = length(live_children)
-
-                  live_child_ids =
-                    live_children
-                    |> Enum.map(fn ch -> to_string(Map.get(ch, :id, "")) end)
-                    |> Enum.reject(&(&1 == ""))
-                    |> Enum.join(", ")
-
-                  base =
-                    "Cannot delete: this node has #{live_children_count} child" <>
-                      if live_children_count == 1, do: "", else: "ren"
-
-                  if live_child_ids != "" do
-                    base <> " (child IDs: " <> live_child_ids <> ")"
-                  else
-                    base
-                  end
-
-                true ->
-                  "Cannot delete"
-              end
-            }
+            title={info.title}
           >
             <span class="inline-flex items-center gap-1.5">
               <svg
