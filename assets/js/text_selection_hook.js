@@ -96,7 +96,7 @@ const textSelectionHook = {
       if (actionButton) {
         actionButton.onclick = () => {
           this.pushEvent("reply-and-answer", {
-            vertex: { content: selectedText },
+            vertex: { content: `Please explain: ${selectedText}` },
             prefix: "explain",
           });
 
