@@ -9,6 +9,7 @@ defmodule Dialectic.Graph.Vertex do
     "premise",
     "conclusion",
     "user",
+    "question",
     "origin"
   ]
   # Define a custom type for class validation

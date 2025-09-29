@@ -81,7 +81,7 @@ defmodule DialecticWeb.NodeMenuComp do
             <.form
               for={@form}
               phx-submit="reply-and-answer"
-              id={"tt-reply-form-" <> @node.id}
+              id={"tt-ask-form-" <> @node.id}
               class="bg-white border border-gray-300 rounded-b-md p-3"
             >
               <div class="relative">

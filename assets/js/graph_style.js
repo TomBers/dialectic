@@ -1,138 +1,66 @@
-const selectState = {
-  shape: "roundrectangle",
-  "font-weight": "500",
-  "border-color": (ele) => darkenColor(getTypeColors(ele).border, 0.2),
-  color: (ele) => readableTextColor(getTypeColors(ele).border),
-  "background-color": (ele) => getTypeColors(ele).border,
-  "border-width": 3,
+const defaultNodeStyle = {
+  text: "#374151",
+  background: "white",
+  border: "#e5e7eb", // light gray (gray-200)
+  selectedText: "#ffffff", // white text on selection for consistency
+  selectedBackground: "#bec3cc", // use border color on selection
+  selectedBorder: "#a1a8b5", // gray-300 for gentle emphasis
 };
 
 const cols = {
-  user: {
-    text: "#374151",
-    background: "white",
-    border: "#d1d5db", // Subtle medium gray for user messages
-  },
-  answer: {
+  question: {
     text: "#374151",
     background: "white",
     border: "#0ea5e9", // Strong blue for answers
+    selectedText: "#ffffff",
+    selectedBackground: "#0ea5e9",
+    selectedBorder: "#0284c7",
   },
+
   antithesis: {
     text: "#374151",
     background: "white",
     border: "#ef4444", // Vibrant red for antithesis/opposing viewpoints
+    selectedText: "#ffffff",
+    selectedBackground: "#ef4444",
+    selectedBorder: "#dc2626",
   },
   synthesis: {
     text: "#374151",
     background: "white",
     border: "#8b5cf6", // Rich purple for synthesis (combined ideas)
+    selectedText: "#ffffff",
+    selectedBackground: "#8b5cf6",
+    selectedBorder: "#7c3aed",
   },
   thesis: {
     text: "#374151",
     background: "white",
     border: "#10b981", // Emerald green for thesis/main arguments
+    selectedText: "#ffffff",
+    selectedBackground: "#10b981",
+    selectedBorder: "#059669",
   },
-  examples: {
-    text: "#374151",
-    background: "white",
-    border: "#f97316", // Warm orange for examples
-  },
+
   ideas: {
     text: "#374151",
     background: "white",
     border: "#f97316", // Warm orange for ideas
-    // border: "#0ea5e9", // Bright sky blue for ideas
-  },
-  details: {
-    text: "#374151",
-    background: "white",
-    border: "#84cc16", // Lime green for details
-  },
-  explain: {
-    text: "#374151",
-    background: "white",
-    border: "#F2F0EF", // Subtle pale amber for explanations
+    selectedText: "#ffffff",
+    selectedBackground: "#f97316",
+    selectedBorder: "#ea580c",
   },
   origin: {
     text: "#374151",
     background: "white",
     border: "#111827", // Distinct dark border for origin node
+    selectedText: "#ffffff",
+    selectedBackground: "#111827",
+    selectedBorder: "#030712",
   },
+  answer: defaultNodeStyle,
+  explain: defaultNodeStyle,
 };
-
-function normalizeToHex(c) {
-  const named = { white: "#ffffff", black: "#000000" };
-  if (!c) return "#000000";
-  c = c.toString().trim().toLowerCase();
-  if (named[c]) return named[c];
-  if (c.startsWith("#")) {
-    let hex = c.slice(1);
-    if (hex.length === 3) {
-      hex = hex
-        .split("")
-        .map((ch) => ch + ch)
-        .join("");
-    }
-    if (hex.length === 6) {
-      return `#${hex}`;
-    }
-  }
-  return c;
-}
-
-function invertColor(c) {
-  const hex = normalizeToHex(c).replace("#", "");
-  if (!/^[0-9a-f]{6}$/i.test(hex)) {
-    return "#000000";
-  }
-  const r = 255 - parseInt(hex.substring(0, 2), 16);
-  const g = 255 - parseInt(hex.substring(2, 4), 16);
-  const b = 255 - parseInt(hex.substring(4, 6), 16);
-  const toHex = (n) => n.toString(16).padStart(2, "0");
-  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
-}
-
-function readableTextColor(c) {
-  const hex = normalizeToHex(c).replace("#", "");
-  if (!/^[0-9a-f]{6}$/i.test(hex)) {
-    return "#000000";
-  }
-  const r = parseInt(hex.substring(0, 2), 16);
-  const g = parseInt(hex.substring(2, 4), 16);
-  const b = parseInt(hex.substring(4, 6), 16);
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.6 ? "#000000" : "#ffffff";
-}
-
-function darkenColor(c, amount = 0.2) {
-  const hex = normalizeToHex(c).replace("#", "");
-  if (!/^[0-9a-f]{6}$/i.test(hex)) {
-    return c;
-  }
-  const r = Math.max(
-    0,
-    Math.floor(parseInt(hex.substring(0, 2), 16) * (1 - amount)),
-  );
-  const g = Math.max(
-    0,
-    Math.floor(parseInt(hex.substring(2, 4), 16) * (1 - amount)),
-  );
-  const b = Math.max(
-    0,
-    Math.floor(parseInt(hex.substring(4, 6), 16) * (1 - amount)),
-  );
-  const toHex = (n) => n.toString(16).padStart(2, "0");
-  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
-}
-function getTypeColors(ele) {
-  for (const type of Object.keys(cols)) {
-    if (ele.hasClass(type)) {
-      return cols[type];
-    }
-  }
-  return { text: "#374151", background: "white", border: "#e5e7eb" };
-}
 
 const cutoff = 140;
 
@@ -198,7 +126,7 @@ export function graphStyle() {
         shape: "roundrectangle",
         "border-width": 1,
         "border-color": "#e5e7eb",
-        "background-color": "white",
+        "background-color": "#f9fafb",
         color: "#374151",
       },
     },
@@ -293,7 +221,7 @@ export function graphStyle() {
         //  NOT "css"
         "border-color": cols[nodeType].border,
         "background-color": cols[nodeType].background,
-        "border-width": 3,
+        "border-width": 2,
         "border-opacity": 1,
         color: cols[nodeType].text,
       },
@@ -301,7 +229,14 @@ export function graphStyle() {
 
     base_style.push({
       selector: `node.${nodeType}.selected`, // ← has both classes
-      style: selectState,
+      style: {
+        shape: "roundrectangle",
+        "font-weight": "500",
+        "border-color": cols[nodeType].selectedBorder,
+        color: cols[nodeType].selectedText,
+        "background-color": cols[nodeType].selectedBackground,
+        "border-width": 2,
+      },
     });
   }
   return base_style;
