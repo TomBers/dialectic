@@ -16,29 +16,38 @@ const listDetectionHook = {
   },
 
   checkForLists() {
-    // Ultra-simple heuristic:
-    // - Collect all <li> texts (including nested)
-    // - Remove any bullet that starts with "Short answer:" (case-insensitive)
-    // - Remove any bullet that ends with ":"
-    // - Dedupe and cache in data-list-items
+    // One-indent heuristic:
+    // - Collect only items that are one level of indentation:
+    //   direct <li> children of a <ul>/<ol> that itself is directly under a top-level <li>
+    // - Exclude label-like items (e.g., ending with ":" or starting with "Short answer:")
+    // - Dedupe and cache
     const items = [];
 
     const clean = (s) => (s || "").replace(/\s+/g, " ").trim();
 
     const textFromLi = (li) => {
       const clone = li.cloneNode(true);
-      // Keep only this item's own text; exclude nested list contents
+      // Exclude nested list contents
       clone.querySelectorAll("ul, ol").forEach((n) => n.remove());
       return clean(clone.textContent || "");
     };
 
+    // For each top-level list item, collect one-indent bullets from its direct nested list(s)
     Array.from(this.el.querySelectorAll("li")).forEach((li) => {
-      const txt = textFromLi(li);
-      if (!txt) return;
-      // Filter rules
-      if (/^short answer\s*:/i.test(txt)) return;
-      if (/:$/.test(txt)) return;
-      items.push(txt);
+      const nestedLists = Array.from(li.children).filter(
+        (el) => el.tagName === "UL" || el.tagName === "OL",
+      );
+      nestedLists.forEach((list) => {
+        Array.from(list.children)
+          .filter((el) => el.tagName === "LI")
+          .forEach((nli) => {
+            const txt = textFromLi(nli);
+            if (!txt) return;
+            if (/^short answer\s*:/i.test(txt)) return;
+            if (/:$/.test(txt)) return;
+            items.push(txt);
+          });
+      });
     });
 
     const deduped = Array.from(new Set(items));

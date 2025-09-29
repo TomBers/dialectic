@@ -138,34 +138,55 @@ const graphHook = {
       btnFit.addEventListener("click", this._btnFitHandler);
     }
     if (btnPngs.length) {
-      this._btnPngHandlers = [];
+      if (!Array.isArray(this._btnPngHandlers)) this._btnPngHandlers = [];
       btnPngs.forEach((btnPng) => {
-        const handler = (e) => {
-          e.preventDefault();
-          e.stopPropagation();
+        // Avoid duplicate binding
+        const already = (this._btnPngHandlers || []).some(
+          ([el]) => el === btnPng,
+        );
+        if (already) return;
 
-          // Alt-click to capture the full graph, otherwise export the current viewport
-          const full = !!e.altKey;
+        if (!this._exportPngHandler) {
+          this._exportPngHandler = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
 
-          // Higher scale for sharper images
-          const scale = 2;
+            // Save current viewport
+            const prevZoom = this.cy.zoom();
+            const prevPan = this.cy.pan();
 
-          const dataUrl = this.cy.png({
-            full: full,
-            scale: scale,
-            bg: "#ffffff",
-          });
+            // Fit the graph to canvas with padding, ignoring user zoom/pan
+            this.cy.fit(undefined, 25);
 
-          const ts = new Date().toISOString().replace(/[:.]/g, "-");
-          const a = document.createElement("a");
-          a.href = dataUrl;
-          a.download = full ? `graph-full-${ts}.png` : `graph-${ts}.png`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-        };
-        btnPng.addEventListener("click", handler);
-        this._btnPngHandlers.push([btnPng, handler]);
+            const doExport = () => {
+              const dataUrl = this.cy.png({
+                full: true, // ignore current viewport; export full graph
+                scale: 2,
+                bg: "#ffffff",
+              });
+
+              const ts = new Date().toISOString().replace(/[:.]/g, "-");
+              const a = document.createElement("a");
+              a.href = dataUrl;
+              a.download = `graph-full-${ts}.png`;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+
+              // Restore the previous viewport
+              this.cy.zoom(prevZoom);
+              this.cy.pan(prevPan);
+            };
+
+            // Wait 2 frames to ensure fit is rendered before snapshot
+            requestAnimationFrame(() => {
+              requestAnimationFrame(doExport);
+            });
+          };
+        }
+
+        btnPng.addEventListener("click", this._exportPngHandler);
+        this._btnPngHandlers.push([btnPng, this._exportPngHandler]);
       });
     }
 
@@ -266,6 +287,51 @@ const graphHook = {
 
     // Initial sync (and retry if the detector element isn't mounted yet)
     updateExplore();
+
+    // Robustly bind PNG buttons that might be added on LiveView updates
+    const pngButtons = Array.from(document.querySelectorAll(".download-png"));
+    if (!Array.isArray(this._btnPngHandlers)) this._btnPngHandlers = [];
+    const bound = new Set(this._btnPngHandlers.map(([el]) => el));
+    pngButtons.forEach((btn) => {
+      if (bound.has(btn)) return;
+      if (!this._exportPngHandler) {
+        this._exportPngHandler = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          const prevZoom = this.cy.zoom();
+          const prevPan = this.cy.pan();
+
+          this.cy.fit(undefined, 25);
+
+          const doExport = () => {
+            const dataUrl = this.cy.png({
+              full: true,
+              scale: 2,
+              bg: "#ffffff",
+            });
+
+            const ts = new Date().toISOString().replace(/[:.]/g, "-");
+            const a = document.createElement("a");
+            a.href = dataUrl;
+            a.download = `graph-full-${ts}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            this.cy.zoom(prevZoom);
+            this.cy.pan(prevPan);
+          };
+
+          requestAnimationFrame(() => {
+            requestAnimationFrame(doExport);
+          });
+        };
+      }
+
+      btn.addEventListener("click", this._exportPngHandler);
+      this._btnPngHandlers.push([btn, this._exportPngHandler]);
+    });
   },
   destroyed() {
     if (this._enterStopper) {
