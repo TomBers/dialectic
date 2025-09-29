@@ -1,10 +1,10 @@
 const defaultNodeStyle = {
   text: "#374151",
   background: "white",
-  border: "#e5e7eb",
-  selectedText: "#ffffff",
-  selectedBackground: "#e5e7eb",
-  selectedBorder: "#b9bcc4",
+  border: "#e5e7eb", // light gray (gray-200)
+  selectedText: "#ffffff", // white text on selection for consistency
+  selectedBackground: "#bec3cc", // use border color on selection
+  selectedBorder: "#a1a8b5", // gray-300 for gentle emphasis
 };
 
 const cols = {
@@ -221,7 +221,7 @@ export function graphStyle() {
         //  NOT "css"
         "border-color": cols[nodeType].border,
         "background-color": cols[nodeType].background,
-        "border-width": 3,
+        "border-width": 2,
         "border-opacity": 1,
         color: cols[nodeType].text,
       },
@@ -235,7 +235,7 @@ export function graphStyle() {
         "border-color": cols[nodeType].selectedBorder,
         color: cols[nodeType].selectedText,
         "background-color": cols[nodeType].selectedBackground,
-        "border-width": 3,
+        "border-width": 2,
       },
     });
   }
