@@ -14,14 +14,14 @@ const cols = {
     border: "#d1d5db", // Subtle medium gray for user messages
   },
   question: {
-    text: "#111827",
-    background: "#fff7ed", // Light amber background for questions
-    border: "#f59e0b", // Amber border for visually distinct question nodes
+    text: "#374151",
+    background: "white",
+    border: "#0ea5e9", // Strong blue for answers
   },
   answer: {
     text: "#374151",
     background: "white",
-    border: "#0ea5e9", // Strong blue for answers
+    border: "#d1d5db", // Subtle medium gray for answer messages
   },
   antithesis: {
     text: "#374151",
@@ -41,7 +41,7 @@ const cols = {
   examples: {
     text: "#374151",
     background: "white",
-    border: "#f97316", // Warm orange for examples
+    border: "#f97316", // Offwhite
   },
   ideas: {
     text: "#374151",
