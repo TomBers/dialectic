@@ -38,16 +38,15 @@ const cols = {
     background: "white",
     border: "#10b981", // Emerald green for thesis/main arguments
   },
-  examples: {
-    text: "#374151",
-    background: "white",
-    border: "#f97316", // Offwhite
-  },
+  // examples: {
+  //   text: "#374151",
+  //   background: "white",
+  //   border: "#f97316", // Orange
+  // },
   ideas: {
     text: "#374151",
     background: "white",
     border: "#f97316", // Warm orange for ideas
-    // border: "#0ea5e9", // Bright sky blue for ideas
   },
   details: {
     text: "#374151",
