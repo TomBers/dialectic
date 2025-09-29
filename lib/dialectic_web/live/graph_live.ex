@@ -484,20 +484,15 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}} = params, socket) do
+  def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}} = _params, socket) do
     if !socket.assigns.can_edit do
       {:noreply, socket |> put_flash(:error, "This graph is locked")}
     else
-      prefix = params["prefix"] || "answer"
-      #  Add a Reply Node and an Answer node
-      # {_graph, node} = GraphActions.comment(graph_action_params(socket), answer, prefix)
-
       update_graph(
         socket,
-        GraphActions.answer_selection(
+        GraphActions.ask_and_answer(
           graph_action_params(socket, socket.assigns.node),
-          answer,
-          prefix
+          answer
         ),
         "answer"
       )

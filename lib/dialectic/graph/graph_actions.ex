@@ -101,4 +101,29 @@ defmodule Dialectic.Graph.GraphActions do
   def find_node(graph_id, id) do
     GraphManager.find_node_by_id(graph_id, id)
   end
+
+  def ask_and_answer({graph_id, node, user, live_view_topic}, question_text) do
+    # 1) Create a visually distinct 'question' node under the selected node (no async update)
+    {_graph1, question_node} =
+      GraphManager.add_child(
+        graph_id,
+        [node],
+        fn _ -> :ok end,
+        "question",
+        user
+      )
+
+    # 2) Set the question content synchronously to avoid races
+    updated_question =
+      GraphManager.update_vertex(graph_id, question_node.id, question_text)
+
+    # 3) Create an AI 'answer' node as a child of the question node, using the updated question
+    GraphManager.add_child(
+      graph_id,
+      [updated_question],
+      fn n -> LlmInterface.gen_response(updated_question, n, graph_id, live_view_topic) end,
+      "answer",
+      user
+    )
+  end
 end

@@ -13,6 +13,11 @@ const cols = {
     background: "white",
     border: "#d1d5db", // Subtle medium gray for user messages
   },
+  question: {
+    text: "#111827",
+    background: "#fff7ed", // Light amber background for questions
+    border: "#f59e0b", // Amber border for visually distinct question nodes
+  },
   answer: {
     text: "#374151",
     background: "white",

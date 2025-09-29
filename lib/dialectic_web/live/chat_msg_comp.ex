@@ -109,6 +109,7 @@ defmodule DialecticWeb.ChatMsgComp do
         "thesis" -> "border-green-400 text-green-700"
         "antithesis" -> "border-red-400 text-red-700"
         "synthesis" -> "border-purple-600 text-purple-700"
+        "question" -> "border-amber-400 text-amber-700"
         _ -> "border border-gray-200 bg-white"
       end
 
