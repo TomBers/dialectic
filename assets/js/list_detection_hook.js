@@ -16,110 +16,45 @@ const listDetectionHook = {
   },
 
   checkForLists() {
-    // This hook is attached directly to the content div containing the HTML
-    const listItems = [];
+    // One-indent heuristic:
+    // - Collect only items that are one level of indentation:
+    //   direct <li> children of a <ul>/<ol> that itself is directly under a top-level <li>
+    // - Exclude label-like items (e.g., ending with ":" or starting with "Short answer:")
+    // - Dedupe and cache
+    const items = [];
 
-    // Prefer ordered-numbered main points first
-    let foundOrdered = false;
+    const clean = (s) => (s || "").replace(/\s+/g, " ").trim();
 
-    // 1. Ordered HTML lists: collect only top-level <li> and exclude nested list text
-    const orderedLists = this.el.querySelectorAll("ol");
-    orderedLists.forEach((list) => {
-      const topLevelLis = Array.from(list.children).filter(
-        (el) => el.tagName === "LI",
+    const textFromLi = (li) => {
+      const clone = li.cloneNode(true);
+      // Exclude nested list contents
+      clone.querySelectorAll("ul, ol").forEach((n) => n.remove());
+      return clean(clone.textContent || "");
+    };
+
+    // For each top-level list item, collect one-indent bullets from its direct nested list(s)
+    Array.from(this.el.querySelectorAll("li")).forEach((li) => {
+      const nestedLists = Array.from(li.children).filter(
+        (el) => el.tagName === "UL" || el.tagName === "OL",
       );
-      topLevelLis.forEach((li) => {
-        const clone = li.cloneNode(true);
-        // Remove any nested lists so we only keep the top-level item's text
-        clone.querySelectorAll("ul, ol").forEach((nested) => nested.remove());
-        const text = clone.textContent.trim();
-        if (text) {
-          listItems.push(text);
-        }
+      nestedLists.forEach((list) => {
+        Array.from(list.children)
+          .filter((el) => el.tagName === "LI")
+          .forEach((nli) => {
+            const txt = textFromLi(nli);
+            if (!txt) return;
+            if (/^short answer\s*:/i.test(txt)) return;
+            if (/:$/.test(txt)) return;
+            items.push(txt);
+          });
       });
     });
-    if (listItems.length > 0) {
-      foundOrdered = true;
-    }
 
-    // 2. Ordered-numbered paragraphs (e.g., "1. Title", "2) Next")
-    if (!foundOrdered) {
-      const paragraphs = this.el.querySelectorAll("p");
-      paragraphs.forEach((p) => {
-        const html = p.innerHTML;
-        const segments =
-          html.includes("<br>") || html.includes("<br />")
-            ? html.split(/<br\s*\/?>/i)
-            : [p.textContent];
+    const deduped = Array.from(new Set(items));
 
-        segments.forEach((segment) => {
-          const raw = segment.replace(/<[^>]*>/g, "").trim();
-          const match = raw.match(/^\s*(\d{1,3})[.)]\s+(.*)$/);
-          if (match) {
-            const itemText = match[2].trim();
-            if (itemText) {
-              listItems.push(itemText);
-            }
-          }
-        });
-      });
-
-      if (listItems.length > 0) {
-        foundOrdered = true;
-      }
-    }
-
-    // 3. Fallback to unordered top-level bullets only if no ordered items were found
-    if (!foundOrdered) {
-      // 3a. Unordered HTML lists: only top-level <li>, excluding nested lists
-      const unorderedLists = this.el.querySelectorAll("ul");
-      unorderedLists.forEach((list) => {
-        const topLevelLis = Array.from(list.children).filter(
-          (el) => el.tagName === "LI",
-        );
-        topLevelLis.forEach((li) => {
-          const clone = li.cloneNode(true);
-          clone.querySelectorAll("ul, ol").forEach((nested) => nested.remove());
-          const text = clone.textContent.trim();
-          if (text) {
-            listItems.push(text);
-          }
-        });
-      });
-
-      // 3b. Bullet paragraphs that start with a bullet (ignore embedded bullets)
-      const paragraphs = this.el.querySelectorAll("p");
-      paragraphs.forEach((p) => {
-        const text = p.textContent.trim();
-        if (
-          text.startsWith("•") ||
-          text.startsWith("-") ||
-          text.startsWith("*")
-        ) {
-          if (p.innerHTML.includes("<br>") || p.innerHTML.includes("<br />")) {
-            const segments = p.innerHTML.split(/<br\s*\/?>/i);
-            segments.forEach((segment) => {
-              const itemText = this.extractBulletPointText(segment.trim());
-              if (itemText) {
-                listItems.push(itemText);
-              }
-            });
-          } else {
-            const itemText = this.extractBulletPointText(text);
-            if (itemText) {
-              listItems.push(itemText);
-            }
-          }
-        }
-      });
-    }
-
-    // Process the list items if any were found
-    if (listItems.length > 0) {
-      // Cache detected list items for external toolbar usage
-      this.el.dataset.listItems = JSON.stringify(listItems);
+    if (deduped.length > 0) {
+      this.el.dataset.listItems = JSON.stringify(deduped);
     } else {
-      // Clear cached list items if none are detected
       delete this.el.dataset.listItems;
     }
   },

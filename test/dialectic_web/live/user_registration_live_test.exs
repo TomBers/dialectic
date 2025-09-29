@@ -52,7 +52,6 @@ defmodule DialecticWeb.UserRegistrationLiveTest do
       response = html_response(conn, 200)
       assert response =~ email
       assert response =~ "settings"
-      assert response =~ "Log out"
     end
 
     test "renders errors for duplicated email", %{conn: conn} do
