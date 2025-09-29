@@ -32,8 +32,8 @@ defmodule GraphManagerTest do
       GraphManager.get_graph(@graph_id)
       assert GraphManager.exists?(@graph_id)
 
-      [{pid, _}] = Registry.lookup(GraphRegistry, @graph_id)
-      assert Process.alive?(pid)
+      pid = :global.whereis_name({:graph, @graph_id})
+      assert is_pid(pid) and Process.alive?(pid)
     end
   end
 
@@ -294,7 +294,7 @@ defmodule GraphManagerTest do
     assert GraphManager.exists?(@graph_id)
 
     # Get the PID
-    [{pid, _}] = Registry.lookup(GraphRegistry, @graph_id)
+    pid = :global.whereis_name({:graph, @graph_id})
 
     # Kill the process
     Process.exit(pid, :kill)
@@ -304,7 +304,7 @@ defmodule GraphManagerTest do
 
     # Verify the process was restarted
     assert GraphManager.exists?(@graph_id)
-    [{new_pid, _}] = Registry.lookup(GraphRegistry, @graph_id)
+    new_pid = :global.whereis_name({:graph, @graph_id})
     assert new_pid != pid
   end
 end
