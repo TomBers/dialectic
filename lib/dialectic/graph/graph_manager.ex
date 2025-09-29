@@ -22,14 +22,14 @@ defmodule GraphManager do
   end
 
   def exists?(path) do
-    case Registry.lookup(GraphRegistry, path) do
-      [] -> false
-      _ -> true
+    case :global.whereis_name({:graph, path}) do
+      :undefined -> false
+      _pid -> true
     end
   end
 
   def via_tuple(path) do
-    {:via, Registry, {GraphRegistry, path}}
+    {:via, :global, {:graph, path}}
   end
 
   # Server callbacks

@@ -78,4 +78,38 @@ defmodule Dialectic.DbActions.Graphs do
     |> Graph.changeset(%{is_public: !graph.is_public})
     |> Repo.update!()
   end
+
+  @doc """
+  Saves the graph only if the provided snapshot timestamp is newer than or equal to
+  the current stored row's updated_at.
+
+  Returns:
+  - {:ok, :updated} if the row was updated
+  - {:error, :stale} if the DB has a newer row (update skipped)
+  - {:error, :invalid_timestamp} if ts can't be parsed
+  - {:error, :not_found} if the graph doesn't exist
+  """
+  def save_graph_if_newer(title, data, iso_ts) when is_binary(iso_ts) do
+    with {:ok, ts, _offset} <- DateTime.from_iso8601(iso_ts) do
+      case get_graph_by_title(title) do
+        nil ->
+          {:error, :not_found}
+
+        _graph ->
+          {count, _} =
+            from(g in Graph,
+              where: g.title == ^title and (is_nil(g.updated_at) or g.updated_at <= ^ts)
+            )
+            |> Repo.update_all(set: [data: data, updated_at: DateTime.utc_now()])
+
+          if count == 1 do
+            {:ok, :updated}
+          else
+            {:error, :stale}
+          end
+      end
+    else
+      _ -> {:error, :invalid_timestamp}
+    end
+  end
 end
