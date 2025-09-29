@@ -11,7 +11,10 @@ config :dialectic, Oban,
   engine: Oban.Engines.Basic,
   notifier: Oban.Notifiers.Postgres,
   queues: [api_request: 10, openai_request: 20, db_write: 5],
-  repo: Dialectic.Repo
+  repo: Dialectic.Repo,
+  plugins: [
+    {Oban.Plugins.Lifeline, rescue_after: 60}
+  ]
 
 config :dialectic,
   ecto_repos: [Dialectic.Repo],
