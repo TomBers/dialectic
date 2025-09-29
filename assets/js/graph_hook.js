@@ -137,58 +137,67 @@ const graphHook = {
       };
       btnFit.addEventListener("click", this._btnFitHandler);
     }
-    if (btnPngs.length) {
-      if (!Array.isArray(this._btnPngHandlers)) this._btnPngHandlers = [];
-      btnPngs.forEach((btnPng) => {
-        // Avoid duplicate binding
-        const already = (this._btnPngHandlers || []).some(
-          ([el]) => el === btnPng,
-        );
-        if (already) return;
+    // Shared PNG export helpers and button binding
+    if (!this._exportGraphPng) {
+      this._exportGraphPng = () => {
+        // Save current viewport
+        const prevZoom = this.cy.zoom();
+        const prevPan = this.cy.pan();
 
-        if (!this._exportPngHandler) {
-          this._exportPngHandler = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
+        // Fit the graph to canvas with padding
+        this.cy.fit(undefined, 25);
 
-            // Save current viewport
-            const prevZoom = this.cy.zoom();
-            const prevPan = this.cy.pan();
-
-            // Fit the graph to canvas with padding, ignoring user zoom/pan
-            this.cy.fit(undefined, 25);
-
-            const doExport = () => {
-              const dataUrl = this.cy.png({
-                full: true, // ignore current viewport; export full graph
-                scale: 2,
-                bg: "#ffffff",
-              });
-
-              const ts = new Date().toISOString().replace(/[:.]/g, "-");
-              const a = document.createElement("a");
-              a.href = dataUrl;
-              a.download = `graph-full-${ts}.png`;
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-
-              // Restore the previous viewport
-              this.cy.zoom(prevZoom);
-              this.cy.pan(prevPan);
-            };
-
-            // Wait 2 frames to ensure fit is rendered before snapshot
-            requestAnimationFrame(() => {
-              requestAnimationFrame(doExport);
+        const doExport = () => {
+          try {
+            const dataUrl = this.cy.png({
+              full: true,
+              scale: window.devicePixelRatio || 2,
+              bg: "#ffffff",
             });
-          };
-        }
 
-        btnPng.addEventListener("click", this._exportPngHandler);
-        this._btnPngHandlers.push([btnPng, this._exportPngHandler]);
-      });
+            const ts = new Date().toISOString().replace(/[:.]/g, "-");
+            const a = document.createElement("a");
+            a.href = dataUrl;
+            a.download = `graph-full-${ts}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          } finally {
+            // Restore the previous viewport
+            this.cy.zoom(prevZoom);
+            this.cy.pan(prevPan);
+          }
+        };
+
+        // Wait 2 frames to ensure fit is rendered before snapshot
+        requestAnimationFrame(() => {
+          requestAnimationFrame(doExport);
+        });
+      };
     }
+
+    if (!this._exportPngHandler) {
+      this._exportPngHandler = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this._exportGraphPng();
+      };
+    }
+
+    // Bind PNG buttons explicitly (supports dynamic additions via updated())
+    if (!this._bindPngButtons) {
+      this._bindPngButtons = () => {
+        const buttons = Array.from(document.querySelectorAll(".download-png"));
+        if (!Array.isArray(this._btnPngHandlers)) this._btnPngHandlers = [];
+        const bound = new Set(this._btnPngHandlers.map(([el]) => el));
+        buttons.forEach((btn) => {
+          if (bound.has(btn)) return;
+          btn.addEventListener("click", this._exportPngHandler);
+          this._btnPngHandlers.push([btn, this._exportPngHandler]);
+        });
+      };
+    }
+    this._bindPngButtons();
 
     // Listen for the center_node event from LiveView
     this.handleEvent("center_node", ({ id }) => {
@@ -288,50 +297,9 @@ const graphHook = {
     // Initial sync (and retry if the detector element isn't mounted yet)
     updateExplore();
 
-    // Robustly bind PNG buttons that might be added on LiveView updates
-    const pngButtons = Array.from(document.querySelectorAll(".download-png"));
-    if (!Array.isArray(this._btnPngHandlers)) this._btnPngHandlers = [];
-    const bound = new Set(this._btnPngHandlers.map(([el]) => el));
-    pngButtons.forEach((btn) => {
-      if (bound.has(btn)) return;
-      if (!this._exportPngHandler) {
-        this._exportPngHandler = (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-
-          const prevZoom = this.cy.zoom();
-          const prevPan = this.cy.pan();
-
-          this.cy.fit(undefined, 25);
-
-          const doExport = () => {
-            const dataUrl = this.cy.png({
-              full: true,
-              scale: 2,
-              bg: "#ffffff",
-            });
-
-            const ts = new Date().toISOString().replace(/[:.]/g, "-");
-            const a = document.createElement("a");
-            a.href = dataUrl;
-            a.download = `graph-full-${ts}.png`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-
-            this.cy.zoom(prevZoom);
-            this.cy.pan(prevPan);
-          };
-
-          requestAnimationFrame(() => {
-            requestAnimationFrame(doExport);
-          });
-        };
-      }
-
-      btn.addEventListener("click", this._exportPngHandler);
-      this._btnPngHandlers.push([btn, this._exportPngHandler]);
-    });
+    if (this._bindPngButtons) {
+      this._bindPngButtons();
+    }
   },
   destroyed() {
     if (this._enterStopper) {
@@ -363,6 +331,7 @@ const graphHook = {
       });
       this._btnPngHandlers = null;
     }
+
     if (this._zoomToastTimer) {
       clearTimeout(this._zoomToastTimer);
       this._zoomToastTimer = null;
