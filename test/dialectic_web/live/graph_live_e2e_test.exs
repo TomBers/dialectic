@@ -50,6 +50,19 @@ defmodule DialecticWeb.GraphLiveE2ETest do
     end
   end
 
+  defp find_children_by_parent(graph, parent_id) do
+    :digraph.vertices(graph)
+    |> Enum.reduce([], fn vid, acc ->
+      case :digraph.vertex(graph, vid) do
+        {^vid, v} ->
+          if Map.get(v, :parent) == parent_id, do: [v | acc], else: acc
+
+        _ ->
+          acc
+      end
+    end)
+  end
+
   describe "GraphLive end-to-end interactions" do
     test "node click, answer, delete, branch, combine, move, related ideas, branch list, explore submit, reply-and-answer, note/unnote, toggle lock",
          %{
@@ -160,18 +173,48 @@ defmodule DialecticWeb.GraphLiveE2ETest do
       assigns = get_socket_assigns(view)
       refute assigns.show_explore_modal
 
-      # 11) reply-and-answer (GraphActions.answer_selection with a prefix)
+      # 11) reply-and-answer creates a 'question' node with the submitted text and an 'answer' child
       {_, graph_before_reply} = GraphManager.get_graph(@graph_id)
       vcount_before_reply = length(:digraph.vertices(graph_before_reply))
 
       render_click(view, "reply-and-answer", %{
-        "vertex" => %{"content" => "Please explain Z"},
-        "prefix" => "explain"
+        "vertex" => %{"content" => "Please explain Z"}
       })
 
       {_, graph_after_reply} = GraphManager.get_graph(@graph_id)
       vcount_after_reply = length(:digraph.vertices(graph_after_reply))
-      assert vcount_after_reply >= vcount_before_reply + 1
+      assert vcount_after_reply >= vcount_before_reply + 2
+
+      # Assert the question node exists with the exact content
+      question_node =
+        :digraph.vertices(graph_after_reply)
+        |> Enum.find_value(fn vid ->
+          case :digraph.vertex(graph_after_reply, vid) do
+            {^vid, v} ->
+              if Map.get(v, :class) == "question" and Map.get(v, :content) == "Please explain Z",
+                do: v,
+                else: nil
+
+            _ ->
+              nil
+          end
+        end)
+
+      assert question_node
+
+      # Assert there is an answer child under the question
+      answer_children =
+        :digraph.out_neighbours(graph_after_reply, question_node.id)
+        |> Enum.map(fn vid ->
+          case :digraph.vertex(graph_after_reply, vid) do
+            {^vid, v} -> v
+            _ -> nil
+          end
+        end)
+        |> Enum.filter(& &1)
+        |> Enum.filter(&(&1.class == "answer"))
+
+      assert length(answer_children) >= 1
 
       # 12) Note and unnote flows on the currently selected node (GraphActions.change_noted_by)
       current_node_id = assigns.node.id
