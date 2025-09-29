@@ -32,6 +32,17 @@ defmodule GraphManager do
     {:via, :global, {:graph, path}}
   end
 
+  def ensure_started(path) do
+    case :global.whereis_name({:graph, path}) do
+      :undefined ->
+        _ = DynamicSupervisor.start_child(GraphSupervisor, {GraphManager, path})
+        :ok
+
+      _pid ->
+        :ok
+    end
+  end
+
   # Server callbacks
   def init(path) do
     Process.flag(:trap_exit, true)
@@ -256,6 +267,7 @@ defmodule GraphManager do
   end
 
   def update_vertex(path, node_id, data) do
+    ensure_started(path)
     GenServer.call(via_tuple(path), {:update_node, {node_id, data}})
   end
 
