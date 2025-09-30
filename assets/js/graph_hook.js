@@ -230,10 +230,6 @@ const graphHook = {
       const btn = document.getElementById("explore-all-points");
       if (!btn) return;
 
-      btn.disabled = false;
-      btn.className =
-        "px-3 py-1 text-sm text-gray-700 rounded-full transition-colors hover:bg-indigo-500 hover:text-white";
-
       if (!this._exploreClickHandler) {
         this._exploreClickHandler = (e) => {
           e.preventDefault();
@@ -348,9 +344,6 @@ const graphHook = {
       if (!btn) return;
 
       // Enable button visually and functionally
-      btn.disabled = false;
-      btn.className =
-        "px-3 py-1 text-sm text-gray-700 rounded-full transition-colors hover:bg-indigo-500 hover:text-white";
 
       if (!this._exploreClickHandler) {
         this._exploreClickHandler = (e) => {

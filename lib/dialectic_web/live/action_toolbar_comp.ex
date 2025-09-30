@@ -288,7 +288,7 @@ defmodule DialecticWeb.ActionToolbarComp do
           <button
             id="explore-all-points"
             type="button"
-            class="px-3 py-1 text-sm text-gray-700 rounded-full transition-colors hover:bg-indigo-500 hover:text-white"
+            class="px-3 py-1 text-sm text-gray-700 rounded-full transition-colors hover:text-white hover:bg-gradient-to-r hover:from-fuchsia-500 hover:via-rose-500 hover:to-amber-500"
             title="Explore all points"
           >
             <span class="inline-flex items-center gap-1.5">

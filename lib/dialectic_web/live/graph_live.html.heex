@@ -265,16 +265,7 @@
           Select the points you want to explore. You can uncheck any you want to skip.
         </p>
 
-        <div id="explore-select-all-container" phx-hook="ExploreSelectAll">
-          <%= if @explore_items != [] do %>
-            <div class="mb-2 flex items-center gap-2">
-              <label class="inline-flex items-center gap-2 text-sm">
-                <input id="explore-select-all" type="checkbox" class="rounded border-gray-300" />
-                <span>Select all</span>
-              </label>
-            </div>
-          <% end %>
-
+        <div>
           <%= if @explore_items == [] do %>
             <div class="mb-3 text-sm text-gray-500 italic">
               No points detected yet for this node.
