@@ -266,13 +266,20 @@
         </p>
 
         <div id="explore-select-all-container" phx-hook="ExploreSelectAll">
-          <div class="mb-2 flex items-center gap-2">
-            <label class="inline-flex items-center gap-2 text-sm">
-              <input id="explore-select-all" type="checkbox" class="rounded border-gray-300" />
-              <span>Select all</span>
-            </label>
-          </div>
+          <%= if @explore_items != [] do %>
+            <div class="mb-2 flex items-center gap-2">
+              <label class="inline-flex items-center gap-2 text-sm">
+                <input id="explore-select-all" type="checkbox" class="rounded border-gray-300" />
+                <span>Select all</span>
+              </label>
+            </div>
+          <% end %>
 
+          <%= if @explore_items == [] do %>
+            <div class="mb-3 text-sm text-gray-500 italic">
+              No points detected yet for this node.
+            </div>
+          <% end %>
           <form phx-submit="submit_explore_modal">
             <div class="max-h-64 overflow-y-auto border rounded-md p-2 mb-3">
               <%= for item <- @explore_items do %>
@@ -298,7 +305,12 @@
               </button>
               <button
                 type="submit"
-                class="px-3 py-1 rounded-md bg-indigo-600 text-white hover:bg-indigo-700"
+                disabled={@explore_items == []}
+                class={[
+                  "px-3 py-1 rounded-md text-white",
+                  @explore_items == [] && "bg-indigo-400 cursor-not-allowed",
+                  @explore_items != [] && "bg-indigo-600 hover:bg-indigo-700"
+                ]}
               >
                 Explore selected
               </button>

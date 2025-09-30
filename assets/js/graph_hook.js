@@ -224,6 +224,103 @@ const graphHook = {
         // no-op, avoid breaking on transient DOM/cy states
       }
     });
+
+    // Ensure Explore button is bound on first mount
+    (function bindExploreOnMount() {
+      const btn = document.getElementById("explore-all-points");
+      if (!btn) return;
+
+      btn.disabled = false;
+      btn.className =
+        "px-3 py-1 text-sm text-gray-700 rounded-full transition-colors hover:bg-indigo-500 hover:text-white";
+
+      if (!this._exploreClickHandler) {
+        this._exploreClickHandler = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          const currentNodeId = this.el.dataset.node;
+
+          // Prefer detector dataset if present
+          const detector = document.getElementById(
+            `list-detector-${currentNodeId}`,
+          );
+          let items = [];
+          if (detector && detector.dataset && detector.dataset.listItems) {
+            try {
+              const parsed = JSON.parse(detector.dataset.listItems);
+              if (Array.isArray(parsed)) items = parsed;
+            } catch (_e) {}
+          }
+
+          // Fallback extraction if needed
+          if (!Array.isArray(items) || items.length === 0) {
+            const clean = (s) => (s || "").replace(/\s+/g, " ").trim();
+            const isHeadingLike = (txt) => {
+              if (!txt) return true;
+              if (/^short answer\s*:/i.test(txt)) return true;
+              if (/:$/.test(txt)) return true;
+              return false;
+            };
+            const textFromLi = (li) => {
+              const clone = li.cloneNode(true);
+              clone.querySelectorAll("ul, ol").forEach((n) => n.remove());
+              return clean(clone.textContent || "");
+            };
+            if (detector) {
+              // 1) Nested sub-bullets
+              Array.from(detector.querySelectorAll("li")).forEach((li) => {
+                const nestedLists = Array.from(li.children).filter(
+                  (el) => el.tagName === "UL" || el.tagName === "OL",
+                );
+                nestedLists.forEach((list) => {
+                  Array.from(list.children)
+                    .filter((el) => el.tagName === "LI")
+                    .forEach((nli) => {
+                      const txt = textFromLi(nli);
+                      if (!txt) return;
+                      if (isHeadingLike(txt)) return;
+                      items.push(txt);
+                    });
+                });
+              });
+              // 2) Top-level leaf bullets
+              const topLists = Array.from(
+                detector.querySelectorAll("ul, ol"),
+              ).filter((list) => !list.closest("li"));
+              topLists.forEach((list) => {
+                Array.from(list.children)
+                  .filter((el) => el.tagName === "LI")
+                  .forEach((li) => {
+                    const hasNested = Array.from(li.children).some(
+                      (el) => el.tagName === "UL" || el.tagName === "OL",
+                    );
+                    if (hasNested) return;
+                    const txt = textFromLi(li);
+                    if (!txt) return;
+                    if (isHeadingLike(txt)) return;
+                    items.push(txt);
+                  });
+              });
+              items = Array.from(new Set(items));
+            }
+          }
+
+          this.pushEvent("open_explore_modal", { items });
+        };
+      }
+
+      if (this._exploreBtnEl !== btn) {
+        if (this._exploreBtnEl && this._exploreClickHandler) {
+          this._exploreBtnEl.removeEventListener(
+            "click",
+            this._exploreClickHandler,
+          );
+        }
+        btn.addEventListener("click", this._exploreClickHandler);
+        this._exploreBtnEl = btn;
+      }
+    }).call(this);
   },
   updated() {
     const { graph, node, operation } = this.el.dataset;
@@ -245,57 +342,110 @@ const graphHook = {
     this.cy.elements().removeClass("selected");
     this.cy.$(`#${node}`).addClass("selected");
 
-    // Keep the Explore button in sync with current node content and children
-    const updateExplore = (attempt = 0) => {
-      const btn =
-        document.getElementById(`explore-all-points-${node}`) ||
-        document.getElementById("explore-all-points") ||
-        document.querySelector(`[id^="explore-all-points-"][id$="-${node}"]`);
-      if (!btn) {
-        if (attempt < 10) setTimeout(() => updateExplore(attempt + 1), 100);
-        return;
-      }
+    // Bind Explore button to always open modal; gather items on demand
+    const ensureExploreBound = () => {
+      const btn = document.getElementById("explore-all-points");
+      if (!btn) return;
 
-      // The ListDetection hook decorates this element with dataset.listItems and data-children
-      const detector = document.getElementById(`list-detector-${node}`);
-      if (!detector) {
-        if (attempt < 10) setTimeout(() => updateExplore(attempt + 1), 100);
-        return;
-      }
+      // Enable button visually and functionally
+      btn.disabled = false;
+      btn.className =
+        "px-3 py-1 text-sm text-gray-700 rounded-full transition-colors hover:bg-indigo-500 hover:text-white";
 
-      const childrenCount = Number(detector.dataset.children || "0");
-      let items = [];
-      try {
-        if (detector.dataset.listItems) {
-          items = JSON.parse(detector.dataset.listItems) || [];
-        }
-      } catch (_e) {
-        items = [];
-      }
-
-      const canExplore =
-        childrenCount === 0 && Array.isArray(items) && items.length > 0;
-
-      // Apply enabled/disabled state and classes
-      if (canExplore) {
-        btn.disabled = false;
-        btn.className =
-          "px-3 py-1 text-sm text-gray-700 rounded-full transition-colors hover:bg-indigo-500 hover:text-white";
-        btn.onclick = (e) => {
+      if (!this._exploreClickHandler) {
+        this._exploreClickHandler = (e) => {
           e.preventDefault();
           e.stopPropagation();
+
+          const currentNodeId = node;
+
+          // Extract items on demand
+          const items = (() => {
+            const detector = document.getElementById(
+              `list-detector-${currentNodeId}`,
+            );
+
+            // Prefer items extracted by ListDetection, if present
+            if (detector && detector.dataset && detector.dataset.listItems) {
+              try {
+                const parsed = JSON.parse(detector.dataset.listItems);
+                if (Array.isArray(parsed)) return parsed;
+              } catch (_e) {}
+            }
+
+            // Fallback: extract bullet points on demand (nested sub-bullets + top-level leaf bullets)
+            const res = [];
+            if (detector) {
+              const clean = (s) => (s || "").replace(/\s+/g, " ").trim();
+              const isHeadingLike = (txt) => {
+                if (!txt) return true;
+                if (/^short answer\s*:/i.test(txt)) return true;
+                if (/:$/.test(txt)) return true;
+                return false;
+              };
+              const textFromLi = (li) => {
+                const clone = li.cloneNode(true);
+                clone.querySelectorAll("ul, ol").forEach((n) => n.remove());
+                return clean(clone.textContent || "");
+              };
+
+              // 1) Nested sub-bullets under parent LI
+              Array.from(detector.querySelectorAll("li")).forEach((li) => {
+                const nestedLists = Array.from(li.children).filter(
+                  (el) => el.tagName === "UL" || el.tagName === "OL",
+                );
+                nestedLists.forEach((list) => {
+                  Array.from(list.children)
+                    .filter((el) => el.tagName === "LI")
+                    .forEach((nli) => {
+                      const txt = textFromLi(nli);
+                      if (!txt) return;
+                      if (isHeadingLike(txt)) return;
+                      res.push(txt);
+                    });
+                });
+              });
+
+              // 2) Top-level leaf bullets (direct LI under root UL/OL with no nested lists)
+              const topLists = Array.from(
+                detector.querySelectorAll("ul, ol"),
+              ).filter((list) => !list.closest("li"));
+              topLists.forEach((list) => {
+                Array.from(list.children)
+                  .filter((el) => el.tagName === "LI")
+                  .forEach((li) => {
+                    const hasNested = Array.from(li.children).some(
+                      (el) => el.tagName === "UL" || el.tagName === "OL",
+                    );
+                    if (hasNested) return;
+                    const txt = textFromLi(li);
+                    if (!txt) return;
+                    if (isHeadingLike(txt)) return;
+                    res.push(txt);
+                  });
+              });
+            }
+            return Array.from(new Set(res));
+          })();
+
           this.pushEvent("open_explore_modal", { items });
         };
-      } else {
-        btn.disabled = true;
-        btn.className =
-          "px-3 py-1 text-sm text-gray-400 opacity-50 cursor-not-allowed rounded-full transition-colors";
-        btn.onclick = null;
+      }
+
+      // Avoid duplicate binding
+      if (this._exploreBtnEl !== btn) {
+        if (this._exploreBtnEl && this._exploreClickHandler) {
+          this._exploreBtnEl.removeEventListener(
+            "click",
+            this._exploreClickHandler,
+          );
+        }
+        btn.addEventListener("click", this._exploreClickHandler);
+        this._exploreBtnEl = btn;
       }
     };
 
-    // Initial sync (and retry if the detector element isn't mounted yet)
-    updateExplore();
+    ensureExploreBound();
 
     if (this._bindPngButtons) {
       this._bindPngButtons();
@@ -330,6 +480,14 @@ const graphHook = {
         el.removeEventListener("click", handler);
       });
       this._btnPngHandlers = null;
+    }
+    if (this._exploreBtnEl && this._exploreClickHandler) {
+      this._exploreBtnEl.removeEventListener(
+        "click",
+        this._exploreClickHandler,
+      );
+      this._exploreBtnEl = null;
+      this._exploreClickHandler = null;
     }
 
     if (this._zoomToastTimer) {

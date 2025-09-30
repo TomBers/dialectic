@@ -150,7 +150,7 @@ defmodule DialecticWeb.ActionToolbarComp do
           <.link
             navigate={~p"/#{@graph_id}/focus/#{@node && @node.id}"}
             class="px-3 py-1 text-sm text-gray-700 rounded-full transition-colors hover:bg-[#10b981] hover:text-white"
-            title="Chat"
+            title="Chat with Node"
           >
             <span class="inline-flex items-center gap-1.5">
               <svg
@@ -288,8 +288,7 @@ defmodule DialecticWeb.ActionToolbarComp do
           <button
             id="explore-all-points"
             type="button"
-            class="px-3 py-1 text-sm text-gray-400 opacity-50 cursor-not-allowed rounded-full transition-colors"
-            disabled
+            class="px-3 py-1 text-sm text-gray-700 rounded-full transition-colors hover:bg-indigo-500 hover:text-white"
             title="Explore all points"
           >
             <span class="inline-flex items-center gap-1.5">
