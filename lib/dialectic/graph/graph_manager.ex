@@ -154,18 +154,29 @@ defmodule GraphManager do
   end
 
   def handle_call({:path_to_node, node}, _, {graph_struct, graph}) do
-    parents =
-      Vertex.collect_parents(graph, node.id)
-      |> MapSet.new()
-      |> Enum.map(fn node_index ->
-        case :digraph.vertex(graph, node_index) do
-          {_id, vertex} -> vertex
-          false -> nil
-        end
-      end)
-      |> Enum.reverse()
+    # Build a linear chain from the current node up to the root by
+    # repeatedly following the first immediate parent. This avoids
+    # arbitrary ordering from sets and produces a deterministic path.
+    build_chain =
+      fn build_chain, current, acc ->
+        case :digraph.in_neighbours(graph, current.id) do
+          [parent_id | _] ->
+            case :digraph.vertex(graph, parent_id) do
+              {^parent_id, parent_vertex} ->
+                build_chain.(build_chain, parent_vertex, acc ++ [parent_vertex])
 
-    {:reply, [node] ++ parents, {graph_struct, graph}}
+              _ ->
+                acc
+            end
+
+          [] ->
+            acc
+        end
+      end
+
+    chain = build_chain.(build_chain, node, [node])
+
+    {:reply, chain, {graph_struct, graph}}
   end
 
   def handle_call({:move, {node, direction}}, _, {graph_struct, graph}) do

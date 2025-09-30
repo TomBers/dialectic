@@ -143,7 +143,9 @@
           <% end %>
           <div class="message-bubble max-w-[85vw] sm:max-w-[70%]">
             <div class="message-content">
-              <div class="overflow-x-auto">{TextUtils.full_html(node.content || "")}</div>
+              <div class="overflow-x-auto break-words prose prose-stone prose-base sm:prose-md md:prose-lg max-w-none prose-headings:mt-0 prose-pre:bg-gray-900 prose-pre:text-white prose-code:text-rose-600">
+                {TextUtils.full_html(node.content || "")}
+              </div>
             </div>
             <div class="message-meta flex justify-end items-center">
               <div class="flex space-x-2 node-actions opacity-0 group-hover:opacity-100 transition-opacity duration-200 ml-4">
