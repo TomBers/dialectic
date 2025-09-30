@@ -78,7 +78,7 @@ defmodule DialecticWeb.ActionToolbarComp do
     ~H"""
     <div>
       <div
-        class="fixed left-1/2 -translate-x-1/2 z-20 bottom-24 sm:bottom-8 md:bottom-6 pointer-events-none"
+        class="hidden sm:block fixed left-1/2 -translate-x-1/2 z-20 bottom-24 sm:bottom-8 md:bottom-6 pointer-events-none"
         data-external="true"
       >
         <div class="bg-white rounded-full shadow border border-gray-200 px-2 py-1 flex flex-wrap items-center justify-center gap-1 pointer-events-auto">
@@ -109,7 +109,7 @@ defmodule DialecticWeb.ActionToolbarComp do
 
           <button
             type="button"
-            class="p-2 text-sm text-gray-700 rounded-full transition-colors group"
+            class="inline-flex items-center justify-center w-8 h-8 text-gray-700 rounded-full transition-colors group"
             phx-click={if noted?, do: "unnote", else: "note"}
             phx-value-node={@node && @node.id}
             title={if noted?, do: "Remove from your notes", else: "Add to your notes"}
