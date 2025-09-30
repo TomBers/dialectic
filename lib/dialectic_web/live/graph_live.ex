@@ -345,7 +345,7 @@ defmodule DialecticWeb.GraphLive do
       {:noreply, socket |> put_flash(:error, "This graph is locked")}
     else
       items
-      |> Enum.reduce([], fn item, _acc ->
+      |> Enum.each(fn item ->
         GraphActions.answer_selection(
           graph_action_params(socket, socket.assigns.node),
           "Please explain: #{item}",

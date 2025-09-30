@@ -823,7 +823,7 @@ button[type="submit"]:active {
 
 .message-wrapper.assistant .message-bubble {
     background: #ffffff;
-    color: #333;
+
     border-bottom-left-radius: 4px;
     border-left: 3px solid #a5b4fc;
 }
@@ -917,6 +917,69 @@ button[type="submit"]:active {
 .message-wrapper.user .message-meta a:hover {
     color: white;
     background: rgba(255, 255, 255, 0.3);
+}
+
+/* Ensure white text inside blue user bubbles, overriding typography defaults */
+.message-wrapper.user .message-bubble .prose {
+    color: #fff;
+}
+
+/* Inherit white for common text elements inside prose */
+.message-wrapper.user
+    .message-bubble
+    .prose
+    :where(
+        p,
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        blockquote,
+        strong,
+        em,
+        li,
+        ol,
+        ul,
+        span,
+        small
+    ) {
+    color: inherit;
+}
+
+/* Links inside blue bubbles */
+.message-wrapper.user .message-bubble .prose a {
+    color: rgba(255, 255, 255, 0.9);
+    text-decoration-color: rgba(255, 255, 255, 0.7);
+}
+.message-wrapper.user .message-bubble .prose a:hover {
+    color: #fff;
+}
+
+/* Code and pre blocks inside blue bubbles */
+.message-wrapper.user .message-bubble .prose code {
+    color: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.15);
+}
+.message-wrapper.user .message-bubble .prose pre {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+/* Blockquotes and rules inside blue bubbles */
+.message-wrapper.user .message-bubble .prose blockquote {
+    color: rgba(255, 255, 255, 0.95);
+    border-left-color: rgba(255, 255, 255, 0.35);
+}
+.message-wrapper.user .message-bubble .prose hr {
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* List markers inside blue bubbles */
+.message-wrapper.user .message-bubble .prose :where(ul > li)::marker,
+.message-wrapper.user .message-bubble .prose :where(ol > li)::marker {
+    color: rgba(255, 255, 255, 0.8);
 }
 
 .typing-indicator {

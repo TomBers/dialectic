@@ -1,29 +1,25 @@
 const listDetectionHook = {
   mounted() {
-    const { children } = this.el.dataset;
-    // Checks if node has children
-    // this is to stop someone re-running the branching leading to lots of duplicate nodes
-    if (Number(children) === 0) {
-      this.checkForLists();
-    }
+    this.checkForLists();
   },
 
   updated() {
-    const { children } = this.el.dataset;
-    if (Number(children) === 0) {
-      this.checkForLists();
-    }
+    this.checkForLists();
   },
 
   checkForLists() {
-    // One-indent heuristic:
-    // - Collect only items that are one level of indentation:
-    //   direct <li> children of a <ul>/<ol> that itself is directly under a top-level <li>
-    // - Exclude label-like items (e.g., ending with ":" or starting with "Short answer:")
-    // - Dedupe and cache
+    // Collect both styles:
+    // 1) Nested sub-bullets (one-indent under a parent list item)
+    // 2) Top-level leaf bullets (direct li under a root ul/ol with no nested lists)
     const items = [];
 
     const clean = (s) => (s || "").replace(/\s+/g, " ").trim();
+    const isHeadingLike = (txt) => {
+      if (!txt) return true;
+      if (/^short answer\s*:/i.test(txt)) return true;
+      if (/:$/.test(txt)) return true;
+      return false;
+    };
 
     const textFromLi = (li) => {
       const clone = li.cloneNode(true);
@@ -32,8 +28,10 @@ const listDetectionHook = {
       return clean(clone.textContent || "");
     };
 
-    // For each top-level list item, collect one-indent bullets from its direct nested list(s)
-    Array.from(this.el.querySelectorAll("li")).forEach((li) => {
+    const root = this.el;
+
+    // 1) Nested sub-bullets (depth 2 under a parent li)
+    Array.from(root.querySelectorAll("li")).forEach((li) => {
       const nestedLists = Array.from(li.children).filter(
         (el) => el.tagName === "UL" || el.tagName === "OL",
       );
@@ -43,11 +41,29 @@ const listDetectionHook = {
           .forEach((nli) => {
             const txt = textFromLi(nli);
             if (!txt) return;
-            if (/^short answer\s*:/i.test(txt)) return;
-            if (/:$/.test(txt)) return;
+            if (isHeadingLike(txt)) return;
             items.push(txt);
           });
       });
+    });
+
+    // 2) Top-level leaf bullets (depth 1 li under root ul/ol that have no nested lists)
+    const topLists = Array.from(root.querySelectorAll("ul, ol")).filter(
+      (list) => !list.closest("li"),
+    );
+    topLists.forEach((list) => {
+      Array.from(list.children)
+        .filter((el) => el.tagName === "LI")
+        .forEach((li) => {
+          const hasNested = Array.from(li.children).some(
+            (el) => el.tagName === "UL" || el.tagName === "OL",
+          );
+          if (hasNested) return;
+          const txt = textFromLi(li);
+          if (!txt) return;
+          if (isHeadingLike(txt)) return;
+          items.push(txt);
+        });
     });
 
     const deduped = Array.from(new Set(items));

@@ -265,14 +265,12 @@
           Select the points you want to explore. You can uncheck any you want to skip.
         </p>
 
-        <div id="explore-select-all-container" phx-hook="ExploreSelectAll">
-          <div class="mb-2 flex items-center gap-2">
-            <label class="inline-flex items-center gap-2 text-sm">
-              <input id="explore-select-all" type="checkbox" class="rounded border-gray-300" />
-              <span>Select all</span>
-            </label>
-          </div>
-
+        <div>
+          <%= if @explore_items == [] do %>
+            <div class="mb-3 text-sm text-gray-500 italic">
+              No points detected yet for this node.
+            </div>
+          <% end %>
           <form phx-submit="submit_explore_modal">
             <div class="max-h-64 overflow-y-auto border rounded-md p-2 mb-3">
               <%= for item <- @explore_items do %>
@@ -298,7 +296,12 @@
               </button>
               <button
                 type="submit"
-                class="px-3 py-1 rounded-md bg-indigo-600 text-white hover:bg-indigo-700"
+                disabled={@explore_items == []}
+                class={[
+                  "px-3 py-1 rounded-md text-white",
+                  @explore_items == [] && "bg-indigo-400 cursor-not-allowed",
+                  @explore_items != [] && "bg-indigo-600 hover:bg-indigo-700"
+                ]}
               >
                 Explore selected
               </button>
@@ -329,8 +332,6 @@
           <span class="sr-only">Open mobile menu</span>
         </summary>
         <div class="absolute bottom-14 right-0 w-56 bg-white rounded-lg shadow-lg border border-gray-200 p-2 space-y-1">
-          <% noted? = Enum.any?((@node && @node.noted_by) || [], fn u -> u == @user end) %>
-
           <button
             type="button"
             phx-click={show_modal("modal-graph-live-modal-comp")}
@@ -357,153 +358,98 @@
             <span>Reader</span>
           </button>
 
-          <button
-            phx-click={if noted?, do: "unnote", else: "note"}
-            phx-value-node={@node && @node.id}
-            class="w-full text-left px-3 py-2 rounded hover:bg-gray-50 flex items-center gap-2"
-          >
-            <%= if noted? do %>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-4 w-4"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z"
-                  clip-rule="evenodd"
-                />
-              </svg>
-            <% else %>
+          <div class="my-1 border-t"></div>
+
+          <div class="flex items-center justify-center gap-2">
+            <button
+              type="button"
+              class="download-png inline-flex items-center justify-center w-8 h-8 rounded-md border border-green-200 text-green-600 hover:bg-green-50"
+              aria-label="Download PNG"
+              title="Download PNG (Alt-click to capture full graph)"
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 class="h-4 w-4"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
+                stroke-width="2"
               >
                 <path
                   stroke-linecap="round"
                   stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                  d="M3 7h4l2-2h6l2 2h4v12H3zM12 17a5 5 0 100-10 5 5 0 000 10z"
                 />
               </svg>
-            <% end %>
-            <span>{if noted?, do: "Unnote", else: "Note"}</span>
-          </button>
+            </button>
 
-          <.link
-            navigate={~p"/#{@graph_id}/story/#{@node && @node.id}"}
-            class="w-full inline-flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-50"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2"
+            <.link
+              navigate={~p"/#{@graph_id}/linear"}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-red-200 text-red-600 hover:bg-red-50"
+              title="Open printable PDF"
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
-              />
-            </svg>
-            <span>Thread</span>
-          </.link>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+            </.link>
 
-          <.link
-            navigate={~p"/#{@graph_id}/focus/#{@node && @node.id}"}
-            class="w-full inline-flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-50"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2"
+            <.link
+              href={"/api/graphs/json/#{@graph_id}"}
+              download={"#{@graph_id}.json"}
+              class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-blue-200 text-blue-600 hover:bg-blue-50"
+              title="Download JSON"
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-              />
-            </svg>
-            <span>Chat</span>
-          </.link>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M7 7h10M7 11h10m-5 4h5m-9 2H9m13 0h-9m-1 4l-3-3H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
+                />
+              </svg>
+            </.link>
 
-          <div class="my-1 border-t"></div>
-
-          <.link
-            navigate={~p"/#{@graph_id}/linear"}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="w-full inline-flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-50"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2"
+            <.link
+              href={"/api/graphs/md/#{@graph_id}"}
+              download={"#{@graph_id}.md"}
+              class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-purple-200 text-purple-600 hover:bg-purple-50"
+              title="Download Markdown"
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
-            <span>PDF</span>
-          </.link>
-
-          <.link
-            href={"/api/graphs/json/#{@graph_id}"}
-            download={"#{@graph_id}.json"}
-            class="w-full inline-flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-50"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M7 7h10M7 11h10m-5 4h5m-9 2H9m13 0h-9m-1 4l-3-3H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
-              />
-            </svg>
-            <span>JSON</span>
-          </.link>
-
-          <.link
-            href={"/api/graphs/md/#{@graph_id}"}
-            download={"#{@graph_id}.md"}
-            class="w-full inline-flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-50"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
-              />
-            </svg>
-            <span>Markdown</span>
-          </.link>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
+                />
+              </svg>
+            </.link>
+          </div>
         </div>
       </details>
     </div>

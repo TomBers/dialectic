@@ -30,8 +30,18 @@ defmodule Dialectic.Responses.RequestQueue do
         live_view_topic: live_view_topic
       }
 
-      # Use optimized enqueuing for OpenAI to improve performance
-      run_openai(params)
+      # Route selection responses to lower-priority path when class is "explain"
+      is_selection =
+        case to_node do
+          %{} = node -> Map.get(node, :class) == "explain"
+          _ -> false
+        end
+
+      if is_selection do
+        run_openai_selection(params)
+      else
+        run_openai(params)
+      end
     end
   end
 
@@ -77,6 +87,15 @@ defmodule Dialectic.Responses.RequestQueue do
       | module: Dialectic.Workers.OpenAIWorker
     }
     |> OpenAIWorker.new(priority: 0, max_attempts: 3, tags: ["openai"])
+    |> Oban.insert()
+  end
+
+  def run_openai_selection(params) do
+    %{
+      params
+      | module: Dialectic.Workers.OpenAIWorker
+    }
+    |> OpenAIWorker.new(priority: 5, max_attempts: 3, tags: ["openai", "selection"])
     |> Oban.insert()
   end
 

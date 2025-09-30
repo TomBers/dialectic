@@ -109,7 +109,34 @@ defmodule DialecticWeb.FocusLive do
     sanitized_message = sanitize_graph_title(message)
 
     if socket.assigns.graph_id do
-      process_user_message(socket, sanitized_message)
+      graph_id = socket.assigns.graph_id
+      current_node = socket.assigns.current_node
+      user = socket.assigns.user
+      live_view_topic = socket.assigns.live_view_topic
+
+      {_graph, node} =
+        GraphActions.ask_and_answer(
+          {graph_id, current_node, user, live_view_topic},
+          sanitized_message
+        )
+
+      # Make the AI node visible immediately while streaming content
+      GraphManager.update_vertex(graph_id, node.id, " ")
+
+      form = to_form(%{"message" => ""}, as: :message)
+
+      path =
+        GraphManager.path_to_node(graph_id, node)
+        |> Enum.reverse()
+
+      {:noreply,
+       assign(socket,
+         form: form,
+         sending_message: true,
+         current_node: node,
+         path: path,
+         message_text: ""
+       )}
     else
       Logger.info("Creating new graph with title: #{sanitized_message}")
 
@@ -149,52 +176,22 @@ defmodule DialecticWeb.FocusLive do
   end
 
   def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}}, socket) do
-    prefix = "Explain: "
-    process_user_message(socket, answer, prefix)
-  end
-
-  # Processes a user message by creating a message node and triggering an AI response.
-  #
-  # This function:
-  # 1. Adds the user's message as a node in the graph
-  # 2. Triggers an AI response to that message
-  # 3. Updates the UI state to reflect the ongoing conversation
-  #
-  # Args:
-  #   socket: The current socket
-  #   message: The user's message content
-  #   prefix: Optional prefix to add to the message (default: "")
-  #
-  # Returns:
-  #   {:noreply, updated_socket}
-  def process_user_message(socket, message, prefix \\ "") do
     graph_id = socket.assigns.graph_id
     current_node = socket.assigns.current_node
     user = socket.assigns.user
     live_view_topic = socket.assigns.live_view_topic
 
-    Logger.debug("Processing user message in graph #{graph_id}")
+    {_graph, node} =
+      GraphActions.ask_and_answer({graph_id, current_node, user, live_view_topic}, answer)
 
-    # Create user message node
-    {_graph, user_node} =
-      GraphActions.comment({graph_id, current_node, user, live_view_topic}, message, prefix)
-
-    # Trigger AI response
-    {_graph, node} = GraphActions.answer({graph_id, user_node, user, live_view_topic})
-
-    # Initialize the AI node with a space to make it visible in the path
-    # even before any content is streamed
+    # Make the AI node visible immediately while streaming content
     GraphManager.update_vertex(graph_id, node.id, " ")
 
-    # Clear the form and set sending state
     form = to_form(%{"message" => ""}, as: :message)
 
-    # Update current_node to the user_node for proper threading
     path =
       GraphManager.path_to_node(graph_id, node)
       |> Enum.reverse()
-
-    Logger.debug("User message processed, waiting for AI response")
 
     {:noreply,
      assign(socket,
