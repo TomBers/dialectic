@@ -44,8 +44,6 @@ defmodule DialecticWeb.FocusLive do
         GraphManager.path_to_node(graph_id, node)
         |> Enum.reverse()
 
-      IO.inspect(path |> Enum.map(& &1.id), label: "Path")
-
       # Subscribe to graph updates
       if connected?(socket), do: Phoenix.PubSub.subscribe(Dialectic.PubSub, live_view_topic)
 
