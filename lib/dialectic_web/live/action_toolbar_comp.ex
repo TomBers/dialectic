@@ -320,7 +320,7 @@ defmodule DialecticWeb.ActionToolbarComp do
             type="button"
             phx-click={if info.deletable, do: "delete_node", else: nil}
             phx-value-node={@node && @node.id}
-            phx-confirm={
+            data-confirm={
               if info.deletable, do: "Are you sure you want to delete this node?", else: nil
             }
             aria-disabled={not info.deletable}
