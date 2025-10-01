@@ -16,6 +16,14 @@ const cols = {
     selectedBackground: "#0ea5e9",
     selectedBorder: "#0284c7",
   },
+  user: {
+    text: "#374151",
+    background: "white",
+    border: "#0ea5e9",
+    selectedText: "#ffffff",
+    selectedBackground: "#0ea5e9",
+    selectedBorder: "#0284c7",
+  },
 
   antithesis: {
     text: "#374151",
