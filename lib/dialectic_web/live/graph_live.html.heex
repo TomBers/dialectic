@@ -232,6 +232,47 @@
           </li>
         </ul>
       </div>
+      
+<!-- Streams panel -->
+      <div class="hidden sm:block sm:fixed right-4 z-30 bottom-96 sm:bottom-80 md:bottom-72 w-72 bg-white border border-gray-200 rounded-md shadow p-3 text-xs text-gray-700 space-y-2">
+        <div class="flex items-center justify-between">
+          <div class="font-semibold text-gray-900">Streams</div>
+          <button
+            type="button"
+            phx-click="open_start_stream_modal"
+            class="text-indigo-600 hover:text-indigo-800"
+          >
+            + Start
+          </button>
+        </div>
+        <div class="max-h-56 overflow-y-auto">
+          <ul class="space-y-1">
+            <%= for s <- @work_streams do %>
+              <li class="flex items-center justify-between gap-2">
+                <span class="truncate">{s.id}</span>
+                <div class="flex items-center gap-2">
+                  <button
+                    type="button"
+                    phx-click="focus_stream"
+                    phx-value-id={s.id}
+                    class="px-2 py-0.5 rounded border text-gray-700 hover:bg-gray-50"
+                  >
+                    Focus
+                  </button>
+                  <button
+                    type="button"
+                    phx-click="toggle_stream"
+                    phx-value-id={s.id}
+                    class="px-2 py-0.5 rounded border text-gray-700 hover:bg-gray-50"
+                  >
+                    Toggle
+                  </button>
+                </div>
+              </li>
+            <% end %>
+          </ul>
+        </div>
+      </div>
 
       <.modal
         :if={@show_combine && @node && @node.id}
@@ -252,6 +293,44 @@
             <.button phx-disable-with="Grouping…">Create group</.button>
           </:actions>
         </.simple_form>
+      </.modal>
+
+      <.modal
+        :if={@show_start_stream_modal}
+        id="start-stream-modal"
+        on_cancel={JS.push("cancel_start_stream")}
+        show
+      >
+        <h2 class="text-xl font-semibold mb-4">Start a new stream</h2>
+        <form phx-submit="start_stream" class="space-y-3">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Stream name</label>
+            <input
+              type="text"
+              name="title"
+              id="start-stream-title"
+              required
+              class="block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6 border-zinc-300 focus:border-zinc-800"
+              oninput="document.getElementById('start-stream-content').value=this.value"
+            />
+            <input type="hidden" name="content" id="start-stream-content" />
+          </div>
+          <div class="flex justify-end gap-2">
+            <button
+              type="button"
+              phx-click="cancel_start_stream"
+              class="px-3 py-1 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="px-3 py-1 rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+            >
+              Create stream
+            </button>
+          </div>
+        </form>
       </.modal>
 
       <.modal
@@ -356,6 +435,24 @@
               />
             </svg>
             <span>Reader</span>
+          </button>
+
+          <button
+            type="button"
+            phx-click="open_start_stream_modal"
+            class="w-full text-left px-3 py-2 rounded hover:bg-gray-50 flex items-center gap-2"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            <span>Start stream</span>
           </button>
 
           <div class="my-1 border-t"></div>

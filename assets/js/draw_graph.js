@@ -166,8 +166,23 @@ export function draw_graph(graph, context, elements, node) {
     ele.removeScratch("_oldParent");
 
     /* decide what the *new* parent should be */
-    const targetIsGroup = dropTarget && dropTarget.isParent();
+    const targetIsGroup =
+      dropTarget && dropTarget.isParent && dropTarget.isParent();
     const newParent = targetIsGroup ? dropTarget.id() : null;
+
+    /* prevent leaving if old group would become empty (last child) */
+    if (!targetIsGroup && oldParent) {
+      const oldGroup = cy.getElementById(oldParent);
+      if (oldGroup && oldGroup.length) {
+        // Remaining children excluding the dragged node
+        const remaining = oldGroup.children().filter((n) => !n.same(ele));
+        if (remaining.length === 0) {
+          // Revert: reattach to old group and abort
+          ele.move({ parent: oldParent });
+          return;
+        }
+      }
+    }
 
     /* ——— ensure the data matches that decision ——— */
     if (!targetIsGroup) ele.move({ parent: null }); // detach from old group
@@ -230,13 +245,35 @@ export function draw_graph(graph, context, elements, node) {
     });
   });
 
-  cy.on("tap", "node[compound]", (e) => toggle(e.target));
+  // Disabled: prevent accidental collapse of compound groups via tap
+  // Toggling is controlled exclusively by the Streams panel
+  cy.on("tap", "node[compound]", function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    return false;
+  });
+
+  // Make compound/group nodes non-selectable so they are ignored by navigation selection
+  try {
+    cy.nodes()
+      .filter((n) => n.isParent && n.isParent())
+      .forEach((n) => n.selectable(false));
+  } catch (_e) {}
+
+  cy.on("add", "node", function (e) {
+    try {
+      const n = e.target;
+      if (n && n.isParent && n.isParent()) {
+        n.selectable(false);
+      }
+    } catch (_e) {}
+  });
 
   // Node selection handling
   cy.on("tap", "node", function (event) {
     const n = this;
-    /* exit early if it’s a parent / compound node */
-    if (n.isParent()) return; // 👈  true when the node owns children
+    // exit early for compound/group nodes so they are not navigable
+    if (n.isParent && n.isParent()) return;
 
     const nodeId = n.id();
 
@@ -269,6 +306,37 @@ export function draw_graph(graph, context, elements, node) {
     if (initial && initial.length > 0) {
       initial.addClass("selected");
     }
+  });
+
+  // Streams: focus and toggle group handlers
+  context.handleEvent("focus_group", ({ id }) => {
+    try {
+      const group = cy.getElementById(id);
+      if (group && group.isParent && group.isParent()) {
+        cy.animate({
+          fit: { eles: group, padding: 32 },
+          duration: 150,
+          easing: "ease-in-out-quad",
+        });
+      }
+    } catch (_e) {}
+  });
+
+  context.handleEvent("toggle_group", ({ id }) => {
+    try {
+      const group = cy.getElementById(id);
+      if (group && group.isParent && group.isParent()) {
+        toggle(group);
+        // If expanded, fit to the group for convenience
+        if (group.data("collapsed") !== "true") {
+          cy.animate({
+            fit: { eles: group, padding: 32 },
+            duration: 150,
+            easing: "ease-in-out-quad",
+          });
+        }
+      }
+    } catch (_e) {}
   });
 
   return cy;

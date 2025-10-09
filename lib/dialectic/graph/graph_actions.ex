@@ -98,6 +98,13 @@ defmodule Dialectic.Graph.GraphActions do
     )
   end
 
+  def new_stream({graph_id, _node, user, _live_view_topic}, content, opts) do
+    parent_group_id = Keyword.get(opts, :group_id)
+    vertex = %Vertex{content: content || "", class: "origin", user: user, parent: parent_group_id}
+    node = GraphManager.add_node(graph_id, vertex)
+    GraphManager.find_node_by_id(graph_id, node.id)
+  end
+
   def find_node(graph_id, id) do
     GraphManager.find_node_by_id(graph_id, id)
   end
