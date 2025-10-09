@@ -546,7 +546,7 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, assign(socket, show_start_stream_modal: false)}
   end
 
-  def handle_event("start_stream", %{"title" => title} = _params, socket) do
+  def handle_event("start_stream", %{"title" => title} = params, socket) do
     if !socket.assigns.can_edit do
       {:noreply, socket |> put_flash(:error, "This graph is locked")}
     else
@@ -577,6 +577,10 @@ defmodule DialecticWeb.GraphLive do
       # 3) Load updated graph and node-with-relatives and update assigns/UI
       {graph2, node2} = GraphManager.find_node_by_id(socket.assigns.graph_id, new_node.id)
       DbWorker.save_graph(socket.assigns.graph_id)
+
+      if Map.get(params, "auto_answer") in ["on", "true", "1"] do
+        GraphActions.answer(graph_action_params(socket, node2))
+      end
 
       update_graph(socket, {graph2, node2}, "start_stream")
     end
