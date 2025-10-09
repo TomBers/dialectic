@@ -249,7 +249,7 @@
           <ul class="space-y-1">
             <%= for s <- @work_streams do %>
               <li class="flex items-center justify-between gap-2">
-                <span class="truncate">{s.id}</span>
+                <span class="truncate"><%= s.id %></span>
                 <div class="flex items-center gap-2">
                   <button
                     type="button"

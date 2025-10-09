@@ -238,7 +238,7 @@ export function draw_graph(graph, context, elements, node) {
   // Make compound/group nodes non-selectable so they are ignored by navigation selection
   try {
     cy.nodes()
-      .filter((n) => n.isParent && n.isParent())
+      .filter((n) => n.isParent())
       .forEach((n) => {
         n.selectable(false);
         n.grabbable(false);
@@ -248,7 +248,7 @@ export function draw_graph(graph, context, elements, node) {
   cy.on("add", "node", function (e) {
     try {
       const n = e.target;
-      if (n && n.isParent && n.isParent()) {
+      if (n && n.isParent()) {
         n.selectable(false);
         n.grabbable(false);
       }
@@ -259,7 +259,7 @@ export function draw_graph(graph, context, elements, node) {
   cy.on("tap", "node", function (event) {
     const n = this;
     // exit early for compound/group nodes so they are not navigable
-    if (n.isParent && n.isParent()) return;
+    if (n.isParent()) return;
 
     const nodeId = n.id();
 
@@ -298,7 +298,7 @@ export function draw_graph(graph, context, elements, node) {
   context.handleEvent("focus_group", ({ id }) => {
     try {
       const group = cy.getElementById(id);
-      if (group && group.isParent && group.isParent()) {
+      if (group && group.isParent()) {
         cy.animate({
           fit: { eles: group, padding: 32 },
           duration: 150,
@@ -311,7 +311,7 @@ export function draw_graph(graph, context, elements, node) {
   context.handleEvent("toggle_group", ({ id }) => {
     try {
       const group = cy.getElementById(id);
-      if (group && group.isParent && group.isParent()) {
+      if (group && group.isParent()) {
         toggle(group);
         // If expanded, fit to the group for convenience
         if (group.data("collapsed") !== "true") {

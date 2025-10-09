@@ -515,11 +515,17 @@ defmodule DialecticWeb.GraphLive do
       {:noreply, socket |> put_flash(:error, "This graph is locked")}
     else
       # 1) Optionally create a compound group to visually contain the stream
-      if is_binary(title) and String.trim(title) != "" do
-        GraphManager.create_group(socket.assigns.graph_id, title, [])
-      end
+      group_id =
+        if is_binary(title) and String.trim(title) != "" do
+          title
+        else
+          nil
+        end
 
-      DbWorker.save_graph(socket.assigns.graph_id)
+      if group_id do
+        GraphManager.create_group(socket.assigns.graph_id, group_id, [])
+        DbWorker.save_graph(socket.assigns.graph_id)
+      end
 
       # 2) Create a new root node under the group (if provided)
       content = title
@@ -528,12 +534,7 @@ defmodule DialecticWeb.GraphLive do
         content: content,
         class: "origin",
         user: socket.assigns.user,
-        parent:
-          if is_binary(title) and String.trim(title) != "" do
-            title
-          else
-            nil
-          end
+        parent: group_id
       }
 
       new_node = GraphManager.add_node(socket.assigns.graph_id, vertex)
@@ -892,7 +893,7 @@ defmodule DialecticWeb.GraphLive do
       end)
       |> then(fn s ->
         # Center on the new node when a stream starts
-        if (operation == "start_stream" and node) && Map.get(node, :id) do
+        if operation == "start_stream" and node and Map.get(node, :id) do
           push_event(s, "center_node", %{id: node.id})
         else
           s
