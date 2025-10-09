@@ -28,7 +28,7 @@ export function draw_graph(graph, context, elements, node) {
     elements: elements,
     style: graphStyle(),
 
-    boxSelectionEnabled: true, // ⬅️ lets users drag‑select
+    boxSelectionEnabled: false, // box selection disabled
     autounselectify: false, // allow multi‑select
     layout: layoutOptions,
   });
@@ -220,28 +220,12 @@ export function draw_graph(graph, context, elements, node) {
     node.connectedEdges().removeClass("edge-hover");
   });
 
-  cy.on("boxstart", (e) => {
-    boxSelecting = true;
-    dragOrigin = e.position; // remembers first corner
+  cy.on("boxstart", (_e) => {
+    // box selection disabled
   });
 
-  cy.on("boxend", (e) => {
-    boxSelecting = false;
-
-    requestAnimationFrame(() => {
-      const selectedNodes = cy
-        .$(":selected")
-        .filter("node")
-        .filter((n) => !n.isParent()); // ⬅️ ignore compound nodes;
-      if (selectedNodes.length) {
-        const ids = selectedNodes.map((n) => n.id());
-        console.log(ids);
-        context.pushEvent("nodes_box_selected", {
-          ids: ids,
-        });
-      }
-      selectedNodes.unselect();
-    });
+  cy.on("boxend", (_e) => {
+    // box selection disabled
   });
 
   // Disabled: prevent accidental collapse of compound groups via tap

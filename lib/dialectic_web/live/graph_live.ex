@@ -105,9 +105,6 @@ defmodule DialecticWeb.GraphLive do
                can_edit: can_edit,
                node_menu_visible: true,
                drawer_open: true,
-               candidate_ids: [],
-               group_changeset: to_form(%{"title" => ""}),
-               show_group_modal: false,
                graph_operation: "",
                ask_question: true,
                search_term: "",
@@ -138,39 +135,6 @@ defmodule DialecticWeb.GraphLive do
 
   defp default_node do
     %{id: "1", content: "", children: [], parents: []}
-  end
-
-  def handle_event("nodes_box_selected", %{"ids" => ids}, socket) do
-    # IO.inspect(ids, label: "Selected Node IDs")
-
-    {:noreply,
-     socket
-     |> assign(:candidate_ids, ids)
-     |> assign(:show_group_modal, true)
-     # JS.exec() helpers work too
-     |> push_event("open_group_modal", %{ids: ids})}
-  end
-
-  def handle_event("cancel_group", _, socket) do
-    {:noreply,
-     socket
-     |> assign(:show_group_modal, false)
-     |> assign(:candidate_ids, [])}
-  end
-
-  def handle_event("group_nodes", %{"title" => t, "ids" => ids}, socket) do
-    graph = GraphManager.create_group(socket.assigns.graph_id, t, String.split(ids, ","))
-    DbWorker.save_graph(socket.assigns.graph_id)
-
-    {:noreply,
-     socket
-     |> assign(
-       candidate_ids: [],
-       graph: graph,
-       f_graph: format_graph(graph),
-       show_group_modal: false,
-       graph_operation: "create_group"
-     )}
   end
 
   def handle_event("node:join_group", %{"node" => nid, "parent" => gid}, socket) do
