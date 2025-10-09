@@ -255,7 +255,10 @@ export function draw_graph(graph, context, elements, node) {
   try {
     cy.nodes()
       .filter((n) => n.isParent && n.isParent())
-      .forEach((n) => n.selectable(false));
+      .forEach((n) => {
+        n.selectable(false);
+        n.grabbable(false);
+      });
   } catch (_e) {}
 
   cy.on("add", "node", function (e) {
@@ -263,6 +266,7 @@ export function draw_graph(graph, context, elements, node) {
       const n = e.target;
       if (n && n.isParent && n.isParent()) {
         n.selectable(false);
+        n.grabbable(false);
       }
     } catch (_e) {}
   });
