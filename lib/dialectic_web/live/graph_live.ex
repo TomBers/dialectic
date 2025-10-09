@@ -537,6 +537,59 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, assign(socket, show_combine: false)}
   end
 
+  # Start stream handlers grouped with other handle_event clauses
+  def handle_event("open_start_stream_modal", _params, socket) do
+    {:noreply, assign(socket, show_start_stream_modal: true)}
+  end
+
+  def handle_event("cancel_start_stream", _params, socket) do
+    {:noreply, assign(socket, show_start_stream_modal: false)}
+  end
+
+  def handle_event("start_stream", %{"title" => title} = _params, socket) do
+    if !socket.assigns.can_edit do
+      {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    else
+      # 1) Optionally create a compound group to visually contain the stream
+      if is_binary(title) and String.trim(title) != "" do
+        GraphManager.create_group(socket.assigns.graph_id, title, [])
+      end
+
+      DbWorker.save_graph(socket.assigns.graph_id)
+
+      # 2) Create a new root node under the group (if provided)
+      content = title
+
+      vertex = %Vertex{
+        content: content,
+        class: "origin",
+        user: socket.assigns.user,
+        parent:
+          if is_binary(title) and String.trim(title) != "" do
+            title
+          else
+            nil
+          end
+      }
+
+      new_node = GraphManager.add_node(socket.assigns.graph_id, vertex)
+
+      # 3) Load updated graph and node-with-relatives and update assigns/UI
+      {graph2, node2} = GraphManager.find_node_by_id(socket.assigns.graph_id, new_node.id)
+      DbWorker.save_graph(socket.assigns.graph_id)
+
+      update_graph(socket, {graph2, node2}, "start_stream")
+    end
+  end
+
+  def handle_event("focus_stream", %{"id" => group_id}, socket) do
+    {:noreply, push_event(socket, "focus_group", %{id: group_id})}
+  end
+
+  def handle_event("toggle_stream", %{"id" => group_id}, socket) do
+    {:noreply, push_event(socket, "toggle_group", %{id: group_id})}
+  end
+
   def handle_info({DialecticWeb.Presence, {:join, presence}}, socket) do
     if is_connected_to_graph?(presence, socket.assigns.graph_id) do
       {:noreply, stream_insert(socket, :presences, presence)}
@@ -879,61 +932,5 @@ defmodule DialecticWeb.GraphLive do
       end)
 
     {:noreply, new_socket}
-  end
-
-  def handle_event("focus_stream", %{"id" => group_id}, socket) do
-    {:noreply, push_event(socket, "focus_group", %{id: group_id})}
-  end
-
-  def handle_event("toggle_stream", %{"id" => group_id}, socket) do
-    {:noreply, push_event(socket, "toggle_group", %{id: group_id})}
-  end
-
-  # PoC: start a new work stream (creates an optional group container and a new root node)
-  def handle_event("open_start_stream_modal", _params, socket) do
-    {:noreply, assign(socket, show_start_stream_modal: true)}
-  end
-
-  def handle_event("cancel_start_stream", _params, socket) do
-    {:noreply, assign(socket, show_start_stream_modal: false)}
-  end
-
-  def handle_event("start_stream", %{"title" => title} = _params, socket) do
-    if !socket.assigns.can_edit do
-      {:noreply, socket |> put_flash(:error, "This graph is locked")}
-    else
-      # 1) Optionally create a compound group to visually contain the stream
-      _graph_after_group =
-        if is_binary(title) and String.trim(title) != "" do
-          GraphManager.create_group(socket.assigns.graph_id, title, [])
-        else
-          socket.assigns.graph
-        end
-
-      DbWorker.save_graph(socket.assigns.graph_id)
-
-      # 2) Create a new root node under the group (if provided)
-      content = title
-
-      vertex = %Vertex{
-        content: content,
-        class: "origin",
-        user: socket.assigns.user,
-        parent:
-          if is_binary(title) and String.trim(title) != "" do
-            title
-          else
-            nil
-          end
-      }
-
-      new_node = GraphManager.add_node(socket.assigns.graph_id, vertex)
-
-      # 3) Load updated graph and node-with-relatives and update assigns/UI
-      {graph2, node2} = GraphManager.find_node_by_id(socket.assigns.graph_id, new_node.id)
-      DbWorker.save_graph(socket.assigns.graph_id)
-
-      update_graph(socket, {graph2, node2}, "start_stream")
-    end
   end
 end

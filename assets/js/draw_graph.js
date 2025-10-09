@@ -166,8 +166,7 @@ export function draw_graph(graph, context, elements, node) {
     ele.removeScratch("_oldParent");
 
     /* decide what the *new* parent should be */
-    const targetIsGroup =
-      dropTarget && dropTarget.isParent && dropTarget.isParent();
+    const targetIsGroup = dropTarget && dropTarget.isParent();
     const newParent = targetIsGroup ? dropTarget.id() : null;
 
     /* prevent leaving if old group would become empty (last child) */
@@ -250,7 +249,6 @@ export function draw_graph(graph, context, elements, node) {
   cy.on("tap", "node[compound]", function (e) {
     e.preventDefault();
     e.stopPropagation();
-    return false;
   });
 
   // Make compound/group nodes non-selectable so they are ignored by navigation selection
