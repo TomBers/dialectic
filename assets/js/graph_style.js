@@ -144,13 +144,36 @@ export function graphStyle() {
         label: "data(id)", // ← use the id field
         "text-halign": "center",
         "text-valign": "top",
-        "text-margin-y": 5,
+        "text-margin-y": 8,
         "font-size": 13,
         "font-weight": 600,
+        "text-outline-width": 2,
+        "text-outline-color": "#f9fafb",
         "text-opacity": 1, // make sure it isn't zero
-        padding: "20px",
-        "background-opacity": 0.15,
-        "background-color": "#f2f4f5",
+        padding: "24px",
+        "background-opacity": 1,
+        "background-color": "white",
+        "border-width": 1,
+        "border-style": "dashed",
+        "border-color": "#4B5563",
+      },
+    },
+    {
+      selector: "node[compound].selected",
+      style: {
+        // Make selection visually inert for compound nodes
+        label: "data(id)",
+        "text-halign": "center",
+        "text-valign": "top",
+        "text-margin-y": 8,
+        "font-size": 13,
+        "font-weight": 600,
+        "text-outline-width": 2,
+        "text-outline-color": "#f9fafb",
+        "text-opacity": 1,
+        padding: "24px",
+        "background-opacity": 1,
+        "background-color": "#f9fafb",
         "border-width": 1,
         "border-style": "dashed",
         "border-color": "#4B5563",
@@ -247,6 +270,13 @@ export function graphStyle() {
       },
     });
   }
+  base_style.push({
+    selector:
+      'node[compound], node[compound].selected, node[compound][collapsed = "true"]',
+    style: {
+      events: "no",
+    },
+  });
   return base_style;
 }
 
