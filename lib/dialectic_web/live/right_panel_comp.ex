@@ -30,13 +30,6 @@ defmodule DialecticWeb.RightPanelComp do
   end
 
   @impl true
-  def handle_event("toggle_section", %{"section" => section}, socket) do
-    current = socket.assigns[:open_sections] || %{}
-    val = Map.get(current, section, false)
-    {:noreply, assign(socket, :open_sections, Map.put(current, section, !val))}
-  end
-
-  @impl true
   def render(assigns) do
     ~H"""
     <div class="space-y-2">
@@ -45,7 +38,6 @@ defmodule DialecticWeb.RightPanelComp do
           class="px-3 py-2 text-xs font-semibold text-gray-700 cursor-pointer select-none"
           phx-click="toggle_section"
           phx-value-section="search"
-          phx-target={@myself}
           onclick="event.preventDefault()"
         >
           Search
@@ -132,7 +124,6 @@ defmodule DialecticWeb.RightPanelComp do
           class="px-3 py-2 text-xs font-semibold text-gray-700 cursor-pointer select-none"
           phx-click="toggle_section"
           phx-value-section="lock"
-          phx-target={@myself}
           onclick="event.preventDefault()"
         >
           Lock
@@ -153,7 +144,6 @@ defmodule DialecticWeb.RightPanelComp do
           class="px-3 py-2 text-xs font-semibold text-gray-700 cursor-pointer select-none"
           phx-click="toggle_section"
           phx-value-section="node_info"
-          phx-target={@myself}
           onclick="event.preventDefault()"
         >
           Share & Download
@@ -290,7 +280,6 @@ defmodule DialecticWeb.RightPanelComp do
           class="px-3 py-2 text-xs font-semibold text-gray-700 cursor-pointer select-none"
           phx-click="toggle_section"
           phx-value-section="streams"
-          phx-target={@myself}
           onclick="event.preventDefault()"
         >
           Streams
@@ -341,7 +330,6 @@ defmodule DialecticWeb.RightPanelComp do
           class="px-3 py-2 text-xs font-semibold text-gray-700 cursor-pointer select-none"
           phx-click="toggle_section"
           phx-value-section="shortcuts"
-          phx-target={@myself}
           onclick="event.preventDefault()"
         >
           Keyboard Shortcuts
