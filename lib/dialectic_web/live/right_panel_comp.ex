@@ -282,7 +282,7 @@ defmodule DialecticWeb.RightPanelComp do
           phx-value-section="streams"
           onclick="event.preventDefault()"
         >
-          Streams
+          Groups ({length(@work_streams)})
         </summary>
         <div class="p-2 text-xs text-gray-700 space-y-2">
           <div class="flex items-center justify-between">
