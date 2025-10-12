@@ -56,8 +56,8 @@ export function draw_graph(graph, context, elements, node) {
 
       const current = cy.zoom();
       // Exponential scale for smooth zooming
-      const zoomFactor = Math.pow(1.0015, -e.deltaY);
-      const next = clamp(current * zoomFactor, 0.05, 4);
+      const zoomFactor = Math.pow(1.001, -e.deltaY);
+      const next = clamp(current * zoomFactor, 0.1, 2.5);
 
       cy.zoom({ level: next, renderedPosition });
     } else {
@@ -310,10 +310,7 @@ export function draw_graph(graph, context, elements, node) {
 
     // Center on the node
     cy.animate({
-      center: {
-        eles: n,
-      },
-      zoom: cy.zoom(),
+      center: { eles: n },
       duration: 150,
       easing: "ease-in-out-quad",
     });
@@ -341,7 +338,7 @@ export function draw_graph(graph, context, elements, node) {
       const group = cy.getElementById(id);
       if (group && group.isParent()) {
         cy.animate({
-          fit: { eles: group, padding: 32 },
+          center: { eles: group },
           duration: 150,
           easing: "ease-in-out-quad",
         });
