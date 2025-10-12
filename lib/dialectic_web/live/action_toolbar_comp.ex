@@ -78,7 +78,7 @@ defmodule DialecticWeb.ActionToolbarComp do
     ~H"""
     <div>
       <div
-        class="hidden sm:block fixed left-1/2 -translate-x-1/2 z-50 pointer-events-none"
+        class="hidden sm:block fixed left-1/2 -translate-x-1/2 z-10 pointer-events-none"
         style="bottom: calc(5.5rem + env(safe-area-inset-bottom));"
         data-external="true"
       >
