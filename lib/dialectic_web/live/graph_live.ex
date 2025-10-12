@@ -107,6 +107,14 @@ defmodule DialecticWeb.GraphLive do
                drawer_open: true,
                graph_operation: "",
                ask_question: true,
+               open_sections: %{
+                 "search" => true,
+                 "lock" => false,
+                 "node_info" => false,
+                 "streams" => false,
+                 "shortcuts" => false
+               },
+               group_states: %{},
                search_term: "",
                search_results: [],
                nav_can_up: nav_up,
@@ -248,6 +256,21 @@ defmodule DialecticWeb.GraphLive do
     {:noreply,
      socket
      |> assign(:node_menu_visible, !socket.assigns.node_menu_visible)}
+  end
+
+  def handle_event("toggle_section", %{"section" => section}, socket) do
+    open_sections = socket.assigns[:open_sections] || %{}
+    current = Map.get(open_sections, section, false)
+    new_sections = Map.put(open_sections, section, !current)
+
+    socket = assign(socket, :open_sections, new_sections)
+
+    send_update(DialecticWeb.RightPanelComp,
+      id: "right-panel-comp",
+      open_sections: new_sections
+    )
+
+    {:noreply, socket}
   end
 
   def handle_event("unnote", %{"node" => node_id}, socket) do
@@ -453,6 +476,29 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, updated_socket} =
       update_graph(socket, GraphActions.find_node(socket.assigns.graph_id, id), "node_clicked")
 
+    # Preserve and re-apply panel/menu state across node changes
+    updated_socket =
+      updated_socket
+      |> assign(
+        :open_sections,
+        socket.assigns[:open_sections] ||
+          %{
+            "search" => true,
+            "lock" => false,
+            "node_info" => false,
+            "streams" => false,
+            "shortcuts" => false
+          }
+      )
+      |> assign(:group_states, socket.assigns[:group_states] || %{})
+
+    send_update(
+      DialecticWeb.RightPanelComp,
+      id: "right-panel-comp",
+      group_states: updated_socket.assigns[:group_states],
+      open_sections: updated_socket.assigns[:open_sections]
+    )
+
     # Push event to center the node if coming from search
     if from_search do
       {:noreply, push_event(updated_socket, "center_node", %{id: id})}
@@ -468,6 +514,29 @@ defmodule DialecticWeb.GraphLive do
         GraphActions.move(graph_action_params(socket), direction),
         "node_clicked"
       )
+
+    # Preserve and re-apply panel/menu state across node moves
+    updated_socket =
+      updated_socket
+      |> assign(
+        :open_sections,
+        socket.assigns[:open_sections] ||
+          %{
+            "search" => true,
+            "lock" => false,
+            "node_info" => false,
+            "streams" => false,
+            "shortcuts" => false
+          }
+      )
+      |> assign(:group_states, socket.assigns[:group_states] || %{})
+
+    send_update(
+      DialecticWeb.RightPanelComp,
+      id: "right-panel-comp",
+      group_states: updated_socket.assigns[:group_states],
+      open_sections: updated_socket.assigns[:open_sections]
+    )
 
     {:noreply, push_event(updated_socket, "center_node", %{id: updated_socket.assigns.node.id})}
   end

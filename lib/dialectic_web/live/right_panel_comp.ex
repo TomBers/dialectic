@@ -15,16 +15,39 @@ defmodule DialecticWeb.RightPanelComp do
       |> assign(assigns)
       |> assign_new(:search_term, fn -> "" end)
       |> assign_new(:search_results, fn -> [] end)
+      |> assign_new(:group_states, fn -> %{} end)
+      |> assign_new(:open_sections, fn ->
+        %{
+          "search" => true,
+          "lock" => false,
+          "node_info" => false,
+          "streams" => false,
+          "shortcuts" => false
+        }
+      end)
 
     {:ok, socket}
+  end
+
+  @impl true
+  def handle_event("toggle_section", %{"section" => section}, socket) do
+    current = socket.assigns[:open_sections] || %{}
+    val = Map.get(current, section, false)
+    {:noreply, assign(socket, :open_sections, Map.put(current, section, !val))}
   end
 
   @impl true
   def render(assigns) do
     ~H"""
     <div class="space-y-2">
-      <details open class="bg-white border border-gray-200 rounded-md">
-        <summary class="px-3 py-2 text-xs font-semibold text-gray-700 cursor-pointer select-none">
+      <details open={@open_sections["search"]} class="bg-white border border-gray-200 rounded-md">
+        <summary
+          class="px-3 py-2 text-xs font-semibold text-gray-700 cursor-pointer select-none"
+          phx-click="toggle_section"
+          phx-value-section="search"
+          phx-target={@myself}
+          onclick="event.preventDefault()"
+        >
           Search
         </summary>
         <div class="p-2 space-y-2">
@@ -104,8 +127,14 @@ defmodule DialecticWeb.RightPanelComp do
         </div>
       </details>
 
-      <details class="bg-white border border-gray-200 rounded-md">
-        <summary class="px-3 py-2 text-xs font-semibold text-gray-700 cursor-pointer select-none">
+      <details open={@open_sections["lock"]} class="bg-white border border-gray-200 rounded-md">
+        <summary
+          class="px-3 py-2 text-xs font-semibold text-gray-700 cursor-pointer select-none"
+          phx-click="toggle_section"
+          phx-value-section="lock"
+          phx-target={@myself}
+          onclick="event.preventDefault()"
+        >
           Lock
         </summary>
         <div class="p-2">
@@ -116,9 +145,18 @@ defmodule DialecticWeb.RightPanelComp do
           />
         </div>
       </details>
-      <details class="bg-white border border-gray-200 rounded-md">
-        <summary class="px-3 py-2 text-xs font-semibold text-gray-700 cursor-pointer select-none">
-          Share | Download
+      <details
+        open={@open_sections["node_info"]}
+        class="group bg-white border border-gray-200 rounded-md"
+      >
+        <summary
+          class="px-3 py-2 text-xs font-semibold text-gray-700 cursor-pointer select-none"
+          phx-click="toggle_section"
+          phx-value-section="node_info"
+          phx-target={@myself}
+          onclick="event.preventDefault()"
+        >
+          Share & Download
         </summary>
         <div class="p-2 text-xs text-gray-700 space-y-2">
           <div class="flex items-center justify-between gap-2">
@@ -247,9 +285,15 @@ defmodule DialecticWeb.RightPanelComp do
         </div>
       </details>
 
-      <details class="bg-white border border-gray-200 rounded-md">
-        <summary class="px-3 py-2 text-xs font-semibold text-gray-700 cursor-pointer select-none">
-          Groups
+      <details open={@open_sections["streams"]} class="bg-white border border-gray-200 rounded-md">
+        <summary
+          class="px-3 py-2 text-xs font-semibold text-gray-700 cursor-pointer select-none"
+          phx-click="toggle_section"
+          phx-value-section="streams"
+          phx-target={@myself}
+          onclick="event.preventDefault()"
+        >
+          Streams
         </summary>
         <div class="p-2 text-xs text-gray-700 space-y-2">
           <div class="flex items-center justify-between">
@@ -292,8 +336,14 @@ defmodule DialecticWeb.RightPanelComp do
         </div>
       </details>
 
-      <details class="bg-white border border-gray-200 rounded-md">
-        <summary class="px-3 py-2 text-xs font-semibold text-gray-700 cursor-pointer select-none">
+      <details open={@open_sections["shortcuts"]} class="bg-white border border-gray-200 rounded-md">
+        <summary
+          class="px-3 py-2 text-xs font-semibold text-gray-700 cursor-pointer select-none"
+          phx-click="toggle_section"
+          phx-value-section="shortcuts"
+          phx-target={@myself}
+          onclick="event.preventDefault()"
+        >
           Keyboard Shortcuts
         </summary>
         <div class="p-2 text-xs text-gray-700 space-y-2">
