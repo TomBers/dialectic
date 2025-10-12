@@ -10,7 +10,13 @@ defmodule DialecticWeb.RightPanelComp do
 
   @impl true
   def update(assigns, socket) do
-    {:ok, assign(socket, assigns)}
+    socket =
+      socket
+      |> assign(assigns)
+      |> assign_new(:search_term, fn -> "" end)
+      |> assign_new(:search_results, fn -> [] end)
+
+    {:ok, socket}
   end
 
   @impl true
@@ -19,7 +25,100 @@ defmodule DialecticWeb.RightPanelComp do
     <div class="space-y-2">
       <details open class="bg-white border border-gray-200 rounded-md">
         <summary class="px-3 py-2 text-xs font-semibold text-gray-700 cursor-pointer select-none">
-          Node Information
+          Search
+        </summary>
+        <div class="p-2 space-y-2">
+          <div class="flex items-center gap-4">
+            <div class="flex-1">
+              <form phx-submit="search_nodes" phx-change="search_nodes" class="flex relative">
+                <input
+                  type="text"
+                  name="search_term"
+                  id="search_input"
+                  value={@search_term || ""}
+                  placeholder="Search ..."
+                  class="block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6 border-zinc-300 focus:border-zinc-800"
+                  autocomplete="off"
+                  phx-debounce="300"
+                />
+                <%= if (@search_term || "") != "" do %>
+                  <button
+                    type="button"
+                    phx-click="clear_search"
+                    class="absolute right-0 top-0 bottom-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="h-5 w-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                <% end %>
+              </form>
+            </div>
+          </div>
+
+          <%= if (@search_term || "") != "" and length(@search_results || []) > 0 do %>
+            <div class="bg-white p-2 max-h-60 overflow-y-auto border border-gray-200 rounded">
+              <h3 class="text-sm font-semibold mb-2 text-gray-700">
+                Search Results ({length(@search_results || [])})
+              </h3>
+              <ul class="space-y-2">
+                <%= for node <- @search_results || [] do %>
+                  <li
+                    class="p-2 bg-gray-50 hover:bg-gray-100 rounded text-sm cursor-pointer"
+                    phx-click="node_clicked"
+                    phx-value-id={node.id}
+                  >
+                    <div class="font-semibold text-xs text-gray-500">
+                      {node.id} • {node.class}
+                    </div>
+                    <div class="truncate">
+                      {String.replace_prefix(node.content, "Title:", "")
+                      |> String.slice(0, 100)}{if String.length(node.content) > 100,
+                        do: "...",
+                        else: ""}
+                    </div>
+                  </li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+
+          <%= if (@search_term || "") != "" and length(@search_results || []) == 0 do %>
+            <div class="bg-white p-2 border border-gray-200 rounded">
+              <p class="text-sm text-gray-500 text-center">
+                No nodes found matching "{@search_term || ""}"
+              </p>
+            </div>
+          <% end %>
+        </div>
+      </details>
+
+      <details class="bg-white border border-gray-200 rounded-md">
+        <summary class="px-3 py-2 text-xs font-semibold text-gray-700 cursor-pointer select-none">
+          Lock
+        </summary>
+        <div class="p-2">
+          <DialecticWeb.LockComp.render
+            :if={@current_user && @graph_struct && @graph_struct.user_id == @current_user.id}
+            id="lock-graph"
+            graph_struct={@graph_struct}
+          />
+        </div>
+      </details>
+      <details class="bg-white border border-gray-200 rounded-md">
+        <summary class="px-3 py-2 text-xs font-semibold text-gray-700 cursor-pointer select-none">
+          Share | Download
         </summary>
         <div class="p-2 text-xs text-gray-700 space-y-2">
           <div class="flex items-center justify-between gap-2">
@@ -150,11 +249,11 @@ defmodule DialecticWeb.RightPanelComp do
 
       <details class="bg-white border border-gray-200 rounded-md">
         <summary class="px-3 py-2 text-xs font-semibold text-gray-700 cursor-pointer select-none">
-          Streams
+          Groups
         </summary>
         <div class="p-2 text-xs text-gray-700 space-y-2">
           <div class="flex items-center justify-between">
-            <div class="font-semibold text-gray-900">Streams</div>
+            <div class="font-semibold text-gray-900">Groups</div>
             <button
               type="button"
               phx-click="open_start_stream_modal"
