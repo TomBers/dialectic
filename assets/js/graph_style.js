@@ -186,29 +186,44 @@ export function graphStyle() {
       selector: 'node[compound][collapsed = "true"]',
       style: {
         /* fixed badge size */
-        width: 230, // px – tweak to taste
-        height: 35,
+        width: 230,
+        height: 40,
 
-        /* look & feel */
-        shape: "roundrectangle",
-        "background-opacity": 0.7,
-        "background-color": "#E5E7EB", // slate‑200
-        "border-width": 1,
+        /* look & feel: square card with accent border and chevron */
+        shape: "rectangle",
+        "background-opacity": 1,
+        "background-color": "#ffffff",
+        "border-width": 2,
         "border-color": "#9ca3af",
         "border-style": "solid",
 
-        /* text centred inside the badge */
+        /* subtle shadow to suggest interactivity */
+        "shadow-blur": 8,
+        "shadow-color": "#000000",
+        "shadow-opacity": 0.15,
+        "shadow-offset-x": 0,
+        "shadow-offset-y": 2,
+
+        /* chevron indicator (right side) */
+        "background-image":
+          "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%239ca3af'><path fill-rule='evenodd' d='M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z' clip-rule='evenodd'/></svg>",
+        "background-fit": "none",
+        "background-clip": "node",
+        "background-width": 12,
+        "background-height": 12,
+        "background-position-x": "96%",
+        "background-position-y": "50%",
+
+        /* text centred inside the card */
         label: "data(id)",
         "text-valign": "center",
         "text-halign": "center",
+        "text-margin-x": -6,
         "font-size": 13,
         "font-weight": 600,
         "text-wrap": "wrap",
-        "text-max-width": 200,
+        "text-max-width": 190,
         color: "#374151",
-        "text-outline-width": 1,
-        "text-outline-color": "#ffffff",
-        "text-outline-opacity": 0.8,
       },
     },
     {
@@ -267,6 +282,14 @@ export function graphStyle() {
         color: cols[nodeType].selectedText,
         "background-color": cols[nodeType].selectedBackground,
         "border-width": 2,
+      },
+    });
+
+    /* per-type accent border for collapsed compound "cards" */
+    base_style.push({
+      selector: `node[compound][collapsed = "true"].${nodeType}`,
+      style: {
+        "border-color": cols[nodeType].border,
       },
     });
   }

@@ -271,7 +271,7 @@ export function draw_graph(graph, context, elements, node) {
       center: {
         eles: n,
       },
-      zoom: 1.6,
+      zoom: cy.zoom(),
       duration: 150,
       easing: "ease-in-out-quad",
     });

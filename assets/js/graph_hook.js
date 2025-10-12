@@ -215,7 +215,7 @@ const graphHook = {
             center: {
               eles: nodeToCenter,
             },
-            zoom: 1.6,
+            zoom: this.cy.zoom(),
             duration: 150,
             easing: "ease-in-out-quad",
           });
