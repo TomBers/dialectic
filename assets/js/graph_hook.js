@@ -322,6 +322,9 @@ const graphHook = {
     const { graph, node, operation } = this.el.dataset;
 
     this.cy.json({ elements: JSON.parse(graph) });
+    if (typeof this.cy.enforceCollapsedState === "function") {
+      this.cy.enforceCollapsedState();
+    }
 
     const reorderOperations = new Set([
       "combine",

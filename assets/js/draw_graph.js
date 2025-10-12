@@ -237,12 +237,10 @@ export function draw_graph(graph, context, elements, node) {
 
   // Make compound/group nodes non-selectable so they are ignored by navigation selection
   try {
-    cy.nodes()
-      .filter((n) => n.isParent())
-      .forEach((n) => {
-        n.selectable(false);
-        n.grabbable(false);
-      });
+    cy.$("node[compound]").forEach((n) => {
+      n.selectable(false);
+      n.grabbable(false);
+    });
   } catch (_e) {}
 
   cy.on("add", "node", function (e) {
@@ -251,6 +249,50 @@ export function draw_graph(graph, context, elements, node) {
       if (n && n.isParent()) {
         n.selectable(false);
         n.grabbable(false);
+      } else if (n && n.isNode && n.isNode()) {
+        // Hide any node added under a collapsed group
+        const anc = n.ancestors().filter((a) => a.isParent() && isCollapsed(a));
+        if (anc && anc.length) {
+          n.addClass("hidden");
+        }
+      }
+    } catch (_e) {}
+  });
+
+  // Ensure edges respect collapsed groups when added
+  cy.on("add", "edge", function (e) {
+    try {
+      const edge = e.target;
+      const src = edge.source();
+      const tgt = edge.target();
+
+      // Find nearest collapsed ancestor for a node, if any
+      const collapsedAncestor = (n) => {
+        if (!n || !n.isNode || !n.isNode()) return null;
+        const anc = n.ancestors().filter((a) => a.isParent() && isCollapsed(a));
+        return anc.length ? anc[0] : null;
+      };
+
+      const srcGroup = collapsedAncestor(src);
+      const tgtGroup = collapsedAncestor(tgt);
+
+      // Hide interior edges if both ends are within the same collapsed group
+      if (srcGroup && tgtGroup && srcGroup.id() === tgtGroup.id()) {
+        edge.addClass("hidden");
+        return;
+      }
+
+      // Reroute external edges to the collapsed parent on the inside end
+      if (!edge.data("_origSource"))
+        edge.data("_origSource", edge.data("source"));
+      if (!edge.data("_origTarget"))
+        edge.data("_origTarget", edge.data("target"));
+
+      if (srcGroup) {
+        edge.move({ source: srcGroup.id() });
+      }
+      if (tgtGroup) {
+        edge.move({ target: tgtGroup.id() });
       }
     } catch (_e) {}
   });
@@ -275,6 +317,7 @@ export function draw_graph(graph, context, elements, node) {
       duration: 150,
       easing: "ease-in-out-quad",
     });
+    enforceCollapsedState(cy);
   });
 
   requestAnimationFrame(() => {
@@ -283,13 +326,11 @@ export function draw_graph(graph, context, elements, node) {
     if (node) {
       initial = cy.getElementById(node);
     }
-    if (!initial || initial.length === 0) {
-      initial = cy
-        .nodes()
-        .filter((n) => !n.isParent())
-        .first();
+    if (!initial || (initial.length !== undefined && initial.length === 0)) {
+      const candidates = cy.nodes().filter((n) => !n.isParent());
+      initial = candidates.length ? candidates[0] : null;
     }
-    if (initial && initial.length > 0) {
+    if (initial) {
       initial.addClass("selected");
     }
   });
@@ -313,78 +354,110 @@ export function draw_graph(graph, context, elements, node) {
       const group = cy.getElementById(id);
       if (group && group.isParent()) {
         toggle(group);
-        // If expanded, fit to the group for convenience
-        if (group.data("collapsed") !== "true") {
-          cy.animate({
-            fit: { eles: group, padding: 32 },
-            duration: 150,
-            easing: "ease-in-out-quad",
-          });
-        }
+        // No viewport changes on toggle; keep current pan/zoom
       }
     } catch (_e) {}
   });
+
+  // Enforce collapsed state for compound groups on init and common lifecycle hooks
+  try {
+    enforceCollapsedState(cy);
+    cy.ready(() => enforceCollapsedState(cy));
+    cy.on("layoutstop", () => enforceCollapsedState(cy));
+    cy.on("render", () => enforceCollapsedState(cy));
+  } catch (_e) {}
+
+  // Expose collapsed-state enforcement for external callers
+  cy.enforceCollapsedState = () => enforceCollapsedState(cy);
 
   return cy;
 }
 
 /* ───────────────────────── collapse ───────────────────────── */
 function collapse(parent) {
-  if (parent.data("collapsed") === "true") return; // already collapsed
+  // always apply collapse; no early return
 
-  const children = parent.children();
-  const intEdges = children
+  let descendants = parent.descendants();
+  if (!descendants || descendants.length === 0) {
+    // Fallback to direct children if descendants are not yet computed
+    descendants = parent.children();
+  }
+  const intEdges = descendants
     .connectedEdges()
     .filter(
-      (e) => children.contains(e.source()) && children.contains(e.target()),
+      (e) =>
+        descendants.contains(e.source()) && descendants.contains(e.target()),
     );
-  const extEdges = children.connectedEdges().subtract(intEdges);
+  const extEdges = descendants.connectedEdges().subtract(intEdges);
 
   /* 1 · save where each child sits so we can restore it */
-  children.forEach((n) => {
+  descendants.forEach((n) => {
     n.data("_prevPos", { x: n.position("x"), y: n.position("y") });
   });
 
   /* 2 · stash IDs for quick lookup */
   parent.data({
     collapsed: "true",
-    _children: children.map((n) => n.id()),
+    _descendants: descendants.map((n) => n.id()),
     _intEdges: intEdges.map((e) => e.id()),
     _extEdges: extEdges.map((e) => e.id()),
   });
 
   /* 3 · hide kids + interior edges, reroute externals */
-  children.addClass("hidden");
-  intEdges.addClass("hidden");
+  descendants.addClass("hidden");
+  const hiddenCount = descendants.filter((n) => n.hasClass("hidden")).length;
 
+  // Final fallback: hide by selector if structural descendants are not present
+  if (!descendants || descendants.length === 0) {
+    const cy = parent.cy && parent.cy();
+    if (cy) {
+      const fallbackKids = cy.nodes(`[parent = "${parent.id()}"]`);
+      fallbackKids.addClass("hidden");
+    }
+  }
+  intEdges.addClass("hidden");
+  const hiddenIntEdges = intEdges.filter((e) => e.hasClass("hidden")).length;
+
+  let movedSrc = 0;
+  let movedTgt = 0;
   extEdges.forEach((e) => {
     if (!e.data("_origSource")) e.data("_origSource", e.data("source"));
     if (!e.data("_origTarget")) e.data("_origTarget", e.data("target"));
 
-    if (children.contains(e.source())) e.move({ source: parent.id() });
-    if (children.contains(e.target())) e.move({ target: parent.id() });
+    if (descendants.contains(e.source())) {
+      e.move({ source: parent.id() });
+      movedSrc++;
+    }
+    if (descendants.contains(e.target())) {
+      e.move({ target: parent.id() });
+      movedTgt++;
+    }
   });
 }
 
 /* ───────────────────────── expand ───────────────────────── */
 function expand(parent) {
-  if (parent.data("collapsed") !== "true") return;
+  if (!isCollapsed(parent)) return;
 
   const cy = parent.cy();
 
+  const descIds = parent.data("_descendants");
+  const intIds = parent.data("_intEdges");
+  const extIds = parent.data("_extEdges");
+
+  if (!descIds || !intIds || !extIds) {
+    // No stored collapse state in this instance; just clear the flag
+    parent.removeData("collapsed");
+    return;
+  }
+
   /* collections we stashed earlier */
-  const children = cy.collection(
-    parent.data("_children").map((id) => cy.getElementById(id)),
-  );
-  const intEdges = cy.collection(
-    parent.data("_intEdges").map((id) => cy.getElementById(id)),
-  );
-  const extEdges = cy.collection(
-    parent.data("_extEdges").map((id) => cy.getElementById(id)),
-  );
+  const descendants = cy.collection(descIds.map((id) => cy.getElementById(id)));
+  const intEdges = cy.collection(intIds.map((id) => cy.getElementById(id)));
+  const extEdges = cy.collection(extIds.map((id) => cy.getElementById(id)));
 
   /* 1 · show kids + interior edges */
-  children.removeClass("hidden");
+  descendants.removeClass("hidden");
   intEdges.removeClass("hidden");
 
   /* 2 · restore edge endpoints */
@@ -396,16 +469,16 @@ function expand(parent) {
   });
 
   /* 3 · restore previous coordinates *or* run a mini‑layout */
-  const anyPrev = children.some((n) => n.data("_prevPos"));
+  const anyPrev = descendants.some((n) => n.data("_prevPos"));
   if (anyPrev) {
-    children.forEach((n) => {
+    descendants.forEach((n) => {
       const p = n.data("_prevPos");
       if (p) n.position(p);
     });
   } else {
     cy.layout({
       ...layoutConfig.expandLayout,
-      eles: children.union(intEdges),
+      eles: descendants.union(intEdges),
     }).run();
   }
 
@@ -415,4 +488,19 @@ function expand(parent) {
 
 function toggle(parent) {
   parent.data("collapsed") ? expand(parent) : collapse(parent);
+}
+
+function isCollapsed(ele) {
+  const v = ele && ele.data && ele.data("collapsed");
+  return v === true || v === "true";
+}
+
+function enforceCollapsedState(cy) {
+  try {
+    cy.$("node[compound]")
+      .filter((n) => isCollapsed(n))
+      .forEach((n) => {
+        collapse(n);
+      });
+  } catch (_e) {}
 }
