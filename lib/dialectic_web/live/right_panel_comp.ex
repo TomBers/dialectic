@@ -222,6 +222,20 @@ defmodule DialecticWeb.RightPanelComp do
 
       <div class="bg-white border border-gray-200 rounded-md">
         <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
+          Keyboard Shortcuts
+        </div>
+        <div class="p-1 text-[11px] text-gray-700 space-y-1">
+          <ul class="space-y-1">
+            <li><span class="font-mono">↑/↓</span> — parent/child</li>
+            <li><span class="font-mono">←/→</span> — prev/next</li>
+            <li><span class="font-mono">Enter</span> — open reader</li>
+            <li><span class="font-mono">Ctrl/⌘ + scroll</span> — zoom</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="bg-white border border-gray-200 rounded-md">
+        <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
           Groups ({length(@work_streams)})
         </div>
         <div class="p-1 text-[11px] text-gray-700 space-y-1">
