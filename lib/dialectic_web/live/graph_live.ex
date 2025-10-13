@@ -487,27 +487,7 @@ defmodule DialecticWeb.GraphLive do
       update_graph(socket, GraphActions.find_node(socket.assigns.graph_id, id), "node_clicked")
 
     # Preserve and re-apply panel/menu state across node changes
-    updated_socket =
-      updated_socket
-      |> assign(
-        :open_sections,
-        socket.assigns[:open_sections] ||
-          %{
-            "search" => true,
-            "lock" => false,
-            "node_info" => false,
-            "streams" => false,
-            "shortcuts" => false
-          }
-      )
-      |> assign(:group_states, socket.assigns[:group_states] || %{})
-
-    send_update(
-      DialecticWeb.RightPanelComp,
-      id: "right-panel-comp",
-      group_states: updated_socket.assigns[:group_states],
-      open_sections: updated_socket.assigns[:open_sections]
-    )
+    updated_socket = reapply_right_panel_state(socket, updated_socket)
 
     # Push event to center the node if coming from search
     if from_search do
@@ -526,27 +506,7 @@ defmodule DialecticWeb.GraphLive do
       )
 
     # Preserve and re-apply panel/menu state across node moves
-    updated_socket =
-      updated_socket
-      |> assign(
-        :open_sections,
-        socket.assigns[:open_sections] ||
-          %{
-            "search" => true,
-            "lock" => false,
-            "node_info" => false,
-            "streams" => false,
-            "shortcuts" => false
-          }
-      )
-      |> assign(:group_states, socket.assigns[:group_states] || %{})
-
-    send_update(
-      DialecticWeb.RightPanelComp,
-      id: "right-panel-comp",
-      group_states: updated_socket.assigns[:group_states],
-      open_sections: updated_socket.assigns[:open_sections]
-    )
+    updated_socket = reapply_right_panel_state(socket, updated_socket)
 
     {:noreply, push_event(updated_socket, "center_node", %{id: updated_socket.assigns.node.id})}
   end
@@ -980,5 +940,32 @@ defmodule DialecticWeb.GraphLive do
       end)
 
     {:noreply, new_socket}
+  end
+
+  # Helper to preserve and re-apply right panel state across node changes/moves
+  defp reapply_right_panel_state(socket, updated_socket) do
+    updated_socket =
+      updated_socket
+      |> assign(
+        :open_sections,
+        socket.assigns[:open_sections] ||
+          %{
+            "search" => true,
+            "lock" => false,
+            "node_info" => false,
+            "streams" => false,
+            "shortcuts" => false
+          }
+      )
+      |> assign(:group_states, socket.assigns[:group_states] || %{})
+
+    send_update(
+      DialecticWeb.RightPanelComp,
+      id: "right-panel-comp",
+      group_states: updated_socket.assigns[:group_states],
+      open_sections: updated_socket.assigns[:open_sections]
+    )
+
+    updated_socket
   end
 end
