@@ -22,6 +22,7 @@ defmodule DialecticWeb.Live.TextUtils do
   """
   def truncated_html(content, cut_off \\ 50) do
     content
+    |> normalize_markdown()
     |> String.slice(0, cut_off)
     |> full_html(" ...")
   end
@@ -30,13 +31,15 @@ defmodule DialecticWeb.Live.TextUtils do
   Converts content to full HTML, handling title extraction if needed.
   """
   def full_html(content, end_string \\ "") do
-    if has_title?(content) do
-      (content <> end_string)
+    norm = normalize_markdown(content)
+
+    if has_title?(norm) do
+      (norm <> end_string)
       |> extract_content_body()
       |> Earmark.as_html!()
       |> Phoenix.HTML.raw()
     else
-      content |> Earmark.as_html!() |> Phoenix.HTML.raw()
+      norm |> Earmark.as_html!() |> Phoenix.HTML.raw()
     end
   end
 
@@ -57,6 +60,8 @@ defmodule DialecticWeb.Live.TextUtils do
   def extract_title(content) do
     if has_title?(content) do
       content
+      |> to_string()
+      |> String.trim_leading()
       |> String.split("\n", parts: 2)
       |> List.first()
       |> String.replace(@title_regex, "")
@@ -68,12 +73,23 @@ defmodule DialecticWeb.Live.TextUtils do
 
   # Private helpers
 
+  defp normalize_markdown(content) do
+    content
+    |> to_string()
+    |> String.replace("\r\n", "\n")
+    |> String.replace("\r", "\n")
+    |> String.trim_leading()
+  end
+
   defp has_title?(content) do
-    String.match?(content, ~r/^title[:"]?|^Title[:"]?/i)
+    content
+    |> to_string()
+    |> String.trim_leading()
+    |> String.match?(~r/^title[:"]?|^Title[:"]?/i)
   end
 
   defp extract_content_body(content) do
-    case String.split(content, "\n", parts: 2) do
+    case content |> to_string() |> String.trim_leading() |> String.split("\n", parts: 2) do
       [_, body] -> body
       [only_content] -> only_content
     end
