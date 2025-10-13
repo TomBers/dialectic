@@ -308,9 +308,18 @@ export function draw_graph(graph, context, elements, node) {
     // Send basic click event
     context.pushEvent("node_clicked", { id: nodeId });
 
-    // Center on the node
+    // Center on the node within visible area (account for right-hand panel)
+    const panel = document.getElementById("right-panel");
+    const rect = container.getBoundingClientRect();
+    const panelRect = panel ? panel.getBoundingClientRect() : null;
+    const panelWidth = panelRect && panelRect.width > 10 ? panelRect.width : 0;
+    const desiredX = Math.max(0, (rect.width - panelWidth) / 2);
+    const desiredY = rect.height / 2;
+    const pos = n.renderedPosition();
+    const dx = desiredX - pos.x;
+    const dy = desiredY - pos.y;
     cy.animate({
-      center: { eles: n },
+      panBy: { x: dx, y: dy },
       duration: 150,
       easing: "ease-in-out-quad",
     });

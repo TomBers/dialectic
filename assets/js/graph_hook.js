@@ -1,13 +1,19 @@
 import { draw_graph } from "./draw_graph";
 import { layoutConfig } from "./layout_config.js";
 
-const layoutGraph = (cy) => {
+const layoutGraph = (cy, onDone) => {
   const layout = cy.layout({
     ...layoutConfig.baseLayout,
-    // Add callback for when layout is done
   });
 
-  // Run the layout
+  if (
+    typeof onDone === "function" &&
+    layout &&
+    typeof layout.one === "function"
+  ) {
+    layout.one("layoutstop", onDone);
+  }
+
   layout.run();
 };
 
@@ -19,6 +25,30 @@ const graphHook = {
       this.el.querySelector(`#${div}`) || document.getElementById(div);
 
     this.cy = draw_graph(container, this, JSON.parse(graph), node);
+
+    // Expose container and a helper to center a node within the visible area (accounts for right panel)
+    this._container = container;
+    this._centerOnNodeVisible = (id) => {
+      try {
+        const n = this.cy.$(`#${id}`);
+        if (!n || n.length === 0) return;
+
+        const rect = this._container.getBoundingClientRect();
+        const panel = document.getElementById("right-panel");
+        const pr = panel ? panel.getBoundingClientRect() : null;
+        const pw = pr && pr.width > 10 ? pr.width : 0;
+
+        const desiredX = Math.max(0, (rect.width - pw) / 2);
+        const desiredY = rect.height / 2;
+        const pos = n.renderedPosition();
+
+        this.cy.animate({
+          panBy: { x: desiredX - pos.x, y: desiredY - pos.y },
+          duration: 150,
+          easing: "ease-in-out-quad",
+        });
+      } catch (_e) {}
+    };
 
     // Prevent Enter shortcut from firing while typing in inputs/textareas/contenteditable
     this._enterStopper = (e) => {
@@ -88,9 +118,21 @@ const graphHook = {
       );
     };
 
+    const getRightPanelWidth = () => {
+      const panel = document.getElementById("right-panel");
+      if (!panel) return 0;
+      const rect = panel.getBoundingClientRect();
+      return rect && rect.width > 10 ? rect.width : 0;
+    };
+
     const centerPoint = () => {
       const rect = container.getBoundingClientRect();
-      return { x: rect.width / 2, y: rect.height / 2 };
+      const rightPanelWidth = getRightPanelWidth();
+      // Center within the visible area (container minus right panel width)
+      return {
+        x: Math.max(0, (rect.width - rightPanelWidth) / 2),
+        y: rect.height / 2,
+      };
     };
 
     const zoomBy = (factor) => {
@@ -101,11 +143,26 @@ const graphHook = {
     };
 
     const fitGraph = () => {
+      // First center to all elements as before
       this.cy.animate({
         center: { eles: this.cy.elements() },
         duration: 150,
         easing: "ease-in-out-quad",
       });
+
+      // Then offset horizontally so the centered content lands in the visible area, not under the right panel
+      const rect = container.getBoundingClientRect();
+      const rightPanelWidth = getRightPanelWidth();
+      const deltaX = rightPanelWidth > 0 ? -(rightPanelWidth / 2) : 0;
+
+      if (deltaX !== 0) {
+        this.cy.animate({
+          panBy: { x: deltaX, y: 0 },
+          duration: 150,
+          easing: "ease-in-out-quad",
+        });
+      }
+
       requestAnimationFrame(showZoom);
     };
 
@@ -199,10 +256,14 @@ const graphHook = {
           // Keep the dataset in sync so other consumers (and hooks) can rely on it
           this.el.dataset.node = id;
 
+          // Pan the graph so the node lands at the center of the visible area (accounting for the right panel)
+          const desired = centerPoint();
+          const pos = nodeToCenter.renderedPosition();
+          const dx = desired.x - pos.x;
+          const dy = desired.y - pos.y;
+
           this.cy.animate({
-            center: {
-              eles: nodeToCenter,
-            },
+            panBy: { x: dx, y: dy },
             duration: 150,
             easing: "ease-in-out-quad",
           });
@@ -319,9 +380,17 @@ const graphHook = {
       "llm_request_complete",
       "comment",
       "other_user_change",
+      "start_stream",
     ]);
 
-    if (reorderOperations.has(operation)) {
+    if (operation === "start_stream") {
+      // Reflow the graph and then center the newly created stream node in the visible area
+      layoutGraph(this.cy, () => {
+        if (this._centerOnNodeVisible) {
+          requestAnimationFrame(() => this._centerOnNodeVisible(node));
+        }
+      });
+    } else if (reorderOperations.has(operation)) {
       layoutGraph(this.cy);
     }
 

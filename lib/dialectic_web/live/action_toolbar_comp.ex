@@ -90,7 +90,7 @@ defmodule DialecticWeb.ActionToolbarComp do
         style={unless @inline, do: "bottom: calc(5.5rem + env(safe-area-inset-bottom));"}
         data-external="true"
       >
-        <div class="bg-white rounded-full shadow border border-gray-200 px-2 py-1 flex flex-wrap items-center justify-center gap-1 pointer-events-auto">
+        <div class="bg-white rounded-full shadow border border-gray-200 px-2 py-1 flex flex-wrap items-center justify-center gap-1 pointer-events-auto max-w-full overflow-x-auto">
           <%= if @can_edit == false do %>
             <span
               class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border border-amber-200 bg-amber-50 text-amber-700"

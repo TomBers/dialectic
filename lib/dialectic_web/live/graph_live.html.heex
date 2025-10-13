@@ -28,12 +28,32 @@
     class={
       if @right_panel_open,
         do:
-          "fixed top-16 right-0 w-80 sm:w-96 bg-white border-l border-gray-200 z-10 transform translate-x-0 opacity-100 transition-all duration-300 ease-in-out",
+          "fixed top-16 bottom-0 right-0 w-80 sm:w-96 bg-white border-l border-gray-200 z-50 overflow-y-auto transform translate-x-0 opacity-100 transition-all duration-300 ease-in-out",
         else:
-          "fixed top-16 right-0 w-0 overflow-hidden bg-white border-l border-gray-200 z-10 transform translate-x-full opacity-0 transition-all duration-300 ease-in-out"
+          "fixed top-16 bottom-0 right-0 w-0 overflow-hidden bg-white border-l border-gray-200 z-50 transform translate-x-full opacity-0 transition-all duration-300 ease-in-out"
     }
   >
     <div class="p-2">
+      <div class="flex items-center justify-end mb-2">
+        <button
+          type="button"
+          phx-click="toggle_right_panel"
+          class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50"
+          aria-label="Close right panel"
+          title="Close panel"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
       <.live_component
         module={DialecticWeb.RightPanelComp}
         id="right-panel-comp"
@@ -45,7 +65,6 @@
         search_term={@search_term}
         search_results={@search_results}
         group_states={@group_states}
-        open_sections={@open_sections}
       />
     </div>
   </div>
@@ -83,7 +102,7 @@
     <div class={
       if @drawer_open,
         do: "w-0 md:w-3/5",
-        else: "w-full " <> if(@right_panel_open, do: "pr-80 sm:pr-96", else: "")
+        else: "w-full"
     }>
       <div
         id="cy"
@@ -437,13 +456,7 @@
       aria-controls="right-panel"
       aria-expanded={@right_panel_open}
       aria-label={if @right_panel_open, do: "Hide right panel", else: "Show right panel"}
-      class={
-        if @right_panel_open,
-          do:
-            "fixed top-1/2 -translate-y-1/2 transform right-[20.5rem] sm:right-[24.5rem] p-1.5 rounded-full bg-white opacity-60 hover:opacity-100 shadow-sm z-20 cursor-pointer transition-all duration-200",
-          else:
-            "fixed top-1/2 -translate-y-1/2 transform right-2 p-1.5 rounded-full bg-white opacity-60 hover:opacity-100 shadow-sm z-20 cursor-pointer transition-all duration-200"
-      }
+      class="fixed top-16 right-2 sm:right-4 p-1.5 rounded-full bg-white opacity-60 hover:opacity-100 shadow-sm z-30 cursor-pointer transition-all duration-200"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -459,7 +472,9 @@
           d={if @right_panel_open, do: "M13 5l7 7-7 7", else: "M11 19l-7-7 7-7"}
         />
       </svg>
-      <span class="sr-only">{if @right_panel_open, do: "Close", else: "Open"} right panel</span>
+      <span class="sr-only">
+        {if @right_panel_open, do: "Close right panel", else: "Open right panel"}
+      </span>
     </button>
     
 <!-- Bottom menu toggle -->
@@ -491,9 +506,11 @@
       class={
         if @bottom_menu_open,
           do:
-            "fixed inset-x-0 bottom-0 z-40 transform translate-y-0 opacity-100 visible transition-all duration-300 ease-in-out px-3 pb-3 pointer-events-auto",
+            "fixed bottom-0 z-30 transform translate-y-0 opacity-100 visible transition-all duration-300 ease-in-out px-3 pb-3 pointer-events-auto " <>
+              if(@drawer_open, do: "left-0 right-0 md:left-[40%]", else: "inset-x-0"),
           else:
-            "fixed inset-x-0 bottom-0 z-40 transform translate-y-full opacity-0 invisible transition-all duration-300 ease-in-out px-3 pb-3 pointer-events-none"
+            "fixed bottom-0 z-30 transform translate-y-full opacity-0 invisible transition-all duration-300 ease-in-out px-3 pb-3 pointer-events-none " <>
+              if(@drawer_open, do: "left-0 right-0 md:left-[40%]", else: "inset-x-0")
       }
       style="padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem);"
     >
