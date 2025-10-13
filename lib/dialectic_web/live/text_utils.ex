@@ -100,6 +100,7 @@ defmodule DialecticWeb.Live.TextUtils do
   logic in assets/js/graph_style.js processNodeContent:
 
   - Remove all instances of "**"
+  - Strip a leading Markdown heading marker (# .. ######) if present
   - Strip a leading "Title:" prefix (case-insensitive)
   - Use only the first line
   - Truncate to the given cutoff
@@ -111,18 +112,23 @@ defmodule DialecticWeb.Live.TextUtils do
       |> to_string()
       |> String.replace("**", "")
 
-    # Remove "Title:" prefix if present (case-insensitive)
-    content_without_title = Regex.replace(~r/^Title:\s*/i, full_content, "")
-
     # Use only the first line
     first_line_only =
-      content_without_title
+      full_content
       |> String.split("\n")
       |> List.first()
       |> to_string()
 
-    text = String.slice(first_line_only, 0, cutoff)
-    suffix = if add_ellipsis and String.length(first_line_only) > cutoff, do: "…", else: ""
+    # Strip leading Markdown heading hashes (e.g., "## ")
+    no_heading =
+      Regex.replace(~r/^\s*\#{1,6}\s*/, first_line_only, "")
+
+    # Remove "Title:" prefix if present (case-insensitive)
+    line =
+      Regex.replace(~r/^Title:\s*/i, no_heading, "")
+
+    text = String.slice(line, 0, cutoff)
+    suffix = if add_ellipsis and String.length(line) > cutoff, do: "…", else: ""
     text <> suffix
   end
 end

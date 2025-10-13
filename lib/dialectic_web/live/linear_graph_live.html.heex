@@ -1,4 +1,4 @@
-<div class="conversation-thread">
+<div class="conversation-thread px-4 py-3 max-w-screen-sm mx-auto">
   <div class="flex flex-wrap items-center gap-2 mb-3">
     <.link
       navigate={~p"/#{@graph_id}"}
@@ -6,27 +6,17 @@
       title="Back to graph view"
       aria-label="Return to graph view"
     >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
+      <.icon
+        name="hero-arrow-left"
         class="h-5 w-5 group-hover:-translate-x-0.5 transition-transform"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M10 19l-7-7m0 0l7-7m-7 7h18"
-        />
-      </svg>
+      />
     </.link>
 
     <.button
       phx-click="toggle_all"
       id="toggle-button"
       aria-label={if length(@hidden) != 0, do: "Expand all", else: "Collapse all"}
-      class="inline-flex items-center text-xs font-semibold px-3 py-1.5 rounded-md bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 hover:text-amber-800 transition-colors shadow-sm"
+      class="inline-flex items-center text-xs font-medium px-3 py-1.5 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 shadow-sm"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -46,29 +36,15 @@
     </.button>
   </div>
 
-  <div class="flex justify-center mb-4">
+  <div class="hidden sm:flex justify-center mb-4">
     <.button
       phx-click="prepare_for_print"
       data-graph-name={@graph_id}
       phx-hook="PrintConversation"
       id="print-button"
-      class="inline-flex items-center text-sm font-bold px-4 py-2 rounded-md bg-red-50 border-2 border-red-300 text-red-700 hover:bg-red-200 hover:text-red-800 transition-colors shadow-md"
+      class="inline-flex items-center text-sm font-semibold px-3 py-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 shadow-sm"
     >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        class="h-5 w-5 mr-2"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        stroke-width="2"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-        />
-      </svg>
-      DOWNLOAD PDF
+      <.icon name="hero-arrow-down-tray" class="h-5 w-5 mr-2" /> DOWNLOAD PDF
     </.button>
   </div>
 
@@ -76,43 +52,72 @@
     <%= unless node.deleted do %>
       <div
         class={[
-          "node mb-4 rounded-lg flex items-start gap-3 bg-white border-l-4",
+          "node mb-4 rounded-lg flex items-start gap-3 bg-white border-l-4 scroll-mt-24",
           message_border_class(node.class)
         ]}
-        style={"margin-left: #{node.indent * 4}rem;"}
+        style={"margin-left: calc(min(#{node.indent} * 1rem, 2.5rem));"}
         id={node.id}
         data-indent={node.indent}
         phx-hook="HighlightNode"
       >
-        <article class="prose prose-stone prose-lg p-4 w-full">
-          <div class="flex items-center gap-2">
+        <div class="p-4 w-full">
+          <div class="not-prose">
             <button
+              type="button"
+              class="flex w-full items-center gap-2 -mx-2 px-2 py-1.5 rounded-md hover:bg-gray-50 text-left"
               phx-click="toggle_node"
               phx-value-node-id={node.id}
-              aria-label={
-                if Enum.member?(@hidden, node.id), do: "Expand node", else: "Collapse node"
-              }
-              class="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100"
+              aria-expanded={!Enum.member?(@hidden, node.id)}
             >
-              {if Enum.member?(@hidden, node.id), do: "+", else: "-"}
-            </button>
+              <span class="inline-flex items-center justify-center w-5 h-5 text-gray-700">
+                <%= if Enum.member?(@hidden, node.id) do %>
+                  <.icon name="hero-chevron-right" class="h-5 w-5" />
+                <% else %>
+                  <.icon name="hero-chevron-down" class="h-5 w-5" />
+                <% end %>
+              </span>
 
-            <%= unless Enum.member?(@hidden, node.id) do %>
-              <h3 class="m-0">{TextUtils.modal_title(node.content, node.class)}</h3>
-            <% else %>
-              {TextUtils.linear_summary(node.content || "")}
-            <% end %>
+              <%= unless Enum.member?(@hidden, node.id) do %>
+                <span class="leading-5 text-[15px] sm:text-base font-medium text-zinc-900">
+                  {TextUtils.modal_title(node.content, node.class)}
+                </span>
+              <% else %>
+                <span class="leading-5 text-[15px] sm:text-base font-medium text-zinc-800 truncate">
+                  {TextUtils.process_node_content(node.content || "")}
+                </span>
+              <% end %>
+            </button>
           </div>
 
           <%= unless Enum.member?(@hidden, node.id) do %>
-            <div class="mt-2">
+            <article class="prose prose-stone text-[15px] sm:text-base md:prose-lg max-w-none mt-2">
               {TextUtils.full_html(node.content || "")}
-            </div>
+            </article>
           <% end %>
-        </article>
+        </div>
       </div>
     <% end %>
   <% end %>
+
+  <div class="fixed bottom-0 inset-x-0 sm:hidden px-4 pb-3 pt-2 bg-white/95 backdrop-blur border-t border-gray-200">
+    <div class="max-w-screen-sm mx-auto flex items-center justify-between gap-2">
+      <.link
+        navigate={~p"/#{@graph_id}"}
+        class="inline-flex items-center justify-center px-3 py-2 rounded-full border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+        aria-label="Return to graph view"
+      >
+        Back to Graph
+      </.link>
+      <.button
+        phx-click="toggle_all"
+        id="expand-collapse-mobile"
+        aria-label={if length(@hidden) != 0, do: "Expand all", else: "Collapse all"}
+        class="inline-flex items-center text-xs font-medium px-3 py-2 rounded-full border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+      >
+        {if length(@hidden) != 0, do: "Expand All", else: "Collapse All"}
+      </.button>
+    </div>
+  </div>
 
   <style id="print-styles" media="print">
     /* Hide non-essential UI elements when printing */
