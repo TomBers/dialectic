@@ -20,6 +20,10 @@ defmodule DialecticWeb.RightPanelComp do
     {:ok, socket}
   end
 
+  defp owner?(graph_struct, current_user) do
+    current_user && graph_struct && graph_struct.user_id == current_user.id
+  end
+
   @impl true
   def render(assigns) do
     ~H"""
@@ -105,7 +109,7 @@ defmodule DialecticWeb.RightPanelComp do
         </div>
       </div>
 
-      <%= if @current_user && @graph_struct && @graph_struct.user_id == @current_user.id do %>
+      <%= if owner?(@graph_struct, @current_user) do %>
         <div class="bg-white border border-gray-200 rounded-md">
           <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
             Lock
