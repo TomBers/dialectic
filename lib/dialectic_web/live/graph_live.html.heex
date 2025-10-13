@@ -28,9 +28,9 @@
     class={
       if @right_panel_open,
         do:
-          "fixed top-16 right-2 w-80 sm:w-96 max-h-[70vh] overflow-auto bg-white border border-gray-200 rounded-md shadow-lg z-50 transform opacity-100 translate-y-0 transition-all duration-200 ease-out",
+          "fixed top-16 right-0 w-80 sm:w-96 bg-white border-l border-gray-200 z-50 transform translate-x-0 opacity-100 transition-all duration-300 ease-in-out",
         else:
-          "fixed top-16 right-2 w-80 sm:w-96 max-h-[70vh] overflow-hidden bg-white border border-gray-200 rounded-md shadow-lg z-50 transform opacity-0 -translate-y-2 pointer-events-none transition-all duration-150 ease-in"
+          "fixed top-16 right-0 w-0 overflow-hidden bg-white border-l border-gray-200 z-50 transform translate-x-full opacity-0 transition-all duration-300 ease-in-out"
     }
   >
     <div class="p-2">
@@ -456,32 +456,22 @@
       aria-controls="right-panel"
       aria-expanded={@right_panel_open}
       aria-label={if @right_panel_open, do: "Hide right panel", else: "Show right panel"}
-      class="fixed top-16 right-2 sm:right-4 p-2 rounded-md bg-white border border-gray-200 text-gray-700 shadow-sm hover:bg-gray-50 z-30 cursor-pointer transition-colors"
+      class="fixed top-16 right-2 sm:right-4 p-1.5 rounded-full bg-white opacity-60 hover:opacity-100 shadow-sm z-30 cursor-pointer transition-all duration-200"
     >
-      <span class="inline-flex items-center gap-1.5">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-4 w-4"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-6 w-6 text-gray-600"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
           stroke-width="2"
-        >
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class={"h-3 w-3 transition-transform " <> if(@right_panel_open, do: "rotate-180", else: "")}
-          viewBox="0 0 20 20"
-          fill="currentColor"
-        >
-          <path
-            fill-rule="evenodd"
-            d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08Z"
-            clip-rule="evenodd"
-          />
-        </svg>
-      </span>
+          d={if @right_panel_open, do: "M13 5l7 7-7 7", else: "M11 19l-7-7 7-7"}
+        />
+      </svg>
       <span class="sr-only">
         {if @right_panel_open, do: "Close right panel", else: "Open right panel"}
       </span>
