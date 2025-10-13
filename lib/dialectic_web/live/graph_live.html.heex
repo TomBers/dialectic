@@ -520,84 +520,88 @@
       style="padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem);"
     >
       <div class="mx-auto w-full max-w-2xl">
-        <div class="flex justify-center">
-          <button
-            id="bottom-menu-close"
-            phx-click="toggle_bottom_menu"
-            aria-controls="bottom-menu"
-            aria-expanded={@bottom_menu_open}
-            aria-label="Hide bottom menu"
-            class="mt-1 mb-2 p-1.5 rounded-full bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 shadow-sm"
-            type="button"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+        <div class="relative">
+          <div class="flex justify-center -mt-4 mb-2">
+            <button
+              id="bottom-menu-close"
+              phx-click="toggle_bottom_menu"
+              aria-controls="bottom-menu"
+              aria-expanded={@bottom_menu_open}
+              aria-label="Hide bottom menu"
+              class="roof-handle inline-flex items-center justify-center w-24 h-7 rounded-full bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 shadow-sm"
+              type="button"
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-            <span class="sr-only">Close bottom menu</span>
-          </button>
-        </div>
-        <.live_component
-          module={DialecticWeb.ActionToolbarComp}
-          id={"action-toolbar-#{@node && @node.id}"}
-          node={@node}
-          user={@user}
-          current_user={assigns[:current_user]}
-          graph_id={@graph_id}
-          can_edit={@can_edit}
-          inline={true}
-          icons_only={true}
-        />
-        <div class="bg-white border border-gray-200 shadow-lg rounded-full px-3 py-2">
-          <div class="flex items-center gap-2">
-            <div class="flex items-center gap-1">
-              <button
-                type="button"
-                phx-click="toggle_ask_question"
-                class={"px-2 py-1 text-xs rounded-full " <> if @ask_question, do: "bg-blue-50 text-blue-600 border border-blue-200", else: "text-gray-600 hover:bg-gray-50 border border-transparent"}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
               >
-                Ask
-              </button>
-              <button
-                type="button"
-                phx-click="toggle_ask_question"
-                class={"px-2 py-1 text-xs rounded-full " <> if !@ask_question, do: "bg-emerald-50 text-emerald-600 border border-emerald-200", else: "text-gray-600 hover:bg-gray-50 border border-transparent"}
-              >
-                Comment
-              </button>
-            </div>
-            <.form
-              for={@form}
-              phx-submit={if @ask_question, do: "reply-and-answer", else: "answer"}
-              id="global-chat-form"
-              class="flex-1 relative"
-            >
-              <div class="relative">
-                <.input
-                  field={@form[:content]}
-                  type="text"
-                  id="global-chat-input"
-                  placeholder={if @ask_question, do: "Ask a question…", else: "Add a comment…"}
-                  class="w-full rounded-full pl-3 pr-24 border-gray-300 focus:border-indigo-400 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 9l-7 7-7-7"
                 />
+              </svg>
+              <span class="sr-only">Close bottom menu</span>
+            </button>
+          </div>
+          <div class="bg-white/95 backdrop-blur border border-gray-200 shadow-xl rounded-t-[1.75rem] rounded-2xl px-4 pt-3 pb-3">
+            <div class="flex items-center justify-center gap-2 mb-2">
+              <.live_component
+                module={DialecticWeb.ActionToolbarComp}
+                id={"action-toolbar-#{@node && @node.id}"}
+                node={@node}
+                user={@user}
+                current_user={assigns[:current_user]}
+                graph_id={@graph_id}
+                can_edit={@can_edit}
+                inline={true}
+                icons_only={true}
+              />
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="flex items-center gap-1">
                 <button
-                  type="submit"
-                  class="absolute right-1 top-1/2 -translate-y-1/2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-3 py-1.5 rounded-full font-medium"
+                  type="button"
+                  phx-click="toggle_ask_question"
+                  class={"px-2 py-1 text-xs rounded-full " <> if @ask_question, do: "bg-blue-50 text-blue-600 border border-blue-200", else: "text-gray-600 hover:bg-gray-50 border border-transparent"}
                 >
-                  {if @ask_question, do: "Ask", else: "Post"}
+                  Ask
+                </button>
+                <button
+                  type="button"
+                  phx-click="toggle_ask_question"
+                  class={"px-2 py-1 text-xs rounded-full " <> if !@ask_question, do: "bg-emerald-50 text-emerald-600 border border-emerald-200", else: "text-gray-600 hover:bg-gray-50 border border-transparent"}
+                >
+                  Comment
                 </button>
               </div>
-            </.form>
+              <.form
+                for={@form}
+                phx-submit={if @ask_question, do: "reply-and-answer", else: "answer"}
+                id="global-chat-form"
+                class="flex-1 relative"
+              >
+                <div class="relative">
+                  <.input
+                    field={@form[:content]}
+                    type="text"
+                    id="global-chat-input"
+                    placeholder={if @ask_question, do: "Ask a question…", else: "Add a comment…"}
+                    class="w-full rounded-full pl-3 pr-24 border-gray-300 focus:border-indigo-400 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                  />
+                  <button
+                    type="submit"
+                    class="absolute right-1 top-1/2 -translate-y-1/2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-3 py-1.5 rounded-full font-medium"
+                  >
+                    {if @ask_question, do: "Ask", else: "Post"}
+                  </button>
+                </div>
+              </.form>
+            </div>
           </div>
         </div>
       </div>
