@@ -526,9 +526,11 @@
       class={
         if @bottom_menu_open,
           do:
-            "fixed inset-x-0 bottom-0 z-40 transform translate-y-0 opacity-100 visible transition-all duration-300 ease-in-out px-3 pb-3 pointer-events-auto",
+            "fixed bottom-0 z-40 transform translate-y-0 opacity-100 visible transition-all duration-300 ease-in-out px-3 pb-3 pointer-events-auto " <>
+              if(@drawer_open, do: "left-0 right-0 md:left-[40%]", else: "inset-x-0"),
           else:
-            "fixed inset-x-0 bottom-0 z-40 transform translate-y-full opacity-0 invisible transition-all duration-300 ease-in-out px-3 pb-3 pointer-events-none"
+            "fixed bottom-0 z-40 transform translate-y-full opacity-0 invisible transition-all duration-300 ease-in-out px-3 pb-3 pointer-events-none " <>
+              if(@drawer_open, do: "left-0 right-0 md:left-[40%]", else: "inset-x-0")
       }
       style="padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem);"
     >
