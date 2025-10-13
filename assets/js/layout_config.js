@@ -15,7 +15,7 @@ export const layoutConfig = {
     // More natural arrangement for complex graphs
     weaveToward: "leaves",
     nestingFactor: 1.0, // Full size for compound nodes
-    fit: true, // Fit graph to viewport
+    fit: false, // Do not auto-fit to viewport
     // Higher quality layout algorithm
     ranker: "network-simplex", // More compact layout algorithm
     // Better alignment for hierarchical structures

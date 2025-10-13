@@ -61,7 +61,7 @@ defmodule Dialectic.Graph.IntegrationGraphActionsTest do
     node = GraphActions.create_new_node(@test_user)
     assert %Vertex{} = node
     assert node.user == @test_user
-    assert node.id == "NewNode"
+    assert String.starts_with?(node.id, "NewNode")
     assert node.parents == []
   end
 

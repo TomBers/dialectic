@@ -3,7 +3,8 @@ defmodule Dialectic.Graph.GraphActions do
   alias Dialectic.Responses.LlmInterface
 
   def create_new_node(user) do
-    %Vertex{user: user, id: "NewNode", noted_by: []}
+    unique_id = "NewNode-" <> Integer.to_string(System.unique_integer([:positive]))
+    %Vertex{user: user, id: unique_id, noted_by: []}
   end
 
   def move({graph_id, node, _user, _live_view_topic}, direction) do
@@ -96,6 +97,13 @@ defmodule Dialectic.Graph.GraphActions do
       "ideas",
       user
     )
+  end
+
+  def new_stream({graph_id, _node, user, _live_view_topic}, content, opts) do
+    parent_group_id = Keyword.get(opts, :group_id)
+    vertex = %Vertex{content: content || "", class: "origin", user: user, parent: parent_group_id}
+    node = GraphManager.add_node(graph_id, vertex)
+    GraphManager.find_node_by_id(graph_id, node.id)
   end
 
   def find_node(graph_id, id) do

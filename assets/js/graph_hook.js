@@ -101,7 +101,11 @@ const graphHook = {
     };
 
     const fitGraph = () => {
-      this.cy.fit(undefined, 25);
+      this.cy.animate({
+        center: { eles: this.cy.elements() },
+        duration: 150,
+        easing: "ease-in-out-quad",
+      });
       requestAnimationFrame(showZoom);
     };
 
@@ -140,39 +144,23 @@ const graphHook = {
     // Shared PNG export helpers and button binding
     if (!this._exportGraphPng) {
       this._exportGraphPng = () => {
-        // Save current viewport
-        const prevZoom = this.cy.zoom();
-        const prevPan = this.cy.pan();
+        try {
+          const dataUrl = this.cy.png({
+            full: true,
+            scale: window.devicePixelRatio || 2,
+            bg: "#ffffff",
+          });
 
-        // Fit the graph to canvas with padding
-        this.cy.fit(undefined, 25);
-
-        const doExport = () => {
-          try {
-            const dataUrl = this.cy.png({
-              full: true,
-              scale: window.devicePixelRatio || 2,
-              bg: "#ffffff",
-            });
-
-            const ts = new Date().toISOString().replace(/[:.]/g, "-");
-            const a = document.createElement("a");
-            a.href = dataUrl;
-            a.download = `graph-full-${ts}.png`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-          } finally {
-            // Restore the previous viewport
-            this.cy.zoom(prevZoom);
-            this.cy.pan(prevPan);
-          }
-        };
-
-        // Wait 2 frames to ensure fit is rendered before snapshot
-        requestAnimationFrame(() => {
-          requestAnimationFrame(doExport);
-        });
+          const ts = new Date().toISOString().replace(/[:.]/g, "-");
+          const a = document.createElement("a");
+          a.href = dataUrl;
+          a.download = `graph-full-${ts}.png`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        } catch (_e) {
+          // no-op
+        }
       };
     }
 
@@ -215,7 +203,6 @@ const graphHook = {
             center: {
               eles: nodeToCenter,
             },
-            zoom: 1.6,
             duration: 150,
             easing: "ease-in-out-quad",
           });
@@ -322,6 +309,9 @@ const graphHook = {
     const { graph, node, operation } = this.el.dataset;
 
     this.cy.json({ elements: JSON.parse(graph) });
+    if (typeof this.cy.enforceCollapsedState === "function") {
+      this.cy.enforceCollapsedState();
+    }
 
     const reorderOperations = new Set([
       "combine",

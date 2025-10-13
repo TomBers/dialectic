@@ -144,13 +144,36 @@ export function graphStyle() {
         label: "data(id)", // ← use the id field
         "text-halign": "center",
         "text-valign": "top",
-        "text-margin-y": 5,
+        "text-margin-y": 8,
         "font-size": 13,
         "font-weight": 600,
+        "text-outline-width": 2,
+        "text-outline-color": "#f9fafb",
         "text-opacity": 1, // make sure it isn't zero
-        padding: "20px",
-        "background-opacity": 0.15,
-        "background-color": "#f2f4f5",
+        padding: "24px",
+        "background-opacity": 1,
+        "background-color": "white",
+        "border-width": 1,
+        "border-style": "dashed",
+        "border-color": "#4B5563",
+      },
+    },
+    {
+      selector: "node[compound].selected",
+      style: {
+        // Make selection visually inert for compound nodes
+        label: "data(id)",
+        "text-halign": "center",
+        "text-valign": "top",
+        "text-margin-y": 8,
+        "font-size": 13,
+        "font-weight": 600,
+        "text-outline-width": 2,
+        "text-outline-color": "#f9fafb",
+        "text-opacity": 1,
+        padding: "24px",
+        "background-opacity": 1,
+        "background-color": "#f9fafb",
         "border-width": 1,
         "border-style": "dashed",
         "border-color": "#4B5563",
@@ -163,29 +186,38 @@ export function graphStyle() {
       selector: 'node[compound][collapsed = "true"]',
       style: {
         /* fixed badge size */
-        width: 230, // px – tweak to taste
-        height: 35,
+        width: 230,
+        height: 40,
 
-        /* look & feel */
-        shape: "roundrectangle",
-        "background-opacity": 0.7,
-        "background-color": "#E5E7EB", // slate‑200
-        "border-width": 1,
+        /* look & feel: square card with accent border and chevron */
+        shape: "rectangle",
+        "background-opacity": 1,
+        "background-color": "#ffffff",
+        "border-width": 2,
         "border-color": "#9ca3af",
         "border-style": "solid",
 
-        /* text centred inside the badge */
+        /* subtle shadow to suggest interactivity */
+
+        /* chevron indicator (right side) */
+
+        "background-fit": "none",
+        "background-clip": "node",
+        "background-width": 12,
+        "background-height": 12,
+        "background-position-x": "96%",
+        "background-position-y": "50%",
+
+        /* text centred inside the card */
         label: "data(id)",
         "text-valign": "center",
         "text-halign": "center",
+        "text-margin-x": -6,
         "font-size": 13,
         "font-weight": 600,
         "text-wrap": "wrap",
-        "text-max-width": 200,
+        "text-max-width": 190,
         color: "#374151",
-        "text-outline-width": 1,
-        "text-outline-color": "#ffffff",
-        "text-outline-opacity": 0.8,
       },
     },
     {
@@ -246,7 +278,22 @@ export function graphStyle() {
         "border-width": 2,
       },
     });
+
+    /* per-type accent border for collapsed compound "cards" */
+    base_style.push({
+      selector: `node[compound][collapsed = "true"].${nodeType}`,
+      style: {
+        "border-color": cols[nodeType].border,
+      },
+    });
   }
+  base_style.push({
+    selector:
+      'node[compound], node[compound].selected, node[compound][collapsed = "true"]',
+    style: {
+      events: "no",
+    },
+  });
   return base_style;
 }
 

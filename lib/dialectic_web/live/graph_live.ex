@@ -66,6 +66,9 @@ defmodule DialecticWeb.GraphLive do
           {:ok, {graph_struct, graph}} ->
             # Continue with the normal flow
 
+            # Ensure a main group exists to make root togglable
+            graph = ensure_main_group(graph_id, graph)
+
             # Handle case when the node might not exist
             node =
               case :digraph.vertex(graph, node_id) do
@@ -102,11 +105,18 @@ defmodule DialecticWeb.GraphLive do
                can_edit: can_edit,
                node_menu_visible: true,
                drawer_open: true,
-               candidate_ids: [],
-               group_changeset: to_form(%{"title" => ""}),
-               show_group_modal: false,
+               right_panel_open: true,
+               bottom_menu_open: true,
                graph_operation: "",
                ask_question: true,
+               open_sections: %{
+                 "search" => true,
+                 "lock" => false,
+                 "node_info" => false,
+                 "streams" => false,
+                 "shortcuts" => false
+               },
+               group_states: %{},
                search_term: "",
                search_results: [],
                nav_can_up: nav_up,
@@ -116,7 +126,9 @@ defmodule DialecticWeb.GraphLive do
                open_read_modal: Map.has_key?(params, "node"),
                show_explore_modal: false,
                explore_items: [],
-               explore_selected: []
+               explore_selected: [],
+               show_start_stream_modal: false,
+               work_streams: list_streams(graph)
              )}
 
           {:error, error_message} ->
@@ -135,39 +147,6 @@ defmodule DialecticWeb.GraphLive do
     %{id: "1", content: "", children: [], parents: []}
   end
 
-  def handle_event("nodes_box_selected", %{"ids" => ids}, socket) do
-    # IO.inspect(ids, label: "Selected Node IDs")
-
-    {:noreply,
-     socket
-     |> assign(:candidate_ids, ids)
-     |> assign(:show_group_modal, true)
-     # JS.exec() helpers work too
-     |> push_event("open_group_modal", %{ids: ids})}
-  end
-
-  def handle_event("cancel_group", _, socket) do
-    {:noreply,
-     socket
-     |> assign(:show_group_modal, false)
-     |> assign(:candidate_ids, [])}
-  end
-
-  def handle_event("group_nodes", %{"title" => t, "ids" => ids}, socket) do
-    graph = GraphManager.create_group(socket.assigns.graph_id, t, String.split(ids, ","))
-    DbWorker.save_graph(socket.assigns.graph_id)
-
-    {:noreply,
-     socket
-     |> assign(
-       candidate_ids: [],
-       graph: graph,
-       f_graph: format_graph(graph),
-       show_group_modal: false,
-       graph_operation: "create_group"
-     )}
-  end
-
   def handle_event("node:join_group", %{"node" => nid, "parent" => gid}, socket) do
     graph = GraphManager.set_parent(socket.assigns.graph_id, nid, gid)
     DbWorker.save_graph(socket.assigns.graph_id)
@@ -182,20 +161,57 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("node:leave_group", %{"node" => nid}, socket) do
-    graph = GraphManager.remove_parent(socket.assigns.graph_id, nid)
-    DbWorker.save_graph(socket.assigns.graph_id)
+    # Server-side guard: do not allow leaving if it would leave the group empty
+    {_gs, g} = GraphManager.get_graph(socket.assigns.graph_id)
 
-    {:noreply,
-     socket
-     |> assign(
-       graph: graph,
-       f_graph: format_graph(graph),
-       graph_operation: "leave_group"
-     )}
+    case :digraph.vertex(g, nid) do
+      {^nid, v} ->
+        parent_id = Map.get(v, :parent)
+
+        if is_binary(parent_id) do
+          children_count =
+            :digraph.vertices(g)
+            |> Enum.count(fn vid ->
+              case :digraph.vertex(g, vid) do
+                {^vid, lbl} -> Map.get(lbl, :parent) == parent_id
+                _ -> false
+              end
+            end)
+
+          if children_count <= 1 do
+            # Block leaving the last child; no-op
+            {:noreply, socket}
+          else
+            graph = GraphManager.remove_parent(socket.assigns.graph_id, nid)
+            DbWorker.save_graph(socket.assigns.graph_id)
+
+            {:noreply,
+             socket
+             |> assign(
+               graph: graph,
+               f_graph: format_graph(graph),
+               graph_operation: "leave_group"
+             )}
+          end
+        else
+          {:noreply, socket}
+        end
+
+      _ ->
+        {:noreply, socket}
+    end
   end
 
   def handle_event("toggle_drawer", _, socket) do
     {:noreply, socket |> assign(drawer_open: !socket.assigns.drawer_open)}
+  end
+
+  def handle_event("toggle_right_panel", _, socket) do
+    {:noreply, socket |> assign(right_panel_open: !socket.assigns.right_panel_open)}
+  end
+
+  def handle_event("toggle_bottom_menu", _, socket) do
+    {:noreply, socket |> assign(bottom_menu_open: !socket.assigns.bottom_menu_open)}
   end
 
   # Handle form submission and change events
@@ -250,6 +266,21 @@ defmodule DialecticWeb.GraphLive do
     {:noreply,
      socket
      |> assign(:node_menu_visible, !socket.assigns.node_menu_visible)}
+  end
+
+  def handle_event("toggle_section", %{"section" => section}, socket) do
+    open_sections = socket.assigns[:open_sections] || %{}
+    current = Map.get(open_sections, section, false)
+    new_sections = Map.put(open_sections, section, !current)
+
+    socket = assign(socket, :open_sections, new_sections)
+
+    send_update(DialecticWeb.RightPanelComp,
+      id: "right-panel-comp",
+      open_sections: new_sections
+    )
+
+    {:noreply, socket}
   end
 
   def handle_event("unnote", %{"node" => node_id}, socket) do
@@ -455,6 +486,9 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, updated_socket} =
       update_graph(socket, GraphActions.find_node(socket.assigns.graph_id, id), "node_clicked")
 
+    # Preserve and re-apply panel/menu state across node changes
+    updated_socket = reapply_right_panel_state(socket, updated_socket)
+
     # Push event to center the node if coming from search
     if from_search do
       {:noreply, push_event(updated_socket, "center_node", %{id: id})}
@@ -470,6 +504,9 @@ defmodule DialecticWeb.GraphLive do
         GraphActions.move(graph_action_params(socket), direction),
         "node_clicked"
       )
+
+    # Preserve and re-apply panel/menu state across node moves
+    updated_socket = reapply_right_panel_state(socket, updated_socket)
 
     {:noreply, push_event(updated_socket, "center_node", %{id: updated_socket.assigns.node.id})}
   end
@@ -503,6 +540,64 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, assign(socket, show_combine: false)}
   end
 
+  # Start stream handlers grouped with other handle_event clauses
+  def handle_event("open_start_stream_modal", _params, socket) do
+    {:noreply, assign(socket, show_start_stream_modal: true)}
+  end
+
+  def handle_event("cancel_start_stream", _params, socket) do
+    {:noreply, assign(socket, show_start_stream_modal: false)}
+  end
+
+  def handle_event("start_stream", %{"title" => title} = params, socket) do
+    if !socket.assigns.can_edit do
+      {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    else
+      # 1) Optionally create a compound group to visually contain the stream
+      group_id =
+        if is_binary(title) and String.trim(title) != "" do
+          title
+        else
+          nil
+        end
+
+      if group_id do
+        GraphManager.create_group(socket.assigns.graph_id, group_id, [])
+        DbWorker.save_graph(socket.assigns.graph_id)
+      end
+
+      # 2) Create a new root node under the group (if provided)
+      content = title
+
+      vertex = %Vertex{
+        content: content,
+        class: "origin",
+        user: socket.assigns.user,
+        parent: group_id
+      }
+
+      new_node = GraphManager.add_node(socket.assigns.graph_id, vertex)
+
+      # 3) Load updated graph and node-with-relatives and update assigns/UI
+      {graph2, node2} = GraphManager.find_node_by_id(socket.assigns.graph_id, new_node.id)
+      DbWorker.save_graph(socket.assigns.graph_id)
+
+      if Map.get(params, "auto_answer") in ["on", "true", "1"] do
+        GraphActions.answer(graph_action_params(socket, node2))
+      end
+
+      update_graph(socket, {graph2, node2}, "start_stream")
+    end
+  end
+
+  def handle_event("focus_stream", %{"id" => group_id}, socket) do
+    {:noreply, push_event(socket, "focus_group", %{id: group_id})}
+  end
+
+  def handle_event("toggle_stream", %{"id" => group_id}, socket) do
+    {:noreply, push_event(socket, "toggle_group", %{id: group_id})}
+  end
+
   def handle_info({DialecticWeb.Presence, {:join, presence}}, socket) do
     if is_connected_to_graph?(presence, socket.assigns.graph_id) do
       {:noreply, stream_insert(socket, :presences, presence)}
@@ -527,7 +622,8 @@ defmodule DialecticWeb.GraphLive do
        assign(socket,
          graph: graph,
          f_graph: format_graph(graph),
-         graph_operation: "other_user_change"
+         graph_operation: "other_user_change",
+         work_streams: list_streams(graph)
        )}
     else
       {:noreply, socket}
@@ -733,6 +829,62 @@ defmodule DialecticWeb.GraphLive do
     {can_up, can_down, can_left, can_right}
   end
 
+  defp list_streams(graph) do
+    try do
+      streams =
+        :digraph.vertices(graph)
+        |> Enum.reduce([], fn vid, acc ->
+          case :digraph.vertex(graph, vid) do
+            {^vid, v} ->
+              if is_map(v) and Map.get(v, :compound) == true do
+                [%{id: v.id} | acc]
+              else
+                acc
+              end
+
+            _ ->
+              acc
+          end
+        end)
+        |> Enum.reverse()
+
+      streams
+    rescue
+      _ -> []
+    end
+  end
+
+  defp ensure_main_group(graph_id, graph) do
+    try do
+      # If a Main compound group exists, do nothing
+      case :digraph.vertex(graph, "Main") do
+        {"Main", _v} ->
+          graph
+
+        false ->
+          # Collect all top-level nodes (non-compound and no parent)
+          child_ids =
+            :digraph.vertices(graph)
+            |> Enum.filter(fn vid ->
+              case :digraph.vertex(graph, vid) do
+                {^vid, v} when is_map(v) ->
+                  Map.get(v, :compound, false) != true and is_nil(Map.get(v, :parent))
+
+                _ ->
+                  false
+              end
+            end)
+
+          # Create the Main group and assign children
+          updated = GraphManager.create_group(graph_id, "Main", child_ids)
+          DbWorker.save_graph(graph_id)
+          updated
+      end
+    rescue
+      _ -> graph
+    end
+  end
+
   def update_graph(socket, {graph, node}, operation) do
     # Changeset needs to be a new node
     new_node = GraphActions.create_new_node(socket.assigns.user)
@@ -755,19 +907,65 @@ defmodule DialecticWeb.GraphLive do
 
     {nav_up, nav_down, nav_left, nav_right} = compute_nav_flags(graph, node)
 
-    {:noreply,
-     assign(socket,
-       graph: graph,
-       f_graph: format_graph(graph),
-       form: to_form(changeset, id: new_node.id),
-       node: node,
-       show_combine: show_combine,
-       graph_operation: operation,
-       open_read_modal: false,
-       nav_can_up: nav_up,
-       nav_can_down: nav_down,
-       nav_can_left: nav_left,
-       nav_can_right: nav_right
-     )}
+    new_socket =
+      assign(socket,
+        graph: graph,
+        f_graph: format_graph(graph),
+        form: to_form(changeset, id: new_node.id),
+        node: node,
+        show_combine: show_combine,
+        graph_operation: operation,
+        open_read_modal: false,
+        nav_can_up: nav_up,
+        nav_can_down: nav_down,
+        nav_can_left: nav_left,
+        nav_can_right: nav_right,
+        work_streams: list_streams(graph)
+      )
+      |> then(fn s ->
+        # Close the start stream modal if applicable
+        if operation == "start_stream" do
+          assign(s, show_start_stream_modal: false)
+        else
+          s
+        end
+      end)
+      |> then(fn s ->
+        # Center on the new node when a stream starts
+        if operation == "start_stream" && node && Map.get(node, :id) do
+          push_event(s, "center_node", %{id: node.id})
+        else
+          s
+        end
+      end)
+
+    {:noreply, new_socket}
+  end
+
+  # Helper to preserve and re-apply right panel state across node changes/moves
+  defp reapply_right_panel_state(socket, updated_socket) do
+    updated_socket =
+      updated_socket
+      |> assign(
+        :open_sections,
+        socket.assigns[:open_sections] ||
+          %{
+            "search" => true,
+            "lock" => false,
+            "node_info" => false,
+            "streams" => false,
+            "shortcuts" => false
+          }
+      )
+      |> assign(:group_states, socket.assigns[:group_states] || %{})
+
+    send_update(
+      DialecticWeb.RightPanelComp,
+      id: "right-panel-comp",
+      group_states: updated_socket.assigns[:group_states],
+      open_sections: updated_socket.assigns[:open_sections]
+    )
+
+    updated_socket
   end
 end

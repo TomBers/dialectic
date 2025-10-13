@@ -70,7 +70,11 @@ defmodule DialecticWeb.ActionToolbarComp do
 
   @impl true
   def update(assigns, socket) do
-    {:ok, assign(socket, assigns)}
+    {:ok,
+     socket
+     |> assign(assigns)
+     |> assign_new(:inline, fn -> false end)
+     |> assign_new(:icons_only, fn -> false end)}
   end
 
   @impl true
@@ -78,7 +82,12 @@ defmodule DialecticWeb.ActionToolbarComp do
     ~H"""
     <div>
       <div
-        class="hidden sm:block fixed left-1/2 -translate-x-1/2 z-20 bottom-24 sm:bottom-8 md:bottom-6 pointer-events-none"
+        class={
+          if @inline,
+            do: "relative z-10 pointer-events-none",
+            else: "hidden sm:block fixed left-1/2 -translate-x-1/2 z-10 pointer-events-none"
+        }
+        style={unless @inline, do: "bottom: calc(5.5rem + env(safe-area-inset-bottom));"}
         data-external="true"
       >
         <div class="bg-white rounded-full shadow border border-gray-200 px-2 py-1 flex flex-wrap items-center justify-center gap-1 pointer-events-auto">
@@ -101,7 +110,9 @@ defmodule DialecticWeb.ActionToolbarComp do
                   d="M16 10V8a4 4 0 10-8 0v2m-1 0h10a2 2 0 012 2v6a2 2 0 01-2 2H7a2 2 0 01-2-2v-6a2 2 0 012-2z"
                 />
               </svg>
-              Locked
+              <%= unless @icons_only do %>
+                Locked
+              <% end %>
             </span>
           <% end %>
 
@@ -194,7 +205,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                   d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"
                 />
               </svg>
-              <span>Reader</span>
+              <span :if={!@icons_only}>Reader</span>
             </span>
           </button>
 
@@ -223,7 +234,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                   d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.517 0c.85.493 1.509 1.333 1.509 2.316V18"
                 />
               </svg>
-              <span>Related Ideas</span>
+              <span :if={!@icons_only}>Related Ideas</span>
             </span>
           </button>
 
@@ -252,7 +263,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                   d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z"
                 />
               </svg>
-              <span>Pros/Cons</span>
+              <span :if={!@icons_only}>Pros/Cons</span>
             </span>
           </button>
 
@@ -281,7 +292,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                   d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0 0 12 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 0 1-2.031.352 5.988 5.988 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.971Zm-16.5.52c.99-.203 1.99-.377 3-.52m0 0 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.989 5.989 0 0 1-2.031.352 5.989 5.989 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L5.25 4.971Z"
                 />
               </svg>
-              <span>Combine</span>
+              <span :if={!@icons_only}>Combine</span>
             </span>
           </button>
 
@@ -309,7 +320,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                   d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z"
                 />
               </svg>
-              <span>Explore</span>
+              <span :if={!@icons_only}>Explore</span>
             </span>
           </button>
 
@@ -350,7 +361,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                   d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0a1 1 0 01-1-1V5a1 1 0 011-1h2a2 2 0 002-2h0a2 2 0 002 2h2a1 1 0 011 1v1"
                 />
               </svg>
-              <span>Delete</span>
+              <span :if={!@icons_only}>Delete</span>
             </span>
           </button>
         </div>

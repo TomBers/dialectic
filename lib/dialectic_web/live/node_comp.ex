@@ -1,5 +1,4 @@
 defmodule DialecticWeb.NodeComp do
-  alias DialecticWeb.NodeMenuComp
   use DialecticWeb, :live_component
   alias DialecticWeb.Live.TextUtils
 
@@ -15,21 +14,12 @@ defmodule DialecticWeb.NodeComp do
       >
         <%= if String.length(@node.content) > 0 do %>
           <div
-            class={[
-              "flex-grow overflow-auto pt-1",
-              @menu_visible && "pb-28 sm:pb-24 md:pb-16",
-              not @menu_visible && "pb-8"
-            ]}
+            class="flex-grow overflow-auto scroll-smooth pt-2 pb-10 px-3 sm:px-4 md:px-6"
             id={"tt-node-" <> @node.id}
-            style={
-              if @menu_visible,
-                do: "max-height: calc(55vh - 100px); transition: max-height 0.3s ease-in-out;",
-                else: "max-height: calc(100vh - 65px); transition: max-height 0.3s ease-in-out;"
-            }
           >
             <div class="summary-content modal-responsive" id={"tt-summary-content-" <> @node.id}>
-              <article class="prose prose-stone prose-lg md:prose-xl max-w-none selection-content w-full prose-headings:mt-0">
-                <h3 class="mt-0 text-lg sm:text-xl md:text-2xl mb-2 sm:mb-3">
+              <article class="prose prose-stone prose-lg md:prose-xl max-w-none selection-content w-full prose-headings:mt-0 prose-p:leading-relaxed prose-li:leading-relaxed">
+                <h3 class="mt-0 text-lg sm:text-xl md:text-2xl mb-2 sm:mb-3 pb-2 border-b border-gray-200">
                   {TextUtils.modal_title(@node.content, @node.class || "")}
                 </h3>
                 <div
@@ -78,49 +68,6 @@ defmodule DialecticWeb.NodeComp do
             </div>
           </div>
         <% end %>
-      </div>
-      <div
-        class={[
-          "flex justify-center mb-3 mt-1 sticky",
-          @menu_visible && "bottom-24 sm:bottom-20 md:bottom-14",
-          not @menu_visible && "bottom-2"
-        ]}
-        style="z-index: 9; padding-bottom: env(safe-area-inset-bottom);"
-      >
-        <button
-          phx-click="toggle_node_menu"
-          class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-1.5 px-5 rounded-full inline-flex items-center shadow-md transition-all duration-200 ease-in-out transform hover:scale-105"
-        >
-          <span class="text-sm">{if @menu_visible, do: "Hide Menu", else: "Show Menu"}</span>
-          <svg
-            class={"ml-2 h-4 w-4 transition-transform duration-300 #{if @menu_visible, do: "rotate-0", else: "rotate-180"}"}
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path
-              fill-rule="evenodd"
-              d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-              clip-rule="evenodd"
-            />
-          </svg>
-        </button>
-      </div>
-      <div
-        class="nodeMenuComp sticky bottom-0 bg-white w-full overflow-hidden shadow-md rounded-t-lg"
-        style={"max-height: #{if @menu_visible, do: "1000px", else: "0"}; opacity: #{if @menu_visible, do: "1", else: "0"}; transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out; border-top: #{if @menu_visible, do: "1px solid #e5e7eb", else: "none"}; z-index: 9; padding-bottom: env(safe-area-inset-bottom);"}
-      >
-        <.live_component
-          module={NodeMenuComp}
-          id={"node-menu-comp-" <> @node.id}
-          node={@node}
-          user={@user}
-          form={@form}
-          graph_id={@graph_id}
-          graph_owner_id={assigns[:graph_owner_id]}
-          current_user={assigns[:current_user]}
-          ask_question={@ask_question}
-        />
       </div>
     </div>
     """

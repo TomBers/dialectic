@@ -22,92 +22,31 @@
     }
   />
   
-<!-- Top section -->
-  <div class="flex-none fixed top-16 right-0 w-full sm:w-96 bg-white border-b border-gray-200 z-10 hidden sm:block">
+<!-- Top section (Right panel becomes slide-in drawer) -->
+  <div
+    id="right-panel"
+    class={
+      if @right_panel_open,
+        do:
+          "fixed top-16 right-0 w-80 sm:w-96 bg-white border-l border-gray-200 z-10 transform translate-x-0 opacity-100 transition-all duration-300 ease-in-out",
+        else:
+          "fixed top-16 right-0 w-0 overflow-hidden bg-white border-l border-gray-200 z-10 transform translate-x-full opacity-0 transition-all duration-300 ease-in-out"
+    }
+  >
     <div class="p-2">
-      <div class="flex items-center gap-4">
-        <DialecticWeb.LockComp.render
-          :if={@current_user && @graph_struct.user_id == @current_user.id}
-          id="lock-graph"
-          graph_struct={@graph_struct}
-        />
-        
-<!-- Search bar -->
-        <div class="flex-1">
-          <form phx-submit="search_nodes" phx-change="search_nodes" class="flex relative">
-            <input
-              type="text"
-              name="search_term"
-              id="search_input"
-              value={@search_term}
-              placeholder="Search ..."
-              class="block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6 border-zinc-300 focus:border-zinc-800"
-              autocomplete="off"
-              phx-debounce="300"
-            />
-            <%= if @search_term && @search_term != "" do %>
-              <button
-                type="button"
-                phx-click="clear_search"
-                class="absolute right-0 top-0 bottom-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-5 w-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            <% end %>
-          </form>
-        </div>
-      </div>
-      
-<!-- Search results (only visible when search_term is present) -->
-      <%= if @search_term && @search_term != "" && length(@search_results) > 0 do %>
-        <div class="bg-white p-2 max-h-60 overflow-y-auto border-b border-gray-200">
-          <h3 class="text-sm font-semibold mb-2 text-gray-700">
-            Search Results ({length(@search_results)})
-          </h3>
-          <ul class="space-y-2">
-            <%= for node <- @search_results do %>
-              <li
-                class="p-2 bg-gray-50 hover:bg-gray-100 rounded text-sm cursor-pointer"
-                phx-click="node_clicked"
-                phx-value-id={node.id}
-              >
-                <div class="font-semibold text-xs text-gray-500">
-                  {node.id} • {node.class}
-                </div>
-                <div class="truncate">
-                  {String.replace_prefix(node.content, "Title:", "")
-                  |> String.slice(0, 100)}{if String.length(node.content) >
-                                                100,
-                                              do: "...",
-                                              else: ""}
-                </div>
-              </li>
-            <% end %>
-          </ul>
-        </div>
-      <% end %>
-      
-<!-- No results message -->
-      <%= if @search_term && @search_term != "" && length(@search_results) == 0 do %>
-        <div class="bg-white p-2 border-b border-gray-200">
-          <p class="text-sm text-gray-500 text-center">
-            No nodes found matching "{@search_term}"
-          </p>
-        </div>
-      <% end %>
+      <.live_component
+        module={DialecticWeb.RightPanelComp}
+        id="right-panel-comp"
+        graph_id={@graph_id}
+        node={@node}
+        work_streams={@work_streams}
+        current_user={@current_user}
+        graph_struct={@graph_struct}
+        search_term={@search_term}
+        search_results={@search_results}
+        group_states={@group_states}
+        open_sections={@open_sections}
+      />
     </div>
   </div>
   
@@ -118,8 +57,9 @@
       class={
         if @drawer_open,
           do:
-            "fixed top-0 bottom-0 left-0 md:relative w-full p-4 md:p-0 md:w-2/5 flex flex-col transition-all duration-300 ease-in-out bg-white z-90",
-          else: "w-0 overflow-hidden transition-all duration-300 ease-in-out"
+            "fixed top-0 bottom-0 left-0 md:relative w-full p-4 md:p-0 md:w-2/5 flex flex-col bg-white md:border-r md:border-gray-200 z-90 transform translate-x-0 opacity-100 transition-all duration-300 ease-in-out",
+          else:
+            "fixed top-0 bottom-0 left-0 md:relative w-0 md:w-0 overflow-hidden flex flex-col bg-white md:border-r md:border-gray-200 z-90 transform -translate-x-full md:translate-x-0 opacity-0 md:opacity-100 transition-all duration-300 ease-in-out"
       }
     >
       <div class="flex-1 overflow-y-auto">
@@ -133,24 +73,18 @@
           graph_owner_id={@graph_struct && @graph_struct.user_id}
           current_user={@current_user}
           ask_question={@ask_question}
-          menu_visible={@node_menu_visible}
         />
       </div>
     </div>
-
-    <.live_component
-      module={DialecticWeb.ActionToolbarComp}
-      id={"action-toolbar-#{@node && @node.id}"}
-      node={@node}
-      user={@user}
-      current_user={assigns[:current_user]}
-      graph_id={@graph_id}
-      can_edit={@can_edit}
-      drawer_open={@drawer_open}
-    />
     
+<!-- Action toolbar moved into bottom actions area -->
+
 <!-- Left side: Graph (expands to full width when drawer is closed) -->
-    <div class={if @drawer_open, do: "w-0 md:w-3/5", else: "w-full"}>
+    <div class={
+      if @drawer_open,
+        do: "w-0 md:w-3/5",
+        else: "w-full " <> if(@right_panel_open, do: "pr-80 sm:pr-96", else: "")
+    }>
       <div
         id="cy"
         class="h-full w-full relative"
@@ -177,7 +111,7 @@
 
       <div
         class="hidden sm:block sm:fixed right-4 z-30 bottom-28 sm:bottom-20 md:bottom-16"
-        style="bottom: calc(6rem + env(safe-area-inset-bottom));"
+        style={"bottom: " <> if(@bottom_menu_open, do: "calc(9rem + env(safe-area-inset-bottom))", else: "calc(6rem + env(safe-area-inset-bottom))") <> ";"}
       >
         <div class="bg-white rounded-md shadow border border-gray-200 flex items-center divide-x divide-gray-200">
           <button
@@ -206,32 +140,8 @@
           </button>
         </div>
       </div>
-
-      <div class="hidden sm:block sm:fixed right-4 z-30 bottom-48 sm:bottom-40 md:bottom-36 w-72 bg-white border border-gray-200 rounded-md shadow p-3 text-xs text-gray-700 space-y-2">
-        <div class="font-semibold text-gray-900">Keyboard Shortcuts</div>
-        <ul class="space-y-1">
-          <li>
-            <span class="font-mono">↑</span>/<span class="font-mono">↓</span>
-            <span class="text-gray-500">—</span>
-            <span>Move to parent / child</span>
-          </li>
-          <li>
-            <span class="font-mono">←</span>/<span class="font-mono">→</span>
-            <span class="text-gray-500">—</span>
-            <span>Move to previous / next sibling</span>
-          </li>
-          <li>
-            <span class="font-mono">Enter</span>
-            <span class="text-gray-500">—</span>
-            <span>Open Reader</span>
-          </li>
-          <li>
-            <span class="font-mono">Ctrl</span> or <span class="font-mono">⌘</span>
-            <span class="text-gray-500"> + </span>
-            <span>Scroll to zoom</span>
-          </li>
-        </ul>
-      </div>
+      
+<!-- Streams panel -->
 
       <.modal
         :if={@show_combine && @node && @node.id}
@@ -242,16 +152,55 @@
         <.live_component module={CombineComp} graph={@graph} node={@node} id="Modal" />
       </.modal>
 
-      <.modal :if={@show_group_modal} id="group-modal" on_cancel={JS.push("cancel_group")} show>
-        <h2 class="text-xl font-semibold mb-4">Group selected nodes</h2>
+      <%!-- removed deprecated grouping modal; grouping now only via streams --%>
 
-        <.simple_form for={@group_changeset} phx-submit="group_nodes">
-          <.input field={@group_changeset[:title]} label="Group title" required />
-          <input type="hidden" name="ids" value={Enum.join(@candidate_ids, ",")} />
-          <:actions>
-            <.button phx-disable-with="Grouping…">Create group</.button>
-          </:actions>
-        </.simple_form>
+      <.modal
+        :if={@show_start_stream_modal}
+        id="start-stream-modal"
+        on_cancel={JS.push("cancel_start_stream")}
+        show
+      >
+        <h2 class="text-xl font-semibold mb-4">Start a new group</h2>
+        <form phx-submit="start_stream" class="space-y-3">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Group name</label>
+            <input
+              type="text"
+              name="title"
+              id="start-stream-title"
+              required
+              class="block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6 border-zinc-300 focus:border-zinc-800"
+              oninput="document.getElementById('start-stream-content').value=this.value"
+            />
+            <input type="hidden" name="content" id="start-stream-content" />
+          </div>
+          <div class="flex items-center gap-2">
+            <input
+              type="checkbox"
+              name="auto_answer"
+              id="start-stream-auto-answer"
+              class="rounded border-gray-300"
+            />
+            <label for="start-stream-auto-answer" class="text-sm text-gray-700">
+              Automatically answer this question on create
+            </label>
+          </div>
+          <div class="flex justify-end gap-2">
+            <button
+              type="button"
+              phx-click="cancel_start_stream"
+              class="px-3 py-1 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="px-3 py-1 rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+            >
+              Create group
+            </button>
+          </div>
+        </form>
       </.modal>
 
       <.modal
@@ -314,7 +263,7 @@
 <!-- Toggle button for drawer -->
     <!-- Mobile compact menu (visible only on small screens) -->
     <div
-      class="sm:hidden fixed z-20"
+      class="sm:hidden fixed z-50"
       style="right: 1rem; bottom: calc(1rem + env(safe-area-inset-bottom));"
     >
       <details class="relative">
@@ -356,6 +305,24 @@
               />
             </svg>
             <span>Reader</span>
+          </button>
+
+          <button
+            type="button"
+            phx-click="open_start_stream_modal"
+            class="w-full text-left px-3 py-2 rounded hover:bg-gray-50 flex items-center gap-2"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            <span>Start stream</span>
           </button>
 
           <div class="my-1 border-t"></div>
@@ -407,28 +374,6 @@
             </.link>
 
             <.link
-              href={"/api/graphs/json/#{@graph_id}"}
-              download={"#{@graph_id}.json"}
-              class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-blue-200 text-blue-600 hover:bg-blue-50"
-              title="Download JSON"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M7 7h10M7 11h10m-5 4h5m-9 2H9m13 0h-9m-1 4l-3-3H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
-                />
-              </svg>
-            </.link>
-
-            <.link
               href={"/api/graphs/md/#{@graph_id}"}
               download={"#{@graph_id}.md"}
               class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-purple-200 text-purple-600 hover:bg-purple-50"
@@ -463,18 +408,17 @@
       class={
         if @drawer_open,
           do:
-            "fixed top-1/2 -translate-y-1/2 transform right-4 md:left-[40%] md:ml-4 md:right-auto p-2 rounded-full border border-gray-300 shadow-md z-10 cursor-pointer hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400 transition-colors bg-white",
+            "fixed top-1/2 -translate-y-1/2 transform right-2 md:left-[40%] md:ml-2 md:right-auto p-1.5 rounded-full bg-white opacity-60 hover:opacity-100 shadow-sm z-20 cursor-pointer transition-all duration-200",
           else:
-            "fixed top-1/2 -translate-y-1/2 transform left-4 p-2 rounded-full border border-gray-300 shadow-md z-10 cursor-pointer hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400 transition-colors bg-white"
+            "fixed top-1/2 -translate-y-1/2 transform left-2 p-1.5 rounded-full bg-white opacity-60 hover:opacity-100 shadow-sm z-20 cursor-pointer transition-all duration-200"
       }
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        class="h-6 w-6"
+        class="h-6 w-6 text-gray-600"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
-        aria-hidden="true"
       >
         <path
           stroke-linecap="round"
@@ -485,6 +429,161 @@
       </svg>
       <span class="sr-only">{if @drawer_open, do: "Close", else: "Open"} drawer</span>
     </button>
+    
+<!-- Right panel toggle -->
+    <button
+      id="right-panel-toggle"
+      phx-click="toggle_right_panel"
+      aria-controls="right-panel"
+      aria-expanded={@right_panel_open}
+      aria-label={if @right_panel_open, do: "Hide right panel", else: "Show right panel"}
+      class={
+        if @right_panel_open,
+          do:
+            "fixed top-1/2 -translate-y-1/2 transform right-[20.5rem] sm:right-[24.5rem] p-1.5 rounded-full bg-white opacity-60 hover:opacity-100 shadow-sm z-20 cursor-pointer transition-all duration-200",
+          else:
+            "fixed top-1/2 -translate-y-1/2 transform right-2 p-1.5 rounded-full bg-white opacity-60 hover:opacity-100 shadow-sm z-20 cursor-pointer transition-all duration-200"
+      }
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-6 w-6 text-gray-600"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d={if @right_panel_open, do: "M13 5l7 7-7 7", else: "M11 19l-7-7 7-7"}
+        />
+      </svg>
+      <span class="sr-only">{if @right_panel_open, do: "Close", else: "Open"} right panel</span>
+    </button>
+    
+<!-- Bottom menu toggle -->
+    <button
+      :if={!@bottom_menu_open}
+      id="bottom-menu-toggle"
+      phx-click="toggle_bottom_menu"
+      aria-controls="bottom-menu"
+      aria-expanded={@bottom_menu_open}
+      aria-label="Show bottom menu"
+      class="fixed left-1/2 -translate-x-1/2 p-2 rounded-full bg-white border border-gray-300 opacity-90 hover:opacity-100 shadow-sm cursor-pointer transition-all duration-200"
+      style="pointer-events:auto; bottom: calc(0.75rem + env(safe-area-inset-bottom)); z-index: 2147483647;"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-6 w-6 text-gray-600"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+      </svg>
+      <span class="sr-only">Open bottom menu</span>
+    </button>
+    
+<!-- Chat input bar -->
+    <div
+      id="bottom-menu"
+      class={
+        if @bottom_menu_open,
+          do:
+            "fixed inset-x-0 bottom-0 z-40 transform translate-y-0 opacity-100 visible transition-all duration-300 ease-in-out px-3 pb-3 pointer-events-auto",
+          else:
+            "fixed inset-x-0 bottom-0 z-40 transform translate-y-full opacity-0 invisible transition-all duration-300 ease-in-out px-3 pb-3 pointer-events-none"
+      }
+      style="padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem);"
+    >
+      <div class="mx-auto w-full max-w-2xl">
+        <div class="relative">
+          <div class="flex justify-center -mt-4 mb-2">
+            <button
+              id="bottom-menu-close"
+              phx-click="toggle_bottom_menu"
+              aria-controls="bottom-menu"
+              aria-expanded={@bottom_menu_open}
+              aria-label="Hide bottom menu"
+              class="roof-handle inline-flex items-center justify-center w-24 h-7 rounded-full bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 shadow-sm"
+              type="button"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+              <span class="sr-only">Close bottom menu</span>
+            </button>
+          </div>
+          <div class="bg-white/95 backdrop-blur border border-gray-200 shadow-xl rounded-t-[1.75rem] rounded-2xl px-4 pt-3 pb-3">
+            <div class="flex items-center justify-center gap-2 mb-2">
+              <.live_component
+                module={DialecticWeb.ActionToolbarComp}
+                id={"action-toolbar-#{@node && @node.id}"}
+                node={@node}
+                user={@user}
+                current_user={assigns[:current_user]}
+                graph_id={@graph_id}
+                can_edit={@can_edit}
+                inline={true}
+                icons_only={true}
+              />
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="flex items-center gap-1">
+                <button
+                  type="button"
+                  phx-click="toggle_ask_question"
+                  class={"px-2 py-1 text-xs rounded-full " <> if @ask_question, do: "bg-blue-50 text-blue-600 border border-blue-200", else: "text-gray-600 hover:bg-gray-50 border border-transparent"}
+                >
+                  Ask
+                </button>
+                <button
+                  type="button"
+                  phx-click="toggle_ask_question"
+                  class={"px-2 py-1 text-xs rounded-full " <> if !@ask_question, do: "bg-emerald-50 text-emerald-600 border border-emerald-200", else: "text-gray-600 hover:bg-gray-50 border border-transparent"}
+                >
+                  Comment
+                </button>
+              </div>
+              <.form
+                for={@form}
+                phx-submit={if @ask_question, do: "reply-and-answer", else: "answer"}
+                id="global-chat-form"
+                class="flex-1 relative"
+              >
+                <div class="relative">
+                  <.input
+                    field={@form[:content]}
+                    type="text"
+                    id="global-chat-input"
+                    placeholder={if @ask_question, do: "Ask a question…", else: "Add a comment…"}
+                    class="w-full rounded-full pl-3 pr-24 border-gray-300 focus:border-indigo-400 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                  />
+                  <button
+                    type="submit"
+                    class="absolute right-1 top-1/2 -translate-y-1/2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-3 py-1.5 rounded-full font-medium"
+                  >
+                    {if @ask_question, do: "Ask", else: "Post"}
+                  </button>
+                </div>
+              </.form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     <!-- Right side: Chat (Drawer) -->
   </div>
 </div>
