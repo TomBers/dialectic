@@ -117,7 +117,7 @@
         }
         style={"bottom: " <> if(@bottom_menu_open, do: "calc(9rem + env(safe-area-inset-bottom))", else: "calc(6rem + env(safe-area-inset-bottom))") <> ";"}
       >
-        <div class="bg-white rounded-md shadow border border-gray-200 flex items-center divide-x divide-gray-200">
+        <div class="bg-white rounded-md shadow border border-gray-200 flex flex-wrap items-center">
           <button
             id="zoom-out"
             type="button"
@@ -142,17 +142,25 @@
           >
             +
           </button>
-          <div class="hidden md:block pl-2">
+          <div class="hidden md:block w-full mt-2 pl-0">
             <div class="bg-white/95 backdrop-blur border border-gray-200 rounded px-2 py-1 shadow-sm">
-              <div class="grid grid-cols-[auto,1fr] gap-x-2 gap-y-0.5 text-[11px] text-gray-600">
-                <div class="font-mono">↑/↓</div>
-                <div>parent/child</div>
-                <div class="font-mono">←/→</div>
-                <div>prev/next</div>
-                <div class="font-mono">Enter</div>
-                <div>open reader</div>
-                <div class="font-mono">Ctrl/⌘ + scroll</div>
-                <div>zoom</div>
+              <div class="space-y-1 text-[11px] text-gray-600">
+                <div>
+                  <div class="font-mono leading-tight">↑/↓</div>
+                  <div class="leading-tight">parent/child</div>
+                </div>
+                <div>
+                  <div class="font-mono leading-tight">←/→</div>
+                  <div class="leading-tight">prev/next</div>
+                </div>
+                <div>
+                  <div class="font-mono leading-tight">Enter</div>
+                  <div class="leading-tight">open reader</div>
+                </div>
+                <div>
+                  <div class="font-mono leading-tight">Ctrl/⌘ + scroll</div>
+                  <div class="leading-tight">zoom</div>
+                </div>
               </div>
             </div>
           </div>
