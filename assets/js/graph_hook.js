@@ -88,9 +88,21 @@ const graphHook = {
       );
     };
 
+    const getRightPanelWidth = () => {
+      const panel = document.getElementById("right-panel");
+      if (!panel) return 0;
+      const rect = panel.getBoundingClientRect();
+      return rect && rect.width > 10 ? rect.width : 0;
+    };
+
     const centerPoint = () => {
       const rect = container.getBoundingClientRect();
-      return { x: rect.width / 2, y: rect.height / 2 };
+      const rightPanelWidth = getRightPanelWidth();
+      // Center within the visible area (container minus right panel width)
+      return {
+        x: Math.max(0, (rect.width - rightPanelWidth) / 2),
+        y: rect.height / 2,
+      };
     };
 
     const zoomBy = (factor) => {
@@ -101,11 +113,26 @@ const graphHook = {
     };
 
     const fitGraph = () => {
+      // First center to all elements as before
       this.cy.animate({
         center: { eles: this.cy.elements() },
         duration: 150,
         easing: "ease-in-out-quad",
       });
+
+      // Then offset horizontally so the centered content lands in the visible area, not under the right panel
+      const rect = container.getBoundingClientRect();
+      const rightPanelWidth = getRightPanelWidth();
+      const deltaX = rightPanelWidth > 0 ? -(rightPanelWidth / 2) : 0;
+
+      if (deltaX !== 0) {
+        this.cy.animate({
+          panBy: { x: deltaX, y: 0 },
+          duration: 150,
+          easing: "ease-in-out-quad",
+        });
+      }
+
       requestAnimationFrame(showZoom);
     };
 
@@ -199,10 +226,14 @@ const graphHook = {
           // Keep the dataset in sync so other consumers (and hooks) can rely on it
           this.el.dataset.node = id;
 
+          // Pan the graph so the node lands at the center of the visible area (accounting for the right panel)
+          const desired = centerPoint();
+          const pos = nodeToCenter.renderedPosition();
+          const dx = desired.x - pos.x;
+          const dy = desired.y - pos.y;
+
           this.cy.animate({
-            center: {
-              eles: nodeToCenter,
-            },
+            panBy: { x: dx, y: dy },
             duration: 150,
             easing: "ease-in-out-quad",
           });
