@@ -109,13 +109,6 @@ defmodule DialecticWeb.GraphLive do
                bottom_menu_open: true,
                graph_operation: "",
                ask_question: true,
-               open_sections: %{
-                 "search" => true,
-                 "lock" => false,
-                 "node_info" => false,
-                 "streams" => false,
-                 "shortcuts" => false
-               },
                group_states: %{},
                search_term: "",
                search_results: [],
@@ -266,21 +259,6 @@ defmodule DialecticWeb.GraphLive do
     {:noreply,
      socket
      |> assign(:node_menu_visible, !socket.assigns.node_menu_visible)}
-  end
-
-  def handle_event("toggle_section", %{"section" => section}, socket) do
-    open_sections = socket.assigns[:open_sections] || %{}
-    current = Map.get(open_sections, section, false)
-    new_sections = Map.put(open_sections, section, !current)
-
-    socket = assign(socket, :open_sections, new_sections)
-
-    send_update(DialecticWeb.RightPanelComp,
-      id: "right-panel-comp",
-      open_sections: new_sections
-    )
-
-    {:noreply, socket}
   end
 
   def handle_event("unnote", %{"node" => node_id}, socket) do
@@ -946,24 +924,12 @@ defmodule DialecticWeb.GraphLive do
   defp reapply_right_panel_state(socket, updated_socket) do
     updated_socket =
       updated_socket
-      |> assign(
-        :open_sections,
-        socket.assigns[:open_sections] ||
-          %{
-            "search" => true,
-            "lock" => false,
-            "node_info" => false,
-            "streams" => false,
-            "shortcuts" => false
-          }
-      )
       |> assign(:group_states, socket.assigns[:group_states] || %{})
 
     send_update(
       DialecticWeb.RightPanelComp,
       id: "right-panel-comp",
-      group_states: updated_socket.assigns[:group_states],
-      open_sections: updated_socket.assigns[:open_sections]
+      group_states: updated_socket.assigns[:group_states]
     )
 
     updated_socket

@@ -7,7 +7,7 @@ defmodule DialecticWeb.LockComp do
 
   def render(assigns) do
     ~H"""
-    <div class="p-4">
+    <div class="p-1">
       <div class="flex items-center">
         <label for="toggle_lock_graph" class="flex items-center cursor-pointer">
           <div class="relative">
@@ -24,13 +24,13 @@ defmodule DialecticWeb.LockComp do
             <div class={"absolute left-1 top-1 w-4 h-4 rounded-full transition transform #{if !@graph_struct.is_public, do: "translate-x-4 bg-white", else: "bg-white"}"}>
             </div>
           </div>
-          <span class="ml-3 text-sm font-medium text-gray-900">
+          <span class="ml-2 text-xs font-medium text-gray-800">
             {if @graph_struct.is_public, do: "Public", else: "Locked"}
           </span>
         </label>
         <.icon
           name="hero-information-circle"
-          class="ml-2 h-5 w-5 text-gray-500"
+          class="ml-1 h-4 w-4 text-gray-500"
           tooltip="When enabled, the graph is locked and cannot be edited by others."
         />
       </div>

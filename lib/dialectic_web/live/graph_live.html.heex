@@ -45,7 +45,6 @@
         search_term={@search_term}
         search_results={@search_results}
         group_states={@group_states}
-        open_sections={@open_sections}
       />
     </div>
   </div>
@@ -82,7 +81,7 @@
 <!-- Left side: Graph (expands to full width when drawer is closed) -->
     <div class={
       if @drawer_open,
-        do: "w-0 md:w-3/5",
+        do: "w-0 md:w-3/5 " <> if(@right_panel_open, do: "pr-80 sm:pr-96", else: ""),
         else: "w-full " <> if(@right_panel_open, do: "pr-80 sm:pr-96", else: "")
     }>
       <div
@@ -110,7 +109,12 @@
 <!-- Shortcuts and zoom controls moved outside Cytoscape container -->
 
       <div
-        class="hidden sm:block sm:fixed right-4 z-30 bottom-28 sm:bottom-20 md:bottom-16"
+        class={
+          if @right_panel_open,
+            do:
+              "hidden sm:block sm:fixed right-[20.5rem] sm:right-[24.5rem] z-30 bottom-28 sm:bottom-20 md:bottom-16",
+            else: "hidden sm:block sm:fixed right-4 z-30 bottom-28 sm:bottom-20 md:bottom-16"
+        }
         style={"bottom: " <> if(@bottom_menu_open, do: "calc(9rem + env(safe-area-inset-bottom))", else: "calc(6rem + env(safe-area-inset-bottom))") <> ";"}
       >
         <div class="bg-white rounded-md shadow border border-gray-200 flex items-center divide-x divide-gray-200">
@@ -138,6 +142,20 @@
           >
             +
           </button>
+          <div class="hidden md:block pl-2">
+            <div class="bg-white/95 backdrop-blur border border-gray-200 rounded px-2 py-1 shadow-sm">
+              <div class="grid grid-cols-[auto,1fr] gap-x-2 gap-y-0.5 text-[11px] text-gray-600">
+                <div class="font-mono">↑/↓</div>
+                <div>parent/child</div>
+                <div class="font-mono">←/→</div>
+                <div>prev/next</div>
+                <div class="font-mono">Enter</div>
+                <div>open reader</div>
+                <div class="font-mono">Ctrl/⌘ + scroll</div>
+                <div>zoom</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       
