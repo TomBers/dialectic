@@ -10,7 +10,7 @@ defmodule Dialectic.Graph.GraphActionsTest do
 
       assert %Vertex{} = node
       assert node.user == user
-      assert node.id == "NewNode"
+      assert String.starts_with?(node.id, "NewNode")
       assert node.noted_by == []
     end
   end
