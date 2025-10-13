@@ -105,7 +105,7 @@ defmodule DialecticWeb.GraphLive do
                can_edit: can_edit,
                node_menu_visible: true,
                drawer_open: true,
-               right_panel_open: true,
+               right_panel_open: false,
                bottom_menu_open: true,
                graph_operation: "",
                ask_question: true,
