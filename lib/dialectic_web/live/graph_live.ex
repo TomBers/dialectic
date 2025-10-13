@@ -962,7 +962,7 @@ defmodule DialecticWeb.GraphLive do
       end)
       |> then(fn s ->
         # Center on the new node when a stream starts
-        if operation == "start_stream" and node and Map.get(node, :id) do
+        if operation == "start_stream" && node && Map.get(node, :id) do
           push_event(s, "center_node", %{id: node.id})
         else
           s
