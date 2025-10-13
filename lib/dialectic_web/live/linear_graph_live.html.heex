@@ -60,45 +60,41 @@
         data-indent={node.indent}
         phx-hook="HighlightNode"
       >
-        <article class="prose prose-stone p-4 w-full text-[15px] sm:text-base md:prose-lg max-w-none">
-          <div
-            class="flex items-center gap-2 cursor-pointer select-none hover:bg-gray-50 rounded-md -mx-2 px-2"
-            phx-click="toggle_node"
-            phx-value-node-id={node.id}
-            role="button"
-            aria-expanded={!Enum.member?(@hidden, node.id)}
-          >
+        <div class="p-4 w-full">
+          <div class="not-prose">
             <button
+              type="button"
+              class="flex w-full items-center gap-2 -mx-2 px-2 py-1.5 rounded-md hover:bg-gray-50 text-left"
               phx-click="toggle_node"
               phx-value-node-id={node.id}
-              aria-label={
-                if Enum.member?(@hidden, node.id), do: "Expand node", else: "Collapse node"
-              }
               aria-expanded={!Enum.member?(@hidden, node.id)}
-              class="inline-flex items-center justify-center w-10 h-10 sm:w-7 sm:h-7 rounded-md border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 shadow-sm"
             >
-              <%= if Enum.member?(@hidden, node.id) do %>
-                <.icon name="hero-chevron-down" class="h-5 w-5 text-gray-700" />
+              <span class="inline-flex items-center justify-center w-5 h-5 text-gray-700">
+                <%= if Enum.member?(@hidden, node.id) do %>
+                  <.icon name="hero-chevron-right" class="h-5 w-5" />
+                <% else %>
+                  <.icon name="hero-chevron-down" class="h-5 w-5" />
+                <% end %>
+              </span>
+
+              <%= unless Enum.member?(@hidden, node.id) do %>
+                <span class="leading-5 text-[15px] sm:text-base font-medium text-zinc-900">
+                  {TextUtils.modal_title(node.content, node.class)}
+                </span>
               <% else %>
-                <.icon name="hero-chevron-up" class="h-5 w-5 text-gray-700" />
+                <span class="leading-5 text-[15px] sm:text-base font-medium text-zinc-800 truncate">
+                  {TextUtils.process_node_content(node.content || "")}
+                </span>
               <% end %>
             </button>
-
-            <%= unless Enum.member?(@hidden, node.id) do %>
-              <h3 class="m-0">{TextUtils.modal_title(node.content, node.class)}</h3>
-            <% else %>
-              <h3 class="m-0 text-zinc-800 truncate">
-                {TextUtils.process_node_content(node.content || "")}
-              </h3>
-            <% end %>
           </div>
 
           <%= unless Enum.member?(@hidden, node.id) do %>
-            <div class="mt-2">
+            <article class="prose prose-stone text-[15px] sm:text-base md:prose-lg max-w-none mt-2">
               {TextUtils.full_html(node.content || "")}
-            </div>
+            </article>
           <% end %>
-        </article>
+        </div>
       </div>
     <% end %>
   <% end %>
@@ -114,7 +110,7 @@
       </.link>
       <.button
         phx-click="toggle_all"
-        id="toggle-button-mobile"
+        id="expand-collapse-mobile"
         aria-label={if length(@hidden) != 0, do: "Expand all", else: "Collapse all"}
         class="inline-flex items-center text-xs font-medium px-3 py-2 rounded-full border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
       >
