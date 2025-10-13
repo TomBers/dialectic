@@ -119,23 +119,21 @@ defmodule DialecticWeb.RightPanelComp do
         </div>
       </details>
 
-      <details open={@open_sections["lock"]} class="bg-white border border-gray-200 rounded-md">
-        <summary
-          class="px-3 py-2 text-xs font-semibold text-gray-700 cursor-pointer select-none"
-          phx-click="toggle_section"
-          phx-value-section="lock"
-          onclick="event.preventDefault()"
-        >
-          Lock
-        </summary>
-        <div class="p-2">
-          <DialecticWeb.LockComp.render
-            :if={@current_user && @graph_struct && @graph_struct.user_id == @current_user.id}
-            id="lock-graph"
-            graph_struct={@graph_struct}
-          />
-        </div>
-      </details>
+      <%= if @current_user && @graph_struct && @graph_struct.user_id == @current_user.id do %>
+        <details open={@open_sections["lock"]} class="bg-white border border-gray-200 rounded-md">
+          <summary
+            class="px-3 py-2 text-xs font-semibold text-gray-700 cursor-pointer select-none"
+            phx-click="toggle_section"
+            phx-value-section="lock"
+            onclick="event.preventDefault()"
+          >
+            Lock
+          </summary>
+          <div class="p-2">
+            <DialecticWeb.LockComp.render id="lock-graph" graph_struct={@graph_struct} />
+          </div>
+        </details>
+      <% end %>
       <details
         open={@open_sections["node_info"]}
         class="group bg-white border border-gray-200 rounded-md"
