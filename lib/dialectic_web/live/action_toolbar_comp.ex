@@ -70,7 +70,10 @@ defmodule DialecticWeb.ActionToolbarComp do
 
   @impl true
   def update(assigns, socket) do
-    {:ok, assign(socket, assigns)}
+    {:ok,
+     socket
+     |> assign(assigns)
+     |> assign_new(:inline, fn -> false end)}
   end
 
   @impl true
@@ -78,8 +81,12 @@ defmodule DialecticWeb.ActionToolbarComp do
     ~H"""
     <div>
       <div
-        class="hidden sm:block fixed left-1/2 -translate-x-1/2 z-10 pointer-events-none"
-        style="bottom: calc(5.5rem + env(safe-area-inset-bottom));"
+        class={
+          if @inline,
+            do: "relative z-10 pointer-events-none",
+            else: "hidden sm:block fixed left-1/2 -translate-x-1/2 z-10 pointer-events-none"
+        }
+        style={unless @inline, do: "bottom: calc(5.5rem + env(safe-area-inset-bottom));"}
         data-external="true"
       >
         <div class="bg-white rounded-full shadow border border-gray-200 px-2 py-1 flex flex-wrap items-center justify-center gap-1 pointer-events-auto">
