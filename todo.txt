@@ -1,18 +1,7 @@
-3) References / Appendix - pull references from nodes and display in separate component
+The bottom toolbar over runs the content panel, making it hard to read the content.  Make it respect sizing if either left hand and / or right hand menu is open
 
-4) Export Image of graph
+Don't show lock in right hand menu if action not possible
 
-9) Allow Multiple trees on same graph
+Now we have the right hand menu not always displayed, can simplify it, no need for drop downs inside.
 
-Done
-
-1) Graph nav, scroll to move, in the same way the Figma app operates
-
-2) Move Graph actions to a bottom centered toolbar
-8) Move the search bar so the menu is visible
-
-5) Colour schemes - tie colour to actions
-
-6) Node selected - the current selection is not clear make more standard.
-
-7) Undo / delete node - just mark node as deleted in the database, need to check ownership and ensure the node does not have anyh children.
+Make center graph respect if the right hand menu is open or not
