@@ -3,7 +3,8 @@ defmodule Dialectic.Graph.GraphActions do
   alias Dialectic.Responses.LlmInterface
 
   def create_new_node(user) do
-    %Vertex{user: user, id: "NewNode", noted_by: []}
+    unique_id = "NewNode-" <> Integer.to_string(System.unique_integer([:positive]))
+    %Vertex{user: user, id: unique_id, noted_by: []}
   end
 
   def move({graph_id, node, _user, _live_view_topic}, direction) do
