@@ -7,7 +7,7 @@ defmodule DialecticWeb.ExportMenuComp do
   Provides:
   - PNG screenshot (integrates with the existing `.download-png` hook)
   - PDF (navigates to the linear print view)
-  - JSON download
+
   - Markdown download
 
   Assigns:
@@ -109,30 +109,6 @@ defmodule DialecticWeb.ExportMenuComp do
               />
             </svg>
             <span>PDF</span>
-          </.link>
-          
-    <!-- JSON -->
-          <.link
-            href={"/api/graphs/json/#{@graph_id}"}
-            download={"#{@graph_id}.json"}
-            class="w-full inline-flex items-center gap-2 text-xs font-medium px-2.5 py-2 rounded-md hover:bg-gray-50 transition-colors"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-4 w-4 text-blue-600"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2"
-              aria-hidden="true"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M7 7h10M7 11h10m-5 4h5m-9 2H9m13 0h-9m-1 4l-3-3H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
-              />
-            </svg>
-            <span>JSON</span>
           </.link>
           
     <!-- Markdown -->

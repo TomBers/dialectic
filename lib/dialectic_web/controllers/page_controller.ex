@@ -2,7 +2,7 @@ defmodule DialecticWeb.PageController do
   use DialecticWeb, :controller
 
   alias Dialectic.Graph.{Vertex, Serialise}
-  alias Dialectic.DbActions.{Notes, Graphs}
+  alias Dialectic.DbActions.{Notes}
 
   def home(conn, params) do
     top_graphs = Notes.top_graphs(5)
@@ -25,11 +25,11 @@ defmodule DialecticWeb.PageController do
     render(conn, :view_all, graphs: graphs, search_term: search_term)
   end
 
-  def graph_json(conn, %{"graph_name" => graph_id_uri}) do
-    graph_name = URI.decode(graph_id_uri)
-    graph = Graphs.get_graph_by_title(graph_name).data
-    json(conn, graph)
-  end
+  # def graph_json(conn, %{"graph_name" => graph_id_uri}) do
+  #   graph_name = URI.decode(graph_id_uri)
+  #   graph = Graphs.get_graph_by_title(graph_name).data
+  #   json(conn, graph)
+  # end
 
   def graph_md(conn, %{"graph_name" => graph_id_uri}) do
     graph_name = URI.decode(graph_id_uri)
