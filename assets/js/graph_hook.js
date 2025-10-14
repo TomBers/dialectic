@@ -2,19 +2,205 @@ import { draw_graph } from "./draw_graph";
 import { layoutConfig } from "./layout_config.js";
 
 const layoutGraph = (cy, onDone) => {
+  try {
+    // Stop any in-flight animations to avoid fighting layout animations
+    if (cy && typeof cy.stop === "function") {
+      cy.stop();
+    }
+    if (cy.__evMeta) {
+      cy.__evMeta.animating = false;
+    }
+  } catch (_e) {}
+
   const layout = cy.layout({
     ...layoutConfig.baseLayout,
   });
 
-  if (
-    typeof onDone === "function" &&
-    layout &&
-    typeof layout.one === "function"
-  ) {
-    layout.one("layoutstop", onDone);
-  }
+  // Track layout running state on the instance that owns this cy
+  try {
+    if (layout && typeof layout.one === "function") {
+      layout.one("layoutstart", () => {
+        if (cy && cy._ownerHook) {
+          cy._ownerHook._layoutRunning = true;
+        }
+      });
+
+      layout.one("layoutstop", () => {
+        if (cy && cy._ownerHook) {
+          cy._ownerHook._layoutRunning = false;
+        }
+        if (typeof onDone === "function") {
+          // Defer one frame to ensure final positions are committed
+          requestAnimationFrame(onDone);
+        }
+      });
+    }
+  } catch (_e) {}
 
   layout.run();
+};
+
+const debugBoundsEnabled = () => {
+  try {
+    if (window.__GRAPH_DEBUG_BOUNDS) return true;
+    const v = window.localStorage && localStorage.getItem("graph_debug_bounds");
+    return v === "1" || v === "true";
+  } catch (_e) {
+    return false;
+  }
+};
+
+const drawDebugBounds = (
+  container,
+  rect,
+  overlap,
+  nodeRenderedX,
+  nodeRenderedY,
+) => {
+  try {
+    let box = container.querySelector(".graph-debug-bounds");
+    if (!box) {
+      box = document.createElement("div");
+      box.className = "graph-debug-bounds";
+      container.appendChild(box);
+    }
+    Object.assign(box.style, {
+      position: "absolute",
+      pointerEvents: "none",
+      left: "0px",
+      top: "0px",
+      width: Math.max(0, rect.width - overlap) + "px",
+      height: rect.height + "px",
+      outline: "2px dashed rgba(255,0,0,0.6)",
+      background: "rgba(255,0,0,0.05)",
+      zIndex: "9999",
+    });
+
+    let edge = container.querySelector(".graph-debug-edge");
+    if (!edge) {
+      edge = document.createElement("div");
+      edge.className = "graph-debug-edge";
+      container.appendChild(edge);
+    }
+    Object.assign(edge.style, {
+      position: "absolute",
+      pointerEvents: "none",
+      left: Math.max(0, rect.width - overlap) + "px",
+      top: "0px",
+      width: "0px",
+      height: rect.height + "px",
+      borderLeft: "2px solid rgba(255,0,0,0.6)",
+      zIndex: "9999",
+    });
+
+    let dot = container.querySelector(".graph-debug-node");
+    if (!dot) {
+      dot = document.createElement("div");
+      dot.className = "graph-debug-node";
+      container.appendChild(dot);
+    }
+    Object.assign(dot.style, {
+      position: "absolute",
+      pointerEvents: "none",
+      width: "8px",
+      height: "8px",
+      borderRadius: "50%",
+      background: "rgba(0,0,255,0.8)",
+      transform: "translate(-4px,-4px)",
+      left: nodeRenderedX + "px",
+      top: nodeRenderedY + "px",
+      zIndex: "10000",
+    });
+  } catch (_e) {}
+};
+
+const ensureVisible = (cy, container, nodeId) => {
+  try {
+    const n = cy.$(`#${nodeId}`);
+    if (!n || n.length === 0) return;
+
+    const rect = container.getBoundingClientRect();
+    const panel = document.getElementById("right-panel");
+    const pr = panel ? panel.getBoundingClientRect() : null;
+
+    // Only the overlap of the right panel over the graph container
+    const overlap = pr
+      ? Math.min(rect.width, Math.max(0, rect.right - pr.left))
+      : 0;
+
+    // Visible region inside the container
+    const getNum = (k, d) => {
+      try {
+        const v = localStorage.getItem(k);
+        if (!v) return d;
+        const n = parseFloat(v);
+        return Number.isFinite(n) ? n : d;
+      } catch (_e) {
+        return d;
+      }
+    };
+    const margin = getNum("graph_nudge_margin", 16); // outer margin from container edges
+    const deadzone = getNum("graph_nudge_deadzone", 8); // hysteresis to avoid bounce
+    const pad = getNum("graph_nudge_pad", 12); // ensure node box + padding is visible
+
+    const visLeft = margin;
+    const visTop = margin;
+    const visRight = Math.max(margin, rect.width - overlap - margin);
+    const visBottom = Math.max(margin, rect.height - margin);
+
+    // Deadzone-shrunk inner box to prevent small back-and-forth nudges
+    const okLeft = visLeft + deadzone;
+    const okTop = visTop + deadzone;
+    const okRight = visRight - deadzone;
+    const okBottom = visBottom - deadzone;
+
+    const zoom = cy.zoom();
+    const pan = cy.pan();
+
+    // Node bounding box in model space
+    const bb = n.boundingBox();
+    // Convert to rendered coords and add padding
+    const rbbLeft = bb.x1 * zoom + pan.x - pad;
+    const rbbRight = bb.x2 * zoom + pan.x + pad;
+    const rbbTop = bb.y1 * zoom + pan.y - pad;
+    const rbbBottom = bb.y2 * zoom + pan.y + pad;
+
+    // Debug dot at node center (rendered)
+    const cx = ((bb.x1 + bb.x2) / 2) * zoom + pan.x;
+    const cyR = ((bb.y1 + bb.y2) / 2) * zoom + pan.y;
+    if (debugBoundsEnabled()) {
+      drawDebugBounds(container, rect, overlap, cx, cyR);
+    }
+
+    // Minimal pan to bring padded box fully inside ok-bounds
+    let dx = 0;
+    let dy = 0;
+
+    if (rbbLeft < okLeft) dx = okLeft - rbbLeft;
+    else if (rbbRight > okRight) dx = okRight - rbbRight;
+
+    if (rbbTop < okTop) dy = okTop - rbbTop;
+    else if (rbbBottom > okBottom) dy = okBottom - rbbBottom;
+
+    if (dx !== 0 || dy !== 0) {
+      const now = performance.now ? performance.now() : Date.now();
+      if (!cy.__evMeta) cy.__evMeta = { last: 0, animating: false };
+      // Throttle and coalesce animations to avoid visible double renders/bounce
+      if (cy.__evMeta.animating || now - cy.__evMeta.last < 120) {
+        return;
+      }
+      cy.__evMeta.animating = true;
+      cy.animate({
+        pan: { x: pan.x + dx, y: pan.y + dy },
+        duration: 120,
+        easing: "ease-in-out-quad",
+        complete: () => {
+          cy.__evMeta.last = performance.now ? performance.now() : Date.now();
+          cy.__evMeta.animating = false;
+        },
+      });
+    }
+  } catch (_e) {}
 };
 
 const graphHook = {
@@ -25,6 +211,13 @@ const graphHook = {
       this.el.querySelector(`#${div}`) || document.getElementById(div);
 
     this.cy = draw_graph(container, this, JSON.parse(graph), node);
+    // Link back so layoutGraph can update running state
+    try {
+      this.cy._ownerHook = this;
+    } catch (_e) {}
+    // Layout/centering coordination state
+    this._layoutRunning = false;
+    this._pendingCenterId = null;
 
     // Expose container and a helper to center a node within the visible area (accounts for right panel)
     this._container = container;
@@ -38,15 +231,9 @@ const graphHook = {
         const pr = panel ? panel.getBoundingClientRect() : null;
         const pw = pr && pr.width > 10 ? pr.width : 0;
 
-        const desiredX = Math.max(0, (rect.width - pw) / 2);
-        const desiredY = rect.height / 2;
-        const pos = n.renderedPosition();
-
-        this.cy.animate({
-          panBy: { x: desiredX - pos.x, y: desiredY - pos.y },
-          duration: 150,
-          easing: "ease-in-out-quad",
-        });
+        // Keep structure stable: only pan if the node is off screen
+        // Compute visible bounds (exclude right panel) with small margins
+        requestAnimationFrame(() => ensureVisible(this.cy, container, id));
       } catch (_e) {}
     };
 
@@ -90,6 +277,35 @@ const graphHook = {
     window.addEventListener("keydown", this._windowKeydown, true);
 
     // Zoom controls (+ / − / Fit)
+    // Debug: keep bounds overlay in sync with pan/zoom/render
+    this._debugRedraw = () => {
+      try {
+        const currentId = this.el.dataset.node;
+        if (!currentId) return;
+        if (!debugBoundsEnabled()) return;
+
+        const rect = this._container.getBoundingClientRect();
+        const panel = document.getElementById("right-panel");
+        const pr = panel ? panel.getBoundingClientRect() : null;
+        const overlap = pr
+          ? Math.min(rect.width, Math.max(0, rect.right - pr.left))
+          : 0;
+
+        const n = this.cy.$(`#${currentId}`);
+        if (!n || n.length === 0) return;
+
+        const zoom = this.cy.zoom();
+        const pan = this.cy.pan();
+        const m = n.position();
+        const rx = m.x * zoom + pan.x;
+        const ry = m.y * zoom + pan.y;
+
+        drawDebugBounds(this._container, rect, overlap, rx, ry);
+      } catch (_e) {}
+    };
+    if (this.cy && typeof this.cy.on === "function") {
+      this.cy.on("pan zoom render", this._debugRedraw);
+    }
     const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
     this._zoomToast = this._zoomToast || null;
     this._zoomToastTimer = this._zoomToastTimer || null;
@@ -255,18 +471,16 @@ const graphHook = {
 
           // Keep the dataset in sync so other consumers (and hooks) can rely on it
           this.el.dataset.node = id;
+          if (this._debugRedraw) this._debugRedraw();
 
-          // Pan the graph so the node lands at the center of the visible area (accounting for the right panel)
-          const desired = centerPoint();
-          const pos = nodeToCenter.renderedPosition();
-          const dx = desired.x - pos.x;
-          const dy = desired.y - pos.y;
+          // If a layout is in progress, defer the visibility nudge until after layoutstop
+          if (this._layoutRunning) {
+            this._pendingCenterId = id;
+            return;
+          }
 
-          this.cy.animate({
-            panBy: { x: dx, y: dy },
-            duration: 150,
-            easing: "ease-in-out-quad",
-          });
+          // Only pan if the node is outside the visible area (preserve existing layout)
+          requestAnimationFrame(() => ensureVisible(this.cy, container, id));
         }
       } catch (_e) {
         // no-op, avoid breaking on transient DOM/cy states
@@ -384,14 +598,58 @@ const graphHook = {
     ]);
 
     if (operation === "start_stream") {
-      // Reflow the graph and then center the newly created stream node in the visible area
+      // Reflow the graph and then ensure the newly created node is visible (deferred until layout completes)
+      // Compute a safe pending center id (must be a non-empty string)
+      const nextPendingId =
+        (typeof node === "string" && node.length > 0 && node) ||
+        (this.el &&
+          this.el.dataset &&
+          typeof this.el.dataset.node === "string" &&
+          this.el.dataset.node.length > 0 &&
+          this.el.dataset.node) ||
+        this._pendingCenterId;
+      this._pendingCenterId = nextPendingId;
+      this._layoutRunning = true;
       layoutGraph(this.cy, () => {
-        if (this._centerOnNodeVisible) {
-          requestAnimationFrame(() => this._centerOnNodeVisible(node));
+        const targetId =
+          (typeof this._pendingCenterId === "string" &&
+            this._pendingCenterId.length > 0 &&
+            this._pendingCenterId) ||
+          (this.el &&
+            this.el.dataset &&
+            typeof this.el.dataset.node === "string" &&
+            this.el.dataset.node.length > 0 &&
+            this.el.dataset.node) ||
+          null;
+        this._pendingCenterId = null;
+        if (targetId) {
+          requestAnimationFrame(() =>
+            ensureVisible(this.cy, this._container, targetId),
+          );
         }
       });
     } else if (reorderOperations.has(operation)) {
-      layoutGraph(this.cy);
+      // Some operations reorder elements; defer ensureVisible until layout finishes
+      this._pendingCenterId = this.el.dataset.node || this._pendingCenterId;
+      this._layoutRunning = true;
+      layoutGraph(this.cy, () => {
+        const targetId =
+          (typeof this._pendingCenterId === "string" &&
+            this._pendingCenterId.length > 0 &&
+            this._pendingCenterId) ||
+          (this.el &&
+            this.el.dataset &&
+            typeof this.el.dataset.node === "string" &&
+            this.el.dataset.node.length > 0 &&
+            this.el.dataset.node) ||
+          null;
+        this._pendingCenterId = null;
+        if (targetId) {
+          requestAnimationFrame(() =>
+            ensureVisible(this.cy, this._container, targetId),
+          );
+        }
+      });
     }
 
     this.cy.elements().removeClass("selected");
@@ -502,8 +760,32 @@ const graphHook = {
     if (this._bindPngButtons) {
       this._bindPngButtons();
     }
+
+    // Debug redraw of bounds on update (no pan to avoid jitter)
+    if (this._debugRedraw) this._debugRedraw();
   },
   destroyed() {
+    // Debug overlay cleanup and listener removal
+    if (
+      this._debugRedraw &&
+      this.cy &&
+      typeof this.cy.removeListener === "function"
+    ) {
+      try {
+        this.cy.removeListener("pan", null, this._debugRedraw);
+        this.cy.removeListener("zoom", null, this._debugRedraw);
+        this.cy.removeListener("render", null, this._debugRedraw);
+      } catch (_e) {}
+      this._debugRedraw = null;
+    }
+    try {
+      [".graph-debug-bounds", ".graph-debug-edge", ".graph-debug-node"].forEach(
+        (sel) => {
+          const el = this._container && this._container.querySelector(sel);
+          if (el && el.parentNode) el.parentNode.removeChild(el);
+        },
+      );
+    } catch (_e) {}
     if (this._enterStopper) {
       this.el.removeEventListener("keydown", this._enterStopper, true);
       this._enterStopper = null;

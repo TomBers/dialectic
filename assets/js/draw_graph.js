@@ -308,21 +308,60 @@ export function draw_graph(graph, context, elements, node) {
     // Send basic click event
     context.pushEvent("node_clicked", { id: nodeId });
 
-    // Center on the node within visible area (account for right-hand panel)
+    // Ensure node is within visible bounds using model-space + zoom/pan; pan minimally if off-screen
     const panel = document.getElementById("right-panel");
     const rect = container.getBoundingClientRect();
     const panelRect = panel ? panel.getBoundingClientRect() : null;
-    const panelWidth = panelRect && panelRect.width > 10 ? panelRect.width : 0;
-    const desiredX = Math.max(0, (rect.width - panelWidth) / 2);
-    const desiredY = rect.height / 2;
-    const pos = n.renderedPosition();
-    const dx = desiredX - pos.x;
-    const dy = desiredY - pos.y;
-    cy.animate({
-      panBy: { x: dx, y: dy },
-      duration: 150,
-      easing: "ease-in-out-quad",
-    });
+
+    // Only the overlap of the right panel over the graph container
+    const overlap = panelRect
+      ? Math.min(rect.width, Math.max(0, rect.right - panelRect.left))
+      : 0;
+
+    // Visible region inside the container
+    const margin = 16; // outer margin from container edges
+    const deadzone = 8; // hysteresis to avoid bounce
+    const pad = 12; // ensure node box + padding is visible
+
+    const visLeft = margin;
+    const visTop = margin;
+    const visRight = Math.max(margin, rect.width - overlap - margin);
+    const visBottom = Math.max(margin, rect.height - margin);
+
+    // Deadzone-shrunk inner box to prevent small back-and-forth nudges
+    const okLeft = visLeft + deadzone;
+    const okTop = visTop + deadzone;
+    const okRight = visRight - deadzone;
+    const okBottom = visBottom - deadzone;
+
+    const zoom = cy.zoom();
+    const pan = cy.pan();
+
+    // Node bounding box in model space
+    const bb = n.boundingBox();
+    // Convert to rendered coords and add padding
+    const rbbLeft = bb.x1 * zoom + pan.x - pad;
+    const rbbRight = bb.x2 * zoom + pan.x + pad;
+    const rbbTop = bb.y1 * zoom + pan.y - pad;
+    const rbbBottom = bb.y2 * zoom + pan.y + pad;
+
+    // Minimal pan to bring padded box fully inside ok-bounds
+    let dx = 0;
+    let dy = 0;
+
+    if (rbbLeft < okLeft) dx = okLeft - rbbLeft;
+    else if (rbbRight > okRight) dx = okRight - rbbRight;
+
+    if (rbbTop < okTop) dy = okTop - rbbTop;
+    else if (rbbBottom > okBottom) dy = okBottom - rbbBottom;
+
+    if (dx !== 0 || dy !== 0) {
+      cy.animate({
+        pan: { x: pan.x + dx, y: pan.y + dy },
+        duration: 150,
+        easing: "ease-in-out-quad",
+      });
+    }
     enforceCollapsedState(cy);
   });
 
