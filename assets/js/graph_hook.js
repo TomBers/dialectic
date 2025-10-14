@@ -4,7 +4,7 @@ import { layoutConfig } from "./layout_config.js";
 const layoutGraph = (cy, onDone) => {
   try {
     // Stop any in-flight animations to avoid fighting layout animations
-    if (typeof cy.stop === "function") {
+    if (cy && typeof cy.stop === "function") {
       cy.stop();
     }
     if (cy.__evMeta) {
@@ -599,11 +599,28 @@ const graphHook = {
 
     if (operation === "start_stream") {
       // Reflow the graph and then ensure the newly created node is visible (deferred until layout completes)
-      this._pendingCenterId =
-        node || this.el.dataset.node || this._pendingCenterId;
+      // Compute a safe pending center id (must be a non-empty string)
+      const nextPendingId =
+        (typeof node === "string" && node.length > 0 && node) ||
+        (this.el &&
+          this.el.dataset &&
+          typeof this.el.dataset.node === "string" &&
+          this.el.dataset.node.length > 0 &&
+          this.el.dataset.node) ||
+        this._pendingCenterId;
+      this._pendingCenterId = nextPendingId;
       this._layoutRunning = true;
       layoutGraph(this.cy, () => {
-        const targetId = this._pendingCenterId || this.el.dataset.node;
+        const targetId =
+          (typeof this._pendingCenterId === "string" &&
+            this._pendingCenterId.length > 0 &&
+            this._pendingCenterId) ||
+          (this.el &&
+            this.el.dataset &&
+            typeof this.el.dataset.node === "string" &&
+            this.el.dataset.node.length > 0 &&
+            this.el.dataset.node) ||
+          null;
         this._pendingCenterId = null;
         if (targetId) {
           requestAnimationFrame(() =>
@@ -616,7 +633,16 @@ const graphHook = {
       this._pendingCenterId = this.el.dataset.node || this._pendingCenterId;
       this._layoutRunning = true;
       layoutGraph(this.cy, () => {
-        const targetId = this._pendingCenterId || this.el.dataset.node;
+        const targetId =
+          (typeof this._pendingCenterId === "string" &&
+            this._pendingCenterId.length > 0 &&
+            this._pendingCenterId) ||
+          (this.el &&
+            this.el.dataset &&
+            typeof this.el.dataset.node === "string" &&
+            this.el.dataset.node.length > 0 &&
+            this.el.dataset.node) ||
+          null;
         this._pendingCenterId = null;
         if (targetId) {
           requestAnimationFrame(() =>
