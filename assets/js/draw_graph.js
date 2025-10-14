@@ -312,28 +312,48 @@ export function draw_graph(graph, context, elements, node) {
     const panel = document.getElementById("right-panel");
     const rect = container.getBoundingClientRect();
     const panelRect = panel ? panel.getBoundingClientRect() : null;
-    const panelWidth = panelRect && panelRect.width > 10 ? panelRect.width : 0;
 
-    const margin = 16;
+    // Only the overlap of the right panel over the graph container
+    const overlap = panelRect
+      ? Math.min(rect.width, Math.max(0, rect.right - panelRect.left))
+      : 0;
+
+    // Visible region inside the container
+    const margin = 16; // outer margin from container edges
+    const deadzone = 8; // hysteresis to avoid bounce
+    const pad = 12; // ensure node box + padding is visible
+
     const visLeft = margin;
-    const visRight = Math.max(margin, rect.width - panelWidth - margin);
     const visTop = margin;
+    const visRight = Math.max(margin, rect.width - overlap - margin);
     const visBottom = Math.max(margin, rect.height - margin);
+
+    // Deadzone-shrunk inner box to prevent small back-and-forth nudges
+    const okLeft = visLeft + deadzone;
+    const okTop = visTop + deadzone;
+    const okRight = visRight - deadzone;
+    const okBottom = visBottom - deadzone;
 
     const zoom = cy.zoom();
     const pan = cy.pan();
-    const model = n.position();
-    const nodeRenderedX = model.x * zoom + pan.x;
-    const nodeRenderedY = model.y * zoom + pan.y;
 
+    // Node bounding box in model space
+    const bb = n.boundingBox();
+    // Convert to rendered coords and add padding
+    const rbbLeft = bb.x1 * zoom + pan.x - pad;
+    const rbbRight = bb.x2 * zoom + pan.x + pad;
+    const rbbTop = bb.y1 * zoom + pan.y - pad;
+    const rbbBottom = bb.y2 * zoom + pan.y + pad;
+
+    // Minimal pan to bring padded box fully inside ok-bounds
     let dx = 0;
     let dy = 0;
 
-    if (nodeRenderedX < visLeft) dx = visLeft - nodeRenderedX;
-    else if (nodeRenderedX > visRight) dx = visRight - nodeRenderedX;
+    if (rbbLeft < okLeft) dx = okLeft - rbbLeft;
+    else if (rbbRight > okRight) dx = okRight - rbbRight;
 
-    if (nodeRenderedY < visTop) dy = visTop - nodeRenderedY;
-    else if (nodeRenderedY > visBottom) dy = visBottom - nodeRenderedY;
+    if (rbbTop < okTop) dy = okTop - rbbTop;
+    else if (rbbBottom > okBottom) dy = okBottom - rbbBottom;
 
     if (dx !== 0 || dy !== 0) {
       cy.animate({
