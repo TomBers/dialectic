@@ -1,4 +1,4 @@
-<div class="h-screen flex flex-col">
+<div class={"h-screen flex flex-col " <> if(@right_panel_open, do: "pr-80 sm:pr-96", else: "")}>
   <.live_component
     module={DialecticWeb.Live.ModalComp}
     node={@node}
@@ -129,7 +129,7 @@
 <!-- Shortcuts and zoom controls moved outside Cytoscape container -->
 
       <div
-        class="hidden sm:block sm:fixed right-4 z-30 bottom-28 sm:bottom-20 md:bottom-16"
+        class={"hidden sm:block sm:fixed right-4 z-30 bottom-28 sm:bottom-20 md:bottom-16" <> if(@right_panel_open, do: " mr-80 sm:mr-96", else: "")}
         style={"bottom: " <> if(@bottom_menu_open, do: "calc(9rem + env(safe-area-inset-bottom))", else: "calc(6rem + env(safe-area-inset-bottom))") <> ";"}
       >
         <div class="bg-white rounded-md shadow border border-gray-200 flex items-center divide-x divide-gray-200">
@@ -319,7 +319,7 @@
       aria-controls="right-panel"
       aria-expanded={@right_panel_open}
       aria-label={if @right_panel_open, do: "Hide right panel", else: "Show right panel"}
-      class="fixed top-16 right-2 sm:right-4 p-1.5 rounded-full bg-white opacity-60 hover:opacity-100 shadow-sm z-30 cursor-pointer transition-all duration-200"
+      class={"fixed top-16 p-1.5 rounded-full bg-white opacity-60 hover:opacity-100 shadow-sm z-30 cursor-pointer transition-all duration-200 " <> if(@right_panel_open, do: "right-[20rem] sm:right-[24rem]", else: "right-2 sm:right-4")}
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -370,10 +370,12 @@
         if @bottom_menu_open,
           do:
             "fixed bottom-0 z-30 transform translate-y-0 opacity-100 visible transition-all duration-300 ease-in-out px-3 pb-3 pointer-events-auto " <>
-              if(@drawer_open, do: "left-0 right-0 md:left-[40%]", else: "inset-x-0"),
+              if(@drawer_open, do: "left-0 right-0 md:left-[40%]", else: "inset-x-0") <>
+              if(@right_panel_open, do: " pr-80 sm:pr-96", else: ""),
           else:
             "fixed bottom-0 z-30 transform translate-y-full opacity-0 invisible transition-all duration-300 ease-in-out px-3 pb-3 pointer-events-none " <>
-              if(@drawer_open, do: "left-0 right-0 md:left-[40%]", else: "inset-x-0")
+              if(@drawer_open, do: "left-0 right-0 md:left-[40%]", else: "inset-x-0") <>
+              if(@right_panel_open, do: " pr-80 sm:pr-96", else: "")
       }
       style="padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem);"
     >
