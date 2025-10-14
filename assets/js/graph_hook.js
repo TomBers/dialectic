@@ -2,17 +2,40 @@ import { draw_graph } from "./draw_graph";
 import { layoutConfig } from "./layout_config.js";
 
 const layoutGraph = (cy, onDone) => {
+  try {
+    // Stop any in-flight animations to avoid fighting layout animations
+    if (typeof cy.stop === "function") {
+      cy.stop();
+    }
+    if (cy.__evMeta) {
+      cy.__evMeta.animating = false;
+    }
+  } catch (_e) {}
+
   const layout = cy.layout({
     ...layoutConfig.baseLayout,
   });
 
-  if (
-    typeof onDone === "function" &&
-    layout &&
-    typeof layout.one === "function"
-  ) {
-    layout.one("layoutstop", onDone);
-  }
+  // Track layout running state on the instance that owns this cy
+  try {
+    if (layout && typeof layout.one === "function") {
+      layout.one("layoutstart", () => {
+        if (cy && cy._ownerHook) {
+          cy._ownerHook._layoutRunning = true;
+        }
+      });
+
+      layout.one("layoutstop", () => {
+        if (cy && cy._ownerHook) {
+          cy._ownerHook._layoutRunning = false;
+        }
+        if (typeof onDone === "function") {
+          // Defer one frame to ensure final positions are committed
+          requestAnimationFrame(onDone);
+        }
+      });
+    }
+  } catch (_e) {}
 
   layout.run();
 };
@@ -188,6 +211,13 @@ const graphHook = {
       this.el.querySelector(`#${div}`) || document.getElementById(div);
 
     this.cy = draw_graph(container, this, JSON.parse(graph), node);
+    // Link back so layoutGraph can update running state
+    try {
+      this.cy._ownerHook = this;
+    } catch (_e) {}
+    // Layout/centering coordination state
+    this._layoutRunning = false;
+    this._pendingCenterId = null;
 
     // Expose container and a helper to center a node within the visible area (accounts for right panel)
     this._container = container;
@@ -443,6 +473,12 @@ const graphHook = {
           this.el.dataset.node = id;
           if (this._debugRedraw) this._debugRedraw();
 
+          // If a layout is in progress, defer the visibility nudge until after layoutstop
+          if (this._layoutRunning) {
+            this._pendingCenterId = id;
+            return;
+          }
+
           // Only pan if the node is outside the visible area (preserve existing layout)
           requestAnimationFrame(() => ensureVisible(this.cy, container, id));
         }
@@ -562,14 +598,32 @@ const graphHook = {
     ]);
 
     if (operation === "start_stream") {
-      // Reflow the graph and then ensure the newly created node is visible (minimal pan, no re-center)
+      // Reflow the graph and then ensure the newly created node is visible (deferred until layout completes)
+      this._pendingCenterId =
+        node || this.el.dataset.node || this._pendingCenterId;
+      this._layoutRunning = true;
       layoutGraph(this.cy, () => {
-        requestAnimationFrame(() =>
-          ensureVisible(this.cy, this._container, node),
-        );
+        const targetId = this._pendingCenterId || this.el.dataset.node;
+        this._pendingCenterId = null;
+        if (targetId) {
+          requestAnimationFrame(() =>
+            ensureVisible(this.cy, this._container, targetId),
+          );
+        }
       });
     } else if (reorderOperations.has(operation)) {
-      layoutGraph(this.cy);
+      // Some operations reorder elements; defer ensureVisible until layout finishes
+      this._pendingCenterId = this.el.dataset.node || this._pendingCenterId;
+      this._layoutRunning = true;
+      layoutGraph(this.cy, () => {
+        const targetId = this._pendingCenterId || this.el.dataset.node;
+        this._pendingCenterId = null;
+        if (targetId) {
+          requestAnimationFrame(() =>
+            ensureVisible(this.cy, this._container, targetId),
+          );
+        }
+      });
     }
 
     this.cy.elements().removeClass("selected");
