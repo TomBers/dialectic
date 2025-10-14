@@ -308,31 +308,36 @@ export function draw_graph(graph, context, elements, node) {
     // Send basic click event
     context.pushEvent("node_clicked", { id: nodeId });
 
-    // Ensure node is within visible bounds; pan minimally if off-screen
+    // Ensure node is within visible bounds using model-space + zoom/pan; pan minimally if off-screen
     const panel = document.getElementById("right-panel");
     const rect = container.getBoundingClientRect();
     const panelRect = panel ? panel.getBoundingClientRect() : null;
     const panelWidth = panelRect && panelRect.width > 10 ? panelRect.width : 0;
 
     const margin = 16;
-    const left = margin;
-    const right = Math.max(margin, rect.width - panelWidth - margin);
-    const top = margin;
-    const bottom = Math.max(margin, rect.height - margin);
+    const visLeft = margin;
+    const visRight = Math.max(margin, rect.width - panelWidth - margin);
+    const visTop = margin;
+    const visBottom = Math.max(margin, rect.height - margin);
 
-    const pos = n.renderedPosition();
+    const zoom = cy.zoom();
+    const pan = cy.pan();
+    const model = n.position();
+    const nodeRenderedX = model.x * zoom + pan.x;
+    const nodeRenderedY = model.y * zoom + pan.y;
+
     let dx = 0;
     let dy = 0;
 
-    if (pos.x < left) dx = left - pos.x;
-    else if (pos.x > right) dx = right - pos.x;
+    if (nodeRenderedX < visLeft) dx = visLeft - nodeRenderedX;
+    else if (nodeRenderedX > visRight) dx = visRight - nodeRenderedX;
 
-    if (pos.y < top) dy = top - pos.y;
-    else if (pos.y > bottom) dy = bottom - pos.y;
+    if (nodeRenderedY < visTop) dy = visTop - nodeRenderedY;
+    else if (nodeRenderedY > visBottom) dy = visBottom - nodeRenderedY;
 
     if (dx !== 0 || dy !== 0) {
       cy.animate({
-        panBy: { x: dx, y: dy },
+        pan: { x: pan.x + dx, y: pan.y + dy },
         duration: 150,
         easing: "ease-in-out-quad",
       });

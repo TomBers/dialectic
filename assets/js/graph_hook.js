@@ -17,6 +17,53 @@ const layoutGraph = (cy, onDone) => {
   layout.run();
 };
 
+const ensureVisible = (cy, container, nodeId) => {
+  try {
+    const n = cy.$(`#${nodeId}`);
+    if (!n || n.length === 0) return;
+
+    const rect = container.getBoundingClientRect();
+    const panel = document.getElementById("right-panel");
+    const pr = panel ? panel.getBoundingClientRect() : null;
+
+    // Compute only the overlap of the right panel over the graph container
+    const overlap = pr
+      ? Math.min(rect.width, Math.max(0, rect.right - pr.left))
+      : 0;
+
+    const margin = 16;
+    const visLeft = margin;
+    const visTop = margin;
+    const visRight = Math.max(margin, rect.width - overlap - margin);
+    const visBottom = Math.max(margin, rect.height - margin);
+
+    const zoom = cy.zoom();
+    const pan = cy.pan();
+    const model = n.position();
+
+    // Compute the node's rendered position from model-space, avoiding renderedPosition() drift
+    const nodeRenderedX = model.x * zoom + pan.x;
+    const nodeRenderedY = model.y * zoom + pan.y;
+
+    let dx = 0;
+    let dy = 0;
+
+    if (nodeRenderedX < visLeft) dx = visLeft - nodeRenderedX;
+    else if (nodeRenderedX > visRight) dx = visRight - nodeRenderedX;
+
+    if (nodeRenderedY < visTop) dy = visTop - nodeRenderedY;
+    else if (nodeRenderedY > visBottom) dy = visBottom - nodeRenderedY;
+
+    if (dx !== 0 || dy !== 0) {
+      cy.animate({
+        pan: { x: pan.x + dx, y: pan.y + dy },
+        duration: 150,
+        easing: "ease-in-out-quad",
+      });
+    }
+  } catch (_e) {}
+};
+
 const graphHook = {
   mounted() {
     const { graph, node, div } = this.el.dataset;
@@ -40,29 +87,7 @@ const graphHook = {
 
         // Keep structure stable: only pan if the node is off screen
         // Compute visible bounds (exclude right panel) with small margins
-        const margin = 16;
-        const left = margin;
-        const right = Math.max(margin, rect.width - pw - margin);
-        const top = margin;
-        const bottom = Math.max(margin, rect.height - margin);
-
-        const pos = n.renderedPosition();
-        let dx = 0;
-        let dy = 0;
-
-        if (pos.x < left) dx = left - pos.x;
-        else if (pos.x > right) dx = right - pos.x;
-
-        if (pos.y < top) dy = top - pos.y;
-        else if (pos.y > bottom) dy = bottom - pos.y;
-
-        if (dx !== 0 || dy !== 0) {
-          this.cy.animate({
-            panBy: { x: dx, y: dy },
-            duration: 150,
-            easing: "ease-in-out-quad",
-          });
-        }
+        requestAnimationFrame(() => ensureVisible(this.cy, container, id));
       } catch (_e) {}
     };
 
@@ -273,31 +298,7 @@ const graphHook = {
           this.el.dataset.node = id;
 
           // Only pan if the node is outside the visible area (preserve existing layout)
-          const rect = container.getBoundingClientRect();
-          const rightPanelWidth = getRightPanelWidth();
-          const margin = 16;
-          const left = margin;
-          const right = Math.max(margin, rect.width - rightPanelWidth - margin);
-          const top = margin;
-          const bottom = Math.max(margin, rect.height - margin);
-
-          const pos = nodeToCenter.renderedPosition();
-          let dx = 0;
-          let dy = 0;
-
-          if (pos.x < left) dx = left - pos.x;
-          else if (pos.x > right) dx = right - pos.x;
-
-          if (pos.y < top) dy = top - pos.y;
-          else if (pos.y > bottom) dy = bottom - pos.y;
-
-          if (dx !== 0 || dy !== 0) {
-            this.cy.animate({
-              panBy: { x: dx, y: dy },
-              duration: 150,
-              easing: "ease-in-out-quad",
-            });
-          }
+          requestAnimationFrame(() => ensureVisible(this.cy, container, id));
         }
       } catch (_e) {
         // no-op, avoid breaking on transient DOM/cy states
@@ -417,9 +418,9 @@ const graphHook = {
     if (operation === "start_stream") {
       // Reflow the graph and then ensure the newly created node is visible (minimal pan, no re-center)
       layoutGraph(this.cy, () => {
-        if (this._centerOnNodeVisible) {
-          requestAnimationFrame(() => this._centerOnNodeVisible(node));
-        }
+        requestAnimationFrame(() =>
+          ensureVisible(this.cy, this._container, node),
+        );
       });
     } else if (reorderOperations.has(operation)) {
       layoutGraph(this.cy);
