@@ -38,15 +38,31 @@ const graphHook = {
         const pr = panel ? panel.getBoundingClientRect() : null;
         const pw = pr && pr.width > 10 ? pr.width : 0;
 
-        const desiredX = Math.max(0, (rect.width - pw) / 2);
-        const desiredY = rect.height / 2;
-        const pos = n.renderedPosition();
+        // Keep structure stable: only pan if the node is off screen
+        // Compute visible bounds (exclude right panel) with small margins
+        const margin = 16;
+        const left = margin;
+        const right = Math.max(margin, rect.width - pw - margin);
+        const top = margin;
+        const bottom = Math.max(margin, rect.height - margin);
 
-        this.cy.animate({
-          panBy: { x: desiredX - pos.x, y: desiredY - pos.y },
-          duration: 150,
-          easing: "ease-in-out-quad",
-        });
+        const pos = n.renderedPosition();
+        let dx = 0;
+        let dy = 0;
+
+        if (pos.x < left) dx = left - pos.x;
+        else if (pos.x > right) dx = right - pos.x;
+
+        if (pos.y < top) dy = top - pos.y;
+        else if (pos.y > bottom) dy = bottom - pos.y;
+
+        if (dx !== 0 || dy !== 0) {
+          this.cy.animate({
+            panBy: { x: dx, y: dy },
+            duration: 150,
+            easing: "ease-in-out-quad",
+          });
+        }
       } catch (_e) {}
     };
 
@@ -256,17 +272,32 @@ const graphHook = {
           // Keep the dataset in sync so other consumers (and hooks) can rely on it
           this.el.dataset.node = id;
 
-          // Pan the graph so the node lands at the center of the visible area (accounting for the right panel)
-          const desired = centerPoint();
-          const pos = nodeToCenter.renderedPosition();
-          const dx = desired.x - pos.x;
-          const dy = desired.y - pos.y;
+          // Only pan if the node is outside the visible area (preserve existing layout)
+          const rect = container.getBoundingClientRect();
+          const rightPanelWidth = getRightPanelWidth();
+          const margin = 16;
+          const left = margin;
+          const right = Math.max(margin, rect.width - rightPanelWidth - margin);
+          const top = margin;
+          const bottom = Math.max(margin, rect.height - margin);
 
-          this.cy.animate({
-            panBy: { x: dx, y: dy },
-            duration: 150,
-            easing: "ease-in-out-quad",
-          });
+          const pos = nodeToCenter.renderedPosition();
+          let dx = 0;
+          let dy = 0;
+
+          if (pos.x < left) dx = left - pos.x;
+          else if (pos.x > right) dx = right - pos.x;
+
+          if (pos.y < top) dy = top - pos.y;
+          else if (pos.y > bottom) dy = bottom - pos.y;
+
+          if (dx !== 0 || dy !== 0) {
+            this.cy.animate({
+              panBy: { x: dx, y: dy },
+              duration: 150,
+              easing: "ease-in-out-quad",
+            });
+          }
         }
       } catch (_e) {
         // no-op, avoid breaking on transient DOM/cy states
@@ -384,7 +415,7 @@ const graphHook = {
     ]);
 
     if (operation === "start_stream") {
-      // Reflow the graph and then center the newly created stream node in the visible area
+      // Reflow the graph and then ensure the newly created node is visible (minimal pan, no re-center)
       layoutGraph(this.cy, () => {
         if (this._centerOnNodeVisible) {
           requestAnimationFrame(() => this._centerOnNodeVisible(node));
