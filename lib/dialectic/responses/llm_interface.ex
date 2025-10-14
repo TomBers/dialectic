@@ -8,20 +8,23 @@ defmodule Dialectic.Responses.LlmInterface do
     Context:
     #{context}
 
-    Task: Answer the question for a first-time learner.
-    Question: "#{node.content}"
+    Task: Teach a first‑time learner aiming for a university‑level understanding of: "#{node.content}"
 
     Output (markdown):
     ## [Short, descriptive title]
-    - Short answer (2–3 sentences).
-    - Key terms (bulleted: term — brief definition).
-    - How it works (3–5 bullets).
-    - Simple example (1–2 lines).
-    - Pitfalls or nuances (1–3 bullets).
-    - Next questions to explore (1–2).
-    - Further reading / references (1–3 items: Title — Source (URL) or a short search query if uncertain).
+    - Short answer (2–3 sentences) giving the core idea and why it matters.
 
-    Constraints: ~150–220 words total (excluding references).
+    ### Deep dive
+    - Foundations: 3–4 bullets defining key terms and stating assumptions.
+    - Model/mechanism: 3–5 bullets explaining how it works; include one line of minimal formalism (equation or pseudocode) if appropriate and define symbols.
+    - Worked example: 3–4 concise steps that show the idea in action.
+    - Nuances: 2–3 bullets on pitfalls, edge cases, or common confusions; include one contrast with a neighboring idea.
+
+    ### Next steps and sources
+    - Next questions to explore (1–2).
+    - Further reading (2–3 items): Title — Source (URL) or, if unsure, a precise search query with what is uncertain.
+
+    Constraints: Aim for depth over breadth; ~220–320 words excluding references.
     """
 
     ask_model(qn, child, graph_id, live_view_topic)
@@ -33,11 +36,19 @@ defmodule Dialectic.Responses.LlmInterface do
     default_schema = """
     Output (markdown):
     ## [Short, descriptive title]
-    - Paraphrase of the selection (1–2 sentences).
-    - Key terms (term — brief definition).
-    - Why it matters here (2–3 bullets).
-    - Follow-up questions or next steps (1–2).
-    - Further reading / references (1–2 items: Title — Source (URL) or a short search query if uncertain).
+    - Paraphrase (1–2 sentences) of the selection in your own words.
+
+    ### Why it matters here
+    - Claims and evidence (2–3 bullets).
+    - Assumptions/definitions you’re relying on (1–2 bullets).
+    - Implications for the current context (1–2 bullets).
+    - Limitations or alternative readings (1–2 bullets).
+
+    ### Next steps and sources
+    - Follow‑up questions (1–2).
+    - Further reading (1–2 items): Title — Source (URL) or a precise search query.
+
+    Constraints: ~180–260 words excluding references.
     """
 
     add_default? =
@@ -54,7 +65,7 @@ defmodule Dialectic.Responses.LlmInterface do
       Instruction (apply to the context and current node):
       #{selection}
 
-      Audience: first-time learner.
+      Audience: first-time learner aiming for university-level understanding.
       """ <> if add_default?, do: "\n\n" <> default_schema, else: ""
 
     ask_model(qn, child, graph_id, live_view_topic)
@@ -73,19 +84,24 @@ defmodule Dialectic.Responses.LlmInterface do
       Context of second argument:
       #{context2}
 
-      Task: Synthesize the positions in "#{n1.content}" and "#{n2.content}" for a first-time learner.
+      Task: Synthesize the positions in "#{n1.content}" and "#{n2.content}" for a first-time learner aiming for university-level understanding.
 
       Output (markdown):
       ## [Short, descriptive title]
-      - Common ground (2 bullets).
-      - Key tension (2 bullets).
-      - Bridge or synthesis idea (3 bullets).
-      - Combined takeaway (1–2 sentences).
-      - Trade-offs or unknowns (1–2 bullets).
-      - Next step to test or explore (1).
-      - Further reading / references (1–3 items: Title — Source (URL) or a short search query if uncertain).
+      - Short summary (1–2 sentences) of the relationship between the two positions.
 
-      Constraints: ~150–220 words (excluding references). If reconciliation is not possible, state the trade-offs clearly.
+      ### Deep dive
+      - Common ground (2 bullets) with language and definitions aligned.
+      - Key tension (2 bullets) specifying assumptions that drive disagreement.
+      - Synthesis/bridge (2–3 bullets) that could reconcile or delineate scope; include a testable prediction.
+      - When each view is stronger (1–2 bullets).
+      - Trade‑offs or unknowns (1–2 bullets).
+
+      ### Next steps and sources
+      - One concrete next step to test or explore.
+      - Further reading (1–3 items): Title — Source (URL) or a precise search query.
+
+      Constraints: ~220–320 words excluding references. If reconciliation is not possible, state the trade‑offs clearly.
       """
 
     ask_model(qn, child, graph_id, live_view_topic)
@@ -98,18 +114,18 @@ defmodule Dialectic.Responses.LlmInterface do
     Context:
     #{context}
 
-    Write a short, beginner-friendly argument in support of: "#{node.content}"
+    Write a short, beginner-friendly but rigorous argument in support of: "#{node.content}"
 
     Output (markdown):
     ## [Title of the pro argument]
-    - Claim: [1 sentence].
-    - Reasons (3 bullets).
-    - Example or evidence (1 line).
-    - Caveat or limits (1 line).
+    - Claim (1 sentence).
+    - Line of reasoning (3 bullets), each grounded in a mechanism, formal result, or empirical evidence; cite the source type (e.g., "randomized trial", "textbook theorem", "official spec").
+    - Illustrative example or evidence (1–2 lines).
+    - Assumptions and limits (1 line) plus a falsifiable prediction.
     - When this holds vs. when it might not (1 line).
-    - Further reading / references (1–2 items: Title — Source (URL) or a short search query if uncertain).
+    - Further reading (1–2 items): Title — Source (URL) or a precise search query.
 
-    Constraints: 120–150 words (excluding references). Define any jargon.
+    Constraints: 150–200 words excluding references.
     """
 
     ask_model(qn, child, graph_id, live_view_topic)
@@ -122,19 +138,19 @@ defmodule Dialectic.Responses.LlmInterface do
     Context:
     #{context}
 
-    Write a short, beginner-friendly argument against: "#{node.content}"
+    Write a short, beginner-friendly but rigorous argument against: "#{node.content}"
     Steelman the opposing view (represent the strongest version fairly).
 
     Output (markdown):
     ## [Title of the con argument]
-    - Claim: [1 sentence].
-    - Reasons (3 bullets).
-    - Example or evidence (1 line).
-    - Caveat or limits (1 line).
+    - Central critique (1 sentence).
+    - Line of reasoning (3 bullets), each grounded in a mechanism, formal result, or empirical evidence; cite the source type when relevant.
+    - Illustrative counterexample or evidence (1–2 lines).
+    - Scope and limits (1 line) plus a falsifiable prediction that would weaken this critique.
     - When this criticism applies vs. when it might not (1 line).
-    - Further reading / references (1–2 items: Title — Source (URL) or a short search query if uncertain).
+    - Further reading (1–2 items): Title — Source (URL) or a precise search query.
 
-    Constraints: 120–150 words (excluding references). Define any jargon.
+    Constraints: 150–200 words excluding references.
     """
 
     ask_model(qn, child, graph_id, live_view_topic)
@@ -175,7 +191,7 @@ defmodule Dialectic.Responses.LlmInterface do
       ### Adjacent concepts
       ### Practical applications
     - Under each heading, list 3–4 bullets.
-    - Each bullet: Concept — 1 sentence on why it’s relevant and how it differs from the current idea.
+    - Each bullet: Concept — 1 sentence on why it’s relevant and how it differs; add one named method/author or canonical example if relevant.
     - Use plain language and avoid jargon.
 
     Return only the headings and bullets; no intro or outro.
@@ -186,14 +202,15 @@ defmodule Dialectic.Responses.LlmInterface do
 
   def ask_model(question, to_node, graph_id, live_view_topic) do
     style = """
-    You are explaining to a curious beginner.
-    - Use plain language; define jargon briefly.
-    - Prefer short paragraphs and bullet lists.
+    You are teaching a curious beginner toward university-level mastery.
+    - Start with intuition, then add precise definitions and assumptions.
+    - Prefer causal/mechanistic explanations. When appropriate, include minimal formalism (one compact equation or pseudocode) and define all symbols; skip if not relevant.
+    - Use short paragraphs and well-structured bullets. Avoid over-fragmented checklists.
     - If context is insufficient, say what’s missing and ask one clarifying question.
     - Prefer info from the provided Context; label other info as "Background".
-    - Never fabricate citations or data. Only include references you are confident in; prefer official docs, textbooks, or peer‑reviewed/authoritative sources. If unsure, provide a concise search query instead of a link and say what’s uncertain.
-    - When a schema includes "Further reading / references", provide 1–3 trustworthy items formatted as: Title — Source (URL). Keep them short.
-    Default to markdown and an H2 title (## …) unless the instruction specifies a different format. When there is any conflict, follow the question/selection’s format and instructions.
+    - Never fabricate citations or data. Include 1–3 trustworthy references formatted: Title — Source (URL). If unsure, provide a precise search query and state what is uncertain.
+    - Avoid tables; use headings and bullets only.
+    Default to markdown and an H2 title (## …) unless the instruction specifies otherwise. When there is any conflict, follow the question/selection’s format and instructions.
     """
 
     RequestQueue.add(
