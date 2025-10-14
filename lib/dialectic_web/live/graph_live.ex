@@ -619,9 +619,6 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_info({:llm_request_complete, node_id}, socket) do
-    # Make sure that the graph is saved to the database
-    # We pass false so that it does not respect the queue exlusion period and stores the response immediately.
-
     # Broadcast new node to all connected users
     PubSub.broadcast(
       Dialectic.PubSub,
@@ -629,11 +626,31 @@ defmodule DialecticWeb.GraphLive do
       {:other_user_change, self()}
     )
 
-    update_graph(
-      socket,
-      GraphActions.find_node(socket.assigns.graph_id, node_id),
-      "llm_request_complete"
-    )
+    # If the completed node is still the selected one, update selection as before.
+    # Otherwise, refresh the graph but keep the user's current selection.
+    current_selected_id =
+      case socket.assigns[:node] do
+        %{} = n -> Map.get(n, :id)
+        _ -> nil
+      end
+
+    if current_selected_id == node_id do
+      update_graph(
+        socket,
+        GraphActions.find_node(socket.assigns.graph_id, node_id),
+        "llm_request_complete"
+      )
+    else
+      {_graph_struct, graph} = GraphManager.get_graph(socket.assigns.graph_id)
+
+      {:noreply,
+       assign(socket,
+         graph: graph,
+         f_graph: format_graph(graph),
+         graph_operation: "llm_request_complete",
+         work_streams: list_streams(graph)
+       )}
+    end
   end
 
   def handle_info({:stream_error, error, :node_id, node_id}, socket) do
@@ -909,8 +926,9 @@ defmodule DialecticWeb.GraphLive do
         end
       end)
       |> then(fn s ->
-        # Center on the new node when a stream starts
-        if operation == "start_stream" && node && Map.get(node, :id) do
+        # Ensure newly created nodes are selected immediately
+        if operation in ["start_stream", "comment", "answer", "branch", "combine", "ideas"] &&
+             node && Map.get(node, :id) do
           push_event(s, "center_node", %{id: node.id})
         else
           s
