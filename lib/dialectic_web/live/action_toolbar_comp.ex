@@ -297,6 +297,33 @@ defmodule DialecticWeb.ActionToolbarComp do
           </button>
 
           <button
+            type="button"
+            class="px-3 py-1 text-sm text-gray-700 rounded-full transition-colors hover:bg-[#06b6d4] hover:text-white"
+            phx-click="node_deepdive"
+            phx-value-id={@node && @node.id}
+            title="Deep dive"
+          >
+            <span class="inline-flex items-center gap-1.5">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="11" cy="11" r="7" />
+                <path d="M21 21l-4.35-4.35" />
+                <path d="M11 8v6M8 11h6" />
+              </svg>
+              <span :if={!@icons_only}>Deep Dive</span>
+            </span>
+          </button>
+
+          <button
             id="explore-all-points"
             type="button"
             class="px-3 py-1 text-sm text-gray-700 rounded-full transition-colors hover:text-white hover:bg-gradient-to-r hover:from-fuchsia-500 hover:via-rose-500 hover:to-amber-500"

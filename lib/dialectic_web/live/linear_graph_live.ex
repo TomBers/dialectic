@@ -43,6 +43,7 @@ defmodule DialecticWeb.LinearGraphLive do
       "thesis" -> "border-green-400"
       "antithesis" -> "border-red-400"
       "synthesis" -> "border-purple-600"
+      "deepdive" -> "border-cyan-500"
       _ -> "border-gray-200"
     end
   end

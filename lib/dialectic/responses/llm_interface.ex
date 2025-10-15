@@ -200,6 +200,28 @@ defmodule Dialectic.Responses.LlmInterface do
     ask_model(qn, child, graph_id, live_view_topic)
   end
 
+  def gen_deepdive(node, child, graph_id, live_view_topic) do
+    context = to_string(node.content || "")
+
+    qn = """
+    Context:
+    #{context}
+
+    Task: Produce a rigorous, detailed deep dive into "#{node.content}" for an advanced learner progressing toward research-level understanding.
+
+    Output (markdown):
+    ## [Precise title]
+    - One-sentence statement of what the concept is and when it applies.
+
+    ### Deepdive
+    - A deep engagement with the concept
+
+    Constraints: Aim for technical clarity and depth; ~350–500 words.
+    """
+
+    ask_model(qn, child, graph_id, live_view_topic)
+  end
+
   def ask_model(question, to_node, graph_id, live_view_topic) do
     style = """
     You are teaching a curious beginner toward university-level mastery.

@@ -64,6 +64,7 @@ defmodule DialecticWeb.Live.TextUtils do
       |> String.trim_leading()
       |> String.split("\n", parts: 2)
       |> List.first()
+      |> String.replace(~r/^\s*\#{1,6}\s*/, "")
       |> String.replace(@title_regex, "")
       |> String.trim()
     else
@@ -82,16 +83,40 @@ defmodule DialecticWeb.Live.TextUtils do
   end
 
   defp has_title?(content) do
-    content
-    |> to_string()
-    |> String.trim_leading()
-    |> String.match?(~r/^title[:"]?|^Title[:"]?/i)
+    first_line =
+      content
+      |> to_string()
+      |> String.trim_leading()
+      |> String.split("\n", parts: 2)
+      |> List.first()
+
+    cond do
+      is_nil(first_line) -> false
+      Regex.match?(~r/^\s*\#{1,6}\s+\S/, first_line) -> true
+      Regex.match?(~r/^title\s*:?\s*/i, first_line) -> true
+      true -> false
+    end
   end
 
   defp extract_content_body(content) do
     case content |> to_string() |> String.trim_leading() |> String.split("\n", parts: 2) do
-      [_, body] -> body
-      [only_content] -> only_content
+      [_, body] ->
+        text = body |> to_string() |> String.trim_leading()
+
+        case String.split(text, "\n", parts: 2) do
+          [first, rest] ->
+            cond do
+              Regex.match?(~r/^title\s*:?\s*/i, first) -> to_string(rest || "")
+              Regex.match?(~r/^\s*\#{1,6}\s+\S/, first) -> to_string(rest || "")
+              true -> text
+            end
+
+          _ ->
+            text
+        end
+
+      [only_content] ->
+        only_content
     end
   end
 
