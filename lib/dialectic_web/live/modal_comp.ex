@@ -85,11 +85,11 @@ defmodule DialecticWeb.Live.ModalComp do
 
           <article class="prose prose-stone prose-lg md:prose-xl lg:prose-2xl max-w-none selection-content space-y-4 min-h-[50vh]">
             <h2 class="text-xl sm:text-2xl md:text-3xl">
-              {TextUtils.modal_title(@node.content, @node.class || "")}
+              {TextUtils.render_content(@node.content || "") |> Map.get(:title)}
             </h2>
 
             <div class="text-base sm:text-lg">
-              {TextUtils.full_html(@node.content || "")}
+              {TextUtils.render_content(@node.content || "") |> Map.get(:body_html)}
             </div>
           </article>
           <!-- Modal selection action button (hidden by default) -->

@@ -79,7 +79,7 @@
 
               <%= unless Enum.member?(@hidden, node.id) do %>
                 <span class="leading-5 text-[15px] sm:text-base font-medium text-zinc-900">
-                  {TextUtils.modal_title(node.content, node.class)}
+                  {TextUtils.render_content(node.content || "") |> Map.get(:title)}
                 </span>
               <% else %>
                 <span class="leading-5 text-[15px] sm:text-base font-medium text-zinc-800 truncate">
@@ -91,7 +91,7 @@
 
           <%= unless Enum.member?(@hidden, node.id) do %>
             <article class="prose prose-stone text-[15px] sm:text-base md:prose-lg max-w-none mt-2">
-              {TextUtils.full_html(node.content || "")}
+              {TextUtils.render_content(node.content || "") |> Map.get(:body_html)}
             </article>
           <% end %>
         </div>
