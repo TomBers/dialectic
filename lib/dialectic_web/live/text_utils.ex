@@ -146,11 +146,11 @@ defmodule DialecticWeb.Live.TextUtils do
 
     # Strip leading Markdown heading hashes (e.g., "## ")
     no_heading =
-      Regex.replace(~r/^\s*\#{1,6}\s*/, first_line_only, "")
+      String.replace(first_line_only, ~r/^\s*\#{1,6}\s*/, "")
 
     # Remove "Title:" prefix if present (case-insensitive)
     line =
-      Regex.replace(~r/^Title:\s*/i, no_heading, "")
+      String.replace(no_heading, ~r/^Title:\s*/i, "")
 
     text = String.slice(line, 0, cutoff)
     suffix = if add_ellipsis and String.length(line) > cutoff, do: "…", else: ""
