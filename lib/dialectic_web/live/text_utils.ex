@@ -88,12 +88,11 @@ defmodule DialecticWeb.Live.TextUtils do
       |> to_string()
       |> String.trim_leading()
       |> String.split("\n", parts: 2)
-      |> List.first()
+      |> List.first() || ""
 
     cond do
-      is_nil(first_line) -> false
-      Regex.match?(~r/^\s*\#{1,6}\s+\S/, first_line) -> true
-      Regex.match?(~r/^title\s*:?\s*/i, first_line) -> true
+      String.match?(first_line, ~r/^\s*\#{1,6}\s+\S/) -> true
+      String.match?(first_line, ~r/^title\s*:?\s*/i) -> true
       true -> false
     end
   end
@@ -106,8 +105,8 @@ defmodule DialecticWeb.Live.TextUtils do
         case String.split(text, "\n", parts: 2) do
           [first, rest] ->
             cond do
-              Regex.match?(~r/^title\s*:?\s*/i, first) -> to_string(rest || "")
-              Regex.match?(~r/^\s*\#{1,6}\s+\S/, first) -> to_string(rest || "")
+              String.match?(first, ~r/^title\s*:?\s*/i) -> to_string(rest)
+              String.match?(first, ~r/^\s*\#{1,6}\s+\S/) -> to_string(rest)
               true -> text
             end
 
