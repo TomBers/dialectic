@@ -1,16 +1,16 @@
 <div class="chat-container flex flex-col h-[calc(100vh-4rem)] max-w-full overflow-hidden">
-  <div class="chat-header flex items-center justify-between px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100">
+  <div class="chat-header flex items-center justify-between px-3 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100">
     <div class="flex items-center space-x-3">
       <%= if @graph_id do %>
         <.link
           navigate={~p"/#{@graph_id}"}
-          class="back-button h-8 w-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-blue-500 hover:text-blue-700 hover:bg-blue-50 transition-all shadow-sm group"
+          class="back-button h-7 w-7 rounded-full bg-white border border-gray-200 flex items-center justify-center text-blue-500 hover:text-blue-700 hover:bg-blue-50 transition-all shadow-sm group"
           title="Back to graph view"
           aria-label="Return to graph view"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5 group-hover:-translate-x-0.5 transition-transform"
+            class="h-4 w-4 group-hover:-translate-x-0.5 transition-transform"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -117,13 +117,13 @@
         >
           <%= if get_message_type(node, idx) == "user" do %>
             <div class="avatar-container hidden md:flex flex-col items-center mr-2">
-              <div class="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold">
+              <div class="h-7 w-7 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold">
                 <span>U</span>
               </div>
             </div>
           <% else %>
             <div class="avatar-container hidden md:flex flex-col items-center mr-2">
-              <div class="h-8 w-8 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-white">
+              <div class="h-7 w-7 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-white">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   class="h-5 w-5"
@@ -141,10 +141,10 @@
               </div>
             </div>
           <% end %>
-          <div class="message-bubble max-w-[85vw] sm:max-w-[70%]">
+          <div class="message-bubble max-w-[92vw] sm:max-w-[80%]">
             <div class="message-content">
-              <div class="overflow-x-auto break-words prose prose-stone prose-base sm:prose-md md:prose-lg max-w-none prose-headings:mt-0 prose-pre:bg-gray-900 prose-pre:text-white prose-code:text-rose-600">
-                <h3 class="mt-0 text-lg sm:text-xl md:text-2xl mb-2 sm:mb-3 pb-2 border-b border-gray-200">
+              <div class="overflow-x-auto break-words prose prose-stone prose-sm sm:prose-base md:prose max-w-none prose-headings:mt-0 prose-pre:bg-gray-900 prose-pre:text-white prose-code:text-rose-600">
+                <h3 class="mt-0 text-base sm:text-lg md:text-xl mb-1 sm:mb-2 pb-1 border-b border-gray-200">
                   {TextUtils.render_content(node.content || "") |> Map.get(:title)}
                 </h3>
                 {TextUtils.render_content(node.content || "") |> Map.get(:body_html)}
@@ -223,10 +223,10 @@
     <%= if @sending_message do %>
       <div class="message-wrapper assistant">
         <div class="avatar-container hidden md:flex flex-col items-center mr-2">
-          <div class="h-8 w-8 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-white">
+          <div class="h-6 w-6 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-white">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5"
+              class="h-4 w-4"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -240,14 +240,14 @@
             </svg>
           </div>
         </div>
-        <div class="message-bubble typing max-w-[85vw] sm:max-w-[70%]">
+        <div class="message-bubble typing max-w-[92vw] sm:max-w-[80%]">
           <div class="typing-indicator">
             <span></span>
             <span></span>
             <span></span>
           </div>
           <div class="message-meta flex items-center">
-            <span class="typing-text text-gray-500">AI is thinking...</span>
+            <span class="typing-text text-gray-500 text-xs">AI is thinking...</span>
           </div>
         </div>
       </div>
