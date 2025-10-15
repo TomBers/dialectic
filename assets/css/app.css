@@ -907,14 +907,15 @@ button[type="submit"]:active {
 
 .message-wrapper.user .message-meta {
     border-top: 1px solid rgba(255, 255, 255, 0.1);
+    opacity: 1;
 }
 
-.message-wrapper.user .message-meta a {
+.message-wrapper.user .message-meta a:not(.bg-white) {
     color: rgba(255, 255, 255, 0.8);
     background: rgba(255, 255, 255, 0.2);
 }
 
-.message-wrapper.user .message-meta a:hover {
+.message-wrapper.user .message-meta a:hover:not(.bg-white) {
     color: white;
     background: rgba(255, 255, 255, 0.3);
 }

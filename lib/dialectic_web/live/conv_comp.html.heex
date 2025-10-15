@@ -143,23 +143,30 @@
           <% end %>
           <div class="message-bubble max-w-[92vw] sm:max-w-[80%]">
             <div class="message-content">
-              <div class="overflow-x-auto break-words prose prose-stone prose-sm sm:prose-base md:prose max-w-none prose-headings:mt-0 prose-pre:bg-gray-900 prose-pre:text-white prose-code:text-rose-600">
-                <h3 class="mt-0 text-base sm:text-lg md:text-xl mb-1 sm:mb-2 pb-1 border-b border-gray-200">
+              <div class={[
+                "overflow-x-auto break-words prose prose-stone prose-sm sm:prose-base md:prose max-w-none prose-headings:mt-0 prose-pre:bg-gray-900 prose-pre:text-white prose-code:text-rose-600",
+                get_message_type(node, idx) == "user" && "prose-invert"
+              ]}>
+                <h3 class={[
+                  "mt-0 text-base sm:text-lg md:text-xl mb-1 sm:mb-2 pb-1 border-b",
+                  get_message_type(node, idx) == "user" && "border-white/70",
+                  get_message_type(node, idx) != "user" && "border-gray-200/70"
+                ]}>
                   {TextUtils.render_content(node.content || "") |> Map.get(:title)}
                 </h3>
                 {TextUtils.render_content(node.content || "") |> Map.get(:body_html)}
               </div>
             </div>
             <div class="message-meta flex justify-end items-center">
-              <div class="flex space-x-2 node-actions opacity-0 group-hover:opacity-100 transition-opacity duration-200 ml-4">
+              <div class="flex space-x-2  ml-2 sm:ml-4">
                 <.link
                   navigate={~p"/#{@graph_id}?node=#{node.id}"}
-                  class="text-xs font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-full inline-flex items-center transition-colors"
+                  class="text-sm font-semibold text-blue-700 bg-white border border-blue-200 hover:bg-blue-50 hover:border-blue-300 px-3 py-1.5 rounded-full inline-flex items-center shadow-sm transition-colors"
                   title="View this node in graph"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    class="h-3 w-3 mr-1"
+                    class="h-4 w-4 mr-1"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -175,12 +182,12 @@
                 </.link>
                 <.link
                   navigate={"/#{@graph_id}/focus/#{node.id}"}
-                  class="text-xs font-medium text-emerald-600 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded-full inline-flex items-center transition-colors"
+                  class="text-sm font-semibold text-emerald-700 bg-white border border-emerald-200 hover:bg-emerald-50 hover:border-emerald-300 px-3 py-1.5 rounded-full inline-flex items-center shadow-sm transition-colors"
                   title="Start new conversation branch from this point"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    class="h-3 w-3 mr-1"
+                    class="h-4 w-4 mr-1"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
