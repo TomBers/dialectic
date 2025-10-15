@@ -52,19 +52,29 @@
     <%= unless node.deleted do %>
       <div
         class={[
-          "node mb-4 rounded-lg flex items-start gap-3 bg-white border-l-4 scroll-mt-24",
-          message_border_class(node.class)
+          "node rounded-lg flex items-start gap-3 bg-white border-l-4 scroll-mt-24",
+          message_border_class(node.class),
+          Enum.member?(@hidden, node.id) && "mb-1",
+          !Enum.member?(@hidden, node.id) && "mb-4"
         ]}
         style={"margin-left: calc(min(#{node.indent} * 1rem, 2.5rem));"}
         id={node.id}
         data-indent={node.indent}
         phx-hook="HighlightNode"
       >
-        <div class="p-4 w-full">
+        <div class={[
+          "w-full",
+          Enum.member?(@hidden, node.id) && "py-0.5 px-2",
+          !Enum.member?(@hidden, node.id) && "p-4"
+        ]}>
           <div class="not-prose">
             <button
               type="button"
-              class="flex w-full items-center gap-2 -mx-2 px-2 py-1.5 rounded-md hover:bg-gray-50 text-left"
+              class={[
+                "flex w-full items-center -mx-2 rounded-md hover:bg-gray-50 text-left",
+                Enum.member?(@hidden, node.id) && "gap-1 px-2 py-0.5",
+                !Enum.member?(@hidden, node.id) && "gap-2 px-2 py-1.5"
+              ]}
               phx-click="toggle_node"
               phx-value-node-id={node.id}
               aria-expanded={!Enum.member?(@hidden, node.id)}
