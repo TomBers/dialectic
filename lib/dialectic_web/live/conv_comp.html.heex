@@ -144,6 +144,9 @@
           <div class="message-bubble max-w-[85vw] sm:max-w-[70%]">
             <div class="message-content">
               <div class="overflow-x-auto break-words prose prose-stone prose-base sm:prose-md md:prose-lg max-w-none prose-headings:mt-0 prose-pre:bg-gray-900 prose-pre:text-white prose-code:text-rose-600">
+                <h3 class="mt-0 text-lg sm:text-xl md:text-2xl mb-2 sm:mb-3 pb-2 border-b border-gray-200">
+                  {TextUtils.render_content(node.content || "") |> Map.get(:title)}
+                </h3>
                 {TextUtils.render_content(node.content || "") |> Map.get(:body_html)}
               </div>
             </div>
