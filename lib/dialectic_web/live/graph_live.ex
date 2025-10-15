@@ -442,6 +442,20 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
+  def handle_event("node_deepdive", %{"id" => node_id}, socket) do
+    if !socket.assigns.can_edit do
+      {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    else
+      {_, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+      update_graph(
+        socket,
+        GraphActions.deepdive(graph_action_params(socket, node)),
+        "deepdive"
+      )
+    end
+  end
+
   def handle_event("combine_node_select", %{"selected_node" => node_id}, socket) do
     if !socket.assigns.can_edit do
       {:noreply, socket |> put_flash(:error, "This graph is locked")}

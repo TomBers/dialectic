@@ -119,6 +119,50 @@ defmodule DialecticWeb.RightPanelComp do
           </div>
         </div>
       <% end %>
+      <div class="bg-white border border-gray-200 rounded-md">
+        <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
+          Groups ({length(@work_streams)})
+        </div>
+        <div class="p-1 text-[11px] text-gray-700 space-y-1">
+          <div class="flex items-center justify-between">
+            <div class="font-semibold text-gray-700 text-xs">Groups</div>
+            <button
+              type="button"
+              phx-click="open_start_stream_modal"
+              class="text-indigo-600 hover:text-indigo-800 text-xs"
+            >
+              + Start
+            </button>
+          </div>
+          <div class="max-h-56 overflow-y-auto">
+            <ul class="space-y-1">
+              <%= for s <- @work_streams || [] do %>
+                <li class="flex items-center justify-between gap-2">
+                  <span class="truncate">{s.id}</span>
+                  <div class="flex items-center gap-2">
+                    <button
+                      type="button"
+                      phx-click="focus_stream"
+                      phx-value-id={s.id}
+                      class="px-1 py-0.5 rounded border text-gray-700 hover:bg-gray-50 text-xs"
+                    >
+                      Focus
+                    </button>
+                    <button
+                      type="button"
+                      phx-click="toggle_stream"
+                      phx-value-id={s.id}
+                      class="px-1 py-0.5 rounded border text-gray-700 hover:bg-gray-50 text-xs"
+                    >
+                      Toggle
+                    </button>
+                  </div>
+                </li>
+              <% end %>
+            </ul>
+          </div>
+        </div>
+      </div>
       <div class="group bg-white border border-gray-200 rounded-md">
         <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
           Share
@@ -235,51 +279,6 @@ defmodule DialecticWeb.RightPanelComp do
             <li><span class="font-mono">Enter</span> — open reader</li>
             <li><span class="font-mono">Ctrl/⌘ + scroll</span> — zoom</li>
           </ul>
-        </div>
-      </div>
-
-      <div class="bg-white border border-gray-200 rounded-md">
-        <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
-          Groups ({length(@work_streams)})
-        </div>
-        <div class="p-1 text-[11px] text-gray-700 space-y-1">
-          <div class="flex items-center justify-between">
-            <div class="font-semibold text-gray-700 text-xs">Groups</div>
-            <button
-              type="button"
-              phx-click="open_start_stream_modal"
-              class="text-indigo-600 hover:text-indigo-800 text-xs"
-            >
-              + Start
-            </button>
-          </div>
-          <div class="max-h-56 overflow-y-auto">
-            <ul class="space-y-1">
-              <%= for s <- @work_streams || [] do %>
-                <li class="flex items-center justify-between gap-2">
-                  <span class="truncate">{s.id}</span>
-                  <div class="flex items-center gap-2">
-                    <button
-                      type="button"
-                      phx-click="focus_stream"
-                      phx-value-id={s.id}
-                      class="px-1 py-0.5 rounded border text-gray-700 hover:bg-gray-50 text-xs"
-                    >
-                      Focus
-                    </button>
-                    <button
-                      type="button"
-                      phx-click="toggle_stream"
-                      phx-value-id={s.id}
-                      class="px-1 py-0.5 rounded border text-gray-700 hover:bg-gray-50 text-xs"
-                    >
-                      Toggle
-                    </button>
-                  </div>
-                </li>
-              <% end %>
-            </ul>
-          </div>
         </div>
       </div>
     </div>

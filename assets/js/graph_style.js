@@ -58,6 +58,14 @@ const cols = {
     selectedBackground: "#f97316",
     selectedBorder: "#ea580c",
   },
+  deepdive: {
+    text: "#374151",
+    background: "white",
+    border: "#06b6d4", // Cyan for deep dive
+    selectedText: "#ffffff",
+    selectedBackground: "#06b6d4",
+    selectedBorder: "#0891b2",
+  },
   origin: {
     text: "#374151",
     background: "white",
@@ -302,12 +310,14 @@ function processNodeContent(content, addEllipsis = true) {
   let fullContent = content || "";
   fullContent = fullContent.replace(/\*\*/g, ""); // Remove all **
 
-  // Remove "Title:" prefix if present
-  const contentWithoutTitle = fullContent.replace(/^Title:\s*/i, "");
-
   // Get only the first line
-  const firstLineCandidate = contentWithoutTitle.split("\n")[0];
-  const firstLineOnly = firstLineCandidate.replace(/^\s*#{1,6}\s*/, "");
+  const firstLineCandidate = (fullContent || "").split("\n")[0] || "";
+
+  // Strip leading Markdown heading hashes (e.g., "## ")
+  const noHeading = firstLineCandidate.replace(/^\s*#{1,6}\s*/, "");
+
+  // Remove "Title:" prefix if present (case-insensitive)
+  const firstLineOnly = noHeading.replace(/^Title:\s*/i, "");
 
   const text = firstLineOnly.slice(0, cutoff);
   const suffix = addEllipsis && firstLineOnly.length > cutoff ? "…" : "";

@@ -9,6 +9,7 @@ defmodule DialecticWeb.ColUtils do
       "synthesis" -> "border-purple-600"
       "question" -> "border-blue-200"
       "ideas" -> "border-orange-200"
+      "deepdive" -> "border-cyan-500"
       _ -> "border-gray-200"
     end
   end

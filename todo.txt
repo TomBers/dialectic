@@ -1,7 +1,3 @@
-The bottom toolbar over runs the content panel, making it hard to read the content.  Make it respect sizing if either left hand and / or right hand menu is open
+Look at the various prompts and see if they are written correctly.
 
-Don't show lock in right hand menu if action not possible
-
-Now we have the right hand menu not always displayed, can simplify it, no need for drop downs inside.
-
-Make center graph respect if the right hand menu is open or not
+Check about the context of grouped nodes, they should ideally be independent
