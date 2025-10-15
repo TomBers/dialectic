@@ -10,8 +10,10 @@ defmodule DialecticWeb.Live.TextUtils do
   or creating a truncated HTML representation otherwise.
   """
   def linear_summary(content) do
-    if has_title?(content) do
-      modal_title(content, "user")
+    title = modal_title(content, "user")
+
+    if title != "" do
+      title
     else
       truncated_html(content)
     end
@@ -33,13 +35,18 @@ defmodule DialecticWeb.Live.TextUtils do
   def full_html(content, end_string \\ "") do
     norm = normalize_markdown(content)
 
-    if has_title?(norm) do
-      (norm <> end_string)
-      |> extract_content_body()
-      |> Earmark.as_html!()
-      |> Phoenix.HTML.raw()
-    else
-      norm |> Earmark.as_html!() |> Phoenix.HTML.raw()
+    cond do
+      has_title?(norm) ->
+        (norm <> end_string)
+        |> extract_content_body()
+        |> Earmark.as_html!()
+        |> Phoenix.HTML.raw()
+
+      single_line?(norm) ->
+        Phoenix.HTML.raw("")
+
+      true ->
+        norm |> Earmark.as_html!() |> Phoenix.HTML.raw()
     end
   end
 
@@ -47,10 +54,21 @@ defmodule DialecticWeb.Live.TextUtils do
   Extracts a modal title from content or uses a class-based default.
   """
   def modal_title(content, _class \\ "") do
-    if has_title?(content) do
-      extract_title(content)
-    else
-      ""
+    cond do
+      has_title?(content) ->
+        extract_title(content)
+
+      single_line?(content) ->
+        content
+        |> to_string()
+        |> String.trim()
+        |> String.split("\n", parts: 2)
+        |> List.first()
+        |> strip_heading_or_title_prefix()
+        |> String.trim()
+
+      true ->
+        ""
     end
   end
 
@@ -64,8 +82,7 @@ defmodule DialecticWeb.Live.TextUtils do
       |> String.trim_leading()
       |> String.split("\n", parts: 2)
       |> List.first()
-      |> String.replace(~r/^\s*\#{1,6}\s*/, "")
-      |> String.replace(@title_regex, "")
+      |> strip_heading_or_title_prefix()
       |> String.trim()
     else
       content
@@ -82,6 +99,29 @@ defmodule DialecticWeb.Live.TextUtils do
     |> String.trim_leading()
   end
 
+  defp single_line?(content) do
+    norm =
+      content
+      |> normalize_markdown()
+      |> String.trim()
+
+    norm != "" and not String.contains?(norm, "\n")
+  end
+
+  defp heading_line?(line) do
+    String.match?(line, ~r/^\s*\#{1,6}\s+\S/)
+  end
+
+  defp title_prefix_line?(line) do
+    String.match?(line, @title_regex)
+  end
+
+  defp strip_heading_or_title_prefix(line) do
+    line
+    |> String.replace(~r/^\s*\#{1,6}\s*/, "")
+    |> String.replace(@title_regex, "")
+  end
+
   defp has_title?(content) do
     first_line =
       content
@@ -91,31 +131,37 @@ defmodule DialecticWeb.Live.TextUtils do
       |> List.first() || ""
 
     cond do
-      String.match?(first_line, ~r/^\s*\#{1,6}\s+\S/) -> true
-      String.match?(first_line, ~r/^title\s*:?\s*/i) -> true
+      heading_line?(first_line) -> true
+      title_prefix_line?(first_line) -> true
       true -> false
     end
   end
 
   defp extract_content_body(content) do
-    case content |> to_string() |> String.trim_leading() |> String.split("\n", parts: 2) do
-      [_, body] ->
-        text = body |> to_string() |> String.trim_leading()
+    norm = normalize_markdown(content)
 
-        case String.split(text, "\n", parts: 2) do
-          [first, rest] ->
-            cond do
-              String.match?(first, ~r/^title\s*:?\s*/i) -> to_string(rest)
-              String.match?(first, ~r/^\s*\#{1,6}\s+\S/) -> to_string(rest)
-              true -> text
-            end
+    if single_line?(norm) do
+      ""
+    else
+      case String.split(norm, "\n", parts: 2) do
+        [_, body] ->
+          text = body |> to_string() |> String.trim_leading()
 
-          _ ->
-            text
-        end
+          case String.split(text, "\n", parts: 2) do
+            [first, rest] ->
+              cond do
+                title_prefix_line?(first) -> to_string(rest)
+                heading_line?(first) -> to_string(rest)
+                true -> text
+              end
 
-      [only_content] ->
-        only_content
+            _ ->
+              text
+          end
+
+        [only_content] ->
+          only_content
+      end
     end
   end
 
@@ -143,13 +189,9 @@ defmodule DialecticWeb.Live.TextUtils do
       |> List.first()
       |> to_string()
 
-    # Strip leading Markdown heading hashes (e.g., "## ")
-    no_heading =
-      String.replace(first_line_only, ~r/^\s*\#{1,6}\s*/, "")
-
-    # Remove "Title:" prefix if present (case-insensitive)
+    # Strip leading Markdown heading hashes and Title prefix if present
     line =
-      String.replace(no_heading, ~r/^Title:\s*/i, "")
+      strip_heading_or_title_prefix(first_line_only)
 
     text = String.slice(line, 0, cutoff)
     suffix = if add_ellipsis and String.length(line) > cutoff, do: "…", else: ""
