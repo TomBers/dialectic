@@ -17,11 +17,16 @@ defmodule DialecticWeb.ConvComp do
     List.last(path)
   end
 
-  defp get_message_type(node, index) do
+  defp get_message_type(node, _index) do
     case node.class do
-      "user" -> "user"
-      "answer" -> "assistant"
-      _ -> if rem(index, 2) == 0, do: "user", else: "assistant"
+      c when c in ["user", "question", "origin"] ->
+        "user"
+
+      c when c in ["answer", "thesis", "antithesis", "synthesis", "ideas", "deepdive"] ->
+        "assistant"
+
+      _ ->
+        "assistant"
     end
   end
 end
