@@ -72,8 +72,6 @@ defmodule DialecticWeb.Live.TextUtils do
     |> to_string()
     |> String.replace("\r\n", "\n")
     |> String.replace("\r", "\n")
-    # Insert a newline before heading markers (##, ###, etc.) that appear mid-line
-    |> String.replace(~r/([^\n])\s*(\#{1,6}\s+)/, "\\1\n\\2")
     |> String.trim_leading()
   end
 
