@@ -183,22 +183,58 @@ defmodule Dialectic.Workers.OpenAIWorker do
   end
 
   defp handle_stream_chunk({:data, data}, context, graph, to_node, live_view_topic) do
-    case parse_chunk(data) do
-      {:ok, chunks} ->
-        Enum.each(chunks, fn chunk ->
-          handle_result(chunk, graph, to_node, live_view_topic)
-        end)
+    # Maintain a rolling buffer across chunks to avoid dropping partial SSE frames
+    incoming =
+      case data do
+        iodata when is_list(iodata) or is_binary(iodata) -> IO.iodata_to_binary(iodata)
+        other -> to_string(other)
+      end
 
-        {:cont, context}
+    buf = Process.get(:sse_buf) || ""
+    combined = buf <> incoming
+    frames = String.split(combined, "\n\n", trim: false)
 
-      {:error, reason} ->
-        Logger.error("Failed to parse OpenAI chunk: #{inspect(reason)}")
-        {:cont, context}
-    end
+    {full_frames, remainder} =
+      if String.ends_with?(combined, "\n\n") do
+        {frames, ""}
+      else
+        {Enum.slice(frames, 0..-2//1), List.last(frames) || ""}
+      end
+
+    Enum.each(full_frames, fn frame ->
+      case parse_chunk(frame) do
+        {:ok, chunks} ->
+          Enum.each(chunks, fn chunk ->
+            handle_result(chunk, graph, to_node, live_view_topic)
+          end)
+
+        {:error, _} ->
+          :ok
+      end
+    end)
+
+    Process.put(:sse_buf, remainder)
+    {:cont, context}
   end
 
   # Handle stream end message
-  defp handle_stream_chunk({:done, _data}, context, _graph, _to_node, _live_view_topic) do
+  defp handle_stream_chunk({:done, _data}, context, graph, to_node, live_view_topic) do
+    # Flush any remainder as a final frame held in the process dictionary
+    remainder = Process.get(:sse_buf) || ""
+
+    if String.trim(remainder) != "" do
+      case parse_chunk(remainder) do
+        {:ok, chunks} ->
+          Enum.each(chunks, fn chunk ->
+            handle_result(chunk, graph, to_node, live_view_topic)
+          end)
+
+        {:error, _} ->
+          :ok
+      end
+    end
+
+    Process.delete(:sse_buf)
     Logger.debug("Stream completed")
     {:cont, context}
   end
