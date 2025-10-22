@@ -15,9 +15,9 @@ defmodule Dialectic.Responses.LlmInterface do
     - Short answer (2–3 sentences) giving the core idea and why it matters.
 
     ### Deep dive
-    - Foundations: 3–4 bullets defining key terms and stating assumptions.
+    - Foundations (optional): 1 short paragraph defining key terms and assumptions.
     - Core explanation (freeform): 1–2 short paragraphs weaving the main mechanism and intuition; include minimal formalism only if it clearly helps, and define symbols if used.
-    - Worked example: 3–4 concise steps that show the idea in action.
+
     - Nuances: 2–3 bullets on pitfalls, edge cases, or common confusions; include one contrast with a neighboring idea.
 
     ### Next steps and sources
@@ -213,7 +213,7 @@ defmodule Dialectic.Responses.LlmInterface do
 
     ### Deep dive
     - Core explanation (freeform): 1–2 short paragraphs tracing the main mechanism, key assumptions, and when it applies; include minimal formalism only if it clearly helps, and define symbols if used.
-    - One compact worked insight: 2–3 lines that concretely illustrate the idea or calculation.
+
     - Optional nuance: 1–2 bullets on caveats or edge cases, only if it clarifies usage.
 
     Constraints: Aim for clarity and concision; ~280–420 words.
