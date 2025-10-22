@@ -1,7 +1,12 @@
 import { draw_graph } from "./draw_graph";
 import { layoutConfig } from "./layout_config.js";
 
-const layoutGraph = (cy, onDone) => {
+const layoutGraph = (cy, opts, onDone) => {
+  // Back-compat: (cy, onDone)
+  if (typeof opts === "function" && onDone === undefined) {
+    onDone = opts;
+    opts = {};
+  }
   try {
     // Stop any in-flight animations to avoid fighting layout animations
     if (cy && typeof cy.stop === "function") {
@@ -14,6 +19,7 @@ const layoutGraph = (cy, onDone) => {
 
   const layout = cy.layout({
     ...layoutConfig.baseLayout,
+    ...(opts || {}),
   });
 
   // Track layout running state on the instance that owns this cy
@@ -22,6 +28,12 @@ const layoutGraph = (cy, onDone) => {
       layout.one("layoutstart", () => {
         if (cy && cy._ownerHook) {
           cy._ownerHook._layoutRunning = true;
+        }
+        // End any active batch after layout starts to avoid flicker during pre-layout updates
+        if (cy && typeof cy.endBatch === "function") {
+          try {
+            cy.endBatch();
+          } catch (_e) {}
         }
       });
 
@@ -116,6 +128,14 @@ const drawDebugBounds = (
 
 const ensureVisible = (cy, container, nodeId) => {
   try {
+    // Defer visibility nudge until after any active layout to avoid pre-layout flicker
+    if (cy && cy._ownerHook && cy._ownerHook._layoutRunning) {
+      try {
+        cy._ownerHook._pendingCenterId = nodeId;
+      } catch (_e) {}
+      return;
+    }
+
     const n = cy.$(`#${nodeId}`);
     if (!n || n.length === 0) return;
 
@@ -583,10 +603,13 @@ const graphHook = {
   updated() {
     const { graph, node, operation } = this.el.dataset;
 
+    if (this.cy && typeof this.cy.startBatch === "function")
+      this.cy.startBatch();
     this.cy.json({ elements: JSON.parse(graph) });
     if (typeof this.cy.enforceCollapsedState === "function") {
       this.cy.enforceCollapsedState();
     }
+    // Defer endBatch until after layout starts or after the no-layout path below
 
     const reorderOperations = new Set([
       "combine",
@@ -595,7 +618,22 @@ const graphHook = {
       "comment",
       "other_user_change",
       "start_stream",
+      "explain",
+      "branch",
+      "ideas",
+      "deepdive",
     ]);
+    // Operations that should reflow without animation to reduce flicker
+    const noAnimateOperations = new Set([
+      "explain",
+      "branch",
+      "ideas",
+      "deepdive",
+      "comment",
+      "answer",
+      "combine",
+    ]);
+    let layoutScheduled = false;
 
     if (operation === "start_stream") {
       // Reflow the graph and then ensure the newly created node is visible (deferred until layout completes)
@@ -610,7 +648,9 @@ const graphHook = {
         this._pendingCenterId;
       this._pendingCenterId = nextPendingId;
       this._layoutRunning = true;
-      layoutGraph(this.cy, () => {
+      layoutScheduled = true;
+      // Keep animation for start_stream
+      layoutGraph(this.cy, {}, () => {
         const targetId =
           (typeof this._pendingCenterId === "string" &&
             this._pendingCenterId.length > 0 &&
@@ -632,7 +672,10 @@ const graphHook = {
       // Some operations reorder elements; defer ensureVisible until layout finishes
       this._pendingCenterId = this.el.dataset.node || this._pendingCenterId;
       this._layoutRunning = true;
-      layoutGraph(this.cy, () => {
+      layoutScheduled = true;
+      // Disable animation for certain operations to avoid flicker
+      const opts = noAnimateOperations.has(operation) ? { animate: false } : {};
+      layoutGraph(this.cy, opts, () => {
         const targetId =
           (typeof this._pendingCenterId === "string" &&
             this._pendingCenterId.length > 0 &&
@@ -652,6 +695,8 @@ const graphHook = {
       });
     }
 
+    if (!layoutScheduled && this.cy && typeof this.cy.endBatch === "function")
+      this.cy.endBatch();
     this.cy.elements().removeClass("selected");
     this.cy.$(`#${node}`).addClass("selected");
 

@@ -353,16 +353,22 @@ defmodule DialecticWeb.GraphLive do
     if !socket.assigns.can_edit do
       {:noreply, socket |> put_flash(:error, "This graph is locked")}
     else
-      items
-      |> Enum.each(fn item ->
-        GraphActions.answer_selection(
-          graph_action_params(socket, socket.assigns.node),
-          "Please explain: #{item}",
-          "explain"
-        )
-      end)
+      last_result =
+        Enum.reduce(items, nil, fn item, _acc ->
+          GraphActions.answer_selection(
+            graph_action_params(socket, socket.assigns.node),
+            "Please explain: #{item}",
+            "explain"
+          )
+        end)
 
-      {:noreply, socket |> put_flash(:info, "Exploring all points")}
+      case last_result do
+        {graph, node} ->
+          update_graph(socket, {graph, node}, "explain")
+
+        _ ->
+          {:noreply, socket}
+      end
     end
   end
 
@@ -389,18 +395,29 @@ defmodule DialecticWeb.GraphLive do
       if selected == [] do
         {:noreply, socket |> put_flash(:error, "Please select at least one point")}
       else
-        Enum.each(selected, fn item ->
-          GraphActions.answer_selection(
-            graph_action_params(socket, socket.assigns.node),
-            "Please explain: #{item}",
-            "explain"
-          )
-        end)
+        last_result =
+          Enum.reduce(selected, nil, fn item, _acc ->
+            GraphActions.answer_selection(
+              graph_action_params(socket, socket.assigns.node),
+              "Please explain: #{item}",
+              "explain"
+            )
+          end)
 
-        {:noreply,
-         socket
-         |> put_flash(:info, "Exploring selected points (#{length(selected)})")
-         |> assign(show_explore_modal: false, explore_items: [], explore_selected: [])}
+        case last_result do
+          {graph, node} ->
+            {:noreply, updated_socket} = update_graph(socket, {graph, node}, "explain")
+
+            {:noreply,
+             assign(updated_socket,
+               show_explore_modal: false,
+               explore_items: [],
+               explore_selected: []
+             )}
+
+          _ ->
+            {:noreply, socket}
+        end
       end
     end
   end
@@ -941,7 +958,15 @@ defmodule DialecticWeb.GraphLive do
       end)
       |> then(fn s ->
         # Ensure newly created nodes are selected immediately
-        if operation in ["start_stream", "comment", "answer", "branch", "combine", "ideas"] &&
+        if operation in [
+             "start_stream",
+             "comment",
+             "answer",
+             "branch",
+             "combine",
+             "ideas",
+             "explain"
+           ] &&
              node && Map.get(node, :id) do
           push_event(s, "center_node", %{id: node.id})
         else

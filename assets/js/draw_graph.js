@@ -39,6 +39,15 @@ export function draw_graph(graph, context, elements, node) {
   // - Hold Space and drag to pan; otherwise keep box selection
   const container = graph;
 
+  // Track layout running to avoid pre-layout panning/centering flicker
+  let layoutRunning = false;
+  cy.on("layoutstart", () => {
+    layoutRunning = true;
+  });
+  cy.on("layoutstop", () => {
+    layoutRunning = false;
+  });
+
   // Disable Cytoscape's default wheel zoom so we fully control it
   cy.userZoomingEnabled(false);
 
@@ -355,13 +364,14 @@ export function draw_graph(graph, context, elements, node) {
     if (rbbTop < okTop) dy = okTop - rbbTop;
     else if (rbbBottom > okBottom) dy = okBottom - rbbBottom;
 
-    if (dx !== 0 || dy !== 0) {
+    if (!layoutRunning && (dx !== 0 || dy !== 0)) {
       cy.animate({
         pan: { x: pan.x + dx, y: pan.y + dy },
         duration: 150,
         easing: "ease-in-out-quad",
       });
     }
+    // If a layout is running, skip the pre-layout nudge to avoid flicker.
     enforceCollapsedState(cy);
   });
 
