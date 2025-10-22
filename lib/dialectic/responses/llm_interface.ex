@@ -16,7 +16,7 @@ defmodule Dialectic.Responses.LlmInterface do
 
     ### Deep dive
     - Foundations (optional): 1 short paragraph defining key terms and assumptions.
-    - Core explanation (freeform): 1–2 short paragraphs weaving the main mechanism and intuition; include minimal formalism only if it clearly helps, and define symbols if used.
+    - Core explanation (freeform): 1–2 short paragraphs weaving the main mechanism and intuition.
 
     - Nuances: 2–3 bullets on pitfalls, edge cases, or common confusions; include one contrast with a neighboring idea.
 
@@ -117,7 +117,7 @@ defmodule Dialectic.Responses.LlmInterface do
     Output (markdown):
     ## [Title of the pro argument]
     - Claim (1 sentence).
-    - Narrative reasoning (freeform): 1–2 short paragraphs weaving mechanism and intuition; include minimal formalism or citations only when they clearly help; cite the source type (e.g., randomized trial, textbook theorem, official spec) if used.
+    - Narrative reasoning (freeform): 1–2 short paragraphs weaving mechanism and intuition.
     - Illustrative example or evidence (1–2 lines).
     - Assumptions and limits (1 line) plus a falsifiable prediction.
     - When this holds vs. when it might not (1 line).
@@ -142,7 +142,7 @@ defmodule Dialectic.Responses.LlmInterface do
     Output (markdown):
     ## [Title of the con argument]
     - Central critique (1 sentence).
-    - Narrative reasoning (freeform): 1–2 short paragraphs laying out the critique; include minimal formalism or citations only when helpful; cite the source type if used.
+    - Narrative reasoning (freeform): 1–2 short paragraphs laying out the critique.
     - Illustrative counterexample or evidence (1–2 lines).
     - Scope and limits (1 line) plus a falsifiable prediction that would weaken this critique.
     - When this criticism applies vs. when it might not (1 line).
@@ -212,7 +212,7 @@ defmodule Dialectic.Responses.LlmInterface do
     - One-sentence statement of what the concept is and when it applies.
 
     ### Deep dive
-    - Core explanation (freeform): 1–2 short paragraphs tracing the main mechanism, key assumptions, and when it applies; include minimal formalism only if it clearly helps, and define symbols if used.
+    - Core explanation (freeform): 1–2 short paragraphs tracing the main mechanism, key assumptions, and when it applies.
 
     - Optional nuance: 1–2 bullets on caveats or edge cases, only if it clarifies usage.
 
@@ -226,7 +226,7 @@ defmodule Dialectic.Responses.LlmInterface do
     style = """
     You are teaching a curious beginner toward university-level mastery.
     - Start with intuition, then add precise definitions and assumptions.
-    - Prefer causal/mechanistic explanations. When appropriate, include minimal formalism (one compact equation or pseudocode) and define all symbols; skip if not relevant.
+    - Prefer causal/mechanistic explanations.
     - Use short paragraphs and well-structured bullets. Avoid over-fragmented checklists.
     - If context is insufficient, say what’s missing and ask one clarifying question.
     - Prefer info from the provided Context; label other info as "Background".
