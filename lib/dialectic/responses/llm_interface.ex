@@ -20,11 +20,10 @@ defmodule Dialectic.Responses.LlmInterface do
 
     - Nuances: 2–3 bullets on pitfalls, edge cases, or common confusions; include one contrast with a neighboring idea.
 
-    ### Next steps and sources
+    ### Next steps
     - Next questions to explore (1–2).
-    - Further reading (2–3 items): Title — Source (URL) or, if unsure, a precise search query with what is uncertain.
 
-    Constraints: Aim for depth over breadth; ~220–320 words excluding references.
+    Constraints: Aim for depth over breadth; ~220–320 words.
     """
 
     ask_model(qn, child, graph_id, live_view_topic)
@@ -44,11 +43,10 @@ defmodule Dialectic.Responses.LlmInterface do
     - Implications for the current context (1–2 bullets).
     - Limitations or alternative readings (1–2 bullets).
 
-    ### Next steps and sources
+    ### Next steps
     - Follow‑up questions (1–2).
-    - Further reading (1–2 items): Title — Source (URL) or a precise search query.
 
-    Constraints: ~180–260 words excluding references.
+    Constraints: ~180–260 words.
     """
 
     add_default? =
@@ -95,11 +93,10 @@ defmodule Dialectic.Responses.LlmInterface do
       - Bridge or delineation: 1 short paragraph proposing a synthesis or clarifying scope; add a testable prediction if helpful.
       - When each view is stronger and remaining trade‑offs: 2–3 concise bullets.
 
-      ### Next steps and sources
+      ### Next steps
       - One concrete next step to test or explore.
-      - Further reading (1–3 items): Title — Source (URL) or a precise search query.
 
-      Constraints: ~220–320 words excluding references. If reconciliation is not possible, state the trade‑offs clearly.
+      Constraints: ~220–320 words. If reconciliation is not possible, state the trade‑offs clearly.
       """
 
     ask_model(qn, child, graph_id, live_view_topic)
@@ -121,9 +118,8 @@ defmodule Dialectic.Responses.LlmInterface do
     - Illustrative example or evidence (1–2 lines).
     - Assumptions and limits (1 line) plus a falsifiable prediction.
     - When this holds vs. when it might not (1 line).
-    - Further reading (1–2 items): Title — Source (URL) or a precise search query.
 
-    Constraints: 150–200 words excluding references.
+    Constraints: 150–200 words.
     """
 
     ask_model(qn, child, graph_id, live_view_topic)
@@ -146,9 +142,8 @@ defmodule Dialectic.Responses.LlmInterface do
     - Illustrative counterexample or evidence (1–2 lines).
     - Scope and limits (1 line) plus a falsifiable prediction that would weaken this critique.
     - When this criticism applies vs. when it might not (1 line).
-    - Further reading (1–2 items): Title — Source (URL) or a precise search query.
 
-    Constraints: 150–200 words excluding references.
+    Constraints: 150–200 words.
     """
 
     ask_model(qn, child, graph_id, live_view_topic)
@@ -230,7 +225,6 @@ defmodule Dialectic.Responses.LlmInterface do
     - Use short paragraphs and well-structured bullets. Avoid over-fragmented checklists.
     - If context is insufficient, say what’s missing and ask one clarifying question.
     - Prefer info from the provided Context; label other info as "Background".
-    - Never fabricate citations or data. Include 1–3 trustworthy references formatted: Title — Source (URL). If unsure, provide a precise search query and state what is uncertain.
     - Avoid tables; use headings and bullets only.
     Default to markdown and an H2 title (## …) unless the instruction specifies otherwise. When there is any conflict, follow the question/selection’s format and instructions.
     """
