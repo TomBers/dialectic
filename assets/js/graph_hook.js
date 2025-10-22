@@ -605,7 +605,17 @@ const graphHook = {
 
     if (this.cy && typeof this.cy.startBatch === "function")
       this.cy.startBatch();
+    if (this.cy && typeof this.cy.scratch === "function") {
+      try {
+        this.cy.scratch("_bulkReload", true);
+      } catch (_e) {}
+    }
     this.cy.json({ elements: JSON.parse(graph) });
+    if (this.cy && typeof this.cy.scratch === "function") {
+      try {
+        this.cy.scratch("_bulkReload", null);
+      } catch (_e) {}
+    }
     if (typeof this.cy.enforceCollapsedState === "function") {
       this.cy.enforceCollapsedState();
     }
