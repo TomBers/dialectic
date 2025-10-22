@@ -83,7 +83,11 @@ defmodule DialecticWeb.Live.ModalComp do
           
     <!-- Side arrows (hidden on small screens) -->
 
-          <article class="prose prose-stone prose-lg md:prose-2xl lg:prose-2xl max-w-none selection-content space-y-4 min-h-[50vh]">
+          <article class={[
+            "prose prose-stone prose-lg md:prose-xl max-w-none selection-content space-y-4 min-h-[50vh]",
+            "prose-headings:mt-0 prose-h1:text-2xl sm:prose-h1:text-3xl",
+            "prose-h2:text-xl sm:prose-h2:text-2xl prose-h3:text-lg sm:prose-h3:text-xl prose-h4:text-base"
+          ]}>
             <% parsed = TextUtils.render_content(@node.content || "") %>
             <h2 class="text-xl sm:text-2xl md:text-3xl">
               {parsed.title}

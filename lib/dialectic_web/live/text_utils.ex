@@ -60,6 +60,8 @@ defmodule DialecticWeb.Live.TextUtils do
     |> to_string()
     |> String.replace("\r\n", "\n")
     |> String.replace("\r", "\n")
+    |> normalize_inline_headings()
+    |> strip_heading_closing_hashes()
     |> trim_leading_blank_lines()
   end
 
@@ -102,8 +104,16 @@ defmodule DialecticWeb.Live.TextUtils do
       |> to_string()
 
     # Strip leading Markdown heading hashes and Title prefix if present
-    line =
+    line0 =
       strip_heading_or_title_prefix(first_line_only)
+
+    # If the original first line is a heading, strip any trailing closing hashes
+    line =
+      if heading_line?(first_line_only) do
+        strip_trailing_heading_hashes(line0)
+      else
+        line0
+      end
 
     text = String.slice(line, 0, cutoff)
     suffix = if add_ellipsis and String.length(line) > cutoff, do: "…", else: ""
@@ -226,6 +236,36 @@ defmodule DialecticWeb.Live.TextUtils do
     text
     |> String.split("\n")
     |> Enum.drop_while(fn line -> String.trim(line) == "" end)
+    |> Enum.join("\n")
+  end
+
+  # Ensure a space before mid-line Markdown heading markers (## ...),
+  # converting 'text## heading' into 'text ## heading'
+  # Public helper to normalize streaming fragments safely.
+  # Currently ensures a space before mid-line heading markers so they don't
+  # get glued to the previous token during streaming.
+  def normalize_stream_fragment(text) do
+    text
+    |> to_string()
+    |> normalize_inline_headings()
+  end
+
+  defp normalize_inline_headings(text) do
+    Regex.replace(~r/([^\n])(\#{2,6}\s+)/, text, "\\1\n\\2")
+  end
+
+  # Remove trailing closing hashes on heading lines, e.g. "## Title ###" => "## Title"
+  defp strip_trailing_heading_hashes(line) do
+    String.replace(line, ~r/\s*#+\s*$/, "")
+  end
+
+  # Apply trailing-hash stripping across the whole text, but only on heading lines
+  defp strip_heading_closing_hashes(text) do
+    text
+    |> String.split("\n")
+    |> Enum.map(fn line ->
+      if heading_line?(line), do: strip_trailing_heading_hashes(line), else: line
+    end)
     |> Enum.join("\n")
   end
 end
