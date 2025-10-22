@@ -139,4 +139,23 @@ defmodule DialecticWeb.Live.TextUtils do
 
     %{title: p.title, body_html: body_html}
   end
+
+  @doc """
+  Normalize a streamed content fragment to avoid mid-line Markdown heading markers
+  being glued to previous tokens during streaming.
+  strategy:
+  - :newline (default) inserts a newline before ##/###... so they render as headings
+  - :space inserts a space instead, keeping them inline text
+  """
+  def normalize_stream_fragment(text, strategy \\ :newline) do
+    s = to_string(text)
+
+    case strategy do
+      :space ->
+        Regex.replace(~r/([^\n])(\#{2,6}\s+)/, s, "\\1 \\2")
+
+      _ ->
+        Regex.replace(~r/([^\n])(\#{2,6}\s+)/, s, "\\1\n\\2")
+    end
+  end
 end
