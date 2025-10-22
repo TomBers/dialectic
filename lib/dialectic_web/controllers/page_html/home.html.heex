@@ -4,28 +4,38 @@
     <div class="absolute inset-0 opacity-5 bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.2\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]">
     </div>
     <div class="relative z-10">
-      <div class="mx-auto max-w-7xl px-6 text-center">
-        <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-white">
-          Explore ideas collaboratively
-        </h1>
-        <p class="mt-4 text-lg md:text-xl text-blue-100/90">
-          A clearer way to explore, connect, and deepen understanding.
-        </p>
-        <div class="mt-6 flex flex-wrap justify-center gap-3">
-          <.link
-            navigate={~p"/intro/how"}
-            class="inline-flex items-center rounded-full bg-white text-[#3a0ca3] px-5 py-2.5 font-semibold ring-1 ring-white/20 hover:bg-white/15 transition"
-          >
-            Guide
-          </.link>
-          <.link
-            href="https://tombers.github.io/dialectic/"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="inline-flex items-center rounded-full bg-transparent text-white px-5 py-2.5 font-semibold ring-1 ring-white/30 hover:bg-white/10 transition"
-          >
-            Learn more
-          </.link>
+      <div class="mx-auto max-w-7xl px-6 md:grid md:grid-cols-2 md:items-center md:gap-12">
+        <div class="text-center md:text-left">
+          <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-white">
+            Explore ideas collaboratively
+          </h1>
+          <p class="mt-4 text-lg md:text-xl text-blue-100/90">
+            A clearer way to explore, connect, and deepen understanding.
+          </p>
+          <div class="mt-6 flex flex-wrap justify-center md:justify-start gap-3">
+            <.link
+              navigate={~p"/intro/how"}
+              class="inline-flex items-center rounded-full bg-white text-[#3a0ca3] px-5 py-2.5 font-semibold ring-1 ring-white/20 hover:bg-white/15 transition"
+            >
+              Guide
+            </.link>
+            <.link
+              href="https://tombers.github.io/dialectic/"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center rounded-full bg-transparent text-white px-5 py-2.5 font-semibold ring-1 ring-white/30 hover:bg-white/10 transition"
+            >
+              Learn more
+            </.link>
+          </div>
+        </div>
+        <div class="mt-10 md:mt-0 flex justify-center md:justify-end">
+          <img
+            src="/images/Landing2.webp"
+            alt="Dialectic interface screenshot"
+            class="w-full max-w-[560px] rounded-xl shadow-lg ring-1 ring-black/5"
+            loading="lazy"
+          />
         </div>
       </div>
     </div>
