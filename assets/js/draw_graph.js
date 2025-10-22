@@ -272,6 +272,13 @@ export function draw_graph(graph, context, elements, node) {
   cy.on("add", "edge", function (e) {
     try {
       const edge = e.target;
+
+      // Skip reroute during bulk JSON reloads when a scratch flag is set
+      const cyInst = edge.cy && edge.cy();
+      if (cyInst && cyInst.scratch && cyInst.scratch("_bulkReload")) {
+        return;
+      }
+
       const src = edge.source();
       const tgt = edge.target();
 
@@ -418,8 +425,8 @@ export function draw_graph(graph, context, elements, node) {
   try {
     enforceCollapsedState(cy);
     cy.ready(() => enforceCollapsedState(cy));
-    cy.on("layoutstop", () => enforceCollapsedState(cy));
-    cy.on("render", () => enforceCollapsedState(cy));
+    // Removed: collapse enforcement on layoutstop to avoid unexpected edge reroutes
+    // Removed: collapse enforcement on render to avoid unexpected edge reroutes
   } catch (_e) {}
 
   // Expose collapsed-state enforcement for external callers
