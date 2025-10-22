@@ -36,19 +36,7 @@ defmodule DialecticWeb.Live.TextUtils do
       else
         case String.split(norm, "\n", parts: 2) do
           [_, body] ->
-            text = body |> to_string() |> String.trim_leading()
-
-            case String.split(text, "\n", parts: 2) do
-              [first2, rest2] ->
-                cond do
-                  title_prefix_line?(first2) -> to_string(rest2)
-                  heading_line?(first2) -> to_string(rest2)
-                  true -> text
-                end
-
-              _ ->
-                text
-            end
+            body |> to_string() |> trim_leading_blank_lines()
 
           [only_content] ->
             only_content
@@ -72,7 +60,7 @@ defmodule DialecticWeb.Live.TextUtils do
     |> to_string()
     |> String.replace("\r\n", "\n")
     |> String.replace("\r", "\n")
-    |> String.trim_leading()
+    |> trim_leading_blank_lines()
   end
 
   defp heading_line?(line) do
@@ -231,5 +219,13 @@ defmodule DialecticWeb.Live.TextUtils do
       [_only] -> ""
       _ -> parts |> Enum.slice(0, length(parts) - 1) |> Enum.join("\n")
     end
+  end
+
+  # Trims only leading blank lines (preserving indentation of the first non-blank line)
+  defp trim_leading_blank_lines(text) do
+    text
+    |> String.split("\n")
+    |> Enum.drop_while(fn line -> String.trim(line) == "" end)
+    |> Enum.join("\n")
   end
 end

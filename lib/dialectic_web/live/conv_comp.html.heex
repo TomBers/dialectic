@@ -154,7 +154,13 @@
                 ]}>
                   {TextUtils.process_node_content(node.content || "")}
                 </h3>
-                {TextUtils.render_content(node.content || "") |> Map.get(:body_html)}
+                <% content = node.content || "" %>
+                <% body =
+                  case String.split(content, "\n", parts: 2) do
+                    [_, b] -> String.trim_leading(b)
+                    _ -> ""
+                  end %>
+                {Earmark.as_html!(body) |> Phoenix.HTML.raw()}
               </div>
             </div>
             <div class="message-meta flex justify-end items-center">
