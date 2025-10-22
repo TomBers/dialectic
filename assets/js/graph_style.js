@@ -93,32 +93,34 @@ export function graphStyle() {
             false,
           );
 
-          // Base height calculation
-          const base = Math.max(
-            Math.min(processedContent.length, cutoff) - 65,
-            35,
-          );
+          // Normalize content and convert <br> tags to newlines for measurement
+          const content = (processedContent || "").replace(/<br\s*\/?>/g, "\n");
 
-          // Get the original content for counting elements that affect height
-          const content = processedContent || "";
+          // Remove zero-width spaces used for wrapping when measuring length
+          const measureText = content.replace(/\u200B/g, "");
 
-          // Count newlines for vertical spacing
-          const newlineCount = (content.match(/\n/g) || []).length;
+          // Heuristic: characters that fit on one line at 210px width, 13px font
+          const approxCharsPerLine = 28;
 
-          // Count bullet points (• character)
-          const bulletCount = (content.match(/•/g) || []).length;
+          // Estimate total wrapped lines across explicit lines
+          const parts = measureText.split("\n");
+          let lines = 0;
+          for (const part of parts) {
+            const len = part.trim().length;
+            // Ensure at least one line per part
+            lines += Math.max(1, Math.ceil(len / approxCharsPerLine));
+          }
 
-          // Extra height for newlines
-          const newlineExtra = newlineCount * 3.5;
+          // Bullet points add extra vertical spacing
+          const bulletCount = (measureText.match(/•/g) || []).length;
+          const bulletExtra = bulletCount * 6; // pixels
 
-          // Extra height for bullet points (add more space per bullet)
-          const bulletExtra = bulletCount * 7;
+          // Compute height from estimated lines
+          const lineHeight = 16; // px per line at 13px font size
+          const basePadding = 14; // px padding/spacing allowance
+          const computed = basePadding + lines * lineHeight + bulletExtra;
 
-          // For content with both <br> tags and bullet points
-          const brTagCount = (content.match(/<br>/g) || []).length;
-          const brExtra = brTagCount * 3;
-
-          return base + newlineExtra + bulletExtra + brExtra;
+          return Math.max(35, computed);
         },
         "min-width": 55,
         "min-height": 35,
@@ -319,8 +321,16 @@ function processNodeContent(content, addEllipsis = true) {
   // Remove "Title:" prefix if present (case-insensitive)
   const firstLineOnly = noHeading.replace(/^Title:\s*/i, "");
 
-  const text = firstLineOnly.slice(0, cutoff);
-  const suffix = addEllipsis && firstLineOnly.length > cutoff ? "…" : "";
+  // Slice to cutoff for measurement and display purposes
+  const raw = firstLineOnly;
+  const sliced = raw.slice(0, cutoff);
+  const suffix = addEllipsis && raw.length > cutoff ? "…" : "";
 
-  return `${text}${suffix}`;
+  // Add break opportunities to help wrapping with long slash/dash sequences
+  // - Insert zero-width space after '/', '-', '–', '—'
+  const withBreaks = sliced
+    .replace(/\//g, "/\u200B")
+    .replace(/([\-–—‑])/g, "$1\u200B");
+
+  return `${withBreaks}${suffix}`;
 }
