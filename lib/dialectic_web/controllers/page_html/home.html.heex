@@ -193,15 +193,13 @@
             </h3>
             <div class="grid grid-cols-1 gap-4">
               <%= for {g, count} <- @top_graphs do %>
-                <div class="rounded-xl bg-white ring-1 ring-gray-200 shadow-sm transition hover:shadow-md">
-                  <DialecticWeb.PageHtml.GraphComp.render
-                    title={g.title}
-                    is_public={g.is_public}
-                    link={gen_link(g.title)}
-                    count={count}
-                    id={"graph-comp-#{g.title}"}
-                  />
-                </div>
+                <DialecticWeb.PageHtml.GraphComp.render
+                  title={g.title}
+                  is_public={g.is_public}
+                  link={gen_link(g.title)}
+                  count={count}
+                  id={"graph-comp-#{g.title}"}
+                />
               <% end %>
             </div>
           </div>
@@ -227,15 +225,13 @@
             </h3>
             <div class="grid grid-cols-1 gap-4">
               <%= for {g, _count} <- @recent_graphs do %>
-                <div class="rounded-xl bg-white ring-1 ring-gray-200 shadow-sm transition hover:shadow-md">
-                  <DialecticWeb.PageHtml.GraphComp.render
-                    title={g.title}
-                    is_public={g.is_public}
-                    link={gen_link(g.title)}
-                    count={nil}
-                    id={"recent-graph-comp-#{g.title}"}
-                  />
-                </div>
+                <DialecticWeb.PageHtml.GraphComp.render
+                  title={g.title}
+                  is_public={g.is_public}
+                  link={gen_link(g.title)}
+                  count={nil}
+                  id={"recent-graph-comp-#{g.title}"}
+                />
               <% end %>
             </div>
           </div>
