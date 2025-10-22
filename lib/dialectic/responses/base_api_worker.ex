@@ -3,6 +3,7 @@ defmodule Dialectic.Workers.BaseAPIWorker do
   A generic API worker which delegates model-specific behavior via callbacks.
   """
   alias Dialectic.DbActions.DbWorker
+  alias Dialectic.Responses.Utils
 
   use Oban.Worker, queue: :api_request, max_attempts: 5
   require Logger
@@ -110,20 +111,51 @@ defmodule Dialectic.Workers.BaseAPIWorker do
   end
 
   defp handle_stream_chunk(module, {:data, data}, context, graph, to_node, live_view_topic) do
-    case module.parse_chunk(data) do
-      {:ok, chunks} ->
-        Logger.info("Parsed chunks: #{inspect(chunks)}")
+    incoming = Utils.to_binary(data)
 
-        Enum.each(chunks, fn chunk ->
-          module.handle_result(chunk, graph, to_node, live_view_topic)
-        end)
+    buf = Process.get(:sse_buf) || ""
+    combined = buf <> incoming
+    frames = String.split(combined, "\n\n", trim: false)
 
-        {:cont, context}
+    {full_frames, remainder} =
+      if String.ends_with?(combined, "\n\n") do
+        {frames, ""}
+      else
+        {Enum.slice(frames, 0..-2//1), List.last(frames) || ""}
+      end
 
-      {:error, reason} ->
-        Logger.info("Failed to parse chunk: #{inspect(reason)}")
-        Logger.error("Failed to parse chunk: #{inspect(reason)}")
-        {:cont, context}
+    Enum.each(full_frames, fn frame ->
+      case module.parse_chunk(frame) do
+        {:ok, chunks} ->
+          Enum.each(chunks, fn chunk ->
+            module.handle_result(chunk, graph, to_node, live_view_topic)
+          end)
+
+        {:error, _} ->
+          :ok
+      end
+    end)
+
+    Process.put(:sse_buf, remainder)
+    {:cont, context}
+  end
+
+  defp handle_stream_chunk(module, {:done, _data}, context, graph, to_node, live_view_topic) do
+    remainder = Process.get(:sse_buf) || ""
+
+    if String.trim(remainder) != "" do
+      case module.parse_chunk(remainder) do
+        {:ok, chunks} ->
+          Enum.each(chunks, fn chunk ->
+            module.handle_result(chunk, graph, to_node, live_view_topic)
+          end)
+
+        {:error, _} ->
+          :ok
+      end
     end
+
+    Process.delete(:sse_buf)
+    {:cont, context}
   end
 end

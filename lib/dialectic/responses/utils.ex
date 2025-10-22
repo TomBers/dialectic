@@ -1,6 +1,13 @@
 defmodule Dialectic.Responses.Utils do
   require Logger
 
+  def to_binary(term) do
+    case term do
+      iodata when is_list(iodata) or is_binary(iodata) -> IO.iodata_to_binary(iodata)
+      other -> to_string(other)
+    end
+  end
+
   def process_chunk(graph, node, data, _module, live_view_topic) do
     # Logger.info("Processing chunk for graph #{graph} and node #{node}. Data: #{data}")
     updated_vertex = GraphManager.update_vertex(graph, node, data)
@@ -14,26 +21,42 @@ defmodule Dialectic.Responses.Utils do
 
   def parse_chunk(chunk) do
     try do
-      # Optimized parsing with fewer operations
-      # Directly split, filter, and decode in one pass with pattern matching
-      chunks =
+      # Tolerant SSE parser:
+      # - Split by lines
+      # - Only consume lines starting with "data:"
+      # - Ignore other fields (event:, id:, etc.) and [DONE]
+      lines =
         chunk
-        |> String.split("data: ", trim: true)
-        |> Enum.flat_map(fn data ->
-          case String.trim(data) do
-            "" ->
-              []
+        |> to_binary()
+        |> String.split(~r/\r?\n/, trim: false)
 
-            "[DONE]" ->
-              []
+      chunks =
+        lines
+        |> Enum.reduce([], fn line, acc ->
+          trimmed = String.trim(line)
 
-            valid_data ->
-              case Jason.decode(valid_data) do
-                {:ok, decoded} -> [decoded]
-                _ -> []
+          if String.starts_with?(trimmed, "data:") do
+            payload =
+              case trimmed do
+                "data:" <> rest -> String.trim_leading(rest)
+                _ -> ""
               end
+
+            cond do
+              payload == "" or payload == "[DONE]" ->
+                acc
+
+              true ->
+                case Jason.decode(payload) do
+                  {:ok, decoded} -> [decoded | acc]
+                  _ -> acc
+                end
+            end
+          else
+            acc
           end
         end)
+        |> Enum.reverse()
 
       {:ok, chunks}
     rescue

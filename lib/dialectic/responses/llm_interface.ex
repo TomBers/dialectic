@@ -15,9 +15,9 @@ defmodule Dialectic.Responses.LlmInterface do
     - Short answer (2–3 sentences) giving the core idea and why it matters.
 
     ### Deep dive
-    - Foundations: 3–4 bullets defining key terms and stating assumptions.
-    - Model/mechanism: 3–5 bullets explaining how it works; include one line of minimal formalism (equation or pseudocode) if appropriate and define symbols.
-    - Worked example: 3–4 concise steps that show the idea in action.
+    - Foundations (optional): 1 short paragraph defining key terms and assumptions.
+    - Core explanation (freeform): 1–2 short paragraphs weaving the main mechanism and intuition; include minimal formalism only if it clearly helps, and define symbols if used.
+
     - Nuances: 2–3 bullets on pitfalls, edge cases, or common confusions; include one contrast with a neighboring idea.
 
     ### Next steps and sources
@@ -91,11 +91,9 @@ defmodule Dialectic.Responses.LlmInterface do
       - Short summary (1–2 sentences) of the relationship between the two positions.
 
       ### Deep dive
-      - Common ground (2 bullets) with language and definitions aligned.
-      - Key tension (2 bullets) specifying assumptions that drive disagreement.
-      - Synthesis/bridge (2–3 bullets) that could reconcile or delineate scope; include a testable prediction.
-      - When each view is stronger (1–2 bullets).
-      - Trade‑offs or unknowns (1–2 bullets).
+      - Narrative analysis: 1–2 short paragraphs integrating common ground and the key tensions; make explicit the assumptions driving disagreement.
+      - Bridge or delineation: 1 short paragraph proposing a synthesis or clarifying scope; add a testable prediction if helpful.
+      - When each view is stronger and remaining trade‑offs: 2–3 concise bullets.
 
       ### Next steps and sources
       - One concrete next step to test or explore.
@@ -119,7 +117,7 @@ defmodule Dialectic.Responses.LlmInterface do
     Output (markdown):
     ## [Title of the pro argument]
     - Claim (1 sentence).
-    - Line of reasoning (3 bullets), each grounded in a mechanism, formal result, or empirical evidence; cite the source type (e.g., "randomized trial", "textbook theorem", "official spec").
+    - Narrative reasoning (freeform): 1–2 short paragraphs weaving mechanism and intuition; include minimal formalism or citations only when they clearly help; cite the source type (e.g., randomized trial, textbook theorem, official spec) if used.
     - Illustrative example or evidence (1–2 lines).
     - Assumptions and limits (1 line) plus a falsifiable prediction.
     - When this holds vs. when it might not (1 line).
@@ -144,7 +142,7 @@ defmodule Dialectic.Responses.LlmInterface do
     Output (markdown):
     ## [Title of the con argument]
     - Central critique (1 sentence).
-    - Line of reasoning (3 bullets), each grounded in a mechanism, formal result, or empirical evidence; cite the source type when relevant.
+    - Narrative reasoning (freeform): 1–2 short paragraphs laying out the critique; include minimal formalism or citations only when helpful; cite the source type if used.
     - Illustrative counterexample or evidence (1–2 lines).
     - Scope and limits (1 line) plus a falsifiable prediction that would weaken this critique.
     - When this criticism applies vs. when it might not (1 line).
@@ -213,10 +211,12 @@ defmodule Dialectic.Responses.LlmInterface do
     ## [Precise title]
     - One-sentence statement of what the concept is and when it applies.
 
-    ### Deepdive
-    - A deep engagement with the concept
+    ### Deep dive
+    - Core explanation (freeform): 1–2 short paragraphs tracing the main mechanism, key assumptions, and when it applies; include minimal formalism only if it clearly helps, and define symbols if used.
 
-    Constraints: Aim for technical clarity and depth; ~350–500 words.
+    - Optional nuance: 1–2 bullets on caveats or edge cases, only if it clarifies usage.
+
+    Constraints: Aim for clarity and concision; ~280–420 words.
     """
 
     ask_model(qn, child, graph_id, live_view_topic)

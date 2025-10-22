@@ -35,26 +35,26 @@
           <%= if @current_user do %>
             <.link
               href={~p"/my/ideas"}
-              class="text-xs sm:text-sm text-zinc-900 font-medium hover:text-zinc-700"
+              class="text-xs sm:text-sm text-zinc-900 font-medium hover:text-zinc-700 hover:underline underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#FD4F00] rounded-sm"
             >
-              Ideas
+              Ideas | Notes
             </.link>
             <.link
               href={~p"/users/settings"}
-              class="text-xs sm:text-sm text-zinc-900 font-medium hover:text-zinc-700"
+              class="text-xs sm:text-sm text-zinc-900 font-medium hover:text-zinc-700 hover:underline underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#FD4F00] rounded-sm"
             >
               {@current_user.email}
             </.link>
           <% else %>
             <.link
               href={~p"/users/register"}
-              class="text-xs sm:text-sm text-zinc-900 font-medium hover:text-zinc-700"
+              class="text-xs sm:text-sm text-zinc-900 font-medium hover:text-zinc-700 hover:underline underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#FD4F00] rounded-sm"
             >
               Register
             </.link>
             <.link
               href={~p"/users/log_in"}
-              class="text-xs sm:text-sm text-zinc-900 font-medium hover:text-[#FD4F00] ml-2 px-3 py-1 border border-[#FD4F00] rounded-md"
+              class="text-xs sm:text-sm text-zinc-900 font-medium hover:text-zinc-700 hover:underline underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#FD4F00] rounded-sm"
             >
               Log in
             </.link>

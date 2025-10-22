@@ -91,8 +91,10 @@ defmodule Dialectic.Graph.Vertex do
   end
 
   def build_context(node, graph, limit) do
+    allowed_parent = Map.get(node, :parent)
+
     context =
-      collect_parents(graph, node.id)
+      collect_parents(graph, node.id, allowed_parent)
       |> Enum.map(&add_node_context(&1, graph))
       |> Enum.reverse()
       |> enforce_limit(limit)
@@ -123,8 +125,13 @@ defmodule Dialectic.Graph.Vertex do
     dat.content
   end
 
+  def collect_parents(graph, vertex, allowed_parent) do
+    collect_parents(graph, vertex, [], allowed_parent)
+  end
+
   def collect_parents(graph, vertex) do
-    collect_parents(graph, vertex, [])
+    # Default behavior: no group scoping when parent is not specified
+    collect_parents(graph, vertex, [], nil)
   end
 
   def find_leaf_nodes(graph) do
@@ -142,18 +149,41 @@ defmodule Dialectic.Graph.Vertex do
   end
 
   # Private recursive function that carries along a list of visited vertices.
-  defp collect_parents(graph, vertex, visited) do
-    # Get immediate parents that haven't been visited yet.
+  # Traversal rules:
+  # - Stop at group boundaries (do not cross into a different `parent` group).
+  # - Exclude and stop at "question" nodes so prior questions don't bleed into the current one.
+  # - Skip compound (group) vertices entirely.
+  defp collect_parents(graph, vertex, visited, allowed_parent) do
     parents =
       :digraph.in_neighbours(graph, vertex)
       |> Enum.reject(&(&1 in visited))
 
     Enum.reduce(parents, [], fn parent, acc ->
-      # Mark the parent as visited.
-      new_visited = [parent | visited]
+      case :digraph.vertex(graph, parent) do
+        {^parent, label} ->
+          parent_group = Map.get(label, :parent)
 
-      # add the parent and recursively traverse its parents.
-      acc ++ [parent] ++ collect_parents(graph, parent, new_visited)
+          cond do
+            # Never include compound/group vertices
+            Map.get(label, :compound, false) ->
+              acc
+
+            # Do not include questions in context and do not traverse beyond them
+            Map.get(label, :class) == "question" ->
+              acc
+
+            # Respect group boundaries: if current node is in a group, only include ancestors in the same group
+            not is_nil(allowed_parent) and parent_group != allowed_parent ->
+              acc
+
+            true ->
+              new_visited = [parent | visited]
+              acc ++ [parent] ++ collect_parents(graph, parent, new_visited, allowed_parent)
+          end
+
+        _ ->
+          acc
+      end
     end)
   end
 
