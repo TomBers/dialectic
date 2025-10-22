@@ -3,6 +3,7 @@ defmodule Dialectic.Workers.BaseAPIWorker do
   A generic API worker which delegates model-specific behavior via callbacks.
   """
   alias Dialectic.DbActions.DbWorker
+  alias Dialectic.Responses.Utils
 
   use Oban.Worker, queue: :api_request, max_attempts: 5
   require Logger
@@ -110,11 +111,7 @@ defmodule Dialectic.Workers.BaseAPIWorker do
   end
 
   defp handle_stream_chunk(module, {:data, data}, context, graph, to_node, live_view_topic) do
-    incoming =
-      case data do
-        iodata when is_list(iodata) or is_binary(iodata) -> IO.iodata_to_binary(iodata)
-        other -> to_string(other)
-      end
+    incoming = Utils.to_binary(data)
 
     buf = Process.get(:sse_buf) || ""
     combined = buf <> incoming

@@ -130,7 +130,7 @@ defmodule Dialectic.Graph.Vertex do
   end
 
   def collect_parents(graph, vertex) do
-    # Backwards-compatible: no group scoping when not provided
+    # Default behavior: no group scoping when parent is not specified
     collect_parents(graph, vertex, [], nil)
   end
 

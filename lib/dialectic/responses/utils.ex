@@ -1,6 +1,13 @@
 defmodule Dialectic.Responses.Utils do
   require Logger
 
+  def to_binary(term) do
+    case term do
+      iodata when is_list(iodata) or is_binary(iodata) -> IO.iodata_to_binary(iodata)
+      other -> to_string(other)
+    end
+  end
+
   def process_chunk(graph, node, data, _module, live_view_topic) do
     # Logger.info("Processing chunk for graph #{graph} and node #{node}. Data: #{data}")
     updated_vertex = GraphManager.update_vertex(graph, node, data)
@@ -19,10 +26,8 @@ defmodule Dialectic.Responses.Utils do
       # - Only consume lines starting with "data:"
       # - Ignore other fields (event:, id:, etc.) and [DONE]
       lines =
-        case chunk do
-          iodata when is_list(iodata) or is_binary(iodata) -> IO.iodata_to_binary(iodata)
-          other -> to_string(other)
-        end
+        chunk
+        |> to_binary()
         |> String.split(~r/\r?\n/, trim: false)
 
       chunks =

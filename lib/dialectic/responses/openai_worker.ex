@@ -184,11 +184,7 @@ defmodule Dialectic.Workers.OpenAIWorker do
 
   defp handle_stream_chunk({:data, data}, context, graph, to_node, live_view_topic) do
     # Maintain a rolling buffer across chunks to avoid dropping partial SSE frames
-    incoming =
-      case data do
-        iodata when is_list(iodata) or is_binary(iodata) -> IO.iodata_to_binary(iodata)
-        other -> to_string(other)
-      end
+    incoming = Utils.to_binary(data)
 
     buf = Process.get(:sse_buf) || ""
     combined = buf <> incoming
