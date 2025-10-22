@@ -1,6 +1,8 @@
 defmodule DialecticWeb.CombinetMsgComp do
   use DialecticWeb, :live_component
 
+  alias DialecticWeb.Live.TextUtils
+
   @impl true
   def update(assigns, socket) do
     socket =
@@ -13,13 +15,8 @@ defmodule DialecticWeb.CombinetMsgComp do
   end
 
   defp truncated_html(content, cut_off) do
-    # If content is already under the cutoff, just return the full text
-    if String.length(content) <= cut_off do
-      full_html(content)
-    else
-      truncated = String.slice(content, 0, cut_off) <> "..."
-      Earmark.as_html!(truncated) |> Phoenix.HTML.raw()
-    end
+    TextUtils.render_preview(content, max_chars: cut_off, stop_before_headings?: true)
+    |> Map.get(:html)
   end
 
   defp full_html(content) do
@@ -48,7 +45,9 @@ defmodule DialecticWeb.CombinetMsgComp do
 
       <div class="proposition flex-1 max-w-none">
         <article class="prose prose-stone prose-sm">
-          {truncated_html(@node.content || "", @cut_off)}
+          <h3 class="mt-0 text-base font-medium">
+            {TextUtils.process_node_content(@node.content || "")}
+          </h3>
         </article>
       </div>
     </div>

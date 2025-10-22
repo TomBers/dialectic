@@ -32,7 +32,7 @@
     </div>
   </div>
   <div class="conversation">
-    <%= for {node, idx} <- Enum.with_index(@path) do %>
+    <%= for {node, idx} <- Enum.with_index(@path) |> Enum.filter(fn {node, _} -> node.compound != true end) do %>
       <% is_explanation =
         node.content && String.starts_with?(String.trim(node.content), "Explain:")
 

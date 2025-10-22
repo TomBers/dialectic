@@ -48,7 +48,7 @@
     </.button>
   </div>
 
-  <%= for node <- @conv do %>
+  <%= for node <- @conv |> Enum.filter(fn n -> String.trim(to_string(Map.get(n, :content, ""))) != "" and not Map.get(n, :compound, false) end) do %>
     <%= unless node.deleted do %>
       <div
         class={[

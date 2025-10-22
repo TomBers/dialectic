@@ -5,6 +5,7 @@ defmodule DialecticWeb.Live.TextUtils do
   Prefer:
   - render_content/1 for a single-pass title + body_html result
   - process_node_content/3 for lightweight label text
+  - render_preview/2 for safe truncated Markdown previews (whole-line, heading-aware)
   """
 
   @title_regex ~r/^title[:]?\s*|^Title[:]?\s*/i
@@ -71,6 +72,8 @@ defmodule DialecticWeb.Live.TextUtils do
     |> to_string()
     |> String.replace("\r\n", "\n")
     |> String.replace("\r", "\n")
+    # Insert a newline before heading markers (##, ###, etc.) that appear mid-line
+    |> String.replace(~r/([^\n])\s*(\#{1,6}\s+)/, "\\1\n\\2")
     |> String.trim_leading()
   end
 
@@ -138,5 +141,97 @@ defmodule DialecticWeb.Live.TextUtils do
       end
 
     %{title: p.title, body_html: body_html}
+  end
+
+  @doc """
+  Render a safe truncated Markdown preview as HTML, cutting only at whole-line boundaries
+  and stopping before a new heading once some content has been added.
+
+  Options:
+  - :max_chars (default 200) – character budget; we add whole lines up to this budget
+  - :stop_before_headings? (default true) – if true, stop when the next line is a heading
+    and we have already added at least one line of content
+
+  Returns a map: %{html: Phoenix.HTML.safe(), preview: String.t(), truncated?: boolean}
+  """
+  def render_preview(content, opts \\ []) do
+    max_chars = Keyword.get(opts, :max_chars, 200)
+    stop_before_headings? = Keyword.get(opts, :stop_before_headings?, true)
+
+    norm = normalize_markdown(content)
+    lines = String.split(to_string(norm), "\n")
+
+    {acc, cnt, any?} =
+      Enum.reduce_while(lines, {"", 0, false}, fn line, {buf, count, added_any} ->
+        cond do
+          stop_before_headings? and added_any and heading_line?(line) ->
+            {:halt, {buf, count, added_any}}
+
+          count == 0 and String.trim(line) == "" ->
+            # Skip leading blank lines
+            {:cont, {buf, count, added_any}}
+
+          count + String.length(line) + 1 > max_chars ->
+            if added_any do
+              {:halt, {buf, count, added_any}}
+            else
+              # If nothing added yet, include the first line even if it exceeds the budget,
+              # to avoid slicing mid-line
+              {:halt, {buf <> line <> "\n", count + String.length(line) + 1, true}}
+            end
+
+          true ->
+            {:cont, {buf <> line <> "\n", count + String.length(line) + 1, true}}
+        end
+      end)
+
+    preview0 = String.trim_trailing(acc)
+
+    preview =
+      case preview0 do
+        "" ->
+          # Fallback to the first non-empty line (or empty string)
+          Enum.find(lines, fn l -> String.trim(l) != "" end) || ""
+
+        other ->
+          other
+      end
+
+    # If we ended on a heading and we already had other content, drop the dangling heading
+    preview =
+      if String.contains?(preview, "\n") and heading_line?(last_nonempty_line(preview)) do
+        drop_last_line(preview) |> String.trim_trailing()
+      else
+        preview
+      end
+
+    needs_ellipsis = String.length(norm) > String.length(preview)
+    ellipsis = if needs_ellipsis, do: "\n\n…", else: ""
+
+    html =
+      (preview <> ellipsis)
+      |> Earmark.as_html!()
+      |> Phoenix.HTML.raw()
+
+    %{html: html, preview: preview, truncated?: needs_ellipsis}
+  end
+
+  # Returns the last non-empty line of a string (or empty string if none)
+  defp last_nonempty_line(text) do
+    text
+    |> String.split("\n")
+    |> Enum.reverse()
+    |> Enum.find("", fn l -> String.trim(l) != "" end)
+  end
+
+  # Drops the last line from a multi-line string
+  defp drop_last_line(text) do
+    parts = String.split(text, "\n")
+
+    case parts do
+      [] -> ""
+      [_only] -> ""
+      _ -> parts |> Enum.slice(0, length(parts) - 1) |> Enum.join("\n")
+    end
   end
 end

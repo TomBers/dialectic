@@ -108,7 +108,7 @@
         </script>
       </div>
     <% else %>
-      <%= for {node, idx} <- Enum.with_index(@path) |> Enum.filter(fn {node, _} -> node.content != "" end) do %>
+      <%= for {node, idx} <- Enum.with_index(@path) |> Enum.filter(fn {node, _} -> String.trim(to_string(node.content || "")) != "" and node.compound != true end) do %>
         <div
           class={["message-wrapper relative group", get_message_type(node, idx)]}
           id={"conv-com-" <> node.id}
@@ -152,7 +152,7 @@
                   get_message_type(node, idx) == "user" && "border-white/70",
                   get_message_type(node, idx) != "user" && "border-gray-200/70"
                 ]}>
-                  {TextUtils.render_content(node.content || "") |> Map.get(:title)}
+                  {TextUtils.process_node_content(node.content || "")}
                 </h3>
                 {TextUtils.render_content(node.content || "") |> Map.get(:body_html)}
               </div>
