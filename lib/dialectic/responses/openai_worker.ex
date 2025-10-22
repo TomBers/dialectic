@@ -11,7 +11,7 @@ defmodule Dialectic.Workers.OpenAIWorker do
 
   @behaviour Dialectic.Workers.BaseAPIWorker
 
-  @model "gpt-5-mini-2025-08-07"
+  @model "gpt-5-nano-2025-08-07"
   # Model-specific configuration:
   # Optimized timeout for OpenAI
   @request_timeout 20_000
