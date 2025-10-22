@@ -152,10 +152,10 @@ defmodule DialecticWeb.Live.TextUtils do
 
     case strategy do
       :space ->
-        Regex.replace(~r/([^\n])(\#{2,6}\s+)/, s, "\\1 \\2")
+        Regex.replace(~r/([^\n])(\#{1,6}\s+)/, s, "\\1 \\2")
 
       _ ->
-        Regex.replace(~r/([^\n])(\#{2,6}\s+)/, s, "\\1\n\\2")
+        Regex.replace(~r/([^\n])(\#{1,6}\s+)/, s, "\\1\n\\2")
     end
   end
 end
