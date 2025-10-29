@@ -13,10 +13,6 @@ defmodule DialecticWeb.ConvComp do
     {:ok, socket}
   end
 
-  defp last_node(path) do
-    List.last(path)
-  end
-
   defp get_message_type(node, _index) do
     case node.class do
       c when c in ["user", "question", "origin"] ->

@@ -146,6 +146,22 @@ export function graphStyle() {
         "border-color": "#e5e7eb",
         "background-color": "#f9fafb",
         color: "#374151",
+
+        "transition-property":
+          "background-color, border-color, color, border-width",
+        "transition-duration": "150ms",
+        "transition-timing-function": "ease-in-out",
+      },
+    },
+    {
+      selector: "node:active",
+      style: {
+        "border-width": 2.5,
+        "border-color": "#60a5fa",
+        "background-color": "#ffffff",
+        "underlay-color": "#60a5fa",
+        "underlay-padding": 6,
+        "underlay-opacity": 0.35,
       },
     },
     {
@@ -161,6 +177,7 @@ export function graphStyle() {
         "text-outline-color": "#f9fafb",
         "text-opacity": 1, // make sure it isn't zero
         padding: "24px",
+
         "background-opacity": 1,
         "background-color": "white",
         "border-width": 1,
@@ -279,6 +296,18 @@ export function graphStyle() {
 
     base_style.push({
       selector: `node.${nodeType}.selected`, // ← has both classes
+      style: {
+        shape: "roundrectangle",
+        "font-weight": "500",
+        "border-color": cols[nodeType].selectedBorder,
+        color: cols[nodeType].selectedText,
+        "background-color": cols[nodeType].selectedBackground,
+        "border-width": 2,
+      },
+    });
+    // Hover should preview the selected color scheme for the node type
+    base_style.push({
+      selector: `node.${nodeType}.node-hover`,
       style: {
         shape: "roundrectangle",
         "font-weight": "500",

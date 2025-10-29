@@ -51,6 +51,19 @@ export function draw_graph(graph, context, elements, node) {
   // Disable Cytoscape's default wheel zoom so we fully control it
   cy.userZoomingEnabled(false);
 
+  // Hover styles are defined per-type in graph_style.js and applied via "node-hover" class
+
+  // Toggle hover class, excluding compound (parent) nodes
+  cy.on("mouseover", "node", (evt) => {
+    const n = evt.target;
+    if (n.isParent && n.isParent()) return;
+    n.addClass("node-hover");
+  });
+  cy.on("mouseout", "node", (evt) => {
+    const n = evt.target;
+    n.removeClass("node-hover");
+  });
+
   // Smooth, cursor-centered zoom
   const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
   const wheelHandler = (e) => {
