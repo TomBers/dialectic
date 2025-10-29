@@ -146,9 +146,9 @@ export function graphStyle() {
         "border-color": "#e5e7eb",
         "background-color": "#f9fafb",
         color: "#374151",
-        cursor: "pointer",
+
         "transition-property":
-          "background-color, border-color, color, border-width, shadow-blur, shadow-opacity",
+          "background-color, border-color, color, border-width",
         "transition-duration": "150ms",
         "transition-timing-function": "ease-in-out",
       },
@@ -159,9 +159,9 @@ export function graphStyle() {
         "border-width": 2.5,
         "border-color": "#60a5fa",
         "background-color": "#ffffff",
-        "shadow-blur": 8,
-        "shadow-opacity": 0.35,
-        "shadow-color": "#60a5fa",
+        "underlay-color": "#60a5fa",
+        "underlay-padding": 6,
+        "underlay-opacity": 0.35,
       },
     },
     {
@@ -177,7 +177,7 @@ export function graphStyle() {
         "text-outline-color": "#f9fafb",
         "text-opacity": 1, // make sure it isn't zero
         padding: "24px",
-        cursor: "default",
+
         "background-opacity": 1,
         "background-color": "white",
         "border-width": 1,

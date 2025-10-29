@@ -15,6 +15,11 @@
 }
 
 /* This file is for your main application CSS */
+/* Make graph nodes feel clickable */
+#cy-inner,
+#cy-inner canvas {
+    cursor: pointer;
+}
 .top-right {
     position: absolute;
     top: 0;
