@@ -71,7 +71,7 @@ defmodule Dialectic.Workers.BaseAPIWorker do
     options = [
       headers: module.headers(module.api_key()),
       body: body,
-      into: &handle_stream_chunk(module, &1, &2, graph, to_node, live_view_topic),
+      into: &Utils.handle_sse_stream(module, &1, &2, graph, to_node, live_view_topic),
       connect_options: [timeout: @timeout],
       receive_timeout: @timeout
     ]
@@ -110,52 +110,7 @@ defmodule Dialectic.Workers.BaseAPIWorker do
       raise exception
   end
 
-  defp handle_stream_chunk(module, {:data, data}, context, graph, to_node, live_view_topic) do
-    incoming = Utils.to_binary(data)
+  # Delegated SSE stream handling to Utils.handle_sse_stream/6
 
-    buf = Process.get(:sse_buf) || ""
-    combined = buf <> incoming
-    frames = String.split(combined, "\n\n", trim: false)
-
-    {full_frames, remainder} =
-      if String.ends_with?(combined, "\n\n") do
-        {frames, ""}
-      else
-        {Enum.slice(frames, 0..-2//1), List.last(frames) || ""}
-      end
-
-    Enum.each(full_frames, fn frame ->
-      case module.parse_chunk(frame) do
-        {:ok, chunks} ->
-          Enum.each(chunks, fn chunk ->
-            module.handle_result(chunk, graph, to_node, live_view_topic)
-          end)
-
-        {:error, _} ->
-          :ok
-      end
-    end)
-
-    Process.put(:sse_buf, remainder)
-    {:cont, context}
-  end
-
-  defp handle_stream_chunk(module, {:done, _data}, context, graph, to_node, live_view_topic) do
-    remainder = Process.get(:sse_buf) || ""
-
-    if String.trim(remainder) != "" do
-      case module.parse_chunk(remainder) do
-        {:ok, chunks} ->
-          Enum.each(chunks, fn chunk ->
-            module.handle_result(chunk, graph, to_node, live_view_topic)
-          end)
-
-        {:error, _} ->
-          :ok
-      end
-    end
-
-    Process.delete(:sse_buf)
-    {:cont, context}
-  end
+  # (removed) handled in Utils.handle_sse_stream/6
 end
