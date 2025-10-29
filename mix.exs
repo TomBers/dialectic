@@ -64,7 +64,8 @@ defmodule Dialectic.MixProject do
       {:req, "~> 0.5.8"},
       {:earmark, "~> 1.4"},
       {:igniter, "~> 0.5"},
-      {:oban, "~> 2.19"}
+      {:oban, "~> 2.19"},
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false}
     ]
   end
 
