@@ -28,6 +28,7 @@ defmodule DialecticWeb.Router do
 
     get "/deploy/dashboard", PageController, :deploy_dashboard
     get "/ideas/all", PageController, :ideas_all
+    live "/reader/pdf", PdfReaderLive
     live "/start/new/idea", FocusLive
     live "/:graph_name", GraphLive
     live "/:graph_name/linear", LinearGraphLive
