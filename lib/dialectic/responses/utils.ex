@@ -95,7 +95,7 @@ defmodule Dialectic.Responses.Utils do
       _ ->
         # Fall back to NDJSON: decode line-by-line, ignoring failures.
         payload
-        |> String.split(~r/\r?\n/, trim: true)
+        |> String.split("\n", trim: true)
         |> Enum.reduce([], fn line, acc ->
           case Jason.decode(line) do
             {:ok, decoded} -> [decoded | acc]
@@ -114,10 +114,11 @@ defmodule Dialectic.Responses.Utils do
 
     buf = Process.get(:sse_buf) || ""
     combined = buf <> incoming
-    frames = String.split(combined, "\n\n", trim: false)
+    normalized = String.replace(combined, "\r\n", "\n")
+    frames = String.split(normalized, "\n\n", trim: false)
 
     {full_frames, remainder} =
-      if String.ends_with?(combined, "\n\n") do
+      if String.ends_with?(normalized, "\n\n") do
         {frames, ""}
       else
         {Enum.slice(frames, 0..-2//1), List.last(frames) || ""}

@@ -109,8 +109,4 @@ defmodule Dialectic.Workers.BaseAPIWorker do
       Logger.error("Exception during request: #{inspect(exception)}")
       raise exception
   end
-
-  # Delegated SSE stream handling to Utils.handle_sse_stream/6
-
-  # (removed) handled in Utils.handle_sse_stream/6
 end
