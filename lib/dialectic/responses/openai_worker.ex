@@ -146,7 +146,7 @@ defmodule Dialectic.Workers.OpenAIWorker do
     options = [
       headers: headers(api_key()),
       body: body,
-      into: &handle_stream_chunk(&1, &2, graph, to_node, live_view_topic),
+      into: &Utils.handle_sse_stream(__MODULE__, &1, &2, graph, to_node, live_view_topic),
       connect_options: [timeout: @request_timeout],
       receive_timeout: @request_timeout,
       retry: :transient,
@@ -182,56 +182,7 @@ defmodule Dialectic.Workers.OpenAIWorker do
       raise exception
   end
 
-  defp handle_stream_chunk({:data, data}, context, graph, to_node, live_view_topic) do
-    # Maintain a rolling buffer across chunks to avoid dropping partial SSE frames
-    incoming = Utils.to_binary(data)
+  # Delegated SSE stream handling to Utils.handle_sse_stream/6
 
-    buf = Process.get(:sse_buf) || ""
-    combined = buf <> incoming
-    frames = String.split(combined, "\n\n", trim: false)
-
-    {full_frames, remainder} =
-      if String.ends_with?(combined, "\n\n") do
-        {frames, ""}
-      else
-        {Enum.slice(frames, 0..-2//1), List.last(frames) || ""}
-      end
-
-    Enum.each(full_frames, fn frame ->
-      case parse_chunk(frame) do
-        {:ok, chunks} ->
-          Enum.each(chunks, fn chunk ->
-            handle_result(chunk, graph, to_node, live_view_topic)
-          end)
-
-        {:error, _} ->
-          :ok
-      end
-    end)
-
-    Process.put(:sse_buf, remainder)
-    {:cont, context}
-  end
-
-  # Handle stream end message
-  defp handle_stream_chunk({:done, _data}, context, graph, to_node, live_view_topic) do
-    # Flush any remainder as a final frame held in the process dictionary
-    remainder = Process.get(:sse_buf) || ""
-
-    if String.trim(remainder) != "" do
-      case parse_chunk(remainder) do
-        {:ok, chunks} ->
-          Enum.each(chunks, fn chunk ->
-            handle_result(chunk, graph, to_node, live_view_topic)
-          end)
-
-        {:error, _} ->
-          :ok
-      end
-    end
-
-    Process.delete(:sse_buf)
-    Logger.debug("Stream completed")
-    {:cont, context}
-  end
+  # Stream completion handled by Utils.handle_sse_stream/6
 end
