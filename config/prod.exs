@@ -10,8 +10,8 @@ config :dialectic, DialecticWeb.Endpoint, cache_static_manifest: "priv/static/ca
 # Configures Swoosh API Client
 config :swoosh, api_client: Swoosh.ApiClient.Finch, finch_name: Dialectic.Finch
 
-# Disable Swoosh Local Memory Storage
-config :swoosh, local: false
+# Enable Swoosh Local Memory Storage
+config :swoosh, local: true
 
 # Do not print debug messages in production
 config :logger, level: :info
