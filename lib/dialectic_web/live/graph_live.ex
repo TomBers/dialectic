@@ -83,12 +83,36 @@ defmodule DialecticWeb.GraphLive do
                   end
               end
 
+            # Auto-answer when landing on an origin node without an existing (live) answer
+            children = Map.get(node, :children, []) || []
+
+            has_live_answer_child? =
+              Enum.any?(children, fn ch ->
+                is_map(ch) and Map.get(ch, :class) == "answer" and
+                  not Map.get(ch, :deleted, false)
+              end)
+
+            should_bootstrap? =
+              connected?(socket) and is_map(node) and Map.get(node, :class) == "origin" and
+                not has_live_answer_child?
+
+            {graph, node, sending_message} =
+              if should_bootstrap? do
+                {g2, answered_node} =
+                  GraphActions.answer({graph_id, node, user, live_view_topic})
+
+                {g2, Vertex.add_relatives(answered_node, g2), true}
+              else
+                {graph, node, false}
+              end
+
+            # Prepare changeset and navigation flags
             changeset = GraphActions.create_new_node(user) |> Vertex.changeset()
 
-            # TODO - can edit is going to be expaned to be more complex, but for the time being, just is not protected
             can_edit = graph_struct.is_public
             {nav_up, nav_down, nav_left, nav_right} = compute_nav_flags(graph, node)
 
+            # Compute conversation path to the current node
             path =
               GraphManager.path_to_node(graph_id, node)
               |> Enum.reverse()
@@ -127,7 +151,7 @@ defmodule DialecticWeb.GraphLive do
                show_start_stream_modal: false,
                work_streams: list_streams(graph),
                conv_path: path,
-               sending_message: false,
+               sending_message: sending_message,
                conv_form: to_form(%{"message" => ""}, as: :message),
                conv_message_text: ""
              )}

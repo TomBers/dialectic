@@ -131,14 +131,14 @@
 <!-- Shortcuts and zoom controls moved outside Cytoscape container -->
 
       <div
-        class={"hidden sm:block sm:fixed right-4 z-30 bottom-28 sm:bottom-20 md:bottom-16" <> if(@right_panel_open, do: " right-[20rem] sm:right-[24rem]", else: "")}
+        class={"hidden sm:block sm:fixed right-3 z-30 bottom-28 sm:bottom-20 md:bottom-16" <> if(@right_panel_open, do: " right-[20rem] sm:right-[24rem]", else: "")}
         style={"bottom: " <> if(@bottom_menu_open, do: "calc(9rem + env(safe-area-inset-bottom))", else: "calc(6rem + env(safe-area-inset-bottom))") <> ";"}
       >
-        <div class="bg-white rounded-md shadow border border-gray-200 flex items-center divide-x divide-gray-200">
+        <div class="bg-white/90 rounded border border-gray-200 flex items-center divide-x divide-gray-200 shadow-sm text-[11px]">
           <button
             id="zoom-out"
             type="button"
-            class="px-2 py-1 text-gray-700 hover:bg-gray-100"
+            class="px-1.5 py-0.5 text-gray-700 hover:bg-gray-100"
             aria-label="Zoom out"
           >
             −
@@ -146,7 +146,7 @@
           <button
             id="zoom-fit"
             type="button"
-            class="px-3 py-1 text-gray-700 hover:bg-gray-100 text-xs"
+            class="px-2 py-0.5 text-gray-700 hover:bg-gray-100 text-[10px]"
             aria-label="Fit"
           >
             Fit
@@ -154,7 +154,7 @@
           <button
             id="zoom-in"
             type="button"
-            class="px-2 py-1 text-gray-700 hover:bg-gray-100"
+            class="px-1.5 py-0.5 text-gray-700 hover:bg-gray-100"
             aria-label="Zoom in"
           >
             +
@@ -350,7 +350,7 @@
       aria-controls="bottom-menu"
       aria-expanded={@bottom_menu_open}
       aria-label="Show bottom menu"
-      class="fixed left-1/2 -translate-x-1/2 p-2 rounded-full bg-white border border-gray-300 opacity-90 hover:opacity-100 shadow-sm cursor-pointer transition-all duration-200"
+      class="fixed left-1/2 -translate-x-1/2 p-1.5 rounded-full bg-white border border-gray-300 opacity-90 hover:opacity-100 shadow-sm cursor-pointer transition-all duration-200"
       style="pointer-events:auto; bottom: calc(0.75rem + env(safe-area-inset-bottom)); z-index: 2147483647;"
     >
       <svg
@@ -371,11 +371,11 @@
       class={
         if @bottom_menu_open,
           do:
-            "fixed bottom-0 z-30 transform translate-y-0 opacity-100 visible transition-all duration-300 ease-in-out px-3 pb-3 pointer-events-auto " <>
+            "fixed bottom-0 z-30 transform translate-y-0 opacity-100 visible transition-all duration-300 ease-in-out px-2 pb-2 pointer-events-auto " <>
               if(@drawer_open, do: "left-0 right-0 md:left-[40%]", else: "inset-x-0") <>
               if(@right_panel_open, do: " right-[20rem] sm:right-[24rem]", else: ""),
           else:
-            "fixed bottom-0 z-30 transform translate-y-full opacity-0 invisible transition-all duration-300 ease-in-out px-3 pb-3 pointer-events-none " <>
+            "fixed bottom-0 z-30 transform translate-y-full opacity-0 invisible transition-all duration-300 ease-in-out px-2 pb-2 pointer-events-none " <>
               if(@drawer_open, do: "left-0 right-0 md:left-[40%]", else: "inset-x-0") <>
               if(@right_panel_open, do: " right-[20rem] sm:right-[24rem]", else: "")
       }
@@ -383,14 +383,14 @@
     >
       <div class="mx-auto w-full max-w-2xl">
         <div class="relative">
-          <div class="flex justify-center -mt-4 mb-2">
+          <div class="flex justify-center -mt-2 mb-0">
             <button
               id="bottom-menu-close"
               phx-click="toggle_bottom_menu"
               aria-controls="bottom-menu"
               aria-expanded={@bottom_menu_open}
               aria-label="Hide bottom menu"
-              class="roof-handle inline-flex items-center justify-center w-24 h-7 rounded-full bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 shadow-sm"
+              class="roof-handle inline-flex items-center justify-center w-20 h-6 rounded-full bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 shadow-sm"
               type="button"
             >
               <svg
@@ -410,8 +410,8 @@
               <span class="sr-only">Close bottom menu</span>
             </button>
           </div>
-          <div class="bg-white/95 backdrop-blur border border-gray-200 shadow-xl rounded-t-[1.75rem] rounded-2xl px-4 pt-3 pb-3">
-            <div class="flex items-center justify-center gap-2 mb-2">
+          <div class="bg-white/95 backdrop-blur border border-gray-200 shadow-xl rounded-t-[1rem] rounded-2xl px-2 py-1">
+            <div class="flex items-center justify-center gap-1.5 mb-0">
               <.live_component
                 module={DialecticWeb.ActionToolbarComp}
                 id={"action-toolbar-#{@node && @node.id}"}

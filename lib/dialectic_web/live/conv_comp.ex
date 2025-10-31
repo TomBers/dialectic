@@ -12,6 +12,7 @@ defmodule DialecticWeb.ConvComp do
       # Embedding flags for header and input visibility
       |> assign_new(:show_header?, fn -> true end)
       |> assign_new(:show_input?, fn -> true end)
+      |> assign_new(:compact?, fn -> true end)
 
     {:ok, socket}
   end
