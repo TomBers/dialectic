@@ -9,6 +9,9 @@ defmodule DialecticWeb.ConvComp do
       |> assign(assigns)
       # Default cutoff length
       |> assign_new(:cut_off, fn -> 500 end)
+      # Embedding flags for header and input visibility
+      |> assign_new(:show_header?, fn -> true end)
+      |> assign_new(:show_input?, fn -> true end)
 
     {:ok, socket}
   end

@@ -83,15 +83,17 @@
     >
       <div class="flex-1 overflow-y-auto">
         <.live_component
-          module={NodeComp}
-          id="node-comp"
-          node={@node}
-          user={@user}
-          form={@form}
+          module={DialecticWeb.ConvComp}
+          id="ConvComp"
           graph_id={@graph_id}
-          graph_owner_id={@graph_struct && @graph_struct.user_id}
-          current_user={@current_user}
+          current_node={@node}
+          sending_message={@sending_message || false}
+          form={@conv_form}
+          path={@conv_path || []}
+          message_text={@conv_message_text || ""}
           ask_question={@ask_question}
+          show_header?={false}
+          show_input?={true}
         />
       </div>
     </div>
@@ -423,44 +425,7 @@
               />
             </div>
             <div class="flex items-center gap-2">
-              <div class="flex items-center gap-1">
-                <button
-                  type="button"
-                  phx-click="toggle_ask_question"
-                  class={"px-2 py-1 text-xs rounded-full " <> if @ask_question, do: "bg-blue-50 text-blue-600 border border-blue-200", else: "text-gray-600 hover:bg-gray-50 border border-transparent"}
-                >
-                  Ask
-                </button>
-                <button
-                  type="button"
-                  phx-click="toggle_ask_question"
-                  class={"px-2 py-1 text-xs rounded-full " <> if !@ask_question, do: "bg-emerald-50 text-emerald-600 border border-emerald-200", else: "text-gray-600 hover:bg-gray-50 border border-transparent"}
-                >
-                  Comment
-                </button>
-              </div>
-              <.form
-                for={@form}
-                phx-submit={if @ask_question, do: "reply-and-answer", else: "answer"}
-                id="global-chat-form"
-                class="flex-1 relative"
-              >
-                <div class="relative">
-                  <.input
-                    field={@form[:content]}
-                    type="text"
-                    id="global-chat-input"
-                    placeholder={if @ask_question, do: "Ask a question…", else: "Add a comment…"}
-                    class="w-full rounded-full pl-3 pr-24 border-gray-300 focus:border-indigo-400 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                  />
-                  <button
-                    type="submit"
-                    class="absolute right-1 top-1/2 -translate-y-1/2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-3 py-1.5 rounded-full font-medium"
-                  >
-                    {if @ask_question, do: "Ask", else: "Post"}
-                  </button>
-                </div>
-              </.form>
+              <%!-- Ask/Comment toggles moved into conversation panel --%>
             </div>
           </div>
         </div>

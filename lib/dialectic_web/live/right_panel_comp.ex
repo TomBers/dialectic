@@ -172,14 +172,26 @@ defmodule DialecticWeb.RightPanelComp do
             <span
               class="flex-1 truncate bg-gray-50 border border-gray-200 rounded px-2 py-1 font-mono select-all cursor-pointer"
               title="Shareable URL path"
-              onclick={"navigator.clipboard.writeText('#{url(~p"/#{@graph_id}?node=#{@node && @node.id}")}').then(() => alert('Link copied to clipboard!'))"}
+              onclick={
+                if @graph_id && @node && @node.id do
+                  "navigator.clipboard.writeText('/#{@graph_id}?node=#{@node.id}').then(() => alert('Link copied to clipboard!'))"
+                else
+                  nil
+                end
+              }
             >
               /{@graph_id}?node={@node && @node.id}
             </span>
             <button
               class="inline-flex items-center gap-1 text-gray-600 hover:text-gray-800 transition-colors p-1.5 border border-gray-300 rounded"
               title="Copy shareable link"
-              onclick={"navigator.clipboard.writeText('#{url(~p"/#{@graph_id}?node=#{@node && @node.id}")}').then(() => alert('Link copied to clipboard!'))"}
+              onclick={
+                if @graph_id && @node && @node.id do
+                  "navigator.clipboard.writeText('/#{@graph_id}?node=#{@node.id}').then(() => alert('Link copied to clipboard!'))"
+                else
+                  nil
+                end
+              }
             >
               <svg
                 width="14"
@@ -221,6 +233,7 @@ defmodule DialecticWeb.RightPanelComp do
             </button>
 
             <.link
+              :if={@graph_id}
               navigate={~p"/#{@graph_id}/linear"}
               target="_blank"
               rel="noopener noreferrer"
@@ -244,6 +257,7 @@ defmodule DialecticWeb.RightPanelComp do
             </.link>
 
             <.link
+              :if={@graph_id}
               href={"/api/graphs/md/#{@graph_id}"}
               download={"#{@graph_id}.md"}
               class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-purple-200 text-purple-600 hover:bg-purple-50"

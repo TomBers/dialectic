@@ -89,6 +89,10 @@ defmodule DialecticWeb.GraphLive do
             can_edit = graph_struct.is_public
             {nav_up, nav_down, nav_left, nav_right} = compute_nav_flags(graph, node)
 
+            path =
+              GraphManager.path_to_node(graph_id, node)
+              |> Enum.reverse()
+
             {:ok,
              assign(socket,
                live_view_topic: live_view_topic,
@@ -121,7 +125,11 @@ defmodule DialecticWeb.GraphLive do
                explore_items: [],
                explore_selected: [],
                show_start_stream_modal: false,
-               work_streams: list_streams(graph)
+               work_streams: list_streams(graph),
+               conv_path: path,
+               sending_message: false,
+               conv_form: to_form(%{"message" => ""}, as: :message),
+               conv_message_text: ""
              )}
 
           {:error, error_message} ->
@@ -136,8 +144,62 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
+  def mount(_params, _session, socket) do
+    live_view_topic = "graph_update:#{socket.id}"
+    user = UserUtils.current_identity(socket.assigns)
+
+    socket =
+      if connected?(socket) do
+        Phoenix.PubSub.subscribe(Dialectic.PubSub, live_view_topic)
+        socket
+      else
+        socket
+      end
+
+    changeset = GraphActions.create_new_node(user) |> Vertex.changeset()
+
+    {:ok,
+     assign(socket,
+       live_view_topic: live_view_topic,
+       graph_topic: nil,
+       graph_struct: nil,
+       graph_id: nil,
+       graph: nil,
+       f_graph: "[]",
+       node: default_node(),
+       form: to_form(changeset),
+       show_combine: false,
+       user: user,
+       current_user: socket.assigns[:current_user],
+       can_edit: true,
+       node_menu_visible: true,
+       drawer_open: true,
+       right_panel_open: false,
+       bottom_menu_open: true,
+       graph_operation: "",
+       ask_question: true,
+       group_states: %{},
+       search_term: "",
+       search_results: [],
+       nav_can_up: false,
+       nav_can_down: false,
+       nav_can_left: false,
+       nav_can_right: false,
+       open_read_modal: false,
+       show_explore_modal: false,
+       explore_items: [],
+       explore_selected: [],
+       show_start_stream_modal: false,
+       work_streams: [],
+       conv_path: [],
+       sending_message: false,
+       conv_form: to_form(%{"message" => ""}, as: :message),
+       conv_message_text: ""
+     )}
+  end
+
   defp default_node do
-    %{id: "1", content: "", children: [], parents: []}
+    %{id: "1", content: "", class: "origin", children: [], parents: []}
   end
 
   def handle_event("node:join_group", %{"node" => nid, "parent" => gid}, socket) do
@@ -499,11 +561,8 @@ defmodule DialecticWeb.GraphLive do
     updated_socket = reapply_right_panel_state(socket, updated_socket)
 
     # Push event to center the node if coming from search
-    if from_search do
-      {:noreply, push_event(updated_socket, "center_node", %{id: id})}
-    else
-      {:noreply, updated_socket}
-    end
+    updated_socket = push_event(updated_socket, "center_node", %{id: id})
+    {:noreply, push_event(updated_socket, "scroll_chat_to_node", %{id: id})}
   end
 
   def handle_event("node_move", %{"direction" => direction}, socket) do
@@ -520,6 +579,102 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, push_event(updated_socket, "center_node", %{id: updated_socket.assigns.node.id})}
   end
 
+  def handle_event("conv_form_change", %{"message" => %{"message" => message}}, socket) do
+    form = to_form(%{"message" => message}, as: :message)
+    {:noreply, assign(socket, conv_form: form, conv_message_text: message)}
+  end
+
+  def handle_event("form_change", %{"message" => %{"message" => message}}, socket) do
+    form = to_form(%{"message" => message}, as: :message)
+    {:noreply, assign(socket, conv_form: form, conv_message_text: message)}
+  end
+
+  def handle_event("send_message", %{"message" => %{"message" => message}}, socket)
+      when message != "" do
+    graph_id = socket.assigns.graph_id
+
+    if graph_id do
+      if socket.assigns.can_edit do
+        current_node = socket.assigns.node
+        user = socket.assigns.user
+        live_view_topic = socket.assigns.live_view_topic
+
+        {_graph, node} =
+          GraphActions.ask_and_answer(
+            {graph_id, current_node, user, live_view_topic},
+            message
+          )
+
+        # Make the AI node visible immediately while streaming content
+        GraphManager.update_vertex(graph_id, node.id, " ")
+
+        form = to_form(%{"message" => ""}, as: :message)
+
+        path =
+          GraphManager.path_to_node(graph_id, node)
+          |> Enum.reverse()
+
+        {:noreply,
+         assign(socket,
+           conv_form: form,
+           sending_message: true,
+           node: node,
+           conv_path: path,
+           conv_message_text: ""
+         )}
+      else
+        {:noreply, socket |> put_flash(:error, "This graph is locked")}
+      end
+    else
+      # No graph yet: create a new graph titled after the first message, like FocusLive
+      sanitized_title = DialecticWeb.FocusLive.sanitize_graph_title(message)
+
+      case Dialectic.DbActions.Graphs.create_new_graph(
+             sanitized_title,
+             socket.assigns.current_user
+           ) do
+        {:ok, _graph} ->
+          {:noreply, socket |> redirect(to: ~p"/#{sanitized_title}")}
+
+        {:error, _changeset} ->
+          {:noreply,
+           socket
+           |> put_flash(:error, "Error creating graph")
+           |> redirect(to: ~p"/start/new/idea")}
+
+        _ ->
+          {:noreply,
+           socket
+           |> put_flash(:error, "Error creating graph")
+           |> redirect(to: ~p"/start/new/idea")}
+      end
+    end
+  end
+
+  # Prevent empty messages
+  def handle_event("send_message", _params, socket) do
+    {:noreply, socket |> put_flash(:error, "Message cannot be empty")}
+  end
+
+  # Panel comment mode: message-shaped params
+  def handle_event("answer", %{"message" => %{"message" => ""}}, socket), do: {:noreply, socket}
+
+  def handle_event("answer", %{"message" => %{"message" => answer}}, socket) do
+    if socket.assigns.can_edit do
+      {:noreply, updated_socket} =
+        update_graph(socket, GraphActions.comment(graph_action_params(socket), answer), "comment")
+
+      {:noreply,
+       assign(updated_socket,
+         conv_form: to_form(%{"message" => ""}, as: :message),
+         conv_message_text: ""
+       )}
+    else
+      {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    end
+  end
+
+  # Legacy vertex-shaped params
   def handle_event("answer", %{"vertex" => %{"content" => ""}}, socket), do: {:noreply, socket}
 
   def handle_event("answer", %{"vertex" => %{"content" => answer}}, socket) do
@@ -534,6 +689,8 @@ defmodule DialecticWeb.GraphLive do
     if !socket.assigns.can_edit do
       {:noreply, socket |> put_flash(:error, "This graph is locked")}
     else
+      socket = assign(socket, sending_message: true)
+
       update_graph(
         socket,
         GraphActions.ask_and_answer(
@@ -641,11 +798,23 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_info({:stream_chunk, updated_vertex, :node_id, node_id}, socket) do
     # This is the streamed LLM response into a node
-
-    if socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
-      {:noreply, assign(socket, node: updated_vertex)}
-    else
+    if is_nil(updated_vertex) do
       {:noreply, socket}
+    else
+      conv_path =
+        case socket.assigns[:conv_path] do
+          list when is_list(list) ->
+            Enum.map(list, fn n -> if n.id == node_id, do: updated_vertex, else: n end)
+
+          _ ->
+            socket.assigns[:conv_path]
+        end
+
+      if socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
+        {:noreply, assign(socket, node: updated_vertex, conv_path: conv_path)}
+      else
+        {:noreply, assign(socket, conv_path: conv_path)}
+      end
     end
   end
 
@@ -666,6 +835,8 @@ defmodule DialecticWeb.GraphLive do
       end
 
     if current_selected_id == node_id do
+      socket = assign(socket, sending_message: false)
+
       update_graph(
         socket,
         GraphActions.find_node(socket.assigns.graph_id, node_id),
@@ -674,12 +845,20 @@ defmodule DialecticWeb.GraphLive do
     else
       {_graph_struct, graph} = GraphManager.get_graph(socket.assigns.graph_id)
 
+      path =
+        case socket.assigns[:node] do
+          %{} = n -> GraphManager.path_to_node(socket.assigns.graph_id, n) |> Enum.reverse()
+          _ -> socket.assigns[:conv_path] || []
+        end
+
       {:noreply,
        assign(socket,
          graph: graph,
          f_graph: format_graph(graph),
          graph_operation: "llm_request_complete",
-         work_streams: list_streams(graph)
+         work_streams: list_streams(graph),
+         conv_path: path,
+         sending_message: false
        )}
     end
   end
@@ -933,6 +1112,20 @@ defmodule DialecticWeb.GraphLive do
 
     {nav_up, nav_down, nav_left, nav_right} = compute_nav_flags(graph, node)
 
+    path =
+      try do
+        GraphManager.path_to_node(socket.assigns.graph_id, node)
+        |> Enum.reverse()
+      rescue
+        _ -> socket.assigns[:conv_path] || []
+      end
+
+    sending_message =
+      case operation do
+        "answer" -> socket.assigns[:sending_message] || false
+        _ -> false
+      end
+
     new_socket =
       assign(socket,
         graph: graph,
@@ -946,7 +1139,9 @@ defmodule DialecticWeb.GraphLive do
         nav_can_down: nav_down,
         nav_can_left: nav_left,
         nav_can_right: nav_right,
-        work_streams: list_streams(graph)
+        work_streams: list_streams(graph),
+        conv_path: path,
+        sending_message: sending_message
       )
       |> then(fn s ->
         # Close the start stream modal if applicable
