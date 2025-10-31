@@ -16,6 +16,7 @@ defmodule DialecticWeb.RightPanelComp do
       |> assign_new(:search_term, fn -> "" end)
       |> assign_new(:search_results, fn -> [] end)
       |> assign_new(:group_states, fn -> %{} end)
+      |> assign_new(:creative_mode, fn -> false end)
 
     {:ok, socket}
   end
@@ -119,6 +120,28 @@ defmodule DialecticWeb.RightPanelComp do
           </div>
         </div>
       <% end %>
+
+      <div class="bg-white border border-gray-200 rounded-md">
+        <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
+          Response Style
+        </div>
+        <div class="p-1 text-[11px] text-gray-700">
+          <div class="flex items-center justify-between">
+            <div class="text-xs text-gray-700">Creative mode</div>
+            <button
+              type="button"
+              phx-click="toggle_creative_mode"
+              class={"px-2 py-0.5 rounded border text-xs " <> if @creative_mode, do: "bg-indigo-50 text-indigo-700 border-indigo-200", else: "text-gray-700 hover:bg-gray-50 border-gray-300"}
+            >
+              {if @creative_mode, do: "On", else: "Off"}
+            </button>
+          </div>
+          <p class="mt-1 text-[11px] text-gray-500">
+            Looser, more voiceful prompts for varied, less repetitive answers.
+          </p>
+        </div>
+      </div>
+
       <div class="bg-white border border-gray-200 rounded-md">
         <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
           Groups ({length(@work_streams)})

@@ -117,7 +117,8 @@ defmodule DialecticWeb.FocusLive do
       {_graph, node} =
         GraphActions.ask_and_answer(
           {graph_id, current_node, user, live_view_topic},
-          sanitized_message
+          sanitized_message,
+          creative: false
         )
 
       # Make the AI node visible immediately while streaming content
@@ -182,7 +183,9 @@ defmodule DialecticWeb.FocusLive do
     live_view_topic = socket.assigns.live_view_topic
 
     {_graph, node} =
-      GraphActions.ask_and_answer({graph_id, current_node, user, live_view_topic}, answer)
+      GraphActions.ask_and_answer({graph_id, current_node, user, live_view_topic}, answer,
+        creative: false
+      )
 
     # Make the AI node visible immediately while streaming content
     GraphManager.update_vertex(graph_id, node.id, " ")
