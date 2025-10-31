@@ -117,7 +117,7 @@ defmodule DialecticWeb.ActionToolbarComp do
           </span>
         <% end %>
 
-        <% noted? = Enum.any?((@node && (@node.noted_by || [])) || [], fn u -> u == @user end) %>
+        <% noted? = Enum.any?(Map.get(@node || %{}, :noted_by, []), fn u -> u == @user end) %>
 
         <button
           type="button"
