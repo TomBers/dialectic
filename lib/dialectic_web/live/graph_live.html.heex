@@ -65,6 +65,7 @@
         search_term={@search_term}
         search_results={@search_results}
         group_states={@group_states}
+        creative_mode={@creative_mode}
       />
     </div>
   </div>
@@ -437,6 +438,15 @@
                   class={"px-2 py-1 text-xs rounded-full " <> if !@ask_question, do: "bg-emerald-50 text-emerald-600 border border-emerald-200", else: "text-gray-600 hover:bg-gray-50 border border-transparent"}
                 >
                   Comment
+                </button>
+                <button
+                  type="button"
+                  phx-click="toggle_creative_mode"
+                  class={"ml-2 px-2 py-1 text-xs rounded-full " <> if @creative_mode, do: "bg-fuchsia-50 text-fuchsia-700 border border-fuchsia-200", else: "text-gray-600 hover:bg-gray-50 border border-transparent"}
+                  aria-pressed={@creative_mode}
+                  title="Toggle creative/free‑form responses"
+                >
+                  Creative
                 </button>
               </div>
               <.form

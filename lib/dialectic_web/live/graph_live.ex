@@ -109,6 +109,7 @@ defmodule DialecticWeb.GraphLive do
                bottom_menu_open: true,
                graph_operation: "",
                ask_question: true,
+               creative_mode: false,
                group_states: %{},
                search_term: "",
                search_results: [],
@@ -225,6 +226,10 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event("toggle_ask_question", _, socket) do
     {:noreply, assign(socket, ask_question: !socket.assigns.ask_question)}
+  end
+
+  def handle_event("toggle_creative_mode", _, socket) do
+    {:noreply, assign(socket, creative_mode: !socket.assigns.creative_mode)}
   end
 
   def handle_event("toggle_lock_graph", _, socket) do
@@ -355,10 +360,18 @@ defmodule DialecticWeb.GraphLive do
     else
       last_result =
         Enum.reduce(items, nil, fn item, _acc ->
+          prompt =
+            if socket.assigns.creative_mode do
+              "Please explain (free‑form, creative voice with vivid examples; end with a provocative question): #{item}"
+            else
+              "Please explain: #{item}"
+            end
+
           GraphActions.answer_selection(
             graph_action_params(socket, socket.assigns.node),
-            "Please explain: #{item}",
-            "explain"
+            prompt,
+            "explain",
+            creative: socket.assigns.creative_mode
           )
         end)
 
@@ -397,10 +410,18 @@ defmodule DialecticWeb.GraphLive do
       else
         last_result =
           Enum.reduce(selected, nil, fn item, _acc ->
+            prompt =
+              if socket.assigns.creative_mode do
+                "Please explain (free‑form, creative voice with vivid examples; end with a provocative question): #{item}"
+              else
+                "Please explain: #{item}"
+              end
+
             GraphActions.answer_selection(
               graph_action_params(socket, socket.assigns.node),
-              "Please explain: #{item}",
-              "explain"
+              prompt,
+              "explain",
+              creative: socket.assigns.creative_mode
             )
           end)
 
@@ -430,7 +451,9 @@ defmodule DialecticWeb.GraphLive do
       # Ensure branching from the correct node
       update_graph(
         socket,
-        GraphActions.branch(graph_action_params(socket, node)),
+        GraphActions.branch(graph_action_params(socket, node),
+          creative: socket.assigns.creative_mode
+        ),
         "branch"
       )
     end
@@ -453,7 +476,9 @@ defmodule DialecticWeb.GraphLive do
 
       update_graph(
         socket,
-        GraphActions.related_ideas(graph_action_params(socket, node)),
+        GraphActions.related_ideas(graph_action_params(socket, node),
+          creative: socket.assigns.creative_mode
+        ),
         "ideas"
       )
     end
@@ -467,7 +492,9 @@ defmodule DialecticWeb.GraphLive do
 
       update_graph(
         socket,
-        GraphActions.deepdive(graph_action_params(socket, node)),
+        GraphActions.deepdive(graph_action_params(socket, node),
+          creative: socket.assigns.creative_mode
+        ),
         "deepdive"
       )
     end
@@ -480,7 +507,8 @@ defmodule DialecticWeb.GraphLive do
       {graph, node} =
         GraphActions.combine(
           graph_action_params(socket),
-          node_id
+          node_id,
+          creative: socket.assigns.creative_mode
         )
 
       update_graph(socket, {graph, node}, "combine")
@@ -538,7 +566,8 @@ defmodule DialecticWeb.GraphLive do
         socket,
         GraphActions.ask_and_answer(
           graph_action_params(socket, socket.assigns.node),
-          answer
+          answer,
+          creative: socket.assigns.creative_mode
         ),
         "answer"
       )
@@ -592,7 +621,9 @@ defmodule DialecticWeb.GraphLive do
       DbWorker.save_graph(socket.assigns.graph_id)
 
       if Map.get(params, "auto_answer") in ["on", "true", "1"] do
-        GraphActions.answer(graph_action_params(socket, node2))
+        GraphActions.answer(graph_action_params(socket, node2),
+          creative: socket.assigns.creative_mode
+        )
       end
 
       update_graph(socket, {graph2, node2}, "start_stream")
@@ -986,7 +1017,8 @@ defmodule DialecticWeb.GraphLive do
     send_update(
       DialecticWeb.RightPanelComp,
       id: "right-panel-comp",
-      group_states: updated_socket.assigns[:group_states]
+      group_states: updated_socket.assigns[:group_states],
+      creative_mode: updated_socket.assigns[:creative_mode]
     )
 
     updated_socket
