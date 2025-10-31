@@ -1,3 +1,9 @@
-Look at the various prompts and see if they are written correctly.
+Add labels back to the bottom toolbar
 
-Check about the context of grouped nodes, they should ideally be independent
+Toggle for freeform or more structured answers
+
+Ability to translate nodes to other languages
+
+Beginner tutorial - guide the user
+
+Integrate chat with the main graph to sit gets built as you type.
