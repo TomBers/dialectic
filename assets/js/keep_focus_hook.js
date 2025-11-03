@@ -72,7 +72,11 @@ const keepFocusHook = {
     if (this._lastForm !== form) {
       if (this._lastForm && this._boundOnSubmit) {
         try {
-          this._lastForm.removeEventListener("submit", this._boundOnSubmit, true);
+          this._lastForm.removeEventListener(
+            "submit",
+            this._boundOnSubmit,
+            true,
+          );
         } catch (_) {}
       }
 
@@ -80,6 +84,7 @@ const keepFocusHook = {
         this._boundOnSubmit = (e) => {
           // Mark a submit happened so we refocus after patch
           this._submittedRecently = true;
+
           // In case LV patches synchronously, attempt immediate focus too
           this.defer(() => this.focusInputIfNeeded({ force: true }));
         };

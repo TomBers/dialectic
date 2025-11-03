@@ -213,14 +213,14 @@ defmodule DialecticWeb.ContentPanelComp do
             <button
               type="button"
               phx-click="toggle_ask_question"
-              class={"px-2 py-1 text-xs rounded-full " <> if @ask_question, do: "bg-blue-50 text-blue-600 border border-blue-200", else: "text-gray-600 hover:bg-gray-50 border border-transparent"}
+              class={"px-2 py-1 text-xs rounded-full border transition-none " <> if @ask_question, do: "bg-blue-50 text-blue-700 border-blue-300", else: "bg-white text-gray-700 border-gray-300"}
             >
               Ask
             </button>
             <button
               type="button"
               phx-click="toggle_ask_question"
-              class={"px-2 py-1 text-xs rounded-full " <> if !@ask_question, do: "bg-emerald-50 text-emerald-600 border border-emerald-200", else: "text-gray-600 hover:bg-gray-50 border border-transparent"}
+              class={"px-2 py-1 text-xs rounded-full border transition-none " <> if !@ask_question, do: "bg-emerald-50 text-emerald-700 border-emerald-300", else: "bg-white text-gray-700 border-gray-300"}
             >
               Comment
             </button>
@@ -243,7 +243,7 @@ defmodule DialecticWeb.ContentPanelComp do
               />
               <button
                 type="submit"
-                class="absolute right-1 top-1/2 -translate-y-1/2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-2 py-1 rounded-md font-medium"
+                class="absolute right-1 top-1/2 -translate-y-1/2 bg-indigo-600 text-white text-sm rounded-md font-medium transition-none focus:outline-none focus:ring-0 h-8 w-16 flex items-center justify-center"
               >
                 {if @ask_question, do: "Ask", else: "Post"}
               </button>
