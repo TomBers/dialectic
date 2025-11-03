@@ -804,7 +804,7 @@ button[type="submit"]:active {
 }
 
 .message-bubble {
-    max-width: 70%;
+    max-width: 95%;
     min-width: 100px;
     border-radius: 18px;
     padding: 14px 18px;

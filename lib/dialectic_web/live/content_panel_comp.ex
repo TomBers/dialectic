@@ -74,7 +74,7 @@ defmodule DialecticWeb.ContentPanelComp do
               phx-hook="TextSelectionHook"
               data-node-id={@node && @node.id}
             >
-              <div class="message-bubble max-w-[92vw] sm:max-w-[80%]">
+              <div class="message-bubble w-full">
                 <div class="message-content">
                   <div class={article_classes(userish?(node.class))}>
                     <h3 class={heading_classes(userish?(node.class))}>
