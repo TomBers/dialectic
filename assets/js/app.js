@@ -82,10 +82,9 @@ hooks.ChatScroll = {
 
     // Clear the chat input as soon as the form is submitted (prevents lingering)
     this._formEl = document.getElementById("content-panel-chat-form");
-    this._inputEl = document.getElementById("content-panel-chat-input");
+
     if (this._formEl) {
       this._onFormSubmit = () => {
-        if (this._inputEl) this._inputEl.value = "";
         // Stay pinned and make sure we’re at the bottom as the AI starts streaming
         this.autoPin = true;
         this.scheduleScroll("submit", "auto");
