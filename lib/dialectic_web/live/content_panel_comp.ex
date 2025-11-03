@@ -233,11 +233,11 @@ defmodule DialecticWeb.ContentPanelComp do
                 type="text"
                 id={"content-panel-chat-input-" <> to_string(@node.id || "root")}
                 placeholder={if @ask_question, do: "Ask a question…", else: "Add a comment…"}
-                class="w-full rounded-full pl-3 pr-24 border-gray-300 focus:border-indigo-400 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                class="w-full rounded-md pl-2 pr-20 border-gray-300 text-sm focus:border-indigo-400 focus:ring focus:ring-indigo-200 focus:ring-opacity-40"
               />
               <button
                 type="submit"
-                class="absolute right-1 top-1/2 -translate-y-1/2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-3 py-1.5 rounded-full font-medium"
+                class="absolute right-1 top-1/2 -translate-y-1/2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-2 py-1 rounded-md font-medium"
               >
                 {if @ask_question, do: "Ask", else: "Post"}
               </button>

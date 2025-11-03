@@ -122,7 +122,7 @@ defmodule DialecticWeb.GraphLive do
                nav_can_down: nav_down,
                nav_can_left: nav_left,
                nav_can_right: nav_right,
-               open_read_modal: Map.has_key?(params, "node"),
+               open_read_modal: false,
                show_explore_modal: false,
                explore_items: [],
                explore_selected: [],
