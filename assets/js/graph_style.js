@@ -309,12 +309,8 @@ export function graphStyle() {
     base_style.push({
       selector: `node.${nodeType}.node-hover`,
       style: {
-        shape: "roundrectangle",
-        "font-weight": "500",
         "border-color": cols[nodeType].selectedBorder,
-        color: cols[nodeType].selectedText,
-        "background-color": cols[nodeType].selectedBackground,
-        "border-width": 2,
+        "border-width": 2.5,
       },
     });
 
