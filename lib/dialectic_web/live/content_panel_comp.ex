@@ -25,7 +25,7 @@ defmodule DialecticWeb.ContentPanelComp do
   def render(assigns) do
     ~H"""
     <div class="h-full flex flex-col">
-      <div class="flex items-center justify-end gap-2 px-2 py-2 border-b border-gray-200">
+      <div class="flex items-center justify-end gap-2 px-2 py-1 border-b border-gray-200">
         <button
           type="button"
           phx-click="set_content_mode"
@@ -63,7 +63,7 @@ defmodule DialecticWeb.ContentPanelComp do
 
       <%= if @content_mode == "conversation" do %>
         <div
-          class="chat-messages flex-1 overflow-y-auto overflow-x-hidden scroll-smooth pt-2 pb-4 px-3 sm:px-4 md:px-6"
+          class="chat-messages flex-1 overflow-y-auto overflow-x-hidden scroll-smooth pt-1 pb-2 px-2 sm:px-3 md:px-4"
           id="chat-messages"
           phx-hook="ChatScroll"
         >
@@ -84,6 +84,25 @@ defmodule DialecticWeb.ContentPanelComp do
                   </div>
                 </div>
               </div>
+              <div class="selection-actions hidden absolute bg-white shadow-lg rounded-lg p-2 z-10 border border-gray-200">
+                <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1.5 px-3 rounded-full flex items-center">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-3 w-3 mr-1"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  Ask about selection
+                </button>
+              </div>
             </div>
           <% end %>
 
@@ -98,23 +117,71 @@ defmodule DialecticWeb.ContentPanelComp do
                 <div class="message-meta flex items-center">
                   <span class="typing-text text-gray-500 text-xs">AI is thinking...</span>
                 </div>
+                <div class="selection-actions hidden absolute bg-white shadow-lg rounded-lg p-2 z-10 border border-gray-200">
+                  <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1.5 px-3 rounded-full flex items-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="h-3 w-3 mr-1"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    Ask about selection
+                  </button>
+                </div>
               </div>
             </div>
           <% end %>
         </div>
       <% else %>
         <div
-          class="flex-1 overflow-y-auto scroll-smooth pt-2 pb-4 px-3 sm:px-4 md:px-6"
+          class="flex-1 overflow-y-auto scroll-smooth pt-1 pb-2 px-2 sm:px-3 md:px-4"
           id="content-messages"
         >
           <%= if @node && String.length(@node.content || "") > 0 do %>
-            <div class="w-full min-w-full text-base sm:text-lg p-2" id={"discrete-node-" <> @node.id}>
-              <article class="prose prose-stone prose-lg md:prose-xl max-w-none selection-content w-full prose-headings:mt-0 prose-p:leading-relaxed prose-li:leading-relaxed">
-                <h3 class="mt-0 text-lg sm:text-xl md:text-2xl mb-2 sm:mb-3 pb-2 border-b border-gray-200">
-                  {TextUtils.render_content(@node.content || "") |> Map.get(:title)}
-                </h3>
-                {TextUtils.render_content(@node.content || "") |> Map.get(:body_html)}
-              </article>
+            <div
+              class="w-full min-w-full text-sm sm:text-base p-1.5"
+              id={"discrete-node-" <> @node.id}
+            >
+              <div
+                class="relative"
+                id={"discrete-selection-" <> to_string(@node.id || "root")}
+                phx-hook="TextSelectionHook"
+                data-node-id={@node && @node.id}
+              >
+                <article class="prose prose-stone prose-sm md:prose-base max-w-none selection-content w-full prose-headings:mt-0 prose-p:leading-snug prose-li:leading-snug">
+                  <h3 class="mt-0 text-sm sm:text-base md:text-lg mb-0.5 sm:mb-1 pb-0.5 border-b border-gray-200">
+                    {TextUtils.render_content(@node.content || "") |> Map.get(:title)}
+                  </h3>
+                  {TextUtils.render_content(@node.content || "") |> Map.get(:body_html)}
+                </article>
+                <div class="selection-actions hidden absolute bg-white shadow-lg rounded-lg p-2 z-10 border border-gray-200">
+                  <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1.5 px-3 rounded-full flex items-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="h-3 w-3 mr-1"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    Ask about selection
+                  </button>
+                </div>
+              </div>
             </div>
           <% else %>
             <div class="node mb-2 p-4">
@@ -135,7 +202,7 @@ defmodule DialecticWeb.ContentPanelComp do
         </div>
       <% end %>
 
-      <div class="border-t border-gray-200 px-3 py-2">
+      <div class="border-t border-gray-200 px-2 py-1.5">
         <div class="flex items-center gap-2">
           <div class="flex items-center gap-1">
             <button
@@ -199,7 +266,7 @@ defmodule DialecticWeb.ContentPanelComp do
   end
 
   defp heading_classes(is_userish) do
-    base = "mt-0 text-base sm:text-lg md:text-xl mb-1 sm:mb-2 pb-1 border-b"
+    base = "mt-0 text-[15px] sm:text-base md:text-lg mb-0.5 sm:mb-1 pb-0.5 border-b"
     if is_userish, do: base <> " border-white/70", else: base <> " border-gray-200/70"
   end
 
