@@ -61,12 +61,12 @@ defmodule DialecticWeb.ContentPanelComp do
         </button>
       </div>
 
-      <div
-        class="flex-1 overflow-y-auto scroll-smooth pt-2 pb-4 px-3 sm:px-4 md:px-6"
-        id="content-messages"
-        phx-hook="ChatScroll"
-      >
-        <%= if @content_mode == "conversation" do %>
+      <%= if @content_mode == "conversation" do %>
+        <div
+          class="chat-messages flex-1 overflow-y-auto overflow-x-hidden scroll-smooth pt-2 pb-4 px-3 sm:px-4 md:px-6"
+          id="chat-messages"
+          phx-hook="ChatScroll"
+        >
           <%= for {node, _idx} <- Enum.with_index(@conv_path || []) |> Enum.filter(fn {n, _} -> (n.content || "") != "" end) do %>
             <div
               class={message_wrapper_class(node.class)}
@@ -101,7 +101,12 @@ defmodule DialecticWeb.ContentPanelComp do
               </div>
             </div>
           <% end %>
-        <% else %>
+        </div>
+      <% else %>
+        <div
+          class="flex-1 overflow-y-auto scroll-smooth pt-2 pb-4 px-3 sm:px-4 md:px-6"
+          id="content-messages"
+        >
           <%= if @node && String.length(@node.content || "") > 0 do %>
             <div class="w-full min-w-full text-base sm:text-lg p-2" id={"discrete-node-" <> @node.id}>
               <article class="prose prose-stone prose-lg md:prose-xl max-w-none selection-content w-full prose-headings:mt-0 prose-p:leading-relaxed prose-li:leading-relaxed">
@@ -127,8 +132,8 @@ defmodule DialecticWeb.ContentPanelComp do
               </div>
             </div>
           <% end %>
-        <% end %>
-      </div>
+        </div>
+      <% end %>
 
       <div class="border-t border-gray-200 px-3 py-2">
         <div class="flex items-center gap-2">
