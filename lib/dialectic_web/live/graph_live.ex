@@ -112,7 +112,7 @@ defmodule DialecticWeb.GraphLive do
                node_menu_visible: true,
                drawer_open: true,
                right_panel_open: false,
-               bottom_menu_open: true,
+               bottom_menu_open: false,
                graph_operation: "",
                ask_question: true,
                group_states: %{},
@@ -231,16 +231,8 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_event("toggle_drawer", _, socket) do
-    {:noreply, socket |> assign(drawer_open: !socket.assigns.drawer_open)}
-  end
-
   def handle_event("toggle_right_panel", _, socket) do
     {:noreply, socket |> assign(right_panel_open: !socket.assigns.right_panel_open)}
-  end
-
-  def handle_event("toggle_bottom_menu", _, socket) do
-    {:noreply, socket |> assign(bottom_menu_open: !socket.assigns.bottom_menu_open)}
   end
 
   # Handle form submission and change events
