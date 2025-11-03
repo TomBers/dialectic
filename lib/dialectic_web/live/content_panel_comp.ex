@@ -63,7 +63,7 @@ defmodule DialecticWeb.ContentPanelComp do
 
       <%= if @content_mode == "conversation" do %>
         <div
-          class="chat-messages flex-1 overflow-y-auto overflow-x-hidden scroll-smooth pt-1 pb-2 px-2 sm:px-3 md:px-4"
+          class="chat-messages flex-1 overflow-y-auto overflow-x-hidden scroll-smooth pt-1 pb-20 px-2 sm:px-3 md:px-4"
           id="chat-messages"
           phx-hook="ChatScroll"
         >
@@ -142,7 +142,7 @@ defmodule DialecticWeb.ContentPanelComp do
         </div>
       <% else %>
         <div
-          class="flex-1 overflow-y-auto scroll-smooth pt-1 pb-2 px-2 sm:px-3 md:px-4"
+          class="flex-1 overflow-y-auto scroll-smooth pt-1 pb-20 px-2 sm:px-3 md:px-4"
           id="content-messages"
         >
           <%= if @node && String.length(@node.content || "") > 0 do %>
@@ -202,7 +202,12 @@ defmodule DialecticWeb.ContentPanelComp do
         </div>
       <% end %>
 
-      <div class="border-t border-gray-200 px-2 py-1.5">
+      <div
+        id="content-panel-sticky-input"
+        class="sticky bottom-0 z-10 bg-white/90 backdrop-blur border-t border-gray-200 shadow-md px-2 pt-1.5 pb-2"
+        phx-hook="KeepFocus"
+        style="padding-bottom: calc(env(safe-area-inset-bottom) + 0.375rem);"
+      >
         <div class="flex items-center gap-2">
           <div class="flex items-center gap-1">
             <button
@@ -224,14 +229,15 @@ defmodule DialecticWeb.ContentPanelComp do
           <.form
             for={@form}
             phx-submit={if @ask_question, do: "reply-and-answer", else: "answer"}
-            id={"content-panel-chat-form-" <> to_string(@node.id || "root")}
+            id="content-panel-chat-form"
             class="flex-1 relative"
           >
             <div class="relative">
               <.input
                 field={@form[:content]}
                 type="text"
-                id={"content-panel-chat-input-" <> to_string(@node.id || "root")}
+                id="content-panel-chat-input"
+                autofocus
                 placeholder={if @ask_question, do: "Ask a question…", else: "Add a comment…"}
                 class="w-full rounded-md pl-2 pr-20 border-gray-300 text-sm focus:border-indigo-400 focus:ring focus:ring-indigo-200 focus:ring-opacity-40"
               />

@@ -1,4 +1,4 @@
-<div class="h-[calc(100vh-4rem)] flex flex-col min-h-0">
+<div class="fixed inset-0 top-6 flex flex-col min-h-0">
   <.live_component
     module={DialecticWeb.Live.ModalComp}
     node={@node}
@@ -28,9 +28,9 @@
     class={
       if @right_panel_open,
         do:
-          "fixed top-5 bottom-0 right-0 w-60 sm:w-96 bg-white border-l border-gray-200 z-40 overflow-y-auto transform translate-x-0 opacity-100 transition-all duration-300 ease-in-out",
+          "fixed top-6 bottom-0 right-0 w-60 sm:w-96 bg-white border-l border-gray-200 z-40 overflow-y-auto transform translate-x-0 opacity-100 transition-all duration-300 ease-in-out",
         else:
-          "fixed top-5 bottom-0 right-0 w-0 overflow-hidden bg-white border-l border-gray-200 z-50 transform translate-x-full opacity-0 transition-all duration-300 ease-in-out"
+          "fixed top-6 bottom-0 right-0 w-0 overflow-hidden bg-white border-l border-gray-200 z-50 transform translate-x-full opacity-0 transition-all duration-300 ease-in-out"
     }
   >
     <div class="p-2">
@@ -73,7 +73,7 @@
   <div class="flex-1 min-h-0 flex">
     <div
       id="side-drawer"
-      class="fixed top-5 bottom-0 left-0 md:relative w-full p-4 md:p-0 md:w-2/5 flex flex-col bg-white md:border-r md:border-gray-200 z-90 transform translate-x-0 opacity-100 transition-all duration-300 ease-in-out"
+      class="fixed top-6 bottom-0 left-0 md:relative w-full p-4 md:p-0 md:w-2/5 flex flex-col bg-white md:border-r md:border-gray-200 z-90 transform translate-x-0 opacity-100 transition-all duration-300 ease-in-out"
     >
       <div class="flex-1 min-h-0">
         <.live_component
@@ -275,7 +275,7 @@
       aria-controls="right-panel"
       aria-expanded={@right_panel_open}
       aria-label={if @right_panel_open, do: "Hide right panel", else: "Show right panel"}
-      class={"fixed top-5 p-1.5 rounded-full bg-white opacity-60 hover:opacity-100 shadow-sm z-30 cursor-pointer transition-all duration-200 " <> if(@right_panel_open, do: "right-[20rem] sm:right-[24rem]", else: "right-2 sm:right-4")}
+      class={"fixed top-6 p-1.5 rounded-full bg-white opacity-60 hover:opacity-100 shadow-sm z-30 cursor-pointer transition-all duration-200 " <> if(@right_panel_open, do: "right-[20rem] sm:right-[24rem]", else: "right-2 sm:right-4")}
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -302,7 +302,7 @@
 <!-- Chat input bar -->
     <div
       id="bottom-menu"
-      class={"fixed bottom-0 z-30 px-2 pb-2 pointer-events-auto left-0 right-0 md:left-[40%]" <> if(@right_panel_open, do: " right-[20rem] sm:right-[24rem]", else: "")}
+      class={"hidden md:block fixed bottom-0 z-30 px-2 pb-2 pointer-events-auto left-0 right-0 md:left-[40%]" <> if(@right_panel_open, do: " right-[20rem] sm:right-[24rem]", else: "")}
       style="padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem);"
     >
       <div class="mx-auto w-full max-w-xl">

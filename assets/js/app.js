@@ -28,6 +28,7 @@ import highlightNodeHook from "./highlight_node_hook.js";
 import printConversationHook from "./print_conversation_hook.js";
 import storyReadabilityHook from "./story_readability_hook.js";
 import listDetectionHook from "./list_detection_hook.js";
+import keepFocusHook from "./keep_focus_hook.js";
 
 let hooks = {};
 
@@ -38,6 +39,7 @@ hooks.HighlightNode = highlightNodeHook;
 hooks.PrintConversation = printConversationHook;
 hooks.StoryReadability = storyReadabilityHook;
 hooks.ListDetection = listDetectionHook;
+hooks.KeepFocus = keepFocusHook;
 
 // Chat scroll & scroll-sync hook
 hooks.ChatScroll = {
