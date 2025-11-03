@@ -28,6 +28,7 @@ import highlightNodeHook from "./highlight_node_hook.js";
 import printConversationHook from "./print_conversation_hook.js";
 import storyReadabilityHook from "./story_readability_hook.js";
 import listDetectionHook from "./list_detection_hook.js";
+import conversationScrollSync from "./conversation_scroll_sync.js";
 
 let hooks = {};
 
@@ -39,22 +40,8 @@ hooks.PrintConversation = printConversationHook;
 hooks.StoryReadability = storyReadabilityHook;
 hooks.ListDetection = listDetectionHook;
 
-// Chat scroll management hook
-hooks.ChatScroll = {
-  mounted() {
-    this.scrollToBottom();
-  },
-
-  updated() {
-    this.scrollToBottom();
-  },
-
-  scrollToBottom() {
-    requestAnimationFrame(() => {
-      this.el.scrollTop = this.el.scrollHeight;
-    });
-  },
-};
+// Chat scroll & scroll-sync hook
+hooks.ChatScroll = conversationScrollSync;
 
 let csrfToken = document
   .querySelector("meta[name='csrf-token']")
