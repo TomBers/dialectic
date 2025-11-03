@@ -181,7 +181,7 @@
                   Graph
                 </.link>
                 <.link
-                  navigate={"/#{@graph_id}/focus/#{node.id}"}
+                  navigate={~p"/#{@graph_id}?node=#{node.id}"}
                   class="text-sm font-semibold text-emerald-700 bg-white border border-emerald-200 hover:bg-emerald-50 hover:border-emerald-300 px-3 py-1.5 rounded-full inline-flex items-center shadow-sm transition-colors"
                   title="Start new conversation branch from this point"
                 >

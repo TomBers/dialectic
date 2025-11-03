@@ -52,27 +52,37 @@
               Create a MuDG to map your ideas clearly with context that stays visible.
             </p>
           </div>
-          <.link
-            navigate={~p"/start/new/idea"}
-            class="inline-flex items-center gap-2 rounded-lg bg-[#4361ee] px-5 py-3 font-semibold text-white shadow-sm hover:bg-[#3a56d9] transition"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5 -ml-0.5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              aria-hidden="true"
+          <form method="post" action={~p"/conversation"} class="flex items-center gap-2">
+            <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+            <input
+              type="text"
+              name="message[message]"
+              placeholder="Start with a question or idea..."
+              class="rounded-lg border border-gray-300 px-3 py-2 w-64"
+              required
+            />
+            <button
+              type="submit"
+              class="inline-flex items-center gap-2 rounded-lg bg-[#4361ee] px-5 py-3 font-semibold text-white shadow-sm hover:bg-[#3a56d9] transition"
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 6v12m6-6H6"
-              />
-            </svg>
-            New exploration
-          </.link>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5 -ml-0.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 6v12m6-6H6"
+                />
+              </svg>
+              Create
+            </button>
+          </form>
         </div>
       </div>
     </div>
@@ -280,7 +290,7 @@
     </p>
     <div class="mt-6 flex flex-wrap justify-center gap-3">
       <a
-        href="/start/new/idea"
+        href="#create-conv"
         class="inline-flex items-center rounded-full bg-white text-[#3a0ca3] px-5 py-2.5 font-semibold shadow-sm ring-1 ring-white/20 hover:bg-white/90 transition"
       >
         Start exploring

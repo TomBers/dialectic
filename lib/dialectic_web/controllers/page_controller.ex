@@ -2,7 +2,7 @@ defmodule DialecticWeb.PageController do
   use DialecticWeb, :controller
 
   alias Dialectic.Graph.{Vertex, Serialise}
-  alias Dialectic.DbActions.{Notes}
+  alias Dialectic.DbActions.{Notes, Graphs}
 
   def home(conn, params) do
     top_graphs = Notes.top_graphs(5)
@@ -47,6 +47,40 @@ defmodule DialecticWeb.PageController do
     |> put_resp_content_type("text/markdown")
     |> put_resp_header("content-disposition", "attachment; filename=#{filename}")
     |> send_resp(200, markdown_content)
+  end
+
+  def create(conn, params) do
+    title =
+      case params do
+        %{"message" => %{"message" => msg}} -> sanitize_graph_title(msg)
+        %{"title" => t} -> sanitize_graph_title(t)
+        _ -> nil
+      end
+
+    cond do
+      is_nil(title) or String.trim(title) == "" ->
+        conn
+        |> put_flash(:error, "Please enter a message to start")
+        |> redirect(to: ~p"/")
+
+      true ->
+        case Graphs.create_new_graph(title, conn.assigns[:current_user]) do
+          {:ok, _graph} ->
+            redirect(conn, to: ~p"/#{title}")
+
+          {:error, _changeset} ->
+            conn
+            |> put_flash(:error, "Error creating graph")
+            |> redirect(to: ~p"/")
+        end
+    end
+  end
+
+  defp sanitize_graph_title(title) do
+    title
+    |> String.trim()
+    |> String.replace(~r/[^a-zA-Z0-9\s"'’,“”\-–—]/u, "")
+    |> String.replace(~r/\s+/, " ")
   end
 
   def what(conn, _params) do

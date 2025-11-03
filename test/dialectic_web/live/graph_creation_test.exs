@@ -2,7 +2,7 @@ defmodule DialecticWeb.GraphCreationTest do
   use DialecticWeb.ConnCase, async: true
   alias Dialectic.DbActions.Graphs
   alias Dialectic.Repo
-  alias DialecticWeb.FocusLive
+  alias DialecticWeb.StartLive, as: FocusLive
 
   @moduledoc """
   Tests for handling apostrophes in graph titles, particularly with titles like "Shakespeare's Macbeth".

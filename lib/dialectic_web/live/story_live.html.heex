@@ -132,7 +132,7 @@
               View
             </.link>
             <.link
-              navigate={"/#{@graph_id}/focus/#{node.id}"}
+              navigate={~p"/#{@graph_id}?node=#{node.id}"}
               class="text-xs font-medium text-white hover:text-gray-200 bg-emerald-600 hover:bg-emerald-700 px-1.5 py-0.5 rounded inline-flex items-center"
               title="Continue conversation from this point"
             >
