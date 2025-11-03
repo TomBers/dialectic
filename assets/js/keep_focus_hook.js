@@ -85,6 +85,10 @@ const keepFocusHook = {
           // Mark a submit happened so we refocus after patch
           this._submittedRecently = true;
 
+          // Clear the input immediately to avoid lingering text
+          const input = document.getElementById(INPUT_ID);
+          if (input) input.value = "";
+
           // In case LV patches synchronously, attempt immediate focus too
           this.defer(() => this.focusInputIfNeeded({ force: true }));
         };

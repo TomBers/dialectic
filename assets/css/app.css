@@ -664,6 +664,13 @@ button[type="submit"]:active {
     transform: translateX(0);
 }
 
+/* Chat containers (iOS momentum scrolling) */
+#chat-messages,
+#content-messages {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+}
+
 /* Prevent vertical dip on chat form submit button due to global transform override */
 #content-panel-chat-form button[type="submit"]:hover {
     transform: translateY(-50%) translateX(2px);

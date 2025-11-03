@@ -42,19 +42,139 @@ hooks.ListDetection = listDetectionHook;
 hooks.KeepFocus = keepFocusHook;
 
 // Chat scroll & scroll-sync hook
+// - Auto-pins to bottom only if the user is near it (within threshold)
+// - Debounces scrolls and uses Resize/Mutation observers to avoid jumpiness
+// - Clears the chat input on submit to prevent text lingering after patch
 hooks.ChatScroll = {
   mounted() {
-    this.scrollToBottom();
+    // Pin-to-bottom threshold (px)
+    this.threshold = 120;
+    this.autoPin = true;
+
+    // Debounce state
+    this._rafId = null;
+    this._pendingBehavior = null;
+
+    // Track user scroll to toggle auto pin
+    this._onScroll = () => {
+      this.autoPin = this.shouldAutoPin();
+    };
+    this.el.addEventListener("scroll", this._onScroll, { passive: true });
+
+    // Observe size changes (fonts/images/streaming)
+    if ("ResizeObserver" in window) {
+      this._resizeObserver = new ResizeObserver(() => {
+        if (this.autoPin) this.scheduleScroll("resize", "auto");
+      });
+      this._resizeObserver.observe(this.el);
+    }
+
+    // Observe DOM mutations (new messages, edits)
+    if ("MutationObserver" in window) {
+      this._mutationObserver = new MutationObserver(() => {
+        if (this.autoPin) this.scheduleScroll("mutation", "auto");
+      });
+      this._mutationObserver.observe(this.el, {
+        childList: true,
+        subtree: true,
+      });
+    }
+
+    // Clear the chat input as soon as the form is submitted (prevents lingering)
+    this._formEl = document.getElementById("content-panel-chat-form");
+    this._inputEl = document.getElementById("content-panel-chat-input");
+    if (this._formEl) {
+      this._onFormSubmit = () => {
+        if (this._inputEl) this._inputEl.value = "";
+        // Stay pinned and make sure we’re at the bottom as the AI starts streaming
+        this.autoPin = true;
+        this.scheduleScroll("submit", "auto");
+      };
+      this._formEl.addEventListener("submit", this._onFormSubmit, true);
+    }
+
+    // Initial alignment if we’re already near the bottom
+    if (this.autoPin) this.scheduleScroll("mounted", "auto");
   },
 
   updated() {
-    this.scrollToBottom();
+    // After LV patches, only scroll if still pinned
+    if (this.autoPin) this.scheduleScroll("lv-updated", "smooth");
   },
 
-  scrollToBottom() {
-    requestAnimationFrame(() => {
-      this.el.scrollTop = this.el.scrollHeight;
+  destroyed() {
+    if (this._onScroll) {
+      try {
+        this.el.removeEventListener("scroll", this._onScroll);
+      } catch (_) {}
+    }
+    if (this._resizeObserver) {
+      try {
+        this._resizeObserver.disconnect();
+      } catch (_) {}
+    }
+    if (this._mutationObserver) {
+      try {
+        this._mutationObserver.disconnect();
+      } catch (_) {}
+    }
+    if (this._formEl && this._onFormSubmit) {
+      try {
+        this._formEl.removeEventListener("submit", this._onFormSubmit, true);
+      } catch (_) {}
+    }
+  },
+
+  // --- Helpers ---
+
+  shouldAutoPin() {
+    const el = this.el;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    return distanceFromBottom <= this.threshold;
+  },
+
+  scheduleScroll(_reason, behavior = "auto") {
+    // Coalesce multiple triggers into one rAF
+    this._pendingBehavior = behavior;
+    if (this._rafId != null) return;
+
+    this._rafId = requestAnimationFrame(() => {
+      const b = this._pendingBehavior || "auto";
+      this._rafId = null;
+      this._pendingBehavior = null;
+      this.performScroll(b);
     });
+  },
+
+  performScroll(behavior = "auto") {
+    const el = this.el;
+
+    // Temporarily override CSS scroll-behavior to ensure programmatic control
+    const prevBehavior = el.style.scrollBehavior;
+    try {
+      el.style.scrollBehavior = "auto";
+
+      // Two-phase scroll to capture any height growth between frames
+      const scrollOnce = (b) => {
+        const top = el.scrollHeight;
+        if (typeof el.scrollTo === "function") {
+          el.scrollTo({ top, behavior: b });
+        } else {
+          el.scrollTop = top;
+        }
+      };
+
+      // First pass
+      scrollOnce(behavior);
+
+      // Second pass in next frame to catch any additional growth
+      requestAnimationFrame(() => {
+        scrollOnce(behavior);
+      });
+    } finally {
+      // Restore previous inline behavior (class-based styles remain in effect)
+      el.style.scrollBehavior = prevBehavior || "";
+    }
   },
 };
 
