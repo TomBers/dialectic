@@ -28,11 +28,11 @@ defmodule DialecticWeb.Router do
 
     get "/deploy/dashboard", PageController, :deploy_dashboard
     get "/ideas/all", PageController, :ideas_all
-    live "/start/new/idea", FocusLive
+
+    live "/start/new/idea", GraphLive
     live "/:graph_name", GraphLive
     live "/:graph_name/linear", LinearGraphLive
     live "/:graph_name/story/:node_id", StoryLive
-    live "/:graph_name/focus/:node_id", FocusLive
   end
 
   # Other scopes may use custom stacks.
