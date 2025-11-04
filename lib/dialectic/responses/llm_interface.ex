@@ -8,11 +8,8 @@ defmodule Dialectic.Responses.LlmInterface do
     Context:
     #{context}
 
-    Task: Teach a first‑time learner aiming for a university‑level understanding of: "#{node.content}"
-
-    Output (markdown):
-    ## [Short, descriptive title]
-    Provide a clear, compact explanation in 1–3 short paragraphs. Use bullets only when they add clarity (for lists, contrasts, or examples). Avoid fixed section headings; let the selected mode guide tone and structure. Aim for ~220–320 words.
+    Instruction:
+    Respond to the user's request — "#{node.content}" — with a clear answer guided by the selected mode's style. Provide a single H2 title, use concise paragraphs, and only add bullets if they improve clarity.
     """
 
     ask_model(qn, child, graph_id, live_view_topic, mode)
@@ -22,20 +19,8 @@ defmodule Dialectic.Responses.LlmInterface do
     context = GraphManager.build_context(graph_id, node)
 
     default_schema = """
-    Output (markdown):
-    ## [Short, descriptive title]
-    - Paraphrase (1–2 sentences) of the selection in your own words.
-
-    ### Why it matters here
-    - Claims and evidence (2–3 bullets).
-    - Assumptions/definitions you’re relying on (1–2 bullets).
-    - Implications for the current context (1–2 bullets).
-    - Limitations or alternative readings (1–2 bullets).
-
-    ### Next steps
-    - Follow‑up questions (1–2).
-
-    Constraints: ~180–260 words.
+    Instruction:
+    Paraphrase the selection succinctly and explain its significance for the current context. Provide a single H2 title; use compact paragraphs and only add bullets when they clarify claims, assumptions, implications, or limitations.
     """
 
     add_default? =
@@ -51,15 +36,12 @@ defmodule Dialectic.Responses.LlmInterface do
 
       Instruction (apply to the context and current node):
       #{selection}
-
-      Audience: first-time learner aiming for university-level understanding.
       """ <> if add_default?, do: "\n\n" <> default_schema, else: ""
 
     ask_model(qn, child, graph_id, live_view_topic, mode)
   end
 
   def gen_synthesis(n1, n2, child, graph_id, live_view_topic, mode \\ nil) do
-    # TODO - Add n2 context ?? need to enforce limit??
     context1 = GraphManager.build_context(graph_id, n1)
     context2 = GraphManager.build_context(graph_id, n2)
 
@@ -71,21 +53,8 @@ defmodule Dialectic.Responses.LlmInterface do
       Context of second argument:
       #{context2}
 
-      Task: Synthesize the positions in "#{n1.content}" and "#{n2.content}" for a first-time learner aiming for university-level understanding.
-
-      Output (markdown):
-      ## [Short, descriptive title]
-      - Short summary (1–2 sentences) of the relationship between the two positions.
-
-      ### Deep dive
-      - Narrative analysis: 1–2 short paragraphs integrating common ground and the key tensions; make explicit the assumptions driving disagreement.
-      - Bridge or delineation: 1 short paragraph proposing a synthesis or clarifying scope; add a testable prediction if helpful.
-      - When each view is stronger and remaining trade‑offs: 2–3 concise bullets.
-
-      ### Next steps
-      - One concrete next step to test or explore.
-
-      Constraints: ~220–320 words. If reconciliation is not possible, state the trade‑offs clearly.
+      Instruction:
+      Synthesize the positions in "#{n1.content}" and "#{n2.content}" by identifying common ground and key tensions, then propose either a synthesis or a clear delineation of scope. Provide a single H2 title and concise paragraphs; add brief bullets only if they help highlight trade‑offs.
       """
 
     ask_model(qn, child, graph_id, live_view_topic, mode)
@@ -98,17 +67,8 @@ defmodule Dialectic.Responses.LlmInterface do
     Context:
     #{context}
 
-    Write a short, beginner-friendly but rigorous argument in support of: "#{node.content}"
-
-    Output (markdown):
-    ## [Title of the pro argument]
-    - Claim (1 sentence).
-    - Narrative reasoning (freeform): 1–2 short paragraphs weaving mechanism and intuition.
-    - Illustrative example or evidence (1–2 lines).
-    - Assumptions and limits (1 line) plus a falsifiable prediction.
-    - When this holds vs. when it might not (1 line).
-
-    Constraints: 150–200 words.
+    Instruction:
+    Write a short, beginner‑friendly but rigorous argument supporting "#{node.content}". Provide a single H2 title, a clear claim and compact reasoning; add one concise example if helpful.
     """
 
     ask_model(qn, child, graph_id, live_view_topic, mode)
@@ -121,18 +81,8 @@ defmodule Dialectic.Responses.LlmInterface do
     Context:
     #{context}
 
-    Write a short, beginner-friendly but rigorous argument against: "#{node.content}"
-    Steelman the opposing view (represent the strongest version fairly).
-
-    Output (markdown):
-    ## [Title of the con argument]
-    - Central critique (1 sentence).
-    - Narrative reasoning (freeform): 1–2 short paragraphs laying out the critique.
-    - Illustrative counterexample or evidence (1–2 lines).
-    - Scope and limits (1 line) plus a falsifiable prediction that would weaken this critique.
-    - When this criticism applies vs. when it might not (1 line).
-
-    Constraints: 150–200 words.
+    Instruction:
+    Write a short, beginner‑friendly but rigorous critique of "#{node.content}". Steelman the opposing view, state the central critique clearly, and support it with compact reasoning and, if useful, a concise counterexample.
     """
 
     ask_model(qn, child, graph_id, live_view_topic, mode)
@@ -158,25 +108,8 @@ defmodule Dialectic.Responses.LlmInterface do
     Context:
     #{context}
 
-    Generate a beginner-friendly list of related but distinct concepts to explore.
-
-    Current idea: "#{title}"
-
-    Requirements:
-    - Do not repeat or restate the current idea; prioritize diversity and contrasting schools of thought.
-    - Include at least one explicitly contrasting perspective (for example, if the topic is behaviourism, include psychodynamics).
-    - Audience: first-time learner.
-
-    Output (markdown only; return only the list):
-    - Create 3 short subsections with H3 headings:
-      ### Different/contrasting approaches
-      ### Adjacent concepts
-      ### Practical applications
-    - Under each heading, list 3–4 bullets.
-    - Each bullet: Concept — 1 sentence on why it’s relevant and how it differs; add one named method/author or canonical example if relevant.
-    - Use plain language and avoid jargon.
-
-    Return only the headings and bullets; no intro or outro.
+    Instruction:
+    Suggest a diverse set of related but distinct concepts to explore next for "#{title}". Provide a single H2 title and a concise bullet list (no subsections). Each bullet: concept — a one‑sentence rationale or contrast.
     """
 
     ask_model(qn, child, graph_id, live_view_topic, mode)
@@ -189,11 +122,8 @@ defmodule Dialectic.Responses.LlmInterface do
     Context:
     #{context}
 
-    Task: Produce a rigorous, detailed deep dive into "#{node.content}" for an advanced learner progressing toward research-level understanding.
-
-    Output (markdown):
-    ## [Precise title]
-    Provide a rigorous explanation in 2–4 compact paragraphs, naming key assumptions and scope. Add a brief caveat sentence or 1–2 bullets if helpful. Avoid fixed section headings; let the selected mode guide tone and structure. Aim for ~280–420 words.
+    Instruction:
+    Provide a rigorous explanation of "#{node.content}" aimed at an advanced learner, naming key assumptions and scope. Use 2–4 compact paragraphs, adding brief caveats only if they clarify. Provide a single H2 title.
     """
 
     ask_model(qn, child, graph_id, live_view_topic, mode)
