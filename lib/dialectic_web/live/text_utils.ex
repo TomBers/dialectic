@@ -9,6 +9,15 @@ defmodule DialecticWeb.Live.TextUtils do
 
   @title_regex ~r/^title[:]?\s*|^Title[:]?\s*/i
 
+  # Shared Markdown block-start pattern used across the app
+  @md_prefixes ~S/(?:\#{1,6}\s+|>\s+|[-*+]\s+|\d+\.\s+)/
+
+  # Regex for lines that begin with a Markdown block-start token
+  def md_block_start_regex, do: ~r/^\s*(?:#{@md_prefixes})/
+
+  # Regex for inline occurrences of a Markdown block-start token that are preceded by a non-newline
+  def md_inline_marker_regex, do: ~r/([^\n])(#{@md_prefixes})/
+
   def parse(content) do
     norm = normalize_markdown(content)
     trimmed = String.trim(norm)
@@ -152,10 +161,10 @@ defmodule DialecticWeb.Live.TextUtils do
 
     case strategy do
       :space ->
-        Regex.replace(~r/([^\n])((?:\#{1,6}\s+|>\s+|[-*+]\s+|\d+\.\s+))/, s, "\\1 \\2")
+        Regex.replace(md_inline_marker_regex(), s, "\\1 \\2")
 
       _ ->
-        Regex.replace(~r/([^\n])((?:\#{1,6}\s+|>\s+|[-*+]\s+|\d+\.\s+))/, s, "\\1\n\\2")
+        Regex.replace(md_inline_marker_regex(), s, "\\1\n\\2")
     end
   end
 end

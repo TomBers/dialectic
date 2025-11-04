@@ -113,7 +113,7 @@ defmodule DialecticWeb.GraphLive do
                 graph_operation: "",
                 ask_question: true,
                 response_mode:
-                  Dialectic.Responses.Modes.normalize_id(Map.get(_session, "response_mode")),
+                  Dialectic.Responses.Modes.normalize_id(Map.get(params, "response_mode")),
                 group_states: %{},
                 search_term: "",
                 search_results: [],
@@ -169,7 +169,7 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def mount(_params, _session, socket) do
+  def mount(params, _session, socket) do
     user = UserUtils.current_identity(socket.assigns)
     changeset = GraphActions.create_new_node(user) |> Vertex.changeset()
 
@@ -198,7 +198,7 @@ defmodule DialecticWeb.GraphLive do
        bottom_menu_open: true,
        graph_operation: "",
        ask_question: true,
-       response_mode: Dialectic.Responses.Modes.normalize_id(Map.get(_session, "response_mode")),
+       response_mode: Dialectic.Responses.Modes.normalize_id(Map.get(params, "response_mode")),
        group_states: %{},
        search_term: "",
        search_results: [],
@@ -295,7 +295,14 @@ defmodule DialecticWeb.GraphLive do
       response_mode: new_mode
     )
 
-    {:noreply, assign(socket, response_mode: new_mode)}
+    target =
+      if socket.assigns.graph_id do
+        ~p"/#{socket.assigns.graph_id}?#{[response_mode: new_mode]}"
+      else
+        ~p"/start/new/idea?#{[response_mode: new_mode]}"
+      end
+
+    {:noreply, push_patch(assign(socket, response_mode: new_mode), to: target)}
   end
 
   def handle_event("cycle_response_mode", _, socket) do
@@ -308,7 +315,26 @@ defmodule DialecticWeb.GraphLive do
       response_mode: new_mode
     )
 
-    {:noreply, assign(socket, response_mode: new_mode)}
+    target =
+      if socket.assigns.graph_id do
+        ~p"/#{socket.assigns.graph_id}?#{[response_mode: new_mode]}"
+      else
+        ~p"/start/new/idea?#{[response_mode: new_mode]}"
+      end
+
+    {:noreply, push_patch(assign(socket, response_mode: new_mode), to: target)}
+  end
+
+  def handle_params(params, _uri, socket) do
+    mode = Dialectic.Responses.Modes.normalize_id(Map.get(params, "response_mode"))
+
+    send_update(
+      DialecticWeb.RightPanelComp,
+      id: "right-panel-comp",
+      response_mode: mode
+    )
+
+    {:noreply, assign(socket, response_mode: mode)}
   end
 
   # Handle form submission and change events

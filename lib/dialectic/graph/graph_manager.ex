@@ -119,7 +119,7 @@ defmodule GraphManager do
         safe0 = TextUtils.normalize_stream_fragment(data, :newline)
 
         safe =
-          if String.match?(safe0, ~r/^\s*(?:\#{1,6}\s+|>\s+|[-*+]\s+|\d+\.\s+)/) and
+          if String.match?(safe0, TextUtils.md_block_start_regex()) and
                not String.ends_with?(to_string(vertex.content || ""), "\n") do
             "\n" <> safe0
           else
