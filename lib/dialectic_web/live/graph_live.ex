@@ -92,40 +92,55 @@ defmodule DialecticWeb.GraphLive do
             can_edit = graph_struct.is_public
             {nav_up, nav_down, nav_left, nav_right} = compute_nav_flags(graph, node)
 
-            {:ok,
-             assign(socket,
-               live_view_topic: live_view_topic,
-               graph_topic: graph_topic,
-               graph_struct: graph_struct,
-               graph_id: graph_id,
-               graph: graph,
-               f_graph: format_graph(graph),
-               node: node,
-               form: to_form(changeset),
-               show_combine: false,
-               user: user,
-               current_user: socket.assigns[:current_user],
-               can_edit: can_edit,
-               node_menu_visible: true,
-               drawer_open: true,
-               right_panel_open: false,
-               bottom_menu_open: true,
-               graph_operation: "",
-               ask_question: true,
-               group_states: %{},
-               search_term: "",
-               search_results: [],
-               nav_can_up: nav_up,
-               nav_can_down: nav_down,
-               nav_can_left: nav_left,
-               nav_can_right: nav_right,
-               open_read_modal: false,
-               show_explore_modal: false,
-               explore_items: [],
-               explore_selected: [],
-               show_start_stream_modal: false,
-               work_streams: list_streams(graph)
-             )}
+            socket =
+              assign(socket,
+                live_view_topic: live_view_topic,
+                graph_topic: graph_topic,
+                graph_struct: graph_struct,
+                graph_id: graph_id,
+                graph: graph,
+                f_graph: format_graph(graph),
+                node: node,
+                form: to_form(changeset),
+                show_combine: false,
+                user: user,
+                current_user: socket.assigns[:current_user],
+                can_edit: can_edit,
+                node_menu_visible: true,
+                drawer_open: true,
+                right_panel_open: false,
+                bottom_menu_open: true,
+                graph_operation: "",
+                ask_question: true,
+                group_states: %{},
+                search_term: "",
+                search_results: [],
+                nav_can_up: nav_up,
+                nav_can_down: nav_down,
+                nav_can_left: nav_left,
+                nav_can_right: nav_right,
+                open_read_modal: false,
+                show_explore_modal: false,
+                explore_items: [],
+                explore_selected: [],
+                show_start_stream_modal: false,
+                work_streams: list_streams(graph)
+              )
+
+            ask_param = Map.get(params, "ask")
+
+            socket =
+              if connected?(socket) and is_binary(ask_param) and String.trim(ask_param) != "" do
+                result =
+                  GraphActions.ask_and_answer_origin(graph_action_params(socket, node), ask_param)
+
+                {_, s1} = update_graph(socket, result, "answer")
+                s1
+              else
+                socket
+              end
+
+            {:ok, socket}
 
           {:error, error_message} ->
             # Redirect to home with the error message
@@ -586,7 +601,8 @@ defmodule DialecticWeb.GraphLive do
 
         case Graphs.create_new_graph(title, socket.assigns[:current_user]) do
           {:ok, _graph} ->
-            {:noreply, socket |> redirect(to: ~p"/#{title}?node=1")}
+            {:noreply,
+             socket |> redirect(to: ~p"/#{title}?node=1&ask=#{URI.encode_www_form(answer)}")}
 
           {:error, _changeset} ->
             {:noreply, socket |> put_flash(:error, "Error creating graph")}
@@ -727,23 +743,11 @@ defmodule DialecticWeb.GraphLive do
         _ -> nil
       end
 
-    if current_selected_id == node_id do
-      update_graph(
-        socket,
-        GraphActions.find_node(socket.assigns.graph_id, node_id),
-        "llm_request_complete"
-      )
-    else
-      {_graph_struct, graph} = GraphManager.get_graph(socket.assigns.graph_id)
-
-      {:noreply,
-       assign(socket,
-         graph: graph,
-         f_graph: format_graph(graph),
-         graph_operation: "llm_request_complete",
-         work_streams: list_streams(graph)
-       )}
-    end
+    update_graph(
+      socket,
+      GraphActions.find_node(socket.assigns.graph_id, node_id),
+      "llm_request_complete"
+    )
   end
 
   def handle_info({:stream_error, error, :node_id, node_id}, socket) do
@@ -1012,7 +1016,12 @@ defmodule DialecticWeb.GraphLive do
       assign(socket,
         graph: graph,
         f_graph: format_graph(graph),
-        form: to_form(changeset, id: new_node.id),
+        form:
+          if operation in ["llm_request_complete", "answer"] do
+            socket.assigns.form
+          else
+            to_form(changeset, id: new_node.id)
+          end,
         node: node,
         show_combine: show_combine,
         graph_operation: operation,

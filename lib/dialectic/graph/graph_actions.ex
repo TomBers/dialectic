@@ -121,25 +121,43 @@ defmodule Dialectic.Graph.GraphActions do
   end
 
   def ask_and_answer({graph_id, node, user, live_view_topic}, question_text) do
-    # 1) Create a visually distinct 'question' node under the selected node (no async update)
-    {_graph1, question_node} =
+    # If we're at the graph root (original context), use an 'origin' node for the first question
+    if Map.get(node, :class) == "origin" and Map.get(node, :id) == "1" do
+      ask_and_answer_origin({graph_id, node, user, live_view_topic}, question_text)
+    else
+      # Otherwise, use a 'question' node for follow-up questions
+      {_graph1, question_node} =
+        GraphManager.add_child(
+          graph_id,
+          [node],
+          fn _ -> :ok end,
+          "question",
+          user
+        )
+
+      updated_question =
+        GraphManager.update_vertex(graph_id, question_node.id, question_text)
+
       GraphManager.add_child(
         graph_id,
-        [node],
-        fn _ -> :ok end,
-        "question",
+        [updated_question],
+        fn n -> LlmInterface.gen_response(updated_question, n, graph_id, live_view_topic) end,
+        "answer",
         user
       )
+    end
+  end
 
-    # 2) Set the question content synchronously to avoid races
-    updated_question =
-      GraphManager.update_vertex(graph_id, question_node.id, question_text)
+  def ask_and_answer_origin({graph_id, node, user, live_view_topic}, question_text) do
+    # Update the existing root origin node with the user's question (no extra node)
+    updated_origin =
+      GraphManager.update_vertex(graph_id, node.id, "\n\n" <> question_text)
 
-    # 3) Create an AI 'answer' node as a child of the question node, using the updated question
+    # Generate the AI answer as a child of the updated origin node
     GraphManager.add_child(
       graph_id,
-      [updated_question],
-      fn n -> LlmInterface.gen_response(updated_question, n, graph_id, live_view_topic) end,
+      [updated_origin],
+      fn n -> LlmInterface.gen_response(updated_origin, n, graph_id, live_view_topic) end,
       "answer",
       user
     )
