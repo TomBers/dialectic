@@ -116,7 +116,16 @@ defmodule GraphManager do
   def handle_call({:update_node, {node_id, data}}, _from, {graph_struct, graph}) do
     case :digraph.vertex(graph, node_id) do
       {_id, vertex} ->
-        safe = TextUtils.normalize_stream_fragment(data, :space)
+        safe0 = TextUtils.normalize_stream_fragment(data, :newline)
+
+        safe =
+          if String.match?(safe0, ~r/^\s*(?:\#{1,6}\s+|>\s+|[-*+]\s+|\d+\.\s+)/) and
+               not String.ends_with?(to_string(vertex.content || ""), "\n") do
+            "\n" <> safe0
+          else
+            safe0
+          end
+
         updated_vertex = %{vertex | content: vertex.content <> safe}
         :digraph.add_vertex(graph, node_id, updated_vertex)
         {:reply, Vertex.add_relatives(updated_vertex, graph), {graph_struct, graph}}
