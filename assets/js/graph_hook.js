@@ -602,6 +602,10 @@ const graphHook = {
   },
   updated() {
     const { graph, node, operation } = this.el.dataset;
+    // Avoid reloading Cytoscape if the graph JSON hasn't changed to reduce flicker
+    const graphStr = graph;
+    const sameGraph = this._lastGraphStr === graphStr;
+    if (!sameGraph) this._lastGraphStr = graphStr;
 
     if (this.cy && typeof this.cy.startBatch === "function")
       this.cy.startBatch();
@@ -610,7 +614,9 @@ const graphHook = {
         this.cy.scratch("_bulkReload", true);
       } catch (_e) {}
     }
-    this.cy.json({ elements: JSON.parse(graph) });
+    if (!sameGraph) {
+      this.cy.json({ elements: JSON.parse(graphStr) });
+    }
     if (this.cy && typeof this.cy.scratch === "function") {
       try {
         this.cy.scratch("_bulkReload", null);
@@ -645,7 +651,7 @@ const graphHook = {
     ]);
     let layoutScheduled = false;
 
-    if (operation === "start_stream") {
+    if (!sameGraph && operation === "start_stream") {
       // Reflow the graph and then ensure the newly created node is visible (deferred until layout completes)
       // Compute a safe pending center id (must be a non-empty string)
       const nextPendingId =
@@ -678,7 +684,7 @@ const graphHook = {
           );
         }
       });
-    } else if (reorderOperations.has(operation)) {
+    } else if (!sameGraph && reorderOperations.has(operation)) {
       // Some operations reorder elements; defer ensureVisible until layout finishes
       this._pendingCenterId = this.el.dataset.node || this._pendingCenterId;
       this._layoutRunning = true;

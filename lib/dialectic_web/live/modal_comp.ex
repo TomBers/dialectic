@@ -53,7 +53,7 @@ defmodule DialecticWeb.Live.ModalComp do
     <div>
       <.modal
         on_cancel={JS.push("modal_closed")}
-        class={ColUtils.message_border_class(@node.class) <> " modal-responsive"}
+        class={ColUtils.message_border_class(Map.get(@node || %{}, :class, "default")) <> " modal-responsive"}
         id={"modal-" <> @id}
         show={@show}
       >
@@ -61,7 +61,7 @@ defmodule DialecticWeb.Live.ModalComp do
           class="modal-content relative px-4 sm:px-14 md:px-16"
           id={"modal-" <> @id <> "-inner"}
           phx-hook="TextSelectionHook"
-          data-node-id={@node.id}
+          data-node-id={Map.get(@node || %{}, :id, "")}
         >
           <span phx-window-keydown="node_move" phx-key="ArrowUp" phx-value-direction="up"></span>
           <span phx-window-keydown="node_move" phx-key="ArrowDown" phx-value-direction="down"></span>

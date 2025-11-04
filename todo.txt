@@ -1,3 +1,6 @@
+Good morning, I have a difficult task to do.  In the project, a graph is created in the FocusLive module, which is linked to from the home page, I want to redirect the home page directly to the graph view, and remove all the focus live code.  The graph view should load containing nothing, but a message to guide the user to ask a question to get started.  Once a user has asked a question, follow the flow from FocusLive and create a new graph with the question the user asked as the title.  Let me know if anything is not clear.
+
+
 Add labels back to the bottom toolbar
 
 Toggle for freeform or more structured answers

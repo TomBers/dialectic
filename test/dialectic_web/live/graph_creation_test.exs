@@ -2,7 +2,7 @@ defmodule DialecticWeb.GraphCreationTest do
   use DialecticWeb.ConnCase, async: true
   alias Dialectic.DbActions.Graphs
   alias Dialectic.Repo
-  alias DialecticWeb.FocusLive
+  alias DialecticWeb.GraphLive
 
   @moduledoc """
   Tests for handling apostrophes in graph titles, particularly with titles like "Shakespeare's Macbeth".
@@ -19,7 +19,7 @@ defmodule DialecticWeb.GraphCreationTest do
       ]
 
       Enum.each(test_titles, fn title ->
-        sanitized = FocusLive.sanitize_graph_title(title)
+        sanitized = GraphLive.sanitize_graph_title(title)
         assert title == sanitized, "Apostrophes should be preserved in '#{title}'"
 
         # Check apostrophe count is maintained
@@ -43,15 +43,15 @@ defmodule DialecticWeb.GraphCreationTest do
       ]
 
       Enum.each(test_cases, fn {input, expected} ->
-        assert FocusLive.sanitize_graph_title(input) == expected
+        assert GraphLive.sanitize_graph_title(input) == expected
       end)
     end
 
     test "handles edge cases properly" do
-      assert FocusLive.sanitize_graph_title("") == ""
-      assert FocusLive.sanitize_graph_title("@#$%^&*()!") == ""
-      assert FocusLive.sanitize_graph_title("   ") == ""
-      assert FocusLive.sanitize_graph_title("MiXeD cAsE tItLe") == "MiXeD cAsE tItLe"
+      assert GraphLive.sanitize_graph_title("") == ""
+      assert GraphLive.sanitize_graph_title("@#$%^&*()!") == ""
+      assert GraphLive.sanitize_graph_title("   ") == ""
+      assert GraphLive.sanitize_graph_title("MiXeD cAsE tItLe") == "MiXeD cAsE tItLe"
     end
   end
 
@@ -107,7 +107,7 @@ defmodule DialecticWeb.GraphCreationTest do
       test_title = "Shakespeare's Macbeth to pass A-Level Exam"
 
       # 1. Sanitize
-      sanitized = FocusLive.sanitize_graph_title(test_title)
+      sanitized = GraphLive.sanitize_graph_title(test_title)
       assert sanitized == test_title, "Sanitization should preserve the original title"
 
       # 2-3. URL encode/decode cycle

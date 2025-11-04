@@ -4,9 +4,12 @@ defmodule DialecticWeb.GraphLive do
   alias Dialectic.Graph.{Vertex, GraphActions, Siblings}
   alias DialecticWeb.{CombineComp, NodeComp}
   alias Dialectic.DbActions.DbWorker
+  alias Dialectic.DbActions.Graphs
   alias DialecticWeb.Utils.UserUtils
 
   alias Phoenix.PubSub
+
+  require Logger
 
   on_mount {DialecticWeb.UserAuth, :mount_current_user}
 
@@ -89,40 +92,68 @@ defmodule DialecticWeb.GraphLive do
             can_edit = graph_struct.is_public
             {nav_up, nav_down, nav_left, nav_right} = compute_nav_flags(graph, node)
 
-            {:ok,
-             assign(socket,
-               live_view_topic: live_view_topic,
-               graph_topic: graph_topic,
-               graph_struct: graph_struct,
-               graph_id: graph_id,
-               graph: graph,
-               f_graph: format_graph(graph),
-               node: node,
-               form: to_form(changeset),
-               show_combine: false,
-               user: user,
-               current_user: socket.assigns[:current_user],
-               can_edit: can_edit,
-               node_menu_visible: true,
-               drawer_open: true,
-               right_panel_open: false,
-               bottom_menu_open: true,
-               graph_operation: "",
-               ask_question: true,
-               group_states: %{},
-               search_term: "",
-               search_results: [],
-               nav_can_up: nav_up,
-               nav_can_down: nav_down,
-               nav_can_left: nav_left,
-               nav_can_right: nav_right,
-               open_read_modal: Map.has_key?(params, "node"),
-               show_explore_modal: false,
-               explore_items: [],
-               explore_selected: [],
-               show_start_stream_modal: false,
-               work_streams: list_streams(graph)
-             )}
+            socket =
+              assign(socket,
+                live_view_topic: live_view_topic,
+                graph_topic: graph_topic,
+                graph_struct: graph_struct,
+                graph_id: graph_id,
+                graph: graph,
+                f_graph: format_graph(graph),
+                node: node,
+                form: to_form(changeset),
+                show_combine: false,
+                user: user,
+                current_user: socket.assigns[:current_user],
+                can_edit: can_edit,
+                node_menu_visible: true,
+                drawer_open: true,
+                right_panel_open: false,
+                bottom_menu_open: true,
+                graph_operation: "",
+                ask_question: true,
+                group_states: %{},
+                search_term: "",
+                search_results: [],
+                nav_can_up: nav_up,
+                nav_can_down: nav_down,
+                nav_can_left: nav_left,
+                nav_can_right: nav_right,
+                open_read_modal: false,
+                show_explore_modal: false,
+                explore_items: [],
+                explore_selected: [],
+                show_start_stream_modal: false,
+                work_streams: list_streams(graph)
+              )
+
+            ask_param = Map.get(params, "ask")
+
+            socket =
+              if connected?(socket) and is_binary(ask_param) and String.trim(ask_param) != "" do
+                result =
+                  GraphActions.ask_and_answer_origin(graph_action_params(socket, node), ask_param)
+
+                case result do
+                  {graph, node} ->
+                    {_, s1} = update_graph(socket, {graph, node}, "answer")
+                    s1
+
+                  {:ok, {graph, node}} ->
+                    {_, s1} = update_graph(socket, {graph, node}, "answer")
+                    s1
+
+                  {:error, error_message} ->
+                    socket |> put_flash(:error, error_message)
+
+                  _ ->
+                    socket
+                end
+              else
+                socket
+              end
+
+            {:ok, socket}
 
           {:error, error_message} ->
             # Redirect to home with the error message
@@ -134,6 +165,51 @@ defmodule DialecticWeb.GraphLive do
             {:ok, socket}
         end
     end
+  end
+
+  def mount(_params, _session, socket) do
+    user = UserUtils.current_identity(socket.assigns)
+    changeset = GraphActions.create_new_node(user) |> Vertex.changeset()
+
+    {:ok,
+     assign(socket,
+       live_view_topic: "graph_update:#{socket.id}",
+       graph_topic: nil,
+       graph_struct: nil,
+       graph_id: nil,
+       graph: nil,
+       f_graph: format_graph(nil),
+       node: %{
+         id: "start",
+         content: "# Ask a question to get started\nType a question below to create a new graph.",
+         children: [],
+         parents: []
+       },
+       form: to_form(changeset),
+       show_combine: false,
+       user: user,
+       current_user: socket.assigns[:current_user],
+       can_edit: true,
+       node_menu_visible: false,
+       drawer_open: true,
+       right_panel_open: false,
+       bottom_menu_open: true,
+       graph_operation: "",
+       ask_question: true,
+       group_states: %{},
+       search_term: "",
+       search_results: [],
+       nav_can_up: false,
+       nav_can_down: false,
+       nav_can_left: false,
+       nav_can_right: false,
+       open_read_modal: false,
+       show_explore_modal: false,
+       explore_items: [],
+       explore_selected: [],
+       show_start_stream_modal: false,
+       work_streams: []
+     )}
   end
 
   defp default_node do
@@ -531,17 +607,32 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}} = _params, socket) do
-    if !socket.assigns.can_edit do
-      {:noreply, socket |> put_flash(:error, "This graph is locked")}
-    else
-      update_graph(
-        socket,
-        GraphActions.ask_and_answer(
-          graph_action_params(socket, socket.assigns.node),
-          answer
-        ),
-        "answer"
-      )
+    cond do
+      # If we're on the empty home state (no graph yet), create a new graph and redirect to it
+      is_nil(socket.assigns[:graph_id]) ->
+        title = sanitize_graph_title(answer)
+
+        case Graphs.create_new_graph(title, socket.assigns[:current_user]) do
+          {:ok, _graph} ->
+            {:noreply,
+             socket |> redirect(to: ~p"/#{title}?node=1&ask=#{URI.encode_www_form(answer)}")}
+
+          {:error, _changeset} ->
+            {:noreply, socket |> put_flash(:error, "Error creating graph")}
+        end
+
+      not socket.assigns.can_edit ->
+        {:noreply, socket |> put_flash(:error, "This graph is locked")}
+
+      true ->
+        update_graph(
+          socket,
+          GraphActions.ask_and_answer(
+            graph_action_params(socket, socket.assigns.node),
+            answer
+          ),
+          "answer"
+        )
     end
   end
 
@@ -665,23 +756,11 @@ defmodule DialecticWeb.GraphLive do
         _ -> nil
       end
 
-    if current_selected_id == node_id do
-      update_graph(
-        socket,
-        GraphActions.find_node(socket.assigns.graph_id, node_id),
-        "llm_request_complete"
-      )
-    else
-      {_graph_struct, graph} = GraphManager.get_graph(socket.assigns.graph_id)
-
-      {:noreply,
-       assign(socket,
-         graph: graph,
-         f_graph: format_graph(graph),
-         graph_operation: "llm_request_complete",
-         work_streams: list_streams(graph)
-       )}
-    end
+    update_graph(
+      socket,
+      GraphActions.find_node(socket.assigns.graph_id, node_id),
+      "llm_request_complete"
+    )
   end
 
   def handle_info({:stream_error, error, :node_id, node_id}, socket) do
@@ -714,7 +793,20 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
+  # Sanitizes a string to be used as a graph title.
+  #
+  # Removes any characters that would cause issues when used in URLs or as graph identifiers.
+  def sanitize_graph_title(title) do
+    title
+    |> String.trim()
+    # Only allow letters, numbers, spaces, ASCII and Unicode dashes and apostrophes
+    |> String.replace(~r/[^a-zA-Z0-9\s"'’,“”\-–—]/u, "")
+    # Replace multiple spaces with single space
+    |> String.replace(~r/\s+/, " ")
+  end
+
   # Search for nodes in the graph based on a search term
+
   defp search_graph_nodes(graph, search_term) do
     search_term = String.downcase(search_term)
 
@@ -937,7 +1029,12 @@ defmodule DialecticWeb.GraphLive do
       assign(socket,
         graph: graph,
         f_graph: format_graph(graph),
-        form: to_form(changeset, id: new_node.id),
+        form:
+          if operation in ["llm_request_complete", "answer"] do
+            socket.assigns.form
+          else
+            to_form(changeset, id: new_node.id)
+          end,
         node: node,
         show_combine: show_combine,
         graph_operation: operation,
