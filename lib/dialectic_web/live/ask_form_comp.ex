@@ -30,10 +30,10 @@ defmodule DialecticWeb.AskFormComp do
       |> assign_new(:input_id, fn -> "global-chat-input" end)
       |> assign_new(:show_hint, fn -> true end)
       |> assign_new(:placeholder, fn ->
-        case {assigns[:graph_id], assigns[:ask_question]} do
-          {nil, _} -> "Ask a question to start a new graph…"
-          {_, true} -> "Ask a question…"
-          {_, false} -> "Add a comment…"
+        if assigns[:ask_question] do
+          "Ask a question…"
+        else
+          "Add a comment…"
         end
       end)
 
@@ -48,26 +48,20 @@ defmodule DialecticWeb.AskFormComp do
         for={@form}
         phx-submit={@submit_event || if(@ask_question, do: "reply-and-answer", else: "answer")}
         id={@id}
-        class="flex-1 relative"
+        class="w-full relative"
       >
         <div class="relative">
-          <%= if @show_hint && is_nil(@graph_id) do %>
-            <div class="mb-1 text-xs text-gray-500">
-              Ask a question to create your first graph
-            </div>
-          <% end %>
-
           <.input
             field={@form[:content]}
             type="text"
             id={@input_id}
             placeholder={@placeholder}
-            class="w-full rounded-full pl-3 pr-24 border-gray-300 focus:border-indigo-400 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+            class="w-full h-11 rounded-full pl-3 pr-28 border border-gray-300 focus:border-indigo-400 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
           />
 
           <button
             type="submit"
-            class="absolute right-1 top-1/2 -translate-y-1/2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-3 py-1.5 rounded-full font-medium"
+            class="absolute right-1 inset-y-0 my-auto bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-3 h-9 rounded-full font-medium"
           >
             {if @submit_label, do: @submit_label, else: if(@ask_question, do: "Ask", else: "Post")}
           </button>
