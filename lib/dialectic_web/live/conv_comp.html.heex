@@ -152,7 +152,7 @@
                   get_message_type(node, idx) == "user" && "border-white/70",
                   get_message_type(node, idx) != "user" && "border-gray-200/70"
                 ]}>
-                  {TextUtils.render_content(node.content || "") |> Map.get(:title)}
+                  {TextUtils.process_node_content(node.content || "")}
                 </h3>
                 {TextUtils.render_content(node.content || "") |> Map.get(:body_html)}
               </div>

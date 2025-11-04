@@ -149,17 +149,60 @@ defmodule Dialectic.Graph.GraphActions do
   end
 
   def ask_and_answer_origin({graph_id, node, user, live_view_topic}, question_text) do
-    # Update the existing root origin node with the user's question (no extra node)
-    updated_origin =
-      GraphManager.update_vertex(graph_id, node.id, "\n\n" <> question_text)
+    # Fetch the latest origin vertex to avoid stale content
+    {_gs, g} = GraphManager.get_graph(graph_id)
 
-    # Generate the AI answer as a child of the updated origin node
-    GraphManager.add_child(
-      graph_id,
-      [updated_origin],
-      fn n -> LlmInterface.gen_response(updated_origin, n, graph_id, live_view_topic) end,
-      "answer",
-      user
-    )
+    current_origin =
+      case :digraph.vertex(g, node.id) do
+        {id, v} when id == node.id -> v
+        _ -> node
+      end
+
+    # Append the question once to the origin content
+    updated_origin =
+      if is_binary(current_origin.content) and
+           String.contains?(current_origin.content, question_text) do
+        current_origin
+      else
+        GraphManager.update_vertex(graph_id, node.id, "\n\n" <> question_text)
+      end
+
+    # If an answer child already exists for this origin, return it instead of enqueuing another
+    has_answer? =
+      try do
+        children = :digraph.out_neighbours(g, updated_origin.id)
+
+        Enum.any?(children, fn cid ->
+          case :digraph.vertex(g, cid) do
+            {^cid, v} when is_map(v) -> Map.get(v, :class) == "answer"
+            _ -> false
+          end
+        end)
+      rescue
+        _ -> false
+      end
+
+    if has_answer? do
+      # Return the first existing answer node
+      answer_id =
+        :digraph.out_neighbours(g, updated_origin.id)
+        |> Enum.find(fn cid ->
+          case :digraph.vertex(g, cid) do
+            {^cid, v} when is_map(v) -> Map.get(v, :class) == "answer"
+            _ -> false
+          end
+        end)
+
+      GraphManager.find_node_by_id(graph_id, answer_id)
+    else
+      # Generate the AI answer as a child of the updated origin node
+      GraphManager.add_child(
+        graph_id,
+        [updated_origin],
+        fn n -> LlmInterface.gen_response(updated_origin, n, graph_id, live_view_topic) end,
+        "answer",
+        user
+      )
+    end
   end
 end

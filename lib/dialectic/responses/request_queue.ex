@@ -50,7 +50,14 @@ defmodule Dialectic.Responses.RequestQueue do
       params
       | module: Dialectic.Workers.LocalWorker
     }
-    |> LocalWorker.new()
+    |> LocalWorker.new(
+      unique: [
+        fields: [:args, :worker, :queue],
+        keys: [:graph, :to_node],
+        period: 60,
+        states: [:available, :scheduled, :executing, :retryable]
+      ]
+    )
     |> Oban.insert()
   end
 
@@ -86,7 +93,17 @@ defmodule Dialectic.Responses.RequestQueue do
       params
       | module: Dialectic.Workers.OpenAIWorker
     }
-    |> OpenAIWorker.new(priority: 0, max_attempts: 3, tags: ["openai"])
+    |> OpenAIWorker.new(
+      priority: 0,
+      max_attempts: 3,
+      tags: ["openai"],
+      unique: [
+        fields: [:args, :worker, :queue],
+        keys: [:graph, :to_node],
+        period: 60,
+        states: [:available, :scheduled, :executing, :retryable]
+      ]
+    )
     |> Oban.insert()
   end
 
@@ -95,7 +112,17 @@ defmodule Dialectic.Responses.RequestQueue do
       params
       | module: Dialectic.Workers.OpenAIWorker
     }
-    |> OpenAIWorker.new(priority: 5, max_attempts: 3, tags: ["openai", "selection"])
+    |> OpenAIWorker.new(
+      priority: 5,
+      max_attempts: 3,
+      tags: ["openai", "selection"],
+      unique: [
+        fields: [:args, :worker, :queue],
+        keys: [:graph, :to_node],
+        period: 60,
+        states: [:available, :scheduled, :executing, :retryable]
+      ]
+    )
     |> Oban.insert()
   end
 
