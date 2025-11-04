@@ -12,18 +12,7 @@ defmodule Dialectic.Responses.LlmInterface do
 
     Output (markdown):
     ## [Short, descriptive title]
-    - Short answer (2–3 sentences) giving the core idea and why it matters.
-
-    ### Deep dive
-    - Foundations (optional): 1 short paragraph defining key terms and assumptions.
-    - Core explanation (freeform): 1–2 short paragraphs weaving the main mechanism and intuition.
-
-    - Nuances: 2–3 bullets on pitfalls, edge cases, or common confusions; include one contrast with a neighboring idea.
-
-    ### Next steps
-    - Next questions to explore (1–2).
-
-    Constraints: Aim for depth over breadth; ~220–320 words.
+    Provide a clear, compact explanation in 1–3 short paragraphs. Use bullets only when they add clarity (for lists, contrasts, or examples). Avoid fixed section headings; let the selected mode guide tone and structure. Aim for ~220–320 words.
     """
 
     ask_model(qn, child, graph_id, live_view_topic, mode)
@@ -204,14 +193,7 @@ defmodule Dialectic.Responses.LlmInterface do
 
     Output (markdown):
     ## [Precise title]
-    - One-sentence statement of what the concept is and when it applies.
-
-    ### Deep dive
-    - Core explanation (freeform): 1–2 short paragraphs tracing the main mechanism, key assumptions, and when it applies.
-
-    - Optional nuance: 1–2 bullets on caveats or edge cases, only if it clarifies usage.
-
-    Constraints: Aim for clarity and concision; ~280–420 words.
+    Provide a rigorous explanation in 2–4 compact paragraphs, naming key assumptions and scope. Add a brief caveat sentence or 1–2 bullets if helpful. Avoid fixed section headings; let the selected mode guide tone and structure. Aim for ~280–420 words.
     """
 
     ask_model(qn, child, graph_id, live_view_topic, mode)

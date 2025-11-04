@@ -48,13 +48,12 @@ defmodule Dialectic.Responses.Modes do
   # The shared teaching style used everywhere unless a particular mode overrides specifics.
   @base_style """
   You are teaching a curious beginner toward university-level mastery.
-  - Start with intuition, then add precise definitions and assumptions.
-  - Prefer causal/mechanistic explanations.
-  - Use short paragraphs and well-structured bullets. Avoid over-fragmented checklists.
+  - Default to markdown with an H2 title (## …).
+  - Aim for clarity and compactness; favor short paragraphs over lists unless lists add clarity.
   - If context is insufficient, say what’s missing and ask one clarifying question.
-  - Prefer info from the provided Context; label other info as "Background".
-  - Avoid tables; use headings and bullets only.
-  Default to markdown and an H2 title (## …) unless the instruction specifies otherwise. When there is any conflict, follow the question/selection’s format and instructions.
+  - Prefer information from the provided Context; label other info as "Background".
+  - Avoid tables.
+  Do not impose canned section headings; follow the mode’s guidance and the question’s intent.
   """
 
   # Per-mode augmentations layered on top of the base style.
@@ -68,6 +67,7 @@ defmodule Dialectic.Responses.Modes do
       Mode: Balanced
       - Balance clarity, structure, and brevity.
       - Keep total length proportional to the task; do not pad.
+      - Avoid canned section labels (e.g., "Deep dive", "Nuances", "Next steps") unless explicitly requested.
       """
     },
     concise: %{
@@ -80,6 +80,7 @@ defmodule Dialectic.Responses.Modes do
       - Avoid headings unless explicitly requested.
       - Remove redundancy and hedging; state the core idea directly.
       - No closing summaries unless explicitly requested.
+      - Never introduce canned section labels (e.g., "Deep dive", "Nuances", "Next steps").
       """
     },
     structured: %{
@@ -104,6 +105,7 @@ defmodule Dialectic.Responses.Modes do
       - Avoid headings; use plain paragraphs (2–4 sentences each).
       - Use bullets only when listing options or examples.
       - Keep jargon to a minimum and explain it briefly if necessary.
+      - Do not introduce canned section labels (e.g., "Deep dive", "Nuances", "Next steps").
       """
     },
     deep_dive: %{
@@ -114,8 +116,8 @@ defmodule Dialectic.Responses.Modes do
       Mode: Deep-dive
       - Increase technical precision and nuance (name core assumptions; note limitations).
       - Prefer compact formalism when it clarifies (define symbols or terms briefly).
-      - Include a short “Caveats” or “Edge cases” section if relevant.
-      - Avoid tables.
+      - If helpful, include a brief caveat sentence or 1–2 bullets; avoid fixed section labels.
+      - Avoid tables and generic headings (e.g., "Deep dive", "Nuances", "Next steps").
       """
     },
     socratic: %{
@@ -129,6 +131,7 @@ defmodule Dialectic.Responses.Modes do
       - Then give a concise explanation addressing those questions.
       - End with one short follow-up question to continue the dialogue.
       - Keep sections compact; avoid heavy headings.
+      - Do not introduce canned section labels (e.g., "Deep dive", "Nuances", "Next steps").
       """
     },
     creative: %{
@@ -139,7 +142,8 @@ defmodule Dialectic.Responses.Modes do
       Mode: Creative/Exploratory
       - Offer 2–3 divergent lenses or ‘what-if’ variations.
       - Use vivid but accurate analogies; explicitly label speculation as such.
-      - Prefer short subsections or bullets to separate distinct takes.
+      - Prefer short subsections or bullets to separate distinct takes; avoid fixed headings.
+      - No canned section labels (e.g., "Deep dive", "Nuances", "Next steps") unless explicitly requested.
       """
     }
   }
