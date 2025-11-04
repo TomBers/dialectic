@@ -43,25 +43,25 @@ defmodule DialecticWeb.AskFormComp do
   @impl true
   def render(assigns) do
     ~H"""
-    <div>
+    <div class="w-full min-w-0">
       <.form
         for={@form}
         phx-submit={@submit_event || if(@ask_question, do: "reply-and-answer", else: "answer")}
         id={@id}
-        class="w-full relative"
+        class="w-full min-w-0 relative"
       >
-        <div class="relative">
+        <div class="relative min-w-0 overflow-hidden">
           <.input
             field={@form[:content]}
             type="text"
             id={@input_id}
             placeholder={@placeholder}
-            class="w-full h-11 rounded-full pl-3 pr-28 border border-gray-300 focus:border-indigo-400 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+            class="box-border w-full h-10 rounded-full pl-3 pr-28 text-sm border border-gray-300 focus:border-indigo-400 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
           />
 
           <button
             type="submit"
-            class="absolute right-1 inset-y-0 my-auto bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-3 h-9 rounded-full font-medium"
+            class="absolute right-2 inset-y-0 my-auto bg-indigo-600 hover:bg-indigo-700 text-white text-sm leading-none px-2.5 h-8 rounded-full font-medium"
           >
             {if @submit_label, do: @submit_label, else: if(@ask_question, do: "Ask", else: "Post")}
           </button>

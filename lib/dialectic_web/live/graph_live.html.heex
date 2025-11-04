@@ -387,7 +387,7 @@
       }
       style="padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem);"
     >
-      <div class="mx-auto w-full max-w-2xl">
+      <div class="mx-auto w-full max-w-xl">
         <div class="relative">
           <div class="flex justify-center -mt-4 mb-2">
             <button
@@ -430,8 +430,8 @@
                 icons_only={false}
               />
             </div>
-            <div class="flex items-center gap-2">
-              <div class="flex items-center gap-1">
+            <div class="flex items-center gap-2 min-w-0">
+              <div class="flex items-center gap-1 flex-none">
                 <button
                   type="button"
                   phx-click="toggle_ask_question"
@@ -447,13 +447,15 @@
                   Comment
                 </button>
               </div>
-              <.live_component
-                module={DialecticWeb.AskFormComp}
-                id="global-chat-form"
-                form={@form}
-                ask_question={@ask_question}
-                graph_id={@graph_id}
-              />
+              <div class="flex-1 min-w-0">
+                <.live_component
+                  module={DialecticWeb.AskFormComp}
+                  id="global-chat-form"
+                  form={@form}
+                  ask_question={@ask_question}
+                  graph_id={@graph_id}
+                />
+              </div>
             </div>
           </div>
         </div>
