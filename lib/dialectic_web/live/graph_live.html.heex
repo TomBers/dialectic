@@ -447,37 +447,13 @@
                   Comment
                 </button>
               </div>
-              <.form
-                for={@form}
-                phx-submit={if @ask_question, do: "reply-and-answer", else: "answer"}
+              <.live_component
+                module={DialecticWeb.AskFormComp}
                 id="global-chat-form"
-                class="flex-1 relative"
-              >
-                <div class="relative">
-                  <%= if is_nil(@graph_id) do %>
-                    <div class="mb-1 text-xs text-gray-500">
-                      Ask a question to create your first graph
-                    </div>
-                  <% end %>
-                  <.input
-                    field={@form[:content]}
-                    type="text"
-                    id="global-chat-input"
-                    placeholder={
-                      if is_nil(@graph_id),
-                        do: "Ask a question to start a new graph…",
-                        else: if(@ask_question, do: "Ask a question…", else: "Add a comment…")
-                    }
-                    class="w-full rounded-full pl-3 pr-24 border-gray-300 focus:border-indigo-400 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                  />
-                  <button
-                    type="submit"
-                    class="absolute right-1 top-1/2 -translate-y-1/2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-3 py-1.5 rounded-full font-medium"
-                  >
-                    {if @ask_question, do: "Ask", else: "Post"}
-                  </button>
-                </div>
-              </.form>
+                form={@form}
+                ask_question={@ask_question}
+                graph_id={@graph_id}
+              />
             </div>
           </div>
         </div>
