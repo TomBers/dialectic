@@ -134,8 +134,21 @@ defmodule DialecticWeb.GraphLive do
                 result =
                   GraphActions.ask_and_answer_origin(graph_action_params(socket, node), ask_param)
 
-                {_, s1} = update_graph(socket, result, "answer")
-                s1
+                case result do
+                  {graph, node} ->
+                    {_, s1} = update_graph(socket, {graph, node}, "answer")
+                    s1
+
+                  {:ok, {graph, node}} ->
+                    {_, s1} = update_graph(socket, {graph, node}, "answer")
+                    s1
+
+                  {:error, error_message} ->
+                    socket |> put_flash(:error, error_message)
+
+                  _ ->
+                    socket
+                end
               else
                 socket
               end
@@ -596,7 +609,7 @@ defmodule DialecticWeb.GraphLive do
   def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}} = _params, socket) do
     cond do
       # If we're on the empty home state (no graph yet), create a new graph and redirect to it
-      is_nil(socket.assigns[:graph_id]) or socket.assigns[:graph_id] == "" ->
+      is_nil(socket.assigns[:graph_id]) ->
         title = sanitize_graph_title(answer)
 
         case Graphs.create_new_graph(title, socket.assigns[:current_user]) do

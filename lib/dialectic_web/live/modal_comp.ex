@@ -53,7 +53,7 @@ defmodule DialecticWeb.Live.ModalComp do
     <div>
       <.modal
         on_cancel={JS.push("modal_closed")}
-        class={ColUtils.message_border_class(Map.get(@node || %{}, :class)) <> " modal-responsive"}
+        class={ColUtils.message_border_class(Map.get(@node || %{}, :class, "default")) <> " modal-responsive"}
         id={"modal-" <> @id}
         show={@show}
       >

@@ -29,11 +29,15 @@ defmodule DialecticWeb.AskFormComp do
       |> assign_new(:submit_label, fn -> nil end)
       |> assign_new(:input_id, fn -> "global-chat-input" end)
       |> assign_new(:show_hint, fn -> true end)
-      |> assign_new(:placeholder, fn ->
-        if assigns[:ask_question] do
-          "Ask a question…"
+      |> then(fn s ->
+        if Map.has_key?(assigns, :placeholder) and not is_nil(assigns[:placeholder]) do
+          assign(s, :placeholder, assigns[:placeholder])
         else
-          "Add a comment…"
+          assign(
+            s,
+            :placeholder,
+            if(s.assigns[:ask_question], do: "Ask a question…", else: "Add a comment…")
+          )
         end
       end)
 

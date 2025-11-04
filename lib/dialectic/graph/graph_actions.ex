@@ -164,7 +164,12 @@ defmodule Dialectic.Graph.GraphActions do
            String.contains?(current_origin.content, question_text) do
         current_origin
       else
-        GraphManager.update_vertex(graph_id, node.id, "\n\n" <> question_text)
+        GraphManager.update_vertex(
+          graph_id,
+          node.id,
+          if(current_origin.content && current_origin.content != "", do: "\n\n", else: "") <>
+            question_text
+        )
       end
 
     # If an answer child already exists for this origin, return it instead of enqueuing another
