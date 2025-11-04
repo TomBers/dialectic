@@ -1,5 +1,49 @@
-Good morning, I have a difficult task to do.  In the project, a graph is created in the FocusLive module, which is linked to from the home page, I want to redirect the home page directly to the graph view, and remove all the focus live code.  The graph view should load containing nothing, but a message to guide the user to ask a question to get started.  Once a user has asked a question, follow the flow from FocusLive and create a new graph with the question the user asked as the title.  Let me know if anything is not clear.
+Placement and scope
+  - Where should the mode selector live: on the chat toolbar next to the input, in settings, or per-conversation header?
 
+  Lets place it in the right hand panel with a description and a smaller icon in the bottom toolbar that can be clicked to cycle the modes.
+
+  - Should it apply per message, per conversation, or be a global user preference with an option to override per message?
+
+  global user preference
+
+- Modes and behavior
+  - Do you have a predefined set of modes, or should I propose one? Example modes: Balanced (default), Concise, Structured (headings/steps), Conversational, Deep-dive, Socratic, Code-first, Creative/Exploratory.
+
+  Lets go for - Balanced (default), Concise, Structured (headings/steps), Conversational, Deep-dive, Socratic, Creative/Exploratory
+
+  - For each mode, should we only change the system prompt, or also tweak sampling params (temperature/top_p), max tokens, and verbosity defaults?
+
+  Just the system prompts, unless you see a benefit of changing the other params
+
+- Prompt plumbing
+  - How is `llm_interface` currently structured? Does it accept a “system prompt” string and generation params, or do we need to extend its API?
+
+  There should be a system prompt - check llm_interface.ex to check how it is done, prefer keeping the prompts separate if possible.
+
+  - Should mode prompts be injected as a system message, a prefix to the user content, or merged into an existing system prompt template?
+
+  What ever you suggest
+
+- Persistence and defaults
+  - What’s the default mode for new users/conversations?
+
+  Balanced.
+
+  - Should the selection persist across sessions (e.g., stored with user profile or conversation metadata), or reset each time?
+
+Maybe as a session varible?
+
+- Custom modes
+  - Do you want users to define their own custom prompts/modes, or stick to a curated set for now?
+
+  Curated
+
+- UI/UX
+  - Preferred control: dropdown, segmented control, or icons with tooltips?
+  - Any copy/tone guidelines for mode names and descriptions?
+
+Dropdown in the right hand menu, a cycling button in the bottom menu
 
 Add labels back to the bottom toolbar
 

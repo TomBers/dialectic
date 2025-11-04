@@ -11,7 +11,15 @@ defmodule Dialectic.Graph.GraphActions do
     GraphManager.move(graph_id, node, direction)
   end
 
+  def move({graph_id, node, _user, _live_view_topic, _mode}, direction) do
+    GraphManager.move(graph_id, node, direction)
+  end
+
   def delete_node({graph_id, _node, _user, _live_view_topic}, node_id) do
+    GraphManager.delete_node(graph_id, node_id)
+  end
+
+  def delete_node({graph_id, _node, _user, _live_view_topic, _mode}, node_id) do
     GraphManager.delete_node(graph_id, node_id)
   end
 
@@ -19,11 +27,21 @@ defmodule Dialectic.Graph.GraphActions do
     GraphManager.change_noted_by(graph_id, node_id, user, change_fn)
   end
 
+  def change_noted_by({graph_id, _node, user, _live_view_topic, _mode}, node_id, change_fn) do
+    GraphManager.change_noted_by(graph_id, node_id, user, change_fn)
+  end
+
   def toggle_graph_locked({graph_id, _node, _user, _live_view_topic}) do
     GraphManager.toggle_graph_locked(graph_id)
   end
 
-  def comment({graph_id, node, user, _live_view_topic}, question, prefix \\ "") do
+  def toggle_graph_locked({graph_id, _node, _user, _live_view_topic, _mode}) do
+    GraphManager.toggle_graph_locked(graph_id)
+  end
+
+  def comment(tuple, question, prefix \\ "")
+
+  def comment({graph_id, node, user, _live_view_topic}, question, prefix) do
     GraphManager.add_child(
       graph_id,
       [node],
@@ -33,33 +51,55 @@ defmodule Dialectic.Graph.GraphActions do
     )
   end
 
-  def answer({graph_id, node, user, live_view_topic}) do
+  def comment({graph_id, node, user, _live_view_topic, _mode}, question, prefix) do
     GraphManager.add_child(
       graph_id,
       [node],
-      fn n -> LlmInterface.gen_response(node, n, graph_id, live_view_topic) end,
+      fn _ -> prefix <> question end,
+      "user",
+      user
+    )
+  end
+
+  def answer(tuple) when is_tuple(tuple) and tuple_size(tuple) == 4 do
+    answer(Tuple.append(tuple, nil))
+  end
+
+  def answer({graph_id, node, user, live_view_topic, mode}) do
+    GraphManager.add_child(
+      graph_id,
+      [node],
+      fn n -> LlmInterface.gen_response(node, n, graph_id, live_view_topic, mode) end,
       "answer",
       user
     )
   end
 
-  def answer_selection({graph_id, node, user, live_view_topic}, selection, type) do
+  def answer_selection(tuple, selection, type) when is_tuple(tuple) and tuple_size(tuple) == 4 do
+    answer_selection(Tuple.append(tuple, nil), selection, type)
+  end
+
+  def answer_selection({graph_id, node, user, live_view_topic, mode}, selection, type) do
     GraphManager.add_child(
       graph_id,
       [node],
       fn n ->
-        LlmInterface.gen_selection_response(node, n, graph_id, selection, live_view_topic)
+        LlmInterface.gen_selection_response(node, n, graph_id, selection, live_view_topic, mode)
       end,
       type,
       user
     )
   end
 
-  def branch({graph_id, node, user, live_view_topic}) do
+  def branch(tuple) when is_tuple(tuple) and tuple_size(tuple) == 4 do
+    branch(Tuple.append(tuple, nil))
+  end
+
+  def branch({graph_id, node, user, live_view_topic, mode}) do
     GraphManager.add_child(
       graph_id,
       [node],
-      fn n -> LlmInterface.gen_thesis(node, n, graph_id, live_view_topic) end,
+      fn n -> LlmInterface.gen_thesis(node, n, graph_id, live_view_topic, mode) end,
       "thesis",
       user
     )
@@ -67,13 +107,17 @@ defmodule Dialectic.Graph.GraphActions do
     GraphManager.add_child(
       graph_id,
       [node],
-      fn n -> LlmInterface.gen_antithesis(node, n, graph_id, live_view_topic) end,
+      fn n -> LlmInterface.gen_antithesis(node, n, graph_id, live_view_topic, mode) end,
       "antithesis",
       user
     )
   end
 
-  def combine({graph_id, node1, user, live_view_topic}, combine_node_id) do
+  def combine(tuple, combine_node_id) when is_tuple(tuple) and tuple_size(tuple) == 4 do
+    combine(Tuple.append(tuple, nil), combine_node_id)
+  end
+
+  def combine({graph_id, node1, user, live_view_topic, mode}, combine_node_id) do
     case GraphManager.find_node_by_id(graph_id, combine_node_id) do
       nil ->
         nil
@@ -82,28 +126,38 @@ defmodule Dialectic.Graph.GraphActions do
         GraphManager.add_child(
           graph_id,
           [node1, node2],
-          fn n -> LlmInterface.gen_synthesis(node1, node2, n, graph_id, live_view_topic) end,
+          fn n ->
+            LlmInterface.gen_synthesis(node1, node2, n, graph_id, live_view_topic, mode)
+          end,
           "synthesis",
           user
         )
     end
   end
 
-  def related_ideas({graph_id, node, user, live_view_topic}) do
+  def related_ideas(tuple) when is_tuple(tuple) and tuple_size(tuple) == 4 do
+    related_ideas(Tuple.append(tuple, nil))
+  end
+
+  def related_ideas({graph_id, node, user, live_view_topic, mode}) do
     GraphManager.add_child(
       graph_id,
       [node],
-      fn n -> LlmInterface.gen_related_ideas(node, n, graph_id, live_view_topic) end,
+      fn n -> LlmInterface.gen_related_ideas(node, n, graph_id, live_view_topic, mode) end,
       "ideas",
       user
     )
   end
 
-  def deepdive({graph_id, node, user, live_view_topic}) do
+  def deepdive(tuple) when is_tuple(tuple) and tuple_size(tuple) == 4 do
+    deepdive(Tuple.append(tuple, nil))
+  end
+
+  def deepdive({graph_id, node, user, live_view_topic, mode}) do
     GraphManager.add_child(
       graph_id,
       [node],
-      fn n -> LlmInterface.gen_deepdive(node, n, graph_id, live_view_topic) end,
+      fn n -> LlmInterface.gen_deepdive(node, n, graph_id, live_view_topic, mode) end,
       "deepdive",
       user
     )
@@ -116,14 +170,25 @@ defmodule Dialectic.Graph.GraphActions do
     GraphManager.find_node_by_id(graph_id, node.id)
   end
 
+  def new_stream({graph_id, _node, user, _live_view_topic, _mode}, content, opts) do
+    parent_group_id = Keyword.get(opts, :group_id)
+    vertex = %Vertex{content: content || "", class: "origin", user: user, parent: parent_group_id}
+    node = GraphManager.add_node(graph_id, vertex)
+    GraphManager.find_node_by_id(graph_id, node.id)
+  end
+
   def find_node(graph_id, id) do
     GraphManager.find_node_by_id(graph_id, id)
   end
 
-  def ask_and_answer({graph_id, node, user, live_view_topic}, question_text) do
+  def ask_and_answer(tuple, question_text) when is_tuple(tuple) and tuple_size(tuple) == 4 do
+    ask_and_answer(Tuple.append(tuple, nil), question_text)
+  end
+
+  def ask_and_answer({graph_id, node, user, live_view_topic, mode}, question_text) do
     # If we're at the graph root (original context), use an 'origin' node for the first question
     if Map.get(node, :class) == "origin" and Map.get(node, :id) == "1" do
-      ask_and_answer_origin({graph_id, node, user, live_view_topic}, question_text)
+      ask_and_answer_origin({graph_id, node, user, live_view_topic, mode}, question_text)
     else
       # Otherwise, use a 'question' node for follow-up questions
       {_graph1, question_node} =
@@ -141,14 +206,21 @@ defmodule Dialectic.Graph.GraphActions do
       GraphManager.add_child(
         graph_id,
         [updated_question],
-        fn n -> LlmInterface.gen_response(updated_question, n, graph_id, live_view_topic) end,
+        fn n ->
+          LlmInterface.gen_response(updated_question, n, graph_id, live_view_topic, mode)
+        end,
         "answer",
         user
       )
     end
   end
 
-  def ask_and_answer_origin({graph_id, node, user, live_view_topic}, question_text) do
+  def ask_and_answer_origin(tuple, question_text)
+      when is_tuple(tuple) and tuple_size(tuple) == 4 do
+    ask_and_answer_origin(Tuple.append(tuple, nil), question_text)
+  end
+
+  def ask_and_answer_origin({graph_id, node, user, live_view_topic, mode}, question_text) do
     # Fetch the latest origin vertex to avoid stale content
     {_gs, g} = GraphManager.get_graph(graph_id)
 
@@ -204,7 +276,7 @@ defmodule Dialectic.Graph.GraphActions do
       GraphManager.add_child(
         graph_id,
         [updated_origin],
-        fn n -> LlmInterface.gen_response(updated_origin, n, graph_id, live_view_topic) end,
+        fn n -> LlmInterface.gen_response(updated_origin, n, graph_id, live_view_topic, mode) end,
         "answer",
         user
       )

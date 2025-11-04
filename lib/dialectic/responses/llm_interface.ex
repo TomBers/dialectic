@@ -1,7 +1,7 @@
 defmodule Dialectic.Responses.LlmInterface do
   alias Dialectic.Responses.RequestQueue
 
-  def gen_response(node, child, graph_id, live_view_topic) do
+  def gen_response(node, child, graph_id, live_view_topic, mode \\ nil) do
     context = GraphManager.build_context(graph_id, node)
 
     qn = """
@@ -26,10 +26,10 @@ defmodule Dialectic.Responses.LlmInterface do
     Constraints: Aim for depth over breadth; ~220–320 words.
     """
 
-    ask_model(qn, child, graph_id, live_view_topic)
+    ask_model(qn, child, graph_id, live_view_topic, mode)
   end
 
-  def gen_selection_response(node, child, graph_id, selection, live_view_topic) do
+  def gen_selection_response(node, child, graph_id, selection, live_view_topic, mode \\ nil) do
     context = GraphManager.build_context(graph_id, node)
 
     default_schema = """
@@ -66,10 +66,10 @@ defmodule Dialectic.Responses.LlmInterface do
       Audience: first-time learner aiming for university-level understanding.
       """ <> if add_default?, do: "\n\n" <> default_schema, else: ""
 
-    ask_model(qn, child, graph_id, live_view_topic)
+    ask_model(qn, child, graph_id, live_view_topic, mode)
   end
 
-  def gen_synthesis(n1, n2, child, graph_id, live_view_topic) do
+  def gen_synthesis(n1, n2, child, graph_id, live_view_topic, mode \\ nil) do
     # TODO - Add n2 context ?? need to enforce limit??
     context1 = GraphManager.build_context(graph_id, n1)
     context2 = GraphManager.build_context(graph_id, n2)
@@ -99,10 +99,10 @@ defmodule Dialectic.Responses.LlmInterface do
       Constraints: ~220–320 words. If reconciliation is not possible, state the trade‑offs clearly.
       """
 
-    ask_model(qn, child, graph_id, live_view_topic)
+    ask_model(qn, child, graph_id, live_view_topic, mode)
   end
 
-  def gen_thesis(node, child, graph_id, live_view_topic) do
+  def gen_thesis(node, child, graph_id, live_view_topic, mode \\ nil) do
     context = GraphManager.build_context(graph_id, node)
 
     qn = """
@@ -122,10 +122,10 @@ defmodule Dialectic.Responses.LlmInterface do
     Constraints: 150–200 words.
     """
 
-    ask_model(qn, child, graph_id, live_view_topic)
+    ask_model(qn, child, graph_id, live_view_topic, mode)
   end
 
-  def gen_antithesis(node, child, graph_id, live_view_topic) do
+  def gen_antithesis(node, child, graph_id, live_view_topic, mode \\ nil) do
     context = GraphManager.build_context(graph_id, node)
 
     qn = """
@@ -146,10 +146,10 @@ defmodule Dialectic.Responses.LlmInterface do
     Constraints: 150–200 words.
     """
 
-    ask_model(qn, child, graph_id, live_view_topic)
+    ask_model(qn, child, graph_id, live_view_topic, mode)
   end
 
-  def gen_related_ideas(node, child, graph_id, live_view_topic) do
+  def gen_related_ideas(node, child, graph_id, live_view_topic, mode \\ nil) do
     context = GraphManager.build_context(graph_id, node)
 
     content =
@@ -190,10 +190,10 @@ defmodule Dialectic.Responses.LlmInterface do
     Return only the headings and bullets; no intro or outro.
     """
 
-    ask_model(qn, child, graph_id, live_view_topic)
+    ask_model(qn, child, graph_id, live_view_topic, mode)
   end
 
-  def gen_deepdive(node, child, graph_id, live_view_topic) do
+  def gen_deepdive(node, child, graph_id, live_view_topic, mode \\ nil) do
     context = to_string(node.content || "")
 
     qn = """
@@ -214,23 +214,22 @@ defmodule Dialectic.Responses.LlmInterface do
     Constraints: Aim for clarity and concision; ~280–420 words.
     """
 
-    ask_model(qn, child, graph_id, live_view_topic)
+    ask_model(qn, child, graph_id, live_view_topic, mode)
   end
 
   def ask_model(question, to_node, graph_id, live_view_topic) do
-    style = """
-    You are teaching a curious beginner toward university-level mastery.
-    - Start with intuition, then add precise definitions and assumptions.
-    - Prefer causal/mechanistic explanations.
-    - Use short paragraphs and well-structured bullets. Avoid over-fragmented checklists.
-    - If context is insufficient, say what’s missing and ask one clarifying question.
-    - Prefer info from the provided Context; label other info as "Background".
-    - Avoid tables; use headings and bullets only.
-    Default to markdown and an H2 title (## …) unless the instruction specifies otherwise. When there is any conflict, follow the question/selection’s format and instructions.
-    """
+    ask_model(question, to_node, graph_id, live_view_topic, nil)
+  end
+
+  def ask_model(question, to_node, graph_id, live_view_topic, mode) do
+    prompt =
+      Dialectic.Responses.Modes.compose(
+        question,
+        mode || Dialectic.Responses.Modes.default()
+      )
 
     RequestQueue.add(
-      style <> "\n\n" <> question,
+      prompt,
       to_node,
       graph_id,
       live_view_topic

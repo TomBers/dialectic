@@ -112,6 +112,8 @@ defmodule DialecticWeb.GraphLive do
                 bottom_menu_open: true,
                 graph_operation: "",
                 ask_question: true,
+                response_mode:
+                  Dialectic.Responses.Modes.normalize_id(Map.get(_session, "response_mode")),
                 group_states: %{},
                 search_term: "",
                 search_results: [],
@@ -196,6 +198,7 @@ defmodule DialecticWeb.GraphLive do
        bottom_menu_open: true,
        graph_operation: "",
        ask_question: true,
+       response_mode: Dialectic.Responses.Modes.normalize_id(Map.get(_session, "response_mode")),
        group_states: %{},
        search_term: "",
        search_results: [],
@@ -281,6 +284,31 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event("toggle_bottom_menu", _, socket) do
     {:noreply, socket |> assign(bottom_menu_open: !socket.assigns.bottom_menu_open)}
+  end
+
+  def handle_event("set_response_mode", %{"mode" => mode}, socket) do
+    new_mode = Dialectic.Responses.Modes.normalize_id(mode)
+
+    send_update(
+      DialecticWeb.RightPanelComp,
+      id: "right-panel-comp",
+      response_mode: new_mode
+    )
+
+    {:noreply, assign(socket, response_mode: new_mode)}
+  end
+
+  def handle_event("cycle_response_mode", _, socket) do
+    current = socket.assigns[:response_mode] || Dialectic.Responses.Modes.default()
+    new_mode = Dialectic.Responses.Modes.cycle(current)
+
+    send_update(
+      DialecticWeb.RightPanelComp,
+      id: "right-panel-comp",
+      response_mode: new_mode
+    )
+
+    {:noreply, assign(socket, response_mode: new_mode)}
   end
 
   # Handle form submission and change events
@@ -922,7 +950,8 @@ defmodule DialecticWeb.GraphLive do
       end
     end
 
-    {graph_id, node_to_use, socket.assigns.user, socket.assigns.live_view_topic}
+    {graph_id, node_to_use, socket.assigns.user, socket.assigns.live_view_topic,
+     socket.assigns[:response_mode]}
   end
 
   defp compute_nav_flags(graph, node) do
@@ -1083,7 +1112,11 @@ defmodule DialecticWeb.GraphLive do
     send_update(
       DialecticWeb.RightPanelComp,
       id: "right-panel-comp",
-      group_states: updated_socket.assigns[:group_states]
+      group_states: updated_socket.assigns[:group_states],
+      response_mode:
+        updated_socket.assigns[:response_mode] ||
+          socket.assigns[:response_mode] ||
+          Dialectic.Responses.Modes.default()
     )
 
     updated_socket

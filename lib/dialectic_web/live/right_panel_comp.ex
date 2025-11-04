@@ -1,5 +1,6 @@
 defmodule DialecticWeb.RightPanelComp do
   use DialecticWeb, :live_component
+  alias Dialectic.Responses.Modes
 
   @moduledoc """
   Accordion-style right panel with:
@@ -16,6 +17,11 @@ defmodule DialecticWeb.RightPanelComp do
       |> assign_new(:search_term, fn -> "" end)
       |> assign_new(:search_results, fn -> [] end)
       |> assign_new(:group_states, fn -> %{} end)
+      |> assign_new(:response_mode, fn -> Modes.default() end)
+      |> assign_new(:mode_options, fn -> Modes.options() end)
+
+    mode_id = Map.get(assigns, :response_mode, socket.assigns.response_mode)
+    socket = assign(socket, :mode_description, Modes.fetch(mode_id).description)
 
     {:ok, socket}
   end
@@ -109,6 +115,30 @@ defmodule DialecticWeb.RightPanelComp do
         </div>
       </div>
 
+      <div class="bg-white border border-gray-200 rounded-md">
+        <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
+          Response Mode
+        </div>
+        <div class="p-1 space-y-1 text-[11px] text-gray-700">
+          <form phx-change="set_response_mode">
+            <label class="block text-xs text-gray-600 mb-1" for="response-mode-select">
+              Choose style
+            </label>
+            <select
+              id="response-mode-select"
+              name="mode"
+              class="block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6 border-zinc-300 focus:border-zinc-800"
+            >
+              <%= for {id, label, _desc} <- @mode_options || [] do %>
+                <option value={id} selected={@response_mode == id}>{label}</option>
+              <% end %>
+            </select>
+          </form>
+          <p class="text-gray-600 mt-1">
+            {@mode_description}
+          </p>
+        </div>
+      </div>
       <%= if owner?(@graph_struct, @current_user) do %>
         <div class="bg-white border border-gray-200 rounded-md">
           <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
