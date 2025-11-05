@@ -55,8 +55,7 @@ defmodule Dialectic.Responses.PromptBuilder do
   def question_response(user_request) when is_binary(user_request) do
     """
     Instruction:
-    Start your answer with:
-    ## Response
+
     Answer "#{user_request}" directly with short paragraphs. Length: ~120–220 words. If the topic is abstract, include one concrete example. You may end with a 2–4‑bullet Checklist if it adds value.
     """
   end
@@ -132,8 +131,7 @@ defmodule Dialectic.Responses.PromptBuilder do
   def question_related_ideas(title) when is_binary(title) do
     """
     Instruction:
-    Start your answer with:
-    ## Related ideas
+
     Suggest diverse, related concepts to explore next for "#{title}". Return 6–8 bullets; each bullet: Concept — one‑sentence rationale or contrast. Total ≤120 words.
     """
   end
