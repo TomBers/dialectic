@@ -13,8 +13,7 @@ defmodule Dialectic.Responses.RequestQueueWorkerTest do
     def request_url(), do: "http://example.test"
     def headers(_key), do: []
     def build_request_body(_q), do: %{}
-    def parse_chunk(_data), do: {:ok, []}
-    def handle_result(_chunk, _graph_id, _to_node, _topic), do: :ok
+    def extract_text(_map), do: nil
     def request_options(), do: []
   end
 
@@ -25,8 +24,7 @@ defmodule Dialectic.Responses.RequestQueueWorkerTest do
     def request_url(), do: "http://example.test"
     def headers(_key), do: []
     def build_request_body(_q), do: raise("boom")
-    def parse_chunk(_data), do: {:ok, []}
-    def handle_result(_chunk, _graph_id, _to_node, _topic), do: :ok
+    def extract_text(_map), do: nil
     def request_options(), do: []
   end
 

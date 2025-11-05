@@ -14,8 +14,8 @@ defmodule Dialectic.Responses.BaseAPIWorkerTest do
       assert :request_url in callback_names
       assert :headers in callback_names
       assert :build_request_body in callback_names
-      assert :parse_chunk in callback_names
-      assert :handle_result in callback_names
+      assert :extract_text in callback_names
+      assert :request_options in callback_names
     end
   end
 end

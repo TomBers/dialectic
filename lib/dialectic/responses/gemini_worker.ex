@@ -19,7 +19,7 @@ defmodule Dialectic.Workers.GeminiWorker do
   def request_url do
     api_key = System.get_env("GEMINI_API_KEY")
 
-    "https://generativelanguage.googleapis.com/v1beta/models/#{@model}:streamGenerateContent?key=#{api_key}"
+    "https://generativelanguage.googleapis.com/v1beta/models/#{@model}:generateContent?key=#{api_key}"
   end
 
   @impl true
@@ -58,55 +58,25 @@ defmodule Dialectic.Workers.GeminiWorker do
   end
 
   @impl true
-  def parse_chunk(chunk) do
-    cleaned_chunk =
-      chunk
-      |> String.replace_prefix(",", "")
-      |> String.replace_prefix("[", "")
-      |> String.trim()
+  def extract_text(%{"candidates" => candidates}) when is_list(candidates) do
+    text =
+      candidates
+      |> Enum.flat_map(fn
+        %{"content" => %{"parts" => parts}} when is_list(parts) ->
+          Enum.flat_map(parts, fn
+            %{"text" => t} when is_binary(t) -> [t]
+            _ -> []
+          end)
 
-    case cleaned_chunk do
-      "" ->
-        {:ok, []}
+        _ ->
+          []
+      end)
+      |> Enum.join("")
 
-      "[DONE]" ->
-        {:ok, []}
-
-      valid_data ->
-        case Jason.decode(valid_data) do
-          {:ok, decoded} -> {:ok, [decoded]}
-          _ -> {:error, "Failed to parse Gemini chunk"}
-        end
-    end
+    if text == "", do: nil, else: text
   end
 
-  @impl true
-  def handle_result(
-        %{
-          "candidates" => [
-            %{
-              "content" => %{
-                "parts" => [
-                  %{
-                    "text" => data
-                  }
-                ]
-              }
-            }
-          ]
-        },
-        graph_id,
-        to_node,
-        live_view_topic
-      )
-      when is_binary(data),
-      do: Utils.process_chunk(graph_id, to_node, data, __MODULE__, live_view_topic)
-
-  @impl true
-  def handle_result(other, _graph, _to_node, _live_view_topic) do
-    IO.inspect(other, label: "Gemini Error")
-    :ok
-  end
+  def extract_text(_), do: nil
 
   @impl Oban.Worker
   defdelegate perform(job), to: Dialectic.Workers.BaseAPIWorker

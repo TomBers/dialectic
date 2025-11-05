@@ -42,7 +42,7 @@ defmodule Dialectic.Responses.Modes do
   # Keep a concise, non-repetitive base style used everywhere.
   @base_style """
   You are teaching a curious beginner toward university-level mastery.
-  - Form: Markdown. Begin with exactly one H2 title as the first line, using the task template’s title (Response, Selection, Synthesis, Thesis, Antithesis, Related ideas, Deepdive).
+  - Form: Markdown. Begin with exactly one H2 title (##) as the first line that summarizes the answer based on the user's request and the provided Context; do not use generic labels like “Response”, “Selection”, “Synthesis”, “Thesis”, “Antithesis”, “Related ideas”, or “Deepdive”. Keep it concise and meaningful.
   - Brevity: short paragraphs (1–3 sentences). Use bullets only when they clarify. No tables.
   - Evidence: Prefer facts from the provided Context. Label anything else as "Background"; if unsure, mark Background — tentative or omit.
   - Process writing: when describing a procedure, use 3–7 numbered steps.

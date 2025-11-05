@@ -85,7 +85,7 @@ defmodule DialecticWeb.GraphLiveTest do
   end
 
   describe "handle_info/2" do
-    test "stream_chunk info updates the node if node_id matches", %{conn: conn} do
+    test "llm_text info updates the node if node_id matches", %{conn: conn} do
       {:ok, view, _html} = setup_live(conn)
       state = :sys.get_state(view.pid).socket
 
@@ -105,7 +105,7 @@ defmodule DialecticWeb.GraphLiveTest do
         deleted: false
       }
 
-      send(view.pid, {:stream_chunk, updated_vertex, :node_id, current_node_id})
+      send(view.pid, {:llm_text, updated_vertex, :node_id, current_node_id})
       # Allow the LiveView process time to process the message.
       :timer.sleep(50)
       state_after = :sys.get_state(view.pid).socket
@@ -114,7 +114,7 @@ defmodule DialecticWeb.GraphLiveTest do
       assert state_after.assigns.node.content == "new content"
     end
 
-    test "stream_chunk info does not update the node if node_id does not match", %{conn: conn} do
+    test "llm_text info does not update the node if node_id does not match", %{conn: conn} do
       {:ok, view, _html} = setup_live(conn)
       state = :sys.get_state(view.pid).socket
       original_node = state.assigns.node
@@ -130,7 +130,7 @@ defmodule DialecticWeb.GraphLiveTest do
         deleted: false
       }
 
-      send(view.pid, {:stream_chunk, updated_vertex, :node_id, "non_matching_id"})
+      send(view.pid, {:llm_text, updated_vertex, :node_id, "non_matching_id"})
       :timer.sleep(50)
       state_after = :sys.get_state(view.pid).socket
 

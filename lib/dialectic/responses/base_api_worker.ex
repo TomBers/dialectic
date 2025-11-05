@@ -13,9 +13,8 @@ defmodule Dialectic.Workers.BaseAPIWorker do
   @callback request_url() :: String.t()
   @callback headers(String.t()) :: list()
   @callback build_request_body(String.t()) :: map()
-  @callback parse_chunk(String.t()) :: {:ok, list()} | {:error, String.t()}
-  @callback handle_result(map(), graph_id :: any(), to_node :: any(), live_view_topic :: any()) ::
-              any()
+  @callback extract_text(map()) :: String.t() | nil
+
   @callback request_options() :: Keyword.t()
 
   @impl Oban.Worker
@@ -68,10 +67,9 @@ defmodule Dialectic.Workers.BaseAPIWorker do
 
   defp do_request(module, url, body, graph, to_node, live_view_topic) do
     # Base options always included
-    options = [
+    base_options = [
       headers: module.headers(module.api_key()),
       body: body,
-      into: &Utils.handle_sse_stream(module, &1, &2, graph, to_node, live_view_topic),
       connect_options: [timeout: @timeout],
       receive_timeout: @timeout
     ]
@@ -80,14 +78,35 @@ defmodule Dialectic.Workers.BaseAPIWorker do
     options =
       if function_exported?(module, :request_options, 0) do
         # Merge the options, with custom options taking precedence
-        Keyword.merge(options, module.request_options())
+        Keyword.merge(base_options, module.request_options())
       else
-        options
+        base_options
       end
 
     case Req.post(url, options) do
-      {:ok, response} ->
-        Logger.info("Base Worker Request completed successfully")
+      {:ok, %Req.Response{body: resp_body}} ->
+        data_map =
+          cond do
+            is_map(resp_body) ->
+              resp_body
+
+            is_binary(resp_body) ->
+              case Jason.decode(resp_body) do
+                {:ok, decoded} when is_map(decoded) -> decoded
+                _ -> %{}
+              end
+
+            true ->
+              %{}
+          end
+
+        case module.extract_text(data_map) do
+          text when is_binary(text) and byte_size(text) > 0 ->
+            Utils.process_text(graph, to_node, text, module, live_view_topic)
+
+          _ ->
+            :ok
+        end
 
         DbWorker.save_graph(graph, false)
 
@@ -97,7 +116,6 @@ defmodule Dialectic.Workers.BaseAPIWorker do
           {:llm_request_complete, to_node}
         )
 
-        Logger.info(response)
         :ok
 
       {:error, reason} ->

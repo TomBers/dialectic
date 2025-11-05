@@ -38,7 +38,6 @@ defmodule Dialectic.Workers.DeepSeekWorker do
   def build_request_body(question) do
     %{
       model: "deepseek-chat",
-      stream: true,
       messages: [
         %{
           role: "system",
@@ -51,27 +50,19 @@ defmodule Dialectic.Workers.DeepSeekWorker do
   end
 
   @impl true
-  def parse_chunk(chunk), do: Utils.parse_chunk(chunk)
+  def extract_text(%{"choices" => choices}) when is_list(choices) do
+    text =
+      choices
+      |> Enum.flat_map(fn
+        %{"message" => %{"content" => t}} when is_binary(t) -> [t]
+        _ -> []
+      end)
+      |> Enum.join("")
 
-  @impl true
-  def handle_result(
-        %{
-          "choices" => [
-            %{"delta" => %{"content" => data}}
-          ]
-        },
-        graph_id,
-        to_node,
-        live_view_topic
-      )
-      when is_binary(data),
-      do: Utils.process_chunk(graph_id, to_node, data, __MODULE__, live_view_topic)
-
-  @impl true
-  def handle_result(other, _graph, _to_node, _live_view_topic) do
-    IO.inspect(other, label: "Error")
-    :ok
+    if text == "", do: nil, else: text
   end
+
+  def extract_text(_), do: nil
 
   @impl Oban.Worker
   defdelegate perform(job), to: Dialectic.Workers.BaseAPIWorker

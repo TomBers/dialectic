@@ -63,6 +63,14 @@ defmodule DialecticWeb.Live.TextUtils do
         end
       end
 
+    # Fallback: if no explicit heading/title prefix, generate a concise title from content
+    title =
+      if title == "" do
+        process_node_content(norm, false, 80)
+      else
+        title
+      end
+
     %{
       normalized: norm,
       first_line: first_line,
@@ -78,6 +86,7 @@ defmodule DialecticWeb.Live.TextUtils do
   defp normalize_markdown(content) do
     content
     |> to_string()
+    |> String.replace("\uFEFF", "")
     |> String.replace("\r\n", "\n")
     |> String.replace("\r", "\n")
     |> String.trim_leading()
@@ -95,6 +104,14 @@ defmodule DialecticWeb.Live.TextUtils do
     line
     |> String.replace(~r/^\s*\#{1,6}\s*/, "")
     |> String.replace(@title_regex, "")
+    # Remove any trailing heading hashes like "## Title ##"
+    |> String.replace(~r/\s*\#{1,6}\s*$/, "")
+    # Robust trimming of surrounding markdown emphasis or quotes
+    |> String.trim()
+    |> String.trim("*")
+    |> String.trim("_")
+    |> String.trim("`")
+    |> String.trim("\"")
   end
 
   @doc """
@@ -150,8 +167,8 @@ defmodule DialecticWeb.Live.TextUtils do
   end
 
   @doc """
-  Normalize a streamed content fragment to avoid mid-line Markdown heading markers
-  being glued to previous tokens during streaming.
+  Normalize a content fragment to avoid mid-line Markdown heading markers
+  being glued to previous tokens.
   strategy:
   - :newline (default) inserts a newline before ##/###... so they render as headings
   - :space inserts a space instead, keeping them inline text

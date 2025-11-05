@@ -1,8 +1,4 @@
 defmodule Dialectic.Workers.OpenAIWorker do
-  alias Dialectic.Responses.Utils
-
-  alias Dialectic.DbActions.DbWorker
-
   @moduledoc """
   Worker for the OpenAI Chat API.
   """
@@ -45,7 +41,6 @@ defmodule Dialectic.Workers.OpenAIWorker do
   def build_request_body(question) do
     %{
       model: @model,
-      stream: true,
       reasoning_effort: "minimal",
       messages: [
         %{
@@ -59,130 +54,20 @@ defmodule Dialectic.Workers.OpenAIWorker do
   end
 
   @impl true
-  def parse_chunk(chunk), do: Utils.parse_chunk(chunk)
+  def extract_text(%{"choices" => choices}) when is_list(choices) do
+    text =
+      choices
+      |> Enum.flat_map(fn
+        %{"message" => %{"content" => t}} when is_binary(t) -> [t]
+        _ -> []
+      end)
+      |> Enum.join("")
 
-  @impl true
-  def handle_result(
-        %{
-          "choices" => [
-            %{"delta" => %{"content" => data}}
-          ]
-        },
-        graph_id,
-        to_node,
-        live_view_topic
-      )
-      when is_binary(data),
-      do: Utils.process_chunk(graph_id, to_node, data, __MODULE__, live_view_topic)
-
-  @impl true
-  def handle_result(
-        %{
-          "choices" => [
-            %{"delta" => %{}, "finish_reason" => "stop"}
-          ]
-        },
-        _graph_id,
-        _to_node,
-        _live_view_topic
-      ),
-      do: :ok
-
-  @impl true
-  def handle_result(other, _graph, _to_node, _live_view_topic) do
-    Logger.debug("Unhandled response format: #{inspect(other)}")
-    :ok
+    if text == "", do: nil, else: text
   end
+
+  def extract_text(_), do: nil
 
   @impl Oban.Worker
-  def perform(
-        %Oban.Job{
-          args: %{
-            "question" => question,
-            "to_node" => to_node,
-            "graph" => graph,
-            "module" => _worker_module,
-            "live_view_topic" => live_view_topic
-          }
-        } = _job
-      ) do
-    # Fast path for OpenAI - optimized request handling
-    with {:ok, body} <- build_request_body_encoded(question),
-         {:ok, url} <- build_url() do
-      do_optimized_request(url, body, graph, to_node, live_view_topic)
-      :ok
-    else
-      {:error, reason} ->
-        Logger.error("Failed to initiate OpenAI request: #{inspect(reason)}")
-        # Return the error directly instead of falling back to base worker
-        # to avoid potential infinite recursion
-        {:error, reason}
-    end
-  end
-
-  defp build_request_body_encoded(question) do
-    try do
-      body = build_request_body(question)
-      {:ok, Jason.encode!(body)}
-    rescue
-      e ->
-        Logger.error("Failed to encode OpenAI request body: #{inspect(e)}")
-        {:error, "Failed to encode request"}
-    end
-  end
-
-  defp build_url do
-    case api_key() do
-      nil ->
-        Logger.error("OpenAI API key not configured")
-        {:error, "API key not configured"}
-
-      _ ->
-        {:ok, request_url()}
-    end
-  end
-
-  defp do_optimized_request(url, body, graph, to_node, live_view_topic) do
-    options = [
-      headers: headers(api_key()),
-      body: body,
-      into: &Utils.handle_sse_stream(__MODULE__, &1, &2, graph, to_node, live_view_topic),
-      connect_options: [timeout: @request_timeout],
-      receive_timeout: @request_timeout,
-      retry: :transient,
-      max_retries: 2
-    ]
-
-    task =
-      Task.async(fn ->
-        Req.post(url, options)
-      end)
-
-    case Task.await(task, @request_timeout + 5000) do
-      {:ok, _response} ->
-        Logger.info("OpenAI request completed successfully")
-
-        DbWorker.save_graph(graph, false)
-
-        Phoenix.PubSub.broadcast(
-          Dialectic.PubSub,
-          live_view_topic,
-          {:llm_request_complete, to_node}
-        )
-
-        :ok
-
-      {:error, reason} ->
-        Logger.error("OpenAI request failed: #{inspect(reason)}")
-        raise "OpenAI request failed: #{inspect(reason)}"
-    end
-  rescue
-    exception ->
-      Logger.error("Exception during OpenAI request: #{inspect(exception)}")
-      raise exception
-  end
-
-  # Delegated SSE stream handling to Utils.handle_sse_stream/6
-
-  # Stream completion handled by Utils.handle_sse_stream/6
+  defdelegate perform(job), to: Dialectic.Workers.BaseAPIWorker
 end

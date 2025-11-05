@@ -41,7 +41,6 @@ defmodule Dialectic.Workers.ClaudeWorker do
     %{
       model: @model,
       max_tokens: 1024,
-      stream: true,
       messages: [
         %{
           role: "user",
@@ -52,27 +51,19 @@ defmodule Dialectic.Workers.ClaudeWorker do
   end
 
   @impl true
-  def parse_chunk(chunk), do: Utils.parse_chunk(chunk)
+  def extract_text(%{"content" => parts}) when is_list(parts) do
+    text =
+      parts
+      |> Enum.flat_map(fn
+        %{"type" => "text", "text" => t} when is_binary(t) -> [t]
+        _ -> []
+      end)
+      |> Enum.join("")
 
-  @impl true
-  def handle_result(
-        %{
-          "delta" => %{
-            "text" => data
-          }
-        },
-        graph_id,
-        to_node,
-        live_view_topic
-      )
-      when is_binary(data),
-      do: Utils.process_chunk(graph_id, to_node, data, __MODULE__, live_view_topic)
-
-  @impl true
-  def handle_result(other, _graph, _to_node, _live_view_topic) do
-    IO.inspect(other, label: "handle_result Error")
-    :ok
+    if text == "", do: nil, else: text
   end
+
+  def extract_text(_), do: nil
 
   @impl Oban.Worker
   defdelegate perform(job), to: Dialectic.Workers.BaseAPIWorker

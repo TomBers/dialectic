@@ -11,7 +11,7 @@ defmodule Dialectic.Workers.LocalWorker do
           "live_view_topic" => live_view_topic
         }
       }) do
-    IO.inspect("Local Processing chunk for graph #{graph} and node #{node}. Data: #{question}",
+    IO.inspect("Local processing for graph #{graph} and node #{node}. Data: #{question}",
       label: "Local Processing"
     )
 
@@ -20,7 +20,7 @@ defmodule Dialectic.Workers.LocalWorker do
     Phoenix.PubSub.broadcast(
       Dialectic.PubSub,
       live_view_topic,
-      {:stream_chunk, updated_vertex, :node_id, node}
+      {:llm_text, updated_vertex, :node_id, node}
     )
 
     Phoenix.PubSub.broadcast(
