@@ -1,151 +1,134 @@
 defmodule Dialectic.Responses.Modes do
   @moduledoc """
-  Centralized definition of response “modes” and their system prompts.
+  Centralized definition of response modes and their system prompts.
 
   Scope:
   - Provides a curated set of response modes the UI can expose (dropdown + cycle button).
-  - Returns a base style prompt plus mode-specific guidance.
+  - Returns a single base style prompt plus mode-specific guidance.
   - Does not change model params; only prompt content varies by mode.
-  - Intended for use by whatever layer assembles the final prompt before enqueueing.
 
   Typical usage:
 
       # Build the full system prompt for a given mode (atom or string).
-      system = Dialectic.Responses.Modes.system_prompt(:balanced)
+      system = Dialectic.Responses.Modes.system_prompt(:structured)
 
       # Or compose a ready-to-send prompt from a question and a mode.
-      combined = Dialectic.Responses.Modes.compose(question, :concise)
+      combined = Dialectic.Responses.Modes.compose(question, :creative)
 
       # Cycle the current mode for a “cycle” button.
-      next_mode = Dialectic.Responses.Modes.cycle(:balanced)
+      next_mode = Dialectic.Responses.Modes.cycle(:structured)
 
   Notes:
-  - The default mode is :balanced.
+  - The default mode is :structured.
   - If an unrecognized mode is passed, functions fall back to the default.
   """
 
-  @type mode_id ::
-          :balanced
-          | :concise
-          | :structured
-          | :conversational
-          | :deep_dive
-          | :socratic
-          | :creative
+  @type mode_id :: :structured | :creative
+  # The following modes are intentionally disabled for now, but kept for later:
+  #   :balanced | :concise | :conversational | :deep_dive | :socratic
 
-  @default_mode :balanced
+  @default_mode :structured
 
   @mode_order [
-    :balanced,
-    :concise,
     :structured,
-    :conversational,
-    :deep_dive,
-    :socratic,
     :creative
+    # :balanced,
+    # :concise,
+    # :conversational,
+    # :deep_dive,
+    # :socratic
   ]
 
-  # The shared teaching style used everywhere unless a particular mode overrides specifics.
+  # Keep a concise, non-repetitive base style used everywhere.
   @base_style """
   You are teaching a curious beginner toward university-level mastery.
-  - Default to markdown with an H2 title (## …).
-  - Aim for clarity and compactness; favor short paragraphs over lists unless lists add clarity.
+  - Use markdown; start with a single concise H2 title when it aids readability.
+  - Prefer short paragraphs; introduce lists only when they clarify.
   - If context is insufficient, say what’s missing and ask one clarifying question.
-  - Prefer information from the provided Context; label other info as "Background".
-  - Avoid tables.
-  Do not impose canned section headings; follow the mode’s guidance and the question’s intent.
+  - Prefer information from the provided Context; label any extra knowledge as "Background".
+  - Avoid tables and canned section headings.
   """
 
   # Per-mode augmentations layered on top of the base style.
   @modes %{
-    balanced: %{
-      id: :balanced,
-      label: "Balanced",
-      description:
-        "General-purpose mode that balances brevity with structure for first-time learners.",
-      prompt: """
-      Mode: Balanced
-      - Balance clarity, structure, and brevity.
-      - Keep total length proportional to the task; do not pad.
-      - Avoid canned section labels (e.g., "Deep dive", "Nuances", "Next steps") unless explicitly requested.
-      """
-    },
-    concise: %{
-      id: :concise,
-      label: "Concise",
-      description: "Crisp answers in as few words as possible without losing essential content.",
-      prompt: """
-      Mode: Concise
-      - Be brief. Prefer 1–2 short paragraphs or 3–5 bullets maximum.
-      - Avoid headings unless explicitly requested.
-      - Remove redundancy and hedging; state the core idea directly.
-      - No closing summaries unless explicitly requested.
-      - Never introduce canned section labels (e.g., "Deep dive", "Nuances", "Next steps").
-      """
-    },
     structured: %{
       id: :structured,
-      label: "Structured (steps)",
-      description:
-        "Well-organized answers with headings and clear step-by-step lists where helpful.",
+      label: "Structured",
+      description: "Organized answers with headings and clear steps when helpful.",
       prompt: """
       Mode: Structured
-      - Use clear section headings and short subsections.
-      - When describing processes, use numbered steps (3–7 steps typical).
-      - Include a brief summary or checklist at the end when appropriate.
-      """
-    },
-    conversational: %{
-      id: :conversational,
-      label: "Conversational",
-      description: "Friendly, approachable tone; light on headings; easy to skim in paragraphs.",
-      prompt: """
-      Mode: Conversational
-      - Use a friendly, natural tone with light use of rhetorical questions.
-      - Avoid headings; use plain paragraphs (2–4 sentences each).
-      - Use bullets only when listing options or examples.
-      - Keep jargon to a minimum and explain it briefly if necessary.
-      - Do not introduce canned section labels (e.g., "Deep dive", "Nuances", "Next steps").
-      """
-    },
-    deep_dive: %{
-      id: :deep_dive,
-      label: "Deep-dive",
-      description: "More technical depth and nuance; assume a motivated learner who wants rigor.",
-      prompt: """
-      Mode: Deep-dive
-      - Increase technical precision and nuance (name core assumptions; note limitations).
-      - Prefer compact formalism when it clarifies (define symbols or terms briefly).
-      - If helpful, include a brief caveat sentence or 1–2 bullets; avoid fixed section labels.
-      - Avoid tables and generic headings (e.g., "Deep dive", "Nuances", "Next steps").
-      """
-    },
-    socratic: %{
-      id: :socratic,
-      label: "Socratic",
-      description:
-        "Lead with 2–4 guiding questions; progressively reveal; ask one follow-up at the end.",
-      prompt: """
-      Mode: Socratic
-      - Begin with 2–4 short questions to probe the user's current model.
-      - Then give a concise explanation addressing those questions.
-      - End with one short follow-up question to continue the dialogue.
-      - Keep sections compact; avoid heavy headings.
-      - Do not introduce canned section labels (e.g., "Deep dive", "Nuances", "Next steps").
+      - Use clear headings and short subsections only when they add structure.
+      - For processes, use 3–7 numbered steps.
+      - Optionally end with a short checklist or summary.
       """
     },
     creative: %{
       id: :creative,
       label: "Creative/Exploratory",
-      description: "Encourage brainstorming, analogies, and contrasting takes; flag speculation.",
+      description: "Encourage contrasting lenses, analogies, and careful speculation.",
       prompt: """
-      Mode: Creative/Exploratory
-      - Offer 2–3 divergent lenses or ‘what-if’ variations.
-      - Use vivid but accurate analogies; explicitly label speculation as such.
-      - Prefer short subsections or bullets to separate distinct takes; avoid fixed headings.
-      - No canned section labels (e.g., "Deep dive", "Nuances", "Next steps") unless explicitly requested.
+      Mode: Creative
+      - Offer 2–3 contrasting lenses or what‑if variations.
+      - Use vivid but accurate analogies; explicitly label speculation.
+      - Separate distinct takes with short subsections or bullets.
       """
     }
+    # --- Unused modes kept for later (commented out) ---
+    # ,balanced: %{
+    #   id: :balanced,
+    #   label: "Balanced",
+    #   description: "General-purpose mode that balances brevity with structure for first-time learners.",
+    #   prompt: """
+    #   Mode: Balanced
+    #   - Balance clarity, structure, and brevity.
+    #   - Keep total length proportional to the task; do not pad.
+    #   - Avoid canned section labels unless explicitly requested.
+    #   """
+    # }
+    # ,concise: %{
+    #   id: :concise,
+    #   label: "Concise",
+    #   description: "Crisp answers in as few words as possible without losing essentials.",
+    #   prompt: """
+    #   Mode: Concise
+    #   - Be brief. Prefer 1–2 short paragraphs or 3–5 bullets.
+    #   - Avoid headings unless explicitly requested.
+    #   - State the core idea directly; avoid hedging and redundancy.
+    #   """
+    # }
+    # ,conversational: %{
+    #   id: :conversational,
+    #   label: "Conversational",
+    #   description: "Friendly, approachable tone; easy to skim in paragraphs.",
+    #   prompt: """
+    #   Mode: Conversational
+    #   - Use a friendly, natural tone with light rhetorical questions.
+    #   - Prefer plain paragraphs; bullets only for options/examples.
+    #   - Keep jargon minimal and explain briefly if needed.
+    #   """
+    # }
+    # ,deep_dive: %{
+    #   id: :deep_dive,
+    #   label: "Deep-dive",
+    #   description: "More technical depth and nuance; assume a motivated learner.",
+    #   prompt: """
+    #   Mode: Deep-dive
+    #   - Increase precision; name assumptions and note limitations.
+    #   - Use compact formalism where it clarifies; define terms briefly.
+    #   - Include brief caveats when helpful; avoid generic fixed labels.
+    #   """
+    # }
+    # ,socratic: %{
+    #   id: :socratic,
+    #   label: "Socratic",
+    #   description: "Lead with guiding questions, then explain; end with a follow-up.",
+    #   prompt: """
+    #   Mode: Socratic
+    #   - Start with 2–4 short questions to probe the user's model.
+    #   - Then provide a concise explanation addressing them.
+    #   - End with one short follow-up question.
+    #   """
+    # }
   }
 
   @doc """
@@ -216,15 +199,15 @@ defmodule Dialectic.Responses.Modes do
 
   def normalize_id(mode) when is_binary(mode) do
     case String.downcase(mode) do
-      "balanced" -> :balanced
-      "concise" -> :concise
       "structured" -> :structured
-      "conversational" -> :conversational
-      "deep-dive" -> :deep_dive
-      "deep_dive" -> :deep_dive
-      "deepdive" -> :deep_dive
-      "socratic" -> :socratic
       "creative" -> :creative
+      # "balanced" -> :balanced
+      # "concise" -> :concise
+      # "conversational" -> :conversational
+      # "deep-dive" -> :deep_dive
+      # "deep_dive" -> :deep_dive
+      # "deepdive" -> :deep_dive
+      # "socratic" -> :socratic
       _ -> @default_mode
     end
   end
