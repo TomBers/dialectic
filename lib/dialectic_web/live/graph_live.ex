@@ -1085,7 +1085,7 @@ defmodule DialecticWeb.GraphLive do
         graph: graph,
         f_graph: format_graph(graph),
         form:
-          if operation == "llm_request_complete" do
+          if operation in ["llm_request_complete"] do
             socket.assigns.form
           else
             to_form(changeset, id: new_node.id)

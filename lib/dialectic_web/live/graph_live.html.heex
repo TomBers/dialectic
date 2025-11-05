@@ -451,14 +451,14 @@
                 <button
                   type="button"
                   phx-click="cycle_response_mode"
-                  title={"Cycle response mode (current: " <> ((@response_mode || :balanced) |> to_string()) <> ")"}
+                  title={"Cycle response mode (current: " <> ((@response_mode || :structured) |> to_string()) <> ")"}
                   class="inline-flex items-center justify-center w-7 h-7 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-50"
                   aria-label="Cycle response mode"
                 >
                   <.icon name="hero-arrow-path" class="w-4 h-4" />
                 </button>
                 <span class="text-[10px] text-gray-600 max-w-[8rem] truncate">
-                  {(@response_mode || :balanced)
+                  {(@response_mode || :structured)
                   |> to_string()
                   |> String.replace("_", " ")
                   |> String.split()
