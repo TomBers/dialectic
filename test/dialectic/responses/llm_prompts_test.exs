@@ -81,6 +81,8 @@ defmodule Dialectic.Responses.LlmPromptsTest do
       Context:
 
       Instruction:
+      Start your answer with:
+      ## Response
       Answer "Explain recursion" directly with short paragraphs. Length: ~120–220 words. If the topic is abstract, include one concrete example. You may end with a 2–4‑bullet Checklist if it adds value.
       """
 
@@ -265,6 +267,8 @@ defmodule Dialectic.Responses.LlmPromptsTest do
       Context:
 
       Instruction:
+      Start your answer with:
+      ## Related ideas
       Suggest diverse, related concepts to explore next for "Event Sourcing in Distributed Systems". Return 6–8 bullets; each bullet: Concept — one‑sentence rationale or contrast. Total ≤120 words.
       """)
     end

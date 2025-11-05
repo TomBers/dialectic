@@ -43,6 +43,8 @@ defmodule Dialectic.Responses.PromptBuilderTest do
 
       expected = """
       Instruction:
+      Start your answer with:
+      ## Response
       Answer "Explain recursion" directly with short paragraphs. Length: ~120–220 words. If the topic is abstract, include one concrete example. You may end with a 2–4‑bullet Checklist if it adds value.
       """
 
@@ -60,6 +62,8 @@ defmodule Dialectic.Responses.PromptBuilderTest do
       Rewrite the highlighted passage more clearly.
 
       Instruction:
+      Start your answer with:
+      ## Selection
       Rewrite the highlighted passage more clearly with one concrete example; then paraphrase why it matters to the current context. If no selection is present, say so and ask for it in one sentence. If the selection is already clear, improve micro‑clarity (shorter sentences, concrete nouns/verbs) rather than expanding.
 
       Return with these sections:
@@ -80,6 +84,8 @@ defmodule Dialectic.Responses.PromptBuilderTest do
 
       expected = """
       Instruction:
+      Start your answer with:
+      ## Synthesis
       Compare "Type systems prevent runtime errors" and "Dynamic typing increases flexibility". Length: ~120–180 words.
       Use this structure:
       ### Common ground — 2–3 bullets.
@@ -98,6 +104,8 @@ defmodule Dialectic.Responses.PromptBuilderTest do
 
       expected = """
       Instruction:
+      Start your answer with:
+      ## Thesis
       Make a brief, rigorous case for "Functional programming improves testability". Length: ~100–160 words.
       Use this structure:
       ### Claim — one sentence.
@@ -116,6 +124,8 @@ defmodule Dialectic.Responses.PromptBuilderTest do
 
       expected = """
       Instruction:
+      Start your answer with:
+      ## Antithesis
       Critique "Microservices are always better than monoliths" rigorously. Length: ~120–180 words.
       Use this structure:
       ### Steelman — the best case for the claim.
@@ -134,6 +144,8 @@ defmodule Dialectic.Responses.PromptBuilderTest do
 
       expected = """
       Instruction:
+      Start your answer with:
+      ## Related ideas
       Suggest diverse, related concepts to explore next for "Event Sourcing in Distributed Systems". Return 6–8 bullets; each bullet: Concept — one‑sentence rationale or contrast. Total ≤120 words.
       """
 
@@ -148,6 +160,8 @@ defmodule Dialectic.Responses.PromptBuilderTest do
 
       expected = """
       Instruction:
+      Start your answer with:
+      ## Deepdive
       Explain "Bayes' theorem" rigorously for an advanced learner. Length: 2–4 compact paragraphs (~140–220 words).
       Use this structure:
       Paragraph 1: core definition and intuition.

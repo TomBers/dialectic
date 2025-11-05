@@ -55,6 +55,8 @@ defmodule Dialectic.Responses.PromptBuilder do
   def question_response(user_request) when is_binary(user_request) do
     """
     Instruction:
+    Start your answer with:
+    ## Response
     Answer "#{user_request}" directly with short paragraphs. Length: ~120–220 words. If the topic is abstract, include one concrete example. You may end with a 2–4‑bullet Checklist if it adds value.
     """
   end
@@ -69,6 +71,8 @@ defmodule Dialectic.Responses.PromptBuilder do
     #{selection}
 
     Instruction:
+    Start your answer with:
+    ## Selection
     Rewrite the highlighted passage more clearly with one concrete example; then paraphrase why it matters to the current context. If no selection is present, say so and ask for it in one sentence. If the selection is already clear, improve micro‑clarity (shorter sentences, concrete nouns/verbs) rather than expanding.
 
     Return with these sections:
@@ -85,6 +89,8 @@ defmodule Dialectic.Responses.PromptBuilder do
   def question_synthesis(a, b) when is_binary(a) and is_binary(b) do
     """
     Instruction:
+    Start your answer with:
+    ## Synthesis
     Compare "#{a}" and "#{b}". Length: ~120–180 words.
     Use this structure:
     ### Common ground — 2–3 bullets.
@@ -100,6 +106,8 @@ defmodule Dialectic.Responses.PromptBuilder do
   def question_thesis(statement) when is_binary(statement) do
     """
     Instruction:
+    Start your answer with:
+    ## Thesis
     Make a brief, rigorous case for "#{statement}". Length: ~100–160 words.
     Use this structure:
     ### Claim — one sentence.
@@ -115,6 +123,8 @@ defmodule Dialectic.Responses.PromptBuilder do
   def question_antithesis(statement) when is_binary(statement) do
     """
     Instruction:
+    Start your answer with:
+    ## Antithesis
     Critique "#{statement}" rigorously. Length: ~120–180 words.
     Use this structure:
     ### Steelman — the best case for the claim.
@@ -130,6 +140,8 @@ defmodule Dialectic.Responses.PromptBuilder do
   def question_related_ideas(title) when is_binary(title) do
     """
     Instruction:
+    Start your answer with:
+    ## Related ideas
     Suggest diverse, related concepts to explore next for "#{title}". Return 6–8 bullets; each bullet: Concept — one‑sentence rationale or contrast. Total ≤120 words.
     """
   end
@@ -141,6 +153,8 @@ defmodule Dialectic.Responses.PromptBuilder do
   def question_deepdive(topic) when is_binary(topic) do
     """
     Instruction:
+    Start your answer with:
+    ## Deepdive
     Explain "#{topic}" rigorously for an advanced learner. Length: 2–4 compact paragraphs (~140–220 words).
     Use this structure:
     Paragraph 1: core definition and intuition.
