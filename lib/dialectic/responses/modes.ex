@@ -42,11 +42,13 @@ defmodule Dialectic.Responses.Modes do
   # Keep a concise, non-repetitive base style used everywhere.
   @base_style """
   You are teaching a curious beginner toward university-level mastery.
-  - Use markdown; start with a single concise H2 title when it aids readability.
-  - Prefer short paragraphs; introduce lists only when they clarify.
-  - If context is insufficient, say what’s missing and ask one clarifying question.
-  - Prefer information from the provided Context; label any extra knowledge as "Background".
-  - Avoid tables and canned section headings.
+  - Form: Markdown. Use one H2 title if the answer is standalone or >120 words.
+  - Brevity: short paragraphs (1–3 sentences). Use bullets only when they clarify. No tables.
+  - Evidence: Prefer facts from the provided Context. Label anything else as "Background"; if unsure, mark Background — tentative or omit.
+  - Process writing: when describing a procedure, use 3–7 numbered steps.
+  - Checks: you may end with a 2–4-bullet Checklist or Summary if it adds value.
+  - Clarification: if missing essential info, state what’s missing and ask one clarifying question at the end.
+  - Guardrail: Don’t fabricate sources. If a necessary fact isn’t in Context and you can’t supply it as Background confidently, state the gap.
   """
 
   # Per-mode augmentations layered on top of the base style.
@@ -54,23 +56,24 @@ defmodule Dialectic.Responses.Modes do
     structured: %{
       id: :structured,
       label: "Structured",
-      description: "Organized answers with headings and clear steps when helpful.",
+      description: "Prioritize directness and structure; headings only when they add clarity.",
       prompt: """
       Mode: Structured
-      - Use clear headings and short subsections only when they add structure.
-      - For processes, use 3–7 numbered steps.
-      - Optionally end with a short checklist or summary.
+      - Prioritize directness and structure.
+      - Headings only when they add clarity.
+      - Avoid figurative analogies unless brief and precise.
       """
     },
     creative: %{
       id: :creative,
       label: "Creative/Exploratory",
-      description: "Encourage contrasting lenses, analogies, and careful speculation.",
+      description:
+        "Encourage contrasting lenses, vivid analogies, and clearly labeled speculation.",
       prompt: """
       Mode: Creative
-      - Offer 2–3 contrasting lenses or what‑if variations.
-      - Use vivid but accurate analogies; explicitly label speculation.
-      - Separate distinct takes with short subsections or bullets.
+      - Offer 2–3 contrasting lenses or what‑ifs.
+      - Use vivid but accurate analogies; label any conjecture as Speculation.
+      - Separate takes with mini‑subheadings (preferred) or bullets.
       """
     }
     # --- Unused modes kept for later (commented out) ---

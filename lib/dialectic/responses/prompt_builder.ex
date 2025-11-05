@@ -55,12 +55,12 @@ defmodule Dialectic.Responses.PromptBuilder do
   def question_response(user_request) when is_binary(user_request) do
     """
     Instruction:
-    Answer "#{user_request}" directly. Be clear and compact; use bullets only if they aid clarity.
+    Answer "#{user_request}" directly with short paragraphs. Length: ~120–220 words. If the topic is abstract, include one concrete example. You may end with a 2–4‑bullet Checklist if it adds value.
     """
   end
 
   @doc """
-  Paraphrase a selected passage and explain its relevance to the current topic.
+  Rewrite a highlighted passage and explain its relevance, with clear fallbacks.
   """
   @spec question_selection(String.t()) :: String.t()
   def question_selection(selection) when is_binary(selection) do
@@ -69,7 +69,11 @@ defmodule Dialectic.Responses.PromptBuilder do
     #{selection}
 
     Instruction:
-    Paraphrase the selection and explain its relevance to the current context. Be brief; use bullets only if they clarify key claims, assumptions, implications, or limitations.
+    Rewrite the highlighted passage more clearly with one concrete example; then paraphrase why it matters to the current context. If no selection is present, say so and ask for it in one sentence. If the selection is already clear, improve micro‑clarity (shorter sentences, concrete nouns/verbs) rather than expanding.
+
+    Return with these sections:
+    ### Rewritten — cleaner phrasing + one concrete example.
+    ### Why it matters here — 1–3 sentences tying it to the current task/context.
     """
   end
 
@@ -81,54 +85,68 @@ defmodule Dialectic.Responses.PromptBuilder do
   def question_synthesis(a, b) when is_binary(a) and is_binary(b) do
     """
     Instruction:
-    Compare "#{a}" and "#{b}": name common ground and key tensions; propose a synthesis or clear scope boundary. Keep it concise; use bullets only to highlight trade‑offs.
+    Compare "#{a}" and "#{b}". Length: ~120–180 words.
+    Use this structure:
+    ### Common ground — 2–3 bullets.
+    ### Tensions — 2–3 bullets (specific).
+    ### Synthesis / Scope boundary — one compact paragraph or 2–3 bullets with when‑to‑use‑which.
     """
   end
 
   @doc """
-  Make a concise, rigorous case for a statement: claim, reasons, and one short example if useful.
+  Make a concise, rigorous case for a statement with fixed micro‑sections.
   """
   @spec question_thesis(String.t()) :: String.t()
   def question_thesis(statement) when is_binary(statement) do
     """
     Instruction:
-    Make a brief, rigorous case for "#{statement}": state the claim, give compact reasoning, and add one short example if useful.
+    Make a brief, rigorous case for "#{statement}". Length: ~100–160 words.
+    Use this structure:
+    ### Claim — one sentence.
+    ### Reasoning — 3 bullets, each a distinct argument.
+    ### Example — 2–3 sentences.
     """
   end
 
   @doc """
-  Provide a concise, rigorous critique: steelman the opposing view, state the core objection,
-  and support it with compact reasoning and (optionally) a short counterexample.
+  Provide a concise, rigorous critique with fixed micro‑sections.
   """
   @spec question_antithesis(String.t()) :: String.t()
   def question_antithesis(statement) when is_binary(statement) do
     """
     Instruction:
-    Give a brief, rigorous critique of "#{statement}": steelman the opposing view, state the core objection, and support it with compact reasoning and, if helpful, a short counterexample.
+    Critique "#{statement}" rigorously. Length: ~120–180 words.
+    Use this structure:
+    ### Steelman — the best case for the claim.
+    ### Core objection — the key flaw or boundary.
+    ### Support / Counterexample — 2–4 sentences.
     """
   end
 
   @doc """
-  Suggest diverse, related concepts for follow-up exploration as a concise bullet list.
-  Each bullet: concept — one-sentence rationale or contrast.
+  Suggest diverse, related concepts to explore next.
   """
   @spec question_related_ideas(String.t()) :: String.t()
   def question_related_ideas(title) when is_binary(title) do
     """
     Instruction:
-    Suggest diverse, related concepts to explore next for "#{title}". Return a concise bullet list; each bullet: concept — one‑sentence rationale or contrast.
+    Suggest diverse, related concepts to explore next for "#{title}". Return 6–8 bullets; each bullet: Concept — one‑sentence rationale or contrast. Total ≤120 words.
     """
   end
 
   @doc """
-  Explain a topic rigorously for an advanced learner: name assumptions and scope; use 2–4
-  compact paragraphs; add brief caveats only if they clarify.
+  Explain a concept rigorously for an advanced learner with explicit structure.
   """
   @spec question_deepdive(String.t()) :: String.t()
   def question_deepdive(topic) when is_binary(topic) do
     """
     Instruction:
-    Explain "#{topic}" rigorously for an advanced learner: note assumptions and scope. Use 2–4 compact paragraphs; add brief caveats only if they clarify.
+    Explain "#{topic}" rigorously for an advanced learner. Length: 2–4 compact paragraphs (~140–220 words).
+    Use this structure:
+    Paragraph 1: core definition and intuition.
+    Paragraph 2: formal relationship/mechanics.
+    Paragraph 3: Assumptions & Scope (explicit).
+    Optional: Brief Caveats if they reduce misuse.
     """
   end
 end

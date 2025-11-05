@@ -43,7 +43,7 @@ defmodule Dialectic.Responses.PromptBuilderTest do
 
       expected = """
       Instruction:
-      Answer "Explain recursion" directly. Be clear and compact; use bullets only if they aid clarity.
+      Answer "Explain recursion" directly with short paragraphs. Length: ~120–220 words. If the topic is abstract, include one concrete example. You may end with a 2–4‑bullet Checklist if it adds value.
       """
 
       assert_same(expected, actual)
@@ -60,7 +60,11 @@ defmodule Dialectic.Responses.PromptBuilderTest do
       Rewrite the highlighted passage more clearly.
 
       Instruction:
-      Paraphrase the selection and explain its relevance to the current context. Be brief; use bullets only if they clarify key claims, assumptions, implications, or limitations.
+      Rewrite the highlighted passage more clearly with one concrete example; then paraphrase why it matters to the current context. If no selection is present, say so and ask for it in one sentence. If the selection is already clear, improve micro‑clarity (shorter sentences, concrete nouns/verbs) rather than expanding.
+
+      Return with these sections:
+      ### Rewritten — cleaner phrasing + one concrete example.
+      ### Why it matters here — 1–3 sentences tying it to the current task/context.
       """
 
       assert_same(expected, actual)
@@ -76,7 +80,11 @@ defmodule Dialectic.Responses.PromptBuilderTest do
 
       expected = """
       Instruction:
-      Compare "Type systems prevent runtime errors" and "Dynamic typing increases flexibility": name common ground and key tensions; propose a synthesis or clear scope boundary. Keep it concise; use bullets only to highlight trade‑offs.
+      Compare "Type systems prevent runtime errors" and "Dynamic typing increases flexibility". Length: ~120–180 words.
+      Use this structure:
+      ### Common ground — 2–3 bullets.
+      ### Tensions — 2–3 bullets (specific).
+      ### Synthesis / Scope boundary — one compact paragraph or 2–3 bullets with when‑to‑use‑which.
       """
 
       assert_same(expected, actual)
@@ -90,7 +98,11 @@ defmodule Dialectic.Responses.PromptBuilderTest do
 
       expected = """
       Instruction:
-      Make a brief, rigorous case for "Functional programming improves testability": state the claim, give compact reasoning, and add one short example if useful.
+      Make a brief, rigorous case for "Functional programming improves testability". Length: ~100–160 words.
+      Use this structure:
+      ### Claim — one sentence.
+      ### Reasoning — 3 bullets, each a distinct argument.
+      ### Example — 2–3 sentences.
       """
 
       assert_same(expected, actual)
@@ -104,7 +116,11 @@ defmodule Dialectic.Responses.PromptBuilderTest do
 
       expected = """
       Instruction:
-      Give a brief, rigorous critique of "Microservices are always better than monoliths": steelman the opposing view, state the core objection, and support it with compact reasoning and, if helpful, a short counterexample.
+      Critique "Microservices are always better than monoliths" rigorously. Length: ~120–180 words.
+      Use this structure:
+      ### Steelman — the best case for the claim.
+      ### Core objection — the key flaw or boundary.
+      ### Support / Counterexample — 2–4 sentences.
       """
 
       assert_same(expected, actual)
@@ -118,7 +134,7 @@ defmodule Dialectic.Responses.PromptBuilderTest do
 
       expected = """
       Instruction:
-      Suggest diverse, related concepts to explore next for "Event Sourcing in Distributed Systems". Return a concise bullet list; each bullet: concept — one‑sentence rationale or contrast.
+      Suggest diverse, related concepts to explore next for "Event Sourcing in Distributed Systems". Return 6–8 bullets; each bullet: Concept — one‑sentence rationale or contrast. Total ≤120 words.
       """
 
       assert_same(expected, actual)
@@ -132,7 +148,12 @@ defmodule Dialectic.Responses.PromptBuilderTest do
 
       expected = """
       Instruction:
-      Explain "Bayes' theorem" rigorously for an advanced learner: note assumptions and scope. Use 2–4 compact paragraphs; add brief caveats only if they clarify.
+      Explain "Bayes' theorem" rigorously for an advanced learner. Length: 2–4 compact paragraphs (~140–220 words).
+      Use this structure:
+      Paragraph 1: core definition and intuition.
+      Paragraph 2: formal relationship/mechanics.
+      Paragraph 3: Assumptions & Scope (explicit).
+      Optional: Brief Caveats if they reduce misuse.
       """
 
       assert_same(expected, actual)
