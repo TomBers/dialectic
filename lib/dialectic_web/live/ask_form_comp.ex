@@ -1,5 +1,6 @@
 defmodule DialecticWeb.AskFormComp do
   use DialecticWeb, :live_component
+  alias Dialectic.Responses.ModeServer
 
   @moduledoc """
   LiveComponent that renders the bottom ask/comment form used by GraphLive.
@@ -29,6 +30,11 @@ defmodule DialecticWeb.AskFormComp do
       |> assign_new(:submit_label, fn -> nil end)
       |> assign_new(:input_id, fn -> "global-chat-input" end)
       |> assign_new(:show_hint, fn -> true end)
+      |> assign_new(:prompt_mode, fn ->
+        gid = assigns[:graph_id]
+        mode = if is_binary(gid), do: ModeServer.get_mode(gid), else: :structured
+        Atom.to_string(mode)
+      end)
       |> then(fn s ->
         if Map.has_key?(assigns, :placeholder) and not is_nil(assigns[:placeholder]) do
           assign(s, :placeholder, assigns[:placeholder])
@@ -45,9 +51,71 @@ defmodule DialecticWeb.AskFormComp do
   end
 
   @impl true
+  def handle_event("cycle_prompt_mode", _params, socket) do
+    gid = socket.assigns[:graph_id]
+
+    if is_binary(gid) do
+      current = ModeServer.get_mode(gid)
+
+      next =
+        case current do
+          :structured -> :creative
+          _ -> :structured
+        end
+
+      :ok = ModeServer.set_mode(gid, next)
+
+      send_update(
+        DialecticWeb.RightPanelComp,
+        id: "right-panel-comp",
+        prompt_mode: Atom.to_string(next)
+      )
+
+      {:noreply, assign(socket, :prompt_mode, Atom.to_string(next))}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  @impl true
+  def handle_event("toggle_ask_question", _params, socket) do
+    {:noreply, assign(socket, :ask_question, !socket.assigns[:ask_question])}
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="w-full min-w-0">
+      <div class="flex items-center justify-between gap-2 mb-2">
+        <div class="flex items-center gap-1">
+          <button
+            type="button"
+            phx-click="toggle_ask_question"
+            phx-target={@myself}
+            class={"px-2 py-1 text-xs rounded-full " <> if @ask_question, do: "bg-blue-50 text-blue-600 border border-blue-200", else: "text-gray-600 hover:bg-gray-50 border border-transparent"}
+          >
+            Ask
+          </button>
+          <button
+            type="button"
+            phx-click="toggle_ask_question"
+            phx-target={@myself}
+            class={"px-2 py-1 text-xs rounded-full " <> if !@ask_question, do: "bg-emerald-50 text-emerald-600 border border-emerald-200", else: "text-gray-600 hover:bg-gray-50 border border-transparent"}
+          >
+            Comment
+          </button>
+        </div>
+        <button
+          type="button"
+          phx-click="cycle_prompt_mode"
+          phx-target={@myself}
+          class="bg-white border border-gray-300 text-gray-700 text-xs leading-none px-2 h-8 rounded-full hover:bg-gray-50"
+          title="Cycle LLM mode"
+        >
+          Mode: {String.capitalize(@prompt_mode || "structured")}
+        </button>
+      </div>
+
       <.form
         for={@form}
         phx-submit={@submit_event || if(@ask_question, do: "reply-and-answer", else: "answer")}
