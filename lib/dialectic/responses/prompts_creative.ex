@@ -84,8 +84,6 @@ defmodule Dialectic.Responses.PromptsCreative do
 
   @doc """
   Builds a prompt that applies a selection/instruction to the current context, with a freer tone.
-
-  If the selection text does not specify a format, a gentle creative guide is appended.
   """
   @spec selection(String.t(), String.t()) :: String.t()
   def selection(context, selection) do
@@ -101,21 +99,7 @@ defmodule Dialectic.Responses.PromptsCreative do
 
     @style <>
       "\n\n" <>
-      if needs_default_selection_schema?(selection) do
-        base <>
-          """
-
-          Suggested shape (feel free to adapt):
-          ## [An inviting heading that names the gist]
-          - Paraphrase in your own words (2–3 sentences).
-          - What matters here: 2–4 bullets surfacing claims, assumptions, and implications.
-          - One alternative angle or tension to keep in mind.
-
-          Close with one playful next step (a question, mini-experiment, or example to find).
-          """
-      else
-        base
-      end
+      base
   end
 
   @doc """
@@ -237,33 +221,5 @@ defmodule Dialectic.Responses.PromptsCreative do
       - Connections: 2–4 bullets (neighboring ideas, methods, pitfalls).
       - (Optional) Micro-story/example/thought experiment.
       """
-  end
-
-  @doc """
-  Extracts a concise title from a content block, mirroring the behavior in Prompts.
-  """
-  @spec extract_title(String.t() | nil) :: String.t()
-  def extract_title(content) do
-    content_str =
-      case content do
-        nil -> ""
-        other -> to_string(other)
-      end
-
-    content1 = String.replace(content_str, "**", "")
-    content2 = Regex.replace(~r/^Title:\s*/i, content1, "")
-    first_line = content2 |> String.split("\n") |> Enum.at(0) |> to_string()
-    stripped = Regex.replace(~r/^\s*[#]{1,6}\s*/, first_line, "")
-    String.trim(stripped)
-  end
-
-  # -- Private helpers --------------------------------------------------------
-
-  @spec needs_default_selection_schema?(String.t()) :: boolean()
-  defp needs_default_selection_schema?(selection) do
-    not Regex.match?(
-      ~r/(^|\n)Output\s*\(|(^|\n)##\s|(^|\n)###\s|Return only|Headings?:|Subsections?:/im,
-      selection
-    )
   end
 end

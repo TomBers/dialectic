@@ -85,8 +85,7 @@ defmodule Dialectic.Responses.PromptsStructured do
   @doc """
   Builds a prompt that applies a selection/instruction to the current context.
 
-  If the selection text does not specify an output schema (headings or “Output (...)”),
-  a default schema is appended automatically.
+
 
   Parameters:
   - context: Text block describing the current node’s context.
@@ -94,8 +93,6 @@ defmodule Dialectic.Responses.PromptsStructured do
   """
   @spec selection(String.t(), String.t()) :: String.t()
   def selection(context, selection) do
-    add_default? = needs_default_selection_schema?(selection)
-
     base = """
     Inputs: #{context}, #{selection}
     If no selection is provided: state that and ask for it (one sentence at end).
@@ -113,13 +110,7 @@ defmodule Dialectic.Responses.PromptsStructured do
     - 1–2 follow-up questions.
     """
 
-    @style <>
-      "\n\n" <>
-      if add_default? do
-        base <> "\n\n" <> default_selection_schema()
-      else
-        base
-      end
+    @style <> "\n\n" <> base
   end
 
   @doc """
@@ -232,27 +223,6 @@ defmodule Dialectic.Responses.PromptsStructured do
   end
 
   @doc """
-  Extracts a concise title from a content block by removing bold markers, an optional
-  leading 'Title:' tag, markdown heading markers, and trimming whitespace. Uses only pure String/Regex ops.
-
-  This mirrors the existing title-extraction behavior used for related-ideas prompts.
-  """
-  @spec extract_title(String.t() | nil) :: String.t()
-  def extract_title(content) do
-    content_str =
-      case content do
-        nil -> ""
-        other -> to_string(other)
-      end
-
-    content1 = String.replace(content_str, "**", "")
-    content2 = Regex.replace(~r/^Title:\s*/i, content1, "")
-    first_line = content2 |> String.split("\n") |> Enum.at(0) |> to_string()
-    stripped = Regex.replace(~r/^\s*[#]{1,6}\s*/, first_line, "")
-    String.trim(stripped)
-  end
-
-  @doc """
   Builds a prompt for a rigorous deep dive aimed at advanced learners.
 
   Parameters:
@@ -273,35 +243,5 @@ defmodule Dialectic.Responses.PromptsStructured do
       - Core explanation (1–2 short paragraphs): mechanism, key assumptions, applicability.
       - (Optional) Nuance: 1–2 bullets with caveats/edge cases.
       """
-  end
-
-  # -- Private helpers --------------------------------------------------------
-
-  @spec needs_default_selection_schema?(String.t()) :: boolean()
-  defp needs_default_selection_schema?(selection) do
-    not Regex.match?(
-      ~r/(^|\n)Output\s*\(|(^|\n)##\s|(^|\n)###\s|Return only|Headings?:|Subsections?:/im,
-      selection
-    )
-  end
-
-  @spec default_selection_schema() :: String.t()
-  defp default_selection_schema do
-    """
-    Output (markdown):
-    ## [Short, descriptive title]
-    - Paraphrase (1–2 sentences) of the selection in your own words.
-
-    ### Why it matters here
-    - Claims and evidence (2–3 bullets).
-    - Assumptions/definitions you’re relying on (1–2 bullets).
-    - Implications for the current context (1–2 bullets).
-    - Limitations or alternative readings (1–2 bullets).
-
-    ### Next steps
-    - Follow‑up questions (1–2).
-
-    Constraints: ~180–260 words.
-    """
   end
 end
