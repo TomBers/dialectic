@@ -6,7 +6,6 @@ defmodule Dialectic.Responses.LlmInterface do
 
     prompt =
       Prompts.explain(context, node.content)
-      |> Prompts.wrap_with_style()
 
     ask_model(prompt, child, graph_id, live_view_topic)
   end
@@ -16,7 +15,6 @@ defmodule Dialectic.Responses.LlmInterface do
 
     prompt =
       Prompts.selection(context, selection)
-      |> Prompts.wrap_with_style()
 
     ask_model(prompt, child, graph_id, live_view_topic)
   end
@@ -28,7 +26,6 @@ defmodule Dialectic.Responses.LlmInterface do
 
     prompt =
       Prompts.synthesis(context1, context2, n1.content, n2.content)
-      |> Prompts.wrap_with_style()
 
     ask_model(prompt, child, graph_id, live_view_topic)
   end
@@ -38,7 +35,6 @@ defmodule Dialectic.Responses.LlmInterface do
 
     prompt =
       Prompts.thesis(context, node.content)
-      |> Prompts.wrap_with_style()
 
     ask_model(prompt, child, graph_id, live_view_topic)
   end
@@ -48,7 +44,6 @@ defmodule Dialectic.Responses.LlmInterface do
 
     prompt =
       Prompts.antithesis(context, node.content)
-      |> Prompts.wrap_with_style()
 
     ask_model(prompt, child, graph_id, live_view_topic)
   end
@@ -67,7 +62,6 @@ defmodule Dialectic.Responses.LlmInterface do
 
     prompt =
       Prompts.related_ideas(context, title)
-      |> Prompts.wrap_with_style()
 
     ask_model(prompt, child, graph_id, live_view_topic)
   end
@@ -77,7 +71,6 @@ defmodule Dialectic.Responses.LlmInterface do
 
     prompt =
       Prompts.deep_dive(context, node.content)
-      |> Prompts.wrap_with_style()
 
     ask_model(prompt, child, graph_id, live_view_topic)
   end

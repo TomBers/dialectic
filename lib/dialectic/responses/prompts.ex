@@ -7,7 +7,7 @@ defmodule Dialectic.Responses.Prompts do
   unit tests against the exact strings that will be sent to a model.
 
   Typical usage in calling code:
-    question = Prompts.explain(context, topic) |> Prompts.wrap_with_style()
+    question = Prompts.explain(context, topic)
     # ...send `question` to your queue / LLM client
 
   You can also unit test each function directly by asserting on the returned strings.
@@ -25,20 +25,6 @@ defmodule Dialectic.Responses.Prompts do
   """
 
   @doc """
-  Returns the global “style” preamble used to guide the LLM’s tone and format.
-  """
-  @spec style() :: String.t()
-  def style, do: @style
-
-  @doc """
-  Prepends the global style preamble to the given prompt/question.
-
-  This mirrors how prompts are sent today: `style <> "\\n\\n" <> question`.
-  """
-  @spec wrap_with_style(String.t()) :: String.t()
-  def wrap_with_style(question), do: @style <> "\n\n" <> question
-
-  @doc """
   Builds a prompt that explains a single topic for a first-time learner.
 
   Parameters:
@@ -47,27 +33,29 @@ defmodule Dialectic.Responses.Prompts do
   """
   @spec explain(String.t(), String.t()) :: String.t()
   def explain(context, topic) do
-    """
-    Context:
-    #{context}
+    @style <>
+      "\n\n" <>
+      """
+      Context:
+      #{context}
 
-    Task: Teach a first‑time learner aiming for a university‑level understanding of: "#{topic}"
+      Task: Teach a first‑time learner aiming for a university‑level understanding of: "#{topic}"
 
-    Output (markdown):
-    ## [Short, descriptive title]
-    - Short answer (2–3 sentences) giving the core idea and why it matters.
+      Output (markdown):
+      ## [Short, descriptive title]
+      - Short answer (2–3 sentences) giving the core idea and why it matters.
 
-    ### Deep dive
-    - Foundations (optional): 1 short paragraph defining key terms and assumptions.
-    - Core explanation (freeform): 1–2 short paragraphs weaving the main mechanism and intuition.
+      ### Deep dive
+      - Foundations (optional): 1 short paragraph defining key terms and assumptions.
+      - Core explanation (freeform): 1–2 short paragraphs weaving the main mechanism and intuition.
 
-    - Nuances: 2–3 bullets on pitfalls, edge cases, or common confusions; include one contrast with a neighboring idea.
+      - Nuances: 2–3 bullets on pitfalls, edge cases, or common confusions; include one contrast with a neighboring idea.
 
-    ### Next steps
-    - Next questions to explore (1–2).
+      ### Next steps
+      - Next questions to explore (1–2).
 
-    Constraints: Aim for depth over breadth; ~220–320 words.
-    """
+      Constraints: Aim for depth over breadth; ~220–320 words.
+      """
   end
 
   @doc """
@@ -94,11 +82,13 @@ defmodule Dialectic.Responses.Prompts do
     Audience: first-time learner aiming for university-level understanding.
     """
 
-    if add_default? do
-      base <> "\n\n" <> default_selection_schema()
-    else
-      base
-    end
+    @style <>
+      "\n\n" <>
+      if add_default? do
+        base <> "\n\n" <> default_selection_schema()
+      else
+        base
+      end
   end
 
   @doc """
@@ -112,29 +102,31 @@ defmodule Dialectic.Responses.Prompts do
   """
   @spec synthesis(String.t(), String.t(), String.t(), String.t()) :: String.t()
   def synthesis(context1, context2, pos1, pos2) do
-    """
-    Context of first argument:
-    #{context1}
+    @style <>
+      "\n\n" <>
+      """
+      Context of first argument:
+      #{context1}
 
-    Context of second argument:
-    #{context2}
+      Context of second argument:
+      #{context2}
 
-    Task: Synthesize the positions in "#{pos1}" and "#{pos2}" for a first-time learner aiming for university-level understanding.
+      Task: Synthesize the positions in "#{pos1}" and "#{pos2}" for a first-time learner aiming for university-level understanding.
 
-    Output (markdown):
-    ## [Short, descriptive title]
-    - Short summary (1–2 sentences) of the relationship between the two positions.
+      Output (markdown):
+      ## [Short, descriptive title]
+      - Short summary (1–2 sentences) of the relationship between the two positions.
 
-    ### Deep dive
-    - Narrative analysis: 1–2 short paragraphs integrating common ground and the key tensions; make explicit the assumptions driving disagreement.
-    - Bridge or delineation: 1 short paragraph proposing a synthesis or clarifying scope; add a testable prediction if helpful.
-    - When each view is stronger and remaining trade‑offs: 2–3 concise bullets.
+      ### Deep dive
+      - Narrative analysis: 1–2 short paragraphs integrating common ground and the key tensions; make explicit the assumptions driving disagreement.
+      - Bridge or delineation: 1 short paragraph proposing a synthesis or clarifying scope; add a testable prediction if helpful.
+      - When each view is stronger and remaining trade‑offs: 2–3 concise bullets.
 
-    ### Next steps
-    - One concrete next step to test or explore.
+      ### Next steps
+      - One concrete next step to test or explore.
 
-    Constraints: ~220–320 words. If reconciliation is not possible, state the trade‑offs clearly.
-    """
+      Constraints: ~220–320 words. If reconciliation is not possible, state the trade‑offs clearly.
+      """
   end
 
   @doc """
@@ -146,22 +138,24 @@ defmodule Dialectic.Responses.Prompts do
   """
   @spec thesis(String.t(), String.t()) :: String.t()
   def thesis(context, claim) do
-    """
-    Context:
-    #{context}
+    @style <>
+      "\n\n" <>
+      """
+      Context:
+      #{context}
 
-    Write a short, beginner-friendly but rigorous argument in support of: "#{claim}"
+      Write a short, beginner-friendly but rigorous argument in support of: "#{claim}"
 
-    Output (markdown):
-    ## [Title of the pro argument]
-    - Claim (1 sentence).
-    - Narrative reasoning (freeform): 1–2 short paragraphs weaving mechanism and intuition.
-    - Illustrative example or evidence (1–2 lines).
-    - Assumptions and limits (1 line) plus a falsifiable prediction.
-    - When this holds vs. when it might not (1 line).
+      Output (markdown):
+      ## [Title of the pro argument]
+      - Claim (1 sentence).
+      - Narrative reasoning (freeform): 1–2 short paragraphs weaving mechanism and intuition.
+      - Illustrative example or evidence (1–2 lines).
+      - Assumptions and limits (1 line) plus a falsifiable prediction.
+      - When this holds vs. when it might not (1 line).
 
-    Constraints: 150–200 words.
-    """
+      Constraints: 150–200 words.
+      """
   end
 
   @doc """
@@ -174,23 +168,25 @@ defmodule Dialectic.Responses.Prompts do
   """
   @spec antithesis(String.t(), String.t()) :: String.t()
   def antithesis(context, claim) do
-    """
-    Context:
-    #{context}
+    @style <>
+      "\n\n" <>
+      """
+      Context:
+      #{context}
 
-    Write a short, beginner-friendly but rigorous argument against: "#{claim}"
-    Steelman the opposing view (represent the strongest version fairly).
+      Write a short, beginner-friendly but rigorous argument against: "#{claim}"
+      Steelman the opposing view (represent the strongest version fairly).
 
-    Output (markdown):
-    ## [Title of the con argument]
-    - Central critique (1 sentence).
-    - Narrative reasoning (freeform): 1–2 short paragraphs laying out the critique.
-    - Illustrative counterexample or evidence (1–2 lines).
-    - Scope and limits (1 line) plus a falsifiable prediction that would weaken this critique.
-    - When this criticism applies vs. when it might not (1 line).
+      Output (markdown):
+      ## [Title of the con argument]
+      - Central critique (1 sentence).
+      - Narrative reasoning (freeform): 1–2 short paragraphs laying out the critique.
+      - Illustrative counterexample or evidence (1–2 lines).
+      - Scope and limits (1 line) plus a falsifiable prediction that would weaken this critique.
+      - When this criticism applies vs. when it might not (1 line).
 
-    Constraints: 150–200 words.
-    """
+      Constraints: 150–200 words.
+      """
   end
 
   @doc """
@@ -202,30 +198,32 @@ defmodule Dialectic.Responses.Prompts do
   """
   @spec related_ideas(String.t(), String.t()) :: String.t()
   def related_ideas(context, current_idea_title) do
-    """
-    Context:
-    #{context}
+    @style <>
+      "\n\n" <>
+      """
+      Context:
+      #{context}
 
-    Generate a beginner-friendly list of related but distinct concepts to explore.
+      Generate a beginner-friendly list of related but distinct concepts to explore.
 
-    Current idea: "#{current_idea_title}"
+      Current idea: "#{current_idea_title}"
 
-    Requirements:
-    - Do not repeat or restate the current idea; prioritize diversity and contrasting schools of thought.
-    - Include at least one explicitly contrasting perspective (for example, if the topic is behaviourism, include psychodynamics).
-    - Audience: first-time learner.
+      Requirements:
+      - Do not repeat or restate the current idea; prioritize diversity and contrasting schools of thought.
+      - Include at least one explicitly contrasting perspective (for example, if the topic is behaviourism, include psychodynamics).
+      - Audience: first-time learner.
 
-    Output (markdown only; return only the list):
-    - Create 3 short subsections with H3 headings:
-      ### Different/contrasting approaches
-      ### Adjacent concepts
-      ### Practical applications
-    - Under each heading, list 3–4 bullets.
-    - Each bullet: Concept — 1 sentence on why it’s relevant and how it differs; add one named method/author or canonical example if relevant.
-    - Use plain language and avoid jargon.
+      Output (markdown only; return only the list):
+      - Create 3 short subsections with H3 headings:
+        ### Different/contrasting approaches
+        ### Adjacent concepts
+        ### Practical applications
+      - Under each heading, list 3–4 bullets.
+      - Each bullet: Concept — 1 sentence on why it’s relevant and how it differs; add one named method/author or canonical example if relevant.
+      - Use plain language and avoid jargon.
 
-    Return only the headings and bullets; no intro or outro.
-    """
+      Return only the headings and bullets; no intro or outro.
+      """
   end
 
   @doc """
@@ -258,23 +256,25 @@ defmodule Dialectic.Responses.Prompts do
   """
   @spec deep_dive(String.t(), String.t()) :: String.t()
   def deep_dive(context, topic) do
-    """
-    Context:
-    #{context}
+    @style <>
+      "\n\n" <>
+      """
+      Context:
+      #{context}
 
-    Task: Produce a rigorous, detailed deep dive into "#{topic}" for an advanced learner progressing toward research-level understanding.
+      Task: Produce a rigorous, detailed deep dive into "#{topic}" for an advanced learner progressing toward research-level understanding.
 
-    Output (markdown):
-    ## [Precise title]
-    - One-sentence statement of what the concept is and when it applies.
+      Output (markdown):
+      ## [Precise title]
+      - One-sentence statement of what the concept is and when it applies.
 
-    ### Deep dive
-    - Core explanation (freeform): 1–2 short paragraphs tracing the main mechanism, key assumptions, and when it applies.
+      ### Deep dive
+      - Core explanation (freeform): 1–2 short paragraphs tracing the main mechanism, key assumptions, and when it applies.
 
-    - Optional nuance: 1–2 bullets on caveats or edge cases, only if it clarifies usage.
+      - Optional nuance: 1–2 bullets on caveats or edge cases, only if it clarifies usage.
 
-    Constraints: Aim for clarity and concision; ~280–420 words.
-    """
+      Constraints: Aim for clarity and concision; ~280–420 words.
+      """
   end
 
   # -- Private helpers --------------------------------------------------------

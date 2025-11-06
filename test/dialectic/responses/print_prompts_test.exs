@@ -2,7 +2,7 @@ defmodule Dialectic.Responses.PrintPromptsTest do
   use ExUnit.Case, async: false
 
   @moduledoc """
-  Console-printing test for visually inspecting all LLM prompts (with style preamble).
+  Console-printing test for visually inspecting all LLM prompts.
 
   Run:
     mix test test/dialectic/responses/print_prompts_test.exs
@@ -33,7 +33,7 @@ defmodule Dialectic.Responses.PrintPromptsTest do
     say(prompt)
   end
 
-  test "print all prompt variants with style preamble" do
+  test "print all prompt variants" do
     context_a = "Context A: prior notes, quotes, and references related to the current node."
 
     context_b =
@@ -57,43 +57,35 @@ defmodule Dialectic.Responses.PrintPromptsTest do
 
     explain =
       Prompts.explain(context_a, topic)
-      |> Prompts.wrap_with_style()
 
     sel_default =
       Prompts.selection(context_a, selection_text)
-      |> Prompts.wrap_with_style()
 
     sel_custom =
       Prompts.selection(context_a, selection_with_headings)
-      |> Prompts.wrap_with_style()
 
     synth =
       Prompts.synthesis(context_a, context_b, pos1, pos2)
-      |> Prompts.wrap_with_style()
 
     thesis =
       Prompts.thesis(
         context_a,
         "Stochastic policies tend to generalize better in high-variance environments"
       )
-      |> Prompts.wrap_with_style()
 
     antithesis =
       Prompts.antithesis(
         context_a,
         "Off-policy methods are always superior to on-policy approaches"
       )
-      |> Prompts.wrap_with_style()
 
     related =
       Prompts.related_ideas(context_a, "Temporal difference learning")
-      |> Prompts.wrap_with_style()
 
     deep =
       Prompts.deep_dive(context_a, "Policy gradient theorem")
-      |> Prompts.wrap_with_style()
 
-    say("\nLLM Prompt Catalog (with style preamble)")
+    say("\nLLM Prompt Catalog")
 
     print_prompt("Explain", explain)
     print_prompt("Selection (default schema applied)", sel_default)

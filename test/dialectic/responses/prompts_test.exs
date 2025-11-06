@@ -9,22 +9,10 @@ defmodule Dialectic.Responses.PromptsTest do
     {:ok, context: context, topic: topic}
   end
 
-  test "style/0 returns a non-empty preamble with expected guidance" do
-    s = Prompts.style()
-    assert is_binary(s)
-    assert s =~ "You are teaching a curious beginner"
-    assert s =~ "Default to markdown and an H2 title"
-  end
-
-  test "wrap_with_style/1 concatenates style and question" do
-    q = "Q?"
-    wrapped = Prompts.wrap_with_style(q)
-    assert wrapped == Prompts.style() <> "\n\n" <> q
-  end
-
   describe "explain/2" do
     test "formats core sections and interpolates topic", %{context: c, topic: t} do
       prompt = Prompts.explain(c, t)
+      assert prompt =~ "You are teaching a curious beginner"
       assert prompt =~ "Context:\n" <> c
 
       assert prompt =~
