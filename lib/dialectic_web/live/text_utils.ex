@@ -88,6 +88,10 @@ defmodule DialecticWeb.Live.TextUtils do
     |> String.replace(@title_regex, "")
   end
 
+  defp rreplace(s, regex, replacement) do
+    Regex.replace(regex, s, replacement)
+  end
+
   @doc """
   Processes content for display in labels (e.g., node titles), mirroring the
   logic in assets/js/graph_style.js processNodeContent:
@@ -175,13 +179,13 @@ defmodule DialecticWeb.Live.TextUtils do
     |> String.replace("\r\n", "\n")
     |> String.replace("\r", "\n")
     # ensure newline before headings that were glued to previous sentence
-    |> Regex.replace(~r/([^\n])\s*(\#{1,6}\s+)/, "\\1\n\\2")
+    |> rreplace(~r/([^\n])\s*(\#{1,6}\s+)/, "\\1\n\\2")
     # trim trailing whitespace per line
-    |> Regex.replace(~r/[ \t]+\n/, "\n")
+    |> rreplace(~r/[ \t]+\n/, "\n")
     # add missing space after heading markers
-    |> Regex.replace(~r/^(\#{1,6})([^\s#])/m, "\\1 \\2")
+    |> rreplace(~r/^(\#{1,6})([^\s#])/m, "\\1 \\2")
     # collapse excessive blank lines
-    |> Regex.replace(~r/\n{3,}/, "\n\n")
+    |> rreplace(~r/\n{3,}/, "\n\n")
     |> String.trim()
   end
 end
