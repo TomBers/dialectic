@@ -763,8 +763,7 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_info({:llm_request_complete, node_id}, socket) do
-    # Finalize markdown for the node before broadcasting/render update
-    GraphManager.finalize_node_content(socket.assigns.graph_id, node_id)
+    # Workers already finalize node content; proceed to broadcast update
     # Broadcast new node to all connected users
     PubSub.broadcast(
       Dialectic.PubSub,
