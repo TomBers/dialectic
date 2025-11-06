@@ -1,4 +1,4 @@
-defmodule Dialectic.Responses.Prompts do
+defmodule Dialectic.Responses.PromptsStructured do
   @moduledoc """
   Pure prompt builders for LLM interactions.
 

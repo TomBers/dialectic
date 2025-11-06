@@ -78,7 +78,7 @@ defmodule Dialectic.Responses.LlmInterface do
   defp prompts_for(graph_id) do
     case Mode.get_mode(graph_id) do
       :creative -> PromptsCreative
-      _ -> Prompts
+      _ -> PromptsStructured
     end
   end
 

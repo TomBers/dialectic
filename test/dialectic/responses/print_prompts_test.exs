@@ -2,7 +2,7 @@ defmodule Dialectic.Responses.PrintPromptsTest do
   use ExUnit.Case, async: false
 
   @moduledoc """
-  Console-printing test for visually inspecting all LLM prompts.
+  Console-printing test for visually inspecting all LLM PromptsStructured.
 
   Run:
     mix test test/dialectic/responses/print_prompts_test.exs
@@ -13,7 +13,7 @@ defmodule Dialectic.Responses.PrintPromptsTest do
   - No assertions are made; it simply outputs each prompt variant.
   """
 
-  alias Dialectic.Responses.{Prompts, PromptsCreative}
+  alias Dialectic.Responses.{PromptsStructured, PromptsCreative}
 
   defp io_device do
     # Ensure we bypass ExUnit's IO capture
@@ -56,34 +56,34 @@ defmodule Dialectic.Responses.PrintPromptsTest do
     pos2 = "Convergence guarantees for value-based methods"
 
     explain =
-      Prompts.explain(context_a, topic)
+      PromptsStructured.explain(context_a, topic)
 
     sel_default =
-      Prompts.selection(context_a, selection_text)
+      PromptsStructured.selection(context_a, selection_text)
 
     sel_custom =
-      Prompts.selection(context_a, selection_with_headings)
+      PromptsStructured.selection(context_a, selection_with_headings)
 
     synth =
-      Prompts.synthesis(context_a, context_b, pos1, pos2)
+      PromptsStructured.synthesis(context_a, context_b, pos1, pos2)
 
     thesis =
-      Prompts.thesis(
+      PromptsStructured.thesis(
         context_a,
         "Stochastic policies tend to generalize better in high-variance environments"
       )
 
     antithesis =
-      Prompts.antithesis(
+      PromptsStructured.antithesis(
         context_a,
         "Off-policy methods are always superior to on-policy approaches"
       )
 
     related =
-      Prompts.related_ideas(context_a, "Temporal difference learning")
+      PromptsStructured.related_ideas(context_a, "Temporal difference learning")
 
     deep =
-      Prompts.deep_dive(context_a, "Policy gradient theorem")
+      PromptsStructured.deep_dive(context_a, "Policy gradient theorem")
 
     say("\nLLM Prompt Catalog")
 
