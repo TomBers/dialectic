@@ -1,5 +1,5 @@
 defmodule Dialectic.Responses.LlmInterface do
-  alias Dialectic.Responses.{RequestQueue, PromptsStructured, PromptsCreative, Mode}
+  alias Dialectic.Responses.{RequestQueue, PromptsStructured, PromptsCreative, ModeServer}
 
   def gen_response(node, child, graph_id, live_view_topic) do
     context = GraphManager.build_context(graph_id, node)
@@ -67,7 +67,7 @@ defmodule Dialectic.Responses.LlmInterface do
   end
 
   defp prompts_for(graph_id) do
-    case Mode.get_mode(graph_id) do
+    case ModeServer.get_mode(graph_id) do
       :creative -> PromptsCreative
       _ -> PromptsStructured
     end

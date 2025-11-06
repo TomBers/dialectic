@@ -7,7 +7,6 @@ defmodule DialecticWeb.GraphLive do
   alias Dialectic.DbActions.Graphs
   alias DialecticWeb.Utils.UserUtils
 
-  alias Dialectic.Responses.Mode
   alias Phoenix.PubSub
 
   require Logger
@@ -126,7 +125,7 @@ defmodule DialecticWeb.GraphLive do
                 explore_selected: [],
                 show_start_stream_modal: false,
                 work_streams: list_streams(graph),
-                prompt_mode: Atom.to_string(Mode.get_mode(graph_id))
+                prompt_mode: Atom.to_string(Dialectic.Responses.ModeServer.get_mode(graph_id))
               )
 
             ask_param = Map.get(params, "ask")
@@ -225,7 +224,7 @@ defmodule DialecticWeb.GraphLive do
       end
 
     if is_binary(graph_id) do
-      _ = Mode.set_mode(graph_id, normalized)
+      _ = Dialectic.Responses.ModeServer.set_mode(graph_id, normalized)
     end
 
     mode_str = Atom.to_string(normalized)
@@ -1061,7 +1060,8 @@ defmodule DialecticWeb.GraphLive do
         nav_can_left: nav_left,
         nav_can_right: nav_right,
         work_streams: list_streams(graph),
-        prompt_mode: Atom.to_string(Mode.get_mode(socket.assigns.graph_id))
+        prompt_mode:
+          Atom.to_string(Dialectic.Responses.ModeServer.get_mode(socket.assigns.graph_id))
       )
       |> then(fn s ->
         # Close the start stream modal if applicable

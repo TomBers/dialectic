@@ -16,6 +16,7 @@ defmodule Dialectic.Application do
       # Start the Finch HTTP client for sending emails
       {Finch, name: Dialectic.Finch},
       DialecticWeb.Presence,
+      {Dialectic.Responses.ModeServer, []},
       {DynamicSupervisor, name: GraphSupervisor},
       # Start a worker by calling: Dialectic.Worker.start_link(arg)
       # {Dialectic.Worker, arg},
