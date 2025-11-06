@@ -145,25 +145,6 @@ defmodule DialecticWeb.Live.TextUtils do
   end
 
   @doc """
-  Normalize a streamed content fragment to avoid mid-line Markdown heading markers
-  being glued to previous tokens during streaming.
-  strategy:
-  - :newline (default) inserts a newline before ##/###... so they render as headings
-  - :space inserts a space instead, keeping them inline text
-  """
-  def normalize_stream_fragment(text, strategy \\ :newline) do
-    s = to_string(text)
-
-    case strategy do
-      :space ->
-        Regex.replace(~r/([^\n])(\#{1,6}\s+)/, s, "\\1 \\2")
-
-      _ ->
-        Regex.replace(~r/([^\n])(\#{1,6}\s+)/, s, "\\1\n\\2")
-    end
-  end
-
-  @doc """
   Finalize a completed Markdown string by:
   - ensuring headings (##, ###, etc.) start on their own line
   - removing trailing spaces
@@ -179,7 +160,7 @@ defmodule DialecticWeb.Live.TextUtils do
     |> String.replace("\r\n", "\n")
     |> String.replace("\r", "\n")
     # ensure newline before headings that were glued to previous sentence
-    |> rreplace(~r/([^\n])\s*(\#{1,6}\s+)/, "\\1\n\\2")
+    |> rreplace(~r/([^\n#])\s*(\#{1,6})(?=\s)/, "\\1\n\\2")
     # trim trailing whitespace per line
     |> rreplace(~r/[ \t]+\n/, "\n")
     # add missing space after heading markers
