@@ -162,6 +162,7 @@ defmodule Dialectic.Workers.OpenAIWorker do
       {:ok, _response} ->
         Logger.info("OpenAI request completed successfully")
 
+        GraphManager.finalize_node_content(graph, to_node)
         DbWorker.save_graph(graph, false)
 
         Phoenix.PubSub.broadcast(

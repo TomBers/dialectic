@@ -158,4 +158,30 @@ defmodule DialecticWeb.Live.TextUtils do
         Regex.replace(~r/([^\n])(\#{1,6}\s+)/, s, "\\1\n\\2")
     end
   end
+
+  @doc """
+  Finalize a completed Markdown string by:
+  - ensuring headings (##, ###, etc.) start on their own line
+  - removing trailing spaces
+  - collapsing 3+ consecutive newlines to 2
+  - normalizing CRLF to LF
+  - adding a space after hash heading markers when missing (e.g., "##Title" -> "## Title")
+
+  Intended to be called once when the LLM stream is complete, before persisting.
+  """
+  def finalize_markdown(text) do
+    text
+    |> to_string()
+    |> String.replace("\r\n", "\n")
+    |> String.replace("\r", "\n")
+    # ensure newline before headings that were glued to previous sentence
+    |> Regex.replace(~r/([^\n])\s*(\#{1,6}\s+)/, "\\1\n\\2")
+    # trim trailing whitespace per line
+    |> Regex.replace(~r/[ \t]+\n/, "\n")
+    # add missing space after heading markers
+    |> Regex.replace(~r/^(\#{1,6})([^\s#])/m, "\\1 \\2")
+    # collapse excessive blank lines
+    |> Regex.replace(~r/\n{3,}/, "\n\n")
+    |> String.trim()
+  end
 end

@@ -89,6 +89,7 @@ defmodule Dialectic.Workers.BaseAPIWorker do
       {:ok, response} ->
         Logger.info("Base Worker Request completed successfully")
 
+        GraphManager.finalize_node_content(graph, to_node)
         DbWorker.save_graph(graph, false)
 
         Phoenix.PubSub.broadcast(
