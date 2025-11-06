@@ -13,7 +13,7 @@ defmodule Dialectic.Responses.PrintPromptsTest do
   - No assertions are made; it simply outputs each prompt variant.
   """
 
-  alias Dialectic.Responses.Prompts
+  alias Dialectic.Responses.{Prompts, PromptsCreative}
 
   defp io_device do
     # Ensure we bypass ExUnit's IO capture
@@ -87,14 +87,62 @@ defmodule Dialectic.Responses.PrintPromptsTest do
 
     say("\nLLM Prompt Catalog")
 
-    print_prompt("Explain", explain)
-    print_prompt("Selection (default schema applied)", sel_default)
-    print_prompt("Selection (custom headings provided)", sel_custom)
-    print_prompt("Synthesis", synth)
-    print_prompt("Thesis", thesis)
-    print_prompt("Antithesis", antithesis)
-    print_prompt("Related ideas", related)
-    print_prompt("Deep dive", deep)
+    print_prompt("Structured — Explain", explain)
+    print_prompt("Creative — Explain", PromptsCreative.explain(context_a, topic))
+    print_prompt("Structured — Selection (default schema applied)", sel_default)
+
+    print_prompt(
+      "Creative — Selection (default schema applied)",
+      PromptsCreative.selection(context_a, selection_text)
+    )
+
+    print_prompt("Structured — Selection (custom headings provided)", sel_custom)
+
+    print_prompt(
+      "Creative — Selection (custom headings provided)",
+      PromptsCreative.selection(context_a, selection_with_headings)
+    )
+
+    print_prompt("Structured — Synthesis", synth)
+
+    print_prompt(
+      "Creative — Synthesis",
+      PromptsCreative.synthesis(context_a, context_b, pos1, pos2)
+    )
+
+    print_prompt("Structured — Thesis", thesis)
+
+    print_prompt(
+      "Creative — Thesis",
+      PromptsCreative.thesis(
+        context_a,
+        "Stochastic policies tend to generalize better in high-variance environments"
+      )
+    )
+
+    print_prompt("Structured — Antithesis", antithesis)
+
+    print_prompt(
+      "Creative — Antithesis",
+      PromptsCreative.antithesis(
+        context_a,
+        "Off-policy methods are always superior to on-policy approaches"
+      )
+    )
+
+    print_prompt("Structured — Related ideas", related)
+
+    print_prompt(
+      "Creative — Related ideas",
+      PromptsCreative.related_ideas(context_a, "Temporal difference learning")
+    )
+
+    print_prompt("Structured — Deep dive", deep)
+
+    print_prompt(
+      "Creative — Deep dive",
+      PromptsCreative.deep_dive(context_a, "Policy gradient theorem")
+    )
 
     :ok
   end

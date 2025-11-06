@@ -1,11 +1,11 @@
 defmodule Dialectic.Responses.LlmInterface do
-  alias Dialectic.Responses.{RequestQueue, Prompts}
+  alias Dialectic.Responses.{RequestQueue, Prompts, PromptsCreative, Mode}
 
   def gen_response(node, child, graph_id, live_view_topic) do
     context = GraphManager.build_context(graph_id, node)
 
     prompt =
-      Prompts.explain(context, node.content)
+      prompts_for(graph_id).explain(context, node.content)
 
     ask_model(prompt, child, graph_id, live_view_topic)
   end
@@ -14,7 +14,7 @@ defmodule Dialectic.Responses.LlmInterface do
     context = GraphManager.build_context(graph_id, node)
 
     prompt =
-      Prompts.selection(context, selection)
+      prompts_for(graph_id).selection(context, selection)
 
     ask_model(prompt, child, graph_id, live_view_topic)
   end
@@ -25,7 +25,7 @@ defmodule Dialectic.Responses.LlmInterface do
     context2 = GraphManager.build_context(graph_id, n2)
 
     prompt =
-      Prompts.synthesis(context1, context2, n1.content, n2.content)
+      prompts_for(graph_id).synthesis(context1, context2, n1.content, n2.content)
 
     ask_model(prompt, child, graph_id, live_view_topic)
   end
@@ -34,7 +34,7 @@ defmodule Dialectic.Responses.LlmInterface do
     context = GraphManager.build_context(graph_id, node)
 
     prompt =
-      Prompts.thesis(context, node.content)
+      prompts_for(graph_id).thesis(context, node.content)
 
     ask_model(prompt, child, graph_id, live_view_topic)
   end
@@ -43,7 +43,7 @@ defmodule Dialectic.Responses.LlmInterface do
     context = GraphManager.build_context(graph_id, node)
 
     prompt =
-      Prompts.antithesis(context, node.content)
+      prompts_for(graph_id).antithesis(context, node.content)
 
     ask_model(prompt, child, graph_id, live_view_topic)
   end
@@ -58,10 +58,10 @@ defmodule Dialectic.Responses.LlmInterface do
         n -> to_string(n.content || "")
       end
 
-    title = Prompts.extract_title(content)
+    title = prompts_for(graph_id).extract_title(content)
 
     prompt =
-      Prompts.related_ideas(context, title)
+      prompts_for(graph_id).related_ideas(context, title)
 
     ask_model(prompt, child, graph_id, live_view_topic)
   end
@@ -70,9 +70,16 @@ defmodule Dialectic.Responses.LlmInterface do
     context = to_string(node.content || "")
 
     prompt =
-      Prompts.deep_dive(context, node.content)
+      prompts_for(graph_id).deep_dive(context, node.content)
 
     ask_model(prompt, child, graph_id, live_view_topic)
+  end
+
+  defp prompts_for(graph_id) do
+    case Mode.get_mode(graph_id) do
+      :creative -> PromptsCreative
+      _ -> Prompts
+    end
   end
 
   def ask_model(question, to_node, graph_id, live_view_topic) do

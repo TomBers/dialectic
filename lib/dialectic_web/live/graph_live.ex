@@ -7,6 +7,7 @@ defmodule DialecticWeb.GraphLive do
   alias Dialectic.DbActions.Graphs
   alias DialecticWeb.Utils.UserUtils
 
+  alias Dialectic.Responses.Mode
   alias Phoenix.PubSub
 
   require Logger
@@ -124,7 +125,8 @@ defmodule DialecticWeb.GraphLive do
                 explore_items: [],
                 explore_selected: [],
                 show_start_stream_modal: false,
-                work_streams: list_streams(graph)
+                work_streams: list_streams(graph),
+                prompt_mode: Atom.to_string(Mode.get_mode(graph_id))
               )
 
             ask_param = Map.get(params, "ask")
@@ -204,12 +206,37 @@ defmodule DialecticWeb.GraphLive do
        explore_items: [],
        explore_selected: [],
        show_start_stream_modal: false,
-       work_streams: []
+       work_streams: [],
+       prompt_mode: "structured"
      )}
   end
 
   defp default_node do
     %{id: "1", content: "", children: [], parents: []}
+  end
+
+  def handle_event("set_prompt_mode", %{"prompt_mode" => mode}, socket) do
+    graph_id = socket.assigns.graph_id
+
+    normalized =
+      case String.downcase(to_string(mode)) do
+        "creative" -> :creative
+        _ -> :structured
+      end
+
+    if is_binary(graph_id) do
+      _ = Mode.set_mode(graph_id, normalized)
+    end
+
+    mode_str = Atom.to_string(normalized)
+
+    send_update(
+      DialecticWeb.RightPanelComp,
+      id: "right-panel-comp",
+      prompt_mode: mode_str
+    )
+
+    {:noreply, assign(socket, prompt_mode: mode_str)}
   end
 
   def handle_event("node:join_group", %{"node" => nid, "parent" => gid}, socket) do
@@ -1031,7 +1058,8 @@ defmodule DialecticWeb.GraphLive do
         nav_can_down: nav_down,
         nav_can_left: nav_left,
         nav_can_right: nav_right,
-        work_streams: list_streams(graph)
+        work_streams: list_streams(graph),
+        prompt_mode: Atom.to_string(Mode.get_mode(socket.assigns.graph_id))
       )
       |> then(fn s ->
         # Close the start stream modal if applicable

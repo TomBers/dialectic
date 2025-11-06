@@ -16,6 +16,7 @@ defmodule DialecticWeb.RightPanelComp do
       |> assign_new(:search_term, fn -> "" end)
       |> assign_new(:search_results, fn -> [] end)
       |> assign_new(:group_states, fn -> %{} end)
+      |> assign_new(:prompt_mode, fn -> "structured" end)
 
     {:ok, socket}
   end
@@ -106,6 +107,35 @@ defmodule DialecticWeb.RightPanelComp do
               </p>
             </div>
           <% end %>
+        </div>
+      </div>
+
+      <div class="bg-white border border-gray-200 rounded-md">
+        <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
+          Mode
+        </div>
+        <div class="p-1">
+          <form phx-change="set_prompt_mode" class="flex items-center gap-2">
+            <label for="prompt_mode" class="text-xs text-gray-700">LLM Mode</label>
+            <select
+              id="prompt_mode"
+              name="prompt_mode"
+              class="block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6 border-zinc-300 focus:border-zinc-800"
+            >
+              <option value="structured" selected={@prompt_mode == "structured"}>Structured</option>
+              <option value="creative" selected={@prompt_mode == "creative"}>Creative</option>
+            </select>
+          </form>
+          <div class="mt-2 text-[11px] text-gray-600 space-y-1">
+            <p>
+              <span class="font-semibold">Structured:</span>
+              organized sections, concise bullets, and clear constraints.
+            </p>
+            <p>
+              <span class="font-semibold">Creative:</span>
+              freer narrative, analogies, and playful exploration.
+            </p>
+          </div>
         </div>
       </div>
 
