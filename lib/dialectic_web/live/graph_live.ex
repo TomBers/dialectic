@@ -139,10 +139,6 @@ defmodule DialecticWeb.GraphLive do
                     {_, s1} = update_graph(socket, {graph, node}, "answer")
                     s1
 
-                  {:ok, {graph, node}} ->
-                    {_, s1} = update_graph(socket, {graph, node}, "answer")
-                    s1
-
                   {:error, error_message} ->
                     socket |> put_flash(:error, error_message)
 
@@ -747,14 +743,6 @@ defmodule DialecticWeb.GraphLive do
       socket.assigns.graph_topic,
       {:other_user_change, self()}
     )
-
-    # If the completed node is still the selected one, update selection as before.
-    # Otherwise, refresh the graph but keep the user's current selection.
-    current_selected_id =
-      case socket.assigns[:node] do
-        %{} = n -> Map.get(n, :id)
-        _ -> nil
-      end
 
     update_graph(
       socket,
