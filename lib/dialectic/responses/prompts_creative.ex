@@ -2,7 +2,7 @@ defmodule Dialectic.Responses.PromptsCreative do
   @moduledoc """
   Creative prompt builders for LLM interactions.
 
-  This module mirrors the `Dialectic.Responses.Prompts` surface but guides the model
+  This module mirrors the `Dialectic.Responses.PromptsStructured` surface but guides the model
   toward a freer, more narrative and exploratory style. The functions are pure and
   return the final prompt text (style preamble included), so they are easy to test
   and swap in based on a user-selected mode.

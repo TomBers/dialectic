@@ -1,7 +1,7 @@
 defmodule Dialectic.Responses.PromptsTest do
   use ExUnit.Case, async: true
 
-  alias Dialectic.Responses.Prompts
+  alias Dialectic.Responses.PromptsStructured
 
   setup do
     context = "Graph context for node A"
@@ -11,7 +11,7 @@ defmodule Dialectic.Responses.PromptsTest do
 
   describe "explain/2" do
     test "formats core sections and interpolates topic", %{context: c, topic: t} do
-      prompt = Prompts.explain(c, t)
+      prompt = PromptsStructured.explain(c, t)
       assert prompt =~ "You are teaching a curious beginner"
       assert prompt =~ "Context:\n" <> c
 
@@ -27,7 +27,7 @@ defmodule Dialectic.Responses.PromptsTest do
   describe "selection/2" do
     test "adds default output schema when selection lacks headings", %{context: c} do
       sel = "Summarize the key claims."
-      prompt = Prompts.selection(c, sel)
+      prompt = PromptsStructured.selection(c, sel)
 
       assert prompt =~ "Instruction (apply to the context and current node):\n" <> sel
       assert prompt =~ "Audience: first-time learner aiming for university-level understanding."
@@ -45,7 +45,7 @@ defmodule Dialectic.Responses.PromptsTest do
       Return only the bullets.
       """
 
-      prompt = Prompts.selection(c, sel)
+      prompt = PromptsStructured.selection(c, sel)
 
       assert prompt =~ "Instruction (apply to the context and current node):"
       # Should not include default schema sections
@@ -54,14 +54,14 @@ defmodule Dialectic.Responses.PromptsTest do
 
     test "does not add default schema when selection includes Output(...)", %{context: c} do
       sel = "Output (markdown):\n## Custom"
-      prompt = Prompts.selection(c, sel)
+      prompt = PromptsStructured.selection(c, sel)
       refute prompt =~ "### Why it matters here"
     end
   end
 
   describe "synthesis/4" do
     test "includes both contexts and positions" do
-      p = Prompts.synthesis("C1", "C2", "A", "B")
+      p = PromptsStructured.synthesis("C1", "C2", "A", "B")
       assert p =~ "Context of first argument:\nC1"
       assert p =~ "Context of second argument:\nC2"
       assert p =~ ~s/Task: Synthesize the positions in "A" and "B"/
@@ -72,7 +72,7 @@ defmodule Dialectic.Responses.PromptsTest do
 
   describe "thesis/2 and antithesis/2" do
     test "thesis has expected sections and constraints" do
-      p = Prompts.thesis("CTX", "My claim")
+      p = PromptsStructured.thesis("CTX", "My claim")
       assert p =~ "Context:\nCTX"
       assert p =~ ~s/in support of: "My claim"/
       assert p =~ "## [Title of the pro argument]"
@@ -80,7 +80,7 @@ defmodule Dialectic.Responses.PromptsTest do
     end
 
     test "antithesis includes steelman instruction" do
-      p = Prompts.antithesis("CTX", "Their claim")
+      p = PromptsStructured.antithesis("CTX", "Their claim")
       assert p =~ "Context:\nCTX"
       assert p =~ ~s/against: "Their claim"/
       assert p =~ "Steelman the opposing view"
@@ -91,7 +91,7 @@ defmodule Dialectic.Responses.PromptsTest do
 
   describe "related_ideas/2" do
     test "produces three requested H3 sections and return-only instruction" do
-      p = Prompts.related_ideas("CTX", "Topic X")
+      p = PromptsStructured.related_ideas("CTX", "Topic X")
       assert p =~ "Context:\nCTX"
       assert p =~ ~s/Current idea: "Topic X"/
       assert p =~ "Output (markdown only; return only the list):"
@@ -104,21 +104,21 @@ defmodule Dialectic.Responses.PromptsTest do
 
   describe "extract_title/1" do
     test "strips bold markers, Title: prefix, heading markers and trims" do
-      assert Prompts.extract_title("**Title: **  \n##  My Heading  ") == "My Heading"
+      assert PromptsStructured.extract_title("**Title: **  \n##  My Heading  ") == "My Heading"
     end
 
     test "returns first line without markdown heading markers" do
-      assert Prompts.extract_title("###   Deep Learning\nMore text") == "Deep Learning"
+      assert PromptsStructured.extract_title("###   Deep Learning\nMore text") == "Deep Learning"
     end
 
     test "handles nil content" do
-      assert Prompts.extract_title(nil) == ""
+      assert PromptsStructured.extract_title(nil) == ""
     end
   end
 
   describe "deep_dive/2" do
     test "contains task, deep dive section and constraints" do
-      p = Prompts.deep_dive("CTX", "Tensor calculus")
+      p = PromptsStructured.deep_dive("CTX", "Tensor calculus")
       assert p =~ "Context:\nCTX"
       assert p =~ ~s/Task: Produce a rigorous, detailed deep dive into "Tensor calculus"/
       assert p =~ "### Deep dive"

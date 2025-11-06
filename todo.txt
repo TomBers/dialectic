@@ -1,4 +1,4 @@
-mix test test/dialectic/responses/prompt_builder_print_test.exs --color --include skip > prompt_test.md
+mix test test/dialectic/responses/print_prompts_test.exs > prompt_test.md
 
 Toggle for freeform or more structured answers
 

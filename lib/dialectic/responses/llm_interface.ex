@@ -1,5 +1,5 @@
 defmodule Dialectic.Responses.LlmInterface do
-  alias Dialectic.Responses.{RequestQueue, Prompts, PromptsCreative, Mode}
+  alias Dialectic.Responses.{RequestQueue, PromptsStructured, PromptsCreative, Mode}
 
   def gen_response(node, child, graph_id, live_view_topic) do
     context = GraphManager.build_context(graph_id, node)
