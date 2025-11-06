@@ -51,17 +51,8 @@ defmodule Dialectic.Responses.LlmInterface do
   def gen_related_ideas(node, child, graph_id, live_view_topic) do
     context = GraphManager.build_context(graph_id, node)
 
-    content =
-      node
-      |> case do
-        nil -> ""
-        n -> to_string(n.content || "")
-      end
-
-    title = prompts_for(graph_id).extract_title(content)
-
     prompt =
-      prompts_for(graph_id).related_ideas(context, title)
+      prompts_for(graph_id).related_ideas(context, node.content)
 
     ask_model(prompt, child, graph_id, live_view_topic)
   end
