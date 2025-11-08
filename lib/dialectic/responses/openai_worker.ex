@@ -84,10 +84,25 @@ defmodule Dialectic.Workers.OpenAIWorker do
         {:discard, :missing_api_key}
 
       {:ok, stream_resp} ->
-        # Stream tokens to UI (and persisted vertex content) as they arrive
-        Enum.each(ReqLLM.StreamResponse.tokens(stream_resp), fn token ->
-          Utils.process_chunk(graph, to_node, token, __MODULE__, live_view_topic)
-        end)
+        # Stream tokens to UI (and persisted vertex content) as they arrive.
+        # Guard against providers that resend cumulative content by appending only the new suffix.
+        _acc =
+          Enum.reduce(ReqLLM.StreamResponse.tokens(stream_resp), "", fn token, acc ->
+            chunk =
+              cond do
+                is_binary(token) -> token
+                is_list(token) -> IO.iodata_to_binary(token)
+                true -> to_string(token)
+              end
+
+            to_emit = diff_suffix(acc, chunk)
+
+            if to_emit != "" do
+              Utils.process_chunk(graph, to_node, to_emit, __MODULE__, live_view_topic)
+            end
+
+            acc <> to_emit
+          end)
 
         finalize(graph, to_node, live_view_topic)
         :ok
@@ -106,6 +121,22 @@ defmodule Dialectic.Workers.OpenAIWorker do
   end
 
   # -- Internals ----------------------------------------------------------------
+
+  # Compute only the unseen suffix of `chunk` relative to what we've already emitted in `acc`.
+  # Handles both incremental token streams and cumulative "full text so far" streams,
+  # and is robust to small prefix/suffix overlaps between chunks.
+  defp diff_suffix("", chunk) when is_binary(chunk), do: chunk
+
+  defp diff_suffix(acc, chunk) when is_binary(acc) and is_binary(chunk) do
+    max = min(byte_size(acc), byte_size(chunk))
+
+    overlap =
+      Enum.find(max..0, fn k ->
+        String.ends_with?(acc, binary_part(chunk, 0, k))
+      end) || 0
+
+    binary_part(chunk, overlap, byte_size(chunk) - overlap)
+  end
 
   defp openai_model_spec do
     # Hardcoded model per request (favor fast TTFT for diagnosis)
