@@ -16,11 +16,6 @@ defmodule Dialectic.Workers.OpenAIWorker do
   alias Dialectic.Responses.Utils
   alias Dialectic.DbActions.DbWorker
 
-  @system_prompt """
-  You are an expert philosopher, helping the user better understand key philosophical points.
-  Keep answers concise and to the point. Add references to sources when appropriate.
-  """
-
   # -- Oban Perform Callback ----------------------------------------------------
 
   @impl Oban.Worker
@@ -43,7 +38,6 @@ defmodule Dialectic.Workers.OpenAIWorker do
     # Build a provider-agnostic chat context: system + user
     ctx =
       ReqLLM.Context.new([
-        ReqLLM.Context.system(@system_prompt),
         ReqLLM.Context.user(question)
       ])
 
