@@ -77,8 +77,12 @@ defmodule Dialectic.Workers.OpenAIWorker do
            ctx,
            api_key: api_key,
            finch_name: ReqLLM.Finch,
-           connect_timeout: 20_000,
-           receive_timeout: 20_000
+           provider_options: [
+             reasoning_effort: :minimal,
+             openai_parallel_tool_calls: false
+           ],
+           connect_timeout: 60_000,
+           receive_timeout: 300_000
          ) do
       {:ok, stream_resp} ->
         headers_received_ms = System.monotonic_time(:millisecond) - request_start_ms

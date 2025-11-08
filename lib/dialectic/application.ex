@@ -13,8 +13,6 @@ defmodule Dialectic.Application do
       {DNSCluster, query: Application.get_env(:dialectic, :dns_cluster_query) || :ignore},
       {Oban, Application.fetch_env!(:dialectic, Oban)},
       {Phoenix.PubSub, name: Dialectic.PubSub},
-      # {Finch, name: Dialectic.Finch},
-      # {Finch, name: ReqLLM.Finch},
       DialecticWeb.Presence,
       {Dialectic.Responses.ModeServer, []},
       {DynamicSupervisor, name: GraphSupervisor},
