@@ -34,7 +34,7 @@ defmodule Dialectic.Responses.Utils do
 
           nil
       catch
-        :exit, reason ->
+        :exit, _reason ->
           nil
       end
 

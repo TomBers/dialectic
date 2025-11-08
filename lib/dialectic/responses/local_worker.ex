@@ -3,14 +3,13 @@ defmodule Dialectic.Workers.LocalWorker do
   use Oban.Worker, queue: :api_request, max_attempts: 5
 
   def perform(%Oban.Job{
-        args:
-          args = %{
-            "question" => question,
-            "to_node" => node,
-            "graph" => graph,
-            "module" => _worker_module,
-            "live_view_topic" => live_view_topic
-          }
+        args: %{
+          "question" => question,
+          "to_node" => node,
+          "graph" => graph,
+          "module" => _worker_module,
+          "live_view_topic" => live_view_topic
+        }
       }) do
     updated_vertex = GraphManager.update_vertex(graph, node, question)
 
