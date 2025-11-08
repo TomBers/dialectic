@@ -24,7 +24,7 @@ defmodule DialecticWeb.Live.TextUtils do
     first_line =
       norm
       |> String.split("\n")
-      |> hd()
+      |> List.first("")
 
     has_t = heading_line?(first_line) or title_prefix_line?(first_line)
     single = trimmed != "" and not String.contains?(norm, "\n")
@@ -118,7 +118,7 @@ defmodule DialecticWeb.Live.TextUtils do
     first_line_only =
       full_content
       |> String.split("\n")
-      |> hd()
+      |> List.first("")
 
     # Strip leading Markdown heading hashes and Title prefix if present
     line =

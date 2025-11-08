@@ -79,7 +79,7 @@ defmodule DialecticWeb.AskFormComp do
 
   @impl true
   def handle_event("toggle_ask_question", _params, socket) do
-    {:noreply, assign(socket, :ask_question, !socket.assigns[:ask_question])}
+    {:noreply, assign(socket, :ask_question, !Map.get(socket.assigns, :ask_question, true))}
   end
 
   @impl true

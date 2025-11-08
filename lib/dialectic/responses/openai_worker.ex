@@ -31,85 +31,79 @@ defmodule Dialectic.Workers.OpenAIWorker do
       }) do
     Logger.metadata(oban_job_id: job_id, oban_attempt: attempt)
 
-    model_spec = openai_model_spec()
-    {_provider, _model, _opts} = model_spec
-    api_key = System.get_env("OPENAI_API_KEY")
+    api_key = fetch_openai_api_key()
 
-    # Build a provider-agnostic chat context: system + user
-    ctx =
-      ReqLLM.Context.new([
-        ReqLLM.Context.system("""
-        You must return valid GitHub-flavored Markdown (GFM) only.
+    if is_nil(api_key) or api_key == "" do
+      Phoenix.PubSub.broadcast(
+        Dialectic.PubSub,
+        live_view_topic,
+        {:stream_error, "OpenAI API key not configured", :node_id, to_node}
+      )
 
-        Rules:
-        - Use headings with a space after the hashes (e.g., '### Title'), never '###. Title' or '###Title'.
-        - Numbered lists must use '1.' '2.' etc., each on its own line, with a space after the period.
-        - Leave a blank line before any heading or list block.
-        - Do not use '1)' or '(1)' for lists.
-        - Do not insert headings mid-sentence.
-        - No JSON or HTML wrappers in the answer; produce Markdown only.
-        - Do not include literal escape sequences like '\n' in the output; emit real newlines.
-        """),
-        ReqLLM.Context.user(question)
-      ])
+      {:discard, :missing_api_key}
+    else
+      model_spec = openai_model_spec()
+      {_provider, _model, _opts} = model_spec
 
-    # Stream text – this returns a StreamResponse handle
+      # Build a provider-agnostic chat context: system + user
+      ctx =
+        ReqLLM.Context.new([
+          ReqLLM.Context.system("""
+          You must return valid GitHub-flavored Markdown (GFM) only.
 
-    result =
-      if is_nil(api_key) or api_key == "" do
-        {:api_key_missing, :missing_api_key}
-      else
-        ReqLLM.stream_text(
-          model_spec,
-          ctx,
-          api_key: api_key,
-          finch_name: ReqLLM.Finch,
-          provider_options: [
-            reasoning_effort: :minimal,
-            openai_parallel_tool_calls: false
-          ],
-          connect_timeout: 60_000,
-          receive_timeout: 300_000
-        )
-      end
+          Rules:
+          - Use headings with a space after the hashes (e.g., '### Title'), never '###. Title' or '###Title'.
+          - Numbered lists must use '1.' '2.' etc., each on its own line, with a space after the period.
+          - Leave a blank line before any heading or list block.
+          - Do not use '1)' or '(1)' for lists.
+          - Do not insert headings mid-sentence.
+          - No JSON or HTML wrappers in the answer; produce Markdown only.
+          - Do not include literal escape sequences like '\n' in the output; emit real newlines.
+          """),
+          ReqLLM.Context.user(question)
+        ])
 
-    case result do
-      {:api_key_missing, _} ->
-        Phoenix.PubSub.broadcast(
-          Dialectic.PubSub,
-          live_view_topic,
-          {:stream_error, "OpenAI API key not configured", :node_id, to_node}
-        )
+      # Stream text – this returns a StreamResponse handle
+      case ReqLLM.stream_text(
+             model_spec,
+             ctx,
+             api_key: api_key,
+             finch_name: ReqLLM.Finch,
+             provider_options: [
+               reasoning_effort: :minimal,
+               openai_parallel_tool_calls: false
+             ],
+             connect_timeout: 60_000,
+             receive_timeout: 300_000
+           ) do
+        {:ok, stream_resp} ->
+          # Stream tokens to UI (and persisted vertex content) as they arrive.
+          # Guard against providers that resend cumulative content by appending only the new suffix.
+          _acc =
+            Enum.reduce(ReqLLM.StreamResponse.tokens(stream_resp), "", fn token, acc ->
+              chunk =
+                cond do
+                  is_binary(token) -> token
+                  is_list(token) -> IO.iodata_to_binary(token)
+                  true -> to_string(token)
+                end
 
-        {:discard, :missing_api_key}
+              to_emit = diff_suffix(acc, chunk)
 
-      {:ok, stream_resp} ->
-        # Stream tokens to UI (and persisted vertex content) as they arrive.
-        # Guard against providers that resend cumulative content by appending only the new suffix.
-        _acc =
-          Enum.reduce(ReqLLM.StreamResponse.tokens(stream_resp), "", fn token, acc ->
-            chunk =
-              cond do
-                is_binary(token) -> token
-                is_list(token) -> IO.iodata_to_binary(token)
-                true -> to_string(token)
+              if to_emit != "" do
+                Utils.process_chunk(graph, to_node, to_emit, __MODULE__, live_view_topic)
               end
 
-            to_emit = diff_suffix(acc, chunk)
+              acc <> to_emit
+            end)
 
-            if to_emit != "" do
-              Utils.process_chunk(graph, to_node, to_emit, __MODULE__, live_view_topic)
-            end
+          finalize(graph, to_node, live_view_topic)
+          :ok
 
-            acc <> to_emit
-          end)
-
-        finalize(graph, to_node, live_view_topic)
-        :ok
-
-      {:error, err} ->
-        Logger.error("OpenAI request error: #{inspect(err)}")
-        {:error, err}
+        {:error, err} ->
+          Logger.error("OpenAI request error: #{inspect(err)}")
+          {:error, err}
+      end
     end
   rescue
     exception ->
@@ -136,6 +130,10 @@ defmodule Dialectic.Workers.OpenAIWorker do
       end) || 0
 
     binary_part(chunk, overlap, byte_size(chunk) - overlap)
+  end
+
+  defp fetch_openai_api_key do
+    System.get_env("OPENAI_API_KEY")
   end
 
   defp openai_model_spec do
