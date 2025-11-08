@@ -10,7 +10,7 @@ defmodule DialecticWeb.Live.TextUtils do
   @title_regex ~r/^title[:]?\s*|^Title[:]?\s*/i
 
   def parse(content) do
-    norm = normalize_markdown(content)
+    norm = content |> to_string()
     trimmed = String.trim(norm)
 
     first_line =
@@ -62,16 +62,6 @@ defmodule DialecticWeb.Live.TextUtils do
       body: body,
       single_line?: single
     }
-  end
-
-  # Private helpers
-
-  defp normalize_markdown(content) do
-    content
-    |> to_string()
-    |> String.replace("\r\n", "\n")
-    |> String.replace("\r", "\n")
-    |> String.trim_leading()
   end
 
   defp heading_line?(line) do
