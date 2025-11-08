@@ -1,6 +1,5 @@
 defmodule GraphManager do
   alias Dialectic.Graph.{Vertex, Serialise, Siblings}
-  alias DialecticWeb.Live.TextUtils
 
   require Logger
 
@@ -217,23 +216,7 @@ defmodule GraphManager do
   def handle_call({:finalize_node, node_id}, _from, {graph_struct, graph}) do
     case :digraph.vertex(graph, node_id) do
       {_id, vertex} ->
-        original =
-          vertex
-          |> Map.get(:content, "")
-          |> to_string()
-
-        fixed = TextUtils.finalize_markdown(original)
-
-        updated_vertex =
-          if fixed != original do
-            new_v = %{vertex | content: fixed}
-            :digraph.add_vertex(graph, node_id, new_v)
-            new_v
-          else
-            vertex
-          end
-
-        {:reply, Vertex.add_relatives(updated_vertex, graph), {graph_struct, graph}}
+        {:reply, Vertex.add_relatives(vertex, graph), {graph_struct, graph}}
 
       false ->
         {:reply, nil, {graph_struct, graph}}
