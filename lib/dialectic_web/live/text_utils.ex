@@ -9,15 +9,22 @@ defmodule DialecticWeb.Live.TextUtils do
 
   @title_regex ~r/^title[:]?\s*|^Title[:]?\s*/i
 
+  @spec parse(String.t() | nil) :: %{
+          normalized: String.t(),
+          first_line: String.t(),
+          has_title: boolean(),
+          title: String.t(),
+          body: String.t(),
+          single_line?: boolean()
+        }
   def parse(content) do
-    norm = content |> to_string()
+    norm = normalize_markdown(content)
     trimmed = String.trim(norm)
 
     first_line =
       norm
       |> String.split("\n")
-      |> List.first()
-      |> to_string()
+      |> hd()
 
     has_t = heading_line?(first_line) or title_prefix_line?(first_line)
     single = trimmed != "" and not String.contains?(norm, "\n")
@@ -35,13 +42,13 @@ defmodule DialecticWeb.Live.TextUtils do
       else
         case String.split(norm, "\n", parts: 2) do
           [_, body] ->
-            text = body |> to_string() |> String.trim_leading()
+            text = String.trim_leading(body)
 
             case String.split(text, "\n", parts: 2) do
               [first2, rest2] ->
                 cond do
-                  title_prefix_line?(first2) -> to_string(rest2)
-                  heading_line?(first2) -> to_string(rest2)
+                  title_prefix_line?(first2) -> rest2
+                  heading_line?(first2) -> rest2
                   true -> text
                 end
 
@@ -64,14 +71,26 @@ defmodule DialecticWeb.Live.TextUtils do
     }
   end
 
+  # Private helpers
+
+  @spec normalize_markdown(String.t() | nil) :: String.t()
+  defp normalize_markdown(content) do
+    (content || "")
+    |> String.replace(~r/\r\n|\r/, "\n")
+    |> String.trim_leading()
+  end
+
+  @spec heading_line?(String.t()) :: boolean()
   defp heading_line?(line) do
     String.match?(line, ~r/^\s*\#{1,6}\s+\S/)
   end
 
+  @spec title_prefix_line?(String.t()) :: boolean()
   defp title_prefix_line?(line) do
     String.match?(line, @title_regex)
   end
 
+  @spec strip_heading_or_title_prefix(String.t()) :: String.t()
   defp strip_heading_or_title_prefix(line) do
     line
     |> String.replace(~r/^\s*\#{1,6}\s*/, "")
@@ -89,18 +108,17 @@ defmodule DialecticWeb.Live.TextUtils do
   - Truncate to the given cutoff
   - Optionally append an ellipsis if truncated
   """
+  @spec process_node_content(String.t() | nil, boolean(), non_neg_integer()) :: String.t()
   def process_node_content(content, add_ellipsis \\ true, cutoff \\ 80) do
     full_content =
-      content
-      |> to_string()
+      (content || "")
       |> String.replace("**", "")
 
     # Use only the first line
     first_line_only =
       full_content
       |> String.split("\n")
-      |> List.first()
-      |> to_string()
+      |> hd()
 
     # Strip leading Markdown heading hashes and Title prefix if present
     line =
@@ -115,6 +133,7 @@ defmodule DialecticWeb.Live.TextUtils do
   Renders the provided content and returns a map with the extracted title and the rendered body HTML.
   This centralizes the Markdown rendering for the body to a single place.
   """
+  @spec render_content(String.t() | nil) :: map()
   def render_content(content) do
     p = parse(content)
 
