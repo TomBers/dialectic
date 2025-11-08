@@ -38,8 +38,7 @@ defmodule Dialectic.Workers.OpenAIWorker do
     Logger.metadata(oban_job_id: job_id, oban_attempt: attempt)
 
     model_spec = openai_model_spec()
-    {provider, model, opts} = model_spec
-    provider_options = Keyword.get(opts, :provider_options)
+    {_provider, _model, _opts} = model_spec
     api_key = System.get_env("OPENAI_API_KEY")
 
     # Build a provider-agnostic chat context: system + user
@@ -51,18 +50,34 @@ defmodule Dialectic.Workers.OpenAIWorker do
 
     # Stream text – this returns a StreamResponse handle
 
-    case ReqLLM.stream_text(
-           model_spec,
-           ctx,
-           api_key: api_key,
-           finch_name: ReqLLM.Finch,
-           provider_options: [
-             reasoning_effort: :minimal,
-             openai_parallel_tool_calls: false
-           ],
-           connect_timeout: 60_000,
-           receive_timeout: 300_000
-         ) do
+    result =
+      if is_nil(api_key) or api_key == "" do
+        {:api_key_missing, :missing_api_key}
+      else
+        ReqLLM.stream_text(
+          model_spec,
+          ctx,
+          api_key: api_key,
+          finch_name: ReqLLM.Finch,
+          provider_options: [
+            reasoning_effort: :minimal,
+            openai_parallel_tool_calls: false
+          ],
+          connect_timeout: 60_000,
+          receive_timeout: 300_000
+        )
+      end
+
+    case result do
+      {:api_key_missing, _} ->
+        Phoenix.PubSub.broadcast(
+          Dialectic.PubSub,
+          live_view_topic,
+          {:stream_error, "OpenAI API key not configured", :node_id, to_node}
+        )
+
+        {:discard, :missing_api_key}
+
       {:ok, stream_resp} ->
         # Stream tokens to UI (and persisted vertex content) as they arrive
         _seen? =
