@@ -18,35 +18,40 @@ defmodule Dialectic.Responses.Utils do
         ) :: :ok
   def process_chunk(graph, node, data, _module, live_view_topic) do
     text =
-      case data do
-        iodata when is_list(iodata) or is_binary(iodata) -> IO.iodata_to_binary(iodata)
-        other -> to_string(other)
+      cond do
+        is_binary(data) -> data
+        is_list(data) -> IO.iodata_to_binary(data)
+        true -> to_string(data)
       end
 
-    updated_vertex =
-      try do
-        GraphManager.update_vertex(graph, node, text)
-      rescue
-        exception ->
-          Logger.error(
-            "llm_timing chunk_drop update_vertex_exception=#{Exception.format(:error, exception, __STACKTRACE__)} graph=#{inspect(graph)} node=#{inspect(node)}"
-          )
+    if text == "" do
+      :ok
+    else
+      updated_vertex =
+        try do
+          GraphManager.update_vertex(graph, node, text)
+        rescue
+          exception ->
+            Logger.error(
+              "process_chunk update_vertex_exception=#{Exception.format(:error, exception, __STACKTRACE__)} graph=#{inspect(graph)} node=#{inspect(node)}"
+            )
 
-          nil
-      catch
-        :exit, _reason ->
-          nil
+            nil
+        catch
+          :exit, _ ->
+            nil
+        end
+
+      if updated_vertex do
+        Phoenix.PubSub.broadcast(
+          Dialectic.PubSub,
+          live_view_topic,
+          {:stream_chunk, updated_vertex, :node_id, node}
+        )
       end
 
-    if updated_vertex do
-      Phoenix.PubSub.broadcast(
-        Dialectic.PubSub,
-        live_view_topic,
-        {:stream_chunk, updated_vertex, :node_id, node}
-      )
+      :ok
     end
-
-    :ok
   end
 
   @doc """

@@ -79,14 +79,9 @@ defmodule Dialectic.Workers.OpenAIWorker do
 
       {:ok, stream_resp} ->
         # Stream tokens to UI (and persisted vertex content) as they arrive
-        _seen? =
-          Enum.reduce(ReqLLM.StreamResponse.tokens(stream_resp), false, fn token, seen? ->
-            unless seen? do
-            end
-
-            Utils.process_chunk(graph, to_node, token, __MODULE__, live_view_topic)
-            true
-          end)
+        Enum.each(ReqLLM.StreamResponse.tokens(stream_resp), fn token ->
+          Utils.process_chunk(graph, to_node, token, __MODULE__, live_view_topic)
+        end)
 
         finalize(graph, to_node, live_view_topic)
         :ok
