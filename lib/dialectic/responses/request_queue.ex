@@ -16,10 +16,6 @@ defmodule Dialectic.Responses.RequestQueue do
         queued_at_ms: System.system_time(:millisecond)
       }
 
-      Logger.info(
-        "llm_timing enqueue queue=api_request graph=#{inspect(graph)} node=#{inspect(to_node.id)} selection=false"
-      )
-
       run_local(params)
     end
   else
@@ -42,16 +38,8 @@ defmodule Dialectic.Responses.RequestQueue do
         end
 
       if is_selection do
-        Logger.info(
-          "llm_timing enqueue queue=openai_selection graph=#{inspect(graph)} node=#{inspect(to_node.id)} selection=true"
-        )
-
         run_openai_selection(params)
       else
-        Logger.info(
-          "llm_timing enqueue queue=openai_request graph=#{inspect(graph)} node=#{inspect(to_node.id)} selection=false"
-        )
-
         run_openai(params)
       end
     end

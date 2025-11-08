@@ -35,20 +35,10 @@ defmodule Dialectic.Responses.Utils do
           nil
       catch
         :exit, reason ->
-          Logger.warning(
-            "llm_timing chunk_drop no_graph_process reason=#{inspect(reason)} graph=#{inspect(graph)} node=#{inspect(node)}"
-          )
-
           nil
       end
 
     if updated_vertex do
-      ts_ms = System.system_time(:millisecond)
-
-      Logger.info(
-        "llm_timing chunk_broadcast ts_ms=#{ts_ms} bytes=#{byte_size(text)} graph=#{inspect(graph)} node=#{inspect(node)}"
-      )
-
       Phoenix.PubSub.broadcast(
         Dialectic.PubSub,
         live_view_topic,

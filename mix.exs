@@ -87,7 +87,8 @@ defmodule Dialectic.MixProject do
         "tailwind dialectic --minify",
         "esbuild dialectic --minify",
         "phx.digest"
-      ]
+      ],
+      precommit: ["format", "test"]
     ]
   end
 end
