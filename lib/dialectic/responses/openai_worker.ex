@@ -77,8 +77,8 @@ defmodule Dialectic.Workers.OpenAIWorker do
            ctx,
            api_key: api_key,
            finch_name: ReqLLM.Finch,
-           connect_timeout: 30_000,
-           receive_timeout: 120_000
+           connect_timeout: 20_000,
+           receive_timeout: 20_000
          ) do
       {:ok, stream_resp} ->
         headers_received_ms = System.monotonic_time(:millisecond) - request_start_ms
@@ -154,7 +154,6 @@ defmodule Dialectic.Workers.OpenAIWorker do
     {:openai, "gpt-5-nano",
      provider_options: [
        reasoning_effort: :minimal,
-       max_completion_tokens: 1024,
        openai_parallel_tool_calls: false
      ]}
   end
