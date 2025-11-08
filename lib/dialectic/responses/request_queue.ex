@@ -1,9 +1,7 @@
 defmodule Dialectic.Responses.RequestQueue do
-  alias Dialectic.Workers.DeepSeekWorker
-  alias Dialectic.Workers.ClaudeWorker
-  alias Dialectic.Workers.GeminiWorker
   alias Dialectic.Workers.OpenAIWorker
   alias Dialectic.Workers.LocalWorker
+  require Logger
 
   # Define the implementation based on compile-time environment
   if Mix.env() == :test do
@@ -14,7 +12,8 @@ defmodule Dialectic.Responses.RequestQueue do
         to_node: to_node.id,
         graph: graph,
         module: nil,
-        live_view_topic: live_view_topic
+        live_view_topic: live_view_topic,
+        queued_at_ms: System.system_time(:millisecond)
       }
 
       run_local(params)
@@ -27,7 +26,8 @@ defmodule Dialectic.Responses.RequestQueue do
         to_node: to_node.id,
         graph: graph,
         module: nil,
-        live_view_topic: live_view_topic
+        live_view_topic: live_view_topic,
+        queued_at_ms: System.system_time(:millisecond)
       }
 
       # Route selection responses to lower-priority path when class is "explain"
@@ -52,39 +52,12 @@ defmodule Dialectic.Responses.RequestQueue do
     }
     |> LocalWorker.new(
       unique: [
-        fields: [:args, :worker, :queue],
+        fields: [:args, :worker],
         keys: [:graph, :to_node],
         period: 60,
         states: [:available, :scheduled, :executing, :retryable]
       ]
     )
-    |> Oban.insert()
-  end
-
-  def run_deepseek(params) do
-    %{
-      params
-      | module: Dialectic.Workers.DeepSeekWorker
-    }
-    |> DeepSeekWorker.new()
-    |> Oban.insert()
-  end
-
-  def run_claude(params) do
-    %{
-      params
-      | module: Dialectic.Workers.ClaudeWorker
-    }
-    |> ClaudeWorker.new()
-    |> Oban.insert()
-  end
-
-  def run_gemini(params) do
-    %{
-      params
-      | module: Dialectic.Workers.GeminiWorker
-    }
-    |> GeminiWorker.new()
     |> Oban.insert()
   end
 
@@ -98,7 +71,7 @@ defmodule Dialectic.Responses.RequestQueue do
       max_attempts: 3,
       tags: ["openai"],
       unique: [
-        fields: [:args, :worker, :queue],
+        fields: [:args, :worker],
         keys: [:graph, :to_node],
         period: 60,
         states: [:available, :scheduled, :executing, :retryable]
@@ -116,29 +89,14 @@ defmodule Dialectic.Responses.RequestQueue do
       priority: 5,
       max_attempts: 3,
       tags: ["openai", "selection"],
+      queue: :openai_selection,
       unique: [
-        fields: [:args, :worker, :queue],
+        fields: [:args, :worker],
         keys: [:graph, :to_node],
         period: 60,
         states: [:available, :scheduled, :executing, :retryable]
       ]
     )
     |> Oban.insert()
-  end
-
-  def test() do
-    params = %{
-      question: "What is a Body without organs?",
-      to_node: "1",
-      graph: "Bob",
-      module: nil,
-      live_view_topic: "test_topic"
-    }
-
-    run_deepseek(params)
-    run_claude(params)
-    run_gemini(params)
-    run_openai(params)
-    :ok
   end
 end

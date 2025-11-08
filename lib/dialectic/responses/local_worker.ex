@@ -11,10 +11,6 @@ defmodule Dialectic.Workers.LocalWorker do
           "live_view_topic" => live_view_topic
         }
       }) do
-    IO.inspect("Local Processing chunk for graph #{graph} and node #{node}. Data: #{question}",
-      label: "Local Processing"
-    )
-
     updated_vertex = GraphManager.update_vertex(graph, node, question)
 
     Phoenix.PubSub.broadcast(
