@@ -54,7 +54,8 @@ defmodule Dialectic.Workers.OpenAIWorker do
     )
 
     model_spec = openai_model_spec()
-    {provider, model, _opts} = model_spec
+    {provider, model, opts} = model_spec
+    provider_options = Keyword.get(opts, :provider_options)
     api_key = System.get_env("OPENAI_API_KEY")
 
     # Build a provider-agnostic chat context: system + user
@@ -68,7 +69,7 @@ defmodule Dialectic.Workers.OpenAIWorker do
     request_start_ms = System.monotonic_time(:millisecond)
 
     Logger.info(
-      "llm_timing request_start provider=#{provider} model=#{model} setup_ms=#{request_start_ms - perform_start_ms} graph=#{inspect(graph)} node=#{inspect(to_node)} job_id=#{inspect(job_id)} attempt=#{inspect(attempt)}"
+      "llm_timing request_start provider=#{provider} model=#{model} provider_options=#{inspect(provider_options)} setup_ms=#{request_start_ms - perform_start_ms} graph=#{inspect(graph)} node=#{inspect(to_node)} job_id=#{inspect(job_id)} attempt=#{inspect(attempt)}"
     )
 
     case ReqLLM.stream_text(
@@ -150,7 +151,12 @@ defmodule Dialectic.Workers.OpenAIWorker do
   defp openai_model_spec do
     # Hardcoded model per request (favor fast TTFT for diagnosis)
     # TODO: make this configurable via config/runtime.exs or OPENAI_CHAT_MODEL
-    {:openai, "gpt-5-nano", []}
+    {:openai, "gpt-5-nano",
+     provider_options: [
+       reasoning_effort: :minimal,
+       max_completion_tokens: 1024,
+       openai_parallel_tool_calls: false
+     ]}
   end
 
   defp finalize(graph, to_node, live_view_topic) do
