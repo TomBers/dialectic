@@ -1,7 +1,4 @@
 defmodule Dialectic.Responses.RequestQueue do
-  alias Dialectic.Workers.DeepSeekWorker
-  alias Dialectic.Workers.ClaudeWorker
-  alias Dialectic.Workers.GeminiWorker
   alias Dialectic.Workers.OpenAIWorker
   alias Dialectic.Workers.LocalWorker
 
@@ -61,33 +58,6 @@ defmodule Dialectic.Responses.RequestQueue do
     |> Oban.insert()
   end
 
-  def run_deepseek(params) do
-    %{
-      params
-      | module: Dialectic.Workers.DeepSeekWorker
-    }
-    |> DeepSeekWorker.new()
-    |> Oban.insert()
-  end
-
-  def run_claude(params) do
-    %{
-      params
-      | module: Dialectic.Workers.ClaudeWorker
-    }
-    |> ClaudeWorker.new()
-    |> Oban.insert()
-  end
-
-  def run_gemini(params) do
-    %{
-      params
-      | module: Dialectic.Workers.GeminiWorker
-    }
-    |> GeminiWorker.new()
-    |> Oban.insert()
-  end
-
   def run_openai(params) do
     %{
       params
@@ -124,21 +94,5 @@ defmodule Dialectic.Responses.RequestQueue do
       ]
     )
     |> Oban.insert()
-  end
-
-  def test() do
-    params = %{
-      question: "What is a Body without organs?",
-      to_node: "1",
-      graph: "Bob",
-      module: nil,
-      live_view_topic: "test_topic"
-    }
-
-    run_deepseek(params)
-    run_claude(params)
-    run_gemini(params)
-    run_openai(params)
-    :ok
   end
 end

@@ -1,189 +1,93 @@
 defmodule Dialectic.Workers.OpenAIWorker do
-  alias Dialectic.Responses.Utils
-
-  alias Dialectic.DbActions.DbWorker
-
   @moduledoc """
-  Worker for the OpenAI Chat API.
+  OpenAI worker implemented with req_llm's high-level streaming API.
+
+  This refactor removes custom HTTP/SSE plumbing. It relies on:
+  - ReqLLM.stream_text/3 for provider-agnostic streaming
+  - ReqLLM.StreamResponse.tokens/1 to enumerate text tokens
+  - Existing Utils.process_chunk/5 to append streamed tokens and broadcast to LiveView
+  - Finalization identical to prior behavior (finalize node content, save graph, PubSub completion)
   """
-  require Logger
+
   use Oban.Worker, queue: :openai_request, max_attempts: 5, priority: 0
 
-  @behaviour Dialectic.Workers.BaseAPIWorker
+  require Logger
 
-  @model "gpt-5-nano-2025-08-07"
-  # Model-specific configuration:
-  # Optimized timeout for OpenAI
-  @request_timeout 20_000
+  alias Dialectic.Responses.Utils
+  alias Dialectic.DbActions.DbWorker
 
-  @impl true
-  def api_key, do: System.get_env("OPENAI_API_KEY")
+  # Prefer explicit provider tuple to avoid relying on "provider:model" parsing,
+  # and to keep compatibility if OPENAI_MODEL is a bare model name.
+  @default_openai_model "gpt-4o-mini"
+  @system_prompt """
+  You are an expert philosopher, helping the user better understand key philosophical points.
+  Keep answers concise and to the point. Add references to sources when appropriate.
+  """
 
-  @impl true
-  def request_url, do: "https://api.openai.com/v1/chat/completions"
-
-  @impl true
-  def headers(api_key) do
-    [
-      {"Authorization", "Bearer #{api_key}"},
-      {"Content-Type", "application/json"},
-      {"Accept", "application/json"}
-    ]
-  end
-
-  @impl true
-  def request_options do
-    [
-      connect_options: [timeout: @request_timeout],
-      receive_timeout: @request_timeout,
-      retry: :transient,
-      max_retries: 2
-    ]
-  end
-
-  @impl true
-  def build_request_body(question) do
-    %{
-      model: @model,
-      stream: true,
-      reasoning_effort: "minimal",
-      messages: [
-        %{
-          role: "system",
-          content:
-            "You are an expert philosopher, helping the user better understand key philosophical points. Please keep your answers concise and to the point. Add references to sources when appropriate."
-        },
-        %{role: "user", content: question}
-      ]
-    }
-  end
-
-  @impl true
-  def parse_chunk(chunk), do: Utils.parse_chunk(chunk)
-
-  @impl true
-  def handle_result(
-        %{
-          "choices" => [
-            %{"delta" => %{"content" => data}}
-          ]
-        },
-        graph_id,
-        to_node,
-        live_view_topic
-      )
-      when is_binary(data),
-      do: Utils.process_chunk(graph_id, to_node, data, __MODULE__, live_view_topic)
-
-  @impl true
-  def handle_result(
-        %{
-          "choices" => [
-            %{"delta" => %{}, "finish_reason" => "stop"}
-          ]
-        },
-        _graph_id,
-        _to_node,
-        _live_view_topic
-      ),
-      do: :ok
-
-  @impl true
-  def handle_result(other, _graph, _to_node, _live_view_topic) do
-    Logger.debug("Unhandled response format: #{inspect(other)}")
-    :ok
-  end
+  # -- Oban Perform Callback ----------------------------------------------------
 
   @impl Oban.Worker
-  def perform(
-        %Oban.Job{
-          args: %{
-            "question" => question,
-            "to_node" => to_node,
-            "graph" => graph,
-            "module" => _worker_module,
-            "live_view_topic" => live_view_topic
-          }
-        } = _job
-      ) do
-    # Fast path for OpenAI - optimized request handling
-    with {:ok, body} <- build_request_body_encoded(question),
-         {:ok, url} <- build_url() do
-      do_optimized_request(url, body, graph, to_node, live_view_topic)
-      :ok
-    else
-      {:error, reason} ->
-        Logger.error("Failed to initiate OpenAI request: #{inspect(reason)}")
-        # Return the error directly instead of falling back to base worker
-        # to avoid potential infinite recursion
-        {:error, reason}
-    end
-  end
+  def perform(%Oban.Job{
+        args: %{
+          "question" => question,
+          "to_node" => to_node,
+          "graph" => graph,
+          "live_view_topic" => live_view_topic
+        }
+      }) do
+    model_spec = openai_model_spec()
+    api_key = System.get_env("OPENAI_API_KEY")
 
-  defp build_request_body_encoded(question) do
-    try do
-      body = build_request_body(question)
-      {:ok, Jason.encode!(body)}
-    rescue
-      e ->
-        Logger.error("Failed to encode OpenAI request body: #{inspect(e)}")
-        {:error, "Failed to encode request"}
-    end
-  end
+    # Build a provider-agnostic chat context: system + user
+    ctx =
+      ReqLLM.Context.new([
+        ReqLLM.Context.system(@system_prompt),
+        ReqLLM.Context.user(question)
+      ])
 
-  defp build_url do
-    case api_key() do
-      nil ->
-        Logger.error("OpenAI API key not configured")
-        {:error, "API key not configured"}
+    # Stream text – this returns a StreamResponse handle
+    case ReqLLM.stream_text(model_spec, ctx, api_key: api_key) do
+      {:ok, stream_resp} ->
+        # Stream tokens to UI (and persisted vertex content) as they arrive
+        ReqLLM.StreamResponse.tokens(stream_resp)
+        |> Stream.each(fn token ->
+          Utils.process_chunk(graph, to_node, token, __MODULE__, live_view_topic)
+        end)
+        |> Stream.run()
 
-      _ ->
-        {:ok, request_url()}
-    end
-  end
-
-  defp do_optimized_request(url, body, graph, to_node, live_view_topic) do
-    options = [
-      headers: headers(api_key()),
-      body: body,
-      into: &Utils.handle_sse_stream(__MODULE__, &1, &2, graph, to_node, live_view_topic),
-      connect_options: [timeout: @request_timeout],
-      receive_timeout: @request_timeout,
-      retry: :transient,
-      max_retries: 2
-    ]
-
-    task =
-      Task.async(fn ->
-        Req.post(url, options)
-      end)
-
-    case Task.await(task, @request_timeout + 5000) do
-      {:ok, _response} ->
-        Logger.info("OpenAI request completed successfully")
-
-        GraphManager.finalize_node_content(graph, to_node)
-        DbWorker.save_graph(graph, false)
-
-        Phoenix.PubSub.broadcast(
-          Dialectic.PubSub,
-          live_view_topic,
-          {:llm_request_complete, to_node}
-        )
-
+        finalize(graph, to_node, live_view_topic)
         :ok
 
-      {:error, reason} ->
-        Logger.error("OpenAI request failed: #{inspect(reason)}")
-        raise "OpenAI request failed: #{inspect(reason)}"
+      {:error, err} ->
+        Logger.error("OpenAI streaming error: #{inspect(err)}")
+        {:error, err}
     end
   rescue
     exception ->
-      Logger.error("Exception during OpenAI request: #{inspect(exception)}")
-      raise exception
+      Logger.error(
+        "OpenAI worker exception: #{Exception.format(:error, exception, __STACKTRACE__)}"
+      )
+
+      reraise exception, __STACKTRACE__
   end
 
-  # Delegated SSE stream handling to Utils.handle_sse_stream/6
+  # -- Internals ----------------------------------------------------------------
 
-  # Stream completion handled by Utils.handle_sse_stream/6
+  defp openai_model_spec do
+    # Allow override via OPENAI_MODEL; default to a widely available model
+    # We use the {:provider, "model", opts} tuple form supported by ReqLLM.
+    raw = System.get_env("OPENAI_MODEL") || @default_openai_model
+    {:openai, raw, []}
+  end
+
+  defp finalize(graph, to_node, live_view_topic) do
+    GraphManager.finalize_node_content(graph, to_node)
+    DbWorker.save_graph(graph, false)
+
+    Phoenix.PubSub.broadcast(
+      Dialectic.PubSub,
+      live_view_topic,
+      {:llm_request_complete, to_node}
+    )
+  end
 end

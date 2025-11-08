@@ -15,6 +15,8 @@ defmodule Dialectic.Application do
       {Phoenix.PubSub, name: Dialectic.PubSub},
       # Start the Finch HTTP client for sending emails
       {Finch, name: Dialectic.Finch},
+      # ReqLLM streaming Finch pool (HTTP/1 as per req_llm docs)
+
       DialecticWeb.Presence,
       {Dialectic.Responses.ModeServer, []},
       {DynamicSupervisor, name: GraphSupervisor},
