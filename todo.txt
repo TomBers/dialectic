@@ -1,5 +1,7 @@
 mix test test/dialectic/responses/print_prompts_test.exs > prompt_test.md
 
+Check what happens when you click the action buttons on an empty graph.
+
 Toggle for freeform or more structured answers
 
 Ability to translate nodes to other languages
