@@ -27,13 +27,12 @@ defmodule Dialectic.Workers.OpenAIWorker do
   def perform(%Oban.Job{
         id: job_id,
         attempt: attempt,
-        args:
-          args = %{
-            "question" => question,
-            "to_node" => to_node,
-            "graph" => graph,
-            "live_view_topic" => live_view_topic
-          }
+        args: %{
+          "question" => question,
+          "to_node" => to_node,
+          "graph" => graph,
+          "live_view_topic" => live_view_topic
+        }
       }) do
     Logger.metadata(oban_job_id: job_id, oban_attempt: attempt)
 
