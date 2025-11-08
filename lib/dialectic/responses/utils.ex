@@ -26,17 +26,17 @@ defmodule Dialectic.Responses.Utils do
     updated_vertex =
       try do
         GraphManager.update_vertex(graph, node, text)
-      catch
-        :exit, reason ->
-          Logger.warn(
-            "llm_timing chunk_drop no_graph_process reason=#{inspect(reason)} graph=#{inspect(graph)} node=#{inspect(node)}"
-          )
-
-          nil
       rescue
         exception ->
           Logger.error(
             "llm_timing chunk_drop update_vertex_exception=#{Exception.format(:error, exception, __STACKTRACE__)} graph=#{inspect(graph)} node=#{inspect(node)}"
+          )
+
+          nil
+      catch
+        :exit, reason ->
+          Logger.warning(
+            "llm_timing chunk_drop no_graph_process reason=#{inspect(reason)} graph=#{inspect(graph)} node=#{inspect(node)}"
           )
 
           nil
@@ -57,5 +57,83 @@ defmodule Dialectic.Responses.Utils do
     end
 
     :ok
+  end
+
+  @doc """
+  Parse a Server-Sent Events (SSE) chunk into a list of decoded JSON payloads.
+
+  - Ignores non-data fields (event:, id:, retry:)
+  - Ignores control payloads like [DONE]
+  - Accepts both LF and CRLF newlines
+  - Supports:
+    * Single JSON across multiple data: lines
+    * NDJSON: multiple JSON objects across data: lines in a single frame
+  """
+  @spec parse_chunk(binary()) :: {:ok, [map()]}
+  def parse_chunk(input) when is_binary(input) do
+    input
+    |> String.replace("\r\n", "\n")
+    |> String.split(~r/\n{2,}/, trim: false)
+    |> Enum.reduce([], fn frame, acc ->
+      lines =
+        frame
+        |> String.split("\n")
+        |> Enum.map(&String.trim_trailing(&1))
+
+      data_lines =
+        Enum.reduce(lines, [], fn line, dl ->
+          case String.split(line, ":", parts: 2) do
+            ["data", rest] ->
+              payload = String.trim_leading(rest)
+              [payload | dl]
+
+            _ ->
+              dl
+          end
+        end)
+        |> Enum.reverse()
+
+      cond do
+        data_lines == [] ->
+          acc
+
+        Enum.any?(data_lines, &(&1 == "[DONE]")) ->
+          acc
+
+        Enum.all?(data_lines, &(&1 == "")) ->
+          acc
+
+        true ->
+          joined = Enum.join(data_lines, "\n")
+
+          case Jason.decode(joined) do
+            {:ok, decoded} ->
+              acc ++ [decoded]
+
+            {:error, _} ->
+              ndjson_lines =
+                joined
+                |> String.split("\n")
+                |> Enum.map(&String.trim/1)
+                |> Enum.reject(&(&1 == ""))
+
+              with true <- ndjson_lines != [],
+                   decoded when is_list(decoded) <-
+                     Enum.reduce_while(ndjson_lines, [], fn line, dacc ->
+                       case Jason.decode(line) do
+                         {:ok, d} -> {:cont, [d | dacc]}
+                         {:error, _} -> {:halt, :error}
+                       end
+                     end) do
+                acc ++ Enum.reverse(decoded)
+              else
+                _ ->
+                  Logger.warning("SSE parse failed for frame: #{inspect(joined)}")
+                  acc
+              end
+          end
+      end
+    end)
+    |> then(&{:ok, &1})
   end
 end
