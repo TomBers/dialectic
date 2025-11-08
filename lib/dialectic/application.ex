@@ -14,6 +14,7 @@ defmodule Dialectic.Application do
       {Oban, Application.fetch_env!(:dialectic, Oban)},
       {Phoenix.PubSub, name: Dialectic.PubSub},
       DialecticWeb.Presence,
+      {Finch, name: Dialectic.Finch},
       {Dialectic.Responses.ModeServer, []},
       {DynamicSupervisor, name: GraphSupervisor},
       DialecticWeb.Endpoint
