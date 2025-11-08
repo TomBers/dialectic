@@ -25,14 +25,36 @@ defmodule Dialectic.Workers.OpenAIWorker do
 
   @impl Oban.Worker
   def perform(%Oban.Job{
-        args: %{
-          "question" => question,
-          "to_node" => to_node,
-          "graph" => graph,
-          "live_view_topic" => live_view_topic
-        }
+        id: job_id,
+        attempt: attempt,
+        args:
+          args = %{
+            "question" => question,
+            "to_node" => to_node,
+            "graph" => graph,
+            "live_view_topic" => live_view_topic
+          }
       }) do
+    Logger.metadata(oban_job_id: job_id, oban_attempt: attempt)
+    # Timing instrumentation
+    queued_at_ms = Map.get(args, "queued_at_ms")
+    perform_start_wall_ms = System.system_time(:millisecond)
+
+    queue_ms =
+      if is_integer(queued_at_ms) do
+        perform_start_wall_ms - queued_at_ms
+      else
+        nil
+      end
+
+    perform_start_ms = System.monotonic_time(:millisecond)
+
+    Logger.info(
+      "llm_timing perform_start queue_ms=#{inspect(queue_ms)} graph=#{inspect(graph)} node=#{inspect(to_node)} job_id=#{inspect(job_id)} attempt=#{inspect(attempt)}"
+    )
+
     model_spec = openai_model_spec()
+    {provider, model, _opts} = model_spec
     api_key = System.get_env("OPENAI_API_KEY")
 
     # Build a provider-agnostic chat context: system + user
@@ -43,6 +65,12 @@ defmodule Dialectic.Workers.OpenAIWorker do
       ])
 
     # Stream text – this returns a StreamResponse handle
+    request_start_ms = System.monotonic_time(:millisecond)
+
+    Logger.info(
+      "llm_timing request_start provider=#{provider} model=#{model} setup_ms=#{request_start_ms - perform_start_ms} graph=#{inspect(graph)} node=#{inspect(to_node)} job_id=#{inspect(job_id)} attempt=#{inspect(attempt)}"
+    )
+
     case ReqLLM.stream_text(
            model_spec,
            ctx,
@@ -52,18 +80,60 @@ defmodule Dialectic.Workers.OpenAIWorker do
            receive_timeout: 120_000
          ) do
       {:ok, stream_resp} ->
+        headers_received_ms = System.monotonic_time(:millisecond) - request_start_ms
+
+        Logger.info(
+          "llm_timing headers_received headers_received_ms=#{headers_received_ms} graph=#{inspect(graph)} node=#{inspect(to_node)} job_id=#{inspect(job_id)} attempt=#{inspect(attempt)}"
+        )
+
         # Stream tokens to UI (and persisted vertex content) as they arrive
-        ReqLLM.StreamResponse.tokens(stream_resp)
-        |> Stream.each(fn token ->
-          Utils.process_chunk(graph, to_node, token, __MODULE__, live_view_topic)
-        end)
-        |> Stream.run()
+        _seen? =
+          Enum.reduce(ReqLLM.StreamResponse.tokens(stream_resp), false, fn token, seen? ->
+            unless seen? do
+              ttft_ms = System.monotonic_time(:millisecond) - request_start_ms
+
+              Logger.info(
+                "llm_timing first_token ttft_ms=#{ttft_ms} graph=#{inspect(graph)} node=#{inspect(to_node)} job_id=#{inspect(job_id)} attempt=#{inspect(attempt)}"
+              )
+            end
+
+            Utils.process_chunk(graph, to_node, token, __MODULE__, live_view_topic)
+            true
+          end)
+
+        stream_end_ms = System.monotonic_time(:millisecond)
+
+        Logger.info(
+          "llm_timing stream_end request_ms=#{stream_end_ms - request_start_ms} graph=#{inspect(graph)} node=#{inspect(to_node)} job_id=#{inspect(job_id)} attempt=#{inspect(attempt)}"
+        )
+
+        Logger.info(
+          "llm_timing finalize_start graph=#{inspect(graph)} node=#{inspect(to_node)} job_id=#{inspect(job_id)} attempt=#{inspect(attempt)}"
+        )
 
         finalize(graph, to_node, live_view_topic)
+        finalize_end_ms = System.monotonic_time(:millisecond)
+
+        total_since_enqueue_ms =
+          if is_integer(queued_at_ms) do
+            System.system_time(:millisecond) - queued_at_ms
+          else
+            nil
+          end
+
+        Logger.info(
+          "llm_timing finalize_end finalize_ms=#{finalize_end_ms - stream_end_ms} total_ms_since_perform=#{finalize_end_ms - perform_start_ms} total_since_enqueue_ms=#{inspect(total_since_enqueue_ms)} job_id=#{inspect(job_id)} attempt=#{inspect(attempt)}"
+        )
+
         :ok
 
       {:error, err} ->
-        Logger.error("OpenAI streaming error: #{inspect(err)}")
+        err_ms = System.monotonic_time(:millisecond)
+
+        Logger.error(
+          "llm_timing request_error elapsed_ms=#{err_ms - request_start_ms} provider=#{provider} model=#{model} graph=#{inspect(graph)} node=#{inspect(to_node)} job_id=#{inspect(job_id)} attempt=#{inspect(attempt)} error=#{inspect(err)}"
+        )
+
         {:error, err}
     end
   rescue
@@ -78,7 +148,8 @@ defmodule Dialectic.Workers.OpenAIWorker do
   # -- Internals ----------------------------------------------------------------
 
   defp openai_model_spec do
-    # Hardcoded model per request
+    # Hardcoded model per request (favor fast TTFT for diagnosis)
+    # TODO: make this configurable via config/runtime.exs or OPENAI_CHAT_MODEL
     {:openai, "gpt-5-nano", []}
   end
 

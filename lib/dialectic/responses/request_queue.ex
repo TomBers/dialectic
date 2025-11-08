@@ -1,6 +1,7 @@
 defmodule Dialectic.Responses.RequestQueue do
   alias Dialectic.Workers.OpenAIWorker
   alias Dialectic.Workers.LocalWorker
+  require Logger
 
   # Define the implementation based on compile-time environment
   if Mix.env() == :test do
@@ -11,8 +12,13 @@ defmodule Dialectic.Responses.RequestQueue do
         to_node: to_node.id,
         graph: graph,
         module: nil,
-        live_view_topic: live_view_topic
+        live_view_topic: live_view_topic,
+        queued_at_ms: System.system_time(:millisecond)
       }
+
+      Logger.info(
+        "llm_timing enqueue queue=api_request graph=#{inspect(graph)} node=#{inspect(to_node.id)} selection=false"
+      )
 
       run_local(params)
     end
@@ -24,7 +30,8 @@ defmodule Dialectic.Responses.RequestQueue do
         to_node: to_node.id,
         graph: graph,
         module: nil,
-        live_view_topic: live_view_topic
+        live_view_topic: live_view_topic,
+        queued_at_ms: System.system_time(:millisecond)
       }
 
       # Route selection responses to lower-priority path when class is "explain"
@@ -35,8 +42,16 @@ defmodule Dialectic.Responses.RequestQueue do
         end
 
       if is_selection do
+        Logger.info(
+          "llm_timing enqueue queue=openai_selection graph=#{inspect(graph)} node=#{inspect(to_node.id)} selection=true"
+        )
+
         run_openai_selection(params)
       else
+        Logger.info(
+          "llm_timing enqueue queue=openai_request graph=#{inspect(graph)} node=#{inspect(to_node.id)} selection=false"
+        )
+
         run_openai(params)
       end
     end
@@ -49,7 +64,7 @@ defmodule Dialectic.Responses.RequestQueue do
     }
     |> LocalWorker.new(
       unique: [
-        fields: [:args, :worker, :queue],
+        fields: [:args, :worker],
         keys: [:graph, :to_node],
         period: 60,
         states: [:available, :scheduled, :executing, :retryable]
@@ -68,7 +83,7 @@ defmodule Dialectic.Responses.RequestQueue do
       max_attempts: 3,
       tags: ["openai"],
       unique: [
-        fields: [:args, :worker, :queue],
+        fields: [:args, :worker],
         keys: [:graph, :to_node],
         period: 60,
         states: [:available, :scheduled, :executing, :retryable]
@@ -86,8 +101,9 @@ defmodule Dialectic.Responses.RequestQueue do
       priority: 5,
       max_attempts: 3,
       tags: ["openai", "selection"],
+      queue: :openai_selection,
       unique: [
-        fields: [:args, :worker, :queue],
+        fields: [:args, :worker],
         keys: [:graph, :to_node],
         period: 60,
         states: [:available, :scheduled, :executing, :retryable]
