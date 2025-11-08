@@ -16,9 +16,6 @@ defmodule Dialectic.Workers.OpenAIWorker do
   alias Dialectic.Responses.Utils
   alias Dialectic.DbActions.DbWorker
 
-  # Prefer explicit provider tuple to avoid relying on "provider:model" parsing,
-  # and to keep compatibility if OPENAI_MODEL is a bare model name.
-  @default_openai_model "gpt-4o-mini"
   @system_prompt """
   You are an expert philosopher, helping the user better understand key philosophical points.
   Keep answers concise and to the point. Add references to sources when appropriate.
@@ -46,7 +43,14 @@ defmodule Dialectic.Workers.OpenAIWorker do
       ])
 
     # Stream text – this returns a StreamResponse handle
-    case ReqLLM.stream_text(model_spec, ctx, api_key: api_key) do
+    case ReqLLM.stream_text(
+           model_spec,
+           ctx,
+           api_key: api_key,
+           finch_name: ReqLLM.Finch,
+           connect_timeout: 30_000,
+           receive_timeout: 120_000
+         ) do
       {:ok, stream_resp} ->
         # Stream tokens to UI (and persisted vertex content) as they arrive
         ReqLLM.StreamResponse.tokens(stream_resp)
@@ -74,10 +78,8 @@ defmodule Dialectic.Workers.OpenAIWorker do
   # -- Internals ----------------------------------------------------------------
 
   defp openai_model_spec do
-    # Allow override via OPENAI_MODEL; default to a widely available model
-    # We use the {:provider, "model", opts} tuple form supported by ReqLLM.
-    raw = System.get_env("OPENAI_MODEL") || @default_openai_model
-    {:openai, raw, []}
+    # Hardcoded model per request
+    {:openai, "gpt-5-nano", []}
   end
 
   defp finalize(graph, to_node, live_view_topic) do

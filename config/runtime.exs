@@ -1,5 +1,15 @@
 import Config
 
+# Configure ReqLLM Finch (streaming) to use HTTP/1 and larger connection pool
+# to reduce Mint timeouts during streaming. See ReqLLM docs "Streaming Configuration".
+config :req_llm,
+  finch: [
+    name: ReqLLM.Finch,
+    pools: %{
+      default: [protocols: [:http1], size: 1, count: 8]
+    }
+  ]
+
 # config/runtime.exs is executed for all environments, including
 # during releases. It is executed after compilation and before the
 # system starts, so it is typically used to load production configuration
