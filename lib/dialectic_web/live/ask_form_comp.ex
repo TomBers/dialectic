@@ -86,57 +86,49 @@ defmodule DialecticWeb.AskFormComp do
   def render(assigns) do
     ~H"""
     <div class="w-full min-w-0">
-      <div class="flex items-center justify-between gap-2 mb-2">
-        <div class="flex items-center gap-1">
-          <button
-            type="button"
-            phx-click="toggle_ask_question"
-            phx-target={@myself}
-            class={"px-2 py-1 text-xs rounded-full " <> if @ask_question, do: "bg-blue-50 text-blue-600 border border-blue-200", else: "text-gray-600 hover:bg-gray-50 border border-transparent"}
-          >
-            Ask
-          </button>
-          <button
-            type="button"
-            phx-click="toggle_ask_question"
-            phx-target={@myself}
-            class={"px-2 py-1 text-xs rounded-full " <> if !@ask_question, do: "bg-emerald-50 text-emerald-600 border border-emerald-200", else: "text-gray-600 hover:bg-gray-50 border border-transparent"}
-          >
-            Comment
-          </button>
-        </div>
-        <button
-          type="button"
-          phx-click="cycle_prompt_mode"
-          phx-target={@myself}
-          class="bg-white border border-gray-300 text-gray-700 text-xs leading-none px-2 h-8 rounded-full hover:bg-gray-50"
-          title="Cycle LLM mode"
-        >
-          Mode: {String.capitalize(@prompt_mode || "structured")}
-        </button>
-      </div>
-
       <.form
         for={@form}
         phx-submit={@submit_event || if(@ask_question, do: "reply-and-answer", else: "answer")}
         id={@id}
-        class="w-full min-w-0 relative"
+        class="w-full min-w-0"
       >
-        <div class="relative min-w-0 overflow-hidden">
-          <.input
-            field={@form[:content]}
-            type="text"
-            id={@input_id}
-            placeholder={@placeholder}
-            class="box-border w-full h-10 rounded-full pl-3 pr-28 text-sm border border-gray-300 focus:border-indigo-400 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-          />
+        <div class="flex items-center gap-2 w-full">
+          <button
+            type="button"
+            phx-click="toggle_ask_question"
+            phx-target={@myself}
+            class={"px-2 py-1 text-xs rounded-full flex-none " <> if @ask_question, do: "bg-blue-50 text-blue-600 border border-blue-200", else: "bg-emerald-50 text-emerald-600 border border-emerald-200"}
+            title="Toggle ask/comment"
+          >
+            {if @ask_question, do: "Ask", else: "Comment"}
+          </button>
 
           <button
-            type="submit"
-            class="absolute right-2 inset-y-0 my-auto bg-indigo-600 hover:bg-indigo-700 text-white text-sm leading-none px-2.5 h-8 rounded-full font-medium"
+            type="button"
+            phx-click="cycle_prompt_mode"
+            phx-target={@myself}
+            class="bg-white border border-gray-300 text-gray-700 text-xs leading-none px-2 h-8 rounded-full hover:bg-gray-50 flex-none"
+            title="Cycle LLM mode"
           >
-            {if @submit_label, do: @submit_label, else: if(@ask_question, do: "Ask", else: "Post")}
+            {String.capitalize(@prompt_mode || "structured")}
           </button>
+
+          <div class="relative min-w-0 flex-1 overflow-hidden">
+            <.input
+              field={@form[:content]}
+              type="text"
+              id={@input_id}
+              placeholder={@placeholder}
+              class="box-border w-full h-10 rounded-full pl-3 pr-28 text-sm border border-gray-300 focus:border-indigo-400 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+            />
+
+            <button
+              type="submit"
+              class="absolute right-2 inset-y-0 my-auto bg-indigo-600 hover:bg-indigo-700 text-white text-sm leading-none px-2.5 h-8 rounded-full font-medium"
+            >
+              {if @submit_label, do: @submit_label, else: if(@ask_question, do: "Ask", else: "Post")}
+            </button>
+          </div>
         </div>
       </.form>
     </div>
