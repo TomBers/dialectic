@@ -49,16 +49,7 @@ defmodule Dialectic.Workers.OpenAIWorker do
       ctx =
         ReqLLM.Context.new([
           ReqLLM.Context.system("""
-          You must return valid GitHub-flavored Markdown (GFM) only.
-
-          Rules:
-          - Use headings with a space after the hashes (e.g., '### Title'), never '###. Title' or '###Title'.
-          - Numbered lists must use '1.' '2.' etc., each on its own line, with a space after the period.
-          - Leave a blank line before any heading or list block.
-          - Do not use '1)' or '(1)' for lists.
-          - Do not insert headings mid-sentence.
-          - No JSON or HTML wrappers in the answer; produce Markdown only.
-          - Do not include literal escape sequences like '\n' in the output; emit real newlines.
+          Output valid GFM only (no HTML/JSON). Use "# " headings; "1. " ordered lists; blank line before headings/lists; no mid-sentence headings; real newlines, not "\n".
           """),
           ReqLLM.Context.user(question)
         ])
