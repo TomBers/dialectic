@@ -42,7 +42,10 @@ defmodule DialecticWeb.AskFormComp do
           assign(
             s,
             :placeholder,
-            if(s.assigns[:ask_question], do: "Ask a question…", else: "Add a comment…")
+            if(s.assigns[:ask_question],
+              do: "Ask a " <> (s.assigns[:prompt_mode] || "structured") <> " question…",
+              else: "Add a comment…"
+            )
           )
         end
       end)
@@ -71,7 +74,15 @@ defmodule DialecticWeb.AskFormComp do
         prompt_mode: Atom.to_string(next)
       )
 
-      {:noreply, assign(socket, :prompt_mode, Atom.to_string(next))}
+      new_mode = Atom.to_string(next)
+      ask_q = Map.get(socket.assigns, :ask_question, true)
+
+      placeholder =
+        if ask_q,
+          do: "Ask a " <> (new_mode || "structured") <> " question…",
+          else: "Add a comment…"
+
+      {:noreply, assign(socket, prompt_mode: new_mode, placeholder: placeholder)}
     else
       {:noreply, socket}
     end
@@ -79,7 +90,15 @@ defmodule DialecticWeb.AskFormComp do
 
   @impl true
   def handle_event("toggle_ask_question", _params, socket) do
-    {:noreply, assign(socket, :ask_question, !Map.get(socket.assigns, :ask_question, true))}
+    new_ask? = !Map.get(socket.assigns, :ask_question, true)
+    mode = socket.assigns[:prompt_mode] || "structured"
+
+    placeholder =
+      if new_ask?,
+        do: "Ask a " <> mode <> " question…",
+        else: "Add a comment…"
+
+    {:noreply, assign(socket, ask_question: new_ask?, placeholder: placeholder)}
   end
 
   @impl true
