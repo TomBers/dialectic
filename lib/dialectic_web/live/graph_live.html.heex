@@ -119,12 +119,7 @@
         phx-hook="Graph"
         tabindex="0"
       >
-        <div
-          id="cy-inner"
-          class="h-full w-full relative pb-40 sm:pb-32 md:pb-24"
-          phx-update="ignore"
-        >
-        </div>
+        <div id="cy-inner" class="h-full w-full relative" phx-update="ignore"></div>
       </div>
 
       <span phx-window-keydown={show_modal("modal-graph-live-modal-comp")} phx-key="Enter"></span>
@@ -350,27 +345,45 @@
     <% end %>
     
 <!-- Bottom menu toggle -->
-    <button
+    <div
       :if={!@bottom_menu_open}
-      id="bottom-menu-toggle"
-      phx-click="toggle_bottom_menu"
-      aria-controls="bottom-menu"
-      aria-expanded={@bottom_menu_open}
-      aria-label="Show bottom menu"
-      class="fixed left-1/2 -translate-x-1/2 p-2 rounded-full bg-white border border-gray-300 opacity-90 hover:opacity-100 shadow-sm cursor-pointer transition-all duration-200"
-      style="pointer-events:auto; bottom: calc(0.75rem + env(safe-area-inset-bottom)); z-index: 2147483647;"
+      class={
+        "fixed bottom-0 z-30 px-3 pb-3 pointer-events-none " <>
+          if(@drawer_open, do: "left-0 right-0 md:left-[40%]", else: "inset-x-0") <>
+          if(@right_panel_open, do: " right-[20rem] sm:right-[24rem]", else: "")
+      }
+      style="padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem);"
     >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        class="h-6 w-6 text-gray-600"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
-      </svg>
-      <span class="sr-only">Open bottom menu</span>
-    </button>
+      <div class="mx-auto w-full max-w-xl">
+        <div class="flex justify-center">
+          <button
+            id="bottom-menu-toggle"
+            phx-click="toggle_bottom_menu"
+            aria-controls="bottom-menu"
+            aria-expanded={@bottom_menu_open}
+            aria-label="Show bottom menu"
+            class="roof-handle inline-flex items-center justify-center w-24 h-7 rounded-full bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 shadow-sm pointer-events-auto"
+            type="button"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M5 15l7-7 7 7"
+              />
+            </svg>
+            <span class="sr-only">Open bottom menu</span>
+          </button>
+        </div>
+      </div>
+    </div>
     
 <!-- Chat input bar -->
     <div
@@ -378,11 +391,11 @@
       class={
         if @bottom_menu_open,
           do:
-            "fixed bottom-0 z-30 transform translate-y-0 opacity-100 visible transition-all duration-300 ease-in-out px-3 pb-3 pointer-events-auto " <>
+            "fixed bottom-0 z-30 transform origin-bottom scale-100 opacity-100 visible transition-all duration-200 ease-out px-3 pb-3 pointer-events-none " <>
               if(@drawer_open, do: "left-0 right-0 md:left-[40%]", else: "inset-x-0") <>
               if(@right_panel_open, do: " right-[20rem] sm:right-[24rem]", else: ""),
           else:
-            "fixed bottom-0 z-30 transform translate-y-full opacity-0 invisible transition-all duration-300 ease-in-out px-3 pb-3 pointer-events-none " <>
+            "fixed bottom-0 z-30 transform origin-bottom scale-90 opacity-0 invisible transition-all duration-150 ease-in px-3 pb-3 pointer-events-none " <>
               if(@drawer_open, do: "left-0 right-0 md:left-[40%]", else: "inset-x-0") <>
               if(@right_panel_open, do: " right-[20rem] sm:right-[24rem]", else: "")
       }
@@ -397,7 +410,7 @@
               aria-controls="bottom-menu"
               aria-expanded={@bottom_menu_open}
               aria-label="Hide bottom menu"
-              class="roof-handle inline-flex items-center justify-center w-24 h-7 rounded-full bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 shadow-sm"
+              class="roof-handle inline-flex items-center justify-center w-24 h-7 rounded-full bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 shadow-sm pointer-events-auto"
               type="button"
             >
               <svg
@@ -417,7 +430,10 @@
               <span class="sr-only">Close bottom menu</span>
             </button>
           </div>
-          <div class="bg-white/95 backdrop-blur border border-gray-200 shadow-xl rounded-t-[1.75rem] rounded-2xl px-4 pt-3 pb-3">
+          <div class={[
+            "bg-white/95 backdrop-blur border border-gray-200 shadow-xl rounded-t-[1.75rem] rounded-2xl px-4 pt-3 pb-3 pointer-events-auto transform-gpu transition-all duration-200 ease-out",
+            if(@bottom_menu_open, do: "translate-y-0", else: "translate-y-2")
+          ]}>
             <div class="flex items-center justify-center gap-2 mb-2">
               <.live_component
                 module={DialecticWeb.ActionToolbarComp}

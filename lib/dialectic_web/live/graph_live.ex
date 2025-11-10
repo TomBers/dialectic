@@ -1062,6 +1062,7 @@ defmodule DialecticWeb.GraphLive do
         prompt_mode:
           Atom.to_string(Dialectic.Responses.ModeServer.get_mode(socket.assigns.graph_id))
       )
+      |> assign(:ask_question, socket.assigns.ask_question)
       |> then(fn s ->
         # Close the start stream modal if applicable
         if operation == "start_stream" do

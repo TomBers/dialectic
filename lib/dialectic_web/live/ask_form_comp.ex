@@ -42,7 +42,7 @@ defmodule DialecticWeb.AskFormComp do
           assign(
             s,
             :placeholder,
-            if(s.assigns[:ask_question], do: "Ask a question…", else: "Add a comment…")
+            placeholder_for(s.assigns[:ask_question], s.assigns[:prompt_mode])
           )
         end
       end)
@@ -71,72 +71,69 @@ defmodule DialecticWeb.AskFormComp do
         prompt_mode: Atom.to_string(next)
       )
 
-      {:noreply, assign(socket, :prompt_mode, Atom.to_string(next))}
+      new_mode = Atom.to_string(next)
+      ask_q = Map.get(socket.assigns, :ask_question, true)
+
+      placeholder = placeholder_for(ask_q, new_mode)
+
+      {:noreply, assign(socket, prompt_mode: new_mode, placeholder: placeholder)}
     else
       {:noreply, socket}
     end
   end
 
-  @impl true
-  def handle_event("toggle_ask_question", _params, socket) do
-    {:noreply, assign(socket, :ask_question, !Map.get(socket.assigns, :ask_question, true))}
+  defp placeholder_for(ask_q, mode) do
+    if ask_q,
+      do: "Ask a " <> (mode || "structured") <> " question…",
+      else: "Add a comment…"
   end
 
   @impl true
   def render(assigns) do
     ~H"""
     <div class="w-full min-w-0">
-      <div class="flex items-center justify-between gap-2 mb-2">
-        <div class="flex items-center gap-1">
-          <button
-            type="button"
-            phx-click="toggle_ask_question"
-            phx-target={@myself}
-            class={"px-2 py-1 text-xs rounded-full " <> if @ask_question, do: "bg-blue-50 text-blue-600 border border-blue-200", else: "text-gray-600 hover:bg-gray-50 border border-transparent"}
-          >
-            Ask
-          </button>
-          <button
-            type="button"
-            phx-click="toggle_ask_question"
-            phx-target={@myself}
-            class={"px-2 py-1 text-xs rounded-full " <> if !@ask_question, do: "bg-emerald-50 text-emerald-600 border border-emerald-200", else: "text-gray-600 hover:bg-gray-50 border border-transparent"}
-          >
-            Comment
-          </button>
-        </div>
-        <button
-          type="button"
-          phx-click="cycle_prompt_mode"
-          phx-target={@myself}
-          class="bg-white border border-gray-300 text-gray-700 text-xs leading-none px-2 h-8 rounded-full hover:bg-gray-50"
-          title="Cycle LLM mode"
-        >
-          Mode: {String.capitalize(@prompt_mode || "structured")}
-        </button>
-      </div>
-
       <.form
         for={@form}
         phx-submit={@submit_event || if(@ask_question, do: "reply-and-answer", else: "answer")}
         id={@id}
-        class="w-full min-w-0 relative"
+        class="w-full min-w-0"
       >
-        <div class="relative min-w-0 overflow-hidden">
-          <.input
-            field={@form[:content]}
-            type="text"
-            id={@input_id}
-            placeholder={@placeholder}
-            class="box-border w-full h-10 rounded-full pl-3 pr-28 text-sm border border-gray-300 focus:border-indigo-400 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-          />
+        <div class="flex items-center gap-2 w-full">
+          <button
+            type="button"
+            phx-click="toggle_ask_question"
+            class={"px-2 py-1 text-xs rounded-full flex-none " <> if @ask_question, do: "bg-blue-50 text-blue-600 border border-blue-200", else: "bg-emerald-50 text-emerald-600 border border-emerald-200"}
+            title="Toggle ask/comment"
+          >
+            {if @ask_question, do: "Ask", else: "Comment"}
+          </button>
 
           <button
-            type="submit"
-            class="absolute right-2 inset-y-0 my-auto bg-indigo-600 hover:bg-indigo-700 text-white text-sm leading-none px-2.5 h-8 rounded-full font-medium"
+            type="button"
+            phx-click="cycle_prompt_mode"
+            phx-target={@myself}
+            class="bg-white border border-gray-300 text-gray-700 text-xs leading-none px-2 h-8 rounded-full hover:bg-gray-50 flex-none"
+            title="Cycle LLM mode"
           >
-            {if @submit_label, do: @submit_label, else: if(@ask_question, do: "Ask", else: "Post")}
+            {String.capitalize(@prompt_mode || "structured")}
           </button>
+
+          <div class="relative min-w-0 flex-1 overflow-hidden rounded-full transition-shadow focus-within:ring-2 focus-within:ring-indigo-400 focus-within:ring-offset-1 focus-within:ring-offset-white">
+            <.input
+              field={@form[:content]}
+              type="text"
+              id={@input_id}
+              placeholder={@placeholder}
+              class="box-border w-full h-10 rounded-full pl-3 pr-28 text-sm border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400 focus:ring-opacity-50 focus:outline-none"
+            />
+
+            <button
+              type="submit"
+              class="absolute right-2 inset-y-0 my-auto bg-indigo-600 hover:bg-indigo-700 text-white text-sm leading-none px-2.5 h-8 rounded-full font-medium"
+            >
+              {if @submit_label, do: @submit_label, else: if(@ask_question, do: "Ask", else: "Post")}
+            </button>
+          </div>
         </div>
       </.form>
     </div>
