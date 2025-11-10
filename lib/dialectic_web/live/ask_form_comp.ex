@@ -118,13 +118,13 @@ defmodule DialecticWeb.AskFormComp do
             {String.capitalize(@prompt_mode || "structured")}
           </button>
 
-          <div class="relative min-w-0 flex-1 overflow-hidden">
+          <div class="relative min-w-0 flex-1 overflow-hidden rounded-full transition-shadow focus-within:ring-2 focus-within:ring-indigo-400 focus-within:ring-offset-1 focus-within:ring-offset-white">
             <.input
               field={@form[:content]}
               type="text"
               id={@input_id}
               placeholder={@placeholder}
-              class="box-border w-full h-10 rounded-full pl-3 pr-28 text-sm border border-gray-300 focus:border-indigo-400 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              class="box-border w-full h-10 rounded-full pl-3 pr-28 text-sm border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400 focus:ring-opacity-50 focus:outline-none"
             />
 
             <button
