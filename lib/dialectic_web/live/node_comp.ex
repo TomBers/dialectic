@@ -18,19 +18,24 @@ defmodule DialecticWeb.NodeComp do
             id={"tt-node-" <> @node.id}
           >
             <div class="summary-content modal-responsive" id={"tt-summary-content-" <> @node.id}>
-              <article class="prose prose-stone prose-lg md:prose-xl max-w-none selection-content w-full prose-headings:mt-0 prose-p:leading-relaxed prose-li:leading-relaxed">
-                <h3 class="mt-0 text-lg sm:text-xl md:text-2xl mb-2 sm:mb-3 pb-2 border-b border-gray-200">
-                  {TextUtils.render_content(@node.content || "") |> Map.get(:title)}
-                </h3>
-                <div
-                  class="w-full min-w-full text-base sm:text-lg p-2"
-                  phx-hook="ListDetection"
-                  data-children={length(@node.children)}
-                  id={"list-detector-" <> @node.id}
-                >
-                  {TextUtils.render_content(@node.content || "") |> Map.get(:body_html)}
+              <div id={"node-content-#{@node.id}"} phx-update="replace">
+                <div id={"node-content-inner-#{@node.id}-#{:erlang.phash2(@node.content || "")}"}>
+                  <article class="prose prose-stone prose-lg md:prose-xl max-w-none selection-content w-full prose-headings:mt-0 prose-p:leading-relaxed prose-li:leading-relaxed">
+                    <% rendered = TextUtils.render_content(@node.content || "") %>
+                    <h3 class="mt-0 text-lg sm:text-xl md:text-2xl mb-2 sm:mb-3 pb-2 border-b border-gray-200">
+                      {rendered |> Map.get(:title)}
+                    </h3>
+                    <div
+                      class="w-full min-w-full text-base sm:text-lg p-2"
+                      phx-hook="ListDetection"
+                      data-children={length(@node.children)}
+                      id={"list-detector-" <> @node.id}
+                    >
+                      {rendered |> Map.get(:body_html)}
+                    </div>
+                  </article>
                 </div>
-              </article>
+              </div>
               <div class="selection-actions hidden absolute bg-white shadow-lg rounded-lg p-1 sm:p-2 z-10 border border-gray-200">
                 <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 sm:py-1.5 px-2 sm:px-3 rounded-full flex items-center">
                   <svg
