@@ -21,8 +21,9 @@ defmodule DialecticWeb.NodeComp do
               <div id={"node-content-#{@node.id}"} phx-update="replace">
                 <div id={"node-content-inner-#{@node.id}-#{:erlang.phash2(@node.content || "")}"}>
                   <article class="prose prose-stone prose-lg md:prose-xl max-w-none selection-content w-full prose-headings:mt-0 prose-p:leading-relaxed prose-li:leading-relaxed">
+                    <% rendered = TextUtils.render_content(@node.content || "") %>
                     <h3 class="mt-0 text-lg sm:text-xl md:text-2xl mb-2 sm:mb-3 pb-2 border-b border-gray-200">
-                      {TextUtils.render_content(@node.content || "") |> Map.get(:title)}
+                      {rendered |> Map.get(:title)}
                     </h3>
                     <div
                       class="w-full min-w-full text-base sm:text-lg p-2"
@@ -30,7 +31,7 @@ defmodule DialecticWeb.NodeComp do
                       data-children={length(@node.children)}
                       id={"list-detector-" <> @node.id}
                     >
-                      {TextUtils.render_content(@node.content || "") |> Map.get(:body_html)}
+                      {rendered |> Map.get(:body_html)}
                     </div>
                   </article>
                 </div>
