@@ -1,12 +1,9 @@
-Good morning, I have a difficult task to do.  In the project, a graph is created in the FocusLive module, which is linked to from the home page, I want to redirect the home page directly to the graph view, and remove all the focus live code.  The graph view should load containing nothing, but a message to guide the user to ask a question to get started.  Once a user has asked a question, follow the flow from FocusLive and create a new graph with the question the user asked as the title.  Let me know if anything is not clear.
+mix test test/dialectic/responses/print_prompts_test.exs > prompt_test.md
 
-
-Add labels back to the bottom toolbar
+Check what happens when you click the action buttons on an empty graph.
 
 Toggle for freeform or more structured answers
 
 Ability to translate nodes to other languages
 
 Beginner tutorial - guide the user
-
-Integrate chat with the main graph to sit gets built as you type.

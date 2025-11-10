@@ -1,6 +1,5 @@
 defmodule GraphManager do
   alias Dialectic.Graph.{Vertex, Serialise, Siblings}
-  alias DialecticWeb.Live.TextUtils
 
   require Logger
 
@@ -116,7 +115,7 @@ defmodule GraphManager do
   def handle_call({:update_node, {node_id, data}}, _from, {graph_struct, graph}) do
     case :digraph.vertex(graph, node_id) do
       {_id, vertex} ->
-        safe = TextUtils.normalize_stream_fragment(data, :space)
+        safe = to_string(data)
         updated_vertex = %{vertex | content: vertex.content <> safe}
         :digraph.add_vertex(graph, node_id, updated_vertex)
         {:reply, Vertex.add_relatives(updated_vertex, graph), {graph_struct, graph}}
@@ -214,6 +213,16 @@ defmodule GraphManager do
     {:reply, updated_graph, {graph_struct, updated_graph}}
   end
 
+  def handle_call({:finalize_node, node_id}, _from, {graph_struct, graph}) do
+    case :digraph.vertex(graph, node_id) do
+      {_id, vertex} ->
+        {:reply, Vertex.add_relatives(vertex, graph), {graph_struct, graph}}
+
+      false ->
+        {:reply, nil, {graph_struct, graph}}
+    end
+  end
+
   def handle_call(:find_leaf_nodes, _, {graph_struct, graph}) do
     {:reply, Vertex.find_leaf_nodes(graph), {graph_struct, graph}}
   end
@@ -270,6 +279,10 @@ defmodule GraphManager do
 
   def update_vertex(path, node_id, data) do
     GenServer.call(via_tuple(path), {:update_node, {node_id, data}})
+  end
+
+  def finalize_node_content(path, node_id) do
+    GenServer.call(via_tuple(path), {:finalize_node, node_id})
   end
 
   def toggle_graph_locked(path) do
