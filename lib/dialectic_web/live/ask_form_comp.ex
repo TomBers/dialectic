@@ -82,16 +82,6 @@ defmodule DialecticWeb.AskFormComp do
     end
   end
 
-  @impl true
-  def handle_event("toggle_ask_question", _params, socket) do
-    new_ask? = !Map.get(socket.assigns, :ask_question, true)
-    mode = socket.assigns[:prompt_mode] || "structured"
-
-    placeholder = placeholder_for(new_ask?, mode)
-
-    {:noreply, assign(socket, ask_question: new_ask?, placeholder: placeholder)}
-  end
-
   defp placeholder_for(ask_q, mode) do
     if ask_q,
       do: "Ask a " <> (mode || "structured") <> " question…",
@@ -112,7 +102,6 @@ defmodule DialecticWeb.AskFormComp do
           <button
             type="button"
             phx-click="toggle_ask_question"
-            phx-target={@myself}
             class={"px-2 py-1 text-xs rounded-full flex-none " <> if @ask_question, do: "bg-blue-50 text-blue-600 border border-blue-200", else: "bg-emerald-50 text-emerald-600 border border-emerald-200"}
             title="Toggle ask/comment"
           >
