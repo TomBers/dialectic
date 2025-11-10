@@ -42,10 +42,7 @@ defmodule DialecticWeb.AskFormComp do
           assign(
             s,
             :placeholder,
-            if(s.assigns[:ask_question],
-              do: "Ask a " <> (s.assigns[:prompt_mode] || "structured") <> " question…",
-              else: "Add a comment…"
-            )
+            placeholder_for(s.assigns[:ask_question], s.assigns[:prompt_mode])
           )
         end
       end)
@@ -77,10 +74,7 @@ defmodule DialecticWeb.AskFormComp do
       new_mode = Atom.to_string(next)
       ask_q = Map.get(socket.assigns, :ask_question, true)
 
-      placeholder =
-        if ask_q,
-          do: "Ask a " <> (new_mode || "structured") <> " question…",
-          else: "Add a comment…"
+      placeholder = placeholder_for(ask_q, new_mode)
 
       {:noreply, assign(socket, prompt_mode: new_mode, placeholder: placeholder)}
     else
@@ -93,12 +87,15 @@ defmodule DialecticWeb.AskFormComp do
     new_ask? = !Map.get(socket.assigns, :ask_question, true)
     mode = socket.assigns[:prompt_mode] || "structured"
 
-    placeholder =
-      if new_ask?,
-        do: "Ask a " <> mode <> " question…",
-        else: "Add a comment…"
+    placeholder = placeholder_for(new_ask?, mode)
 
     {:noreply, assign(socket, ask_question: new_ask?, placeholder: placeholder)}
+  end
+
+  defp placeholder_for(ask_q, mode) do
+    if ask_q,
+      do: "Ask a " <> (mode || "structured") <> " question…",
+      else: "Add a comment…"
   end
 
   @impl true
