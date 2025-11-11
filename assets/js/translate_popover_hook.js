@@ -13,9 +13,9 @@ function getPanelCandidate(root) {
   // Try likely selector candidates, in order
   const candidates = [
     '[data-role="panel"]',
-    '[data-popover-panel]',
-    '.translate-popover-panel',
-    '.translate-menu',
+    "[data-popover-panel]",
+    ".translate-popover-panel",
+    ".translate-menu",
   ];
   for (const sel of candidates) {
     const el = root.querySelector(sel);
@@ -24,13 +24,15 @@ function getPanelCandidate(root) {
 
   // Fallback: the first direct child that looks like a menu container
   const maybe = Array.from(root.children).find((c) => {
-    const tag = (c.tagName || '').toLowerCase();
-    if (tag === 'template') return false;
-    const hasLinks = c.querySelector && c.querySelector('a, button, [role="menuitem"]');
-    const hasMenuRole = c.getAttribute && c.getAttribute('role') === 'menu';
+    const tag = (c.tagName || "").toLowerCase();
+    if (tag === "template") return false;
+    const hasLinks =
+      c.querySelector && c.querySelector('a, button, [role="menuitem"]');
+    const hasMenuRole = c.getAttribute && c.getAttribute("role") === "menu";
     const isHidden =
-      (c.style && (c.style.display === 'none' || c.style.visibility === 'hidden')) ||
-      c.hasAttribute('hidden');
+      (c.style &&
+        (c.style.display === "none" || c.style.visibility === "hidden")) ||
+      c.hasAttribute("hidden");
     return (hasLinks || hasMenuRole) && !isHidden;
   });
   return maybe || null;
@@ -42,7 +44,7 @@ function getTriggerCandidate(root) {
   if (trigger) return trigger;
 
   // Otherwise, first button inside
-  trigger = root.querySelector('button');
+  trigger = root.querySelector("button");
   if (trigger) return trigger;
 
   // Fallback to the root element itself (clickable container)
@@ -58,9 +60,9 @@ function computePosition(triggerRect, panelWidth, panelHeight, align) {
 
   // Horizontal alignment: center by default, clamp to viewport
   let left;
-  if (align === 'left') {
+  if (align === "left") {
     left = triggerRect.left;
-  } else if (align === 'right') {
+  } else if (align === "right") {
     left = triggerRect.right - panelWidth;
   } else {
     // center
@@ -75,7 +77,11 @@ function computePosition(triggerRect, panelWidth, panelHeight, align) {
     top = triggerRect.top - panelHeight - MARGIN;
     // If still out of view, clamp
     if (top < MARGIN) {
-      top = clamp(triggerRect.top + triggerRect.height + MARGIN, MARGIN, vh - panelHeight - MARGIN);
+      top = clamp(
+        triggerRect.top + triggerRect.height + MARGIN,
+        MARGIN,
+        vh - panelHeight - MARGIN,
+      );
     }
   }
 
@@ -99,28 +105,30 @@ const translatePopoverHook = {
     if (!this._trigger || !this._panel) {
       // Gracefully no-op if we can't find what we need
       // eslint-disable-next-line no-console
-      console.warn('[TranslatePopover] Missing trigger or panel element. Hook inert.');
+      console.warn(
+        "[TranslatePopover] Missing trigger or panel element. Hook inert.",
+      );
       return;
     }
 
     // Store references to restore later
     this._originalParent = this._panel.parentNode;
     this._originalNextSibling = this._panel.nextSibling;
-    this._storedPanelStyle = this._panel.getAttribute('style');
+    this._storedPanelStyle = this._panel.getAttribute("style");
 
     // Ensure panel visible semantics are controlled by us
-    this._panel.removeAttribute('hidden');
-    this._panel.style.display = '';
+    this._panel.removeAttribute("hidden");
+    this._panel.style.display = "";
 
     // Create a fixed-position portal container in body
-    this._container = document.createElement('div');
-    this._container.className = 'translate-popover-portal';
+    this._container = document.createElement("div");
+    this._container.className = "translate-popover-portal";
     Object.assign(this._container.style, {
-      position: 'fixed',
-      top: '-9999px',
-      left: '-9999px',
+      position: "fixed",
+      top: "-9999px",
+      left: "-9999px",
       zIndex: String(Z_INDEX),
-      display: 'none', // hidden by default
+      display: "none", // hidden by default
     });
 
     // Move panel into container
@@ -147,7 +155,7 @@ const translatePopoverHook = {
 
     this._onKeyDown = (e) => {
       if (!this._open) return;
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         e.preventDefault();
         this.close();
         // Return focus to trigger for accessibility
@@ -167,12 +175,12 @@ const translatePopoverHook = {
       this.position();
     });
 
-    this._trigger.addEventListener('click', this._onTriggerClick);
-    document.addEventListener('mousedown', this._onDocPointerDown, true);
-    document.addEventListener('touchstart', this._onDocPointerDown, true);
-    document.addEventListener('keydown', this._onKeyDown, true);
-    window.addEventListener('scroll', this._onScrollOrResize, true);
-    window.addEventListener('resize', this._onScrollOrResize, true);
+    this._trigger.addEventListener("click", this._onTriggerClick);
+    document.addEventListener("mousedown", this._onDocPointerDown, true);
+    document.addEventListener("touchstart", this._onDocPointerDown, true);
+    document.addEventListener("keydown", this._onKeyDown, true);
+    window.addEventListener("scroll", this._onScrollOrResize, true);
+    window.addEventListener("resize", this._onScrollOrResize, true);
     this._ro.observe(this._panel);
     this._ro.observe(this._trigger);
   },
@@ -187,13 +195,13 @@ const translatePopoverHook = {
   destroyed() {
     try {
       if (this._trigger && this._onTriggerClick) {
-        this._trigger.removeEventListener('click', this._onTriggerClick);
+        this._trigger.removeEventListener("click", this._onTriggerClick);
       }
-      document.removeEventListener('mousedown', this._onDocPointerDown, true);
-      document.removeEventListener('touchstart', this._onDocPointerDown, true);
-      document.removeEventListener('keydown', this._onKeyDown, true);
-      window.removeEventListener('scroll', this._onScrollOrResize, true);
-      window.removeEventListener('resize', this._onScrollOrResize, true);
+      document.removeEventListener("mousedown", this._onDocPointerDown, true);
+      document.removeEventListener("touchstart", this._onDocPointerDown, true);
+      document.removeEventListener("keydown", this._onKeyDown, true);
+      window.removeEventListener("scroll", this._onScrollOrResize, true);
+      window.removeEventListener("resize", this._onScrollOrResize, true);
       if (this._ro) {
         try {
           this._ro.disconnect();
@@ -202,15 +210,21 @@ const translatePopoverHook = {
 
       // Restore panel to original parent if possible
       if (this._panel) {
-        if (this._storedPanelStyle == null) {
-          this._panel.removeAttribute('style');
+        if (this._storedPanelStyle === null) {
+          this._panel.removeAttribute("style");
         } else {
-          this._panel.setAttribute('style', this._storedPanelStyle);
+          this._panel.setAttribute("style", this._storedPanelStyle);
         }
 
         if (this._originalParent && this._originalParent.isConnected) {
-          if (this._originalNextSibling && this._originalNextSibling.parentNode === this._originalParent) {
-            this._originalParent.insertBefore(this._panel, this._originalNextSibling);
+          if (
+            this._originalNextSibling &&
+            this._originalNextSibling.parentNode === this._originalParent
+          ) {
+            this._originalParent.insertBefore(
+              this._panel,
+              this._originalNextSibling,
+            );
           } else {
             this._originalParent.appendChild(this._panel);
           }
@@ -231,14 +245,16 @@ const translatePopoverHook = {
   open() {
     if (!this._container || !this._panel || !this._trigger) return;
     this._open = true;
-    this._container.style.display = 'block';
+    this._container.style.display = "block";
     this.position();
 
     // Manage aria-expanded
-    this._trigger.setAttribute('aria-expanded', 'true');
+    this._trigger.setAttribute("aria-expanded", "true");
 
     // Focus first interactive element for accessibility
-    const focusable = this._panel.querySelector('a, button, [tabindex]:not([tabindex="-1"])');
+    const focusable = this._panel.querySelector(
+      'a, button, [tabindex]:not([tabindex="-1"])',
+    );
     if (focusable && focusable.focus) {
       // Small delay to ensure layout is applied before focusing
       requestAnimationFrame(() => focusable.focus());
@@ -248,10 +264,10 @@ const translatePopoverHook = {
   close() {
     if (!this._container || !this._panel || !this._trigger) return;
     this._open = false;
-    this._container.style.display = 'none';
+    this._container.style.display = "none";
 
     // Manage aria-expanded
-    this._trigger.setAttribute('aria-expanded', 'false');
+    this._trigger.setAttribute("aria-expanded", "false");
   },
 
   toggle() {
@@ -262,7 +278,7 @@ const translatePopoverHook = {
   position() {
     if (!this._container || !this._panel || !this._trigger) return;
     // Compute preferred alignment from data attribute
-    const align = this.el.getAttribute('data-popover-align') || 'center';
+    const align = this.el.getAttribute("data-popover-align") || "center";
 
     const rect = this._trigger.getBoundingClientRect();
     const panelRect = this._panel.getBoundingClientRect();
@@ -275,15 +291,15 @@ const translatePopoverHook = {
       // Temporarily show invisibly for measurement
       const prevDisplay = this._container.style.display;
       const prevVisibility = this._container.style.visibility;
-      this._container.style.display = 'block';
-      this._container.style.visibility = 'hidden';
+      this._container.style.display = "block";
+      this._container.style.visibility = "hidden";
 
       const r = this._panel.getBoundingClientRect();
       panelWidth = r.width;
       panelHeight = r.height;
 
-      this._container.style.visibility = prevVisibility || '';
-      this._container.style.display = prevDisplay || 'none';
+      this._container.style.visibility = prevVisibility || "";
+      this._container.style.display = prevDisplay || "none";
     }
 
     const { top, left } = computePosition(rect, panelWidth, panelHeight, align);

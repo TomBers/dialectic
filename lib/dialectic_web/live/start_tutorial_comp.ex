@@ -48,13 +48,14 @@ defmodule DialecticWeb.StartTutorialComp do
           </li>
         </ol>
 
-        <div class="mt-8 flex items-center gap-3">
+        <div class="mt-8 flex items-center justify-center gap-3">
           <button
             type="button"
-            class="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 transition"
-            title="Focus the question input"
+            class="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-fuchsia-500 via-rose-500 to-amber-500 px-5 py-2.5 text-white text-sm font-semibold shadow-md hover:shadow-lg hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-300 transition"
+            title="Inspire me"
+            onclick="(async()=>{try{const r=await fetch('/api/random_question',{headers:{'Accept':'application/json'}});if(!r.ok)throw new Error('HTTP '+r.status);const d=await r.json();const q=(d&&d.question)||'';const el=document.getElementById('global-chat-input');if(el){el.value=q||el.value;el.focus();el.dispatchEvent(new Event('input',{bubbles:true}));}}catch(_e){const el=document.getElementById('global-chat-input');if(el){el.focus();}}})();"
           >
-            Start by asking a question
+            Inspire me
           </button>
         </div>
       </article>
