@@ -80,6 +80,7 @@ defmodule DialecticWeb.ActionToolbarComp do
   # Translation helpers
   defp translate_targets do
     [
+      {"English (en)", "en"},
       {"Spanish (es)", "es"},
       {"French (fr)", "fr"},
       {"German (de)", "de"},
