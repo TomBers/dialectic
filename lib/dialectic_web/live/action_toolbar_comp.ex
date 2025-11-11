@@ -77,6 +77,41 @@ defmodule DialecticWeb.ActionToolbarComp do
      |> assign_new(:icons_only, fn -> false end)}
   end
 
+  # Translation helpers
+  defp translate_targets do
+    [
+      {"English (en)", "en"},
+      {"Spanish (es)", "es"},
+      {"French (fr)", "fr"},
+      {"German (de)", "de"},
+      {"Portuguese (pt)", "pt"},
+      {"Chinese Simplified (zh-CN)", "zh-CN"},
+      {"Japanese (ja)", "ja"},
+      {"Russian (ru)", "ru"},
+      {"Arabic (ar)", "ar"},
+      {"Hindi (hi)", "hi"}
+    ]
+  end
+
+  defp google_translate_url(node, tl) do
+    safe_limit = 4000
+
+    content =
+      node
+      |> Kernel.||(%{})
+      |> Map.get(:content, "")
+      |> to_string()
+
+    truncated =
+      if String.length(content) > safe_limit do
+        String.slice(content, 0, safe_limit)
+      else
+        content
+      end
+
+    "https://translate.google.com/?sl=auto&tl=#{tl}&text=#{URI.encode_www_form(truncated)}&op=translate"
+  end
+
   @impl true
   def render(assigns) do
     ~H"""
@@ -301,6 +336,62 @@ defmodule DialecticWeb.ActionToolbarComp do
             <span :if={!@icons_only}>Deep Dive</span>
           </span>
         </button>
+
+        <div
+          class="relative group"
+          tabindex="0"
+          id={"translate-popover-#{@node && @node.id}"}
+          phx-hook="TranslatePopover"
+          data-popover-align="center"
+        >
+          <button
+            type="button"
+            data-role="trigger"
+            class="inline-flex items-center justify-center px-2.5 py-1 text-xs text-gray-700 rounded-md transition-colors hover:bg-gray-100 hover:text-gray-900"
+            title={
+              if String.length((@node && @node.content) || "") > 3800,
+                do: "Translate (content truncated for length)",
+                else: "Translate"
+            }
+          >
+            <span class="inline-flex flex-col items-center gap-0.5">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="12" r="9" />
+                <path d="M3 12h18" />
+                <path d="M12 3a15 15 0 0 1 0 18" />
+                <path d="M12 3a15 15 0 0 0 0 18" />
+              </svg>
+              <span :if={!@icons_only}>Translate</span>
+            </span>
+          </button>
+          <div
+            data-role="panel"
+            class="absolute left-1/2 -translate-x-1/2 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-20 min-w-[12rem]"
+          >
+            <div class="py-1">
+              <%= for {label, code} <- translate_targets() do %>
+                <a
+                  href={google_translate_url(@node, code)}
+                  target="_blank"
+                  rel="noopener"
+                  class="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100"
+                >
+                  {label}
+                </a>
+              <% end %>
+            </div>
+          </div>
+        </div>
 
         <button
           id="explore-all-points"

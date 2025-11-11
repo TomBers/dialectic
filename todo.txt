@@ -4,6 +4,10 @@ Check what happens when you click the action buttons on an empty graph.
 
 Toggle for freeform or more structured answers
 
-Ability to translate nodes to other languages
 
-Beginner tutorial - guide the user
+
+Think of ways of styling the node content to make it more readable - tags - p, ul, ol, h2
+
+Beginner tutorial - guide the user when they are on a blank graph - currently simple text, but should be a more indepth tutorial with step 1, 2 etc put placeholder images.
+
+Ability to translate nodes to other languages (using built in chrome tools?)
