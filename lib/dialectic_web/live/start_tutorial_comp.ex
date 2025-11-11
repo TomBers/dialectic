@@ -36,7 +36,7 @@ defmodule DialecticWeb.StartTutorialComp do
             Click a node and use the toolbar to add:
             <ul class="list-disc pl-6 mt-1">
               <li>Note (add to your notes)</li>
-              <li>Reader (a distraction‑free view with readability controls)</li>
+              <li>Reader (a distraction free view with readability controls)</li>
               <li>Related Ideas (adjacent concepts)</li>
               <li>Pros/Cons (compare arguments)</li>
               <li>Combine (merge with another node)</li>

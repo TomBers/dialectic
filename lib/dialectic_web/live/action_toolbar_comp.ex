@@ -94,13 +94,22 @@ defmodule DialecticWeb.ActionToolbarComp do
   end
 
   defp google_translate_url(node, tl) do
+    safe_limit = 4000
+
     content =
       node
       |> Kernel.||(%{})
       |> Map.get(:content, "")
       |> to_string()
 
-    "https://translate.google.com/?sl=auto&tl=#{tl}&text=#{URI.encode_www_form(content)}&op=translate"
+    truncated =
+      if String.length(content) > safe_limit do
+        String.slice(content, 0, safe_limit)
+      else
+        content
+      end
+
+    "https://translate.google.com/?sl=auto&tl=#{tl}&text=#{URI.encode_www_form(truncated)}&op=translate"
   end
 
   @impl true
@@ -339,7 +348,11 @@ defmodule DialecticWeb.ActionToolbarComp do
             type="button"
             data-role="trigger"
             class="inline-flex items-center justify-center px-2.5 py-1 text-xs text-gray-700 rounded-md transition-colors hover:bg-gray-100 hover:text-gray-900"
-            title="Translate"
+            title={
+              if String.length((@node && @node.content) || "") > 3800,
+                do: "Translate (content truncated for length)",
+                else: "Translate"
+            }
           >
             <span class="inline-flex flex-col items-center gap-0.5">
               <svg
