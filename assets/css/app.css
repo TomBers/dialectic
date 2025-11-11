@@ -995,7 +995,7 @@ button[type="submit"]:active {
 }
 
 /* Lead paragraph and H1 within selection-content */
-.selection-content p:first-of-type {
+.selection-content > p:first-child {
     font-size: 1.35em;
     line-height: 1.55;
     color: #1f2937;
@@ -1040,6 +1040,20 @@ button[type="submit"]:active {
 .selection-content ol {
     margin: 0.5em 0 0.85em 1.25em;
     padding-left: 1.25em;
+    font-size: 1em;
+}
+
+/* Normalize first-child lists so they don't inherit lead sizing */
+.selection-content > ul:first-child,
+.selection-content > ol:first-child {
+    font-size: inherit;
+    margin-top: 0.25em;
+}
+
+/* Guard against stray first-child list items appearing before a UL/OL */
+.selection-content > li:first-child {
+    font-size: inherit;
+    margin-top: 0.25em;
 }
 .selection-content li {
     margin: 0.3em 0;
