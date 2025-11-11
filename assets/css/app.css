@@ -988,6 +988,54 @@ button[type="submit"]:active {
     color: rgba(255, 255, 255, 0.8);
 }
 
+/* Node content readability inside selection-content */
+.selection-content {
+    line-height: 1.65;
+}
+
+.selection-content h2 {
+    margin-top: 0.6em;
+    margin-bottom: 0.4em;
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.selection-content p {
+    margin: 0.5em 0;
+}
+
+.selection-content ul,
+.selection-content ol {
+    margin: 0.5em 0 0.75em 1.25em;
+    padding-left: 1.25em;
+}
+
+.selection-content li {
+    margin: 0.25em 0;
+}
+
+.selection-content ul {
+    list-style: disc;
+}
+
+.selection-content ol {
+    list-style: decimal;
+}
+
+.selection-content li > ul,
+.selection-content li > ol {
+    margin-top: 0.25em;
+    margin-bottom: 0.25em;
+}
+
+/* Translate popover portal: ensure it's fixed and above other UI */
+.translate-popover-portal {
+    position: fixed;
+    z-index: 10050; /* above modals/menus */
+    pointer-events: auto;
+}
+
 .typing-indicator {
     display: flex;
     align-items: center;

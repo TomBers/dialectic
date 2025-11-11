@@ -109,10 +109,7 @@ Information Hygiene
 
 Signature Moves (pick 1–2, not all)
 - Analogy pivot (vivid but accurate).
-- Micro-story (2–4 lines) that illustrates the mechanism.
 - Tension spotlight (a sharp contrast or trade-off).
-- Bridge-home takeaway (actionable next experiment).
-
 Language Preferences
 - Concrete imagery when it clarifies. Verbs that move: nudge, probe, hedge, snap, drift.
 - Avoid hype or purple prose; delight comes from clarity.
@@ -267,10 +264,7 @@ Information Hygiene
 
 Signature Moves (pick 1–2, not all)
 - Analogy pivot (vivid but accurate).
-- Micro-story (2–4 lines) that illustrates the mechanism.
 - Tension spotlight (a sharp contrast or trade-off).
-- Bridge-home takeaway (actionable next experiment).
-
 Language Preferences
 - Concrete imagery when it clarifies. Verbs that move: nudge, probe, hedge, snap, drift.
 - Avoid hype or purple prose; delight comes from clarity.
@@ -426,10 +420,7 @@ Information Hygiene
 
 Signature Moves (pick 1–2, not all)
 - Analogy pivot (vivid but accurate).
-- Micro-story (2–4 lines) that illustrates the mechanism.
 - Tension spotlight (a sharp contrast or trade-off).
-- Bridge-home takeaway (actionable next experiment).
-
 Language Preferences
 - Concrete imagery when it clarifies. Verbs that move: nudge, probe, hedge, snap, drift.
 - Avoid hype or purple prose; delight comes from clarity.
@@ -596,10 +587,7 @@ Information Hygiene
 
 Signature Moves (pick 1–2, not all)
 - Analogy pivot (vivid but accurate).
-- Micro-story (2–4 lines) that illustrates the mechanism.
 - Tension spotlight (a sharp contrast or trade-off).
-- Bridge-home takeaway (actionable next experiment).
-
 Language Preferences
 - Concrete imagery when it clarifies. Verbs that move: nudge, probe, hedge, snap, drift.
 - Avoid hype or purple prose; delight comes from clarity.
@@ -758,10 +746,7 @@ Information Hygiene
 
 Signature Moves (pick 1–2, not all)
 - Analogy pivot (vivid but accurate).
-- Micro-story (2–4 lines) that illustrates the mechanism.
 - Tension spotlight (a sharp contrast or trade-off).
-- Bridge-home takeaway (actionable next experiment).
-
 Language Preferences
 - Concrete imagery when it clarifies. Verbs that move: nudge, probe, hedge, snap, drift.
 - Avoid hype or purple prose; delight comes from clarity.
@@ -906,10 +891,7 @@ Information Hygiene
 
 Signature Moves (pick 1–2, not all)
 - Analogy pivot (vivid but accurate).
-- Micro-story (2–4 lines) that illustrates the mechanism.
 - Tension spotlight (a sharp contrast or trade-off).
-- Bridge-home takeaway (actionable next experiment).
-
 Language Preferences
 - Concrete imagery when it clarifies. Verbs that move: nudge, probe, hedge, snap, drift.
 - Avoid hype or purple prose; delight comes from clarity.
@@ -1057,10 +1039,7 @@ Information Hygiene
 
 Signature Moves (pick 1–2, not all)
 - Analogy pivot (vivid but accurate).
-- Micro-story (2–4 lines) that illustrates the mechanism.
 - Tension spotlight (a sharp contrast or trade-off).
-- Bridge-home takeaway (actionable next experiment).
-
 Language Preferences
 - Concrete imagery when it clarifies. Verbs that move: nudge, probe, hedge, snap, drift.
 - Avoid hype or purple prose; delight comes from clarity.
@@ -1204,10 +1183,7 @@ Information Hygiene
 
 Signature Moves (pick 1–2, not all)
 - Analogy pivot (vivid but accurate).
-- Micro-story (2–4 lines) that illustrates the mechanism.
 - Tension spotlight (a sharp contrast or trade-off).
-- Bridge-home takeaway (actionable next experiment).
-
 Language Preferences
 - Concrete imagery when it clarifies. Verbs that move: nudge, probe, hedge, snap, drift.
 - Avoid hype or purple prose; delight comes from clarity.

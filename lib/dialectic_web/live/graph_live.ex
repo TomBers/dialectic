@@ -178,7 +178,8 @@ defmodule DialecticWeb.GraphLive do
        f_graph: format_graph(nil),
        node: %{
          id: "start",
-         content: "# Ask a question to get started\nType a question below to create a new graph.",
+         content:
+           "# Welcome to Dialectic\n\n## Beginner tutorial\n\n![Placeholder Step 1](https://via.placeholder.com/600x200?text=Step+1)\n\n1. Ask a question in the box below to create your first node.\n2. Click a node and use the toolbar to add a Thesis, Antithesis, Synthesis, Ideas, or Deep Dive.\n3. Drag to pan, scroll/pinch to zoom. Click any node to center it.\n4. Use Explore to open a modal of key bullet points extracted from the node.\n5. Use Reader to open a distraction-free reading view with readability controls.\n\n![Placeholder Step 2](https://via.placeholder.com/600x200?text=Step+2)\n\nTips:\n- Use short titles (h2) and bullets for clarity.\n- Select text inside a node to ask targeted follow-up questions.\n- Press Tab to focus inputs; use toolbar buttons to branch your thinking.\n\nWhen you’re ready, type a question to start the graph.",
          children: [],
          parents: []
        },

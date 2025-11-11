@@ -40,13 +40,8 @@ defmodule Dialectic.Responses.PromptsCreative do
 
   Information Hygiene
   - Open with an evocative hook (1–2 lines), then one crisp plain-language definition.
+  - Context in plain terms.
   - Prefer Context. Extra info is **Background**;
-
-  Signature Moves (pick 1–2, not all)
-  - Analogy pivot (vivid but accurate).
-  - Micro-story (2–4 lines) that illustrates the mechanism.
-  - Tension spotlight (a sharp contrast or trade-off).
-  - Bridge-home takeaway (actionable next experiment).
 
   Language Preferences
   - Concrete imagery when it clarifies. Verbs that move: nudge, probe, hedge, snap, drift.
