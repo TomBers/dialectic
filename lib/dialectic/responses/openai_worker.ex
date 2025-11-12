@@ -47,17 +47,12 @@ defmodule Dialectic.Workers.OpenAIWorker do
       {_provider, _model, _opts} = model_spec
 
       # Build a provider-agnostic chat context: system + user
+      # TODO: get system prompt depending on the mode selected.
+      system_prompt = "TODO"
+
       ctx =
         ReqLLM.Context.new([
-          ReqLLM.Context.system("""
-          Output valid GitHub-Flavored Markdown only (no HTML/JSON).
-          Put a blank line before headings and before lists.
-          Prefer short paragraphs over lists; keep any list ≤ 5 bullets.
-          One level of bullets only; do not nest lists.
-          Each bullet is a single sentence (≤ 25 words).
-          Do not use "Label:" bullets; if a label is needed, write "#### Label" on its own line and follow with 1–2 sentence paragraph(s).
-          No mid-sentence headings; use real newlines, not the literal sequence "\n".
-          """),
+          ReqLLM.Context.system(system_prompt),
           ReqLLM.Context.user(question)
         ])
 

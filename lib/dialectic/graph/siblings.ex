@@ -52,6 +52,21 @@ defmodule Dialectic.Graph.Siblings do
     end
   end
 
+  def sort_siblings(node, graph_id) when is_binary(graph_id) do
+    node.parents
+    |> Enum.flat_map(fn p ->
+      GraphManager.out_neighbours(graph_id, p.id)
+      |> Enum.map(fn cid ->
+        case GraphManager.vertex_label(graph_id, cid) do
+          %{} = v -> v
+          _ -> nil
+        end
+      end)
+      |> Enum.reject(&is_nil/1)
+    end)
+    |> sort_nodes()
+  end
+
   def sort_siblings(node, graph) do
     node.parents
     |> Enum.map(fn p -> Vertex.add_relatives(p, graph) end)

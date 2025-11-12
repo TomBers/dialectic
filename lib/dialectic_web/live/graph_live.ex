@@ -90,7 +90,7 @@ defmodule DialecticWeb.GraphLive do
 
             # TODO - can edit is going to be expaned to be more complex, but for the time being, just is not protected
             can_edit = graph_struct.is_public
-            {nav_up, nav_down, nav_left, nav_right} = compute_nav_flags(graph, node)
+            {nav_up, nav_down, nav_left, nav_right} = compute_nav_flags(graph_id, node)
 
             socket =
               assign(socket,
@@ -98,8 +98,7 @@ defmodule DialecticWeb.GraphLive do
                 graph_topic: graph_topic,
                 graph_struct: graph_struct,
                 graph_id: graph_id,
-                graph: graph,
-                f_graph: format_graph(graph),
+                f_graph: GraphManager.format_graph_json(graph_id),
                 node: node,
                 form: to_form(changeset),
                 show_combine: false,
@@ -124,7 +123,7 @@ defmodule DialecticWeb.GraphLive do
                 explore_items: [],
                 explore_selected: [],
                 show_start_stream_modal: false,
-                work_streams: list_streams(graph),
+                work_streams: list_streams(graph_id),
                 prompt_mode: Atom.to_string(Dialectic.Responses.ModeServer.get_mode(graph_id))
               )
 
@@ -141,12 +140,9 @@ defmodule DialecticWeb.GraphLive do
                   GraphActions.ask_and_answer_origin(graph_action_params(socket, node), ask_param)
 
                 case result do
-                  {graph, node} ->
-                    {_, s1} = update_graph(socket, {graph, node}, "answer")
+                  {_, node} ->
+                    {_, s1} = update_graph(socket, {nil, node}, "answer")
                     s1
-
-                  {:error, error_message} ->
-                    socket |> put_flash(:error, error_message)
 
                   _ ->
                     socket
@@ -179,7 +175,6 @@ defmodule DialecticWeb.GraphLive do
        graph_topic: nil,
        graph_struct: nil,
        graph_id: nil,
-       graph: nil,
        f_graph: format_graph(nil),
        node: %{
          id: "start",
@@ -244,32 +239,29 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("node:join_group", %{"node" => nid, "parent" => gid}, socket) do
-    graph = GraphManager.set_parent(socket.assigns.graph_id, nid, gid)
+    _graph = GraphManager.set_parent(socket.assigns.graph_id, nid, gid)
     DbWorker.save_graph(socket.assigns.graph_id)
 
     {:noreply,
      socket
      |> assign(
-       graph: graph,
-       f_graph: format_graph(graph),
+       f_graph: GraphManager.format_graph_json(socket.assigns.graph_id),
        graph_operation: "join_group"
      )}
   end
 
   def handle_event("node:leave_group", %{"node" => nid}, socket) do
     # Server-side guard: do not allow leaving if it would leave the group empty
-    {_gs, g} = GraphManager.get_graph(socket.assigns.graph_id)
-
-    case :digraph.vertex(g, nid) do
-      {^nid, v} ->
+    case GraphManager.vertex_label(socket.assigns.graph_id, nid) do
+      %{} = v ->
         parent_id = Map.get(v, :parent)
 
         if is_binary(parent_id) do
           children_count =
-            :digraph.vertices(g)
+            GraphManager.vertices(socket.assigns.graph_id)
             |> Enum.count(fn vid ->
-              case :digraph.vertex(g, vid) do
-                {^vid, lbl} -> Map.get(lbl, :parent) == parent_id
+              case GraphManager.vertex_label(socket.assigns.graph_id, vid) do
+                %{} = lbl -> Map.get(lbl, :parent) == parent_id
                 _ -> false
               end
             end)
@@ -278,14 +270,13 @@ defmodule DialecticWeb.GraphLive do
             # Block leaving the last child; no-op
             {:noreply, socket}
           else
-            graph = GraphManager.remove_parent(socket.assigns.graph_id, nid)
+            _graph = GraphManager.remove_parent(socket.assigns.graph_id, nid)
             DbWorker.save_graph(socket.assigns.graph_id)
 
             {:noreply,
              socket
              |> assign(
-               graph: graph,
-               f_graph: format_graph(graph),
+               f_graph: GraphManager.format_graph_json(socket.assigns.graph_id),
                graph_operation: "leave_group"
              )}
           end
@@ -443,7 +434,7 @@ defmodule DialecticWeb.GraphLive do
                   end
 
                 {:noreply, updated_socket} =
-                  update_graph(socket, {graph2, selected_node}, "delete")
+                  update_graph(socket, {nil, selected_node}, "delete")
 
                 {:noreply, updated_socket |> put_flash(:info, "Node deleted")}
             end
@@ -466,8 +457,8 @@ defmodule DialecticWeb.GraphLive do
         end)
 
       case last_result do
-        {graph, node} ->
-          update_graph(socket, {graph, node}, "explain")
+        node when is_map(node) ->
+          update_graph(socket, {nil, node}, "explain")
 
         _ ->
           {:noreply, socket}
@@ -508,8 +499,8 @@ defmodule DialecticWeb.GraphLive do
           end)
 
         case last_result do
-          {graph, node} ->
-            {:noreply, updated_socket} = update_graph(socket, {graph, node}, "explain")
+          node ->
+            {:noreply, updated_socket} = update_graph(socket, {nil, node}, "explain")
 
             {:noreply,
              assign(updated_socket,
@@ -529,11 +520,11 @@ defmodule DialecticWeb.GraphLive do
     if !socket.assigns.can_edit do
       {:noreply, socket |> put_flash(:error, "This graph is locked")}
     else
-      {_, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
+      node = GraphActions.find_node(socket.assigns.graph_id, node_id)
       # Ensure branching from the correct node
       update_graph(
         socket,
-        GraphActions.branch(graph_action_params(socket, node)),
+        {nil, GraphActions.branch(graph_action_params(socket, node))},
         "branch"
       )
     end
@@ -543,7 +534,7 @@ defmodule DialecticWeb.GraphLive do
     if !socket.assigns.can_edit do
       {:noreply, socket |> put_flash(:error, "This graph is locked")}
     else
-      {_, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
+      node = GraphActions.find_node(socket.assigns.graph_id, node_id)
       {:noreply, assign(socket, show_combine: true, node: node)}
     end
   end
@@ -552,11 +543,11 @@ defmodule DialecticWeb.GraphLive do
     if !socket.assigns.can_edit do
       {:noreply, socket |> put_flash(:error, "This graph is locked")}
     else
-      {_, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
+      node = GraphActions.find_node(socket.assigns.graph_id, node_id)
 
       update_graph(
         socket,
-        GraphActions.related_ideas(graph_action_params(socket, node)),
+        {nil, GraphActions.related_ideas(graph_action_params(socket, node))},
         "ideas"
       )
     end
@@ -566,11 +557,11 @@ defmodule DialecticWeb.GraphLive do
     if !socket.assigns.can_edit do
       {:noreply, socket |> put_flash(:error, "This graph is locked")}
     else
-      {_, node} = GraphActions.find_node(socket.assigns.graph_id, node_id)
+      node = GraphActions.find_node(socket.assigns.graph_id, node_id)
 
       update_graph(
         socket,
-        GraphActions.deepdive(graph_action_params(socket, node)),
+        {nil, GraphActions.deepdive(graph_action_params(socket, node))},
         "deepdive"
       )
     end
@@ -580,13 +571,13 @@ defmodule DialecticWeb.GraphLive do
     if !socket.assigns.can_edit do
       {:noreply, socket |> put_flash(:error, "This graph is locked")}
     else
-      {graph, node} =
+      node =
         GraphActions.combine(
           graph_action_params(socket),
           node_id
         )
 
-      update_graph(socket, {graph, node}, "combine")
+      update_graph(socket, {nil, node}, "combine")
     end
   end
 
@@ -596,7 +587,11 @@ defmodule DialecticWeb.GraphLive do
 
     # Update the graph
     {:noreply, updated_socket} =
-      update_graph(socket, GraphActions.find_node(socket.assigns.graph_id, id), "node_clicked")
+      update_graph(
+        socket,
+        {nil, GraphActions.find_node(socket.assigns.graph_id, id)},
+        "node_clicked"
+      )
 
     # Preserve and re-apply panel/menu state across node changes
     updated_socket = reapply_right_panel_state(socket, updated_socket)
@@ -627,7 +622,11 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event("answer", %{"vertex" => %{"content" => answer}}, socket) do
     if socket.assigns.can_edit do
-      update_graph(socket, GraphActions.comment(graph_action_params(socket), answer), "comment")
+      update_graph(
+        socket,
+        {nil, GraphActions.comment(graph_action_params(socket), answer)},
+        "comment"
+      )
     else
       {:noreply, socket |> put_flash(:error, "This graph is locked")}
     end
@@ -654,10 +653,11 @@ defmodule DialecticWeb.GraphLive do
       true ->
         update_graph(
           socket,
-          GraphActions.ask_and_answer(
-            graph_action_params(socket, socket.assigns.node),
-            answer
-          ),
+          {nil,
+           GraphActions.ask_and_answer(
+             graph_action_params(socket, socket.assigns.node),
+             answer
+           )},
           "answer"
         )
     end
@@ -706,14 +706,14 @@ defmodule DialecticWeb.GraphLive do
       new_node = GraphManager.add_node(socket.assigns.graph_id, vertex)
 
       # 3) Load updated graph and node-with-relatives and update assigns/UI
-      {graph2, node2} = GraphManager.find_node_by_id(socket.assigns.graph_id, new_node.id)
+      node2 = GraphManager.find_node_by_id(socket.assigns.graph_id, new_node.id)
       DbWorker.save_graph(socket.assigns.graph_id)
 
       if Map.get(params, "auto_answer") in ["on", "true", "1"] do
         GraphActions.answer(graph_action_params(socket, node2))
       end
 
-      update_graph(socket, {graph2, node2}, "start_stream")
+      update_graph(socket, {nil, node2}, "start_stream")
     end
   end
 
@@ -743,14 +743,13 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_info({:other_user_change, sender_pid}, socket) do
     if self() != sender_pid do
-      {_graph_struct, graph} = GraphManager.get_graph(socket.assigns.graph_id)
+      {_graph_struct, _graph} = GraphManager.get_graph(socket.assigns.graph_id)
 
       {:noreply,
        assign(socket,
-         graph: graph,
-         f_graph: format_graph(graph),
+         f_graph: GraphManager.format_graph_json(socket.assigns.graph_id),
          graph_operation: "other_user_change",
-         work_streams: list_streams(graph)
+         work_streams: list_streams(socket.assigns.graph_id)
        )}
     else
       {:noreply, socket}
@@ -951,7 +950,10 @@ defmodule DialecticWeb.GraphLive do
 
     siblings =
       try do
-        Siblings.sort_siblings(node, graph)
+        case graph do
+          id when is_binary(id) -> Siblings.sort_siblings(node, id)
+          _ -> Siblings.sort_siblings(node, graph)
+        end
       rescue
         _ -> []
       end
@@ -967,26 +969,23 @@ defmodule DialecticWeb.GraphLive do
     {can_up, can_down, can_left, can_right}
   end
 
-  defp list_streams(graph) do
+  defp list_streams(graph_id) do
     try do
-      streams =
-        :digraph.vertices(graph)
-        |> Enum.reduce([], fn vid, acc ->
-          case :digraph.vertex(graph, vid) do
-            {^vid, v} ->
-              if is_map(v) and Map.get(v, :compound) == true do
-                [%{id: v.id} | acc]
-              else
-                acc
-              end
-
-            _ ->
+      GraphManager.vertices(graph_id)
+      |> Enum.reduce([], fn vid, acc ->
+        case GraphManager.vertex_label(graph_id, vid) do
+          %{} = v ->
+            if Map.get(v, :compound) == true do
+              [%{id: v.id} | acc]
+            else
               acc
-          end
-        end)
-        |> Enum.reverse()
+            end
 
-      streams
+          _ ->
+            acc
+        end
+      end)
+      |> Enum.reverse()
     rescue
       _ -> []
     end
@@ -995,17 +994,17 @@ defmodule DialecticWeb.GraphLive do
   defp ensure_main_group(graph_id, graph) do
     try do
       # If a Main compound group exists, do nothing
-      case :digraph.vertex(graph, "Main") do
-        {"Main", _v} ->
+      case GraphManager.vertex_label(graph_id, "Main") do
+        %{} ->
           graph
 
-        false ->
+        _ ->
           # Collect all top-level nodes (non-compound and no parent)
           child_ids =
-            :digraph.vertices(graph)
+            GraphManager.vertices(graph_id)
             |> Enum.filter(fn vid ->
-              case :digraph.vertex(graph, vid) do
-                {^vid, v} when is_map(v) ->
+              case GraphManager.vertex_label(graph_id, vid) do
+                %{} = v ->
                   Map.get(v, :compound, false) != true and is_nil(Map.get(v, :parent))
 
                 _ ->
@@ -1023,7 +1022,7 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def update_graph(socket, {graph, node}, operation) do
+  def update_graph(socket, {_graph, node}, operation) do
     # Changeset needs to be a new node
     new_node = GraphActions.create_new_node(socket.assigns.user)
     changeset = Vertex.changeset(new_node)
@@ -1043,12 +1042,11 @@ defmodule DialecticWeb.GraphLive do
         socket
       end
 
-    {nav_up, nav_down, nav_left, nav_right} = compute_nav_flags(graph, node)
+    {nav_up, nav_down, nav_left, nav_right} = compute_nav_flags(socket.assigns.graph_id, node)
 
     new_socket =
       assign(socket,
-        graph: graph,
-        f_graph: format_graph(graph),
+        f_graph: GraphManager.format_graph_json(socket.assigns.graph_id),
         form:
           if operation in ["llm_request_complete"] do
             socket.assigns.form
@@ -1063,7 +1061,7 @@ defmodule DialecticWeb.GraphLive do
         nav_can_down: nav_down,
         nav_can_left: nav_left,
         nav_can_right: nav_right,
-        work_streams: list_streams(graph),
+        work_streams: list_streams(socket.assigns.graph_id),
         prompt_mode:
           Atom.to_string(Dialectic.Responses.ModeServer.get_mode(socket.assigns.graph_id))
       )
