@@ -13,7 +13,7 @@ defmodule Dialectic.Responses.PromptsCreative do
   # Fences arbitrary content so the model treats it as data, not instructions.
   defp fence(label, text) do
     """
-    ### #{label}
+    *** #{label} ***
     ```text
     #{text}
     ```
