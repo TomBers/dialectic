@@ -996,8 +996,9 @@ button[type="submit"]:active {
 
 /* Lead paragraph and H1 within selection-content */
 .selection-content > p:first-child {
-    font-size: 1.35em;
-    line-height: 1.55;
+    font-size: 1.15em;
+    line-height: 1.35;
+    font-style: italic;
     color: #1f2937;
     margin-top: 0.1em;
     margin-bottom: 0.6em;

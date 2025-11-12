@@ -61,12 +61,13 @@ defmodule Dialectic.Workers.OpenAIWorker do
       mode = ModeServer.get_mode(graph)
       {_prov, model_name, _opts} = model_spec
 
-      Logger.debug(fn ->
-        sys_preview = String.slice(system_prompt || "", 0, 500)
-        usr_preview = String.slice(question || "", 0, 500)
+      ## USED for Debugging
+      # Logger.debug(fn ->
+      #   sys_preview = String.slice(system_prompt || "", 0, 500)
+      #   usr_preview = String.slice(question || "", 0, 500)
 
-        "[OpenAIWorker] graph_id=#{inspect(graph)} mode=#{mode} model=#{model_name}\nSYSTEM_PROMPT_START\n#{sys_preview}\nSYSTEM_PROMPT_END\nUSER_PROMPT_START\n#{usr_preview}\nUSER_PROMPT_END"
-      end)
+      #   "[OpenAIWorker] graph_id=#{inspect(graph)} mode=#{mode} model=#{model_name}\nSYSTEM_PROMPT_START\n#{sys_preview}\nSYSTEM_PROMPT_END\nUSER_PROMPT_START\n#{usr_preview}\nUSER_PROMPT_END"
+      # end)
 
       # Stream text – this returns a StreamResponse handle
       case ReqLLM.stream_text(

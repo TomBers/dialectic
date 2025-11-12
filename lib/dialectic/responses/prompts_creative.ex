@@ -1,13 +1,7 @@
 defmodule Dialectic.Responses.PromptsCreative do
   @moduledoc """
-  Creative-mode prompt builders (v2).
-  Pure functions that return the exact prompt string to send to an LLM.
-
-  Design:
-  - System preamble (shared) + task-specific Output Contract.
-  - Freer narrative style, but deterministic section headings.
-  - Single-question fallback if required inputs are missing.
-  - GitHub-Flavored Markdown formatting discipline encoded in the preamble.
+  Creative-mode prompt builders (v3, simplified).
+  Minimal prompts favoring longer, more expressive answers.
   """
 
   # ---- Helpers ---------------------------------------------------------------
@@ -16,36 +10,30 @@ defmodule Dialectic.Responses.PromptsCreative do
     """
     SYSTEM — Creative Mode
 
-    Role & Persona
-    - A thoughtful guide: curious, vivid, and rigorous. Uses analogy or a micro-story when it clarifies.
+    Persona: A thoughtful guide. Curious, vivid, and rigorous.
 
-    Global Formatting (GitHub-Flavored Markdown only)
-    - Output valid GFM only (no HTML/JSON).
-    - Put a blank line before every heading and before every list.
-    - Prefer short paragraphs over lists; only use a list if the section explicitly asks for one.
-    - Any list ≤ 5 bullets, one level only (no nesting).
-    - Each bullet is a single sentence (≤ 25 words).
-    - Do not use “Label:” bullets. If a label is needed, write a level-4 heading (#### Label) and follow with 1–2 sentence paragraph(s).
-    - No mid-sentence headings; use real newlines (not the literal "\\n").
-    - No tables or emojis.
+    Global formatting rules
+    - You must return only GitHub-Flavored Markdown.
+    - Always begin the response with exactly one H2 heading i.e ## Your Title.
+    - Keep the H2 concise (≤ 80 chars). No additional H1/H2 headings after the first.
+    - Prefer paragraphs; use lists sparingly when it clarifies structure.
+    - For any data formats (e.g., JSON, CSV, XML, SQL), include them inside fenced code blocks with the correct language tag; never return raw, top-level non-Markdown output.
+    - Use code fences for code, CLI commands, or config; do not emit raw code outside fences.
+    - Do not include images or HTML. No emojis.
+
+    Precedence and exceptions
+    - If the user requests a specific non-Markdown format, return it inside a fenced code block with the appropriate language tag (e.g., ```json ... ```); do not return raw content.
+    - If required information is missing, ask one concise clarifying question before proceeding.
 
     Style
-    - Varied cadence: mix short punchy lines with longer arcs. Hooks welcome.
-    - A single, well-placed rhetorical question is allowed per major section.
-    - Define crucial terms early, in plain language. Gloss symbols on first use.
-    - Mark non-context information as **Background** (or **Background — tentative** if low confidence).
+    - Thoughtful, vivid, and rigorous.
+    - Favor narrative flow, concrete examples, and occasional analogies or micro-stories.
+    - Define key terms in plain language when first used.
+    - Aim for originality while staying faithful to facts and the user's intent.
 
-    Hard Rules
-    - Never show internal reasoning or a checklist; output conclusions only.
-    - Start with the required H2 title and include the exact sections listed in the Output Contract.
-    - Do not add, remove, or rename sections beyond the contract.
-
-    Direct Answer
-    - Include a `#### Answer` heading near the top with a one-sentence direct answer or takeaway.
-
-    Missing Inputs
-    - If any input is missing or empty, continue with best effort using whatever is provided.
-    - Do not ask for clarification; never produce a “Clarification needed” response.
+    Safety
+    - Do not reveal chain-of-thought or internal reasoning; present conclusions only.
+    - Avoid speculation presented as fact; label speculation clearly.
     """
   end
 
@@ -58,26 +46,11 @@ defmodule Dialectic.Responses.PromptsCreative do
     """
   end
 
-  defp silent_checklist do
-    """
-    (Do not print this. Use it silently.)
-    Checklist:
-    - Required H2 present? (exact title)
-    - Sections present in exact order with exact headings?
-    - Bullet limits respected? (≤ 5; one level; ≤ 25 words)
-    - Key terms defined early; symbols glossed?
-    - Optional rhetorical questions kept to ≤ 1 per major section?
-    - At least one limit/failure mode included when relevant?
-    """
-  end
-
   defp join_blocks(blocks) do
     blocks
     |> Enum.reject(&(&1 == nil or &1 == ""))
     |> Enum.join("\n\n")
   end
-
-  defp missing?(_val), do: false
 
   defp sanitize_title(title) do
     s = to_string(title) |> String.trim()
@@ -99,51 +72,8 @@ defmodule Dialectic.Responses.PromptsCreative do
   def explain(context, topic) do
     join_blocks([
       fence("Context", context),
-      fence("Topic", topic),
       """
-      Output Contract
-      - Start with: ## Explain: #{sanitize_title(topic)}
-      - Order and exact headings:
-
-        #### Answer
-        - One sentence that directly answers the question or states the takeaway.
-
-        ### Hook & Definition
-        - 1–2 lines for an evocative hook.
-        - 1 line plain-language definition.
-
-        ### Story-driven explanation
-        - Two short paragraphs (≤ 90 words each): intuition; then how it works in practice.
-        - May include one rhetorical question total.
-
-        ### Subtleties (2–3 bullets, one sentence each, ≤ 25 words)
-        - Pitfalls, contrasts, edge cases; include at least one limit/failure mode.
-
-        ### One next step (1 bullet, one sentence, ≤ 25 words)
-        - A simple action or question to explore next.
-      """,
-      silent_checklist(),
-      """
-      ## Explain: #{sanitize_title(topic)}
-
-      #### Answer
-      [One sentence.]
-
-      ### Hook & Definition
-      [1–2 lines of hook.]
-      [1 line definition.]
-
-      ### Story-driven explanation
-      [Paragraph 1: intuition.]
-      [Paragraph 2: how it works.]
-
-      ### Subtleties
-      -
-      -
-      -
-
-      ### One next step
-      -
+      Explain: #{sanitize_title(topic)}
       """
     ])
   end
@@ -155,56 +85,8 @@ defmodule Dialectic.Responses.PromptsCreative do
   def selection(context, selection_text) do
     join_blocks([
       fence("Context", context),
-      fence("Selection", selection_text),
       """
-      Output Contract
-      - Start with: ## Apply: #{sanitize_title(selection_text)}
-      - Order and exact headings:
-
-        #### Answer
-        - One sentence stating the action/result.
-
-        ### Paraphrase (1–2 sentences)
-        - Restate the instruction precisely and in plain terms.
-
-        ### Why it matters here (3 bullets, one sentence each, ≤ 25 words)
-        - Context-specific benefits or evidence.
-
-        ### Assumptions (2 bullets, one sentence each, ≤ 25 words)
-        - Preconditions or definitions required.
-
-        ### Implications (2 bullets, one sentence each, ≤ 25 words)
-        - Concrete outcomes or decisions.
-
-        ### Limitations & Alternatives (2 bullets, one sentence each, ≤ 25 words)
-        - Where it may fail; viable alternatives.
-      """,
-      silent_checklist(),
-      """
-      ## Apply: #{sanitize_title(selection_text)}
-
-      #### Answer
-      [One sentence.]
-
-      ### Paraphrase (1–2 sentences)
-      [1–2 sentences.]
-
-      ### Why it matters here
-      -
-      -
-      -
-
-      ### Assumptions
-      -
-      -
-
-      ### Implications
-      -
-      -
-
-      ### Limitations & Alternatives
-      -
-      -
+      Explain: #{sanitize_title(selection_text)}
       """
     ])
   end
@@ -214,56 +96,11 @@ defmodule Dialectic.Responses.PromptsCreative do
   """
   @spec synthesis(String.t(), String.t(), String.t(), String.t()) :: String.t()
   def synthesis(context1, context2, pos1, pos2) do
-    title = "Synthesize: #{pos1} × #{pos2}"
-
     join_blocks([
       fence("Context A", context1),
       fence("Context B", context2),
-      fence("Position A", pos1),
-      fence("Position B", pos2),
       """
-      Output Contract
-      - Start with: ## #{title}
-      - Order and exact headings:
-
-        #### Answer
-        - One sentence capturing the principal reconciliation or trade-off.
-
-        ### Narrative bridge
-        - 1–2 short paragraphs (≤ 100 words each) on common ground and tensions; make assumptions explicit.
-        - May include one rhetorical question total.
-
-        ### Bridge or boundary (1 short paragraph, ≤ 110 words)
-        - A synthesis or clear boundary with decision criteria; include one testable prediction.
-
-        ### When each view is stronger (3 bullets, one sentence each, ≤ 25 words)
-        - Contexts where A wins, B wins, or a hybrid wins.
-
-        ### Open Questions (2 bullets, one sentence each, ≤ 25 words)
-        - Honest unknowns or empirical tests.
-      """,
-      silent_checklist(),
-      """
-      ## #{title}
-
-      #### Answer
-      [One sentence.]
-
-      ### Narrative bridge
-      [Paragraph 1.]
-      [Paragraph 2.]
-
-      ### Bridge or boundary
-      [One short paragraph.]
-
-      ### When each view is stronger
-      -
-      -
-      -
-
-      ### Open Questions
-      -
-      -
+      A narrative synthesis between #{sanitize_title(pos1)} and #{sanitize_title(pos2)}.
       """
     ])
   end
@@ -277,54 +114,7 @@ defmodule Dialectic.Responses.PromptsCreative do
       fence("Context", context),
       fence("Claim", claim),
       """
-        Output Contract
-        - Start with: ## Argue for: #{sanitize_title(claim)}
-      - Order and exact headings:
-
-        #### Answer
-        - One sentence stating the position.
-
-        ### Claim (1 sentence)
-        - Exact proposition being defended.
-
-        ### Reasons (3 bullets, one sentence each, ≤ 25 words)
-        - Each reason and why it supports the claim.
-
-        ### Evidence / Examples (2 bullets, one sentence each, ≤ 25 words)
-        - Concrete facts, cases, or citations (label outside context as **Background**).
-
-        ### Counterarguments & Rebuttals (2 bullets, one sentence each, ≤ 25 words)
-        - Strong opposing points and succinct responses.
-
-        ### Assumptions, Limits, Prediction (3 bullets, one sentence each, ≤ 25 words)
-        - Key assumption; boundary; a falsifiable prediction.
-      """,
-      silent_checklist(),
-      """
-      ## Argue for: #{sanitize_title(claim)}
-
-      #### Answer
-      [One sentence.]
-
-      ### Claim
-      [One sentence.]
-
-      ### Reasons
-      -
-      -
-      -
-
-      ### Evidence / Examples
-      -
-      -
-
-      ### Counterarguments & Rebuttals
-      -
-      -
-
-      ### Assumptions, Limits, Prediction
-      -
-      -
+      An argument in favour of the claim #{sanitize_title(claim)}
       """
     ])
   end
@@ -338,54 +128,7 @@ defmodule Dialectic.Responses.PromptsCreative do
       fence("Context", context),
       fence("Target Claim", claim),
       """
-        Output Contract
-        - Start with: ## Critique: #{sanitize_title(claim)}
-      - Order and exact headings:
-
-        #### Answer
-        - One sentence stating the central critique.
-
-        ### Central Critique (1 sentence)
-        - What is being argued against and why.
-
-        ### Reasons (3 bullets, one sentence each, ≤ 25 words)
-        - How each reason undermines the claim.
-
-        ### Evidence / Counterexamples (2 bullets, one sentence each, ≤ 25 words)
-        - Concrete disconfirming facts/cases.
-
-        ### Steelman & Response (2 bullets, one sentence each, ≤ 25 words)
-        - Strongest pro-claim point(s) and why insufficient.
-
-        ### Scope, Limit, Prediction (3 bullets, one sentence each, ≤ 25 words)
-        - Where the critique applies; boundary; a risky prediction.
-      """,
-      silent_checklist(),
-      """
-      ## Critique: #{sanitize_title(claim)}
-
-      #### Answer
-      [One sentence.]
-
-      ### Central Critique
-      [One sentence.]
-
-      ### Reasons
-      -
-      -
-      -
-
-      ### Evidence / Counterexamples
-      -
-      -
-
-      ### Steelman & Response
-      -
-      -
-
-      ### Scope, Limit, Prediction
-      -
-      -
+      An argument against the claim #{sanitize_title(claim)}
       """
     ])
   end
@@ -397,57 +140,8 @@ defmodule Dialectic.Responses.PromptsCreative do
   def related_ideas(context, current_idea_title) do
     join_blocks([
       fence("Context", context),
-      fence("Current Idea", current_idea_title),
       """
-        Output Contract
-        - Start with: ## What to explore next: #{sanitize_title(current_idea_title)}
-      - Order and exact headings:
-
-        #### Answer
-        - One sentence stating the next-step takeaway.
-
-        ### Adjacent concepts
-        - Provide 3–4 items. For each item:
-          Use a level-4 heading with the concept name, then a 1–2 sentence paragraph (≤ 50 words) explaining relevance. No lists inside items.
-
-        ### Practical sparks
-        - Provide 3–4 items. For each item:
-          Use a level-4 heading with the idea name, then a 1–2 sentence paragraph (≤ 50 words) describing a concrete application.
-      """,
-      silent_checklist(),
-      """
-      ## What to explore next: #{sanitize_title(current_idea_title)}
-
-      #### Answer
-      [One sentence.]
-
-      ### Adjacent concepts
-
-      #### [Concept 1]
-      [1–2 sentence paragraph.]
-
-      #### [Concept 2]
-      [1–2 sentence paragraph.]
-
-      #### [Concept 3]
-      [1–2 sentence paragraph.]
-
-      #### [Concept 4]
-      [1–2 sentence paragraph.]
-
-      ### Practical sparks
-
-      #### [Application 1]
-      [1–2 sentence paragraph.]
-
-      #### [Application 2]
-      [1–2 sentence paragraph.]
-
-      #### [Application 3]
-      [1–2 sentence paragraph.]
-
-      #### [Application 4]
-      [1–2 sentence paragraph.]
+      Provide 3–4 related topics to #{sanitize_title(current_idea_title)}, each with a brief rationale.
       """
     ])
   end
@@ -459,50 +153,8 @@ defmodule Dialectic.Responses.PromptsCreative do
   def deep_dive(context, topic) do
     join_blocks([
       fence("Context", context),
-      fence("Concept", topic),
       """
-        Output Contract
-        - Start with: ## Deep dive: #{sanitize_title(topic)}
-      - Order and exact headings:
-
-        #### Answer
-        - One sentence direct takeaway.
-
-        ### One-liner (1 sentence)
-        - What it is and when it applies.
-
-        ### The arc
-        - 2–3 short paragraphs (≤ 100 words each): intuition → mechanism → implications.
-        - May include one rhetorical question total.
-
-        ### Nuance (2 bullets, one sentence each, ≤ 25 words)
-        - Caveats, edge cases, or failure modes.
-
-        ### When to use vs. avoid (2 bullets, one sentence each, ≤ 25 words)
-        - Clear decision cues.
-      """,
-      silent_checklist(),
-      """
-      ## Deep dive: #{sanitize_title(topic)}
-
-      #### Answer
-      [One sentence.]
-
-      ### One-liner
-      [One sentence.]
-
-      ### The arc
-      [Paragraph 1: intuition.]
-      [Paragraph 2: mechanism.]
-      [Paragraph 3: implications.]
-
-      ### Nuance
-      -
-      -
-
-      ### When to use vs. avoid
-      -
-      -
+      Write a deep dive on #{sanitize_title(topic)}
       """
     ])
   end
