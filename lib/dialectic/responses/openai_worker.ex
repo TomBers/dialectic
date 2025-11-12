@@ -49,11 +49,24 @@ defmodule Dialectic.Workers.OpenAIWorker do
 
       # Build a provider-agnostic chat context: system + user
 
+      system_prompt = get_system_prompt(graph)
+
       ctx =
         ReqLLM.Context.new([
-          ReqLLM.Context.system(get_system_prompt(graph)),
+          ReqLLM.Context.system(system_prompt),
           ReqLLM.Context.user(question)
         ])
+
+      # Debug logging: system + user prompt (truncated)
+      mode = ModeServer.get_mode(graph)
+      {_prov, model_name, _opts} = model_spec
+
+      Logger.debug(fn ->
+        sys_preview = String.slice(system_prompt || "", 0, 500)
+        usr_preview = String.slice(question || "", 0, 500)
+
+        "[OpenAIWorker] graph_id=#{inspect(graph)} mode=#{mode} model=#{model_name}\nSYSTEM_PROMPT_START\n#{sys_preview}\nSYSTEM_PROMPT_END\nUSER_PROMPT_START\n#{usr_preview}\nUSER_PROMPT_END"
+      end)
 
       # Stream text – this returns a StreamResponse handle
       case ReqLLM.stream_text(

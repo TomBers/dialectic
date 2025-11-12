@@ -16,6 +16,22 @@ defmodule DialecticWeb.GraphLive do
   def mount(%{"graph_name" => graph_id_uri} = params, _session, socket) do
     graph_id = URI.decode(graph_id_uri)
 
+    # Honor ?mode=... param by persisting per-graph mode before any actions
+    mode_param = Map.get(params, "mode")
+
+    if is_binary(mode_param) do
+      normalized =
+        case String.downcase(mode_param) do
+          "creative" -> :creative
+          "structured" -> :structured
+          _ -> nil
+        end
+
+      if normalized do
+        _ = Dialectic.Responses.ModeServer.set_mode(graph_id, normalized)
+      end
+    end
+
     live_view_topic = "graph_update:#{socket.id}"
     graph_topic = "graph_update:#{graph_id}"
 
@@ -165,9 +181,22 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def mount(_params, _session, socket) do
+  def mount(params, _session, socket) do
     user = UserUtils.current_identity(socket.assigns)
     changeset = GraphActions.create_new_node(user) |> Vertex.changeset()
+
+    # Derive initial prompt mode from query param (?mode=creative) when no graph exists yet
+    initial_mode_str =
+      case params do
+        %{"mode" => mode} when is_binary(mode) ->
+          case String.downcase(mode) do
+            "creative" -> "creative"
+            _ -> "structured"
+          end
+
+        _ ->
+          "structured"
+      end
 
     {:ok,
      assign(socket,
@@ -206,7 +235,7 @@ defmodule DialecticWeb.GraphLive do
        explore_selected: [],
        show_start_stream_modal: false,
        work_streams: [],
-       prompt_mode: "structured"
+       prompt_mode: initial_mode_str
      )}
   end
 
@@ -669,8 +698,13 @@ defmodule DialecticWeb.GraphLive do
 
         case Graphs.create_new_graph(title, socket.assigns[:current_user]) do
           {:ok, _graph} ->
+            mode_q = socket.assigns[:prompt_mode] || "structured"
+
             {:noreply,
-             socket |> redirect(to: ~p"/#{title}?node=1&ask=#{URI.encode_www_form(answer)}")}
+             socket
+             |> redirect(
+               to: ~p"/#{title}?node=1&ask=#{URI.encode_www_form(answer)}&mode=#{mode_q}"
+             )}
 
           {:error, _changeset} ->
             {:noreply, socket |> put_flash(:error, "Error creating graph")}

@@ -35,6 +35,11 @@ test("graph exercise end-to-end (creative mode)", async ({ page }) => {
   const askInput = page.locator("#global-chat-input");
   await expect(askInput).toBeVisible();
 
+  // Verify creative mode badge/button reflects Creative
+  const modeButton = page.locator('button[title="Cycle LLM mode"]');
+  await expect(modeButton).toBeVisible();
+  await expect(modeButton).toHaveText(/Creative/i);
+
   // 2) Click "Inspire me" to populate a random question
   // StartTutorialComp renders a button with title="Inspire me"
   const inspireBtn = page.getByTitle("Inspire me");
@@ -52,8 +57,10 @@ test("graph exercise end-to-end (creative mode)", async ({ page }) => {
   await expect(askFormSubmit).toBeVisible();
   await askFormSubmit.click();
 
-  // Wait for redirect to the new graph page (URL should no longer be /start/new/idea)
+  // Wait for redirect to the new graph page (URL should no longer be /start\/new\/idea/)
   await expect(page).not.toHaveURL(/\/start\/new\/idea/);
+  // And the URL should persist the mode
+  await expect(page).toHaveURL(/mode=creative/);
 
   // Allow time for initial streaming tokens to show
   await pause(LONG_PAUSE);
