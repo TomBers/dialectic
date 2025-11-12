@@ -128,7 +128,12 @@ defmodule DialecticWeb.GraphLive do
                 prompt_mode: Atom.to_string(Dialectic.Responses.ModeServer.get_mode(graph_id))
               )
 
-            ask_param = Map.get(params, "ask")
+            ask_param_raw = Map.get(params, "ask")
+
+            ask_param =
+              if is_binary(ask_param_raw),
+                do: URI.decode(String.replace(ask_param_raw, "+", " ")),
+                else: ask_param_raw
 
             socket =
               if connected?(socket) and is_binary(ask_param) and String.trim(ask_param) != "" do
