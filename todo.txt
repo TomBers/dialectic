@@ -1,13 +1,10 @@
 mix test test/dialectic/responses/print_prompts_test.exs > prompt_test.md
 
-Check what happens when you click the action buttons on an empty graph.
+E2E Testing:
 
-Toggle for freeform or more structured answers
-
-
-
-Think of ways of styling the node content to make it more readable - tags - p, ul, ol, h2
-
-Beginner tutorial - guide the user when they are on a blank graph - currently simple text, but should be a more indepth tutorial with step 1, 2 etc put placeholder images.
-
-Ability to translate nodes to other languages (using built in chrome tools?)
+Start the server: MIX_ENV=dev OPENAI_API_KEY=sk-... mix phx.server
+- In another terminal:
+  - cd dialectic/e2e
+  - npm install
+  - npm run e2e:install
+  - npm run e2e:headed

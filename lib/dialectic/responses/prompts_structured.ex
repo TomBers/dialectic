@@ -192,12 +192,13 @@ defmodule Dialectic.Responses.PromptsStructured do
         fence("Claim", claim),
         """
         Output:
-        ## [Title of the pro argument]
-        - Claim (1 sentence).
-        - Narrative reasoning (1–2 short paragraphs).
-        - Example/evidence (1–2 lines).
-        - Assumptions & limits (1 line) + falsifiable prediction.
-        - When this holds vs. might not (1 line).
+        ## [Pro argument title]
+        - Argument claim (1 sentence) — clearly state what is being argued for.
+        - Reasons (2–3 short bullets): each names a reason and briefly explains why it supports the claim.
+        - Evidence/examples (1–2 lines): concrete facts, cases, or citations tied to the reasons.
+        - Counter-arguments & rebuttals (1–2 bullets): strongest opposing points and succinct rebuttals.
+        - Assumptions & limits (1 line) + a falsifiable prediction.
+        - Applicability (1 line): where this argument is strongest vs. where it likely fails.
         """
       ],
       "\n\n"
@@ -221,12 +222,13 @@ defmodule Dialectic.Responses.PromptsStructured do
         fence("Target Claim", claim),
         """
         Output:
-        ## [Title of the con argument]
-        - Central critique (1 sentence).
-        - Narrative reasoning (1–2 short paragraphs).
-        - Counterexample/evidence (1–2 lines).
-        - Scope & limits (1 line) + falsifiable prediction that would weaken the critique.
-        - When this applies vs. not (1 line).
+        ## [Con argument title]
+        - Central critique (1 sentence) — clearly state what is being argued against.
+        - Reasons (2–3 short bullets): each names a reason and briefly explains why it undermines the claim.
+        - Evidence/counterexamples (1–2 lines): concrete facts, cases, or citations tied to the reasons.
+        - Steelman & rebuttal (1–2 bullets): acknowledge the best pro point(s) and explain why they’re insufficient.
+        - Scope & limits (1 line) + a falsifiable prediction that would weaken this critique.
+        - Applicability (1 line): when this critique applies vs. when it likely does not.
         """
       ],
       "\n\n"

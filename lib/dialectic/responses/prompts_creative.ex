@@ -147,7 +147,16 @@ defmodule Dialectic.Responses.PromptsCreative do
         fence("Context", context),
         fence("Claim", claim),
         """
-        Task: Make a creative yet rigorous case for the **Claim**.
+        Task: Make a creative yet rigorous argument for the **Claim**.
+
+        Output:
+        ## [Pro argument title]
+        - Argument claim (1 sentence) — clearly state what is being argued for.
+        - Reasons (2–3 short bullets): each names a reason and briefly explains why it supports the claim.
+        - Evidence/examples (1–2 lines): concrete facts, cases, or citations tied to the reasons.
+        - Counter-arguments & rebuttals (1–2 bullets): strongest opposing points and succinct rebuttals.
+        - Assumptions & limits (1 line) + a falsifiable prediction.
+        - Applicability (1 line): where this argument is strongest vs. where it likely fails.
         """
       ],
       "\n\n"
@@ -169,7 +178,16 @@ defmodule Dialectic.Responses.PromptsCreative do
         fence("Context", context),
         fence("Target Claim", claim),
         """
-        Task: Critique the **Target Claim** fairly—steelman first, then challenge.
+        Task: Critique the **Target Claim** with creative clarity—steelman first, then challenge.
+
+        Output:
+        ## [Con argument title]
+        - Central critique (1 sentence) — clearly state what is being argued against.
+        - Reasons (2–3 short bullets): each names a reason and briefly explains why it undermines the claim.
+        - Evidence/counterexamples (1–2 lines): concrete facts, cases, or citations tied to the reasons.
+        - Steelman & rebuttal (1–2 bullets): acknowledge the best pro point(s) and explain why they’re insufficient.
+        - Scope & limits (1 line) + a falsifiable prediction that would weaken this critique.
+        - Applicability (1 line): when this critique applies vs. when it likely does not.
         """
       ],
       "\n\n"

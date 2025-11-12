@@ -35,3 +35,10 @@ dialectic-*.tar
 # In case you use Node.js/npm, you want to ignore these.
 npm-debug.log
 /assets/node_modules/
+
+# E2E runner (Playwright) artifacts
+/e2e/node_modules/
+/e2e/test-results/
+/e2e/playwright-report/
+/e2e/.playwright/
+/e2e/package-lock.json
