@@ -50,7 +50,13 @@ defmodule Dialectic.Workers.OpenAIWorker do
       ctx =
         ReqLLM.Context.new([
           ReqLLM.Context.system("""
-          Output valid GFM only (no HTML/JSON). Use "# " headings; "1. " ordered lists; blank line before headings/lists; no mid-sentence headings; real newlines, not "\n".
+          Output valid GitHub-Flavored Markdown only (no HTML/JSON).
+          Put a blank line before headings and before lists.
+          Prefer short paragraphs over lists; keep any list ≤ 5 bullets.
+          One level of bullets only; do not nest lists.
+          Each bullet is a single sentence (≤ 25 words).
+          Do not use "Label:" bullets; if a label is needed, write "#### Label" on its own line and follow with 1–2 sentence paragraph(s).
+          No mid-sentence headings; use real newlines, not the literal sequence "\n".
           """),
           ReqLLM.Context.user(question)
         ])

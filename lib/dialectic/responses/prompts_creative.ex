@@ -38,6 +38,7 @@ defmodule Dialectic.Responses.PromptsCreative do
   - Headings are flexible; narrative flow beats rigid sections.
   - No tables. Sparse italics for emphasis; em dashes allowed.
 
+
   Information Hygiene
   - Open with an evocative hook (1–2 lines), then one crisp plain-language definition.
   - Context in plain terms.
@@ -157,6 +158,8 @@ defmodule Dialectic.Responses.PromptsCreative do
         - Counter-arguments & rebuttals (1–2 bullets): strongest opposing points and succinct rebuttals.
         - Assumptions & limits (1 line) + a falsifiable prediction.
         - Applicability (1 line): where this argument is strongest vs. where it likely fails.
+
+
         """
       ],
       "\n\n"
@@ -188,6 +191,8 @@ defmodule Dialectic.Responses.PromptsCreative do
         - Steelman & rebuttal (1–2 bullets): acknowledge the best pro point(s) and explain why they’re insufficient.
         - Scope & limits (1 line) + a falsifiable prediction that would weaken this critique.
         - Applicability (1 line): when this critique applies vs. when it likely does not.
+
+
         """
       ],
       "\n\n"
