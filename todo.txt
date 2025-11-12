@@ -2,9 +2,12 @@ mix test test/dialectic/responses/print_prompts_test.exs > prompt_test.md
 
 E2E Testing:
 
-Start the server: MIX_ENV=dev OPENAI_API_KEY=sk-... mix phx.server
-- In another terminal:
-  - cd dialectic/e2e
-  - npm install
-  - npm run e2e:install
-  - npm run e2e:headed
+Headed vs headless
+- Your base scripts default to headless. To launch a visible browser, use the headed variants I added:
+  - npm run e2e:structured:headed
+  - npm run e2e:creative:headed
+
+2) Targeting a specific test file
+- The scripts already pass a specific test path to Playwright:
+  - e2e:structured runs tests/graph-exercise.spec.ts
+  - e2e:creative runs tests/graph-exercise-creative.spec.ts

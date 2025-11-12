@@ -47,6 +47,20 @@ Run
   - cd dialectic/e2e
   - npm run e2e:ui
 
+- Run only the structured test:
+  - cd dialectic/e2e
+  - npm run e2e:structured
+
+- Run only the creative test:
+  - cd dialectic/e2e
+  - npm run e2e:creative
+
+- One command (start server + run a single test):
+  - Structured:
+    - npm run e2e:structured:with-server
+  - Creative:
+    - npm run e2e:creative:with-server
+
 Artifacts and reports
 - HTML report:
   - npm run e2e:report

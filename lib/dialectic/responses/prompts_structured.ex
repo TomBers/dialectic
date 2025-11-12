@@ -40,8 +40,13 @@ defmodule Dialectic.Responses.PromptsStructured do
 
   Formatting
   - Use an H2 title for standalone answers unless the template overrides.
+  - Always start the output with the H2 title shown in the template.
   - Headings only when they clarify; ≤ 3 levels.
   - No tables, emojis, or rhetorical questions.
+  - Respond with Markdown only, begin with the H2 title, and include only the sections requested.
+  - Title rules: follow the exact template string; never invent, rename, or omit titles.
+  - Placeholder convention for titles: replace any {Label} with the exact input text; do not include braces or quotes.
+  - If an input label is empty or missing, state the gap and ask one direct question instead of inventing a title.
 
   Information Hygiene
   - Start with intuition (1–2 lines), then definitions/assumptions.
@@ -65,6 +70,8 @@ defmodule Dialectic.Responses.PromptsStructured do
   - Every paragraph advances the answer.
   - Give each symbol a brief gloss on first use.
   - Include at least one limit or failure mode if relevant.
+  - Do not add sections beyond those requested.
+  - Do not rename sections or headings.
   """
 
   # ---- Templates -------------------------------------------------------------
@@ -87,7 +94,7 @@ defmodule Dialectic.Responses.PromptsStructured do
         Task: Teach a first-time learner the **Topic**.
 
         Output:
-        ## [Short, descriptive title]
+        ## Explain: {Topic}
         - Short answer (2–3 sentences): core idea + why it matters.
 
         ### Deep dive
@@ -95,8 +102,7 @@ defmodule Dialectic.Responses.PromptsStructured do
         - Core explanation: mechanism + intuition (1–2 short paragraphs).
         - Nuances: 2–3 bullets (pitfalls/edge cases + one contrast).
 
-        ### Next steps
-        - 1–2 next questions.
+        Respond with Markdown only, begin with the H2 title, and include only the sections above.
         """
       ],
       "\n\n"
@@ -121,7 +127,7 @@ defmodule Dialectic.Responses.PromptsStructured do
         If no **Selection** is provided, state that and ask for it (one sentence at end).
 
         Output:
-        ## [Short, descriptive title]
+        ## Apply: {Selection}
         - Paraphrase (1–2 sentences).
 
         ### Why it matters here
@@ -130,8 +136,7 @@ defmodule Dialectic.Responses.PromptsStructured do
         - Implications (1–2 bullets).
         - Limitations/alternative readings (1–2 bullets).
 
-        ### Next steps
-        - 1–2 follow-up questions.
+        Respond with Markdown only, begin with the H2 title, and include only the sections above.
         """
       ],
       "\n\n"
@@ -160,7 +165,7 @@ defmodule Dialectic.Responses.PromptsStructured do
         Task: Synthesize **Position A** and **Position B** for a first-time learner.
 
         Output:
-        ## [Short, descriptive title]
+        ## Synthesis: {Position A} vs {Position B}
         - Short summary (1–2 sentences) of the relationship.
 
         ### Deep dive
@@ -168,8 +173,7 @@ defmodule Dialectic.Responses.PromptsStructured do
         - Bridge or delineation: 1 short paragraph proposing a synthesis or scope boundary; add a testable prediction if helpful.
         - When each view is stronger + remaining trade-offs: 2–3 concise bullets.
 
-        ### Next steps
-        - One concrete next step to test or explore.
+        Respond with Markdown only, begin with the H2 title, and include only the sections above.
         """
       ],
       "\n\n"
@@ -192,13 +196,15 @@ defmodule Dialectic.Responses.PromptsStructured do
         fence("Claim", claim),
         """
         Output:
-        ## [Pro argument title]
+        ## In favor of: {Claim}
         - Argument claim (1 sentence) — clearly state what is being argued for.
         - Reasons (2–3 short bullets): each names a reason and briefly explains why it supports the claim.
         - Evidence/examples (1–2 lines): concrete facts, cases, or citations tied to the reasons.
         - Counter-arguments & rebuttals (1–2 bullets): strongest opposing points and succinct rebuttals.
         - Assumptions & limits (1 line) + a falsifiable prediction.
         - Applicability (1 line): where this argument is strongest vs. where it likely fails.
+
+        Respond with Markdown only, begin with the H2 title, and include only the sections above.
         """
       ],
       "\n\n"
@@ -222,13 +228,15 @@ defmodule Dialectic.Responses.PromptsStructured do
         fence("Target Claim", claim),
         """
         Output:
-        ## [Con argument title]
+        ## Against: {Target Claim}
         - Central critique (1 sentence) — clearly state what is being argued against.
         - Reasons (2–3 short bullets): each names a reason and briefly explains why it undermines the claim.
         - Evidence/counterexamples (1–2 lines): concrete facts, cases, or citations tied to the reasons.
         - Steelman & rebuttal (1–2 bullets): acknowledge the best pro point(s) and explain why they’re insufficient.
         - Scope & limits (1 line) + a falsifiable prediction that would weaken this critique.
         - Applicability (1 line): when this critique applies vs. when it likely does not.
+
+        Respond with Markdown only, begin with the H2 title, and include only the sections above.
         """
       ],
       "\n\n"
@@ -253,7 +261,7 @@ defmodule Dialectic.Responses.PromptsStructured do
         Task: Generate related but distinct concepts for a first-time learner.
 
         Output:
-        ### Different/contrasting approaches
+        ## What to explore next: {Current Idea}
         - Provide 3–4 bullets. Each: Concept — 1 sentence (difference/relevance; optional method/author/example).
 
         ### Adjacent concepts
@@ -261,6 +269,8 @@ defmodule Dialectic.Responses.PromptsStructured do
 
         ### Practical applications
         - Provide 3–4 bullets. Each: Concept — 1 sentence (use-case/why it matters; optional method/author/example).
+
+        Respond with Markdown only, begin with the H2 title, and include only the sections above.
         """
       ],
       "\n\n"
@@ -285,12 +295,14 @@ defmodule Dialectic.Responses.PromptsStructured do
         Task: Produce a rigorous deep dive into the **Concept** for an advanced learner.
 
         Output:
-        ## [Precise title]
+        ## Deep dive: {Concept}
         - One-sentence statement of what it is and when it applies.
 
         ### Deep dive
         - Core explanation (1–2 short paragraphs): mechanism, key assumptions, applicability.
         - (Optional) Nuance: 1–2 bullets with caveats or edge cases.
+
+        Respond with Markdown only, begin with the H2 title, and include only the sections above.
         """
       ],
       "\n\n"
