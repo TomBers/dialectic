@@ -13,7 +13,7 @@ defmodule Dialectic.Responses.PromptsCreative do
   # Fences arbitrary content so the model treats it as data, not instructions.
   defp fence(label, text) do
     """
-    ### #{label}
+    *** #{label} ***
     ```text
     #{text}
     ```
@@ -35,8 +35,14 @@ defmodule Dialectic.Responses.PromptsCreative do
 
   Formatting
   - H2 titles encouraged and may be playful.
-  - Headings are flexible; narrative flow beats rigid sections.
+  - Always start the output with the H2 title shown in the template.
+  - Title rules: follow the exact template string; never invent, rename, or omit titles.
+  - Placeholder convention: replace any {Label} with the exact input text; do not include braces or quotes.
+  - If an input label is empty or missing, state the gap and ask one direct question instead of inventing a title.
+  - Keep to only the sections requested; do not add, rename, or remove headings.
+  - Headings are flexible when allowed, but the template sections are mandatory.
   - No tables. Sparse italics for emphasis; em dashes allowed.
+
 
   Information Hygiene
   - Open with an evocative hook (1–2 lines), then one crisp plain-language definition.
@@ -76,6 +82,18 @@ defmodule Dialectic.Responses.PromptsCreative do
         """
         Task: Offer a narrative exploration of the **Topic**.
 
+        Output:
+        ## Explain: {Topic}
+        - Hook (1–2 lines), then a plain-language definition (1 line).
+
+        ### Story-driven explanation
+        - 1 short paragraph: intuition and why it matters.
+        - 1 short paragraph: mechanism or how it works in practice.
+
+        ### Subtleties
+        - 2–3 bullets: pitfalls, contrasts, or edge cases.
+
+        Respond with Markdown only, begin with the H2 title, and include only the sections above.
         """
       ],
       "\n\n"
@@ -98,6 +116,18 @@ defmodule Dialectic.Responses.PromptsCreative do
         fence("Selection", selection_text),
         """
         If no **Selection** is provided, say so and ask for it (one sentence at end).
+
+        Output:
+        ## Apply: {Selection}
+        - Paraphrase (1–2 sentences).
+
+        ### Why it matters here
+        - Claims/evidence (2–3 bullets).
+        - Assumptions/definitions (1–2 bullets).
+        - Implications (1–2 bullets).
+        - Limitations/alternative readings (1–2 bullets).
+
+        Respond with Markdown only, begin with the H2 title, and include only the sections above.
         """
       ],
       "\n\n"
@@ -126,6 +156,20 @@ defmodule Dialectic.Responses.PromptsCreative do
         Task: Weave a creative synthesis of **Position A** and **Position B** that respects both,
         clarifies where they shine, and proposes a bridge or a useful boundary.
 
+        Output:
+        ## Synthesis: {Position A} vs {Position B}
+        - Short summary (1–2 sentences) of the relationship.
+
+        ### Narrative bridge
+        - 1–2 short paragraphs on common ground and key tensions; make explicit the assumptions driving disagreement.
+
+        ### Bridge or boundary
+        - 1 short paragraph proposing a synthesis or scope boundary; add a testable prediction if helpful.
+
+        ### When each view is stronger
+        - 2–3 concise bullets on contexts where each view wins and the remaining trade-offs.
+
+        Respond with Markdown only, begin with the H2 title, and include only the sections above.
         """
       ],
       "\n\n"
@@ -147,7 +191,18 @@ defmodule Dialectic.Responses.PromptsCreative do
         fence("Context", context),
         fence("Claim", claim),
         """
-        Task: Make a creative yet rigorous case for the **Claim**.
+        Task: Make a creative yet rigorous argument for the **Claim**.
+
+        Output:
+        ## In favor of: {Claim}
+        - Argument claim (1 sentence) — clearly state what is being argued for.
+        - Reasons (2–3 short bullets): each names a reason and briefly explains why it supports the claim.
+        - Evidence/examples (1–2 lines): concrete facts, cases, or citations tied to the reasons.
+        - Counter-arguments & rebuttals (1–2 bullets): strongest opposing points and succinct rebuttals.
+        - Assumptions & limits (1 line) + a falsifiable prediction.
+        - Applicability (1 line): where this argument is strongest vs. where it likely fails.
+
+        Respond with Markdown only, begin with the H2 title, and include only the sections above.
         """
       ],
       "\n\n"
@@ -169,7 +224,18 @@ defmodule Dialectic.Responses.PromptsCreative do
         fence("Context", context),
         fence("Target Claim", claim),
         """
-        Task: Critique the **Target Claim** fairly—steelman first, then challenge.
+        Task: Critique the **Target Claim** with creative clarity—steelman first, then challenge.
+
+        Output:
+        ## Against: {Target Claim}
+        - Central critique (1 sentence) — clearly state what is being argued against.
+        - Reasons (2–3 short bullets): each names a reason and briefly explains why it undermines the claim.
+        - Evidence/counterexamples (1–2 lines): concrete facts, cases, or citations tied to the reasons.
+        - Steelman & rebuttal (1–2 bullets): acknowledge the best pro point(s) and explain why they’re insufficient.
+        - Scope & limits (1 line) + a falsifiable prediction that would weaken this critique.
+        - Applicability (1 line): when this critique applies vs. when it likely does not.
+
+        Respond with Markdown only, begin with the H2 title, and include only the sections above.
         """
       ],
       "\n\n"
@@ -192,6 +258,18 @@ defmodule Dialectic.Responses.PromptsCreative do
         fence("Current Idea", current_idea_title),
         """
         Task: Generate a creative list of related but distinct concepts worth exploring next.
+
+        Output:
+        ## What to explore next: {Current Idea}
+        - Provide 3–4 bullets. Each: Concept — 1 sentence (difference/relevance; optional method/author/example).
+
+        ### Adjacent concepts
+        - Provide 3–4 bullets. Each: Concept — 1 sentence (link/relevance; optional method/author/example).
+
+        ### Practical applications
+        - Provide 3–4 bullets. Each: Concept — 1 sentence (use-case/why it matters; optional method/author/example).
+
+        Respond with Markdown only, begin with the H2 title, and include only the sections above.
         """
       ],
       "\n\n"
@@ -216,6 +294,15 @@ defmodule Dialectic.Responses.PromptsCreative do
         Task: Compose a narrative deep dive into the **Concept** that blends intuition,
         one crisp definition, and a few surprising connections.
 
+        Output:
+        ## Deep dive: {Concept}
+        - One-sentence statement of what it is and when it applies.
+
+        ### Deep dive
+        - Core explanation (1–2 short paragraphs): mechanism, key assumptions, applicability.
+        - (Optional) Nuance: 1–2 bullets with caveats or edge cases.
+
+        Respond with Markdown only, begin with the H2 title, and include only the sections above.
         """
       ],
       "\n\n"

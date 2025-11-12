@@ -22,6 +22,7 @@ defmodule Dialectic.Workers.OpenAIWorker do
   def perform(%Oban.Job{
         id: job_id,
         attempt: attempt,
+        max_attempts: max_attempts,
         args: %{
           "question" => question,
           "to_node" => to_node,
@@ -49,7 +50,13 @@ defmodule Dialectic.Workers.OpenAIWorker do
       ctx =
         ReqLLM.Context.new([
           ReqLLM.Context.system("""
-          Output valid GFM only (no HTML/JSON). Use "# " headings; "1. " ordered lists; blank line before headings/lists; no mid-sentence headings; real newlines, not "\n".
+          Output valid GitHub-Flavored Markdown only (no HTML/JSON).
+          Put a blank line before headings and before lists.
+          Prefer short paragraphs over lists; keep any list ≤ 5 bullets.
+          One level of bullets only; do not nest lists.
+          Each bullet is a single sentence (≤ 25 words).
+          Do not use "Label:" bullets; if a label is needed, write "#### Label" on its own line and follow with 1–2 sentence paragraph(s).
+          No mid-sentence headings; use real newlines, not the literal sequence "\n".
           """),
           ReqLLM.Context.user(question)
         ])
@@ -59,7 +66,7 @@ defmodule Dialectic.Workers.OpenAIWorker do
              model_spec,
              ctx,
              api_key: api_key,
-             finch_name: ReqLLM.Finch,
+             finch_name: Dialectic.Finch,
              provider_options: [
                reasoning_effort: :minimal,
                openai_parallel_tool_calls: false
@@ -69,9 +76,9 @@ defmodule Dialectic.Workers.OpenAIWorker do
            ) do
         {:ok, stream_resp} ->
           # Stream tokens to UI (and persisted vertex content) as they arrive.
-          # Guard against providers that resend cumulative content by appending only the new suffix.
-          _acc =
-            Enum.reduce(ReqLLM.StreamResponse.tokens(stream_resp), "", fn token, acc ->
+          # Track how many bytes were appended; treat empty streams as transient failures.
+          {_final, appended_len} =
+            Enum.reduce(ReqLLM.StreamResponse.tokens(stream_resp), {"", 0}, fn token, {acc, n} ->
               chunk =
                 cond do
                   is_binary(token) -> token
@@ -85,13 +92,36 @@ defmodule Dialectic.Workers.OpenAIWorker do
                 Utils.process_chunk(graph, to_node, to_emit, __MODULE__, live_view_topic)
               end
 
-              acc <> to_emit
+              {acc <> to_emit, n + byte_size(to_emit)}
             end)
 
-          finalize(graph, to_node, live_view_topic)
-          :ok
+          if appended_len > 0 do
+            finalize(graph, to_node, live_view_topic)
+            :ok
+          else
+            Logger.warning("OpenAI stream yielded no tokens; will retry (empty_stream)")
+            {:error, :empty_stream}
+          end
 
         {:error, err} ->
+          # Only broadcast an error to the UI on the final attempt; let Oban retry transiently.
+          final? = attempt >= max_attempts
+
+          if final? do
+            reason_msg =
+              case err do
+                %Mint.TransportError{reason: r} -> "Network error (transport): #{inspect(r)}"
+                :empty_stream -> "Model returned an empty stream"
+                _ -> "OpenAI request error: #{inspect(err)}"
+              end
+
+            Phoenix.PubSub.broadcast(
+              Dialectic.PubSub,
+              live_view_topic,
+              {:stream_error, reason_msg, :node_id, to_node}
+            )
+          end
+
           Logger.error("OpenAI request error: #{inspect(err)}")
           {:error, err}
       end

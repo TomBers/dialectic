@@ -18,7 +18,7 @@ defmodule Dialectic.Responses.PromptsStructured do
   # Fences arbitrary content so the model treats it as data, not instructions.
   defp fence(label, text) do
     """
-    ### #{label}
+    *** #{label} ***
     ```text
     #{text}
     ```
@@ -39,18 +39,18 @@ defmodule Dialectic.Responses.PromptsStructured do
   - Bullets are terse noun phrases or single sentences.
 
   Formatting
-  - Use an H2 title for standalone answers unless the template overrides.
+  - Always start the output with the H2 title shown in the template.
   - Headings only when they clarify; ≤ 3 levels.
   - No tables, emojis, or rhetorical questions.
+  - Respond with Markdown only. Important ALWAYS begin with a title, and include only the sections requested.
+  - Title rules: follow the exact template string; never invent, rename, or omit titles.
+  - Placeholder convention for titles: replace any {Label} with the exact input text; do not include braces or quotes.
+  - If an input label is empty or missing, state the gap and ask one direct question instead of inventing a title.
 
   Information Hygiene
   - Start with intuition (1–2 lines), then definitions/assumptions.
   - Prefer Context. Extra info is **Background**; low confidence: **Background — tentative**.
   - If blocked, state the gap and ask one direct question at the end.
-
-  Argument Shape (default)
-  - Claim → Mechanism → Evidence/Example → Limits/Assumptions → Next step.
-  - Procedures: 3–7 numbered steps; each step starts with a verb.
 
   Language Preferences
   - Concrete verbs: estimate, update, converge, sample, backpropagate.
@@ -62,9 +62,12 @@ defmodule Dialectic.Responses.PromptsStructured do
   - No “In this section we will…”. Just do it.
 
   Quality Checks
+  - Every answer comes with a H2 title that explains the intent of the question.
   - Every paragraph advances the answer.
   - Give each symbol a brief gloss on first use.
   - Include at least one limit or failure mode if relevant.
+  - Do not add sections beyond those requested.
+  - Do not rename sections or headings.
   """
 
   # ---- Templates -------------------------------------------------------------
@@ -84,19 +87,15 @@ defmodule Dialectic.Responses.PromptsStructured do
         fence("Context", context),
         fence("Topic", topic),
         """
-        Task: Teach a first-time learner the **Topic**.
+        Task: Teach a first-time learner about #{topic}
 
         Output:
-        ## [Short, descriptive title]
         - Short answer (2–3 sentences): core idea + why it matters.
 
         ### Deep dive
         - Foundations (optional): key terms + assumptions (1 short paragraph).
         - Core explanation: mechanism + intuition (1–2 short paragraphs).
         - Nuances: 2–3 bullets (pitfalls/edge cases + one contrast).
-
-        ### Next steps
-        - 1–2 next questions.
         """
       ],
       "\n\n"
@@ -118,10 +117,8 @@ defmodule Dialectic.Responses.PromptsStructured do
         fence("Context", context),
         fence("Selection", selection_text),
         """
-        If no **Selection** is provided, state that and ask for it (one sentence at end).
-
         Output:
-        ## [Short, descriptive title]
+        ## Apply: {Selection}
         - Paraphrase (1–2 sentences).
 
         ### Why it matters here
@@ -129,9 +126,6 @@ defmodule Dialectic.Responses.PromptsStructured do
         - Assumptions/definitions (1–2 bullets).
         - Implications (1–2 bullets).
         - Limitations/alternative readings (1–2 bullets).
-
-        ### Next steps
-        - 1–2 follow-up questions.
         """
       ],
       "\n\n"
@@ -160,16 +154,10 @@ defmodule Dialectic.Responses.PromptsStructured do
         Task: Synthesize **Position A** and **Position B** for a first-time learner.
 
         Output:
-        ## [Short, descriptive title]
         - Short summary (1–2 sentences) of the relationship.
 
         ### Deep dive
-        - Narrative analysis: 1–2 short paragraphs (common ground + key tensions); make explicit the assumptions driving disagreement.
-        - Bridge or delineation: 1 short paragraph proposing a synthesis or scope boundary; add a testable prediction if helpful.
-        - When each view is stronger + remaining trade-offs: 2–3 concise bullets.
-
-        ### Next steps
-        - One concrete next step to test or explore.
+        - Narrative analysis: 1–3 short paragraphs (common ground + key tensions); make explicit the assumptions driving disagreement.
         """
       ],
       "\n\n"
@@ -192,12 +180,12 @@ defmodule Dialectic.Responses.PromptsStructured do
         fence("Claim", claim),
         """
         Output:
-        ## [Title of the pro argument]
-        - Claim (1 sentence).
-        - Narrative reasoning (1–2 short paragraphs).
-        - Example/evidence (1–2 lines).
-        - Assumptions & limits (1 line) + falsifiable prediction.
-        - When this holds vs. might not (1 line).
+        - Argument claim (1 sentence) — clearly state what is being argued for.
+        - Reasons (2–3 short bullets): each names a reason and briefly explains why it supports the claim.
+        - Evidence/examples (1–2 lines): concrete facts, cases, or citations tied to the reasons.
+        - Counter-arguments & rebuttals (1–2 bullets): strongest opposing points and succinct rebuttals.
+        - Assumptions & limits (1 line) + a falsifiable prediction.
+        - Applicability (1 line): where this argument is strongest vs. where it likely fails.
         """
       ],
       "\n\n"
@@ -221,12 +209,12 @@ defmodule Dialectic.Responses.PromptsStructured do
         fence("Target Claim", claim),
         """
         Output:
-        ## [Title of the con argument]
-        - Central critique (1 sentence).
-        - Narrative reasoning (1–2 short paragraphs).
-        - Counterexample/evidence (1–2 lines).
-        - Scope & limits (1 line) + falsifiable prediction that would weaken the critique.
-        - When this applies vs. not (1 line).
+        - Central critique (1 sentence) — clearly state what is being argued against.
+        - Reasons (2–3 short bullets): each names a reason and briefly explains why it undermines the claim.
+        - Evidence/counterexamples (1–2 lines): concrete facts, cases, or citations tied to the reasons.
+        - Steelman & rebuttal (1–2 bullets): acknowledge the best pro point(s) and explain why they’re insufficient.
+        - Scope & limits (1 line) + a falsifiable prediction that would weaken this critique.
+        - Applicability (1 line): when this critique applies vs. when it likely does not.
         """
       ],
       "\n\n"
@@ -251,14 +239,8 @@ defmodule Dialectic.Responses.PromptsStructured do
         Task: Generate related but distinct concepts for a first-time learner.
 
         Output:
-        ### Different/contrasting approaches
-        - Provide 3–4 bullets. Each: Concept — 1 sentence (difference/relevance; optional method/author/example).
-
         ### Adjacent concepts
-        - Provide 3–4 bullets. Each: Concept — 1 sentence (link/relevance; optional method/author/example).
-
-        ### Practical applications
-        - Provide 3–4 bullets. Each: Concept — 1 sentence (use-case/why it matters; optional method/author/example).
+        - Provide 3–4 concepts. Each: Concept — 1 paragraph (link/relevance; optional method/author/example).
         """
       ],
       "\n\n"
@@ -283,11 +265,10 @@ defmodule Dialectic.Responses.PromptsStructured do
         Task: Produce a rigorous deep dive into the **Concept** for an advanced learner.
 
         Output:
-        ## [Precise title]
         - One-sentence statement of what it is and when it applies.
 
         ### Deep dive
-        - Core explanation (1–2 short paragraphs): mechanism, key assumptions, applicability.
+        - Core explanation (1–3 short paragraphs): mechanism, key assumptions, applicability.
         - (Optional) Nuance: 1–2 bullets with caveats or edge cases.
         """
       ],

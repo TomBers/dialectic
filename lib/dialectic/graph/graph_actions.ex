@@ -158,17 +158,24 @@ defmodule Dialectic.Graph.GraphActions do
         _ -> node
       end
 
-    # Append the question once to the origin content
+    # Append the question once to the origin content (account for encoded forms)
+    decoded_question = URI.decode_www_form(to_string(question_text || ""))
+
+    question_present? =
+      is_binary(current_origin.content) and
+        Enum.any?([to_string(question_text || ""), decoded_question], fn q ->
+          q != "" and String.contains?(current_origin.content, q)
+        end)
+
     updated_origin =
-      if is_binary(current_origin.content) and
-           String.contains?(current_origin.content, question_text) do
+      if question_present? do
         current_origin
       else
         GraphManager.update_vertex(
           graph_id,
           node.id,
           if(current_origin.content && current_origin.content != "", do: "\n\n", else: "") <>
-            question_text
+            decoded_question
         )
       end
 

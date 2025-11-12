@@ -1,0 +1,29 @@
+{
+  "name": "dialectic-e2e",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Playwright-based end-to-end runner for Dialectic. Uses only public UI and real LLM path.",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "e2e:install": "playwright install --with-deps",
+    "e2e": "playwright test --project=chromium",
+    "e2e:headed": "playwright test --project=chromium --headed",
+    "e2e:ui": "playwright test --ui",
+    "e2e:trace": "playwright test --project=chromium --trace on",
+    "e2e:report": "playwright show-report",
+    "e2e:with-server": "start-server-and-test 'mix phx.server' http-get://localhost:4000 'playwright test --project=chromium'",
+    "e2e:structured": "playwright test --project=chromium tests/graph-exercise.spec.ts",
+    "e2e:structured:headed": "playwright test --project=chromium --headed tests/graph-exercise.spec.ts",
+    "e2e:creative": "playwright test --project=chromium tests/graph-exercise-creative.spec.ts",
+    "e2e:creative:headed": "playwright test --project=chromium --headed tests/graph-exercise-creative.spec.ts",
+    "e2e:structured:with-server": "start-server-and-test 'mix phx.server' http-get://localhost:4000 'playwright test --project=chromium tests/graph-exercise.spec.ts'",
+    "e2e:creative:with-server": "start-server-and-test 'mix phx.server' http-get://localhost:4000 'playwright test --project=chromium tests/graph-exercise-creative.spec.ts'"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.2",
+    "start-server-and-test": "^2.0.3",
+    "@types/node": "^20.12.7"
+  }
+}
