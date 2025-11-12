@@ -35,10 +35,8 @@ defmodule Dialectic.Responses.PromptsStructured do
     - Keep sentences short (≈ 8–18 words) unless a section explicitly permits longer.
 
     Missing Inputs
-    - If any required input is empty or clearly missing, ignore the normal format and produce:
-      ## Clarification needed
-
-      - Ask one concise question to unblock progress (single bullet, ≤ 25 words).
+    - If any input is missing or empty, continue with best effort using whatever is provided.
+    - Do not ask for clarification; never produce a “Clarification needed” response.
     """
   end
 
@@ -69,7 +67,7 @@ defmodule Dialectic.Responses.PromptsStructured do
     |> Enum.join("\n\n")
   end
 
-  defp missing?(val), do: val |> to_string() |> String.trim() == ""
+  defp missing?(_val), do: false
 
   # ---- Templates -------------------------------------------------------------
 
@@ -78,75 +76,59 @@ defmodule Dialectic.Responses.PromptsStructured do
   """
   @spec explain(String.t(), String.t()) :: String.t()
   def explain(context, topic) do
-    if missing?(topic) or missing?(context) do
-      join_blocks([
-        fence("Context", context),
-        fence("Topic", topic),
-        """
-        Output Contract:
-        - If any required input is missing, output only:
-
-          ## Clarification needed
-
-          - Ask one concise question to unblock progress (single bullet, ≤ 25 words).
-        """,
-        silent_checklist()
-      ])
-    else
-      join_blocks([
-        fence("Context", context),
-        fence("Topic", topic),
-        """
-        Output Contract
-        - Start with: ## Explain: #{topic}
-        - Sections (exact order, exact headings):
-
-          ### TL;DR (2 sentences max)
-          - Core idea and why it matters.
-
-          ### Definitions & Assumptions (3–5 bullets, one sentence each, ≤ 25 words)
-          - Define key terms; state assumptions and scope.
-
-          ### Mechanism & Intuition (2 short paragraphs, ≤ 90 words each)
-          - First paragraph: intuition.
-          - Second paragraph: causal steps; gloss each symbol on first use.
-
-          ### Nuances & Limits (3 bullets, one sentence each, ≤ 25 words)
-          - Edge cases, pitfalls, or contrasts.
-
-          ### One next step (1 bullet, one sentence, ≤ 25 words)
-          - A simple, actionable follow-up for the learner.
-        """,
-        silent_checklist(),
-        """
-        ## Explain: #{topic}
+    join_blocks([
+      fence("Context", context),
+      fence("Topic", topic),
+      """
+      Output Contract
+      - Start with: ## Explain: #{topic}
+      - Sections (exact order, exact headings):
 
         ### TL;DR (2 sentences max)
-
-        -
+        - Core idea and why it matters.
 
         ### Definitions & Assumptions (3–5 bullets, one sentence each, ≤ 25 words)
+        - Define key terms; state assumptions and scope.
 
-        -
-        -
-        -
+        ### Mechanism & Intuition (2 short paragraphs, ≤ 90 words each)
+        - First paragraph: intuition.
+        - Second paragraph: causal steps; gloss each symbol on first use.
 
-        ### Mechanism & Intuition
+        ### Nuances & Limits (3 bullets, one sentence each, ≤ 25 words)
+        - Edge cases, pitfalls, or contrasts.
 
-        [Write two short paragraphs.]
+        ### One next step (1 bullet, one sentence, ≤ 25 words)
+        - A simple, actionable follow-up for the learner.
+      """,
+      silent_checklist(),
+      """
+      ## Explain: #{topic}
 
-        ### Nuances & Limits
+      ### TL;DR (2 sentences max)
 
-        -
-        -
-        -
+      -
 
-        ### One next step
+      ### Definitions & Assumptions (3–5 bullets, one sentence each, ≤ 25 words)
 
-        -
-        """
-      ])
-    end
+      -
+      -
+      -
+
+      ### Mechanism & Intuition
+
+      [Write two short paragraphs.]
+
+      ### Nuances & Limits
+
+      -
+      -
+      -
+
+      ### One next step
+
+      -
+      """
+    ])
   end
 
   @doc """
@@ -154,75 +136,59 @@ defmodule Dialectic.Responses.PromptsStructured do
   """
   @spec selection(String.t(), String.t()) :: String.t()
   def selection(context, selection_text) do
-    if missing?(selection_text) or missing?(context) do
-      join_blocks([
-        fence("Context", context),
-        fence("Selection", selection_text),
-        """
-        Output Contract:
-        - If any required input is missing, output only:
-
-          ## Clarification needed
-
-          - Ask one concise question to unblock progress (single bullet, ≤ 25 words).
-        """,
-        silent_checklist()
-      ])
-    else
-      join_blocks([
-        fence("Context", context),
-        fence("Selection", selection_text),
-        """
-        Output Contract
-        - Start with: ## Apply: #{selection_text}
-        - Sections (exact order):
-
-          ### Paraphrase (1–2 sentences)
-          - Restate the selection precisely.
-
-          ### Why it matters here (3 bullets, one sentence each, ≤ 25 words)
-          - Claims/evidence specific to the given context.
-
-          ### Assumptions (2 bullets, one sentence each, ≤ 25 words)
-          - Preconditions for the selection to hold.
-
-          ### Implications (2 bullets, one sentence each, ≤ 25 words)
-          - Concrete outcomes or decisions.
-
-          ### Limitations & Alternatives (2 bullets, one sentence each, ≤ 25 words)
-          - Where it may fail; viable alternatives.
-        """,
-        silent_checklist(),
-        """
-        ## Apply: #{selection_text}
+    join_blocks([
+      fence("Context", context),
+      fence("Selection", selection_text),
+      """
+      Output Contract
+      - Start with: ## Apply: #{selection_text}
+      - Sections (exact order):
 
         ### Paraphrase (1–2 sentences)
+        - Restate the selection precisely.
 
-        -
+        ### Why it matters here (3 bullets, one sentence each, ≤ 25 words)
+        - Claims/evidence specific to the given context.
 
-        ### Why it matters here
+        ### Assumptions (2 bullets, one sentence each, ≤ 25 words)
+        - Preconditions for the selection to hold.
 
-        -
-        -
-        -
+        ### Implications (2 bullets, one sentence each, ≤ 25 words)
+        - Concrete outcomes or decisions.
 
-        ### Assumptions
+        ### Limitations & Alternatives (2 bullets, one sentence each, ≤ 25 words)
+        - Where it may fail; viable alternatives.
+      """,
+      silent_checklist(),
+      """
+      ## Apply: #{selection_text}
 
-        -
-        -
+      ### Paraphrase (1–2 sentences)
 
-        ### Implications
+      -
 
-        -
-        -
+      ### Why it matters here
 
-        ### Limitations & Alternatives
+      -
+      -
+      -
 
-        -
-        -
-        """
-      ])
-    end
+      ### Assumptions
+
+      -
+      -
+
+      ### Implications
+
+      -
+      -
+
+      ### Limitations & Alternatives
+
+      -
+      -
+      """
+    ])
   end
 
   @doc """
@@ -230,81 +196,63 @@ defmodule Dialectic.Responses.PromptsStructured do
   """
   @spec synthesis(String.t(), String.t(), String.t(), String.t()) :: String.t()
   def synthesis(context1, context2, pos1, pos2) do
-    if missing?(context1) or missing?(context2) or missing?(pos1) or missing?(pos2) do
-      join_blocks([
-        fence("Context A", context1),
-        fence("Context B", context2),
-        fence("Position A", pos1),
-        fence("Position B", pos2),
-        """
-        Output Contract:
-        - If any required input is missing, output only:
+    title = "Synthesize: #{pos1} × #{pos2}"
 
-          ## Clarification needed
+    join_blocks([
+      fence("Context A", context1),
+      fence("Context B", context2),
+      fence("Position A", pos1),
+      fence("Position B", pos2),
+      """
+      Output Contract
+      - Start with: ## #{title}
+      - Sections (exact order):
 
-          - Ask one concise question to unblock progress (single bullet, ≤ 25 words).
-        """,
-        silent_checklist()
-      ])
-    else
-      title = "Synthesize: #{pos1} × #{pos2}"
+        ### Relationship (2 sentences)
+        - Concise statement of overlap vs. divergence.
 
-      join_blocks([
-        fence("Context A", context1),
-        fence("Context B", context2),
-        fence("Position A", pos1),
-        fence("Position B", pos2),
-        """
-        Output Contract
-        - Start with: ## #{title}
-        - Sections (exact order):
+        ### Common Ground (2–3 bullets, one sentence each, ≤ 25 words)
+        - Shared assumptions or compatible mechanisms.
 
-          ### Relationship (2 sentences)
-          - Concise statement of overlap vs. divergence.
+        ### Key Tensions (3 bullets, one sentence each, ≤ 25 words)
+        - Assumption clashes; trade-offs; boundary conditions.
 
-          ### Common Ground (2–3 bullets, one sentence each, ≤ 25 words)
-          - Shared assumptions or compatible mechanisms.
+        ### Reconciliation / Choice (1 short paragraph, ≤ 110 words)
+        - When to prefer A, B, or a hybrid; state decision criteria.
 
-          ### Key Tensions (3 bullets, one sentence each, ≤ 25 words)
-          - Assumption clashes; trade-offs; boundary conditions.
+        ### Open Questions (2 bullets, one sentence each, ≤ 25 words)
+        - Honest unknowns or empirical tests.
+      """,
+      silent_checklist(),
+      """
+      ## #{title}
 
-          ### Reconciliation / Choice (1 short paragraph, ≤ 110 words)
-          - When to prefer A, B, or a hybrid; state decision criteria.
+      ### Relationship
 
-          ### Open Questions (2 bullets, one sentence each, ≤ 25 words)
-          - Honest unknowns or empirical tests.
-        """,
-        silent_checklist(),
-        """
-        ## #{title}
+      -
 
-        ### Relationship
+      ### Common Ground
 
-        -
+      -
+      -
+      -
 
-        ### Common Ground
+      ### Key Tensions
 
-        -
-        -
-        -
+      -
+      -
+      -
 
-        ### Key Tensions
+      ### Reconciliation / Choice
 
-        -
-        -
-        -
+      [Write one short paragraph.]
 
-        ### Reconciliation / Choice
+      ### Open Questions
 
-        [Write one short paragraph.]
-
-        ### Open Questions
-
-        -
-        -
-        """
-      ])
-    end
+      -
+      -
+      """
+    ])
   end
 
   @doc """
@@ -312,75 +260,59 @@ defmodule Dialectic.Responses.PromptsStructured do
   """
   @spec thesis(String.t(), String.t()) :: String.t()
   def thesis(context, claim) do
-    if missing?(claim) or missing?(context) do
-      join_blocks([
-        fence("Context", context),
-        fence("Claim", claim),
-        """
-        Output Contract:
-        - If any required input is missing, output only:
+    join_blocks([
+      fence("Context", context),
+      fence("Claim", claim),
+      """
+      Output Contract
+      - Start with: ## Argue for: #{claim}
+      - Sections (exact order):
 
-          ## Clarification needed
+        ### Claim (1 sentence)
+        - Exact proposition being defended.
 
-          - Ask one concise question to unblock progress (single bullet, ≤ 25 words).
-        """,
-        silent_checklist()
-      ])
-    else
-      join_blocks([
-        fence("Context", context),
-        fence("Claim", claim),
-        """
-        Output Contract
-        - Start with: ## Argue for: #{claim}
-        - Sections (exact order):
+        ### Reasons (3 bullets, one sentence each, ≤ 25 words)
+        - Each reason and why it supports the claim.
 
-          ### Claim (1 sentence)
-          - Exact proposition being defended.
+        ### Evidence / Examples (2 bullets, one sentence each, ≤ 25 words)
+        - Concrete facts, cases, or citations (label outside context as "Background").
 
-          ### Reasons (3 bullets, one sentence each, ≤ 25 words)
-          - Each reason and why it supports the claim.
+        ### Counterarguments & Rebuttals (2 bullets, one sentence each, ≤ 25 words)
+        - Strong opposing points and succinct responses.
 
-          ### Evidence / Examples (2 bullets, one sentence each, ≤ 25 words)
-          - Concrete facts, cases, or citations (label outside context as "Background").
+        ### Assumptions, Limits, Prediction (3 bullets, one sentence each, ≤ 25 words)
+        - Key assumption; boundary; a falsifiable prediction.
+      """,
+      silent_checklist(),
+      """
+      ## Argue for: #{claim}
 
-          ### Counterarguments & Rebuttals (2 bullets, one sentence each, ≤ 25 words)
-          - Strong opposing points and succinct responses.
+      ### Claim
 
-          ### Assumptions, Limits, Prediction (3 bullets, one sentence each, ≤ 25 words)
-          - Key assumption; boundary; a falsifiable prediction.
-        """,
-        silent_checklist(),
-        """
-        ## Argue for: #{claim}
+      -
 
-        ### Claim
+      ### Reasons
 
-        -
+      -
+      -
+      -
 
-        ### Reasons
+      ### Evidence / Examples
 
-        -
-        -
-        -
+      -
+      -
 
-        ### Evidence / Examples
+      ### Counterarguments & Rebuttals
 
-        -
-        -
+      -
+      -
 
-        ### Counterarguments & Rebuttals
+      ### Assumptions, Limits, Prediction
 
-        -
-        -
-
-        ### Assumptions, Limits, Prediction
-
-        -
-        -
-        """
-      ])
-    end
+      -
+      -
+      """
+    ])
   end
 
   @doc """
@@ -388,75 +320,59 @@ defmodule Dialectic.Responses.PromptsStructured do
   """
   @spec antithesis(String.t(), String.t()) :: String.t()
   def antithesis(context, claim) do
-    if missing?(claim) or missing?(context) do
-      join_blocks([
-        fence("Context", context),
-        fence("Target Claim", claim),
-        """
-        Output Contract:
-        - If any required input is missing, output only:
+    join_blocks([
+      fence("Context", context),
+      fence("Target Claim", claim),
+      """
+      Output Contract
+      - Start with: ## Critique: #{claim}
+      - Sections (exact order):
 
-          ## Clarification needed
+        ### Central Critique (1 sentence)
+        - What is being argued against and why.
 
-          - Ask one concise question to unblock progress (single bullet, ≤ 25 words).
-        """,
-        silent_checklist()
-      ])
-    else
-      join_blocks([
-        fence("Context", context),
-        fence("Target Claim", claim),
-        """
-        Output Contract
-        - Start with: ## Critique: #{claim}
-        - Sections (exact order):
+        ### Reasons (3 bullets, one sentence each, ≤ 25 words)
+        - How each reason undermines the claim.
 
-          ### Central Critique (1 sentence)
-          - What is being argued against and why.
+        ### Evidence / Counterexamples (2 bullets, one sentence each, ≤ 25 words)
+        - Concrete disconfirming facts/cases.
 
-          ### Reasons (3 bullets, one sentence each, ≤ 25 words)
-          - How each reason undermines the claim.
+        ### Steelman & Response (2 bullets, one sentence each, ≤ 25 words)
+        - Strongest pro-claim point(s) and why insufficient.
 
-          ### Evidence / Counterexamples (2 bullets, one sentence each, ≤ 25 words)
-          - Concrete disconfirming facts/cases.
+        ### Scope, Limit, Prediction (3 bullets, one sentence each, ≤ 25 words)
+        - Where the critique applies; boundary; a risky prediction.
+      """,
+      silent_checklist(),
+      """
+      ## Critique: #{claim}
 
-          ### Steelman & Response (2 bullets, one sentence each, ≤ 25 words)
-          - Strongest pro-claim point(s) and why insufficient.
+      ### Central Critique
 
-          ### Scope, Limit, Prediction (3 bullets, one sentence each, ≤ 25 words)
-          - Where the critique applies; boundary; a risky prediction.
-        """,
-        silent_checklist(),
-        """
-        ## Critique: #{claim}
+      -
 
-        ### Central Critique
+      ### Reasons
 
-        -
+      -
+      -
+      -
 
-        ### Reasons
+      ### Evidence / Counterexamples
 
-        -
-        -
-        -
+      -
+      -
 
-        ### Evidence / Counterexamples
+      ### Steelman & Response
 
-        -
-        -
+      -
+      -
 
-        ### Steelman & Response
+      ### Scope, Limit, Prediction
 
-        -
-        -
-
-        ### Scope, Limit, Prediction
-
-        -
-        -
-        """
-      ])
-    end
+      -
+      -
+      """
+    ])
   end
 
   @doc """
@@ -464,53 +380,37 @@ defmodule Dialectic.Responses.PromptsStructured do
   """
   @spec related_ideas(String.t(), String.t()) :: String.t()
   def related_ideas(context, current_idea_title) do
-    if missing?(current_idea_title) or missing?(context) do
-      join_blocks([
-        fence("Context", context),
-        fence("Current Idea", current_idea_title),
-        """
-        Output Contract:
-        - If any required input is missing, output only:
-
-          ## Clarification needed
-
-          - Ask one concise question to unblock progress (single bullet, ≤ 25 words).
-        """,
-        silent_checklist()
-      ])
-    else
-      join_blocks([
-        fence("Context", context),
-        fence("Current Idea", current_idea_title),
-        """
-        Output Contract
-        - Start with: ## Adjacent to: #{current_idea_title}
-        - Sections (exact order):
-
-          ### Adjacent concepts
-          - Provide 3–4 concepts. For each concept:
-            Use a level-4 heading with the concept name, then a 1–2 sentence paragraph (≤ 50 words) explaining relevance. No lists inside items.
-        """,
-        silent_checklist(),
-        """
-        ## Adjacent to: #{current_idea_title}
+    join_blocks([
+      fence("Context", context),
+      fence("Current Idea", current_idea_title),
+      """
+      Output Contract
+      - Start with: ## Adjacent to: #{current_idea_title}
+      - Sections (exact order):
 
         ### Adjacent concepts
+        - Provide 3–4 concepts. For each concept:
+          Use a level-4 heading with the concept name, then a 1–2 sentence paragraph (≤ 50 words) explaining relevance. No lists inside items.
+      """,
+      silent_checklist(),
+      """
+      ## Adjacent to: #{current_idea_title}
 
-        #### [Concept 1]
-        [Write 1–2 sentences on relevance.]
+      ### Adjacent concepts
 
-        #### [Concept 2]
-        [Write 1–2 sentences on relevance.]
+      #### [Concept 1]
+      [Write 1–2 sentences on relevance.]
 
-        #### [Concept 3]
-        [Write 1–2 sentences on relevance.]
+      #### [Concept 2]
+      [Write 1–2 sentences on relevance.]
 
-        #### [Concept 4]
-        [Write 1–2 sentences on relevance.]
-        """
-      ])
-    end
+      #### [Concept 3]
+      [Write 1–2 sentences on relevance.]
+
+      #### [Concept 4]
+      [Write 1–2 sentences on relevance.]
+      """
+    ])
   end
 
   @doc """
@@ -518,64 +418,48 @@ defmodule Dialectic.Responses.PromptsStructured do
   """
   @spec deep_dive(String.t(), String.t()) :: String.t()
   def deep_dive(context, topic) do
-    if missing?(topic) or missing?(context) do
-      join_blocks([
-        fence("Context", context),
-        fence("Concept", topic),
-        """
-        Output Contract:
-        - If any required input is missing, output only:
+    join_blocks([
+      fence("Context", context),
+      fence("Concept", topic),
+      """
+      Output Contract
+      - Start with: ## Deep dive: #{topic}
+      - Sections (exact order):
 
-          ## Clarification needed
+        ### One-liner (1 sentence)
+        - What it is and when it applies.
 
-          - Ask one concise question to unblock progress (single bullet, ≤ 25 words).
-        """,
-        silent_checklist()
-      ])
-    else
-      join_blocks([
-        fence("Context", context),
-        fence("Concept", topic),
-        """
-        Output Contract
-        - Start with: ## Deep dive: #{topic}
-        - Sections (exact order):
+        ### Core explanation (2–3 short paragraphs, ≤ 100 words each)
+        - Mechanism; assumptions; applicability. Gloss symbols on first use.
 
-          ### One-liner (1 sentence)
-          - What it is and when it applies.
+        ### Nuance (2 bullets, one sentence each, ≤ 25 words)
+        - Caveats, edge cases, or failure modes.
 
-          ### Core explanation (2–3 short paragraphs, ≤ 100 words each)
-          - Mechanism; assumptions; applicability. Gloss symbols on first use.
+        ### When to use vs. avoid (2 bullets, one sentence each, ≤ 25 words)
+        - Clear decision cues.
+      """,
+      silent_checklist(),
+      """
+      ## Deep dive: #{topic}
 
-          ### Nuance (2 bullets, one sentence each, ≤ 25 words)
-          - Caveats, edge cases, or failure modes.
+      ### One-liner
 
-          ### When to use vs. avoid (2 bullets, one sentence each, ≤ 25 words)
-          - Clear decision cues.
-        """,
-        silent_checklist(),
-        """
-        ## Deep dive: #{topic}
+      -
 
-        ### One-liner
+      ### Core explanation
 
-        -
+      [Write 2–3 short paragraphs.]
 
-        ### Core explanation
+      ### Nuance
 
-        [Write 2–3 short paragraphs.]
+      -
+      -
 
-        ### Nuance
+      ### When to use vs. avoid
 
-        -
-        -
-
-        ### When to use vs. avoid
-
-        -
-        -
-        """
-      ])
-    end
+      -
+      -
+      """
+    ])
   end
 end

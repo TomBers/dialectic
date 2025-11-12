@@ -48,8 +48,6 @@ defmodule Dialectic.Workers.OpenAIWorker do
       {_provider, _model, _opts} = model_spec
 
       # Build a provider-agnostic chat context: system + user
-      # TODO: get system prompt depending on the mode selected.
-      system_prompt = "TODO"
 
       ctx =
         ReqLLM.Context.new([
