@@ -120,9 +120,14 @@ defmodule DialecticWeb.Live.TextUtils do
       |> String.split("\n")
       |> List.first("")
 
-    # Strip leading Markdown heading hashes and Title prefix if present
+    # Strip leading Markdown heading hashes, Title prefix, and prompt labels if present
     line =
-      strip_heading_or_title_prefix(first_line_only)
+      first_line_only
+      |> strip_heading_or_title_prefix()
+      |> String.replace(
+        ~r/^(Explain:|Apply:|Synthesize:|Argue for:|Critique:|Adjacent to:|Deep dive:|What to explore next:)[:\s]*/i,
+        ""
+      )
 
     text = String.slice(line, 0, cutoff)
     suffix = if add_ellipsis and String.length(line) > cutoff, do: "…", else: ""
@@ -146,6 +151,15 @@ defmodule DialecticWeb.Live.TextUtils do
         |> Phoenix.HTML.raw()
       end
 
-    %{title: p.title, body_html: body_html}
+    # Sanitize title to remove Markdown headings and leading prompt labels from past data
+    sanitized_title =
+      p.title
+      |> String.replace(~r/^\s*#+\s*/, "")
+      |> String.replace(
+        ~r/^(Explain:|Apply:|Synthesize:|Argue for:|Critique:|Adjacent to:|Deep dive:|What to explore next:)[:\s]*/i,
+        ""
+      )
+
+    %{title: sanitized_title, body_html: body_html}
   end
 end

@@ -69,6 +69,17 @@ defmodule Dialectic.Responses.PromptsStructured do
 
   defp missing?(_val), do: false
 
+  defp sanitize_title(title) do
+    s = to_string(title) |> String.trim()
+    s = Regex.replace(~r/^\s*#+\s*/, s, "")
+
+    Regex.replace(
+      ~r/^(Explain:|Apply:|Synthesize:|Argue for:|Critique:|Adjacent to:|Deep dive:)\s*/i,
+      s,
+      ""
+    )
+  end
+
   # ---- Templates -------------------------------------------------------------
 
   @doc """
@@ -81,7 +92,7 @@ defmodule Dialectic.Responses.PromptsStructured do
       fence("Topic", topic),
       """
       Output Contract
-      - Start with: ## Explain: #{topic}
+      - Start with: ## Explain: #{sanitize_title(topic)}
       - Sections (exact order, exact headings):
 
         ### TL;DR (2 sentences max)
@@ -102,7 +113,7 @@ defmodule Dialectic.Responses.PromptsStructured do
       """,
       silent_checklist(),
       """
-      ## Explain: #{topic}
+      ## Explain: #{sanitize_title(topic)}
 
       ### TL;DR (2 sentences max)
 
@@ -141,7 +152,7 @@ defmodule Dialectic.Responses.PromptsStructured do
       fence("Selection", selection_text),
       """
       Output Contract
-      - Start with: ## Apply: #{selection_text}
+      - Start with: ## Apply: #{sanitize_title(selection_text)}
       - Sections (exact order):
 
         ### Paraphrase (1–2 sentences)
@@ -161,7 +172,7 @@ defmodule Dialectic.Responses.PromptsStructured do
       """,
       silent_checklist(),
       """
-      ## Apply: #{selection_text}
+      ## Apply: #{sanitize_title(selection_text)}
 
       ### Paraphrase (1–2 sentences)
 
@@ -196,7 +207,7 @@ defmodule Dialectic.Responses.PromptsStructured do
   """
   @spec synthesis(String.t(), String.t(), String.t(), String.t()) :: String.t()
   def synthesis(context1, context2, pos1, pos2) do
-    title = "Synthesize: #{pos1} × #{pos2}"
+    title = "Synthesize: #{sanitize_title(pos1)} × #{sanitize_title(pos2)}"
 
     join_blocks([
       fence("Context A", context1),
@@ -265,7 +276,7 @@ defmodule Dialectic.Responses.PromptsStructured do
       fence("Claim", claim),
       """
       Output Contract
-      - Start with: ## Argue for: #{claim}
+      - Start with: ## Argue for: #{sanitize_title(claim)}
       - Sections (exact order):
 
         ### Claim (1 sentence)
@@ -285,7 +296,7 @@ defmodule Dialectic.Responses.PromptsStructured do
       """,
       silent_checklist(),
       """
-      ## Argue for: #{claim}
+      ## Argue for: #{sanitize_title(claim)}
 
       ### Claim
 
@@ -325,7 +336,7 @@ defmodule Dialectic.Responses.PromptsStructured do
       fence("Target Claim", claim),
       """
       Output Contract
-      - Start with: ## Critique: #{claim}
+      - Start with: ## Critique: #{sanitize_title(claim)}
       - Sections (exact order):
 
         ### Central Critique (1 sentence)
@@ -345,7 +356,7 @@ defmodule Dialectic.Responses.PromptsStructured do
       """,
       silent_checklist(),
       """
-      ## Critique: #{claim}
+      ## Critique: #{sanitize_title(claim)}
 
       ### Central Critique
 
@@ -385,7 +396,7 @@ defmodule Dialectic.Responses.PromptsStructured do
       fence("Current Idea", current_idea_title),
       """
       Output Contract
-      - Start with: ## Adjacent to: #{current_idea_title}
+      - Start with: ## Adjacent to: #{sanitize_title(current_idea_title)}
       - Sections (exact order):
 
         ### Adjacent concepts
@@ -394,7 +405,7 @@ defmodule Dialectic.Responses.PromptsStructured do
       """,
       silent_checklist(),
       """
-      ## Adjacent to: #{current_idea_title}
+      ## Adjacent to: #{sanitize_title(current_idea_title)}
 
       ### Adjacent concepts
 
@@ -423,7 +434,7 @@ defmodule Dialectic.Responses.PromptsStructured do
       fence("Concept", topic),
       """
       Output Contract
-      - Start with: ## Deep dive: #{topic}
+      - Start with: ## Deep dive: #{sanitize_title(topic)}
       - Sections (exact order):
 
         ### One-liner (1 sentence)
@@ -440,7 +451,7 @@ defmodule Dialectic.Responses.PromptsStructured do
       """,
       silent_checklist(),
       """
-      ## Deep dive: #{topic}
+      ## Deep dive: #{sanitize_title(topic)}
 
       ### One-liner
 

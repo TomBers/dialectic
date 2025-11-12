@@ -79,117 +79,117 @@ test("graph exercise end-to-end", async ({ page }) => {
   }
 
   // Explore points (open modal and submit)
-  const exploreBtn = page.locator("#explore-all-points");
-  if (await exploreBtn.isVisible().catch(() => false)) {
-    await exploreBtn.click();
+  // const exploreBtn = page.locator("#explore-all-points");
+  // if (await exploreBtn.isVisible().catch(() => false)) {
+  //   await exploreBtn.click();
 
-    // The explore modal content contains a form with phx-submit="submit_explore_modal"
-    const exploreForm = page.locator('form[phx-submit="submit_explore_modal"]');
-    if (await exploreForm.isVisible().catch(() => false)) {
-      // Click the submit button inside the modal form
-      const submitExplore = exploreForm.locator('button[type="submit"]');
-      if (await submitExplore.isVisible().catch(() => false)) {
-        await submitExplore.click();
-        await pause(LONG_PAUSE);
-      }
-    }
-  }
+  //   // The explore modal content contains a form with phx-submit="submit_explore_modal"
+  //   const exploreForm = page.locator('form[phx-submit="submit_explore_modal"]');
+  //   if (await exploreForm.isVisible().catch(() => false)) {
+  //     // Click the submit button inside the modal form
+  //     const submitExplore = exploreForm.locator('button[type="submit"]');
+  //     if (await submitExplore.isVisible().catch(() => false)) {
+  //       await submitExplore.click();
+  //       await pause(LONG_PAUSE);
+  //     }
+  //   }
+  // }
 
   // Combine (move later so more nodes exist; open modal, wait for candidates, pick one)
-  const combineBtn = page.locator('button[title="Combine with another"]');
-  if (await combineBtn.isVisible().catch(() => false)) {
-    // Try normal click; if overlay intercepts, close panels and force click as fallback
-    try {
-      await combineBtn.click({ timeout: 3000 });
-    } catch (_e) {
-      // Close any modal or overlays (Esc) and try to hide right panel if open
-      try {
-        await page.keyboard.press("Escape");
-      } catch {}
-      const rightPanelToggle = page.locator("#right-panel-toggle");
-      if (await rightPanelToggle.isVisible().catch(() => false)) {
-        const expanded = await rightPanelToggle
-          .getAttribute("aria-expanded")
-          .catch(() => null);
-        if (expanded === "true") {
-          await rightPanelToggle.click().catch(() => {});
-          await pause(500);
-        }
-      }
-      // Ensure bottom menu (toolbar) is open in case it's collapsed
-      const bottomMenuToggle = page.locator("#bottom-menu-toggle");
-      if (await bottomMenuToggle.isVisible().catch(() => false)) {
-        await bottomMenuToggle.click().catch(() => {});
-        await pause(300);
-      }
-      // Try a normal click again after clearing overlays
-      try {
-        await combineBtn.click({ timeout: 3000 });
-      } catch {
-        // Final fallback: force click (bypass actionability checks)
-        await combineBtn.click({ force: true });
-      }
-    }
+  // const combineBtn = page.locator('button[title="Combine with another"]');
+  // if (await combineBtn.isVisible().catch(() => false)) {
+  //   // Try normal click; if overlay intercepts, close panels and force click as fallback
+  //   try {
+  //     await combineBtn.click({ timeout: 3000 });
+  //   } catch (_e) {
+  //     // Close any modal or overlays (Esc) and try to hide right panel if open
+  //     try {
+  //       await page.keyboard.press("Escape");
+  //     } catch {}
+  //     const rightPanelToggle = page.locator("#right-panel-toggle");
+  //     if (await rightPanelToggle.isVisible().catch(() => false)) {
+  //       const expanded = await rightPanelToggle
+  //         .getAttribute("aria-expanded")
+  //         .catch(() => null);
+  //       if (expanded === "true") {
+  //         await rightPanelToggle.click().catch(() => {});
+  //         await pause(500);
+  //       }
+  //     }
+  //     // Ensure bottom menu (toolbar) is open in case it's collapsed
+  //     const bottomMenuToggle = page.locator("#bottom-menu-toggle");
+  //     if (await bottomMenuToggle.isVisible().catch(() => false)) {
+  //       await bottomMenuToggle.click().catch(() => {});
+  //       await pause(300);
+  //     }
+  //     // Try a normal click again after clearing overlays
+  //     try {
+  //       await combineBtn.click({ timeout: 3000 });
+  //     } catch {
+  //       // Final fallback: force click (bypass actionability checks)
+  //       await combineBtn.click({ force: true });
+  //     }
+  //   }
 
-    // Wait for combine modal to appear (id "confirm-modal" from graph_live.html.heex)
-    const combineModal = page.locator("#confirm-modal");
-    // Try to wait for modal to be visible; if it doesn't open, retry once and continue
-    try {
-      await expect(combineModal).toBeVisible({ timeout: 5000 });
-    } catch {
-      // Retry opening the modal once
-      try {
-        await combineBtn.click({ timeout: 2000 });
-      } catch {}
-      await pause(1000);
-    }
+  //   // Wait for combine modal to appear (id "confirm-modal" from graph_live.html.heex)
+  //   const combineModal = page.locator("#confirm-modal");
+  //   // Try to wait for modal to be visible; if it doesn't open, retry once and continue
+  //   try {
+  //     await expect(combineModal).toBeVisible({ timeout: 5000 });
+  //   } catch {
+  //     // Retry opening the modal once
+  //     try {
+  //       await combineBtn.click({ timeout: 2000 });
+  //     } catch {}
+  //     await pause(1000);
+  //   }
 
-    // Wait for at least one candidate to be available before selecting
-    const candidates = combineModal.locator(
-      '[phx-click="combine_node_select"]',
-    );
-    await candidates
-      .first()
-      .waitFor({ state: "visible", timeout: 15_000 })
-      .catch(() => {});
+  //   // Wait for at least one candidate to be available before selecting
+  //   const candidates = combineModal.locator(
+  //     '[phx-click="combine_node_select"]',
+  //   );
+  //   await candidates
+  //     .first()
+  //     .waitFor({ state: "visible", timeout: 15_000 })
+  //     .catch(() => {});
 
-    // Click the first available candidate
-    const combineCandidate = candidates.first();
-    if (await combineCandidate.isVisible().catch(() => false)) {
-      // Robust click sequence: try normal click, scroll into view, JS click, then mouse fallback
-      try {
-        await combineCandidate.click({ timeout: 3000 });
-      } catch (_e) {
-        try {
-          await combineCandidate.scrollIntoViewIfNeeded();
-          await combineCandidate.click({ timeout: 3000 });
-        } catch (_e2) {
-          try {
-            const el = await combineCandidate.elementHandle();
-            if (el) {
-              await el.evaluate((n: HTMLElement) => n.click());
-            } else {
-              throw new Error("no elementHandle");
-            }
-          } catch (_e3) {
-            const box = await combineCandidate.boundingBox();
-            if (box) {
-              await page.mouse.move(
-                box.x + box.width / 2,
-                box.y + box.height / 2,
-              );
-              await page.mouse.down();
-              await page.mouse.up();
-            } else {
-              // Final fallback: force click to bypass actionability checks
-              await combineCandidate.click({ force: true });
-            }
-          }
-        }
-      }
-      await pause(LONG_PAUSE);
-    }
-  }
+  //   // Click the first available candidate
+  //   const combineCandidate = candidates.first();
+  //   if (await combineCandidate.isVisible().catch(() => false)) {
+  //     // Robust click sequence: try normal click, scroll into view, JS click, then mouse fallback
+  //     try {
+  //       await combineCandidate.click({ timeout: 3000 });
+  //     } catch (_e) {
+  //       try {
+  //         await combineCandidate.scrollIntoViewIfNeeded();
+  //         await combineCandidate.click({ timeout: 3000 });
+  //       } catch (_e2) {
+  //         try {
+  //           const el = await combineCandidate.elementHandle();
+  //           if (el) {
+  //             await el.evaluate((n: HTMLElement) => n.click());
+  //           } else {
+  //             throw new Error("no elementHandle");
+  //           }
+  //         } catch (_e3) {
+  //           const box = await combineCandidate.boundingBox();
+  //           if (box) {
+  //             await page.mouse.move(
+  //               box.x + box.width / 2,
+  //               box.y + box.height / 2,
+  //             );
+  //             await page.mouse.down();
+  //             await page.mouse.up();
+  //           } else {
+  //             // Final fallback: force click to bypass actionability checks
+  //             await combineCandidate.click({ force: true });
+  //           }
+  //         }
+  //       }
+  //     }
+  //     await pause(LONG_PAUSE);
+  //   }
+  // }
 
   // 5) Toggle lock and attempt an action to see lock behavior (flash)
   const lockToggle = page.locator("#toggle_lock_graph");

@@ -79,6 +79,17 @@ defmodule Dialectic.Responses.PromptsCreative do
 
   defp missing?(_val), do: false
 
+  defp sanitize_title(title) do
+    s = to_string(title) |> String.trim()
+    s = Regex.replace(~r/^\s*#+\s*/, s, "")
+
+    Regex.replace(
+      ~r/^(Explain:|Apply:|Synthesize:|Argue for:|Critique:|Adjacent to:|Deep dive:)\s*/i,
+      s,
+      ""
+    )
+  end
+
   # ---- Templates -------------------------------------------------------------
 
   @doc """
@@ -91,7 +102,7 @@ defmodule Dialectic.Responses.PromptsCreative do
       fence("Topic", topic),
       """
       Output Contract
-      - Start with: ## Explain: #{topic}
+      - Start with: ## Explain: #{sanitize_title(topic)}
       - Order and exact headings:
 
         #### Answer
@@ -113,7 +124,7 @@ defmodule Dialectic.Responses.PromptsCreative do
       """,
       silent_checklist(),
       """
-      ## Explain: #{topic}
+      ## Explain: #{sanitize_title(topic)}
 
       #### Answer
       [One sentence.]
@@ -147,7 +158,7 @@ defmodule Dialectic.Responses.PromptsCreative do
       fence("Selection", selection_text),
       """
       Output Contract
-      - Start with: ## Apply: #{selection_text}
+      - Start with: ## Apply: #{sanitize_title(selection_text)}
       - Order and exact headings:
 
         #### Answer
@@ -170,7 +181,7 @@ defmodule Dialectic.Responses.PromptsCreative do
       """,
       silent_checklist(),
       """
-      ## Apply: #{selection_text}
+      ## Apply: #{sanitize_title(selection_text)}
 
       #### Answer
       [One sentence.]
@@ -266,8 +277,8 @@ defmodule Dialectic.Responses.PromptsCreative do
       fence("Context", context),
       fence("Claim", claim),
       """
-      Output Contract
-      - Start with: ## Argue for: #{claim}
+        Output Contract
+        - Start with: ## Argue for: #{sanitize_title(claim)}
       - Order and exact headings:
 
         #### Answer
@@ -290,7 +301,7 @@ defmodule Dialectic.Responses.PromptsCreative do
       """,
       silent_checklist(),
       """
-      ## Argue for: #{claim}
+      ## Argue for: #{sanitize_title(claim)}
 
       #### Answer
       [One sentence.]
@@ -327,8 +338,8 @@ defmodule Dialectic.Responses.PromptsCreative do
       fence("Context", context),
       fence("Target Claim", claim),
       """
-      Output Contract
-      - Start with: ## Critique: #{claim}
+        Output Contract
+        - Start with: ## Critique: #{sanitize_title(claim)}
       - Order and exact headings:
 
         #### Answer
@@ -351,7 +362,7 @@ defmodule Dialectic.Responses.PromptsCreative do
       """,
       silent_checklist(),
       """
-      ## Critique: #{claim}
+      ## Critique: #{sanitize_title(claim)}
 
       #### Answer
       [One sentence.]
@@ -388,8 +399,8 @@ defmodule Dialectic.Responses.PromptsCreative do
       fence("Context", context),
       fence("Current Idea", current_idea_title),
       """
-      Output Contract
-      - Start with: ## What to explore next: #{current_idea_title}
+        Output Contract
+        - Start with: ## What to explore next: #{sanitize_title(current_idea_title)}
       - Order and exact headings:
 
         #### Answer
@@ -405,7 +416,7 @@ defmodule Dialectic.Responses.PromptsCreative do
       """,
       silent_checklist(),
       """
-      ## What to explore next: #{current_idea_title}
+      ## What to explore next: #{sanitize_title(current_idea_title)}
 
       #### Answer
       [One sentence.]
@@ -450,8 +461,8 @@ defmodule Dialectic.Responses.PromptsCreative do
       fence("Context", context),
       fence("Concept", topic),
       """
-      Output Contract
-      - Start with: ## Deep dive: #{topic}
+        Output Contract
+        - Start with: ## Deep dive: #{sanitize_title(topic)}
       - Order and exact headings:
 
         #### Answer
@@ -472,7 +483,7 @@ defmodule Dialectic.Responses.PromptsCreative do
       """,
       silent_checklist(),
       """
-      ## Deep dive: #{topic}
+      ## Deep dive: #{sanitize_title(topic)}
 
       #### Answer
       [One sentence.]
