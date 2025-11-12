@@ -10,23 +10,12 @@ defmodule Dialectic.Responses.PromptsCreative do
 
   # ---- Helpers ---------------------------------------------------------------
 
-  # Fences arbitrary content so the model treats it as data, not instructions.
-  defp fence(label, text) do
-    """
-    *** #{label} ***
-    ```text
-    #{text}
-    ```
-    """
-  end
-
   @style """
-  Persona: A thoughtful guide. Curious, vivid, and rigorous. Uses story and analogy to spark insight.
+  Persona: A thoughtful guide. Curious, vivid, and rigorous.
 
   Voice & Tone
   - Warm, lively, intellectually honest. You may use “you”.
   - Carefully chosen metaphor or micro-story allowed.
-  - Label any guesswork as **Speculation**.
 
   Rhythm & Sentence Rules
   - Varied cadence: mix short punchy lines with longer arcs.
@@ -37,11 +26,18 @@ defmodule Dialectic.Responses.PromptsCreative do
   - H2 titles encouraged and may be playful.
   - Always start the output with the H2 title shown in the template.
   - Title rules: follow the exact template string; never invent, rename, or omit titles.
-  - Placeholder convention: replace any {Label} with the exact input text; do not include braces or quotes.
+
   - If an input label is empty or missing, state the gap and ask one direct question instead of inventing a title.
   - Keep to only the sections requested; do not add, rename, or remove headings.
   - Headings are flexible when allowed, but the template sections are mandatory.
   - No tables. Sparse italics for emphasis; em dashes allowed.
+
+  Direct Answer Rule
+  - When the user’s input contains a question (in Context or labels), begin with an explicit line: "Answer: ..." that directly answers it before any background.
+  - If there is no clear question, still include an "Answer:" line as a one-sentence takeaway.
+
+  Structure Flexibility
+  - Bullet and paragraph counts in templates are guidelines; expand or compress as needed while preserving the sections and intent.
 
 
   Information Hygiene
@@ -57,10 +53,6 @@ defmodule Dialectic.Responses.PromptsCreative do
   - No long lists or academic throat-clearing.
   - Don’t hide definitions—state one early.
 
-  Quality Checks
-  - The hook makes the idea feel alive without distortion.
-  - Includes at least one precise definition in plain language.
-  - Ends with an actionable next step or question.
   """
 
   # ---- Templates -------------------------------------------------------------
@@ -77,13 +69,20 @@ defmodule Dialectic.Responses.PromptsCreative do
     Enum.join(
       [
         @style,
-        fence("Context", context),
-        fence("Topic", topic),
         """
-        Task: Offer a narrative exploration of the **Topic**.
+        Context:
+        #{context}
+        """,
+        """
+        Topic:
+        #{topic}
+        """,
+        """
+        Task: Offer a narrative exploration of #{topic}.
 
         Output:
-        ## Explain: {Topic}
+        ## Explain: #{topic}
+        - Answer: Directly answer the question if one is present in Context or Topic; otherwise give a one-sentence takeaway.
         - Hook (1–2 lines), then a plain-language definition (1 line).
 
         ### Story-driven explanation
@@ -112,13 +111,20 @@ defmodule Dialectic.Responses.PromptsCreative do
     Enum.join(
       [
         @style,
-        fence("Context", context),
-        fence("Selection", selection_text),
         """
-        If no **Selection** is provided, say so and ask for it (one sentence at end).
+        Context:
+        #{context}
+        """,
+        """
+        Selection:
+        #{selection_text}
+        """,
+        """
+        If no selection text is provided, say so and ask for it (one sentence at end).
 
         Output:
-        ## Apply: {Selection}
+        ## Apply: #{selection_text}
+        - Answer: Directly answer the user’s question or requested action if present; otherwise state the main takeaway in one sentence.
         - Paraphrase (1–2 sentences).
 
         ### Why it matters here
@@ -148,26 +154,39 @@ defmodule Dialectic.Responses.PromptsCreative do
     Enum.join(
       [
         @style,
-        fence("Context A", context1),
-        fence("Context B", context2),
-        fence("Position A", pos1),
-        fence("Position B", pos2),
         """
-        Task: Weave a creative synthesis of **Position A** and **Position B** that respects both,
+        Context A:
+        #{context1}
+        """,
+        """
+        Context B:
+        #{context2}
+        """,
+        """
+        Position A:
+        #{pos1}
+        """,
+        """
+        Position B:
+        #{pos2}
+        """,
+        """
+        Task: Weave a creative synthesis of #{pos1} and #{pos2} that respects both,
         clarifies where they shine, and proposes a bridge or a useful boundary.
 
         Output:
-        ## Synthesis: {Position A} vs {Position B}
+        ## Synthesis: #{pos1} vs #{pos2}
+        - Answer: In one sentence, directly address the user’s question or the principal reconciliation between the positions.
         - Short summary (1–2 sentences) of the relationship.
 
         ### Narrative bridge
-        - 1–2 short paragraphs on common ground and key tensions; make explicit the assumptions driving disagreement.
+        - 1–2 short paragraphs on common ground and key tensions between #{pos1} and #{pos2}; make explicit the assumptions driving disagreement.
 
         ### Bridge or boundary
-        - 1 short paragraph proposing a synthesis or scope boundary; add a testable prediction if helpful.
+        - 1 short paragraph proposing a synthesis or scope boundary for #{pos1} and #{pos2}; add a testable prediction if helpful.
 
         ### When each view is stronger
-        - 2–3 concise bullets on contexts where each view wins and the remaining trade-offs.
+        - 2–3 concise bullets on contexts where #{pos1} or #{pos2} is stronger and the remaining trade-offs.
 
         Respond with Markdown only, begin with the H2 title, and include only the sections above.
         """
@@ -188,19 +207,26 @@ defmodule Dialectic.Responses.PromptsCreative do
     Enum.join(
       [
         @style,
-        fence("Context", context),
-        fence("Claim", claim),
         """
-        Task: Make a creative yet rigorous argument for the **Claim**.
+        Context:
+        #{context}
+        """,
+        """
+        Claim:
+        #{claim}
+        """,
+        """
+        Task: Make a creative yet rigorous argument for #{claim}.
 
         Output:
-        ## In favor of: {Claim}
-        - Argument claim (1 sentence) — clearly state what is being argued for.
-        - Reasons (2–3 short bullets): each names a reason and briefly explains why it supports the claim.
-        - Evidence/examples (1–2 lines): concrete facts, cases, or citations tied to the reasons.
-        - Counter-arguments & rebuttals (1–2 bullets): strongest opposing points and succinct rebuttals.
+        ## In favor of: #{claim}
+        - Answer: State the direct answer or position in one sentence before elaboration.
+        - Argument claim (1 sentence) — clearly state what is being argued for: #{claim}.
+        - Reasons (2–3 short bullets): each names a reason and briefly explains why it supports #{claim}.
+        - Evidence/examples (1–2 lines): concrete facts, cases, or citations tied to the reasons supporting #{claim}.
+        - Counter-arguments & rebuttals (1–2 bullets): strongest opposing points and succinct rebuttals to #{claim}.
         - Assumptions & limits (1 line) + a falsifiable prediction.
-        - Applicability (1 line): where this argument is strongest vs. where it likely fails.
+        - Applicability (1 line): where the argument for #{claim} is strongest vs. where it likely fails.
 
         Respond with Markdown only, begin with the H2 title, and include only the sections above.
         """
@@ -221,19 +247,26 @@ defmodule Dialectic.Responses.PromptsCreative do
     Enum.join(
       [
         @style,
-        fence("Context", context),
-        fence("Target Claim", claim),
         """
-        Task: Critique the **Target Claim** with creative clarity—steelman first, then challenge.
+        Context:
+        #{context}
+        """,
+        """
+        Target Claim:
+        #{claim}
+        """,
+        """
+        Task: Critique #{claim} with creative clarity—steelman first, then challenge.
 
         Output:
-        ## Against: {Target Claim}
-        - Central critique (1 sentence) — clearly state what is being argued against.
-        - Reasons (2–3 short bullets): each names a reason and briefly explains why it undermines the claim.
-        - Evidence/counterexamples (1–2 lines): concrete facts, cases, or citations tied to the reasons.
-        - Steelman & rebuttal (1–2 bullets): acknowledge the best pro point(s) and explain why they’re insufficient.
+        ## Against: #{claim}
+        - Answer: State the direct critique or stance in one sentence before elaboration.
+        - Central critique (1 sentence) — clearly state what is being argued against: #{claim}.
+        - Reasons (2–3 short bullets): each names a reason and briefly explains why it undermines #{claim}.
+        - Evidence/counterexamples (1–2 lines): concrete facts, cases, or citations tied to the reasons against #{claim}.
+        - Steelman & rebuttal (1–2 bullets): acknowledge the best pro-#{claim} point(s) and explain why they’re insufficient.
         - Scope & limits (1 line) + a falsifiable prediction that would weaken this critique.
-        - Applicability (1 line): when this critique applies vs. when it likely does not.
+        - Applicability (1 line): when this critique of #{claim} applies vs. when it likely does not.
 
         Respond with Markdown only, begin with the H2 title, and include only the sections above.
         """
@@ -254,13 +287,20 @@ defmodule Dialectic.Responses.PromptsCreative do
     Enum.join(
       [
         @style,
-        fence("Context", context),
-        fence("Current Idea", current_idea_title),
+        """
+        Context:
+        #{context}
+        """,
+        """
+        Current Idea:
+        #{current_idea_title}
+        """,
         """
         Task: Generate a creative list of related but distinct concepts worth exploring next.
 
         Output:
-        ## What to explore next: {Current Idea}
+        ## What to explore next: #{current_idea_title}
+        - Answer: If a question is present, answer briefly before listing ideas; otherwise give a one-line next-step takeaway.
         - Provide 3–4 bullets. Each: Concept — 1 sentence (difference/relevance; optional method/author/example).
 
         ### Adjacent concepts
@@ -288,14 +328,21 @@ defmodule Dialectic.Responses.PromptsCreative do
     Enum.join(
       [
         @style,
-        fence("Context", context),
-        fence("Concept", topic),
         """
-        Task: Compose a narrative deep dive into the **Concept** that blends intuition,
+        Context:
+        #{context}
+        """,
+        """
+        Concept:
+        #{topic}
+        """,
+        """
+        Task: Compose a narrative deep dive into #{topic} that blends intuition,
         one crisp definition, and a few surprising connections.
 
         Output:
-        ## Deep dive: {Concept}
+        ## Deep dive: #{topic}
+        - Answer: One-sentence direct answer or takeaway before the deep dive.
         - One-sentence statement of what it is and when it applies.
 
         ### Deep dive

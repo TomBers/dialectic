@@ -15,16 +15,6 @@ defmodule Dialectic.Responses.PromptsStructured do
 
   # ---- Helpers ---------------------------------------------------------------
 
-  # Fences arbitrary content so the model treats it as data, not instructions.
-  defp fence(label, text) do
-    """
-    *** #{label} ***
-    ```text
-    #{text}
-    ```
-    """
-  end
-
   @style """
   Persona: A precise lecturer. Efficient, calm, unemotional. Prioritizes mechanism and definitions.
 
@@ -44,7 +34,7 @@ defmodule Dialectic.Responses.PromptsStructured do
   - No tables, emojis, or rhetorical questions.
   - Respond with Markdown only. Important ALWAYS begin with a title, and include only the sections requested.
   - Title rules: follow the exact template string; never invent, rename, or omit titles.
-  - Placeholder convention for titles: replace any {Label} with the exact input text; do not include braces or quotes.
+
   - If an input label is empty or missing, state the gap and ask one direct question instead of inventing a title.
 
   Information Hygiene
@@ -84,8 +74,14 @@ defmodule Dialectic.Responses.PromptsStructured do
     Enum.join(
       [
         @style,
-        fence("Context", context),
-        fence("Topic", topic),
+        """
+        Context:
+        #{context}
+        """,
+        """
+        Topic:
+        #{topic}
+        """,
         """
         Task: Teach a first-time learner about #{topic}
 
@@ -114,11 +110,17 @@ defmodule Dialectic.Responses.PromptsStructured do
     Enum.join(
       [
         @style,
-        fence("Context", context),
-        fence("Selection", selection_text),
+        """
+        Context:
+        #{context}
+        """,
+        """
+        Selection:
+        #{selection_text}
+        """,
         """
         Output:
-        ## Apply: {Selection}
+        ## Apply: #{selection_text}
         - Paraphrase (1–2 sentences).
 
         ### Why it matters here
@@ -146,12 +148,24 @@ defmodule Dialectic.Responses.PromptsStructured do
     Enum.join(
       [
         @style,
-        fence("Context A", context1),
-        fence("Context B", context2),
-        fence("Position A", pos1),
-        fence("Position B", pos2),
         """
-        Task: Synthesize **Position A** and **Position B** for a first-time learner.
+        Context A:
+        #{context1}
+        """,
+        """
+        Context B:
+        #{context2}
+        """,
+        """
+        Position A:
+        #{pos1}
+        """,
+        """
+        Position B:
+        #{pos2}
+        """,
+        """
+        Task: Synthesize #{pos1} and #{pos2} for a first-time learner.
 
         Output:
         - Short summary (1–2 sentences) of the relationship.
@@ -176,16 +190,22 @@ defmodule Dialectic.Responses.PromptsStructured do
     Enum.join(
       [
         @style,
-        fence("Context", context),
-        fence("Claim", claim),
+        """
+        Context:
+        #{context}
+        """,
+        """
+        Claim:
+        #{claim}
+        """,
         """
         Output:
-        - Argument claim (1 sentence) — clearly state what is being argued for.
-        - Reasons (2–3 short bullets): each names a reason and briefly explains why it supports the claim.
-        - Evidence/examples (1–2 lines): concrete facts, cases, or citations tied to the reasons.
-        - Counter-arguments & rebuttals (1–2 bullets): strongest opposing points and succinct rebuttals.
+        - Argument claim (1 sentence) — clearly state what is being argued for: #{claim}.
+        - Reasons (2–3 short bullets): each names a reason and briefly explains why it supports #{claim}.
+        - Evidence/examples (1–2 lines): concrete facts, cases, or citations tied to the reasons supporting #{claim}.
+        - Counter-arguments & rebuttals (1–2 bullets): strongest opposing points and succinct rebuttals to #{claim}.
         - Assumptions & limits (1 line) + a falsifiable prediction.
-        - Applicability (1 line): where this argument is strongest vs. where it likely fails.
+        - Applicability (1 line): where the argument for #{claim} is strongest vs. where it likely fails.
         """
       ],
       "\n\n"
@@ -205,16 +225,22 @@ defmodule Dialectic.Responses.PromptsStructured do
     Enum.join(
       [
         @style,
-        fence("Context", context),
-        fence("Target Claim", claim),
+        """
+        Context:
+        #{context}
+        """,
+        """
+        Target Claim:
+        #{claim}
+        """,
         """
         Output:
-        - Central critique (1 sentence) — clearly state what is being argued against.
-        - Reasons (2–3 short bullets): each names a reason and briefly explains why it undermines the claim.
-        - Evidence/counterexamples (1–2 lines): concrete facts, cases, or citations tied to the reasons.
-        - Steelman & rebuttal (1–2 bullets): acknowledge the best pro point(s) and explain why they’re insufficient.
+        - Central critique (1 sentence) — clearly state what is being argued against: #{claim}.
+        - Reasons (2–3 short bullets): each names a reason and briefly explains why it undermines #{claim}.
+        - Evidence/counterexamples (1–2 lines): concrete facts, cases, or citations tied to the reasons against #{claim}.
+        - Steelman & rebuttal (1–2 bullets): acknowledge the best pro-#{claim} point(s) and explain why they’re insufficient.
         - Scope & limits (1 line) + a falsifiable prediction that would weaken this critique.
-        - Applicability (1 line): when this critique applies vs. when it likely does not.
+        - Applicability (1 line): when this critique of #{claim} applies vs. when it likely does not.
         """
       ],
       "\n\n"
@@ -233,8 +259,14 @@ defmodule Dialectic.Responses.PromptsStructured do
     Enum.join(
       [
         @style,
-        fence("Context", context),
-        fence("Current Idea", current_idea_title),
+        """
+        Context:
+        #{context}
+        """,
+        """
+        Current Idea:
+        #{current_idea_title}
+        """,
         """
         Task: Generate related but distinct concepts for a first-time learner.
 
@@ -259,10 +291,16 @@ defmodule Dialectic.Responses.PromptsStructured do
     Enum.join(
       [
         @style,
-        fence("Context", context),
-        fence("Concept", topic),
         """
-        Task: Produce a rigorous deep dive into the **Concept** for an advanced learner.
+        Context:
+        #{context}
+        """,
+        """
+        Concept:
+        #{topic}
+        """,
+        """
+        Task: Produce a rigorous deep dive into #{topic} for an advanced learner.
 
         Output:
         - One-sentence statement of what it is and when it applies.
