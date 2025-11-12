@@ -805,7 +805,7 @@ defmodule DialecticWeb.GraphLive do
 
     update_graph(
       socket,
-      GraphActions.find_node(socket.assigns.graph_id, node_id),
+      {nil, GraphActions.find_node(socket.assigns.graph_id, node_id)},
       "llm_request_complete"
     )
   end
