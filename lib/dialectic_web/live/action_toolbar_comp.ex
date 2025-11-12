@@ -342,6 +342,7 @@ defmodule DialecticWeb.ActionToolbarComp do
           tabindex="0"
           id={"translate-popover-#{@node && @node.id}"}
           phx-hook="TranslatePopover"
+          phx-update="ignore"
           data-popover-align="center"
         >
           <button
@@ -376,7 +377,8 @@ defmodule DialecticWeb.ActionToolbarComp do
           </button>
           <div
             data-role="panel"
-            class="absolute left-1/2 -translate-x-1/2 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-20 min-w-[12rem]"
+            hidden
+            class="bg-white border border-gray-200 rounded-md shadow-lg z-20 min-w-[12rem]"
           >
             <div class="py-1">
               <%= for {label, code} <- translate_targets() do %>

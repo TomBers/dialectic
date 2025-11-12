@@ -39,30 +39,39 @@ defmodule Dialectic.DbActions.DbWorker do
 
   def save_graph(path, wait \\ true) do
     # Build a portable JSON snapshot without exposing the raw digraph handle
-    nodes =
+    {nodes, edges} =
       GraphManager.vertices(path)
-      |> Enum.map(fn vid ->
-        case GraphManager.vertex_label(path, vid) do
-          %{} = v -> Dialectic.Graph.Vertex.serialize(v)
-          _ -> nil
-        end
-      end)
-      |> Enum.reject(&is_nil/1)
+      |> Enum.reduce({[], []}, fn vid, {nodes_acc, edges_acc} ->
+        node =
+          case GraphManager.vertex_label(path, vid) do
+            %{} = v -> Dialectic.Graph.Vertex.serialize(v)
+            _ -> nil
+          end
 
-    edges =
-      GraphManager.vertices(path)
-      |> Enum.flat_map(fn sid ->
-        GraphManager.out_neighbours(path, sid)
-        |> Enum.map(fn tid ->
-          %{
-            data: %{
-              id: sid <> tid,
-              source: sid,
-              target: tid
+        node_acc =
+          if is_nil(node) do
+            nodes_acc
+          else
+            [node | nodes_acc]
+          end
+
+        out_edges =
+          GraphManager.out_neighbours(path, vid)
+          |> Enum.map(fn tid ->
+            %{
+              data: %{
+                id: vid <> tid,
+                source: vid,
+                target: tid
+              }
             }
-          }
-        end)
+          end)
+
+        {node_acc, out_edges ++ edges_acc}
       end)
+
+    nodes = Enum.reverse(nodes)
+    edges = Enum.reverse(edges)
 
     data = %{nodes: nodes, edges: edges}
 

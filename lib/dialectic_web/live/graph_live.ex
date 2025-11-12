@@ -161,6 +161,10 @@ defmodule DialecticWeb.GraphLive do
                     s1
 
                   _ ->
+                    Logger.warning(
+                      "ask_and_answer_origin returned unexpected: #{inspect(result)}"
+                    )
+
                     socket
                 end
               else

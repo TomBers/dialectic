@@ -54,13 +54,7 @@ defmodule Dialectic.Responses.PromptsStructured do
 
   defp sanitize_title(title) do
     s = to_string(title) |> String.trim()
-    s = Regex.replace(~r/^\s*#+\s*/, s, "")
-
-    Regex.replace(
-      ~r/^(Explain:|Apply:|Synthesize:|Argue for:|Critique:|Adjacent to:|Deep dive:)\s*/i,
-      s,
-      ""
-    )
+    Regex.replace(~r/^\s*#+\s*/, s, "")
   end
 
   # ---- Templates -------------------------------------------------------------
@@ -115,7 +109,7 @@ defmodule Dialectic.Responses.PromptsStructured do
     join_blocks([
       fence("Context", context),
       """
-      An argument in favour of the claim #{sanitize_title(claim)}
+      An argument for the claim #{sanitize_title(claim)}
       """
     ])
   end

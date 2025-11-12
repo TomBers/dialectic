@@ -4,7 +4,7 @@ defmodule DialecticWeb.CombineComp do
   alias DialecticWeb.CombinetMsgComp
 
   def update(assigns, socket) do
-    graph_id = assigns[:graph_id] || assigns[:graph_struct][:title]
+    graph_id = assigns[:graph_id] || get_in(assigns, [:graph_struct, :title])
 
     possible_nodes =
       GraphManager.vertices(graph_id)

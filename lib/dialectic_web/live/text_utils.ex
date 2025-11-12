@@ -124,10 +124,6 @@ defmodule DialecticWeb.Live.TextUtils do
     line =
       first_line_only
       |> strip_heading_or_title_prefix()
-      |> String.replace(
-        ~r/^(Explain:|Apply:|Synthesize:|Argue for:|Critique:|Adjacent to:|Deep dive:|What to explore next:)[:\s]*/i,
-        ""
-      )
 
     text = String.slice(line, 0, cutoff)
     suffix = if add_ellipsis and String.length(line) > cutoff, do: "…", else: ""
@@ -155,10 +151,6 @@ defmodule DialecticWeb.Live.TextUtils do
     sanitized_title =
       p.title
       |> String.replace(~r/^\s*#+\s*/, "")
-      |> String.replace(
-        ~r/^(Explain:|Apply:|Synthesize:|Argue for:|Critique:|Adjacent to:|Deep dive:|What to explore next:)[:\s]*/i,
-        ""
-      )
 
     %{title: sanitized_title, body_html: body_html}
   end

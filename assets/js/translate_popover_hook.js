@@ -116,9 +116,9 @@ const translatePopoverHook = {
     this._originalNextSibling = this._panel.nextSibling;
     this._storedPanelStyle = this._panel.getAttribute("style");
 
-    // Ensure panel visible semantics are controlled by us
-    this._panel.removeAttribute("hidden");
-    this._panel.style.display = "";
+    // Keep panel hidden until explicitly opened
+    this._panelInitiallyHidden = this._panel.hasAttribute("hidden");
+    this._panel.setAttribute("hidden", "");
 
     // Create a fixed-position portal container in body
     this._container = document.createElement("div");
@@ -216,6 +216,13 @@ const translatePopoverHook = {
           this._panel.setAttribute("style", this._storedPanelStyle);
         }
 
+        // Restore original hidden state
+        if (this._panelInitiallyHidden) {
+          this._panel.setAttribute("hidden", "");
+        } else {
+          this._panel.removeAttribute("hidden");
+        }
+
         if (this._originalParent && this._originalParent.isConnected) {
           if (
             this._originalNextSibling &&
@@ -246,6 +253,7 @@ const translatePopoverHook = {
     if (!this._container || !this._panel || !this._trigger) return;
     this._open = true;
     this._container.style.display = "block";
+    this._panel.removeAttribute("hidden");
     this.position();
 
     // Manage aria-expanded
@@ -264,6 +272,7 @@ const translatePopoverHook = {
   close() {
     if (!this._container || !this._panel || !this._trigger) return;
     this._open = false;
+    this._panel.setAttribute("hidden", "");
     this._container.style.display = "none";
 
     // Manage aria-expanded
@@ -288,9 +297,11 @@ const translatePopoverHook = {
     let panelHeight = panelRect.height;
 
     if (panelWidth === 0 || panelHeight === 0) {
-      // Temporarily show invisibly for measurement
+      // Temporarily show invisibly for measurement, toggling hidden if needed
       const prevDisplay = this._container.style.display;
       const prevVisibility = this._container.style.visibility;
+      const wasHidden = this._panel.hasAttribute("hidden");
+      if (wasHidden) this._panel.removeAttribute("hidden");
       this._container.style.display = "block";
       this._container.style.visibility = "hidden";
 
@@ -300,6 +311,7 @@ const translatePopoverHook = {
 
       this._container.style.visibility = prevVisibility || "";
       this._container.style.display = prevDisplay || "none";
+      if (wasHidden) this._panel.setAttribute("hidden", "");
     }
 
     const { top, left } = computePosition(rect, panelWidth, panelHeight, align);
