@@ -15,6 +15,7 @@ defmodule Dialectic.Workers.OpenAIWorker do
 
   alias Dialectic.Responses.Utils
   alias Dialectic.DbActions.DbWorker
+  alias Dialectic.Responses.{PromptsStructured, PromptsCreative, ModeServer}
 
   # -- Oban Perform Callback ----------------------------------------------------
 
@@ -52,7 +53,7 @@ defmodule Dialectic.Workers.OpenAIWorker do
 
       ctx =
         ReqLLM.Context.new([
-          ReqLLM.Context.system(system_prompt),
+          ReqLLM.Context.system(get_system_prompt(graph)),
           ReqLLM.Context.user(question)
         ])
 
@@ -156,6 +157,13 @@ defmodule Dialectic.Workers.OpenAIWorker do
     # Hardcoded model per request (favor fast TTFT for diagnosis)
     # TODO: make this configurable via config/runtime.exs or OPENAI_CHAT_MODEL
     {:openai, "gpt-5-nano", []}
+  end
+
+  defp get_system_prompt(graph_id) do
+    case ModeServer.get_mode(graph_id) do
+      :creative -> PromptsCreative.system_preamble()
+      _ -> PromptsStructured.system_preamble()
+    end
   end
 
   defp finalize(graph, to_node, live_view_topic) do

@@ -35,6 +35,8 @@ defmodule GraphManager do
   # Server callbacks
   def init(path) do
     Process.flag(:trap_exit, true)
+    # Tag all logs from this server with the graph_id for better tracing
+    Logger.metadata(graph_id: path)
 
     graph_struct =
       Dialectic.DbActions.Graphs.get_graph_by_title(path)
@@ -140,6 +142,21 @@ defmodule GraphManager do
     GenServer.call(via_tuple(path), :format_graph_json)
   end
 
+  # Helper telemetry/logging for digraph errors
+  defp telemetry_error(op, tags) do
+    :telemetry.execute([:dialectic, :graph, :error], %{count: 1}, Map.merge(%{op: op}, tags))
+  end
+
+  defp log_digraph_error(op, node_id, error, stack) do
+    telemetry_error(op, %{node_id: node_id})
+
+    Logger.error("""
+    digraph error
+    op=#{inspect(op)} node_id=#{inspect(node_id)}
+    error=#{Exception.format(:error, error, stack)}
+    """)
+  end
+
   # -------- Safe query handle_call implementations --------
 
   def handle_call({:vertex_label, node_id}, _from, {graph_struct, graph}) do
@@ -157,7 +174,9 @@ defmodule GraphManager do
       try do
         :digraph.out_neighbours(graph, node_id)
       rescue
-        _ -> []
+        e ->
+          log_digraph_error(:out_neighbours, node_id, e, __STACKTRACE__)
+          []
       end
 
     {:reply, neighbours, {graph_struct, graph}}
@@ -168,7 +187,9 @@ defmodule GraphManager do
       try do
         :digraph.in_neighbours(graph, node_id)
       rescue
-        _ -> []
+        e ->
+          log_digraph_error(:in_neighbours, node_id, e, __STACKTRACE__)
+          []
       end
 
     {:reply, neighbours, {graph_struct, graph}}
@@ -179,7 +200,9 @@ defmodule GraphManager do
       try do
         :digraph.vertices(graph)
       rescue
-        _ -> []
+        e ->
+          log_digraph_error(:vertices, :all, e, __STACKTRACE__)
+          []
       end
 
     {:reply, verts, {graph_struct, graph}}
@@ -305,10 +328,18 @@ defmodule GraphManager do
   end
 
   def handle_call({:create_group, {group_title, child_ids}}, _, {graph_struct, graph}) do
-    updated_graph =
-      Vertex.add_group(graph, group_title, child_ids)
+    try do
+      updated_graph = Vertex.add_group(graph, group_title, child_ids)
+      {:reply, updated_graph, {graph_struct, updated_graph}}
+    rescue
+      e ->
+        Logger.error("create_group failed",
+          group_title: group_title,
+          child_ids: child_ids
+        )
 
-    {:reply, updated_graph, {graph_struct, updated_graph}}
+        reraise e, __STACKTRACE__
+    end
   end
 
   def handle_call({:change_parent, {node_id, parent_id}}, _, {graph_struct, graph}) do

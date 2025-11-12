@@ -12,16 +12,7 @@ defmodule Dialectic.Responses.PromptsStructured do
 
   # ---- Helpers ---------------------------------------------------------------
 
-  defp fence(label, text) do
-    """
-    ### #{label}
-    ```text
-    #{text}
-    ```
-    """
-  end
-
-  defp system_preamble do
+  def system_preamble do
     """
     SYSTEM — Structured Mode
 
@@ -48,6 +39,15 @@ defmodule Dialectic.Responses.PromptsStructured do
       ## Clarification needed
 
       - Ask one concise question to unblock progress (single bullet, ≤ 25 words).
+    """
+  end
+
+  defp fence(label, text) do
+    """
+    ### #{label}
+    ```text
+    #{text}
+    ```
     """
   end
 
@@ -80,7 +80,6 @@ defmodule Dialectic.Responses.PromptsStructured do
   def explain(context, topic) do
     if missing?(topic) or missing?(context) do
       join_blocks([
-        system_preamble(),
         fence("Context", context),
         fence("Topic", topic),
         """
@@ -95,7 +94,6 @@ defmodule Dialectic.Responses.PromptsStructured do
       ])
     else
       join_blocks([
-        system_preamble(),
         fence("Context", context),
         fence("Topic", topic),
         """
@@ -158,7 +156,6 @@ defmodule Dialectic.Responses.PromptsStructured do
   def selection(context, selection_text) do
     if missing?(selection_text) or missing?(context) do
       join_blocks([
-        system_preamble(),
         fence("Context", context),
         fence("Selection", selection_text),
         """
@@ -173,7 +170,6 @@ defmodule Dialectic.Responses.PromptsStructured do
       ])
     else
       join_blocks([
-        system_preamble(),
         fence("Context", context),
         fence("Selection", selection_text),
         """
@@ -236,7 +232,6 @@ defmodule Dialectic.Responses.PromptsStructured do
   def synthesis(context1, context2, pos1, pos2) do
     if missing?(context1) or missing?(context2) or missing?(pos1) or missing?(pos2) do
       join_blocks([
-        system_preamble(),
         fence("Context A", context1),
         fence("Context B", context2),
         fence("Position A", pos1),
@@ -255,7 +250,6 @@ defmodule Dialectic.Responses.PromptsStructured do
       title = "Synthesize: #{pos1} × #{pos2}"
 
       join_blocks([
-        system_preamble(),
         fence("Context A", context1),
         fence("Context B", context2),
         fence("Position A", pos1),
@@ -320,7 +314,6 @@ defmodule Dialectic.Responses.PromptsStructured do
   def thesis(context, claim) do
     if missing?(claim) or missing?(context) do
       join_blocks([
-        system_preamble(),
         fence("Context", context),
         fence("Claim", claim),
         """
@@ -335,7 +328,6 @@ defmodule Dialectic.Responses.PromptsStructured do
       ])
     else
       join_blocks([
-        system_preamble(),
         fence("Context", context),
         fence("Claim", claim),
         """
@@ -398,7 +390,6 @@ defmodule Dialectic.Responses.PromptsStructured do
   def antithesis(context, claim) do
     if missing?(claim) or missing?(context) do
       join_blocks([
-        system_preamble(),
         fence("Context", context),
         fence("Target Claim", claim),
         """
@@ -413,7 +404,6 @@ defmodule Dialectic.Responses.PromptsStructured do
       ])
     else
       join_blocks([
-        system_preamble(),
         fence("Context", context),
         fence("Target Claim", claim),
         """
@@ -476,7 +466,6 @@ defmodule Dialectic.Responses.PromptsStructured do
   def related_ideas(context, current_idea_title) do
     if missing?(current_idea_title) or missing?(context) do
       join_blocks([
-        system_preamble(),
         fence("Context", context),
         fence("Current Idea", current_idea_title),
         """
@@ -491,7 +480,6 @@ defmodule Dialectic.Responses.PromptsStructured do
       ])
     else
       join_blocks([
-        system_preamble(),
         fence("Context", context),
         fence("Current Idea", current_idea_title),
         """
@@ -532,7 +520,6 @@ defmodule Dialectic.Responses.PromptsStructured do
   def deep_dive(context, topic) do
     if missing?(topic) or missing?(context) do
       join_blocks([
-        system_preamble(),
         fence("Context", context),
         fence("Concept", topic),
         """
@@ -547,7 +534,6 @@ defmodule Dialectic.Responses.PromptsStructured do
       ])
     else
       join_blocks([
-        system_preamble(),
         fence("Context", context),
         fence("Concept", topic),
         """

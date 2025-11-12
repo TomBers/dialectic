@@ -4,11 +4,13 @@ defmodule DialecticWeb.CombineComp do
   alias DialecticWeb.CombinetMsgComp
 
   def update(assigns, socket) do
+    graph_id = assigns[:graph_id] || assigns[:graph_struct][:title]
+
     possible_nodes =
-      assigns.graph
-      |> :digraph.vertices()
-      |> Enum.map(fn id -> assigns.graph |> :digraph.vertex(id) |> elem(1) end)
-      |> Enum.reject(&(&1 == assigns.node.id || &1.compound == true))
+      GraphManager.vertices(graph_id)
+      |> Enum.map(fn vid -> GraphManager.vertex_label(graph_id, vid) end)
+      |> Enum.reject(&is_nil/1)
+      |> Enum.reject(&(&1.id == assigns.node.id or Map.get(&1, :compound, false) == true))
 
     {:ok, assign(socket, possible_nodes: possible_nodes)}
   end

@@ -308,7 +308,33 @@ defmodule DialecticWeb.GraphLive do
     if search_term == "" do
       {:noreply, socket |> assign(search_term: "", search_results: [])}
     else
-      search_results = search_graph_nodes(socket.assigns.graph, search_term)
+      search_results =
+        try do
+          term = String.downcase(search_term)
+
+          GraphManager.vertices(socket.assigns.graph_id)
+          |> Enum.reduce([], fn vid, acc ->
+            case GraphManager.vertex_label(socket.assigns.graph_id, vid) do
+              %{} = vertex ->
+                if valid_search_node(vertex) and
+                     String.contains?(String.downcase(vertex.content), term) do
+                  exact_match = if String.downcase(vertex.content) == term, do: 0, else: 1
+                  [{exact_match, vertex.id, vertex} | acc]
+                else
+                  acc
+                end
+
+              _ ->
+                acc
+            end
+          end)
+          |> Enum.sort()
+          |> Enum.map(fn {_, _, vertex} -> vertex end)
+          |> Enum.take(10)
+        rescue
+          _ -> []
+        end
+
       {:noreply, socket |> assign(search_term: search_term, search_results: search_results)}
     end
   end
@@ -339,11 +365,12 @@ defmodule DialecticWeb.GraphLive do
 
       update_graph(
         socket,
-        GraphActions.change_noted_by(
-          graph_action_params(socket),
-          node_id,
-          &Vertex.add_noted_by/2
-        ),
+        {nil,
+         GraphActions.change_noted_by(
+           graph_action_params(socket),
+           node_id,
+           &Vertex.add_noted_by/2
+         )},
         "note"
       )
     end
@@ -367,11 +394,12 @@ defmodule DialecticWeb.GraphLive do
 
       update_graph(
         socket,
-        GraphActions.change_noted_by(
-          graph_action_params(socket),
-          node_id,
-          &Vertex.remove_noted_by/2
-        ),
+        {nil,
+         GraphActions.change_noted_by(
+           graph_action_params(socket),
+           node_id,
+           &Vertex.remove_noted_by/2
+         )},
         "unnote"
       )
     end
@@ -388,7 +416,7 @@ defmodule DialecticWeb.GraphLive do
           nil ->
             {:noreply, socket |> put_flash(:error, "Node not found")}
 
-          {_graph, node} ->
+          node ->
             children = Map.get(node, :children, [])
 
             owns = UserUtils.owner?(node, socket.assigns)
@@ -402,10 +430,11 @@ defmodule DialecticWeb.GraphLive do
                  socket |> put_flash(:error, "Cannot delete a node that has non-deleted children")}
 
               true ->
-                {graph2, next_node} =
+                next_node =
                   GraphActions.delete_node(graph_action_params(socket), node_id)
 
                 DbWorker.save_graph(socket.assigns.graph_id)
+                {_, graph2} = GraphManager.get_graph(socket.assigns.graph_id)
 
                 # Ensure we navigate to a valid, non-deleted node.
                 # If no parent exists or it's invalid/deleted, pick the first non-deleted node in the graph.
@@ -608,7 +637,7 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, updated_socket} =
       update_graph(
         socket,
-        GraphActions.move(graph_action_params(socket), direction),
+        {nil, GraphActions.move(graph_action_params(socket), direction)},
         "node_clicked"
       )
 
@@ -653,11 +682,10 @@ defmodule DialecticWeb.GraphLive do
       true ->
         update_graph(
           socket,
-          {nil,
-           GraphActions.ask_and_answer(
-             graph_action_params(socket, socket.assigns.node),
-             answer
-           )},
+          GraphActions.ask_and_answer(
+            graph_action_params(socket, socket.assigns.node),
+            answer
+          ),
           "answer"
         )
     end
