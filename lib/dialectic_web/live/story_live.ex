@@ -8,7 +8,7 @@ defmodule DialecticWeb.StoryLive do
     # Ensure graph is started
     GraphManager.get_graph(graph_id)
 
-    {_, node} = GraphManager.find_node_by_id(graph_id, node_id)
+    node = GraphManager.find_node_by_id(graph_id, node_id)
 
     path =
       GraphManager.path_to_node(graph_id, node)

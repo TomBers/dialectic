@@ -1,3 +1,6 @@
+FIX the Prompts the answers are nonsense at the moment.
+
+
 mix test test/dialectic/responses/print_prompts_test.exs > prompt_test.md
 
 E2E Testing:

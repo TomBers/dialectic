@@ -71,7 +71,8 @@ defmodule GraphManagerTest do
         })
 
       # Add edge
-      {updated_graph, updated_child} = GraphManager.add_edges(@graph_id, child, [parent])
+      updated_child = GraphManager.add_edges(@graph_id, child, [parent])
+      {_, updated_graph} = GraphManager.get_graph(@graph_id)
 
       # Verify edge exists
       edges = :digraph.edges(updated_graph)
@@ -99,7 +100,7 @@ defmodule GraphManagerTest do
         })
 
       # Find the node
-      {_graph, found_vertex} = GraphManager.find_node_by_id(@graph_id, vertex.id)
+      found_vertex = GraphManager.find_node_by_id(@graph_id, vertex.id)
 
       assert found_vertex.id == vertex.id
       assert found_vertex.content == vertex.content
@@ -120,7 +121,7 @@ defmodule GraphManagerTest do
         })
 
       # Add child using add_child
-      {updated_graph, child} =
+      child =
         GraphManager.add_child(
           @graph_id,
           [parent],
@@ -137,6 +138,7 @@ defmodule GraphManagerTest do
       assert child.user == @test_user
 
       # Verify edge exists
+      {_, updated_graph} = GraphManager.get_graph(@graph_id)
       edges = :digraph.edges(updated_graph)
       assert length(edges) == 1
 
@@ -156,7 +158,7 @@ defmodule GraphManagerTest do
           user: @test_user
         })
 
-      {graph_with_nodes, _child} =
+      _child =
         GraphManager.add_child(
           @graph_id,
           [parent],
@@ -166,6 +168,7 @@ defmodule GraphManagerTest do
         )
 
       # Verify nodes and edges exist
+      {_, graph_with_nodes} = GraphManager.get_graph(@graph_id)
       assert length(:digraph.vertices(graph_with_nodes)) > 0
       assert length(:digraph.edges(graph_with_nodes)) > 0
 
@@ -195,7 +198,7 @@ defmodule GraphManagerTest do
         })
 
       # Add multiple children
-      {_graph1, child1} =
+      child1 =
         GraphManager.add_child(
           @graph_id,
           [parent],
@@ -204,7 +207,7 @@ defmodule GraphManagerTest do
           @test_user
         )
 
-      {graph2, child2} =
+      child2 =
         GraphManager.add_child(
           @graph_id,
           [parent],
@@ -214,6 +217,7 @@ defmodule GraphManagerTest do
         )
 
       # Verify all nodes exist
+      {_, graph2} = GraphManager.get_graph(@graph_id)
       vertices = :digraph.vertices(graph2)
       assert length(vertices) == 3
 
@@ -222,8 +226,8 @@ defmodule GraphManagerTest do
       assert length(edges) == 2
 
       # Verify both children have the same parent
-      {_, updated_child1} = GraphManager.find_node_by_id(@graph_id, child1.id)
-      {_, updated_child2} = GraphManager.find_node_by_id(@graph_id, child2.id)
+      updated_child1 = GraphManager.find_node_by_id(@graph_id, child1.id)
+      updated_child2 = GraphManager.find_node_by_id(@graph_id, child2.id)
 
       assert length(updated_child1.parents) == 1
       assert length(updated_child2.parents) == 1
@@ -247,11 +251,11 @@ defmodule GraphManagerTest do
       GraphManager.create_group(@graph_id, group_title, [parent.id])
 
       # Refresh parent node to get updated parent field
-      {_, updated_parent} = GraphManager.find_node_by_id(@graph_id, parent.id)
+      updated_parent = GraphManager.find_node_by_id(@graph_id, parent.id)
       assert updated_parent.parent == group_title
 
       # Create a child node from the parent (should inherit group)
-      {_, child} =
+      child =
         GraphManager.add_child(
           @graph_id,
           [updated_parent],
@@ -261,7 +265,7 @@ defmodule GraphManagerTest do
         )
 
       # Verify child inherits parent's group
-      {_, updated_child} = GraphManager.find_node_by_id(@graph_id, child.id)
+      updated_child = GraphManager.find_node_by_id(@graph_id, child.id)
       assert updated_child.parent == group_title
 
       # Create a node not in any group
@@ -273,7 +277,7 @@ defmodule GraphManagerTest do
         })
 
       # Create a child from both a grouped and non-grouped parent
-      {_, mixed_child} =
+      mixed_child =
         GraphManager.add_child(
           @graph_id,
           [updated_parent, standalone],
@@ -283,7 +287,7 @@ defmodule GraphManagerTest do
         )
 
       # Child should still be part of the group (inherits from at least one parent)
-      {_, updated_mixed_child} = GraphManager.find_node_by_id(@graph_id, mixed_child.id)
+      updated_mixed_child = GraphManager.find_node_by_id(@graph_id, mixed_child.id)
       assert updated_mixed_child.parent == group_title
     end
   end

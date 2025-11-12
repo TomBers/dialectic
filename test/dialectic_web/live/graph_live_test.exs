@@ -57,17 +57,17 @@ defmodule DialecticWeb.GraphLiveTest do
       assert state_before == state_after
     end
 
-    # This test assumes that GraphActions.comment/4 returns a tuple {graph, node}.
+    # GraphActions.comment/4 returns the new node; graph mutations happen inside GraphManager.
     # In a real test you would stub GraphActions.comment/4 to return predictable values.
     test "answer event with content calls GraphActions.comment and updates assigns", %{conn: conn} do
       {:ok, view, _html} = setup_live(conn)
 
       # We simulate a non-empty answer. In this case, update_graph/3 (called by handle_event)
-      # will update the graph and node assigns.
+      # will update the node and f_graph assigns.
       render_click(view, "answer", %{"vertex" => %{"content" => "A non-empty answer"}})
 
       _state = :sys.get_state(view.pid).socket
-      # (Other assigns such as graph and node would be updated by GraphActions.comment.)
+      # (Other assigns such as node and f_graph would be updated by GraphActions.comment.)
     end
   end
 

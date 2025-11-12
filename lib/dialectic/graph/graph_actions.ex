@@ -78,7 +78,7 @@ defmodule Dialectic.Graph.GraphActions do
       nil ->
         nil
 
-      {_g, node2} ->
+      node2 ->
         GraphManager.add_child(
           graph_id,
           [node1, node2],
@@ -112,12 +112,12 @@ defmodule Dialectic.Graph.GraphActions do
   def new_stream({graph_id, _node, user, _live_view_topic}, content, opts) do
     parent_group_id = Keyword.get(opts, :group_id)
     vertex = %Vertex{content: content || "", class: "origin", user: user, parent: parent_group_id}
-    node = GraphManager.add_node(graph_id, vertex)
-    GraphManager.find_node_by_id(graph_id, node.id)
+    new_node = GraphManager.add_node(graph_id, vertex)
+    GraphManager.find_node_by_id(graph_id, new_node.id)
   end
 
-  def find_node(graph_id, id) do
-    GraphManager.find_node_by_id(graph_id, id)
+  def find_node(graph_id, node_id) do
+    GraphManager.find_node_by_id(graph_id, node_id)
   end
 
   def ask_and_answer({graph_id, node, user, live_view_topic}, question_text) do
@@ -126,7 +126,7 @@ defmodule Dialectic.Graph.GraphActions do
       ask_and_answer_origin({graph_id, node, user, live_view_topic}, question_text)
     else
       # Otherwise, use a 'question' node for follow-up questions
-      {_graph1, question_node} =
+      question_node =
         GraphManager.add_child(
           graph_id,
           [node],
@@ -138,24 +138,25 @@ defmodule Dialectic.Graph.GraphActions do
       updated_question =
         GraphManager.update_vertex(graph_id, question_node.id, question_text)
 
-      GraphManager.add_child(
-        graph_id,
-        [updated_question],
-        fn n -> LlmInterface.gen_response(updated_question, n, graph_id, live_view_topic) end,
-        "answer",
-        user
-      )
+      {nil,
+       GraphManager.add_child(
+         graph_id,
+         [updated_question],
+         fn n -> LlmInterface.gen_response(updated_question, n, graph_id, live_view_topic) end,
+         "answer",
+         user
+       )}
     end
   end
 
   def ask_and_answer_origin({graph_id, node, user, live_view_topic}, question_text) do
-    # Fetch the latest origin vertex to avoid stale content
-    {_gs, g} = GraphManager.get_graph(graph_id)
+    # Fetch the latest origin vertex label safely via GraphManager (avoid direct :digraph)
+    # Note: do not expose or rely on the raw digraph handle across processes
 
     current_origin =
-      case :digraph.vertex(g, node.id) do
-        {id, v} when id == node.id -> v
-        _ -> node
+      case GraphManager.vertex_label(graph_id, node.id) do
+        nil -> node
+        v -> v
       end
 
     # Append the question once to the origin content (account for encoded forms)
@@ -181,40 +182,30 @@ defmodule Dialectic.Graph.GraphActions do
 
     # If an answer child already exists for this origin, return it instead of enqueuing another
     has_answer? =
-      try do
-        children = :digraph.out_neighbours(g, updated_origin.id)
-
-        Enum.any?(children, fn cid ->
-          case :digraph.vertex(g, cid) do
-            {^cid, v} when is_map(v) -> Map.get(v, :class) == "answer"
-            _ -> false
-          end
-        end)
-      rescue
-        _ -> false
-      end
+      GraphManager.has_child_with_class(graph_id, updated_origin.id, "answer")
 
     if has_answer? do
       # Return the first existing answer node
       answer_id =
-        :digraph.out_neighbours(g, updated_origin.id)
+        GraphManager.out_neighbours(graph_id, updated_origin.id)
         |> Enum.find(fn cid ->
-          case :digraph.vertex(g, cid) do
-            {^cid, v} when is_map(v) -> Map.get(v, :class) == "answer"
+          case GraphManager.vertex_label(graph_id, cid) do
+            %{} = v -> Map.get(v, :class) == "answer"
             _ -> false
           end
         end)
 
-      GraphManager.find_node_by_id(graph_id, answer_id)
+      {nil, GraphManager.find_node_by_id(graph_id, answer_id)}
     else
       # Generate the AI answer as a child of the updated origin node
-      GraphManager.add_child(
-        graph_id,
-        [updated_origin],
-        fn n -> LlmInterface.gen_response(updated_origin, n, graph_id, live_view_topic) end,
-        "answer",
-        user
-      )
+      {nil,
+       GraphManager.add_child(
+         graph_id,
+         [updated_origin],
+         fn n -> LlmInterface.gen_response(updated_origin, n, graph_id, live_view_topic) end,
+         "answer",
+         user
+       )}
     end
   end
 end

@@ -15,6 +15,7 @@ defmodule Dialectic.Workers.OpenAIWorker do
 
   alias Dialectic.Responses.Utils
   alias Dialectic.DbActions.DbWorker
+  alias Dialectic.Responses.{PromptsStructured, PromptsCreative, ModeServer}
 
   # -- Oban Perform Callback ----------------------------------------------------
 
@@ -47,19 +48,26 @@ defmodule Dialectic.Workers.OpenAIWorker do
       {_provider, _model, _opts} = model_spec
 
       # Build a provider-agnostic chat context: system + user
+
+      system_prompt = get_system_prompt(graph)
+
       ctx =
         ReqLLM.Context.new([
-          ReqLLM.Context.system("""
-          Output valid GitHub-Flavored Markdown only (no HTML/JSON).
-          Put a blank line before headings and before lists.
-          Prefer short paragraphs over lists; keep any list ≤ 5 bullets.
-          One level of bullets only; do not nest lists.
-          Each bullet is a single sentence (≤ 25 words).
-          Do not use "Label:" bullets; if a label is needed, write "#### Label" on its own line and follow with 1–2 sentence paragraph(s).
-          No mid-sentence headings; use real newlines, not the literal sequence "\n".
-          """),
+          ReqLLM.Context.system(system_prompt),
           ReqLLM.Context.user(question)
         ])
+
+      # Debug logging: system + user prompt (truncated)
+      mode = ModeServer.get_mode(graph)
+      {_prov, model_name, _opts} = model_spec
+
+      ## USED for Debugging
+      # Logger.debug(fn ->
+      #   sys_preview = String.slice(system_prompt || "", 0, 500)
+      #   usr_preview = String.slice(question || "", 0, 500)
+
+      #   "[OpenAIWorker] graph_id=#{inspect(graph)} mode=#{mode} model=#{model_name}\nSYSTEM_PROMPT_START\n#{sys_preview}\nSYSTEM_PROMPT_END\nUSER_PROMPT_START\n#{usr_preview}\nUSER_PROMPT_END"
+      # end)
 
       # Stream text – this returns a StreamResponse handle
       case ReqLLM.stream_text(
@@ -161,6 +169,13 @@ defmodule Dialectic.Workers.OpenAIWorker do
     # Hardcoded model per request (favor fast TTFT for diagnosis)
     # TODO: make this configurable via config/runtime.exs or OPENAI_CHAT_MODEL
     {:openai, "gpt-5-nano", []}
+  end
+
+  defp get_system_prompt(graph_id) do
+    case ModeServer.get_mode(graph_id) do
+      :creative -> PromptsCreative.system_preamble()
+      _ -> PromptsStructured.system_preamble()
+    end
   end
 
   defp finalize(graph, to_node, live_view_topic) do

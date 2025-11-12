@@ -35,6 +35,8 @@ defmodule GraphManager do
   # Server callbacks
   def init(path) do
     Process.flag(:trap_exit, true)
+    # Tag all logs from this server with the graph_id for better tracing
+    Logger.metadata(graph_id: path)
 
     graph_struct =
       Dialectic.DbActions.Graphs.get_graph_by_title(path)
@@ -86,13 +88,13 @@ defmodule GraphManager do
       :digraph.add_edge(graph, parent.id, vertex.id)
     end)
 
-    {:reply, {graph, Vertex.add_relatives(vertex, graph)}, {graph_struct, graph}}
+    {:reply, Vertex.add_relatives(vertex, graph), {graph_struct, graph}}
   end
 
   def handle_call({:find_node_by_id, combine_node_id}, _from, {graph_struct, graph}) do
     case :digraph.vertex(graph, combine_node_id) do
       {_id, vertex} ->
-        {:reply, {graph, Vertex.add_relatives(vertex, graph)}, {graph_struct, graph}}
+        {:reply, Vertex.add_relatives(vertex, graph), {graph_struct, graph}}
 
       false ->
         {:reply, nil, {graph_struct, graph}}
@@ -106,6 +108,132 @@ defmodule GraphManager do
   # In handle_call
   def handle_call({:reset_graph}, _from, {graph_struct, _graph}) do
     {:reply, :digraph.new(), {graph_struct, :digraph.new()}}
+  end
+
+  # -------- Safe public query APIs (avoid exposing raw digraph ETS handles) --------
+
+  # Returns the vertex label (payload map) for a node_id or nil if not found
+  def vertex_label(path, node_id) do
+    GenServer.call(via_tuple(path), {:vertex_label, node_id})
+  end
+
+  # Returns list of out-neighbour ids for a given node_id
+  def out_neighbours(path, node_id) do
+    GenServer.call(via_tuple(path), {:out_neighbours, node_id})
+  end
+
+  # Returns list of in-neighbour ids for a given node_id
+  def in_neighbours(path, node_id) do
+    GenServer.call(via_tuple(path), {:in_neighbours, node_id})
+  end
+
+  # Returns list of all vertex ids in the graph
+  def vertices(path) do
+    GenServer.call(via_tuple(path), :vertices)
+  end
+
+  # Convenience: does node have a child with the given class?
+  def has_child_with_class(path, node_id, class) do
+    GenServer.call(via_tuple(path), {:has_child_with_class, node_id, class})
+  end
+
+  # Server-side formatting of the graph as JSON for the UI (Cytoscape format)
+  def format_graph_json(path) do
+    GenServer.call(via_tuple(path), :format_graph_json)
+  end
+
+  # Helper telemetry/logging for digraph errors
+  defp telemetry_error(op, tags) do
+    :telemetry.execute([:dialectic, :graph, :error], %{count: 1}, Map.merge(%{op: op}, tags))
+  end
+
+  defp log_digraph_error(op, node_id, error, stack) do
+    telemetry_error(op, %{node_id: node_id})
+
+    Logger.error("""
+    digraph error
+    op=#{inspect(op)} node_id=#{inspect(node_id)}
+    error=#{Exception.format(:error, error, stack)}
+    """)
+  end
+
+  # -------- Safe query handle_call implementations --------
+
+  def handle_call({:vertex_label, node_id}, _from, {graph_struct, graph}) do
+    reply =
+      case :digraph.vertex(graph, node_id) do
+        {^node_id, v} -> v
+        _ -> nil
+      end
+
+    {:reply, reply, {graph_struct, graph}}
+  end
+
+  def handle_call({:out_neighbours, node_id}, _from, {graph_struct, graph}) do
+    neighbours =
+      try do
+        :digraph.out_neighbours(graph, node_id)
+      rescue
+        e ->
+          log_digraph_error(:out_neighbours, node_id, e, __STACKTRACE__)
+          []
+      end
+
+    {:reply, neighbours, {graph_struct, graph}}
+  end
+
+  def handle_call({:in_neighbours, node_id}, _from, {graph_struct, graph}) do
+    neighbours =
+      try do
+        :digraph.in_neighbours(graph, node_id)
+      rescue
+        e ->
+          log_digraph_error(:in_neighbours, node_id, e, __STACKTRACE__)
+          []
+      end
+
+    {:reply, neighbours, {graph_struct, graph}}
+  end
+
+  def handle_call(:vertices, _from, {graph_struct, graph}) do
+    verts =
+      try do
+        :digraph.vertices(graph)
+      rescue
+        e ->
+          log_digraph_error(:vertices, :all, e, __STACKTRACE__)
+          []
+      end
+
+    {:reply, verts, {graph_struct, graph}}
+  end
+
+  def handle_call({:has_child_with_class, node_id, class}, _from, {graph_struct, graph}) do
+    has_child =
+      try do
+        :digraph.out_neighbours(graph, node_id)
+        |> Enum.any?(fn cid ->
+          case :digraph.vertex(graph, cid) do
+            {^cid, v} when is_map(v) -> Map.get(v, :class) == class
+            _ -> false
+          end
+        end)
+      rescue
+        _ -> false
+      end
+
+    {:reply, has_child, {graph_struct, graph}}
+  end
+
+  def handle_call(:format_graph_json, _from, {graph_struct, graph}) do
+    json =
+      try do
+        graph |> Vertex.to_cytoscape_format() |> Jason.encode!()
+      rescue
+        _ -> "[]"
+      end
+
+    {:reply, json, {graph_struct, graph}}
   end
 
   def handle_call({:save_graph, path}, _from, {graph_struct, graph}) do
@@ -135,7 +263,7 @@ defmodule GraphManager do
       {_id, vertex} ->
         updated_vertex = change_fn.(vertex, user)
         :digraph.add_vertex(graph, node_id, updated_vertex)
-        {:reply, {graph, Vertex.add_relatives(updated_vertex, graph)}, {graph_struct, graph}}
+        {:reply, Vertex.add_relatives(updated_vertex, graph), {graph_struct, graph}}
 
       false ->
         {:reply, nil, {graph_struct, graph}}
@@ -147,7 +275,7 @@ defmodule GraphManager do
       {_id, vertex} ->
         updated_vertex = Vertex.add_relatives(vertex, graph) |> Vertex.delete_vertex()
         :digraph.add_vertex(graph, node_id, updated_vertex)
-        {:reply, {graph, List.first(updated_vertex.parents)}, {graph_struct, graph}}
+        {:reply, List.first(updated_vertex.parents), {graph_struct, graph}}
 
       false ->
         {:reply, nil, {graph_struct, graph}}
@@ -196,14 +324,22 @@ defmodule GraphManager do
           Siblings.right(node, graph)
       end
 
-    {:reply, {graph, Vertex.add_relatives(updated_vertex, graph)}, {graph_struct, graph}}
+    {:reply, Vertex.add_relatives(updated_vertex, graph), {graph_struct, graph}}
   end
 
   def handle_call({:create_group, {group_title, child_ids}}, _, {graph_struct, graph}) do
-    updated_graph =
-      Vertex.add_group(graph, group_title, child_ids)
+    try do
+      updated_graph = Vertex.add_group(graph, group_title, child_ids)
+      {:reply, updated_graph, {graph_struct, updated_graph}}
+    rescue
+      e ->
+        Logger.error("create_group failed",
+          group_title: group_title,
+          child_ids: child_ids
+        )
 
-    {:reply, updated_graph, {graph_struct, updated_graph}}
+        reraise e, __STACKTRACE__
+    end
   end
 
   def handle_call({:change_parent, {node_id, parent_id}}, _, {graph_struct, graph}) do

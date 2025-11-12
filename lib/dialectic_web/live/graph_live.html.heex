@@ -168,7 +168,7 @@
         id="confirm-modal"
         show
       >
-        <.live_component module={CombineComp} graph={@graph} node={@node} id="Modal" />
+        <.live_component module={CombineComp} graph_id={@graph_id} node={@node} id="Modal" />
       </.modal>
 
       <%!-- removed deprecated grouping modal; grouping now only via streams --%>
@@ -455,6 +455,7 @@
                   id="global-chat-form"
                   form={@form}
                   ask_question={@ask_question}
+                  prompt_mode={@prompt_mode}
                   graph_id={@graph_id}
                 />
               </div>

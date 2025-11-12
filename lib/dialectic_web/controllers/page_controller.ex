@@ -33,7 +33,8 @@ defmodule DialecticWeb.PageController do
 
   def graph_md(conn, %{"graph_name" => graph_id_uri}) do
     graph_name = URI.decode(graph_id_uri)
-    {_graph_struct, graph} = GraphManager.get_graph(graph_name)
+    graph_struct = Dialectic.DbActions.Graphs.get_graph_by_title(graph_name)
+    graph = Dialectic.Graph.Serialise.json_to_graph(graph_struct.data)
 
     # Convert the graph to markdown
     markdown_content =

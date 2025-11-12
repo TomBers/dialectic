@@ -36,6 +36,13 @@ defmodule DialecticWeb.AskFormComp do
         Atom.to_string(mode)
       end)
       |> then(fn s ->
+        s =
+          if Map.has_key?(assigns, :prompt_mode) and not is_nil(assigns[:prompt_mode]) do
+            assign(s, :prompt_mode, String.downcase(to_string(assigns[:prompt_mode])))
+          else
+            s
+          end
+
         if Map.has_key?(assigns, :placeholder) and not is_nil(assigns[:placeholder]) do
           assign(s, :placeholder, assigns[:placeholder])
         else

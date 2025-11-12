@@ -24,13 +24,17 @@ defmodule DialecticWeb.GraphLiveE2ETest do
     :sys.get_state(view.pid).socket.assigns
   end
 
-  defp vertices_count(graph) do
+  defp vertices_count(_graph) do
+    {_, graph} = GraphManager.get_graph(@graph_id)
+
     graph
     |> :digraph.vertices()
     |> length()
   end
 
-  defp find_vertex_by_class(graph, class) do
+  defp find_vertex_by_class(_graph, class) do
+    {_, graph} = GraphManager.get_graph(@graph_id)
+
     :digraph.vertices(graph)
     |> Enum.find_value(fn vid ->
       case :digraph.vertex(graph, vid) do
@@ -43,14 +47,18 @@ defmodule DialecticWeb.GraphLiveE2ETest do
     end)
   end
 
-  defp get_vertex(graph, vid) do
+  defp get_vertex(_graph, vid) do
+    {_, graph} = GraphManager.get_graph(@graph_id)
+
     case :digraph.vertex(graph, vid) do
       {^vid, v} -> v
       _ -> nil
     end
   end
 
-  defp find_children_by_parent(graph, parent_id) do
+  defp find_children_by_parent(_graph, parent_id) do
+    {_, graph} = GraphManager.get_graph(@graph_id)
+
     :digraph.vertices(graph)
     |> Enum.reduce([], fn vid, acc ->
       case :digraph.vertex(graph, vid) do
@@ -72,9 +80,8 @@ defmodule DialecticWeb.GraphLiveE2ETest do
 
       # Initial state
       assigns = get_socket_assigns(view)
-      initial_graph = assigns.graph
       initial_node = assigns.node
-      initial_vcount = vertices_count(initial_graph)
+      initial_vcount = vertices_count(nil)
       assert initial_node.id
 
       # 1) Node click navigates/focuses a node
@@ -85,8 +92,7 @@ defmodule DialecticWeb.GraphLiveE2ETest do
       # 2) "answer" with content creates a new child node (class "user") and updates the graph (GraphActions.comment)
       render_click(view, "answer", %{"vertex" => %{"content" => "A new idea"}})
       assigns = get_socket_assigns(view)
-      after_answer_graph = assigns.graph
-      assert vertices_count(after_answer_graph) > initial_vcount
+      assert vertices_count(nil) > initial_vcount
 
       new_node = assigns.node
       assert new_node.class == "user"
@@ -95,14 +101,13 @@ defmodule DialecticWeb.GraphLiveE2ETest do
       new_node_id = new_node.id
 
       # 3) Delete the newly created node (GraphActions.delete_node)
-      before_del_vcount = vertices_count(after_answer_graph)
+      before_del_vcount = vertices_count(nil)
       render_click(view, "delete_node", %{"node" => new_node_id})
 
       assigns = get_socket_assigns(view)
-      after_delete_graph = assigns.graph
-      deleted_vertex = get_vertex(after_delete_graph, new_node_id)
+      deleted_vertex = get_vertex(nil, new_node_id)
       assert deleted_vertex == nil or Map.get(deleted_vertex, :deleted, false)
-      assert vertices_count(after_delete_graph) <= before_del_vcount
+      assert vertices_count(nil) <= before_del_vcount
 
       # 4) Create another answer node that we'll branch from
       render_click(view, "answer", %{"vertex" => %{"content" => "Branch from here"}})
@@ -110,16 +115,15 @@ defmodule DialecticWeb.GraphLiveE2ETest do
       branch_parent = assigns.node
       assert branch_parent.class == "user"
 
-      before_branch_vcount = vertices_count(assigns.graph)
+      before_branch_vcount = vertices_count(nil)
 
       # 5) Branch to thesis & antithesis (GraphActions.branch)
       render_click(view, "node_branch", %{"id" => branch_parent.id})
       assigns = get_socket_assigns(view)
-      after_branch_graph = assigns.graph
-      assert vertices_count(after_branch_graph) >= before_branch_vcount + 2
+      assert vertices_count(nil) >= before_branch_vcount + 2
 
       # Find a thesis node for combining (GraphActions.combine)
-      thesis = find_vertex_by_class(after_branch_graph, "thesis")
+      thesis = find_vertex_by_class(nil, "thesis")
       assert thesis
 
       # 6) Open combine UI and combine with thesis -> creates synthesis
@@ -129,7 +133,7 @@ defmodule DialecticWeb.GraphLiveE2ETest do
 
       render_click(view, "combine_node_select", %{"selected_node" => thesis.id})
       assigns = get_socket_assigns(view)
-      synthesis = find_vertex_by_class(assigns.graph, "synthesis")
+      synthesis = find_vertex_by_class(nil, "synthesis")
       assert synthesis
 
       # 7) Move selection (GraphActions.move) - verifies event path executes without error
@@ -138,11 +142,11 @@ defmodule DialecticWeb.GraphLiveE2ETest do
       assigns = get_socket_assigns(view)
       assert assigns.node.id
 
-      # 8) Related ideas (GraphActions.related_ideas) - adds a child; assigns.graph should grow
-      before_ideas_vcount = vertices_count(assigns.graph)
+      # 8) Related ideas (GraphActions.related_ideas) - adds a child; graph should grow
+      before_ideas_vcount = vertices_count(nil)
       render_click(view, "node_related_ideas", %{"id" => assigns.node.id})
       assigns = get_socket_assigns(view)
-      assert vertices_count(assigns.graph) > before_ideas_vcount
+      assert vertices_count(nil) > before_ideas_vcount
 
       # 9) Branch list (GraphActions.answer_selection for each item) - graph mutates in GraphManager
       {_, graph_before_bl} = GraphManager.get_graph(@graph_id)
@@ -221,7 +225,7 @@ defmodule DialecticWeb.GraphLiveE2ETest do
 
       render_click(view, "note", %{"node" => current_node_id})
       assigns = get_socket_assigns(view)
-      noted_vertex = get_vertex(assigns.graph, current_node_id)
+      noted_vertex = get_vertex(nil, current_node_id)
 
       if noted_vertex do
         assert user.email in Map.get(noted_vertex, :noted_by, [])
@@ -229,7 +233,7 @@ defmodule DialecticWeb.GraphLiveE2ETest do
 
       render_click(view, "unnote", %{"node" => current_node_id})
       assigns = get_socket_assigns(view)
-      unnoted_vertex = get_vertex(assigns.graph, current_node_id)
+      unnoted_vertex = get_vertex(nil, current_node_id)
 
       if unnoted_vertex do
         refute user.email in Map.get(unnoted_vertex, :noted_by, [])

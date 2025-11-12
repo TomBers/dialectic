@@ -4,7 +4,8 @@ defmodule DialecticWeb.LinearGraphLive do
 
   def mount(%{"graph_name" => graph_id_uri}, _session, socket) do
     graph_id = URI.decode(graph_id_uri)
-    {_graph_struct, graph} = GraphManager.get_graph(graph_id)
+    graph_struct = Dialectic.DbActions.Graphs.get_graph_by_title(graph_id)
+    graph = Dialectic.Graph.Serialise.json_to_graph(graph_struct.data)
 
     conv =
       Dialectic.Linear.ThreadedConv.prepare_conversation(graph)
