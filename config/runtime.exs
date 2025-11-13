@@ -1,5 +1,12 @@
 import Config
 
+# Google Translate server-side translation (in-app)
+# Configure your API key via the GOOGLE_TRANSLATE_API_KEY environment variable.
+# These settings enable the server-side Translate feature that uses Req.
+config :dialectic, Dialectic.Translate,
+  api_key: System.get_env("GOOGLE_TRANSLATE_API_KEY"),
+  timeout_ms: 20_000
+
 # config/runtime.exs is executed for all environments, including
 # during releases. It is executed after compilation and before the
 # system starts, so it is typically used to load production configuration

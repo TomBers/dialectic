@@ -447,6 +447,165 @@
                 icons_only={false}
               />
             </div>
+
+            <button
+              type="button"
+              id="server-translate-button"
+              class="inline-flex items-center justify-center px-2.5 py-1 text-xs text-gray-700 rounded-md transition-colors hover:bg-gray-100 hover:text-gray-900"
+              phx-click="open_translate_modal"
+              title="Translate this node (in app)"
+            >
+              <span class="inline-flex flex-col items-center gap-0.5">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M3 12h18" />
+                  <path d="M12 3a15 15 0 0 1 0 18" />
+                  <path d="M12 3a15 15 0 0 0 0 18" />
+                </svg>
+                <span>Translate (in app)</span>
+              </span>
+            </button>
+
+            <.modal
+              :if={assigns[:show_translate_modal]}
+              id="translate-modal"
+              on_cancel={JS.push("close_translate_modal")}
+            >
+              <div
+                class="modal-content relative px-4 sm:px-10 md:px-12"
+                id="translate-modal-inner"
+              >
+                <h2 class="text-base font-semibold text-gray-900 mb-2">Translate</h2>
+                <p class="text-xs text-gray-600">
+                  Choose a language to translate the current node’s content.
+                </p>
+
+                <div class="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    id="translate-en"
+                    class="px-2.5 py-1 text-xs rounded-md border border-gray-200 hover:bg-gray-100"
+                    phx-click="translate_node"
+                    phx-value-tl="en"
+                  >
+                    English
+                  </button>
+
+                  <button
+                    type="button"
+                    id="translate-es"
+                    class="px-2.5 py-1 text-xs rounded-md border border-gray-200 hover:bg-gray-100"
+                    phx-click="translate_node"
+                    phx-value-tl="es"
+                  >
+                    Spanish
+                  </button>
+
+                  <button
+                    type="button"
+                    id="translate-fr"
+                    class="px-2.5 py-1 text-xs rounded-md border border-gray-200 hover:bg-gray-100"
+                    phx-click="translate_node"
+                    phx-value-tl="fr"
+                  >
+                    French
+                  </button>
+
+                  <button
+                    type="button"
+                    id="translate-de"
+                    class="px-2.5 py-1 text-xs rounded-md border border-gray-200 hover:bg-gray-100"
+                    phx-click="translate_node"
+                    phx-value-tl="de"
+                  >
+                    German
+                  </button>
+
+                  <button
+                    type="button"
+                    id="translate-pt-br"
+                    class="px-2.5 py-1 text-xs rounded-md border border-gray-200 hover:bg-gray-100"
+                    phx-click="translate_node"
+                    phx-value-tl="pt-BR"
+                  >
+                    Portuguese (BR)
+                  </button>
+
+                  <button
+                    type="button"
+                    id="translate-pt-pt"
+                    class="px-2.5 py-1 text-xs rounded-md border border-gray-200 hover:bg-gray-100"
+                    phx-click="translate_node"
+                    phx-value-tl="pt-PT"
+                  >
+                    Portuguese (PT)
+                  </button>
+
+                  <button
+                    type="button"
+                    id="translate-ja"
+                    class="px-2.5 py-1 text-xs rounded-md border border-gray-200 hover:bg-gray-100"
+                    phx-click="translate_node"
+                    phx-value-tl="ja"
+                  >
+                    Japanese
+                  </button>
+
+                  <button
+                    type="button"
+                    id="translate-ru"
+                    class="px-2.5 py-1 text-xs rounded-md border border-gray-200 hover:bg-gray-100"
+                    phx-click="translate_node"
+                    phx-value-tl="ru"
+                  >
+                    Russian
+                  </button>
+
+                  <button
+                    type="button"
+                    id="translate-zh"
+                    class="px-2.5 py-1 text-xs rounded-md border border-gray-200 hover:bg-gray-100"
+                    phx-click="translate_node"
+                    phx-value-tl="zh-CN"
+                  >
+                    Chinese
+                  </button>
+                </div>
+
+                <div class="mt-4">
+                  <h3 class="text-xs font-medium text-gray-700">Original</h3>
+                  <pre
+                    class="mt-1 max-h-40 overflow-auto whitespace-pre-wrap text-xs bg-gray-50 p-2 rounded border border-gray-200"
+                    phx-no-curly-interpolation
+                  ><%= String.slice(to_string(Map.get(@node || %{}, :content, "")), 0, 500) %></pre>
+                </div>
+
+                <div class="mt-4">
+                  <h3 class="text-xs font-medium text-gray-700">Translation</h3>
+                  <div :if={assigns[:translate_loading]} class="text-xs text-gray-500">
+                    Translating…
+                  </div>
+                  <div :if={assigns[:translate_error]} class="text-xs text-red-600">
+                    {assigns[:translate_error]}
+                  </div>
+                  <pre
+                    class="mt-1 max-h-64 overflow-auto whitespace-pre-wrap text-xs bg-white p-2 rounded border border-gray-200"
+                    phx-no-curly-interpolation
+                  ><%= assigns[:translated_text] || "" %></pre>
+                </div>
+              </div>
+            </.modal>
+
             <div class="flex items-center gap-2 min-w-0">
               <div class="flex items-center gap-1 flex-none"></div>
               <div class="flex-1 min-w-0">

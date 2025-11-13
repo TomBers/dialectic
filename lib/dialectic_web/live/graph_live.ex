@@ -733,6 +733,66 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, assign(socket, show_combine: false)}
   end
 
+  def handle_event("open_translate_modal", _params, socket) do
+    {:noreply,
+     assign(socket,
+       show_translate_modal: true,
+       translate_loading: false,
+       translated_text: nil,
+       translate_error: nil
+     )}
+  end
+
+  def handle_event("close_translate_modal", _params, socket) do
+    {:noreply,
+     assign(socket,
+       show_translate_modal: false,
+       translate_loading: false
+     )}
+  end
+
+  def handle_event("translate_node", %{"tl" => tl}, socket) do
+    node = socket.assigns.node || %{}
+    content = node |> Map.get(:content, "") |> to_string()
+
+    socket = assign(socket, translate_loading: true, translate_error: nil)
+
+    result =
+      case content do
+        "" -> {:error, :empty}
+        _ -> Dialectic.Translate.translate(content, tl)
+      end
+
+    case result do
+      {:ok, %Dialectic.Translate.Result{text: text}} ->
+        {:noreply, assign(socket, translated_text: text, translate_loading: false)}
+
+      {:error, :missing_api_key} ->
+        {:noreply,
+         assign(socket,
+           translate_error: "Google Translate API key not configured",
+           translate_loading: false,
+           translated_text: nil
+         )}
+
+      {:error, {:google_error, %{message: msg}}} ->
+        {:noreply,
+         assign(socket,
+           translate_error: "Translation failed: #{msg}",
+           translate_loading: false,
+           translated_text: nil
+         )}
+
+      {:error, reason} ->
+        {:noreply,
+         assign(socket,
+           translate_error: "Translation failed: #{inspect(reason)}",
+           translate_loading: false,
+           translated_text: nil
+         )}
+    end
+  end
+
   # Start stream handlers grouped with other handle_event clauses
   def handle_event("open_start_stream_modal", _params, socket) do
     {:noreply, assign(socket, show_start_stream_modal: true)}
