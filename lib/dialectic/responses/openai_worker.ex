@@ -76,7 +76,6 @@ defmodule Dialectic.Workers.OpenAIWorker do
              api_key: api_key,
              finch_name: Dialectic.Finch,
              provider_options: [
-               reasoning_effort: :minimal,
                openai_parallel_tool_calls: false
              ],
              connect_timeout: 60_000,
@@ -168,7 +167,7 @@ defmodule Dialectic.Workers.OpenAIWorker do
   defp openai_model_spec do
     # Hardcoded model per request (favor fast TTFT for diagnosis)
     # TODO: make this configurable via config/runtime.exs or OPENAI_CHAT_MODEL
-    {:openai, "gpt-5-nano", []}
+    {:openai, "gpt-5.1-chat-latest", []}
   end
 
   defp get_system_prompt(graph_id) do
