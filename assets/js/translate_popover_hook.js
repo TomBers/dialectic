@@ -186,7 +186,64 @@ const translatePopoverHook = {
   },
 
   updated() {
-    // The LV patch may re-render the trigger container; keep positioning fresh when open
+    // LiveView patches may replace the trigger or the panel in-place.
+    // Keep our references fresh and ensure the portaled panel mirrors the latest HTML.
+    // 1) Re-bind trigger if it was re-rendered
+    const newTrigger = getTriggerCandidate(this.el);
+    if (newTrigger && newTrigger !== this._trigger) {
+      if (this._trigger && this._onTriggerClick) {
+        this._trigger.removeEventListener("click", this._onTriggerClick);
+        try {
+          this._ro && this._ro.unobserve(this._trigger);
+        } catch (_e) {}
+      }
+      this._trigger = newTrigger;
+      this._trigger.addEventListener("click", this._onTriggerClick);
+      try {
+        this._ro && this._ro.observe(this._trigger);
+      } catch (_e) {}
+    }
+
+    // 2) Swap in freshly rendered panel if LV replaced it,
+    //    and ensure we don't accumulate duplicates in the portal
+    const newPanel = getPanelCandidate(this.el);
+    if (newPanel && newPanel !== this._panel && this._container) {
+      // Stop observing the old panel
+      if (this._panel) {
+        try {
+          this._ro && this._ro.unobserve(this._panel);
+        } catch (_e) {}
+      }
+
+      // Capture original placement for proper restoration on destroyed()
+      this._originalParent = newPanel.parentNode;
+      this._originalNextSibling = newPanel.nextSibling;
+      this._storedPanelStyle = newPanel.getAttribute("style");
+      this._panelInitiallyHidden = newPanel.hasAttribute("hidden");
+
+      // Move new panel into the portal, replacing any previous panel to avoid duplicates
+      if (this._panel && this._panel.parentNode === this._container) {
+        this._container.replaceChild(newPanel, this._panel);
+      } else {
+        this._container.appendChild(newPanel);
+      }
+      this._panel = newPanel;
+
+      // Ensure visibility matches current open state
+      if (this._open) {
+        this._container.style.display = "block";
+        this._panel.removeAttribute("hidden");
+      } else {
+        this._panel.setAttribute("hidden", "");
+        this._container.style.display = "none";
+      }
+
+      try {
+        this._ro && this._ro.observe(this._panel);
+      } catch (_e) {}
+    }
+
+    // Keep positioning fresh when open
     if (this._open) {
       this.position();
     }

@@ -93,23 +93,69 @@ defmodule DialecticWeb.ActionToolbarComp do
     ]
   end
 
-  defp google_translate_url(node, tl) do
-    safe_limit = 4000
+  # Max safe URL length for Google Translate links (conservative)
+  defp google_translate_max_url_len, do: 2000
 
+  # Truncate content so that the final URL-encoded text fits within max URL length
+  # Returns {truncated_text, truncated?}
+  defp truncate_for_google_translate(content, tl) do
+    base_prefix = "https://translate.google.com/?sl=auto&tl=#{tl}&text="
+    suffix = "&op=translate"
+    max_len = google_translate_max_url_len()
+    content = to_string(content || "")
+    base_len = String.length(base_prefix)
+    suffix_len = String.length(suffix)
+
+    enc = URI.encode_www_form(content)
+
+    if base_len + String.length(enc) + suffix_len <= max_len do
+      {content, false}
+    else
+      total = String.length(content)
+      bs_truncate(content, base_len, suffix_len, max_len, 0, total, "")
+    end
+  end
+
+  # Binary search helper for truncate_for_google_translate/2
+  defp bs_truncate(content, base_len, suffix_len, max_len, low, high, best) do
+    if low > high do
+      {best, true}
+    else
+      mid = div(low + high, 2)
+      slice = String.slice(content, 0, mid)
+      enc_len = slice |> URI.encode_www_form() |> String.length()
+      url_len = base_len + enc_len + suffix_len
+
+      if url_len <= max_len do
+        bs_truncate(content, base_len, suffix_len, max_len, mid + 1, high, slice)
+      else
+        bs_truncate(content, base_len, suffix_len, max_len, low, mid - 1, best)
+      end
+    end
+  end
+
+  defp google_translate_url(node, tl) do
     content =
       node
       |> Kernel.||(%{})
       |> Map.get(:content, "")
       |> to_string()
 
-    truncated =
-      if String.length(content) > safe_limit do
-        String.slice(content, 0, safe_limit)
-      else
-        content
-      end
+    {truncated_text, _truncated?} = truncate_for_google_translate(content, tl)
 
-    "https://translate.google.com/?sl=auto&tl=#{tl}&text=#{URI.encode_www_form(truncated)}&op=translate"
+    "https://translate.google.com/?sl=auto&tl=#{tl}&text=#{URI.encode_www_form(truncated_text)}&op=translate"
+  end
+
+  # Expose if the translation text would be truncated (used for tooltip)
+  defp translate_truncated?(node) do
+    content =
+      node
+      |> Kernel.||(%{})
+      |> Map.get(:content, "")
+      |> to_string()
+
+    {_txt, truncated?} = truncate_for_google_translate(content, "en")
+    truncated?
   end
 
   @impl true
@@ -350,7 +396,7 @@ defmodule DialecticWeb.ActionToolbarComp do
             data-role="trigger"
             class="inline-flex items-center justify-center px-2.5 py-1 text-xs text-gray-700 rounded-md transition-colors hover:bg-gray-100 hover:text-gray-900"
             title={
-              if String.length((@node && @node.content) || "") > 3800,
+              if translate_truncated?(@node),
                 do: "Translate (content truncated for length)",
                 else: "Translate"
             }

@@ -13,27 +13,16 @@ defmodule Dialectic.Responses.PromptsCreative do
     Persona: A thoughtful guide. Curious, vivid, and rigorous.
 
     Global formatting rules
-    - You must return only GitHub-Flavored Markdown.
-    - Always begin the response with exactly one H2 heading i.e ## Your Title.
-    - Keep the H2 concise (≤ 80 chars). No additional H1/H2 headings after the first.
-    - Prefer paragraphs; use lists sparingly when it clarifies structure.
-    - For any data formats (e.g., JSON, CSV, XML, SQL), include them inside fenced code blocks with the correct language tag; never return raw, top-level non-Markdown output.
-    - Use code fences for code, CLI commands, or config; do not emit raw code outside fences.
-    - Do not include images or HTML. No emojis.
-
-    Precedence and exceptions
-    - If the user requests a specific non-Markdown format, return it inside a fenced code block with the appropriate language tag (e.g., ```json ... ```); do not return raw content.
-    - If required information is missing, ask one concise clarifying question before proceeding.
+    - Please return valid Markdown.
+    - Structure the response as a document that is going to be displayed on a webpage.
+    - Start each response with a concise title (# <title>), followed by a introductory paragraph.
+    - Aim to produce a response that would be interesting to read on a webpage, with sections rather than lots of lists, make use of all the Markdown formatting features.
 
     Style
     - Thoughtful, vivid, and rigorous.
     - Favor narrative flow, concrete examples, and occasional analogies or micro-stories.
-    - Define key terms in plain language when first used.
     - Aim for originality while staying faithful to facts and the user's intent.
-
-    Safety
-    - Do not reveal chain-of-thought or internal reasoning; present conclusions only.
-    - Avoid speculation presented as fact; label speculation clearly.
+    - Try and keep the response concise and focused, aim for a maximum of 500 words.
     """
   end
 
@@ -148,7 +137,7 @@ defmodule Dialectic.Responses.PromptsCreative do
     join_blocks([
       fence("Context", context),
       """
-      Write a deep dive on #{sanitize_title(topic)}
+      Write a deep dive on #{sanitize_title(topic)}. Feel free to go beyond the previous word limits, write enough to understand the topic.
       """
     ])
   end
