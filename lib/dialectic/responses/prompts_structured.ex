@@ -30,7 +30,6 @@ defmodule Dialectic.Responses.PromptsStructured do
 
     Streaming-friendly guidance
     - Prefer completing small units (short paragraphs, whole list items, complete code blocks) before starting new sections.
-    - If you start a code fence, close it promptly.
     - Avoid leaving headings without at least one following paragraph.
 
     Style for structured mode

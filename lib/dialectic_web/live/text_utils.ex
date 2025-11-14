@@ -274,7 +274,6 @@ defmodule DialecticWeb.Live.TextUtils do
         |> String.replace("<", "&lt;")
         |> String.replace(">", "&gt;")
       end)
-      |> Enum.join("")
 
     merge_outside_inside(repaired_outside, inside)
   end
@@ -294,33 +293,87 @@ defmodule DialecticWeb.Live.TextUtils do
   defp fix_unbalanced_emphasis(markdown) do
     {outside, inside} = split_outside_inside_fences(markdown)
 
-    {fixed_outside, need_double?, need_single?} =
-      Enum.reduce(outside, {"", false, false}, fn seg, {acc, dbl?, sgl?} ->
+    {outside_segments, need_double?, need_single?} =
+      Enum.reduce(outside, {[], false, false}, fn seg, {acc, dbl?, sgl?} ->
         dbl_imbalance = rem(count(seg, "**"), 2) == 1
         sgl_imbalance = rem(count(seg, "*") - 2 * count(seg, "**"), 2) == 1
-        {acc <> seg, dbl? or dbl_imbalance, sgl? or sgl_imbalance}
+        {acc ++ [seg], dbl? or dbl_imbalance, sgl? or sgl_imbalance}
       end)
 
-    repaired =
-      fixed_outside <>
-        if(need_double?, do: "**", else: "") <>
-        if need_single?, do: "*", else: ""
+    outside_segments =
+      if need_double? or need_single? do
+        case outside_segments do
+          [] ->
+            []
 
-    merge_outside_inside(repaired, inside)
+          _ ->
+            List.update_at(outside_segments, length(outside_segments) - 1, fn last ->
+              last <>
+                if(need_double?, do: "**", else: "") <>
+                if need_single?, do: "*", else: ""
+            end)
+        end
+      else
+        outside_segments
+      end
+
+    merge_outside_inside(outside_segments, inside)
   end
 
   # Split the markdown into alternating outside/inside fenced segments.
+  # Robust to unclosed fences: if the last fence is unclosed, the remainder is
+  # treated as a single inside segment.
   # Returns {outside_segments, inside_fence_segments}
   defp split_outside_inside_fences(markdown) do
-    parts = Regex.split(~r/(```.*?```)/s, markdown, include_captures: true)
-    indexed = Enum.with_index(parts)
-    outside = for {seg, idx} <- indexed, rem(idx, 2) == 0, do: seg
-    inside = for {seg, idx} <- indexed, rem(idx, 2) == 1, do: seg
-    {outside, inside}
+    # Split on individual fence lines (``` with optional language), keep delimiters
+    tokens = Regex.split(~r/(^```[^\n]*\n?)/m, markdown, include_captures: true)
+
+    {outside_segments, inside_segments, inside?, current} =
+      Enum.reduce(tokens, {[], [], false, ""}, fn tok, {outs, ins, inside?, cur} ->
+        if String.match?(tok, ~r/^```/m) do
+          if inside? do
+            # Closing fence: include fence and finalize the inside segment
+            seg = cur <> tok
+            {outs, ins ++ [seg], false, ""}
+          else
+            # Opening fence: flush any pending outside, start inside
+            outs =
+              if cur == "" do
+                outs
+              else
+                outs ++ [cur]
+              end
+
+            {outs, ins, true, tok}
+          end
+        else
+          {outs, ins, inside?, cur <> tok}
+        end
+      end)
+
+    {outside_segments, inside_segments} =
+      if inside? do
+        # Unclosed fence: treat the remainder as an inside segment
+        {outside_segments, inside_segments ++ [current]}
+      else
+        # Flush any trailing outside content
+        outs =
+          if current == "" do
+            outside_segments
+          else
+            outside_segments ++ [current]
+          end
+
+        {outs, inside_segments}
+      end
+
+    {outside_segments, inside_segments}
   end
 
-  defp merge_outside_inside(outside_joined, inside_segments) do
-    outside_joined <> Enum.join(inside_segments, "")
+  defp merge_outside_inside(outside_segments, inside_segments) do
+    Enum.zip(outside_segments, inside_segments ++ [""])
+    |> Enum.flat_map(fn {out, ins} -> [out, ins] end)
+    |> Enum.join("")
   end
 
   defp count(haystack, needle) do

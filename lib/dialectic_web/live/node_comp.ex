@@ -40,7 +40,7 @@ defmodule DialecticWeb.NodeComp do
                         <pre
                           id={"node-tail-" <> @node.id}
                           class="whitespace-pre-wrap font-mono text-sm text-gray-800"
-                          phx-no-curly-interpolation
+                          phx-no-format
                         >
     <%= rendered |> Map.get(:tail_text) %>
                         </pre>
