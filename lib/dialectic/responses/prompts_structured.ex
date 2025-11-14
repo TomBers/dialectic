@@ -90,7 +90,7 @@ defmodule Dialectic.Responses.PromptsStructured do
       fence("Context A", context1),
       fence("Context B", context2),
       """
-      A narrative synthesis between #{sanitize_title(pos1)} and #{sanitize_title(pos2)}.
+      A synthesis between #{sanitize_title(pos1)} and #{sanitize_title(pos2)}.
       """
     ])
   end
@@ -103,7 +103,7 @@ defmodule Dialectic.Responses.PromptsStructured do
     join_blocks([
       fence("Context", context),
       """
-      An argument for the claim #{sanitize_title(claim)}
+      Pros for #{sanitize_title(claim)}
       """
     ])
   end
@@ -116,7 +116,7 @@ defmodule Dialectic.Responses.PromptsStructured do
     join_blocks([
       fence("Context", context),
       """
-      An argument against the claim #{sanitize_title(claim)}
+      Cons for #{sanitize_title(claim)}
       """
     ])
   end
@@ -129,7 +129,7 @@ defmodule Dialectic.Responses.PromptsStructured do
     join_blocks([
       fence("Context", context),
       """
-      Provide 3–4 related topics to #{sanitize_title(current_idea_title)}, each with a brief rationale.
+      Related topics to #{sanitize_title(current_idea_title)}.
       """
     ])
   end

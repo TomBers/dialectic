@@ -87,7 +87,7 @@ function renderMdInto(el) {
 
   // Title-only mode: render first line as plain text (no HTML), strip headings/Title: and bold markers
   if (el.getAttribute("data-title-only") === "true") {
-    const norm = md.replace(/\r\n|\r/g, "\n");
+    const norm = md.replace(/\r\n|\r/g, "\n").replace(/^\s+/, "");
     const first = norm.split("\n")[0] || "";
     let title = first
       .replace(/^\s*#{1,6}\s*/, "") // strip leading markdown heading markers
