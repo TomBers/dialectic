@@ -110,3 +110,31 @@ Caveats
 - The test does not assert on the content; it’s meant to visually confirm that UI and streaming behave as expected.
 
 Happy testing!
+
+## Streaming debugging (optional)
+
+Occasionally during E2E runs you may observe a node that stops with a heading or partial text. This is often due to streaming/finalization timing. You can enable extra server-side logging to diagnose these cases.
+
+Enable debug logging on the Phoenix server:
+- Start your server with an additional env var:
+  - MIX_ENV=dev E2E_STREAM_DEBUG=1 OPENAI_API_KEY=sk-... mix phx.server
+
+What you’ll see in the server logs (when E2E_STREAM_DEBUG is set):
+- [openai] stream_start/opened/complete/finalize entries around each streamed request
+- [stream] chunk_received entries for each chunk with size and fence counts
+- [stream] after_update entries with:
+  - len: current total content length for the node
+  - fences_total: number of ``` fences in the content
+  - open_fence?: whether there’s an unclosed code fence at this point
+
+How to interpret the logs:
+- If open_fence? is true very late in the run, the UI tail may look incomplete until finalization; the server auto-closes a final open fence on finalize.
+- If you see stream_complete bytes=0 or repeated empty chunks, the provider returned little/no content (transient); the worker may retry.
+- If stream_error appears, check your API key and network conditions.
+
+Test runner tips:
+- If content often seems to cut off before finalization, increase the wait in the runner:
+  - E2E_LONG_PAUSE_MS=15000 npm run e2e (or adjust to your environment)
+- Ensure Oban queues are running and the server has OPENAI_API_KEY set.
+- You can also increase the shorter pauses:
+  - E2E_PAUSE_MS=1500 E2E_LONG_PAUSE_MS=12000 npm run e2e

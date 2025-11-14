@@ -9,6 +9,17 @@ defmodule Dialectic.Responses.Utils do
 
   require Logger
 
+  @stream_debug_env_key "E2E_STREAM_DEBUG"
+
+  defp stream_debug? do
+    case System.get_env(@stream_debug_env_key) do
+      "1" -> true
+      "true" -> true
+      "TRUE" -> true
+      _ -> false
+    end
+  end
+
   @spec process_chunk(
           graph :: any(),
           node :: any(),
@@ -25,8 +36,19 @@ defmodule Dialectic.Responses.Utils do
       end
 
     if text == "" do
+      if stream_debug?(),
+        do: Logger.debug("[stream] empty_chunk graph=#{inspect(graph)} node=#{inspect(node)}")
+
       :ok
     else
+      if stream_debug?() do
+        fence_ct = Regex.scan(~r/```/, text) |> length()
+
+        Logger.debug(
+          "[stream] chunk_received size=#{byte_size(text)} fences_in_chunk=#{fence_ct} preview=#{inspect(String.slice(text, 0, 80))}"
+        )
+      end
+
       updated_vertex =
         try do
           GraphManager.update_vertex(graph, node, text)
@@ -43,6 +65,17 @@ defmodule Dialectic.Responses.Utils do
         end
 
       if updated_vertex do
+        if stream_debug?() do
+          content = updated_vertex.content || ""
+          total_len = byte_size(content)
+          total_fences = Regex.scan(~r/```/, content) |> length()
+          open_fence? = rem(total_fences, 2) == 1
+
+          Logger.debug(
+            "[stream] after_update node=#{inspect(node)} len=#{total_len} fences_total=#{total_fences} open_fence?=#{open_fence?}"
+          )
+        end
+
         Phoenix.PubSub.broadcast(
           Dialectic.PubSub,
           live_view_topic,

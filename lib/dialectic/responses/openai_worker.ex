@@ -13,6 +13,16 @@ defmodule Dialectic.Workers.OpenAIWorker do
 
   require Logger
 
+  @stream_debug_env_key "E2E_STREAM_DEBUG"
+  defp stream_debug? do
+    case System.get_env(@stream_debug_env_key) do
+      "1" -> true
+      "true" -> true
+      "TRUE" -> true
+      _ -> false
+    end
+  end
+
   alias Dialectic.Responses.Utils
   alias Dialectic.DbActions.DbWorker
   alias Dialectic.Responses.{PromptsStructured, PromptsCreative, ModeServer}
@@ -70,6 +80,12 @@ defmodule Dialectic.Workers.OpenAIWorker do
       # end)
 
       # Stream text – this returns a StreamResponse handle
+      if stream_debug?(),
+        do:
+          Logger.debug(
+            "[openai] stream_start graph=#{inspect(graph)} node=#{inspect(to_node)} attempt=#{attempt}/#{max_attempts}"
+          )
+
       case ReqLLM.stream_text(
              model_spec,
              ctx,
@@ -82,6 +98,11 @@ defmodule Dialectic.Workers.OpenAIWorker do
              receive_timeout: 300_000
            ) do
         {:ok, stream_resp} ->
+          if stream_debug?() do
+            {prov, model_name, _} = model_spec
+            Logger.debug("[openai] stream_opened provider=#{inspect(prov)} model=#{model_name}")
+          end
+
           # Stream tokens to UI (and persisted vertex content) as they arrive.
           # Track how many bytes were appended; treat empty streams as transient failures.
           {_final, appended_len} =
@@ -102,6 +123,8 @@ defmodule Dialectic.Workers.OpenAIWorker do
               {acc <> to_emit, n + byte_size(to_emit)}
             end)
 
+          if stream_debug?(), do: Logger.debug("[openai] stream_complete bytes=#{appended_len}")
+
           if appended_len > 0 do
             finalize(graph, to_node, live_view_topic)
             :ok
@@ -111,6 +134,12 @@ defmodule Dialectic.Workers.OpenAIWorker do
           end
 
         {:error, err} ->
+          if stream_debug?(),
+            do:
+              Logger.debug(
+                "[openai] stream_error err=#{inspect(err)} attempt=#{attempt}/#{max_attempts}"
+              )
+
           reason_msg =
             case err do
               %Mint.TransportError{reason: r} -> "Network error (transport): #{inspect(r)}"
@@ -150,14 +179,35 @@ defmodule Dialectic.Workers.OpenAIWorker do
   defp diff_suffix("", chunk) when is_binary(chunk), do: chunk
 
   defp diff_suffix(acc, chunk) when is_binary(acc) and is_binary(chunk) do
-    max = min(byte_size(acc), byte_size(chunk))
+    cond do
+      chunk == "" ->
+        ""
 
-    overlap =
-      Enum.find(max..0, fn k ->
-        String.ends_with?(acc, binary_part(chunk, 0, k))
-      end) || 0
+      # Cumulative stream: chunk is the "full text so far"
+      String.starts_with?(chunk, acc) ->
+        binary_part(chunk, byte_size(acc), byte_size(chunk) - byte_size(acc))
 
-    binary_part(chunk, overlap, byte_size(chunk) - overlap)
+      # Chunk is entirely already included in acc (e.g., resend of old prefix/suffix)
+      String.starts_with?(acc, chunk) or String.ends_with?(acc, chunk) ->
+        ""
+
+      true ->
+        # Heuristic overlap with a minimum threshold to avoid accidental matches on small tokens.
+        max = min(byte_size(acc), byte_size(chunk))
+        min_overlap = 12
+
+        overlap =
+          Enum.find(max..min_overlap, fn k ->
+            String.ends_with?(acc, binary_part(chunk, 0, k))
+          end) || 0
+
+        if overlap > 0 do
+          binary_part(chunk, overlap, byte_size(chunk) - overlap)
+        else
+          # Treat as incremental token; emit as-is (prefer duplicates over dropped characters)
+          chunk
+        end
+    end
   end
 
   defp fetch_openai_api_key do
@@ -178,6 +228,9 @@ defmodule Dialectic.Workers.OpenAIWorker do
   end
 
   defp finalize(graph, to_node, live_view_topic) do
+    if stream_debug?(),
+      do: Logger.debug("[openai] finalize graph=#{inspect(graph)} node=#{inspect(to_node)}")
+
     GraphManager.finalize_node_content(graph, to_node)
     DbWorker.save_graph(graph, false, final: true)
 
