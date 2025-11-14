@@ -89,7 +89,16 @@ defmodule DialecticWeb.Live.ModalComp do
             </h2>
 
             <div class="text-base sm:text-lg">
-              {TextUtils.render_content(@node.content || "") |> Map.get(:body_html)}
+              <div id={"modal-stable-" <> @node.id} phx-update="replace">
+                {TextUtils.render_content(@node.content || "") |> Map.get(:stable_html)}
+              </div>
+              <pre
+                id={"modal-tail-" <> @node.id}
+                class="whitespace-pre-wrap font-mono text-sm text-gray-800"
+                phx-no-curly-interpolation
+              >
+    <%= TextUtils.render_content(@node.content || "") |> Map.get(:tail_text) %>
+              </pre>
             </div>
           </article>
           <!-- Modal selection action button (hidden by default) -->

@@ -824,11 +824,43 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_info({:stream_chunk, updated_vertex, :node_id, node_id}, socket) do
     # This is the streamed LLM response into a node
-
     if socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
-      {:noreply, assign(socket, node: updated_vertex)}
+      # Throttle node assigns to reduce re-renders and heavy Earmark work.
+      ref = socket.assigns[:render_throttle_ref]
+
+      socket =
+        if is_reference(ref) do
+          # Timer already scheduled; just stage the latest node update.
+          assign(socket, :pending_node_update, updated_vertex)
+        else
+          # Schedule a flush shortly; stage the latest node update now.
+          ms = 120
+          new_ref = Process.send_after(self(), :flush_node_render, ms)
+
+          socket
+          |> assign(:pending_node_update, updated_vertex)
+          |> assign(:render_throttle_ref, new_ref)
+        end
+
+      {:noreply, socket}
     else
       {:noreply, socket}
+    end
+  end
+
+  def handle_info(:flush_node_render, socket) do
+    case socket.assigns[:pending_node_update] do
+      nil ->
+        # Nothing staged; just clear the throttle ref.
+        {:noreply, assign(socket, :render_throttle_ref, nil)}
+
+      updated_vertex ->
+        # Apply the latest staged update and clear staging state.
+        {:noreply,
+         socket
+         |> assign(:node, updated_vertex)
+         |> assign(:pending_node_update, nil)
+         |> assign(:render_throttle_ref, nil)}
     end
   end
 

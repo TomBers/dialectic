@@ -101,7 +101,16 @@
 
           <%= unless Enum.member?(@hidden, node.id) do %>
             <article class="prose prose-stone text-[15px] sm:text-base md:prose-lg max-w-none mt-2">
-              {TextUtils.render_content(node.content || "") |> Map.get(:body_html)}
+              <div id={"lg-stable-" <> node.id} phx-update="replace">
+                {TextUtils.render_content(node.content || "") |> Map.get(:stable_html)}
+              </div>
+              <pre
+                id={"lg-tail-" <> node.id}
+                class="whitespace-pre-wrap font-mono text-sm text-gray-800"
+                phx-no-curly-interpolation
+              >
+<%= TextUtils.render_content(node.content || "") |> Map.get(:tail_text) %>
+              </pre>
             </article>
           <% end %>
         </div>

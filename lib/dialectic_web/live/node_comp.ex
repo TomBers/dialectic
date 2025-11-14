@@ -34,7 +34,16 @@ defmodule DialecticWeb.NodeComp do
                         data-children={length(@node.children)}
                         id={"list-detector-" <> @node.id}
                       >
-                        {rendered |> Map.get(:body_html)}
+                        <div id={"node-stable-" <> @node.id} phx-update="replace">
+                          {rendered |> Map.get(:stable_html)}
+                        </div>
+                        <pre
+                          id={"node-tail-" <> @node.id}
+                          class="whitespace-pre-wrap font-mono text-sm text-gray-800"
+                          phx-no-curly-interpolation
+                        >
+    <%= rendered |> Map.get(:tail_text) %>
+                        </pre>
                       </div>
                     </article>
                   </div>
