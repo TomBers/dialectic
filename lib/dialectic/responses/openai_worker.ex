@@ -15,12 +15,13 @@ defmodule Dialectic.Workers.OpenAIWorker do
 
   @stream_debug_env_key "E2E_STREAM_DEBUG"
   defp stream_debug? do
-    case System.get_env(@stream_debug_env_key) do
-      "1" -> true
-      "true" -> true
-      "TRUE" -> true
-      _ -> false
-    end
+    Mix.env() != :prod and
+      case System.get_env(@stream_debug_env_key) do
+        "1" -> true
+        "true" -> true
+        "TRUE" -> true
+        _ -> false
+      end
   end
 
   alias Dialectic.Responses.Utils

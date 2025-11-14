@@ -225,6 +225,7 @@ defmodule DialecticWeb.GraphLive do
        right_panel_open: false,
        bottom_menu_open: true,
        graph_operation: "",
+       in_flight?: false,
        ask_question: true,
        group_states: %{},
        search_term: "",
@@ -832,6 +833,10 @@ defmodule DialecticWeb.GraphLive do
         if is_reference(ref) do
           # Timer already scheduled; just stage the latest node update.
           assign(socket, :pending_node_update, updated_vertex)
+          |> assign(:in_flight?, true)
+          |> then(fn s ->
+            assign(s, :can_edit, s.assigns.graph_struct.is_public and not s.assigns.in_flight?)
+          end)
         else
           # Schedule a flush shortly; stage the latest node update now.
           ms = 120
@@ -840,6 +845,10 @@ defmodule DialecticWeb.GraphLive do
           socket
           |> assign(:pending_node_update, updated_vertex)
           |> assign(:render_throttle_ref, new_ref)
+          |> assign(:in_flight?, true)
+          |> then(fn s ->
+            assign(s, :can_edit, s.assigns.graph_struct.is_public and not s.assigns.in_flight?)
+          end)
         end
 
       {:noreply, socket}
@@ -873,11 +882,18 @@ defmodule DialecticWeb.GraphLive do
       {:other_user_change, self()}
     )
 
-    update_graph(
-      socket,
-      {nil, GraphActions.find_node(socket.assigns.graph_id, node_id)},
-      "llm_request_complete"
-    )
+    {:noreply, new_socket} =
+      update_graph(
+        socket,
+        {nil, GraphActions.find_node(socket.assigns.graph_id, node_id)},
+        "llm_request_complete"
+      )
+
+    {:noreply,
+     assign(new_socket,
+       in_flight?: false,
+       can_edit: new_socket.assigns.graph_struct.is_public
+     )}
   end
 
   def handle_info({:stream_error, error, :node_id, node_id}, socket) do
@@ -887,9 +903,16 @@ defmodule DialecticWeb.GraphLive do
       GraphManager.update_vertex(socket.assigns.graph_id, node_id, error <> "\n\n— [interrupted]")
 
     if socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
-      {:noreply, assign(socket, node: updated_vertex)}
+      {:noreply,
+       socket
+       |> assign(node: updated_vertex)
+       |> assign(:in_flight?, false)
+       |> then(fn s -> assign(s, :can_edit, s.assigns.graph_struct.is_public) end)}
     else
-      {:noreply, socket}
+      {:noreply,
+       socket
+       |> assign(:in_flight?, false)
+       |> then(fn s -> assign(s, :can_edit, s.assigns.graph_struct.is_public) end)}
     end
   end
 

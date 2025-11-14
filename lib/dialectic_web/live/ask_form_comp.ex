@@ -109,6 +109,7 @@ defmodule DialecticWeb.AskFormComp do
           <button
             type="button"
             phx-click="toggle_ask_question"
+            disabled={@in_flight?}
             class={"px-2 py-1 text-xs rounded-full flex-none " <> if @ask_question, do: "bg-blue-50 text-blue-600 border border-blue-200", else: "bg-emerald-50 text-emerald-600 border border-emerald-200"}
             title="Toggle ask/comment"
           >
@@ -119,6 +120,7 @@ defmodule DialecticWeb.AskFormComp do
             type="button"
             phx-click="cycle_prompt_mode"
             phx-target={@myself}
+            disabled={@in_flight?}
             class="bg-white border border-gray-300 text-gray-700 text-xs leading-none px-2 h-8 rounded-full hover:bg-gray-50 flex-none"
             title="Cycle LLM mode"
           >
@@ -131,11 +133,13 @@ defmodule DialecticWeb.AskFormComp do
               type="text"
               id={@input_id}
               placeholder={@placeholder}
+              disabled={@in_flight?}
               class="box-border w-full h-10 rounded-full pl-3 pr-28 text-sm border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400 focus:ring-opacity-50 focus:outline-none"
             />
 
             <button
               type="submit"
+              disabled={@in_flight?}
               class="absolute right-2 inset-y-0 my-auto bg-indigo-600 hover:bg-indigo-700 text-white text-sm leading-none px-2.5 h-8 rounded-full font-medium"
             >
               {if @submit_label, do: @submit_label, else: if(@ask_question, do: "Ask", else: "Post")}

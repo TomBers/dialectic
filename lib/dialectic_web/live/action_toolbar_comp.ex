@@ -275,6 +275,8 @@ defmodule DialecticWeb.ActionToolbarComp do
           phx-click="node_related_ideas"
           phx-value-id={@node && @node.id}
           title="Related ideas"
+          disabled={@in_flight?}
+          aria-disabled={@in_flight?}
         >
           <span class="inline-flex flex-col items-center gap-0.5">
             <svg
@@ -304,6 +306,8 @@ defmodule DialecticWeb.ActionToolbarComp do
           phx-click="node_branch"
           phx-value-id={@node && @node.id}
           title="Pros and Cons"
+          disabled={@in_flight?}
+          aria-disabled={@in_flight?}
         >
           <span class="inline-flex flex-col items-center gap-0.5">
             <svg
@@ -333,6 +337,8 @@ defmodule DialecticWeb.ActionToolbarComp do
           phx-click="node_combine"
           phx-value-id={@node && @node.id}
           title="Combine with another"
+          disabled={@in_flight?}
+          aria-disabled={@in_flight?}
         >
           <span class="inline-flex flex-col items-center gap-0.5">
             <svg
@@ -362,6 +368,8 @@ defmodule DialecticWeb.ActionToolbarComp do
           phx-click="node_deepdive"
           phx-value-id={@node && @node.id}
           title="Deep dive"
+          disabled={@in_flight?}
+          aria-disabled={@in_flight?}
         >
           <span class="inline-flex flex-col items-center gap-0.5">
             <svg
