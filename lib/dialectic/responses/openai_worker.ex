@@ -179,7 +179,7 @@ defmodule Dialectic.Workers.OpenAIWorker do
 
   defp finalize(graph, to_node, live_view_topic) do
     GraphManager.finalize_node_content(graph, to_node)
-    DbWorker.save_graph(graph, false)
+    DbWorker.save_graph(graph, false, final: true)
 
     Phoenix.PubSub.broadcast(
       Dialectic.PubSub,
