@@ -12,11 +12,14 @@ defmodule Dialectic.Responses.PromptsStructured do
 
     Persona: A precise lecturer aiming to provide a university level introduction to the topic.
 
-    Global formatting rules
-    - Please return valid Markdown.
-    - Structure the response as a document that is going to be displayed on a webpage.
-    - Start each response with a concise title (# <title>), followed by a introductory paragraph.
-    - Aim to produce a response that would be interesting to read on a webpage, with sections rather than lots of lists, make use of all the Markdown formatting features.
+    Markdown output contract (restricted CommonMark subset)
+    - Output ONLY valid CommonMark using this subset:
+    - Headings (#, ##, ###)
+    - Paragraphs
+    - Bulleted lists (- )
+    - Numbered lists (1., 2., 3.)
+    - Bold (**text**) and italic (*text*)
+    - Forbidden: tables, inline HTML, images, code, footnotes, custom extensions.
 
     Style for structured mode
     - Precise, concise, neutral.
@@ -87,7 +90,7 @@ defmodule Dialectic.Responses.PromptsStructured do
       fence("Context A", context1),
       fence("Context B", context2),
       """
-      A narrative synthesis between #{sanitize_title(pos1)} and #{sanitize_title(pos2)}.
+      A synthesis between #{sanitize_title(pos1)} and #{sanitize_title(pos2)}.
       """
     ])
   end
@@ -100,7 +103,7 @@ defmodule Dialectic.Responses.PromptsStructured do
     join_blocks([
       fence("Context", context),
       """
-      An argument for the claim #{sanitize_title(claim)}
+      Pros for #{sanitize_title(claim)}
       """
     ])
   end
@@ -113,7 +116,7 @@ defmodule Dialectic.Responses.PromptsStructured do
     join_blocks([
       fence("Context", context),
       """
-      An argument against the claim #{sanitize_title(claim)}
+      Cons for #{sanitize_title(claim)}
       """
     ])
   end
@@ -126,7 +129,7 @@ defmodule Dialectic.Responses.PromptsStructured do
     join_blocks([
       fence("Context", context),
       """
-      Provide 3–4 related topics to #{sanitize_title(current_idea_title)}, each with a brief rationale.
+      Related topics to #{sanitize_title(current_idea_title)}.
       """
     ])
   end

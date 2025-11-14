@@ -88,12 +88,23 @@
               </span>
 
               <%= unless Enum.member?(@hidden, node.id) do %>
-                <span class="leading-5 text-[15px] sm:text-base font-medium text-zinc-900">
-                  {TextUtils.render_content(node.content || "") |> Map.get(:title)}
+                <span
+                  class="leading-5 text-[15px] sm:text-base font-medium text-zinc-900"
+                  phx-hook="Markdown"
+                  id={"markdown-title-collapsed-#{node.id}"}
+                  data-md={node.content || ""}
+                  data-title-only="true"
+                >
                 </span>
               <% else %>
-                <span class="leading-5 text-[15px] sm:text-base font-medium text-zinc-800 truncate">
-                  {TextUtils.process_node_content(node.content || "")}
+                <span
+                  class="leading-5 text-[15px] sm:text-base font-medium text-zinc-800 truncate"
+                  phx-hook="Markdown"
+                  id={"markdown-title-collapsed-#{node.id}"}
+                  data-md={node.content || ""}
+                  data-title-only="true"
+                  data-truncate="80"
+                >
                 </span>
               <% end %>
             </button>
@@ -101,7 +112,13 @@
 
           <%= unless Enum.member?(@hidden, node.id) do %>
             <article class="prose prose-stone text-[15px] sm:text-base md:prose-lg max-w-none mt-2">
-              {TextUtils.render_content(node.content || "") |> Map.get(:body_html)}
+              <div
+                phx-hook="Markdown"
+                id={"markdown-body-#{node.id}"}
+                data-md={node.content || ""}
+                data-body-only="true"
+              >
+              </div>
             </article>
           <% end %>
         </div>

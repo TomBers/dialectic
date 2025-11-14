@@ -1,6 +1,6 @@
 defmodule DialecticWeb.Live.ModalComp do
   use DialecticWeb, :live_component
-  alias DialecticWeb.Live.TextUtils
+
   alias DialecticWeb.ColUtils
 
   def update(assigns, socket) do
@@ -77,7 +77,18 @@ defmodule DialecticWeb.Live.ModalComp do
               class={nav_button_class(@nav_can_up)}
               title="Go to parent"
             >
-              {if @nav_parent_title, do: "↑ " <> @nav_parent_title, else: "↑ Parent"}
+              <%= if @nav_parent_title do %>
+                ↑
+                <span
+                  phx-hook="Markdown"
+                  id={"markdown-parent-title-" <> @id}
+                  data-md={@nav_parent_title}
+                  data-title-only="true"
+                >
+                </span>
+              <% else %>
+                ↑ Parent
+              <% end %>
             </button>
           </div>
           
@@ -85,11 +96,23 @@ defmodule DialecticWeb.Live.ModalComp do
 
           <article class="prose prose-stone prose-lg md:prose-xl lg:prose-2xl max-w-none selection-content space-y-4 min-h-[50vh]">
             <h2 class="text-xl sm:text-2xl md:text-3xl">
-              {TextUtils.render_content(@node.content || "") |> Map.get(:title)}
+              <span
+                phx-hook="Markdown"
+                id={"markdown-title-" <> @id}
+                data-md={@node.content || ""}
+                data-title-only="true"
+              >
+              </span>
             </h2>
 
             <div class="text-base sm:text-lg">
-              {TextUtils.render_content(@node.content || "") |> Map.get(:body_html)}
+              <div
+                phx-hook="Markdown"
+                id={"markdown-body-" <> @id}
+                data-md={@node.content || ""}
+                data-body-only="true"
+              >
+              </div>
             </div>
           </article>
           <!-- Modal selection action button (hidden by default) -->
@@ -120,7 +143,18 @@ defmodule DialecticWeb.Live.ModalComp do
               class={nav_button_class(@nav_can_down)}
               title="Go to child"
             >
-              {if @nav_child_title, do: @nav_child_title <> " ↓", else: "Child ↓"}
+              <%= if @nav_child_title do %>
+                <span
+                  phx-hook="Markdown"
+                  id={"markdown-child-title-" <> @id}
+                  data-md={@nav_child_title}
+                  data-title-only="true"
+                >
+                </span>
+                ↓
+              <% else %>
+                Child ↓
+              <% end %>
             </button>
           </div>
         </div>

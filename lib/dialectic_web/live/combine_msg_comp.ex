@@ -12,20 +12,6 @@ defmodule DialecticWeb.CombinetMsgComp do
     {:ok, socket}
   end
 
-  defp truncated_html(content, cut_off) do
-    # If content is already under the cutoff, just return the full text
-    if String.length(content) <= cut_off do
-      full_html(content)
-    else
-      truncated = String.slice(content, 0, cut_off) <> "..."
-      Earmark.as_html!(truncated) |> Phoenix.HTML.raw()
-    end
-  end
-
-  defp full_html(content) do
-    Earmark.as_html!(content) |> Phoenix.HTML.raw()
-  end
-
   @impl true
   def render(assigns) do
     ~H"""
@@ -48,7 +34,13 @@ defmodule DialecticWeb.CombinetMsgComp do
 
       <div class="proposition flex-1 max-w-none">
         <article class="prose prose-stone prose-sm">
-          {truncated_html(@node.content || "", @cut_off)}
+          <div
+            phx-hook="Markdown"
+            id={"markdown-preview-" <> @node.id}
+            data-truncate={@cut_off}
+            data-md={@node.content || ""}
+          >
+          </div>
         </article>
       </div>
     </div>
