@@ -89,7 +89,7 @@
 
               <%= unless Enum.member?(@hidden, node.id) do %>
                 <span class="leading-5 text-[15px] sm:text-base font-medium text-zinc-900">
-                  {TextUtils.render_content(node.content || "") |> Map.get(:title)}
+                  {TextUtils.render_title_text(node.content || "")}
                 </span>
               <% else %>
                 <span class="leading-5 text-[15px] sm:text-base font-medium text-zinc-800 truncate">
@@ -101,7 +101,12 @@
 
           <%= unless Enum.member?(@hidden, node.id) do %>
             <article class="prose prose-stone text-[15px] sm:text-base md:prose-lg max-w-none mt-2">
-              {TextUtils.render_content(node.content || "") |> Map.get(:body_html)}
+              <div
+                phx-hook="Markdown"
+                id={"markdown-body-" <> node.id}
+                data-md={TextUtils.render_body_md(node.content || "")}
+              >
+              </div>
             </article>
           <% end %>
         </div>

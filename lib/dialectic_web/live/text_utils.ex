@@ -3,7 +3,7 @@ defmodule DialecticWeb.Live.TextUtils do
   Text parsing and rendering helpers for LiveView components.
 
   Prefer:
-  - render_content/1 for a single-pass title + body_html result
+  - render_content/1 for a single-pass title + body_md result
   - process_node_content/3 for lightweight label text
   """
 
@@ -135,23 +135,26 @@ defmodule DialecticWeb.Live.TextUtils do
   This centralizes the Markdown rendering for the body to a single place.
   """
   @spec render_content(String.t() | nil) :: map()
+  def render_title_text(content) do
+    p = parse(content)
+
+    p.title
+    |> String.replace(~r/^\s*#+\s*/, "")
+  end
+
+  def render_body_md(content) do
+    p = parse(content)
+    p.body
+  end
+
   def render_content(content) do
     p = parse(content)
 
-    body_html =
-      if p.body == "" do
-        Phoenix.HTML.raw("")
-      else
-        p.body
-        |> Earmark.as_html!()
-        |> Phoenix.HTML.raw()
-      end
-
-    # Sanitize title to remove Markdown headings and leading prompt labels from past data
     sanitized_title =
       p.title
       |> String.replace(~r/^\s*#+\s*/, "")
 
-    %{title: sanitized_title, body_html: body_html}
+    # Return markdown for client-side rendering instead of server-side HTML
+    %{title: sanitized_title, body_md: p.body}
   end
 end
