@@ -8,14 +8,14 @@
     nav_can_down={@nav_can_down}
     nav_parent_title={
       if @node && is_list(@node.parents) && List.first(@node.parents) do
-        DialecticWeb.Live.TextUtils.process_node_content(List.first(@node.parents).content || "")
+        List.first(@node.parents).content || ""
       else
         nil
       end
     }
     nav_child_title={
       if @node && is_list(@node.children) && List.first(@node.children) do
-        DialecticWeb.Live.TextUtils.process_node_content(List.first(@node.children).content || "")
+        List.first(@node.children).content || ""
       else
         nil
       end

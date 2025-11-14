@@ -26,7 +26,13 @@ defmodule DialecticWeb.NodeComp do
                     <article class="prose prose-stone prose-lg md:prose-xl max-w-none w-full prose-headings:mt-0 prose-p:leading-relaxed prose-li:leading-relaxed">
                       <%!-- Client-side Markdown rendering via Markdown hook --%>
                       <h3 class="mt-0 text-lg sm:text-xl md:text-2xl mb-2 sm:mb-3 pb-2 border-b border-gray-200">
-                        {TextUtils.render_title_text(@node.content || "")}
+                        <span
+                          phx-hook="Markdown"
+                          id={"markdown-title-" <> @node.id}
+                          data-md={@node.content || ""}
+                          data-title-only="true"
+                        >
+                        </span>
                       </h3>
                       <div
                         class="selection-content w-full min-w-full text-base sm:text-lg p-2"
@@ -37,7 +43,8 @@ defmodule DialecticWeb.NodeComp do
                         <div
                           phx-hook="Markdown"
                           id={"markdown-body-" <> @node.id}
-                          data-md={TextUtils.render_body_md(@node.content || "")}
+                          data-md={@node.content || ""}
+                          data-body-only="true"
                         >
                         </div>
                       </div>

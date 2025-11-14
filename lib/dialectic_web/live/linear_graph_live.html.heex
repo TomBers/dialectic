@@ -88,12 +88,23 @@
               </span>
 
               <%= unless Enum.member?(@hidden, node.id) do %>
-                <span class="leading-5 text-[15px] sm:text-base font-medium text-zinc-900">
-                  {TextUtils.render_title_text(node.content || "")}
+                <span
+                  class="leading-5 text-[15px] sm:text-base font-medium text-zinc-900"
+                  phx-hook="Markdown"
+                  id={"markdown-title-" <> node.id}
+                  data-md={node.content || ""}
+                  data-title-only="true"
+                >
                 </span>
               <% else %>
-                <span class="leading-5 text-[15px] sm:text-base font-medium text-zinc-800 truncate">
-                  {TextUtils.process_node_content(node.content || "")}
+                <span
+                  class="leading-5 text-[15px] sm:text-base font-medium text-zinc-800 truncate"
+                  phx-hook="Markdown"
+                  id={"markdown-title-collapsed-" <> node.id}
+                  data-md={node.content || ""}
+                  data-title-only="true"
+                  data-truncate="80"
+                >
                 </span>
               <% end %>
             </button>
@@ -104,7 +115,8 @@
               <div
                 phx-hook="Markdown"
                 id={"markdown-body-" <> node.id}
-                data-md={TextUtils.render_body_md(node.content || "")}
+                data-md={node.content || ""}
+                data-body-only="true"
               >
               </div>
             </article>

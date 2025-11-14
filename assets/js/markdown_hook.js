@@ -85,6 +85,54 @@ function hashString(str) {
 function renderMdInto(el) {
   let md = readMarkdownSource(el) || "";
 
+  // Title-only mode: render first line as plain text (no HTML), strip headings/Title: and bold markers
+  if (el.getAttribute("data-title-only") === "true") {
+    const norm = md.replace(/\r\n|\r/g, "\n");
+    const first = norm.split("\n")[0] || "";
+    let title = first
+      .replace(/^\s*#{1,6}\s*/, "") // strip leading markdown heading markers
+      .replace(/^\s*(title|Title)\s*:?\s*/, "") // strip "Title:" prefix (case-insensitive)
+      .replace(/\*\*/g, "") // strip bold markers
+      .trim();
+
+    const tLen = parseInt(el.getAttribute("data-truncate") || "0", 10);
+    if (!Number.isNaN(tLen) && tLen > 0 && title.length > tLen) {
+      title = title.slice(0, tLen) + "…";
+    }
+
+    const tHash = hashString("TITLE|" + title);
+    if (el.__markdownHash === tHash) {
+      return;
+    }
+
+    // Plain text content prevents any HTML injection
+    el.textContent = title;
+    el.__markdownHash = tHash;
+    el.dispatchEvent(new CustomEvent("markdown:rendered", { bubbles: true }));
+    return;
+  }
+
+  // Body-only mode: drop first line, and optionally a second heading/title line
+  if (el.getAttribute("data-body-only") === "true") {
+    const norm = md.replace(/\r\n|\r/g, "\n");
+    const parts = norm.split("\n");
+    const rest = parts.slice(1).join("\n").replace(/^\n+/, "");
+    const lines2 = rest.split("\n");
+    if (lines2.length > 0) {
+      const first2 = lines2[0];
+      if (
+        /^\s*#{1,6}\s+\S/.test(first2) ||
+        /^\s*(title|Title)\s*:?\s*/.test(first2)
+      ) {
+        md = lines2.slice(1).join("\n");
+      } else {
+        md = rest;
+      }
+    } else {
+      md = rest;
+    }
+  }
+
   const truncate = parseInt(el.getAttribute("data-truncate") || "0", 10);
   if (!Number.isNaN(truncate) && truncate > 0 && md.length > truncate) {
     md = md.slice(0, truncate) + "…";
