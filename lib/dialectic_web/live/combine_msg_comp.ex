@@ -1,4 +1,4 @@
-defmodule DialecticWeb.CombinetMsgComp do
+defmodule DialecticWeb.CombineMsgComp do
   use DialecticWeb, :live_component
   alias DialecticWeb.Live.TextUtils
 
@@ -33,7 +33,7 @@ defmodule DialecticWeb.CombinetMsgComp do
 
       <div class="proposition flex-1 max-w-none">
         <article class="prose prose-stone prose-sm">
-          {case TextUtils.render_content(@node.content || "").title do
+          {case TextUtils.render_content(@node.content || "") |> Map.get(:title) do
             "" -> "Untitled"
             t -> t
           end}
