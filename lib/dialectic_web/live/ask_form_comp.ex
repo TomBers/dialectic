@@ -30,6 +30,7 @@ defmodule DialecticWeb.AskFormComp do
       |> assign_new(:submit_label, fn -> nil end)
       |> assign_new(:input_id, fn -> "global-chat-input" end)
       |> assign_new(:show_hint, fn -> true end)
+      |> assign_new(:in_flight?, fn -> false end)
       |> assign_new(:prompt_mode, fn ->
         gid = assigns[:graph_id]
         mode = if is_binary(gid), do: ModeServer.get_mode(gid), else: :structured

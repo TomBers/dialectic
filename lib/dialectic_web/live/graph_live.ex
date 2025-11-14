@@ -834,9 +834,6 @@ defmodule DialecticWeb.GraphLive do
           # Timer already scheduled; just stage the latest node update.
           assign(socket, :pending_node_update, updated_vertex)
           |> assign(:in_flight?, true)
-          |> then(fn s ->
-            assign(s, :can_edit, s.assigns.graph_struct.is_public and not s.assigns.in_flight?)
-          end)
         else
           # Schedule a flush shortly; stage the latest node update now.
           ms = 120
@@ -846,9 +843,6 @@ defmodule DialecticWeb.GraphLive do
           |> assign(:pending_node_update, updated_vertex)
           |> assign(:render_throttle_ref, new_ref)
           |> assign(:in_flight?, true)
-          |> then(fn s ->
-            assign(s, :can_edit, s.assigns.graph_struct.is_public and not s.assigns.in_flight?)
-          end)
         end
 
       {:noreply, socket}
@@ -906,13 +900,11 @@ defmodule DialecticWeb.GraphLive do
       {:noreply,
        socket
        |> assign(node: updated_vertex)
-       |> assign(:in_flight?, false)
-       |> then(fn s -> assign(s, :can_edit, s.assigns.graph_struct.is_public) end)}
+       |> assign(:in_flight?, false)}
     else
       {:noreply,
        socket
-       |> assign(:in_flight?, false)
-       |> then(fn s -> assign(s, :can_edit, s.assigns.graph_struct.is_public) end)}
+       |> assign(:in_flight?, false)}
     end
   end
 

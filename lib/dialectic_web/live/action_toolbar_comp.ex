@@ -74,7 +74,8 @@ defmodule DialecticWeb.ActionToolbarComp do
      socket
      |> assign(assigns)
      |> assign_new(:inline, fn -> false end)
-     |> assign_new(:icons_only, fn -> false end)}
+     |> assign_new(:icons_only, fn -> false end)
+     |> assign_new(:in_flight?, fn -> false end)}
   end
 
   # Translation helpers

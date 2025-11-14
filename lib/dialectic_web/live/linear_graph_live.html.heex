@@ -107,7 +107,7 @@
               <pre
                 id={"lg-tail-" <> node.id}
                 class="whitespace-pre-wrap font-mono text-sm text-gray-800"
-                phx-no-curly-interpolation
+                phx-no-format
               >
 <%= TextUtils.render_content(node.content || "") |> Map.get(:tail_text) %>
               </pre>

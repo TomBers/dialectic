@@ -197,10 +197,22 @@ defmodule Dialectic.Workers.OpenAIWorker do
         max = min(byte_size(acc), byte_size(chunk))
         min_overlap = 12
 
+        # Recompute an overlap safely and search from largest to smallest to prefer longest match.
+        max_overlap = min(byte_size(acc), byte_size(chunk))
+
         overlap =
-          Enum.find(max..min_overlap, fn k ->
-            String.ends_with?(acc, binary_part(chunk, 0, k))
-          end) || 0
+          if max_overlap < min_overlap do
+            0
+          else
+            min_overlap..max_overlap
+            |> Enum.reverse()
+            |> Enum.find_value(fn k ->
+              # k <= max_overlap <= byte_size(chunk); safe slice
+              prefix = binary_part(chunk, 0, k)
+              if String.ends_with?(acc, prefix), do: k, else: nil
+            end)
+            |> Kernel.||(0)
+          end
 
         if overlap > 0 do
           binary_part(chunk, overlap, byte_size(chunk) - overlap)

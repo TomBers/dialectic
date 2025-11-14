@@ -19,7 +19,9 @@
     "e2e:creative": "playwright test --project=chromium tests/graph-exercise-creative.spec.ts",
     "e2e:creative:headed": "playwright test --project=chromium --headed tests/graph-exercise-creative.spec.ts",
     "e2e:structured:with-server": "start-server-and-test 'mix phx.server' http-get://localhost:4000 'playwright test --project=chromium tests/graph-exercise.spec.ts'",
-    "e2e:creative:with-server": "start-server-and-test 'mix phx.server' http-get://localhost:4000 'playwright test --project=chromium tests/graph-exercise-creative.spec.ts'"
+    "e2e:creative:with-server": "start-server-and-test 'mix phx.server' http-get://localhost:4000 'playwright test --project=chromium tests/graph-exercise-creative.spec.ts'",
+    "e2e:deploy:headed": "playwright test --project=chromium --headed tests/deployment-readiness.spec.ts",
+    "e2e:deploy:ui": "playwright test --ui tests/deployment-readiness.spec.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.48.2",
