@@ -131,27 +131,261 @@ defmodule DialecticWeb.Live.TextUtils do
   end
 
   @doc """
-  Renders the provided content and returns a map with the extracted title and the rendered body HTML.
-  This centralizes the Markdown rendering for the body to a single place.
+  Renders the provided content and returns a map with:
+  - title
+  - body_html: stable rendered markdown + a raw-text tail block (for immediate feedback)
+  - stable_html: only the rendered stable portion
+  - tail_text: the trailing, possibly malformed text (unrendered)
   """
   @spec render_content(String.t() | nil) :: map()
   def render_content(content) do
     p = parse(content)
+    body = p.body || ""
 
-    body_html =
-      if p.body == "" do
-        Phoenix.HTML.raw("")
+    {stable, tail} = split_stable_tail(body)
+
+    stable_html =
+      if stable == "" do
+        ""
       else
-        p.body
-        |> Earmark.as_html!()
-        |> Phoenix.HTML.raw()
+        stable
+        |> strip_forbidden_blocks()
+        |> fix_unclosed_fences()
+        |> fix_unbalanced_emphasis()
+        |> render_markdown_html()
       end
+
+    tail_html =
+      if tail == "" do
+        ""
+      else
+        "<pre class=\"whitespace-pre-wrap font-mono text-sm text-gray-800\">" <>
+          html_escape(tail) <> "</pre>"
+      end
+
+    combined_html = stable_html <> tail_html
 
     # Sanitize title to remove Markdown headings and leading prompt labels from past data
     sanitized_title =
       p.title
       |> String.replace(~r/^\s*#+\s*/, "")
 
-    %{title: sanitized_title, body_html: body_html}
+    %{
+      title: sanitized_title,
+      body_html: Phoenix.HTML.raw(combined_html),
+      stable_html: Phoenix.HTML.raw(stable_html),
+      tail_text: tail
+    }
+  end
+
+  # --- Robust streaming helpers ---
+
+  # Split the buffer into stable and tail so that the stable portion never ends inside an open code fence.
+  # Also prefer to cut the stable portion on a paragraph boundary (double newline) when possible.
+  @doc false
+  defp split_stable_tail(buffer) do
+    buf = to_string(buffer || "")
+
+    if buf == "" do
+      {"", ""}
+    else
+      fence_positions =
+        Regex.scan(~r/```/, buf, return: :index)
+        |> Enum.map(fn [pos] -> elem(pos, 0) end)
+
+      {stable_candidate, tail_after_fence} =
+        if rem(length(fence_positions), 2) == 1 do
+          # Odd number of backtick fences => last is an opening fence; move it (and after) to tail
+          last_open = List.last(fence_positions)
+
+          {binary_part(buf, 0, last_open),
+           binary_part(buf, last_open, byte_size(buf) - last_open)}
+        else
+          {buf, ""}
+        end
+
+      # Prefer splitting stable on the last paragraph boundary to reduce mid-token artifacts.
+      para_matches = :binary.matches(stable_candidate, "\n\n")
+
+      stable_len =
+        case para_matches do
+          [] ->
+            byte_size(stable_candidate)
+
+          list ->
+            {pos, _} = List.last(list)
+            pos + 2
+        end
+
+      stable = binary_part(stable_candidate, 0, stable_len)
+
+      tail =
+        binary_part(stable_candidate, stable_len, byte_size(stable_candidate) - stable_len) <>
+          tail_after_fence
+
+      {stable, tail}
+    end
+  end
+
+  defp render_markdown_html(markdown) do
+    opts = %Earmark.Options{code_class_prefix: "lang-", smartypants: false, escape: true}
+
+    case Earmark.as_html(markdown, opts) do
+      {:ok, html_doc, _warnings} -> html_doc
+      {:error, html_doc, _messages} -> html_doc
+    end
+  end
+
+  # Remove/neutralize constructs we disallow or that often break parsing.
+  defp strip_forbidden_blocks(markdown) do
+    markdown
+    |> strip_tables()
+    |> replace_images()
+    |> remove_inline_html()
+  end
+
+  # Treat lines that look like table rows as plain text.
+  defp strip_tables(markdown) do
+    markdown
+    |> String.split("\n", trim: false)
+    |> Enum.map(fn line ->
+      if String.match?(line, ~r/^\|.*\|/) do
+        "Table row (rendered as text): " <> line
+      else
+        line
+      end
+    end)
+    |> Enum.join("\n")
+  end
+
+  # Replace images like ![alt](url) with a simple placeholder.
+  defp replace_images(markdown) do
+    Regex.replace(~r/!\[[^\]]*\]\([^)]+\)/, markdown, "[image omitted]")
+  end
+
+  # Escape inline HTML tags outside fenced code blocks to prevent raw HTML rendering.
+  defp remove_inline_html(markdown) do
+    {outside, inside} = split_outside_inside_fences(markdown)
+
+    repaired_outside =
+      Enum.map(outside, fn seg ->
+        seg
+        |> String.replace("&", "&amp;")
+        |> String.replace("<", "&lt;")
+        |> String.replace(">", "&gt;")
+      end)
+
+    merge_outside_inside(repaired_outside, inside)
+  end
+
+  # Close unclosed code fences (render-only).
+  defp fix_unclosed_fences(markdown) do
+    fence_count = Regex.scan(~r/```/, markdown) |> length()
+
+    if rem(fence_count, 2) == 1 do
+      markdown <> "\n```"
+    else
+      markdown
+    end
+  end
+
+  # Balance ** and * markers outside fenced code blocks (render-only).
+  defp fix_unbalanced_emphasis(markdown) do
+    {outside, inside} = split_outside_inside_fences(markdown)
+
+    {outside_segments, need_double?, need_single?} =
+      Enum.reduce(outside, {[], false, false}, fn seg, {acc, dbl?, sgl?} ->
+        dbl_imbalance = rem(count(seg, "**"), 2) == 1
+        sgl_imbalance = rem(count(seg, "*") - 2 * count(seg, "**"), 2) == 1
+        {acc ++ [seg], dbl? or dbl_imbalance, sgl? or sgl_imbalance}
+      end)
+
+    outside_segments =
+      if need_double? or need_single? do
+        case outside_segments do
+          [] ->
+            []
+
+          _ ->
+            List.update_at(outside_segments, length(outside_segments) - 1, fn last ->
+              last <>
+                if(need_double?, do: "**", else: "") <>
+                if need_single?, do: "*", else: ""
+            end)
+        end
+      else
+        outside_segments
+      end
+
+    merge_outside_inside(outside_segments, inside)
+  end
+
+  # Split the markdown into alternating outside/inside fenced segments.
+  # Robust to unclosed fences: if the last fence is unclosed, the remainder is
+  # treated as a single inside segment.
+  # Returns {outside_segments, inside_fence_segments}
+  defp split_outside_inside_fences(markdown) do
+    # Split on individual fence lines (``` with optional language), keep delimiters
+    tokens = Regex.split(~r/(^```[^\n]*\n?)/m, markdown, include_captures: true)
+
+    {outside_segments, inside_segments, inside?, current} =
+      Enum.reduce(tokens, {[], [], false, ""}, fn tok, {outs, ins, inside?, cur} ->
+        if String.match?(tok, ~r/^```/m) do
+          if inside? do
+            # Closing fence: include fence and finalize the inside segment
+            seg = cur <> tok
+            {outs, ins ++ [seg], false, ""}
+          else
+            # Opening fence: flush any pending outside, start inside
+            outs =
+              if cur == "" do
+                outs
+              else
+                outs ++ [cur]
+              end
+
+            {outs, ins, true, tok}
+          end
+        else
+          {outs, ins, inside?, cur <> tok}
+        end
+      end)
+
+    {outside_segments, inside_segments} =
+      if inside? do
+        # Unclosed fence: treat the remainder as an inside segment
+        {outside_segments, inside_segments ++ [current]}
+      else
+        # Flush any trailing outside content
+        outs =
+          if current == "" do
+            outside_segments
+          else
+            outside_segments ++ [current]
+          end
+
+        {outs, inside_segments}
+      end
+
+    {outside_segments, inside_segments}
+  end
+
+  defp merge_outside_inside(outside_segments, inside_segments) do
+    Enum.zip(outside_segments, inside_segments ++ [""])
+    |> Enum.flat_map(fn {out, ins} -> [out, ins] end)
+    |> Enum.join("")
+  end
+
+  defp count(haystack, needle) do
+    haystack
+    |> :binary.matches(needle)
+    |> length()
+  end
+
+  defp html_escape(text) do
+    to_string(text || "")
+    |> String.replace("&", "&amp;")
+    |> String.replace("<", "&lt;")
+    |> String.replace(">", "&gt;")
   end
 end

@@ -4,7 +4,12 @@ defmodule DialecticWeb.Live.ModalComp do
   alias DialecticWeb.ColUtils
 
   def update(assigns, socket) do
-    node = Map.get(assigns, :node, %{})
+    node =
+      case Map.get(assigns, :node) do
+        %{} = n -> n
+        _ -> %{}
+      end
+
     parents = Map.get(node, :parents, []) || []
     children = Map.get(node, :children, []) || []
 
@@ -85,11 +90,21 @@ defmodule DialecticWeb.Live.ModalComp do
 
           <article class="prose prose-stone prose-lg md:prose-xl lg:prose-2xl max-w-none selection-content space-y-4 min-h-[50vh]">
             <h2 class="text-xl sm:text-2xl md:text-3xl">
-              {TextUtils.render_content(@node.content || "") |> Map.get(:title)}
+              {TextUtils.render_content(Map.get(@node || %{}, :content, "")) |> Map.get(:title)}
             </h2>
 
             <div class="text-base sm:text-lg">
-              {TextUtils.render_content(@node.content || "") |> Map.get(:body_html)}
+              <div id={"modal-stable-" <> Map.get(@node || %{}, :id, "")} phx-update="replace">
+                {TextUtils.render_content(Map.get(@node || %{}, :content, ""))
+                |> Map.get(:stable_html)}
+              </div>
+              <pre
+                id={"modal-tail-" <> Map.get(@node || %{}, :id, "")}
+                class="whitespace-pre-wrap font-mono text-sm text-gray-800"
+                phx-no-format
+              >
+    <%= TextUtils.render_content(Map.get(@node || %{}, :content, "")) |> Map.get(:tail_text) %>
+              </pre>
             </div>
           </article>
           <!-- Modal selection action button (hidden by default) -->

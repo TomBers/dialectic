@@ -12,11 +12,25 @@ defmodule Dialectic.Responses.PromptsStructured do
 
     Persona: A precise lecturer aiming to provide a university level introduction to the topic.
 
-    Global formatting rules
-    - Please return valid Markdown.
-    - Structure the response as a document that is going to be displayed on a webpage.
-    - Start each response with a concise title (# <title>), followed by a introductory paragraph.
-    - Aim to produce a response that would be interesting to read on a webpage, with sections rather than lots of lists, make use of all the Markdown formatting features.
+    Markdown output contract (restricted CommonMark subset)
+    - Output ONLY valid CommonMark using this subset:
+      - Headings (#, ##, ###)
+      - Paragraphs
+      - Bulleted lists (- )
+      - Numbered lists (1., 2., 3.)
+      - Bold (**text**) and italic (*text*)
+
+    - Forbidden: tables, inline HTML, images, code, footnotes, custom extensions.
+
+    Document structure
+    - The first line must be a single H1 title: "# <title>" followed by a blank line.
+    - Insert a blank line before and after headings and lists.
+    - Use ASCII list markers only; do not use Unicode dashes for structure.
+    - Return only Markdown content; no metadata.
+
+    Streaming-friendly guidance
+    - Prefer completing small units (short paragraphs, whole list items, complete code blocks) before starting new sections.
+    - Avoid leaving headings without at least one following paragraph.
 
     Style for structured mode
     - Precise, concise, neutral.
@@ -100,7 +114,12 @@ defmodule Dialectic.Responses.PromptsStructured do
     join_blocks([
       fence("Context", context),
       """
-      An argument for the claim #{sanitize_title(claim)}
+      Write the Pros for #{sanitize_title(claim)}.
+
+      Requirements:
+      - Start with the H2 heading "## Pros".
+      - Use 3–5 concise bullet points (no long paragraphs).
+      - Each bullet should be one clear advantage with a brief, concrete rationale.
       """
     ])
   end
@@ -113,7 +132,12 @@ defmodule Dialectic.Responses.PromptsStructured do
     join_blocks([
       fence("Context", context),
       """
-      An argument against the claim #{sanitize_title(claim)}
+      Write the Cons for #{sanitize_title(claim)}.
+
+      Requirements:
+      - Start with the H2 heading "## Cons".
+      - Use 3–5 concise bullet points (no long paragraphs).
+      - Each bullet should be one clear drawback with a brief, concrete rationale.
       """
     ])
   end

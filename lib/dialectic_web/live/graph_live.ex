@@ -225,6 +225,7 @@ defmodule DialecticWeb.GraphLive do
        right_panel_open: false,
        bottom_menu_open: true,
        graph_operation: "",
+       in_flight?: false,
        ask_question: true,
        group_states: %{},
        search_term: "",
@@ -824,11 +825,45 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_info({:stream_chunk, updated_vertex, :node_id, node_id}, socket) do
     # This is the streamed LLM response into a node
-
     if socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
-      {:noreply, assign(socket, node: updated_vertex)}
+      # Throttle node assigns to reduce re-renders and heavy Earmark work.
+      ref = socket.assigns[:render_throttle_ref]
+
+      socket =
+        if is_reference(ref) do
+          # Timer already scheduled; just stage the latest node update.
+          assign(socket, :pending_node_update, updated_vertex)
+          |> assign(:in_flight?, true)
+        else
+          # Schedule a flush shortly; stage the latest node update now.
+          ms = 120
+          new_ref = Process.send_after(self(), :flush_node_render, ms)
+
+          socket
+          |> assign(:pending_node_update, updated_vertex)
+          |> assign(:render_throttle_ref, new_ref)
+          |> assign(:in_flight?, true)
+        end
+
+      {:noreply, socket}
     else
       {:noreply, socket}
+    end
+  end
+
+  def handle_info(:flush_node_render, socket) do
+    case socket.assigns[:pending_node_update] do
+      nil ->
+        # Nothing staged; just clear the throttle ref.
+        {:noreply, assign(socket, :render_throttle_ref, nil)}
+
+      updated_vertex ->
+        # Apply the latest staged update and clear staging state.
+        {:noreply,
+         socket
+         |> assign(:node, updated_vertex)
+         |> assign(:pending_node_update, nil)
+         |> assign(:render_throttle_ref, nil)}
     end
   end
 
@@ -841,22 +876,35 @@ defmodule DialecticWeb.GraphLive do
       {:other_user_change, self()}
     )
 
-    update_graph(
-      socket,
-      {nil, GraphActions.find_node(socket.assigns.graph_id, node_id)},
-      "llm_request_complete"
-    )
+    {:noreply, new_socket} =
+      update_graph(
+        socket,
+        {nil, GraphActions.find_node(socket.assigns.graph_id, node_id)},
+        "llm_request_complete"
+      )
+
+    {:noreply,
+     assign(new_socket,
+       in_flight?: false,
+       can_edit: new_socket.assigns.graph_struct.is_public
+     )}
   end
 
   def handle_info({:stream_error, error, :node_id, node_id}, socket) do
     # This is the streamed LLM response into a node
     # TODO - broadcast to all users??? - only want to update the node that is being worked on, just rerender the others
-    updated_vertex = GraphManager.update_vertex(socket.assigns.graph_id, node_id, error)
+    updated_vertex =
+      GraphManager.update_vertex(socket.assigns.graph_id, node_id, error <> "\n\n— [interrupted]")
 
     if socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
-      {:noreply, assign(socket, node: updated_vertex)}
+      {:noreply,
+       socket
+       |> assign(node: updated_vertex)
+       |> assign(:in_flight?, false)}
     else
-      {:noreply, socket}
+      {:noreply,
+       socket
+       |> assign(:in_flight?, false)}
     end
   end
 

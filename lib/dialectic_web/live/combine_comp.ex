@@ -1,7 +1,7 @@
 defmodule DialecticWeb.CombineComp do
   use DialecticWeb, :live_component
 
-  alias DialecticWeb.CombinetMsgComp
+  alias DialecticWeb.CombineMsgComp
 
   def update(assigns, socket) do
     graph_id = assigns[:graph_id] || get_in(assigns, [:graph_struct, :title])
@@ -19,7 +19,7 @@ defmodule DialecticWeb.CombineComp do
     ~H"""
     <div class="node-list">
       <%= for node <- @possible_nodes do %>
-        <.live_component module={CombinetMsgComp} node={node} id={node.id <>"_combine" } />
+        <.live_component module={CombineMsgComp} node={node} id={node.id <>"_combine" } />
       <% end %>
     </div>
     """

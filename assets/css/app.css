@@ -1100,8 +1100,8 @@ button[type="submit"]:active {
     font-size: 0.9em;
 }
 .selection-content pre {
-    background: #0b1020; /* deep slate */
-    color: #e5e7eb;
+    background: white;
+    color: black;
     padding: 0.85rem 1rem;
     border-radius: 10px;
     overflow: auto;

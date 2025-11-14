@@ -8,7 +8,7 @@ defmodule Dialectic.Responses.LlmInterface do
     prompt =
       prompts_for(graph_id).explain(context, node.content)
 
-    log_prompt("explain", graph_id, prompt)
+    # log_prompt("explain", graph_id, prompt)
     ask_model(prompt, child, graph_id, live_view_topic)
   end
 
@@ -18,7 +18,7 @@ defmodule Dialectic.Responses.LlmInterface do
     prompt =
       prompts_for(graph_id).selection(context, selection)
 
-    log_prompt("selection", graph_id, prompt)
+    # log_prompt("selection", graph_id, prompt)
     ask_model(prompt, child, graph_id, live_view_topic)
   end
 
@@ -30,7 +30,7 @@ defmodule Dialectic.Responses.LlmInterface do
     prompt =
       prompts_for(graph_id).synthesis(context1, context2, n1.content, n2.content)
 
-    log_prompt("synthesis", graph_id, prompt)
+    # log_prompt("synthesis", graph_id, prompt)
     ask_model(prompt, child, graph_id, live_view_topic)
   end
 
@@ -40,7 +40,7 @@ defmodule Dialectic.Responses.LlmInterface do
     prompt =
       prompts_for(graph_id).thesis(context, node.content)
 
-    log_prompt("thesis", graph_id, prompt)
+    # log_prompt("thesis", graph_id, prompt)
     ask_model(prompt, child, graph_id, live_view_topic)
   end
 
@@ -50,7 +50,7 @@ defmodule Dialectic.Responses.LlmInterface do
     prompt =
       prompts_for(graph_id).antithesis(context, node.content)
 
-    log_prompt("antithesis", graph_id, prompt)
+    # log_prompt("antithesis", graph_id, prompt)
     ask_model(prompt, child, graph_id, live_view_topic)
   end
 
@@ -60,7 +60,7 @@ defmodule Dialectic.Responses.LlmInterface do
     prompt =
       prompts_for(graph_id).related_ideas(context, node.content)
 
-    log_prompt("related_ideas", graph_id, prompt)
+    # log_prompt("related_ideas", graph_id, prompt)
     ask_model(prompt, child, graph_id, live_view_topic)
   end
 
@@ -70,7 +70,7 @@ defmodule Dialectic.Responses.LlmInterface do
     prompt =
       prompts_for(graph_id).deep_dive(context, node.content)
 
-    log_prompt("deep_dive", graph_id, prompt)
+    # log_prompt("deep_dive", graph_id, prompt)
     ask_model(prompt, child, graph_id, live_view_topic)
   end
 

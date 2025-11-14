@@ -352,7 +352,21 @@ defmodule GraphManager do
   def handle_call({:finalize_node, node_id}, _from, {graph_struct, graph}) do
     case :digraph.vertex(graph, node_id) do
       {_id, vertex} ->
-        {:reply, Vertex.add_relatives(vertex, graph), {graph_struct, graph}}
+        # Ensure any open code fence is closed on finalize, to avoid malformed markdown in saved/printed views
+        safe = to_string(vertex.content || "")
+        fence_count = Regex.scan(~r/```/, safe) |> length()
+        updated_content = if rem(fence_count, 2) == 1, do: safe <> "\n```", else: safe
+
+        updated_vertex =
+          if updated_content != safe do
+            newv = %{vertex | content: updated_content}
+            :digraph.add_vertex(graph, node_id, newv)
+            newv
+          else
+            vertex
+          end
+
+        {:reply, Vertex.add_relatives(updated_vertex, graph), {graph_struct, graph}}
 
       false ->
         {:reply, nil, {graph_struct, graph}}
