@@ -100,7 +100,12 @@ defmodule Dialectic.Responses.PromptsStructured do
     join_blocks([
       fence("Context", context),
       """
-      An argument for the claim #{sanitize_title(claim)}
+      Write the Pros for #{sanitize_title(claim)}.
+
+      Requirements:
+      - Start with the H2 heading "## Pros".
+      - Use 3–5 concise bullet points (no long paragraphs).
+      - Each bullet should be one clear advantage with a brief, concrete rationale.
       """
     ])
   end
@@ -113,7 +118,12 @@ defmodule Dialectic.Responses.PromptsStructured do
     join_blocks([
       fence("Context", context),
       """
-      An argument against the claim #{sanitize_title(claim)}
+      Write the Cons for #{sanitize_title(claim)}.
+
+      Requirements:
+      - Start with the H2 heading "## Cons".
+      - Use 3–5 concise bullet points (no long paragraphs).
+      - Each bullet should be one clear drawback with a brief, concrete rationale.
       """
     ])
   end

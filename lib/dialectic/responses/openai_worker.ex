@@ -21,7 +21,7 @@ defmodule Dialectic.Workers.OpenAIWorker do
 
   @impl Oban.Worker
   def perform(%Oban.Job{
-        id: job_id,
+        id: _job_id,
         attempt: attempt,
         max_attempts: max_attempts,
         args: %{
@@ -31,7 +31,7 @@ defmodule Dialectic.Workers.OpenAIWorker do
           "live_view_topic" => live_view_topic
         }
       }) do
-    Logger.metadata(oban_job_id: job_id, oban_attempt: attempt)
+    # Logger.metadata(oban_job_id: job_id, oban_attempt: attempt)
 
     api_key = fetch_openai_api_key()
 
@@ -58,8 +58,8 @@ defmodule Dialectic.Workers.OpenAIWorker do
         ])
 
       # Debug logging: system + user prompt (truncated)
-      mode = ModeServer.get_mode(graph)
-      {_prov, model_name, _opts} = model_spec
+      _mode = ModeServer.get_mode(graph)
+      {_prov, _model_name, _opts} = model_spec
 
       ## USED for Debugging
       # Logger.debug(fn ->
@@ -111,25 +111,25 @@ defmodule Dialectic.Workers.OpenAIWorker do
           end
 
         {:error, err} ->
-          # Only broadcast an error to the UI on the final attempt; let Oban retry transiently.
-          final? = attempt >= max_attempts
+          reason_msg =
+            case err do
+              %Mint.TransportError{reason: r} -> "Network error (transport): #{inspect(r)}"
+              :empty_stream -> "Model returned an empty stream"
+              _ -> "OpenAI request error: #{inspect(err)}"
+            end
 
-          if final? do
-            reason_msg =
-              case err do
-                %Mint.TransportError{reason: r} -> "Network error (transport): #{inspect(r)}"
-                :empty_stream -> "Model returned an empty stream"
-                _ -> "OpenAI request error: #{inspect(err)}"
-              end
+          attempt_msg = "[attempt #{attempt}/#{max_attempts}] "
 
-            Phoenix.PubSub.broadcast(
-              Dialectic.PubSub,
-              live_view_topic,
-              {:stream_error, reason_msg, :node_id, to_node}
-            )
-          end
+          Phoenix.PubSub.broadcast(
+            Dialectic.PubSub,
+            live_view_topic,
+            {:stream_error, attempt_msg <> reason_msg, :node_id, to_node}
+          )
 
-          Logger.error("OpenAI request error: #{inspect(err)}")
+          Logger.error(
+            "OpenAI request error (attempt #{attempt}/#{max_attempts}): #{inspect(err)}"
+          )
+
           {:error, err}
       end
     end

@@ -851,7 +851,8 @@ defmodule DialecticWeb.GraphLive do
   def handle_info({:stream_error, error, :node_id, node_id}, socket) do
     # This is the streamed LLM response into a node
     # TODO - broadcast to all users??? - only want to update the node that is being worked on, just rerender the others
-    updated_vertex = GraphManager.update_vertex(socket.assigns.graph_id, node_id, error)
+    updated_vertex =
+      GraphManager.update_vertex(socket.assigns.graph_id, node_id, error <> "\n\n— [interrupted]")
 
     if socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
       {:noreply, assign(socket, node: updated_vertex)}
