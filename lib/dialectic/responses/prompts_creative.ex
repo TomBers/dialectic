@@ -112,7 +112,7 @@ defmodule Dialectic.Responses.PromptsCreative do
     join_blocks([
       fence("Context", context),
       """
-      Cons against #{sanitize_title(claim)}
+      Cons for #{sanitize_title(claim)}
       """
     ])
   end

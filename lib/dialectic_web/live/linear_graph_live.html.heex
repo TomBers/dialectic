@@ -91,7 +91,7 @@
                 <span
                   class="leading-5 text-[15px] sm:text-base font-medium text-zinc-900"
                   phx-hook="Markdown"
-                  id={"markdown-title-" <> node.id}
+                  id={"markdown-title-collapsed-#{node.id}"}
                   data-md={node.content || ""}
                   data-title-only="true"
                 >
@@ -100,7 +100,7 @@
                 <span
                   class="leading-5 text-[15px] sm:text-base font-medium text-zinc-800 truncate"
                   phx-hook="Markdown"
-                  id={"markdown-title-collapsed-" <> node.id}
+                  id={"markdown-title-collapsed-#{node.id}"}
                   data-md={node.content || ""}
                   data-title-only="true"
                   data-truncate="80"
@@ -114,7 +114,7 @@
             <article class="prose prose-stone text-[15px] sm:text-base md:prose-lg max-w-none mt-2">
               <div
                 phx-hook="Markdown"
-                id={"markdown-body-" <> node.id}
+                id={"markdown-body-#{node.id}"}
                 data-md={node.content || ""}
                 data-body-only="true"
               >
