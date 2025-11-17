@@ -92,7 +92,7 @@ defmodule Dialectic.Workers.LLMWorker do
              api_key: api_key_val,
              finch_name: finch_name,
              provider_options: provider_options,
-             connect_timeout: connect_timeout,
+             req_http_options: [connect_options: [timeout: connect_timeout]],
              receive_timeout: receive_timeout
            ) do
         {:ok, stream_resp} ->
