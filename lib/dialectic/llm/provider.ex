@@ -34,7 +34,7 @@ defmodule Dialectic.LLM.Provider do
         def model, do: "gemini-2.0-flash-lite"
 
         @impl true
-        def api_key, do: System.get_env("GOOGLE_API_KEY") || System.get_env("GEMINI_API_KEY")
+        def api_key, do: System.get_env("GEMINI_API_KEY")
 
         @impl true
         def provider_options, do: []
