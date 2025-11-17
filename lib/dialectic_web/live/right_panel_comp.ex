@@ -10,9 +10,44 @@ defmodule DialecticWeb.RightPanelComp do
 
   @impl true
   def update(assigns, socket) do
+    node_id =
+      case Map.get(assigns, :node) do
+        %{} = n ->
+          Map.get(n, :id)
+
+        _ ->
+          case Map.get(socket.assigns, :node) do
+            %{} = n -> Map.get(n, :id)
+            _ -> nil
+          end
+      end
+
+    graph_id =
+      case Map.get(assigns, :graph_id) do
+        id when is_binary(id) and id != "" ->
+          id
+
+        _ ->
+          case Map.get(assigns, :graph_struct) do
+            %{} = gs ->
+              Map.get(gs, :title) || Map.get(socket.assigns, :graph_id, "")
+
+            _ ->
+              Map.get(socket.assigns, :graph_id, "")
+          end
+      end
+
+    share_path =
+      if not is_nil(node_id) and node_id != "" and (is_binary(graph_id) and graph_id != "") do
+        "/#{graph_id}?node=#{node_id}"
+      else
+        "/#{graph_id}"
+      end
+
     socket =
       socket
       |> assign(assigns)
+      |> assign(:share_path, share_path)
       |> assign_new(:search_term, fn -> "" end)
       |> assign_new(:search_results, fn -> [] end)
       |> assign_new(:group_states, fn -> %{} end)
@@ -202,14 +237,14 @@ defmodule DialecticWeb.RightPanelComp do
             <span
               class="flex-1 truncate bg-gray-50 border border-gray-200 rounded px-2 py-1 font-mono select-all cursor-pointer"
               title="Shareable URL path"
-              onclick={"navigator.clipboard.writeText('#{unverified_url(@socket, if(@node, do: "/#{@graph_id}?node=#{@node.id}", else: "/#{@graph_id}"))}').then(() => alert('Link copied to clipboard!'))"}
+              onclick={"navigator.clipboard.writeText(window.location.origin + '#{@share_path}').then(() => alert('Link copied to clipboard!'))"}
             >
-              {if @node, do: "/#{@graph_id}?node=#{@node.id}", else: "/#{@graph_id}"}
+              {@share_path}
             </span>
             <button
               class="inline-flex items-center gap-1 text-gray-600 hover:text-gray-800 transition-colors p-1.5 border border-gray-300 rounded"
               title="Copy shareable link"
-              onclick={"navigator.clipboard.writeText('#{unverified_url(@socket, if(@node, do: "/#{@graph_id}?node=#{@node.id}", else: "/#{@graph_id}"))}').then(() => alert('Link copied to clipboard!'))"}
+              onclick={"navigator.clipboard.writeText(window.location.origin + '#{@share_path}').then(() => alert('Link copied to clipboard!'))"}
             >
               <svg
                 width="14"
