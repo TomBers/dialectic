@@ -89,7 +89,6 @@ defmodule Dialectic.Responses.RequestQueue do
       priority: 5,
       max_attempts: 3,
       tags: ["llm", "selection"],
-      queue: :openai_selection,
       unique: [
         fields: [:args, :worker],
         keys: [:graph, :to_node],

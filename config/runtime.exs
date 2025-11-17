@@ -20,6 +20,38 @@ if System.get_env("PHX_SERVER") do
   config :dialectic, DialecticWeb.Endpoint, server: true
 end
 
+if config_env() != :test do
+  # Optionally override LLM queue concurrency at runtime.
+  # Set LLM_MAX_CONCURRENCY to an integer (e.g., 5) to cap :openai_request inflight jobs.
+  llm_conc =
+    case System.get_env("LLM_MAX_CONCURRENCY") do
+      nil ->
+        nil
+
+      "" ->
+        nil
+
+      val ->
+        case Integer.parse(val) do
+          {i, ""} when i > 0 -> i
+          _ -> nil
+        end
+    end
+
+  if llm_conc do
+    oban_cfg = Application.get_env(:dialectic, Oban) || []
+    queues = Keyword.get(oban_cfg, :queues, [])
+
+    new_queues =
+      Enum.map(queues, fn
+        {:openai_request, _} -> {:openai_request, llm_conc}
+        other -> other
+      end)
+
+    config :dialectic, Oban, Keyword.put(oban_cfg, :queues, new_queues)
+  end
+end
+
 if config_env() == :prod do
   database_url =
     System.get_env("DATABASE_URL") ||
