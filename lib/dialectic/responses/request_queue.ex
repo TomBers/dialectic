@@ -1,5 +1,5 @@
 defmodule Dialectic.Responses.RequestQueue do
-  alias Dialectic.Workers.OpenAIWorker
+  alias Dialectic.Workers.LLMWorker
   alias Dialectic.Workers.LocalWorker
   require Logger
 
@@ -19,7 +19,7 @@ defmodule Dialectic.Responses.RequestQueue do
       run_local(params)
     end
   else
-    # Non-test environments use OpenAI
+    # Non-test environments use LLMWorker
     def add(question, to_node, graph, live_view_topic) do
       params = %{
         question: question,
@@ -38,9 +38,9 @@ defmodule Dialectic.Responses.RequestQueue do
         end
 
       if is_selection do
-        run_openai_selection(params)
+        run_llm_selection(params)
       else
-        run_openai(params)
+        run_llm(params)
       end
     end
   end
@@ -61,15 +61,15 @@ defmodule Dialectic.Responses.RequestQueue do
     |> Oban.insert()
   end
 
-  def run_openai(params) do
+  def run_llm(params) do
     %{
       params
-      | module: Dialectic.Workers.OpenAIWorker
+      | module: Dialectic.Workers.LLMWorker
     }
-    |> OpenAIWorker.new(
+    |> LLMWorker.new(
       priority: 0,
       max_attempts: 3,
-      tags: ["openai"],
+      tags: ["llm"],
       unique: [
         fields: [:args, :worker],
         keys: [:graph, :to_node],
@@ -80,15 +80,15 @@ defmodule Dialectic.Responses.RequestQueue do
     |> Oban.insert()
   end
 
-  def run_openai_selection(params) do
+  def run_llm_selection(params) do
     %{
       params
-      | module: Dialectic.Workers.OpenAIWorker
+      | module: Dialectic.Workers.LLMWorker
     }
-    |> OpenAIWorker.new(
+    |> LLMWorker.new(
       priority: 5,
       max_attempts: 3,
-      tags: ["openai", "selection"],
+      tags: ["llm", "selection"],
       queue: :openai_selection,
       unique: [
         fields: [:args, :worker],
