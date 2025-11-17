@@ -202,14 +202,14 @@ defmodule DialecticWeb.RightPanelComp do
             <span
               class="flex-1 truncate bg-gray-50 border border-gray-200 rounded px-2 py-1 font-mono select-all cursor-pointer"
               title="Shareable URL path"
-              onclick={"navigator.clipboard.writeText('#{url(~p"/#{@graph_id}?node=#{@node && @node.id}")}').then(() => alert('Link copied to clipboard!'))"}
+              onclick={"navigator.clipboard.writeText('#{unverified_url(@socket, if(@node, do: "/#{@graph_id}?node=#{@node.id}", else: "/#{@graph_id}"))}').then(() => alert('Link copied to clipboard!'))"}
             >
-              /{@graph_id}?node={@node && @node.id}
+              {if @node, do: "/#{@graph_id}?node=#{@node.id}", else: "/#{@graph_id}"}
             </span>
             <button
               class="inline-flex items-center gap-1 text-gray-600 hover:text-gray-800 transition-colors p-1.5 border border-gray-300 rounded"
               title="Copy shareable link"
-              onclick={"navigator.clipboard.writeText('#{url(~p"/#{@graph_id}?node=#{@node && @node.id}")}').then(() => alert('Link copied to clipboard!'))"}
+              onclick={"navigator.clipboard.writeText('#{unverified_url(@socket, if(@node, do: "/#{@graph_id}?node=#{@node.id}", else: "/#{@graph_id}"))}').then(() => alert('Link copied to clipboard!'))"}
             >
               <svg
                 width="14"

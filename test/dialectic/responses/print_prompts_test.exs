@@ -13,7 +13,7 @@ defmodule Dialectic.Responses.PrintPromptsTest do
   - No assertions are made; it simply outputs each prompt variant.
   """
 
-  alias Dialectic.Responses.{PromptsStructured, PromptsCreative}
+  alias Dialectic.Responses.{Prompts, PromptsStructured, PromptsCreative}
 
   defp io_device do
     # Ensure we bypass ExUnit's IO capture
@@ -56,65 +56,65 @@ defmodule Dialectic.Responses.PrintPromptsTest do
     pos2 = "Convergence guarantees for value-based methods"
 
     explain =
-      PromptsStructured.explain(context_a, topic)
+      Prompts.explain(context_a, topic)
 
     sel_default =
-      PromptsStructured.selection(context_a, selection_text)
+      Prompts.selection(context_a, selection_text)
 
     sel_custom =
-      PromptsStructured.selection(context_a, selection_with_headings)
+      Prompts.selection(context_a, selection_with_headings)
 
     synth =
-      PromptsStructured.synthesis(context_a, context_b, pos1, pos2)
+      Prompts.synthesis(context_a, context_b, pos1, pos2)
 
     thesis =
-      PromptsStructured.thesis(
+      Prompts.thesis(
         context_a,
         "Stochastic policies tend to generalize better in high-variance environments"
       )
 
     antithesis =
-      PromptsStructured.antithesis(
+      Prompts.antithesis(
         context_a,
         "Off-policy methods are always superior to on-policy approaches"
       )
 
     related =
-      PromptsStructured.related_ideas(context_a, "Temporal difference learning")
+      Prompts.related_ideas(context_a, "Temporal difference learning")
 
     deep =
-      PromptsStructured.deep_dive(context_a, "Policy gradient theorem")
+      Prompts.deep_dive(context_a, "Policy gradient theorem")
 
     say("\nLLM Prompt Catalog")
 
     print_prompt("Structured — Explain", explain)
-    print_prompt("Creative — Explain", PromptsCreative.explain(context_a, topic))
+    print_prompt("Creative — Explain", Prompts.explain(context_a, topic))
     print_prompt("Structured — Selection (default schema applied)", sel_default)
 
     print_prompt(
       "Creative — Selection (default schema applied)",
-      PromptsCreative.selection(context_a, selection_text)
+      Prompts.selection(context_a, selection_text)
     )
 
     print_prompt("Structured — Selection (custom headings provided)", sel_custom)
 
     print_prompt(
       "Creative — Selection (custom headings provided)",
-      PromptsCreative.selection(context_a, selection_with_headings)
+      Prompts.selection(context_a, selection_with_headings)
     )
 
     print_prompt("Structured — Synthesis", synth)
 
     print_prompt(
       "Creative — Synthesis",
-      PromptsCreative.synthesis(context_a, context_b, pos1, pos2)
+      Prompts.synthesis(context_a, context_b, pos1, pos2)
     )
 
     print_prompt("Structured — Thesis", thesis)
 
     print_prompt(
       "Creative — Thesis",
-      PromptsCreative.thesis(
+      Prompts.thesis(
         context_a,
         "Stochastic policies tend to generalize better in high-variance environments"
       )
@@ -124,7 +124,7 @@ defmodule Dialectic.Responses.PrintPromptsTest do
 
     print_prompt(
       "Creative — Antithesis",
-      PromptsCreative.antithesis(
+      Prompts.antithesis(
         context_a,
         "Off-policy methods are always superior to on-policy approaches"
       )
@@ -134,14 +134,14 @@ defmodule Dialectic.Responses.PrintPromptsTest do
 
     print_prompt(
       "Creative — Related ideas",
-      PromptsCreative.related_ideas(context_a, "Temporal difference learning")
+      Prompts.related_ideas(context_a, "Temporal difference learning")
     )
 
     print_prompt("Structured — Deep dive", deep)
 
     print_prompt(
       "Creative — Deep dive",
-      PromptsCreative.deep_dive(context_a, "Policy gradient theorem")
+      Prompts.deep_dive(context_a, "Policy gradient theorem")
     )
 
     :ok

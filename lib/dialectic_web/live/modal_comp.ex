@@ -4,7 +4,12 @@ defmodule DialecticWeb.Live.ModalComp do
   alias DialecticWeb.ColUtils
 
   def update(assigns, socket) do
-    node = Map.get(assigns, :node, %{})
+    node =
+      case Map.get(assigns, :node) do
+        %{} = n -> n
+        _ -> %{}
+      end
+
     parents = Map.get(node, :parents, []) || []
     children = Map.get(node, :children, []) || []
 
@@ -99,7 +104,7 @@ defmodule DialecticWeb.Live.ModalComp do
               <span
                 phx-hook="Markdown"
                 id={"markdown-title-" <> @id}
-                data-md={@node.content || ""}
+                data-md={Map.get(@node || %{}, :content, "")}
                 data-title-only="true"
               >
               </span>
@@ -109,7 +114,7 @@ defmodule DialecticWeb.Live.ModalComp do
               <div
                 phx-hook="Markdown"
                 id={"markdown-body-" <> @id}
-                data-md={@node.content || ""}
+                data-md={Map.get(@node || %{}, :content, "")}
                 data-body-only="true"
               >
               </div>

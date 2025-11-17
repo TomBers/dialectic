@@ -6,9 +6,11 @@ defmodule Dialectic.Responses.RequestQueue do
   # Define the implementation based on compile-time environment
   if Mix.env() == :test do
     # Test environment uses local model
-    def add(question, to_node, graph, live_view_topic) do
+    def add(instruction, system_prompt, to_node, graph, live_view_topic) do
       params = %{
-        question: question,
+        instruction: instruction,
+        system_prompt: system_prompt,
+        question: instruction,
         to_node: to_node.id,
         graph: graph,
         module: nil,
@@ -18,11 +20,17 @@ defmodule Dialectic.Responses.RequestQueue do
 
       run_local(params)
     end
+
+    def add(question, to_node, graph, live_view_topic) do
+      add(question, nil, to_node, graph, live_view_topic)
+    end
   else
     # Non-test environments use LLMWorker
-    def add(question, to_node, graph, live_view_topic) do
+    def add(instruction, system_prompt, to_node, graph, live_view_topic) do
       params = %{
-        question: question,
+        instruction: instruction,
+        system_prompt: system_prompt,
+        question: instruction,
         to_node: to_node.id,
         graph: graph,
         module: nil,
@@ -42,6 +50,10 @@ defmodule Dialectic.Responses.RequestQueue do
       else
         run_llm(params)
       end
+    end
+
+    def add(question, to_node, graph, live_view_topic) do
+      add(question, nil, to_node, graph, live_view_topic)
     end
   end
 

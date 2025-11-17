@@ -8,27 +8,27 @@ defmodule DialecticWeb.NodeComp do
         id={"node-menu-" <> @node_id}
         class="flex flex-col relative"
         phx-hook="TextSelectionHook"
-        data-node-id={@node.id}
+        data-node-id={Map.get(@node || %{}, :id, "")}
         style="max-height: 100vh; display: flex; flex-direction: column; padding-bottom: env(safe-area-inset-bottom);"
       >
-        <%= if @node.id == "start" do %>
+        <%= if Map.get(@node || %{}, :id, "") == "start" do %>
           <.live_component module={DialecticWeb.StartTutorialComp} id="start-tutorial" />
         <% else %>
-          <%= if String.length(@node.content) > 0 do %>
+          <%= if String.length(Map.get(@node || %{}, :content, "")) > 0 do %>
             <div
               class="flex-grow overflow-auto scroll-smooth pt-2 pb-10 px-3 sm:px-4 md:px-6"
-              id={"tt-node-" <> @node.id}
+              id={"tt-node-" <> (Map.get(@node || %{}, :id, ""))}
             >
               <div class="summary-content modal-responsive" id={"tt-summary-content-" <> @node.id}>
-                <div id={"node-content-#{@node.id}"} phx-update="replace">
-                  <div id={"node-content-inner-#{@node.id}-#{:erlang.phash2(@node.content || "")}"}>
+                <div id={"node-content-#{Map.get(@node || %{}, :id, "")}"} phx-update="replace">
+                  <div id={"node-content-inner-#{Map.get(@node || %{}, :id, "")}-#{:erlang.phash2(Map.get(@node || %{}, :content, ""))}"}>
                     <article class="prose prose-stone prose-lg md:prose-xl max-w-none w-full prose-headings:mt-0 prose-p:leading-relaxed prose-li:leading-relaxed">
                       <%!-- Client-side Markdown rendering via Markdown hook --%>
                       <h3 class="mt-0 text-lg sm:text-xl md:text-2xl mb-2 sm:mb-3 pb-2 border-b border-gray-200">
                         <span
                           phx-hook="Markdown"
-                          id={"markdown-title-" <> @node.id}
-                          data-md={@node.content || ""}
+                          id={"markdown-title-" <> (Map.get(@node || %{}, :id, ""))}
+                          data-md={Map.get(@node || %{}, :content, "")}
                           data-title-only="true"
                         >
                         </span>
@@ -36,13 +36,13 @@ defmodule DialecticWeb.NodeComp do
                       <div
                         class="selection-content w-full min-w-full text-base sm:text-lg p-2"
                         phx-hook="ListDetection"
-                        data-children={length(@node.children)}
-                        id={"list-detector-" <> @node.id}
+                        data-children={length(Map.get(@node || %{}, :children, []))}
+                        id={"list-detector-" <> (Map.get(@node || %{}, :id, ""))}
                       >
                         <div
                           phx-hook="Markdown"
-                          id={"markdown-body-" <> @node.id}
-                          data-md={@node.content || ""}
+                          id={"markdown-body-" <> (Map.get(@node || %{}, :id, ""))}
+                          data-md={Map.get(@node || %{}, :content, "")}
                           data-body-only="true"
                         >
                         </div>
@@ -94,8 +94,13 @@ defmodule DialecticWeb.NodeComp do
   end
 
   def update(assigns, socket) do
-    node = Map.get(assigns, :node, %{})
-    node_id = Map.get(node, :id)
+    node =
+      case Map.get(assigns, :node) do
+        %{} = n -> n
+        _ -> %{}
+      end
+
+    node_id = Map.get(node, :id, "")
 
     {:ok,
      assign(socket,

@@ -74,12 +74,22 @@ defmodule Dialectic.Workers.LLMWorker do
       {_provider, _model, _opts} = model_spec
 
       # Build a provider-agnostic chat context: system + user
-      system_prompt = get_system_prompt(graph)
+      system_prompt =
+        case Map.get(args, "system_prompt") do
+          s when is_binary(s) and s != "" -> s
+          _ -> get_system_prompt(graph)
+        end
+
+      instruction =
+        case Map.get(args, "instruction") do
+          s when is_binary(s) and s != "" -> s
+          _ -> question
+        end
 
       ctx =
         ReqLLM.Context.new([
           ReqLLM.Context.system(system_prompt),
-          ReqLLM.Context.user(question)
+          ReqLLM.Context.user(instruction)
         ])
 
       {connect_timeout, receive_timeout} = Dialectic.LLM.Provider.timeouts(provider_mod)
