@@ -237,7 +237,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                 />
               </svg>
             <% end %>
-            <span :if={!@icons_only}>{if noted?, do: "Noted", else: "Note"}</span>
+            <span :if={!@icons_only}>{if noted?, do: "Saved", else: "Save"}</span>
           </span>
         </button>
 

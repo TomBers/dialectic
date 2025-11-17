@@ -20,7 +20,7 @@ defmodule DialecticWeb.StartTutorialComp do
   def render(assigns) do
     ~H"""
     <div class="w-full h-full">
-      <article class="prose prose-stone prose-lg md:prose-xl max-w-none px-4 sm:px-6 md:px-8 py-4">
+      <article class="prose prose-stone prose-lg max-w-none px-4 sm:px-6 md:px-8 py-4">
         <h2 class="mb-2">Getting Started:</h2>
 
         <ol class="list-decimal pl-6 space-y-2">
@@ -35,7 +35,7 @@ defmodule DialecticWeb.StartTutorialComp do
           <li>
             Click a node and use the toolbar to add:
             <ul class="list-disc pl-6 mt-1">
-              <li>Note (add to your notes)</li>
+              <li>Save (add to your saved notes)</li>
               <li>Reader (a distraction free view with readability controls)</li>
               <li>Related Ideas (adjacent concepts)</li>
               <li>Pros/Cons (compare arguments)</li>
