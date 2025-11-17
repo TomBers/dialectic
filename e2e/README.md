@@ -4,7 +4,7 @@ This folder contains a lightweight, standalone end‑to‑end (E2E) runner you c
 
 Highlights
 - Uses the actual “Inspire me” button to generate a question via /api/random_question.
-- Submits the Ask form to create a brand new graph and watches real-time LLM streaming (OpenAIWorker).
+- Submits the Ask form to create a brand new graph and watches real-time LLM streaming (LLMWorker).
 - Clicks through key graph actions (Related Ideas, Pros/Cons, Combine, Deep Dive, Explore).
 - Toggles the lock and attempts an action (to surface the “locked” behavior).
 - Opens the Reader and performs node move actions via arrow keys.

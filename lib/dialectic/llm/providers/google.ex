@@ -52,19 +52,15 @@ defmodule Dialectic.LLM.Providers.Google do
     []
   end
 
-  @impl true
   def connect_timeout do
     60_000
   end
 
-  @impl true
   def receive_timeout do
     300_000
   end
 
-  @impl true
   def tags, do: ["google", "gemini"]
 
-  @impl true
   def finch_name, do: Dialectic.Finch
 end

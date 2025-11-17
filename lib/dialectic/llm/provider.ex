@@ -73,23 +73,6 @@ defmodule Dialectic.LLM.Provider do
   @doc "Provider-specific options for ReqLLM. Leave empty list if none."
   @callback provider_options() :: keyword()
 
-  @doc "Optional: Per-provider connect timeout in milliseconds"
-  @callback connect_timeout() :: non_neg_integer()
-
-  @doc "Optional: Per-provider receive timeout in milliseconds"
-  @callback receive_timeout() :: non_neg_integer()
-
-  @doc "Optional: Job tags for metrics or queue tagging"
-  @callback tags() :: [String.t()]
-
-  @doc "Optional: Finch instance name to use for this provider"
-  @callback finch_name() :: atom()
-
-  @optional_callbacks connect_timeout: 0,
-                      receive_timeout: 0,
-                      tags: 0,
-                      finch_name: 0
-
   @default_connect_timeout 60_000
   @default_receive_timeout 300_000
   @default_finch Dialectic.Finch
@@ -112,37 +95,19 @@ defmodule Dialectic.LLM.Provider do
   the optional callbacks.
   """
   @spec timeouts(provider_module()) :: {non_neg_integer(), non_neg_integer()}
-  def timeouts(mod) do
-    connect =
-      if function_exported?(mod, :connect_timeout, 0),
-        do: mod.connect_timeout(),
-        else: @default_connect_timeout
-
-    receive_ =
-      if function_exported?(mod, :receive_timeout, 0),
-        do: mod.receive_timeout(),
-        else: @default_receive_timeout
-
-    {connect, receive_}
-  end
+  def timeouts(_mod), do: {@default_connect_timeout, @default_receive_timeout}
 
   @doc """
   Returns the Finch name for the provider, defaulting to `Dialectic.Finch`.
   """
   @spec finch_name(provider_module()) :: atom()
-  def finch_name(mod) do
-    if function_exported?(mod, :finch_name, 0),
-      do: mod.finch_name(),
-      else: @default_finch
-  end
+  def finch_name(_mod), do: @default_finch
 
   @doc """
   Returns any job tags the provider wishes to attach (or empty list).
   """
   @spec tags(provider_module()) :: [String.t()]
-  def tags(mod) do
-    if function_exported?(mod, :tags, 0), do: mod.tags(), else: []
-  end
+  def tags(_mod), do: []
 
   @doc """
   Returns the API key or raises a descriptive error if missing.
