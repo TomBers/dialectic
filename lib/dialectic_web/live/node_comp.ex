@@ -1,6 +1,5 @@
 defmodule DialecticWeb.NodeComp do
   use DialecticWeb, :live_component
-  alias DialecticWeb.Live.TextUtils
 
   def render(assigns) do
     ~H"""

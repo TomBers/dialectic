@@ -2,7 +2,7 @@ defmodule DialecticWeb.GraphLive do
   use DialecticWeb, :live_view
 
   alias Dialectic.Graph.{Vertex, GraphActions, Siblings}
-  alias DialecticWeb.{CombineComp, NodeComp, StartTutorialComp}
+  alias DialecticWeb.{CombineComp, NodeComp}
   alias Dialectic.DbActions.DbWorker
   alias Dialectic.DbActions.Graphs
   alias DialecticWeb.Utils.UserUtils
@@ -561,6 +561,9 @@ defmodule DialecticWeb.GraphLive do
           end)
 
         case last_result do
+          nil ->
+            {:noreply, socket}
+
           node ->
             {:noreply, updated_socket} = update_graph(socket, {nil, node}, "explain")
 
@@ -570,9 +573,6 @@ defmodule DialecticWeb.GraphLive do
                explore_items: [],
                explore_selected: []
              )}
-
-          _ ->
-            {:noreply, socket}
         end
       end
     end
@@ -891,53 +891,6 @@ defmodule DialecticWeb.GraphLive do
   end
 
   # Search for nodes in the graph based on a search term
-
-  defp search_graph_nodes(graph, search_term) do
-    search_term = String.downcase(search_term)
-
-    # Return empty results if graph is invalid
-    if is_nil(graph) do
-      []
-    else
-      # Process vertices in a more defensive way
-      results =
-        try do
-          Enum.reduce(:digraph.vertices(graph), [], fn vertex_id, acc ->
-            # Get vertex safely
-            vertex_data =
-              case :digraph.vertex(graph, vertex_id) do
-                {^vertex_id, vertex} -> vertex
-                _ -> nil
-              end
-
-            # Only process valid vertices with content
-            if valid_search_node(vertex_data) do
-              # Check if content contains search term
-              if String.contains?(String.downcase(vertex_data.content), search_term) do
-                # Add to results with sorting information
-                exact_match =
-                  if String.downcase(vertex_data.content) == search_term, do: 0, else: 1
-
-                [{exact_match, vertex_data.id, vertex_data} | acc]
-              else
-                acc
-              end
-            else
-              acc
-            end
-          end)
-        rescue
-          # Return empty list on error
-          _ -> []
-        end
-
-      # Sort by relevance and extract just the vertex data
-      results
-      |> Enum.sort()
-      |> Enum.map(fn {_, _, vertex} -> vertex end)
-      |> Enum.take(10)
-    end
-  end
 
   defp valid_search_node(vertex_data) do
     # First ensure we have a vertex_data that's a map
