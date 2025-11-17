@@ -129,7 +129,20 @@ defmodule Dialectic.Responses.PromptsStructured do
     join_blocks([
       fence("Context", context),
       """
-      Related topics to #{sanitize_title(current_idea_title)}.
+      Generate exactly 5 adjacent topics tightly grounded in the Context for #{sanitize_title(current_idea_title)}.
+
+      Requirements:
+      - Each topic must be directly connected to specific concepts or phrases in the Context (no generic or far-reaching items).
+      - For each topic, include a one-sentence rationale that explicitly references the exact terms or claims from the Context that justify the connection.
+      - Avoid duplicates or trivial rephrasings.
+      - Do not introduce topics that aren’t traceable to the Context.
+
+      Output format (markdown bullets):
+      - Topic — rationale referencing Context
+      - Topic — rationale referencing Context
+      - Topic — rationale referencing Context
+      - Topic — rationale referencing Context
+      - Topic — rationale referencing Context
       """
     ])
   end

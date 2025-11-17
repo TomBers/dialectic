@@ -125,7 +125,19 @@ defmodule Dialectic.Responses.PromptsCreative do
     join_blocks([
       fence("Context", context),
       """
-      Related topics to #{sanitize_title(current_idea_title)}, each with a brief rationale.
+      Propose exactly 5 related topics for #{sanitize_title(current_idea_title)} that are clearly adjacent to ideas in the Context.
+
+      Requirements:
+      - Each item must cite concrete phrases/claims from the Context showing why it’s adjacent.
+      - Keep rationales crisp (one sentence), avoid generic links.
+      - No duplication or loose associations.
+
+      Output (markdown bullets):
+      - Topic — rationale citing specific Context phrase(s)
+      - Topic — rationale citing specific Context phrase(s)
+      - Topic — rationale citing specific Context phrase(s)
+      - Topic — rationale citing specific Context phrase(s)
+      - Topic — rationale citing specific Context phrase(s)
       """
     ])
   end

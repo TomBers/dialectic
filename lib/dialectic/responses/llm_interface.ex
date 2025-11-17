@@ -55,7 +55,12 @@ defmodule Dialectic.Responses.LlmInterface do
   end
 
   def gen_related_ideas(node, child, graph_id, live_view_topic) do
-    context = GraphManager.build_context(graph_id, node)
+    base = GraphManager.build_context(graph_id, node)
+
+    context =
+      [base, to_string(node.content || "")]
+      |> Enum.reject(&(&1 == ""))
+      |> Enum.join("\n\n")
 
     prompt =
       prompts_for(graph_id).related_ideas(context, node.content)
