@@ -97,8 +97,8 @@ defmodule Dialectic.Workers.LLMWorker do
            ) do
         {:ok, stream_resp} ->
           # Stream tokens to UI (and persisted vertex content) as they arrive.
-          {_final, appended_len} =
-            Enum.reduce(ReqLLM.StreamResponse.tokens(stream_resp), {"", 0}, fn token, {acc, n} ->
+          appended_len =
+            Enum.reduce(ReqLLM.StreamResponse.tokens(stream_resp), 0, fn token, n ->
               chunk =
                 cond do
                   is_binary(token) -> token
@@ -106,13 +106,11 @@ defmodule Dialectic.Workers.LLMWorker do
                   true -> to_string(token)
                 end
 
-              to_emit = diff_suffix(acc, chunk)
-
-              if to_emit != "" do
-                Utils.process_chunk(graph, to_node, to_emit, __MODULE__, live_view_topic)
+              if chunk != "" do
+                Utils.process_chunk(graph, to_node, chunk, __MODULE__, live_view_topic)
               end
 
-              {acc <> to_emit, n + byte_size(to_emit)}
+              n + byte_size(chunk)
             end)
 
           if appended_len > 0 do
@@ -157,22 +155,6 @@ defmodule Dialectic.Workers.LLMWorker do
   end
 
   # -- Internals ----------------------------------------------------------------
-
-  # Compute only the unseen suffix of `chunk` relative to what we've already emitted in `acc`.
-  # Handles both incremental token streams and cumulative "full text so far" streams,
-  # and is robust to small prefix/suffix overlaps between chunks.
-  defp diff_suffix("", chunk) when is_binary(chunk), do: chunk
-
-  defp diff_suffix(acc, chunk) when is_binary(acc) and is_binary(chunk) do
-    max = min(byte_size(acc), byte_size(chunk))
-
-    overlap =
-      Enum.find(Range.new(max, 0, -1), fn k ->
-        String.ends_with?(acc, binary_part(chunk, 0, k))
-      end) || 0
-
-    binary_part(chunk, overlap, byte_size(chunk) - overlap)
-  end
 
   defp get_system_prompt(graph_id) do
     case ModeServer.get_mode(graph_id) do
