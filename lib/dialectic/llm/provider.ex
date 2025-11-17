@@ -1,21 +1,28 @@
 defmodule Dialectic.LLM.Provider do
   @moduledoc """
-  Behaviour and minimal helpers for provider-specific LLM configuration.
+  Behaviour and helpers for provider-specific LLM configuration (kept minimal).
 
-  Implement this behaviour for each provider (e.g., OpenAI, Google/Gemini, Anthropic)
-  so the core streaming code remains provider-agnostic. A provider module encapsulates:
-    - provider identifier (e.g., `:openai`, `:google`)
-    - model name (string)
-    - API key retrieval
-    - provider-specific options for ReqLLM (`provider_options/0`)
-    - optional timeouts and Finch name
+  Goals:
+  - Keep the streaming pipeline provider-agnostic.
+  - Allow very simple providers that hardcode sensible defaults.
+  - Keep configurability optional and incremental.
 
-  The core streaming pipeline can then depend on this behaviour to:
-    - construct a `model_spec/1` tuple {:provider, model, []}
-    - fetch the API key
-    - derive provider-specific options without branching logic
+  Providers should implement:
+    - `id/0` — provider identifier (e.g., `:openai`, `:google`)
+    - `model/0` — model name (string)
+    - `api_key/0` — API key value or `nil` if not configured
+    - `provider_options/0` — keyword list for ReqLLM provider options (often `[]`)
 
-  Example:
+  Optional callbacks (the worker uses sensible defaults if not implemented):
+    - `connect_timeout/0` (defaults to 60_000 ms)
+    - `receive_timeout/0` (defaults to 300_000 ms)
+    - `tags/0` (defaults to `[]`)
+    - `finch_name/0` (defaults to `Dialectic.Finch`)
+
+  Note: For now we intentionally keep providers simple — it's fine to hardcode model
+  names and options. Add environment-driven configuration only when you need it.
+
+  Minimal example:
 
       defmodule Dialectic.LLM.Providers.Google do
         @behaviour Dialectic.LLM.Provider
@@ -24,37 +31,18 @@ defmodule Dialectic.LLM.Provider do
         def id, do: :google
 
         @impl true
-        def model, do: System.get_env("GOOGLE_MODEL") || "gemini-1.5-flash"
+        def model, do: "gemini-2.0-flash-lite"
 
         @impl true
         def api_key, do: System.get_env("GOOGLE_API_KEY") || System.get_env("GEMINI_API_KEY")
 
         @impl true
-        def provider_options do
-          base = []
+        def provider_options, do: []
 
-          base =
-            if System.get_env("GOOGLE_GROUNDING_ENABLE") in ["1", "true", "TRUE"] do
-              Keyword.put(base, :google_grounding, %{enable: true})
-            else
-              base
-            end
-
-          base =
-            case System.get_env("GOOGLE_API_VERSION") do
-              "v1beta" -> Keyword.put(base, :google_api_version, "v1beta")
-              "v1" -> Keyword.put(base, :google_api_version, "v1")
-              _ -> base
-            end
-
-          base
-        end
-
-        # Optional callbacks
-        def tags, do: ["google", "gemini"]
+        # Optional overrides are not required; defaults will be used.
       end
 
-  The core worker could then call:
+  Worker usage:
 
       mod = Dialectic.LLM.Providers.Google
       spec = Dialectic.LLM.Provider.model_spec(mod)
@@ -62,7 +50,6 @@ defmodule Dialectic.LLM.Provider do
       provider_opts = mod.provider_options()
       {connect_to, recv_to} = Dialectic.LLM.Provider.timeouts(mod)
       finch = Dialectic.LLM.Provider.finch_name(mod)
-
   """
 
   @typedoc "Provider identifier used by ReqLLM (e.g., :openai, :google, :anthropic, :deepseek)"

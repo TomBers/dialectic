@@ -21,11 +21,11 @@ defmodule Dialectic.Workers.LLMWorker do
 
   Notes:
     - This module is designed to replace the previous OpenAI-specific worker.
-    - It reuses the same queue name (`:openai_request`) to minimize config changes.
+    - Uses a generic queue name (`:llm_request`) shared by all providers.
   """
 
-  # Keep queue name and settings so it can drop-in replace OpenAIWorker without router/config changes.
-  use Oban.Worker, queue: :openai_request, max_attempts: 5, priority: 0
+  # Use a generic LLM queue shared by all providers.
+  use Oban.Worker, queue: :llm_request, max_attempts: 5, priority: 0
 
   require Logger
 
@@ -90,8 +90,9 @@ defmodule Dialectic.Workers.LLMWorker do
              model_spec,
              ctx,
              api_key: api_key_val,
-             req_http_options: [finch: finch_name],
+             finch_name: finch_name,
              provider_options: provider_options,
+             connect_timeout: connect_timeout,
              receive_timeout: receive_timeout
            ) do
         {:ok, stream_resp} ->

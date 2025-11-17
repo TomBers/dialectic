@@ -6,7 +6,7 @@ defmodule Dialectic.Workers.OpenAIWorker do
   to the provider-agnostic LLMWorker with provider set to "openai".
   """
 
-  use Oban.Worker, queue: :openai_request, max_attempts: 5, priority: 0
+  use Oban.Worker, queue: :llm_request, max_attempts: 5, priority: 0
 
   # -- Oban Perform Callback ----------------------------------------------------
 
