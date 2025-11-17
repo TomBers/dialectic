@@ -117,15 +117,4 @@ defmodule Dialectic.Responses.LlmInterface do
       live_view_topic
     )
   end
-
-  def ask_model(question, to_node, graph_id, live_view_topic) do
-    # Backward-compatible wrapper for tests and legacy callers
-    RequestQueue.add(
-      question,
-      nil,
-      to_node,
-      graph_id,
-      live_view_topic
-    )
-  end
 end

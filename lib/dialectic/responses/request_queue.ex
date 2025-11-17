@@ -20,10 +20,6 @@ defmodule Dialectic.Responses.RequestQueue do
 
       run_local(params)
     end
-
-    def add(question, to_node, graph, live_view_topic) do
-      add(question, nil, to_node, graph, live_view_topic)
-    end
   else
     # Non-test environments use LLMWorker
     def add(instruction, system_prompt, to_node, graph, live_view_topic) do
@@ -38,22 +34,7 @@ defmodule Dialectic.Responses.RequestQueue do
         queued_at_ms: System.system_time(:millisecond)
       }
 
-      # Route selection responses to lower-priority path when class is "explain"
-      is_selection =
-        case to_node do
-          %{} = node -> Map.get(node, :class) == "explain"
-          _ -> false
-        end
-
-      if is_selection do
-        run_llm_selection(params)
-      else
-        run_llm(params)
-      end
-    end
-
-    def add(question, to_node, graph, live_view_topic) do
-      add(question, nil, to_node, graph, live_view_topic)
+      run_llm(params)
     end
   end
 
@@ -82,25 +63,6 @@ defmodule Dialectic.Responses.RequestQueue do
       priority: 0,
       max_attempts: 3,
       tags: ["llm"],
-      unique: [
-        fields: [:args, :worker],
-        keys: [:graph, :to_node],
-        period: 60,
-        states: [:available, :scheduled, :executing, :retryable]
-      ]
-    )
-    |> Oban.insert()
-  end
-
-  def run_llm_selection(params) do
-    %{
-      params
-      | module: Dialectic.Workers.LLMWorker
-    }
-    |> LLMWorker.new(
-      priority: 5,
-      max_attempts: 3,
-      tags: ["llm", "selection"],
       unique: [
         fields: [:args, :worker],
         keys: [:graph, :to_node],
