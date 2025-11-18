@@ -21,7 +21,14 @@ defmodule DialecticWeb.NodeComp do
             >
               <div class="summary-content modal-responsive" id={"tt-summary-content-" <> @node.id}>
                 <div id={"node-content-#{@node.id}"} phx-update="replace">
-                  <div id={"node-content-inner-#{@node.id}-#{@content_hash}"}>
+                  <div
+                    id={"node-content-inner-#{@node.id}-#{@content_hash}"}
+                    class="transition-colors"
+                    phx-mounted={
+                      JS.add_class("bg-amber-50")
+                      |> JS.remove_class("bg-amber-50", time: 250)
+                    }
+                  >
                     <article class="prose prose-stone prose-lg md:prose-xl max-w-none w-full prose-headings:mt-0 prose-p:leading-relaxed prose-li:leading-relaxed">
                       <%!-- Client-side Markdown rendering via Markdown hook --%>
                       <h3 class="mt-0 text-lg sm:text-xl md:text-2xl mb-2 sm:mb-3 pb-2 border-b border-gray-200">
