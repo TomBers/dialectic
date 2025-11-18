@@ -108,7 +108,7 @@ defmodule DialecticWeb.NodeComp do
       |> Map.put_new(:children, [])
 
     node_id = Map.get(node, :id, "")
-    content_hash = :erlang.phash2(Map.get(node, :content, "") || "")
+    content_hash = :erlang.phash2(Map.get(node, :content, ""))
 
     {:ok,
      assign(socket,

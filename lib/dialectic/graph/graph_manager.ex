@@ -487,6 +487,8 @@ defmodule GraphManager do
 
         # Create the group and assign children (safe server-side mutation)
         _ = create_group(path, "Main", child_ids)
+        # Persist immediately so the new group isn't lost until a later save
+        Dialectic.DbActions.DbWorker.save_graph(path)
         :ok
     end
   end
