@@ -110,53 +110,6 @@ defmodule GraphManager do
     {:reply, :digraph.new(), {graph_struct, :digraph.new()}}
   end
 
-  # -------- Safe public query APIs (avoid exposing raw digraph ETS handles) --------
-
-  # Returns the vertex label (payload map) for a node_id or nil if not found
-  def vertex_label(path, node_id) do
-    GenServer.call(via_tuple(path), {:vertex_label, node_id})
-  end
-
-  # Returns list of out-neighbour ids for a given node_id
-  def out_neighbours(path, node_id) do
-    GenServer.call(via_tuple(path), {:out_neighbours, node_id})
-  end
-
-  # Returns list of in-neighbour ids for a given node_id
-  def in_neighbours(path, node_id) do
-    GenServer.call(via_tuple(path), {:in_neighbours, node_id})
-  end
-
-  # Returns list of all vertex ids in the graph
-  def vertices(path) do
-    GenServer.call(via_tuple(path), :vertices)
-  end
-
-  # Convenience: does node have a child with the given class?
-  def has_child_with_class(path, node_id, class) do
-    GenServer.call(via_tuple(path), {:has_child_with_class, node_id, class})
-  end
-
-  # Server-side formatting of the graph as JSON for the UI (Cytoscape format)
-  def format_graph_json(path) do
-    GenServer.call(via_tuple(path), :format_graph_json)
-  end
-
-  # Helper telemetry/logging for digraph errors
-  defp telemetry_error(op, tags) do
-    :telemetry.execute([:dialectic, :graph, :error], %{count: 1}, Map.merge(%{op: op}, tags))
-  end
-
-  defp log_digraph_error(op, node_id, error, stack) do
-    telemetry_error(op, %{node_id: node_id})
-
-    Logger.error("""
-    digraph error
-    op=#{inspect(op)} node_id=#{inspect(node_id)}
-    error=#{Exception.format(:error, error, stack)}
-    """)
-  end
-
   # -------- Safe query handle_call implementations --------
 
   def handle_call({:vertex_label, node_id}, _from, {graph_struct, graph}) do
@@ -361,6 +314,53 @@ defmodule GraphManager do
 
   def handle_call(:find_leaf_nodes, _, {graph_struct, graph}) do
     {:reply, Vertex.find_leaf_nodes(graph), {graph_struct, graph}}
+  end
+
+  # -------- Safe public query APIs (avoid exposing raw digraph ETS handles) --------
+
+  # Returns the vertex label (payload map) for a node_id or nil if not found
+  def vertex_label(path, node_id) do
+    GenServer.call(via_tuple(path), {:vertex_label, node_id})
+  end
+
+  # Returns list of out-neighbour ids for a given node_id
+  def out_neighbours(path, node_id) do
+    GenServer.call(via_tuple(path), {:out_neighbours, node_id})
+  end
+
+  # Returns list of in-neighbour ids for a given node_id
+  def in_neighbours(path, node_id) do
+    GenServer.call(via_tuple(path), {:in_neighbours, node_id})
+  end
+
+  # Returns list of all vertex ids in the graph
+  def vertices(path) do
+    GenServer.call(via_tuple(path), :vertices)
+  end
+
+  # Convenience: does node have a child with the given class?
+  def has_child_with_class(path, node_id, class) do
+    GenServer.call(via_tuple(path), {:has_child_with_class, node_id, class})
+  end
+
+  # Server-side formatting of the graph as JSON for the UI (Cytoscape format)
+  def format_graph_json(path) do
+    GenServer.call(via_tuple(path), :format_graph_json)
+  end
+
+  # Helper telemetry/logging for digraph errors
+  defp telemetry_error(op, tags) do
+    :telemetry.execute([:dialectic, :graph, :error], %{count: 1}, Map.merge(%{op: op}, tags))
+  end
+
+  defp log_digraph_error(op, node_id, error, stack) do
+    telemetry_error(op, %{node_id: node_id})
+
+    Logger.error("""
+    digraph error
+    op=#{inspect(op)} node_id=#{inspect(node_id)}
+    error=#{Exception.format(:error, error, stack)}
+    """)
   end
 
   # Client API

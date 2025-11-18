@@ -125,7 +125,7 @@ defmodule GraphManagerTest do
         GraphManager.add_child(
           @graph_id,
           [parent],
-          fn n -> LlmInterface.ask_model("child content", n, @graph_id, nil) end,
+          fn n -> LlmInterface.ask_model("child content", "SYSTEM", n, @graph_id, nil) end,
           "child_class",
           @test_user
         )
@@ -162,7 +162,7 @@ defmodule GraphManagerTest do
         GraphManager.add_child(
           @graph_id,
           [parent],
-          fn n -> LlmInterface.ask_model("child content", n, @graph_id, nil) end,
+          fn n -> LlmInterface.ask_model("child content", "SYSTEM", n, @graph_id, nil) end,
           "child_class",
           @test_user
         )
@@ -202,7 +202,7 @@ defmodule GraphManagerTest do
         GraphManager.add_child(
           @graph_id,
           [parent],
-          fn n -> LlmInterface.ask_model("child content", n, @graph_id, nil) end,
+          fn n -> LlmInterface.ask_model("child content", "SYSTEM", n, @graph_id, nil) end,
           "test",
           @test_user
         )
@@ -211,7 +211,7 @@ defmodule GraphManagerTest do
         GraphManager.add_child(
           @graph_id,
           [parent],
-          fn n -> LlmInterface.ask_model("child content", n, @graph_id, nil) end,
+          fn n -> LlmInterface.ask_model("child content", "SYSTEM", n, @graph_id, nil) end,
           "test",
           @test_user
         )

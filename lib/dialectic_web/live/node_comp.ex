@@ -1,6 +1,5 @@
 defmodule DialecticWeb.NodeComp do
   use DialecticWeb, :live_component
-  alias DialecticWeb.Live.TextUtils
 
   def render(assigns) do
     ~H"""
@@ -95,8 +94,20 @@ defmodule DialecticWeb.NodeComp do
   end
 
   def update(assigns, socket) do
-    node = Map.get(assigns, :node, %{})
-    node_id = Map.get(node, :id)
+    base_node =
+      case Map.get(assigns, :node) do
+        %{} = n -> n
+        _ -> %{}
+      end
+
+    # Normalize required fields so template can use @node.id/content/children directly
+    node =
+      base_node
+      |> Map.put_new(:id, "")
+      |> Map.put_new(:content, "")
+      |> Map.put_new(:children, [])
+
+    node_id = Map.get(node, :id, "")
 
     {:ok,
      assign(socket,

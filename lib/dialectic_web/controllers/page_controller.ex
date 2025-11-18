@@ -83,7 +83,12 @@ defmodule DialecticWeb.PageController do
   end
 
   def deploy_dashboard(conn, _params) do
-    keys = ["ANTHROPIC_API_KEY", "DEEPSEEK_API_KEY", "GEMINI_API_KEY", "OPENAI_API_KEY"]
+    keys = [
+      "ANTHROPIC_API_KEY",
+      "DEEPSEEK_API_KEY",
+      "GEMINI_API_KEY",
+      "OPENAI_API_KEY"
+    ]
 
     seeds = Dialectic.DbActions.Init.seed()
     render(conn, :deploy_dashboard, seeds: seeds, keys: Enum.map(keys, &check_key(&1)))
