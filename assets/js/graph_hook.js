@@ -136,7 +136,7 @@ const ensureVisible = (cy, container, nodeId) => {
       return;
     }
 
-    const n = cy.$(`#${nodeId}`);
+    const n = cy.getElementById(nodeId);
     if (!n || n.length === 0) return;
 
     const rect = container.getBoundingClientRect();
@@ -243,7 +243,7 @@ const graphHook = {
     this._container = container;
     this._centerOnNodeVisible = (id) => {
       try {
-        const n = this.cy.$(`#${id}`);
+        const n = this.cy.getElementById(id);
         if (!n || n.length === 0) return;
 
         const rect = this._container.getBoundingClientRect();
@@ -311,7 +311,7 @@ const graphHook = {
           ? Math.min(rect.width, Math.max(0, rect.right - pr.left))
           : 0;
 
-        const n = this.cy.$(`#${currentId}`);
+        const n = this.cy.getElementById(currentId);
         if (!n || n.length === 0) return;
 
         const zoom = this.cy.zoom();
@@ -480,12 +480,28 @@ const graphHook = {
     }
     this._bindPngButtons();
 
+    // Handle incremental label updates for streaming titles without full graph reloads
+    this.handleEvent("update_node_label", ({ id, label }) => {
+      try {
+        if (!id) return;
+        const n =
+          this.cy && typeof this.cy.getElementById === "function"
+            ? this.cy.getElementById(id)
+            : null;
+        if (!n || n.length === 0) return;
+        // Override label style for this node; does not mutate underlying data
+        n.style("label", String(label || ""));
+      } catch (_e) {
+        // no-op
+      }
+    });
+
     // Listen for the center_node event from LiveView
     this.handleEvent("center_node", ({ id }) => {
       try {
         // Update selected highlighting to reflect the newly selected node
         this.cy.elements().removeClass("selected");
-        const nodeToCenter = this.cy.$(`#${id}`);
+        const nodeToCenter = this.cy.getElementById(id);
         if (nodeToCenter.length > 0) {
           nodeToCenter.addClass("selected");
 
@@ -607,23 +623,23 @@ const graphHook = {
     const sameGraph = this._lastGraphStr === graphStr;
     if (!sameGraph) this._lastGraphStr = graphStr;
 
-    if (this.cy && typeof this.cy.startBatch === "function")
-      this.cy.startBatch();
-    if (this.cy && typeof this.cy.scratch === "function") {
-      try {
-        this.cy.scratch("_bulkReload", true);
-      } catch (_e) {}
-    }
     if (!sameGraph) {
+      if (this.cy && typeof this.cy.startBatch === "function")
+        this.cy.startBatch();
+      if (this.cy && typeof this.cy.scratch === "function") {
+        try {
+          this.cy.scratch("_bulkReload", true);
+        } catch (_e) {}
+      }
       this.cy.json({ elements: JSON.parse(graphStr) });
-    }
-    if (this.cy && typeof this.cy.scratch === "function") {
-      try {
-        this.cy.scratch("_bulkReload", null);
-      } catch (_e) {}
-    }
-    if (typeof this.cy.enforceCollapsedState === "function") {
-      this.cy.enforceCollapsedState();
+      if (this.cy && typeof this.cy.scratch === "function") {
+        try {
+          this.cy.scratch("_bulkReload", null);
+        } catch (_e) {}
+      }
+      if (typeof this.cy.enforceCollapsedState === "function") {
+        this.cy.enforceCollapsedState();
+      }
     }
     // Defer endBatch until after layout starts or after the no-layout path below
 
@@ -714,7 +730,7 @@ const graphHook = {
     if (!layoutScheduled && this.cy && typeof this.cy.endBatch === "function")
       this.cy.endBatch();
     this.cy.elements().removeClass("selected");
-    this.cy.$(`#${node}`).addClass("selected");
+    this.cy.getElementById(node).addClass("selected");
 
     // Bind Explore button to always open modal; gather items on demand
     const ensureExploreBound = () => {
