@@ -14,7 +14,7 @@ defmodule Dialectic.LLM.Providers.OpenAI do
   def id, do: :openai
 
   @impl true
-  def model, do: "gpt-5-nano"
+  def model, do: "gpt-5.1-chat-latest"
 
   @impl true
   def api_key, do: System.get_env("OPENAI_API_KEY")
@@ -22,7 +22,6 @@ defmodule Dialectic.LLM.Providers.OpenAI do
   @impl true
   def provider_options do
     [
-      reasoning_effort: :minimal,
       openai_parallel_tool_calls: false
     ]
   end
