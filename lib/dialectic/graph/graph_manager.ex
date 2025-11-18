@@ -398,8 +398,8 @@ defmodule GraphManager do
     parent_group =
       parents
       |> Enum.find_value(nil, fn parent ->
-        case :digraph.vertex(get_graph(graph_id) |> elem(1), parent.id) do
-          {_id, vertex} -> Map.get(vertex, :parent)
+        case vertex_label(graph_id, parent.id) do
+          %{} = v -> Map.get(v, :parent)
           _ -> nil
         end
       end)
@@ -463,5 +463,61 @@ defmodule GraphManager do
 
   def find_leaf_nodes(path) do
     GenServer.call(via_tuple(path), :find_leaf_nodes)
+  end
+
+  # Ensure a "Main" compound group exists and contains all top-level nodes.
+  # Operates via GenServer calls only; does not return or rely on digraph handles.
+  def ensure_main_group(path) do
+    case vertex_label(path, "Main") do
+      %{} ->
+        :ok
+
+      _ ->
+        child_ids =
+          vertices(path)
+          |> Enum.filter(fn vid ->
+            case vertex_label(path, vid) do
+              %{} = v ->
+                Map.get(v, :compound, false) != true and is_nil(Map.get(v, :parent))
+
+              _ ->
+                false
+            end
+          end)
+
+        # Create the group and assign children (safe server-side mutation)
+        _ = create_group(path, "Main", child_ids)
+        :ok
+    end
+  end
+
+  # Returns a robust "best" node to render:
+  # - try desired_id
+  # - else try "1"
+  # - else first non-deleted vertex
+  # - else nil
+  def best_node(path, desired_id) do
+    with nil <- find_node_by_id(path, desired_id),
+         nil <- find_node_by_id(path, "1") do
+      fallback_id =
+        vertices(path)
+        |> Enum.find_value(fn vid ->
+          case vertex_label(path, vid) do
+            %{} = v ->
+              if not Map.get(v, :deleted, false), do: v.id, else: nil
+
+            _ ->
+              nil
+          end
+        end)
+
+      if is_binary(fallback_id) do
+        find_node_by_id(path, fallback_id)
+      else
+        nil
+      end
+    else
+      node -> node
+    end
   end
 end

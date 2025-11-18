@@ -86,20 +86,13 @@ defmodule DialecticWeb.GraphLive do
             # Continue with the normal flow
 
             # Ensure a main group exists to make root togglable
-            graph = ensure_main_group(graph_id, graph)
+            _ = ensure_main_group(graph_id)
 
             # Handle case when the node might not exist
             node =
-              case :digraph.vertex(graph, node_id) do
-                {_, vertex} ->
-                  Vertex.add_relatives(vertex, graph)
-
-                _ ->
-                  # Default to node "1" if specified node doesn't exist
-                  case :digraph.vertex(graph, "1") do
-                    {_, default_vertex} -> Vertex.add_relatives(default_vertex, graph)
-                    _ -> default_node()
-                  end
+              case GraphManager.best_node(graph_id, node_id) do
+                nil -> default_node()
+                v -> v
               end
 
             changeset = GraphActions.create_new_node(user) |> Vertex.changeset()
@@ -467,20 +460,22 @@ defmodule DialecticWeb.GraphLive do
                   GraphActions.delete_node(graph_action_params(socket), node_id)
 
                 DbWorker.save_graph(socket.assigns.graph_id)
-                {_, graph2} = GraphManager.get_graph(socket.assigns.graph_id)
+                {_, _graph2} = GraphManager.get_graph(socket.assigns.graph_id)
 
                 # Ensure we navigate to a valid, non-deleted node.
                 # If no parent exists or it's invalid/deleted, pick the first non-deleted node in the graph.
                 selected_node =
                   cond do
                     is_map(next_node) and not Map.get(next_node, :deleted, false) ->
-                      Vertex.add_relatives(next_node, graph2)
+                      # Resolve via manager to ensure relatives and current graph state
+                      GraphActions.find_node(socket.assigns.graph_id, next_node.id)
 
                     true ->
                       fallback =
-                        Enum.find_value(:digraph.vertices(graph2), fn vid ->
-                          case :digraph.vertex(graph2, vid) do
-                            {^vid, v} ->
+                        GraphManager.vertices(socket.assigns.graph_id)
+                        |> Enum.find_value(fn vid ->
+                          case GraphManager.vertex_label(socket.assigns.graph_id, vid) do
+                            %{} = v ->
                               if not Map.get(v, :deleted, false), do: v, else: nil
 
                             _ ->
@@ -489,7 +484,7 @@ defmodule DialecticWeb.GraphLive do
                         end)
 
                       if fallback do
-                        Vertex.add_relatives(fallback, graph2)
+                        GraphActions.find_node(socket.assigns.graph_id, fallback.id)
                       else
                         default_node()
                       end
@@ -1035,35 +1030,8 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  defp ensure_main_group(graph_id, graph) do
-    try do
-      # If a Main compound group exists, do nothing
-      case GraphManager.vertex_label(graph_id, "Main") do
-        %{} ->
-          graph
-
-        _ ->
-          # Collect all top-level nodes (non-compound and no parent)
-          child_ids =
-            GraphManager.vertices(graph_id)
-            |> Enum.filter(fn vid ->
-              case GraphManager.vertex_label(graph_id, vid) do
-                %{} = v ->
-                  Map.get(v, :compound, false) != true and is_nil(Map.get(v, :parent))
-
-                _ ->
-                  false
-              end
-            end)
-
-          # Create the Main group and assign children
-          updated = GraphManager.create_group(graph_id, "Main", child_ids)
-          DbWorker.save_graph(graph_id)
-          updated
-      end
-    rescue
-      _ -> graph
-    end
+  defp ensure_main_group(graph_id) do
+    GraphManager.ensure_main_group(graph_id)
   end
 
   def update_graph(socket, {_graph, node}, operation) do
