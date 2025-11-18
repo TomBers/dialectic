@@ -21,13 +21,13 @@ defmodule DialecticWeb.NodeComp do
             >
               <div class="summary-content modal-responsive" id={"tt-summary-content-" <> @node.id}>
                 <div id={"node-content-#{@node.id}"} phx-update="replace">
-                  <div id={"node-content-inner-#{@node.id}-#{:erlang.phash2(@node.content || "")}"}>
+                  <div id={"node-content-inner-#{@node.id}-#{@content_hash}"}>
                     <article class="prose prose-stone prose-lg md:prose-xl max-w-none w-full prose-headings:mt-0 prose-p:leading-relaxed prose-li:leading-relaxed">
                       <%!-- Client-side Markdown rendering via Markdown hook --%>
                       <h3 class="mt-0 text-lg sm:text-xl md:text-2xl mb-2 sm:mb-3 pb-2 border-b border-gray-200">
                         <span
                           phx-hook="Markdown"
-                          id={"markdown-title-#{@node.id}-#{:erlang.phash2(@node.content || "")}"}
+                          id={"markdown-title-#{@node.id}-#{@content_hash}"}
                           data-md={@node.content || ""}
                           data-title-only="true"
                         >
@@ -41,7 +41,7 @@ defmodule DialecticWeb.NodeComp do
                       >
                         <div
                           phx-hook="Markdown"
-                          id={"markdown-body-#{@node.id}-#{:erlang.phash2(@node.content || "")}"}
+                          id={"markdown-body-#{@node.id}-#{@content_hash}"}
                           data-md={@node.content || ""}
                           data-body-only="true"
                         >
@@ -108,11 +108,13 @@ defmodule DialecticWeb.NodeComp do
       |> Map.put_new(:children, [])
 
     node_id = Map.get(node, :id, "")
+    content_hash = :erlang.phash2(Map.get(node, :content, "") || "")
 
     {:ok,
      assign(socket,
        node_id: node_id,
        node: node,
+       content_hash: content_hash,
        user: Map.get(assigns, :user, nil),
        form: Map.get(assigns, :form, nil),
        cut_off: Map.get(assigns, :cut_off, 500),

@@ -19,7 +19,7 @@
 
 import { marked } from "marked";
 import DOMPurify from "dompurify";
-import { extractTitle } from "./title_utils.js";
+import { extractTitle, hashTitle as hashString } from "./title_utils.js";
 
 // Configure marked defaults (tweak as needed)
 marked.setOptions({
@@ -67,17 +67,7 @@ function readMarkdownSource(el) {
   return "";
 }
 
-/**
- * Simple fast string hash for change detection (not cryptographic).
- */
-function hashString(str) {
-  let h = 0;
-  for (let i = 0; i < str.length; i++) {
-    h = (h << 5) - h + str.charCodeAt(i);
-    h |= 0; // Convert to 32-bit int
-  }
-  return String(h);
-}
+// hashing moved to title_utils.js (hashTitle aliased as hashString)
 
 /**
  * Renders markdown into the element using marked -> DOMPurify.
