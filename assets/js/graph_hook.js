@@ -480,6 +480,19 @@ const graphHook = {
     }
     this._bindPngButtons();
 
+    // Handle incremental label updates for streaming titles without full graph reloads
+    this.handleEvent("update_node_label", ({ id, label }) => {
+      try {
+        if (!id) return;
+        const n = this.cy && this.cy.$ ? this.cy.$(`#${id}`) : null;
+        if (!n || n.length === 0) return;
+        // Override label style for this node; does not mutate underlying data
+        n.style("label", String(label || ""));
+      } catch (_e) {
+        // no-op
+      }
+    });
+
     // Listen for the center_node event from LiveView
     this.handleEvent("center_node", ({ id }) => {
       try {
@@ -607,23 +620,23 @@ const graphHook = {
     const sameGraph = this._lastGraphStr === graphStr;
     if (!sameGraph) this._lastGraphStr = graphStr;
 
-    if (this.cy && typeof this.cy.startBatch === "function")
-      this.cy.startBatch();
-    if (this.cy && typeof this.cy.scratch === "function") {
-      try {
-        this.cy.scratch("_bulkReload", true);
-      } catch (_e) {}
-    }
     if (!sameGraph) {
+      if (this.cy && typeof this.cy.startBatch === "function")
+        this.cy.startBatch();
+      if (this.cy && typeof this.cy.scratch === "function") {
+        try {
+          this.cy.scratch("_bulkReload", true);
+        } catch (_e) {}
+      }
       this.cy.json({ elements: JSON.parse(graphStr) });
-    }
-    if (this.cy && typeof this.cy.scratch === "function") {
-      try {
-        this.cy.scratch("_bulkReload", null);
-      } catch (_e) {}
-    }
-    if (typeof this.cy.enforceCollapsedState === "function") {
-      this.cy.enforceCollapsedState();
+      if (this.cy && typeof this.cy.scratch === "function") {
+        try {
+          this.cy.scratch("_bulkReload", null);
+        } catch (_e) {}
+      }
+      if (typeof this.cy.enforceCollapsedState === "function") {
+        this.cy.enforceCollapsedState();
+      }
     }
     // Defer endBatch until after layout starts or after the no-layout path below
 

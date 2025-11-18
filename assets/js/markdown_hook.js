@@ -19,6 +19,7 @@
 
 import { marked } from "marked";
 import DOMPurify from "dompurify";
+import { extractTitle } from "./title_utils.js";
 
 // Configure marked defaults (tweak as needed)
 marked.setOptions({
@@ -87,18 +88,12 @@ function renderMdInto(el) {
 
   // Title-only mode: render first line as plain text (no HTML), strip headings/Title: and bold markers
   if (el.getAttribute("data-title-only") === "true") {
-    const norm = md.replace(/\r\n|\r/g, "\n").replace(/^\s+/, "");
-    const first = norm.split("\n")[0] || "";
-    let title = first
-      .replace(/^\s*#{1,6}\s*/, "") // strip leading markdown heading markers
-      .replace(/^\s*(title|Title)\s*:?\s*/, "") // strip "Title:" prefix (case-insensitive)
-      .replace(/\*\*/g, "") // strip bold markers
-      .trim();
-
     const tLen = parseInt(el.getAttribute("data-truncate") || "0", 10);
-    if (!Number.isNaN(tLen) && tLen > 0 && title.length > tLen) {
-      title = title.slice(0, tLen) + "…";
-    }
+    const title = extractTitle(md, {
+      truncate: Number.isNaN(tLen) ? 0 : tLen,
+      addEllipsis: !Number.isNaN(tLen) && tLen > 0,
+      addBreaks: false,
+    });
 
     const tHash = hashString("TITLE|" + title);
     if (el.__markdownHash === tHash) {

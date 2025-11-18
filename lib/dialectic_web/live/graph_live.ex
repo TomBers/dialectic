@@ -824,15 +824,29 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_info({:stream_chunk, updated_vertex, :node_id, node_id}, socket) do
     # This is the streamed LLM response into a node
+    Logger.debug(fn ->
+      "[GraphLive] stream_chunk node_id=#{inspect(node_id)} current=#{inspect(socket.assigns.node && Map.get(socket.assigns.node, :id))} content_len=#{String.length(to_string(Map.get(updated_vertex, :content, "")))}"
+    end)
 
     if socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
-      {:noreply, assign(socket, node: updated_vertex)}
+      label = extract_title(Map.get(updated_vertex, :content, ""))
+
+      socket =
+        socket
+        |> assign(node: updated_vertex)
+        |> push_event("update_node_label", %{id: node_id, label: label})
+
+      {:noreply, socket}
     else
       {:noreply, socket}
     end
   end
 
   def handle_info({:llm_request_complete, node_id}, socket) do
+    Logger.debug(fn ->
+      "[GraphLive] llm_request_complete node_id=#{inspect(node_id)} current=#{inspect(socket.assigns.node && Map.get(socket.assigns.node, :id))}"
+    end)
+
     # Workers already finalize node content; proceed to broadcast update
     # Broadcast new node to all connected users
     PubSub.broadcast(
@@ -849,12 +863,23 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_info({:stream_error, error, :node_id, node_id}, socket) do
+    Logger.debug(fn ->
+      "[GraphLive] stream_error node_id=#{inspect(node_id)} current=#{inspect(socket.assigns.node && Map.get(socket.assigns.node, :id))} error=#{inspect(error)}"
+    end)
+
     # This is the streamed LLM response into a node
     # TODO - broadcast to all users??? - only want to update the node that is being worked on, just rerender the others
     updated_vertex = GraphManager.update_vertex(socket.assigns.graph_id, node_id, error)
 
     if socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
-      {:noreply, assign(socket, node: updated_vertex)}
+      label = extract_title(Map.get(updated_vertex, :content, ""))
+
+      socket =
+        socket
+        |> assign(node: updated_vertex)
+        |> push_event("update_node_label", %{id: node_id, label: label})
+
+      {:noreply, socket}
     else
       {:noreply, socket}
     end
@@ -1127,5 +1152,18 @@ defmodule DialecticWeb.GraphLive do
     )
 
     updated_socket
+  end
+
+  defp extract_title(content) do
+    content
+    |> to_string()
+    |> String.replace(~r/\r\n|\r/, "\n")
+    |> String.split("\n")
+    |> List.first()
+    |> Kernel.||("")
+    |> String.replace(~r/^\s*\#{1,6}\s*/, "")
+    |> String.replace(~r/^\s*title\s*:?\s*/i, "")
+    |> String.replace("**", "")
+    |> String.trim()
   end
 end

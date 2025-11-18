@@ -27,7 +27,7 @@ defmodule DialecticWeb.NodeComp do
                       <h3 class="mt-0 text-lg sm:text-xl md:text-2xl mb-2 sm:mb-3 pb-2 border-b border-gray-200">
                         <span
                           phx-hook="Markdown"
-                          id={"markdown-title-" <> @node.id}
+                          id={"markdown-title-#{@node.id}-#{:erlang.phash2(@node.content || "")}"}
                           data-md={@node.content || ""}
                           data-title-only="true"
                         >
@@ -41,7 +41,7 @@ defmodule DialecticWeb.NodeComp do
                       >
                         <div
                           phx-hook="Markdown"
-                          id={"markdown-body-" <> @node.id}
+                          id={"markdown-body-#{@node.id}-#{:erlang.phash2(@node.content || "")}"}
                           data-md={@node.content || ""}
                           data-body-only="true"
                         >
