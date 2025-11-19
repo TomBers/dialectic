@@ -1,5 +1,7 @@
-FIX the Prompts the answers are nonsense at the moment.
+Set model on Prod
 
+fly secrets set LLM_PROVIDER=gemini
+fly secrets set LLM_PROVIDER=openai
 
 mix test test/dialectic/responses/print_prompts_test.exs > prompt_test.md
 
