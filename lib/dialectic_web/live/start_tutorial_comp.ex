@@ -20,7 +20,7 @@ defmodule DialecticWeb.StartTutorialComp do
   def render(assigns) do
     ~H"""
     <div class="w-full h-full">
-      <article class="prose prose-stone prose-lg max-w-none px-4 sm:px-6 md:px-8 py-4">
+      <article class="prose prose-stone prose-md max-w-none px-4 sm:px-6 md:px-8 py-4">
         <h2 class="mb-2">Getting Started:</h2>
 
         <ol class="list-decimal pl-6 space-y-2">
