@@ -92,19 +92,23 @@
                   class="leading-5 text-[15px] sm:text-base font-medium text-zinc-900"
                   phx-hook="Markdown"
                   id={"markdown-title-collapsed-#{node.id}"}
-                  data-md={node.content || ""}
                   data-title-only="true"
                 >
+                  <template phx-no-curly-interpolation data-md>
+                    {node.content || ""}
+                  </template>
                 </span>
               <% else %>
                 <span
                   class="leading-5 text-[15px] sm:text-base font-medium text-zinc-800 truncate"
                   phx-hook="Markdown"
                   id={"markdown-title-collapsed-#{node.id}"}
-                  data-md={node.content || ""}
                   data-title-only="true"
                   data-truncate="80"
                 >
+                  <template phx-no-curly-interpolation data-md>
+                    {node.content || ""}
+                  </template>
                 </span>
               <% end %>
             </button>
@@ -112,12 +116,10 @@
 
           <%= unless Enum.member?(@hidden, node.id) do %>
             <article class="prose prose-stone text-[15px] sm:text-base md:prose-lg max-w-none mt-2">
-              <div
-                phx-hook="Markdown"
-                id={"markdown-body-#{node.id}"}
-                data-md={node.content || ""}
-                data-body-only="true"
-              >
+              <div phx-hook="Markdown" id={"markdown-body-#{node.id}"} data-body-only="true">
+                <template phx-no-curly-interpolation data-md>
+                  {node.content || ""}
+                </template>
               </div>
             </article>
           <% end %>

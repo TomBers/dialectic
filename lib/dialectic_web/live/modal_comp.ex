@@ -84,12 +84,10 @@ defmodule DialecticWeb.Live.ModalComp do
             >
               <%= if @nav_parent_title do %>
                 ↑
-                <span
-                  phx-hook="Markdown"
-                  id={"markdown-parent-title-" <> @id}
-                  data-md={@nav_parent_title}
-                  data-title-only="true"
-                >
+                <span phx-hook="Markdown" id={"markdown-parent-title-" <> @id} data-title-only="true">
+                  <template phx-no-curly-interpolation data-md>
+                    {@nav_parent_title}
+                  </template>
                 </span>
               <% else %>
                 ↑ Parent
@@ -101,22 +99,18 @@ defmodule DialecticWeb.Live.ModalComp do
 
           <article class="prose prose-stone prose-lg md:prose-xl lg:prose-2xl max-w-none selection-content space-y-4 min-h-[50vh]">
             <h2 class="text-xl sm:text-2xl md:text-3xl">
-              <span
-                phx-hook="Markdown"
-                id={"markdown-title-" <> @id}
-                data-md={Map.get(@node || %{}, :content, "")}
-                data-title-only="true"
-              >
+              <span phx-hook="Markdown" id={"markdown-title-" <> @id} data-title-only="true">
+                <template phx-no-curly-interpolation data-md>
+                  {Map.get(@node || %{}, :content, "")}
+                </template>
               </span>
             </h2>
 
             <div class="text-base sm:text-lg">
-              <div
-                phx-hook="Markdown"
-                id={"markdown-body-" <> @id}
-                data-md={Map.get(@node || %{}, :content, "")}
-                data-body-only="true"
-              >
+              <div phx-hook="Markdown" id={"markdown-body-" <> @id} data-body-only="true">
+                <template phx-no-curly-interpolation data-md>
+                  {Map.get(@node || %{}, :content, "")}
+                </template>
               </div>
             </div>
           </article>
@@ -149,12 +143,10 @@ defmodule DialecticWeb.Live.ModalComp do
               title="Go to child"
             >
               <%= if @nav_child_title do %>
-                <span
-                  phx-hook="Markdown"
-                  id={"markdown-child-title-" <> @id}
-                  data-md={@nav_child_title}
-                  data-title-only="true"
-                >
+                <span phx-hook="Markdown" id={"markdown-child-title-" <> @id} data-title-only="true">
+                  <template phx-no-curly-interpolation data-md>
+                    {@nav_child_title}
+                  </template>
                 </span>
                 ↓
               <% else %>

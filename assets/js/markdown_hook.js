@@ -2,15 +2,15 @@
  *
  * Usage patterns in HEEx:
  *
- * 1) Inline via data attribute:
- *    <div phx-hook="Markdown" data-md={@markdown_string}></div>
+ * 1) Inline via data attribute (simple cases):
+ *    <span phx-hook="Markdown" data-md={@markdown_string}></span>
  *
- * 2) Using a <template> to avoid curly interpolation issues in HEEx:
- *    <div phx-hook="Markdown">
+ * 2) Preferred for HEEx with braces: wrap in a <template data-md>:
+ *    <span phx-hook="Markdown">
  *      <template phx-no-curly-interpolation data-md>
  *        {@markdown_string}
  *      </template>
- *    </div>
+ *    </span>
  *
  * Optional:
  *    - Truncate input before rendering: data-truncate="200" (in characters)
@@ -55,13 +55,25 @@ function enhanceLinks(root) {
  * - <template data-md> child content
  */
 function readMarkdownSource(el) {
+  // 1) data-md attribute on the host element takes precedence
   const fromAttr = el.getAttribute("data-md");
-  if (fromAttr != null) return fromAttr;
+  if (fromAttr != null) {
+    el.__markdownSource = fromAttr;
+    return fromAttr;
+  }
 
+  // 2) <template data-md> child (present on initial mount; may be removed on render)
   const tpl = el.querySelector("template[data-md]");
   if (tpl) {
     // template.textContent preserves literal braces and newlines
-    return tpl.textContent || "";
+    const text = tpl.textContent || "";
+    el.__markdownSource = text;
+    return text;
+  }
+
+  // 3) Fallback to previously cached source captured on first render
+  if (typeof el.__markdownSource === "string") {
+    return el.__markdownSource;
   }
 
   return "";

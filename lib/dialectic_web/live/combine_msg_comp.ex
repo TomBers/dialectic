@@ -34,12 +34,10 @@ defmodule DialecticWeb.CombinetMsgComp do
 
       <div class="proposition flex-1 max-w-none">
         <article class="prose prose-stone prose-sm">
-          <div
-            phx-hook="Markdown"
-            id={"markdown-preview-" <> @node.id}
-            data-truncate={@cut_off}
-            data-md={@node.content || ""}
-          >
+          <div phx-hook="Markdown" id={"markdown-preview-" <> @node.id} data-truncate={@cut_off}>
+            <template phx-no-curly-interpolation data-md>
+              {@node.content || ""}
+            </template>
           </div>
         </article>
       </div>

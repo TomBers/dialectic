@@ -28,9 +28,11 @@ defmodule DialecticWeb.NodeComp do
                         <span
                           phx-hook="Markdown"
                           id={"markdown-title-#{@node.id}-#{@content_hash}"}
-                          data-md={@node.content || ""}
                           data-title-only="true"
                         >
+                          <template phx-no-curly-interpolation data-md>
+                            {@node.content || ""}
+                          </template>
                         </span>
                       </h3>
                       <div
@@ -42,9 +44,11 @@ defmodule DialecticWeb.NodeComp do
                         <div
                           phx-hook="Markdown"
                           id={"markdown-body-#{@node.id}-#{@content_hash}"}
-                          data-md={@node.content || ""}
                           data-body-only="true"
                         >
+                          <template phx-no-curly-interpolation data-md>
+                            {@node.content || ""}
+                          </template>
                         </div>
                       </div>
                     </article>
