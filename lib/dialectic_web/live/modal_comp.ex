@@ -86,9 +86,11 @@ defmodule DialecticWeb.Live.ModalComp do
                 ↑
                 <span
                   phx-hook="Markdown"
+                  phx-update="ignore"
                   id={"markdown-parent-title-" <> @id}
                   data-md={@nav_parent_title}
                   data-title-only="true"
+                  data-debounce="50"
                 >
                 </span>
               <% else %>
@@ -103,9 +105,11 @@ defmodule DialecticWeb.Live.ModalComp do
             <h2 class="text-xl sm:text-2xl md:text-3xl">
               <span
                 phx-hook="Markdown"
+                phx-update="ignore"
                 id={"markdown-title-" <> @id}
                 data-md={Map.get(@node || %{}, :content, "")}
                 data-title-only="true"
+                data-debounce="50"
               >
               </span>
             </h2>
@@ -113,9 +117,11 @@ defmodule DialecticWeb.Live.ModalComp do
             <div class="text-base sm:text-lg">
               <div
                 phx-hook="Markdown"
+                phx-update="ignore"
                 id={"markdown-body-" <> @id}
                 data-md={Map.get(@node || %{}, :content, "")}
                 data-body-only="true"
+                data-debounce="50"
               >
               </div>
             </div>
@@ -151,9 +157,11 @@ defmodule DialecticWeb.Live.ModalComp do
               <%= if @nav_child_title do %>
                 <span
                   phx-hook="Markdown"
+                  phx-update="ignore"
                   id={"markdown-child-title-" <> @id}
                   data-md={@nav_child_title}
                   data-title-only="true"
+                  data-debounce="50"
                 >
                 </span>
                 ↓

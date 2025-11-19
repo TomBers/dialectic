@@ -22,7 +22,7 @@ defmodule Dialectic.Workers.LocalWorker do
     Phoenix.PubSub.broadcast(
       Dialectic.PubSub,
       live_view_topic,
-      {:stream_chunk, updated_vertex, :node_id, node}
+      {:stream_update, %{id: node, content: Map.get(updated_vertex, :content, "")}}
     )
 
     Phoenix.PubSub.broadcast(

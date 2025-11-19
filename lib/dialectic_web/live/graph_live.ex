@@ -817,18 +817,25 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_info({:stream_chunk, updated_vertex, :node_id, node_id}, socket) do
-    # This is the streamed LLM response into a node
+  def handle_info({:stream_update, %{id: node_id, content: content}}, socket) do
     Logger.debug(fn ->
-      "[GraphLive] stream_chunk node_id=#{inspect(node_id)} current=#{inspect(socket.assigns.node && Map.get(socket.assigns.node, :id))} content_len=#{String.length(to_string(Map.get(updated_vertex, :content, "")))}"
+      "[GraphLive] stream_update node_id=#{inspect(node_id)} current=#{inspect(socket.assigns.node && Map.get(socket.assigns.node, :id))} content_len=#{String.length(to_string(content || ""))}"
     end)
 
     if socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
-      label = extract_title(Map.get(updated_vertex, :content, ""))
+      updated_node =
+        socket.assigns.node
+        |> Map.put(:content, to_string(content || ""))
 
+      label = extract_title(Map.get(updated_node, :content, ""))
+
+      # Note: Markdown hook elements in the linear list use stable ids:
+      # - "markdown-title-collapsed-#{node_id}"
+      # - "markdown-body-#{node_id}"
+      # They render from data-md via the client hook on each LiveView patch.
       socket =
         socket
-        |> assign(node: updated_vertex)
+        |> assign(node: updated_node)
         |> push_event("update_node_label", %{id: node_id, label: label})
 
       {:noreply, socket}

@@ -106,7 +106,7 @@ defmodule Dialectic.Workers.LLMWorker do
              receive_timeout: receive_timeout
            ) do
         {:ok, stream_resp} ->
-          # Stream tokens to UI (and persisted vertex content) as they arrive.
+          # Stream tokens are persisted server-side; UI is notified with :stream_update containing the full buffer.
           appended_len =
             Enum.reduce(ReqLLM.StreamResponse.tokens(stream_resp), 0, fn token, n ->
               chunk =

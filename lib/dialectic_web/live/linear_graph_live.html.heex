@@ -91,18 +91,22 @@
                 <span
                   class="leading-5 text-[15px] sm:text-base font-medium text-zinc-900"
                   phx-hook="Markdown"
+                  phx-update="ignore"
                   id={"markdown-title-collapsed-#{node.id}"}
                   data-md={node.content || ""}
                   data-title-only="true"
+                  data-debounce="50"
                 >
                 </span>
               <% else %>
                 <span
                   class="leading-5 text-[15px] sm:text-base font-medium text-zinc-800 truncate"
                   phx-hook="Markdown"
+                  phx-update="ignore"
                   id={"markdown-title-collapsed-#{node.id}"}
                   data-md={node.content || ""}
                   data-title-only="true"
+                  data-debounce="50"
                   data-truncate="80"
                 >
                 </span>
@@ -114,9 +118,11 @@
             <article class="prose prose-stone text-[15px] sm:text-base md:prose-lg max-w-none mt-2">
               <div
                 phx-hook="Markdown"
+                phx-update="ignore"
                 id={"markdown-body-#{node.id}"}
                 data-md={node.content || ""}
                 data-body-only="true"
+                data-debounce="50"
               >
               </div>
             </article>

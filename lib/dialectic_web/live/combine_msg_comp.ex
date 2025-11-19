@@ -39,6 +39,7 @@ defmodule DialecticWeb.CombinetMsgComp do
             id={"markdown-preview-" <> @node.id}
             data-truncate={@cut_off}
             data-md={@node.content || ""}
+            data-debounce="50"
           >
           </div>
         </article>

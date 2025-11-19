@@ -14,6 +14,8 @@
  *
  * Optional:
  *    - Truncate input before rendering: data-truncate="200" (in characters)
+ *    - Debounce rendering: data-debounce="50" (ms). Use 0 for requestAnimationFrame batching.
+
  *    - You can re-run rendering by updating the element (LiveView updated/replace)
  */
 
@@ -68,6 +70,7 @@ function readMarkdownSource(el) {
 }
 
 // hashing moved to title_utils.js (hashTitle aliased as hashString)
+//
 
 /**
  * Renders markdown into the element using marked -> DOMPurify.
@@ -75,6 +78,7 @@ function readMarkdownSource(el) {
  */
 function renderMdInto(el) {
   let md = readMarkdownSource(el) || "";
+  const debug = el.getAttribute("data-debug") === "true";
 
   // Title-only mode: render first line as plain text (no HTML), strip headings/Title: and bold markers
   if (el.getAttribute("data-title-only") === "true") {
@@ -125,15 +129,22 @@ function renderMdInto(el) {
 
   // Use a per-element cache to avoid unnecessary DOM churn
   const currentHash = hashString(md);
+
   if (el.__markdownHash === currentHash) {
+    if (debug)
+      console.debug("[MarkdownHook] skip: unchanged hash", { id: el.id });
     return; // No change since last render
   }
+
+  // Proceed to render full buffer immediately (no safety gating)
 
   // Markdown -> HTML -> sanitize
   const html = marked.parse(md);
   const safe = DOMPurify.sanitize(html);
 
   // Inject result
+  if (debug)
+    console.debug("[MarkdownHook] rendered", { id: el.id, hash: currentHash });
   el.innerHTML = safe;
 
   // Enhance anchors for safety/UX
@@ -147,11 +158,52 @@ function renderMdInto(el) {
 }
 
 const Markdown = {
+  scheduleRender(el) {
+    const val = el.getAttribute("data-debounce");
+    if (val == null) {
+      // No debounce specified: render immediately
+      renderMdInto(el);
+      return;
+    }
+
+    const n = parseInt(val, 10);
+
+    // rAF batching when debounce is explicitly 0
+    if (n === 0) {
+      if (el.__mdRafScheduled) return;
+      el.__mdRafScheduled = true;
+      requestAnimationFrame(() => {
+        el.__mdRafScheduled = false;
+        renderMdInto(el);
+      });
+      return;
+    }
+
+    // Positive debounce in ms
+    if (!Number.isNaN(n) && n > 0) {
+      if (el.__mdDebounceTimer) clearTimeout(el.__mdDebounceTimer);
+      el.__mdDebounceTimer = setTimeout(() => {
+        el.__mdDebounceTimer = null;
+        renderMdInto(el);
+      }, n);
+      return;
+    }
+
+    // Fallback: invalid value -> immediate render
+    renderMdInto(el);
+  },
+
   mounted() {
-    renderMdInto(this.el);
+    this.scheduleRender(this.el);
   },
   updated() {
-    renderMdInto(this.el);
+    this.scheduleRender(this.el);
+  },
+  destroyed() {
+    const el = this.el;
+    if (el.__mdDebounceTimer) clearTimeout(el.__mdDebounceTimer);
+    el.__mdDebounceTimer = null;
+    el.__mdRafScheduled = false;
   },
 };
 

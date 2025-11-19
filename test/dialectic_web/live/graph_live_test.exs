@@ -85,27 +85,16 @@ defmodule DialecticWeb.GraphLiveTest do
   end
 
   describe "handle_info/2" do
-    test "stream_chunk info updates the node if node_id matches", %{conn: conn} do
+    test "stream_update info updates the node if node_id matches", %{conn: conn} do
       {:ok, view, _html} = setup_live(conn)
       state = :sys.get_state(view.pid).socket
 
       # Assume the current node has an id; if not, default to "1".
       current_node_id = Map.get(state.assigns.node, :id, "1")
 
-      # Create a proper vertex structure instead of just a string
-      # As the handler expects a vertex structure
-      updated_vertex = %{
-        id: current_node_id,
-        content: "new content",
-        class: "test",
-        user: "test_user",
-        noted_by: [],
-        parents: [],
-        children: [],
-        deleted: false
-      }
+      content = "new content"
 
-      send(view.pid, {:stream_chunk, updated_vertex, :node_id, current_node_id})
+      send(view.pid, {:stream_update, %{id: current_node_id, content: content}})
       # Allow the LiveView process time to process the message.
       :timer.sleep(50)
       state_after = :sys.get_state(view.pid).socket
@@ -114,23 +103,14 @@ defmodule DialecticWeb.GraphLiveTest do
       assert state_after.assigns.node.content == "new content"
     end
 
-    test "stream_chunk info does not update the node if node_id does not match", %{conn: conn} do
+    test "stream_update info does not update the node if node_id does not match", %{conn: conn} do
       {:ok, view, _html} = setup_live(conn)
       state = :sys.get_state(view.pid).socket
       original_node = state.assigns.node
 
-      updated_vertex = %{
-        id: "non_matching_id",
-        content: "new content",
-        class: "test",
-        user: "test_user",
-        noted_by: [],
-        parents: [],
-        children: [],
-        deleted: false
-      }
+      content = "new content"
 
-      send(view.pid, {:stream_chunk, updated_vertex, :node_id, "non_matching_id"})
+      send(view.pid, {:stream_update, %{id: "non_matching_id", content: content}})
       :timer.sleep(50)
       state_after = :sys.get_state(view.pid).socket
 
