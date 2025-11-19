@@ -40,43 +40,13 @@ defmodule DialecticWeb.StartTutorialComp do
         </ol>
 
         <div class="mt-6">
-          <div class="mb-2 text-sm font-semibold text-stone-700">Try one:</div>
-          <div class="flex flex-wrap gap-2">
-            <button
-              type="button"
-              class="rounded-full bg-stone-900/90 text-white text-xs px-3 py-1.5 hover:bg-stone-900 transition"
-              onclick="(()=>{const el=document.getElementById('global-chat-input');if(el){el.value='Explain CRDTs in simple terms';el.focus();el.dispatchEvent(new Event('input',{bubbles:true}));}})();"
-            >
-              Explain CRDTs in simple terms
-            </button>
-
-            <button
-              type="button"
-              class="rounded-full bg-stone-900/90 text-white text-xs px-3 py-1.5 hover:bg-stone-900 transition"
-              onclick="(()=>{const el=document.getElementById('global-chat-input');if(el){el.value='What are the tradeoffs of server-side rendering vs. client-side rendering?';el.focus();el.dispatchEvent(new Event('input',{bubbles:true}));}})();"
-            >
-              SSR vs CSR tradeoffs
-            </button>
-
-            <button
-              type="button"
-              class="rounded-full bg-stone-900/90 text-white text-xs px-3 py-1.5 hover:bg-stone-900 transition"
-              onclick="(()=>{const el=document.getElementById('global-chat-input');if(el){el.value='Brainstorm 5 novel product ideas for mindful note-taking';el.focus();el.dispatchEvent(new Event('input',{bubbles:true}));}})();"
-            >
-              Brainstorm product ideas
-            </button>
-
-            <button
-              type="button"
-              class="rounded-full bg-stone-900/90 text-white text-xs px-3 py-1.5 hover:bg-stone-900 transition"
-              onclick="(()=>{const el=document.getElementById('global-chat-input');if(el){el.value='Summarize the main arguments for and against universal basic income';el.focus();el.dispatchEvent(new Event('input',{bubbles:true}));}})();"
-            >
-              Summarize an argument
-            </button>
-          </div>
+          <p class="text-sm text-stone-700">
+            Not sure where to start? <span class="font-semibold">Click “Inspire me”</span>
+            below for a fresh starter question.
+          </p>
         </div>
 
-        <div class="mt-6 flex items-center justify-center gap-3">
+        <div class="mt-6 flex flex-col items-center justify-center gap-2">
           <button
             type="button"
             class="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-fuchsia-500 via-rose-500 to-amber-500 px-5 py-2.5 text-white text-sm font-semibold shadow-md hover:shadow-lg hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-300 transition"
