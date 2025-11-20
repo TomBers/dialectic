@@ -33,6 +33,8 @@ defmodule Dialectic.Workers.LLMWorker do
   alias Dialectic.DbActions.DbWorker
   alias Dialectic.Responses.{PromptsStructured, PromptsCreative, ModeServer}
 
+  @buffer_size 50
+
   # -- Oban Perform Callback ----------------------------------------------------
 
   @impl Oban.Worker
@@ -107,23 +109,36 @@ defmodule Dialectic.Workers.LLMWorker do
            ) do
         {:ok, stream_resp} ->
           # Stream tokens to UI (and persisted vertex content) as they arrive.
-          appended_len =
-            Enum.reduce(ReqLLM.StreamResponse.tokens(stream_resp), 0, fn token, n ->
+          {final_buf, appended_len} =
+            Enum.reduce(ReqLLM.StreamResponse.tokens(stream_resp), {"", 0}, fn token,
+                                                                               {buf, total} ->
               chunk =
-                cond do
-                  is_binary(token) -> token
-                  is_list(token) -> IO.iodata_to_binary(token)
-                  true -> to_string(token)
+                case token do
+                  t when is_binary(t) -> t
+                  t when is_list(t) -> IO.iodata_to_binary(t)
+                  t -> to_string(t)
                 end
 
-              if chunk != "" do
-                Utils.process_chunk(graph, to_node, chunk, __MODULE__, live_view_topic)
-              end
+              new_buf = buf <> chunk
 
-              n + byte_size(chunk)
+              # Buffer to reduce broadcast frequency (fixing markdown glitches and excessive DOM updates).
+              # Flush if > @buffer_size chars or contains newline.
+              if byte_size(new_buf) > @buffer_size or String.contains?(new_buf, "\n") do
+                Utils.process_chunk(graph, to_node, new_buf, live_view_topic)
+                {"", total + byte_size(new_buf)}
+              else
+                {new_buf, total}
+              end
             end)
 
-          if appended_len > 0 do
+          # Flush remaining buffer
+          if final_buf != "" do
+            Utils.process_chunk(graph, to_node, final_buf, live_view_topic)
+          end
+
+          total_len = appended_len + byte_size(final_buf)
+
+          if total_len > 0 do
             finalize(graph, to_node, live_view_topic)
             :ok
           else

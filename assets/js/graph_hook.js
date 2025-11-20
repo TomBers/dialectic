@@ -1,5 +1,6 @@
 import { draw_graph } from "./draw_graph";
 import { layoutConfig } from "./layout_config.js";
+import { extractListItems } from "./list_detection_hook.js";
 
 const layoutGraph = (cy, opts, onDone) => {
   // Back-compat: (cy, onDone)
@@ -539,66 +540,7 @@ const graphHook = {
           const detector = document.getElementById(
             `list-detector-${currentNodeId}`,
           );
-          let items = [];
-          if (detector && detector.dataset && detector.dataset.listItems) {
-            try {
-              const parsed = JSON.parse(detector.dataset.listItems);
-              if (Array.isArray(parsed)) items = parsed;
-            } catch (_e) {}
-          }
-
-          // Fallback extraction if needed
-          if (!Array.isArray(items) || items.length === 0) {
-            const clean = (s) => (s || "").replace(/\s+/g, " ").trim();
-            const isHeadingLike = (txt) => {
-              if (!txt) return true;
-              if (/^short answer\s*:/i.test(txt)) return true;
-              if (/:$/.test(txt)) return true;
-              return false;
-            };
-            const textFromLi = (li) => {
-              const clone = li.cloneNode(true);
-              clone.querySelectorAll("ul, ol").forEach((n) => n.remove());
-              return clean(clone.textContent || "");
-            };
-            if (detector) {
-              // 1) Nested sub-bullets
-              Array.from(detector.querySelectorAll("li")).forEach((li) => {
-                const nestedLists = Array.from(li.children).filter(
-                  (el) => el.tagName === "UL" || el.tagName === "OL",
-                );
-                nestedLists.forEach((list) => {
-                  Array.from(list.children)
-                    .filter((el) => el.tagName === "LI")
-                    .forEach((nli) => {
-                      const txt = textFromLi(nli);
-                      if (!txt) return;
-                      if (isHeadingLike(txt)) return;
-                      items.push(txt);
-                    });
-                });
-              });
-              // 2) Top-level leaf bullets
-              const topLists = Array.from(
-                detector.querySelectorAll("ul, ol"),
-              ).filter((list) => !list.closest("li"));
-              topLists.forEach((list) => {
-                Array.from(list.children)
-                  .filter((el) => el.tagName === "LI")
-                  .forEach((li) => {
-                    const hasNested = Array.from(li.children).some(
-                      (el) => el.tagName === "UL" || el.tagName === "OL",
-                    );
-                    if (hasNested) return;
-                    const txt = textFromLi(li);
-                    if (!txt) return;
-                    if (isHeadingLike(txt)) return;
-                    items.push(txt);
-                  });
-              });
-              items = Array.from(new Set(items));
-            }
-          }
+          const items = extractListItems(detector);
 
           this.pushEvent("open_explore_modal", { items });
         };
@@ -744,76 +686,12 @@ const graphHook = {
           e.preventDefault();
           e.stopPropagation();
 
-          const currentNodeId = node;
+          const currentNodeId = this.el.dataset.node;
 
-          // Extract items on demand
-          const items = (() => {
-            const detector = document.getElementById(
-              `list-detector-${currentNodeId}`,
-            );
-
-            // Prefer items extracted by ListDetection, if present
-            if (detector && detector.dataset && detector.dataset.listItems) {
-              try {
-                const parsed = JSON.parse(detector.dataset.listItems);
-                if (Array.isArray(parsed)) return parsed;
-              } catch (_e) {}
-            }
-
-            // Fallback: extract bullet points on demand (nested sub-bullets + top-level leaf bullets)
-            const res = [];
-            if (detector) {
-              const clean = (s) => (s || "").replace(/\s+/g, " ").trim();
-              const isHeadingLike = (txt) => {
-                if (!txt) return true;
-                if (/^short answer\s*:/i.test(txt)) return true;
-                if (/:$/.test(txt)) return true;
-                return false;
-              };
-              const textFromLi = (li) => {
-                const clone = li.cloneNode(true);
-                clone.querySelectorAll("ul, ol").forEach((n) => n.remove());
-                return clean(clone.textContent || "");
-              };
-
-              // 1) Nested sub-bullets under parent LI
-              Array.from(detector.querySelectorAll("li")).forEach((li) => {
-                const nestedLists = Array.from(li.children).filter(
-                  (el) => el.tagName === "UL" || el.tagName === "OL",
-                );
-                nestedLists.forEach((list) => {
-                  Array.from(list.children)
-                    .filter((el) => el.tagName === "LI")
-                    .forEach((nli) => {
-                      const txt = textFromLi(nli);
-                      if (!txt) return;
-                      if (isHeadingLike(txt)) return;
-                      res.push(txt);
-                    });
-                });
-              });
-
-              // 2) Top-level leaf bullets (direct LI under root UL/OL with no nested lists)
-              const topLists = Array.from(
-                detector.querySelectorAll("ul, ol"),
-              ).filter((list) => !list.closest("li"));
-              topLists.forEach((list) => {
-                Array.from(list.children)
-                  .filter((el) => el.tagName === "LI")
-                  .forEach((li) => {
-                    const hasNested = Array.from(li.children).some(
-                      (el) => el.tagName === "UL" || el.tagName === "OL",
-                    );
-                    if (hasNested) return;
-                    const txt = textFromLi(li);
-                    if (!txt) return;
-                    if (isHeadingLike(txt)) return;
-                    res.push(txt);
-                  });
-              });
-            }
-            return Array.from(new Set(res));
-          })();
+          const detector = document.getElementById(
+            `list-detector-${currentNodeId}`,
+          );
+          const items = extractListItems(detector);
 
           this.pushEvent("open_explore_modal", { items });
         };

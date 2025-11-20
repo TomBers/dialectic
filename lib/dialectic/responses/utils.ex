@@ -13,10 +13,9 @@ defmodule Dialectic.Responses.Utils do
           graph :: any(),
           node :: any(),
           data :: iodata(),
-          module :: module(),
           live_view_topic :: term()
         ) :: :ok
-  def process_chunk(graph, node, data, _module, live_view_topic) do
+  def process_chunk(graph, node, data, live_view_topic) do
     text =
       cond do
         is_binary(data) -> data
