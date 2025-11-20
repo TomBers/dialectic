@@ -113,10 +113,10 @@ defmodule Dialectic.Workers.LLMWorker do
             Enum.reduce(ReqLLM.StreamResponse.tokens(stream_resp), {"", 0}, fn token,
                                                                                {buf, total} ->
               chunk =
-                cond do
-                  is_binary(token) -> token
-                  is_list(token) -> IO.iodata_to_binary(token)
-                  true -> to_string(token)
+                case token do
+                  t when is_binary(t) -> t
+                  t when is_list(t) -> IO.iodata_to_binary(t)
+                  t -> to_string(t)
                 end
 
               new_buf = buf <> chunk
@@ -124,7 +124,7 @@ defmodule Dialectic.Workers.LLMWorker do
               # Buffer to reduce broadcast frequency (fixing markdown glitches and excessive DOM updates).
               # Flush if > @buffer_size chars or contains newline.
               if byte_size(new_buf) > @buffer_size or String.contains?(new_buf, "\n") do
-                Utils.process_chunk(graph, to_node, new_buf, __MODULE__, live_view_topic)
+                Utils.process_chunk(graph, to_node, new_buf, live_view_topic)
                 {"", total + byte_size(new_buf)}
               else
                 {new_buf, total}
@@ -133,7 +133,7 @@ defmodule Dialectic.Workers.LLMWorker do
 
           # Flush remaining buffer
           if final_buf != "" do
-            Utils.process_chunk(graph, to_node, final_buf, __MODULE__, live_view_topic)
+            Utils.process_chunk(graph, to_node, final_buf, live_view_topic)
           end
 
           total_len = appended_len + byte_size(final_buf)
