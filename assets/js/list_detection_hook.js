@@ -1,78 +1,79 @@
-const listDetectionHook = {
-  mounted() {
-    this.checkForLists();
-  },
+const clean = (s) => (s || "").replace(/\s+/g, " ").trim();
 
-  updated() {
-    this.checkForLists();
-  },
+const isHeadingLike = (txt) => {
+  if (!txt) return true;
+  if (/^short answer\s*:/i.test(txt)) return true;
+  if (/:$/.test(txt)) return true;
+  return false;
+};
 
-  checkForLists() {
-    // Collect both styles:
-    // 1) Nested sub-bullets (one-indent under a parent list item)
-    // 2) Top-level leaf bullets (direct li under a root ul/ol with no nested lists)
-    const items = [];
+const textFromLi = (li) => {
+  const clone = li.cloneNode(true);
+  // Exclude nested list contents
+  clone.querySelectorAll("ul, ol").forEach((n) => n.remove());
+  return clean(clone.textContent || "");
+};
 
-    const clean = (s) => (s || "").replace(/\s+/g, " ").trim();
-    const isHeadingLike = (txt) => {
-      if (!txt) return true;
-      if (/^short answer\s*:/i.test(txt)) return true;
-      if (/:$/.test(txt)) return true;
-      return false;
-    };
+export function extractListItems(root) {
+  const items = [];
 
-    const textFromLi = (li) => {
-      const clone = li.cloneNode(true);
-      // Exclude nested list contents
-      clone.querySelectorAll("ul, ol").forEach((n) => n.remove());
-      return clean(clone.textContent || "");
-    };
+  if (!root) return items;
 
-    const root = this.el;
-
-    // 1) Nested sub-bullets (depth 2 under a parent li)
-    Array.from(root.querySelectorAll("li")).forEach((li) => {
-      const nestedLists = Array.from(li.children).filter(
-        (el) => el.tagName === "UL" || el.tagName === "OL",
-      );
-      nestedLists.forEach((list) => {
-        Array.from(list.children)
-          .filter((el) => el.tagName === "LI")
-          .forEach((nli) => {
-            const txt = textFromLi(nli);
-            if (!txt) return;
-            if (isHeadingLike(txt)) return;
-            items.push(txt);
-          });
-      });
-    });
-
-    // 2) Top-level leaf bullets (depth 1 li under root ul/ol that have no nested lists)
-    const topLists = Array.from(root.querySelectorAll("ul, ol")).filter(
-      (list) => !list.closest("li"),
+  // 1) Nested sub-bullets (depth 2 under a parent li)
+  Array.from(root.querySelectorAll("li")).forEach((li) => {
+    const nestedLists = Array.from(li.children).filter(
+      (el) => el.tagName === "UL" || el.tagName === "OL",
     );
-    topLists.forEach((list) => {
+    nestedLists.forEach((list) => {
       Array.from(list.children)
         .filter((el) => el.tagName === "LI")
-        .forEach((li) => {
-          const hasNested = Array.from(li.children).some(
-            (el) => el.tagName === "UL" || el.tagName === "OL",
-          );
-          if (hasNested) return;
-          const txt = textFromLi(li);
+        .forEach((nli) => {
+          const txt = textFromLi(nli);
           if (!txt) return;
           if (isHeadingLike(txt)) return;
           items.push(txt);
         });
     });
+  });
 
-    const deduped = Array.from(new Set(items));
+  // 2) Top-level leaf bullets (depth 1 li under root ul/ol that have no nested lists)
+  const topLists = Array.from(root.querySelectorAll("ul, ol")).filter(
+    (list) => !list.closest("li"),
+  );
+  topLists.forEach((list) => {
+    Array.from(list.children)
+      .filter((el) => el.tagName === "LI")
+      .forEach((li) => {
+        const hasNested = Array.from(li.children).some(
+          (el) => el.tagName === "UL" || el.tagName === "OL",
+        );
+        if (hasNested) return;
+        const txt = textFromLi(li);
+        if (!txt) return;
+        if (isHeadingLike(txt)) return;
+        items.push(txt);
+      });
+  });
 
-    if (deduped.length > 0) {
-      this.el.dataset.listItems = JSON.stringify(deduped);
-    } else {
-      delete this.el.dataset.listItems;
-    }
+  return Array.from(new Set(items));
+}
+
+const listDetectionHook = {
+  mounted() {
+    // Attach helper to element so it can be called on-demand
+    this.el.extractListItems = () => extractListItems(this.el);
+
+    // Listen for custom event to trigger extraction
+    this.el.addEventListener("detect-lists", (e) => {
+      const items = extractListItems(this.el);
+      // You can dispatch an event back or use the items as needed
+      // e.g. this.pushEvent("lists_detected", { items });
+      console.debug("List detection triggered manually", items);
+    });
+  },
+
+  updated() {
+    // No automatic scanning to prevent performance issues
   },
 
   extractBulletPointText(text) {
