@@ -14,65 +14,65 @@ defmodule DialecticWeb.NodeComp do
         <%= if @node.id == "start" do %>
           <.live_component module={DialecticWeb.StartTutorialComp} id="start-tutorial" />
         <% else %>
-          <%= if String.length(@node.content) > 0 do %>
-            <div
-              class="flex-grow overflow-auto scroll-smooth pt-2 pb-10 px-3 sm:px-4 md:px-6"
-              id={"tt-node-" <> @node.id}
-            >
-              <div class="summary-content modal-responsive" id={"tt-summary-content-" <> @node.id}>
-                <div id={"node-content-#{@node.id}"}>
-                  <div id={"node-content-inner-#{@node.id}"}>
-                    <article class="prose prose-stone prose-lg md:prose-xl max-w-none w-full prose-headings:mt-0 prose-p:leading-relaxed prose-li:leading-relaxed">
-                      <%!-- Client-side Markdown rendering via Markdown hook --%>
-                      <h3 class="mt-0 text-lg sm:text-xl md:text-2xl mb-2 sm:mb-3 pb-2 border-b border-gray-200">
-                        <span
-                          phx-hook="Markdown"
-                          id={"markdown-title-#{@node.id}"}
-                          data-md={@node.content || ""}
-                          data-title-only="true"
-                        >
-                        </span>
-                      </h3>
-                      <div
-                        class="selection-content w-full min-w-full text-base sm:text-lg p-2"
-                        data-children={length(@node.children)}
-                        id={"list-detector-" <> @node.id}
+          <div
+            class={"flex-grow overflow-auto scroll-smooth pt-2 pb-10 px-3 sm:px-4 md:px-6 " <> if(String.length(@node.content) == 0, do: "hidden", else: "")}
+            id={"tt-node-" <> @node.id}
+          >
+            <div class="summary-content modal-responsive" id={"tt-summary-content-" <> @node.id}>
+              <div id={"node-content-#{@node.id}"}>
+                <div id={"node-content-inner-#{@node.id}"}>
+                  <article class="prose prose-stone prose-lg md:prose-xl max-w-none w-full prose-headings:mt-0 prose-p:leading-relaxed prose-li:leading-relaxed">
+                    <%!-- Client-side Markdown rendering via Markdown hook --%>
+                    <h3 class="mt-0 text-lg sm:text-xl md:text-2xl mb-2 sm:mb-3 pb-2 border-b border-gray-200">
+                      <span
+                        phx-hook="Markdown"
+                        id={"markdown-title-#{@node.id}"}
+                        data-md={@node.content || ""}
+                        data-title-only="true"
                       >
-                        <div
-                          phx-hook="Markdown"
-                          id={"markdown-body-#{@node.id}"}
-                          data-md={@node.content || ""}
-                          data-body-only="true"
-                        >
-                        </div>
-                      </div>
-                    </article>
-                  </div>
-                </div>
-                <div class="selection-actions hidden absolute bg-white shadow-lg rounded-lg p-1 sm:p-2 z-10 border border-gray-200">
-                  <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 sm:py-1.5 px-2 sm:px-3 rounded-full flex items-center">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="h-3 w-3 mr-0.5 sm:mr-1"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+                      </span>
+                    </h3>
+                    <div
+                      class="selection-content w-full min-w-full text-base sm:text-lg p-2"
+                      data-children={length(@node.children)}
+                      id={"list-detector-" <> @node.id}
                     >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    Ask about selection
-                  </button>
+                      <div
+                        phx-hook="Markdown"
+                        id={"markdown-body-#{@node.id}"}
+                        data-md={@node.content || ""}
+                        data-body-only="true"
+                      >
+                      </div>
+                    </div>
+                  </article>
                 </div>
               </div>
+              <div class="selection-actions hidden absolute bg-white shadow-lg rounded-lg p-1 sm:p-2 z-10 border border-gray-200">
+                <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 sm:py-1.5 px-2 sm:px-3 rounded-full flex items-center">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-3 w-3 mr-0.5 sm:mr-1"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  Ask about selection
+                </button>
+              </div>
             </div>
-          <% else %>
-            <div class="node mb-2 p-4">
-              <div class="flex flex-col space-y-4 animate-pulse">
+          </div>
+
+          <%= if String.length(@node.content) == 0 do %>
+            <div class="node mb-2 p-4 relative">
+              <div class="flex flex-col space-y-4 animate-pulse opacity-40">
                 <div class="h-6 bg-gray-200 rounded-md w-3/4"></div>
                 <div class="space-y-2">
                   <div class="h-4 bg-gray-200 rounded-md w-full"></div>
@@ -83,6 +83,32 @@ defmodule DialecticWeb.NodeComp do
                   <div class="h-8 w-8 bg-gray-200 rounded-full"></div>
                   <div class="h-3 bg-gray-200 rounded-md w-24"></div>
                 </div>
+              </div>
+              <div class="absolute inset-0 flex items-center justify-center z-10">
+                <button
+                  phx-click="node_regenerate"
+                  phx-value-id={@node.id}
+                  phx-disable-with="Regenerating..."
+                  disabled={@streaming}
+                  class="bg-white shadow-sm border border-gray-300 px-3 py-1.5 rounded-full text-xs font-medium text-gray-700 hover:bg-gray-50 hover:text-indigo-600 flex items-center gap-1.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Regenerate response"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    class="w-3.5 h-3.5"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.992 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
+                    />
+                  </svg>
+                  {if @streaming, do: "Generating...", else: "Regenerate"}
+                </button>
               </div>
             </div>
           <% end %>
@@ -119,7 +145,8 @@ defmodule DialecticWeb.NodeComp do
        graph_id: Map.get(assigns, :graph_id, ""),
        graph_owner_id: Map.get(assigns, :graph_owner_id, nil),
        current_user: Map.get(assigns, :current_user, nil),
-       menu_visible: Map.get(assigns, :menu_visible, true)
+       menu_visible: Map.get(assigns, :menu_visible, true),
+       streaming: Map.get(assigns, :streaming, false)
      )}
   end
 end

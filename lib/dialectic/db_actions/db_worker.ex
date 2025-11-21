@@ -37,7 +37,7 @@ defmodule Dialectic.DbActions.DbWorker do
     :ok
   end
 
-  def save_graph(path, wait \\ true) do
+  def save_graph(path, wait \\ false) do
     # Build a portable JSON snapshot without exposing the raw digraph handle
     {nodes, edges} =
       GraphManager.vertices(path)
@@ -86,7 +86,7 @@ defmodule Dialectic.DbActions.DbWorker do
 
   defp create_job(args, true) do
     args
-    |> new(unique: [period: 30, keys: [:id]])
+    |> new(unique: [period: 1, keys: [:id]])
     |> Oban.insert()
   end
 

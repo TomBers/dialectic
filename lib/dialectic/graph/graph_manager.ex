@@ -206,6 +206,18 @@ defmodule GraphManager do
     end
   end
 
+  def handle_call({:set_node_content, {node_id, content}}, _from, {graph_struct, graph}) do
+    case :digraph.vertex(graph, node_id) do
+      {_id, vertex} ->
+        updated_vertex = %{vertex | content: to_string(content)}
+        :digraph.add_vertex(graph, node_id, updated_vertex)
+        {:reply, Vertex.add_relatives(updated_vertex, graph), {graph_struct, graph}}
+
+      false ->
+        {:reply, nil, {graph_struct, graph}}
+    end
+  end
+
   def handle_call({:toggle_graph_locked}, _from, {graph_struct, graph}) do
     updated_graph_struct = Dialectic.DbActions.Graphs.toggle_graph_locked(graph_struct)
     {:reply, updated_graph_struct, {updated_graph_struct, graph}}
@@ -387,8 +399,9 @@ defmodule GraphManager do
   def add_child(graph_id, parents, llm_fn, class, user) do
     content =
       case class do
-        "user" ->
-          llm_fn.(class)
+        c when c in ["user", "question"] ->
+          val = llm_fn.(class)
+          if is_binary(val), do: val, else: ""
 
         _ ->
           ""
@@ -410,11 +423,17 @@ defmodule GraphManager do
     # Stream response to the Node
     spawn(fn -> llm_fn.(node) end)
 
-    add_edges(graph_id, node, parents)
+    result = add_edges(graph_id, node, parents)
+    save_graph(graph_id)
+    result
   end
 
   def update_vertex(path, node_id, data) do
     GenServer.call(via_tuple(path), {:update_node, {node_id, data}})
+  end
+
+  def set_node_content(path, node_id, content) do
+    GenServer.call(via_tuple(path), {:set_node_content, {node_id, content}})
   end
 
   def finalize_node_content(path, node_id) do

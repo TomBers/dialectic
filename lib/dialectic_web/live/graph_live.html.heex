@@ -91,6 +91,8 @@
           node={@node}
           user={@user}
           form={@form}
+          streaming={@node && MapSet.member?(@streaming_nodes, @node.id)}
+          live_view_topic={@live_view_topic}
           graph_id={@graph_id}
           graph_owner_id={@graph_struct && @graph_struct.user_id}
           current_user={@current_user}
