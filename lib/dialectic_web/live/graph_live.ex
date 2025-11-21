@@ -628,13 +628,13 @@ defmodule DialecticWeb.GraphLive do
     if !socket.assigns.can_edit do
       {:noreply, socket |> put_flash(:error, "This graph is locked")}
     else
-      Dialectic.Responses.LlmInterface.regenerate_node(
-        node_id,
-        socket.assigns.graph_id,
-        socket.assigns.live_view_topic
-      )
+      case GraphActions.regenerate_node(graph_action_params(socket), node_id) do
+        nil ->
+          {:noreply, socket |> put_flash(:error, "Could not regenerate node")}
 
-      {:noreply, socket |> put_flash(:info, "Regenerating...")}
+        new_node ->
+          update_graph(socket, {nil, new_node}, "regenerate")
+      end
     end
   end
 

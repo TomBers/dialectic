@@ -205,4 +205,77 @@ defmodule Dialectic.Graph.GraphActions do
        )}
     end
   end
+
+  def regenerate_node({graph_id, _node, user, live_view_topic}, stuck_node_id) do
+    case GraphManager.find_node_by_id(graph_id, stuck_node_id) do
+      nil ->
+        nil
+
+      stuck_node ->
+        parents = stuck_node.parents
+        children = stuck_node.children
+
+        # Delete the stuck node immediately so we can replace it
+        GraphManager.delete_node(graph_id, stuck_node_id)
+
+        new_node =
+          case stuck_node.class do
+            "thesis" ->
+              if parent = List.first(parents) do
+                GraphManager.add_child(
+                  graph_id,
+                  [parent],
+                  fn n -> LlmInterface.gen_thesis(parent, n, graph_id, live_view_topic) end,
+                  "thesis",
+                  user
+                )
+              end
+
+            "antithesis" ->
+              if parent = List.first(parents) do
+                GraphManager.add_child(
+                  graph_id,
+                  [parent],
+                  fn n -> LlmInterface.gen_antithesis(parent, n, graph_id, live_view_topic) end,
+                  "antithesis",
+                  user
+                )
+              end
+
+            "deepdive" ->
+              if parent = List.first(parents) do
+                deepdive({graph_id, parent, user, live_view_topic})
+              end
+
+            "ideas" ->
+              if parent = List.first(parents) do
+                related_ideas({graph_id, parent, user, live_view_topic})
+              end
+
+            "answer" ->
+              if parent = List.first(parents) do
+                answer({graph_id, parent, user, live_view_topic})
+              end
+
+            "synthesis" ->
+              if length(parents) >= 2 do
+                [p1, p2 | _] = parents
+                combine({graph_id, p1, user, live_view_topic}, p2.id)
+              end
+
+            _ ->
+              nil
+          end
+
+        if new_node && children != [] do
+          Enum.each(children, fn child ->
+            GraphManager.add_edges(graph_id, child, [new_node])
+          end)
+
+          GraphManager.save_graph(graph_id)
+        end
+
+        new_node
+    end
+  end
 end
