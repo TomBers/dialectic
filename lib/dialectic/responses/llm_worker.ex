@@ -52,6 +52,10 @@ defmodule Dialectic.Workers.LLMWorker do
       }) do
     Logger.metadata(oban_job_id: job_id, oban_attempt: attempt)
 
+    # Ensure the graph is loaded and the node content is cleared (idempotency)
+    GraphManager.get_graph(graph)
+    GraphManager.set_node_content(graph, to_node, "")
+
     provider_mod = select_provider(args)
 
     # Validate configuration early to surface clear messages

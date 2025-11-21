@@ -130,19 +130,16 @@ defmodule Dialectic.Graph.GraphActions do
         GraphManager.add_child(
           graph_id,
           [node],
-          fn _ -> :ok end,
+          fn _ -> question_text end,
           "question",
           user
         )
 
-      updated_question =
-        GraphManager.update_vertex(graph_id, question_node.id, question_text)
-
       {nil,
        GraphManager.add_child(
          graph_id,
-         [updated_question],
-         fn n -> LlmInterface.gen_response(updated_question, n, graph_id, live_view_topic) end,
+         [question_node],
+         fn n -> LlmInterface.gen_response(question_node, n, graph_id, live_view_topic) end,
          "answer",
          user
        )}

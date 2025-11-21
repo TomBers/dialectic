@@ -87,8 +87,10 @@ defmodule DialecticWeb.NodeComp do
               <div class="absolute inset-0 flex items-center justify-center z-10">
                 <button
                   phx-click="node_regenerate"
+                  phx-target={@myself}
                   phx-value-id={@node.id}
-                  class="bg-white shadow-sm border border-gray-300 px-3 py-1.5 rounded-full text-xs font-medium text-gray-700 hover:bg-gray-50 hover:text-indigo-600 flex items-center gap-1.5 transition-colors"
+                  disabled={@regenerating}
+                  class="bg-white shadow-sm border border-gray-300 px-3 py-1.5 rounded-full text-xs font-medium text-gray-700 hover:bg-gray-50 hover:text-indigo-600 flex items-center gap-1.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   title="Regenerate response"
                 >
                   <svg
@@ -105,7 +107,7 @@ defmodule DialecticWeb.NodeComp do
                       d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.992 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
                     />
                   </svg>
-                  Regenerate
+                  {if @regenerating, do: "Regenerating...", else: "Regenerate"}
                 </button>
               </div>
             </div>
@@ -132,18 +134,37 @@ defmodule DialecticWeb.NodeComp do
 
     node_id = Map.get(node, :id, "")
 
-    {:ok,
-     assign(socket,
-       node_id: node_id,
-       node: node,
-       user: Map.get(assigns, :user, nil),
-       form: Map.get(assigns, :form, nil),
-       cut_off: Map.get(assigns, :cut_off, 500),
-       ask_question: Map.get(assigns, :ask_question, true),
-       graph_id: Map.get(assigns, :graph_id, ""),
-       graph_owner_id: Map.get(assigns, :graph_owner_id, nil),
-       current_user: Map.get(assigns, :current_user, nil),
-       menu_visible: Map.get(assigns, :menu_visible, true)
-     )}
+    socket =
+      assign(socket,
+        node_id: node_id,
+        node: node,
+        user: Map.get(assigns, :user, nil),
+        form: Map.get(assigns, :form, nil),
+        cut_off: Map.get(assigns, :cut_off, 500),
+        ask_question: Map.get(assigns, :ask_question, true),
+        graph_id: Map.get(assigns, :graph_id, ""),
+        graph_owner_id: Map.get(assigns, :graph_owner_id, nil),
+        current_user: Map.get(assigns, :current_user, nil),
+        menu_visible: Map.get(assigns, :menu_visible, true),
+        live_view_topic: Map.get(assigns, :live_view_topic)
+      )
+
+    {:ok, assign_new(socket, :regenerating, fn -> false end)}
+  end
+
+  def handle_event("node_regenerate", %{"id" => node_id}, socket) do
+    if socket.assigns.regenerating do
+      {:noreply, socket}
+    else
+      topic = socket.assigns[:live_view_topic] || "graph:#{socket.assigns.graph_id}"
+
+      Dialectic.Responses.LlmInterface.regenerate_node(
+        node_id,
+        socket.assigns.graph_id,
+        topic
+      )
+
+      {:noreply, assign(socket, regenerating: true)}
+    end
   end
 end
