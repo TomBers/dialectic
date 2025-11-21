@@ -166,17 +166,9 @@ defmodule DialecticWeb.ActionToolbarComp do
         class={
           if @inline,
             do:
-              "relative z-10 px-1.5 py-1 flex flex-nowrap items-center justify-center gap-1 max-w-full overflow-x-auto " <>
-                if(is_nil(@graph_id),
-                  do: "pointer-events-none opacity-50",
-                  else: "pointer-events-auto"
-                ),
+              "relative z-10 px-1.5 py-1 flex flex-nowrap items-center justify-center gap-1 pointer-events-auto max-w-full overflow-x-auto",
             else:
-              "hidden sm:block fixed left-1/2 -translate-x-1/2 z-10 bg-white shadow border border-gray-200 px-1.5 py-1 flex flex-nowrap items-center justify-center gap-1 max-w-full overflow-x-auto " <>
-                if(is_nil(@graph_id),
-                  do: "pointer-events-none opacity-50",
-                  else: "pointer-events-auto"
-                )
+              "hidden sm:block fixed left-1/2 -translate-x-1/2 z-10 bg-white shadow border border-gray-200 px-1.5 py-1 flex flex-nowrap items-center justify-center gap-1 pointer-events-auto max-w-full overflow-x-auto"
         }
         style={unless @inline, do: "bottom: calc(5.5rem + env(safe-area-inset-bottom));"}
         data-external="true"
@@ -460,7 +452,7 @@ defmodule DialecticWeb.ActionToolbarComp do
           id="explore-all-points"
           type="button"
           disabled={is_nil(@graph_id)}
-          class="inline-flex items-center justify-center px-2.5 py-1 text-xs text-gray-700 rounded-md transition-colors hover:text-white hover:bg-gradient-to-r hover:from-fuchsia-500 hover:via-rose-500 hover:to-amber-500"
+          class="inline-flex items-center justify-center px-2.5 py-1 text-xs text-gray-700 rounded-md transition-colors hover:text-white hover:bg-gradient-to-r hover:from-fuchsia-500 hover:via-rose-500 hover:to-amber-500 disabled:opacity-50 disabled:cursor-not-allowed"
           title="Explore all points"
         >
           <span class="inline-flex flex-col items-center gap-0.5">
@@ -499,7 +491,7 @@ defmodule DialecticWeb.ActionToolbarComp do
           aria-disabled={not info.deletable}
           data-disabled={not info.deletable}
           class={[
-            "inline-flex items-center justify-center px-2.5 py-1 text-xs text-gray-700 rounded-md transition-colors",
+            "inline-flex items-center justify-center px-2.5 py-1 text-xs rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
             info.deletable && "hover:bg-[#ef4444] hover:text-white",
             !info.deletable && "text-gray-400 cursor-not-allowed"
           ]}
