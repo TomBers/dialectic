@@ -107,6 +107,7 @@ defmodule DialecticWeb.GraphLive do
                 graph_topic: graph_topic,
                 graph_struct: graph_struct,
                 graph_id: graph_id,
+                streaming_nodes: MapSet.new(),
                 f_graph: GraphManager.format_graph_json(graph_id),
                 node: node,
                 form: to_form(changeset),
@@ -633,6 +634,11 @@ defmodule DialecticWeb.GraphLive do
           {:noreply, socket |> put_flash(:error, "Could not regenerate node")}
 
         new_node ->
+          socket =
+            assign(socket,
+              streaming_nodes: MapSet.put(socket.assigns.streaming_nodes, new_node.id)
+            )
+
           update_graph(socket, {nil, new_node}, "regenerate")
       end
     end
@@ -852,6 +858,9 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_info({:llm_request_complete, node_id}, socket) do
+    socket =
+      assign(socket, streaming_nodes: MapSet.delete(socket.assigns.streaming_nodes, node_id))
+
     Logger.debug(fn ->
       "[GraphLive] llm_request_complete node_id=#{inspect(node_id)} current=#{inspect(socket.assigns.node && Map.get(socket.assigns.node, :id))}"
     end)

@@ -89,6 +89,7 @@ defmodule DialecticWeb.NodeComp do
                   phx-click="node_regenerate"
                   phx-value-id={@node.id}
                   phx-disable-with="Regenerating..."
+                  disabled={@streaming}
                   class="bg-white shadow-sm border border-gray-300 px-3 py-1.5 rounded-full text-xs font-medium text-gray-700 hover:bg-gray-50 hover:text-indigo-600 flex items-center gap-1.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   title="Regenerate response"
                 >
@@ -106,7 +107,7 @@ defmodule DialecticWeb.NodeComp do
                       d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.992 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
                     />
                   </svg>
-                  Regenerate
+                  {if @streaming, do: "Generating...", else: "Regenerate"}
                 </button>
               </div>
             </div>
@@ -144,7 +145,8 @@ defmodule DialecticWeb.NodeComp do
        graph_id: Map.get(assigns, :graph_id, ""),
        graph_owner_id: Map.get(assigns, :graph_owner_id, nil),
        current_user: Map.get(assigns, :current_user, nil),
-       menu_visible: Map.get(assigns, :menu_visible, true)
+       menu_visible: Map.get(assigns, :menu_visible, true),
+       streaming: Map.get(assigns, :streaming, false)
      )}
   end
 end
