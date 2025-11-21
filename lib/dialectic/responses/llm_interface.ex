@@ -104,29 +104,49 @@ defmodule Dialectic.Responses.LlmInterface do
 
         case target_node.class do
           "thesis" ->
-            if parent = List.first(parents),
-              do: gen_thesis(parent, target_node, graph_id, live_view_topic)
+            case List.first(parents) do
+              nil -> Logger.warning("regenerate_node: No parent found for thesis node #{node_id}")
+              parent -> gen_thesis(parent, target_node, graph_id, live_view_topic)
+            end
 
           "antithesis" ->
-            if parent = List.first(parents),
-              do: gen_antithesis(parent, target_node, graph_id, live_view_topic)
+            case List.first(parents) do
+              nil ->
+                Logger.warning("regenerate_node: No parent found for antithesis node #{node_id}")
+
+              parent ->
+                gen_antithesis(parent, target_node, graph_id, live_view_topic)
+            end
 
           "deepdive" ->
-            if parent = List.first(parents),
-              do: gen_deepdive(parent, target_node, graph_id, live_view_topic)
+            case List.first(parents) do
+              nil ->
+                Logger.warning("regenerate_node: No parent found for deepdive node #{node_id}")
+
+              parent ->
+                gen_deepdive(parent, target_node, graph_id, live_view_topic)
+            end
 
           "ideas" ->
-            if parent = List.first(parents),
-              do: gen_related_ideas(parent, target_node, graph_id, live_view_topic)
+            case List.first(parents) do
+              nil -> Logger.warning("regenerate_node: No parent found for ideas node #{node_id}")
+              parent -> gen_related_ideas(parent, target_node, graph_id, live_view_topic)
+            end
 
           "answer" ->
-            if parent = List.first(parents),
-              do: gen_response(parent, target_node, graph_id, live_view_topic)
+            case List.first(parents) do
+              nil -> Logger.warning("regenerate_node: No parent found for answer node #{node_id}")
+              parent -> gen_response(parent, target_node, graph_id, live_view_topic)
+            end
 
           "synthesis" ->
             if length(parents) >= 2 do
               [p1, p2 | _] = parents
               gen_synthesis(p1, p2, target_node, graph_id, live_view_topic)
+            else
+              Logger.warning(
+                "regenerate_node: Insufficient parents for synthesis node #{node_id} (found #{length(parents)})"
+              )
             end
 
           _ ->
