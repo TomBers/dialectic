@@ -202,6 +202,7 @@ defmodule DialecticWeb.GraphLive do
        graph_topic: nil,
        graph_struct: nil,
        graph_id: nil,
+       streaming_nodes: MapSet.new(),
        f_graph: format_graph(nil),
        node: %{
          id: "start",
@@ -630,13 +631,16 @@ defmodule DialecticWeb.GraphLive do
       {:noreply, socket |> put_flash(:error, "This graph is locked")}
     else
       case GraphActions.regenerate_node(graph_action_params(socket), node_id) do
-        nil ->
-          {:noreply, socket |> put_flash(:error, "Could not regenerate node")}
+        {:error, reason} ->
+          {:noreply, socket |> put_flash(:error, reason)}
 
-        new_node ->
+        {:ok, new_node} ->
           socket =
             assign(socket,
-              streaming_nodes: MapSet.put(socket.assigns.streaming_nodes, new_node.id)
+              streaming_nodes:
+                socket.assigns.streaming_nodes
+                |> MapSet.delete(node_id)
+                |> MapSet.put(new_node.id)
             )
 
           update_graph(socket, {nil, new_node}, "regenerate")

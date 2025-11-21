@@ -209,19 +209,37 @@ defmodule Dialectic.Graph.GraphActions do
   def regenerate_node({graph_id, _node, user, live_view_topic}, stuck_node_id) do
     case GraphManager.find_node_by_id(graph_id, stuck_node_id) do
       nil ->
-        nil
+        {:error, "Node not found"}
 
       stuck_node ->
         parents = stuck_node.parents
         children = stuck_node.children
 
-        # Delete the stuck node immediately so we can replace it
-        GraphManager.delete_node(graph_id, stuck_node_id)
-
-        new_node =
+        {valid?, error_msg} =
           case stuck_node.class do
-            "thesis" ->
-              if parent = List.first(parents) do
+            c when c in ["thesis", "antithesis", "deepdive", "ideas", "answer"] ->
+              if List.first(parents) != nil,
+                do: {true, nil},
+                else: {false, "Missing parent node"}
+
+            "synthesis" ->
+              if length(parents) >= 2,
+                do: {true, nil},
+                else: {false, "Need at least 2 parent nodes for synthesis"}
+
+            other ->
+              {false, "Regeneration is not available for node type '#{other}'."}
+          end
+
+        if valid? do
+          # Delete the stuck node immediately so we can replace it
+          GraphManager.delete_node(graph_id, stuck_node_id)
+
+          new_node =
+            case stuck_node.class do
+              "thesis" ->
+                parent = List.first(parents)
+
                 GraphManager.add_child(
                   graph_id,
                   [parent],
@@ -229,10 +247,10 @@ defmodule Dialectic.Graph.GraphActions do
                   "thesis",
                   user
                 )
-              end
 
-            "antithesis" ->
-              if parent = List.first(parents) do
+              "antithesis" ->
+                parent = List.first(parents)
+
                 GraphManager.add_child(
                   graph_id,
                   [parent],
@@ -240,42 +258,43 @@ defmodule Dialectic.Graph.GraphActions do
                   "antithesis",
                   user
                 )
-              end
 
-            "deepdive" ->
-              if parent = List.first(parents) do
+              "deepdive" ->
+                parent = List.first(parents)
                 deepdive({graph_id, parent, user, live_view_topic})
-              end
 
-            "ideas" ->
-              if parent = List.first(parents) do
+              "ideas" ->
+                parent = List.first(parents)
                 related_ideas({graph_id, parent, user, live_view_topic})
-              end
 
-            "answer" ->
-              if parent = List.first(parents) do
+              "answer" ->
+                parent = List.first(parents)
                 answer({graph_id, parent, user, live_view_topic})
-              end
 
-            "synthesis" ->
-              if length(parents) >= 2 do
+              "synthesis" ->
                 [p1, p2 | _] = parents
                 combine({graph_id, p1, user, live_view_topic}, p2.id)
-              end
 
-            _ ->
-              nil
+              _ ->
+                nil
+            end
+
+          if new_node do
+            if children != [] do
+              Enum.each(children, fn child ->
+                GraphManager.add_edges(graph_id, child, [new_node])
+              end)
+
+              GraphManager.save_graph(graph_id)
+            end
+
+            {:ok, new_node}
+          else
+            {:error, "Failed to create replacement node"}
           end
-
-        if new_node && children != [] do
-          Enum.each(children, fn child ->
-            GraphManager.add_edges(graph_id, child, [new_node])
-          end)
-
-          GraphManager.save_graph(graph_id)
+        else
+          {:error, error_msg}
         end
-
-        new_node
     end
   end
 end
