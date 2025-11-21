@@ -624,6 +624,20 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
+  def handle_event("node_regenerate", %{"id" => node_id}, socket) do
+    if !socket.assigns.can_edit do
+      {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    else
+      Dialectic.Responses.LlmInterface.regenerate_node(
+        node_id,
+        socket.assigns.graph_id,
+        socket.assigns.live_view_topic
+      )
+
+      {:noreply, socket |> put_flash(:info, "Regenerating...")}
+    end
+  end
+
   def handle_event("combine_node_select", %{"selected_node" => node_id}, socket) do
     if !socket.assigns.can_edit do
       {:noreply, socket |> put_flash(:error, "This graph is locked")}

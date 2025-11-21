@@ -71,8 +71,8 @@ defmodule DialecticWeb.NodeComp do
               </div>
             </div>
           <% else %>
-            <div class="node mb-2 p-4">
-              <div class="flex flex-col space-y-4 animate-pulse">
+            <div class="node mb-2 p-4 relative">
+              <div class="flex flex-col space-y-4 animate-pulse opacity-40">
                 <div class="h-6 bg-gray-200 rounded-md w-3/4"></div>
                 <div class="space-y-2">
                   <div class="h-4 bg-gray-200 rounded-md w-full"></div>
@@ -83,6 +83,30 @@ defmodule DialecticWeb.NodeComp do
                   <div class="h-8 w-8 bg-gray-200 rounded-full"></div>
                   <div class="h-3 bg-gray-200 rounded-md w-24"></div>
                 </div>
+              </div>
+              <div class="absolute inset-0 flex items-center justify-center z-10">
+                <button
+                  phx-click="node_regenerate"
+                  phx-value-id={@node.id}
+                  class="bg-white shadow-sm border border-gray-300 px-3 py-1.5 rounded-full text-xs font-medium text-gray-700 hover:bg-gray-50 hover:text-indigo-600 flex items-center gap-1.5 transition-colors"
+                  title="Regenerate response"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    class="w-3.5 h-3.5"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.992 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
+                    />
+                  </svg>
+                  Regenerate
+                </button>
               </div>
             </div>
           <% end %>
