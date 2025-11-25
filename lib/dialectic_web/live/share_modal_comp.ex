@@ -28,6 +28,16 @@ defmodule DialecticWeb.ShareModalComp do
   def handle_event("invite", %{"email" => email}, socket) do
     case Sharing.invite_user(socket.assigns.graph_struct, email) do
       {:ok, _share} ->
+        %{
+          "email_type" => "invite",
+          "to" => email,
+          "inviter" => socket.assigns.current_user.email,
+          "graph_title" => socket.assigns.graph_struct.title,
+          "link" => share_url(socket.assigns.graph_struct)
+        }
+        |> Dialectic.Workers.EmailWorker.new()
+        |> Oban.insert()
+
         shares = Sharing.list_shares(socket.assigns.graph_struct)
 
         {:noreply,
