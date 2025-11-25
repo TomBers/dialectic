@@ -243,10 +243,12 @@ defmodule DialecticWeb.GraphLiveE2ETest do
       render_click(view, "toggle_lock_graph", %{})
       assigns = get_socket_assigns(view)
       refute assigns.can_edit
+      assert assigns.graph_struct.is_locked
 
       render_click(view, "toggle_lock_graph", %{})
       assigns = get_socket_assigns(view)
       assert assigns.can_edit
+      refute assigns.graph_struct.is_locked
 
       # Ensure move didn't crash earlier and node id remains valid
       assert prev_node_id

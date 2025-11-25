@@ -14,6 +14,7 @@ defmodule Dialectic.DbActions.Notes do
     query =
       from g in Dialectic.Accounts.Graph,
         where: g.is_published == true,
+        where: g.is_public == true,
         left_join: n in assoc(g, :notes),
         group_by: g.title,
         order_by: [desc: count(n.id)],
@@ -27,6 +28,7 @@ defmodule Dialectic.DbActions.Notes do
     query =
       from g in Dialectic.Accounts.Graph,
         where: g.is_published == true,
+        where: g.is_public == true,
         order_by: [desc: g.inserted_at],
         limit: ^limit,
         select: {g, 0}

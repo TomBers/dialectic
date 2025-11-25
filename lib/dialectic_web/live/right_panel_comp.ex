@@ -233,6 +233,15 @@ defmodule DialecticWeb.RightPanelComp do
           Share
         </div>
         <div class="p-1 text-[11px] text-gray-700 space-y-1">
+          <%= if owner?(@graph_struct, @current_user) do %>
+            <button
+              phx-click="open_share_modal"
+              class="w-full flex items-center justify-center px-2 py-1 mb-2 border border-indigo-200 rounded bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors"
+            >
+              <.icon name="hero-user-plus" class="w-3 h-3 mr-1" />
+              <span>Manage Access</span>
+            </button>
+          <% end %>
           <div class="flex items-center gap-2">
             <span
               class="flex-1 truncate bg-gray-50 border border-gray-200 rounded px-2 py-1 font-mono select-all cursor-pointer"

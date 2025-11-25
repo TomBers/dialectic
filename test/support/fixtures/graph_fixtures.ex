@@ -22,6 +22,7 @@ defmodule Dialectic.GraphFixtures do
         user_id: nil,
         data: data,
         is_public: true,
+        is_locked: false,
         is_deleted: false,
         is_published: true
       })

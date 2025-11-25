@@ -14,14 +14,18 @@ defmodule Dialectic.DbActions.Graphs do
       "edges" => []
     }
 
+    token = :crypto.strong_rand_bytes(16) |> Base.url_encode64(padding: false)
+
     %Graph{}
     |> Graph.changeset(%{
       title: title,
       user_id: user && user.id,
       data: data,
       is_public: true,
+      is_locked: false,
       is_deleted: false,
-      is_published: true
+      is_published: true,
+      share_token: token
     })
     |> Repo.insert()
   end
@@ -40,6 +44,7 @@ defmodule Dialectic.DbActions.Graphs do
     query =
       from g in Dialectic.Accounts.Graph,
         where: g.is_published == true,
+        where: g.is_public == true,
         where: ilike(g.title, ^search_pattern),
         left_join: n in assoc(g, :notes),
         group_by: g.title,
@@ -75,7 +80,26 @@ defmodule Dialectic.DbActions.Graphs do
 
   def toggle_graph_locked(graph) do
     graph
-    |> Graph.changeset(%{is_public: !graph.is_public})
+    |> Graph.changeset(%{is_locked: !graph.is_locked})
+    |> Repo.update!()
+  end
+
+  def toggle_graph_public(graph) do
+    updates = %{is_public: !graph.is_public}
+
+    updates =
+      if is_nil(graph.share_token) do
+        Map.put(
+          updates,
+          :share_token,
+          :crypto.strong_rand_bytes(16) |> Base.url_encode64(padding: false)
+        )
+      else
+        updates
+      end
+
+    graph
+    |> Graph.changeset(updates)
     |> Repo.update!()
   end
 

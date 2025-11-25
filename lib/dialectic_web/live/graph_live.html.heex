@@ -1,5 +1,12 @@
 <div class="h-screen overflow-hidden flex flex-col">
   <.live_component
+    module={DialecticWeb.ShareModalComp}
+    id="share-modal"
+    show={@show_share_modal}
+    graph_struct={@graph_struct}
+  />
+
+  <.live_component
     module={DialecticWeb.Live.ModalComp}
     node={@node}
     id="graph-live-modal-comp"

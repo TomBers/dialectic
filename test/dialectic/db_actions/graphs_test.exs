@@ -24,6 +24,7 @@ defmodule Dialectic.DbActions.GraphsTest do
 
       assert %Graph{title: ^title} = graph
       assert graph.is_public == true
+      assert graph.is_locked == false
       assert graph.is_deleted == false
       assert graph.is_published == true
 
@@ -74,16 +75,30 @@ defmodule Dialectic.DbActions.GraphsTest do
   end
 
   describe "toggle_graph_locked/1" do
-    test "flips is_public flag" do
-      title = unique_title("toggle")
+    test "flips is_locked flag" do
+      title = unique_title("toggle-lock")
       graph = insert_graph!(title)
-      assert graph.is_public == true
+      assert graph.is_locked == false
 
       updated = Graphs.toggle_graph_locked(graph)
-      refute updated.is_public
+      assert updated.is_locked
 
       # Flip back for completeness
       updated_again = Graphs.toggle_graph_locked(updated)
+      refute updated_again.is_locked
+    end
+  end
+
+  describe "toggle_graph_public/1" do
+    test "flips is_public flag" do
+      title = unique_title("toggle-public")
+      graph = insert_graph!(title)
+      assert graph.is_public == true
+
+      updated = Graphs.toggle_graph_public(graph)
+      refute updated.is_public
+
+      updated_again = Graphs.toggle_graph_public(updated)
       assert updated_again.is_public
     end
   end
@@ -129,6 +144,7 @@ defmodule Dialectic.DbActions.GraphsTest do
             "edges" => []
           },
           is_public: true,
+          is_locked: false,
           is_deleted: false,
           is_published: false
         })
