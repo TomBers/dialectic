@@ -177,7 +177,7 @@ defmodule DialecticWeb.RightPanelComp do
       <%= if owner?(@graph_struct, @current_user) do %>
         <div class="bg-white border border-gray-200 rounded-md">
           <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
-            Lock
+            Access
           </div>
           <div class="p-1">
             <DialecticWeb.LockComp.render id="lock-graph" graph_struct={@graph_struct} />

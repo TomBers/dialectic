@@ -14,7 +14,7 @@ defmodule Dialectic.DbActions.Graphs do
       "edges" => []
     }
 
-    token = :crypto.strong_rand_bytes(16) |> Base.url_encode64(padding: false)
+    token = generate_share_token()
 
     %Graph{}
     |> Graph.changeset(%{
@@ -92,7 +92,7 @@ defmodule Dialectic.DbActions.Graphs do
         Map.put(
           updates,
           :share_token,
-          :crypto.strong_rand_bytes(16) |> Base.url_encode64(padding: false)
+          generate_share_token()
         )
       else
         updates
@@ -135,5 +135,9 @@ defmodule Dialectic.DbActions.Graphs do
     else
       _ -> {:error, :invalid_timestamp}
     end
+  end
+
+  defp generate_share_token do
+    :crypto.strong_rand_bytes(16) |> Base.url_encode64(padding: false)
   end
 end

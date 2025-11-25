@@ -26,19 +26,15 @@ defmodule DialecticWeb.ShareModalComp do
 
   @impl true
   def handle_event("invite", %{"email" => email}, socket) do
-    if email =~ ~r/^[^\s]+@[^\s]+$/ do
-      case Sharing.invite_user(socket.assigns.graph_struct, email) do
-        {:ok, _share} ->
-          shares = Sharing.list_shares(socket.assigns.graph_struct)
+    case Sharing.invite_user(socket.assigns.graph_struct, email) do
+      {:ok, _share} ->
+        shares = Sharing.list_shares(socket.assigns.graph_struct)
 
-          {:noreply,
-           socket |> assign(shares: shares, email: "") |> put_flash(:info, "Invitation sent")}
+        {:noreply,
+         socket |> assign(shares: shares, email: "") |> put_flash(:info, "Invitation sent")}
 
-        {:error, _changeset} ->
-          {:noreply, put_flash(socket, :error, "Could not invite user")}
-      end
-    else
-      {:noreply, put_flash(socket, :error, "Invalid email address")}
+      {:error, _changeset} ->
+        {:noreply, put_flash(socket, :error, "Could not invite user")}
     end
   end
 
@@ -113,9 +109,16 @@ defmodule DialecticWeb.ShareModalComp do
                         type="text"
                         readonly
                         value={share_url(@graph_struct)}
-                        class="flex-1 min-w-0 block w-full px-3 py-2 rounded-md border-gray-300 sm:text-sm bg-white text-gray-500"
-                        onclick="this.select()"
+                        class="flex-1 min-w-0 block w-full px-3 py-2 rounded-l-md border-gray-300 sm:text-sm bg-white text-gray-500"
                       />
+                      <button
+                        type="button"
+                        class="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 rounded-r-md bg-gray-50 text-gray-500 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        onclick={"navigator.clipboard.writeText('#{share_url(@graph_struct)}').then(() => alert('Link copied to clipboard!'))"}
+                        aria-label="Copy to clipboard"
+                      >
+                        <.icon name="hero-clipboard-document" class="w-4 h-4" />
+                      </button>
                     </div>
                     <p class="mt-1 text-xs text-gray-500">
                       <%= if @graph_struct.is_public do %>
