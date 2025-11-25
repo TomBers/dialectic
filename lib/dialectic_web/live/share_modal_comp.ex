@@ -4,6 +4,14 @@ defmodule DialecticWeb.ShareModalComp do
 
   @impl true
   def update(assigns, socket) do
+    assigns =
+      if assigns[:graph_struct] do
+        {:ok, graph} = Sharing.ensure_share_token(assigns.graph_struct)
+        Map.put(assigns, :graph_struct, graph)
+      else
+        assigns
+      end
+
     socket = assign(socket, assigns)
 
     shares =
@@ -125,7 +133,8 @@ defmodule DialecticWeb.ShareModalComp do
                       <button
                         type="button"
                         class="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 rounded-r-md bg-gray-50 text-gray-500 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                        onclick={"navigator.clipboard.writeText('#{share_url(@graph_struct)}').then(() => alert('Link copied to clipboard!'))"}
+                        data-copy-url={share_url(@graph_struct)}
+                        onclick="navigator.clipboard.writeText(this.dataset.copyUrl).then(() => alert('Link copied to clipboard!'))"
                         aria-label="Copy to clipboard"
                       >
                         <.icon name="hero-clipboard-document" class="w-4 h-4" />

@@ -85,21 +85,10 @@ defmodule Dialectic.DbActions.Graphs do
   end
 
   def toggle_graph_public(graph) do
-    updates = %{is_public: !graph.is_public}
-
-    updates =
-      if is_nil(graph.share_token) do
-        Map.put(
-          updates,
-          :share_token,
-          generate_share_token()
-        )
-      else
-        updates
-      end
+    {:ok, graph} = Dialectic.DbActions.Sharing.ensure_share_token(graph)
 
     graph
-    |> Graph.changeset(updates)
+    |> Graph.changeset(%{is_public: !graph.is_public})
     |> Repo.update!()
   end
 

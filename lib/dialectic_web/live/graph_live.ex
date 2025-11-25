@@ -74,7 +74,8 @@ defmodule DialecticWeb.GraphLive do
 
         has_access =
           Dialectic.DbActions.Sharing.can_access?(socket.assigns[:current_user], graph_db) or
-            (is_binary(token_param) and token_param == graph_db.share_token)
+            (is_binary(token_param) and is_binary(graph_db.share_token) and
+               Plug.Crypto.secure_compare(token_param, graph_db.share_token))
 
         # Try to get the graph safely
         result =
