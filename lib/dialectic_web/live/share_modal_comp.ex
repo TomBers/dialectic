@@ -25,27 +25,28 @@ defmodule DialecticWeb.ShareModalComp do
   end
 
   @impl true
-  def handle_event("invite", %{"email" => email}, socket) do
-    case Sharing.invite_user(socket.assigns.graph_struct, email) do
-      {:ok, _share} ->
-        %{
-          "email_type" => "invite",
-          "to" => email,
-          "inviter" => socket.assigns.current_user.email,
-          "graph_title" => socket.assigns.graph_struct.title,
-          "link" => share_url(socket.assigns.graph_struct)
-        }
-        |> Dialectic.Workers.EmailWorker.new()
-        |> Oban.insert()
+  def handle_event("invite", %{"email" => _email}, socket) do
+    # case Sharing.invite_user(socket.assigns.graph_struct, email) do
+    #   {:ok, _share} ->
+    #     %{
+    #       "email_type" => "invite",
+    #       "to" => email,
+    #       "inviter" => socket.assigns.current_user.email,
+    #       "graph_title" => socket.assigns.graph_struct.title,
+    #       "link" => share_url(socket.assigns.graph_struct)
+    #     }
+    #     |> Dialectic.Workers.EmailWorker.new()
+    #     |> Oban.insert()
 
-        shares = Sharing.list_shares(socket.assigns.graph_struct)
+    #     shares = Sharing.list_shares(socket.assigns.graph_struct)
 
-        {:noreply,
-         socket |> assign(shares: shares, email: "") |> put_flash(:info, "Invitation sent")}
+    #     {:noreply,
+    #      socket |> assign(shares: shares, email: "") |> put_flash(:info, "Invitation sent")}
 
-      {:error, _changeset} ->
-        {:noreply, put_flash(socket, :error, "Could not invite user")}
-    end
+    #   {:error, _changeset} ->
+    #     {:noreply, put_flash(socket, :error, "Could not invite user")}
+    # end
+    {:noreply, socket}
   end
 
   @impl true
@@ -139,8 +140,8 @@ defmodule DialecticWeb.ShareModalComp do
                     </p>
                   </div>
                   
-    <!-- Invite Section -->
-                  <div class="mt-6">
+    <!-- Invite Section (Hidden) -->
+                  <%!-- <div class="mt-6">
                     <form phx-submit="invite" phx-change="validate" phx-target={@myself}>
                       <label for="email" class="block text-sm font-medium text-gray-700">
                         Invite people
@@ -162,10 +163,10 @@ defmodule DialecticWeb.ShareModalComp do
                         </button>
                       </div>
                     </form>
-                  </div>
+                  </div> --%>
                   
-    <!-- Shares List -->
-                  <div class="mt-6">
+    <!-- Shares List (Hidden) -->
+                  <%!-- <div class="mt-6">
                     <h4 class="text-sm font-medium text-gray-700">People with access</h4>
                     <ul class="mt-3 border-t border-gray-200 divide-y divide-gray-200">
                       <%= for share <- @shares do %>
@@ -198,7 +199,7 @@ defmodule DialecticWeb.ShareModalComp do
                         </li>
                       <% end %>
                     </ul>
-                  </div>
+                  </div> --%>
                 </div>
               </div>
             </div>
