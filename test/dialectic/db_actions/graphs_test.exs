@@ -167,5 +167,34 @@ defmodule Dialectic.DbActions.GraphsTest do
 
       assert only_one == [{pub_title1, 0}]
     end
+
+    test "excludes private graphs" do
+      public_title = unique_title("public-graph")
+      private_title = unique_title("private-graph")
+
+      insert_graph!(public_title)
+
+      # Insert private graph
+      {:ok, _private} =
+        %Graph{}
+        |> Graph.changeset(%{
+          title: private_title,
+          data: %{
+            "nodes" => [%Vertex{id: "1", content: "## " <> private_title, class: "origin"}],
+            "edges" => []
+          },
+          is_public: false,
+          is_published: true,
+          is_locked: false,
+          is_deleted: false
+        })
+        |> Repo.insert()
+
+      results = Graphs.all_graphs_with_notes("")
+      result_titles = Enum.map(results, fn {g, _count} -> g.title end)
+
+      assert public_title in result_titles
+      refute private_title in result_titles
+    end
   end
 end
