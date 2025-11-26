@@ -6,8 +6,10 @@ defmodule DialecticWeb.ShareModalComp do
   def update(assigns, socket) do
     assigns =
       if assigns[:graph_struct] do
-        {:ok, graph} = Sharing.ensure_share_token(assigns.graph_struct)
-        Map.put(assigns, :graph_struct, graph)
+        case Sharing.ensure_share_token(assigns.graph_struct) do
+          {:ok, graph} -> Map.put(assigns, :graph_struct, graph)
+          _ -> assigns
+        end
       else
         assigns
       end
