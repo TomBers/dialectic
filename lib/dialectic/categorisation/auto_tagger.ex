@@ -11,7 +11,7 @@ defmodule Dialectic.Categorisation.AutoTagger do
   """
   def tag_graph(graph) do
     # Run in a separate task to avoid blocking the caller
-    Task.start(fn ->
+    Task.Supervisor.start_child(Dialectic.TaskSupervisor, fn ->
       try do
         do_tag_graph(graph)
       rescue

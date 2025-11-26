@@ -1,7 +1,6 @@
 defmodule Dialectic.DbActions.Graphs do
   alias Dialectic.Repo
   alias Dialectic.Accounts.Graph
-  alias Dialectic.Graph.Vertex
 
   import Ecto.Query
 
@@ -10,7 +9,18 @@ defmodule Dialectic.DbActions.Graphs do
   """
   def create_new_graph(title, user \\ nil) do
     data = %{
-      "nodes" => [%Vertex{id: "1", content: "## " <> title, class: "origin"}],
+      "nodes" => [
+        %{
+          "id" => "1",
+          "content" => "## " <> title,
+          "class" => "origin",
+          "user" => "",
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false
+        }
+      ],
       "edges" => []
     }
 

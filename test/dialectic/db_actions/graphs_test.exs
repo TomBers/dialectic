@@ -33,9 +33,9 @@ defmodule Dialectic.DbActions.GraphsTest do
       assert length(nodes) == 1
 
       first_node = hd(nodes)
-      assert %Vertex{} = first_node
-      assert first_node.class == "origin"
-      assert first_node.content == "## " <> title
+      assert is_map(first_node)
+      assert first_node["class"] == "origin"
+      assert first_node["content"] == "## " <> title
     end
 
     test "sets user_id when a user is provided" do
