@@ -23,6 +23,10 @@ defmodule Dialectic.Graph.GraphActions do
     GraphManager.toggle_graph_locked(graph_id)
   end
 
+  def toggle_graph_public({graph_id, _node, _user, _live_view_topic}) do
+    GraphManager.toggle_graph_public(graph_id)
+  end
+
   def comment({graph_id, node, user, _live_view_topic}, question, prefix \\ "") do
     GraphManager.add_child(
       graph_id,

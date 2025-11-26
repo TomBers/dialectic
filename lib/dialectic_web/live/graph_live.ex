@@ -68,21 +68,33 @@ defmodule DialecticWeb.GraphLive do
 
         {:ok, socket}
 
-      _graph_exists ->
+      graph_db ->
+        # Check Access
+        token_param = Map.get(params, "token")
+
+        has_access =
+          Dialectic.DbActions.Sharing.can_access?(socket.assigns[:current_user], graph_db) or
+            (is_binary(token_param) and is_binary(graph_db.share_token) and
+               Plug.Crypto.secure_compare(token_param, graph_db.share_token))
+
         # Try to get the graph safely
         result =
-          try do
-            {:ok, GraphManager.get_graph(graph_id)}
-          rescue
-            _e ->
-              # If there's an error fetching it, redirect home instead of creating a new graph
-              require Logger
-              Logger.error("Failed to load graph: #{graph_id}")
-              {:error, "Error loading graph: #{graph_id}"}
+          if has_access do
+            try do
+              {:ok, GraphManager.get_graph(graph_id)}
+            rescue
+              _e ->
+                # If there's an error fetching it, redirect home instead of creating a new graph
+                require Logger
+                Logger.error("Failed to load graph: #{graph_id}")
+                {:error, "Error loading graph: #{graph_id}"}
+            end
+          else
+            {:error, "You do not have permission to view this graph."}
           end
 
         case result do
-          {:ok, {graph_struct, graph}} ->
+          {:ok, {graph_struct, _graph}} ->
             # Continue with the normal flow
 
             # Ensure a main group exists to make root togglable
@@ -98,7 +110,7 @@ defmodule DialecticWeb.GraphLive do
             changeset = GraphActions.create_new_node(user) |> Vertex.changeset()
 
             # TODO - can edit is going to be expaned to be more complex, but for the time being, just is not protected
-            can_edit = graph_struct.is_public
+            can_edit = !graph_struct.is_locked
             {nav_up, nav_down, nav_left, nav_right} = compute_nav_flags(graph_id, node)
 
             socket =
@@ -133,6 +145,7 @@ defmodule DialecticWeb.GraphLive do
                 explore_items: [],
                 explore_selected: [],
                 show_start_stream_modal: false,
+                show_share_modal: false,
                 work_streams: list_streams(graph_id),
                 prompt_mode: Atom.to_string(Dialectic.Responses.ModeServer.get_mode(graph_id))
               )
@@ -377,8 +390,13 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event("toggle_lock_graph", _, socket) do
     graph_struct = GraphActions.toggle_graph_locked(graph_action_params(socket))
-    can_edit = graph_struct.is_public
+    can_edit = !graph_struct.is_locked
     {:noreply, socket |> assign(graph_struct: graph_struct, can_edit: can_edit)}
+  end
+
+  def handle_event("toggle_public_graph", _, socket) do
+    graph_struct = GraphActions.toggle_graph_public(graph_action_params(socket))
+    {:noreply, socket |> assign(graph_struct: graph_struct)}
   end
 
   def handle_event("note", %{"node" => node_id}, socket) do
@@ -753,6 +771,14 @@ defmodule DialecticWeb.GraphLive do
   end
 
   # Start stream handlers grouped with other handle_event clauses
+  def handle_event("open_share_modal", _params, socket) do
+    {:noreply, assign(socket, show_share_modal: true)}
+  end
+
+  def handle_event("close_share_modal", _params, socket) do
+    {:noreply, assign(socket, show_share_modal: false)}
+  end
+
   def handle_event("open_start_stream_modal", _params, socket) do
     {:noreply, assign(socket, show_start_stream_modal: true)}
   end
@@ -808,6 +834,10 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event("toggle_stream", %{"id" => group_id}, socket) do
     {:noreply, push_event(socket, "toggle_group", %{id: group_id})}
+  end
+
+  def handle_info(:close_share_modal, socket) do
+    {:noreply, assign(socket, show_share_modal: false)}
   end
 
   def handle_info({DialecticWeb.Presence, {:join, presence}}, socket) do

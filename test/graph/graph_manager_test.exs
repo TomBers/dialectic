@@ -182,6 +182,7 @@ defmodule GraphManagerTest do
       assert graph_struct.is_public == true
       assert graph_struct.is_deleted == false
       assert graph_struct.is_published == true
+      assert graph_struct.is_locked == false
 
       # Verify graph is empty
       assert length(:digraph.vertices(fresh_graph)) == 0

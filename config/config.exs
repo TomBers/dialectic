@@ -40,6 +40,9 @@ config :dialectic, DialecticWeb.Endpoint,
 # at the `config/runtime.exs`.
 config :dialectic, Dialectic.Mailer, adapter: Swoosh.Adapters.Local
 
+config :swoosh, :api_client, Swoosh.ApiClient.Finch
+config :swoosh, :finch_name, Dialectic.Finch
+
 # Configure esbuild (the version is required)
 config :esbuild,
   version: "0.17.11",

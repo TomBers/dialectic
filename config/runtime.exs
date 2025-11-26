@@ -115,3 +115,9 @@ if config_env() == :prod do
   #
   # See https://hexdocs.pm/swoosh/Swoosh.html#module-installation for details.
 end
+
+if api_key = System.get_env("RESEND_API_KEY") do
+  config :dialectic, Dialectic.Mailer,
+    adapter: Swoosh.Adapters.Resend,
+    api_key: api_key
+end
