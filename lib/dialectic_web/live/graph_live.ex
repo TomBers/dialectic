@@ -246,6 +246,7 @@ defmodule DialecticWeb.GraphLive do
        explore_items: [],
        explore_selected: [],
        show_start_stream_modal: false,
+       show_share_modal: false,
        work_streams: [],
        prompt_mode: initial_mode_str
      )}
