@@ -180,6 +180,8 @@
                   is_public={g.is_public}
                   link={gen_link(g.title)}
                   count={count}
+                  tags={g.tags}
+                  node_count={length(g.data["nodes"] || [])}
                   id={"graph-comp-#{g.title}"}
                 />
               <% end %>
@@ -212,6 +214,8 @@
                   is_public={g.is_public}
                   link={gen_link(g.title)}
                   count={nil}
+                  tags={g.tags}
+                  node_count={length(g.data["nodes"] || [])}
                   id={"recent-graph-comp-#{g.title}"}
                 />
               <% end %>

@@ -21,8 +21,36 @@ defmodule DialecticWeb.PageController do
 
   def view_all(conn, params) do
     search_term = Map.get(params, "search", "")
-    graphs = Dialectic.DbActions.Graphs.all_graphs_with_notes(search_term)
-    render(conn, :view_all, graphs: graphs, search_term: search_term)
+    tag = Map.get(params, "tag")
+    category = Map.get(params, "category")
+
+    graphs =
+      cond do
+        is_binary(tag) && tag != "" ->
+          Dialectic.DbActions.Graphs.list_graphs_by_tag(tag)
+          |> Enum.map(&{&1, 0})
+
+        category == "deep_dives" ->
+          Dialectic.DbActions.Graphs.list_deep_dives()
+          |> Enum.map(&{&1, 0})
+
+        category == "seedlings" ->
+          Dialectic.DbActions.Graphs.list_seedlings()
+          |> Enum.map(&{&1, 0})
+
+        true ->
+          Dialectic.DbActions.Graphs.all_graphs_with_notes(search_term)
+      end
+
+    popular_tags = Dialectic.DbActions.Graphs.list_popular_tags()
+
+    render(conn, :view_all,
+      graphs: graphs,
+      search_term: search_term,
+      popular_tags: popular_tags,
+      active_tag: tag,
+      active_category: category
+    )
   end
 
   # def graph_json(conn, %{"graph_name" => graph_id_uri}) do
