@@ -53,6 +53,30 @@ defmodule DialecticWeb.PageController do
     )
   end
 
+  def generate_tags(conn, %{"title" => title}) do
+    case Dialectic.DbActions.Graphs.get_graph_by_title(title) do
+      nil ->
+        conn
+        |> put_flash(:error, "Graph not found.")
+        |> redirect(to: ~p"/view_all/graphs")
+
+      graph ->
+        Dialectic.Categorisation.AutoTagger.tag_graph(graph)
+
+        referer = get_req_header(conn, "referer") |> List.first()
+
+        conn =
+          conn
+          |> put_flash(:info, "Generating tags for \"#{graph.title}\" in the background...")
+
+        if referer do
+          redirect(conn, external: referer)
+        else
+          redirect(conn, to: ~p"/view_all/graphs")
+        end
+    end
+  end
+
   # def graph_json(conn, %{"graph_name" => graph_id_uri}) do
   #   graph_name = URI.decode(graph_id_uri)
   #   graph = Graphs.get_graph_by_title(graph_name).data

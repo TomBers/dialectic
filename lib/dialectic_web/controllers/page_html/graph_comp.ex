@@ -3,8 +3,11 @@ defmodule DialecticWeb.PageHtml.GraphComp do
 
   def render(assigns) do
     ~H"""
-    <.link navigate={@link} class="block group h-full">
-      <div class="bg-white text-gray-900 rounded-lg p-5 ring-1 ring-gray-200 hover:bg-gray-50 hover:ring-gray-300 transition-colors flex flex-col h-full">
+    <div class="relative block group h-full bg-white text-gray-900 rounded-lg ring-1 ring-gray-200 hover:bg-gray-50 hover:ring-gray-300 transition-colors flex flex-col">
+      <.link navigate={@link} class="absolute inset-0 z-0 rounded-lg">
+        <span class="sr-only">View {@title}</span>
+      </.link>
+      <div class="p-5 flex flex-col h-full pointer-events-none relative z-10">
         <h3 class="font-semibold text-lg">
           {@title}
         </h3>
@@ -29,14 +32,28 @@ defmodule DialecticWeb.PageHtml.GraphComp do
             <% end %>
           <% end %>
         </div>
-        <%= if assigns[:count] && @count > 0 do %>
-          <div class="mt-auto pt-4 flex items-center text-sm text-gray-500">
-            <.icon name="hero-chat-bubble-left-right" class="w-4 h-4 mr-1" />
-            <span>{@count} notes</span>
-          </div>
-        <% end %>
+        <div class="mt-auto pt-4 flex items-center justify-between pointer-events-auto">
+          <%= if assigns[:count] && @count > 0 do %>
+            <div class="flex items-center text-sm text-gray-500">
+              <.icon name="hero-chat-bubble-left-right" class="w-4 h-4 mr-1" />
+              <span>{@count} notes</span>
+            </div>
+          <% else %>
+            <div></div>
+          <% end %>
+          <%= if (is_nil(assigns[:tags]) or @tags == []) do %>
+            <.form for={%{}} action={~p"/graphs/#{@title}/generate_tags"} method="post">
+              <button
+                type="submit"
+                class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-700/10 hover:bg-indigo-100"
+              >
+                ✨ Generate Tags
+              </button>
+            </.form>
+          <% end %>
+        </div>
       </div>
-    </.link>
+    </div>
     """
   end
 end

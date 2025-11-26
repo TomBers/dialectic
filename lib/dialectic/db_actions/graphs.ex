@@ -16,18 +16,28 @@ defmodule Dialectic.DbActions.Graphs do
 
     token = generate_share_token()
 
-    %Graph{}
-    |> Graph.changeset(%{
-      title: title,
-      user_id: user && user.id,
-      data: data,
-      is_public: true,
-      is_locked: false,
-      is_deleted: false,
-      is_published: true,
-      share_token: token
-    })
-    |> Repo.insert()
+    result =
+      %Graph{}
+      |> Graph.changeset(%{
+        title: title,
+        user_id: user && user.id,
+        data: data,
+        is_public: true,
+        is_locked: false,
+        is_deleted: false,
+        is_published: true,
+        share_token: token
+      })
+      |> Repo.insert()
+
+    case result do
+      {:ok, graph} ->
+        Dialectic.Categorisation.AutoTagger.tag_graph(graph)
+        {:ok, graph}
+
+      error ->
+        error
+    end
   end
 
   def list_graphs do
@@ -135,6 +145,16 @@ defmodule Dialectic.DbActions.Graphs do
     graph
     |> Graph.changeset(%{tags: tags})
     |> Repo.update()
+  end
+
+  def backfill_tags do
+    from(g in Graph,
+      where: g.is_published == true,
+      where: g.is_public == true
+    )
+    |> Repo.all()
+    |> Enum.filter(fn g -> is_nil(g.tags) or g.tags == [] end)
+    |> Enum.each(&Dialectic.Categorisation.AutoTagger.tag_graph/1)
   end
 
   def toggle_graph_locked(graph) do
