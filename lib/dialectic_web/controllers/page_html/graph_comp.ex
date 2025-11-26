@@ -7,19 +7,19 @@ defmodule DialecticWeb.PageHtml.GraphComp do
       <.link navigate={@link} class="absolute inset-0 z-0 rounded-lg">
         <span class="sr-only">View {@title}</span>
       </.link>
-      <div class="p-5 flex flex-col h-full pointer-events-none relative z-10">
-        <h3 class="font-semibold text-lg text-gray-800">
+      <div class="p-4 flex flex-col h-full pointer-events-none relative z-10">
+        <h3 class="font-semibold text-base text-gray-800 leading-snug">
           {@title}
         </h3>
-        <div class="mt-4 flex flex-wrap gap-2">
+        <div class="mt-2 flex flex-wrap gap-1.5">
           <%= if assigns[:node_count] do %>
             <%= if @node_count < 5 do %>
-              <span class="inline-flex items-center rounded-md bg-gradient-to-r from-emerald-50 to-teal-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+              <span class="inline-flex items-center rounded-md bg-gradient-to-r from-emerald-50 to-teal-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
                 <.icon name="hero-sparkles" class="w-3 h-3 mr-1 text-emerald-600" /> Seedling
               </span>
             <% end %>
             <%= if @node_count > 20 do %>
-              <span class="inline-flex items-center rounded-md bg-gradient-to-r from-blue-50 to-indigo-50 px-2.5 py-1 text-xs font-semibold text-blue-700 ring-1 ring-inset ring-blue-700/10">
+              <span class="inline-flex items-center rounded-md bg-gradient-to-r from-blue-50 to-indigo-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 ring-1 ring-inset ring-blue-700/10">
                 <.icon name="hero-book-open" class="w-3 h-3 mr-1 text-blue-600" /> Deep Dive
               </span>
             <% end %>
@@ -27,7 +27,7 @@ defmodule DialecticWeb.PageHtml.GraphComp do
           <%= if assigns[:tags] do %>
             <%= for tag <- @tags do %>
               <span class={[
-                "inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset transition-all hover:scale-105",
+                "inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold ring-1 ring-inset transition-all hover:scale-105",
                 tag_color_class(tag)
               ]}>
                 {tag}
@@ -35,26 +35,18 @@ defmodule DialecticWeb.PageHtml.GraphComp do
             <% end %>
           <% end %>
         </div>
-        <div class="mt-auto pt-5 flex items-center justify-between pointer-events-auto border-t border-gray-50">
-          <%= if assigns[:count] && @count > 0 do %>
-            <div class="flex items-center text-xs font-medium text-gray-500">
-              <.icon name="hero-chat-bubble-left-right" class="w-4 h-4 mr-1.5 text-gray-400" />
-              <span>{@count} notes</span>
-            </div>
-          <% else %>
-            <div></div>
-          <% end %>
-          <%= if (is_nil(assigns[:tags]) or @tags == []) do %>
+        <%= if (is_nil(assigns[:tags]) or @tags == []) do %>
+          <div class="mt-auto pt-2 flex justify-end pointer-events-auto border-t border-gray-50">
             <.form for={%{}} action={~p"/graphs/#{@title}/generate_tags"} method="post">
               <button
                 type="submit"
-                class="inline-flex items-center rounded-full bg-gradient-to-r from-violet-100 to-fuchsia-100 px-3 py-1 text-xs font-semibold text-violet-700 ring-1 ring-inset ring-violet-700/10 hover:from-violet-200 hover:to-fuchsia-200 transition-all shadow-sm"
+                class="inline-flex items-center rounded-full bg-gradient-to-r from-violet-100 to-fuchsia-100 px-2 py-0.5 text-[10px] font-bold text-violet-700 ring-1 ring-inset ring-violet-700/10 hover:from-violet-200 hover:to-fuchsia-200 transition-all shadow-sm"
               >
                 ✨ Generate Tags
               </button>
             </.form>
-          <% end %>
-        </div>
+          </div>
+        <% end %>
       </div>
     </div>
     """

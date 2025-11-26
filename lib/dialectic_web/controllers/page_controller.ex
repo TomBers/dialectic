@@ -4,14 +4,6 @@ defmodule DialecticWeb.PageController do
   alias Dialectic.Graph.{Vertex, Serialise}
   alias Dialectic.DbActions.{Notes}
 
-  def home(conn, params) do
-    top_graphs = Notes.top_graphs(5)
-    recent_graphs = Notes.recent_graphs(5)
-    topic = Map.get(params, "topic", "")
-    # IO.inspect(stats, label: "Stats")
-    render(conn, :home, top_graphs: top_graphs, recent_graphs: recent_graphs, topic: topic)
-  end
-
   def my_graphs(conn, _params) do
     stats = Notes.get_my_stats(conn.assigns.current_user)
 
@@ -20,37 +12,7 @@ defmodule DialecticWeb.PageController do
   end
 
   def view_all(conn, params) do
-    search_term = Map.get(params, "search", "")
-    tag = Map.get(params, "tag")
-    category = Map.get(params, "category")
-
-    graphs =
-      cond do
-        is_binary(tag) && tag != "" ->
-          Dialectic.DbActions.Graphs.list_graphs_by_tag(tag)
-          |> Enum.map(&{&1, 0})
-
-        category == "deep_dives" ->
-          Dialectic.DbActions.Graphs.list_deep_dives()
-          |> Enum.map(&{&1, 0})
-
-        category == "seedlings" ->
-          Dialectic.DbActions.Graphs.list_seedlings()
-          |> Enum.map(&{&1, 0})
-
-        true ->
-          Dialectic.DbActions.Graphs.all_graphs_with_notes(search_term)
-      end
-
-    popular_tags = Dialectic.DbActions.Graphs.list_popular_tags()
-
-    render(conn, :view_all,
-      graphs: graphs,
-      search_term: search_term,
-      popular_tags: popular_tags,
-      active_tag: tag,
-      active_category: category
-    )
+    redirect(conn, to: ~p"/?#{params}")
   end
 
   def generate_tags(conn, %{"title" => title}) do
@@ -58,7 +20,7 @@ defmodule DialecticWeb.PageController do
       nil ->
         conn
         |> put_flash(:error, "Graph not found.")
-        |> redirect(to: ~p"/view_all/graphs")
+        |> redirect(to: ~p"/")
 
       graph ->
         Dialectic.Categorisation.AutoTagger.tag_graph(graph)
@@ -72,7 +34,7 @@ defmodule DialecticWeb.PageController do
         if referer do
           redirect(conn, external: referer)
         else
-          redirect(conn, to: ~p"/view_all/graphs")
+          redirect(conn, to: ~p"/")
         end
     end
   end
