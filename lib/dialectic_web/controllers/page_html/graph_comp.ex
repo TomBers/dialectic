@@ -37,14 +37,31 @@ defmodule DialecticWeb.PageHtml.GraphComp do
         </div>
         <%= if (is_nil(assigns[:tags]) or @tags == []) do %>
           <div class="mt-auto pt-2 flex justify-end pointer-events-auto border-t border-gray-50">
-            <.form for={%{}} action={~p"/graphs/#{@title}/generate_tags"} method="post">
-              <button
-                type="submit"
-                class="inline-flex items-center rounded-full bg-gradient-to-r from-violet-100 to-fuchsia-100 px-2 py-0.5 text-[10px] font-bold text-violet-700 ring-1 ring-inset ring-violet-700/10 hover:from-violet-200 hover:to-fuchsia-200 transition-all shadow-sm"
-              >
-                ✨ Generate Tags
-              </button>
-            </.form>
+            <%= if assigns[:generating] do %>
+              <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-gray-500 ring-1 ring-inset ring-gray-500/10 animate-pulse">
+                Generating...
+              </span>
+            <% else %>
+              <%= if assigns[:is_live] do %>
+                <button
+                  type="button"
+                  phx-click="generate_tags"
+                  phx-value-title={@title}
+                  class="inline-flex items-center rounded-full bg-gradient-to-r from-violet-100 to-fuchsia-100 px-2 py-0.5 text-[10px] font-bold text-violet-700 ring-1 ring-inset ring-violet-700/10 hover:from-violet-200 hover:to-fuchsia-200 transition-all shadow-sm"
+                >
+                  ✨ Generate Tags
+                </button>
+              <% else %>
+                <.form for={%{}} action={~p"/graphs/#{@title}/generate_tags"} method="post">
+                  <button
+                    type="submit"
+                    class="inline-flex items-center rounded-full bg-gradient-to-r from-violet-100 to-fuchsia-100 px-2 py-0.5 text-[10px] font-bold text-violet-700 ring-1 ring-inset ring-violet-700/10 hover:from-violet-200 hover:to-fuchsia-200 transition-all shadow-sm"
+                  >
+                    ✨ Generate Tags
+                  </button>
+                </.form>
+              <% end %>
+            <% end %>
           </div>
         <% end %>
       </div>

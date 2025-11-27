@@ -152,9 +152,19 @@ defmodule Dialectic.DbActions.Graphs do
   end
 
   def update_tags(graph, tags) when is_list(tags) do
-    graph
-    |> Graph.changeset(%{tags: tags})
-    |> Repo.update()
+    case graph |> Graph.changeset(%{tags: tags}) |> Repo.update() do
+      {:ok, updated_graph} ->
+        Phoenix.PubSub.broadcast(
+          Dialectic.PubSub,
+          "graphs",
+          {:tags_updated, updated_graph.title, tags}
+        )
+
+        {:ok, updated_graph}
+
+      error ->
+        error
+    end
   end
 
   def toggle_graph_locked(graph) do

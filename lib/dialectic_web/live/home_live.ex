@@ -4,6 +4,8 @@ defmodule DialecticWeb.HomeLive do
 
   @impl true
   def mount(_params, _session, socket) do
+    if connected?(socket), do: Phoenix.PubSub.subscribe(Dialectic.PubSub, "graphs")
+
     {:ok,
      assign(socket,
        search_term: "",
@@ -11,7 +13,8 @@ defmodule DialecticWeb.HomeLive do
        active_category: nil,
        graphs: [],
        popular_tags: [],
-       limit: 20
+       limit: 20,
+       generating: MapSet.new()
      )}
   end
 
@@ -49,6 +52,39 @@ defmodule DialecticWeb.HomeLive do
       end
 
     {:noreply, push_patch(socket, to: ~p"/?#{params}")}
+  end
+
+  @impl true
+  def handle_event("generate_tags", %{"title" => title}, socket) do
+    case Graphs.get_graph_by_title(title) do
+      nil ->
+        {:noreply, put_flash(socket, :error, "Graph not found")}
+
+      graph ->
+        Dialectic.Categorisation.AutoTagger.tag_graph(graph)
+        {:noreply, assign(socket, generating: MapSet.put(socket.assigns.generating, title))}
+    end
+  end
+
+  @impl true
+  def handle_info({:tags_updated, title, tags}, socket) do
+    graphs =
+      Enum.map(socket.assigns.graphs, fn {g, c} ->
+        if g.title == title do
+          {Map.put(g, :tags, tags), c}
+        else
+          {g, c}
+        end
+      end)
+
+    popular_tags = Graphs.list_popular_tags()
+
+    {:noreply,
+     assign(socket,
+       graphs: graphs,
+       popular_tags: popular_tags,
+       generating: MapSet.delete(socket.assigns.generating, title)
+     )}
   end
 
   @impl true
@@ -348,6 +384,8 @@ defmodule DialecticWeb.HomeLive do
                   count={count}
                   tags={g.tags}
                   node_count={length(g.data["nodes"] || [])}
+                  is_live={true}
+                  generating={MapSet.member?(@generating, g.title)}
                   id={"graph-comp-#{g.title}"}
                 />
               </div>
