@@ -181,10 +181,6 @@ defmodule Dialectic.DbActions.Graphs do
       |> Graph.changeset(%{is_public: !graph.is_public})
       |> Repo.update!()
 
-    if updated_graph.is_public do
-      Dialectic.Categorisation.AutoTagger.tag_graph(updated_graph)
-    end
-
     updated_graph
   end
 
