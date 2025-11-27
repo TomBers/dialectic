@@ -110,16 +110,30 @@ defmodule Dialectic.Categorisation.AutoTagger do
             ReqLLM.Context.user(user_prompt)
           ])
 
-        case ReqLLM.generate_text(
+        case ReqLLM.stream_text(
                model_spec,
                ctx,
                api_key: api_key,
+               finch_name: finch_name,
                provider_options: provider_options,
-               req_http_options: [finch: finch_name],
                receive_timeout: receive_timeout
              ) do
-          {:ok, response} ->
-            {:ok, ReqLLM.Response.text(response)}
+          {:ok, stream_resp} ->
+            text =
+              stream_resp
+              |> ReqLLM.StreamResponse.tokens()
+              |> Enum.reduce("", fn token, acc ->
+                chunk =
+                  case token do
+                    t when is_binary(t) -> t
+                    t when is_list(t) -> IO.iodata_to_binary(t)
+                    t -> to_string(t)
+                  end
+
+                acc <> chunk
+              end)
+
+            {:ok, text}
 
           error ->
             error
