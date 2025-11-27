@@ -19,9 +19,10 @@ defmodule DialecticWeb.Router do
 
   scope "/", DialecticWeb do
     pipe_through :browser
-    get "/", PageController, :home
+    live "/", HomeLive
     get "/my/ideas", PageController, :my_graphs
     get "/view_all/graphs", PageController, :view_all
+    post "/graphs/:title/generate_tags", PageController, :generate_tags
     post "/conversation", PageController, :create
     # get "/intro/what", PageController, :what
     get "/intro/how", PageController, :guide

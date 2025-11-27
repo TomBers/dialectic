@@ -37,6 +37,8 @@
               is_public={g.is_public}
               link={gen_link(g.title)}
               count={g.notes |> Enum.filter(& &1.is_noted) |> length()}
+              tags={g.tags}
+              node_count={length(g.data["nodes"] || [])}
               id={"my-graph-comp-#{g.title}"}
             />
           <% end %>

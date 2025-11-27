@@ -4,14 +4,6 @@ defmodule DialecticWeb.PageController do
   alias Dialectic.Graph.{Vertex, Serialise}
   alias Dialectic.DbActions.{Notes}
 
-  def home(conn, params) do
-    top_graphs = Notes.top_graphs(5)
-    recent_graphs = Notes.recent_graphs(5)
-    topic = Map.get(params, "topic", "")
-    # IO.inspect(stats, label: "Stats")
-    render(conn, :home, top_graphs: top_graphs, recent_graphs: recent_graphs, topic: topic)
-  end
-
   def my_graphs(conn, _params) do
     stats = Notes.get_my_stats(conn.assigns.current_user)
 
@@ -20,9 +12,31 @@ defmodule DialecticWeb.PageController do
   end
 
   def view_all(conn, params) do
-    search_term = Map.get(params, "search", "")
-    graphs = Dialectic.DbActions.Graphs.all_graphs_with_notes(search_term)
-    render(conn, :view_all, graphs: graphs, search_term: search_term)
+    redirect(conn, to: ~p"/?#{params}")
+  end
+
+  def generate_tags(conn, %{"title" => title}) do
+    case Dialectic.DbActions.Graphs.get_graph_by_title(title) do
+      nil ->
+        conn
+        |> put_flash(:error, "Graph not found.")
+        |> redirect(to: ~p"/")
+
+      graph ->
+        Dialectic.Categorisation.AutoTagger.tag_graph(graph)
+
+        referer = get_req_header(conn, "referer") |> List.first()
+
+        conn =
+          conn
+          |> put_flash(:info, "Generating tags for \"#{graph.title}\" in the background...")
+
+        if referer do
+          redirect(conn, external: referer)
+        else
+          redirect(conn, to: ~p"/")
+        end
+    end
   end
 
   # def graph_json(conn, %{"graph_name" => graph_id_uri}) do

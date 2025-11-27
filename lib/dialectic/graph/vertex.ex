@@ -44,6 +44,8 @@ defmodule Dialectic.Graph.Vertex do
     }
   end
 
+  def deserialize(%Dialectic.Graph.Vertex{} = data), do: data
+
   def deserialize(data) do
     %Dialectic.Graph.Vertex{
       id: data["id"],

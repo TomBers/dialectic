@@ -33,9 +33,9 @@ defmodule Dialectic.DbActions.GraphsTest do
       assert length(nodes) == 1
 
       first_node = hd(nodes)
-      assert %Vertex{} = first_node
-      assert first_node.class == "origin"
-      assert first_node.content == "## " <> title
+      assert is_map(first_node)
+      assert first_node["class"] == "origin"
+      assert first_node["content"] == "## " <> title
     end
 
     test "sets user_id when a user is provided" do
@@ -195,6 +195,29 @@ defmodule Dialectic.DbActions.GraphsTest do
 
       assert public_title in result_titles
       refute private_title in result_titles
+    end
+  end
+
+  describe "list_popular_tags/1" do
+    test "returns aggregated tag counts" do
+      title1 = unique_title("tags-1")
+      title2 = unique_title("tags-2")
+      title3 = unique_title("tags-3")
+
+      {:ok, g1} = Graphs.create_new_graph(title1)
+      {:ok, _} = Graphs.update_tags(g1, ["elixir", "phoenix"])
+
+      {:ok, g2} = Graphs.create_new_graph(title2)
+      {:ok, _} = Graphs.update_tags(g2, ["phoenix", "liveview"])
+
+      {:ok, g3} = Graphs.create_new_graph(title3)
+      {:ok, _} = Graphs.update_tags(g3, ["phoenix"])
+
+      results = Graphs.list_popular_tags()
+
+      assert {"phoenix", 3} in results
+      assert {"elixir", 1} in results
+      assert {"liveview", 1} in results
     end
   end
 end

@@ -1,7 +1,6 @@
 defmodule Dialectic.DbActions.Graphs do
   alias Dialectic.Repo
   alias Dialectic.Accounts.Graph
-  alias Dialectic.Graph.Vertex
 
   import Ecto.Query
 
@@ -10,24 +9,45 @@ defmodule Dialectic.DbActions.Graphs do
   """
   def create_new_graph(title, user \\ nil) do
     data = %{
-      "nodes" => [%Vertex{id: "1", content: "## " <> title, class: "origin"}],
+      "nodes" => [
+        %{
+          "id" => "1",
+          "content" => "## " <> title,
+          "class" => "origin",
+          "user" => "",
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false
+        }
+      ],
       "edges" => []
     }
 
     token = generate_share_token()
 
-    %Graph{}
-    |> Graph.changeset(%{
-      title: title,
-      user_id: user && user.id,
-      data: data,
-      is_public: true,
-      is_locked: false,
-      is_deleted: false,
-      is_published: true,
-      share_token: token
-    })
-    |> Repo.insert()
+    result =
+      %Graph{}
+      |> Graph.changeset(%{
+        title: title,
+        user_id: user && user.id,
+        data: data,
+        is_public: true,
+        is_locked: false,
+        is_deleted: false,
+        is_published: true,
+        share_token: token
+      })
+      |> Repo.insert()
+
+    case result do
+      {:ok, graph} ->
+        Dialectic.Categorisation.AutoTagger.tag_graph(graph)
+        {:ok, graph}
+
+      error ->
+        error
+    end
   end
 
   def list_graphs do
@@ -48,10 +68,63 @@ defmodule Dialectic.DbActions.Graphs do
         where: ilike(g.title, ^search_pattern),
         left_join: n in assoc(g, :notes),
         group_by: g.title,
-        order_by: [desc: count(n.id), desc: g.inserted_at],
+        order_by: [desc: g.updated_at],
         select: {g, count(n.id)}
 
     Dialectic.Repo.all(query)
+  end
+
+  def list_seedlings(limit \\ 10) do
+    query =
+      from g in Graph,
+        where: g.is_published == true,
+        where: g.is_public == true,
+        where: fragment("jsonb_array_length(?->'nodes') < ?", g.data, 5),
+        order_by: [desc: g.inserted_at],
+        limit: ^limit
+
+    Repo.all(query)
+  end
+
+  def list_deep_dives(limit \\ 10) do
+    query =
+      from g in Graph,
+        where: g.is_published == true,
+        where: g.is_public == true,
+        where: fragment("jsonb_array_length(?->'nodes') > ?", g.data, 20),
+        order_by: [desc: g.updated_at],
+        limit: ^limit
+
+    Repo.all(query)
+  end
+
+  def list_popular_tags(limit \\ 10) do
+    tags_query =
+      from g in Graph,
+        where: g.is_published == true,
+        where: g.is_public == true,
+        select: %{tag: fragment("unnest(?)", g.tags)}
+
+    query =
+      from t in subquery(tags_query),
+        group_by: t.tag,
+        order_by: [desc: count(t.tag)],
+        limit: ^limit,
+        select: {t.tag, count(t.tag)}
+
+    Repo.all(query)
+  end
+
+  def list_graphs_by_tag(tag, limit \\ 20) do
+    query =
+      from g in Graph,
+        where: g.is_published == true,
+        where: g.is_public == true,
+        where: ^tag in g.tags,
+        order_by: [desc: g.updated_at],
+        limit: ^limit
+
+    Repo.all(query)
   end
 
   @doc """
@@ -78,6 +151,22 @@ defmodule Dialectic.DbActions.Graphs do
     end
   end
 
+  def update_tags(graph, tags) when is_list(tags) do
+    case graph |> Graph.changeset(%{tags: tags}) |> Repo.update() do
+      {:ok, updated_graph} ->
+        Phoenix.PubSub.broadcast(
+          Dialectic.PubSub,
+          "graphs",
+          {:tags_updated, updated_graph.title, tags}
+        )
+
+        {:ok, updated_graph}
+
+      error ->
+        error
+    end
+  end
+
   def toggle_graph_locked(graph) do
     graph
     |> Graph.changeset(%{is_locked: !graph.is_locked})
@@ -87,9 +176,12 @@ defmodule Dialectic.DbActions.Graphs do
   def toggle_graph_public(graph) do
     {:ok, graph} = Dialectic.DbActions.Sharing.ensure_share_token(graph)
 
-    graph
-    |> Graph.changeset(%{is_public: !graph.is_public})
-    |> Repo.update!()
+    updated_graph =
+      graph
+      |> Graph.changeset(%{is_public: !graph.is_public})
+      |> Repo.update!()
+
+    updated_graph
   end
 
   @doc """
