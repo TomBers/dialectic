@@ -4,11 +4,11 @@ defmodule Dialectic.Repo.Migrations.AddTagsToGraphs do
 
   def up do
     execute "ALTER TABLE graphs ADD COLUMN IF NOT EXISTS tags text[] DEFAULT '{}'"
-    create index(:graphs, [:tags], using: :gin, concurrently: true, if_not_exists: true)
+    create_if_not_exists index(:graphs, [:tags], using: :gin, concurrently: true)
   end
 
   def down do
-    drop index(:graphs, [:tags], concurrently: true, if_exists: true)
+    drop_if_exists index(:graphs, [:tags], concurrently: true)
     execute "ALTER TABLE graphs DROP COLUMN IF EXISTS tags"
   end
 end
