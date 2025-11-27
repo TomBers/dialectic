@@ -10,10 +10,9 @@ defmodule Dialectic.Categorisation.AutoTagger do
   Analyzes the graph content and updates its tags asynchronously.
   """
   def tag_graph(graph) do
-    # Run in a separate task to avoid blocking the caller
     Task.Supervisor.start_child(Dialectic.TaskSupervisor, fn ->
       try do
-        do_tag_graph(graph)
+        generate_tags(graph)
       rescue
         e ->
           Logger.error("AutoTagger failed for graph #{graph.title}: #{inspect(e)}")
@@ -21,61 +20,53 @@ defmodule Dialectic.Categorisation.AutoTagger do
     end)
   end
 
-  defp do_tag_graph(graph) do
-    # Load the full graph structure to get the root node
-    digraph = Serialise.json_to_graph(graph.data)
+  defp generate_tags(graph) do
+    content = get_origin_content(graph)
 
-    # Find origin node (usually id "1")
-    origin_content =
-      case :digraph.vertex(digraph, "1") do
-        {_v, data} -> data.content
-        false -> ""
+    if content != "" do
+      provider_mod = get_provider()
+
+      system_prompt = """
+      You are an expert librarian and taxonomist.
+      Analyze the following discussion topic and context.
+      Generate 3 to 5 short, relevant, high-level category tags.
+
+      Rules:
+      1. Tags must be single words or short phrases (e.g. "Philosophy", "Artificial Intelligence").
+      2. Return ONLY a valid JSON array of strings. No markdown formatting, no explanations.
+      3. Example output: ["Technology", "Ethics", "Future"]
+      """
+
+      user_prompt = """
+      Title: #{graph.title}
+
+      Content:
+      #{content}
+      """
+
+      case make_request(provider_mod, system_prompt, user_prompt) do
+        {:ok, text} ->
+          case parse_tags(text) do
+            {:ok, tags} ->
+              Logger.info("AutoTagger generated tags for #{graph.title}: #{inspect(tags)}")
+              Graphs.update_tags(graph, tags)
+
+            {:error, _} ->
+              Logger.warning("AutoTagger failed to parse response: #{text}")
+          end
+
+        {:error, reason} ->
+          Logger.error("AutoTagger LLM error: #{inspect(reason)}")
       end
-
-    if origin_content == "" do
-      Logger.info("AutoTagger skipping #{graph.title}: No origin content")
-      :skip
-    else
-      generate_and_save_tags(graph, origin_content)
     end
   end
 
-  defp generate_and_save_tags(graph, content) do
-    provider_mod = get_provider()
+  defp get_origin_content(graph) do
+    digraph = Serialise.json_to_graph(graph.data)
 
-    system_prompt = """
-    You are an expert librarian and taxonomist.
-    Analyze the following discussion topic and context.
-    Generate 3 to 5 short, relevant, high-level category tags.
-
-    Rules:
-    1. Tags must be single words or short phrases (e.g. "Philosophy", "Artificial Intelligence").
-    2. Return ONLY a valid JSON array of strings. No markdown formatting, no explanations.
-    3. Example output: ["Technology", "Ethics", "Future"]
-    """
-
-    user_prompt = """
-    Title: #{graph.title}
-
-    Content:
-    #{content}
-    """
-
-    case call_llm(provider_mod, system_prompt, user_prompt) do
-      {:ok, response_text} ->
-        case parse_tags(response_text) do
-          {:ok, tags} ->
-            Logger.info("AutoTagger generated tags for #{graph.title}: #{inspect(tags)}")
-            Graphs.update_tags(graph, tags)
-
-          {:error, _} ->
-            Logger.warning(
-              "AutoTagger failed to parse response for #{graph.title}: #{response_text}"
-            )
-        end
-
-      {:error, reason} ->
-        Logger.error("AutoTagger LLM error for #{graph.title}: #{inspect(reason)}")
+    case :digraph.vertex(digraph, "1") do
+      {_v, data} -> data.content
+      false -> ""
     end
   end
 
@@ -105,52 +96,37 @@ defmodule Dialectic.Categorisation.AutoTagger do
     end
   end
 
-  defp call_llm(provider_mod, system_prompt, user_prompt) do
-    model_spec = Dialectic.LLM.Provider.model_spec(provider_mod)
-    {_provider, _model, _opts} = model_spec
-
+  defp make_request(provider_mod, system_prompt, user_prompt) do
     case Dialectic.LLM.Provider.api_key(provider_mod) do
       {:ok, api_key} ->
+        model_spec = Dialectic.LLM.Provider.model_spec(provider_mod)
+        {_, receive_timeout} = Dialectic.LLM.Provider.timeouts(provider_mod)
+        finch_name = Dialectic.LLM.Provider.finch_name(provider_mod)
+        provider_options = provider_mod.provider_options()
+
         ctx =
           ReqLLM.Context.new([
             ReqLLM.Context.system(system_prompt),
             ReqLLM.Context.user(user_prompt)
           ])
 
-        {connect_timeout, receive_timeout} = Dialectic.LLM.Provider.timeouts(provider_mod)
-        finch_name = Dialectic.LLM.Provider.finch_name(provider_mod)
-        provider_options = provider_mod.provider_options()
-
-        # Collect stream into a single string
-        ReqLLM.stream_text(
-          model_spec,
-          ctx,
-          api_key: api_key,
-          finch_name: finch_name,
-          provider_options: provider_options,
-          req_http_options: [connect_options: [timeout: connect_timeout]],
-          receive_timeout: receive_timeout
-        )
-        |> case do
-          {:ok, stream} ->
-            text =
-              stream
-              |> ReqLLM.StreamResponse.tokens()
-              |> Enum.map(fn
-                t when is_binary(t) -> t
-                t when is_list(t) -> IO.iodata_to_binary(t)
-                t -> to_string(t)
-              end)
-              |> Enum.join("")
-
-            {:ok, text}
+        case ReqLLM.generate_text(
+               model_spec,
+               ctx,
+               api_key: api_key,
+               provider_options: provider_options,
+               req_http_options: [finch: finch_name],
+               receive_timeout: receive_timeout
+             ) do
+          {:ok, response} ->
+            {:ok, ReqLLM.Response.text(response)}
 
           error ->
             error
         end
 
-      {:error, reason} ->
-        {:error, reason}
+      error ->
+        error
     end
   end
 

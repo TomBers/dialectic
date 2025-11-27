@@ -51,6 +51,7 @@ defmodule DialecticWeb.HomeLive do
     {:noreply, push_patch(socket, to: ~p"/?#{params}")}
   end
 
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="min-h-screen bg-gray-50 text-gray-800">

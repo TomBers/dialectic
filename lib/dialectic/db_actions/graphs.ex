@@ -157,16 +157,6 @@ defmodule Dialectic.DbActions.Graphs do
     |> Repo.update()
   end
 
-  def backfill_tags do
-    from(g in Graph,
-      where: g.is_published == true,
-      where: g.is_public == true
-    )
-    |> Repo.all()
-    |> Enum.filter(fn g -> is_nil(g.tags) or g.tags == [] end)
-    |> Enum.each(&Dialectic.Categorisation.AutoTagger.tag_graph/1)
-  end
-
   def toggle_graph_locked(graph) do
     graph
     |> Graph.changeset(%{is_locked: !graph.is_locked})
