@@ -374,7 +374,11 @@ const graphHook = {
 
     const zoomBy = (factor) => {
       const current = this.cy.zoom();
-      const next = clamp(current * factor, 0.05, 4);
+      const next = clamp(
+        current * factor,
+        layoutConfig.zoomSettings.min || 0.05,
+        layoutConfig.zoomSettings.max || 4.0,
+      );
       this.cy.zoom({ level: next, renderedPosition: centerPoint() });
       showZoom();
     };

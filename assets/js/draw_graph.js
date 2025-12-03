@@ -31,6 +31,8 @@ export function draw_graph(graph, context, elements, node) {
     boxSelectionEnabled: false, // box selection disabled
     autounselectify: false, // allow multi‑select
     layout: layoutOptions,
+    minZoom: layoutConfig.zoomSettings.min || 0.05,
+    maxZoom: layoutConfig.zoomSettings.max || 4.0,
   });
 
   // Figma-like navigation controls
@@ -78,8 +80,13 @@ export function draw_graph(graph, context, elements, node) {
 
       const current = cy.zoom();
       // Exponential scale for smooth zooming
-      const zoomFactor = Math.pow(1.001, -e.deltaY);
-      const next = clamp(current * zoomFactor, 0.1, 2.5);
+      const sensitivity = layoutConfig.zoomSettings.sensitivity || 0.001;
+      const zoomFactor = Math.pow(1 + sensitivity, -e.deltaY);
+      const next = clamp(
+        current * zoomFactor,
+        layoutConfig.zoomSettings.min || 0.05,
+        layoutConfig.zoomSettings.max || 4.0,
+      );
 
       cy.zoom({ level: next, renderedPosition });
     } else {
@@ -101,6 +108,71 @@ export function draw_graph(graph, context, elements, node) {
   };
 
   container.addEventListener("wheel", wheelHandler, { passive: false });
+
+  // Touch handling for pinch-to-zoom
+  let touchStartDist = 0;
+  let touchStartZoom = 1;
+  let touchCenter = { x: 0, y: 0 };
+  let isPinching = false;
+
+  const getTouchDist = (e) => {
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  const getTouchCenter = (e) => {
+    const rect = container.getBoundingClientRect();
+    return {
+      x: (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left,
+      y: (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top,
+    };
+  };
+
+  const touchStartHandler = (e) => {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      touchStartDist = getTouchDist(e);
+      touchStartZoom = cy.zoom();
+      touchCenter = getTouchCenter(e);
+      isPinching = true;
+    }
+  };
+
+  const touchMoveHandler = (e) => {
+    if (isPinching && e.touches.length === 2) {
+      if (e.cancelable) e.preventDefault();
+
+      const dist = getTouchDist(e);
+      const rawScale = dist / touchStartDist;
+      const sensitivity = layoutConfig.zoomSettings.pinchSensitivity || 1.0;
+      const zoomFactor = Math.pow(rawScale, sensitivity);
+
+      const next = clamp(
+        touchStartZoom * zoomFactor,
+        layoutConfig.zoomSettings.min || 0.05,
+        layoutConfig.zoomSettings.max || 4.0,
+      );
+
+      cy.zoom({
+        level: next,
+        renderedPosition: touchCenter,
+      });
+    }
+  };
+
+  const touchEndHandler = (e) => {
+    if (e.touches.length < 2) {
+      isPinching = false;
+    }
+  };
+
+  container.addEventListener("touchstart", touchStartHandler, {
+    passive: false,
+  });
+  container.addEventListener("touchmove", touchMoveHandler, { passive: false });
+  container.addEventListener("touchend", touchEndHandler);
+  container.addEventListener("touchcancel", touchEndHandler);
 
   // Space-drag to pan while preserving box selection otherwise
   let isSpaceDown = false;

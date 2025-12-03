@@ -77,4 +77,12 @@ export const layoutConfig = {
     // Edge attraction force
     elasticity: 0.8,
   },
+
+  // Zoom interaction settings
+  zoomSettings: {
+    min: 0.05,
+    max: 4.0,
+    sensitivity: 0.0025,
+    pinchSensitivity: 2.0,
+  },
 };
