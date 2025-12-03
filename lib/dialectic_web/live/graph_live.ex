@@ -126,6 +126,7 @@ defmodule DialecticWeb.GraphLive do
                 show_combine: false,
                 user: user,
                 current_user: socket.assigns[:current_user],
+                exploration_stats: nil,
                 can_edit: can_edit,
                 node_menu_visible: true,
                 drawer_open: true,
@@ -835,6 +836,10 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event("toggle_stream", %{"id" => group_id}, socket) do
     {:noreply, push_event(socket, "toggle_group", %{id: group_id})}
+  end
+
+  def handle_event("update_exploration_progress", params, socket) do
+    {:noreply, assign(socket, :exploration_stats, params)}
   end
 
   def handle_info(:close_share_modal, socket) do

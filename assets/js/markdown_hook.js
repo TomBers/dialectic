@@ -86,7 +86,7 @@ function renderMdInto(el) {
     });
 
     const tHash = hashString("TITLE|" + title);
-    if (el.__markdownHash === tHash) {
+    if (el.__markdownHash === tHash && el.textContent.trim() !== "") {
       return;
     }
 
@@ -125,7 +125,7 @@ function renderMdInto(el) {
 
   // Use a per-element cache to avoid unnecessary DOM churn
   const currentHash = hashString(md);
-  if (el.__markdownHash === currentHash) {
+  if (el.__markdownHash === currentHash && el.innerHTML.trim() !== "") {
     return; // No change since last render
   }
 

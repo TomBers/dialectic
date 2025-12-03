@@ -105,6 +105,7 @@
           graph_owner_id={@graph_struct && @graph_struct.user_id}
           current_user={@current_user}
           ask_question={@ask_question}
+          exploration_stats={@exploration_stats}
         />
       </div>
     </div>
@@ -120,6 +121,7 @@
       <div
         id="cy"
         class="h-full w-full relative"
+        data-graph-id={@graph_id}
         data-graph={@f_graph}
         data-node={if @node, do: @node.id, else: nil}
         data-operation={@graph_operation}

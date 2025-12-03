@@ -23,14 +23,20 @@ defmodule DialecticWeb.NodeComp do
                 <div id={"node-content-inner-#{@node.id}"}>
                   <article class="prose prose-stone prose-lg md:prose-xl max-w-none w-full prose-headings:mt-0 prose-p:leading-relaxed prose-li:leading-relaxed">
                     <%!-- Client-side Markdown rendering via Markdown hook --%>
-                    <h3 class="mt-0 text-lg sm:text-xl md:text-2xl mb-2 sm:mb-3 pb-2 border-b border-gray-200">
+                    <h3 class="mt-0 text-lg sm:text-xl md:text-2xl mb-2 sm:mb-3 pb-2 border-b border-gray-200 flex items-start justify-between gap-4">
                       <span
+                        class="flex-1"
                         phx-hook="Markdown"
                         id={"markdown-title-#{@node.id}"}
                         data-md={@node.content || ""}
                         data-title-only="true"
                       >
                       </span>
+                      <%= if @exploration_stats do %>
+                        <span class="flex-none text-xs font-medium text-gray-500 bg-gray-100 rounded-full px-2 py-1 whitespace-nowrap mt-1">
+                          {@exploration_stats["explored"]} / {@exploration_stats["total"]} explored
+                        </span>
+                      <% end %>
                     </h3>
                     <div
                       class="selection-content w-full min-w-full text-base sm:text-lg p-2"
@@ -146,7 +152,8 @@ defmodule DialecticWeb.NodeComp do
        graph_owner_id: Map.get(assigns, :graph_owner_id, nil),
        current_user: Map.get(assigns, :current_user, nil),
        menu_visible: Map.get(assigns, :menu_visible, true),
-       streaming: Map.get(assigns, :streaming, false)
+       streaming: Map.get(assigns, :streaming, false),
+       exploration_stats: Map.get(assigns, :exploration_stats, nil)
      )}
   end
 end

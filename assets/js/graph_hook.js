@@ -232,6 +232,61 @@ const graphHook = {
       this.el.querySelector(`#${div}`) || document.getElementById(div);
 
     this.cy = draw_graph(container, this, JSON.parse(graph), node);
+
+    // --- Explored Nodes Tracking ---
+    this._updateExploredStatus = () => {
+      try {
+        const graphId = this.el.dataset.graphId;
+        if (!graphId) return;
+
+        const storageKey = `dialectic_explored_${graphId}`;
+        let explored = new Set();
+        try {
+          const stored = localStorage.getItem(storageKey);
+          if (stored) {
+            JSON.parse(stored).forEach((id) => explored.add(id));
+          }
+        } catch (e) {}
+
+        // Mark current node as explored
+        const currentNodeId = this.el.dataset.node;
+        if (currentNodeId) {
+          if (!explored.has(currentNodeId)) {
+            explored.add(currentNodeId);
+            localStorage.setItem(storageKey, JSON.stringify([...explored]));
+          }
+        }
+
+        // Apply visual state & update progress
+        if (this.cy) {
+          this.cy.batch(() => {
+            const allNodes = this.cy.nodes();
+            allNodes.forEach((n) => {
+              if (explored.has(n.id())) {
+                n.addClass("explored");
+              }
+            });
+          });
+
+          // Calculate progress (exclude compound parents)
+          const realNodes = this.cy.nodes().filter((n) => !n.isParent());
+          const total = realNodes.length;
+          const exploredCount = realNodes.filter((n) =>
+            explored.has(n.id()),
+          ).length;
+
+          this.pushEvent("update_exploration_progress", {
+            explored: exploredCount,
+            total: total,
+          });
+        }
+      } catch (e) {
+        // no-op
+      }
+    };
+    // Initial update
+    this._updateExploredStatus();
+
     // Link back so layoutGraph can update running state
     try {
       this.cy._ownerHook = this;
@@ -522,6 +577,8 @@ const graphHook = {
 
           // Only pan if the node is outside the visible area (preserve existing layout)
           requestAnimationFrame(() => ensureVisible(this.cy, container, id));
+
+          if (this._updateExploredStatus) this._updateExploredStatus();
         }
       } catch (_e) {
         // no-op, avoid breaking on transient DOM/cy states
@@ -587,6 +644,9 @@ const graphHook = {
         this.cy.enforceCollapsedState();
       }
     }
+
+    if (this._updateExploredStatus) this._updateExploredStatus();
+
     // Defer endBatch until after layout starts or after the no-layout path below
 
     const reorderOperations = new Set([
