@@ -80,7 +80,7 @@ export function draw_graph(graph, context, elements, node) {
 
       const current = cy.zoom();
       // Exponential scale for smooth zooming
-      const sensitivity = layoutConfig.zoomSettings.sensitivity || 0.001;
+      const sensitivity = layoutConfig.zoomSettings.sensitivity || 0.0025;
       const zoomFactor = Math.pow(1 + sensitivity, -e.deltaY);
       const next = clamp(
         current * zoomFactor,
