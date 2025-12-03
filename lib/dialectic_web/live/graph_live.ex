@@ -249,7 +249,8 @@ defmodule DialecticWeb.GraphLive do
        show_start_stream_modal: false,
        show_share_modal: false,
        work_streams: [],
-       prompt_mode: initial_mode_str
+       prompt_mode: initial_mode_str,
+       exploration_stats: nil
      )}
   end
 
