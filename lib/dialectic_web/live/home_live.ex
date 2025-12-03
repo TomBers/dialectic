@@ -383,7 +383,9 @@ defmodule DialecticWeb.HomeLive do
                   link={gen_link(g.title)}
                   count={count}
                   tags={g.tags}
-                  node_count={length(g.data["nodes"] || [])}
+                  node_count={
+                    Enum.count(g.data["nodes"] || [], fn n -> !Map.get(n, "compound", false) end)
+                  }
                   is_live={true}
                   generating={MapSet.member?(@generating, g.title)}
                   id={"graph-comp-#{g.title}"}
