@@ -43,6 +43,37 @@ hooks.ListDetection = listDetectionHook;
 hooks.TranslatePopover = translatePopoverHook;
 hooks.Markdown = MarkdownHook;
 
+hooks.ExplorationStats = {
+  mounted() {
+    this.updateStats();
+  },
+  updated() {
+    this.updateStats();
+  },
+  updateStats() {
+    const graphId = this.el.dataset.graphId;
+    if (!graphId) return;
+
+    const total = parseInt(this.el.dataset.total || "0");
+    const storageKey = `dialectic_explored_${graphId}`;
+
+    try {
+      const stored = localStorage.getItem(storageKey);
+      let exploredCount = 0;
+      if (stored) {
+        const exploredList = JSON.parse(stored);
+        exploredCount = exploredList.length;
+      }
+
+      this.el.textContent = `${exploredCount} / ${total} explored`;
+      this.el.classList.remove("hidden");
+    } catch (e) {
+      this.el.textContent = `0 / ${total} explored`;
+      this.el.classList.remove("hidden");
+    }
+  },
+};
+
 // Chat scroll management hook
 hooks.ChatScroll = {
   mounted() {

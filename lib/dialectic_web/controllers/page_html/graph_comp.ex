@@ -23,6 +23,14 @@ defmodule DialecticWeb.PageHtml.GraphComp do
                 <.icon name="hero-book-open" class="w-3 h-3 mr-1 text-blue-600" /> Deep Dive
               </span>
             <% end %>
+            <span
+              phx-hook="ExplorationStats"
+              id={"stats-" <> @title}
+              data-graph-id={@title}
+              data-total={@node_count}
+              class="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-gray-600 ring-1 ring-inset ring-gray-500/10"
+            >
+            </span>
           <% end %>
           <%= if assigns[:tags] do %>
             <%= for tag <- @tags do %>

@@ -327,6 +327,14 @@ export function graphStyle() {
     });
   }
   base_style.push({
+    selector: "node.explored",
+    style: {
+      "border-style": "double",
+      "border-width": 6,
+    },
+  });
+
+  base_style.push({
     selector:
       'node[compound], node[compound].selected, node[compound][collapsed = "true"]',
     style: {
