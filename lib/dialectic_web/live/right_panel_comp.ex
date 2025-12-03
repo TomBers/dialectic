@@ -52,6 +52,7 @@ defmodule DialecticWeb.RightPanelComp do
       |> assign_new(:search_results, fn -> [] end)
       |> assign_new(:group_states, fn -> %{} end)
       |> assign_new(:prompt_mode, fn -> "structured" end)
+      |> assign_new(:highlights, fn -> [] end)
 
     {:ok, socket}
   end
@@ -228,6 +229,43 @@ defmodule DialecticWeb.RightPanelComp do
           </div>
         </div>
       </div>
+
+      <div class="bg-white border border-gray-200 rounded-md">
+        <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
+          Highlights ({length(@highlights)})
+        </div>
+        <div class="p-1 text-[11px] text-gray-700 space-y-1">
+          <div class="max-h-56 overflow-y-auto">
+            <%= if length(@highlights) > 0 do %>
+              <ul class="space-y-1">
+                <%= for highlight <- @highlights do %>
+                  <li
+                    class="p-1 bg-gray-50 hover:bg-gray-100 rounded text-xs cursor-pointer flex flex-col gap-1"
+                    phx-click="highlight_clicked"
+                    phx-value-id={highlight.id}
+                    phx-value-node-id={highlight.node_id}
+                  >
+                    <div class="font-medium text-gray-600 truncate">
+                      "{highlight.selected_text_snapshot}"
+                    </div>
+                    <%= if highlight.note do %>
+                      <div class="text-gray-500 italic truncate">
+                        {highlight.note}
+                      </div>
+                    <% end %>
+                    <div class="text-[10px] text-gray-400">
+                      Node: {highlight.node_id}
+                    </div>
+                  </li>
+                <% end %>
+              </ul>
+            <% else %>
+              <p class="text-gray-400 italic px-1">No highlights yet.</p>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
       <div class="group bg-white border border-gray-200 rounded-md">
         <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
           Share

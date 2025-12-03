@@ -1,10 +1,14 @@
+import HighlightUtils from "./highlight_utils.js";
+
 const textSelectionHook = {
   mounted() {
     this.handleSelection = this.handleSelection.bind(this);
     this.hideSelectionActions = this.hideSelectionActions.bind(this);
+    this.refreshHighlights = this.refreshHighlights.bind(this);
 
     // Get node ID from data attribute
     this.nodeId = this.el.dataset.nodeId;
+    this.mudgId = this.el.dataset.mudgId;
 
     // Store element ID to prevent duplicate events
     this.elId = this.el.id;
@@ -27,11 +31,48 @@ const textSelectionHook = {
         this.hideSelectionActions();
       }
     });
+
+    // Initial highlight load
+    this.refreshHighlights();
+
+    // Listen for events
+    window.addEventListener("highlight:created", this.refreshHighlights);
+    this.el.addEventListener("markdown:rendered", this.refreshHighlights);
   },
 
   destroyed() {
     this.el.removeEventListener("mouseup", this.handleSelection);
     this.el.removeEventListener("touchend", this.handleSelection);
+    window.removeEventListener("highlight:created", this.refreshHighlights);
+    this.el.removeEventListener("markdown:rendered", this.refreshHighlights);
+  },
+
+  refreshHighlights(event) {
+    if (event && event.type === "highlight:created") {
+      const h = event.detail?.data;
+      if (h && (h.mudg_id !== this.mudgId || h.node_id !== this.nodeId)) return;
+    }
+
+    if (!this.mudgId || !this.nodeId) return;
+
+    fetch(`/api/highlights?mudg_id=${this.mudgId}&node_id=${this.nodeId}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch highlights");
+        return res.json();
+      })
+      .then((json) => {
+        const highlights = json.data;
+
+        // Find container to render into
+        const mdContainer = this.el.querySelector(
+          '[phx-hook="Markdown"][data-body-only="true"]',
+        );
+
+        if (mdContainer) {
+          HighlightUtils.renderHighlights(mdContainer, highlights);
+        }
+      })
+      .catch((err) => console.error("Error loading highlights:", err));
   },
 
   handleSelection(event) {
@@ -91,16 +132,25 @@ const textSelectionHook = {
       selectionActionsEl.style.top = `${top}px`;
       selectionActionsEl.style.left = `${leftPos}px`;
 
-      // Set up the button to send the selected text to the server
-      const actionButton = selectionActionsEl.querySelector("button");
-      if (actionButton) {
-        actionButton.onclick = () => {
+      // Set up "Ask" button
+      const askButton = selectionActionsEl.querySelector(".ask-btn");
+      if (askButton) {
+        askButton.onclick = () => {
           this.pushEvent("reply-and-answer", {
             vertex: { content: `Please explain: ${selectedText}` },
             prefix: "explain",
           });
 
           // Hide the action button after clicking
+          this.hideSelectionActions();
+        };
+      }
+
+      // Set up "Add Note" button
+      const addNoteButton = selectionActionsEl.querySelector(".add-note-btn");
+      if (addNoteButton) {
+        addNoteButton.onclick = () => {
+          this.createHighlight(selectedText);
           this.hideSelectionActions();
         };
       }
@@ -164,6 +214,73 @@ const textSelectionHook = {
     if (selectionActionsEl) {
       selectionActionsEl.classList.add("hidden");
     }
+  },
+
+  createHighlight(text) {
+    if (!this.mudgId || !this.nodeId) return;
+
+    // Find the markdown container to calculate offsets relative to it
+    const mdContainer = this.el.querySelector(
+      '[phx-hook="Markdown"][data-body-only="true"]',
+    );
+    if (!mdContainer) return;
+
+    const offsets = this.getSelectionOffsets(mdContainer);
+
+    const csrfToken = document
+      .querySelector("meta[name='csrf-token']")
+      .getAttribute("content");
+
+    fetch("/api/highlights", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrfToken,
+      },
+      body: JSON.stringify({
+        mudg_id: this.mudgId,
+        node_id: this.nodeId,
+        text_source_type: "node",
+        selection_start: offsets.start,
+        selection_end: offsets.end,
+        selected_text_snapshot: text,
+      }),
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error("Failed to create highlight");
+        return response.json();
+      })
+      .then((data) => {
+        console.log("Highlight created:", data);
+        window.dispatchEvent(
+          new CustomEvent("highlight:created", { detail: data }),
+        );
+      })
+      .catch((error) => {
+        console.error("Error creating highlight:", error);
+      });
+  },
+
+  getSelectionOffsets(container) {
+    const selection = window.getSelection();
+    if (selection.rangeCount === 0) return { start: 0, end: 0 };
+
+    const range = selection.getRangeAt(0);
+
+    // Ensure the selection is actually inside the container
+    if (!container.contains(range.commonAncestorContainer)) {
+      return { start: 0, end: 0 };
+    }
+
+    const preSelectionRange = range.cloneRange();
+    preSelectionRange.selectNodeContents(container);
+    preSelectionRange.setEnd(range.startContainer, range.startOffset);
+    const start = preSelectionRange.toString().length;
+
+    return {
+      start: start,
+      end: start + range.toString().length,
+    };
   },
 };
 

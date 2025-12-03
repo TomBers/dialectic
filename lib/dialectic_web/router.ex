@@ -15,6 +15,8 @@ defmodule DialecticWeb.Router do
 
   pipeline :api do
     plug :accepts, ["json"]
+    plug :fetch_session
+    plug :fetch_current_user
   end
 
   scope "/", DialecticWeb do
@@ -43,6 +45,8 @@ defmodule DialecticWeb.Router do
     get "/random_question", PageController, :random_question
     # get "/graphs/json/:graph_name", PageController, :graph_json
     get "/graphs/md/:graph_name", PageController, :graph_md
+
+    resources "/highlights", HighlightController, except: [:new, :edit]
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
