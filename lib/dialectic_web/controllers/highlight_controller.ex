@@ -7,31 +7,39 @@ defmodule DialecticWeb.HighlightController do
   action_fallback DialecticWeb.FallbackController
 
   def index(conn, %{"mudg_id" => mudg_id} = params) do
-    criteria = [mudg_id: mudg_id]
+    current_user = conn.assigns[:current_user]
+    graph = Dialectic.DbActions.Graphs.get_graph_by_title(mudg_id)
 
-    criteria =
-      if node_id = params["node_id"] do
-        criteria ++ [node_id: node_id]
-      else
-        criteria
-      end
+    if graph && Dialectic.DbActions.Sharing.can_access?(current_user, graph) do
+      criteria = [mudg_id: mudg_id]
 
-    # Optional: filter by creator if "created_by_user_id" is present
-    criteria =
-      if user_id = params["created_by_user_id"] do
-        criteria ++ [created_by_user_id: user_id]
-      else
-        criteria
-      end
+      criteria =
+        if node_id = params["node_id"] do
+          criteria ++ [node_id: node_id]
+        else
+          criteria
+        end
 
-    highlights = Highlights.list_highlights(criteria)
-    render(conn, :index, highlights: highlights)
+      # Optional: filter by creator if "created_by_user_id" is present
+      criteria =
+        if user_id = params["created_by_user_id"] do
+          criteria ++ [created_by_user_id: user_id]
+        else
+          criteria
+        end
+
+      highlights = Highlights.list_highlights(criteria)
+      render(conn, :index, highlights: highlights)
+    else
+      {:error, :forbidden}
+    end
   end
 
-  def create(conn, highlight_params) do
+  def create(conn, %{"mudg_id" => mudg_id} = highlight_params) do
     current_user = conn.assigns[:current_user]
+    graph = Dialectic.DbActions.Graphs.get_graph_by_title(mudg_id)
 
-    if current_user do
+    if current_user && graph && Dialectic.DbActions.Sharing.can_access?(current_user, graph) do
       params = Map.put(highlight_params, "created_by_user_id", current_user.id)
 
       with {:ok, %Highlight{} = highlight} <- Highlights.create_highlight(params) do
@@ -40,19 +48,23 @@ defmodule DialecticWeb.HighlightController do
         |> render(:show, highlight: highlight)
       end
     else
-      {:error, :unauthorized}
+      if is_nil(current_user), do: {:error, :unauthorized}, else: {:error, :forbidden}
     end
   end
 
-  def update(conn, %{"id" => id, "highlight" => highlight_params}) do
+  def update(conn, %{"id" => id} = highlight_params) do
     highlight = Highlights.get_highlight!(id)
     current_user = conn.assigns[:current_user]
+    graph = Dialectic.DbActions.Graphs.get_graph_by_title(highlight.mudg_id)
 
     cond do
       is_nil(current_user) ->
         {:error, :unauthorized}
 
       highlight.created_by_user_id != current_user.id ->
+        {:error, :forbidden}
+
+      !graph || !Dialectic.DbActions.Sharing.can_access?(current_user, graph) ->
         {:error, :forbidden}
 
       true ->
@@ -69,12 +81,16 @@ defmodule DialecticWeb.HighlightController do
   def delete(conn, %{"id" => id}) do
     highlight = Highlights.get_highlight!(id)
     current_user = conn.assigns[:current_user]
+    graph = Dialectic.DbActions.Graphs.get_graph_by_title(highlight.mudg_id)
 
     cond do
       is_nil(current_user) ->
         {:error, :unauthorized}
 
       highlight.created_by_user_id != current_user.id ->
+        {:error, :forbidden}
+
+      !graph || !Dialectic.DbActions.Sharing.can_access?(current_user, graph) ->
         {:error, :forbidden}
 
       true ->

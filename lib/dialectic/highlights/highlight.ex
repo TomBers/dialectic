@@ -61,5 +61,17 @@ defmodule Dialectic.Highlights.Highlight do
     ])
     |> validate_number(:selection_start, greater_than_or_equal_to: 0)
     |> validate_number(:selection_end, greater_than_or_equal_to: 0)
+    |> validate_range_order()
+  end
+
+  defp validate_range_order(changeset) do
+    start = get_field(changeset, :selection_start)
+    finish = get_field(changeset, :selection_end)
+
+    if start && finish && finish < start do
+      add_error(changeset, :selection_end, "must be greater than or equal to selection_start")
+    else
+      changeset
+    end
   end
 end
