@@ -53,49 +53,61 @@ defmodule DialecticWeb.HighlightController do
   end
 
   def update(conn, %{"id" => id} = highlight_params) do
-    highlight = Highlights.get_highlight!(id)
     current_user = conn.assigns[:current_user]
-    graph = Dialectic.DbActions.Graphs.get_graph_by_title(highlight.mudg_id)
 
-    cond do
-      is_nil(current_user) ->
-        {:error, :unauthorized}
+    case Highlights.get_highlight(id) do
+      nil ->
+        {:error, :not_found}
 
-      highlight.created_by_user_id != current_user.id ->
-        {:error, :forbidden}
+      highlight ->
+        graph = Dialectic.DbActions.Graphs.get_graph_by_title(highlight.mudg_id)
 
-      !graph || !Dialectic.DbActions.Sharing.can_access?(current_user, graph) ->
-        {:error, :forbidden}
+        cond do
+          is_nil(current_user) ->
+            {:error, :unauthorized}
 
-      true ->
-        # Filter to only allow note updates
-        update_params = Map.take(highlight_params, ["note"])
+          highlight.created_by_user_id != current_user.id ->
+            {:error, :forbidden}
 
-        with {:ok, %Highlight{} = highlight} <-
-               Highlights.update_highlight(highlight, update_params) do
-          render(conn, :show, highlight: highlight)
+          !graph || !Dialectic.DbActions.Sharing.can_access?(current_user, graph) ->
+            {:error, :forbidden}
+
+          true ->
+            # Filter to only allow note updates
+            update_params = Map.take(highlight_params, ["note"])
+
+            with {:ok, %Highlight{} = highlight} <-
+                   Highlights.update_highlight(highlight, update_params) do
+              render(conn, :show, highlight: highlight)
+            end
         end
     end
   end
 
   def delete(conn, %{"id" => id}) do
-    highlight = Highlights.get_highlight!(id)
     current_user = conn.assigns[:current_user]
-    graph = Dialectic.DbActions.Graphs.get_graph_by_title(highlight.mudg_id)
 
-    cond do
-      is_nil(current_user) ->
-        {:error, :unauthorized}
+    case Highlights.get_highlight(id) do
+      nil ->
+        {:error, :not_found}
 
-      highlight.created_by_user_id != current_user.id ->
-        {:error, :forbidden}
+      highlight ->
+        graph = Dialectic.DbActions.Graphs.get_graph_by_title(highlight.mudg_id)
 
-      !graph || !Dialectic.DbActions.Sharing.can_access?(current_user, graph) ->
-        {:error, :forbidden}
+        cond do
+          is_nil(current_user) ->
+            {:error, :unauthorized}
 
-      true ->
-        with {:ok, %Highlight{}} <- Highlights.delete_highlight(highlight) do
-          send_resp(conn, :no_content, "")
+          highlight.created_by_user_id != current_user.id ->
+            {:error, :forbidden}
+
+          !graph || !Dialectic.DbActions.Sharing.can_access?(current_user, graph) ->
+            {:error, :forbidden}
+
+          true ->
+            with {:ok, %Highlight{}} <- Highlights.delete_highlight(highlight) do
+              send_resp(conn, :no_content, "")
+            end
         end
     end
   end

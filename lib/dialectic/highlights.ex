@@ -94,6 +94,22 @@ defmodule Dialectic.Highlights do
   def get_highlight!(id), do: Repo.get!(Highlight, id)
 
   @doc """
+  Gets a single highlight.
+
+  Returns `nil` if the Highlight does not exist.
+
+  ## Examples
+
+      iex> get_highlight(123)
+      %Highlight{}
+
+      iex> get_highlight(456)
+      nil
+
+  """
+  def get_highlight(id), do: Repo.get(Highlight, id)
+
+  @doc """
   Creates a highlight.
 
   ## Examples

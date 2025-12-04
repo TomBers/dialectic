@@ -68,8 +68,8 @@ defmodule Dialectic.Highlights.Highlight do
     start = get_field(changeset, :selection_start)
     finish = get_field(changeset, :selection_end)
 
-    if start && finish && finish < start do
-      add_error(changeset, :selection_end, "must be greater than or equal to selection_start")
+    if start && finish && finish <= start do
+      add_error(changeset, :selection_end, "must be greater than selection_start")
     else
       changeset
     end

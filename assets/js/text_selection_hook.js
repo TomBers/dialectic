@@ -274,7 +274,12 @@ const textSelectionHook = {
 
     const csrfToken = document
       .querySelector("meta[name='csrf-token']")
-      .getAttribute("content");
+      ?.getAttribute("content");
+
+    if (!csrfToken) {
+      console.error("CSRF token not found");
+      return;
+    }
 
     fetch("/api/highlights", {
       method: "POST",

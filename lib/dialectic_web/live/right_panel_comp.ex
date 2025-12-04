@@ -60,18 +60,23 @@ defmodule DialecticWeb.RightPanelComp do
 
   @impl true
   def handle_event("delete_highlight", %{"id" => id}, socket) do
-    highlight = Dialectic.Highlights.get_highlight!(id)
+    current_user = socket.assigns.current_user
 
-    if socket.assigns.current_user &&
-         socket.assigns.current_user.id == highlight.created_by_user_id do
-      Dialectic.Highlights.delete_highlight(highlight)
+    with {int_id, ""} <- Integer.parse(id),
+         highlight when not is_nil(highlight) <- Dialectic.Highlights.get_highlight(int_id) do
+      if current_user && current_user.id == highlight.created_by_user_id do
+        Dialectic.Highlights.delete_highlight(highlight)
+      end
     end
 
     {:noreply, socket}
   end
 
   def handle_event("edit_highlight", %{"id" => id}, socket) do
-    {:noreply, assign(socket, editing_highlight_id: String.to_integer(id))}
+    case Integer.parse(id) do
+      {int_id, ""} -> {:noreply, assign(socket, editing_highlight_id: int_id)}
+      _ -> {:noreply, socket}
+    end
   end
 
   def handle_event("cancel_edit", _, socket) do
@@ -79,11 +84,13 @@ defmodule DialecticWeb.RightPanelComp do
   end
 
   def handle_event("save_note", %{"id" => id, "note" => note}, socket) do
-    highlight = Dialectic.Highlights.get_highlight!(id)
+    current_user = socket.assigns.current_user
 
-    if socket.assigns.current_user &&
-         socket.assigns.current_user.id == highlight.created_by_user_id do
-      Dialectic.Highlights.update_highlight(highlight, %{note: note})
+    with {int_id, ""} <- Integer.parse(id),
+         highlight when not is_nil(highlight) <- Dialectic.Highlights.get_highlight(int_id) do
+      if current_user && current_user.id == highlight.created_by_user_id do
+        Dialectic.Highlights.update_highlight(highlight, %{note: note})
+      end
     end
 
     {:noreply, assign(socket, editing_highlight_id: nil)}
