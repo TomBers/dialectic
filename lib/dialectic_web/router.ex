@@ -15,8 +15,13 @@ defmodule DialecticWeb.Router do
 
   pipeline :api do
     plug :accepts, ["json"]
+  end
+
+  pipeline :browser_api do
+    plug :accepts, ["json"]
     plug :fetch_session
     plug :fetch_current_user
+    plug :protect_from_forgery
   end
 
   scope "/", DialecticWeb do
@@ -45,6 +50,10 @@ defmodule DialecticWeb.Router do
     get "/random_question", PageController, :random_question
     # get "/graphs/json/:graph_name", PageController, :graph_json
     get "/graphs/md/:graph_name", PageController, :graph_md
+  end
+
+  scope "/api", DialecticWeb do
+    pipe_through :browser_api
 
     resources "/highlights", HighlightController, except: [:new, :edit]
   end

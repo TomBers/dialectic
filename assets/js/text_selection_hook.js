@@ -98,7 +98,9 @@ const textSelectionHook = {
 
     if (!this.mudgId || !this.nodeId) return;
 
-    fetch(`/api/highlights?mudg_id=${this.mudgId}&node_id=${this.nodeId}`)
+    fetch(`/api/highlights?mudg_id=${this.mudgId}&node_id=${this.nodeId}`, {
+      credentials: "include",
+    })
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch highlights");
         return res.json();

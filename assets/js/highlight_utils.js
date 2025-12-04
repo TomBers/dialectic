@@ -75,9 +75,6 @@ const HighlightUtils = {
       const span = document.createElement("span");
       span.className = "highlight-span";
       span.dataset.highlightId = highlight.id;
-      // Optional styling hook
-      span.style.backgroundColor = "rgba(255, 255, 0, 0.2)";
-      span.style.cursor = "pointer";
 
       try {
         range.surroundContents(span);

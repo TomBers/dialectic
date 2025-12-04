@@ -56,12 +56,11 @@ defmodule DialecticWeb.HighlightController do
         {:error, :forbidden}
 
       true ->
-        # For updates, we typically only allow updating the note
-        # But we'll pass params through and let the changeset handle validation if needed,
-        # usually update_highlight should restrict fields if strictness is required.
-        # The schema changeset allows most fields, but logic dictates mostly note updates.
+        # Filter to only allow note updates
+        update_params = Map.take(highlight_params, ["note"])
+
         with {:ok, %Highlight{} = highlight} <-
-               Highlights.update_highlight(highlight, highlight_params) do
+               Highlights.update_highlight(highlight, update_params) do
           render(conn, :show, highlight: highlight)
         end
     end
