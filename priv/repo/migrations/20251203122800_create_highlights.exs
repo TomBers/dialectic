@@ -18,8 +18,10 @@ defmodule Dialectic.Repo.Migrations.CreateHighlights do
       timestamps(type: :utc_datetime)
     end
 
-    create index(:highlights, [:mudg_id])
     create index(:highlights, [:created_by_user_id])
-    create index(:highlights, [:mudg_id, :node_id])
+    # Optimized for list_highlights(mudg_id: ...) with default sort
+    create index(:highlights, [:mudg_id, :inserted_at])
+    # Optimized for list_highlights(mudg_id: ..., node_id: ...) with default sort
+    create index(:highlights, [:mudg_id, :node_id, :inserted_at])
   end
 end
