@@ -38,6 +38,9 @@ const textSelectionHook = {
     // Listen for events
     window.addEventListener("highlight:created", this.refreshHighlights);
     this.el.addEventListener("markdown:rendered", this.refreshHighlights);
+
+    this.handleEvent("scroll_to_highlight", this.scrollToHighlight.bind(this));
+    this.handleEvent("refresh_highlights", this.refreshHighlights);
   },
 
   destroyed() {
@@ -47,9 +50,49 @@ const textSelectionHook = {
     this.el.removeEventListener("markdown:rendered", this.refreshHighlights);
   },
 
+  scrollToHighlight({ id }) {
+    if (!id) return;
+
+    // Use a slight delay or retry mechanism because the node might be expanding
+    // or markdown rendering might be finishing
+    const findAndScroll = (attempts = 0) => {
+      const span = this.el.querySelector(
+        `.highlight-span[data-highlight-id="${id}"]`,
+      );
+      if (span) {
+        span.scrollIntoView({ behavior: "smooth", block: "center" });
+        // Pulse effect
+        const originalTransition = span.style.transition;
+        const originalColor = span.style.backgroundColor;
+
+        span.style.transition = "background-color 0.5s";
+        span.style.backgroundColor = "rgba(255, 165, 0, 0.6)"; // Orange pulse
+
+        setTimeout(() => {
+          span.style.backgroundColor = originalColor;
+          setTimeout(() => {
+            span.style.transition = originalTransition;
+          }, 500);
+        }, 1500);
+      } else if (attempts < 10) {
+        setTimeout(() => {
+          findAndScroll(attempts + 1);
+        }, 100);
+      }
+    };
+
+    findAndScroll();
+  },
+
   refreshHighlights(event) {
     if (event && event.type === "highlight:created") {
       const h = event.detail?.data;
+      if (h && (h.mudg_id !== this.mudgId || h.node_id !== this.nodeId)) return;
+    }
+
+    // Handle server push event payload
+    if (event && event.data && !event.type) {
+      const h = event.data;
       if (h && (h.mudg_id !== this.mudgId || h.node_id !== this.nodeId)) return;
     }
 

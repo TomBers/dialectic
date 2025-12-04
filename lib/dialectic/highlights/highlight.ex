@@ -2,6 +2,21 @@ defmodule Dialectic.Highlights.Highlight do
   use Ecto.Schema
   import Ecto.Changeset
 
+  @derive {Jason.Encoder,
+           only: [
+             :id,
+             :mudg_id,
+             :node_id,
+             :text_source_type,
+             :text_source_id,
+             :selection_start,
+             :selection_end,
+             :selected_text_snapshot,
+             :note,
+             :created_by_user_id,
+             :inserted_at,
+             :updated_at
+           ]}
   schema "highlights" do
     field :node_id, :string
     field :text_source_type, :string

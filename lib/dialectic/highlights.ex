@@ -8,6 +8,24 @@ defmodule Dialectic.Highlights do
 
   alias Dialectic.Highlights.Highlight
 
+  @topic_prefix "highlights"
+
+  def subscribe(mudg_id) do
+    Phoenix.PubSub.subscribe(Dialectic.PubSub, "#{@topic_prefix}:#{mudg_id}")
+  end
+
+  defp broadcast({:ok, highlight}, event) do
+    Phoenix.PubSub.broadcast(
+      Dialectic.PubSub,
+      "#{@topic_prefix}:#{highlight.mudg_id}",
+      {event, highlight}
+    )
+
+    {:ok, highlight}
+  end
+
+  defp broadcast({:error, _reason} = error, _event), do: error
+
   @doc """
   Returns the list of highlights.
 
@@ -54,6 +72,8 @@ defmodule Dialectic.Highlights do
           query
       end)
 
+    query = from q in query, order_by: [desc: q.inserted_at]
+
     Repo.all(query)
   end
 
@@ -89,6 +109,7 @@ defmodule Dialectic.Highlights do
     %Highlight{}
     |> Highlight.changeset(attrs)
     |> Repo.insert()
+    |> broadcast(:created)
   end
 
   @doc """
@@ -107,6 +128,7 @@ defmodule Dialectic.Highlights do
     highlight
     |> Highlight.changeset(attrs)
     |> Repo.update()
+    |> broadcast(:updated)
   end
 
   @doc """
@@ -123,6 +145,7 @@ defmodule Dialectic.Highlights do
   """
   def delete_highlight(%Highlight{} = highlight) do
     Repo.delete(highlight)
+    |> broadcast(:deleted)
   end
 
   @doc """
