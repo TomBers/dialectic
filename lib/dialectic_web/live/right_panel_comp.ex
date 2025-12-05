@@ -331,12 +331,12 @@ defmodule DialecticWeb.RightPanelComp do
                       <div class="absolute top-1 right-1 hidden group-hover:flex gap-1 bg-white/80 rounded">
                         <button
                           type="button"
-                          phx-click={
-                            Phoenix.LiveView.JS.dispatch("phx:copy",
-                              to: "body",
-                              detail: %{text: "/#{highlight.mudg_id}?highlight=#{highlight.id}"}
-                            )
+                          data-copy-url={
+                            DialecticWeb.Endpoint.url() <>
+                              "/" <>
+                              URI.encode(highlight.mudg_id) <> "?highlight=" <> to_string(highlight.id)
                           }
+                          onclick="navigator.clipboard.writeText(this.dataset.copyUrl).then(() => alert('Link copied to clipboard!'))"
                           class="text-gray-400 hover:text-indigo-500 p-0.5 rounded"
                           title="Copy link to highlight"
                         >
