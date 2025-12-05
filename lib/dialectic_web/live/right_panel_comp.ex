@@ -83,7 +83,7 @@ defmodule DialecticWeb.RightPanelComp do
     {:noreply, assign(socket, editing_highlight_id: nil)}
   end
 
-  def handle_event("save_note", %{"id" => id, "note" => note}, socket) do
+  def handle_event("save_note", %{"highlight_id" => id, "note" => note}, socket) do
     current_user = socket.assigns.current_user
 
     with {int_id, ""} <- Integer.parse(id),
@@ -285,7 +285,7 @@ defmodule DialecticWeb.RightPanelComp do
                         phx-target={@myself}
                         class="flex flex-col gap-2 p-1"
                       >
-                        <input type="hidden" name="id" value={highlight.id} />
+                        <input type="hidden" name="highlight_id" value={highlight.id} />
                         <textarea
                           name="note"
                           class="w-full text-xs border-gray-300 rounded focus:ring-indigo-500 focus:border-indigo-500"
