@@ -52,8 +52,48 @@ defmodule DialecticWeb.RightPanelComp do
       |> assign_new(:search_results, fn -> [] end)
       |> assign_new(:group_states, fn -> %{} end)
       |> assign_new(:prompt_mode, fn -> "structured" end)
+      |> assign_new(:highlights, fn -> [] end)
+      |> assign_new(:editing_highlight_id, fn -> nil end)
 
     {:ok, socket}
+  end
+
+  @impl true
+  def handle_event("delete_highlight", %{"id" => id}, socket) do
+    current_user = socket.assigns.current_user
+
+    with {int_id, ""} <- Integer.parse(id),
+         highlight when not is_nil(highlight) <- Dialectic.Highlights.get_highlight(int_id) do
+      if current_user && current_user.id == highlight.created_by_user_id do
+        Dialectic.Highlights.delete_highlight(highlight)
+      end
+    end
+
+    {:noreply, socket}
+  end
+
+  def handle_event("edit_highlight", %{"id" => id}, socket) do
+    case Integer.parse(id) do
+      {int_id, ""} -> {:noreply, assign(socket, editing_highlight_id: int_id)}
+      _ -> {:noreply, socket}
+    end
+  end
+
+  def handle_event("cancel_edit", _, socket) do
+    {:noreply, assign(socket, editing_highlight_id: nil)}
+  end
+
+  def handle_event("save_note", %{"highlight_id" => id, "note" => note}, socket) do
+    current_user = socket.assigns.current_user
+
+    with {int_id, ""} <- Integer.parse(id),
+         highlight when not is_nil(highlight) <- Dialectic.Highlights.get_highlight(int_id) do
+      if current_user && current_user.id == highlight.created_by_user_id do
+        Dialectic.Highlights.update_highlight(highlight, %{note: note})
+      end
+    end
+
+    {:noreply, assign(socket, editing_highlight_id: nil)}
   end
 
   defp owner?(graph_struct, current_user) do
@@ -228,6 +268,112 @@ defmodule DialecticWeb.RightPanelComp do
           </div>
         </div>
       </div>
+
+      <div class="bg-white border border-gray-200 rounded-md">
+        <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
+          Highlights ({length(@highlights)})
+        </div>
+        <div class="p-1 text-[11px] text-gray-700 space-y-1">
+          <div class="max-h-56 overflow-y-auto">
+            <%= if length(@highlights) > 0 do %>
+              <ul class="space-y-1">
+                <%= for highlight <- @highlights do %>
+                  <li class="group p-1 bg-gray-50 hover:bg-gray-100 rounded text-xs relative">
+                    <%= if @editing_highlight_id == highlight.id do %>
+                      <form
+                        phx-submit="save_note"
+                        phx-target={@myself}
+                        class="flex flex-col gap-2 p-1"
+                      >
+                        <input type="hidden" name="highlight_id" value={highlight.id} />
+                        <textarea
+                          name="note"
+                          class="w-full text-xs border-gray-300 rounded focus:ring-indigo-500 focus:border-indigo-500"
+                          rows="3"
+                          placeholder="Add a note..."
+                        ><%= highlight.note %></textarea>
+                        <div class="flex justify-end gap-2">
+                          <button
+                            type="button"
+                            phx-click="cancel_edit"
+                            phx-target={@myself}
+                            class="text-gray-500 hover:text-gray-700"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            class="bg-indigo-600 text-white px-2 py-1 rounded hover:bg-indigo-700"
+                          >
+                            Save
+                          </button>
+                        </div>
+                      </form>
+                    <% else %>
+                      <div
+                        class="flex flex-col gap-1 cursor-pointer"
+                        phx-click="highlight_clicked"
+                        phx-value-id={highlight.id}
+                        phx-value-node-id={highlight.node_id}
+                      >
+                        <div class="font-medium text-gray-600 truncate pr-12">
+                          "{highlight.selected_text_snapshot}"
+                        </div>
+                        <%= if highlight.note && highlight.note != "" do %>
+                          <div class="text-gray-500 italic truncate">
+                            {highlight.note}
+                          </div>
+                        <% end %>
+                        <div class="text-[10px] text-gray-400">
+                          Node: {highlight.node_id}
+                        </div>
+                      </div>
+                      <div class="absolute top-1 right-1 hidden group-hover:flex gap-1 bg-white/80 rounded">
+                        <button
+                          type="button"
+                          data-copy-url={
+                            DialecticWeb.Endpoint.url() <>
+                              "/" <>
+                              URI.encode(highlight.mudg_id) <> "?highlight=" <> to_string(highlight.id)
+                          }
+                          onclick="navigator.clipboard.writeText(this.dataset.copyUrl).then(() => alert('Link copied to clipboard!'))"
+                          class="text-gray-400 hover:text-indigo-500 p-0.5 rounded"
+                          title="Copy link to highlight"
+                        >
+                          <.icon name="hero-link" class="w-3 h-3" />
+                        </button>
+                        <%= if @current_user && @current_user.id == highlight.created_by_user_id do %>
+                          <button
+                            phx-click="edit_highlight"
+                            phx-target={@myself}
+                            phx-value-id={highlight.id}
+                            class="text-gray-400 hover:text-indigo-500 p-0.5 rounded"
+                            title="Edit note"
+                          >
+                            <.icon name="hero-pencil" class="w-3 h-3" />
+                          </button>
+                          <button
+                            phx-click="delete_highlight"
+                            phx-target={@myself}
+                            phx-value-id={highlight.id}
+                            class="text-gray-400 hover:text-red-500 p-0.5 rounded"
+                            title="Delete highlight"
+                          >
+                            <.icon name="hero-trash" class="w-3 h-3" />
+                          </button>
+                        <% end %>
+                      </div>
+                    <% end %>
+                  </li>
+                <% end %>
+              </ul>
+            <% else %>
+              <p class="text-gray-400 italic px-1">No highlights yet.</p>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
       <div class="group bg-white border border-gray-200 rounded-md">
         <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
           Share

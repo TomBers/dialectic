@@ -1,24 +1,46 @@
 const HighlightNode = {
   mounted() {
-    // Check if this node matches the current hash
+    // Bind the handler so we can add/remove it properly
+    this.onHashChange = this.onHashChange.bind(this);
+
+    // Run initial check
+    this.onHashChange();
+
+    // Listen for hash changes
+    window.addEventListener("hashchange", this.onHashChange);
+  },
+
+  destroyed() {
+    window.removeEventListener("hashchange", this.onHashChange);
+  },
+
+  onHashChange() {
     const currentNodeId = this.el.id.replace("node-", "");
     const hashNodeId = window.location.hash.substring(1);
 
-    if (currentNodeId === hashNodeId) {
+    if (hashNodeId && currentNodeId === hashNodeId) {
       this.el.classList.add("selected-node");
-      this.el.scrollIntoView({ behavior: "smooth", block: "center" });
+      this.scrollToNode();
+    } else {
+      this.el.classList.remove("selected-node");
     }
+  },
 
-    // Listen for hash changes
-    window.addEventListener("hashchange", () => {
-      const hashNodeId = window.location.hash.substring(1);
-      if (currentNodeId === hashNodeId) {
-        this.el.classList.add("selected-node");
-        this.el.scrollIntoView({ behavior: "smooth", block: "center" });
-      } else {
-        this.el.classList.remove("selected-node");
-      }
-    });
+  scrollToNode() {
+    // We use manual window.scrollTo instead of scrollIntoView to better control
+    // the offset, ensuring the sticky header doesn't obscure the content.
+    // Using a timeout allows any native browser behavior or layout shifts to settle first.
+    setTimeout(() => {
+      const offset = 150; // Adjust for header height + padding
+      const elementRect = this.el.getBoundingClientRect();
+      const absoluteElementTop = elementRect.top + window.scrollY;
+      const targetPosition = absoluteElementTop - offset;
+
+      window.scrollTo({
+        top: targetPosition,
+        behavior: "smooth",
+      });
+    }, 100);
   },
 };
 

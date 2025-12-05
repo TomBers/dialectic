@@ -77,7 +77,6 @@ defmodule Dialectic.Workers.LLMWorker do
       {:discard, :missing_api_key}
     else
       model_spec = Dialectic.LLM.Provider.model_spec(provider_mod)
-      {_provider, _model, _opts} = model_spec
 
       # Build a provider-agnostic chat context: system + user
       system_prompt =

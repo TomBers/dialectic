@@ -9,6 +9,7 @@ defmodule DialecticWeb.NodeComp do
         class="flex flex-col relative"
         phx-hook="TextSelectionHook"
         data-node-id={@node.id}
+        data-mudg-id={@graph_id}
         style="max-height: 100vh; display: flex; flex-direction: column; padding-bottom: env(safe-area-inset-bottom);"
       >
         <%= if @node.id == "start" do %>
@@ -54,8 +55,8 @@ defmodule DialecticWeb.NodeComp do
                   </article>
                 </div>
               </div>
-              <div class="selection-actions hidden absolute bg-white shadow-lg rounded-lg p-1 sm:p-2 z-10 border border-gray-200">
-                <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 sm:py-1.5 px-2 sm:px-3 rounded-full flex items-center">
+              <div class="selection-actions hidden absolute bg-white shadow-lg rounded-lg p-1 sm:p-2 z-10 border border-gray-200 flex gap-2">
+                <button class="ask-btn bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 sm:py-1.5 px-2 sm:px-3 rounded-full flex items-center">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     class="h-3 w-3 mr-0.5 sm:mr-1"
@@ -71,6 +72,23 @@ defmodule DialecticWeb.NodeComp do
                     />
                   </svg>
                   Ask about selection
+                </button>
+                <button class="add-note-btn bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs py-1 sm:py-1.5 px-2 sm:px-3 rounded-full flex items-center transition-colors">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-3 w-3 mr-0.5 sm:mr-1"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                  Highlight
                 </button>
               </div>
             </div>

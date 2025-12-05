@@ -58,8 +58,8 @@ defmodule Dialectic.LLM.Provider do
   @typedoc "A module that implements this behaviour"
   @type provider_module :: module()
 
-  @typedoc "The 3-tuple model spec {:provider_id, model_name, model_options}"
-  @type model_spec :: {provider_id(), String.t(), keyword()}
+  @typedoc "The 2-tuple model spec {:provider_id, keyword()}"
+  @type model_spec :: {provider_id(), keyword()}
 
   @doc "Provider identifier (e.g., :openai, :google)"
   @callback id() :: provider_id()
@@ -78,14 +78,11 @@ defmodule Dialectic.LLM.Provider do
   @default_finch Dialectic.Finch
 
   @doc """
-  Build the 3-tuple model spec {:provider_id, model, []} used by `ReqLLM.stream_text/3`.
-
-  The third element is reserved for model-specific options, but most providers
-  can leave this empty list and rely on `provider_options/0` for their settings.
+  Build the 2-tuple model spec {:provider_id, [model: model]} used by `ReqLLM.stream_text/3`.
   """
   @spec model_spec(provider_module()) :: model_spec()
   def model_spec(mod) when is_atom(mod) do
-    {mod.id(), mod.model(), []}
+    {mod.id(), [model: mod.model()]}
   end
 
   @doc """

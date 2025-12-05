@@ -1430,3 +1430,15 @@ button[type="submit"]:active {
         bottom: calc(5.5rem + env(safe-area-inset-bottom)) !important;
     }
 }
+
+/* Highlight Styles */
+.highlight-span {
+  background-color: rgba(255, 235, 59, 0.4);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.highlight-span:hover {
+  background-color: rgba(255, 235, 59, 0.7);
+}

@@ -102,7 +102,7 @@ defmodule DialecticWeb.ActionToolbarComp do
     base_prefix = "https://translate.google.com/?sl=auto&tl=#{tl}&text="
     suffix = "&op=translate"
     max_len = google_translate_max_url_len()
-    content = to_string(content || "")
+    content = to_string(content)
     base_len = String.length(base_prefix)
     suffix_len = String.length(suffix)
 

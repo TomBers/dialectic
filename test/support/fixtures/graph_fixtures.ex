@@ -84,7 +84,7 @@ defmodule Dialectic.GraphFixtures do
     %{"nodes" => nodes, "edges" => edges}
   end
 
-  defp build_sample_graph(graph_name) do
+  defp build_sample_graph(_graph_name) do
     %{
       "nodes" => [],
       "edges" => []

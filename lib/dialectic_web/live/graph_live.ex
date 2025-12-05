@@ -6,6 +6,7 @@ defmodule DialecticWeb.GraphLive do
   alias Dialectic.DbActions.DbWorker
   alias Dialectic.DbActions.Graphs
   alias DialecticWeb.Utils.UserUtils
+  alias Dialectic.Highlights
 
   alias Phoenix.PubSub
 
@@ -37,7 +38,20 @@ defmodule DialecticWeb.GraphLive do
 
     user = UserUtils.current_identity(socket.assigns)
 
-    node_id = Map.get(params, "node", "1")
+    highlight_param = Map.get(params, "highlight")
+
+    {node_id, initial_highlight_id} =
+      if highlight_param do
+        case Highlights.get_highlight(highlight_param) do
+          %{mudg_id: ^graph_id, node_id: h_node_id, id: h_id} ->
+            {h_node_id, h_id}
+
+          _ ->
+            {Map.get(params, "node", "1"), nil}
+        end
+      else
+        {Map.get(params, "node", "1"), nil}
+      end
 
     socket = stream(socket, :presences, [])
 
@@ -46,6 +60,7 @@ defmodule DialecticWeb.GraphLive do
         # Subscribe to the liveview events and the graph wide events
         Phoenix.PubSub.subscribe(Dialectic.PubSub, live_view_topic)
         Phoenix.PubSub.subscribe(Dialectic.PubSub, graph_topic)
+        Highlights.subscribe(graph_id)
         DialecticWeb.Presence.track_user(user, %{id: user, graph_id: graph_id})
         DialecticWeb.Presence.subscribe()
 
@@ -148,7 +163,8 @@ defmodule DialecticWeb.GraphLive do
                 show_start_stream_modal: false,
                 show_share_modal: false,
                 work_streams: list_streams(graph_id),
-                prompt_mode: Atom.to_string(Dialectic.Responses.ModeServer.get_mode(graph_id))
+                prompt_mode: Atom.to_string(Dialectic.Responses.ModeServer.get_mode(graph_id)),
+                highlights: Highlights.list_highlights(mudg_id: graph_id)
               )
 
             ask_param_raw = Map.get(params, "ask")
@@ -160,21 +176,24 @@ defmodule DialecticWeb.GraphLive do
 
             socket =
               if connected?(socket) and is_binary(ask_param) and String.trim(ask_param) != "" do
-                result =
-                  GraphActions.ask_and_answer_origin(graph_action_params(socket, node), ask_param)
-
-                case result do
-                  {_, node} ->
+                case GraphActions.ask_and_answer_origin(
+                       graph_action_params(socket, node),
+                       ask_param
+                     ) do
+                  {_, node} when not is_nil(node) ->
                     {_, s1} = update_graph(socket, {nil, node}, "answer")
                     s1
 
                   _ ->
-                    Logger.warning(
-                      "ask_and_answer_origin returned unexpected: #{inspect(result)}"
-                    )
-
                     socket
                 end
+              else
+                socket
+              end
+
+            socket =
+              if connected?(socket) && initial_highlight_id do
+                push_event(socket, "scroll_to_highlight", %{id: initial_highlight_id})
               else
                 socket
               end
@@ -706,6 +725,27 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
+  def handle_event("highlight_clicked", %{"id" => highlight_id, "node-id" => node_id}, socket) do
+    socket =
+      if socket.assigns.node && socket.assigns.node.id == node_id do
+        socket
+      else
+        case GraphManager.find_node_by_id(socket.assigns.graph_id, node_id) do
+          nil ->
+            socket
+
+          node ->
+            {_, socket} = update_graph(socket, {nil, node}, "node_clicked")
+
+            socket
+            |> push_event("center_node", %{id: node.id})
+            |> push_event("expand_node", %{id: node.id})
+        end
+      end
+
+    {:noreply, push_event(socket, "scroll_to_highlight", %{id: highlight_id})}
+  end
+
   def handle_event("node_move", %{"direction" => direction}, socket) do
     {:noreply, updated_socket} =
       update_graph(
@@ -845,6 +885,34 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_info(:close_share_modal, socket) do
     {:noreply, assign(socket, show_share_modal: false)}
+  end
+
+  def handle_info({:created, highlight}, socket) do
+    highlights = [highlight | socket.assigns.highlights]
+
+    {:noreply,
+     assign(socket, highlights: highlights)
+     |> push_event("refresh_highlights", %{data: highlight})}
+  end
+
+  def handle_info({:updated, highlight}, socket) do
+    highlights =
+      Enum.map(socket.assigns.highlights, fn h ->
+        if h.id == highlight.id, do: highlight, else: h
+      end)
+
+    {:noreply,
+     assign(socket, highlights: highlights)
+     |> push_event("refresh_highlights", %{data: highlight})}
+  end
+
+  def handle_info({:deleted, highlight}, socket) do
+    highlights =
+      Enum.reject(socket.assigns.highlights, fn h -> h.id == highlight.id end)
+
+    {:noreply,
+     assign(socket, highlights: highlights)
+     |> push_event("refresh_highlights", %{data: highlight})}
   end
 
   def handle_info({DialecticWeb.Presence, {:join, presence}}, socket) do
