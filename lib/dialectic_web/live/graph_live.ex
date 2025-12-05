@@ -176,12 +176,17 @@ defmodule DialecticWeb.GraphLive do
 
             socket =
               if connected?(socket) and is_binary(ask_param) and String.trim(ask_param) != "" do
-                result =
-                  GraphActions.ask_and_answer_origin(graph_action_params(socket, node), ask_param)
+                case GraphActions.ask_and_answer_origin(
+                       graph_action_params(socket, node),
+                       ask_param
+                     ) do
+                  {_, node} when not is_nil(node) ->
+                    {_, s1} = update_graph(socket, {nil, node}, "answer")
+                    s1
 
-                {_, node} = result
-                {_, s1} = update_graph(socket, {nil, node}, "answer")
-                s1
+                  _ ->
+                    socket
+                end
               else
                 socket
               end

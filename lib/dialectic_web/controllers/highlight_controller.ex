@@ -9,29 +9,40 @@ defmodule DialecticWeb.HighlightController do
   def index(conn, %{"mudg_id" => mudg_id} = params) do
     current_user = conn.assigns[:current_user]
     graph = Dialectic.DbActions.Graphs.get_graph_by_title(mudg_id)
+    token_param = params["token"]
 
-    if graph && Dialectic.DbActions.Sharing.can_access?(current_user, graph) do
-      criteria = [mudg_id: mudg_id]
+    cond do
+      is_nil(graph) ->
+        {:error, :not_found}
 
-      criteria =
-        if node_id = params["node_id"] do
-          criteria ++ [node_id: node_id]
-        else
-          criteria
-        end
+      Dialectic.DbActions.Sharing.can_access?(current_user, graph) or
+          (is_binary(token_param) and is_binary(graph.share_token) and
+             Plug.Crypto.secure_compare(token_param, graph.share_token)) ->
+        criteria = [mudg_id: mudg_id]
 
-      # Optional: filter by creator if "created_by_user_id" is present
-      criteria =
-        if user_id = params["created_by_user_id"] do
-          criteria ++ [created_by_user_id: user_id]
-        else
-          criteria
-        end
+        criteria =
+          if node_id = params["node_id"] do
+            criteria ++ [node_id: node_id]
+          else
+            criteria
+          end
 
-      highlights = Highlights.list_highlights(criteria)
-      render(conn, :index, highlights: highlights)
-    else
-      {:error, :forbidden}
+        # Optional: filter by creator if "created_by_user_id" is present
+        criteria =
+          if user_id = params["created_by_user_id"] do
+            criteria ++ [created_by_user_id: user_id]
+          else
+            criteria
+          end
+
+        highlights = Highlights.list_highlights(criteria)
+        render(conn, :index, highlights: highlights)
+
+      is_nil(current_user) ->
+        {:error, :unauthorized}
+
+      true ->
+        {:error, :forbidden}
     end
   end
 
