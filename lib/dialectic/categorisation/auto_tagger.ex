@@ -135,11 +135,11 @@ defmodule Dialectic.Categorisation.AutoTagger do
 
             {:ok, text}
 
-          error ->
+          {:error, _} = error ->
             error
         end
 
-      error ->
+      {:error, _} = error ->
         error
     end
   end
