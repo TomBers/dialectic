@@ -179,18 +179,9 @@ defmodule DialecticWeb.GraphLive do
                 result =
                   GraphActions.ask_and_answer_origin(graph_action_params(socket, node), ask_param)
 
-                case result do
-                  {_, node} ->
-                    {_, s1} = update_graph(socket, {nil, node}, "answer")
-                    s1
-
-                  _ ->
-                    Logger.warning(
-                      "ask_and_answer_origin returned unexpected: #{inspect(result)}"
-                    )
-
-                    socket
-                end
+                {_, node} = result
+                {_, s1} = update_graph(socket, {nil, node}, "answer")
+                s1
               else
                 socket
               end
