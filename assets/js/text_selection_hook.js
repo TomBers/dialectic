@@ -6,6 +6,24 @@ const textSelectionHook = {
     this.hideSelectionActions = this.hideSelectionActions.bind(this);
     this.refreshHighlights = this.refreshHighlights.bind(this);
 
+    // Reset scroll position for the drawer container to ensure we start at the top
+    // We target both parent containers and the internal content container
+    const containers = [
+      this.el.closest(".overflow-y-auto"),
+      this.el.closest(".overflow-auto"),
+      this.el.querySelector(".overflow-y-auto"),
+      this.el.querySelector(".overflow-auto"),
+    ].filter((c) => c);
+
+    // Deduplicate
+    const uniqueContainers = [...new Set(containers)];
+
+    uniqueContainers.forEach((container) => {
+      container.style.scrollBehavior = "auto";
+      container.scrollTop = 0;
+      container.style.removeProperty("scroll-behavior");
+    });
+
     // Get node ID from data attribute
     this.nodeId = this.el.dataset.nodeId;
     this.mudgId = this.el.dataset.mudgId;
@@ -61,6 +79,7 @@ const textSelectionHook = {
       );
       if (span) {
         span.scrollIntoView({ behavior: "smooth", block: "center" });
+
         // Pulse effect
         const originalTransition = span.style.transition;
         const originalColor = span.style.backgroundColor;
