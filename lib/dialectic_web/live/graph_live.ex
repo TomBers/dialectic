@@ -38,7 +38,20 @@ defmodule DialecticWeb.GraphLive do
 
     user = UserUtils.current_identity(socket.assigns)
 
-    node_id = Map.get(params, "node", "1")
+    highlight_param = Map.get(params, "highlight")
+
+    {node_id, initial_highlight_id} =
+      if highlight_param do
+        case Highlights.get_highlight(highlight_param) do
+          %{mudg_id: ^graph_id, node_id: h_node_id, id: h_id} ->
+            {h_node_id, h_id}
+
+          _ ->
+            {Map.get(params, "node", "1"), nil}
+        end
+      else
+        {Map.get(params, "node", "1"), nil}
+      end
 
     socket = stream(socket, :presences, [])
 
@@ -178,6 +191,13 @@ defmodule DialecticWeb.GraphLive do
 
                     socket
                 end
+              else
+                socket
+              end
+
+            socket =
+              if connected?(socket) && initial_highlight_id do
+                push_event(socket, "scroll_to_highlight", %{id: initial_highlight_id})
               else
                 socket
               end

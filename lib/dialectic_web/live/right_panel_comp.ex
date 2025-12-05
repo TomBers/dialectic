@@ -328,8 +328,21 @@ defmodule DialecticWeb.RightPanelComp do
                           Node: {highlight.node_id}
                         </div>
                       </div>
-                      <%= if @current_user && @current_user.id == highlight.created_by_user_id do %>
-                        <div class="absolute top-1 right-1 hidden group-hover:flex gap-1 bg-white/80 rounded">
+                      <div class="absolute top-1 right-1 hidden group-hover:flex gap-1 bg-white/80 rounded">
+                        <button
+                          type="button"
+                          phx-click={
+                            Phoenix.LiveView.JS.dispatch("phx:copy",
+                              to: "body",
+                              detail: %{text: "/#{highlight.mudg_id}?highlight=#{highlight.id}"}
+                            )
+                          }
+                          class="text-gray-400 hover:text-indigo-500 p-0.5 rounded"
+                          title="Copy link to highlight"
+                        >
+                          <.icon name="hero-link" class="w-3 h-3" />
+                        </button>
+                        <%= if @current_user && @current_user.id == highlight.created_by_user_id do %>
                           <button
                             phx-click="edit_highlight"
                             phx-target={@myself}
@@ -348,8 +361,8 @@ defmodule DialecticWeb.RightPanelComp do
                           >
                             <.icon name="hero-trash" class="w-3 h-3" />
                           </button>
-                        </div>
-                      <% end %>
+                        <% end %>
+                      </div>
                     <% end %>
                   </li>
                 <% end %>

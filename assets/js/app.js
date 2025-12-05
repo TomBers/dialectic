@@ -125,3 +125,9 @@ liveSocket.connect();
 // >> liveSocket.enableLatencySim(1000)  // enabled for duration of browser session
 // >> liveSocket.disableLatencySim()
 window.liveSocket = liveSocket;
+
+window.addEventListener("phx:copy", (e) => {
+  const text = e.detail.text;
+  const fullText = text.startsWith("/") ? window.location.origin + text : text;
+  navigator.clipboard.writeText(fullText);
+});
