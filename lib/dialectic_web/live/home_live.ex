@@ -143,6 +143,14 @@ defmodule DialecticWeb.HomeLive do
                 <p class="mt-1 text-gray-600">
                   Create a MuDG to map your ideas clearly with context that stays visible.
                 </p>
+                <div class="mt-2">
+                  <.link
+                    navigate={~p"/inspiration"}
+                    class="text-sm font-medium text-[#4361ee] hover:underline"
+                  >
+                    Need inspiration?
+                  </.link>
+                </div>
               </div>
               <.link
                 navigate={~p"/start/new/idea"}

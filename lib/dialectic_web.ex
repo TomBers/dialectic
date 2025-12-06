@@ -89,6 +89,7 @@ defmodule DialecticWeb do
       import Phoenix.HTML
       # Core UI components
       import DialecticWeb.CoreComponents
+      alias DialecticWeb.Layouts
 
       # Shortcut for generating JS commands
       alias Phoenix.LiveView.JS
