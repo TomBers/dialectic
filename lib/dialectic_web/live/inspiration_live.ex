@@ -21,14 +21,23 @@ defmodule DialecticWeb.InspirationLive do
   def handle_event("update_preferences", params, socket) do
     socket =
       socket
-      |> assign(:reality, String.to_integer(params["reality"]))
-      |> assign(:focus, String.to_integer(params["focus"]))
-      |> assign(:timeframe, String.to_integer(params["timeframe"]))
-      |> assign(:depth, String.to_integer(params["depth"]))
-      |> assign(:tone, String.to_integer(params["tone"]))
+      |> assign(:reality, parse_slider_value(params["reality"], 50))
+      |> assign(:focus, parse_slider_value(params["focus"], 50))
+      |> assign(:timeframe, parse_slider_value(params["timeframe"], 50))
+      |> assign(:depth, parse_slider_value(params["depth"], 50))
+      |> assign(:tone, parse_slider_value(params["tone"], 50))
 
     {:noreply, socket}
   end
+
+  defp parse_slider_value(value, default) when is_binary(value) do
+    case Integer.parse(value) do
+      {int, _} -> int
+      :error -> default
+    end
+  end
+
+  defp parse_slider_value(_, default), do: default
 
   def handle_event("generate_prompt", _, socket) do
     prompt = build_prompt(socket.assigns)
@@ -41,7 +50,7 @@ defmodule DialecticWeb.InspirationLive do
   end
 
   def handle_event("select_question", %{"question" => question}, socket) do
-    {:noreply, push_navigate(socket, to: ~p"/start/new/idea?initial_prompt=#{question}")}
+    {:noreply, push_navigate(socket, to: ~p"/start/new/idea?#{[initial_prompt: question]}")}
   end
 
   def handle_info({ref, result}, socket) do
@@ -53,7 +62,8 @@ defmodule DialecticWeb.InspirationLive do
           assign(socket, loading: false, questions: questions)
 
         {:error, _} ->
-          put_flash(socket, :error, "Failed to generate questions. Please try again.")
+          socket
+          |> put_flash(:error, "Failed to generate questions. Please try again.")
           |> assign(loading: false)
       end
 
@@ -215,13 +225,14 @@ defmodule DialecticWeb.InspirationLive do
     ~H"""
     <div class="space-y-2">
       <div class="flex justify-between items-end mb-1">
-        <label class="block text-sm font-medium leading-6 text-zinc-900">
+        <label for={@name} class="block text-sm font-medium leading-6 text-zinc-900">
           {@label}
         </label>
       </div>
       <div class="relative">
         <input
           type="range"
+          id={@name}
           min="0"
           max="100"
           value={@value}
