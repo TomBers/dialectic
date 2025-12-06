@@ -8,21 +8,26 @@
   />
 
   <.modal :if={@show_login_modal} id="login-modal" show on_cancel={JS.push("close_login_modal")}>
-    <div class="p-4 text-center">
-      <h2 class="text-xl font-semibold mb-4">Login Required</h2>
-      <p class="mb-6 text-gray-600">You need to be logged in to perform this action.</p>
-      <div class="flex justify-center gap-4">
+    <div class="p-4 text-center sm:p-6">
+      <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100 mb-4">
+        <.icon name="hero-lock-closed" class="h-6 w-6 text-zinc-600" />
+      </div>
+      <h3 class="text-lg font-semibold leading-6 text-zinc-900 mb-2">Login Required</h3>
+      <p class="text-sm text-zinc-500 mb-6">
+        You need to be signed in to perform this action. Please log in to your account or create a new one to continue.
+      </p>
+      <div class="flex flex-col sm:flex-row justify-center gap-3">
         <.link
           href={~p"/users/log_in"}
-          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          class="inline-flex justify-center rounded-lg bg-zinc-900 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-zinc-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
         >
-          Log in
+          Sign in
         </.link>
         <.link
           href={~p"/users/register"}
-          class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          class="inline-flex justify-center rounded-lg bg-white px-3 py-2 text-sm font-semibold text-zinc-900 shadow-sm ring-1 ring-inset ring-zinc-300 hover:bg-zinc-50"
         >
-          Register
+          Create account
         </.link>
       </div>
     </div>
