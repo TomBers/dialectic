@@ -164,7 +164,8 @@ defmodule DialecticWeb.GraphLive do
                 show_share_modal: false,
                 work_streams: list_streams(graph_id),
                 prompt_mode: Atom.to_string(Dialectic.Responses.ModeServer.get_mode(graph_id)),
-                highlights: Highlights.list_highlights(mudg_id: graph_id)
+                highlights: Highlights.list_highlights(mudg_id: graph_id),
+                show_login_modal: false
               )
 
             ask_param_raw = Map.get(params, "ask")
@@ -269,7 +270,8 @@ defmodule DialecticWeb.GraphLive do
        show_share_modal: false,
        work_streams: [],
        prompt_mode: initial_mode_str,
-       exploration_stats: nil
+       exploration_stats: nil,
+       show_login_modal: false
      )}
   end
 
@@ -423,7 +425,7 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event("note", %{"node" => node_id}, socket) do
     if socket.assigns.current_user == nil do
-      {:noreply, socket |> put_flash(:error, "You must be logged in to note")}
+      {:noreply, assign(socket, show_login_modal: true)}
     else
       Dialectic.DbActions.Notes.add_note(
         socket.assigns.graph_id,
@@ -452,7 +454,7 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event("unnote", %{"node" => node_id}, socket) do
     if socket.assigns.current_user == nil do
-      {:noreply, socket |> put_flash(:error, "You must be logged in to unnote")}
+      {:noreply, assign(socket, show_login_modal: true)}
     else
       Dialectic.DbActions.Notes.remove_note(
         socket.assigns.graph_id,
@@ -478,7 +480,7 @@ defmodule DialecticWeb.GraphLive do
       {:noreply, socket |> put_flash(:error, "This graph is locked")}
     else
       if socket.assigns.current_user == nil do
-        {:noreply, socket |> put_flash(:error, "You must be logged in to delete nodes")}
+        {:noreply, assign(socket, show_login_modal: true)}
       else
         case GraphActions.find_node(socket.assigns.graph_id, node_id) do
           nil ->
@@ -820,6 +822,15 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event("close_share_modal", _params, socket) do
     {:noreply, assign(socket, show_share_modal: false)}
+  end
+
+  # Triggered by the client-side JS hook (text_selection_hook.js) when it receives a 401
+  def handle_event("show_login_required", _, socket) do
+    {:noreply, assign(socket, show_login_modal: true)}
+  end
+
+  def handle_event("close_login_modal", _, socket) do
+    {:noreply, assign(socket, show_login_modal: false)}
   end
 
   def handle_event("open_start_stream_modal", _params, socket) do
