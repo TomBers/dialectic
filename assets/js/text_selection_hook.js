@@ -316,6 +316,11 @@ const textSelectionHook = {
       }),
     })
       .then((response) => {
+        if (response.status === 401) {
+          this.pushEvent("show_login_required", {});
+          throw new Error("Unauthorized");
+        }
+
         if (!response.ok) throw new Error("Failed to create highlight");
         return response.json();
       })
