@@ -148,14 +148,14 @@ defmodule DialecticWeb.InspirationLive do
               </div>
 
               <div class="pt-4 sticky bottom-0 bg-white pb-4 border-t border-gray-100 mt-8">
-                <.button
+                <button
                   type="button"
                   phx-click="generate_prompt"
-                  class="w-full py-3 text-lg"
+                  class="w-full justify-center inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-fuchsia-500 via-rose-500 to-amber-500 px-5 py-3 text-white text-lg font-semibold shadow-md hover:shadow-lg hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-300 transition disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={@loading}
                 >
                   {if @loading, do: "Generating...", else: "Generate Questions"}
-                </.button>
+                </button>
               </div>
             </form>
           </div>
