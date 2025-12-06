@@ -824,6 +824,7 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, assign(socket, show_share_modal: false)}
   end
 
+  # Triggered by the client-side JS hook (text_selection_hook.js) when it receives a 401
   def handle_event("show_login_required", _, socket) do
     {:noreply, assign(socket, show_login_modal: true)}
   end
