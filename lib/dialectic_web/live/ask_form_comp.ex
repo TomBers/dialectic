@@ -131,7 +131,7 @@ defmodule DialecticWeb.AskFormComp do
               type="text"
               id={@input_id}
               placeholder={@placeholder}
-              class="box-border w-full h-10 rounded-full pl-3 pr-28 text-sm border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400 focus:ring-opacity-50 focus:outline-none"
+              class="box-border w-full h-10 rounded-full pl-3 pr-16 text-sm border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400 focus:ring-opacity-50 focus:outline-none"
             />
 
             <button

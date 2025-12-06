@@ -92,95 +92,110 @@ defmodule DialecticWeb.InspirationLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-      <.header class="text-center mb-12">
-        Find Your Question
-        <:subtitle>
-          Adjust the sliders to discover questions that match your curiosity.
-        </:subtitle>
-      </.header>
+    <div class="h-[calc(100vh-3.5rem)] overflow-hidden flex flex-col bg-white">
+      <div class="flex-1 min-h-0 flex flex-col md:flex-row">
+        <!-- Left Panel: Controls -->
+        <div class="w-full md:w-2/5 flex flex-col bg-white border-r border-gray-200 overflow-y-auto z-10 shadow-lg md:shadow-none">
+          <div class="p-6">
+            <.header class="mb-8">
+              Find Your Question
+              <:subtitle>
+                Adjust the sliders to discover questions that match your curiosity.
+              </:subtitle>
+            </.header>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
-        <div class="space-y-8 bg-zinc-50 p-6 rounded-lg shadow-sm h-fit">
-          <h3 class="text-lg font-medium text-zinc-900 border-b border-zinc-200 pb-2">
-            Preferences
-          </h3>
-
-          <form phx-change="update_preferences" class="space-y-6">
-            <.slider
-              label="Reality"
-              name="reality"
-              value={@reality}
-              left_label="Fiction"
-              right_label="Non-Fiction"
-            />
-
-            <.slider
-              label="Focus"
-              name="focus"
-              value={@focus}
-              left_label="Mainstream"
-              right_label="Esoteric"
-            />
-
-            <.slider
-              label="Timeframe"
-              name="timeframe"
-              value={@timeframe}
-              left_label="Past"
-              right_label="Future"
-            />
-
-            <.slider
-              label="Depth"
-              name="depth"
-              value={@depth}
-              left_label="Beginner"
-              right_label="Expert"
-            />
-
-            <.slider
-              label="Tone"
-              name="tone"
-              value={@tone}
-              left_label="Serious"
-              right_label="Playful"
-            />
-
-            <div class="pt-4">
-              <.button type="button" phx-click="generate_prompt" class="w-full" disabled={@loading}>
-                {if @loading, do: "Generating...", else: "Generate Questions"}
-              </.button>
-            </div>
-          </form>
-        </div>
-
-        <div class="space-y-6">
-          <h3 class="text-lg font-medium text-zinc-900 border-b border-zinc-200 pb-2">
-            Suggested Questions
-          </h3>
-
-          <div :if={@loading} class="text-center py-12">
-            <.icon name="hero-arrow-path" class="w-8 h-8 animate-spin text-zinc-400 mx-auto" />
-            <p class="mt-2 text-sm text-zinc-500">Consulting the oracle...</p>
-          </div>
-
-          <div :if={!@loading and @questions == []} class="text-zinc-500 italic text-center py-12">
-            Adjust preferences and click Generate Questions
-          </div>
-
-          <div :if={!@loading and @questions != []} class="space-y-4">
-            <div
-              :for={question <- @questions}
-              class="group relative bg-white p-4 rounded-lg border border-zinc-200 shadow-sm hover:border-zinc-400 hover:shadow-md transition-all cursor-pointer"
-              phx-click={JS.push("select_question", value: %{question: question})}
-            >
-              <div class="flex justify-between items-start gap-4">
-                <p class="text-zinc-700 font-medium">{question}</p>
-                <.icon
-                  name="hero-chevron-right"
-                  class="w-5 h-5 text-zinc-300 group-hover:text-zinc-600 mt-1"
+            <form phx-change="update_preferences" class="space-y-8">
+              <div class="space-y-6">
+                <.slider
+                  label="Reality"
+                  name="reality"
+                  value={@reality}
+                  left_label="Fiction"
+                  right_label="Non-Fiction"
                 />
+
+                <.slider
+                  label="Focus"
+                  name="focus"
+                  value={@focus}
+                  left_label="Mainstream"
+                  right_label="Esoteric"
+                />
+
+                <.slider
+                  label="Timeframe"
+                  name="timeframe"
+                  value={@timeframe}
+                  left_label="Past"
+                  right_label="Future"
+                />
+
+                <.slider
+                  label="Depth"
+                  name="depth"
+                  value={@depth}
+                  left_label="Beginner"
+                  right_label="Expert"
+                />
+
+                <.slider
+                  label="Tone"
+                  name="tone"
+                  value={@tone}
+                  left_label="Serious"
+                  right_label="Playful"
+                />
+              </div>
+
+              <div class="pt-4 sticky bottom-0 bg-white pb-4 border-t border-gray-100 mt-8">
+                <.button
+                  type="button"
+                  phx-click="generate_prompt"
+                  class="w-full py-3 text-lg"
+                  disabled={@loading}
+                >
+                  {if @loading, do: "Generating...", else: "Generate Questions"}
+                </.button>
+              </div>
+            </form>
+          </div>
+        </div>
+        
+    <!-- Right Panel: Results -->
+        <div class="flex-1 flex flex-col bg-gray-50 overflow-hidden relative">
+          <div class="absolute inset-0 opacity-5 bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23000000\' fill-opacity=\'1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]">
+          </div>
+
+          <div class="relative flex-1 overflow-y-auto p-6 md:p-12">
+            <h3 class="text-2xl font-medium text-gray-900 mb-8 flex items-center gap-3">
+              <.icon name="hero-sparkles" class="w-8 h-8 text-blue-500" /> Suggested Questions
+            </h3>
+
+            <div :if={@loading} class="flex flex-col items-center justify-center h-64 text-gray-500">
+              <.icon name="hero-arrow-path" class="w-12 h-12 animate-spin text-blue-500 mb-4" />
+              <p class="text-lg">Consulting the oracle...</p>
+            </div>
+
+            <div
+              :if={!@loading and @questions == []}
+              class="flex flex-col items-center justify-center h-64 text-gray-400"
+            >
+              <.icon name="hero-adjustments-horizontal" class="w-16 h-16 mb-4 opacity-50" />
+              <p class="text-lg font-medium">Adjust preferences on the left and click Generate</p>
+            </div>
+
+            <div :if={!@loading and @questions != []} class="grid gap-4 max-w-3xl mx-auto">
+              <div
+                :for={question <- @questions}
+                class="group relative bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:border-blue-300 hover:shadow-md transition-all cursor-pointer transform hover:-translate-y-1"
+                phx-click={JS.push("select_question", value: %{question: question})}
+              >
+                <div class="flex justify-between items-start gap-4">
+                  <p class="text-lg text-gray-800 font-medium leading-relaxed">{question}</p>
+                  <div class="shrink-0 rounded-full bg-blue-50 p-2 text-blue-600 group-hover:bg-blue-100 transition-colors">
+                    <.icon name="hero-arrow-right" class="w-5 h-5" />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
