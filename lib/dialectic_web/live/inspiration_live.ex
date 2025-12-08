@@ -30,15 +30,6 @@ defmodule DialecticWeb.InspirationLive do
     {:noreply, socket}
   end
 
-  defp parse_slider_value(value, default) when is_binary(value) do
-    case Integer.parse(value) do
-      {int, _} -> int
-      :error -> default
-    end
-  end
-
-  defp parse_slider_value(_, default), do: default
-
   def handle_event("generate_prompt", _, socket) do
     prompt = build_prompt(socket.assigns)
 
@@ -53,6 +44,16 @@ defmodule DialecticWeb.InspirationLive do
     {:noreply, push_navigate(socket, to: ~p"/start/new/idea?#{[initial_prompt: question]}")}
   end
 
+  defp parse_slider_value(value, default) when is_binary(value) do
+    case Integer.parse(value) do
+      {int, _} -> int
+      :error -> default
+    end
+  end
+
+  defp parse_slider_value(_, default), do: default
+
+  @impl true
   def handle_info({ref, result}, socket) do
     Process.demonitor(ref, [:flush])
 
@@ -76,7 +77,8 @@ defmodule DialecticWeb.InspirationLive do
 
   defp build_prompt(assigns) do
     """
-    Act as a muse and generate 5 thought-provoking questions for exploration.
+    Act as a muse and generate 5 inviting, open-ended questions that serve as starting points for a deep exploration or discussion.
+    The questions should be accessible and intriguing, encouraging the user to want to find the answer.
 
     Adhere to these stylistic and thematic preferences:
     - Reality: #{describe_scale(assigns.reality, "Pure Fiction", "Strictly Non-Fiction")}
@@ -85,7 +87,7 @@ defmodule DialecticWeb.InspirationLive do
     - Depth: #{describe_scale(assigns.depth, "Beginner/General Audience", "Expert/Technical")}
     - Tone: #{describe_scale(assigns.tone, "Serious/Academic", "Playful/Whimsical")}
 
-    Output ONLY the questions as a numbered list.
+    Output the questions as a JSON array of strings.
     """
   end
 
@@ -223,13 +225,15 @@ defmodule DialecticWeb.InspirationLive do
 
   def slider(assigns) do
     ~H"""
-    <div class="space-y-2">
-      <div class="flex justify-between items-end mb-1">
-        <label for={@name} class="block text-sm font-medium leading-6 text-zinc-900">
+    <div class="space-y-3 pt-2">
+      <div class="flex justify-between items-end mb-2">
+        <label for={@name} class="block text-base font-semibold text-gray-800 tracking-tight">
           {@label}
         </label>
       </div>
-      <div class="relative">
+      <div class="relative h-6 flex items-center">
+        <div class="absolute w-full h-2 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded-full">
+        </div>
         <input
           type="range"
           id={@name}
@@ -237,11 +241,11 @@ defmodule DialecticWeb.InspirationLive do
           max="100"
           value={@value}
           name={@name}
-          class="w-full h-2 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-500"
+          class="relative w-full h-2 appearance-none bg-transparent cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-indigo-600 [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-110 focus:outline-none focus:ring-0"
           phx-debounce="200"
         />
       </div>
-      <div class="flex justify-between text-xs font-medium text-zinc-500">
+      <div class="flex justify-between text-xs font-medium text-gray-500 uppercase tracking-wider">
         <span>{@left_label}</span>
         <span>{@right_label}</span>
       </div>

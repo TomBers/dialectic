@@ -13,7 +13,8 @@ defmodule Dialectic.Inspiration.Generator do
 
     system_prompt = """
     You are a creative muse.
-    Generate 5 thought-provoking questions for exploration based on the user's preferences.
+    Generate 5 engaging, open-ended questions that invite deep discussion and exploration based on the user's preferences.
+    The questions should be accessible but intriguing, serving as a gateway to a larger topic.
 
     Rules:
     1. The output must be a valid JSON array of strings.
