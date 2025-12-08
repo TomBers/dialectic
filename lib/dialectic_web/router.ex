@@ -35,8 +35,8 @@ defmodule DialecticWeb.Router do
     get "/intro/how", PageController, :guide
 
     get "/deploy/dashboard", PageController, :deploy_dashboard
-    get "/ideas/all", PageController, :ideas_all
 
+    live "/inspiration", InspirationLive
     live "/start/new/idea", GraphLive
     live "/:graph_name", GraphLive
     live "/:graph_name/linear", LinearGraphLive
@@ -47,7 +47,6 @@ defmodule DialecticWeb.Router do
   scope "/api", DialecticWeb do
     pipe_through :api
 
-    get "/random_question", PageController, :random_question
     # get "/graphs/json/:graph_name", PageController, :graph_json
     get "/graphs/md/:graph_name", PageController, :graph_md
   end

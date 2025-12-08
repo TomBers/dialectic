@@ -215,7 +215,11 @@ defmodule DialecticWeb.GraphLive do
 
   def mount(params, _session, socket) do
     user = UserUtils.current_identity(socket.assigns)
-    changeset = GraphActions.create_new_node(user) |> Vertex.changeset()
+    initial_content = params["initial_prompt"]
+
+    changeset =
+      GraphActions.create_new_node(user)
+      |> Vertex.changeset(if initial_content, do: %{content: initial_content}, else: %{})
 
     # Derive initial prompt mode from query param (?mode=creative) when no graph exists yet
     initial_mode_str =

@@ -108,16 +108,6 @@ defmodule DialecticWeb.PageController do
     render(conn, :deploy_dashboard, seeds: seeds, keys: Enum.map(keys, &check_key(&1)))
   end
 
-  def ideas_all(conn, _params) do
-    ideas = Dialectic.Ideas.IdeaGenerator.all()
-    render(conn, :ideas_all, ideas: ideas)
-  end
-
-  def random_question(conn, _params) do
-    question = Dialectic.Ideas.IdeaGenerator.run()
-    json(conn, %{question: question})
-  end
-
   def guide(conn, _params) do
     render(conn, :how)
   end
