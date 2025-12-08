@@ -77,15 +77,33 @@ defmodule DialecticWeb.InspirationLive do
 
   defp build_prompt(assigns) do
     """
-    Act as a muse and generate 5 inviting, open-ended questions that serve as starting points for a deep exploration or discussion.
-    The questions should be accessible and intriguing, encouraging the user to want to find the answer.
+    Act as a muse to spark curiosity and a desire to explore.
+    Generate exactly 5 distinct, open-ended questions that invite elaboration and allow multiple valid perspectives.
+    Do not generate yes/no questions or simple fact-retrieval questions.
+    The questions should be accessible and intriguing, even if the depth is high.
 
     Adhere to these stylistic and thematic preferences:
-    - Reality: #{describe_scale(assigns.reality, "Pure Fiction", "Strictly Non-Fiction")}
-    - Focus: #{describe_scale(assigns.focus, "Mainstream/Popular", "Esoteric/Niche")}
-    - Timeframe: #{describe_scale(assigns.timeframe, "The Past", "The Future")}
-    - Depth: #{describe_scale(assigns.depth, "Beginner/General Audience", "Expert/Technical")}
-    - Tone: #{describe_scale(assigns.tone, "Serious/Academic", "Playful/Whimsical")}
+
+    1. Reality: #{describe_scale(assigns.reality, "Pure Fiction", "Reality-Grounded")}
+       - Pure Fiction: invent imagined worlds, scenarios, or hypothetical settings.
+       - Reality-Grounded: focus on real-world phenomena, history, science, society, or evidence-based topics.
+
+    2. Focus: #{describe_scale(assigns.focus, "Mainstream/Popular", "Esoteric/Niche")}
+       - Mainstream/Popular: use widely-known topics, events, technologies, stories, and references.
+       - Esoteric/Niche: feel free to draw on specialised theories, obscure topics, subcultures, or lesser-known thinkers.
+
+    3. Timeframe: #{describe_scale(assigns.timeframe, "The Past", "The Future")}
+       - Past: root questions in historical events, long-term trends, and origins.
+       - Future: emphasise possibilities, scenarios, and foresight.
+       - Mid-range: allow present-focused questions connecting past -> present -> future.
+
+    4. Depth: #{describe_scale(assigns.depth, "Beginner/General Audience", "Expert/Technical")}
+       - Beginner/General: avoid jargon, explain assumptions, rely on everyday language and analogies.
+       - Expert/Technical: assume prior knowledge; reference specific theories, models, methods, or technical debates.
+
+    5. Tone: #{describe_scale(assigns.tone, "Serious/Academic", "Playful/Whimsical")}
+       - Serious/Academic: grounded, respectful, reflective; not jokey; still engaging.
+       - Playful/Whimsical: light, imaginative, surprising, but must remain coherent and meaningful.
 
     Output the questions as a JSON array of strings.
     """
@@ -122,8 +140,8 @@ defmodule DialecticWeb.InspirationLive do
                   label="Reality"
                   name="reality"
                   value={@reality}
-                  left_label="Fiction"
-                  right_label="Non-Fiction"
+                  left_label="Pure Fiction"
+                  right_label="Reality-Grounded"
                 />
 
                 <.slider

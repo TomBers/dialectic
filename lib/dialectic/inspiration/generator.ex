@@ -12,15 +12,23 @@ defmodule Dialectic.Inspiration.Generator do
     provider_mod = get_provider()
 
     system_prompt = """
-    You are a creative muse.
-    Generate 5 engaging, open-ended questions that invite deep discussion and exploration based on the user's preferences.
-    The questions should be accessible but intriguing, serving as a gateway to a larger topic.
+    You are a creative muse. Your goal is to spark curiosity and a desire to explore.
+    Generate exactly 5 distinct, open-ended questions based on the user's preferences.
 
-    Rules:
+    Behavioral Rules:
+    1. Question Shape:
+       - Open-ended only. Explicitly forbid yes/no or one-word-answer questions.
+       - Each question must invite elaboration and allow multiple valid perspectives.
+       - Questions should be accessible and intriguing, even at higher depth/complexity.
+
+    2. Variety:
+       - The 5 questions must be meaningfully different in framing and angle.
+       - Avoid minor rephrasings of the same underlying concept.
+
+    Output Rules:
     1. The output must be a valid JSON array of strings.
     2. Do not include markdown formatting (like ```json).
     3. Do not include any explanation or other text.
-    4. Each question should be distinct and open-ended.
     """
 
     case make_request(provider_mod, system_prompt, preferences_prompt) do
