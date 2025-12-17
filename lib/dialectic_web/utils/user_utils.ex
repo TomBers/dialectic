@@ -21,7 +21,7 @@ defmodule DialecticWeb.Utils.UserUtils do
 
     case identity do
       "anonymous" -> false
-      email -> node.user == email
+      email -> Map.get(node, :user) == email
     end
   end
 end
