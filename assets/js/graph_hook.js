@@ -231,7 +231,35 @@ const graphHook = {
     const container =
       this.el.querySelector(`#${div}`) || document.getElementById(div);
 
-    this.cy = draw_graph(container, this, JSON.parse(graph), node);
+    if (!container) {
+      console.error(`Graph container #${div} not found`);
+    }
+
+    try {
+      this.cy = draw_graph(container, this, JSON.parse(graph), node);
+    } catch (e) {
+      console.error("Error initializing graph:", e);
+    }
+
+    if (!this.cy) return;
+
+    const centerOrFit = () => {
+      this.cy.resize();
+      // If a specific node is selected (e.g. via minimap params), center on it
+      const target = node ? this.cy.getElementById(node) : null;
+      if (target && target.length) {
+        this.cy.center(target);
+        this.cy.zoom(1);
+      } else {
+        // Otherwise fit the whole graph
+        this.cy.fit(this.cy.elements(), 50);
+        this.cy.center();
+      }
+    };
+
+    this.cy.on("layoutstop", centerOrFit);
+    // In case layout finished synchronously or before we attached listener
+    requestAnimationFrame(centerOrFit);
 
     // --- Explored Nodes Tracking ---
     this._updateExploredStatus = () => {
@@ -634,7 +662,7 @@ const graphHook = {
           this.cy.scratch("_bulkReload", true);
         } catch (_e) {}
       }
-      this.cy.json({ elements: JSON.parse(graphStr) });
+      if (this.cy) this.cy.json({ elements: JSON.parse(graphStr) });
       if (this.cy && typeof this.cy.scratch === "function") {
         try {
           this.cy.scratch("_bulkReload", null);

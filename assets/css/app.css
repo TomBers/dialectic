@@ -17,7 +17,9 @@
 /* This file is for your main application CSS */
 /* Make graph nodes feel clickable */
 #cy-inner,
-#cy-inner canvas {
+#cy-inner canvas,
+#cy-minimap-inner,
+#cy-minimap-inner canvas {
     cursor: pointer;
 }
 .top-right {
@@ -1433,12 +1435,12 @@ button[type="submit"]:active {
 
 /* Highlight Styles */
 .highlight-span {
-  background-color: rgba(255, 235, 59, 0.4);
-  border-radius: 2px;
-  cursor: pointer;
-  transition: background-color 0.2s;
+    background-color: rgba(255, 235, 59, 0.4);
+    border-radius: 2px;
+    cursor: pointer;
+    transition: background-color 0.2s;
 }
 
 .highlight-span:hover {
-  background-color: rgba(255, 235, 59, 0.7);
+    background-color: rgba(255, 235, 59, 0.7);
 }

@@ -43,6 +43,17 @@ hooks.ListDetection = listDetectionHook;
 hooks.TranslatePopover = translatePopoverHook;
 hooks.Markdown = MarkdownHook;
 
+hooks.LinearView = {
+  mounted() {
+    this.handleEvent("scroll_to_node", ({ id }) => {
+      const el = document.getElementById(`node-${id}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+  },
+};
+
 hooks.ExplorationStats = {
   mounted() {
     this.updateStats();
