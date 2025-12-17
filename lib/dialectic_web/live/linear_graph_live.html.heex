@@ -30,6 +30,7 @@
           phx-click="prepare_for_print"
           phx-hook="PrintConversation"
           id="print-btn"
+          data-graph-name={@graph_id}
           class="text-xs px-2.5 py-1.5 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm hidden sm:inline-flex"
         >
           <.icon name="hero-printer" class="h-4 w-4 mr-1.5 inline-block" /> PDF
@@ -139,7 +140,8 @@
                   else: "hover:bg-white hover:border-gray-200 hover:shadow-sm text-gray-600"
                 ),
                 if(Enum.any?(@linear_path, &(&1.id == node.id)) and @selected_node_id != node.id,
-                  do: "bg-gray-100/50 text-gray-900",
+                  do:
+                    "bg-blue-50 text-blue-900 border-blue-100 ring-1 ring-blue-200/50 font-medium",
                   else: ""
                 )
               ]}
@@ -174,10 +176,42 @@
 
 <!-- Print Styles -->
 <style media="print">
-  header, .back-button, button, #cy-minimap-container, .hidden.lg\:block { display: none !important; }
+  /* Global resets for layout containers */
+  body, html, #app, .flex, .h-screen, .overflow-hidden, .flex-col, .relative {
+    height: auto !important;
+    overflow: visible !important;
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+  }
+
+  /* Hide UI elements */
+  header, .back-button, button, #cy-minimap-container, .hidden.lg\:flex, .flex-none {
+    display: none !important;
+  }
+
+  /* Content styling */
   .prose { font-size: 11pt !important; }
-  .node { break-inside: avoid; border: 1px solid #ddd !important; box-shadow: none !important; margin-bottom: 1.5rem; page-break-inside: avoid; }
-  #linear-scroller { overflow: visible !important; height: auto !important; padding: 0 !important; background: white !important; }
-  .max-w-3xl { max-width: none !important; }
+
+  .node {
+    break-inside: avoid;
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+    margin-bottom: 1.5rem;
+    page-break-inside: avoid;
+    display: block !important; /* Ensure block display for nodes */
+  }
+
+  /* Specific resets for scroll container */
+  #linear-scroller {
+    overflow: visible !important;
+    height: auto !important;
+    padding: 0 !important;
+    background: white !important;
+    display: block !important;
+  }
+
+  .max-w-3xl { max-width: none !important; margin: 0 !important; }
+
   @page { margin: 2cm; }
 </style>
