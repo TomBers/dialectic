@@ -64,10 +64,6 @@
               class={[
                 "group relative bg-white rounded-xl shadow-sm border transition-all duration-200 scroll-mt-32",
                 "border-l-[6px]",
-                if(@selected_node_id == node.id,
-                  do: "ring-2 ring-blue-500/20 border-gray-300",
-                  else: "border-gray-200 hover:border-gray-300"
-                ),
                 message_border_class(node.class)
               ]}
             >
