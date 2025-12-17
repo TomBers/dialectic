@@ -76,18 +76,7 @@
                 <div class="flex items-center gap-2">
                   <span class={[
                     "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider",
-                    case node.class do
-                      "question" -> "bg-sky-50 text-sky-700 ring-1 ring-sky-600/10"
-                      "user" -> "bg-sky-50 text-sky-700 ring-1 ring-sky-600/10"
-                      "answer" -> "bg-gray-100 text-gray-700 ring-1 ring-gray-600/10"
-                      "thesis" -> "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/10"
-                      "antithesis" -> "bg-red-50 text-red-700 ring-1 ring-red-600/10"
-                      "synthesis" -> "bg-violet-50 text-violet-700 ring-1 ring-violet-600/10"
-                      "ideas" -> "bg-orange-50 text-orange-700 ring-1 ring-orange-600/10"
-                      "deepdive" -> "bg-cyan-50 text-cyan-700 ring-1 ring-cyan-600/10"
-                      "origin" -> "bg-gray-900 text-gray-100 ring-1 ring-gray-900/10"
-                      _ -> "bg-gray-100 text-gray-600 ring-1 ring-gray-500/10"
-                    end
+                    DialecticWeb.ColUtils.badge_class(node.class)
                   ]}>
                     {node.class}
                   </span>
@@ -149,18 +138,7 @@
             >
               <div class={[
                 "flex-none w-2 h-2 rounded-full mt-1 mr-2 shadow-sm ring-1 ring-black/5",
-                case node.class do
-                  "question" -> "bg-sky-500"
-                  "user" -> "bg-sky-500"
-                  "answer" -> "bg-gray-400"
-                  "thesis" -> "bg-emerald-500"
-                  "antithesis" -> "bg-red-500"
-                  "synthesis" -> "bg-violet-500"
-                  "ideas" -> "bg-orange-500"
-                  "deepdive" -> "bg-cyan-500"
-                  "origin" -> "bg-gray-900"
-                  _ -> "bg-gray-300"
-                end
+                DialecticWeb.ColUtils.dot_class(node.class)
               ]}>
               </div>
               <span class="truncate leading-tight opacity-90">

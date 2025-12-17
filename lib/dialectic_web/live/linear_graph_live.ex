@@ -2,6 +2,7 @@ defmodule DialecticWeb.LinearGraphLive do
   use DialecticWeb, :live_view
 
   alias Dialectic.Graph.GraphActions
+  alias DialecticWeb.ColUtils
 
   def mount(%{"graph_name" => graph_id_uri} = params, _session, socket) do
     graph_id = URI.decode(graph_id_uri)
@@ -92,17 +93,7 @@ defmodule DialecticWeb.LinearGraphLive do
   end
 
   defp message_border_class(class) do
-    case class do
-      "question" -> "border-sky-500"
-      "user" -> "border-sky-500"
-      "thesis" -> "border-emerald-500"
-      "antithesis" -> "border-red-500"
-      "synthesis" -> "border-violet-500"
-      "deepdive" -> "border-cyan-500"
-      "ideas" -> "border-orange-500"
-      "origin" -> "border-gray-900"
-      _ -> "border-gray-200"
-    end
+    ColUtils.border_class(class)
   end
 
   defp clean_title(nil), do: ""

@@ -17,9 +17,7 @@
 /* This file is for your main application CSS */
 /* Make graph nodes feel clickable */
 #cy-inner,
-#cy-inner canvas,
-#cy-minimap-inner,
-#cy-minimap-inner canvas {
+#cy-inner canvas {
     cursor: pointer;
 }
 .top-right {
