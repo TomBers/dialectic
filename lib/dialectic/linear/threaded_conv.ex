@@ -14,7 +14,7 @@ defmodule Dialectic.Linear.ThreadedConv do
   List of {node_id, indent_level, node_data} tuples ordered for conversation display
   """
   def process_graph(graph) do
-    root_nodes = find_root_nodes(graph)
+    root_nodes = find_root_nodes(graph) |> sort_by_id()
     nodes_with_indent = []
     visited = MapSet.new()
 
@@ -69,7 +69,7 @@ defmodule Dialectic.Linear.ThreadedConv do
       updated_visited = MapSet.put(visited, node)
 
       # Get all child nodes (outgoing edges)
-      children = :digraph.out_neighbours(graph, node)
+      children = :digraph.out_neighbours(graph, node) |> sort_by_id()
 
       # Process each child with an increased indent level
       Enum.reduce(children, {updated_acc, updated_visited}, fn child,
@@ -114,5 +114,14 @@ defmodule Dialectic.Linear.ThreadedConv do
     graph
     |> process_graph()
     |> format_for_rendering()
+  end
+
+  defp sort_by_id(nodes) do
+    Enum.sort_by(nodes, fn id ->
+      case Integer.parse(id) do
+        {int, _} -> int
+        :error -> id
+      end
+    end)
   end
 end
