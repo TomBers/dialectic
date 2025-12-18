@@ -27,31 +27,6 @@
         As such MuDG (Multi-user Dialectic Graph) is a tool for thought. A multiplayer chat interface to allow the full reasoning behind an argument to be followed. Many people can think together to build out a massive knowledge graph, interacting with LLMs to integrate the knowledge into the whole.
       </p>
     </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
-      <%= for {instruction, index} <- @instructions |> Enum.with_index() do %>
-        <div class="bg-white rounded-lg shadow p-4 flex flex-col">
-          <div class="h-48 w-full mb-4 bg-gray-50 rounded border border-gray-100 relative">
-            <div
-              id={"graph-" <> Integer.to_string(index)}
-              class="w-full h-full info-graph absolute inset-0"
-              data-graph={instruction.graph}
-              data-node={instruction.node}
-              data-cols={Jason.encode!(Dialectic.Consts.Colours.graph_cols())}
-              data-updateview="false"
-              data-div={"graph-" <> Integer.to_string(index)}
-              phx-hook="Graph"
-              phx-update="ignore"
-            >
-            </div>
-          </div>
-          <div>
-            <h3 class="text-xl font-bold mb-2 text-gray-900">{instruction.title}</h3>
-            <p class="text-gray-600">{instruction.description}</p>
-          </div>
-        </div>
-      <% end %>
-    </div>
   </div>
   
 <!-- Why Dialectic? (Features) -->
@@ -164,66 +139,6 @@
     </div>
   </div>
   
-<!-- Showcase Section -->
-  <div class="py-16 bg-gray-50 border-b border-gray-200">
-    <div class="max-w-7xl mx-auto px-6">
-      <div class="text-center mb-16">
-        <h2 class="text-3xl font-bold text-gray-900">See It In Action</h2>
-        <p class="mt-4 text-lg text-gray-600">
-          Explore how Dialectic transforms knowledge representation and collaborative learning
-        </p>
-      </div>
-
-      <div class="space-y-24">
-        <!-- Showcase 1 -->
-        <div class="flex flex-col lg:flex-row items-center gap-12">
-          <div class="flex-1">
-            <h3 class="text-2xl font-bold mb-4 text-gray-900">Interactive Knowledge Graphs</h3>
-            <p class="text-lg text-gray-600 mb-4">
-              Transform complex ideas into intuitive visual networks. Unlike linear conversations, knowledge graphs let you explore multiple paths simultaneously and see relationships at a glance.
-            </p>
-            <p class="text-lg text-gray-600 mb-6">
-              Each node can be expanded to reveal more details or branch into new directions, creating a rich web of connected knowledge.
-            </p>
-          </div>
-          <div class="flex-1 w-full">
-            <div class="aspect-video bg-gray-900 rounded-xl overflow-hidden shadow-xl relative group">
-              <div class="absolute inset-0 flex items-center justify-center">
-                <img
-                  src="/images/graph.webp"
-                  alt="Interactive Graph"
-                  class="w-full h-full object-cover"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-        
-<!-- Showcase 2 -->
-        <div class="flex flex-col lg:flex-row-reverse items-center gap-12">
-          <div class="flex-1">
-            <h3 class="text-2xl font-bold mb-4 text-gray-900">Beyond Traditional Chat</h3>
-            <p class="text-lg text-gray-600 mb-4">
-              Traditional AI chat interfaces present knowledge as linear walls of text. Dialectic's graph-based approach structures information spatially.
-            </p>
-            <p class="text-lg text-gray-600">
-              This allows for non-linear exploration while maintaining context, making it easier to revisit specific points and see the big picture.
-            </p>
-          </div>
-          <div class="flex-1 w-full">
-            <div class="aspect-video bg-gray-100 rounded-xl overflow-hidden shadow-xl">
-              <img
-                src="/images/chat.webp"
-                alt="Chat Interface"
-                class="w-full h-full object-cover"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  
 <!-- Why We Built It -->
   <div class="py-16 bg-white border-b border-gray-200">
     <div class="max-w-7xl mx-auto px-6">
@@ -298,80 +213,134 @@
         
 <!-- Step 2 -->
         <div class="bg-white rounded-lg shadow p-6">
-          <h3 class="text-2xl font-semibold mb-4">Step 2: Start the Conversation</h3>
+          <h3 class="text-2xl font-semibold mb-4">Step 2: Use the Interface</h3>
           <p class="mb-4">
             Visit
             <a href="https://mudg.fly.dev/start/new/idea" class="text-blue-600 hover:underline">
               mudg.fly.dev/start/new/idea
             </a>
-            and enter your initial query in the search box.
+            to begin. After you enter your first query, MuDG opens a single workspace where your conversation and the knowledge graph evolve together.
           </p>
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 mb-4">
-              <div class="aspect-video bg-gray-100">
-                <img src="/images/empty_chat.webp" alt="Empty Knowledge Graph Visualization" />
+
+          <div
+            id="how-interface-highlight"
+            phx-hook="InterfaceHighlight"
+            class="border-2 border-dashed border-gray-300 rounded-lg shadow-sm bg-white p-4 mb-6"
+          >
+            <div class="relative rounded-md overflow-hidden">
+              <img
+                class="block w-full h-auto select-none"
+                src="/images/graph_live.webp"
+                alt="MuDG interface showing conversation, responses, and knowledge graph"
+              />
+
+              <%!--
+                Base dim overlay is always on.
+                Hovering a description item sets `data-interface-highlight-active` via the InterfaceHighlight hook.
+                The overlays below appear based on that active key.
+              --%>
+              <div class="pointer-events-none absolute inset-0">
+                <%!-- No dim by default. Only dim when a highlight is active. --%>
+                <div class="absolute inset-0 bg-black/0 [[data-interface-highlight-active]_&]:bg-black/25 transition-colors duration-150">
+                </div>
+
+                <%!-- Graph highlight --%>
+                <%!-- Responses highlight (0,0) -> (750,830) on a 1914x854 image --%>
+                <div
+                  class="absolute hidden [[data-interface-highlight-active='responses']_&]:block"
+                  style="left: 0%; top: 0%; width: 39.186%; height: 100%;"
+                >
+                  <div class="absolute inset-0 bg-transparent rounded-lg ring-2 ring-yellow-300 shadow-[0_0_0_9999px_rgba(0,0,0,0.25),_0_0_0_4px_rgba(253,224,71,0.35)]">
+                  </div>
+                </div>
+
+                <%!-- Graph visualization highlight (750,0) -> (1340,670) on a 1914x854 image --%>
+                <div
+                  class="absolute hidden [[data-interface-highlight-active='graph']_&]:block"
+                  style="left: 39.186%; top: 0%; width: 30.825%; height: 78.454%;"
+                >
+                  <div class="absolute inset-0 bg-transparent rounded-lg ring-2 ring-yellow-300 shadow-[0_0_0_9999px_rgba(0,0,0,0.25),_0_0_0_4px_rgba(253,224,71,0.35)]">
+                  </div>
+                </div>
+
+                <%!-- Action tools highlight (811,723) -> (1486,853) on a 1914x854 image --%>
+                <div
+                  class="absolute hidden [[data-interface-highlight-active='tools']_&]:block"
+                  style="left: 42.372%; top: 84.661%; width: 35.266%; height: 15.222%;"
+                >
+                  <div class="absolute inset-0 bg-transparent rounded-lg ring-2 ring-yellow-300 shadow-[0_0_0_9999px_rgba(0,0,0,0.25),_0_0_0_4px_rgba(253,224,71,0.35)]">
+                  </div>
+                </div>
+
+                <%!-- Admin panel highlight (1350,0) -> (1730,852) on a 1914x854 image --%>
+                <div
+                  class="absolute hidden [[data-interface-highlight-active='admin']_&]:block"
+                  style="left: 80%; top: 0%; width: 19.854%; height: 99.766%;"
+                >
+                  <div class="absolute inset-0 bg-transparent rounded-lg ring-2 ring-yellow-300 shadow-[0_0_0_9999px_rgba(0,0,0,0.25),_0_0_0_4px_rgba(253,224,71,0.35)]">
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 mb-4">
-              <div class="aspect-video bg-gray-100">
-                <img src="/images/chat.webp" alt="Empty Knowledge Graph Visualization" />
-              </div>
-            </div>
+
+            <p class="mt-6 mb-4">
+              The interface has a few key areas (<span class="font-semibold">hover the labels</span> to highlight them):
+            </p>
+
+            <ul class="space-y-2 mb-4">
+              <li class="flex items-start gap-2">
+                <span
+                  class="font-semibold min-w-[170px] cursor-help underline decoration-dotted underline-offset-4 hover:decoration-solid focus-visible:decoration-solid focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-300/70 focus-visible:ring-offset-2 rounded-sm"
+                  data-interface-highlight-trigger="responses"
+                  tabindex="0"
+                  title="Hover to highlight this area in the screenshot"
+                >
+                  Responses:
+                </span>
+                <span>The text content</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span
+                  class="font-semibold min-w-[170px] cursor-help underline decoration-dotted underline-offset-4 hover:decoration-solid focus-visible:decoration-solid focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-300/70 focus-visible:ring-offset-2 rounded-sm"
+                  data-interface-highlight-trigger="graph"
+                  tabindex="0"
+                  title="Hover to highlight this area in the screenshot"
+                >
+                  Graph visualisation:
+                </span>
+                <span>An interactive digram of ideas and their relationships</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span
+                  class="font-semibold min-w-[170px] cursor-help underline decoration-dotted underline-offset-4 hover:decoration-solid focus-visible:decoration-solid focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-300/70 focus-visible:ring-offset-2 rounded-sm"
+                  data-interface-highlight-trigger="tools"
+                  tabindex="0"
+                  title="Hover to highlight this area in the screenshot"
+                >
+                  Action tools:
+                </span>
+                <span>
+                  Controls for common graph operations like exploring related ideas and combining concepts.
+                </span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span
+                  class="font-semibold min-w-[170px] cursor-help underline decoration-dotted underline-offset-4 hover:decoration-solid focus-visible:decoration-solid focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-300/70 focus-visible:ring-offset-2 rounded-sm"
+                  data-interface-highlight-trigger="admin"
+                  tabindex="0"
+                  title="Hover to highlight this area in the screenshot"
+                >
+                  Admin panel:
+                </span>
+                <span>
+                  Search, set LLM personality, control who has access, create groups, see notes others have written, share the graph, and download the content
+                </span>
+              </li>
+            </ul>
           </div>
-        </div>
-      </div>
-      
-<!-- Right Column -->
-      <div class="space-y-6">
-        <!-- Step 3 -->
-        <div class="bg-white rounded-lg shadow p-6">
-          <h3 class="text-2xl font-semibold mb-4">Step 3: Navigate the Knowledge Graph</h3>
-          <p class="mb-4">The interface is divided into several key areas:</p>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
-              <h4 class="font-semibold mb-2">Graph Visualization</h4>
-              <div class="aspect-video bg-gray-100 mb-2">
-                <img src="/images/graph.webp" alt="Empty Knowledge Graph Visualization" />
-              </div>
-              <p class="text-sm text-gray-600">
-                The interactive graph shows connections between ideas. Nodes represent concepts, and edges show relationships.
-              </p>
-            </div>
-
-            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
-              <h4 class="font-semibold mb-2">Conversation Panel</h4>
-              <div class="aspect-video bg-gray-100 mb-2">
-                <img src="/images/ask-question.webp" alt="Empty Knowledge Graph Visualization" />
-              </div>
-              <p class="text-sm text-gray-600">
-                Where you interact with MuDG, ask questions, and see responses.
-              </p>
-            </div>
-
-            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
-              <h4 class="font-semibold mb-2">Action Tools</h4>
-              <div class="aspect-video bg-gray-100 mb-2">
-                <img src="/images/graph_controls.webp" alt="Empty Knowledge Graph Visualization" />
-              </div>
-              <p class="text-sm text-gray-600">
-                Tools for combining nodes, exploring relationships, and managing your graph.
-              </p>
-            </div>
-
-            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
-              <h4 class="font-semibold mb-2">Responses</h4>
-              <div class="aspect-video bg-gray-100 mb-2">
-                <img src="/images/answer.webp" alt="Empty Knowledge Graph Visualization" />
-              </div>
-              <p class="text-sm text-gray-600">
-                Zoom, pan, and focus controls for exploring your knowledge graph.
-              </p>
-            </div>
-          </div>
-
-          <h4 class="font-semibold mb-2">Interaction Options:</h4>
-          <ul class="space-y-2 mb-4">
+          <h4 class="font-semibold mb-2">Common interaction patterns:</h4>
+          <ul class="space-y-2">
             <li class="flex items-start gap-2">
               <span class="font-semibold min-w-[160px]">Follow-up Questions:</span>
               <span>Dig deeper into specific aspects of the topic</span>
@@ -394,10 +363,14 @@
             </li>
           </ul>
         </div>
+      </div>
+      
+<!-- Right Column -->
+      <div class="space-y-6">
         
 <!-- Step 4 -->
         <div class="bg-white rounded-lg shadow p-6">
-          <h3 class="text-2xl font-semibold mb-4">Step 4: Save and Share Your Research</h3>
+          <h3 class="text-2xl font-semibold mb-4">Step 3: Save and Share Your Research</h3>
           <ul class="space-y-2">
             <li class="flex items-start gap-2">
               <span class="font-semibold min-w-[160px]">Download:</span>

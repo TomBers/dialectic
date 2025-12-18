@@ -30,6 +30,7 @@ import storyReadabilityHook from "./story_readability_hook.js";
 import listDetectionHook from "./list_detection_hook.js";
 import translatePopoverHook from "./translate_popover_hook.js";
 import MarkdownHook from "./markdown_hook.js";
+import InterfaceHighlightHook from "./how/interface_highlight_hook.js";
 
 let hooks = {};
 
@@ -42,6 +43,7 @@ hooks.StoryReadability = storyReadabilityHook;
 hooks.ListDetection = listDetectionHook;
 hooks.TranslatePopover = translatePopoverHook;
 hooks.Markdown = MarkdownHook;
+hooks.InterfaceHighlight = InterfaceHighlightHook;
 
 hooks.LinearView = {
   mounted() {

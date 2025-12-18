@@ -34,8 +34,6 @@ defmodule DialecticWeb.Router do
     # get "/intro/what", PageController, :what
     get "/intro/how", PageController, :guide
 
-    get "/deploy/dashboard", PageController, :deploy_dashboard
-
     live "/inspiration", InspirationLive
     live "/start/new/idea", GraphLive
     live "/:graph_name", GraphLive

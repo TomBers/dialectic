@@ -64,64 +64,7 @@ defmodule DialecticWeb.PageController do
     |> send_resp(200, markdown_content)
   end
 
-  def what(conn, _params) do
-    render(conn, :what, instructions: get_instructions(), layout: false)
-  end
-
-  def deploy_dashboard(conn, _params) do
-    keys = [
-      "ANTHROPIC_API_KEY",
-      "DEEPSEEK_API_KEY",
-      "GEMINI_API_KEY",
-      "OPENAI_API_KEY"
-    ]
-
-    seeds = Dialectic.DbActions.Init.seed()
-    render(conn, :deploy_dashboard, seeds: seeds, keys: Enum.map(keys, &check_key(&1)))
-  end
-
   def guide(conn, _params) do
-    render(conn, :how, instructions: get_instructions())
-  end
-
-  defp get_instructions do
-    [
-      %{
-        graph: "reply",
-        title: "Answer",
-        description: "Add a response to any node",
-        node: "2"
-      },
-      %{
-        graph: "answer",
-        title: "Reply",
-        description: "The system will reply to the node",
-        node: "2"
-      },
-      %{
-        graph: "branch",
-        title: "Branch",
-        description: "Create a thesis / antithesis (for / against) argument for a node",
-        node: "2"
-      },
-      %{
-        graph: "combine",
-        title: "Combine",
-        description: "Create a synthesis from 2 nodes",
-        node: "4"
-      }
-    ]
-    |> Enum.map(fn g -> %{g | graph: encode_graph(g.graph)} end)
-  end
-
-  defp check_key(key) do
-    case System.get_env(key) do
-      nil -> "Missing #{key}"
-      _ -> "Found #{key}"
-    end
-  end
-
-  defp encode_graph(n) do
-    Serialise.load_graph(n) |> Vertex.to_cytoscape_format() |> Jason.encode!()
+    render(conn, :how)
   end
 end
