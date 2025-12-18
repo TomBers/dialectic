@@ -4,60 +4,100 @@ defmodule DialecticWeb.LinearGraphLive do
   alias Dialectic.Graph.GraphActions
   alias DialecticWeb.ColUtils
 
+  on_mount {DialecticWeb.UserAuth, :mount_current_user}
+
   def mount(%{"graph_name" => graph_id_uri} = params, _session, socket) do
     graph_id = URI.decode(graph_id_uri)
 
-    # Ensure graph is loaded and available
-    {_graph_struct, graph} = GraphManager.get_graph(graph_id)
+    case Dialectic.DbActions.Graphs.get_graph_by_title(graph_id) do
+      nil ->
+        socket =
+          socket
+          |> put_flash(:error, "Graph not found: #{graph_id}")
+          |> redirect(to: ~p"/")
 
-    # Generate flat list for HTML minimap
-    map_nodes =
-      Dialectic.Linear.ThreadedConv.prepare_conversation(graph)
-      |> Enum.reject(&(Map.get(&1, :compound, false) == true))
-      |> Enum.map(fn node ->
-        Map.put(node, :title, clean_title(node.content))
-      end)
+        {:ok, socket}
 
-    # Determine which node to focus on.
-    # If a node_id is provided in params, use it.
-    # Otherwise, fall back to the "latest" leaf node to show a full conversation.
-    target_node =
-      if params["node_id"] do
-        GraphActions.find_node(graph_id, params["node_id"])
-      else
-        GraphManager.find_leaf_nodes(graph_id)
-        |> Enum.sort_by(
-          fn node ->
-            case Integer.parse(node.id) do
-              {int, _} -> int
-              _ -> 0
-            end
-          end,
-          :desc
-        )
-        |> List.first() || GraphManager.best_node(graph_id, nil)
-      end
+      graph_db ->
+        # Check Access
+        token_param = Map.get(params, "token")
 
-    # Build the linear path from Root -> Target
-    linear_path =
-      if target_node do
-        GraphManager.path_to_node(graph_id, target_node)
-        |> Enum.reverse()
-        |> Enum.map(fn node -> Map.put(node, :title, clean_title(node.content)) end)
-      else
-        []
-      end
+        has_access =
+          Dialectic.DbActions.Sharing.can_access?(socket.assigns[:current_user], graph_db) or
+            (is_binary(token_param) and is_binary(graph_db.share_token) and
+               Plug.Crypto.secure_compare(token_param, graph_db.share_token))
 
-    socket =
-      assign(socket,
-        linear_path: linear_path,
-        map_nodes: map_nodes,
-        graph_id: graph_id,
-        show_minimap: true,
-        selected_node_id: if(target_node, do: target_node.id, else: nil)
-      )
+        if has_access do
+          try do
+            # Ensure graph is loaded and available
+            {_graph_struct, graph} = GraphManager.get_graph(graph_id)
 
-    {:ok, socket}
+            # Generate flat list for HTML minimap
+            map_nodes =
+              Dialectic.Linear.ThreadedConv.prepare_conversation(graph)
+              |> Enum.reject(&(Map.get(&1, :compound, false) == true))
+              |> Enum.map(fn node ->
+                Map.put(node, :title, clean_title(node.content))
+              end)
+
+            # Determine which node to focus on.
+            # If a node_id is provided in params, use it.
+            # Otherwise, fall back to the "latest" leaf node to show a full conversation.
+            target_node =
+              if params["node_id"] do
+                GraphActions.find_node(graph_id, params["node_id"])
+              else
+                GraphManager.find_leaf_nodes(graph_id)
+                |> Enum.sort_by(
+                  fn node ->
+                    case Integer.parse(node.id) do
+                      {int, _} -> int
+                      _ -> 0
+                    end
+                  end,
+                  :desc
+                )
+                |> List.first() || GraphManager.best_node(graph_id, nil)
+              end
+
+            # Build the linear path from Root -> Target
+            linear_path =
+              if target_node do
+                GraphManager.path_to_node(graph_id, target_node)
+                |> Enum.reverse()
+                |> Enum.map(fn node -> Map.put(node, :title, clean_title(node.content)) end)
+              else
+                []
+              end
+
+            socket =
+              assign(socket,
+                linear_path: linear_path,
+                map_nodes: map_nodes,
+                graph_id: graph_id,
+                show_minimap: true,
+                selected_node_id: if(target_node, do: target_node.id, else: nil)
+              )
+
+            {:ok, socket}
+          rescue
+            _e ->
+              socket =
+                socket
+                |> put_flash(:error, "Error loading graph: #{graph_id}")
+                |> redirect(to: ~p"/")
+
+              {:ok, socket}
+          end
+        else
+          socket =
+            socket
+            |> put_flash(:error, "You do not have permission to view this graph.")
+            |> redirect(to: ~p"/")
+
+          {:ok, socket}
+        end
+    end
   end
 
   def handle_event("toggle_minimap", _, socket) do
