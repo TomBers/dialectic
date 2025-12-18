@@ -3,6 +3,7 @@ defmodule DialecticWeb.LinearGraphLive do
 
   alias Dialectic.Graph.GraphActions
   alias DialecticWeb.ColUtils
+  alias Dialectic.Highlights
 
   on_mount {DialecticWeb.UserAuth, :mount_current_user}
 
@@ -70,12 +71,18 @@ defmodule DialecticWeb.LinearGraphLive do
                 []
               end
 
+            if connected?(socket) do
+              Highlights.subscribe(graph_id)
+            end
+
             socket =
               assign(socket,
                 linear_path: linear_path,
                 map_nodes: map_nodes,
                 graph_id: graph_id,
                 show_minimap: true,
+                show_highlights: true,
+                highlights: Highlights.list_highlights(mudg_id: graph_id),
                 selected_node_id: if(target_node, do: target_node.id, else: nil)
               )
 
@@ -104,6 +111,10 @@ defmodule DialecticWeb.LinearGraphLive do
     {:noreply, assign(socket, show_minimap: !socket.assigns.show_minimap)}
   end
 
+  def handle_event("toggle_highlights", _, socket) do
+    {:noreply, assign(socket, show_highlights: !socket.assigns.show_highlights)}
+  end
+
   def handle_event("node_clicked", %{"id" => id}, socket) do
     node = GraphActions.find_node(socket.assigns.graph_id, id)
 
@@ -130,6 +141,34 @@ defmodule DialecticWeb.LinearGraphLive do
 
   def handle_event("update_exploration_progress", _params, socket) do
     {:noreply, socket}
+  end
+
+  def handle_info({:created, highlight}, socket) do
+    highlights = [highlight | socket.assigns.highlights]
+
+    {:noreply,
+     assign(socket, highlights: highlights)
+     |> push_event("refresh_highlights", %{data: highlight})}
+  end
+
+  def handle_info({:updated, highlight}, socket) do
+    highlights =
+      Enum.map(socket.assigns.highlights, fn h ->
+        if h.id == highlight.id, do: highlight, else: h
+      end)
+
+    {:noreply,
+     assign(socket, highlights: highlights)
+     |> push_event("refresh_highlights", %{data: highlight})}
+  end
+
+  def handle_info({:deleted, highlight}, socket) do
+    highlights =
+      Enum.reject(socket.assigns.highlights, fn h -> h.id == highlight.id end)
+
+    {:noreply,
+     assign(socket, highlights: highlights)
+     |> push_event("refresh_highlights", %{data: highlight})}
   end
 
   defp message_border_class(class) do

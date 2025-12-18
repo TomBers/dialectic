@@ -28,6 +28,14 @@
         </.button>
 
         <.button
+          phx-click="toggle_highlights"
+          class={"text-xs px-2.5 py-1.5 border shadow-sm transition-colors " <> if(@show_highlights, do: "bg-amber-50 border-amber-200 text-amber-700", else: "bg-white border-gray-300 text-gray-700 hover:bg-gray-50")}
+        >
+          <.icon name="hero-pencil" class="h-4 w-4 mr-1.5 inline-block" />
+          {if @show_highlights, do: "Hide Highlights", else: "Show Highlights"}
+        </.button>
+
+        <.button
           phx-click="prepare_for_print"
           phx-hook="PrintConversation"
           id="print-btn"
@@ -63,10 +71,14 @@
           <%= unless Map.get(node, :deleted, false) do %>
             <div
               id={"node-#{node.id}"}
+              phx-hook="TextSelectionHook"
+              data-node-id={node.id}
+              data-mudg-id={@graph_id}
               class={[
                 "group relative bg-white rounded-xl shadow-sm border transition-all duration-200 scroll-mt-32",
                 "border-l-[6px]",
-                message_border_class(node.class)
+                message_border_class(node.class),
+                if(@show_highlights, do: "highlights-visible", else: "highlights-hidden")
               ]}
             >
               <!-- Node Header / Controls -->
@@ -93,6 +105,29 @@
                   data-body-only="true"
                 >
                 </div>
+              </div>
+
+              <div
+                class="selection-actions hidden absolute bg-white shadow-lg rounded-lg p-1 sm:p-2 z-10 border border-gray-200 flex gap-2"
+                style={if !@show_highlights, do: "display: none !important;", else: ""}
+              >
+                <button class="add-note-btn bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs py-1 sm:py-1.5 px-2 sm:px-3 rounded-full flex items-center transition-colors">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-3 w-3 mr-0.5 sm:mr-1"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                  Highlight
+                </button>
               </div>
             </div>
           <% end %>
@@ -190,4 +225,10 @@
   .max-w-3xl { max-width: none !important; margin: 0 !important; }
 
   @page { margin: 2cm; }
+</style>
+
+<style>
+  .highlights-hidden .highlight-span {
+    background-color: transparent !important;
+  }
 </style>
