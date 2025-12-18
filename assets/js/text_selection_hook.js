@@ -174,6 +174,7 @@ const textSelectionHook = {
 
       // Make the button visible so we can measure its width
       selectionActionsEl.classList.remove("hidden");
+      selectionActionsEl.classList.add("flex");
 
       // Get button dimensions after making it visible
       const buttonWidth = selectionActionsEl.offsetWidth;
@@ -277,6 +278,7 @@ const textSelectionHook = {
     const selectionActionsEl = this.el.querySelector(".selection-actions");
     if (selectionActionsEl) {
       selectionActionsEl.classList.add("hidden");
+      selectionActionsEl.classList.remove("flex");
     }
   },
 

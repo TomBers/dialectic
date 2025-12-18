@@ -35,7 +35,7 @@
             title={if @show_highlights, do: "Hide Highlights", else: "Show Highlights"}
           >
             <.icon name="hero-pencil" class="h-4 w-4 mr-1.5" />
-            {if @show_highlights, do: "Highlights", else: "Highlights"}
+            {if @show_highlights, do: "Hide Highlights", else: "Show Highlights"}
           </button>
 
           <%= if @highlights != [] do %>
@@ -159,7 +159,7 @@
               </div>
 
               <div
-                class="selection-actions hidden absolute bg-white shadow-lg rounded-lg p-1 sm:p-2 z-10 border border-gray-200 flex gap-2"
+                class="selection-actions hidden absolute bg-white shadow-lg rounded-lg p-1 sm:p-2 z-10 border border-gray-200 gap-2"
                 style={if !@show_highlights, do: "display: none !important;", else: ""}
               >
                 <button class="add-note-btn bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs py-1 sm:py-1.5 px-2 sm:px-3 rounded-full flex items-center transition-colors">

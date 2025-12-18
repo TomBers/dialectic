@@ -55,7 +55,7 @@ defmodule DialecticWeb.NodeComp do
                   </article>
                 </div>
               </div>
-              <div class="selection-actions hidden absolute bg-white shadow-lg rounded-lg p-1 sm:p-2 z-10 border border-gray-200 flex gap-2">
+              <div class="selection-actions hidden absolute bg-white shadow-lg rounded-lg p-1 sm:p-2 z-10 border border-gray-200 gap-2">
                 <button class="ask-btn bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 sm:py-1.5 px-2 sm:px-3 rounded-full flex items-center">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
