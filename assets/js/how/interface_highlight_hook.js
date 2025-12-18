@@ -42,7 +42,9 @@ const InterfaceHighlightHook = {
       // If focus is currently within a trigger, keep it active.
       const activeTrigger = this._closestTrigger(document.activeElement);
       if (activeTrigger) {
-        const key = activeTrigger.getAttribute("data-interface-highlight-trigger");
+        const key = activeTrigger.getAttribute(
+          "data-interface-highlight-trigger",
+        );
         if (key) this.el.dataset.interfaceHighlightActive = key;
         return;
       }
@@ -63,8 +65,11 @@ const InterfaceHighlightHook = {
     this.el.addEventListener("focusout", this._onFocusOut, true);
 
     // Optional: if markup provides a default active key.
+    // If it's empty/whitespace, do not activate anything.
     const initial = this.el.getAttribute("data-interface-highlight-initial");
-    if (initial) this.el.dataset.interfaceHighlightActive = initial;
+    const initialKey = typeof initial === "string" ? initial.trim() : "";
+    if (initialKey !== "")
+      this.el.dataset.interfaceHighlightActive = initialKey;
   },
 
   destroyed() {
