@@ -13,7 +13,7 @@
         </.link>
 
         <h1 class="text-sm font-semibold text-gray-700 hidden sm:block">
-          Linear View
+          Map
         </h1>
       </div>
 
@@ -119,10 +119,16 @@
               phx-value-id={node.id}
               class={[
                 "w-full text-left group flex items-start py-1.5 px-2 rounded-md text-xs transition-colors duration-150 border border-transparent scroll-mt-10",
-                if(@selected_node_id == node.id,
-                  do: "bg-gray-100 text-gray-900 font-semibold shadow-sm border-gray-200",
-                  else: "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                )
+                cond do
+                  @selected_node_id == node.id ->
+                    "bg-gray-100 text-gray-900 font-semibold shadow-sm border-gray-200"
+
+                  Enum.any?(@linear_path, &(&1.id == node.id)) ->
+                    "text-gray-900 font-medium hover:bg-gray-50"
+
+                  true ->
+                    "text-gray-500 opacity-60 hover:opacity-100 hover:bg-gray-50 hover:text-gray-900"
+                end
               ]}
               style={"margin-left: #{node.indent * 12}px; width: calc(100% - #{node.indent * 12}px);"}
             >
