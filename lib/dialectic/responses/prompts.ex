@@ -42,7 +42,8 @@ defmodule Dialectic.Responses.Prompts do
     join_blocks([
       fence("Context", context),
       """
-      Explain: #{sanitize_title(topic)}
+      Please explain the following topic: #{sanitize_title(topic)}.
+      Use the provided Context to ground your explanation.
       """
     ])
   end
@@ -55,7 +56,8 @@ defmodule Dialectic.Responses.Prompts do
     join_blocks([
       fence("Context", context),
       """
-      Explain: #{sanitize_title(selection_text)}
+      Please explain or elaborate on the following selection: #{sanitize_title(selection_text)}.
+      Use the provided Context to ground your response.
       """
     ])
   end
@@ -69,7 +71,11 @@ defmodule Dialectic.Responses.Prompts do
       fence("Context A", context1),
       fence("Context B", context2),
       """
-      A synthesis between #{sanitize_title(pos1)} and #{sanitize_title(pos2)}.
+      Please provide a synthesis that bridges the following two positions:
+      1. #{sanitize_title(pos1)}
+      2. #{sanitize_title(pos2)}
+
+      Draw upon "Context A" and "Context B" to construct a unified perspective or resolution.
       """
     ])
   end
@@ -82,7 +88,8 @@ defmodule Dialectic.Responses.Prompts do
     join_blocks([
       fence("Context", context),
       """
-      Pros for #{sanitize_title(claim)}
+      Please provide a detailed argument IN FAVOR OF the following claim: #{sanitize_title(claim)}.
+      Use the provided Context to ground your argument.
       """
     ])
   end
@@ -95,7 +102,8 @@ defmodule Dialectic.Responses.Prompts do
     join_blocks([
       fence("Context", context),
       """
-      Cons for #{sanitize_title(claim)}
+      Please provide a detailed argument AGAINST the following claim: #{sanitize_title(claim)}.
+      Use the provided Context to ground your argument.
       """
     ])
   end
@@ -108,7 +116,8 @@ defmodule Dialectic.Responses.Prompts do
     join_blocks([
       fence("Context", context),
       """
-      Adjacent topics or thinkers tightly grounded in the Context for #{sanitize_title(current_idea_title)}.
+      Please suggest adjacent topics, thinkers, or concepts that are related to: #{sanitize_title(current_idea_title)}.
+      Ensure your suggestions are tightly grounded in the provided Context.
       """
     ])
   end
