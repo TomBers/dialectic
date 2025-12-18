@@ -244,7 +244,11 @@ defmodule DialecticWeb.ActionToolbarComp do
 
         <%= if @graph_id do %>
           <.link
-            navigate={~p"/#{@graph_id}/linear?node_id=#{@node && @node.id}"}
+            navigate={
+              if @node,
+                do: ~p"/#{@graph_id}/linear?node_id=#{@node.id}",
+                else: ~p"/#{@graph_id}/linear"
+            }
             class="inline-flex items-center justify-center px-2.5 py-1 text-xs text-gray-700 rounded-md transition-colors hover:bg-gray-100 hover:text-gray-900"
             title="Open linear view"
           >
