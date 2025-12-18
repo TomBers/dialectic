@@ -68,7 +68,7 @@ defmodule Dialectic.DbActions.Graphs do
         where: ilike(g.title, ^search_pattern),
         left_join: n in assoc(g, :notes),
         group_by: g.title,
-        order_by: [desc: g.updated_at],
+        order_by: [desc: g.inserted_at],
         select: {g, count(n.id)}
 
     Dialectic.Repo.all(query)
