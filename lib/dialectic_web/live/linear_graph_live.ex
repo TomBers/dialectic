@@ -3,6 +3,7 @@ defmodule DialecticWeb.LinearGraphLive do
 
   alias Dialectic.Graph.GraphActions
   alias DialecticWeb.ColUtils
+  alias Dialectic.Highlights
 
   on_mount {DialecticWeb.UserAuth, :mount_current_user}
 
@@ -70,12 +71,19 @@ defmodule DialecticWeb.LinearGraphLive do
                 []
               end
 
+            if connected?(socket) do
+              Highlights.subscribe(graph_id)
+            end
+
             socket =
               assign(socket,
                 linear_path: linear_path,
                 map_nodes: map_nodes,
                 graph_id: graph_id,
                 show_minimap: true,
+                show_highlights: true,
+                show_highlights_list: false,
+                highlights: Highlights.list_highlights(mudg_id: graph_id),
                 selected_node_id: if(target_node, do: target_node.id, else: nil)
               )
 
@@ -104,6 +112,36 @@ defmodule DialecticWeb.LinearGraphLive do
     {:noreply, assign(socket, show_minimap: !socket.assigns.show_minimap)}
   end
 
+  def handle_event("toggle_highlights", _, socket) do
+    {:noreply, assign(socket, show_highlights: !socket.assigns.show_highlights)}
+  end
+
+  def handle_event("toggle_highlights_list", _, socket) do
+    {:noreply, assign(socket, show_highlights_list: !socket.assigns.show_highlights_list)}
+  end
+
+  def handle_event("jump_to_highlight", %{"id" => highlight_id, "node_id" => node_id}, socket) do
+    socket =
+      if Enum.any?(socket.assigns.linear_path, &(&1.id == node_id)) do
+        socket
+      else
+        node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+        if node do
+          path =
+            GraphManager.path_to_node(socket.assigns.graph_id, node)
+            |> Enum.reverse()
+            |> Enum.map(fn n -> Map.put(n, :title, clean_title(n.content)) end)
+
+          assign(socket, selected_node_id: node.id, linear_path: path)
+        else
+          socket
+        end
+      end
+
+    {:noreply, push_event(socket, "scroll_to_highlight", %{id: highlight_id})}
+  end
+
   def handle_event("node_clicked", %{"id" => id}, socket) do
     node = GraphActions.find_node(socket.assigns.graph_id, id)
 
@@ -130,6 +168,34 @@ defmodule DialecticWeb.LinearGraphLive do
 
   def handle_event("update_exploration_progress", _params, socket) do
     {:noreply, socket}
+  end
+
+  def handle_info({:created, highlight}, socket) do
+    highlights = [highlight | socket.assigns.highlights]
+
+    {:noreply,
+     assign(socket, highlights: highlights)
+     |> push_event("refresh_highlights", %{data: highlight})}
+  end
+
+  def handle_info({:updated, highlight}, socket) do
+    highlights =
+      Enum.map(socket.assigns.highlights, fn h ->
+        if h.id == highlight.id, do: highlight, else: h
+      end)
+
+    {:noreply,
+     assign(socket, highlights: highlights)
+     |> push_event("refresh_highlights", %{data: highlight})}
+  end
+
+  def handle_info({:deleted, highlight}, socket) do
+    highlights =
+      Enum.reject(socket.assigns.highlights, fn h -> h.id == highlight.id end)
+
+    {:noreply,
+     assign(socket, highlights: highlights)
+     |> push_event("refresh_highlights", %{data: highlight})}
   end
 
   defp message_border_class(class) do
