@@ -120,14 +120,8 @@
               class={[
                 "w-full text-left group flex items-start py-1.5 px-2 rounded-md text-xs transition-colors duration-150 border border-transparent scroll-mt-10",
                 if(@selected_node_id == node.id,
-                  do:
-                    "bg-blue-100 text-blue-900 border-blue-200 font-medium shadow-sm ring-1 ring-blue-300",
-                  else: "hover:bg-white hover:border-gray-200 hover:shadow-sm text-gray-600"
-                ),
-                if(Enum.any?(@linear_path, &(&1.id == node.id)) and @selected_node_id != node.id,
-                  do:
-                    "bg-blue-50 text-blue-900 border-blue-100 ring-1 ring-blue-200/50 font-medium",
-                  else: ""
+                  do: "bg-gray-100 text-gray-900 font-semibold shadow-sm border-gray-200",
+                  else: "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                 )
               ]}
               style={"margin-left: #{node.indent * 12}px; width: calc(100% - #{node.indent * 12}px);"}
