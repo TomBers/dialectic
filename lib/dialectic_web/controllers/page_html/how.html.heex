@@ -136,27 +136,81 @@
         <p class="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-700 ring-1 ring-emerald-200">
           Teacher's Guide
         </p>
-        <h3 class="text-2xl font-semibold text-gray-900">Run a classroom debate</h3>
+        <h3 class="text-2xl font-semibold text-gray-900">
+          Create, lock, and share a classroom graph
+        </h3>
         <p class="text-gray-700">
-          Assign small groups to build competing graphs, then merge the best claims into a shared synthesis. Ask students to cite sources in each node before they present.
+          Use MuDG to build a structured “map” of a topic, then lock it so students explore the learning path you designed.
+          Share a URL so everyone can join the same graph.
         </p>
-        <ul class="list-disc space-y-2 pl-4 text-gray-700">
-          <li>Start with a clear prompt and a starter graph to model the structure.</li>
-          <li>Have scribes capture quotes, counter-arguments, and links in the node details.</li>
-          <li>Use exports to review reasoning or grade participation after class.</li>
-        </ul>
+        <ol class="list-decimal space-y-2 pl-5 text-gray-700">
+          <li>
+            <span class="font-semibold text-gray-900">Create a graph:</span>
+            start an exploration and build out the key nodes, claims, and sources for your topic.
+          </li>
+          <li>
+            <span class="font-semibold text-gray-900">Lock it in the Admin panel:</span>
+            use the lock feature to prevent unintended edits while students navigate and discuss.
+          </li>
+          <li>
+            <span class="font-semibold text-gray-900">Share the URL:</span>
+            send the link to students so they can follow the graph, ask questions, and add notes where allowed.
+          </li>
+        </ol>
+        <p class="text-gray-700">
+          You can also have groups build competing graphs and then merge the best claims into a shared synthesis.
+        </p>
       </div>
+
       <div class="rounded-xl bg-gradient-to-br from-emerald-50 to-white p-5 ring-1 ring-emerald-100">
         <p class="text-sm font-semibold text-emerald-800">Share the guide</p>
         <p class="mt-2 text-sm text-gray-700">
-          Link this page to students or fellow teachers so they can learn the basics and join your workspace quickly.
+          Copy this page URL and paste it into your lesson plan, LMS, or class chat.
         </p>
-        <a
-          href="/intro/how"
+        <button
+          type="button"
           class="mt-4 inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+          onclick="
+            (async () => {
+              const btn = this;
+              const original = btn.dataset.originalText || btn.textContent.trim();
+              btn.dataset.originalText = original;
+
+              const url = window.location.href;
+
+              try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                  await navigator.clipboard.writeText(url);
+                } else {
+                  const ta = document.createElement('textarea');
+                  ta.value = url;
+                  ta.setAttribute('readonly', 'true');
+                  ta.style.position = 'fixed';
+                  ta.style.top = '-9999px';
+                  ta.style.left = '-9999px';
+                  document.body.appendChild(ta);
+                  ta.select();
+                  document.execCommand('copy');
+                  document.body.removeChild(ta);
+                }
+
+                btn.textContent = 'Copied!';
+              } catch (_e) {
+                btn.textContent = 'Copy failed';
+              }
+
+              window.clearTimeout(btn._copyResetTimer);
+              btn._copyResetTimer = window.setTimeout(() => {
+                btn.textContent = original;
+              }, 1600);
+            })();
+          "
         >
           Copy lesson link
-        </a>
+        </button>
+        <p class="mt-2 text-xs text-emerald-900/70">
+          Clicking will copy the current page URL to your clipboard.
+        </p>
       </div>
     </div>
   </section>
