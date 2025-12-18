@@ -16,6 +16,8 @@ defmodule DialecticWeb.Utils.UserUtils do
   @doc """
   Checks if the current user is the owner of the given node.
   """
+  def owner?(nil, _assigns), do: false
+
   def owner?(node, assigns) do
     identity = current_identity(assigns)
 

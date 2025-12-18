@@ -143,7 +143,7 @@ defmodule DialecticWeb.LinearGraphLive do
     |> String.split("\n", parts: 2)
     |> List.first()
     # Remove markdown headers
-    |> String.replace(~R/^\s*#{1,6}\s*/, "")
+    |> String.replace(~r/^\s*\#{1,6}\s*/, "")
     # Remove bold
     |> String.replace(~r/\*\*/, "")
     |> String.trim()
