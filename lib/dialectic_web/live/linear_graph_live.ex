@@ -82,6 +82,7 @@ defmodule DialecticWeb.LinearGraphLive do
                 graph_id: graph_id,
                 show_minimap: true,
                 show_highlights: true,
+                show_highlights_list: false,
                 highlights: Highlights.list_highlights(mudg_id: graph_id),
                 selected_node_id: if(target_node, do: target_node.id, else: nil)
               )
@@ -113,6 +114,32 @@ defmodule DialecticWeb.LinearGraphLive do
 
   def handle_event("toggle_highlights", _, socket) do
     {:noreply, assign(socket, show_highlights: !socket.assigns.show_highlights)}
+  end
+
+  def handle_event("toggle_highlights_list", _, socket) do
+    {:noreply, assign(socket, show_highlights_list: !socket.assigns.show_highlights_list)}
+  end
+
+  def handle_event("jump_to_highlight", %{"id" => highlight_id, "node_id" => node_id}, socket) do
+    socket =
+      if Enum.any?(socket.assigns.linear_path, &(&1.id == node_id)) do
+        socket
+      else
+        node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+        if node do
+          path =
+            GraphManager.path_to_node(socket.assigns.graph_id, node)
+            |> Enum.reverse()
+            |> Enum.map(fn n -> Map.put(n, :title, clean_title(n.content)) end)
+
+          assign(socket, selected_node_id: node.id, linear_path: path)
+        else
+          socket
+        end
+      end
+
+    {:noreply, push_event(socket, "scroll_to_highlight", %{id: highlight_id})}
   end
 
   def handle_event("node_clicked", %{"id" => id}, socket) do

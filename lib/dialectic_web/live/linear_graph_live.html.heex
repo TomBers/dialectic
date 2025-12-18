@@ -27,13 +27,64 @@
           {if @show_minimap, do: "Hide Map", else: "Show Map"}
         </.button>
 
-        <.button
-          phx-click="toggle_highlights"
-          class={"text-xs px-2.5 py-1.5 border shadow-sm transition-colors " <> if(@show_highlights, do: "bg-amber-50 border-amber-200 text-amber-700", else: "bg-white border-gray-300 text-gray-700 hover:bg-gray-50")}
-        >
-          <.icon name="hero-pencil" class="h-4 w-4 mr-1.5 inline-block" />
-          {if @show_highlights, do: "Hide Highlights", else: "Show Highlights"}
-        </.button>
+        <div class="flex items-center rounded-md shadow-sm isolate">
+          <button
+            type="button"
+            phx-click="toggle_highlights"
+            class={"relative inline-flex items-center px-2.5 py-1.5 text-xs border border-gray-300 rounded-l-md focus:z-10 transition-colors " <> if(@show_highlights, do: "bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100", else: "bg-white text-gray-700 hover:bg-gray-50")}
+            title={if @show_highlights, do: "Hide Highlights", else: "Show Highlights"}
+          >
+            <.icon name="hero-pencil" class="h-4 w-4 mr-1.5" />
+            {if @show_highlights, do: "Highlights", else: "Highlights"}
+          </button>
+
+          <%= if @highlights != [] do %>
+            <div class="relative">
+              <button
+                type="button"
+                phx-click="toggle_highlights_list"
+                phx-click-away={if @show_highlights_list, do: "toggle_highlights_list", else: nil}
+                class={"relative -ml-px inline-flex items-center px-2 py-1.5 text-xs border border-gray-300 rounded-r-md focus:z-10 transition-colors " <> if(@show_highlights_list, do: "bg-amber-100 border-amber-300 text-amber-800", else: "bg-white text-gray-700 hover:bg-gray-50")}
+              >
+                <span class="sr-only">Open highlights menu</span>
+                <span class="font-medium mr-1">{length(@highlights)}</span>
+                <.icon name="hero-chevron-down" class="h-3 w-3" />
+              </button>
+
+              <%= if @show_highlights_list do %>
+                <div class="absolute right-0 z-50 mt-2 w-72 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none max-h-96 overflow-y-auto">
+                  <div class="py-1">
+                    <%= for highlight <- @highlights do %>
+                      <button
+                        phx-click="jump_to_highlight"
+                        phx-value-id={highlight.id}
+                        phx-value-node_id={highlight.node_id}
+                        class="group w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100 hover:text-gray-900 border-b border-gray-50 last:border-0"
+                      >
+                        <div class="flex items-start gap-2">
+                          <div class="mt-1.5 w-1.5 h-1.5 rounded-full bg-amber-400 flex-none group-hover:bg-amber-500">
+                          </div>
+                          <div class="flex-1 min-w-0">
+                            <p class="truncate font-medium text-gray-900">
+                              "{highlight.selected_text_snapshot}"
+                            </p>
+                            <p class="text-gray-500 text-[10px] mt-0.5 truncate">
+                              Node {highlight.node_id}
+                            </p>
+                          </div>
+                        </div>
+                      </button>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          <% else %>
+            <span class="relative -ml-px inline-flex items-center px-2 py-1.5 text-xs border border-gray-300 rounded-r-md bg-gray-50 text-gray-400 cursor-not-allowed">
+              0
+            </span>
+          <% end %>
+        </div>
 
         <.button
           phx-click="prepare_for_print"
