@@ -41,7 +41,7 @@ defmodule DialecticWeb.ActionToolbarComp do
           base =
             "Cannot delete: you are not the author"
 
-          if String.trim(to_string((node && node.user) || "")) == "" do
+          if String.trim(to_string((node && Map.get(node, :user)) || "")) == "" do
             base <> " [blank owner assumed current user]"
           else
             base
