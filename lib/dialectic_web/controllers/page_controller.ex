@@ -65,7 +65,27 @@ defmodule DialecticWeb.PageController do
   end
 
   def what(conn, _params) do
-    r = [
+    render(conn, :what, instructions: get_instructions(), layout: false)
+  end
+
+  def deploy_dashboard(conn, _params) do
+    keys = [
+      "ANTHROPIC_API_KEY",
+      "DEEPSEEK_API_KEY",
+      "GEMINI_API_KEY",
+      "OPENAI_API_KEY"
+    ]
+
+    seeds = Dialectic.DbActions.Init.seed()
+    render(conn, :deploy_dashboard, seeds: seeds, keys: Enum.map(keys, &check_key(&1)))
+  end
+
+  def guide(conn, _params) do
+    render(conn, :how, instructions: get_instructions())
+  end
+
+  defp get_instructions do
+    [
       %{
         graph: "reply",
         title: "Answer",
@@ -91,25 +111,7 @@ defmodule DialecticWeb.PageController do
         node: "4"
       }
     ]
-
-    graphs = r |> Enum.map(fn g -> %{g | graph: encode_graph(g.graph)} end)
-    render(conn, :what, instructions: graphs, layout: false)
-  end
-
-  def deploy_dashboard(conn, _params) do
-    keys = [
-      "ANTHROPIC_API_KEY",
-      "DEEPSEEK_API_KEY",
-      "GEMINI_API_KEY",
-      "OPENAI_API_KEY"
-    ]
-
-    seeds = Dialectic.DbActions.Init.seed()
-    render(conn, :deploy_dashboard, seeds: seeds, keys: Enum.map(keys, &check_key(&1)))
-  end
-
-  def guide(conn, _params) do
-    render(conn, :how)
+    |> Enum.map(fn g -> %{g | graph: encode_graph(g.graph)} end)
   end
 
   defp check_key(key) do

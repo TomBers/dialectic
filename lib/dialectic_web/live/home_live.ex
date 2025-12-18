@@ -97,61 +97,74 @@ defmodule DialecticWeb.HomeLive do
         </div>
         <div class="relative z-10">
           <div class="mx-auto max-w-7xl px-6 md:grid md:grid-cols-2 md:items-center md:gap-12">
-            <div class="text-center md:text-left">
-              <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-white">
-                Explore ideas collaboratively
-              </h1>
-              <p class="mt-4 text-lg md:text-xl text-blue-100/90">
-                Explore, connect, and learn together.
-              </p>
-              <div class="mt-6 flex flex-wrap justify-center md:justify-start gap-3">
-                <.link
-                  navigate={~p"/intro/how"}
-                  class="inline-flex items-center rounded-full bg-white text-[#3a0ca3] px-5 py-2.5 font-semibold ring-1 ring-white/20 hover:bg-white/15 transition"
-                >
-                  Guide
-                </.link>
-                <.link
-                  href="https://tombers.github.io/dialectic/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="inline-flex items-center rounded-full bg-transparent text-white px-5 py-2.5 font-semibold ring-1 ring-white/30 hover:bg-white/10 transition"
-                >
-                  Learn more
-                </.link>
-              </div>
-            </div>
-            <div class="mt-10 md:mt-0 flex justify-center md:justify-end">
-              <img
-                src="/images/Landing2.webp"
-                alt="Dialectic interface screenshot"
-                class="w-full max-w-[560px] ring-1 ring-black/5"
-                loading="lazy"
-              />
-            </div>
+            <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-white text-center md:text-left">
+              AI tool to explore and develop ideas and concepts around pretty much anything.
+            </h1>
+            <h2 class="mt-6 md:mt-0 text-4xl md:text-5xl font-bold tracking-tight text-blue-100/90 text-center md:text-left">
+              Analyse or synthesise your ideas alone or in collaboration.
+            </h2>
           </div>
         </div>
       </header>
       
+    <!-- Why section -->
+      <section class="mx-auto max-w-7xl px-6">
+        <div class="mt-12 text-center">
+          <h2 class="text-3xl font-bold text-gray-900">Why MuDG?</h2>
+
+          <ul class="mt-6 space-y-4 text-left max-w-3xl mx-auto text-lg text-gray-600 list-disc list-inside">
+            <li>
+              <span class="font-semibold text-gray-900">See the structure of your thinking</span> –
+              Turn messy, linear chat into a visual map of how ideas branch, connect, and evolve, so you can dive deep without losing the bigger picture.
+            </li>
+            <li>
+              <span class="font-semibold text-gray-900">Explore together in real time</span> –
+              Invite others into the same MuDG to add questions, examples, and perspectives as you go, turning solitary learning into a shared exploration.
+            </li>
+            <li>
+              <span class="font-semibold text-gray-900">Build on a living knowledge base</span> –
+              Reuse existing graphs, follow others’ explorations, and connect your own ideas to what the community is already mapping.
+            </li>
+          </ul>
+        </div>
+      </section>
+      
     <!-- Create conversation -->
       <section id="create-conv" class="mx-auto max-w-7xl px-6">
-        <div class="mt-10 rounded-xl bg-white ring-1 ring-gray-200 shadow-sm">
-          <div class="p-6 sm:p-8">
-            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 class="text-2xl font-semibold text-gray-900">Start a new exploration</h2>
-                <p class="mt-1 text-gray-600">
-                  Create a MuDG to map your ideas clearly with context that stays visible.
-                </p>
-                <div class="mt-2">
-                  <.link
-                    navigate={~p"/inspiration"}
-                    class="text-sm font-medium text-[#4361ee] hover:underline"
-                  >
-                    Need inspiration?
-                  </.link>
-                </div>
+        <div class="mt-10 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="rounded-xl bg-white ring-1 ring-gray-200 shadow-sm p-6 sm:p-8 flex flex-col justify-between">
+            <div>
+              <h2 class="text-2xl font-semibold text-gray-900">User Guide</h2>
+              <p class="mt-1 text-gray-600">
+                Learn how to navigate complex topics, discover connections, and use MuDG effectively.
+              </p>
+            </div>
+            <div class="mt-6">
+              <.link
+                href={~p"/intro/how"}
+                class="inline-flex items-center gap-2 rounded-lg bg-white border border-gray-300 px-5 py-3 font-semibold text-gray-700 shadow-sm hover:bg-gray-50 transition"
+              >
+                <.icon name="hero-book-open" class="h-5 w-5 text-gray-500" /> Read the Guide
+              </.link>
+            </div>
+          </div>
+
+          <div class="rounded-xl bg-white ring-1 ring-gray-200 shadow-sm p-6 sm:p-8 flex flex-col justify-between">
+            <div>
+              <h2 class="text-2xl font-semibold text-gray-900">Start a new exploration</h2>
+              <p class="mt-1 text-gray-600">
+                Create a MuDG to map your ideas clearly with context that stays visible.
+              </p>
+              <div class="mt-2">
+                <.link
+                  navigate={~p"/inspiration"}
+                  class="text-sm font-medium text-[#4361ee] hover:underline"
+                >
+                  Need inspiration?
+                </.link>
               </div>
+            </div>
+            <div class="mt-6">
               <.link
                 navigate={~p"/start/new/idea"}
                 class="inline-flex items-center gap-2 rounded-lg bg-[#4361ee] px-5 py-3 font-semibold text-white shadow-sm hover:bg-[#3a56d9] transition"
@@ -178,77 +191,6 @@ defmodule DialecticWeb.HomeLive do
         </div>
       </section>
       
-    <!-- Why section -->
-      <section class="mx-auto max-w-7xl px-6">
-        <div class="mt-12 text-center">
-          <h2 class="text-3xl font-bold text-gray-900">Why MuDG?</h2>
-
-          <ul class="mt-6 space-y-4 text-left max-w-3xl mx-auto text-lg text-gray-600 list-disc list-inside">
-            <li>
-              <span class="font-semibold text-gray-900">See the structure of your thinking</span> –
-              Turn messy, linear chat into a visual map of how ideas branch, connect, and evolve, so you can dive deep without losing the bigger picture.
-            </li>
-            <li>
-              <span class="font-semibold text-gray-900">Explore together in real time</span> –
-              Invite others into the same MuDG to add questions, examples, and perspectives as you go, turning solitary learning into a shared exploration.
-            </li>
-            <li>
-              <span class="font-semibold text-gray-900">Build on a living knowledge base</span> –
-              Reuse existing graphs, follow others’ explorations, and connect your own ideas to what the community is already mapping.
-            </li>
-          </ul>
-        </div>
-
-        <div class="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2">
-          <!-- MuDG card -->
-          <div class="group relative overflow-hidden rounded-2xl bg-white ring-1 ring-gray-200 shadow-sm transition hover:shadow-md">
-            <img
-              src="/images/home_graph.webp"
-              alt="MuDG graph example"
-              class="absolute inset-0 h-full w-full object-cover"
-              style="background:white;"
-            />
-            <div class="relative h-[300px] md:h-[380px]"></div>
-            <div class="relative border-t border-gray-100 bg-white p-5">
-              <div class="flex items-center justify-between">
-                <div>
-                  <h3 class="text-xl font-semibold text-gray-900">MuDG</h3>
-                  <p class="mt-1 text-gray-600">
-                    Clear paths and visible context. Build knowledge with deliberate structure.
-                  </p>
-                </div>
-                <span class="inline-flex items-center rounded-full bg-[#eef2ff] text-[#3a0ca3] px-3 py-1 text-sm font-medium">
-                  Structured
-                </span>
-              </div>
-            </div>
-          </div>
-          
-    <!-- ChatGPT card -->
-          <div class="group relative overflow-hidden rounded-2xl bg-white ring-1 ring-gray-200 shadow-sm transition hover:shadow-md">
-            <img
-              src="/images/chatgpt.webp"
-              alt="Chat conversation example"
-              class="absolute inset-0 h-full w-full object-contain bg-white"
-            />
-            <div class="relative h-[300px] md:h-[380px]"></div>
-            <div class="relative border-t border-gray-100 bg-white p-5">
-              <div class="flex items-center justify-between">
-                <div>
-                  <h3 class="text-xl font-semibold text-gray-900">ChatGPT</h3>
-                  <p class="mt-1 text-gray-600">
-                    Linear threads require constant looping back to context, slowing deep dives.
-                  </p>
-                </div>
-                <span class="inline-flex items-center rounded-full bg-gray-100 text-gray-700 px-3 py-1 text-sm font-medium">
-                  Linear
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-      
     <!-- Explore Ideas (Masonry Grid) -->
       <section class="mx-auto max-w-7xl px-6" id="explore">
         <div class="mt-16">
@@ -264,7 +206,7 @@ defmodule DialecticWeb.HomeLive do
                 <% @search_term != "" -> %>
                   Search results for "{@search_term}"
                 <% true -> %>
-                  Explore Ideas
+                  Here are some Ideas to Inspire you
               <% end %>
             </h2>
             <div class="w-1/3">

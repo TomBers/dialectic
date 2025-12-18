@@ -16,9 +16,251 @@
       </div>
     </div>
   </header>
+
+  <div class="max-w-4xl mx-auto mt-12 px-6">
+    <div class="prose prose-stone prose-lg max-w-none mb-12">
+      <h2>What is MuDG?</h2>
+      <p>
+        Dialectics is a method of reasoning that seeks to understand things in their movement and change. It is a way of thinking that is based on the idea that everything is interconnected and that change is constant. Dialectics is a powerful tool for understanding complex systems and for making sense of the world around us.
+      </p>
+      <p>
+        As such MuDG (Multi-user Dialectic Graph) is a tool for thought. A multiplayer chat interface to allow the full reasoning behind an argument to be followed. Many people can think together to build out a massive knowledge graph, interacting with LLMs to integrate the knowledge into the whole.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
+      <%= for {instruction, index} <- @instructions |> Enum.with_index() do %>
+        <div class="bg-white rounded-lg shadow p-4 flex flex-col">
+          <div class="h-48 w-full mb-4 bg-gray-50 rounded border border-gray-100 relative">
+            <div
+              id={"graph-" <> Integer.to_string(index)}
+              class="w-full h-full info-graph absolute inset-0"
+              data-graph={instruction.graph}
+              data-node={instruction.node}
+              data-cols={Jason.encode!(Dialectic.Consts.Colours.graph_cols())}
+              data-updateview="false"
+              data-div={"graph-" <> Integer.to_string(index)}
+              phx-hook="Graph"
+              phx-update="ignore"
+            >
+            </div>
+          </div>
+          <div>
+            <h3 class="text-xl font-bold mb-2 text-gray-900">{instruction.title}</h3>
+            <p class="text-gray-600">{instruction.description}</p>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+  
+<!-- Why Dialectic? (Features) -->
+  <div class="py-16 bg-white border-t border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-gray-900">Why Dialectic?</h2>
+        <p class="mt-4 text-lg text-gray-600">
+          Discover how our platform transforms the way you explore and understand complex ideas
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <!-- Feature 1 -->
+        <div class="p-6 bg-gray-50 rounded-xl">
+          <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center mb-4">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              class="w-6 h-6"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M13 10V3L4 14h7v7l9-11h-7z"
+              />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold mb-2 text-gray-900">Visualized Knowledge</h3>
+          <p class="text-gray-600">
+            Transform complex ideas into visual knowledge graphs that make connections explicit and easy to navigate.
+          </p>
+        </div>
+        
+<!-- Feature 2 -->
+        <div class="p-6 bg-gray-50 rounded-xl">
+          <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center mb-4">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              class="w-6 h-6"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+              />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold mb-2 text-gray-900">Collaborative Learning</h3>
+          <p class="text-gray-600">
+            Invite others to join your exploration in real-time, sharing different perspectives and building knowledge together.
+          </p>
+        </div>
+        
+<!-- Feature 3 -->
+        <div class="p-6 bg-gray-50 rounded-xl">
+          <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center mb-4">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              class="w-6 h-6"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+              />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold mb-2 text-gray-900">AI-Powered Insights</h3>
+          <p class="text-gray-600">
+            Leverage the analytical power of language models to explore ideas in depth while maintaining human guidance.
+          </p>
+        </div>
+        
+<!-- Feature 4 -->
+        <div class="p-6 bg-gray-50 rounded-xl">
+          <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center mb-4">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              class="w-6 h-6"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold mb-2 text-gray-900">Persistent Knowledge</h3>
+          <p class="text-gray-600">
+            Your knowledge graphs persist and grow over time. Export to PDF, JSON, or Markdown - the data is yours!
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+<!-- Showcase Section -->
+  <div class="py-16 bg-gray-50 border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl font-bold text-gray-900">See It In Action</h2>
+        <p class="mt-4 text-lg text-gray-600">
+          Explore how Dialectic transforms knowledge representation and collaborative learning
+        </p>
+      </div>
+
+      <div class="space-y-24">
+        <!-- Showcase 1 -->
+        <div class="flex flex-col lg:flex-row items-center gap-12">
+          <div class="flex-1">
+            <h3 class="text-2xl font-bold mb-4 text-gray-900">Interactive Knowledge Graphs</h3>
+            <p class="text-lg text-gray-600 mb-4">
+              Transform complex ideas into intuitive visual networks. Unlike linear conversations, knowledge graphs let you explore multiple paths simultaneously and see relationships at a glance.
+            </p>
+            <p class="text-lg text-gray-600 mb-6">
+              Each node can be expanded to reveal more details or branch into new directions, creating a rich web of connected knowledge.
+            </p>
+          </div>
+          <div class="flex-1 w-full">
+            <div class="aspect-video bg-gray-900 rounded-xl overflow-hidden shadow-xl relative group">
+              <div class="absolute inset-0 flex items-center justify-center">
+                <img
+                  src="/images/graph.webp"
+                  alt="Interactive Graph"
+                  class="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+        
+<!-- Showcase 2 -->
+        <div class="flex flex-col lg:flex-row-reverse items-center gap-12">
+          <div class="flex-1">
+            <h3 class="text-2xl font-bold mb-4 text-gray-900">Beyond Traditional Chat</h3>
+            <p class="text-lg text-gray-600 mb-4">
+              Traditional AI chat interfaces present knowledge as linear walls of text. Dialectic's graph-based approach structures information spatially.
+            </p>
+            <p class="text-lg text-gray-600">
+              This allows for non-linear exploration while maintaining context, making it easier to revisit specific points and see the big picture.
+            </p>
+          </div>
+          <div class="flex-1 w-full">
+            <div class="aspect-video bg-gray-100 rounded-xl overflow-hidden shadow-xl">
+              <img
+                src="/images/chat.webp"
+                alt="Chat Interface"
+                class="w-full h-full object-cover"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+<!-- Why We Built It -->
+  <div class="py-16 bg-white border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl font-bold text-gray-900">Why We Built It</h2>
+        <p class="mt-4 text-lg text-gray-600">
+          Our motivation for developing a new approach to collaborative learning
+        </p>
+      </div>
+
+      <div class="space-y-16">
+        <div class="flex flex-col md:flex-row items-center gap-8">
+          <div class="flex-1">
+            <div class="bg-blue-50 rounded-xl p-8 h-full">
+              <h3 class="text-2xl font-bold mb-4 text-gray-900">The Information Age Paradox</h3>
+              <p class="text-gray-700 leading-relaxed">
+                We live in an era of unprecedented information access, yet meaningful discourse is rare. We built Dialectic because we believe deep understanding comes from exploring assumptions and seeing how different starting points lead to different conclusions.
+              </p>
+            </div>
+          </div>
+          <div class="flex-1">
+            <div class="bg-indigo-50 rounded-xl p-8 h-full">
+              <h3 class="text-2xl font-bold mb-4 text-gray-900">
+                AI Revolution & Active Learning
+              </h3>
+              <p class="text-gray-700 leading-relaxed">
+                Dialectic transforms AI interaction into an active, exploratory process. Instead of passively consuming answers, learners branch out in multiple directions, creating a personalized knowledge map that evolves with their curiosity.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
   
 <!-- Researchers & Students Guide -->
-  <div class="mb-12 max-w-4xl mx-auto">
+  <div class="mb-12 max-w-4xl mx-auto px-6 mt-16">
     <h2 class="text-3xl font-bold mb-6 mt-6 text-[#2d3748]">
       Guide for Researchers and Students
     </h2>
