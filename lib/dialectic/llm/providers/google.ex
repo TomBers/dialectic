@@ -20,7 +20,7 @@ defmodule Dialectic.LLM.Providers.Google do
 
   @impl true
   def model do
-    "gemini-2.0-flash-lite"
+    "gemini-3-flash-preview"
   end
 
   @impl true
