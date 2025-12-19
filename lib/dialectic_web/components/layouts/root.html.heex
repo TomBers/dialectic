@@ -24,26 +24,32 @@
     </script>
   </head>
   <body class="bg-white">
-    <header class="sticky top-0 bg-white shadow-sm z-10" id="userHeader">
+    <header
+      class="sticky top-0 bg-gradient-to-r from-[#3a0ca3] to-[#4361ee] shadow-sm z-[9999]"
+      id="userHeader"
+    >
       <nav class="flex items-center justify-between px-2">
         <div class="flex items-center gap-2">
-          <.link href={~p"/"} class="underline text-blue-600 hover:text-blue-800">
+          <.link href={~p"/"} class="underline text-white/90 hover:text-white">
             <span>Home</span>
           </.link>
         </div>
         <div class="flex items-center gap-2 sm:gap-4">
+          <.link href={~p"/intro/how"} class="underline text-white/90 hover:text-white">
+            Guide
+          </.link>
           <%= if @current_user do %>
-            <.link href={~p"/my/ideas"} class="underline text-blue-600 hover:text-blue-800">
+            <.link href={~p"/my/ideas"} class="underline text-white/90 hover:text-white">
               Ideas | Notes
             </.link>
-            <.link href={~p"/users/settings"} class="underline text-blue-600 hover:text-blue-800">
+            <.link href={~p"/users/settings"} class="underline text-white/90 hover:text-white">
               {@current_user.email}
             </.link>
           <% else %>
-            <.link href={~p"/users/register"} class="underline text-blue-600 hover:text-blue-800">
+            <.link href={~p"/users/register"} class="underline text-white/90 hover:text-white">
               Register
             </.link>
-            <.link href={~p"/users/log_in"} class="underline text-blue-600 hover:text-blue-800">
+            <.link href={~p"/users/log_in"} class="underline text-white/90 hover:text-white">
               Log in
             </.link>
           <% end %>

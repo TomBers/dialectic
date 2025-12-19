@@ -198,7 +198,7 @@ defmodule DialecticWeb.InspirationLive do
 
           <div class="relative flex-1 overflow-y-auto p-6 md:p-12">
             <h3 class="text-2xl font-medium text-gray-900 mb-8 flex items-center gap-3">
-              <.icon name="hero-sparkles" class="w-8 h-8 text-blue-500" /> Suggested Questions
+              <.icon name="hero-sparkles" class="w-8 h-8 text-blue-500" /> Your Generated Questions
             </h3>
 
             <div :if={@loading} class="flex flex-col items-center justify-center h-64 text-gray-500">

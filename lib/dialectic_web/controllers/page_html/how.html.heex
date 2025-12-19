@@ -1,275 +1,344 @@
-<div class="min-h-screen bg-[#f8f9fa]">
-  <!-- Header -->
-  <header class="relative overflow-hidden bg-gradient-to-r from-[#4361ee] to-[#3a0ca3] py-8 px-6">
-    <!-- Hero Pattern Background -->
-    <div class="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.05\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]">
-    </div>
-    <div class="container mx-auto relative z-10">
-      <div class="text-center max-w-4xl mx-auto">
-        <h1 class="text-3xl md:text-4xl font-bold text-white mb-2 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
+<div class="bg-white text-gray-900">
+  <section class="relative isolate overflow-hidden bg-gradient-to-br from-sky-50 via-white to-indigo-50">
+    <div class="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-16 sm:py-20">
+      <p class="inline-flex w-fit items-center gap-2 rounded-full bg-white/70 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-sky-700 ring-1 ring-sky-200">
+        Guide
+      </p>
+      <div class="max-w-3xl space-y-4">
+        <h1 class="text-4xl font-bold leading-tight text-gray-900 sm:text-5xl">
           How to Use MuDG
         </h1>
-        <p class="text-lg text-blue-100 mb-4 opacity-90">
-          A powerful knowledge exploration tool that helps you navigate through complex topics,
-          discover connections between ideas, and deepen your understanding through interactive conversation.
+        <p class="text-lg text-gray-700">
+          Explore arguments with friends or students, build diagrams together, and keep every thread of the conversation linked to evidence.
         </p>
       </div>
     </div>
-  </header>
-  
-<!-- Researchers & Students Guide -->
-  <div class="mb-12 max-w-4xl mx-auto">
-    <h2 class="text-3xl font-bold mb-6 mt-6 text-[#2d3748]">
-      Guide for Researchers and Students
-    </h2>
+  </section>
 
-    <div class="grid grid-cols-1 lg:grid-cols-1 gap-6">
-      <!-- Left Column -->
-      <div class="space-y-6">
-        <!-- Step 1 -->
-        <div class="bg-white rounded-lg shadow p-6">
-          <h3 class="text-2xl font-semibold mb-4 text-[#2d3748]">
-            Step 1: Define Your Learning Objective
-          </h3>
-          <p class="mb-4">
-            Begin by identifying what you want to learn about. MuDG works best when you start with:
-          </p>
-          <ul class="space-y-2 mb-4">
-            <li class="flex items-start">
-              <span class="font-semibold min-w-[100px]">Topics:</span>
-              <span>Historical periods, scientific concepts, philosophical movements</span>
-            </li>
-            <li class="flex items-start">
-              <span class="font-semibold min-w-[100px]">Books:</span>
-              <span>Literature, textbooks, research papers</span>
-            </li>
-            <li class="flex items-start">
-              <span class="font-semibold min-w-[100px]">Ideas:</span>
-              <span>Theories, methodologies, frameworks</span>
-            </li>
-            <li class="flex items-start">
-              <span class="font-semibold min-w-[100px]">Questions:</span>
-              <span>Research questions or concepts you're trying to understand</span>
-            </li>
-          </ul>
+  <section class="mx-auto max-w-6xl px-4 py-10 sm:py-14 space-y-12">
+    <div class="grid gap-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:grid-cols-2 sm:p-8">
+      <div class="space-y-3">
+        <div class="inline-flex items-center rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-sky-700 ring-1 ring-sky-200">
+          Step 1
         </div>
-        
-<!-- Step 2 -->
-        <div class="bg-white rounded-lg shadow p-6">
-          <h3 class="text-2xl font-semibold mb-4">Step 2: Start the Conversation</h3>
-          <p class="mb-4">
-            Visit
-            <a href="https://mudg.fly.dev/start/new/idea" class="text-blue-600 hover:underline">
-              mudg.fly.dev/start/new/idea
-            </a>
-            and enter your initial query in the search box.
-          </p>
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 mb-4">
-              <div class="aspect-video bg-gray-100">
-                <img src="/images/empty_chat.webp" alt="Empty Knowledge Graph Visualization" />
-              </div>
+        <h2 class="text-2xl font-semibold text-gray-900">Start a conversation</h2>
+        <p class="text-gray-700">
+          Pick a topic, invite collaborators, and ask MuDG to map the ideas. Every reply becomes part of the shared diagram so you can reference it later.
+          <br /><br />
+          If you’re not sure where to start, try the <a
+            href="/inspiration"
+            class="font-medium text-sky-700 underline hover:text-sky-800"
+          >
+            Inspire me
+          </a>page for ideas.
+        </p>
+      </div>
+      <div class="rounded-xl bg-gradient-to-r from-indigo-50 to-sky-50 p-6 ring-1 ring-indigo-100">
+        <p class="text-base font-medium text-gray-800">Quick tips</p>
+        <ul class="mt-3 list-disc space-y-2 pl-4 text-gray-700">
+          <li>Use follow-up questions to expand the diagram with evidence and counter-points.</li>
+          <li>Use actions to quickly create chains of thought</li>
+          <li>Save snapshots when you reach agreement to revisit the reasoning later.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div
+      class="group grid gap-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8"
+      phx-hook="InterfaceHighlight"
+      data-interface-highlight-initial=""
+      id="interface-highlight"
+    >
+      <div class="space-y-4">
+        <div class="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-indigo-700 ring-1 ring-indigo-200">
+          Step 2
+        </div>
+        <h3 class="text-2xl font-semibold text-gray-900">Get comfortable with the interface</h3>
+        <p class="text-gray-700">
+          Hover the labels to see which part of the workspace they control.
+        </p>
+      </div>
+
+      <div class="relative">
+        <div class="overflow-hidden rounded-xl border border-gray-200 bg-gray-900/5 shadow-md">
+          <img
+            src="/images/graph_live.webp"
+            alt="MuDG interface showing responses, graph visualisation, action tools, and admin panel"
+            class="block w-full h-auto"
+          />
+          <div class="pointer-events-none absolute inset-0">
+            <div
+              class="absolute rounded-lg ring-4 ring-yellow-300 bg-yellow-300/10 shadow-[0_0_0_6px_rgba(253,224,71,0.45)] transition-opacity duration-200 opacity-0 group-data-[interface-highlight-active=responses]:opacity-100"
+              aria-hidden="true"
+              style="left: 0.8%; top: 0.8%; width: 37.586%; height: 98.4%;"
+            >
             </div>
-            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 mb-4">
-              <div class="aspect-video bg-gray-100">
-                <img src="/images/chat.webp" alt="Empty Knowledge Graph Visualization" />
-              </div>
+            <div
+              class="absolute rounded-lg ring-4 ring-yellow-300 bg-yellow-300/10 shadow-[0_0_0_6px_rgba(253,224,71,0.45)] transition-opacity duration-200 opacity-0 group-data-[interface-highlight-active=graph]:opacity-100"
+              aria-hidden="true"
+              style="left: 39.986%; top: 0.8%; width: 29.225%; height: 76.854%;"
+            >
+            </div>
+            <div
+              class="absolute rounded-lg ring-4 ring-yellow-300 bg-yellow-300/10 shadow-[0_0_0_6px_rgba(253,224,71,0.45)] transition-opacity duration-200 opacity-0 group-data-[interface-highlight-active=tools]:opacity-100"
+              aria-hidden="true"
+              style="left: 43.172%; top: 85.461%; width: 33.666%; height: 13.622%;"
+            >
+            </div>
+            <div
+              class="absolute rounded-lg ring-4 ring-yellow-300 bg-yellow-300/10 shadow-[0_0_0_6px_rgba(253,224,71,0.45)] transition-opacity duration-200 opacity-0 group-data-[interface-highlight-active=admin]:opacity-100"
+              aria-hidden="true"
+              style="left: 80.8%; top: 0.8%; width: 18.254%; height: 98.166%;"
+            >
             </div>
           </div>
         </div>
       </div>
-      
-<!-- Right Column -->
-      <div class="space-y-6">
-        <!-- Step 3 -->
-        <div class="bg-white rounded-lg shadow p-6">
-          <h3 class="text-2xl font-semibold mb-4">Step 3: Navigate the Knowledge Graph</h3>
-          <p class="mb-4">The interface is divided into several key areas:</p>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
-              <h4 class="font-semibold mb-2">Graph Visualization</h4>
-              <div class="aspect-video bg-gray-100 mb-2">
-                <img src="/images/graph.webp" alt="Empty Knowledge Graph Visualization" />
-              </div>
-              <p class="text-sm text-gray-600">
-                The interactive graph shows connections between ideas. Nodes represent concepts, and edges show relationships.
-              </p>
-            </div>
-
-            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
-              <h4 class="font-semibold mb-2">Conversation Panel</h4>
-              <div class="aspect-video bg-gray-100 mb-2">
-                <img src="/images/ask-question.webp" alt="Empty Knowledge Graph Visualization" />
-              </div>
-              <p class="text-sm text-gray-600">
-                Where you interact with MuDG, ask questions, and see responses.
-              </p>
-            </div>
-
-            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
-              <h4 class="font-semibold mb-2">Action Tools</h4>
-              <div class="aspect-video bg-gray-100 mb-2">
-                <img src="/images/graph_controls.webp" alt="Empty Knowledge Graph Visualization" />
-              </div>
-              <p class="text-sm text-gray-600">
-                Tools for combining nodes, exploring relationships, and managing your graph.
-              </p>
-            </div>
-
-            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
-              <h4 class="font-semibold mb-2">Responses</h4>
-              <div class="aspect-video bg-gray-100 mb-2">
-                <img src="/images/answer.webp" alt="Empty Knowledge Graph Visualization" />
-              </div>
-              <p class="text-sm text-gray-600">
-                Zoom, pan, and focus controls for exploring your knowledge graph.
-              </p>
-            </div>
-          </div>
-
-          <h4 class="font-semibold mb-2">Interaction Options:</h4>
-          <ul class="space-y-2 mb-4">
-            <li class="flex items-start gap-2">
-              <span class="font-semibold min-w-[160px]">Follow-up Questions:</span>
-              <span>Dig deeper into specific aspects of the topic</span>
-            </li>
-            <li class="flex items-start gap-2">
-              <span class="font-semibold min-w-[160px]">Define Terms:</span>
-              <span>Request clear explanations of unfamiliar concepts</span>
-            </li>
-            <li class="flex items-start gap-2">
-              <span class="font-semibold min-w-[160px]">Pros / Cons:</span>
-              <span>Understand different perspectives on debates</span>
-            </li>
-            <li class="flex items-start gap-2">
-              <span class="font-semibold min-w-[160px]">Combine Nodes:</span>
-              <span>Select two concepts and ask MuDG to synthesize them</span>
-            </li>
-            <li class="flex items-start gap-2">
-              <span class="font-semibold min-w-[160px]">Related Ideas:</span>
-              <span>Discover adjacent concepts that enhance understanding</span>
-            </li>
-          </ul>
+      <div class="grid gap-3 sm:grid-cols-2">
+        <div
+          class="rounded-lg border border-gray-200 bg-gray-50/60 p-3 transition-colors hover:border-indigo-200 hover:bg-indigo-50/50"
+          data-interface-highlight-trigger="responses"
+        >
+          <p class="text-sm font-semibold text-indigo-700">Responses</p>
+          <p class="text-sm text-gray-700">
+            The text content.
+          </p>
         </div>
-        
-<!-- Step 4 -->
-        <div class="bg-white rounded-lg shadow p-6">
-          <h3 class="text-2xl font-semibold mb-4">Step 4: Save and Share Your Research</h3>
-          <ul class="space-y-2">
-            <li class="flex items-start gap-2">
-              <span class="font-semibold min-w-[160px]">Download:</span>
-              <span>Export your research as PDF or Markdown</span>
-            </li>
-            <li class="flex items-start gap-2">
-              <span class="font-semibold min-w-[160px]">Share:</span>
-              <span>Send your graph to colleagues to build upon your work</span>
-            </li>
-            <li class="flex items-start gap-2">
-              <span class="font-semibold min-w-[160px]">Extend:</span>
-              <span>Continue your research session later or allow others to contribute</span>
-            </li>
-          </ul>
+
+        <div
+          class="rounded-lg border border-gray-200 bg-gray-50/60 p-3 transition-colors hover:border-sky-200 hover:bg-sky-50/60"
+          data-interface-highlight-trigger="graph"
+        >
+          <p class="text-sm font-semibold text-sky-700">Visualisation</p>
+          <p class="text-sm text-gray-700">
+            An interactive diagram of ideas and their relationships.
+          </p>
+        </div>
+
+        <div
+          class="rounded-lg border border-gray-200 bg-gray-50/60 p-3 transition-colors hover:border-amber-200 hover:bg-amber-50/60"
+          data-interface-highlight-trigger="tools"
+        >
+          <p class="text-sm font-semibold text-amber-700">Action tools</p>
+          <p class="text-sm text-gray-700">
+            Controls for common actions: Pros / Cons, exploring related ideas, combining concepts, Translate and Deep Dive.
+          </p>
+        </div>
+
+        <div
+          class="rounded-lg border border-gray-200 bg-gray-50/60 p-3 transition-colors hover:border-emerald-200 hover:bg-emerald-50/60"
+          data-interface-highlight-trigger="admin"
+        >
+          <p class="text-sm font-semibold text-emerald-700">Admin panel</p>
+          <p class="text-sm text-gray-700">
+            Search, set LLM personality, control who has access, create groups, see notes others have written, share the diagram, and download the content.
+          </p>
         </div>
       </div>
     </div>
-  </div>
-  
-<!-- Teachers Guide -->
-  <div class="mb-12 max-w-4xl mx-auto">
-    <h2 class="text-3xl font-bold mb-6 text-[#2d3748]">Guide for Teachers</h2>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 container mx-auto">
-      <!-- Introduction -->
-      <div class="lg:col-span-3 bg-white rounded-lg shadow p-6">
-        <h3 class="text-2xl font-semibold mb-4">Creating Learning Experiences with MuDG</h3>
-        <p>
-          MuDG offers unique opportunities for creating guided learning experiences for your students.
-          Here's how to use it effectively in your teaching:
+    <div class="flex justify-center">
+      <a
+        href="/start/new/idea"
+        class={[
+          "group inline-flex items-center justify-center gap-2 rounded-lg px-6 py-3 text-md font-semibold text-white shadow-sm",
+          "bg-gradient-to-r from-[#3a0ca3] to-[#4361ee] ring-1 ring-white/15 transition",
+          "hover:shadow-md hover:-translate-y-0.5 hover:ring-white/25",
+          "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4361ee]"
+        ]}
+      >
+        <span>Get started</span>
+        <.icon
+          name="hero-arrow-right"
+          class="h-4 w-4 transition-transform group-hover:translate-x-0.5"
+        />
+      </a>
+    </div>
+
+    <div class="grid gap-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+      <div class="space-y-3">
+        <div class="inline-flex items-center rounded-full bg-violet-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-violet-700 ring-1 ring-violet-200">
+          Step 3
+        </div>
+        <h3 class="text-2xl font-semibold text-gray-900">Share and download your work</h3>
+        <p class="text-gray-700">
+          MuDG makes it easy to share what you’ve built and take it offline.
         </p>
+        <ul class="mt-4 list-disc space-y-2 pl-5 text-gray-700">
+          <li>
+            <span class="font-semibold text-gray-900">Unique URLs:</span>
+            every graph and every node has its own unique URL, so you can share a specific overview or a single point with anyone.
+          </li>
+          <li>
+            <span class="font-semibold text-gray-900">Private graphs:</span>
+            graphs can be made private so only people with the access code can view them.
+          </li>
+          <li>
+            <span class="font-semibold text-gray-900">Download anything:</span>
+            export your work as PDF, PNG, or Markdown for printing, sharing, or editing offline.
+          </li>
+        </ul>
       </div>
-      
-<!-- Step 1 -->
-      <div class="bg-white rounded-lg shadow p-6">
-        <h3 class="text-2xl font-semibold mb-4">Step 1: Create a Learning Path</h3>
-        <ol class="space-y-2">
-          <li class="flex items-start gap-2">
-            <span class="font-semibold min-w-[24px]">1.</span>
-            <span>Enter your topic or learning objective</span>
+    </div>
+
+    <div class="grid gap-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:grid-cols-3 sm:p-8">
+      <div class="sm:col-span-2 space-y-3">
+        <p class="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-700 ring-1 ring-emerald-200">
+          Teacher's Guide
+        </p>
+        <h3 class="text-2xl font-semibold text-gray-900">
+          Create, lock, and share a classroom diagram
+        </h3>
+        <p class="text-gray-700">
+          Use MuDG to build a structured “map” of a topic, then lock it so students explore the learning path you designed.
+          Share a URL so everyone can join the same diagram.
+        </p>
+        <ol class="list-decimal space-y-2 pl-5 text-gray-700">
+          <li>
+            <span class="font-semibold text-gray-900">Create a diagram:</span>
+            start an exploration and build out the key nodes, claims, and sources for your topic.
           </li>
-          <li class="flex items-start gap-2">
-            <span class="font-semibold min-w-[24px]">2.</span>
-            <span>Build out the knowledge graph through conversation</span>
+          <li>
+            <span class="font-semibold text-gray-900">Lock it in the Admin panel:</span>
+            use the lock feature to prevent unintended edits while students navigate and discuss.
           </li>
-          <li class="flex items-start gap-2">
-            <span class="font-semibold min-w-[24px]">3.</span>
-            <span>Navigate and expand the graph to cover key concepts</span>
+          <li>
+            <span class="font-semibold text-gray-900">Share the URL:</span>
+            send the link to students so they can follow the diagram, ask questions, and add notes where allowed.
           </li>
         </ol>
+        <p class="text-gray-700">
+          You can also have groups build competing diagrams and then merge the best claims into a shared synthesis.
+        </p>
       </div>
-      
-<!-- Step 2 -->
-      <div class="bg-white rounded-lg shadow p-6">
-        <h3 class="text-2xl font-semibold mb-4">Step 2: Lock the Graph</h3>
-        <ul class="space-y-2">
-          <li class="flex items-start gap-2">
-            <span class="w-1.5 h-1.5 rounded-full bg-gray-800 mt-2"></span>
-            <span>Use the "Lock Graph" feature to prevent unintended modifications</span>
-          </li>
-          <li class="flex items-start gap-2">
-            <span class="w-1.5 h-1.5 rounded-full bg-gray-800 mt-2"></span>
-            <span>This ensures students follow the learning path you've designed</span>
-          </li>
-          <li class="flex items-start gap-2">
-            <span class="w-1.5 h-1.5 rounded-full bg-gray-800 mt-2"></span>
-            <span>The locked graph will maintain all your curated connections</span>
-          </li>
-        </ul>
+
+      <div class="rounded-xl bg-gradient-to-br from-emerald-50 to-white p-5 ring-1 ring-emerald-100">
+        <p class="text-sm font-semibold text-emerald-800">Share the guide</p>
+        <p class="mt-2 text-sm text-gray-700">
+          Copy this page URL and paste it into your lesson plan, LMS, or class chat.
+        </p>
+        <button
+          type="button"
+          class="mt-4 inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+          onclick="
+            (async () => {
+              const btn = this;
+              const original = btn.dataset.originalText || btn.textContent.trim();
+              btn.dataset.originalText = original;
+
+              const url = window.location.href;
+
+              try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                  await navigator.clipboard.writeText(url);
+                } else {
+                  const ta = document.createElement('textarea');
+                  ta.value = url;
+                  ta.setAttribute('readonly', 'true');
+                  ta.style.position = 'fixed';
+                  ta.style.top = '-9999px';
+                  ta.style.left = '-9999px';
+                  document.body.appendChild(ta);
+                  ta.select();
+                  document.execCommand('copy');
+                  document.body.removeChild(ta);
+                }
+
+                btn.textContent = 'Copied!';
+              } catch (_e) {
+                btn.textContent = 'Copy failed';
+              }
+
+              window.clearTimeout(btn._copyResetTimer);
+              btn._copyResetTimer = window.setTimeout(() => {
+                btn.textContent = original;
+              }, 1600);
+            })();
+          "
+        >
+          Copy lesson link
+        </button>
+        <p class="mt-2 text-xs text-emerald-900/70">
+          Clicking will copy the current page URL to your clipboard.
+        </p>
       </div>
-      
-<!-- Step 3 -->
-      <div class="bg-white rounded-lg shadow p-6">
-        <h3 class="text-2xl font-semibold mb-4">Step 3: Share with Students</h3>
-        <ul class="space-y-2">
-          <li class="flex items-start gap-2">
-            <span class="w-1.5 h-1.5 rounded-full bg-gray-800 mt-2"></span>
-            <span>Generate a shareable URL for your graph</span>
-          </li>
-          <li class="flex items-start gap-2">
-            <span class="w-1.5 h-1.5 rounded-full bg-gray-800 mt-2"></span>
-            <span>Distribute this URL to your students</span>
-          </li>
-          <li class="flex items-start gap-2">
-            <span class="w-1.5 h-1.5 rounded-full bg-gray-800 mt-2"></span>
-            <span>Provide guided questions for exploration</span>
-          </li>
-        </ul>
-      </div>
-      
-<!-- Teaching Tips -->
-      <div class="lg:col-span-3 bg-white rounded-lg shadow p-6">
-        <h3 class="text-2xl font-semibold mb-4">Teaching Tips</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div class="p-4 bg-gray-50 rounded-lg">
-            <h4 class="font-semibold mb-2">Multiple Graphs</h4>
-            <p class="text-sm text-gray-600">
-              Create different graphs for various units or difficulty levels
+    </div>
+
+    <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+      <div class="space-y-4">
+        <p class="inline-flex items-center rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-sky-700 ring-1 ring-sky-200">
+          Teaching Tips
+        </p>
+        <h3 class="text-2xl font-semibold text-gray-900">Teaching Tips</h3>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div class="rounded-xl bg-gray-50/60 p-4 ring-1 ring-gray-200">
+            <p class="font-semibold text-gray-900">Multiple Diagrams</p>
+            <p class="mt-1 text-gray-700">
+              Create different diagrams for various units or difficulty levels
             </p>
           </div>
-          <div class="p-4 bg-gray-50 rounded-lg">
-            <h4 class="font-semibold mb-2">Collaborative Learning</h4>
-            <p class="text-sm text-gray-600">Use MuDG as a tool during class discussions</p>
+
+          <div class="rounded-xl bg-gray-50/60 p-4 ring-1 ring-gray-200">
+            <p class="font-semibold text-gray-900">Collaborative Learning</p>
+            <p class="mt-1 text-gray-700">
+              Use MuDG as a tool during class discussions
+            </p>
           </div>
-          <div class="p-4 bg-gray-50 rounded-lg">
-            <h4 class="font-semibold mb-2">Student Presentations</h4>
-            <p class="text-sm text-gray-600">Have students present their path explorations</p>
+
+          <div class="rounded-xl bg-gray-50/60 p-4 ring-1 ring-gray-200">
+            <p class="font-semibold text-gray-900">Student Presentations</p>
+            <p class="mt-1 text-gray-700">
+              Have students present their path explorations
+            </p>
           </div>
-          <div class="p-4 bg-gray-50 rounded-lg">
-            <h4 class="font-semibold mb-2">Assessment</h4>
-            <p class="text-sm text-gray-600">Compare student-created graphs for evaluation</p>
+
+          <div class="rounded-xl bg-gray-50/60 p-4 ring-1 ring-gray-200">
+            <p class="font-semibold text-gray-900">Assessment</p>
+            <p class="mt-1 text-gray-700">
+              Compare student-created diagrams for evaluation
+            </p>
           </div>
         </div>
       </div>
     </div>
-  </div>
+  </section>
+
+  <footer class="mt-16 w-full bg-gradient-to-r from-[#3a0ca3] to-[#4361ee]">
+    <section class="mx-auto max-w-7xl px-6 py-14 text-center text-white">
+      <h2 class="text-3xl md:text-4xl font-semibold tracking-tight">
+        Ready to transform your learning?
+      </h2>
+      <p class="mt-3 text-blue-100/90 max-w-2xl mx-auto">
+        Join a growing community of collaborative thinkers.
+      </p>
+      <div class="mt-6 flex flex-wrap justify-center gap-3">
+        <a
+          href="/start/new/idea"
+          class="inline-flex items-center rounded-full bg-white text-[#3a0ca3] px-5 py-2.5 font-semibold shadow-sm ring-1 ring-white/20 hover:bg-white/90 transition"
+        >
+          Start exploring
+        </a>
+        <a
+          href="https://x.com/TJCBerman"
+          target="_blank"
+          class="inline-flex items-center gap-2 rounded-full bg-white/10 text-white px-5 py-2.5 font-semibold ring-1 ring-white/20 hover:bg-white/15 transition"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5 -ml-0.5"
+            fill="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+          </svg>
+          Follow @TJCBerman
+        </a>
+      </div>
+      <div class="mt-10 text-white/70 text-sm">
+        &copy; 2025 Dialectic — Multi-user Dialectical Graph (MuDG)
+      </div>
+    </section>
+  </footer>
 </div>
