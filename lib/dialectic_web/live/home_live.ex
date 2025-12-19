@@ -126,10 +126,10 @@ defmodule DialecticWeb.HomeLive do
               </div>
 
               <ul class="mt-8 grid gap-4 sm:grid-cols-3">
-                <li class="rounded-xl bg-white/70 p-5 ring-1 ring-gray-200 shadow-sm transition will-change-transform hover:-translate-y-0.5 hover:shadow-md hover:ring-gray-300">
+                <li class="rounded-xl bg-white/60 p-5 transition hover:bg-white/80">
                   <div class="flex items-start gap-3">
-                    <span class="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-full bg-indigo-600 text-white shadow-sm">
-                      <.icon name="hero-sparkles" class="h-6 w-6 shrink-0" />
+                    <span class="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white">
+                      <.icon name="hero-sparkles" class="h-6 w-6 shrink-0 text-[#3a0ca3]" />
                     </span>
                     <div>
                       <p class="font-semibold text-gray-900">See the structure of your thinking</p>
@@ -140,10 +140,10 @@ defmodule DialecticWeb.HomeLive do
                   </div>
                 </li>
 
-                <li class="rounded-xl bg-white/70 p-5 ring-1 ring-gray-200 shadow-sm transition will-change-transform hover:-translate-y-0.5 hover:shadow-md hover:ring-gray-300">
+                <li class="rounded-xl bg-white/60 p-5 transition hover:bg-white/80">
                   <div class="flex items-start gap-3">
-                    <span class="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#4361ee] text-white shadow-sm">
-                      <.icon name="hero-user-group" class="h-6 w-6 shrink-0" />
+                    <span class="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white">
+                      <.icon name="hero-user-group" class="h-6 w-6 shrink-0 text-[#3e35c9]" />
                     </span>
                     <div>
                       <p class="font-semibold text-gray-900">Explore together in real time</p>
@@ -154,10 +154,10 @@ defmodule DialecticWeb.HomeLive do
                   </div>
                 </li>
 
-                <li class="rounded-xl bg-white/70 p-5 ring-1 ring-gray-200 shadow-sm transition will-change-transform hover:-translate-y-0.5 hover:shadow-md hover:ring-gray-300">
+                <li class="rounded-xl bg-white/60 p-5 transition hover:bg-white/80">
                   <div class="flex items-start gap-3">
-                    <span class="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-full bg-sky-600 text-white shadow-sm">
-                      <.icon name="hero-circle-stack" class="h-6 w-6 shrink-0" />
+                    <span class="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white">
+                      <.icon name="hero-circle-stack" class="h-6 w-6 shrink-0 text-[#4361ee]" />
                     </span>
                     <div>
                       <p class="font-semibold text-gray-900">Build on a living knowledge base</p>
