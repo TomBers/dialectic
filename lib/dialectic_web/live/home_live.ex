@@ -96,11 +96,11 @@ defmodule DialecticWeb.HomeLive do
         <div class="absolute inset-0 opacity-5 bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.2\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]">
         </div>
         <div class="relative z-10">
-          <div class="mx-auto max-w-7xl px-6 md:grid md:grid-cols-2 md:items-center md:gap-12">
-            <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-white text-center md:text-left">
+          <div class="mx-auto max-w-7xl px-6 md:flex md:items-baseline md:justify-between md:gap-8">
+            <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-white text-center md:text-left whitespace-nowrap">
               MuDG
             </h1>
-            <h2 class="mt-6 md:mt-0 text-4xl md:text-5xl font-bold tracking-tight text-blue-100/90 text-center md:text-left">
+            <h2 class="mt-6 md:mt-0 text-4xl md:text-5xl font-bold tracking-tight text-blue-100/90 text-center md:text-left whitespace-nowrap">
               Collaborative AI-augmented learning
             </h2>
           </div>
@@ -206,7 +206,7 @@ defmodule DialecticWeb.HomeLive do
                 <% @search_term != "" -> %>
                   Search results for "{@search_term}"
                 <% true -> %>
-                  Here are some Ideas to Inspire you
+                  Existing Ideas
               <% end %>
             </h2>
             <div class="w-1/3">
