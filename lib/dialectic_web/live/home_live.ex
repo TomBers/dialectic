@@ -101,7 +101,7 @@ defmodule DialecticWeb.HomeLive do
               MuDG
             </h1>
             <h2 class="mt-6 md:mt-0 text-4xl md:text-5xl font-bold tracking-tight text-blue-100/90 text-center md:text-left">
-              AI-augmented learning tool. Explore and develop ideas on any topic.
+              Collaborative AI-augmented learning
             </h2>
           </div>
         </div>
@@ -461,7 +461,7 @@ defmodule DialecticWeb.HomeLive do
       category == "deep_dives" -> "Deep Dives"
       category == "seedlings" -> "Seedlings"
       is_binary(search) and search != "" -> "Search: #{search}"
-      true -> "Dialectic"
+      true -> "MuDG"
     end
   end
 
