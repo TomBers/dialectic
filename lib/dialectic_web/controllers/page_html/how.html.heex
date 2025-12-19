@@ -9,7 +9,7 @@
           How to Use MuDG
         </h1>
         <p class="text-lg text-gray-700">
-          Explore arguments with friends or students, build graphs together, and keep every thread of the conversation linked to evidence.
+          Explore arguments with friends or students, build diagrams together, and keep every thread of the conversation linked to evidence.
         </p>
       </div>
     </div>
@@ -23,18 +23,20 @@
         </div>
         <h2 class="text-2xl font-semibold text-gray-900">Start a conversation</h2>
         <p class="text-gray-700">
-          Pick a topic, invite collaborators, and ask MuDG to map the ideas. Every reply becomes part of the shared graph so you can reference it later.
-          <br /><br /> If you’re not sure where to start, try the
-          <a href="/inspiration" class="font-medium text-sky-700 underline hover:text-sky-800">
+          Pick a topic, invite collaborators, and ask MuDG to map the ideas. Every reply becomes part of the shared diagram so you can reference it later.
+          <br /><br />
+          If you’re not sure where to start, try the <a
+            href="/inspiration"
+            class="font-medium text-sky-700 underline hover:text-sky-800"
+          >
             Inspire me
-          </a>
-          page for ideas.
+          </a>page for ideas.
         </p>
       </div>
       <div class="rounded-xl bg-gradient-to-r from-indigo-50 to-sky-50 p-6 ring-1 ring-indigo-100">
         <p class="text-base font-medium text-gray-800">Quick tips</p>
         <ul class="mt-3 list-disc space-y-2 pl-4 text-gray-700">
-          <li>Use follow-up questions to expand the graph with evidence and counter-points.</li>
+          <li>Use follow-up questions to expand the diagram with evidence and counter-points.</li>
           <li>Use actions to quickly create chains of thought</li>
           <li>Save snapshots when you reach agreement to revisit the reasoning later.</li>
         </ul>
@@ -130,10 +132,28 @@
         >
           <p class="text-sm font-semibold text-emerald-700">Admin panel</p>
           <p class="text-sm text-gray-700">
-            Search, set LLM personality, control who has access, create groups, see notes others have written, share the graph, and download the content.
+            Search, set LLM personality, control who has access, create groups, see notes others have written, share the diagram, and download the content.
           </p>
         </div>
       </div>
+    </div>
+
+    <div class="flex justify-center">
+      <a
+        href="/start/new/idea"
+        class={[
+          "group inline-flex items-center justify-center gap-2 rounded-lg px-6 py-3 text-md font-semibold text-white shadow-sm",
+          "bg-gradient-to-r from-[#3a0ca3] to-[#4361ee] ring-1 ring-white/15 transition",
+          "hover:shadow-md hover:-translate-y-0.5 hover:ring-white/25",
+          "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4361ee]"
+        ]}
+      >
+        <span>Get started</span>
+        <.icon
+          name="hero-arrow-right"
+          class="h-4 w-4 transition-transform group-hover:translate-x-0.5"
+        />
+      </a>
     </div>
 
     <div class="grid gap-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:grid-cols-3 sm:p-8">
@@ -142,15 +162,15 @@
           Teacher's Guide
         </p>
         <h3 class="text-2xl font-semibold text-gray-900">
-          Create, lock, and share a classroom graph
+          Create, lock, and share a classroom diagram
         </h3>
         <p class="text-gray-700">
           Use MuDG to build a structured “map” of a topic, then lock it so students explore the learning path you designed.
-          Share a URL so everyone can join the same graph.
+          Share a URL so everyone can join the same diagram.
         </p>
         <ol class="list-decimal space-y-2 pl-5 text-gray-700">
           <li>
-            <span class="font-semibold text-gray-900">Create a graph:</span>
+            <span class="font-semibold text-gray-900">Create a diagram:</span>
             start an exploration and build out the key nodes, claims, and sources for your topic.
           </li>
           <li>
@@ -159,11 +179,11 @@
           </li>
           <li>
             <span class="font-semibold text-gray-900">Share the URL:</span>
-            send the link to students so they can follow the graph, ask questions, and add notes where allowed.
+            send the link to students so they can follow the diagram, ask questions, and add notes where allowed.
           </li>
         </ol>
         <p class="text-gray-700">
-          You can also have groups build competing graphs and then merge the best claims into a shared synthesis.
+          You can also have groups build competing diagrams and then merge the best claims into a shared synthesis.
         </p>
       </div>
 
@@ -216,6 +236,44 @@
         <p class="mt-2 text-xs text-emerald-900/70">
           Clicking will copy the current page URL to your clipboard.
         </p>
+      </div>
+    </div>
+
+    <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+      <div class="space-y-4">
+        <p class="inline-flex items-center rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-sky-700 ring-1 ring-sky-200">
+          Teaching Tips
+        </p>
+        <h3 class="text-2xl font-semibold text-gray-900">Teaching Tips</h3>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div class="rounded-xl bg-gray-50/60 p-4 ring-1 ring-gray-200">
+            <p class="font-semibold text-gray-900">Multiple Diagrams</p>
+            <p class="mt-1 text-gray-700">
+              Create different diagrams for various units or difficulty levels
+            </p>
+          </div>
+
+          <div class="rounded-xl bg-gray-50/60 p-4 ring-1 ring-gray-200">
+            <p class="font-semibold text-gray-900">Collaborative Learning</p>
+            <p class="mt-1 text-gray-700">
+              Use MuDG as a tool during class discussions
+            </p>
+          </div>
+
+          <div class="rounded-xl bg-gray-50/60 p-4 ring-1 ring-gray-200">
+            <p class="font-semibold text-gray-900">Student Presentations</p>
+            <p class="mt-1 text-gray-700">
+              Have students present their path explorations
+            </p>
+          </div>
+
+          <div class="rounded-xl bg-gray-50/60 p-4 ring-1 ring-gray-200">
+            <p class="font-semibold text-gray-900">Assessment</p>
+            <p class="mt-1 text-gray-700">
+              Compare student-created diagrams for evaluation
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   </section>

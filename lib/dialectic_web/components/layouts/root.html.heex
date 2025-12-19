@@ -32,6 +32,9 @@
           </.link>
         </div>
         <div class="flex items-center gap-2 sm:gap-4">
+          <.link href={~p"/intro/how"} class="underline text-blue-600 hover:text-blue-800">
+            Guide
+          </.link>
           <%= if @current_user do %>
             <.link href={~p"/my/ideas"} class="underline text-blue-600 hover:text-blue-800">
               Ideas | Notes

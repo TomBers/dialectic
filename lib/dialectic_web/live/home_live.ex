@@ -98,10 +98,10 @@ defmodule DialecticWeb.HomeLive do
         <div class="relative z-10">
           <div class="mx-auto max-w-7xl px-6 md:grid md:grid-cols-2 md:items-center md:gap-12">
             <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-white text-center md:text-left">
-              AI tool to explore and develop ideas and concepts around pretty much anything.
+              MuDG
             </h1>
             <h2 class="mt-6 md:mt-0 text-4xl md:text-5xl font-bold tracking-tight text-blue-100/90 text-center md:text-left">
-              Analyse or synthesise your ideas alone or in collaboration.
+              AI-augmented learning tool. Explore and develop ideas on any topic.
             </h2>
           </div>
         </div>
@@ -123,7 +123,7 @@ defmodule DialecticWeb.HomeLive do
             </li>
             <li>
               <span class="font-semibold text-gray-900">Build on a living knowledge base</span> –
-              Reuse existing graphs, follow others’ explorations, and connect your own ideas to what the community is already mapping.
+              Reuse existing diagrams, follow others’ explorations, and connect your own ideas to what the community is already mapping.
             </li>
           </ul>
         </div>
