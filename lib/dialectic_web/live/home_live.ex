@@ -109,23 +109,67 @@ defmodule DialecticWeb.HomeLive do
       
     <!-- Why section -->
       <section class="mx-auto max-w-7xl px-6">
-        <div class="mt-12 text-center">
-          <h2 class="text-3xl font-bold text-gray-900">Why MuDG?</h2>
+        <div class="mt-12">
+          <div class="relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-200">
+            <div
+              class="absolute inset-0 bg-gradient-to-r from-indigo-50 via-white to-sky-50"
+              aria-hidden="true"
+            >
+            </div>
 
-          <ul class="mt-6 space-y-4 text-left max-w-3xl mx-auto text-lg text-gray-600 list-disc list-inside">
-            <li>
-              <span class="font-semibold text-gray-900">See the structure of your thinking</span> –
-              Turn messy, linear chat into a visual map of how ideas branch, connect, and evolve, so you can dive deep without losing the bigger picture.
-            </li>
-            <li>
-              <span class="font-semibold text-gray-900">Explore together in real time</span> –
-              Invite others into the same MuDG to add questions, examples, and perspectives as you go, turning solitary learning into a shared exploration.
-            </li>
-            <li>
-              <span class="font-semibold text-gray-900">Build on a living knowledge base</span> –
-              Reuse existing diagrams, follow others’ explorations, and connect your own ideas to what the community is already mapping.
-            </li>
-          </ul>
+            <div class="relative p-8 sm:p-10">
+              <div class="mx-auto max-w-3xl text-center">
+                <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Why MuDG?</h2>
+                <p class="mt-3 text-lg text-gray-600">
+                  A better way to explore complex topics: structured, collaborative, and easy to share.
+                </p>
+              </div>
+
+              <ul class="mt-8 grid gap-4 sm:grid-cols-3">
+                <li class="rounded-xl bg-white/70 p-5 ring-1 ring-gray-200 shadow-sm transition will-change-transform hover:-translate-y-0.5 hover:shadow-md hover:ring-gray-300">
+                  <div class="flex items-start gap-3">
+                    <span class="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-full bg-indigo-600 text-white shadow-sm">
+                      <.icon name="hero-sparkles" class="h-6 w-6 shrink-0" />
+                    </span>
+                    <div>
+                      <p class="font-semibold text-gray-900">See the structure of your thinking</p>
+                      <p class="mt-1 text-sm text-gray-600">
+                        Turn messy, linear chat into a visual map of how ideas branch, connect, and evolve, so you can dive deep without losing the bigger picture.
+                      </p>
+                    </div>
+                  </div>
+                </li>
+
+                <li class="rounded-xl bg-white/70 p-5 ring-1 ring-gray-200 shadow-sm transition will-change-transform hover:-translate-y-0.5 hover:shadow-md hover:ring-gray-300">
+                  <div class="flex items-start gap-3">
+                    <span class="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#4361ee] text-white shadow-sm">
+                      <.icon name="hero-user-group" class="h-6 w-6 shrink-0" />
+                    </span>
+                    <div>
+                      <p class="font-semibold text-gray-900">Explore together in real time</p>
+                      <p class="mt-1 text-sm text-gray-600">
+                        Invite others into the same MuDG to add questions, examples, and perspectives as you go, turning solitary learning into a shared exploration.
+                      </p>
+                    </div>
+                  </div>
+                </li>
+
+                <li class="rounded-xl bg-white/70 p-5 ring-1 ring-gray-200 shadow-sm transition will-change-transform hover:-translate-y-0.5 hover:shadow-md hover:ring-gray-300">
+                  <div class="flex items-start gap-3">
+                    <span class="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-full bg-sky-600 text-white shadow-sm">
+                      <.icon name="hero-circle-stack" class="h-6 w-6 shrink-0" />
+                    </span>
+                    <div>
+                      <p class="font-semibold text-gray-900">Build on a living knowledge base</p>
+                      <p class="mt-1 text-sm text-gray-600">
+                        Reuse existing diagrams, follow others’ explorations, and connect your own ideas to what the community is already mapping.
+                      </p>
+                    </div>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
         </div>
       </section>
       
