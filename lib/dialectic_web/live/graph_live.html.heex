@@ -400,25 +400,18 @@
         aria-controls="right-panel"
         aria-expanded={@right_panel_open}
         aria-label={if @right_panel_open, do: "Hide right panel", else: "Show right panel"}
-        class={"fixed top-5 p-1.5 rounded-full bg-white opacity-60 hover:opacity-100 shadow-sm z-30 cursor-pointer transition-all duration-200 " <> if(@right_panel_open, do: "right-80 sm:right-96", else: "right-2 sm:right-4")}
+        class={"fixed top-20 z-30 transition-all duration-300 shadow-sm border border-gray-200 " <>
+      if(@right_panel_open,
+        do: "right-80 sm:right-96 p-2 rounded-l-md bg-white text-gray-500 hover:text-gray-700 rounded-r-none border-r-0",
+        else: "right-4 px-4 py-2 bg-white rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+      )}
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-6 w-6 text-gray-600"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d={if @right_panel_open, do: "M13 5l7 7-7 7", else: "M11 19l-7-7 7-7"}
-          />
-        </svg>
-        <span class="sr-only">
-          {if @right_panel_open, do: "Close right panel", else: "Open right panel"}
-        </span>
+        <%= if @right_panel_open do %>
+          <.icon name="hero-chevron-right" class="h-5 w-5" />
+        <% else %>
+          <.icon name="hero-adjustments-horizontal" class="h-5 w-5 text-gray-500" />
+          <span>Admin</span>
+        <% end %>
       </button>
     <% end %>
     
