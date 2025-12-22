@@ -56,6 +56,17 @@ hooks.LinearView = {
   },
 };
 
+hooks.MobileMinimap = {
+  mounted() {
+    this.el.addEventListener("click", (e) => {
+      const button = e.target.closest("button[id^='map-node-']");
+      if (button && window.innerWidth < 1024) {
+        this.pushEvent("close_minimap", {});
+      }
+    });
+  },
+};
+
 hooks.ExplorationStats = {
   mounted() {
     this.updateStats();

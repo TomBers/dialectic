@@ -100,7 +100,7 @@ defmodule DialecticWeb.HomeLive do
             <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-white text-center md:text-left whitespace-nowrap">
               MuDG
             </h1>
-            <h2 class="mt-6 md:mt-0 text-4xl md:text-5xl font-bold tracking-tight text-blue-100/90 text-center md:text-left whitespace-nowrap">
+            <h2 class="mt-6 md:mt-0 text-4xl md:text-5xl font-bold tracking-tight text-blue-100/90 text-center md:text-left md:whitespace-nowrap">
               Collaborative AI-augmented learning
             </h2>
           </div>
@@ -199,14 +199,6 @@ defmodule DialecticWeb.HomeLive do
               <p class="mt-1 text-gray-600">
                 Create a MuDG to map your ideas clearly with context that stays visible.
               </p>
-              <div class="mt-2">
-                <.link
-                  navigate={~p"/inspiration"}
-                  class="text-sm font-medium text-[#4361ee] hover:underline"
-                >
-                  Need inspiration?
-                </.link>
-              </div>
             </div>
             <div class="mt-6">
               <.link
@@ -439,40 +431,36 @@ defmodule DialecticWeb.HomeLive do
     </div>
 
     <!-- Footer -->
-    <footer class="mt-16 w-full bg-gradient-to-r from-[#3a0ca3] to-[#4361ee]">
-      <section class="mx-auto max-w-7xl px-6 py-14 text-center text-white">
-        <h2 class="text-3xl md:text-4xl font-semibold tracking-tight">
-          Ready to transform your learning?
-        </h2>
-        <p class="mt-3 text-blue-100/90 max-w-2xl mx-auto">
-          Join a growing community of collaborative thinkers.
-        </p>
-        <div class="mt-6 flex flex-wrap justify-center gap-3">
-          <a
-            href="/start/new/idea"
-            class="inline-flex items-center rounded-full bg-white text-[#3a0ca3] px-5 py-2.5 font-semibold shadow-sm ring-1 ring-white/20 hover:bg-white/90 transition"
-          >
-            Start exploring
-          </a>
-          <a
-            href="https://x.com/TJCBerman"
-            target="_blank"
-            class="inline-flex items-center gap-2 rounded-full bg-white/10 text-white px-5 py-2.5 font-semibold ring-1 ring-white/20 hover:bg-white/15 transition"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5 -ml-0.5"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
+    <footer class="mt-16 relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen bg-gradient-to-r from-[#3a0ca3] to-[#4361ee]">
+      <section class="mx-auto max-w-7xl px-6 py-8 text-center text-white">
+        <div class="flex flex-col md:flex-row items-center justify-center gap-6">
+          <h2 class="text-xl font-semibold tracking-tight">
+            Ready to transform your learning?
+          </h2>
+          <div class="flex flex-wrap justify-center gap-3">
+            <a
+              href="/start/new/idea"
+              class="inline-flex items-center rounded-full bg-white text-[#3a0ca3] px-4 py-1.5 text-sm font-semibold shadow-sm ring-1 ring-white/20 hover:bg-white/90 transition"
             >
-              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-            </svg>
-            Follow @TJCBerman
-          </a>
-        </div>
-        <div class="mt-10 text-white/70 text-sm">
-          &copy; 2025 Dialectic — Multi-user Dialectical Graph (MuDG)
+              Start exploring
+            </a>
+            <a
+              href="https://x.com/TJCBerman"
+              target="_blank"
+              class="inline-flex items-center gap-2 rounded-full bg-white/10 text-white px-4 py-1.5 text-sm font-semibold ring-1 ring-white/20 hover:bg-white/15 transition"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+              </svg>
+              Follow
+            </a>
+          </div>
         </div>
       </section>
     </footer>
