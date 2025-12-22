@@ -112,6 +112,10 @@ defmodule DialecticWeb.LinearGraphLive do
     {:noreply, assign(socket, show_minimap: !socket.assigns.show_minimap)}
   end
 
+  def handle_event("close_minimap", _, socket) do
+    {:noreply, assign(socket, show_minimap: false)}
+  end
+
   def handle_event("toggle_highlights", _, socket) do
     {:noreply, assign(socket, show_highlights: !socket.assigns.show_highlights)}
   end
