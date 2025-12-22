@@ -80,7 +80,7 @@ defmodule DialecticWeb.LinearGraphLive do
                 linear_path: linear_path,
                 map_nodes: map_nodes,
                 graph_id: graph_id,
-                show_minimap: true,
+                show_minimap: false,
                 show_highlights: true,
                 show_highlights_list: false,
                 highlights: Highlights.list_highlights(mudg_id: graph_id),
