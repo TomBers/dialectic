@@ -1,4 +1,4 @@
-<div class="h-[calc(100vh-3.5rem)] overflow-hidden flex flex-col relative">
+<div class="h-[calc(100vh-2.5rem)] overflow-hidden flex flex-col relative">
   <div class="md:hidden absolute inset-0 z-[60] bg-white flex flex-col items-center justify-center p-6 text-center">
     <div class="max-w-md space-y-6">
       <div class="mx-auto w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center">
@@ -102,9 +102,9 @@
       class={
         if @right_panel_open,
           do:
-            "fixed top-14 bottom-0 right-0 w-60 sm:w-96 bg-white border-l border-gray-200 z-40 overflow-y-auto transform translate-x-0 opacity-100 transition-all duration-300 ease-in-out",
+            "fixed top-10 bottom-0 right-0 w-full sm:w-96 bg-white border-l border-gray-200 z-40 overflow-y-auto transform translate-x-0 opacity-100 transition-all duration-300 ease-in-out",
           else:
-            "fixed top-14 bottom-0 right-0 w-0 overflow-hidden bg-white border-l border-gray-200 z-50 transform translate-x-full opacity-0 transition-all duration-300 ease-in-out"
+            "fixed top-10 bottom-0 right-0 w-0 overflow-hidden bg-white border-l border-gray-200 z-50 transform translate-x-full opacity-0 transition-all duration-300 ease-in-out"
       }
     >
       <div class="p-2">
@@ -400,7 +400,7 @@
         aria-controls="right-panel"
         aria-expanded={@right_panel_open}
         aria-label={if @right_panel_open, do: "Hide right panel", else: "Show right panel"}
-        class={"fixed top-20 z-30 transition-all duration-300 shadow-sm border border-gray-200 " <>
+        class={"fixed top-16 z-30 transition-all duration-300 shadow-sm border border-gray-200 " <>
       if(@right_panel_open,
         do: "right-80 sm:right-96 p-2 rounded-l-md bg-white text-gray-500 hover:text-gray-700 rounded-r-none border-r-0",
         else: "right-4 px-4 py-2 bg-white rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 flex items-center gap-2"

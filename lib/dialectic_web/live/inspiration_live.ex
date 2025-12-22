@@ -122,7 +122,7 @@ defmodule DialecticWeb.InspirationLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="h-[calc(100vh-3.5rem)] overflow-hidden flex flex-col bg-white">
+    <div class="h-[calc(100vh-2.5rem)] overflow-hidden flex flex-col bg-white">
       <div class="flex-1 min-h-0 flex flex-col md:flex-row">
         <!-- Left Panel: Controls -->
         <div class="w-full md:w-2/5 flex flex-col bg-white border-r border-gray-200 overflow-y-auto z-10 shadow-lg md:shadow-none">
