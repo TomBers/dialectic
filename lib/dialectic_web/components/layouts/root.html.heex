@@ -25,10 +25,10 @@
   </head>
   <body class="bg-white">
     <header
-      class="sticky top-0 bg-gradient-to-r from-[#3a0ca3] to-[#4361ee] shadow-sm z-[9999]"
+      class="sticky top-0 h-14 flex items-center bg-gradient-to-r from-[#3a0ca3] to-[#4361ee] shadow-sm z-[9999]"
       id="userHeader"
     >
-      <nav class="flex items-center justify-between px-2">
+      <nav class="flex items-center justify-between px-4 w-full">
         <div class="flex items-center gap-2">
           <.link href={~p"/"} class="underline text-white/90 hover:text-white">
             <span>Home</span>
@@ -40,10 +40,11 @@
           </.link>
           <%= if @current_user do %>
             <.link href={~p"/my/ideas"} class="underline text-white/90 hover:text-white">
-              Ideas | Notes
+              Ideas
             </.link>
             <.link href={~p"/users/settings"} class="underline text-white/90 hover:text-white">
-              {@current_user.email}
+              <span class="hidden sm:inline">{@current_user.email}</span>
+              <span class="sm:hidden">Account</span>
             </.link>
           <% else %>
             <.link href={~p"/users/register"} class="underline text-white/90 hover:text-white">
