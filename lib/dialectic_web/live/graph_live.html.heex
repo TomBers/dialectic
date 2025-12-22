@@ -1,12 +1,12 @@
 <div class="h-[calc(100vh-2.5rem)] overflow-hidden flex flex-col relative">
-  <div class="md:hidden absolute inset-0 z-[60] bg-white flex flex-col items-center justify-center p-6 text-center">
+  <div class="lg:hidden absolute inset-0 z-50 bg-white flex flex-col items-center justify-center p-6 text-center">
     <div class="max-w-md space-y-6">
       <div class="mx-auto w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center">
         <.icon name="hero-device-phone-mobile" class="w-8 h-8 text-indigo-600" />
       </div>
 
       <h2 class="text-2xl font-bold text-gray-900">
-        Desktop Experience Recommended
+        Desktop Required for Editing
       </h2>
 
       <p class="text-gray-600">
@@ -400,7 +400,7 @@
         aria-controls="right-panel"
         aria-expanded={@right_panel_open}
         aria-label={if @right_panel_open, do: "Hide right panel", else: "Show right panel"}
-        class={"fixed top-16 z-30 transition-all duration-300 shadow-sm border border-gray-200 " <>
+        class={"fixed top-11 z-30 transition-all duration-300 shadow-sm border border-gray-200 " <>
       if(@right_panel_open,
         do: "right-80 sm:right-96 p-2 rounded-l-md bg-white text-gray-500 hover:text-gray-700 rounded-r-none border-r-0",
         else: "right-4 px-4 py-2 bg-white rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 flex items-center gap-2"
