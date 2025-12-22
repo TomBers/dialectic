@@ -100,7 +100,7 @@ defmodule DialecticWeb.HomeLive do
             <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-white text-center md:text-left whitespace-nowrap">
               MuDG
             </h1>
-            <h2 class="mt-6 md:mt-0 text-4xl md:text-5xl font-bold tracking-tight text-blue-100/90 text-center md:text-left whitespace-nowrap">
+            <h2 class="mt-6 md:mt-0 text-4xl md:text-5xl font-bold tracking-tight text-blue-100/90 text-center md:text-left md:whitespace-nowrap">
               Collaborative AI-augmented learning
             </h2>
           </div>
