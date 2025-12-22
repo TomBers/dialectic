@@ -1,4 +1,35 @@
-<div class="h-[calc(100vh-3.5rem)] overflow-hidden flex flex-col">
+<div class="h-[calc(100vh-3.5rem)] overflow-hidden flex flex-col relative">
+  <div class="md:hidden absolute inset-0 z-[60] bg-white flex flex-col items-center justify-center p-6 text-center">
+    <div class="max-w-md space-y-6">
+      <div class="mx-auto w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center">
+        <.icon name="hero-device-phone-mobile" class="w-8 h-8 text-indigo-600" />
+      </div>
+
+      <h2 class="text-2xl font-bold text-gray-900">
+        Desktop Experience Recommended
+      </h2>
+
+      <p class="text-gray-600">
+        The MuDG graph editor is optimized for desktop screens. On mobile, we recommend using the Linear View to explore the conversation.
+      </p>
+
+      <%= if assigns[:graph_id] do %>
+        <div class="pt-2">
+          <.link
+            navigate={~p"/#{@graph_id}/linear"}
+            class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 w-full"
+          >
+            <.icon name="hero-list-bullet" class="w-5 h-5 mr-2" /> Switch to Linear View
+          </.link>
+        </div>
+      <% end %>
+
+      <p class="text-xs text-gray-400 mt-8">
+        Please visit on a computer to edit or create graphs.
+      </p>
+    </div>
+  </div>
+
   <.live_component
     module={DialecticWeb.ShareModalComp}
     id="share-modal"
