@@ -93,15 +93,25 @@ defmodule DialecticWeb.HomeLive do
     ~H"""
     <div class="min-h-screen bg-gray-50 text-gray-800">
       <!-- Hero -->
-      <header class="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen overflow-hidden bg-gradient-to-r from-[#3a0ca3] to-[#4361ee] py-12">
-        <div class="absolute inset-0 opacity-5 bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.2\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]">
+      <header class="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen overflow-hidden bg-gray-900 py-12">
+        <div class="absolute inset-0 z-0">
+          <video
+            autoplay
+            muted
+            playsinline
+            class="absolute inset-0 h-full w-full object-cover opacity-40"
+          >
+            <source src={~p"/images/FractalBranchingTree.mp4"} type="video/mp4" />
+          </video>
+          <div class="absolute inset-0 bg-gradient-to-r from-[#3a0ca3]/90 to-[#4361ee]/90 mix-blend-multiply">
+          </div>
         </div>
         <div class="relative z-10">
           <div class="mx-auto max-w-7xl px-6 lg:flex lg:items-baseline lg:justify-between lg:gap-8">
             <h1 class="text-4xl lg:text-5xl font-bold tracking-tight text-white text-center lg:text-left">
               MuDG
             </h1>
-            <h2 class="mt-6 lg:mt-0 text-4xl lg:text-5xl font-bold tracking-tight text-blue-100/90 text-center lg:text-left">
+            <h2 class="mt-6 lg:mt-0 text-4xl lg:text-5xl font-bold tracking-tight text-indigo-200 text-center lg:text-left">
               Collaborative AI-augmented learning
             </h2>
           </div>
