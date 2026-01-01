@@ -305,6 +305,35 @@ defmodule DialecticWeb.ActionToolbarComp do
 
         <button
           type="button"
+          class="inline-flex items-center justify-center px-2.5 py-1 text-xs text-gray-700 rounded-md transition-colors hover:bg-gray-100 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+          phx-click="open_share_modal"
+          disabled={is_nil(@graph_id)}
+          title="Share graph"
+        >
+          <span class="inline-flex flex-col items-center gap-0.5">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"
+              />
+            </svg>
+            <span :if={!@icons_only}>Share</span>
+          </span>
+        </button>
+
+        <button
+          type="button"
           class="inline-flex items-center justify-center px-2.5 py-1 text-xs text-gray-700 rounded-md transition-colors hover:bg-[#f97316] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
           phx-click="node_related_ideas"
           phx-value-id={@node && @node.id}

@@ -4,6 +4,36 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content={get_csrf_token()} />
+    <meta property="og:site_name" content="MuDG" />
+    <meta property="og:type" content="website" />
+    <meta
+      property="og:title"
+      content={assigns[:page_title] || "MuDG - Collaborative AI-Augmented Learning"}
+    />
+    <meta
+      property="og:description"
+      content={
+        assigns[:page_description] ||
+          "Turn messy linear chat into visual maps. Explore complex topics, reason together, and build a living knowledge base with MuDG."
+      }
+    />
+    <%= if assigns[:og_image] do %>
+      <meta property="og:image" content={@og_image} />
+      <meta name="twitter:image" content={@og_image} />
+    <% end %>
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content={assigns[:page_title] || "MuDG - Collaborative AI-Augmented Learning"}
+    />
+    <meta
+      name="twitter:description"
+      content={
+        assigns[:page_description] ||
+          "Turn messy linear chat into visual maps. Explore complex topics, reason together, and build a living knowledge base with MuDG."
+      }
+    />
+
     <.live_title default="MuDG" suffix=" : Explore Ideas Together">
       {assigns[:page_title]}
     </.live_title>

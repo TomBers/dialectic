@@ -8,6 +8,7 @@ defmodule DialecticWeb.HomeLive do
 
     {:ok,
      assign(socket,
+       og_image: DialecticWeb.Endpoint.url() <> ~p"/images/graph_live.webp",
        search_term: "",
        active_tag: nil,
        active_category: nil,

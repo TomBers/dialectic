@@ -130,6 +130,10 @@ defmodule DialecticWeb.GraphLive do
 
             socket =
               assign(socket,
+                page_title: graph_struct.title,
+                og_image: DialecticWeb.Endpoint.url() <> ~p"/images/graph_live.webp",
+                page_description:
+                  "Explore the dialectic map for \"#{graph_struct.title}\" on MuDG.",
                 live_view_topic: live_view_topic,
                 graph_topic: graph_topic,
                 graph_struct: graph_struct,
