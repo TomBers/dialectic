@@ -93,13 +93,15 @@ defmodule DialecticWeb.HomeLive do
     ~H"""
     <div class="min-h-screen bg-gray-50 text-gray-800">
       <!-- Hero -->
-      <header class="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen overflow-hidden bg-gray-900 py-12">
+      <header class="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen overflow-hidden bg-[#3a0ca3] py-12">
         <div class="absolute inset-0 z-0">
           <video
             autoplay
             muted
             playsinline
+            preload="none"
             class="absolute inset-0 h-full w-full object-cover opacity-40"
+            aria-hidden="true"
           >
             <source src={~p"/images/FractalBranchingTree.mp4"} type="video/mp4" />
           </video>
