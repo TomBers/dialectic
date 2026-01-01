@@ -1,6 +1,0 @@
-Investigate OpenAI GPT5.2
-https://platform.openai.com/docs/models/gpt-5.2-chat-latest
-
-Add prompt about specific examples.
-
-Update front page graph so bias more recent graphs.

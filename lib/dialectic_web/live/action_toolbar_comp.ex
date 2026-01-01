@@ -166,9 +166,9 @@ defmodule DialecticWeb.ActionToolbarComp do
         class={
           if @inline,
             do:
-              "relative z-10 px-1.5 py-1 flex flex-nowrap items-center justify-center gap-1 pointer-events-auto max-w-full overflow-x-auto",
+              "relative z-10 px-1.5 py-1 flex flex-wrap items-center justify-center gap-1 pointer-events-auto max-w-full",
             else:
-              "hidden sm:block fixed left-1/2 -translate-x-1/2 z-10 bg-white shadow border border-gray-200 px-1.5 py-1 flex flex-nowrap items-center justify-center gap-1 pointer-events-auto max-w-full overflow-x-auto"
+              "hidden sm:flex fixed left-1/2 -translate-x-1/2 z-10 bg-white shadow border border-gray-200 px-1.5 py-1 rounded-md flex-wrap items-center justify-center gap-1 pointer-events-auto max-w-[90vw]"
         }
         style={unless @inline, do: "bottom: calc(5.5rem + env(safe-area-inset-bottom));"}
         data-external="true"
@@ -192,9 +192,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                 d="M16 10V8a4 4 0 10-8 0v2m-1 0h10a2 2 0 012 2v6a2 2 0 01-2 2H7a2 2 0 01-2-2v-6a2 2 0 012-2z"
               />
             </svg>
-            <%= unless @icons_only do %>
-              Locked
-            <% end %>
+            <span :if={!@icons_only} class="hidden sm:inline">Locked</span>
           </span>
         <% end %>
 
@@ -238,7 +236,9 @@ defmodule DialecticWeb.ActionToolbarComp do
                 />
               </svg>
             <% end %>
-            <span :if={!@icons_only}>{if noted?, do: "Saved", else: "Save"}</span>
+            <span :if={!@icons_only} class="hidden sm:inline">
+              {if noted?, do: "Saved", else: "Save"}
+            </span>
           </span>
         </button>
 
@@ -270,7 +270,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                   d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
                 />
               </svg>
-              <span :if={!@icons_only}>Reader</span>
+              <span :if={!@icons_only} class="hidden sm:inline">Reader</span>
             </span>
           </.link>
         <% else %>
@@ -298,10 +298,39 @@ defmodule DialecticWeb.ActionToolbarComp do
                   d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
                 />
               </svg>
-              <span :if={!@icons_only}>Reader</span>
+              <span :if={!@icons_only} class="hidden sm:inline">Reader</span>
             </span>
           </button>
         <% end %>
+
+        <button
+          type="button"
+          class="inline-flex items-center justify-center px-2.5 py-1 text-xs text-gray-700 rounded-md transition-colors hover:bg-gray-100 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+          phx-click="open_share_modal"
+          disabled={is_nil(@graph_id)}
+          title="Share graph"
+        >
+          <span class="inline-flex flex-col items-center gap-0.5">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"
+              />
+            </svg>
+            <span :if={!@icons_only} class="hidden sm:inline">Share</span>
+          </span>
+        </button>
 
         <button
           type="button"
@@ -329,7 +358,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                 d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.517 0c.85.493 1.509 1.333 1.509 2.316V18"
               />
             </svg>
-            <span :if={!@icons_only}>Related Ideas</span>
+            <span :if={!@icons_only} class="hidden sm:inline">Related Ideas</span>
           </span>
         </button>
 
@@ -359,7 +388,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                 d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z"
               />
             </svg>
-            <span :if={!@icons_only}>Pros/Cons</span>
+            <span :if={!@icons_only} class="hidden sm:inline">Pros/Cons</span>
           </span>
         </button>
 
@@ -389,7 +418,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                 d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0 0 12 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 0 1-2.031.352 5.988 5.988 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.971Zm-16.5.52c.99-.203 1.99-.377 3-.52m0 0 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.989 5.989 0 0 1-2.031.352 5.989 5.989 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L5.25 4.971Z"
               />
             </svg>
-            <span :if={!@icons_only}>Combine</span>
+            <span :if={!@icons_only} class="hidden sm:inline">Combine</span>
           </span>
         </button>
 
@@ -417,7 +446,7 @@ defmodule DialecticWeb.ActionToolbarComp do
               <path d="M21 21l-4.35-4.35" />
               <path d="M11 8v6M8 11h6" />
             </svg>
-            <span :if={!@icons_only}>Deep Dive</span>
+            <span :if={!@icons_only} class="hidden sm:inline">Deep Dive</span>
           </span>
         </button>
 
@@ -457,7 +486,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                 <path d="M12 3a15 15 0 0 1 0 18" />
                 <path d="M12 3a15 15 0 0 0 0 18" />
               </svg>
-              <span :if={!@icons_only}>Translate</span>
+              <span :if={!@icons_only} class="hidden sm:inline">Translate</span>
             </span>
           </button>
           <div
@@ -505,7 +534,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                 d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z"
               />
             </svg>
-            <span :if={!@icons_only}>Explore</span>
+            <span :if={!@icons_only} class="hidden sm:inline">Explore</span>
           </span>
         </button>
 
@@ -545,7 +574,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                 d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0a1 1 0 01-1-1V5a1 1 0 011-1h2a2 2 0 002-2h0a2 2 0 002 2h2a1 1 0 011 1v1"
               />
             </svg>
-            <span :if={!@icons_only}>Delete</span>
+            <span :if={!@icons_only} class="hidden sm:inline">Delete</span>
           </span>
         </button>
       </div>
