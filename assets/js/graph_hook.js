@@ -649,18 +649,6 @@ const graphHook = {
 
     // Defer endBatch until after layout starts or after the no-layout path below
 
-    const reorderOperations = new Set([
-      "combine",
-      "answer",
-      "llm_request_complete",
-      "comment",
-      "other_user_change",
-      "start_stream",
-      "explain",
-      "branch",
-      "ideas",
-      "deepdive",
-    ]);
     // Operations that should reflow without animation to reduce flicker
     const noAnimateOperations = new Set([
       "explain",
@@ -706,7 +694,7 @@ const graphHook = {
           );
         }
       });
-    } else if (!sameGraph && reorderOperations.has(operation)) {
+    } else if (!sameGraph) {
       // Some operations reorder elements; defer ensureVisible until layout finishes
       this._pendingCenterId = this.el.dataset.node || this._pendingCenterId;
       this._layoutRunning = true;
