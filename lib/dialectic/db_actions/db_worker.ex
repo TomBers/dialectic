@@ -37,6 +37,16 @@ defmodule Dialectic.DbActions.DbWorker do
     :ok
   end
 
+  def save_snapshot(path, data) do
+    args = %{
+      "id" => path,
+      "data" => data,
+      "ts" => DateTime.utc_now() |> DateTime.to_iso8601()
+    }
+
+    create_job(args, false)
+  end
+
   def save_graph(path, wait \\ false) do
     # Build a portable JSON snapshot without exposing the raw digraph handle
     {nodes, edges} =
