@@ -14,8 +14,7 @@ defmodule Dialectic.Responses.RequestQueue do
         to_node: to_node.id,
         graph: graph,
         module: nil,
-        live_view_topic: live_view_topic,
-        queued_at_ms: System.system_time(:millisecond)
+        live_view_topic: live_view_topic
       }
 
       run_local(params)
@@ -30,8 +29,7 @@ defmodule Dialectic.Responses.RequestQueue do
         to_node: to_node.id,
         graph: graph,
         module: nil,
-        live_view_topic: live_view_topic,
-        queued_at_ms: System.system_time(:millisecond)
+        live_view_topic: live_view_topic
       }
 
       run_llm(params)

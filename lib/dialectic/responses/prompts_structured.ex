@@ -12,6 +12,7 @@ defmodule Dialectic.Responses.PromptsStructured do
 
     Markdown output contract (restricted CommonMark subset)
     - Output ONLY valid CommonMark using this subset:
+    - Start with a concise title using Heading 1 (#)
     - Headings (#, ##, ###)
     - Paragraphs
     - Bulleted lists (- )

@@ -126,7 +126,9 @@ defmodule Dialectic.Workers.LLMWorker do
 
               # Buffer to reduce broadcast frequency (fixing markdown glitches and excessive DOM updates).
               # Flush if > @buffer_size chars or contains newline.
-              if byte_size(new_buf) > @buffer_size or String.contains?(new_buf, "\n") do
+              # ALSO: Always flush the very first chunk (total == 0) to improve TTFT (Time To First Token).
+              if total == 0 or byte_size(new_buf) > @buffer_size or
+                   String.contains?(new_buf, "\n") do
                 Utils.process_chunk(graph, to_node, new_buf, live_view_topic)
                 {"", total + byte_size(new_buf)}
               else

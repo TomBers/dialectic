@@ -10,6 +10,7 @@ defmodule DialecticWeb.NodeComp do
         phx-hook="TextSelectionHook"
         data-node-id={@node.id}
         data-mudg-id={@graph_id}
+        data-streaming={to_string(@streaming)}
         style="max-height: 100vh; display: flex; flex-direction: column; padding-bottom: env(safe-area-inset-bottom);"
       >
         <%= if @node.id == "start" do %>

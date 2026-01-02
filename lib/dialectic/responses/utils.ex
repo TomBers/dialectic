@@ -26,20 +26,7 @@ defmodule Dialectic.Responses.Utils do
     if text == "" do
       :ok
     else
-      updated_vertex =
-        try do
-          GraphManager.update_vertex(graph, node, text)
-        rescue
-          exception ->
-            Logger.error(
-              "process_chunk update_vertex_exception=#{Exception.format(:error, exception, __STACKTRACE__)} graph=#{inspect(graph)} node=#{inspect(node)}"
-            )
-
-            nil
-        catch
-          :exit, _ ->
-            nil
-        end
+      updated_vertex = GraphManager.update_vertex(graph, node, text)
 
       if updated_vertex do
         Phoenix.PubSub.broadcast(

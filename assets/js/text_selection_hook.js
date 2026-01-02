@@ -4,6 +4,17 @@ const textSelectionHook = {
   mounted() {
     this.handleSelection = this.handleSelection.bind(this);
     this.hideSelectionActions = this.hideSelectionActions.bind(this);
+
+    this.fetchHighlights = this.fetchHighlights.bind(this);
+    const originalFetch = this.fetchHighlights;
+    this._fetchTimeout = null;
+    this.fetchHighlights = (...args) => {
+      clearTimeout(this._fetchTimeout);
+      this._fetchTimeout = setTimeout(() => {
+        originalFetch(...args);
+      }, 300);
+    };
+
     this.refreshHighlights = this.refreshHighlights.bind(this);
 
     // Reset scroll position for the drawer container to ensure we start at the top
@@ -62,6 +73,7 @@ const textSelectionHook = {
   },
 
   destroyed() {
+    clearTimeout(this._fetchTimeout);
     this.el.removeEventListener("mouseup", this.handleSelection);
     this.el.removeEventListener("touchend", this.handleSelection);
     window.removeEventListener("highlight:created", this.refreshHighlights);
@@ -115,6 +127,11 @@ const textSelectionHook = {
       if (h && (h.mudg_id !== this.mudgId || h.node_id !== this.nodeId)) return;
     }
 
+    this.fetchHighlights();
+  },
+
+  fetchHighlights() {
+    if (this.el.dataset.streaming === "true") return;
     if (!this.mudgId || !this.nodeId) return;
 
     fetch(`/api/highlights?mudg_id=${this.mudgId}&node_id=${this.nodeId}`, {
@@ -140,6 +157,11 @@ const textSelectionHook = {
   },
 
   handleSelection(event) {
+    if (this.el.dataset.streaming === "true") {
+      this.hideSelectionActions();
+      return;
+    }
+
     // Add small delay to ensure selection is properly registered
     setTimeout(() => {
       const selection = window.getSelection();
