@@ -50,21 +50,126 @@ defmodule DialecticWeb.PageController do
     graph_struct = Dialectic.DbActions.Graphs.get_graph_by_title(graph_name)
     graph = Dialectic.Graph.Serialise.json_to_graph(graph_struct.data)
 
-    # Convert the graph to markdown
-    markdown_content =
-      Dialectic.Linear.ThreadedConv.prepare_conversation(graph)
-      |> Enum.map(&(&1.content <> "\n\n"))
+    vertices =
+      :digraph.vertices(graph)
+      |> Enum.filter(fn v ->
+        {_, data} = :digraph.vertex(graph, v)
+        !Map.get(data, :compound, false)
+      end)
 
-    # Set filename
-    filename = "#{graph_name}.md"
+    # First pass: Generate filenames for all vertices to ensure consistent linking
+    # Format: "Index - Title.md"
+    id_to_filename =
+      vertices
+      |> Enum.with_index(1)
+      |> Map.new(fn {v, index} ->
+        {_, data} = :digraph.vertex(graph, v)
+        title = extract_title(data.content)
+
+        sanitized_title =
+          title
+          |> String.replace(~r/\s+/, " ")
+          |> String.replace(~r/[^a-zA-Z0-9\s\-_]/, "")
+          |> String.trim()
+
+        sanitized_title = if sanitized_title == "", do: "Untitled", else: sanitized_title
+
+        {v, "#{index} - #{sanitized_title}.md"}
+      end)
+
+    # Second pass: Generate file content with links
+    files =
+      Enum.map(vertices, fn v ->
+        {_, data} = :digraph.vertex(graph, v)
+        filename = id_to_filename[v]
+
+        title = extract_title(data.content)
+        body = extract_body(data.content)
+
+        children = :digraph.out_neighbours(graph, v)
+
+        links =
+          children
+          |> Enum.filter(&Map.has_key?(id_to_filename, &1))
+          |> Enum.map_join("\n", fn child_id ->
+            child_filename = id_to_filename[child_id]
+            # Obsidian link format: [[Filename]]
+            "- [[#{child_filename}]]"
+          end)
+
+        file_content = """
+        #{body}
+
+        **Class**: #{data.class}
+
+        ## Children
+        #{links}
+        """
+
+        {String.to_charlist(filename), file_content}
+      end)
+
+    sanitized_graph_name =
+      graph_name
+      |> String.replace(~r/[^a-zA-Z0-9\s-_]/, "")
+      |> String.trim()
+      |> String.replace(~r/\s+/, "_")
+
+    # Create ZIP file in memory
+    {:ok, {_filename, binary}} =
+      :zip.create(String.to_charlist("#{sanitized_graph_name}.zip"), files, [:memory])
 
     conn
-    |> put_resp_content_type("text/markdown")
-    |> put_resp_header("content-disposition", "attachment; filename=#{filename}")
-    |> send_resp(200, markdown_content)
+    |> put_resp_content_type("application/zip")
+    |> put_resp_header("content-disposition", "attachment; filename=#{sanitized_graph_name}.zip")
+    |> send_resp(200, binary)
   end
 
   def guide(conn, _params) do
     render(conn, :how)
+  end
+
+  defp extract_title(content) do
+    content = content || ""
+
+    first_line =
+      content
+      |> String.replace(~r/\r\n|\r/, "\n")
+      |> String.trim_leading()
+      |> String.split("\n", parts: 2)
+      |> List.first() || ""
+
+    first_line
+    |> String.replace(~R/^\s*#{1,6}\s*/, "")
+    |> String.replace(~r/^\s*title\s*:?\s*/i, "")
+    |> String.replace("**", "")
+    |> String.trim()
+  end
+
+  defp extract_body(content) do
+    content = content || ""
+
+    parts =
+      content
+      |> String.replace(~r/\r\n|\r/, "\n")
+      |> String.split("\n")
+
+    # Drop first line
+    rest = Enum.drop(parts, 1)
+
+    # Check if we should drop the second line (if it looks like a header/title)
+    case rest do
+      [] ->
+        ""
+
+      [next | _] ->
+        if String.match?(next, ~R/^\s*#{1,6}\s+\S/) or
+             String.match?(next, ~r/^\s*(title|Title)\s*:?\s*/) do
+          Enum.drop(rest, 1) |> Enum.join("\n")
+        else
+          Enum.join(rest, "\n")
+        end
+    end
+    |> String.trim()
   end
 end
