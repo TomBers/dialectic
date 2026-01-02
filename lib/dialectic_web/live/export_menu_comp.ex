@@ -114,7 +114,7 @@ defmodule DialecticWeb.ExportMenuComp do
     <!-- Markdown -->
           <.link
             href={"/api/graphs/md/#{@graph_id}"}
-            download={"#{@graph_id}.md"}
+            download={"#{@graph_id}.zip"}
             class="w-full inline-flex items-center gap-2 text-xs font-medium px-2.5 py-2 rounded-md hover:bg-gray-50 transition-colors"
           >
             <svg
