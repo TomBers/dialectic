@@ -100,7 +100,7 @@ export function graphStyle() {
           const measureText = content.replace(/\u200B/g, "");
 
           // Heuristic: characters that fit on one line at 210px width, 13px font
-          const approxCharsPerLine = 28;
+          const approxCharsPerLine = 24;
 
           // Estimate total wrapped lines across explicit lines
           const parts = measureText.split("\n");

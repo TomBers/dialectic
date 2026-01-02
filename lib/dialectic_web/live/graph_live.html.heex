@@ -200,10 +200,11 @@
         <div id="cy-inner" class="h-full w-full relative" phx-update="ignore"></div>
       </div>
 
-      <span phx-window-keydown={show_modal("modal-graph-live-modal-comp")} phx-key="Enter"></span>
-
       <%= if @graph_id do %>
-        <!-- Shortcuts and zoom controls moved outside Cytoscape container -->
+        <span phx-window-keydown={show_modal("modal-graph-live-modal-comp")} phx-key="Enter">
+        </span>
+        
+<!-- Shortcuts and zoom controls moved outside Cytoscape container -->
 
         <div
           class={"hidden sm:block sm:fixed right-4 z-30 bottom-28 sm:bottom-20 md:bottom-16" <> if(@right_panel_open, do: " right-80 sm:right-96", else: "")}
