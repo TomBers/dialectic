@@ -38,7 +38,6 @@ defmodule DialecticWeb.GraphLive do
           |> assign_defaults()
           |> subscribe_to_topics(graph_id, user)
           |> assign_graph_data(graph_db, graph_struct, node, graph_id, user)
-          |> handle_initial_question(node, params)
           |> handle_initial_highlight(initial_highlight_id)
 
         {:ok, socket}
@@ -1176,31 +1175,6 @@ defmodule DialecticWeb.GraphLive do
       prompt_mode: Atom.to_string(Dialectic.Responses.ModeServer.get_mode(graph_id)),
       highlights: Highlights.list_highlights(mudg_id: graph_id)
     )
-  end
-
-  defp handle_initial_question(socket, node, params) do
-    ask_param_raw = Map.get(params, "ask")
-
-    ask_param =
-      if is_binary(ask_param_raw),
-        do: URI.decode(String.replace(ask_param_raw, "+", " ")),
-        else: ask_param_raw
-
-    if connected?(socket) and is_binary(ask_param) and String.trim(ask_param) != "" do
-      case GraphActions.ask_and_answer_origin(
-             graph_action_params(socket, node),
-             ask_param
-           ) do
-        {_, node} when not is_nil(node) ->
-          {_, s1} = update_graph(socket, {nil, node}, "answer")
-          s1
-
-        _ ->
-          socket
-      end
-    else
-      socket
-    end
   end
 
   defp handle_initial_highlight(socket, highlight_id) do

@@ -39,7 +39,8 @@ defmodule DialecticWeb.NewIdeaFormComp do
         <div class="absolute inset-y-0 right-2 flex items-center">
           <button
             type="submit"
-            class="inline-flex items-center justify-center px-6 py-2 border border-transparent text-base font-medium rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            phx-disable-with="Starting..."
+            class="inline-flex items-center justify-center px-6 py-2 border border-transparent text-base font-medium rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {@submit_label}
           </button>

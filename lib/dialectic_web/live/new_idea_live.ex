@@ -4,6 +4,7 @@ defmodule DialecticWeb.NewIdeaLive do
   alias Dialectic.DbActions.Graphs
   alias Dialectic.Graph.GraphActions
   alias Dialectic.Graph.Vertex
+  alias Dialectic.Responses.ModeServer
   alias DialecticWeb.Utils.UserUtils
 
   on_mount {DialecticWeb.UserAuth, :mount_current_user}
@@ -105,14 +106,31 @@ defmodule DialecticWeb.NewIdeaLive do
 
     case Graphs.create_new_graph(title, socket.assigns[:current_user]) do
       {:ok, _graph} ->
-        mode_q = socket.assigns[:prompt_mode] || "structured"
+        mode_str = socket.assigns[:prompt_mode] || "structured"
+        mode = if mode_str == "creative", do: :creative, else: :structured
+        ModeServer.set_mode(title, mode)
 
-        {:noreply,
-         socket
-         |> redirect(to: ~p"/#{title}?node=1&ask=#{URI.encode_www_form(answer)}&mode=#{mode_q}")}
+        GraphManager.get_graph(title)
+        node = GraphManager.find_node_by_id(title, "1")
+
+        user_identity = UserUtils.current_identity(socket.assigns)
+        topic = "graph_update:#{title}"
+
+        GraphActions.ask_and_answer_origin(
+          {title, node, user_identity, topic},
+          answer
+        )
+
+        {:noreply, socket |> redirect(to: ~p"/#{title}")}
 
       {:error, _changeset} ->
-        {:noreply, socket |> put_flash(:error, "Error creating graph")}
+        case Graphs.get_graph_by_title(title) do
+          nil ->
+            {:noreply, socket |> put_flash(:error, "Error creating graph")}
+
+          _graph ->
+            {:noreply, socket |> redirect(to: ~p"/#{title}")}
+        end
     end
   end
 
@@ -120,7 +138,7 @@ defmodule DialecticWeb.NewIdeaLive do
 
   defp sanitize_graph_title(title) do
     title
-    |> String.slice(0, 200)
+    |> String.slice(0, 140)
     |> String.trim()
     |> String.replace("/", "-")
   end
