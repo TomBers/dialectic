@@ -185,55 +185,61 @@ defmodule DialecticWeb.HomeLive do
         
     <!-- Make the hero content scroll within the viewport naturally -->
         <div class="relative z-10 mx-auto max-w-7xl px-6 pt-14 pb-10 min-h-[calc(100vh-4rem)]">
-          <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-            <!-- Left: Create new idea -->
-            <div class="lg:col-span-5 flex flex-col items-center lg:items-start space-y-8">
-              <div class="text-center lg:text-left space-y-4">
-                <h1 class="text-4xl font-bold tracking-tight text-white sm:text-5xl">
-                  Start a new thought process
-                </h1>
-                <p class="text-lg text-indigo-100">
-                  Ask a question or state a premise to begin exploring a new dialectic map.
-                </p>
-              </div>
+          <div class="flex flex-col gap-10 items-stretch">
+            <!-- Top: Create new idea (primary action, centered stack with breathing room) -->
+            <section class="w-full">
+              <div class="mx-auto w-full max-w-3xl">
+                <div class="flex flex-col items-center text-center gap-7">
+                  <div class="space-y-4">
+                    <h1 class="text-4xl font-bold tracking-tight text-white sm:text-5xl">
+                      Start a new thought map
+                    </h1>
+                    <p class="text-lg text-indigo-100">
+                      Ask a question or state a premise to begin exploring a new dialectic map.
+                    </p>
+                  </div>
 
-              <div class="w-full bg-white/10 backdrop-blur-md rounded-2xl shadow-xl border border-white/15 p-6">
-                <.live_component
-                  module={DialecticWeb.NewIdeaFormComp}
-                  id="new-idea-form"
-                  form={@form}
-                />
-              </div>
+                  <div class="w-full bg-white/10 backdrop-blur-md rounded-2xl shadow-xl border border-white/15 p-6">
+                    <.live_component
+                      module={DialecticWeb.NewIdeaFormComp}
+                      id="new-idea-form"
+                      form={@form}
+                    />
+                  </div>
 
-              <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 text-sm font-semibold w-full">
-                <.link
-                  navigate={~p"/inspiration"}
-                  class={[
-                    "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3",
-                    "bg-white text-[#3a0ca3] shadow-lg ring-1 ring-white/30",
-                    "hover:bg-white/95 hover:shadow-xl transition",
-                    "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-                  ]}
-                >
-                  <.icon name="hero-sparkles" class="w-5 h-5" /> Inspire me
-                </.link>
+                  <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 text-sm font-semibold w-full">
+                    <.link
+                      navigate={~p"/inspiration"}
+                      class={[
+                        "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3",
+                        "bg-white text-[#3a0ca3] shadow-lg ring-1 ring-white/30",
+                        "hover:bg-white/95 hover:shadow-xl transition",
+                        "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                      ]}
+                    >
+                      <.icon name="hero-sparkles" class="w-5 h-5" /> Inspire me
+                    </.link>
 
-                <.link
-                  navigate={~p"/intro/how"}
-                  class={[
-                    "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3",
-                    "bg-white/10 text-white shadow-lg ring-1 ring-white/25 backdrop-blur-md",
-                    "hover:bg-white/15 hover:shadow-xl transition",
-                    "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-                  ]}
-                >
-                  <.icon name="hero-book-open" class="w-5 h-5" /> Read the guide
-                </.link>
+                    <.link
+                      navigate={~p"/intro/how"}
+                      class={[
+                        "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3",
+                        "bg-white/10 text-white shadow-lg ring-1 ring-white/25 backdrop-blur-md",
+                        "hover:bg-white/15 hover:shadow-xl transition",
+                        "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                      ]}
+                    >
+                      <.icon name="hero-book-open" class="w-5 h-5" /> Read the guide
+                    </.link>
+                  </div>
+
+                  <div class="h-6 sm:h-10" />
+                </div>
               </div>
-            </div>
+            </section>
             
-    <!-- Right: Existing ideas -->
-            <section class="lg:col-span-7" id="explore">
+    <!-- Below: Existing ideas (full-width on desktop, uses available space) -->
+            <section class="w-full" id="explore">
               <div class="rounded-2xl border border-white/15 bg-white/10 backdrop-blur-md shadow-xl">
                 <div class="p-5 sm:p-6">
                   <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -248,7 +254,7 @@ defmodule DialecticWeb.HomeLive do
                         <% @search_term != "" -> %>
                           Search results for "{@search_term}"
                         <% true -> %>
-                          Existing Ideas
+                          Existing Maps
                       <% end %>
                     </h2>
 
@@ -371,7 +377,7 @@ defmodule DialecticWeb.HomeLive do
 
                 <div class="border-t border-white/10">
                   <div class="p-5 sm:p-6">
-                    <div class="columns-1 sm:columns-2 gap-6 space-y-6 overflow-auto pr-1 max-h-[60vh] lg:max-h-[calc(100vh-4rem-16rem)]">
+                    <div class="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6 overflow-auto pr-1 max-h-[60vh] lg:max-h-[calc(100vh-4rem-22rem)]">
                       <%= for {g, count} <- @graphs do %>
                         <div class="break-inside-avoid">
                           <DialecticWeb.PageHtml.GraphComp.render
