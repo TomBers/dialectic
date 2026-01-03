@@ -165,9 +165,9 @@ defmodule DialecticWeb.HomeLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="min-h-screen bg-gray-50 text-gray-800">
-      <div class="relative min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center overflow-hidden">
-        <!-- Background Video with Overlay -->
+    <div class="min-h-screen bg-slate-950 text-white">
+      <div class="relative h-[calc(100vh-4rem)] w-screen overflow-hidden">
+        <!-- Background Video with Overlay (full-bleed) -->
         <div class="absolute inset-0 z-0">
           <video
             autoplay
@@ -183,233 +183,217 @@ defmodule DialecticWeb.HomeLive do
           </div>
         </div>
 
-        <div class="relative z-10 w-full max-w-2xl px-6 flex flex-col items-center space-y-8">
-          <div class="text-center space-y-4">
-            <h1 class="text-4xl font-bold tracking-tight text-white sm:text-5xl">
-              Start a new thought process
-            </h1>
-            <p class="text-lg text-indigo-100">
-              Ask a question or state a premise to begin exploring a new dialectic map.
-            </p>
-          </div>
+        <div class="relative z-10 mx-auto max-w-7xl px-6 pt-14 pb-10 h-full">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+            <!-- Left: Create new idea -->
+            <div class="lg:col-span-5 flex flex-col items-center lg:items-start space-y-8">
+              <div class="text-center lg:text-left space-y-4">
+                <h1 class="text-4xl font-bold tracking-tight text-white sm:text-5xl">
+                  Start a new thought process
+                </h1>
+                <p class="text-lg text-indigo-100">
+                  Ask a question or state a premise to begin exploring a new dialectic map.
+                </p>
+              </div>
 
-          <div class="w-full bg-white/80 backdrop-blur-md rounded-2xl shadow-xl border border-gray-200 p-6">
-            <.live_component module={DialecticWeb.NewIdeaFormComp} id="new-idea-form" form={@form} />
-          </div>
+              <div class="w-full bg-white/10 backdrop-blur-md rounded-2xl shadow-xl border border-white/15 p-6">
+                <.live_component
+                  module={DialecticWeb.NewIdeaFormComp}
+                  id="new-idea-form"
+                  form={@form}
+                />
+              </div>
 
-          <div class="flex items-center gap-8 text-sm font-medium">
-            <.link
-              navigate={~p"/inspiration"}
-              class="flex items-center gap-2 text-indigo-100 hover:text-white transition-colors group"
-            >
-              <span class="p-1.5 rounded-lg bg-indigo-500/30 group-hover:bg-indigo-500/50 transition-colors">
-                <.icon name="hero-sparkles" class="w-4 h-4" />
-              </span>
-              Inspire me
-            </.link>
-            <.link
-              navigate={~p"/intro/how"}
-              class="flex items-center gap-2 text-indigo-100 hover:text-white transition-colors group"
-            >
-              <span class="p-1.5 rounded-lg bg-indigo-500/30 group-hover:bg-indigo-500/50 transition-colors">
-                <.icon name="hero-book-open" class="w-4 h-4" />
-              </span>
-              Read the guide
-            </.link>
+              <div class="flex items-center gap-8 text-sm font-medium">
+                <.link
+                  navigate={~p"/inspiration"}
+                  class="flex items-center gap-2 text-indigo-100 hover:text-white transition-colors group"
+                >
+                  <span class="p-1.5 rounded-lg bg-indigo-500/30 group-hover:bg-indigo-500/50 transition-colors">
+                    <.icon name="hero-sparkles" class="w-4 h-4" />
+                  </span>
+                  Inspire me
+                </.link>
+                <.link
+                  navigate={~p"/intro/how"}
+                  class="flex items-center gap-2 text-indigo-100 hover:text-white transition-colors group"
+                >
+                  <span class="p-1.5 rounded-lg bg-indigo-500/30 group-hover:bg-indigo-500/50 transition-colors">
+                    <.icon name="hero-book-open" class="w-4 h-4" />
+                  </span>
+                  Read the guide
+                </.link>
+              </div>
+            </div>
+            
+    <!-- Right: Existing ideas (moved into hero) -->
+            <section class="lg:col-span-7" id="explore">
+              <div class="rounded-2xl border border-white/15 bg-white/10 backdrop-blur-md shadow-xl">
+                <div class="p-5 sm:p-6">
+                  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <h2 class="text-xl sm:text-2xl font-semibold tracking-tight text-white">
+                      <%= cond do %>
+                        <% @active_tag -> %>
+                          Ideas tagged with "{@active_tag}"
+                        <% @active_category == "deep_dives" -> %>
+                          Deep Dives
+                        <% @active_category == "seedlings" -> %>
+                          Seedlings
+                        <% @search_term != "" -> %>
+                          Search results for "{@search_term}"
+                        <% true -> %>
+                          Existing Ideas
+                      <% end %>
+                    </h2>
+
+                    <div class="w-full sm:w-80">
+                      <form
+                        phx-change="search"
+                        phx-submit="search"
+                        class="flex relative"
+                        onsubmit="return false;"
+                      >
+                        <input
+                          type="text"
+                          name="search"
+                          value={@search_term}
+                          phx-debounce="300"
+                          placeholder="Search ideas..."
+                          class="w-full px-4 py-2 rounded-l-md border border-white/15 bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-white/30"
+                          autocomplete="off"
+                        />
+                        <%= if @search_term && @search_term != "" do %>
+                          <button
+                            type="button"
+                            phx-click="search"
+                            phx-value-search=""
+                            class="absolute right-12 top-0 bottom-0 flex items-center pr-3 text-white/70 hover:text-white transition-colors"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              class="h-5 w-5"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"
+                              />
+                            </svg>
+                          </button>
+                        <% end %>
+                        <button
+                          type="button"
+                          class="bg-white/20 text-white px-4 py-2 rounded-r-md hover:bg-white/25 transition border border-white/15 border-l-0"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-5 w-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                            />
+                          </svg>
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+
+                  <div class="mt-5 space-y-4">
+                    <div class="flex flex-wrap gap-2">
+                      <.link
+                        patch={~p"/"}
+                        class={[
+                          "px-3 py-1.5 rounded-full text-sm font-medium transition-colors",
+                          (!@active_category && !@active_tag && @search_term == "" &&
+                             "bg-white text-[#3a0ca3]") ||
+                            "bg-white/10 text-white hover:bg-white/15 border border-white/10"
+                        ]}
+                      >
+                        All
+                      </.link>
+                      <.link
+                        patch={~p"/?category=deep_dives"}
+                        class={[
+                          "px-3 py-1.5 rounded-full text-sm font-medium transition-colors",
+                          (@active_category == "deep_dives" && "bg-white text-[#3a0ca3]") ||
+                            "bg-white/10 text-white hover:bg-white/15 border border-white/10"
+                        ]}
+                      >
+                        Deep Dives
+                      </.link>
+                      <.link
+                        patch={~p"/?category=seedlings"}
+                        class={[
+                          "px-3 py-1.5 rounded-full text-sm font-medium transition-colors",
+                          (@active_category == "seedlings" && "bg-white text-[#3a0ca3]") ||
+                            "bg-white/10 text-white hover:bg-white/15 border border-white/10"
+                        ]}
+                      >
+                        Seedlings
+                      </.link>
+                    </div>
+
+                    <%= if @popular_tags != [] do %>
+                      <div class="flex flex-wrap items-center gap-2">
+                        <span class="text-sm text-white/70 mr-2">Popular topics:</span>
+                        <%= for {tag, count} <- @popular_tags do %>
+                          <.link
+                            patch={~p"/?tag=#{tag}"}
+                            class={[
+                              "text-xs font-medium px-2.5 py-0.5 rounded border transition-colors",
+                              (@active_tag == tag && "bg-white text-[#3a0ca3] border-white") ||
+                                "bg-white/10 text-white border-white/15 hover:border-white/30 hover:bg-white/15"
+                            ]}
+                          >
+                            #{tag} <span class="text-white/60 ml-0.5">(#{count})</span>
+                          </.link>
+                        <% end %>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+
+                <div class="border-t border-white/10">
+                  <div class="p-5 sm:p-6">
+                    <div class="columns-1 sm:columns-2 gap-6 space-y-6 max-h-[calc(100vh-4rem-14rem)] overflow-auto pr-1">
+                      <%= for {g, count} <- @graphs do %>
+                        <div class="break-inside-avoid">
+                          <DialecticWeb.PageHtml.GraphComp.render
+                            title={g.title}
+                            is_public={g.is_public}
+                            link={gen_link(g.title)}
+                            count={count}
+                            tags={g.tags}
+                            node_count={
+                              Enum.count(g.data["nodes"] || [], fn n ->
+                                !Map.get(n, "compound", false)
+                              end)
+                            }
+                            is_live={true}
+                            generating={MapSet.member?(@generating, g.title)}
+                            id={"graph-comp-#{g.title}"}
+                          />
+                        </div>
+                      <% end %>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
           </div>
         </div>
       </div>
-      
-    <!-- Explore Ideas (Masonry Grid) -->
-      <section class="mx-auto max-w-7xl px-6" id="explore">
-        <div class="mt-16">
-          <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold text-gray-700">
-              <%= cond do %>
-                <% @active_tag -> %>
-                  Ideas tagged with "{@active_tag}"
-                <% @active_category == "deep_dives" -> %>
-                  Deep Dives
-                <% @active_category == "seedlings" -> %>
-                  Seedlings
-                <% @search_term != "" -> %>
-                  Search results for "{@search_term}"
-                <% true -> %>
-                  Existing Ideas
-              <% end %>
-            </h2>
-            <div class="w-1/3">
-              <form
-                phx-change="search"
-                phx-submit="search"
-                class="flex relative"
-                onsubmit="return false;"
-              >
-                <input
-                  type="text"
-                  name="search"
-                  value={@search_term}
-                  phx-debounce="300"
-                  placeholder="Search ideas..."
-                  class="w-full px-4 py-2 rounded-l-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  autocomplete="off"
-                />
-                <%= if @search_term && @search_term != "" do %>
-                  <button
-                    type="button"
-                    phx-click="search"
-                    phx-value-search=""
-                    class="absolute right-12 top-0 bottom-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="h-5 w-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </button>
-                <% end %>
-                <button
-                  type="button"
-                  class="bg-blue-500 text-white px-4 py-2 rounded-r-md hover:bg-blue-600 transition"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                    />
-                  </svg>
-                </button>
-              </form>
-            </div>
-          </div>
-
-          <div class="mb-8 space-y-4">
-            <div class="flex flex-wrap gap-2">
-              <.link
-                patch={~p"/"}
-                class={[
-                  "px-3 py-1.5 rounded-full text-sm font-medium transition-colors",
-                  (!@active_category && !@active_tag && @search_term == "" && "bg-gray-900 text-white") ||
-                    "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                ]}
-              >
-                All
-              </.link>
-              <.link
-                patch={~p"/?category=deep_dives"}
-                class={[
-                  "px-3 py-1.5 rounded-full text-sm font-medium transition-colors",
-                  (@active_category == "deep_dives" && "bg-indigo-600 text-white") ||
-                    "bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
-                ]}
-              >
-                Deep Dives
-              </.link>
-              <.link
-                patch={~p"/?category=seedlings"}
-                class={[
-                  "px-3 py-1.5 rounded-full text-sm font-medium transition-colors",
-                  (@active_category == "seedlings" && "bg-green-600 text-white") ||
-                    "bg-green-50 text-green-700 hover:bg-green-100"
-                ]}
-              >
-                Seedlings
-              </.link>
-            </div>
-
-            <%= if @popular_tags != [] do %>
-              <div class="flex flex-wrap items-center gap-2">
-                <span class="text-sm text-gray-500 mr-2">Popular topics:</span>
-                <%= for {tag, count} <- @popular_tags do %>
-                  <.link
-                    patch={~p"/?tag=#{tag}"}
-                    class={[
-                      "text-xs font-medium px-2.5 py-0.5 rounded border transition-colors",
-                      (@active_tag == tag && "bg-blue-100 text-blue-800 border-blue-200") ||
-                        "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
-                    ]}
-                  >
-                    #{tag} <span class="text-gray-400 ml-0.5">(#{count})</span>
-                  </.link>
-                <% end %>
-              </div>
-            <% end %>
-          </div>
-
-          <div class="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6 pb-12">
-            <%= for {g, count} <- @graphs do %>
-              <div class="break-inside-avoid">
-                <DialecticWeb.PageHtml.GraphComp.render
-                  title={g.title}
-                  is_public={g.is_public}
-                  link={gen_link(g.title)}
-                  count={count}
-                  tags={g.tags}
-                  node_count={
-                    Enum.count(g.data["nodes"] || [], fn n -> !Map.get(n, "compound", false) end)
-                  }
-                  is_live={true}
-                  generating={MapSet.member?(@generating, g.title)}
-                  id={"graph-comp-#{g.title}"}
-                />
-              </div>
-            <% end %>
-          </div>
-        </div>
-      </section>
     </div>
-
-    <!-- Footer -->
-    <footer class="mt-16 relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen bg-gradient-to-r from-[#3a0ca3] to-[#4361ee]">
-      <section class="mx-auto max-w-7xl px-6 py-8 text-center text-white">
-        <div class="flex flex-col md:flex-row items-center justify-center gap-6">
-          <h2 class="text-xl font-semibold tracking-tight">
-            Ready to transform your learning?
-          </h2>
-          <div class="flex flex-wrap justify-center gap-3">
-            <.link
-              navigate={~p"/"}
-              class="inline-flex items-center rounded-full bg-white text-[#3a0ca3] px-4 py-1.5 text-sm font-semibold shadow-sm ring-1 ring-white/20 hover:bg-white/90 transition"
-            >
-              Start exploring
-            </.link>
-            <a
-              href="https://x.com/TJCBerman"
-              target="_blank"
-              class="inline-flex items-center gap-2 rounded-full bg-white/10 text-white px-4 py-1.5 text-sm font-semibold ring-1 ring-white/20 hover:bg-white/15 transition"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-4 w-4"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-              </svg>
-              Follow
-            </a>
-          </div>
-        </div>
-      </section>
-    </footer>
     """
   end
 

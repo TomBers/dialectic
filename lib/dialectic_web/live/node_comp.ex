@@ -17,7 +17,7 @@ defmodule DialecticWeb.NodeComp do
           <.live_component module={DialecticWeb.StartTutorialComp} id="start-tutorial" />
         <% else %>
           <div
-            class={"flex-grow overflow-auto scroll-smooth pt-2 pb-10 px-3 sm:px-4 md:px-6 " <> if(String.length(@node.content) == 0, do: "hidden", else: "")}
+            class={"flex-grow overflow-auto scroll-smooth pt-2 pb-10 px-3 sm:px-4 " <> if(String.length(@node.content) == 0, do: "hidden", else: "")}
             id={"tt-node-" <> @node.id}
           >
             <div class="summary-content modal-responsive" id={"tt-summary-content-" <> @node.id}>
