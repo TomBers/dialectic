@@ -79,7 +79,7 @@ Configuration
     - E2E_PAUSE_MS=1500 E2E_LONG_PAUSE_MS=8000 npm run e2e:headed
 
 What the script does (at a glance)
-- Navigate to /start/new/idea
+- Navigate to /
 - Click the “Inspire me” button (fetches a random question and fills #global-chat-input)
 - Submit the ask form (creates a new graph: /:graph_name?node=1&ask=...)
 - Wait while LLM streams a response (real OpenAI path)

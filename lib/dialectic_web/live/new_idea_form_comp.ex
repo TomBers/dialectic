@@ -33,7 +33,7 @@ defmodule DialecticWeb.NewIdeaFormComp do
           type="text"
           id="new-idea-input"
           placeholder={@placeholder}
-          class="w-full h-14 pl-6 pr-32 text-lg rounded-full border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          class="w-full h-14 pl-6 pr-32 text-black text-lg rounded-full border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
           autocomplete="off"
         />
         <div class="absolute inset-y-0 right-2 flex items-center">

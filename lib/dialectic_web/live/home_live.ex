@@ -1,10 +1,35 @@
 defmodule DialecticWeb.HomeLive do
   use DialecticWeb, :live_view
   alias Dialectic.DbActions.Graphs
+  alias Dialectic.Graph.GraphActions
+  alias Dialectic.Graph.Vertex
+  alias Dialectic.Responses.ModeServer
+  alias DialecticWeb.Utils.UserUtils
+
+  on_mount {DialecticWeb.UserAuth, :mount_current_user}
 
   @impl true
-  def mount(_params, _session, socket) do
+  def mount(params, _session, socket) do
     if connected?(socket), do: Phoenix.PubSub.subscribe(Dialectic.PubSub, "graphs")
+
+    user = UserUtils.current_identity(socket.assigns)
+    initial_content = params["initial_prompt"]
+
+    changeset =
+      GraphActions.create_new_node(user)
+      |> Vertex.changeset(if initial_content, do: %{content: initial_content}, else: %{})
+
+    prompt_mode =
+      case params do
+        %{"mode" => mode} when is_binary(mode) ->
+          case String.downcase(mode) do
+            "creative" -> "creative"
+            _ -> "structured"
+          end
+
+        _ ->
+          "structured"
+      end
 
     {:ok,
      assign(socket,
@@ -15,7 +40,12 @@ defmodule DialecticWeb.HomeLive do
        graphs: [],
        popular_tags: [],
        limit: 20,
-       generating: MapSet.new()
+       generating: MapSet.new(),
+       user: user,
+       form: to_form(changeset),
+       prompt_mode: prompt_mode,
+       ask_question: true,
+       graph_id: nil
      )}
   end
 
@@ -56,6 +86,40 @@ defmodule DialecticWeb.HomeLive do
   end
 
   @impl true
+  def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}}, socket) do
+    title = sanitize_graph_title(answer)
+
+    case Graphs.create_new_graph(title, socket.assigns[:current_user]) do
+      {:ok, _graph} ->
+        mode_str = socket.assigns[:prompt_mode] || "structured"
+        mode = if mode_str == "creative", do: :creative, else: :structured
+        ModeServer.set_mode(title, mode)
+
+        GraphManager.get_graph(title)
+        node = GraphManager.find_node_by_id(title, "1")
+
+        user_identity = UserUtils.current_identity(socket.assigns)
+        topic = "graph_update:#{title}"
+
+        GraphActions.ask_and_answer_origin(
+          {title, node, user_identity, topic},
+          answer
+        )
+
+        {:noreply, socket |> redirect(to: ~p"/#{title}")}
+
+      {:error, _changeset} ->
+        case Graphs.get_graph_by_title(title) do
+          nil ->
+            {:noreply, socket |> put_flash(:error, "Error creating graph")}
+
+          _graph ->
+            {:noreply, socket |> redirect(to: ~p"/#{title}")}
+        end
+    end
+  end
+
+  @impl true
   def handle_event("generate_tags", %{"title" => title}, socket) do
     case Graphs.get_graph_by_title(title) do
       nil ->
@@ -88,12 +152,22 @@ defmodule DialecticWeb.HomeLive do
      )}
   end
 
+  defp sanitize_graph_title(title) do
+    sanitized =
+      title
+      |> String.slice(0, 140)
+      |> String.trim()
+      |> String.replace("/", "-")
+
+    if sanitized == "", do: "untitled-idea", else: sanitized
+  end
+
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="min-h-screen bg-gray-50 text-gray-800">
-      <!-- Hero -->
-      <header class="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen overflow-hidden bg-[#3a0ca3] py-12">
+    <div class="min-h-[calc(100vh-4rem)] w-screen bg-slate-950 text-white">
+      <div class="relative min-h-[calc(100vh-4rem)] w-screen overflow-hidden">
+        <!-- Background Video with Overlay (full-bleed) -->
         <div class="absolute inset-0 z-0">
           <video
             autoplay
@@ -108,375 +182,230 @@ defmodule DialecticWeb.HomeLive do
           <div class="absolute inset-0 bg-gradient-to-r from-[#3a0ca3]/90 to-[#4361ee]/90 mix-blend-multiply">
           </div>
         </div>
-        <div class="relative z-10">
-          <div class="mx-auto max-w-7xl px-6 lg:flex lg:items-baseline lg:justify-between lg:gap-8">
-            <h1 class="text-4xl lg:text-5xl font-bold tracking-tight text-white text-center lg:text-left">
-              MuDG
-            </h1>
-            <h2 class="mt-6 lg:mt-0 text-4xl lg:text-5xl font-bold tracking-tight text-indigo-200 text-center lg:text-left">
-              Collaborative AI-augmented learning
-            </h2>
-          </div>
-        </div>
-      </header>
-      
-    <!-- Why section -->
-      <section class="mx-auto max-w-7xl px-6">
-        <div class="mt-12">
-          <div class="relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-200">
-            <div
-              class="absolute inset-0 bg-gradient-to-r from-indigo-50 via-white to-sky-50"
-              aria-hidden="true"
-            >
-            </div>
-
-            <div class="relative p-8 sm:p-10">
-              <div class="mx-auto max-w-3xl text-center">
-                <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Why MuDG?</h2>
-                <p class="mt-3 text-lg text-gray-600">
-                  A better way to explore complex topics: structured, collaborative, and easy to share.
-                </p>
-              </div>
-
-              <ul class="mt-8 grid gap-4 sm:grid-cols-3">
-                <li class="rounded-xl bg-white/60 p-5 transition hover:bg-white/80">
-                  <div class="flex items-start gap-3">
-                    <span class="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white">
-                      <.icon name="hero-sparkles" class="h-6 w-6 shrink-0 text-[#3a0ca3]" />
-                    </span>
-                    <div>
-                      <p class="font-semibold text-gray-900">See the structure of your thinking</p>
-                      <p class="mt-1 text-sm text-gray-600">
-                        Turn messy, linear chat into a visual map of how ideas branch, connect, and evolve, so you can dive deep without losing the bigger picture.
-                      </p>
-                    </div>
+        
+    <!-- Make the hero content scroll within the viewport naturally -->
+        <div class="relative z-10 mx-auto max-w-7xl px-6 pt-14 pb-10 min-h-[calc(100vh-4rem)]">
+          <div class="flex flex-col gap-10 items-stretch">
+            <!-- Top: Create new idea (primary action, centered stack with breathing room) -->
+            <section class="w-full">
+              <div class="mx-auto w-full max-w-3xl">
+                <div class="flex flex-col items-center text-center gap-7">
+                  <div class="space-y-4">
+                    <h1 class="text-4xl font-bold tracking-tight text-white sm:text-5xl">
+                      Start a new thought map
+                    </h1>
+                    <p class="text-lg text-indigo-100">
+                      Ask a question or state a premise to begin exploring a new dialectic map.
+                    </p>
                   </div>
-                </li>
 
-                <li class="rounded-xl bg-white/60 p-5 transition hover:bg-white/80">
-                  <div class="flex items-start gap-3">
-                    <span class="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white">
-                      <.icon name="hero-user-group" class="h-6 w-6 shrink-0 text-[#3e35c9]" />
-                    </span>
-                    <div>
-                      <p class="font-semibold text-gray-900">Explore together in real time</p>
-                      <p class="mt-1 text-sm text-gray-600">
-                        Invite others into the same MuDG to add questions, examples, and perspectives as you go, turning solitary learning into a shared exploration.
-                      </p>
-                    </div>
-                  </div>
-                </li>
-
-                <li class="rounded-xl bg-white/60 p-5 transition hover:bg-white/80">
-                  <div class="flex items-start gap-3">
-                    <span class="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white">
-                      <.icon name="hero-circle-stack" class="h-6 w-6 shrink-0 text-[#4361ee]" />
-                    </span>
-                    <div>
-                      <p class="font-semibold text-gray-900">Build on a living knowledge base</p>
-                      <p class="mt-1 text-sm text-gray-600">
-                        Reuse existing diagrams, follow others’ explorations, and connect your own ideas to what the community is already mapping.
-                      </p>
-                    </div>
-                  </div>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-      
-    <!-- Create conversation -->
-      <section id="create-conv" class="mx-auto max-w-7xl px-6">
-        <div class="mt-10 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="rounded-xl bg-white ring-1 ring-gray-200 shadow-sm p-6 sm:p-8 flex flex-col justify-between">
-            <div>
-              <h2 class="text-2xl font-semibold text-gray-900">User Guide</h2>
-              <p class="mt-1 text-gray-600">
-                Learn how to navigate complex topics, discover connections, and use MuDG effectively.
-              </p>
-            </div>
-            <div class="mt-6">
-              <.link
-                href={~p"/intro/how"}
-                class="inline-flex items-center gap-2 rounded-lg bg-white border border-gray-300 px-5 py-3 font-semibold text-gray-700 shadow-sm hover:bg-gray-50 transition"
-              >
-                <.icon name="hero-book-open" class="h-5 w-5 text-gray-500" /> Read the Guide
-              </.link>
-            </div>
-          </div>
-
-          <div class="rounded-xl bg-white ring-1 ring-gray-200 shadow-sm p-6 sm:p-8 flex flex-col justify-between">
-            <div>
-              <h2 class="text-2xl font-semibold text-gray-900">Start a new exploration</h2>
-              <p class="mt-1 text-gray-600">
-                Create a MuDG to map your ideas clearly with context that stays visible.
-              </p>
-            </div>
-            <div class="mt-6">
-              <.link
-                navigate={~p"/start/new/idea"}
-                class="inline-flex items-center gap-2 rounded-lg bg-[#4361ee] px-5 py-3 font-semibold text-white shadow-sm hover:bg-[#3a56d9] transition"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-5 w-5 -ml-0.5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  aria-hidden="true"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 6v12m6-6H6"
-                  />
-                </svg>
-                New exploration
-              </.link>
-            </div>
-          </div>
-        </div>
-      </section>
-      
-    <!-- Explore Ideas (Masonry Grid) -->
-      <section class="mx-auto max-w-7xl px-6" id="explore">
-        <div class="mt-16">
-          <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold text-gray-700">
-              <%= cond do %>
-                <% @active_tag -> %>
-                  Ideas tagged with "{@active_tag}"
-                <% @active_category == "deep_dives" -> %>
-                  Deep Dives
-                <% @active_category == "seedlings" -> %>
-                  Seedlings
-                <% @search_term != "" -> %>
-                  Search results for "{@search_term}"
-                <% true -> %>
-                  Existing Ideas
-              <% end %>
-            </h2>
-            <div class="w-1/3">
-              <form
-                phx-change="search"
-                phx-submit="search"
-                class="flex relative"
-                onsubmit="return false;"
-              >
-                <input
-                  type="text"
-                  name="search"
-                  value={@search_term}
-                  phx-debounce="300"
-                  placeholder="Search ideas..."
-                  class="w-full px-4 py-2 rounded-l-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  autocomplete="off"
-                />
-                <%= if @search_term && @search_term != "" do %>
-                  <button
-                    type="button"
-                    phx-click="search"
-                    phx-value-search=""
-                    class="absolute right-12 top-0 bottom-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="h-5 w-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </button>
-                <% end %>
-                <button
-                  type="button"
-                  class="bg-blue-500 text-white px-4 py-2 rounded-r-md hover:bg-blue-600 transition"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  <div class="w-full bg-white/10 backdrop-blur-md rounded-2xl shadow-xl border border-white/15 p-6">
+                    <.live_component
+                      module={DialecticWeb.NewIdeaFormComp}
+                      id="new-idea-form"
+                      form={@form}
                     />
-                  </svg>
-                </button>
-              </form>
-            </div>
-          </div>
-
-          <div class="mb-8 space-y-4">
-            <div class="flex flex-wrap gap-2">
-              <.link
-                patch={~p"/"}
-                class={[
-                  "px-3 py-1.5 rounded-full text-sm font-medium transition-colors",
-                  (!@active_category && !@active_tag && @search_term == "" && "bg-gray-900 text-white") ||
-                    "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                ]}
-              >
-                All
-              </.link>
-              <.link
-                patch={~p"/?category=deep_dives"}
-                class={[
-                  "px-3 py-1.5 rounded-full text-sm font-medium transition-colors",
-                  (@active_category == "deep_dives" && "bg-indigo-600 text-white") ||
-                    "bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
-                ]}
-              >
-                Deep Dives
-              </.link>
-              <.link
-                patch={~p"/?category=seedlings"}
-                class={[
-                  "px-3 py-1.5 rounded-full text-sm font-medium transition-colors",
-                  (@active_category == "seedlings" && "bg-green-600 text-white") ||
-                    "bg-green-50 text-green-700 hover:bg-green-100"
-                ]}
-              >
-                Seedlings
-              </.link>
-            </div>
-
-            <%= if @popular_tags != [] do %>
-              <div class="flex flex-wrap items-center gap-2">
-                <span class="text-sm text-gray-500 mr-2">Popular topics:</span>
-                <%= for {tag, count} <- @popular_tags do %>
-                  <.link
-                    patch={~p"/?tag=#{tag}"}
-                    class={[
-                      "text-xs font-medium px-2.5 py-0.5 rounded border transition-colors",
-                      (@active_tag == tag && "bg-blue-100 text-blue-800 border-blue-200") ||
-                        "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
-                    ]}
-                  >
-                    #{tag} <span class="text-gray-400 ml-0.5">(#{count})</span>
-                  </.link>
-                <% end %>
-              </div>
-            <% end %>
-          </div>
-
-          <div class="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6 pb-12">
-            <%= for {g, count} <- @graphs do %>
-              <div class="break-inside-avoid">
-                <DialecticWeb.PageHtml.GraphComp.render
-                  title={g.title}
-                  is_public={g.is_public}
-                  link={gen_link(g.title)}
-                  count={count}
-                  tags={g.tags}
-                  node_count={
-                    Enum.count(g.data["nodes"] || [], fn n -> !Map.get(n, "compound", false) end)
-                  }
-                  is_live={true}
-                  generating={MapSet.member?(@generating, g.title)}
-                  id={"graph-comp-#{g.title}"}
-                />
-              </div>
-            <% end %>
-          </div>
-        </div>
-      </section>
-      
-    <!-- Testimonial -->
-      <section class="mx-auto max-w-7xl px-6">
-        <div class="mt-16 rounded-xl bg-white ring-1 ring-gray-200 shadow-sm">
-          <div class="p-6 sm:p-10">
-            <div class="text-center">
-              <h2 class="text-2xl font-semibold text-gray-900">What our users say</h2>
-            </div>
-            <div class="mt-8 flex justify-center">
-              <figure class="max-w-3xl">
-                <svg
-                  class="h-8 w-8 text-[#4361ee] mx-auto opacity-80"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  aria-hidden="true"
-                >
-                  <path d="M7.17 6A5.17 5.17 0 0 0 2 11.17V21h8v-9.83A5.17 5.17 0 0 0 4.83 6H7.17zm10 0A5.17 5.17 0 0 0 12 11.17V21h8v-9.83A5.17 5.17 0 0 0 14.83 6h2.34z" />
-                </svg>
-                <blockquote class="mt-4 text-lg text-gray-700 italic">
-                  An amazing free specialised AI tool to explore philosophical ideas around pretty much anything — from academic questions to films to... hamsters! All at one's fingertips, in a matter of seconds, with in-built tools for a sophisticated, yet accessible dialectic. Bravo!
-                </blockquote>
-                <figcaption class="mt-6 flex items-center justify-center gap-3">
-                  <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#4361ee] text-white font-bold">
-                    AK
-                  </span>
-                  <div class="text-left">
-                    <div class="font-semibold text-gray-900">Alexandra Konoplyanik</div>
-                    <a
-                      href="https://pfalondon.org/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="text-sm text-[#4361ee] hover:text-[#3a56d9]"
-                    >
-                      Philosophy for All
-                    </a>
                   </div>
-                </figcaption>
-              </figure>
-            </div>
-            <div class="mt-4 text-right">
-              <a href="#explore" class="text-sm font-medium text-[#4361ee] hover:text-[#3a56d9]">
-                Explore all →
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-    </div>
 
-    <!-- Footer -->
-    <footer class="mt-16 relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen bg-gradient-to-r from-[#3a0ca3] to-[#4361ee]">
-      <section class="mx-auto max-w-7xl px-6 py-8 text-center text-white">
-        <div class="flex flex-col md:flex-row items-center justify-center gap-6">
-          <h2 class="text-xl font-semibold tracking-tight">
-            Ready to transform your learning?
-          </h2>
-          <div class="flex flex-wrap justify-center gap-3">
-            <a
-              href="/start/new/idea"
-              class="inline-flex items-center rounded-full bg-white text-[#3a0ca3] px-4 py-1.5 text-sm font-semibold shadow-sm ring-1 ring-white/20 hover:bg-white/90 transition"
-            >
-              Start exploring
-            </a>
-            <a
-              href="https://x.com/TJCBerman"
-              target="_blank"
-              class="inline-flex items-center gap-2 rounded-full bg-white/10 text-white px-4 py-1.5 text-sm font-semibold ring-1 ring-white/20 hover:bg-white/15 transition"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-4 w-4"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-              </svg>
-              Follow
-            </a>
+                  <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 text-sm font-semibold w-full">
+                    <.link
+                      navigate={~p"/inspiration"}
+                      class={[
+                        "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3",
+                        "bg-white text-[#3a0ca3] shadow-lg ring-1 ring-white/30",
+                        "hover:bg-white/95 hover:shadow-xl transition",
+                        "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                      ]}
+                    >
+                      <.icon name="hero-sparkles" class="w-5 h-5" /> Inspire me
+                    </.link>
+
+                    <.link
+                      navigate={~p"/intro/how"}
+                      class={[
+                        "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3",
+                        "bg-white/10 text-white shadow-lg ring-1 ring-white/25 backdrop-blur-md",
+                        "hover:bg-white/15 hover:shadow-xl transition",
+                        "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                      ]}
+                    >
+                      <.icon name="hero-book-open" class="w-5 h-5" /> Read the guide
+                    </.link>
+                  </div>
+
+                  <div class="h-6 sm:h-10" />
+                </div>
+              </div>
+            </section>
+            
+    <!-- Below: Existing ideas (full-width on desktop, uses available space) -->
+            <section class="w-full" id="explore">
+              <div class="rounded-2xl border border-white/15 bg-white/10 backdrop-blur-md shadow-xl">
+                <div class="p-5 sm:p-6">
+                  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <h2 class="text-xl sm:text-2xl font-semibold tracking-tight text-white">
+                      <%= cond do %>
+                        <% @active_tag -> %>
+                          Ideas tagged with "{@active_tag}"
+                        <% @active_category == "deep_dives" -> %>
+                          Deep Dives
+                        <% @active_category == "seedlings" -> %>
+                          Seedlings
+                        <% @search_term != "" -> %>
+                          Search results for "{@search_term}"
+                        <% true -> %>
+                          Existing Maps
+                      <% end %>
+                    </h2>
+
+                    <div class="w-full sm:w-80">
+                      <form
+                        phx-change="search"
+                        phx-submit="search"
+                        class="flex relative"
+                        onsubmit="return false;"
+                      >
+                        <input
+                          type="text"
+                          name="search"
+                          value={@search_term}
+                          phx-debounce="300"
+                          placeholder="Search ideas..."
+                          class="w-full px-4 py-2 rounded-l-md border border-white/15 bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-white/30"
+                          autocomplete="off"
+                        />
+                        <%= if @search_term && @search_term != "" do %>
+                          <button
+                            type="button"
+                            phx-click="search"
+                            phx-value-search=""
+                            class="absolute right-12 top-0 bottom-0 flex items-center pr-3 text-white/70 hover:text-white transition-colors"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              class="h-5 w-5"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"
+                              />
+                            </svg>
+                          </button>
+                        <% end %>
+                        <button
+                          type="button"
+                          class="bg-white/20 text-white px-4 py-2 rounded-r-md hover:bg-white/25 transition border border-white/15 border-l-0"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-5 w-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                            />
+                          </svg>
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+
+                  <div class="mt-5 space-y-4">
+                    <div class="flex flex-wrap gap-2">
+                      <.link
+                        patch={~p"/"}
+                        class={[
+                          "px-3 py-1.5 rounded-full text-sm font-medium transition-colors",
+                          (!@active_category && !@active_tag && @search_term == "" &&
+                             "bg-white text-[#3a0ca3]") ||
+                            "bg-white/10 text-white hover:bg-white/15 border border-white/10"
+                        ]}
+                      >
+                        All
+                      </.link>
+                      <.link
+                        patch={~p"/?category=deep_dives"}
+                        class={[
+                          "px-3 py-1.5 rounded-full text-sm font-medium transition-colors",
+                          (@active_category == "deep_dives" && "bg-white text-[#3a0ca3]") ||
+                            "bg-white/10 text-white hover:bg-white/15 border border-white/10"
+                        ]}
+                      >
+                        Deep Dives
+                      </.link>
+                      <.link
+                        patch={~p"/?category=seedlings"}
+                        class={[
+                          "px-3 py-1.5 rounded-full text-sm font-medium transition-colors",
+                          (@active_category == "seedlings" && "bg-white text-[#3a0ca3]") ||
+                            "bg-white/10 text-white hover:bg-white/15 border border-white/10"
+                        ]}
+                      >
+                        Seedlings
+                      </.link>
+                    </div>
+
+                    <%= if @popular_tags != [] do %>
+                      <div class="flex flex-wrap items-center gap-2">
+                        <span class="text-sm text-white/70 mr-2">Popular topics:</span>
+                        <%= for {tag, count} <- @popular_tags do %>
+                          <.link
+                            patch={~p"/?tag=#{tag}"}
+                            class={[
+                              "text-xs font-medium px-2.5 py-0.5 rounded border transition-colors",
+                              (@active_tag == tag && "bg-white text-[#3a0ca3] border-white") ||
+                                "bg-white/10 text-white border-white/15 hover:border-white/30 hover:bg-white/15"
+                            ]}
+                          >
+                            #{tag} <span class="text-white/60 ml-0.5">(#{count})</span>
+                          </.link>
+                        <% end %>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+
+                <div class="border-t border-white/10">
+                  <div class="p-5 sm:p-6">
+                    <div class="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6 overflow-auto pr-1 max-h-[60vh] lg:max-h-[calc(100vh-4rem-22rem)]">
+                      <%= for {g, count} <- @graphs do %>
+                        <div class="break-inside-avoid">
+                          <DialecticWeb.PageHtml.GraphComp.render
+                            title={g.title}
+                            is_public={g.is_public}
+                            link={gen_link(g.title)}
+                            count={count}
+                            tags={g.tags}
+                            node_count={
+                              Enum.count(g.data["nodes"] || [], fn n ->
+                                !Map.get(n, "compound", false)
+                              end)
+                            }
+                            is_live={true}
+                            generating={MapSet.member?(@generating, g.title)}
+                            id={"graph-comp-#{g.title}"}
+                          />
+                        </div>
+                      <% end %>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
           </div>
         </div>
-      </section>
-    </footer>
+      </div>
+    </div>
     """
   end
 
