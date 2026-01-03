@@ -137,9 +137,12 @@ defmodule DialecticWeb.NewIdeaLive do
   # Helpers
 
   defp sanitize_graph_title(title) do
-    title
-    |> String.slice(0, 140)
-    |> String.trim()
-    |> String.replace("/", "-")
+    sanitized =
+      title
+      |> String.slice(0, 140)
+      |> String.trim()
+      |> String.replace("/", "-")
+
+    if sanitized == "", do: "untitled-idea", else: sanitized
   end
 end
