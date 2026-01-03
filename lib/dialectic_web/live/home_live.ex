@@ -165,8 +165,8 @@ defmodule DialecticWeb.HomeLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="min-h-screen bg-slate-950 text-white">
-      <div class="relative h-[calc(100vh-4rem)] w-screen overflow-hidden">
+    <div class="min-h-[calc(100vh-4rem)] w-screen bg-slate-950 text-white">
+      <div class="relative min-h-[calc(100vh-4rem)] w-screen overflow-hidden">
         <!-- Background Video with Overlay (full-bleed) -->
         <div class="absolute inset-0 z-0">
           <video
@@ -182,8 +182,9 @@ defmodule DialecticWeb.HomeLive do
           <div class="absolute inset-0 bg-gradient-to-r from-[#3a0ca3]/90 to-[#4361ee]/90 mix-blend-multiply">
           </div>
         </div>
-
-        <div class="relative z-10 mx-auto max-w-7xl px-6 pt-14 pb-10 h-full">
+        
+    <!-- Make the hero content scroll within the viewport naturally -->
+        <div class="relative z-10 mx-auto max-w-7xl px-6 pt-14 pb-10 min-h-[calc(100vh-4rem)]">
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
             <!-- Left: Create new idea -->
             <div class="lg:col-span-5 flex flex-col items-center lg:items-start space-y-8">
@@ -204,29 +205,34 @@ defmodule DialecticWeb.HomeLive do
                 />
               </div>
 
-              <div class="flex items-center gap-8 text-sm font-medium">
+              <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 text-sm font-semibold w-full">
                 <.link
                   navigate={~p"/inspiration"}
-                  class="flex items-center gap-2 text-indigo-100 hover:text-white transition-colors group"
+                  class={[
+                    "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3",
+                    "bg-white text-[#3a0ca3] shadow-lg ring-1 ring-white/30",
+                    "hover:bg-white/95 hover:shadow-xl transition",
+                    "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                  ]}
                 >
-                  <span class="p-1.5 rounded-lg bg-indigo-500/30 group-hover:bg-indigo-500/50 transition-colors">
-                    <.icon name="hero-sparkles" class="w-4 h-4" />
-                  </span>
-                  Inspire me
+                  <.icon name="hero-sparkles" class="w-5 h-5" /> Inspire me
                 </.link>
+
                 <.link
                   navigate={~p"/intro/how"}
-                  class="flex items-center gap-2 text-indigo-100 hover:text-white transition-colors group"
+                  class={[
+                    "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3",
+                    "bg-white/10 text-white shadow-lg ring-1 ring-white/25 backdrop-blur-md",
+                    "hover:bg-white/15 hover:shadow-xl transition",
+                    "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                  ]}
                 >
-                  <span class="p-1.5 rounded-lg bg-indigo-500/30 group-hover:bg-indigo-500/50 transition-colors">
-                    <.icon name="hero-book-open" class="w-4 h-4" />
-                  </span>
-                  Read the guide
+                  <.icon name="hero-book-open" class="w-5 h-5" /> Read the guide
                 </.link>
               </div>
             </div>
             
-    <!-- Right: Existing ideas (moved into hero) -->
+    <!-- Right: Existing ideas -->
             <section class="lg:col-span-7" id="explore">
               <div class="rounded-2xl border border-white/15 bg-white/10 backdrop-blur-md shadow-xl">
                 <div class="p-5 sm:p-6">
@@ -365,7 +371,7 @@ defmodule DialecticWeb.HomeLive do
 
                 <div class="border-t border-white/10">
                   <div class="p-5 sm:p-6">
-                    <div class="columns-1 sm:columns-2 gap-6 space-y-6 max-h-[calc(100vh-4rem-14rem)] overflow-auto pr-1">
+                    <div class="columns-1 sm:columns-2 gap-6 space-y-6 overflow-auto pr-1 max-h-[60vh] lg:max-h-[calc(100vh-4rem-16rem)]">
                       <%= for {g, count} <- @graphs do %>
                         <div class="break-inside-avoid">
                           <DialecticWeb.PageHtml.GraphComp.render
