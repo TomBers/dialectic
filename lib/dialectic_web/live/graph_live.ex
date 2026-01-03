@@ -562,14 +562,21 @@ defmodule DialecticWeb.GraphLive do
         {:noreply, socket |> put_flash(:error, "This graph is locked")}
 
       true ->
-        update_graph(
-          socket,
+        # Mark the newly created answer node as streaming so the UI can show progress.
+        # This supports the "redirect immediately and show progress" flow (origin question
+        # is created elsewhere, then the user lands here while content streams in).
+        {nil, new_node} =
           GraphActions.ask_and_answer(
             graph_action_params(socket, socket.assigns.node),
             answer
-          ),
-          "answer"
-        )
+          )
+
+        socket =
+          assign(socket,
+            streaming_nodes: MapSet.put(socket.assigns.streaming_nodes, new_node.id)
+          )
+
+        update_graph(socket, {nil, new_node}, "answer")
     end
   end
 
@@ -723,7 +730,16 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_info({:stream_chunk, updated_vertex, :node_id, node_id}, socket) do
-    # This is the streamed LLM response into a node
+    # This is the streamed LLM response into a node.
+    #
+    # When the user is redirected into the graph immediately (home page flow),
+    # streaming may begin before the user has clicked/selected the node. In that case,
+    # we still want the UI to reflect that the node is "in progress".
+    socket =
+      assign(socket,
+        streaming_nodes: MapSet.put(socket.assigns.streaming_nodes, node_id)
+      )
+
     if socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
       label = extract_title(Map.get(updated_vertex, :content, ""))
 

@@ -193,15 +193,21 @@ defmodule Dialectic.Graph.GraphActions do
 
       {nil, GraphManager.find_node_by_id(graph_id, answer_id)}
     else
-      # Generate the AI answer as a child of the updated origin node
-      {nil,
-       GraphManager.add_child(
-         graph_id,
-         [updated_origin],
-         fn n -> LlmInterface.gen_response(updated_origin, n, graph_id, live_view_topic) end,
-         "answer",
-         user
-       )}
+      # Create the answer node immediately so GraphLive can show progress after redirect.
+      # The worker streams content into this node via PubSub updates.
+      answer_node =
+        GraphManager.add_child(
+          graph_id,
+          [updated_origin],
+          fn _ -> "" end,
+          "answer",
+          user
+        )
+
+      # Kick off the AI answer generation (streaming) targeting the new answer node.
+      LlmInterface.gen_response(updated_origin, answer_node, graph_id, live_view_topic)
+
+      {nil, answer_node}
     end
   end
 

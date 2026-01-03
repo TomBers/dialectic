@@ -101,6 +101,8 @@ defmodule DialecticWeb.HomeLive do
         user_identity = UserUtils.current_identity(socket.assigns)
         topic = "graph_update:#{title}"
 
+        # Kick off the answer generation in the background (streaming to GraphLive via PubSub),
+        # then redirect immediately so the user sees progress on the graph page.
         GraphActions.ask_and_answer_origin(
           {title, node, user_identity, topic},
           answer
