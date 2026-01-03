@@ -722,16 +722,15 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_info({:stream_chunk, updated_vertex, :node_id, node_id}, socket) do
     # This is the streamed LLM response into a node
-    Logger.debug(fn ->
-      "[GraphLive] stream_chunk node_id=#{inspect(node_id)} current=#{inspect(socket.assigns.node && Map.get(socket.assigns.node, :id))} content_len=#{String.length(to_string(Map.get(updated_vertex, :content, "")))}"
-    end)
-
     if socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
       label = extract_title(Map.get(updated_vertex, :content, ""))
 
+      # Merge content update while preserving relatives (parents/children)
+      node = %{socket.assigns.node | content: updated_vertex.content}
+
       socket =
         socket
-        |> assign(node: updated_vertex)
+        |> assign(node: node)
         |> push_event("update_node_label", %{id: node_id, label: label})
 
       {:noreply, socket}
