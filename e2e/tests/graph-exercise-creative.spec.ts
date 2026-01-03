@@ -5,7 +5,7 @@ import { test, expect } from "@playwright/test";
  * Dialectic E2E: Graph Exercise (Creative Mode)
  *
  * This script:
- *  - Navigates to /start/new/idea?mode=creative to force creative mode
+ *  - Navigates to /?mode=creative to force creative mode
  *  - Clicks "Inspire me" to auto-fill a random question
  *  - Submits the ask form to create a new graph with real LLM streaming
  *  - Exercises key graph actions (Related Ideas, Pros/Cons, Deep Dive, Explore, Combine)
@@ -26,8 +26,8 @@ async function pause(ms: number) {
 }
 
 test("graph exercise end-to-end (creative mode)", async ({ page }) => {
-  // 1) Go to the new-idea route that shows the StartTutorial and ask form, forcing creative mode
-  await page.goto("/start/new/idea?mode=creative", {
+  // 1) Go to the home route that shows the start form, forcing creative mode
+  await page.goto("/?mode=creative", {
     waitUntil: "domcontentloaded",
   });
 
@@ -57,8 +57,8 @@ test("graph exercise end-to-end (creative mode)", async ({ page }) => {
   await expect(askFormSubmit).toBeVisible();
   await askFormSubmit.click();
 
-  // Wait for redirect to the new graph page (URL should no longer be /start\/new\/idea/)
-  await expect(page).not.toHaveURL(/\/start\/new\/idea/);
+  // Wait for redirect to the new graph page (URL should no longer be /)
+  await expect(page).not.toHaveURL(/^\/(\?.*)?$/);
   // And the URL should persist the mode
   await expect(page).toHaveURL(/mode=creative/);
 

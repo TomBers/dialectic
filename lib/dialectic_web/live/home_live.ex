@@ -1,10 +1,35 @@
 defmodule DialecticWeb.HomeLive do
   use DialecticWeb, :live_view
   alias Dialectic.DbActions.Graphs
+  alias Dialectic.Graph.GraphActions
+  alias Dialectic.Graph.Vertex
+  alias Dialectic.Responses.ModeServer
+  alias DialecticWeb.Utils.UserUtils
+
+  on_mount {DialecticWeb.UserAuth, :mount_current_user}
 
   @impl true
-  def mount(_params, _session, socket) do
+  def mount(params, _session, socket) do
     if connected?(socket), do: Phoenix.PubSub.subscribe(Dialectic.PubSub, "graphs")
+
+    user = UserUtils.current_identity(socket.assigns)
+    initial_content = params["initial_prompt"]
+
+    changeset =
+      GraphActions.create_new_node(user)
+      |> Vertex.changeset(if initial_content, do: %{content: initial_content}, else: %{})
+
+    prompt_mode =
+      case params do
+        %{"mode" => mode} when is_binary(mode) ->
+          case String.downcase(mode) do
+            "creative" -> "creative"
+            _ -> "structured"
+          end
+
+        _ ->
+          "structured"
+      end
 
     {:ok,
      assign(socket,
@@ -15,7 +40,12 @@ defmodule DialecticWeb.HomeLive do
        graphs: [],
        popular_tags: [],
        limit: 20,
-       generating: MapSet.new()
+       generating: MapSet.new(),
+       user: user,
+       form: to_form(changeset),
+       prompt_mode: prompt_mode,
+       ask_question: true,
+       graph_id: nil
      )}
   end
 
@@ -56,6 +86,40 @@ defmodule DialecticWeb.HomeLive do
   end
 
   @impl true
+  def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}}, socket) do
+    title = sanitize_graph_title(answer)
+
+    case Graphs.create_new_graph(title, socket.assigns[:current_user]) do
+      {:ok, _graph} ->
+        mode_str = socket.assigns[:prompt_mode] || "structured"
+        mode = if mode_str == "creative", do: :creative, else: :structured
+        ModeServer.set_mode(title, mode)
+
+        GraphManager.get_graph(title)
+        node = GraphManager.find_node_by_id(title, "1")
+
+        user_identity = UserUtils.current_identity(socket.assigns)
+        topic = "graph_update:#{title}"
+
+        GraphActions.ask_and_answer_origin(
+          {title, node, user_identity, topic},
+          answer
+        )
+
+        {:noreply, socket |> redirect(to: ~p"/#{title}")}
+
+      {:error, _changeset} ->
+        case Graphs.get_graph_by_title(title) do
+          nil ->
+            {:noreply, socket |> put_flash(:error, "Error creating graph")}
+
+          _graph ->
+            {:noreply, socket |> redirect(to: ~p"/#{title}")}
+        end
+    end
+  end
+
+  @impl true
   def handle_event("generate_tags", %{"title" => title}, socket) do
     case Graphs.get_graph_by_title(title) do
       nil ->
@@ -88,12 +152,22 @@ defmodule DialecticWeb.HomeLive do
      )}
   end
 
+  defp sanitize_graph_title(title) do
+    sanitized =
+      title
+      |> String.slice(0, 140)
+      |> String.trim()
+      |> String.replace("/", "-")
+
+    if sanitized == "", do: "untitled-idea", else: sanitized
+  end
+
   @impl true
   def render(assigns) do
     ~H"""
     <div class="min-h-screen bg-gray-50 text-gray-800">
-      <!-- Hero -->
-      <header class="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen overflow-hidden bg-[#3a0ca3] py-12">
+      <div class="relative min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center overflow-hidden">
+        <!-- Background Video with Overlay -->
         <div class="absolute inset-0 z-0">
           <video
             autoplay
@@ -108,137 +182,43 @@ defmodule DialecticWeb.HomeLive do
           <div class="absolute inset-0 bg-gradient-to-r from-[#3a0ca3]/90 to-[#4361ee]/90 mix-blend-multiply">
           </div>
         </div>
-        <div class="relative z-10">
-          <div class="mx-auto max-w-7xl px-6 lg:flex lg:items-baseline lg:justify-between lg:gap-8">
-            <h1 class="text-4xl lg:text-5xl font-bold tracking-tight text-white text-center lg:text-left">
-              MuDG
+
+        <div class="relative z-10 w-full max-w-2xl px-6 flex flex-col items-center space-y-8">
+          <div class="text-center space-y-4">
+            <h1 class="text-4xl font-bold tracking-tight text-white sm:text-5xl">
+              Start a new thought process
             </h1>
-            <h2 class="mt-6 lg:mt-0 text-4xl lg:text-5xl font-bold tracking-tight text-indigo-200 text-center lg:text-left">
-              Collaborative AI-augmented learning
-            </h2>
+            <p class="text-lg text-indigo-100">
+              Ask a question or state a premise to begin exploring a new dialectic map.
+            </p>
           </div>
-        </div>
-      </header>
-      
-    <!-- Why section -->
-      <section class="mx-auto max-w-7xl px-6">
-        <div class="mt-12">
-          <div class="relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-200">
-            <div
-              class="absolute inset-0 bg-gradient-to-r from-indigo-50 via-white to-sky-50"
-              aria-hidden="true"
+
+          <div class="w-full bg-white/80 backdrop-blur-md rounded-2xl shadow-xl border border-gray-200 p-6">
+            <.live_component module={DialecticWeb.NewIdeaFormComp} id="new-idea-form" form={@form} />
+          </div>
+
+          <div class="flex items-center gap-8 text-sm font-medium">
+            <.link
+              navigate={~p"/inspiration"}
+              class="flex items-center gap-2 text-indigo-100 hover:text-white transition-colors group"
             >
-            </div>
-
-            <div class="relative p-8 sm:p-10">
-              <div class="mx-auto max-w-3xl text-center">
-                <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Why MuDG?</h2>
-                <p class="mt-3 text-lg text-gray-600">
-                  A better way to explore complex topics: structured, collaborative, and easy to share.
-                </p>
-              </div>
-
-              <ul class="mt-8 grid gap-4 sm:grid-cols-3">
-                <li class="rounded-xl bg-white/60 p-5 transition hover:bg-white/80">
-                  <div class="flex items-start gap-3">
-                    <span class="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white">
-                      <.icon name="hero-sparkles" class="h-6 w-6 shrink-0 text-[#3a0ca3]" />
-                    </span>
-                    <div>
-                      <p class="font-semibold text-gray-900">See the structure of your thinking</p>
-                      <p class="mt-1 text-sm text-gray-600">
-                        Turn messy, linear chat into a visual map of how ideas branch, connect, and evolve, so you can dive deep without losing the bigger picture.
-                      </p>
-                    </div>
-                  </div>
-                </li>
-
-                <li class="rounded-xl bg-white/60 p-5 transition hover:bg-white/80">
-                  <div class="flex items-start gap-3">
-                    <span class="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white">
-                      <.icon name="hero-user-group" class="h-6 w-6 shrink-0 text-[#3e35c9]" />
-                    </span>
-                    <div>
-                      <p class="font-semibold text-gray-900">Explore together in real time</p>
-                      <p class="mt-1 text-sm text-gray-600">
-                        Invite others into the same MuDG to add questions, examples, and perspectives as you go, turning solitary learning into a shared exploration.
-                      </p>
-                    </div>
-                  </div>
-                </li>
-
-                <li class="rounded-xl bg-white/60 p-5 transition hover:bg-white/80">
-                  <div class="flex items-start gap-3">
-                    <span class="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white">
-                      <.icon name="hero-circle-stack" class="h-6 w-6 shrink-0 text-[#4361ee]" />
-                    </span>
-                    <div>
-                      <p class="font-semibold text-gray-900">Build on a living knowledge base</p>
-                      <p class="mt-1 text-sm text-gray-600">
-                        Reuse existing diagrams, follow others’ explorations, and connect your own ideas to what the community is already mapping.
-                      </p>
-                    </div>
-                  </div>
-                </li>
-              </ul>
-            </div>
+              <span class="p-1.5 rounded-lg bg-indigo-500/30 group-hover:bg-indigo-500/50 transition-colors">
+                <.icon name="hero-sparkles" class="w-4 h-4" />
+              </span>
+              Inspire me
+            </.link>
+            <.link
+              navigate={~p"/intro/how"}
+              class="flex items-center gap-2 text-indigo-100 hover:text-white transition-colors group"
+            >
+              <span class="p-1.5 rounded-lg bg-indigo-500/30 group-hover:bg-indigo-500/50 transition-colors">
+                <.icon name="hero-book-open" class="w-4 h-4" />
+              </span>
+              Read the guide
+            </.link>
           </div>
         </div>
-      </section>
-      
-    <!-- Create conversation -->
-      <section id="create-conv" class="mx-auto max-w-7xl px-6">
-        <div class="mt-10 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="rounded-xl bg-white ring-1 ring-gray-200 shadow-sm p-6 sm:p-8 flex flex-col justify-between">
-            <div>
-              <h2 class="text-2xl font-semibold text-gray-900">User Guide</h2>
-              <p class="mt-1 text-gray-600">
-                Learn how to navigate complex topics, discover connections, and use MuDG effectively.
-              </p>
-            </div>
-            <div class="mt-6">
-              <.link
-                href={~p"/intro/how"}
-                class="inline-flex items-center gap-2 rounded-lg bg-white border border-gray-300 px-5 py-3 font-semibold text-gray-700 shadow-sm hover:bg-gray-50 transition"
-              >
-                <.icon name="hero-book-open" class="h-5 w-5 text-gray-500" /> Read the Guide
-              </.link>
-            </div>
-          </div>
-
-          <div class="rounded-xl bg-white ring-1 ring-gray-200 shadow-sm p-6 sm:p-8 flex flex-col justify-between">
-            <div>
-              <h2 class="text-2xl font-semibold text-gray-900">Start a new exploration</h2>
-              <p class="mt-1 text-gray-600">
-                Create a MuDG to map your ideas clearly with context that stays visible.
-              </p>
-            </div>
-            <div class="mt-6">
-              <.link
-                navigate={~p"/start/new/idea"}
-                class="inline-flex items-center gap-2 rounded-lg bg-[#4361ee] px-5 py-3 font-semibold text-white shadow-sm hover:bg-[#3a56d9] transition"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-5 w-5 -ml-0.5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  aria-hidden="true"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 6v12m6-6H6"
-                  />
-                </svg>
-                New exploration
-              </.link>
-            </div>
-          </div>
-        </div>
-      </section>
+      </div>
       
     <!-- Explore Ideas (Masonry Grid) -->
       <section class="mx-auto max-w-7xl px-6" id="explore">
@@ -394,53 +374,6 @@ defmodule DialecticWeb.HomeLive do
           </div>
         </div>
       </section>
-      
-    <!-- Testimonial -->
-      <section class="mx-auto max-w-7xl px-6">
-        <div class="mt-16 rounded-xl bg-white ring-1 ring-gray-200 shadow-sm">
-          <div class="p-6 sm:p-10">
-            <div class="text-center">
-              <h2 class="text-2xl font-semibold text-gray-900">What our users say</h2>
-            </div>
-            <div class="mt-8 flex justify-center">
-              <figure class="max-w-3xl">
-                <svg
-                  class="h-8 w-8 text-[#4361ee] mx-auto opacity-80"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  aria-hidden="true"
-                >
-                  <path d="M7.17 6A5.17 5.17 0 0 0 2 11.17V21h8v-9.83A5.17 5.17 0 0 0 4.83 6H7.17zm10 0A5.17 5.17 0 0 0 12 11.17V21h8v-9.83A5.17 5.17 0 0 0 14.83 6h2.34z" />
-                </svg>
-                <blockquote class="mt-4 text-lg text-gray-700 italic">
-                  An amazing free specialised AI tool to explore philosophical ideas around pretty much anything — from academic questions to films to... hamsters! All at one's fingertips, in a matter of seconds, with in-built tools for a sophisticated, yet accessible dialectic. Bravo!
-                </blockquote>
-                <figcaption class="mt-6 flex items-center justify-center gap-3">
-                  <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#4361ee] text-white font-bold">
-                    AK
-                  </span>
-                  <div class="text-left">
-                    <div class="font-semibold text-gray-900">Alexandra Konoplyanik</div>
-                    <a
-                      href="https://pfalondon.org/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="text-sm text-[#4361ee] hover:text-[#3a56d9]"
-                    >
-                      Philosophy for All
-                    </a>
-                  </div>
-                </figcaption>
-              </figure>
-            </div>
-            <div class="mt-4 text-right">
-              <a href="#explore" class="text-sm font-medium text-[#4361ee] hover:text-[#3a56d9]">
-                Explore all →
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
     </div>
 
     <!-- Footer -->
@@ -451,12 +384,12 @@ defmodule DialecticWeb.HomeLive do
             Ready to transform your learning?
           </h2>
           <div class="flex flex-wrap justify-center gap-3">
-            <a
-              href="/start/new/idea"
+            <.link
+              navigate={~p"/"}
               class="inline-flex items-center rounded-full bg-white text-[#3a0ca3] px-4 py-1.5 text-sm font-semibold shadow-sm ring-1 ring-white/20 hover:bg-white/90 transition"
             >
               Start exploring
-            </a>
+            </.link>
             <a
               href="https://x.com/TJCBerman"
               target="_blank"
