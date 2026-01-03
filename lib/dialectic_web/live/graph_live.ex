@@ -16,271 +16,40 @@ defmodule DialecticWeb.GraphLive do
 
   def mount(%{"graph_name" => graph_id_uri} = params, _session, socket) do
     graph_id = URI.decode(graph_id_uri)
-
-    # Honor ?mode=... param by persisting per-graph mode before any actions
-    mode_param = Map.get(params, "mode")
-
-    if is_binary(mode_param) do
-      normalized =
-        case String.downcase(mode_param) do
-          "creative" -> :creative
-          "structured" -> :structured
-          _ -> nil
-        end
-
-      if normalized do
-        _ = Dialectic.Responses.ModeServer.set_mode(graph_id, normalized)
-      end
-    end
-
-    live_view_topic = "graph_update:#{socket.id}"
-    graph_topic = "graph_update:#{graph_id}"
-
     user = UserUtils.current_identity(socket.assigns)
 
-    highlight_param = Map.get(params, "highlight")
+    maybe_set_mode(graph_id, params)
 
-    {node_id, initial_highlight_id} =
-      if highlight_param do
-        case Highlights.get_highlight(highlight_param) do
-          %{mudg_id: ^graph_id, node_id: h_node_id, id: h_id} ->
-            {h_node_id, h_id}
+    case fetch_graph(socket.assigns[:current_user], graph_id, params) do
+      {:ok, {graph_struct, _}, graph_db} ->
+        # Ensure a main group exists
+        _ = ensure_main_group(graph_id)
 
-          _ ->
-            {Map.get(params, "node", "1"), nil}
-        end
-      else
-        {Map.get(params, "node", "1"), nil}
-      end
+        {node_id, initial_highlight_id} = resolve_target_node(graph_id, params)
 
-    socket = stream(socket, :presences, [])
+        node =
+          case GraphManager.best_node(graph_id, node_id) do
+            nil -> default_node()
+            v -> v
+          end
 
-    socket =
-      if connected?(socket) do
-        # Subscribe to the liveview events and the graph wide events
-        Phoenix.PubSub.subscribe(Dialectic.PubSub, live_view_topic)
-        Phoenix.PubSub.subscribe(Dialectic.PubSub, graph_topic)
-        Highlights.subscribe(graph_id)
-        DialecticWeb.Presence.track_user(user, %{id: user, graph_id: graph_id})
-        DialecticWeb.Presence.subscribe()
-
-        presences =
-          DialecticWeb.Presence.list_online_users(graph_id)
-
-        stream(socket, :presences, presences)
-      else
-        socket
-      end
-
-    # Check if the graph exists in the database before trying to get it
-    case Dialectic.DbActions.Graphs.get_graph_by_title(graph_id) do
-      nil ->
-        # If the graph doesn't exist, redirect to homepage with error
         socket =
           socket
-          |> put_flash(:error, "Graph not found: #{graph_id}")
-          |> redirect(to: ~p"/")
+          |> assign_defaults()
+          |> subscribe_to_topics(graph_id, user)
+          |> assign_graph_data(graph_db, graph_struct, node, graph_id, user)
+          |> handle_initial_highlight(initial_highlight_id)
 
         {:ok, socket}
 
-      graph_db ->
-        # Check Access
-        token_param = Map.get(params, "token")
+      {:error, error_message} ->
+        socket =
+          socket
+          |> put_flash(:error, error_message)
+          |> redirect(to: ~p"/")
 
-        has_access =
-          Dialectic.DbActions.Sharing.can_access?(socket.assigns[:current_user], graph_db) or
-            (is_binary(token_param) and is_binary(graph_db.share_token) and
-               Plug.Crypto.secure_compare(token_param, graph_db.share_token))
-
-        # Try to get the graph safely
-        result =
-          if has_access do
-            try do
-              {:ok, GraphManager.get_graph(graph_id)}
-            rescue
-              _e ->
-                # If there's an error fetching it, redirect home instead of creating a new graph
-                require Logger
-                Logger.error("Failed to load graph: #{graph_id}")
-                {:error, "Error loading graph: #{graph_id}"}
-            end
-          else
-            {:error, "You do not have permission to view this graph."}
-          end
-
-        case result do
-          {:ok, {graph_struct, _graph}} ->
-            # Continue with the normal flow
-
-            # Ensure a main group exists to make root togglable
-            _ = ensure_main_group(graph_id)
-
-            # Handle case when the node might not exist
-            node =
-              case GraphManager.best_node(graph_id, node_id) do
-                nil -> default_node()
-                v -> v
-              end
-
-            changeset = GraphActions.create_new_node(user) |> Vertex.changeset()
-
-            # TODO - can edit is going to be expaned to be more complex, but for the time being, just is not protected
-            can_edit = !graph_struct.is_locked
-            {nav_up, nav_down, nav_left, nav_right} = compute_nav_flags(graph_id, node)
-
-            socket =
-              assign(socket,
-                page_title: graph_struct.title,
-                og_image: DialecticWeb.Endpoint.url() <> ~p"/images/graph_live.webp",
-                page_description:
-                  "Explore the dialectic map for \"#{graph_struct.title}\" on MuDG.",
-                live_view_topic: live_view_topic,
-                graph_topic: graph_topic,
-                graph_struct: graph_struct,
-                graph_id: graph_id,
-                streaming_nodes: MapSet.new(),
-                f_graph: GraphManager.format_graph_json(graph_id),
-                node: node,
-                form: to_form(changeset),
-                show_combine: false,
-                user: user,
-                current_user: socket.assigns[:current_user],
-                exploration_stats: nil,
-                can_edit: can_edit,
-                node_menu_visible: true,
-                drawer_open: true,
-                right_panel_open: false,
-                bottom_menu_open: true,
-                graph_operation: "",
-                ask_question: true,
-                group_states: %{},
-                search_term: "",
-                search_results: [],
-                nav_can_up: nav_up,
-                nav_can_down: nav_down,
-                nav_can_left: nav_left,
-                nav_can_right: nav_right,
-                open_read_modal: false,
-                show_explore_modal: false,
-                explore_items: [],
-                explore_selected: [],
-                show_start_stream_modal: false,
-                show_share_modal: false,
-                work_streams: list_streams(graph_id),
-                prompt_mode: Atom.to_string(Dialectic.Responses.ModeServer.get_mode(graph_id)),
-                highlights: Highlights.list_highlights(mudg_id: graph_id),
-                show_login_modal: false
-              )
-
-            ask_param_raw = Map.get(params, "ask")
-
-            ask_param =
-              if is_binary(ask_param_raw),
-                do: URI.decode(String.replace(ask_param_raw, "+", " ")),
-                else: ask_param_raw
-
-            socket =
-              if connected?(socket) and is_binary(ask_param) and String.trim(ask_param) != "" do
-                case GraphActions.ask_and_answer_origin(
-                       graph_action_params(socket, node),
-                       ask_param
-                     ) do
-                  {_, node} when not is_nil(node) ->
-                    {_, s1} = update_graph(socket, {nil, node}, "answer")
-                    s1
-
-                  _ ->
-                    socket
-                end
-              else
-                socket
-              end
-
-            socket =
-              if connected?(socket) && initial_highlight_id do
-                push_event(socket, "scroll_to_highlight", %{id: initial_highlight_id})
-              else
-                socket
-              end
-
-            {:ok, socket}
-
-          {:error, error_message} ->
-            # Redirect to home with the error message
-            socket =
-              socket
-              |> put_flash(:error, error_message)
-              |> redirect(to: ~p"/")
-
-            {:ok, socket}
-        end
+        {:ok, socket}
     end
-  end
-
-  def mount(params, _session, socket) do
-    user = UserUtils.current_identity(socket.assigns)
-    initial_content = params["initial_prompt"]
-
-    changeset =
-      GraphActions.create_new_node(user)
-      |> Vertex.changeset(if initial_content, do: %{content: initial_content}, else: %{})
-
-    # Derive initial prompt mode from query param (?mode=creative) when no graph exists yet
-    initial_mode_str =
-      case params do
-        %{"mode" => mode} when is_binary(mode) ->
-          case String.downcase(mode) do
-            "creative" -> "creative"
-            _ -> "structured"
-          end
-
-        _ ->
-          "structured"
-      end
-
-    {:ok,
-     assign(socket,
-       live_view_topic: "graph_update:#{socket.id}",
-       graph_topic: nil,
-       graph_struct: nil,
-       graph_id: nil,
-       streaming_nodes: MapSet.new(),
-       f_graph: format_graph(nil),
-       node: %{
-         id: "start",
-         content: "# Ask a question to get started\nType a question below to create a new graph.",
-         children: [],
-         parents: []
-       },
-       form: to_form(changeset),
-       show_combine: false,
-       user: user,
-       current_user: socket.assigns[:current_user],
-       can_edit: true,
-       node_menu_visible: false,
-       drawer_open: true,
-       right_panel_open: false,
-       bottom_menu_open: true,
-       graph_operation: "",
-       ask_question: true,
-       group_states: %{},
-       search_term: "",
-       search_results: [],
-       nav_can_up: false,
-       nav_can_down: false,
-       nav_can_left: false,
-       nav_can_right: false,
-       open_read_modal: false,
-       show_explore_modal: false,
-       explore_items: [],
-       explore_selected: [],
-       show_start_stream_modal: false,
-       show_share_modal: false,
-       work_streams: [],
-       prompt_mode: initial_mode_str,
-       exploration_stats: nil,
-       show_login_modal: false
-     )}
   end
 
   defp default_node do
@@ -786,24 +555,6 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}} = _params, socket) do
     cond do
-      # If we're on the empty home state (no graph yet), create a new graph and redirect to it
-      is_nil(socket.assigns[:graph_id]) ->
-        title = sanitize_graph_title(answer)
-
-        case Graphs.create_new_graph(title, socket.assigns[:current_user]) do
-          {:ok, _graph} ->
-            mode_q = socket.assigns[:prompt_mode] || "structured"
-
-            {:noreply,
-             socket
-             |> redirect(
-               to: ~p"/#{title}?node=1&ask=#{URI.encode_www_form(answer)}&mode=#{mode_q}"
-             )}
-
-          {:error, _changeset} ->
-            {:noreply, socket |> put_flash(:error, "Error creating graph")}
-        end
-
       not socket.assigns.can_edit ->
         {:noreply, socket |> put_flash(:error, "This graph is locked")}
 
@@ -1284,5 +1035,153 @@ defmodule DialecticWeb.GraphLive do
     |> String.replace(~r/^\s*title\s*:?\s*/i, "")
     |> String.replace("**", "")
     |> String.trim()
+  end
+
+  defp maybe_set_mode(graph_id, params) do
+    mode_param = Map.get(params, "mode")
+
+    if is_binary(mode_param) do
+      normalized =
+        case String.downcase(mode_param) do
+          "creative" -> :creative
+          "structured" -> :structured
+          _ -> nil
+        end
+
+      if normalized do
+        _ = Dialectic.Responses.ModeServer.set_mode(graph_id, normalized)
+      end
+    end
+  end
+
+  defp fetch_graph(user, graph_id, params) do
+    case Dialectic.DbActions.Graphs.get_graph_by_title(graph_id) do
+      nil ->
+        {:error, "Graph not found: #{graph_id}"}
+
+      graph_db ->
+        token_param = Map.get(params, "token")
+
+        has_access =
+          Dialectic.DbActions.Sharing.can_access?(user, graph_db) or
+            (is_binary(token_param) and is_binary(graph_db.share_token) and
+               Plug.Crypto.secure_compare(token_param, graph_db.share_token))
+
+        if has_access do
+          try do
+            {:ok, GraphManager.get_graph(graph_id), graph_db}
+          rescue
+            _e ->
+              require Logger
+              Logger.error("Failed to load graph: #{graph_id}")
+              {:error, "Error loading graph: #{graph_id}"}
+          end
+        else
+          {:error, "You do not have permission to view this graph."}
+        end
+    end
+  end
+
+  defp resolve_target_node(graph_id, params) do
+    highlight_param = Map.get(params, "highlight")
+
+    if highlight_param do
+      case Highlights.get_highlight(highlight_param) do
+        %{mudg_id: ^graph_id, node_id: h_node_id, id: h_id} ->
+          {h_node_id, h_id}
+
+        _ ->
+          {Map.get(params, "node", "1"), nil}
+      end
+    else
+      {Map.get(params, "node", "1"), nil}
+    end
+  end
+
+  defp assign_defaults(socket) do
+    user = UserUtils.current_identity(socket.assigns)
+
+    assign(socket,
+      user: user,
+      current_user: socket.assigns[:current_user],
+      streaming_nodes: MapSet.new(),
+      show_combine: false,
+      drawer_open: true,
+      right_panel_open: false,
+      bottom_menu_open: true,
+      graph_operation: "",
+      ask_question: true,
+      group_states: %{},
+      search_term: "",
+      search_results: [],
+      nav_can_up: false,
+      nav_can_down: false,
+      nav_can_left: false,
+      nav_can_right: false,
+      open_read_modal: false,
+      show_explore_modal: false,
+      explore_items: [],
+      explore_selected: [],
+      show_start_stream_modal: false,
+      show_share_modal: false,
+      work_streams: [],
+      exploration_stats: nil,
+      show_login_modal: false
+    )
+  end
+
+  defp subscribe_to_topics(socket, graph_id, user) do
+    if connected?(socket) do
+      live_view_topic = "graph_update:#{socket.id}"
+      graph_topic = "graph_update:#{graph_id}"
+
+      Phoenix.PubSub.subscribe(Dialectic.PubSub, live_view_topic)
+      Phoenix.PubSub.subscribe(Dialectic.PubSub, graph_topic)
+      Highlights.subscribe(graph_id)
+      DialecticWeb.Presence.track_user(user, %{id: user, graph_id: graph_id})
+      DialecticWeb.Presence.subscribe()
+
+      presences = DialecticWeb.Presence.list_online_users(graph_id)
+
+      stream(socket, :presences, presences)
+    else
+      stream(socket, :presences, [])
+    end
+  end
+
+  defp assign_graph_data(socket, _graph_db, graph_struct, node, graph_id, user) do
+    changeset = GraphActions.create_new_node(user) |> Vertex.changeset()
+    can_edit = !graph_struct.is_locked
+    {nav_up, nav_down, nav_left, nav_right} = compute_nav_flags(graph_id, node)
+
+    assign(socket,
+      page_title: graph_struct.title,
+      og_image: DialecticWeb.Endpoint.url() <> ~p"/images/graph_live.webp",
+      page_description: "Explore the dialectic map for \"#{graph_struct.title}\" on MuDG.",
+      live_view_topic: "graph_update:#{socket.id}",
+      graph_topic: "graph_update:#{graph_id}",
+      graph_struct: graph_struct,
+      graph_id: graph_id,
+      f_graph: GraphManager.format_graph_json(graph_id),
+      node: node,
+      form: to_form(changeset),
+      can_edit: can_edit,
+      node_menu_visible: true,
+      nav_can_up: nav_up,
+      nav_can_down: nav_down,
+      nav_can_left: nav_left,
+      nav_can_right: nav_right,
+      work_streams: list_streams(graph_id),
+      prompt_mode: Atom.to_string(Dialectic.Responses.ModeServer.get_mode(graph_id)),
+      highlights: Highlights.list_highlights(mudg_id: graph_id)
+    )
+  end
+
+  defp handle_initial_highlight(socket, highlight_id) do
+    if connected?(socket) && highlight_id do
+      push_event(socket, "scroll_to_highlight", %{id: highlight_id})
+    else
+      socket
+    end
   end
 end

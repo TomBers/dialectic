@@ -4,3 +4,5 @@ Idea - completely copy Git semantics.
 
 
 Deep research on steroids!!
+
+* Maybe clean up initialisation code
