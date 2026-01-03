@@ -123,8 +123,10 @@ defmodule Dialectic.Graph.Vertex do
   end
 
   def add_node_context(node_id, graph) do
-    {_, dat} = :digraph.vertex(graph, node_id)
-    dat.content
+    case :digraph.vertex(graph, node_id) do
+      {_id, dat} -> dat.content
+      _ -> ""
+    end
   end
 
   def collect_parents(graph, vertex, allowed_parent) do
@@ -276,19 +278,33 @@ defmodule Dialectic.Graph.Vertex do
 
   def find_parents(graph, vertex) do
     :digraph.in_edges(graph, vertex.id)
-    |> Enum.map(fn edge_id ->
-      {_edge, parent_id, _child_id, _label} = :digraph.edge(graph, edge_id)
-      {_id, vertex} = :digraph.vertex(graph, parent_id)
-      vertex
+    |> Enum.flat_map(fn edge_id ->
+      case :digraph.edge(graph, edge_id) do
+        {_edge, parent_id, _child_id, _label} ->
+          case :digraph.vertex(graph, parent_id) do
+            {_id, vertex} -> [vertex]
+            _ -> []
+          end
+
+        _ ->
+          []
+      end
     end)
   end
 
   def find_children(graph, vertex) do
     :digraph.out_edges(graph, vertex.id)
-    |> Enum.map(fn edge_id ->
-      {_edge, _parent_id, child_id, _label} = :digraph.edge(graph, edge_id)
-      {_id, vertex} = :digraph.vertex(graph, child_id)
-      vertex
+    |> Enum.flat_map(fn edge_id ->
+      case :digraph.edge(graph, edge_id) do
+        {_edge, _parent_id, child_id, _label} ->
+          case :digraph.vertex(graph, child_id) do
+            {_id, vertex} -> [vertex]
+            _ -> []
+          end
+
+        _ ->
+          []
+      end
     end)
   end
 
@@ -302,60 +318,66 @@ defmodule Dialectic.Graph.Vertex do
     nodes =
       Enum.reduce(vertices, [], fn vertex, acc ->
         # Get the vertex label/data from the digraph
-        {vid, dat} = :digraph.vertex(graph, vertex)
+        case :digraph.vertex(graph, vertex) do
+          {vid, dat} ->
+            # Create cytoscape node format
+            case dat.deleted do
+              true ->
+                acc
 
-        # Create cytoscape node format
-        case dat.deleted do
-          true ->
-            acc
-
-          false ->
-            acc ++
-              [
-                %{
-                  classes: dat.class,
-                  data:
+              false ->
+                acc ++
+                  [
                     %{
-                      id: vid,
-                      parent: Map.get(dat, :parent, ""),
-                      content: dat.content
+                      classes: dat.class,
+                      data:
+                        %{
+                          id: vid,
+                          parent: Map.get(dat, :parent, ""),
+                          content: dat.content
+                        }
+                        |> then(fn m ->
+                          if Map.get(dat, :compound, false),
+                            do: Map.put(m, :compound, true),
+                            else: m
+                        end)
                     }
-                    |> then(fn m ->
-                      if Map.get(dat, :compound, false), do: Map.put(m, :compound, true), else: m
-                    end)
-                }
-              ]
+                  ]
+            end
+
+          _ ->
+            acc
         end
       end)
 
     # Convert edges to cytoscape edges format
     edges =
       Enum.reduce(edges, [], fn edge, acc ->
-        {_, v1, v2, _} = :digraph.edge(graph, edge)
+        with {_, v1, v2, _} <- :digraph.edge(graph, edge),
+             {source_id, s_dat} <- :digraph.vertex(graph, v1),
+             {target_id, t_dat} <- :digraph.vertex(graph, v2) do
+          # Create edge ID from source and target names
+          edge_id = source_id <> "_" <> target_id
 
-        # Get vertex data for source and target
-        {source_id, s_dat} = :digraph.vertex(graph, v1)
-        {target_id, t_dat} = :digraph.vertex(graph, v2)
-
-        # Create edge ID from source and target names
-        edge_id = source_id <> "_" <> target_id
-
-        # Create cytoscape edge format
-        case !(s_dat.deleted or t_dat.deleted) do
-          true ->
-            acc ++
-              [
-                %{
-                  data: %{
-                    id: edge_id,
-                    source: source_id,
-                    target: target_id
+          # Create cytoscape edge format
+          case !(s_dat.deleted or t_dat.deleted) do
+            true ->
+              acc ++
+                [
+                  %{
+                    data: %{
+                      id: edge_id,
+                      source: source_id,
+                      target: target_id
+                    }
                   }
-                }
-              ]
+                ]
 
-          false ->
-            acc
+            false ->
+              acc
+          end
+        else
+          _ -> acc
         end
       end)
 
