@@ -41,7 +41,7 @@ defmodule DialecticWeb.InspirationLive do
   end
 
   def handle_event("select_question", %{"question" => question}, socket) do
-    {:noreply, push_navigate(socket, to: ~p"/start/new/idea?#{[initial_prompt: question]}")}
+    {:noreply, push_navigate(socket, to: ~p"/?#{[initial_prompt: question]}")}
   end
 
   defp parse_slider_value(value, default) when is_binary(value) do

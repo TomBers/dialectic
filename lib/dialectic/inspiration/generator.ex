@@ -32,13 +32,15 @@ defmodule Dialectic.Inspiration.Generator do
     """
 
     case make_request(provider_mod, system_prompt, preferences_prompt) do
-      {:ok, text} ->
+      {:ok, resp} ->
+        text = extract_text(resp)
+
         case parse_response(text) do
           {:ok, questions} ->
             {:ok, questions}
 
           {:error, _} = err ->
-            Logger.warning("Inspiration generator failed to parse response: #{text}")
+            Logger.warning("Inspiration generator failed to parse response: #{inspect(resp)}")
             err
         end
 
@@ -49,6 +51,8 @@ defmodule Dialectic.Inspiration.Generator do
   end
 
   defp parse_response(text) do
+    text = to_string(text || "")
+
     # Cleanup markdown code blocks if present
     clean_text =
       text
@@ -75,11 +79,17 @@ defmodule Dialectic.Inspiration.Generator do
   end
 
   defp make_request(provider_mod, system_prompt, user_prompt) do
+    # Validate configuration early to surface clear messages
     case Dialectic.LLM.Provider.api_key(provider_mod) do
-      {:ok, api_key} ->
-        model_spec = Dialectic.LLM.Provider.model_spec(provider_mod)
-        {_, receive_timeout} = Dialectic.LLM.Provider.timeouts(provider_mod)
-        finch_name = Dialectic.LLM.Provider.finch_name(provider_mod)
+      {:ok, _api_key} ->
+        # Use a faster model for inspiration generation, regardless of the app-wide provider model.
+        # Gemini 2.5 Flash-Lite is optimized for low-latency, lightweight generations like this.
+        model_spec =
+          case provider_mod.id() do
+            :google -> {:google, [model: "gemini-2.5-flash-lite"]}
+            _ -> Dialectic.LLM.Provider.model_spec(provider_mod)
+          end
+
         provider_options = provider_mod.provider_options()
 
         ctx =
@@ -88,39 +98,30 @@ defmodule Dialectic.Inspiration.Generator do
             ReqLLM.Context.user(user_prompt)
           ])
 
-        case ReqLLM.stream_text(
-               model_spec,
-               ctx,
-               api_key: api_key,
-               finch_name: finch_name,
-               provider_options: provider_options,
-               receive_timeout: receive_timeout
-             ) do
-          {:ok, stream_resp} ->
-            text =
-              stream_resp
-              |> ReqLLM.StreamResponse.tokens()
-              |> Enum.reduce("", fn token, acc ->
-                chunk =
-                  case token do
-                    t when is_binary(t) -> t
-                    t when is_list(t) -> IO.iodata_to_binary(t)
-                    t -> to_string(t)
-                  end
-
-                acc <> chunk
-              end)
-
-            {:ok, text}
-
-          {:error, _} = error ->
-            error
-        end
+        # Non-streaming: request the full response in one shot.
+        #
+        # IMPORTANT:
+        # - ReqLLM non-streaming generation validates options strictly.
+        # - Credentials should be provided via environment/config (e.g. GOOGLE_API_KEY / OPENAI_API_KEY)
+        #   rather than passing per-request credential keys.
+        # - `:finch_name` is not a supported option for ReqLLM generation calls.
+        ReqLLM.generate_text(
+          model_spec,
+          ctx,
+          provider_options: provider_options
+        )
 
       {:error, _} = error ->
         error
     end
   end
+
+  defp extract_text(%ReqLLM.Response{} = resp) do
+    ReqLLM.Response.text(resp)
+  end
+
+  defp extract_text(text) when is_binary(text), do: text
+  defp extract_text(other), do: to_string(other || "")
 
   defp get_provider do
     case System.get_env("LLM_PROVIDER") do

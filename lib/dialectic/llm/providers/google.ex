@@ -3,7 +3,7 @@ defmodule Dialectic.LLM.Providers.Google do
   Google (Gemini) provider for the `Dialectic.LLM.Provider` behaviour.
 
   Simplified configuration:
-  - Required: GEMINI_API_KEY
+  - Required: GOOGLE_API_KEY (ReqLLM also supports GOOGLE_API_KEY automatically)
   - Hardcoded model: "gemini-2.0-flash-lite"
   - provider_options: []
 
@@ -25,7 +25,9 @@ defmodule Dialectic.LLM.Providers.Google do
 
   @impl true
   def api_key do
-    System.get_env("GEMINI_API_KEY")
+    # ReqLLM expects Google credentials via `GOOGLE_API_KEY` (or config :req_llm, :google_api_key).
+    # Keep this aligned so both streaming and non-streaming calls work consistently.
+    System.get_env("GOOGLE_API_KEY")
   end
 
   @impl true

@@ -1,8 +1,7 @@
 defmodule DialecticWeb.PageController do
   use DialecticWeb, :controller
 
-  alias Dialectic.Graph.{Vertex, Serialise}
-  alias Dialectic.DbActions.{Notes}
+  alias Dialectic.DbActions.Notes
 
   def my_graphs(conn, _params) do
     stats = Notes.get_my_stats(conn.assigns.current_user)
