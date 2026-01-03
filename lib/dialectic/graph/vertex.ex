@@ -1,4 +1,6 @@
 defmodule Dialectic.Graph.Vertex do
+  require Logger
+
   @derive {Jason.Encoder, only: [:id, :content, :class, :user, :noted_by, :deleted]}
   @valid_classes [
     "thesis",
@@ -277,35 +279,51 @@ defmodule Dialectic.Graph.Vertex do
   end
 
   def find_parents(graph, vertex) do
-    :digraph.in_edges(graph, vertex.id)
-    |> Enum.flat_map(fn edge_id ->
-      case :digraph.edge(graph, edge_id) do
-        {_edge, parent_id, _child_id, _label} ->
-          case :digraph.vertex(graph, parent_id) do
-            {_id, vertex} -> [vertex]
-            _ -> []
-          end
+    parents =
+      :digraph.in_edges(graph, vertex.id)
+      |> Enum.flat_map(fn edge_id ->
+        case :digraph.edge(graph, edge_id) do
+          {_edge, parent_id, _child_id, _label} ->
+            case :digraph.vertex(graph, parent_id) do
+              {_id, v} -> [v]
+              _ -> []
+            end
 
-        _ ->
-          []
-      end
-    end)
+          _ ->
+            []
+        end
+      end)
+
+    if parents == [] and :digraph.in_degree(graph, vertex.id) > 0 do
+      Logger.warning("Vertex #{vertex.id} has in-degree > 0 but find_parents returned empty list")
+    end
+
+    parents
   end
 
   def find_children(graph, vertex) do
-    :digraph.out_edges(graph, vertex.id)
-    |> Enum.flat_map(fn edge_id ->
-      case :digraph.edge(graph, edge_id) do
-        {_edge, _parent_id, child_id, _label} ->
-          case :digraph.vertex(graph, child_id) do
-            {_id, vertex} -> [vertex]
-            _ -> []
-          end
+    children =
+      :digraph.out_edges(graph, vertex.id)
+      |> Enum.flat_map(fn edge_id ->
+        case :digraph.edge(graph, edge_id) do
+          {_edge, _parent_id, child_id, _label} ->
+            case :digraph.vertex(graph, child_id) do
+              {_id, v} -> [v]
+              _ -> []
+            end
 
-        _ ->
-          []
-      end
-    end)
+          _ ->
+            []
+        end
+      end)
+
+    if children == [] and :digraph.out_degree(graph, vertex.id) > 0 do
+      Logger.warning(
+        "Vertex #{vertex.id} has out-degree > 0 but find_children returned empty list"
+      )
+    end
+
+    children
   end
 
   def to_cytoscape_format(graph) do

@@ -526,17 +526,21 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("node_move", %{"direction" => direction}, socket) do
-    {:noreply, updated_socket} =
-      update_graph(
-        socket,
-        {nil, GraphActions.move(graph_action_params(socket), direction)},
-        "node_clicked"
-      )
+    if socket.assigns.node do
+      {:noreply, updated_socket} =
+        update_graph(
+          socket,
+          {nil, GraphActions.move(graph_action_params(socket), direction)},
+          "node_clicked"
+        )
 
-    # Preserve and re-apply panel/menu state across node moves
-    updated_socket = reapply_right_panel_state(socket, updated_socket)
+      # Preserve and re-apply panel/menu state across node moves
+      updated_socket = reapply_right_panel_state(socket, updated_socket)
 
-    {:noreply, push_event(updated_socket, "center_node", %{id: updated_socket.assigns.node.id})}
+      {:noreply, push_event(updated_socket, "center_node", %{id: updated_socket.assigns.node.id})}
+    else
+      {:noreply, socket}
+    end
   end
 
   def handle_event("answer", %{"vertex" => %{"content" => ""}}, socket), do: {:noreply, socket}
