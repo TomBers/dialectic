@@ -637,11 +637,14 @@ defmodule DialecticWeb.GraphLive do
       node2 = GraphManager.find_node_by_id(socket.assigns.graph_id, new_node.id)
       DbWorker.save_graph(socket.assigns.graph_id)
 
-      if Map.get(params, "auto_answer") in ["on", "true", "1"] do
-        GraphActions.answer(graph_action_params(socket, node2))
-      end
+      final_node =
+        if Map.get(params, "auto_answer") in ["on", "true", "1"] do
+          GraphActions.answer(graph_action_params(socket, node2))
+        else
+          node2
+        end
 
-      update_graph(socket, {nil, node2}, "start_stream")
+      update_graph(socket, {nil, final_node}, "start_stream")
     end
   end
 
