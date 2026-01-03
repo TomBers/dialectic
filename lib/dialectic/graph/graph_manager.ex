@@ -199,7 +199,7 @@ defmodule GraphManager do
         safe = to_string(data)
         updated_vertex = %{vertex | content: vertex.content <> safe}
         :digraph.add_vertex(graph, node_id, updated_vertex)
-        {:reply, Vertex.add_relatives(updated_vertex, graph), {graph_struct, graph}}
+        {:reply, updated_vertex, {graph_struct, graph}}
 
       false ->
         {:reply, nil, {graph_struct, graph}}
@@ -211,7 +211,7 @@ defmodule GraphManager do
       {_id, vertex} ->
         updated_vertex = %{vertex | content: to_string(content)}
         :digraph.add_vertex(graph, node_id, updated_vertex)
-        {:reply, Vertex.add_relatives(updated_vertex, graph), {graph_struct, graph}}
+        {:reply, updated_vertex, {graph_struct, graph}}
 
       false ->
         {:reply, nil, {graph_struct, graph}}
@@ -278,23 +278,34 @@ defmodule GraphManager do
     {:reply, chain, {graph_struct, graph}}
   end
 
-  def handle_call({:move, {node, direction}}, _, {graph_struct, graph}) do
-    updated_vertex =
-      case direction do
-        "up" ->
-          Siblings.up(node)
+  def handle_call({:move, {node_or_id, direction}}, _, {graph_struct, graph}) do
+    node_id = if is_map(node_or_id), do: node_or_id.id, else: node_or_id
 
-        "down" ->
-          Siblings.down(node)
+    case :digraph.vertex(graph, node_id) do
+      {^node_id, raw_vertex} ->
+        # Use authoritative state from graph for navigation
+        current_node = Vertex.add_relatives(raw_vertex, graph)
 
-        "left" ->
-          Siblings.left(node, graph)
+        next_node =
+          case direction do
+            "up" ->
+              Siblings.up(current_node)
 
-        "right" ->
-          Siblings.right(node, graph)
-      end
+            "down" ->
+              Siblings.down(current_node)
 
-    {:reply, Vertex.add_relatives(updated_vertex, graph), {graph_struct, graph}}
+            "left" ->
+              Siblings.left(current_node, graph)
+
+            "right" ->
+              Siblings.right(current_node, graph)
+          end
+
+        {:reply, Vertex.add_relatives(next_node, graph), {graph_struct, graph}}
+
+      false ->
+        {:reply, nil, {graph_struct, graph}}
+    end
   end
 
   def handle_call({:create_group, {group_title, child_ids}}, _, {graph_struct, graph}) do

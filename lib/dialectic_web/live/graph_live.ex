@@ -526,17 +526,21 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("node_move", %{"direction" => direction}, socket) do
-    {:noreply, updated_socket} =
-      update_graph(
-        socket,
-        {nil, GraphActions.move(graph_action_params(socket), direction)},
-        "node_clicked"
-      )
+    if socket.assigns.node do
+      {:noreply, updated_socket} =
+        update_graph(
+          socket,
+          {nil, GraphActions.move(graph_action_params(socket), direction)},
+          "node_clicked"
+        )
 
-    # Preserve and re-apply panel/menu state across node moves
-    updated_socket = reapply_right_panel_state(socket, updated_socket)
+      # Preserve and re-apply panel/menu state across node moves
+      updated_socket = reapply_right_panel_state(socket, updated_socket)
 
-    {:noreply, push_event(updated_socket, "center_node", %{id: updated_socket.assigns.node.id})}
+      {:noreply, push_event(updated_socket, "center_node", %{id: updated_socket.assigns.node.id})}
+    else
+      {:noreply, socket}
+    end
   end
 
   def handle_event("answer", %{"vertex" => %{"content" => ""}}, socket), do: {:noreply, socket}
@@ -633,11 +637,14 @@ defmodule DialecticWeb.GraphLive do
       node2 = GraphManager.find_node_by_id(socket.assigns.graph_id, new_node.id)
       DbWorker.save_graph(socket.assigns.graph_id)
 
-      if Map.get(params, "auto_answer") in ["on", "true", "1"] do
-        GraphActions.answer(graph_action_params(socket, node2))
-      end
+      final_node =
+        if Map.get(params, "auto_answer") in ["on", "true", "1"] do
+          GraphActions.answer(graph_action_params(socket, node2))
+        else
+          node2
+        end
 
-      update_graph(socket, {nil, node2}, "start_stream")
+      update_graph(socket, {nil, final_node}, "start_stream")
     end
   end
 
@@ -718,16 +725,15 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_info({:stream_chunk, updated_vertex, :node_id, node_id}, socket) do
     # This is the streamed LLM response into a node
-    Logger.debug(fn ->
-      "[GraphLive] stream_chunk node_id=#{inspect(node_id)} current=#{inspect(socket.assigns.node && Map.get(socket.assigns.node, :id))} content_len=#{String.length(to_string(Map.get(updated_vertex, :content, "")))}"
-    end)
-
     if socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
       label = extract_title(Map.get(updated_vertex, :content, ""))
 
+      # Merge content update while preserving relatives (parents/children)
+      node = %{socket.assigns.node | content: updated_vertex.content}
+
       socket =
         socket
-        |> assign(node: updated_vertex)
+        |> assign(node: node)
         |> push_event("update_node_label", %{id: node_id, label: label})
 
       {:noreply, socket}

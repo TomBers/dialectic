@@ -56,6 +56,10 @@ defmodule DialecticWeb.Live.ModalComp do
   def render(assigns) do
     ~H"""
     <div>
+      <span phx-window-keydown="node_move" phx-key="ArrowUp" phx-value-direction="up"></span>
+      <span phx-window-keydown="node_move" phx-key="ArrowDown" phx-value-direction="down"></span>
+      <span phx-window-keydown="node_move" phx-key="ArrowLeft" phx-value-direction="left"></span>
+      <span phx-window-keydown="node_move" phx-key="ArrowRight" phx-value-direction="right"></span>
       <.modal
         on_cancel={JS.push("modal_closed")}
         class={ColUtils.message_border_class(Map.get(@node || %{}, :class, "default")) <> " modal-responsive"}
@@ -68,16 +72,8 @@ defmodule DialecticWeb.Live.ModalComp do
           phx-hook="TextSelectionHook"
           data-node-id={Map.get(@node || %{}, :id, "")}
         >
-          <%= if @show do %>
-            <span phx-window-keydown="node_move" phx-key="ArrowUp" phx-value-direction="up"></span>
-            <span phx-window-keydown="node_move" phx-key="ArrowDown" phx-value-direction="down">
-            </span>
-            <span phx-window-keydown="node_move" phx-key="ArrowLeft" phx-value-direction="left">
-            </span>
-            <span phx-window-keydown="node_move" phx-key="ArrowRight" phx-value-direction="right">
-            </span>
-          <% end %>
-          <!-- Directional navigation buttons -->
+          
+    <!-- Directional navigation buttons -->
           <!-- Top sticky bar (Parent) -->
           <div class="sticky top-0 z-10 flex justify-center bg-white/90 backdrop-blur px-2 py-1 md:py-2 border-b border-gray-100">
             <button
