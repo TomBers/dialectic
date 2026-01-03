@@ -6,6 +6,8 @@ defmodule DialecticWeb.NewIdeaLive do
   alias Dialectic.Graph.Vertex
   alias DialecticWeb.Utils.UserUtils
 
+  on_mount {DialecticWeb.UserAuth, :mount_current_user}
+
   @impl true
   def mount(params, _session, socket) do
     user = UserUtils.current_identity(socket.assigns)
@@ -101,7 +103,7 @@ defmodule DialecticWeb.NewIdeaLive do
   def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}}, socket) do
     title = sanitize_graph_title(answer)
 
-    case Graphs.create_new_graph(title, socket.assigns[:user]) do
+    case Graphs.create_new_graph(title, socket.assigns[:current_user]) do
       {:ok, _graph} ->
         mode_q = socket.assigns[:prompt_mode] || "structured"
 
@@ -118,10 +120,8 @@ defmodule DialecticWeb.NewIdeaLive do
 
   defp sanitize_graph_title(title) do
     title
-    |> String.slice(0, 100)
+    |> String.slice(0, 200)
     |> String.trim()
-    |> String.replace(~r/[^a-zA-Z0-9\s-_]/, "")
-    |> String.replace(~r/\s+/, "-")
-    |> String.downcase()
+    |> String.replace("/", "-")
   end
 end
