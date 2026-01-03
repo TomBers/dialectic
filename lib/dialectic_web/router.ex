@@ -35,7 +35,7 @@ defmodule DialecticWeb.Router do
     get "/intro/how", PageController, :guide
 
     live "/inspiration", InspirationLive
-    live "/start/new/idea", GraphLive
+    live "/start/new/idea", NewIdeaLive
     live "/:graph_name", GraphLive
     live "/:graph_name/linear", LinearGraphLive
     live "/:graph_name/story/:node_id", StoryLive
