@@ -3,19 +3,13 @@ defmodule Dialectic.Responses.Utils do
   Minimal utilities for streaming updates.
 
   This module intentionally does not implement any request parsing.
-  Upstream callers should pass plaintext tokens/chunks to `process_chunk/5`,
-  which appends them to the node and broadcasts to LiveView subscribers.
+  Upstream callers should pass plaintext tokens/chunks to `set_node_content/4`,
+  which sets the content on the node and broadcasts to LiveView subscribers.
   """
 
   require Logger
 
-  @spec process_chunk(
-          graph :: any(),
-          node :: any(),
-          data :: iodata(),
-          live_view_topic :: term()
-        ) :: :ok
-  def process_chunk(graph, node, data, live_view_topic) do
+  def set_node_content(graph, node, data, live_view_topic) do
     text =
       cond do
         is_binary(data) -> data
@@ -23,20 +17,16 @@ defmodule Dialectic.Responses.Utils do
         true -> to_string(data)
       end
 
-    if text == "" do
-      :ok
-    else
-      updated_vertex = GraphManager.update_vertex(graph, node, text)
+    updated_vertex = GraphManager.set_node_content(graph, node, text)
 
-      if updated_vertex do
-        Phoenix.PubSub.broadcast(
-          Dialectic.PubSub,
-          live_view_topic,
-          {:stream_chunk, updated_vertex, :node_id, node}
-        )
-      end
-
-      :ok
+    if updated_vertex do
+      Phoenix.PubSub.broadcast(
+        Dialectic.PubSub,
+        live_view_topic,
+        {:stream_chunk, updated_vertex, :node_id, node}
+      )
     end
+
+    :ok
   end
 end
