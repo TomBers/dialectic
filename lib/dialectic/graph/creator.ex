@@ -81,6 +81,8 @@ defmodule Dialectic.Graph.Creator do
     decoded_q = URI.decode_www_form(to_string(question))
     new_content = "## " <> decoded_q
     GraphManager.set_node_content(title, node.id, new_content)
+    # Explicitly return the updated node struct
+    GraphManager.find_node_by_id(title, node.id)
   end
 
   defp create_answer_node_struct(title, parent, user_identity) do
