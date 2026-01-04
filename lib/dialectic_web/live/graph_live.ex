@@ -4,7 +4,6 @@ defmodule DialecticWeb.GraphLive do
   alias Dialectic.Graph.{Vertex, GraphActions, Siblings}
   alias DialecticWeb.{CombineComp, NodeComp}
   alias Dialectic.DbActions.DbWorker
-  alias Dialectic.DbActions.Graphs
   alias DialecticWeb.Utils.UserUtils
   alias Dialectic.Highlights
 

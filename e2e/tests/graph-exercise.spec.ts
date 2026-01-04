@@ -4,7 +4,7 @@ import { test, expect } from "@playwright/test";
  * Dialectic E2E: Graph Exercise
  *
  * This script:
- *  - Navigates to /start/new/idea
+ *  - Navigates to /
  *  - Clicks "Inspire me" to auto-fill a random question
  *  - Submits the ask form to create a new graph with real LLM streaming
  *  - Exercises key graph actions (Related Ideas, Pros/Cons, Deep Dive, Explore, Combine)
@@ -12,9 +12,7 @@ import { test, expect } from "@playwright/test";
  *  - Opens the reader and sends arrow keys for node movement
  *
  * Notes:
- *  - Uses only public pages and UI elements.
- *  - No assertions are made on content; waits are included so you can visually confirm progress.
- *  - Assumes the Phoenix server is running locally and OPENAI_API_KEY is set on the server side.
+ *  - This is intended to be run against a running dev server.
  */
 
 const PAUSE = Number(process.env.E2E_PAUSE_MS || 3000);
@@ -25,8 +23,8 @@ async function pause(ms: number) {
 }
 
 test("graph exercise end-to-end", async ({ page }) => {
-  // 1) Go to the new-idea route that shows the StartTutorial and ask form
-  await page.goto("/start/new/idea", { waitUntil: "domcontentloaded" });
+  // 1) Go to the home route that shows the start form
+  await page.goto("/", { waitUntil: "domcontentloaded" });
 
   // Make sure the ask input is visible
   const askInput = page.locator("#global-chat-input");
@@ -49,8 +47,8 @@ test("graph exercise end-to-end", async ({ page }) => {
   await expect(askFormSubmit).toBeVisible();
   await askFormSubmit.click();
 
-  // Wait for redirect to the new graph page (URL should no longer be /start/new/idea)
-  await expect(page).not.toHaveURL(/\/start\/new\/idea/);
+  // Wait for redirect to the new graph page (URL should no longer be /)
+  await expect(page).not.toHaveURL(/^\/(\?.*)?$/);
 
   // Allow time for initial streaming tokens to show
   await pause(LONG_PAUSE);
