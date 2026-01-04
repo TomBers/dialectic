@@ -5,6 +5,7 @@ defmodule DialecticWeb.HomeLive do
   alias Dialectic.Graph.Vertex
   alias Dialectic.Responses.ModeServer
   alias DialecticWeb.Utils.UserUtils
+  require Logger
 
   on_mount {DialecticWeb.UserAuth, :mount_current_user}
 
@@ -88,7 +89,7 @@ defmodule DialecticWeb.HomeLive do
 
   @impl true
   def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}}, socket) do
-    title = sanitize_graph_title(answer)
+    title = Graphs.sanitize_title(answer)
 
     if Graphs.get_graph_by_title(title) do
       {:noreply, redirect(socket, to: ~p"/#{title}")}
@@ -141,8 +142,10 @@ defmodule DialecticWeb.HomeLive do
   end
 
   def handle_async(:create_graph_flow, {:exit, reason}, socket) do
+    Logger.error("Graph creation task exited: #{inspect(reason)}")
+
     {:noreply,
-     put_flash(socket, :error, "Graph creation failed: #{inspect(reason)}")
+     put_flash(socket, :error, "Graph creation failed. Please try again.")
      |> assign(:loading_graph, nil)}
   end
 
@@ -177,16 +180,6 @@ defmodule DialecticWeb.HomeLive do
        popular_tags: popular_tags,
        generating: MapSet.delete(socket.assigns.generating, title)
      )}
-  end
-
-  defp sanitize_graph_title(title) do
-    sanitized =
-      title
-      |> String.slice(0, 140)
-      |> String.trim()
-      |> String.replace("/", "-")
-
-    if sanitized == "", do: "untitled-idea", else: sanitized
   end
 
   @impl true

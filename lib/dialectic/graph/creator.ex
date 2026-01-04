@@ -25,7 +25,7 @@ defmodule Dialectic.Graph.Creator do
   """
   def create(question, user, user_identity, opts \\ []) do
     callback = Keyword.get(opts, :progress_callback, fn _ -> :ok end)
-    title = Keyword.get(opts, :title) || sanitize_title(question)
+    title = Keyword.get(opts, :title) || Graphs.sanitize_title(question)
     mode = Keyword.get(opts, :mode, :structured)
 
     callback.("Creating graph structure...")
@@ -106,26 +106,11 @@ defmodule Dialectic.Graph.Creator do
         _ -> PromptsStructured.system_preamble()
       end
 
-    # Use a faster model for Google/Gemini if configured
-    model =
-      case System.get_env("LLM_PROVIDER") do
-        "google" -> "gemini-2.5-flash-lite"
-        "gemini" -> "gemini-2.5-flash-lite"
-        _ -> nil
-      end
-
-    opts =
-      [system_prompt: system_prompt]
-      |> then(&if(model, do: Keyword.put(&1, :model, model), else: &1))
+    opts = [
+      system_prompt: system_prompt,
+      model: "gemini-2.5-flash-lite"
+    ]
 
     Dialectic.LLM.Generator.generate(instruction, opts)
-  end
-
-  defp sanitize_title(title) do
-    title
-    |> String.trim()
-    |> String.slice(0, 100)
-    |> String.replace(~r/[^a-zA-Z0-9\s\-_]/, "")
-    |> String.trim()
   end
 end

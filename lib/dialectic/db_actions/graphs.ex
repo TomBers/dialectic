@@ -5,6 +5,19 @@ defmodule Dialectic.DbActions.Graphs do
   import Ecto.Query
 
   @doc """
+  Sanitizes a graph title to ensure it is valid for URLs and storage.
+  """
+  def sanitize_title(title) do
+    sanitized =
+      title
+      |> String.slice(0, 140)
+      |> String.trim()
+      |> String.replace("/", "-")
+
+    if sanitized == "", do: "untitled-idea", else: sanitized
+  end
+
+  @doc """
   Creates a new graph with the given title.
   """
   def create_new_graph(title, user \\ nil) do

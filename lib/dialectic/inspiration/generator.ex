@@ -29,17 +29,11 @@ defmodule Dialectic.Inspiration.Generator do
     3. Do not include any explanation or other text.
     """
 
-    # Use a faster model for Google/Gemini
-    model =
-      case System.get_env("LLM_PROVIDER") do
-        "google" -> "gemini-2.5-flash-lite"
-        "gemini" -> "gemini-2.5-flash-lite"
-        _ -> nil
-      end
-
-    opts =
-      [system_prompt: system_prompt]
-      |> then(&if(model, do: Keyword.put(&1, :model, model), else: &1))
+    # Use a faster model for inspiration generation
+    opts = [
+      system_prompt: system_prompt,
+      model: "gemini-2.5-flash-lite"
+    ]
 
     case Dialectic.LLM.Generator.generate(preferences_prompt, opts) do
       {:ok, text} ->
