@@ -195,7 +195,7 @@ defmodule DialecticWeb.HomeLive do
     <div class="min-h-[calc(100vh-4rem)] w-screen bg-slate-950 text-white">
       <div class="relative min-h-[calc(100vh-4rem)] w-screen overflow-hidden">
         <%= if @loading_graph do %>
-          <div class="absolute inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm">
+          <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm">
             <div class="max-w-md w-full p-8 bg-white/10 border border-white/20 rounded-2xl shadow-2xl backdrop-blur-md">
               <div class="flex flex-col items-center gap-6">
                 <div class="relative w-16 h-16">
