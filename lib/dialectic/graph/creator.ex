@@ -78,15 +78,9 @@ defmodule Dialectic.Graph.Creator do
   end
 
   defp update_origin_content(title, node, question) do
-    current = node.content || ""
     decoded_q = URI.decode_www_form(to_string(question))
-
-    if String.contains?(current, decoded_q) do
-      node
-    else
-      new_content = if(current != "", do: current <> "\n\n", else: "") <> decoded_q
-      GraphManager.update_vertex(title, node.id, new_content)
-    end
+    new_content = "## " <> decoded_q
+    GraphManager.set_node_content(title, node.id, new_content)
   end
 
   defp create_answer_node_struct(title, parent, user_identity) do
