@@ -51,7 +51,7 @@ defmodule Dialectic.LLM.Generator do
       case Provider.api_key(provider_mod) do
         {:ok, key} ->
           case provider_mod.id() do
-            :google -> Keyword.put(req_http_options, :google_api_key, key)
+            :google -> req_http_options
             _ -> Keyword.put(req_http_options, :auth, {:bearer, key})
           end
 
