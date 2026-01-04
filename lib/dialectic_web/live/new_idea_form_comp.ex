@@ -35,6 +35,7 @@ defmodule DialecticWeb.NewIdeaFormComp do
           placeholder={@placeholder}
           class="w-full h-14 pl-6 pr-32 text-black text-lg rounded-full border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
           autocomplete="off"
+          required
         />
         <div class="absolute inset-y-0 right-2 flex items-center">
           <button

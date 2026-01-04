@@ -89,22 +89,26 @@ defmodule DialecticWeb.HomeLive do
 
   @impl true
   def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}}, socket) do
-    title = Graphs.sanitize_title(answer)
-
-    if Graphs.get_graph_by_title(title) do
-      {:noreply, redirect(socket, to: ~p"/#{title}")}
+    if String.trim(answer) == "" do
+      {:noreply, put_flash(socket, :error, "Please enter a question or topic.")}
     else
-      parent_pid = self()
-      assigns = socket.assigns
+      title = Graphs.sanitize_title(answer)
 
-      socket =
-        socket
-        |> assign(:loading_graph, %{title: title, status: "Initializing...", steps: []})
-        |> start_async(:create_graph_flow, fn ->
-          create_graph_task(title, answer, assigns, parent_pid)
-        end)
+      if Graphs.get_graph_by_title(title) do
+        {:noreply, redirect(socket, to: ~p"/#{title}")}
+      else
+        parent_pid = self()
+        assigns = socket.assigns
 
-      {:noreply, socket}
+        socket =
+          socket
+          |> assign(:loading_graph, %{title: title, status: "Initializing...", steps: []})
+          |> start_async(:create_graph_flow, fn ->
+            create_graph_task(title, answer, assigns, parent_pid)
+          end)
+
+        {:noreply, socket}
+      end
     end
   end
 
