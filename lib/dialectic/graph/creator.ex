@@ -1,0 +1,137 @@
+defmodule Dialectic.Graph.Creator do
+  @moduledoc """
+  Handles the end-to-end flow of creating a new graph from a question.
+  This orchestrates database creation, graph process initialization,
+  node creation, and synchronous LLM generation.
+  """
+  require Logger
+  alias Dialectic.DbActions.Graphs
+  alias GraphManager
+  alias Dialectic.Graph.Vertex
+  alias Dialectic.Responses.{ModeServer, Prompts, PromptsStructured, PromptsCreative}
+  alias Dialectic.LLM.Generator
+
+  @doc """
+  Creates a graph, adds the initial question, generates an answer, and saves it.
+
+  ## Arguments
+  - `question`: String, the user's initial prompt.
+  - `user`: The User Ecto struct (for DB ownership).
+  - `user_identity`: Map/Struct representing the user for Vertex attribution.
+  - `opts`: Keyword list of options.
+    - `:mode` - :structured (default) or :creative.
+    - `:title` - Optional title override.
+    - `:progress_callback` - Function/1 to receive status strings.
+  """
+  def create(question, user, user_identity, opts \\ []) do
+    callback = Keyword.get(opts, :progress_callback, fn _ -> :ok end)
+    title = Keyword.get(opts, :title) || sanitize_title(question)
+    mode = Keyword.get(opts, :mode, :structured)
+
+    callback.("Creating graph structure...")
+
+    if Graphs.get_graph_by_title(title) do
+      {:ok, title}
+    else
+      do_create(title, question, user, user_identity, mode, callback)
+    end
+  end
+
+  defp do_create(title, question, user, user_identity, mode, callback) do
+    case Graphs.create_new_graph(title, user) do
+      {:ok, _} ->
+        ModeServer.set_mode(title, mode)
+
+        callback.("Initializing graph manager...")
+        GraphManager.get_graph(title)
+
+        # Retrieve the origin node (ID "1") created by default during graph init
+        origin_node = GraphManager.find_node_by_id(title, "1")
+
+        callback.("Updating origin...")
+        updated_origin = update_origin_content(title, origin_node, question)
+
+        callback.("Generating response (this may take a moment)...")
+
+        # Create the empty answer node connected to origin
+        answer_node = create_answer_node_struct(title, updated_origin, user_identity)
+
+        # Generate LLM response synchronously
+        case generate_response(title, updated_origin, mode) do
+          {:ok, content} ->
+            GraphManager.set_node_content(title, answer_node.id, content)
+            GraphManager.finalize_node_content(title, answer_node.id)
+            GraphManager.save_graph(title)
+
+            callback.("Finalizing...")
+            {:ok, title}
+
+          {:error, reason} ->
+            Logger.error("Graph creation LLM error: #{inspect(reason)}")
+            # If generation fails, we still return the graph, just with empty answer node
+            {:error, reason}
+        end
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  defp update_origin_content(title, node, question) do
+    current = node.content || ""
+    decoded_q = URI.decode_www_form(to_string(question))
+
+    if String.contains?(current, decoded_q) do
+      node
+    else
+      new_content = if(current != "", do: current <> "\n\n", else: "") <> decoded_q
+      GraphManager.update_vertex(title, node.id, new_content)
+    end
+  end
+
+  defp create_answer_node_struct(title, parent, user_identity) do
+    vertex = %Vertex{
+      content: "",
+      class: "answer",
+      user: user_identity,
+      parent: nil
+    }
+
+    node = GraphManager.add_node(title, vertex)
+    GraphManager.add_edges(title, node, [parent])
+    node
+  end
+
+  defp generate_response(title, origin_node, mode) do
+    context = GraphManager.build_context(title, origin_node)
+    instruction = Prompts.explain(context, origin_node.content)
+
+    system_prompt =
+      case mode do
+        :creative -> PromptsCreative.system_preamble()
+        _ -> PromptsStructured.system_preamble()
+      end
+
+    # Use a faster model for Google/Gemini if configured
+    model =
+      case System.get_env("LLM_PROVIDER") do
+        "google" -> "gemini-2.5-flash-lite"
+        "gemini" -> "gemini-2.5-flash-lite"
+        _ -> nil
+      end
+
+    opts =
+      [system_prompt: system_prompt]
+      |> then(&if(model, do: Keyword.put(&1, :model, model), else: &1))
+
+    Dialectic.LLM.Generator.generate(instruction, opts)
+  end
+
+  defp sanitize_title(title) do
+    title
+    |> String.trim()
+    |> String.slice(0, 100)
+    |> String.replace(~r/[^a-zA-Z0-9\s\-_]/, "")
+    |> String.trim()
+  end
+end

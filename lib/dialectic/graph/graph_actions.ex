@@ -145,66 +145,6 @@ defmodule Dialectic.Graph.GraphActions do
      )}
   end
 
-  def ask_and_answer_origin({graph_id, node, user, live_view_topic}, question_text) do
-    # Fetch the latest origin vertex label safely via GraphManager (avoid direct :digraph)
-    # Note: do not expose or rely on the raw digraph handle across processes
-
-    current_origin =
-      case GraphManager.vertex_label(graph_id, node.id) do
-        nil -> node
-        v -> v
-      end
-
-    # Append the question once to the origin content (account for encoded forms)
-    decoded_question = URI.decode_www_form(to_string(question_text || ""))
-
-    question_present? =
-      is_binary(current_origin.content) and
-        Enum.any?([to_string(question_text || ""), decoded_question], fn q ->
-          q != "" and String.contains?(current_origin.content, q)
-        end)
-
-    updated_origin =
-      if question_present? do
-        current_origin
-      else
-        GraphManager.update_vertex(
-          graph_id,
-          node.id,
-          if(current_origin.content && current_origin.content != "", do: "\n\n", else: "") <>
-            decoded_question
-        )
-      end
-
-    # If an answer child already exists for this origin, return it instead of enqueuing another
-    has_answer? =
-      GraphManager.has_child_with_class(graph_id, updated_origin.id, "answer")
-
-    if has_answer? do
-      # Return the first existing answer node
-      answer_id =
-        GraphManager.out_neighbours(graph_id, updated_origin.id)
-        |> Enum.find(fn cid ->
-          case GraphManager.vertex_label(graph_id, cid) do
-            %{} = v -> Map.get(v, :class) == "answer"
-            _ -> false
-          end
-        end)
-
-      {nil, GraphManager.find_node_by_id(graph_id, answer_id)}
-    else
-      # Generate the AI answer as a child of the updated origin node
-      {nil,
-       GraphManager.add_child(
-         graph_id,
-         [updated_origin],
-         fn n -> generate_answer_sync(updated_origin, n, graph_id, live_view_topic) end,
-         "answer",
-         user
-       )}
-    end
-  end
-
   def regenerate_node({graph_id, _node, user, live_view_topic}, stuck_node_id) do
     case GraphManager.find_node_by_id(graph_id, stuck_node_id) do
       nil ->
@@ -294,47 +234,6 @@ defmodule Dialectic.Graph.GraphActions do
         else
           {:error, error_msg}
         end
-    end
-  end
-
-  defp generate_answer_sync(origin_node, target_node, graph_id, live_view_topic) do
-    alias Dialectic.Responses.{Prompts, ModeServer, PromptsStructured, PromptsCreative}
-
-    context = GraphManager.build_context(graph_id, origin_node)
-    instruction = Prompts.explain(context, origin_node.content)
-
-    system_prompt =
-      case ModeServer.get_mode(graph_id) do
-        :creative -> PromptsCreative.system_preamble()
-        _ -> PromptsStructured.system_preamble()
-      end
-
-    # Use a faster model for Google/Gemini
-    model =
-      case System.get_env("LLM_PROVIDER") do
-        "google" -> "gemini-2.5-flash-lite"
-        "gemini" -> "gemini-2.5-flash-lite"
-        _ -> nil
-      end
-
-    opts =
-      [system_prompt: system_prompt]
-      |> then(&if(model, do: Keyword.put(&1, :model, model), else: &1))
-
-    case Dialectic.LLM.Generator.generate(instruction, opts) do
-      {:ok, text} ->
-        GraphManager.set_node_content(graph_id, target_node.id, text)
-        GraphManager.finalize_node_content(graph_id, target_node.id)
-        GraphManager.save_graph(graph_id)
-
-        Phoenix.PubSub.broadcast(
-          Dialectic.PubSub,
-          live_view_topic,
-          {:llm_request_complete, target_node.id}
-        )
-
-      {:error, _} ->
-        :ok
     end
   end
 end

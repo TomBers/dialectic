@@ -10,6 +10,7 @@ defmodule DialecticWeb.HomeLive do
 
   @impl true
   def mount(params, _session, socket) do
+    socket = assign(socket, :loading_graph, nil)
     if connected?(socket), do: Phoenix.PubSub.subscribe(Dialectic.PubSub, "graphs")
 
     user = UserUtils.current_identity(socket.assigns)
@@ -89,34 +90,34 @@ defmodule DialecticWeb.HomeLive do
   def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}}, socket) do
     title = sanitize_graph_title(answer)
 
-    case Graphs.create_new_graph(title, socket.assigns[:current_user]) do
-      {:ok, _graph} ->
-        mode_str = socket.assigns[:prompt_mode] || "structured"
-        mode = if mode_str == "creative", do: :creative, else: :structured
-        ModeServer.set_mode(title, mode)
+    if Graphs.get_graph_by_title(title) do
+      {:noreply, redirect(socket, to: ~p"/#{title}")}
+    else
+      parent_pid = self()
+      assigns = socket.assigns
 
-        GraphManager.get_graph(title)
-        node = GraphManager.find_node_by_id(title, "1")
+      socket =
+        socket
+        |> assign(:loading_graph, %{title: title, status: "Initializing...", steps: []})
+        |> start_async(:create_graph_flow, fn ->
+          create_graph_task(title, answer, assigns, parent_pid)
+        end)
 
-        user_identity = UserUtils.current_identity(socket.assigns)
-        topic = "graph_update:#{title}"
-
-        GraphActions.ask_and_answer_origin(
-          {title, node, user_identity, topic},
-          answer
-        )
-
-        {:noreply, socket |> redirect(to: ~p"/#{title}")}
-
-      {:error, _changeset} ->
-        case Graphs.get_graph_by_title(title) do
-          nil ->
-            {:noreply, socket |> put_flash(:error, "Error creating graph")}
-
-          _graph ->
-            {:noreply, socket |> redirect(to: ~p"/#{title}")}
-        end
+      {:noreply, socket}
     end
+  end
+
+  defp create_graph_task(title, answer, assigns, parent_pid) do
+    mode_str = assigns[:prompt_mode] || "structured"
+    mode = if mode_str == "creative", do: :creative, else: :structured
+    user_identity = UserUtils.current_identity(assigns)
+    current_user = assigns[:current_user]
+
+    Dialectic.Graph.Creator.create(answer, current_user, user_identity,
+      mode: mode,
+      title: title,
+      progress_callback: fn status -> send(parent_pid, {:graph_creation_update, status}) end
+    )
   end
 
   @impl true
@@ -128,6 +129,32 @@ defmodule DialecticWeb.HomeLive do
       graph ->
         Dialectic.Categorisation.AutoTagger.tag_graph(graph)
         {:noreply, assign(socket, generating: MapSet.put(socket.assigns.generating, title))}
+    end
+  end
+
+  def handle_async(:create_graph_flow, {:ok, {:ok, title}}, socket) do
+    {:noreply, redirect(socket, to: ~p"/#{title}")}
+  end
+
+  def handle_async(:create_graph_flow, {:ok, _}, socket) do
+    {:noreply, put_flash(socket, :error, "Failed to create graph") |> assign(:loading_graph, nil)}
+  end
+
+  def handle_async(:create_graph_flow, {:exit, reason}, socket) do
+    {:noreply,
+     put_flash(socket, :error, "Graph creation failed: #{inspect(reason)}")
+     |> assign(:loading_graph, nil)}
+  end
+
+  @impl true
+  def handle_info({:graph_creation_update, status}, socket) do
+    loading = socket.assigns.loading_graph
+
+    if loading do
+      new_steps = loading.steps ++ [status]
+      {:noreply, assign(socket, :loading_graph, %{loading | status: status, steps: new_steps})}
+    else
+      {:noreply, socket}
     end
   end
 
@@ -167,7 +194,35 @@ defmodule DialecticWeb.HomeLive do
     ~H"""
     <div class="min-h-[calc(100vh-4rem)] w-screen bg-slate-950 text-white">
       <div class="relative min-h-[calc(100vh-4rem)] w-screen overflow-hidden">
-        <!-- Background Video with Overlay (full-bleed) -->
+        <%= if @loading_graph do %>
+          <div class="absolute inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm">
+            <div class="max-w-md w-full p-8 bg-white/10 border border-white/20 rounded-2xl shadow-2xl backdrop-blur-md">
+              <div class="flex flex-col items-center gap-6">
+                <div class="relative w-16 h-16">
+                  <div class="absolute inset-0 border-4 border-white/20 rounded-full"></div>
+                  <div class="absolute inset-0 border-4 border-t-white rounded-full animate-spin">
+                  </div>
+                </div>
+
+                <div class="space-y-2 text-center">
+                  <h3 class="text-xl font-bold text-white">{@loading_graph.title}</h3>
+                  <p class="text-indigo-200">{@loading_graph.status}</p>
+                </div>
+
+                <div class="w-full space-y-2">
+                  <%= for step <- Enum.reverse(@loading_graph.steps) |> Enum.take(3) do %>
+                    <div class="text-sm text-white/60 flex items-center gap-2">
+                      <.icon name="hero-check-circle" class="w-4 h-4 text-green-400" />
+                      {step}
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% end %>
+        
+    <!-- Background Video with Overlay (full-bleed) -->
         <div class="absolute inset-0 z-0">
           <video
             autoplay
