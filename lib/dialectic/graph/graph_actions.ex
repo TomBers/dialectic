@@ -198,7 +198,7 @@ defmodule Dialectic.Graph.GraphActions do
        GraphManager.add_child(
          graph_id,
          [updated_origin],
-         fn n -> LlmInterface.gen_response(updated_origin, n, graph_id, live_view_topic) end,
+         fn n -> generate_answer_sync(updated_origin, n, graph_id, live_view_topic) end,
          "answer",
          user
        )}
@@ -294,6 +294,47 @@ defmodule Dialectic.Graph.GraphActions do
         else
           {:error, error_msg}
         end
+    end
+  end
+
+  defp generate_answer_sync(origin_node, target_node, graph_id, live_view_topic) do
+    alias Dialectic.Responses.{Prompts, ModeServer, PromptsStructured, PromptsCreative}
+
+    context = GraphManager.build_context(graph_id, origin_node)
+    instruction = Prompts.explain(context, origin_node.content)
+
+    system_prompt =
+      case ModeServer.get_mode(graph_id) do
+        :creative -> PromptsCreative.system_preamble()
+        _ -> PromptsStructured.system_preamble()
+      end
+
+    # Use a faster model for Google/Gemini
+    model =
+      case System.get_env("LLM_PROVIDER") do
+        "google" -> "gemini-2.5-flash-lite"
+        "gemini" -> "gemini-2.5-flash-lite"
+        _ -> nil
+      end
+
+    opts =
+      [system_prompt: system_prompt]
+      |> then(&if(model, do: Keyword.put(&1, :model, model), else: &1))
+
+    case Dialectic.LLM.Generator.generate(instruction, opts) do
+      {:ok, text} ->
+        GraphManager.set_node_content(graph_id, target_node.id, text)
+        GraphManager.finalize_node_content(graph_id, target_node.id)
+        GraphManager.save_graph(graph_id)
+
+        Phoenix.PubSub.broadcast(
+          Dialectic.PubSub,
+          live_view_topic,
+          {:llm_request_complete, target_node.id}
+        )
+
+      {:error, _} ->
+        :ok
     end
   end
 end

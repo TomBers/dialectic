@@ -9,8 +9,6 @@ defmodule Dialectic.Inspiration.Generator do
   Returns `{:ok, [question_strings]}` or `{:error, reason}`.
   """
   def generate_questions(preferences_prompt) do
-    provider_mod = get_provider()
-
     system_prompt = """
     You are a creative muse. Your goal is to spark curiosity and a desire to explore.
     Generate exactly 5 distinct, open-ended questions based on the user's preferences.
@@ -31,14 +29,26 @@ defmodule Dialectic.Inspiration.Generator do
     3. Do not include any explanation or other text.
     """
 
-    case make_request(provider_mod, system_prompt, preferences_prompt) do
+    # Use a faster model for Google/Gemini
+    model =
+      case System.get_env("LLM_PROVIDER") do
+        "google" -> "gemini-2.5-flash-lite"
+        "gemini" -> "gemini-2.5-flash-lite"
+        _ -> nil
+      end
+
+    opts =
+      [system_prompt: system_prompt]
+      |> then(&if(model, do: Keyword.put(&1, :model, model), else: &1))
+
+    case Dialectic.LLM.Generator.generate(preferences_prompt, opts) do
       {:ok, text} ->
         case parse_response(text) do
           {:ok, questions} ->
             {:ok, questions}
 
           {:error, _} = err ->
-            Logger.warning("Inspiration generator failed to parse response: #{text}")
+            Logger.warning("Inspiration generator failed to parse response: #{inspect(text)}")
             err
         end
 
@@ -71,62 +81,6 @@ defmodule Dialectic.Inspiration.Generator do
 
       _ ->
         {:error, :invalid_json}
-    end
-  end
-
-  defp make_request(provider_mod, system_prompt, user_prompt) do
-    case Dialectic.LLM.Provider.api_key(provider_mod) do
-      {:ok, api_key} ->
-        model_spec = Dialectic.LLM.Provider.model_spec(provider_mod)
-        {_, receive_timeout} = Dialectic.LLM.Provider.timeouts(provider_mod)
-        finch_name = Dialectic.LLM.Provider.finch_name(provider_mod)
-        provider_options = provider_mod.provider_options()
-
-        ctx =
-          ReqLLM.Context.new([
-            ReqLLM.Context.system(system_prompt),
-            ReqLLM.Context.user(user_prompt)
-          ])
-
-        case ReqLLM.stream_text(
-               model_spec,
-               ctx,
-               api_key: api_key,
-               finch_name: finch_name,
-               provider_options: provider_options,
-               receive_timeout: receive_timeout
-             ) do
-          {:ok, stream_resp} ->
-            text =
-              stream_resp
-              |> ReqLLM.StreamResponse.tokens()
-              |> Enum.reduce("", fn token, acc ->
-                chunk =
-                  case token do
-                    t when is_binary(t) -> t
-                    t when is_list(t) -> IO.iodata_to_binary(t)
-                    t -> to_string(t)
-                  end
-
-                acc <> chunk
-              end)
-
-            {:ok, text}
-
-          {:error, _} = error ->
-            error
-        end
-
-      {:error, _} = error ->
-        error
-    end
-  end
-
-  defp get_provider do
-    case System.get_env("LLM_PROVIDER") do
-      "google" -> Dialectic.LLM.Providers.Google
-      "gemini" -> Dialectic.LLM.Providers.Google
-      _ -> Dialectic.LLM.Providers.OpenAI
     end
   end
 end
