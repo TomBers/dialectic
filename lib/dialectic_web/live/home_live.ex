@@ -89,11 +89,11 @@ defmodule DialecticWeb.HomeLive do
 
   @impl true
   def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}}, socket) do
-    if String.trim(answer) == "" do
+    title = Graphs.sanitize_title(answer)
+
+    if title == "untitled-idea" do
       {:noreply, put_flash(socket, :error, "Please enter a question or topic.")}
     else
-      title = Graphs.sanitize_title(answer)
-
       if Graphs.get_graph_by_title(title) do
         {:noreply, redirect(socket, to: ~p"/#{title}")}
       else
