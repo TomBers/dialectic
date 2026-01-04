@@ -11,12 +11,39 @@
         <p class="text-lg text-gray-700">
           Explore arguments with friends or students, build diagrams together, and keep every thread of the conversation linked to evidence.
         </p>
+
+        <div class="flex flex-wrap gap-x-6 gap-y-2 pt-2">
+          <a
+            href="#why"
+            class="text-sm font-semibold text-sky-700 hover:text-sky-900 hover:underline"
+          >
+            Why MuDG?
+          </a>
+          <a
+            href="#walkthrough"
+            class="text-sm font-semibold text-sky-700 hover:text-sky-900 hover:underline"
+          >
+            Walkthrough
+          </a>
+          <a
+            href="#teaching"
+            class="text-sm font-semibold text-sky-700 hover:text-sky-900 hover:underline"
+          >
+            For Teachers
+          </a>
+          <a
+            href="#about"
+            class="text-sm font-semibold text-sky-700 hover:text-sky-900 hover:underline"
+          >
+            About
+          </a>
+        </div>
       </div>
     </div>
   </section>
   
 <!-- Why section -->
-  <section class="mx-auto max-w-6xl px-4 py-8">
+  <section id="why" class="mx-auto max-w-6xl px-4 py-8">
     <div class="relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-200">
       <div
         class="absolute inset-0 bg-gradient-to-r from-indigo-50 via-white to-sky-50"
@@ -79,7 +106,7 @@
     </div>
   </section>
 
-  <section class="mx-auto max-w-6xl px-4 py-10 sm:py-14 space-y-12">
+  <section id="walkthrough" class="mx-auto max-w-6xl px-4 py-10 sm:py-14 space-y-12">
     <div class="grid gap-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:grid-cols-2 sm:p-8">
       <div class="space-y-3">
         <div class="inline-flex items-center rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-sky-700 ring-1 ring-sky-200">
@@ -287,7 +314,10 @@
       </div>
     </div>
 
-    <div class="grid gap-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:grid-cols-3 sm:p-8">
+    <div
+      id="teaching"
+      class="grid gap-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:grid-cols-3 sm:p-8"
+    >
       <div class="sm:col-span-2 space-y-3">
         <p class="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-700 ring-1 ring-emerald-200">
           Teacher's Guide
@@ -402,6 +432,53 @@
             <p class="font-semibold text-gray-900">Assessment</p>
             <p class="mt-1 text-gray-700">
               Compare student-created diagrams for evaluation
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+<!-- About section -->
+  <section id="about" class="mx-auto max-w-6xl px-4 py-12 sm:py-16">
+    <div class="rounded-2xl bg-gray-50 border border-gray-200 p-8 sm:p-12">
+      <div class="mx-auto max-w-3xl">
+        <h2 class="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl mb-6 text-center">
+          About Dialectic
+        </h2>
+
+        <div class="prose prose-lg text-gray-600 max-w-none space-y-6">
+          <p>
+            Dialectic (MuDG) was built on the belief that the future of learning isn't linear—it's networked. While traditional AI assistants offer ephemeral exchanges, we aim to transform interactions into persistent, evolving knowledge graphs that mirror how human curiosity naturally branches and connects.
+          </p>
+
+          <p>
+            Our philosophy is simple:
+          </p>
+          <ul class="list-disc pl-5 space-y-2">
+            <li>
+              <strong>Speed matters:</strong>
+              We optimize for cognitive flow by minimizing technical friction.
+            </li>
+            <li>
+              <strong>Simplicity enables depth:</strong>
+              A clean interface allows deeper engagement with complex ideas.
+            </li>
+            <li>
+              <strong>Persistence creates value:</strong>
+              Unlike fleeting chats, knowledge graphs accumulate insights over time.
+            </li>
+          </ul>
+
+          <div class="mt-8 pt-6 border-t border-gray-200 text-sm text-center">
+            <p>
+              Dialectic is an open source, single-person project by <a
+                href="https://github.com/TomBers"
+                class="text-indigo-600 font-medium hover:underline"
+              >Tom Berman</a>. <a
+                href="https://github.com/TomBers/dialectic"
+                class="text-indigo-600 font-medium hover:underline ml-2"
+              >View source on GitHub</a>.
             </p>
           </div>
         </div>
