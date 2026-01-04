@@ -7,6 +7,11 @@ defmodule Dialectic.Application do
 
   @impl true
   def start(_type, _args) do
+    # Map GOOGLE_API_KEY to :google_api_key for ReqLLM
+    if key = System.get_env("GOOGLE_API_KEY") do
+      Application.put_env(:req_llm, :google_api_key, key)
+    end
+
     children = [
       DialecticWeb.Telemetry,
       Dialectic.Repo,

@@ -25,7 +25,7 @@ defmodule Dialectic.LLM.Providers.Google do
 
   @impl true
   def api_key do
-    System.get_env("GEMINI_API_KEY")
+    System.get_env("GOOGLE_API_KEY")
   end
 
   @impl true
