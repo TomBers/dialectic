@@ -30,7 +30,6 @@ defmodule Dialectic.Workers.LLMWorker do
   require Logger
 
   alias Dialectic.Responses.Utils
-  alias Dialectic.DbActions.DbWorker
   alias Dialectic.Responses.{PromptsStructured, PromptsCreative, ModeServer}
 
   @buffer_size 50
@@ -112,9 +111,12 @@ defmodule Dialectic.Workers.LLMWorker do
            ) do
         {:ok, stream_resp} ->
           # Stream tokens to UI (and persisted vertex content) as they arrive.
-          {final_buf, appended_len} =
-            Enum.reduce(ReqLLM.StreamResponse.tokens(stream_resp), {"", 0}, fn token,
-                                                                               {buf, total} ->
+          # We accumulate the *full* response text in the worker to ensure
+          # we can safely overwrite the node content (bullet-proofing against
+          # lost partial updates or GraphManager restarts).
+          {final_full_text, final_buf} =
+            Enum.reduce(ReqLLM.StreamResponse.tokens(stream_resp), {"", ""}, fn token,
+                                                                                {full_text, buf} ->
               chunk =
                 case token do
                   t when is_binary(t) -> t
@@ -122,28 +124,27 @@ defmodule Dialectic.Workers.LLMWorker do
                   t -> to_string(t)
                 end
 
+              new_full_text = full_text <> chunk
               new_buf = buf <> chunk
 
               # Buffer to reduce broadcast frequency (fixing markdown glitches and excessive DOM updates).
               # Flush if > @buffer_size chars or contains newline.
-              # ALSO: Always flush the very first chunk (total == 0) to improve TTFT (Time To First Token).
-              if total == 0 or byte_size(new_buf) > @buffer_size or
+              # ALSO: Always flush the very first chunk (full_text was empty) to improve TTFT.
+              if full_text == "" or byte_size(new_buf) > @buffer_size or
                    String.contains?(new_buf, "\n") do
-                Utils.process_chunk(graph, to_node, new_buf, live_view_topic)
-                {"", total + byte_size(new_buf)}
+                Utils.set_node_content(graph, to_node, new_full_text, live_view_topic)
+                {new_full_text, ""}
               else
-                {new_buf, total}
+                {new_full_text, new_buf}
               end
             end)
 
-          # Flush remaining buffer
+          # Flush remaining buffer (ensure final state matches full accumulation)
           if final_buf != "" do
-            Utils.process_chunk(graph, to_node, final_buf, live_view_topic)
+            Utils.set_node_content(graph, to_node, final_full_text, live_view_topic)
           end
 
-          total_len = appended_len + byte_size(final_buf)
-
-          if total_len > 0 do
+          if byte_size(final_full_text) > 0 do
             finalize(graph, to_node, live_view_topic)
             :ok
           else
@@ -195,7 +196,7 @@ defmodule Dialectic.Workers.LLMWorker do
 
   defp finalize(graph, to_node, live_view_topic) do
     GraphManager.finalize_node_content(graph, to_node)
-    DbWorker.save_graph(graph, false)
+    GraphManager.save_graph(graph)
 
     Phoenix.PubSub.broadcast(
       Dialectic.PubSub,

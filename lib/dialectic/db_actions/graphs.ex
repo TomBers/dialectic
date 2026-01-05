@@ -218,7 +218,7 @@ defmodule Dialectic.DbActions.Graphs do
             from(g in Graph,
               where: g.title == ^title and (is_nil(g.updated_at) or g.updated_at <= ^ts)
             )
-            |> Repo.update_all(set: [data: data, updated_at: DateTime.utc_now()])
+            |> Repo.update_all(set: [data: data, updated_at: ts])
 
           if count == 1 do
             {:ok, :updated}
