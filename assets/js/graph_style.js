@@ -150,11 +150,6 @@ export function graphStyle() {
         "border-color": "#e5e7eb",
         "background-color": "#ffffff",
         color: "#1f2937",
-
-        "transition-property":
-          "background-color, border-color, color, border-width",
-        "transition-duration": "150ms",
-        "transition-timing-function": "ease-in-out",
       },
     },
     {
@@ -163,9 +158,6 @@ export function graphStyle() {
         "border-width": 3,
         "border-color": "#3b82f6",
         "background-color": "#eff6ff",
-        "underlay-color": "#3b82f6",
-        "underlay-padding": 4,
-        "underlay-opacity": 0.2,
       },
     },
     {
@@ -192,27 +184,6 @@ export function graphStyle() {
         "border-color": "#cbd5e1", // slate-300
         shape: "roundrectangle",
         "corner-radius": 24,
-      },
-    },
-    {
-      selector: "node[compound].selected",
-      style: {
-        // Make selection visually inert for compound nodes
-        label: "data(id)",
-        "text-halign": "center",
-        "text-valign": "top",
-        "text-margin-y": 8,
-        "font-size": 13,
-        "font-weight": 600,
-        "text-outline-width": 2,
-        "text-outline-color": "#f9fafb",
-        "text-opacity": 1,
-        padding: "24px",
-        "background-opacity": 1,
-        "background-color": "#f9fafb",
-        "border-width": 1,
-        "border-style": "dashed",
-        "border-color": "#4B5563",
       },
     },
     { selector: ".hidden", style: { display: "none" } },
@@ -256,14 +227,6 @@ export function graphStyle() {
         color: "#1e293b",
       },
     },
-    {
-      selector: ".preview",
-      style: {
-        "border-width": 3,
-        opacity: 1,
-      },
-    },
-
     // Edge styling
     {
       selector: "edge",
@@ -306,22 +269,9 @@ export function graphStyle() {
     });
 
     base_style.push({
-      selector: `node.${nodeType}.selected`, // ← has both classes
+      selector: `node.${nodeType}.selected, node.${nodeType}.node-hover`,
       style: {
         shape: "roundrectangle",
-        "font-weight": "500",
-        "border-color": cols[nodeType].selectedBorder,
-        color: cols[nodeType].selectedText,
-        "background-color": cols[nodeType].selectedBackground,
-        "border-width": 2,
-      },
-    });
-    // Hover should preview the selected color scheme for the node type
-    base_style.push({
-      selector: `node.${nodeType}.node-hover`,
-      style: {
-        shape: "roundrectangle",
-        "font-weight": "500",
         "border-color": cols[nodeType].selectedBorder,
         color: cols[nodeType].selectedText,
         "background-color": cols[nodeType].selectedBackground,
@@ -337,13 +287,6 @@ export function graphStyle() {
       },
     });
   }
-  base_style.push({
-    selector: "node.explored",
-    style: {
-      "border-style": "double",
-      "border-width": 6,
-    },
-  });
 
   base_style.push({
     selector:

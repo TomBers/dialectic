@@ -238,8 +238,10 @@ const graphHook = {
       this.cy._ownerHook = this;
     } catch (_e) {}
 
-    // Initial update
-    if (this._updateExploredStatus) this._updateExploredStatus();
+    // Initial update (deferred to ensure function definition)
+    setTimeout(() => {
+      if (this._updateExploredStatus) this._updateExploredStatus();
+    }, 0);
 
     this.handleEvent("request_screenshot", () => {
       if (this.cy) {
@@ -291,14 +293,7 @@ const graphHook = {
 
         // Apply visual state & update progress
         if (this.cy) {
-          this.cy.batch(() => {
-            const allNodes = this.cy.nodes();
-            allNodes.forEach((n) => {
-              if (explored.has(n.id())) {
-                n.addClass("explored");
-              }
-            });
-          });
+          // Styles simplified: removed 'explored' class application
 
           // Calculate progress (exclude compound parents)
           const realNodes = this.cy.nodes().filter((n) => !n.isParent());
