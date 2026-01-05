@@ -68,12 +68,12 @@ const cols = {
     selectedBorder: "#0e7490",
   },
   origin: {
-    text: "#ffffff",
-    background: "#1f2937", // gray-800
-    border: "#111827",
+    text: "#1e293b", // slate-800
+    background: "#f1f5f9", // slate-100
+    border: "#64748b", // slate-500
     selectedText: "#ffffff",
-    selectedBackground: "#000000",
-    selectedBorder: "#000000",
+    selectedBackground: "#475569", // slate-600
+    selectedBorder: "#334155", // slate-700
   },
   answer: defaultNodeStyle,
   explain: defaultNodeStyle,
