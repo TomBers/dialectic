@@ -6,12 +6,12 @@ export const layoutConfig = {
     name: "dagre",
     rankDir: "TB",
     // Spacing adjustments for better proportions
-    nodeSep: 35, // Horizontal spacing between nodes (further reduced)
-    edgeSep: 25, // Spacing between parallel edges (further reduced)
-    rankSep: 45, // Vertical spacing between ranks (significantly reduced)
+    nodeSep: 50, // Horizontal spacing between nodes
+    edgeSep: 30, // Spacing between parallel edges
+    rankSep: 70, // Vertical spacing between ranks
     // Visual enhancement settings
-    spacingFactor: 0.95, // Tighter spacing factor for more compact layout
-    padding: 25, // Minimum padding around the graph
+    spacingFactor: 1.05, // Relaxed spacing factor for more readable layout
+    padding: 30, // Minimum padding around the graph
     // More natural arrangement for complex graphs
     weaveToward: "leaves",
     nestingFactor: 1.0, // Full size for compound nodes
@@ -32,15 +32,15 @@ export const layoutConfig = {
   expandLayout: {
     name: "dagre",
     fit: false,
-    padding: 25,
+    padding: 30,
     animate: true,
     animationDuration: 300,
     // Spacing for expanded compound nodes
-    nodeSep: 15,
-    edgeSep: 12,
-    rankSep: 35,
+    nodeSep: 30,
+    edgeSep: 15,
+    rankSep: 50,
     // Better handling of expanded groups
-    spacingFactor: 0.8,
+    spacingFactor: 1.0,
     nestingFactor: 0.95,
     align: "DL", // Down-left alignment for better compound node layout
   },

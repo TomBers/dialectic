@@ -1,78 +1,79 @@
 const defaultNodeStyle = {
-  text: "#374151",
-  background: "white",
-  border: "#e5e7eb", // light gray (gray-200)
-  selectedText: "#ffffff", // white text on selection for consistency
-  selectedBackground: "#bec3cc", // use border color on selection
-  selectedBorder: "#a1a8b5", // gray-300 for gentle emphasis
+  text: "#1f2937", // gray-800
+  background: "#ffffff",
+  border: "#e5e7eb", // gray-200
+  selectedText: "#ffffff",
+  selectedBackground: "#9ca3af", // gray-400
+  selectedBorder: "#6b7280", // gray-500
 };
 
+// Modern color palette with subtle backgrounds
 const cols = {
   question: {
-    text: "#374151",
-    background: "white",
-    border: "#0ea5e9", // Strong blue for answers
+    text: "#0c4a6e", // sky-900
+    background: "#f0f9ff", // sky-50
+    border: "#0ea5e9", // sky-500
     selectedText: "#ffffff",
     selectedBackground: "#0ea5e9",
-    selectedBorder: "#0284c7",
+    selectedBorder: "#0369a1",
   },
   user: {
-    text: "#374151",
-    background: "white",
+    text: "#0c4a6e",
+    background: "#f0f9ff",
     border: "#0ea5e9",
     selectedText: "#ffffff",
     selectedBackground: "#0ea5e9",
-    selectedBorder: "#0284c7",
+    selectedBorder: "#0369a1",
   },
 
   antithesis: {
-    text: "#374151",
-    background: "white",
-    border: "#ef4444", // Vibrant red for antithesis/opposing viewpoints
+    text: "#7f1d1d", // red-900
+    background: "#fef2f2", // red-50
+    border: "#f87171", // red-400 (softer than before)
     selectedText: "#ffffff",
     selectedBackground: "#ef4444",
-    selectedBorder: "#dc2626",
+    selectedBorder: "#b91c1c",
   },
   synthesis: {
-    text: "#374151",
-    background: "white",
-    border: "#8b5cf6", // Rich purple for synthesis (combined ideas)
+    text: "#581c87", // purple-900
+    background: "#faf5ff", // purple-50
+    border: "#a78bfa", // purple-400
     selectedText: "#ffffff",
     selectedBackground: "#8b5cf6",
-    selectedBorder: "#7c3aed",
+    selectedBorder: "#6d28d9",
   },
   thesis: {
-    text: "#374151",
-    background: "white",
-    border: "#10b981", // Emerald green for thesis/main arguments
+    text: "#064e3b", // emerald-900
+    background: "#ecfdf5", // emerald-50
+    border: "#34d399", // emerald-400
     selectedText: "#ffffff",
     selectedBackground: "#10b981",
-    selectedBorder: "#059669",
+    selectedBorder: "#047857",
   },
 
   ideas: {
-    text: "#374151",
-    background: "white",
-    border: "#f97316", // Warm orange for ideas
+    text: "#7c2d12", // orange-900
+    background: "#fff7ed", // orange-50
+    border: "#fb923c", // orange-400
     selectedText: "#ffffff",
     selectedBackground: "#f97316",
-    selectedBorder: "#ea580c",
+    selectedBorder: "#c2410c",
   },
   deepdive: {
-    text: "#374151",
-    background: "white",
-    border: "#06b6d4", // Cyan for deep dive
+    text: "#164e63", // cyan-900
+    background: "#ecfeff", // cyan-50
+    border: "#22d3ee", // cyan-400
     selectedText: "#ffffff",
     selectedBackground: "#06b6d4",
-    selectedBorder: "#0891b2",
+    selectedBorder: "#0e7490",
   },
   origin: {
-    text: "#374151",
-    background: "white",
-    border: "#111827", // Distinct dark border for origin node
+    text: "#ffffff",
+    background: "#1f2937", // gray-800
+    border: "#111827",
     selectedText: "#ffffff",
-    selectedBackground: "#111827",
-    selectedBorder: "#030712",
+    selectedBackground: "#000000",
+    selectedBorder: "#000000",
   },
   answer: defaultNodeStyle,
   explain: defaultNodeStyle,
@@ -99,8 +100,8 @@ export function graphStyle() {
           // Remove zero-width spaces used for wrapping when measuring length
           const measureText = content.replace(/\u200B/g, "");
 
-          // Heuristic: characters that fit on one line at 210px width, 13px font
-          const approxCharsPerLine = 24;
+          // Heuristic: characters that fit on one line at 210px width, 14px font
+          const approxCharsPerLine = 22;
 
           // Estimate total wrapped lines across explicit lines
           const parts = measureText.split("\n");
@@ -116,8 +117,8 @@ export function graphStyle() {
           const bulletExtra = bulletCount * 6; // pixels
 
           // Compute height from estimated lines
-          const lineHeight = 16; // px per line at 13px font size
-          const basePadding = 14; // px padding/spacing allowance
+          const lineHeight = 20; // px per line (14px * 1.4)
+          const basePadding = 20; // px padding/spacing allowance
           const computed = basePadding + lines * lineHeight + bulletExtra;
 
           return Math.max(35, computed);
@@ -134,18 +135,20 @@ export function graphStyle() {
         },
 
         /* font & layout --------------------------------------------------- */
-        "font-family": "sans-serif",
-        "font-size": 13,
-        "font-weight": 400,
+        "font-family": "Inter, sans-serif",
+        "font-size": 14,
+        "font-weight": 500,
         "text-halign": "center",
         "text-valign": "center",
+        "line-height": 1.4,
 
         /* aesthetics ------------------------------------------------------ */
         shape: "roundrectangle",
-        "border-width": 1,
+        "corner-radius": 12,
+        "border-width": 1.5,
         "border-color": "#e5e7eb",
-        "background-color": "#f9fafb",
-        color: "#374151",
+        "background-color": "#ffffff",
+        color: "#1f2937",
 
         "transition-property":
           "background-color, border-color, color, border-width",
@@ -156,12 +159,12 @@ export function graphStyle() {
     {
       selector: "node:active",
       style: {
-        "border-width": 2.5,
-        "border-color": "#60a5fa",
-        "background-color": "#ffffff",
-        "underlay-color": "#60a5fa",
-        "underlay-padding": 6,
-        "underlay-opacity": 0.35,
+        "border-width": 3,
+        "border-color": "#3b82f6",
+        "background-color": "#eff6ff",
+        "underlay-color": "#3b82f6",
+        "underlay-padding": 4,
+        "underlay-opacity": 0.2,
       },
     },
     {
@@ -171,18 +174,23 @@ export function graphStyle() {
         "text-halign": "center",
         "text-valign": "top",
         "text-margin-y": 8,
-        "font-size": 13,
-        "font-weight": 600,
-        "text-outline-width": 2,
-        "text-outline-color": "#f9fafb",
-        "text-opacity": 1, // make sure it isn't zero
-        padding: "24px",
+        "font-family": "Inter, sans-serif",
+        "font-size": 12,
+        "font-weight": 700,
+        "text-transform": "uppercase",
+        "letter-spacing": "0.05em",
+        "text-outline-width": 3,
+        "text-outline-color": "#ffffff",
+        "text-opacity": 1,
+        padding: "32px",
 
-        "background-opacity": 1,
-        "background-color": "white",
-        "border-width": 1,
+        "background-opacity": 0.5,
+        "background-color": "#f8fafc", // slate-50
+        "border-width": 2,
         "border-style": "dashed",
-        "border-color": "#4B5563",
+        "border-color": "#cbd5e1", // slate-300
+        shape: "roundrectangle",
+        "corner-radius": 24,
       },
     },
     {
@@ -213,38 +221,37 @@ export function graphStyle() {
       selector: 'node[compound][collapsed = "true"]',
       style: {
         /* fixed badge size */
-        width: 230,
-        height: 40,
+        width: 220,
+        height: 48,
 
-        /* look & feel: square card with accent border and chevron */
-        shape: "rectangle",
+        /* look & feel: pill shape */
+        shape: "roundrectangle",
+        "corner-radius": 24,
         "background-opacity": 1,
         "background-color": "#ffffff",
         "border-width": 2,
-        "border-color": "#9ca3af",
+        "border-color": "#e2e8f0",
         "border-style": "solid",
 
-        /* subtle shadow to suggest interactivity */
-
         /* chevron indicator (right side) */
-
         "background-fit": "none",
         "background-clip": "node",
         "background-width": 12,
         "background-height": 12,
-        "background-position-x": "96%",
+        "background-position-x": "92%",
         "background-position-y": "50%",
 
         /* text centred inside the card */
         label: "data(id)",
         "text-valign": "center",
         "text-halign": "center",
-        "text-margin-x": -6,
-        "font-size": 13,
+        "text-margin-x": 0,
+        "font-family": "Inter, sans-serif",
+        "font-size": 14,
         "font-weight": 600,
-        "text-wrap": "wrap",
-        "text-max-width": 190,
-        color: "#374151",
+        "text-wrap": "ellipsis",
+        "text-max-width": 180,
+        color: "#1e293b",
       },
     },
     {
@@ -259,24 +266,26 @@ export function graphStyle() {
     {
       selector: "edge",
       style: {
-        width: 1.5,
-        "line-color": "#c0c6d0",
+        width: 2,
+        "line-color": "#cbd5e1", // slate-300
         "edge-distances": "node-position",
         "curve-style": "bezier",
-        "control-point-step-size": 25,
-        "control-point-weight": 0.35,
+        "target-arrow-shape": "triangle",
+        "target-arrow-color": "#cbd5e1",
+        "arrow-scale": 0.8,
+        "control-point-step-size": 40,
+        "control-point-weight": 0.5,
         opacity: 0.8,
       },
     },
     {
       selector: ".edge-hover",
       style: {
-        width: 4, // Increased thickness for better visibility
-        "line-color": "#4ade80", // More refined green color
+        width: 3,
+        "line-color": "#3b82f6", // blue-500
+        "target-arrow-color": "#3b82f6",
         "z-index": 9998,
         opacity: 1,
-        "target-arrow-color": "#4ade80", // Matching arrow color
-        "target-arrow-shape": "triangle", // Add arrow shape for highlighted edges
       },
     },
   ];

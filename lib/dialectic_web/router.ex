@@ -30,6 +30,7 @@ defmodule DialecticWeb.Router do
     get "/my/ideas", PageController, :my_graphs
     get "/view_all/graphs", PageController, :view_all
     post "/graphs/:title/generate_tags", PageController, :generate_tags
+    get "/graphs/preview/:title", GraphImageController, :show
     post "/conversation", PageController, :create
     # get "/intro/what", PageController, :what
     get "/intro/how", PageController, :guide

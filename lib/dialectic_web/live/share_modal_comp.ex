@@ -121,6 +121,20 @@ defmodule DialecticWeb.ShareModalComp do
                       Manage access to <strong>{@graph_struct.title}</strong>
                     </p>
                   </div>
+
+                  <%= if Map.get(@graph_struct.data || %{}, "preview_image") do %>
+                    <div class="mt-4 border rounded-lg overflow-hidden shadow-sm bg-gray-50">
+                      <img
+                        src={@graph_struct.data["preview_image"]}
+                        alt="Graph Preview"
+                        class="w-full max-h-48 object-contain"
+                      />
+                    </div>
+                  <% else %>
+                    <div class="mt-4 flex items-center justify-center h-32 bg-gray-50 border border-dashed border-gray-300 rounded-lg text-gray-400 text-sm">
+                      <span class="animate-pulse">Generating preview...</span>
+                    </div>
+                  <% end %>
                   
     <!-- Public Link Section -->
                   <div class="mt-4 p-3 bg-gray-50 rounded-md">

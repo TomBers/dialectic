@@ -233,6 +233,18 @@ const graphHook = {
 
     this.cy = draw_graph(container, this, JSON.parse(graph), node);
 
+    this.handleEvent("request_screenshot", () => {
+      if (this.cy) {
+        const png = this.cy.png({
+          output: "base64uri",
+          full: true,
+          scale: 1.5,
+          bg: "white",
+        });
+        this.pushEvent("save_screenshot", { image: png });
+      }
+    });
+
     // --- Explored Nodes Tracking ---
     this._updateExploredStatus = () => {
       try {
