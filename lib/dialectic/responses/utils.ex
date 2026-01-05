@@ -17,16 +17,20 @@ defmodule Dialectic.Responses.Utils do
         true -> to_string(data)
       end
 
-    updated_vertex = GraphManager.set_node_content(graph, node, text)
+    if text == "" do
+      :ok
+    else
+      updated_vertex = GraphManager.set_node_content(graph, node, text)
 
-    if updated_vertex do
-      Phoenix.PubSub.broadcast(
-        Dialectic.PubSub,
-        live_view_topic,
-        {:stream_chunk, updated_vertex, :node_id, node}
-      )
+      if updated_vertex do
+        Phoenix.PubSub.broadcast(
+          Dialectic.PubSub,
+          live_view_topic,
+          {:stream_chunk, updated_vertex, :node_id, node}
+        )
+      end
+
+      :ok
     end
-
-    :ok
   end
 end

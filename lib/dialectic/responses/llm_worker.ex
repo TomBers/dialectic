@@ -30,7 +30,6 @@ defmodule Dialectic.Workers.LLMWorker do
   require Logger
 
   alias Dialectic.Responses.Utils
-  alias Dialectic.DbActions.DbWorker
   alias Dialectic.Responses.{PromptsStructured, PromptsCreative, ModeServer}
 
   @buffer_size 50
@@ -197,7 +196,7 @@ defmodule Dialectic.Workers.LLMWorker do
 
   defp finalize(graph, to_node, live_view_topic) do
     GraphManager.finalize_node_content(graph, to_node)
-    DbWorker.save_graph(graph, false)
+    GraphManager.save_graph(graph)
 
     Phoenix.PubSub.broadcast(
       Dialectic.PubSub,
