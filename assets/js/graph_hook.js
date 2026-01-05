@@ -238,10 +238,8 @@ const graphHook = {
       this.cy._ownerHook = this;
     } catch (_e) {}
 
-    // Initial update (deferred to ensure function definition)
-    setTimeout(() => {
-      if (this._updateExploredStatus) this._updateExploredStatus();
-    }, 0);
+    // Initial update
+    this._updateExploredStatus();
 
     this.handleEvent("request_screenshot", () => {
       if (this.cy) {
@@ -266,51 +264,6 @@ const graphHook = {
         }, 200);
       }
     });
-
-    // --- Explored Nodes Tracking ---
-    this._updateExploredStatus = () => {
-      try {
-        const graphId = this.el.dataset.graphId;
-        if (!graphId) return;
-
-        const storageKey = `dialectic_explored_${graphId}`;
-        let explored = new Set();
-        try {
-          const stored = localStorage.getItem(storageKey);
-          if (stored) {
-            JSON.parse(stored).forEach((id) => explored.add(id));
-          }
-        } catch (e) {}
-
-        // Mark current node as explored
-        const currentNodeId = this.el.dataset.node;
-        if (currentNodeId) {
-          if (!explored.has(currentNodeId)) {
-            explored.add(currentNodeId);
-            localStorage.setItem(storageKey, JSON.stringify([...explored]));
-          }
-        }
-
-        // Apply visual state & update progress
-        if (this.cy) {
-          // Styles simplified: removed 'explored' class application
-
-          // Calculate progress (exclude compound parents)
-          const realNodes = this.cy.nodes().filter((n) => !n.isParent());
-          const total = realNodes.length;
-          const exploredCount = realNodes.filter((n) =>
-            explored.has(n.id()),
-          ).length;
-
-          this.pushEvent("update_exploration_progress", {
-            explored: exploredCount,
-            total: total,
-          });
-        }
-      } catch (e) {
-        // no-op
-      }
-    };
 
     // Layout/centering coordination state
     this._layoutRunning = false;
@@ -640,6 +593,51 @@ const graphHook = {
       }
     }).call(this);
   },
+
+  _updateExploredStatus() {
+    try {
+      const graphId = this.el.dataset.graphId;
+      if (!graphId) return;
+
+      const storageKey = `dialectic_explored_${graphId}`;
+      let explored = new Set();
+      try {
+        const stored = localStorage.getItem(storageKey);
+        if (stored) {
+          JSON.parse(stored).forEach((id) => explored.add(id));
+        }
+      } catch (e) {}
+
+      // Mark current node as explored
+      const currentNodeId = this.el.dataset.node;
+      if (currentNodeId) {
+        if (!explored.has(currentNodeId)) {
+          explored.add(currentNodeId);
+          localStorage.setItem(storageKey, JSON.stringify([...explored]));
+        }
+      }
+
+      // Apply visual state & update progress
+      if (this.cy) {
+        // Styles simplified: removed 'explored' class application
+
+        // Calculate progress (exclude compound parents)
+        const realNodes = this.cy.nodes().filter((n) => !n.isParent());
+        const total = realNodes.length;
+        const exploredCount = realNodes.filter((n) =>
+          explored.has(n.id()),
+        ).length;
+
+        this.pushEvent("update_exploration_progress", {
+          explored: exploredCount,
+          total: total,
+        });
+      }
+    } catch (e) {
+      // no-op
+    }
+  },
+
   updated() {
     const { graph, node, operation } = this.el.dataset;
     // Avoid reloading Cytoscape if the graph JSON hasn't changed to reduce flicker
