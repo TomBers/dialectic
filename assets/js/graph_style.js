@@ -100,8 +100,8 @@ export function graphStyle() {
           // Remove zero-width spaces used for wrapping when measuring length
           const measureText = content.replace(/\u200B/g, "");
 
-          // Heuristic: characters that fit on one line at 210px width, 14px font
-          const approxCharsPerLine = 22;
+          // Heuristic: characters that fit on one line at 190px width, 14px font
+          const approxCharsPerLine = 20;
 
           // Estimate total wrapped lines across explicit lines
           const parts = measureText.split("\n");
@@ -127,7 +127,7 @@ export function graphStyle() {
         "min-height": 35,
         padding: "10px",
         "text-wrap": "wrap",
-        "text-max-width": 210, // interior width incl. padding
+        "text-max-width": 190, // interior width incl. padding
 
         /* label ----------------------------------------------------------- */
         label: (ele) => {
