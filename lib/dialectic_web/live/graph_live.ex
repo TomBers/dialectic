@@ -589,16 +589,11 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event("save_screenshot", %{"image" => image_data}, socket) do
     graph = socket.assigns.graph_struct
+    # Update in memory only for modal display
     new_data = Map.put(graph.data || %{}, "preview_image", image_data)
-    changeset = Ecto.Changeset.change(graph, data: new_data)
+    updated_graph = %{graph | data: new_data}
 
-    case Dialectic.Repo.update(changeset) do
-      {:ok, updated_graph} ->
-        {:noreply, assign(socket, graph_struct: updated_graph)}
-
-      _ ->
-        {:noreply, socket}
-    end
+    {:noreply, assign(socket, graph_struct: updated_graph)}
   end
 
   def handle_event("close_share_modal", _params, socket) do
@@ -1181,17 +1176,7 @@ defmodule DialecticWeb.GraphLive do
 
     assign(socket,
       page_title: graph_struct.title,
-      og_image:
-        if(Map.get(graph_struct.data || %{}, "preview_image")) do
-          if graph_struct.is_public do
-            DialecticWeb.Endpoint.url() <> ~p"/graphs/preview/#{graph_struct.title}"
-          else
-            DialecticWeb.Endpoint.url() <>
-              ~p"/graphs/preview/#{graph_struct.title}?token=#{graph_struct.share_token}"
-          end
-        else
-          DialecticWeb.Endpoint.url() <> ~p"/images/graph_live.webp"
-        end,
+      og_image: DialecticWeb.Endpoint.url() <> ~p"/images/graph_live.webp",
       page_description:
         "Explore the interactive map for \"#{graph_struct.title}\". Visualize arguments, discover connections, and collaborate on MuDG.",
       live_view_topic: "graph_update:#{socket.id}",
