@@ -100,7 +100,7 @@ defmodule Dialectic.Graph.Creator do
 
   defp generate_response(title, origin_node, mode) do
     context = GraphManager.build_context(title, origin_node)
-    instruction = Prompts.explain(context, origin_node.content)
+    instruction = Prompts.initial_explainer(context, origin_node.content)
 
     system_prompt =
       case mode do
@@ -110,7 +110,7 @@ defmodule Dialectic.Graph.Creator do
 
     opts = [
       system_prompt: system_prompt,
-      model: "gemini-2.5-flash-lite"
+      model: "gemini-3-flash-preview"
     ]
 
     Dialectic.LLM.Generator.generate(instruction, opts)

@@ -49,6 +49,22 @@ defmodule Dialectic.Responses.Prompts do
   end
 
   @doc """
+  Initial answer to a question, with suggestions for further exploration.
+  """
+  @spec initial_explainer(String.t(), String.t()) :: String.t()
+  def initial_explainer(context, topic) do
+    join_blocks([
+      fence("Context", context),
+      """
+      Please answer the following question: #{sanitize_title(topic)}.
+
+      In addition to the answer, please provide a basis for ongoing exploration by highlighting extension questions and related topics.
+      Use the provided Context to ground your explanation.
+      """
+    ])
+  end
+
+  @doc """
   Apply an instruction or selection to the current context.
   """
   @spec selection(String.t(), String.t()) :: String.t()
