@@ -757,9 +757,10 @@ defmodule DialecticWeb.GraphLive do
       {:other_user_change, self()}
     )
 
+    # Update graph structure but keep current node selection
     update_graph(
       socket,
-      {nil, GraphActions.find_node(socket.assigns.graph_id, node_id)},
+      {nil, socket.assigns.node},
       "llm_request_complete"
     )
   end
