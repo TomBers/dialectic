@@ -579,7 +579,21 @@ defmodule DialecticWeb.GraphLive do
 
   # Start stream handlers grouped with other handle_event clauses
   def handle_event("open_share_modal", _params, socket) do
-    {:noreply, assign(socket, show_share_modal: true)}
+    socket =
+      socket
+      |> assign(show_share_modal: true)
+      |> push_event("request_screenshot", %{})
+
+    {:noreply, socket}
+  end
+
+  def handle_event("save_screenshot", %{"image" => image_data}, socket) do
+    graph = socket.assigns.graph_struct
+    # Update in memory only for modal display
+    new_data = Map.put(graph.data || %{}, "preview_image", image_data)
+    updated_graph = %{graph | data: new_data}
+
+    {:noreply, assign(socket, graph_struct: updated_graph)}
   end
 
   def handle_event("close_share_modal", _params, socket) do
@@ -1163,7 +1177,8 @@ defmodule DialecticWeb.GraphLive do
     assign(socket,
       page_title: graph_struct.title,
       og_image: DialecticWeb.Endpoint.url() <> ~p"/images/graph_live.webp",
-      page_description: "Explore the dialectic map for \"#{graph_struct.title}\" on MuDG.",
+      page_description:
+        "Explore the interactive map for \"#{graph_struct.title}\". Visualize arguments, discover connections, and collaborate on MuDG.",
       live_view_topic: "graph_update:#{socket.id}",
       graph_topic: "graph_update:#{graph_id}",
       graph_struct: graph_struct,

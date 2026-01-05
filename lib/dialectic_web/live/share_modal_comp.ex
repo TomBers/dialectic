@@ -121,6 +121,20 @@ defmodule DialecticWeb.ShareModalComp do
                       Manage access to <strong>{@graph_struct.title}</strong>
                     </p>
                   </div>
+
+                  <%= if Map.get(@graph_struct.data || %{}, "preview_image") do %>
+                    <div class="mt-4 border rounded-lg overflow-hidden shadow-sm bg-gray-50">
+                      <img
+                        src={@graph_struct.data["preview_image"]}
+                        alt="Graph Preview"
+                        class="w-full max-h-48 object-contain"
+                      />
+                    </div>
+                  <% else %>
+                    <div class="mt-4 flex items-center justify-center h-32 bg-gray-50 border border-dashed border-gray-300 rounded-lg text-gray-400 text-sm">
+                      <span class="animate-pulse">Generating preview...</span>
+                    </div>
+                  <% end %>
                   
     <!-- Public Link Section -->
                   <div class="mt-4 p-3 bg-gray-50 rounded-md">
@@ -149,6 +163,61 @@ defmodule DialecticWeb.ShareModalComp do
                         Private link with access token.
                       <% end %>
                     </p>
+                  </div>
+                  
+    <!-- Social Share Section -->
+                  <div class="mt-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                      Share on Social
+                    </label>
+                    <div class="flex space-x-2">
+                      <a
+                        href={"https://twitter.com/intent/tweet?text=#{URI.encode_www_form("Check out this map on MuDG: " <> @graph_struct.title)}&url=#{URI.encode_www_form(share_url(@graph_struct))}"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                      >
+                        X (Twitter)
+                      </a>
+                      <a
+                        href={"https://www.linkedin.com/sharing/share-offsite/?url=#{URI.encode_www_form(share_url(@graph_struct))}"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                      >
+                        LinkedIn
+                      </a>
+                      <a
+                        href={"https://www.reddit.com/submit?url=#{URI.encode_www_form(share_url(@graph_struct))}&title=#{URI.encode_www_form(@graph_struct.title)}"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                      >
+                        Reddit
+                      </a>
+                    </div>
+                  </div>
+                  
+    <!-- Embed Code Section -->
+                  <div class="mt-4 p-3 bg-gray-50 rounded-md">
+                    <label class="block text-sm font-medium text-gray-700">Embed Code</label>
+                    <div class="mt-1 flex rounded-md shadow-sm">
+                      <textarea
+                        readonly
+                        rows="3"
+                        class="flex-1 min-w-0 block w-full px-3 py-2 rounded-l-md border-gray-300 sm:text-sm bg-white text-gray-500 font-mono text-xs"
+                        onclick="this.select()"
+                      ><iframe src={share_url(@graph_struct)} width="100%" height="600px" frameborder="0" allowfullscreen></iframe></textarea>
+                      <button
+                        type="button"
+                        class="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 rounded-r-md bg-gray-50 text-gray-500 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        data-copy-text={"<iframe src=\"#{share_url(@graph_struct)}\" width=\"100%\" height=\"600px\" frameborder=\"0\" allowfullscreen></iframe>"}
+                        onclick="navigator.clipboard.writeText(this.dataset.copyText).then(() => alert('Embed code copied!'))"
+                        aria-label="Copy embed code"
+                      >
+                        <.icon name="hero-clipboard-document" class="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                   
     <!-- Invite Section (Hidden) -->
