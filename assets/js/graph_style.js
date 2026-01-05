@@ -87,7 +87,7 @@ export function graphStyle() {
       selector: "node",
       style: {
         /* sizing ---------------------------------------------------------- */
-        width: 230,
+        width: 260,
         height: (n) => {
           const processedContent = processNodeContent(
             n.data("content") || "",
@@ -100,7 +100,7 @@ export function graphStyle() {
           // Remove zero-width spaces used for wrapping when measuring length
           const measureText = content.replace(/\u200B/g, "");
 
-          // Heuristic: characters that fit on one line at 190px width, 14px font
+          // Heuristic: characters that fit on one line at 200px width, 14px font
           const approxCharsPerLine = 20;
 
           // Estimate total wrapped lines across explicit lines
@@ -127,7 +127,7 @@ export function graphStyle() {
         "min-height": 35,
         padding: "10px",
         "text-wrap": "wrap",
-        "text-max-width": 190, // interior width incl. padding
+        "text-max-width": 200, // interior width incl. padding
 
         /* label ----------------------------------------------------------- */
         label: (ele) => {
@@ -135,7 +135,8 @@ export function graphStyle() {
         },
 
         /* font & layout --------------------------------------------------- */
-        "font-family": "Inter, sans-serif",
+        "font-family":
+          'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif',
         "font-size": 14,
         "font-weight": 500,
         "text-halign": "center",
@@ -174,11 +175,11 @@ export function graphStyle() {
         "text-halign": "center",
         "text-valign": "top",
         "text-margin-y": 8,
-        "font-family": "Inter, sans-serif",
+        "font-family":
+          'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif',
         "font-size": 12,
         "font-weight": 700,
         "text-transform": "uppercase",
-        "letter-spacing": "0.05em",
         "text-outline-width": 3,
         "text-outline-color": "#ffffff",
         "text-opacity": 1,
@@ -246,7 +247,8 @@ export function graphStyle() {
         "text-valign": "center",
         "text-halign": "center",
         "text-margin-x": 0,
-        "font-family": "Inter, sans-serif",
+        "font-family":
+          'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif',
         "font-size": 14,
         "font-weight": 600,
         "text-wrap": "ellipsis",

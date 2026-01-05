@@ -233,6 +233,14 @@ const graphHook = {
 
     this.cy = draw_graph(container, this, JSON.parse(graph), node);
 
+    // Link back so layoutGraph can update running state
+    try {
+      this.cy._ownerHook = this;
+    } catch (_e) {}
+
+    // Initial update
+    if (this._updateExploredStatus) this._updateExploredStatus();
+
     this.handleEvent("request_screenshot", () => {
       if (this.cy) {
         const stateSelected = this.cy.$(":selected");
@@ -308,13 +316,7 @@ const graphHook = {
         // no-op
       }
     };
-    // Initial update
-    this._updateExploredStatus();
 
-    // Link back so layoutGraph can update running state
-    try {
-      this.cy._ownerHook = this;
-    } catch (_e) {}
     // Layout/centering coordination state
     this._layoutRunning = false;
     this._pendingCenterId = null;
