@@ -235,13 +235,25 @@ const graphHook = {
 
     this.handleEvent("request_screenshot", () => {
       if (this.cy) {
-        const png = this.cy.png({
-          output: "base64uri",
-          full: true,
-          scale: 1.5,
-          bg: "white",
-        });
-        this.pushEvent("save_screenshot", { image: png });
+        const stateSelected = this.cy.$(":selected");
+        const classSelected = this.cy.$(".selected");
+
+        stateSelected.unselect();
+        classSelected.removeClass("selected");
+
+        setTimeout(() => {
+          if (!this.cy) return;
+          const png = this.cy.png({
+            output: "base64uri",
+            full: true,
+            scale: 1.5,
+            bg: "white",
+          });
+
+          stateSelected.select();
+          classSelected.addClass("selected");
+          this.pushEvent("save_screenshot", { image: png });
+        }, 200);
       }
     });
 
