@@ -56,18 +56,18 @@ defmodule DialecticWeb.Plugs.RateLimiter do
 
   # Get rate limit configuration based on endpoint type
   defp get_limits(:auth) do
-    # Authentication: 5 attempts per minute
-    {5, 60_000}
+    # Authentication: 20 attempts per minute (increased for shared IPs)
+    {20, 60_000}
   end
 
   defp get_limits(:api) do
-    # API endpoints: 60 requests per minute
-    {60, 60_000}
+    # API endpoints: 120 requests per minute (increased for shared IPs)
+    {120, 60_000}
   end
 
   defp get_limits(:llm) do
-    # LLM endpoints: 20 requests per minute (more restrictive due to cost)
-    {20, 60_000}
+    # LLM endpoints: 30 requests per minute (more restrictive due to cost)
+    {30, 60_000}
   end
 
   defp get_limits(_) do
