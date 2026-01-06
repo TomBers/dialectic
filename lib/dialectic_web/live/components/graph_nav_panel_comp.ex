@@ -4,7 +4,7 @@ defmodule DialecticWeb.GraphNavPanelComp do
   @impl true
   def render(assigns) do
     ~H"""
-    <div>
+    <div phx-hook="ViewMode" id="view-mode-container">
       <!-- Graph Navigation Panel Toggle (when hidden) -->
       <%= if !@show do %>
         <button
@@ -68,14 +68,8 @@ defmodule DialecticWeb.GraphNavPanelComp do
                 <div class="flex items-center rounded-md border border-gray-200 overflow-hidden">
                   <button
                     type="button"
-                    phx-click="toggle_view_mode"
-                    class={[
-                      "flex-1 px-3 py-1.5 text-xs font-medium transition-colors",
-                      if(@view_mode == "spaced",
-                        do: "bg-indigo-600 text-white",
-                        else: "text-gray-700 hover:bg-gray-50 border-r border-gray-200"
-                      )
-                    ]}
+                    data-view-mode-toggle="spaced"
+                    class="flex-1 px-3 py-1.5 text-xs font-medium transition-colors text-gray-700 hover:bg-gray-50 border-r border-gray-200"
                     aria-label="Spaced view"
                   >
                     <.icon name="hero-arrows-pointing-out" class="w-3.5 h-3.5 inline-block mr-1" />
@@ -83,14 +77,8 @@ defmodule DialecticWeb.GraphNavPanelComp do
                   </button>
                   <button
                     type="button"
-                    phx-click="toggle_view_mode"
-                    class={[
-                      "flex-1 px-3 py-1.5 text-xs font-medium transition-colors",
-                      if(@view_mode == "compact",
-                        do: "bg-indigo-600 text-white",
-                        else: "text-gray-700 hover:bg-gray-50"
-                      )
-                    ]}
+                    data-view-mode-toggle="compact"
+                    class="flex-1 px-3 py-1.5 text-xs font-medium transition-colors text-gray-700 hover:bg-gray-50"
                     aria-label="Compact view"
                   >
                     <.icon name="hero-arrows-pointing-in" class="w-3.5 h-3.5 inline-block mr-1" />

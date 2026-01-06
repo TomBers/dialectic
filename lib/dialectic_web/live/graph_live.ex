@@ -79,18 +79,6 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, assign(socket, prompt_mode: mode_str)}
   end
 
-  def handle_event("toggle_view_mode", _params, socket) do
-    new_mode = if socket.assigns.view_mode == "spaced", do: "compact", else: "spaced"
-
-    {:noreply,
-     socket
-     |> assign(view_mode: new_mode)
-     |> assign(
-       f_graph: GraphManager.format_graph_json(socket.assigns.graph_id),
-       graph_operation: "view_mode_changed"
-     )}
-  end
-
   def handle_event("toggle_graph_nav_panel", _params, socket) do
     {:noreply, assign(socket, show_graph_nav_panel: !socket.assigns.show_graph_nav_panel)}
   end
@@ -1163,7 +1151,6 @@ defmodule DialecticWeb.GraphLive do
       work_streams: [],
       exploration_stats: nil,
       show_login_modal: false,
-      view_mode: "spaced",
       show_graph_nav_panel: true
     )
   end

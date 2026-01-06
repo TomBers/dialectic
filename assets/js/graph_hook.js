@@ -226,21 +226,18 @@ const ensureVisible = (cy, container, nodeId) => {
 
 const graphHook = {
   mounted() {
-    const { graph, node, div, viewMode } = this.el.dataset;
+    const { graph, node, div } = this.el.dataset;
 
     const container =
       this.el.querySelector(`#${div}`) || document.getElementById(div);
 
-    this.cy = draw_graph(
-      container,
-      this,
-      JSON.parse(graph),
-      node,
-      viewMode || "spaced",
-    );
+    // Get view mode from localStorage or default to "spaced"
+    const viewMode = localStorage.getItem("graph_view_mode") || "spaced";
+
+    this.cy = draw_graph(container, this, JSON.parse(graph), node, viewMode);
 
     // Track view mode for detecting changes
-    this._lastViewMode = viewMode || "spaced";
+    this._lastViewMode = viewMode;
 
     // Store container reference for reinitializing
     this._container = container;
@@ -274,6 +271,57 @@ const graphHook = {
           classSelected.addClass("selected");
           this.pushEvent("save_screenshot", { image: png });
         }, 200);
+      }
+    });
+
+    // Handle view mode changes from client-side toggle via custom DOM event
+    this.el.addEventListener("viewModeChanged", (e) => {
+      const currentViewMode = e.detail.view_mode || "spaced";
+
+      if (this._lastViewMode === currentViewMode) return;
+
+      // Store the current zoom and pan
+      const zoom = this.cy ? this.cy.zoom() : 1;
+      const pan = this.cy ? this.cy.pan() : { x: 0, y: 0 };
+      const currentNode = this.el.dataset.node;
+
+      // Destroy the old instance
+      if (this.cy) {
+        try {
+          this.cy.destroy();
+        } catch (_e) {}
+      }
+
+      // Recreate with new view mode
+      const graph = this.el.dataset.graph;
+      this.cy = draw_graph(
+        this._container,
+        this,
+        JSON.parse(graph),
+        currentNode,
+        currentViewMode,
+      );
+
+      // Restore zoom and pan
+      if (this.cy) {
+        try {
+          this.cy.zoom(zoom);
+          this.cy.pan(pan);
+          this.cy._ownerHook = this;
+        } catch (_e) {}
+      }
+
+      // Update tracked view mode
+      this._lastViewMode = currentViewMode;
+
+      // Re-bind all event handlers and update state
+      if (this._updateExploredStatus) this._updateExploredStatus();
+      if (this._bindPngButtons) this._bindPngButtons();
+
+      // Highlight the selected node
+      if (this.cy && currentNode) {
+        this.cy.elements().removeClass("selected");
+        this.cy.getElementById(currentNode).addClass("selected");
       }
     });
 
