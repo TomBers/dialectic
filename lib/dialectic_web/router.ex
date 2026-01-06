@@ -29,6 +29,14 @@ defmodule DialecticWeb.Router do
     plug :protect_from_forgery
   end
 
+  # Health check endpoints
+  scope "/health", DialecticWeb do
+    pipe_through :api
+
+    get "/", HealthController, :check
+    get "/deep", HealthController, :deep
+  end
+
   scope "/", DialecticWeb do
     pipe_through :browser
     live "/", HomeLive
@@ -43,14 +51,6 @@ defmodule DialecticWeb.Router do
     live "/:graph_name", GraphLive
     live "/:graph_name/linear", LinearGraphLive
     live "/:graph_name/story/:node_id", StoryLive
-  end
-
-  # Health check endpoints
-  scope "/health", DialecticWeb do
-    pipe_through :api
-
-    get "/", HealthController, :check
-    get "/deep", HealthController, :deep
   end
 
   # Other scopes may use custom stacks.
