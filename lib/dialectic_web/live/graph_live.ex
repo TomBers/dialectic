@@ -750,21 +750,7 @@ defmodule DialecticWeb.GraphLive do
       {:stream_chunk_broadcast, updated_vertex, :node_id, node_id, self()}
     )
 
-    if socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
-      label = extract_title(Map.get(updated_vertex, :content, ""))
-
-      # Merge content update while preserving relatives (parents/children)
-      node = %{socket.assigns.node | content: updated_vertex.content}
-
-      socket =
-        socket
-        |> assign(node: node)
-        |> push_event("update_node_label", %{id: node_id, label: label})
-
-      {:noreply, socket}
-    else
-      {:noreply, socket}
-    end
+    {:noreply, update_streaming_node(socket, updated_vertex, node_id)}
   end
 
   def handle_info(
@@ -776,21 +762,7 @@ defmodule DialecticWeb.GraphLive do
       {:noreply, socket}
     else
       # Another user is streaming - update our view if we're viewing this node
-      if socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
-        label = extract_title(Map.get(updated_vertex, :content, ""))
-
-        # Merge content update while preserving relatives (parents/children)
-        node = %{socket.assigns.node | content: updated_vertex.content}
-
-        socket =
-          socket
-          |> assign(node: node)
-          |> push_event("update_node_label", %{id: node_id, label: label})
-
-        {:noreply, socket}
-      else
-        {:noreply, socket}
-      end
+      {:noreply, update_streaming_node(socket, updated_vertex, node_id)}
     end
   end
 
@@ -1048,7 +1020,8 @@ defmodule DialecticWeb.GraphLive do
              "branch",
              "combine",
              "ideas",
-             "explain"
+             "explain",
+             "deepdive"
            ] &&
              node && Map.get(node, :id) do
           push_event(s, "center_node", %{id: node.id})
@@ -1105,6 +1078,21 @@ defmodule DialecticWeb.GraphLive do
     |> String.replace(~r/^\s*title\s*:?\s*/i, "")
     |> String.replace("**", "")
     |> String.trim()
+  end
+
+  defp update_streaming_node(socket, updated_vertex, node_id) do
+    if socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
+      label = extract_title(Map.get(updated_vertex, :content, ""))
+
+      # Merge content update while preserving relatives (parents/children)
+      node = %{socket.assigns.node | content: updated_vertex.content}
+
+      socket
+      |> assign(node: node)
+      |> push_event("update_node_label", %{id: node_id, label: label})
+    else
+      socket
+    end
   end
 
   defp maybe_set_mode(graph_id, params) do
