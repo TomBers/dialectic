@@ -91,6 +91,10 @@ defmodule DialecticWeb.GraphLive do
      )}
   end
 
+  def handle_event("toggle_graph_nav_panel", _params, socket) do
+    {:noreply, assign(socket, show_graph_nav_panel: !socket.assigns.show_graph_nav_panel)}
+  end
+
   def handle_event("node:join_group", %{"node" => nid, "parent" => gid}, socket) do
     _graph = GraphManager.set_parent(socket.assigns.graph_id, nid, gid)
     DbWorker.save_graph(socket.assigns.graph_id)
@@ -1159,7 +1163,8 @@ defmodule DialecticWeb.GraphLive do
       work_streams: [],
       exploration_stats: nil,
       show_login_modal: false,
-      view_mode: "spaced"
+      view_mode: "spaced",
+      show_graph_nav_panel: true
     )
   end
 
