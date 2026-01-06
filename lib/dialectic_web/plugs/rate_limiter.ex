@@ -7,6 +7,8 @@ defmodule DialecticWeb.Plugs.RateLimiter do
   import Plug.Conn
   import Phoenix.Controller, only: [json: 2]
 
+  @env Mix.env()
+
   @doc """
   Rate limits requests based on endpoint type and client IP.
 
@@ -26,7 +28,7 @@ defmodule DialecticWeb.Plugs.RateLimiter do
 
   def call(conn, opts) do
     # Skip rate limiting in test environment
-    if Mix.env() == :test do
+    if @env == :test do
       conn
     else
       type = Keyword.get(opts, :type, :api)
