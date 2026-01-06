@@ -41,3 +41,4 @@ kill_signal = 'SIGTERM'
     method = "GET"
     timeout = "5s"
     path = "/health"
+    port = 8080

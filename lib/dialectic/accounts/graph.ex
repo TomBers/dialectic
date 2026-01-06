@@ -43,7 +43,7 @@ defmodule Dialectic.Accounts.Graph do
 
   defp validate_title_format(changeset) do
     changeset
-    |> validate_format(:title, ~r/^[a-zA-Z0-9\s\-_\.'",;:!?()&]+$/,
+    |> validate_format(:title, ~r/^[a-zA-Z0-9\s\-_\.',:!?]+$/,
       message: "contains invalid characters"
     )
   end
