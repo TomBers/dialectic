@@ -1081,32 +1081,34 @@ defmodule DialecticWeb.GraphLive do
   end
 
   defp update_streaming_node(socket, updated_vertex, node_id) do
+    new_content = Map.get(updated_vertex, :content, "")
+
+    # Check if we've already set the title for this node on this socket
+    already_titled = MapSet.member?(socket.assigns.titled_nodes, node_id)
+    new_title = extract_title(new_content)
+    needs_title_set = !already_titled && new_title != ""
+
+    # Push label update to Cytoscape for all users, regardless of which node they're viewing
+    socket =
+      if needs_title_set do
+        socket
+        |> assign(titled_nodes: MapSet.put(socket.assigns.titled_nodes, node_id))
+        |> push_event("update_node_label", %{id: node_id, label: new_title})
+      else
+        socket
+      end
+
+    # If this user is currently viewing the streaming node, update their assigns
     if socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
       current_content = Map.get(socket.assigns.node, :content, "")
-      new_content = Map.get(updated_vertex, :content, "")
 
-      # Skip update if content hasn't changed (prevents redundant rerenders)
+      # Skip assign update if content hasn't changed
       if current_content == new_content do
         socket
       else
         # Merge content update while preserving relatives (parents/children)
         node = %{socket.assigns.node | content: new_content}
-
-        # Only extract and set title once (when transitioning from empty to content)
-        # This prevents title changes during streaming
-        current_title = extract_title(current_content)
-        needs_title_set = current_title == "" && current_content != new_content
-
-        socket =
-          socket
-          |> assign(node: node)
-
-        if needs_title_set do
-          label = extract_title(new_content)
-          push_event(socket, "update_node_label", %{id: node_id, label: label})
-        else
-          socket
-        end
+        assign(socket, node: node)
       end
     else
       socket
@@ -1181,6 +1183,7 @@ defmodule DialecticWeb.GraphLive do
       user: user,
       current_user: socket.assigns[:current_user],
       streaming_nodes: MapSet.new(),
+      titled_nodes: MapSet.new(),
       show_combine: false,
       drawer_open: true,
       right_panel_open: false,
