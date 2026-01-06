@@ -696,10 +696,10 @@ const graphHook = {
   },
 
   updated() {
-    const { graph, node, operation, viewMode } = this.el.dataset;
+    const { graph, node, operation } = this.el.dataset;
 
-    // Check if view mode has changed
-    const currentViewMode = viewMode || "spaced";
+    // Check if view mode has changed (read from localStorage)
+    const currentViewMode = localStorage.getItem("graph_view_mode") || "spaced";
     const viewModeChanged = this._lastViewMode !== currentViewMode;
 
     if (viewModeChanged) {
