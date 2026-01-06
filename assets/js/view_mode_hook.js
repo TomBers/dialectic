@@ -7,6 +7,25 @@ export const ViewModeHook = {
     const savedViewMode = localStorage.getItem("graph_view_mode") || "spaced";
     this.viewMode = savedViewMode;
 
+    this._bindEvents();
+  },
+
+  updated() {
+    this._bindEvents();
+  },
+
+  destroyed() {
+    if (this.toggleInput && this._onToggleChange) {
+      this.toggleInput.removeEventListener("change", this._onToggleChange);
+    }
+  },
+
+  _bindEvents() {
+    // Cleanup old listener if it exists
+    if (this.toggleInput && this._onToggleChange) {
+      this.toggleInput.removeEventListener("change", this._onToggleChange);
+    }
+
     // Get toggle elements
     this.toggleInput = this.el.querySelector(
       '[data-view-mode-toggle="toggle"]',
@@ -21,7 +40,7 @@ export const ViewModeHook = {
 
     // Listen for toggle click
     if (this.toggleInput) {
-      this.toggleInput.addEventListener("change", (e) => {
+      this._onToggleChange = (e) => {
         // Toggle between spaced and compact
         const newMode = this.viewMode === "spaced" ? "compact" : "spaced";
 
@@ -32,14 +51,15 @@ export const ViewModeHook = {
         this.updateToggle();
 
         // Notify the graph hook via custom DOM event (client-side only)
-        const graphEl = document.getElementById("cy");
-        if (graphEl) {
+        const graphEls = document.querySelectorAll('[phx-hook="Graph"]');
+        graphEls.forEach((graphEl) => {
           const event = new CustomEvent("viewModeChanged", {
             detail: { view_mode: newMode },
           });
           graphEl.dispatchEvent(event);
-        }
-      });
+        });
+      };
+      this.toggleInput.addEventListener("change", this._onToggleChange);
     }
   },
 

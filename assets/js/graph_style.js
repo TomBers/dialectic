@@ -91,29 +91,7 @@ export function graphStyle(viewMode = "spaced") {
         /* sizing ---------------------------------------------------------- */
         width: (n) => {
           if (!isCompact) return 260;
-
-          const processedContent = processNodeContent(
-            n.data("content") || "",
-            false,
-          );
-          const content = (processedContent || "").replace(/<br\s*\/?>/g, "\n");
-          const measureText = content.replace(/\u200B/g, "");
-
-          // Get the longest line to determine width
-          const lines = measureText.split("\n");
-          let maxLineLength = 0;
-          for (const line of lines) {
-            maxLineLength = Math.max(maxLineLength, line.trim().length);
-          }
-
-          // Estimate width: ~7.5px per character at 10px font + padding
-          // 8px total padding (4px left + 4px right)
-          const charWidth = 7.5;
-          const padding = 8;
-          const computed = Math.ceil(maxLineLength * charWidth) + padding;
-
-          // Min 50px, max 140px to keep compact
-          return Math.max(50, Math.min(140, computed));
+          return getCompactNodeWidth(n);
         },
         height: (n) => {
           const processedContent = processNodeContent(
@@ -146,18 +124,11 @@ export function graphStyle(viewMode = "spaced") {
 
           // Compact mode: calculate based on actual dynamic width
           const lines_arr = measureText.split("\n");
-          let maxLineLength = 0;
-          for (const line of lines_arr) {
-            maxLineLength = Math.max(maxLineLength, line.trim().length);
-          }
 
-          // Calculate actual node width
           const charWidth = 7.5;
           const padding = 8;
-          const nodeWidth = Math.max(
-            50,
-            Math.min(140, Math.ceil(maxLineLength * charWidth) + padding),
-          );
+          // Calculate actual node width
+          const nodeWidth = getCompactNodeWidth(n);
           const textWidth = nodeWidth - padding;
 
           // Calculate chars per line based on actual width
@@ -187,30 +158,7 @@ export function graphStyle(viewMode = "spaced") {
         "text-wrap": "wrap",
         "text-max-width": (n) => {
           if (!isCompact) return 200;
-
-          // For compact mode, calculate based on actual node width
-          const processedContent = processNodeContent(
-            n.data("content") || "",
-            false,
-          );
-          const content = (processedContent || "").replace(/<br\s*\/?>/g, "\n");
-          const measureText = content.replace(/\u200B/g, "");
-
-          const lines = measureText.split("\n");
-          let maxLineLength = 0;
-          for (const line of lines) {
-            maxLineLength = Math.max(maxLineLength, line.trim().length);
-          }
-
-          const charWidth = 7.5;
-          const padding = 8;
-          const nodeWidth = Math.max(
-            50,
-            Math.min(140, Math.ceil(maxLineLength * charWidth) + padding),
-          );
-
-          // Return interior width (node width - padding)
-          return nodeWidth - padding;
+          return getCompactNodeWidth(n) - 8;
         },
 
         /* label ----------------------------------------------------------- */
@@ -279,15 +227,7 @@ export function graphStyle(viewMode = "spaced") {
         /* dynamic badge size based on label length */
         width: (n) => {
           if (!isCompact) return 220;
-
-          const label = n.data("id") || "";
-          // Estimate width: ~7px per character at 10px font + padding for chevron
-          const charWidth = 7;
-          const padding = 30; // Extra padding for chevron and margins
-          const computed = Math.ceil(label.length * charWidth) + padding;
-
-          // Min 70px, max 150px
-          return Math.max(70, Math.min(150, computed));
+          return getCompactCollapsedWidth(n);
         },
         height: isCompact ? 28 : 48,
 
@@ -320,17 +260,7 @@ export function graphStyle(viewMode = "spaced") {
         "text-wrap": "ellipsis",
         "text-max-width": (n) => {
           if (!isCompact) return 180;
-
-          const label = n.data("id") || "";
-          const charWidth = 7;
-          const padding = 30;
-          const nodeWidth = Math.max(
-            70,
-            Math.min(150, Math.ceil(label.length * charWidth) + padding),
-          );
-
-          // Return most of the width for text, leaving space for chevron
-          return nodeWidth - 25;
+          return getCompactCollapsedWidth(n) - 25;
         },
         color: "#1e293b",
       },
@@ -432,4 +362,37 @@ function processNodeContent(content, addEllipsis = true) {
     .replace(/([\-–—‑])/g, "$1\u200B");
 
   return `${withBreaks}${suffix}`;
+}
+
+function getCompactNodeWidth(n) {
+  const processedContent = processNodeContent(n.data("content") || "", false);
+  const content = (processedContent || "").replace(/<br\s*\/?>/g, "\n");
+  const measureText = content.replace(/\u200B/g, "");
+
+  // Get the longest line to determine width
+  const lines = measureText.split("\n");
+  let maxLineLength = 0;
+  for (const line of lines) {
+    maxLineLength = Math.max(maxLineLength, line.trim().length);
+  }
+
+  // Estimate width: ~7.5px per character at 10px font + padding
+  // 8px total padding (4px left + 4px right)
+  const charWidth = 7.5;
+  const padding = 8;
+  const computed = Math.ceil(maxLineLength * charWidth) + padding;
+
+  // Min 50px, max 140px to keep compact
+  return Math.max(50, Math.min(140, computed));
+}
+
+function getCompactCollapsedWidth(n) {
+  const label = n.data("id") || "";
+  // Estimate width: ~7px per character at 10px font + padding for chevron
+  const charWidth = 7;
+  const padding = 30; // Extra padding for chevron and margins
+  const computed = Math.ceil(label.length * charWidth) + padding;
+
+  // Min 70px, max 150px
+  return Math.max(70, Math.min(150, computed));
 }

@@ -64,7 +64,7 @@ defmodule DialecticWeb.GraphNavPanelComp do
             <div class="p-3 space-y-3">
               <!-- View Mode Section -->
               <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1.5">View Mode</label>
+                <div class="block text-xs font-medium text-gray-600 mb-1.5">View Mode</div>
                 <label class="flex items-center cursor-pointer">
                   <span class="mr-2 text-xs font-medium text-gray-700">
                     Spaced
@@ -88,7 +88,7 @@ defmodule DialecticWeb.GraphNavPanelComp do
               
     <!-- Zoom Controls Section -->
               <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1.5">Zoom</label>
+                <div class="block text-xs font-medium text-gray-600 mb-1.5">Zoom</div>
                 <div class="flex items-center rounded-md border border-gray-200 overflow-hidden">
                   <button
                     id="zoom-out"
@@ -122,7 +122,7 @@ defmodule DialecticWeb.GraphNavPanelComp do
               
     <!-- Keyboard Shortcuts Section -->
               <div class="pt-2 border-t border-gray-200">
-                <label class="block text-xs font-medium text-gray-600 mb-2">Shortcuts</label>
+                <div class="block text-xs font-medium text-gray-600 mb-2">Shortcuts</div>
                 <div class="space-y-1.5 text-xs text-gray-600">
                   <div class="flex items-center justify-between">
                     <span>Pan graph</span>

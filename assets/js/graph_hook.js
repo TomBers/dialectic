@@ -18,10 +18,24 @@ const layoutGraph = (cy, opts, onDone) => {
     }
   } catch (_e) {}
 
-  const layout = cy.layout({
-    ...layoutConfig.baseLayout,
+  // Determine layout based on view mode
+  const viewMode = localStorage.getItem("graph_view_mode") || "spaced";
+  const baseLayout =
+    viewMode === "compact"
+      ? layoutConfig.compactLayout
+      : layoutConfig.baseLayout;
+
+  // Check for small graph to adjust padding
+  const edgeCount = cy.edges().length;
+  const isSmallGraph = edgeCount === 1;
+
+  const layoutOptions = {
+    ...baseLayout,
+    padding: isSmallGraph ? 200 : baseLayout.padding,
     ...(opts || {}),
-  });
+  };
+
+  const layout = cy.layout(layoutOptions);
 
   // Track layout running state on the instance that owns this cy
   try {
@@ -275,55 +289,19 @@ const graphHook = {
     });
 
     // Handle view mode changes from client-side toggle via custom DOM event
-    this.el.addEventListener("viewModeChanged", (e) => {
+    // Handle view mode changes via custom event
+    this._onViewModeChange = (e) => {
       const currentViewMode = e.detail.view_mode || "spaced";
 
       if (this._lastViewMode === currentViewMode) return;
 
-      // Store the current zoom and pan
-      const zoom = this.cy ? this.cy.zoom() : 1;
-      const pan = this.cy ? this.cy.pan() : { x: 0, y: 0 };
       const currentNode = this.el.dataset.node;
-
-      // Destroy the old instance
-      if (this.cy) {
-        try {
-          this.cy.destroy();
-        } catch (_e) {}
-      }
-
-      // Recreate with new view mode
       const graph = this.el.dataset.graph;
-      this.cy = draw_graph(
-        this._container,
-        this,
-        JSON.parse(graph),
-        currentNode,
-        currentViewMode,
-      );
 
-      // Restore zoom and pan
-      if (this.cy) {
-        try {
-          this.cy.zoom(zoom);
-          this.cy.pan(pan);
-          this.cy._ownerHook = this;
-        } catch (_e) {}
-      }
+      this._handleViewModeChange(currentViewMode, graph, currentNode);
+    };
 
-      // Update tracked view mode
-      this._lastViewMode = currentViewMode;
-
-      // Re-bind all event handlers and update state
-      if (this._updateExploredStatus) this._updateExploredStatus();
-      if (this._bindPngButtons) this._bindPngButtons();
-
-      // Highlight the selected node
-      if (this.cy && currentNode) {
-        this.cy.elements().removeClass("selected");
-        this.cy.getElementById(currentNode).addClass("selected");
-      }
-    });
+    this.el.addEventListener("viewModeChanged", this._onViewModeChange);
 
     // Layout/centering coordination state
     this._layoutRunning = false;
@@ -651,6 +629,50 @@ const graphHook = {
     }).call(this);
   },
 
+  _handleViewModeChange(currentViewMode, graphStr, currentNode) {
+    // Store the current zoom and pan
+    const zoom = this.cy ? this.cy.zoom() : 1;
+    const pan = this.cy ? this.cy.pan() : { x: 0, y: 0 };
+
+    // Destroy the old instance
+    if (this.cy) {
+      try {
+        this.cy.destroy();
+      } catch (_e) {}
+    }
+
+    // Recreate with new view mode
+    this.cy = draw_graph(
+      this._container,
+      this,
+      JSON.parse(graphStr),
+      currentNode,
+      currentViewMode,
+    );
+
+    // Restore zoom and pan
+    if (this.cy) {
+      try {
+        this.cy.zoom(zoom);
+        this.cy.pan(pan);
+        this.cy._ownerHook = this;
+      } catch (_e) {}
+    }
+
+    // Update tracked view mode
+    this._lastViewMode = currentViewMode;
+
+    // Re-bind all event handlers and update state
+    if (this._updateExploredStatus) this._updateExploredStatus();
+    if (this._bindPngButtons) this._bindPngButtons();
+
+    // Highlight the selected node
+    if (this.cy && currentNode) {
+      this.cy.elements().removeClass("selected");
+      this.cy.getElementById(currentNode).addClass("selected");
+    }
+  },
+
   _updateExploredStatus() {
     try {
       const graphId = this.el.dataset.graphId;
@@ -703,48 +725,8 @@ const graphHook = {
     const viewModeChanged = this._lastViewMode !== currentViewMode;
 
     if (viewModeChanged) {
-      // Store the current zoom and pan
-      const zoom = this.cy ? this.cy.zoom() : 1;
-      const pan = this.cy ? this.cy.pan() : { x: 0, y: 0 };
-
-      // Destroy the old instance
-      if (this.cy) {
-        try {
-          this.cy.destroy();
-        } catch (_e) {}
-      }
-
-      // Recreate with new view mode
-      this.cy = draw_graph(
-        this._container,
-        this,
-        JSON.parse(graph),
-        node,
-        currentViewMode,
-      );
-
-      // Restore zoom and pan
-      if (this.cy) {
-        try {
-          this.cy.zoom(zoom);
-          this.cy.pan(pan);
-          this.cy._ownerHook = this;
-        } catch (_e) {}
-      }
-
-      // Update tracked view mode
-      this._lastViewMode = currentViewMode;
+      this._handleViewModeChange(currentViewMode, graph, node);
       this._lastGraphStr = graph;
-
-      // Re-bind all event handlers and update state
-      if (this._updateExploredStatus) this._updateExploredStatus();
-      if (this._bindPngButtons) this._bindPngButtons();
-
-      // Highlight the selected node
-      if (this.cy && node) {
-        this.cy.elements().removeClass("selected");
-        this.cy.getElementById(node).addClass("selected");
-      }
 
       return;
     }
@@ -900,6 +882,9 @@ const graphHook = {
     if (this._debugRedraw) this._debugRedraw();
   },
   destroyed() {
+    if (this._onViewModeChange) {
+      this.el.removeEventListener("viewModeChanged", this._onViewModeChange);
+    }
     // Debug overlay cleanup and listener removal
     if (
       this._debugRedraw &&
