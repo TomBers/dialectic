@@ -65,26 +65,25 @@ defmodule DialecticWeb.GraphNavPanelComp do
               <!-- View Mode Section -->
               <div>
                 <label class="block text-xs font-medium text-gray-600 mb-1.5">View Mode</label>
-                <div class="flex items-center rounded-md border border-gray-200 overflow-hidden">
-                  <button
-                    type="button"
-                    data-view-mode-toggle="spaced"
-                    class="flex-1 px-3 py-1.5 text-xs font-medium transition-colors text-gray-700 hover:bg-gray-50 border-r border-gray-200"
-                    aria-label="Spaced view"
-                  >
-                    <.icon name="hero-arrows-pointing-out" class="w-3.5 h-3.5 inline-block mr-1" />
+                <label class="flex items-center cursor-pointer">
+                  <span class="mr-2 text-xs font-medium text-gray-700">
                     Spaced
-                  </button>
-                  <button
-                    type="button"
-                    data-view-mode-toggle="compact"
-                    class="flex-1 px-3 py-1.5 text-xs font-medium transition-colors text-gray-700 hover:bg-gray-50"
-                    aria-label="Compact view"
-                  >
-                    <.icon name="hero-arrows-pointing-in" class="w-3.5 h-3.5 inline-block mr-1" />
+                  </span>
+                  <div class="relative">
+                    <input
+                      type="checkbox"
+                      class="sr-only"
+                      data-view-mode-toggle="toggle"
+                      aria-label="Toggle view mode"
+                    />
+                    <div class="w-10 h-6 bg-gray-300 rounded-full transition"></div>
+                    <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition transform">
+                    </div>
+                  </div>
+                  <span class="ml-2 text-xs font-medium text-gray-700">
                     Compact
-                  </button>
-                </div>
+                  </span>
+                </label>
               </div>
               
     <!-- Zoom Controls Section -->
@@ -108,7 +107,6 @@ defmodule DialecticWeb.GraphNavPanelComp do
                     title="Fit to screen"
                   >
                     <.icon name="hero-arrows-pointing-out" class="w-3.5 h-3.5 inline-block mr-1" />
-                    Fit
                   </button>
                   <button
                     id="zoom-in"
