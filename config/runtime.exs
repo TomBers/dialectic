@@ -30,12 +30,8 @@ if config_env() == :prod do
 
   maybe_ipv6 = if System.get_env("ECTO_IPV6") in ~w(true 1), do: [:inet6], else: []
 
-  # Allow disabling SSL for local development databases
-  # Set DATABASE_SSL=false to disable SSL (defaults to true for production)
-  database_ssl = System.get_env("DATABASE_SSL", "true") not in ~w(false 0 no)
-
   config :dialectic, Dialectic.Repo,
-    ssl: if(database_ssl, do: [verify: :verify_none], else: false),
+    ssl: false,
     url: database_url,
     pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
     queue_target: 5000,
