@@ -558,8 +558,22 @@ const graphHook = {
             ? this.cy.getElementById(id)
             : null;
         if (!n || n.length === 0) return;
-        // Override label style for this node; does not mutate underlying data
-        n.style("label", String(label || ""));
+
+        // Update the underlying content data so size calculations are triggered
+        const currentContent = n.data("content") || "";
+        const lines = currentContent.split("\n");
+
+        // Replace the first line with the new label while preserving the rest
+        if (lines.length > 0) {
+          lines[0] = String(label || "");
+          n.data("content", lines.join("\n"));
+        } else {
+          n.data("content", String(label || ""));
+        }
+
+        // Remove any style overrides so the stylesheet functions recalculate
+        // This allows width and height to be recalculated based on the new content
+        n.removeStyle("width height label");
       } catch (_e) {
         // no-op
       }
