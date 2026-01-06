@@ -34,11 +34,9 @@ kill_signal = 'SIGTERM'
   cpu_kind = 'shared'
   cpus = 2
 
-[http_service.checks]
-  [http_service.checks.health]
-    grace_period = "10s"
-    interval = "30s"
-    method = "GET"
-    timeout = "5s"
-    path = "/health"
-    port = 8080
+[[http_service.checks]]
+  grace_period = "10s"
+  interval = "30s"
+  method = "GET"
+  timeout = "5s"
+  path = "/health"
