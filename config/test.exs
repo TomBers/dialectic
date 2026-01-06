@@ -1,4 +1,9 @@
 import Config
+
+# Disable Hammer rate limiting in tests
+config :hammer,
+  backend: {Hammer.Backend.ETS, [expiry_ms: 60_000 * 60 * 2, cleanup_interval_ms: 60_000 * 10]}
+
 config :dialectic, Oban, testing: :manual
 
 # Only in tests, remove the complexity from the password hashing algorithm

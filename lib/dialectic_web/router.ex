@@ -13,8 +13,13 @@ defmodule DialecticWeb.Router do
     plug :fetch_current_user
   end
 
+  pipeline :auth do
+    plug DialecticWeb.Plugs.RateLimiter, type: :auth
+  end
+
   pipeline :api do
     plug :accepts, ["json"]
+    plug DialecticWeb.Plugs.RateLimiter, type: :api
   end
 
   pipeline :browser_api do
@@ -38,6 +43,14 @@ defmodule DialecticWeb.Router do
     live "/:graph_name", GraphLive
     live "/:graph_name/linear", LinearGraphLive
     live "/:graph_name/story/:node_id", StoryLive
+  end
+
+  # Health check endpoints
+  scope "/health", DialecticWeb do
+    pipe_through :api
+
+    get "/", HealthController, :check
+    get "/deep", HealthController, :deep
   end
 
   # Other scopes may use custom stacks.
@@ -74,7 +87,7 @@ defmodule DialecticWeb.Router do
   ## Authentication routes
 
   scope "/", DialecticWeb do
-    pipe_through [:browser, :redirect_if_user_is_authenticated]
+    pipe_through [:browser, :redirect_if_user_is_authenticated, :auth]
 
     live_session :redirect_if_user_is_authenticated,
       on_mount: [{DialecticWeb.UserAuth, :redirect_if_user_is_authenticated}] do

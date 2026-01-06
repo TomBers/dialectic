@@ -34,7 +34,37 @@ defmodule Dialectic.Accounts.Graph do
       :tags
     ])
     |> validate_required([:title, :data])
+    |> validate_length(:title, min: 1, max: 255)
+    |> validate_title_format()
+    |> validate_data_size()
     |> unique_constraint(:title, name: :graphs_pkey)
     |> unique_constraint(:share_token)
+  end
+
+  defp validate_title_format(changeset) do
+    changeset
+    |> validate_format(:title, ~r/^[a-zA-Z0-9\s\-_\.',:!?]+$/,
+      message: "contains invalid characters"
+    )
+  end
+
+  defp validate_data_size(changeset) do
+    case get_change(changeset, :data) do
+      nil ->
+        changeset
+
+      data when is_map(data) ->
+        # Estimate JSON size (rough approximation)
+        json_size = data |> Jason.encode!() |> byte_size()
+
+        if json_size > 10_000_000 do
+          add_error(changeset, :data, "is too large (max 10MB)")
+        else
+          changeset
+        end
+
+      _ ->
+        changeset
+    end
   end
 end

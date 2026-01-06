@@ -45,10 +45,29 @@ defmodule GraphManager do
     {:ok, {graph_struct, graph}}
   end
 
-  def terminate(_reason, {graph_struct, graph}) do
+  def terminate(reason, {graph_struct, graph}) do
     path = graph_struct.title
-    Logger.info("Shutting Down: " <> path)
-    save_graph_to_db(path, graph)
+    Logger.info("Shutting Down GraphManager for: #{path}, reason: #{inspect(reason)}")
+
+    # Synchronously save graph data before termination
+    # This ensures data is persisted even during application shutdown
+    try do
+      json = Serialise.graph_to_json(graph)
+      # Use synchronous save for immediate persistence
+      case Dialectic.DbActions.Graphs.save_graph(path, json) do
+        {:ok, _} ->
+          Logger.info("Successfully saved graph #{path} during shutdown")
+
+        {:error, reason} ->
+          Logger.error("Failed to save graph #{path} during shutdown: #{inspect(reason)}")
+      end
+    rescue
+      error ->
+        Logger.error(
+          "Exception saving graph #{path} during shutdown: #{Exception.format(:error, error, __STACKTRACE__)}"
+        )
+    end
+
     :ok
   end
 
@@ -436,8 +455,8 @@ defmodule GraphManager do
     node =
       add_node(graph_id, %Vertex{content: content, class: class, user: user, parent: parent_group})
 
-    # Stream response to the Node
-    spawn(fn -> llm_fn.(node) end)
+    # Stream response to the Node using supervised task
+    Task.Supervisor.start_child(Dialectic.TaskSupervisor, fn -> llm_fn.(node) end)
 
     result = add_edges(graph_id, node, parents)
     save_graph(graph_id)

@@ -9,7 +9,6 @@ defmodule Dialectic.Graph.Creator do
   alias GraphManager
   alias Dialectic.Graph.Vertex
   alias Dialectic.Responses.{ModeServer, Prompts, PromptsStructured, PromptsCreative}
-  alias Dialectic.LLM.Generator
 
   @doc """
   Creates a graph, adds the initial question, generates an answer, and saves it.

@@ -3,7 +3,6 @@ defmodule DialecticWeb.HomeLive do
   alias Dialectic.DbActions.Graphs
   alias Dialectic.Graph.GraphActions
   alias Dialectic.Graph.Vertex
-  alias Dialectic.Responses.ModeServer
   alias DialecticWeb.Utils.UserUtils
   require Logger
 
@@ -112,19 +111,6 @@ defmodule DialecticWeb.HomeLive do
     end
   end
 
-  defp create_graph_task(title, answer, assigns, parent_pid) do
-    mode_str = assigns[:prompt_mode] || "structured"
-    mode = if mode_str == "creative", do: :creative, else: :structured
-    user_identity = UserUtils.current_identity(assigns)
-    current_user = assigns[:current_user]
-
-    Dialectic.Graph.Creator.create(answer, current_user, user_identity,
-      mode: mode,
-      title: title,
-      progress_callback: fn status -> send(parent_pid, {:graph_creation_update, status}) end
-    )
-  end
-
   @impl true
   def handle_event("generate_tags", %{"title" => title}, socket) do
     case Graphs.get_graph_by_title(title) do
@@ -137,6 +123,7 @@ defmodule DialecticWeb.HomeLive do
     end
   end
 
+  @impl true
   def handle_async(:create_graph_flow, {:ok, {:ok, title}}, socket) do
     {:noreply, redirect(socket, to: ~p"/#{title}")}
   end
@@ -184,6 +171,19 @@ defmodule DialecticWeb.HomeLive do
        popular_tags: popular_tags,
        generating: MapSet.delete(socket.assigns.generating, title)
      )}
+  end
+
+  defp create_graph_task(title, answer, assigns, parent_pid) do
+    mode_str = assigns[:prompt_mode] || "structured"
+    mode = if mode_str == "creative", do: :creative, else: :structured
+    user_identity = UserUtils.current_identity(assigns)
+    current_user = assigns[:current_user]
+
+    Dialectic.Graph.Creator.create(answer, current_user, user_identity,
+      mode: mode,
+      title: title,
+      progress_callback: fn status -> send(parent_pid, {:graph_creation_update, status}) end
+    )
   end
 
   @impl true

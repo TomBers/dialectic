@@ -30,10 +30,18 @@ if config_env() == :prod do
 
   maybe_ipv6 = if System.get_env("ECTO_IPV6") in ~w(true 1), do: [:inet6], else: []
 
+  # Allow disabling SSL for local development databases
+  # Set DATABASE_SSL=false to disable SSL (defaults to true for production)
+  database_ssl = System.get_env("DATABASE_SSL", "true") not in ~w(false 0 no)
+
   config :dialectic, Dialectic.Repo,
-    # ssl: true,
+    ssl: database_ssl,
     url: database_url,
     pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
+    queue_target: 5000,
+    queue_interval: 1000,
+    timeout: 15_000,
+    connect_timeout: 15_000,
     socket_options: maybe_ipv6
 
   # The secret key base is used to sign/encrypt cookies and other secrets.
@@ -63,7 +71,8 @@ if config_env() == :prod do
       ip: {0, 0, 0, 0, 0, 0, 0, 0},
       port: port
     ],
-    secret_key_base: secret_key_base
+    secret_key_base: secret_key_base,
+    force_ssl: [hsts: true, rewrite_on: [:x_forwarded_proto]]
 
   # ## SSL Support
   #

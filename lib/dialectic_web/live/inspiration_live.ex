@@ -33,7 +33,7 @@ defmodule DialecticWeb.InspirationLive do
   def handle_event("generate_prompt", _, socket) do
     prompt = build_prompt(socket.assigns)
 
-    Task.async(fn ->
+    Task.Supervisor.async_nolink(Dialectic.TaskSupervisor, fn ->
       Dialectic.Inspiration.Generator.generate_questions(prompt)
     end)
 
@@ -54,7 +54,7 @@ defmodule DialecticWeb.InspirationLive do
   defp parse_slider_value(_, default), do: default
 
   @impl true
-  def handle_info({ref, result}, socket) do
+  def handle_info({ref, result}, socket) when is_reference(ref) do
     Process.demonitor(ref, [:flush])
 
     socket =
@@ -71,8 +71,19 @@ defmodule DialecticWeb.InspirationLive do
     {:noreply, socket}
   end
 
-  def handle_info({:DOWN, _ref, :process, _pid, _reason}, socket) do
-    {:noreply, assign(socket, loading: false)}
+  def handle_info({:DOWN, _ref, :process, _pid, :normal}, socket) do
+    # Task completed normally, result already handled
+    {:noreply, socket}
+  end
+
+  def handle_info({:DOWN, _ref, :process, _pid, reason}, socket) do
+    # Task failed or timed out
+    socket =
+      socket
+      |> put_flash(:error, "Question generation failed: #{inspect(reason)}")
+      |> assign(loading: false)
+
+    {:noreply, socket}
   end
 
   defp build_prompt(assigns) do
