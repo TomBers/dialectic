@@ -726,13 +726,14 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_info({:other_user_change, sender_pid}, socket) do
+    # Skip if it's our own change - we've already updated our view
     if self() != sender_pid do
       {_graph_struct, _graph} = GraphManager.get_graph(socket.assigns.graph_id)
 
+      # Update f_graph so other users see structural changes (new nodes, etc.)
       {:noreply,
        assign(socket,
          f_graph: GraphManager.format_graph_json(socket.assigns.graph_id),
-         graph_operation: "other_user_change",
          work_streams: list_streams(socket.assigns.graph_id)
        )}
     else
@@ -742,6 +743,13 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_info({:stream_chunk, updated_vertex, :node_id, node_id}, socket) do
     # This is the streamed LLM response into a node
+    # Re-broadcast to all users on the graph so they see real-time streaming
+    PubSub.broadcast(
+      Dialectic.PubSub,
+      socket.assigns.graph_topic,
+      {:stream_chunk_broadcast, updated_vertex, :node_id, node_id, self()}
+    )
+
     if socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
       label = extract_title(Map.get(updated_vertex, :content, ""))
 
@@ -759,28 +767,47 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_info({:llm_request_complete, node_id}, socket) do
-    socket =
-      assign(socket, streaming_nodes: MapSet.delete(socket.assigns.streaming_nodes, node_id))
+  def handle_info(
+        {:stream_chunk_broadcast, updated_vertex, :node_id, node_id, sender_pid},
+        socket
+      ) do
+    # Skip if this is our own broadcast (we already handled it above)
+    if self() == sender_pid do
+      {:noreply, socket}
+    else
+      # Another user is streaming - update our view if we're viewing this node
+      if socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
+        label = extract_title(Map.get(updated_vertex, :content, ""))
 
+        # Merge content update while preserving relatives (parents/children)
+        node = %{socket.assigns.node | content: updated_vertex.content}
+
+        socket =
+          socket
+          |> assign(node: node)
+          |> push_event("update_node_label", %{id: node_id, label: label})
+
+        {:noreply, socket}
+      else
+        {:noreply, socket}
+      end
+    end
+  end
+
+  def handle_info({:llm_request_complete, node_id}, socket) do
     Logger.debug(fn ->
       "[GraphLive] llm_request_complete node_id=#{inspect(node_id)} current=#{inspect(socket.assigns.node && Map.get(socket.assigns.node, :id))}"
     end)
 
-    # Workers already finalize node content; proceed to broadcast update
-    # Broadcast new node to all connected users
-    PubSub.broadcast(
-      Dialectic.PubSub,
-      socket.assigns.graph_topic,
-      {:other_user_change, self()}
-    )
+    socket =
+      socket
+      |> assign(streaming_nodes: MapSet.delete(socket.assigns.streaming_nodes, node_id))
+      |> assign(work_streams: list_streams(socket.assigns.graph_id))
 
-    # Update graph structure but keep current node selection
-    update_graph(
-      socket,
-      {nil, socket.assigns.node},
-      "llm_request_complete"
-    )
+    # Don't broadcast or call update_graph - the streaming already updated the node content
+    # and we don't want to cause a flash/rerender for the user watching the stream
+    # Other users will see the node when it was created, not when it completes
+    {:noreply, socket}
   end
 
   def handle_info({:stream_error, error, :node_id, node_id}, socket) do
@@ -1029,6 +1056,25 @@ defmodule DialecticWeb.GraphLive do
           s
         end
       end)
+
+    # Broadcast structural changes to other users (new nodes created, etc.)
+    # Skip for operations that don't change graph structure
+    if operation in [
+         "start_stream",
+         "comment",
+         "answer",
+         "branch",
+         "combine",
+         "ideas",
+         "explain",
+         "deepdive"
+       ] do
+      PubSub.broadcast(
+        Dialectic.PubSub,
+        socket.assigns.graph_topic,
+        {:other_user_change, self()}
+      )
+    end
 
     {:noreply, new_socket}
   end
