@@ -226,12 +226,24 @@ const ensureVisible = (cy, container, nodeId) => {
 
 const graphHook = {
   mounted() {
-    const { graph, node, div } = this.el.dataset;
+    const { graph, node, div, viewMode } = this.el.dataset;
 
     const container =
       this.el.querySelector(`#${div}`) || document.getElementById(div);
 
-    this.cy = draw_graph(container, this, JSON.parse(graph), node);
+    this.cy = draw_graph(
+      container,
+      this,
+      JSON.parse(graph),
+      node,
+      viewMode || "spaced",
+    );
+
+    // Track view mode for detecting changes
+    this._lastViewMode = viewMode || "spaced";
+
+    // Store container reference for reinitializing
+    this._container = container;
 
     // Link back so layoutGraph can update running state
     try {
@@ -268,9 +280,6 @@ const graphHook = {
     // Layout/centering coordination state
     this._layoutRunning = false;
     this._pendingCenterId = null;
-
-    // Expose container and a helper to center a node within the visible area (accounts for right panel)
-    this._container = container;
     this._centerOnNodeVisible = (id) => {
       try {
         const n = this.cy.getElementById(id);
@@ -639,7 +648,59 @@ const graphHook = {
   },
 
   updated() {
-    const { graph, node, operation } = this.el.dataset;
+    const { graph, node, operation, viewMode } = this.el.dataset;
+
+    // Check if view mode has changed
+    const currentViewMode = viewMode || "spaced";
+    const viewModeChanged = this._lastViewMode !== currentViewMode;
+
+    if (viewModeChanged) {
+      // Store the current zoom and pan
+      const zoom = this.cy ? this.cy.zoom() : 1;
+      const pan = this.cy ? this.cy.pan() : { x: 0, y: 0 };
+
+      // Destroy the old instance
+      if (this.cy) {
+        try {
+          this.cy.destroy();
+        } catch (_e) {}
+      }
+
+      // Recreate with new view mode
+      this.cy = draw_graph(
+        this._container,
+        this,
+        JSON.parse(graph),
+        node,
+        currentViewMode,
+      );
+
+      // Restore zoom and pan
+      if (this.cy) {
+        try {
+          this.cy.zoom(zoom);
+          this.cy.pan(pan);
+          this.cy._ownerHook = this;
+        } catch (_e) {}
+      }
+
+      // Update tracked view mode
+      this._lastViewMode = currentViewMode;
+      this._lastGraphStr = graph;
+
+      // Re-bind all event handlers and update state
+      if (this._updateExploredStatus) this._updateExploredStatus();
+      if (this._bindPngButtons) this._bindPngButtons();
+
+      // Highlight the selected node
+      if (this.cy && node) {
+        this.cy.elements().removeClass("selected");
+        this.cy.getElementById(node).addClass("selected");
+      }
+
+      return;
+    }
+
     // Avoid reloading Cytoscape if the graph JSON hasn't changed to reduce flicker
     const graphStr = graph;
     const sameGraph = this._lastGraphStr === graphStr;
