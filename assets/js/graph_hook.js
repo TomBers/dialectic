@@ -558,8 +558,53 @@ const graphHook = {
             ? this.cy.getElementById(id)
             : null;
         if (!n || n.length === 0) return;
-        // Override label style for this node; does not mutate underlying data
-        n.style("label", String(label || ""));
+
+        // Update the underlying content data so size calculations are triggered
+        const currentContent = n.data("content") || "";
+        const lines = currentContent.split("\n");
+
+        const newLabel = String(label || "");
+        const newContent =
+          lines.length > 0
+            ? [newLabel, ...lines.slice(1)].join("\n")
+            : newLabel;
+
+        // Only update if content has actually changed to avoid unnecessary rerenders
+        if (currentContent === newContent) return;
+
+        // Check if this is the first time we're setting a meaningful title
+        // (transition from empty/placeholder to actual content)
+        const currentTitle = lines.length > 0 ? lines[0].trim() : "";
+        const isFirstTitleSet = !currentTitle && newLabel.trim().length > 0;
+
+        // Track if we've already reflowed for this node
+        if (!this._reflowedNodes) this._reflowedNodes = new Set();
+        const needsReflow = isFirstTitleSet && !this._reflowedNodes.has(id);
+
+        // Batch updates to prevent multiple redraws
+        if (this.cy && typeof this.cy.startBatch === "function") {
+          this.cy.startBatch();
+        }
+
+        // Update content data (this triggers style function recalculation)
+        n.data("content", newContent);
+
+        // End batch to apply changes once
+        if (this.cy && typeof this.cy.endBatch === "function") {
+          this.cy.endBatch();
+        }
+
+        // Reflow the graph when title is first set to prevent node overlapping
+        if (needsReflow) {
+          this._reflowedNodes.add(id);
+
+          // Use a small delay to ensure size calculations are complete
+          setTimeout(() => {
+            if (this.cy && typeof layoutGraph === "function") {
+              layoutGraph(this.cy, { animate: true });
+            }
+          }, 50);
+        }
       } catch (_e) {
         // no-op
       }
