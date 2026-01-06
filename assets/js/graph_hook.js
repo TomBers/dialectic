@@ -18,10 +18,24 @@ const layoutGraph = (cy, opts, onDone) => {
     }
   } catch (_e) {}
 
-  const layout = cy.layout({
-    ...layoutConfig.baseLayout,
+  // Determine layout based on view mode
+  const viewMode = localStorage.getItem("graph_view_mode") || "spaced";
+  const baseLayout =
+    viewMode === "compact"
+      ? layoutConfig.compactLayout
+      : layoutConfig.baseLayout;
+
+  // Check for small graph to adjust padding
+  const edgeCount = cy.edges().length;
+  const isSmallGraph = edgeCount === 1;
+
+  const layoutOptions = {
+    ...baseLayout,
+    padding: isSmallGraph ? 200 : baseLayout.padding,
     ...(opts || {}),
-  });
+  };
+
+  const layout = cy.layout(layoutOptions);
 
   // Track layout running state on the instance that owns this cy
   try {
@@ -231,7 +245,16 @@ const graphHook = {
     const container =
       this.el.querySelector(`#${div}`) || document.getElementById(div);
 
-    this.cy = draw_graph(container, this, JSON.parse(graph), node);
+    // Get view mode from localStorage or default to "spaced"
+    const viewMode = localStorage.getItem("graph_view_mode") || "spaced";
+
+    this.cy = draw_graph(container, this, JSON.parse(graph), node, viewMode);
+
+    // Track view mode for detecting changes
+    this._lastViewMode = viewMode;
+
+    // Store container reference for reinitializing
+    this._container = container;
 
     // Link back so layoutGraph can update running state
     try {
@@ -265,12 +288,24 @@ const graphHook = {
       }
     });
 
+    // Handle view mode changes from client-side toggle via custom DOM event
+    // Handle view mode changes via custom event
+    this._onViewModeChange = (e) => {
+      const currentViewMode = e.detail.view_mode || "spaced";
+
+      if (this._lastViewMode === currentViewMode) return;
+
+      const currentNode = this.el.dataset.node;
+      const graph = this.el.dataset.graph;
+
+      this._handleViewModeChange(currentViewMode, graph, currentNode);
+    };
+
+    this.el.addEventListener("viewModeChanged", this._onViewModeChange);
+
     // Layout/centering coordination state
     this._layoutRunning = false;
     this._pendingCenterId = null;
-
-    // Expose container and a helper to center a node within the visible area (accounts for right panel)
-    this._container = container;
     this._centerOnNodeVisible = (id) => {
       try {
         const n = this.cy.getElementById(id);
@@ -594,6 +629,50 @@ const graphHook = {
     }).call(this);
   },
 
+  _handleViewModeChange(currentViewMode, graphStr, currentNode) {
+    // Store the current zoom and pan
+    const zoom = this.cy ? this.cy.zoom() : 1;
+    const pan = this.cy ? this.cy.pan() : { x: 0, y: 0 };
+
+    // Destroy the old instance
+    if (this.cy) {
+      try {
+        this.cy.destroy();
+      } catch (_e) {}
+    }
+
+    // Recreate with new view mode
+    this.cy = draw_graph(
+      this._container,
+      this,
+      JSON.parse(graphStr),
+      currentNode,
+      currentViewMode,
+    );
+
+    // Restore zoom and pan
+    if (this.cy) {
+      try {
+        this.cy.zoom(zoom);
+        this.cy.pan(pan);
+        this.cy._ownerHook = this;
+      } catch (_e) {}
+    }
+
+    // Update tracked view mode
+    this._lastViewMode = currentViewMode;
+
+    // Re-bind all event handlers and update state
+    if (this._updateExploredStatus) this._updateExploredStatus();
+    if (this._bindPngButtons) this._bindPngButtons();
+
+    // Highlight the selected node
+    if (this.cy && currentNode) {
+      this.cy.elements().removeClass("selected");
+      this.cy.getElementById(currentNode).addClass("selected");
+    }
+  },
+
   _updateExploredStatus() {
     try {
       const graphId = this.el.dataset.graphId;
@@ -640,6 +719,18 @@ const graphHook = {
 
   updated() {
     const { graph, node, operation } = this.el.dataset;
+
+    // Check if view mode has changed (read from localStorage)
+    const currentViewMode = localStorage.getItem("graph_view_mode") || "spaced";
+    const viewModeChanged = this._lastViewMode !== currentViewMode;
+
+    if (viewModeChanged) {
+      this._handleViewModeChange(currentViewMode, graph, node);
+      this._lastGraphStr = graph;
+
+      return;
+    }
+
     // Avoid reloading Cytoscape if the graph JSON hasn't changed to reduce flicker
     const graphStr = graph;
     const sameGraph = this._lastGraphStr === graphStr;
@@ -791,6 +882,9 @@ const graphHook = {
     if (this._debugRedraw) this._debugRedraw();
   },
   destroyed() {
+    if (this._onViewModeChange) {
+      this.el.removeEventListener("viewModeChanged", this._onViewModeChange);
+    }
     // Debug overlay cleanup and listener removal
     if (
       this._debugRedraw &&

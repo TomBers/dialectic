@@ -7,7 +7,13 @@ import { layoutConfig } from "./layout_config.js";
 cytoscape.use(dagre);
 cytoscape.use(compoundDragAndDrop);
 
-export function draw_graph(graph, context, elements, node) {
+export function draw_graph(
+  graph,
+  context,
+  elements,
+  node,
+  viewMode = "spaced",
+) {
   // Check if we have a small graph (2 nodes)
 
   const edgeCount = elements.filter((ele) =>
@@ -16,17 +22,23 @@ export function draw_graph(graph, context, elements, node) {
 
   const isSmallGraph = edgeCount === 1;
 
+  // Select layout based on view mode
+  const baseLayoutConfig =
+    viewMode === "compact"
+      ? layoutConfig.compactLayout
+      : layoutConfig.baseLayout;
+
   // Create a modified layout config for small graphs
   const layoutOptions = {
-    ...layoutConfig.baseLayout,
+    ...baseLayoutConfig,
     // For small graphs, use a larger padding to prevent excessive zoom
-    padding: isSmallGraph ? 200 : layoutConfig.baseLayout.padding,
+    padding: isSmallGraph ? 200 : baseLayoutConfig.padding,
   };
 
   const cy = cytoscape({
     container: graph, // container to render in
     elements: elements,
-    style: graphStyle(),
+    style: graphStyle(viewMode),
 
     boxSelectionEnabled: false, // box selection disabled
     autounselectify: false, // allow multi‑select

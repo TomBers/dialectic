@@ -81,13 +81,18 @@ const cols = {
 
 const cutoff = 140;
 
-export function graphStyle() {
+export function graphStyle(viewMode = "spaced") {
+  const isCompact = viewMode === "compact";
+
   const base_style = [
     {
       selector: "node",
       style: {
         /* sizing ---------------------------------------------------------- */
-        width: 260,
+        width: (n) => {
+          if (!isCompact) return 260;
+          return getCompactNodeWidth(n);
+        },
         height: (n) => {
           const processedContent = processNodeContent(
             n.data("content") || "",
@@ -100,34 +105,61 @@ export function graphStyle() {
           // Remove zero-width spaces used for wrapping when measuring length
           const measureText = content.replace(/\u200B/g, "");
 
-          // Heuristic: characters that fit on one line at 200px width, 14px font
-          const approxCharsPerLine = 20;
+          if (!isCompact) {
+            // Spaced mode: use fixed width calculation
+            const approxCharsPerLine = 20;
+            const parts = measureText.split("\n");
+            let lines = 0;
+            for (const part of parts) {
+              const len = part.trim().length;
+              lines += Math.max(1, Math.ceil(len / approxCharsPerLine));
+            }
+            const bulletCount = (measureText.match(/•/g) || []).length;
+            const bulletExtra = bulletCount * 6;
+            const lineHeight = 20;
+            const basePadding = 20;
+            const computed = basePadding + lines * lineHeight + bulletExtra;
+            return Math.max(35, computed);
+          }
 
-          // Estimate total wrapped lines across explicit lines
-          const parts = measureText.split("\n");
+          // Compact mode: calculate based on actual dynamic width
+          const lines_arr = measureText.split("\n");
+
+          const charWidth = 7.5;
+          const padding = 8;
+          // Calculate actual node width
+          const nodeWidth = getCompactNodeWidth(n);
+          const textWidth = nodeWidth - padding;
+
+          // Calculate chars per line based on actual width
+          const approxCharsPerLine = Math.floor(textWidth / charWidth);
+
+          // Estimate total wrapped lines
           let lines = 0;
-          for (const part of parts) {
+          for (const part of lines_arr) {
             const len = part.trim().length;
-            // Ensure at least one line per part
             lines += Math.max(1, Math.ceil(len / approxCharsPerLine));
           }
 
           // Bullet points add extra vertical spacing
           const bulletCount = (measureText.match(/•/g) || []).length;
-          const bulletExtra = bulletCount * 6; // pixels
+          const bulletExtra = bulletCount * 2;
 
-          // Compute height from estimated lines
-          const lineHeight = 20; // px per line (14px * 1.4)
-          const basePadding = 20; // px padding/spacing allowance
+          // Compute height: 10px font * 1.2 line-height = 12px per line
+          const lineHeight = 12;
+          const basePadding = 8; // 4px top + 4px bottom
           const computed = basePadding + lines * lineHeight + bulletExtra;
 
-          return Math.max(35, computed);
+          return Math.max(22, computed);
         },
-        "min-width": 55,
-        "min-height": 35,
-        padding: "10px",
+        "min-width": isCompact ? 50 : 55,
+        "min-height": isCompact ? 22 : 35,
+        padding: isCompact ? "4px" : "10px",
         "text-wrap": "wrap",
-        "text-max-width": 200, // interior width incl. padding
+        "text-max-width": (n) => {
+          if (!isCompact) return 200;
+          return getCompactNodeWidth(n) - 8;
+        },
 
         /* label ----------------------------------------------------------- */
         label: (ele) => {
@@ -137,16 +169,16 @@ export function graphStyle() {
         /* font & layout --------------------------------------------------- */
         "font-family":
           'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif',
-        "font-size": 14,
-        "font-weight": 500,
+        "font-size": isCompact ? 10 : 14,
+        "font-weight": isCompact ? 400 : 500,
         "text-halign": "center",
         "text-valign": "center",
-        "line-height": 1.4,
+        "line-height": isCompact ? 1.2 : 1.4,
 
         /* aesthetics ------------------------------------------------------ */
         shape: "roundrectangle",
-        "corner-radius": 12,
-        "border-width": 1.5,
+        "corner-radius": isCompact ? 6 : 12,
+        "border-width": isCompact ? 0.75 : 1.5,
         "border-color": "#e5e7eb",
         "background-color": "#ffffff",
         color: "#1f2937",
@@ -175,41 +207,44 @@ export function graphStyle() {
         "text-outline-width": 3,
         "text-outline-color": "#ffffff",
         "text-opacity": 1,
-        padding: "32px",
+        padding: isCompact ? "12px" : "32px",
 
         "background-opacity": 0.5,
         "background-color": "#f8fafc", // slate-50
-        "border-width": 2,
+        "border-width": isCompact ? 1 : 2,
         "border-style": "dashed",
         "border-color": "#cbd5e1", // slate-300
         shape: "roundrectangle",
-        "corner-radius": 24,
+        "corner-radius": isCompact ? 12 : 24,
       },
     },
     { selector: ".hidden", style: { display: "none" } },
 
-    /* draw the parent differently when it’s collapsed --- */
+    /* draw the parent differently when it's collapsed --- */
     {
       selector: 'node[compound][collapsed = "true"]',
       style: {
-        /* fixed badge size */
-        width: 220,
-        height: 48,
+        /* dynamic badge size based on label length */
+        width: (n) => {
+          if (!isCompact) return 220;
+          return getCompactCollapsedWidth(n);
+        },
+        height: isCompact ? 28 : 48,
 
         /* look & feel: pill shape */
         shape: "roundrectangle",
-        "corner-radius": 24,
+        "corner-radius": isCompact ? 14 : 24,
         "background-opacity": 1,
         "background-color": "#ffffff",
-        "border-width": 2,
+        "border-width": isCompact ? 1.5 : 2,
         "border-color": "#e2e8f0",
         "border-style": "solid",
 
         /* chevron indicator (right side) */
         "background-fit": "none",
         "background-clip": "node",
-        "background-width": 12,
-        "background-height": 12,
+        "background-width": isCompact ? 8 : 12,
+        "background-height": isCompact ? 8 : 12,
         "background-position-x": "92%",
         "background-position-y": "50%",
 
@@ -220,10 +255,13 @@ export function graphStyle() {
         "text-margin-x": 0,
         "font-family":
           'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif',
-        "font-size": 14,
-        "font-weight": 600,
+        "font-size": isCompact ? 10 : 14,
+        "font-weight": isCompact ? 500 : 600,
         "text-wrap": "ellipsis",
-        "text-max-width": 180,
+        "text-max-width": (n) => {
+          if (!isCompact) return 180;
+          return getCompactCollapsedWidth(n) - 25;
+        },
         color: "#1e293b",
       },
     },
@@ -231,14 +269,14 @@ export function graphStyle() {
     {
       selector: "edge",
       style: {
-        width: 2,
+        width: isCompact ? 1 : 2,
         "line-color": "#cbd5e1", // slate-300
         "edge-distances": "node-position",
         "curve-style": "bezier",
         "target-arrow-shape": "triangle",
         "target-arrow-color": "#cbd5e1",
-        "arrow-scale": 0.8,
-        "control-point-step-size": 40,
+        "arrow-scale": isCompact ? 0.6 : 0.8,
+        "control-point-step-size": isCompact ? 25 : 40,
         "control-point-weight": 0.5,
         opacity: 0.8,
       },
@@ -324,4 +362,37 @@ function processNodeContent(content, addEllipsis = true) {
     .replace(/([\-–—‑])/g, "$1\u200B");
 
   return `${withBreaks}${suffix}`;
+}
+
+function getCompactNodeWidth(n) {
+  const processedContent = processNodeContent(n.data("content") || "", false);
+  const content = (processedContent || "").replace(/<br\s*\/?>/g, "\n");
+  const measureText = content.replace(/\u200B/g, "");
+
+  // Get the longest line to determine width
+  const lines = measureText.split("\n");
+  let maxLineLength = 0;
+  for (const line of lines) {
+    maxLineLength = Math.max(maxLineLength, line.trim().length);
+  }
+
+  // Estimate width: ~7.5px per character at 10px font + padding
+  // 8px total padding (4px left + 4px right)
+  const charWidth = 7.5;
+  const padding = 8;
+  const computed = Math.ceil(maxLineLength * charWidth) + padding;
+
+  // Min 50px, max 140px to keep compact
+  return Math.max(50, Math.min(140, computed));
+}
+
+function getCompactCollapsedWidth(n) {
+  const label = n.data("id") || "";
+  // Estimate width: ~7px per character at 10px font + padding for chevron
+  const charWidth = 7;
+  const padding = 30; // Extra padding for chevron and margins
+  const computed = Math.ceil(label.length * charWidth) + padding;
+
+  // Min 70px, max 150px
+  return Math.max(70, Math.min(150, computed));
 }
