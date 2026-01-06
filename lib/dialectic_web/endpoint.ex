@@ -26,7 +26,7 @@ defmodule DialecticWeb.Endpoint do
   plug Plug.Static,
     at: "/",
     from: :dialectic,
-    gzip: false,
+    gzip: Mix.env() == :prod,
     only: DialecticWeb.static_paths()
 
   if Code.ensure_loaded?(Tidewave) do
@@ -57,5 +57,19 @@ defmodule DialecticWeb.Endpoint do
   plug Plug.MethodOverride
   plug Plug.Head
   plug Plug.Session, @session_options
+  plug :put_secure_browser_headers
   plug DialecticWeb.Router
+
+  defp put_secure_browser_headers(conn, _opts) do
+    conn
+    |> Plug.Conn.put_resp_header(
+      "content-security-policy",
+      "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' wss: ws:; frame-ancestors 'self'"
+    )
+    |> Plug.Conn.put_resp_header("x-frame-options", "SAMEORIGIN")
+    |> Plug.Conn.put_resp_header("x-content-type-options", "nosniff")
+    |> Plug.Conn.put_resp_header("x-xss-protection", "1; mode=block")
+    |> Plug.Conn.put_resp_header("referrer-policy", "strict-origin-when-cross-origin")
+    |> Plug.Conn.put_resp_header("permissions-policy", "geolocation=(), microphone=(), camera=()")
+  end
 end

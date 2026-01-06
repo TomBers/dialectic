@@ -7,10 +7,18 @@
 # General application configuration
 import Config
 
+# Configure Hammer for rate limiting
+config :hammer,
+  backend: {Hammer.Backend.ETS, [expiry_ms: 60_000 * 60 * 2, cleanup_interval_ms: 60_000 * 10]}
+
 config :dialectic, Oban,
   engine: Oban.Engines.Basic,
   notifier: Oban.Notifiers.Postgres,
-  queues: [api_request: 10, llm_request: 5, db_write: 5],
+  queues: [
+    api_request: String.to_integer(System.get_env("OBAN_API_CONCURRENCY") || "10"),
+    llm_request: String.to_integer(System.get_env("OBAN_LLM_CONCURRENCY") || "5"),
+    db_write: String.to_integer(System.get_env("OBAN_DB_CONCURRENCY") || "5")
+  ],
   repo: Dialectic.Repo,
   plugins: [
     {Oban.Plugins.Lifeline, rescue_after: 60}

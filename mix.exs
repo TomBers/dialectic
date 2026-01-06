@@ -65,7 +65,8 @@ defmodule Dialectic.MixProject do
       {:earmark, "~> 1.4"},
       {:igniter, "~> 0.5"},
       {:oban, "~> 2.19"},
-      {:req_llm, "~> 1.0.0"}
+      {:req_llm, "~> 1.0.0"},
+      {:hammer, "~> 6.1"}
     ]
   end
 
