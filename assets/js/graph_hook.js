@@ -563,17 +563,48 @@ const graphHook = {
         const currentContent = n.data("content") || "";
         const lines = currentContent.split("\n");
 
-        // Replace the first line with the new label while preserving the rest
-        if (lines.length > 0) {
-          lines[0] = String(label || "");
-          n.data("content", lines.join("\n"));
-        } else {
-          n.data("content", String(label || ""));
+        const newLabel = String(label || "");
+        const newContent =
+          lines.length > 0
+            ? [newLabel, ...lines.slice(1)].join("\n")
+            : newLabel;
+
+        // Only update if content has actually changed to avoid unnecessary rerenders
+        if (currentContent === newContent) return;
+
+        // Check if this is the first time we're setting a meaningful title
+        // (transition from empty/placeholder to actual content)
+        const currentTitle = lines.length > 0 ? lines[0].trim() : "";
+        const isFirstTitleSet = !currentTitle && newLabel.trim().length > 0;
+
+        // Track if we've already reflowed for this node
+        if (!this._reflowedNodes) this._reflowedNodes = new Set();
+        const needsReflow = isFirstTitleSet && !this._reflowedNodes.has(id);
+
+        // Batch updates to prevent multiple redraws
+        if (this.cy && typeof this.cy.startBatch === "function") {
+          this.cy.startBatch();
         }
 
-        // Remove any style overrides so the stylesheet functions recalculate
-        // This allows width and height to be recalculated based on the new content
-        n.removeStyle("width height label");
+        // Update content data (this triggers style function recalculation)
+        n.data("content", newContent);
+
+        // End batch to apply changes once
+        if (this.cy && typeof this.cy.endBatch === "function") {
+          this.cy.endBatch();
+        }
+
+        // Reflow the graph when title is first set to prevent node overlapping
+        if (needsReflow) {
+          this._reflowedNodes.add(id);
+
+          // Use a small delay to ensure size calculations are complete
+          setTimeout(() => {
+            if (this.cy && typeof layoutGraph === "function") {
+              layoutGraph(this.cy, { animate: true });
+            }
+          }, 50);
+        }
       } catch (_e) {
         // no-op
       }

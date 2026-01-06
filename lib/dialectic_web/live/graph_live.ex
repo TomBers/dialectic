@@ -1082,14 +1082,32 @@ defmodule DialecticWeb.GraphLive do
 
   defp update_streaming_node(socket, updated_vertex, node_id) do
     if socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
-      label = extract_title(Map.get(updated_vertex, :content, ""))
+      current_content = Map.get(socket.assigns.node, :content, "")
+      new_content = Map.get(updated_vertex, :content, "")
 
-      # Merge content update while preserving relatives (parents/children)
-      node = %{socket.assigns.node | content: updated_vertex.content}
+      # Skip update if content hasn't changed (prevents redundant rerenders)
+      if current_content == new_content do
+        socket
+      else
+        # Merge content update while preserving relatives (parents/children)
+        node = %{socket.assigns.node | content: new_content}
 
-      socket
-      |> assign(node: node)
-      |> push_event("update_node_label", %{id: node_id, label: label})
+        # Only extract and set title once (when transitioning from empty to content)
+        # This prevents title changes during streaming
+        current_title = extract_title(current_content)
+        needs_title_set = current_title == "" && current_content != new_content
+
+        socket =
+          socket
+          |> assign(node: node)
+
+        if needs_title_set do
+          label = extract_title(new_content)
+          push_event(socket, "update_node_label", %{id: node_id, label: label})
+        else
+          socket
+        end
+      end
     else
       socket
     end
