@@ -35,8 +35,7 @@ if config_env() == :prod do
   database_ssl = System.get_env("DATABASE_SSL", "true") not in ~w(false 0 no)
 
   config :dialectic, Dialectic.Repo,
-    ssl: database_ssl,
-    ssl_opts: [verify: :verify_none],
+    ssl: if(database_ssl, do: [verify: :verify_none], else: false),
     url: database_url,
     pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
     queue_target: 5000,
