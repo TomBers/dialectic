@@ -46,7 +46,7 @@ defmodule Dialectic.Application do
 
   defp validate_api_keys! do
     # Only validate in production to avoid breaking dev/test environments
-    if Mix.env() == :prod do
+    if Application.get_env(:dialectic, :env) == :prod do
       # Check which LLM provider is configured
       provider = System.get_env("LLM_PROVIDER") || "openai"
 

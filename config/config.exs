@@ -26,7 +26,8 @@ config :dialectic, Oban,
 
 config :dialectic,
   ecto_repos: [Dialectic.Repo],
-  generators: [timestamp_type: :utc_datetime]
+  generators: [timestamp_type: :utc_datetime],
+  env: config_env()
 
 # Configures the endpoint
 config :dialectic, DialecticWeb.Endpoint,
