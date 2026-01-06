@@ -64,7 +64,7 @@ defmodule DialecticWeb.Endpoint do
     conn
     |> Plug.Conn.put_resp_header(
       "content-security-policy",
-      "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' wss: ws:; frame-ancestors 'self'"
+      "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://rsms.me; img-src 'self' data: https:; font-src 'self' data: https://rsms.me; connect-src 'self' wss: ws: https://www.google-analytics.com https://*.google-analytics.com; frame-ancestors 'self'"
     )
     |> Plug.Conn.put_resp_header("x-frame-options", "SAMEORIGIN")
     |> Plug.Conn.put_resp_header("x-content-type-options", "nosniff")
