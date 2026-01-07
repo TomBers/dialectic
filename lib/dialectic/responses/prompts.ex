@@ -8,16 +8,30 @@ defmodule Dialectic.Responses.Prompts do
   only the system message varies across modes.
 
   Each public function returns a Markdown string (restricted CommonMark subset).
+
+  ## Design Principles
+
+  These prompts are designed for **graph-based exploration** where each response
+  extends a conversation thread. To minimize repetition:
+
+  1. Context is framed as "already covered territory"
+  2. Instructions emphasize ADDING new insights
+  3. Tasks are framed as continuations, not standalone answers
   """
 
   # ---- Helpers ---------------------------------------------------------------
 
-  defp fence(label, text) do
+  defp frame_context(context_text) do
     """
-    ### #{label}
+    ### Foundation
+
+    The following has already been explored:
+
     ```text
-    #{text}
+    #{context_text}
     ```
+
+    ↑ This is already covered. Your response should ADD NEW insights beyond what's shown above.
     """
   end
 
@@ -32,6 +46,12 @@ defmodule Dialectic.Responses.Prompts do
     Regex.replace(~r/^\s*#+\s*/, s, "")
   end
 
+  defp anti_repetition_footer do
+    """
+    **Important:** Do not repeat or merely rephrase what's in the Foundation section. Focus on adding genuinely new information, perspectives, or insights.
+    """
+  end
+
   # ---- Templates -------------------------------------------------------------
 
   @doc """
@@ -40,11 +60,19 @@ defmodule Dialectic.Responses.Prompts do
   @spec explain(String.t(), String.t()) :: String.t()
   def explain(context, topic) do
     join_blocks([
-      fence("Context", context),
+      frame_context(context),
       """
-      Please explain the following topic: #{sanitize_title(topic)}.
-      Use the provided Context to ground your explanation.
-      """
+      You are continuing an exploration where the Foundation has already been covered.
+
+      **Your task:** Explain **#{sanitize_title(topic)}** by ADDING new perspectives, details, or insights that EXTEND BEYOND what's already in the Foundation.
+
+      Focus on aspects not yet discussed, such as:
+      - Deeper mechanisms or processes
+      - Concrete examples or applications
+      - Different perspectives or frameworks
+      - Connections to related concepts
+      """,
+      anti_repetition_footer()
     ])
   end
 
@@ -54,12 +82,17 @@ defmodule Dialectic.Responses.Prompts do
   @spec initial_explainer(String.t(), String.t()) :: String.t()
   def initial_explainer(context, topic) do
     join_blocks([
-      fence("Context", context),
+      frame_context(context),
       """
-      Please answer the following question: #{sanitize_title(topic)}.
+      You are beginning an exploration. The Foundation provides background.
 
-      In addition to the answer, please provide a basis for ongoing exploration by highlighting extension questions and related topics.
-      Use the provided Context to ground your explanation.
+      **Your task:** Answer **#{sanitize_title(topic)}** while identifying promising directions for deeper exploration.
+
+      Include:
+      1. A clear, substantive answer
+      2. 2-3 extension questions or related topics that would enrich understanding
+
+      Build on the Foundation without repeating it.
       """
     ])
   end
@@ -70,11 +103,19 @@ defmodule Dialectic.Responses.Prompts do
   @spec selection(String.t(), String.t()) :: String.t()
   def selection(context, selection_text) do
     join_blocks([
-      fence("Context", context),
+      frame_context(context),
       """
-      Please explain or elaborate on the following selection: #{sanitize_title(selection_text)}.
-      Use the provided Context to ground your response.
-      """
+      A specific phrase was highlighted: **#{sanitize_title(selection_text)}**
+
+      **Your task:** Provide deeper insight into this specific concept by:
+      - Unpacking technical terms or implicit assumptions
+      - Providing concrete examples or applications
+      - Connecting to broader implications
+      - Exploring edge cases or nuances
+
+      Add details and perspectives NOT already covered in the Foundation.
+      """,
+      anti_repetition_footer()
     ])
   end
 
@@ -84,14 +125,29 @@ defmodule Dialectic.Responses.Prompts do
   @spec synthesis(String.t(), String.t(), String.t(), String.t()) :: String.t()
   def synthesis(context1, context2, pos1, pos2) do
     join_blocks([
-      fence("Context A", context1),
-      fence("Context B", context2),
       """
-      Please provide a synthesis that bridges the following two positions:
-      1. #{sanitize_title(pos1)}
-      2. #{sanitize_title(pos2)}
+      ### Foundation A
+      ```text
+      #{context1}
+      ```
 
-      Draw upon "Context A" and "Context B" to construct a unified perspective or resolution.
+      ### Foundation B
+      ```text
+      #{context2}
+      ```
+      """,
+      """
+      Two different lines of inquiry have emerged:
+
+      **Position A:** #{sanitize_title(pos1)}
+      **Position B:** #{sanitize_title(pos2)}
+
+      **Your task:** Synthesize these positions by identifying:
+      - Common ground or complementary insights
+      - A unified framework that integrates both perspectives
+      - New understanding that emerges from their combination
+
+      Do not simply summarize—create something new from their integration.
       """
     ])
   end
@@ -102,11 +158,20 @@ defmodule Dialectic.Responses.Prompts do
   @spec thesis(String.t(), String.t()) :: String.t()
   def thesis(context, claim) do
     join_blocks([
-      fence("Context", context),
+      frame_context(context),
       """
-      Please provide a detailed argument IN FAVOR OF the following claim: #{sanitize_title(claim)}.
-      Use the provided Context to ground your argument.
-      """
+      The Foundation represents existing discussion.
+
+      **Your task:** Build a strong argument **IN FAVOR OF** this claim: **#{sanitize_title(claim)}**
+
+      Provide:
+      - New reasoning, evidence, or examples not yet mentioned
+      - Novel angles or supporting frameworks
+      - Fresh perspectives that strengthen the case
+
+      Avoid simply restating points already made in the Foundation.
+      """,
+      anti_repetition_footer()
     ])
   end
 
@@ -116,11 +181,20 @@ defmodule Dialectic.Responses.Prompts do
   @spec antithesis(String.t(), String.t()) :: String.t()
   def antithesis(context, claim) do
     join_blocks([
-      fence("Context", context),
+      frame_context(context),
       """
-      Please provide a detailed argument AGAINST the following claim: #{sanitize_title(claim)}.
-      Use the provided Context to ground your argument.
-      """
+      The Foundation represents existing discussion.
+
+      **Your task:** Build a strong argument **AGAINST** this claim: **#{sanitize_title(claim)}**
+
+      Provide:
+      - New counterarguments, contradicting evidence, or counterexamples
+      - Alternative frameworks that challenge the claim
+      - Fresh critical perspectives not yet explored
+
+      Avoid simply restating points already made in the Foundation.
+      """,
+      anti_repetition_footer()
     ])
   end
 
@@ -130,10 +204,17 @@ defmodule Dialectic.Responses.Prompts do
   @spec related_ideas(String.t(), String.t()) :: String.t()
   def related_ideas(context, current_idea_title) do
     join_blocks([
-      fence("Context", context),
+      frame_context(context),
       """
-      Please suggest adjacent topics, thinkers, or concepts that are related to: #{sanitize_title(current_idea_title)}.
-      Ensure your suggestions are tightly grounded in the provided Context.
+      The exploration has covered: **#{sanitize_title(current_idea_title)}**
+
+      **Your task:** Identify 3-5 adjacent topics, thinkers, or concepts that would enrich this exploration.
+
+      For each suggestion, briefly explain:
+      - How it connects to the current topic
+      - What new dimension it would add to understanding
+
+      Prioritize suggestions that open NEW directions, not just variations on what's already been discussed.
       """
     ])
   end
@@ -144,10 +225,19 @@ defmodule Dialectic.Responses.Prompts do
   @spec deep_dive(String.t(), String.t()) :: String.t()
   def deep_dive(context, topic) do
     join_blocks([
-      fence("Context", context),
+      frame_context(context),
       """
-      Write a deep dive on #{sanitize_title(topic)}. Feel free to go beyond the previous word limits, write enough to understand the topic.
-      """
+      The Foundation provides an overview of **#{sanitize_title(topic)}**.
+
+      **Your task:** Write a deep dive that goes BEYOND the overview by:
+      - Adding technical depth, nuance, or complexity
+      - Providing concrete examples, case studies, or applications
+      - Exploring implications, edge cases, or subtleties
+      - Addressing questions the overview raises but doesn't answer
+
+      You may write at length (beyond normal 500-word limit). Focus on adding substantial new understanding.
+      """,
+      anti_repetition_footer()
     ])
   end
 end
