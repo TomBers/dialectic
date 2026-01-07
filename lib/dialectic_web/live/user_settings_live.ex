@@ -5,78 +5,170 @@ defmodule DialecticWeb.UserSettingsLive do
 
   def render(assigns) do
     ~H"""
-    <.header class="text-center">
-      Account Settings
-      <:subtitle>Manage your account email address and password settings</:subtitle>
-    </.header>
+    <div class="mx-auto max-w-3xl px-6 py-14">
+      <div class="rounded-2xl border border-zinc-200/70 bg-white shadow-sm">
+        <div class="flex flex-col gap-4 border-b border-zinc-100 px-6 py-5 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 class="text-xl font-semibold tracking-tight text-zinc-900">
+              Account settings
+            </h1>
+            <p class="mt-1 text-sm text-zinc-600">
+              Manage your account email address and password settings.
+            </p>
+          </div>
 
-    <br /><br />
-    <.link
-      href={~p"/users/log_out"}
-      method="delete"
-      class="phx-submit-loading:opacity-75 rounded-lg bg-zinc-900 hover:bg-zinc-700 py-2 px-3 text-sm font-semibold leading-6 text-white active:text-white/80"
-    >
-      Log out
-    </.link>
+          <div class="flex items-center gap-3">
+            <.link
+              href={~p"/users/log_out"}
+              method="delete"
+              id="user-settings-logout"
+              class="inline-flex items-center justify-center rounded-xl bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-zinc-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
+            >
+              Log out
+            </.link>
+          </div>
+        </div>
 
-    <div class="space-y-12 divide-y">
-      <div>
-        <.simple_form
-          for={@email_form}
-          id="email_form"
-          phx-submit="update_email"
-          phx-change="validate_email"
-        >
-          <.input field={@email_form[:email]} type="email" label="Email" required />
-          <.input
-            field={@email_form[:current_password]}
-            name="current_password"
-            id="current_password_for_email"
-            type="password"
-            label="Current password"
-            value={@email_form_current_password}
-            required
-          />
-          <:actions>
-            <.button phx-disable-with="Changing...">Change Email</.button>
-          </:actions>
-        </.simple_form>
-      </div>
-      <div>
-        <.simple_form
-          for={@password_form}
-          id="password_form"
-          action={~p"/users/log_in?_action=password_updated"}
-          method="post"
-          phx-change="validate_password"
-          phx-submit="update_password"
-          phx-trigger-action={@trigger_submit}
-        >
-          <input
-            name={@password_form[:email].name}
-            type="hidden"
-            id="hidden_user_email"
-            value={@current_email}
-          />
-          <.input field={@password_form[:password]} type="password" label="New password" required />
-          <.input
-            field={@password_form[:password_confirmation]}
-            type="password"
-            label="Confirm new password"
-          />
-          <.input
-            field={@password_form[:current_password]}
-            name="current_password"
-            type="password"
-            label="Current password"
-            id="current_password_for_password"
-            value={@current_password}
-            required
-          />
-          <:actions>
-            <.button phx-disable-with="Changing...">Change Password</.button>
-          </:actions>
-        </.simple_form>
+        <div class="px-6 py-6">
+          <div class="space-y-10">
+            <section id="user-settings-email-section" class="space-y-4">
+              <div class="flex items-start gap-3">
+                <div class="mt-0.5 flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 ring-1 ring-indigo-100">
+                  <.icon name="hero-envelope" class="h-5 w-5 text-indigo-700" />
+                </div>
+
+                <div>
+                  <h2 class="text-base font-semibold text-zinc-900">Email</h2>
+                  <p class="mt-1 text-sm text-zinc-600">
+                    Update the email address associated with your account.
+                  </p>
+                </div>
+              </div>
+
+              <div class="rounded-2xl border border-zinc-200/60 bg-zinc-50/50 p-5 sm:p-6">
+                <.simple_form
+                  for={@email_form}
+                  id="email_form"
+                  phx-submit="update_email"
+                  phx-change="validate_email"
+                >
+                  <.input
+                    field={@email_form[:email]}
+                    type="email"
+                    label="Email"
+                    required
+                    class="mt-2 block w-full rounded-lg border border-zinc-200 bg-white text-zinc-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm sm:leading-6"
+                  />
+
+                  <.input
+                    field={@email_form[:current_password]}
+                    name="current_password"
+                    id="current_password_for_email"
+                    type="password"
+                    label="Current password"
+                    value={@email_form_current_password}
+                    required
+                    class="mt-2 block w-full rounded-lg border border-zinc-200 bg-white text-zinc-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm sm:leading-6"
+                  />
+
+                  <:actions>
+                    <.button
+                      phx-disable-with="Changing..."
+                      class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                    >
+                      Change email
+                    </.button>
+                  </:actions>
+                </.simple_form>
+              </div>
+            </section>
+
+            <div class="h-px bg-zinc-100"></div>
+
+            <section id="user-settings-password-section" class="space-y-4">
+              <div class="flex items-start gap-3">
+                <div class="mt-0.5 flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 ring-1 ring-indigo-100">
+                  <.icon name="hero-key" class="h-5 w-5 text-indigo-700" />
+                </div>
+
+                <div>
+                  <h2 class="text-base font-semibold text-zinc-900">Password</h2>
+                  <p class="mt-1 text-sm text-zinc-600">
+                    Change your password. You’ll be asked to log in again after updating.
+                  </p>
+                </div>
+              </div>
+
+              <div class="rounded-2xl border border-zinc-200/60 bg-zinc-50/50 p-5 sm:p-6">
+                <.simple_form
+                  for={@password_form}
+                  id="password_form"
+                  action={~p"/users/log_in?_action=password_updated"}
+                  method="post"
+                  phx-change="validate_password"
+                  phx-submit="update_password"
+                  phx-trigger-action={@trigger_submit}
+                >
+                  <input
+                    name={@password_form[:email].name}
+                    type="hidden"
+                    id="hidden_user_email"
+                    value={@current_email}
+                  />
+
+                  <.input
+                    field={@password_form[:password]}
+                    type="password"
+                    label="New password"
+                    required
+                    class="mt-2 block w-full rounded-lg border border-zinc-200 bg-white text-zinc-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm sm:leading-6"
+                  />
+
+                  <.input
+                    field={@password_form[:password_confirmation]}
+                    type="password"
+                    label="Confirm new password"
+                    class="mt-2 block w-full rounded-lg border border-zinc-200 bg-white text-zinc-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm sm:leading-6"
+                  />
+
+                  <.input
+                    field={@password_form[:current_password]}
+                    name="current_password"
+                    type="password"
+                    label="Current password"
+                    id="current_password_for_password"
+                    value={@current_password}
+                    required
+                    class="mt-2 block w-full rounded-lg border border-zinc-200 bg-white text-zinc-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm sm:leading-6"
+                  />
+
+                  <:actions>
+                    <.button
+                      phx-disable-with="Changing..."
+                      class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                    >
+                      Change password
+                    </.button>
+                  </:actions>
+                </.simple_form>
+              </div>
+            </section>
+          </div>
+
+          <div class="mt-8 flex items-center justify-between">
+            <.link
+              navigate={~p"/"}
+              id="user-settings-back-home"
+              class="inline-flex items-center gap-2 text-sm font-semibold text-zinc-700 hover:text-zinc-900"
+            >
+              <.icon name="hero-arrow-left" class="h-4 w-4" /> Back to home
+            </.link>
+
+            <p class="text-xs text-zinc-500">
+              Need help? Email support.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
     """

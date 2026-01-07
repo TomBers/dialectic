@@ -5,35 +5,71 @@ defmodule DialecticWeb.UserResetPasswordLive do
 
   def render(assigns) do
     ~H"""
-    <div class="mx-auto max-w-sm">
-      <.header class="text-center">Reset Password</.header>
+    <div class="mx-auto max-w-md px-6 py-14">
+      <div class="rounded-2xl border border-zinc-200/70 bg-white shadow-sm">
+        <div class="border-b border-zinc-100 px-6 py-5">
+          <h1 class="text-xl font-semibold tracking-tight text-zinc-900">
+            Reset password
+          </h1>
+          <p class="mt-1 text-sm text-zinc-600">
+            Choose a new password for your account.
+          </p>
+        </div>
 
-      <.simple_form
-        for={@form}
-        id="reset_password_form"
-        phx-submit="reset_password"
-        phx-change="validate"
-      >
-        <.error :if={@form.errors != []}>
-          Oops, something went wrong! Please check the errors below.
-        </.error>
+        <div class="px-6 py-6">
+          <.simple_form
+            for={@form}
+            id="reset_password_form"
+            phx-submit="reset_password"
+            phx-change="validate"
+          >
+            <.error :if={@form.errors != []}>
+              Oops, something went wrong! Please check the errors below.
+            </.error>
 
-        <.input field={@form[:password]} type="password" label="New password" required />
-        <.input
-          field={@form[:password_confirmation]}
-          type="password"
-          label="Confirm new password"
-          required
-        />
-        <:actions>
-          <.button phx-disable-with="Resetting..." class="w-full">Reset Password</.button>
-        </:actions>
-      </.simple_form>
+            <.input
+              field={@form[:password]}
+              type="password"
+              label="New password"
+              required
+              class="mt-2 block w-full rounded-lg border border-zinc-200 bg-white text-zinc-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm sm:leading-6"
+            />
 
-      <p class="text-center text-sm mt-4">
-        <.link href={~p"/users/register"}>Register</.link>
-        | <.link href={~p"/users/log_in"}>Log in</.link>
-      </p>
+            <.input
+              field={@form[:password_confirmation]}
+              type="password"
+              label="Confirm new password"
+              required
+              class="mt-2 block w-full rounded-lg border border-zinc-200 bg-white text-zinc-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm sm:leading-6"
+            />
+
+            <:actions>
+              <.button
+                phx-disable-with="Resetting..."
+                class="w-full inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              >
+                Reset password
+              </.button>
+            </:actions>
+          </.simple_form>
+
+          <div class="mt-6 flex items-center justify-between">
+            <.link
+              href={~p"/users/log_in"}
+              class="text-sm font-semibold text-indigo-600 hover:text-indigo-500"
+            >
+              Back to log in
+            </.link>
+
+            <.link
+              href={~p"/users/register"}
+              class="text-sm font-semibold text-zinc-700 hover:text-zinc-900"
+            >
+              Create an account
+            </.link>
+          </div>
+        </div>
+      </div>
     </div>
     """
   end
