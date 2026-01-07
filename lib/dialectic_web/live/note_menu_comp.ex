@@ -58,9 +58,9 @@ defmodule DialecticWeb.NoteMenuComp do
 
           <.link
             href={"/api/graphs/md/#{@graph_id}"}
-            download={"#{@graph_id}.md"}
+            download={"#{@graph_id}.zip"}
             class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-purple-200 text-purple-600 hover:bg-purple-50"
-            title="Download Markdown"
+            title="Download Obsidian Vault (ZIP)"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
