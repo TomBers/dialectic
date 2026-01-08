@@ -464,8 +464,16 @@ defmodule DialecticWeb.RightPanelComp do
             </.link>
 
             <.link
-              href={"/api/graphs/md/#{@graph_id}"}
-              download={"#{@graph_id}.md"}
+              href={
+                if @graph_struct && @graph_struct.slug,
+                  do: "/api/graphs/md/#{@graph_struct.slug}",
+                  else: "/api/graphs/md/#{URI.encode(@graph_id)}"
+              }
+              download={
+                if @graph_struct && @graph_struct.slug,
+                  do: "#{@graph_struct.slug}.md",
+                  else: "#{@graph_id}.md"
+              }
               class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-purple-200 text-purple-600 hover:bg-purple-50"
               title="Download Markdown"
             >

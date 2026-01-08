@@ -46,21 +46,29 @@ defmodule DialecticWeb.PageController do
 
   def graph_md(conn, %{"graph_name" => graph_id_uri}) do
     graph_name = URI.decode(graph_id_uri)
-    graph_struct = Dialectic.DbActions.Graphs.get_graph_by_title(graph_name)
-    graph = Dialectic.Graph.Serialise.json_to_graph(graph_struct.data)
+    graph_struct = Dialectic.DbActions.Graphs.get_graph_by_slug_or_title(graph_name)
 
-    # Convert the graph to markdown
-    markdown_content =
-      Dialectic.Linear.ThreadedConv.prepare_conversation(graph)
-      |> Enum.map(&(&1.content <> "\n\n"))
+    if is_nil(graph_struct) do
+      conn
+      |> put_status(:not_found)
+      |> text("Graph not found")
+    else
+      graph = Dialectic.Graph.Serialise.json_to_graph(graph_struct.data)
 
-    # Set filename
-    filename = "#{graph_name}.md"
+      # Convert the graph to markdown
+      markdown_content =
+        Dialectic.Linear.ThreadedConv.prepare_conversation(graph)
+        |> Enum.map(&(&1.content <> "\n\n"))
 
-    conn
-    |> put_resp_content_type("text/markdown")
-    |> put_resp_header("content-disposition", "attachment; filename=#{filename}")
-    |> send_resp(200, markdown_content)
+      # Use slug for filename if available, otherwise title
+      filename =
+        if graph_struct.slug, do: "#{graph_struct.slug}.md", else: "#{graph_struct.title}.md"
+
+      conn
+      |> put_resp_content_type("text/markdown")
+      |> put_resp_header("content-disposition", "attachment; filename=\"#{filename}\"")
+      |> send_resp(200, markdown_content)
+    end
   end
 
   def guide(conn, _params) do
