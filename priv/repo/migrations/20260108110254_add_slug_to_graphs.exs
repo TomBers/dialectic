@@ -62,7 +62,7 @@ defmodule Dialectic.Repo.Migrations.AddSlugToGraphs do
       result = repo.query!("SELECT title FROM graphs WHERE slug = $1 LIMIT 1", [slug])
 
       if Enum.empty?(result.rows), do: slug, else: nil
-    end) || "#{base_slug}-#{System.system_time(:millisecond)}"
+    end) || "#{base_slug}-#{:crypto.strong_rand_bytes(8) |> Base.encode16(case: :lower)}"
   end
 
   defp generate_slug_from_title(title) do

@@ -35,8 +35,8 @@ defmodule Dialectic.Application do
     opts = [strategy: :one_for_one, name: Dialectic.Supervisor]
     result = Supervisor.start_link(children, opts)
 
-    # Warm up database connections after startup
-    warm_up_database()
+    # Warm up database connections after startup without blocking application start
+    Task.Supervisor.start_child(Dialectic.TaskSupervisor, fn -> warm_up_database() end)
 
     result
   end
@@ -51,7 +51,7 @@ defmodule Dialectic.Application do
 
   defp validate_api_keys! do
     # Only validate in production to avoid breaking dev/test environments
-    if Application.get_env(:dialectic, :env) == :prod do
+    if Mix.env() == :prod do
       # Check which LLM provider is configured
       provider = System.get_env("LLM_PROVIDER") || "openai"
 
@@ -92,7 +92,7 @@ defmodule Dialectic.Application do
 
   defp warm_up_database do
     # Only warm up in production to prevent connection issues on Fly.io
-    if Application.get_env(:dialectic, :env) == :prod do
+    if Mix.env() == :prod do
       try do
         Ecto.Adapters.SQL.query(Dialectic.Repo, "SELECT 1", [])
         :ok

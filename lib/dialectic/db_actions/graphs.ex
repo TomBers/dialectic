@@ -32,7 +32,8 @@ defmodule Dialectic.DbActions.Graphs do
     Enum.find_value(1..max_attempts, fn _ ->
       slug = generate_slug(title)
       if Repo.get_by(Graph, slug: slug), do: nil, else: slug
-    end) || generate_slug(title <> "-#{:os.system_time(:millisecond)}")
+    end) ||
+      generate_slug(title <> "-#{:crypto.strong_rand_bytes(8) |> Base.encode16(case: :lower)}")
   end
 
   @doc """

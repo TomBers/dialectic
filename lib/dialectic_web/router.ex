@@ -49,15 +49,9 @@ defmodule DialecticWeb.Router do
 
     live "/inspiration", InspirationLive
 
-    # Slug-based routes (preferred, short URLs)
+    # Slug-based routes
     live "/g/:graph_name", GraphLive
     live "/g/:graph_name/linear", LinearGraphLive
-    live "/g/:graph_name/story/:node_id", StoryLive
-
-    # Legacy title-based routes (backward compatibility)
-    live "/:graph_name", GraphLive
-    live "/:graph_name/linear", LinearGraphLive
-    live "/:graph_name/story/:node_id", StoryLive
   end
 
   # Other scopes may use custom stacks.

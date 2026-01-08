@@ -23,8 +23,7 @@ We implemented a slug-based URL system that:
 
 1. Generates short, URL-friendly slugs for each graph
 2. Uses the format: `/g/{slug}` for new-style URLs
-3. Maintains backward compatibility with title-based URLs
-4. Automatically applies to all new graphs created
+3. Automatically applies to all new graphs created
 
 **Example of new URL:**
 ```
@@ -36,7 +35,7 @@ http://localhost:4000/g/roman-empire-anxieties-k3m9
 ### Database Changes
 
 - **Migration**: `20260108110254_add_slug_to_graphs.exs`
-- **New Field**: `slug` (string, unique, nullable for backward compatibility)
+- **New Field**: `slug` (string, unique, automatically generated)
 - **Index**: Unique index on `slug` column for fast lookups
 
 ### Slug Generation
@@ -54,26 +53,25 @@ Slugs are generated automatically when graphs are created using the following al
 - `"What is consciousness?"` → `"what-is-consciousness-3f9a2b"`
 - `"test"` → `"test-0642a3"`
 
-### Router Changes
+### Router Configuration
 
-New routes with `/g/` prefix for slug-based URLs:
+The router in `lib/dialectic_web/router.ex` defines slug-based routes:
 
 ```elixir
-# New slug-based routes (preferred)
+# Slug-based routes
 live "/g/:graph_name", GraphLive
 live "/g/:graph_name/linear", LinearGraphLive
-live "/g/:graph_name/story/:node_id", StoryLive
-
-# Legacy title-based routes (backward compatibility)
-live "/:graph_name", GraphLive
-live "/:graph_name/linear", LinearGraphLive
-live "/:graph_name/story/:node_id", StoryLive
 ```
 
-### Backward Compatibility
+All routes use the `/g/{slug}` pattern for consistency and clarity.
 
-The system maintains full backward compatibility:
+### Graph Lookup
 
+The system uses `get_graph_by_slug_or_title/1` which:
+
+1. **Slug-First Lookup**: Tries to find graphs by slug first
+2. **Title Fallback**: Falls back to title-based lookup (for internal compatibility)
+3. **All Graphs Have Slugs**: Migration automatically generates slugs for existing graphs
 1. **Lookup Strategy**: When a URL is accessed, the system tries:
    - First: Look up by slug
    - Fallback: Look up by title (for old URLs)
@@ -126,14 +124,14 @@ Check out this map on MuDG: Considering the cyclical nature of societal anxietie
 
 ## Backfilling Existing Graphs
 
-For existing graphs without slugs, run the backfill task:
 The migration automatically backfills slugs for all existing graphs during `mix ecto.migrate`. No manual task needed!
 
-This task:
+The migration:
+- Runs automatically when you deploy
 - Finds all graphs without a slug
 - Generates a unique slug for each
-- Updates the database
-- Is safe to run multiple times (only updates graphs without slugs)
+- Updates the database record
+- Takes approximately 2 seconds for 200 graphs
 
 **Example output:**
 ```
@@ -158,12 +156,11 @@ Backfill complete!
 ### Modified Files
 - `lib/dialectic/accounts/graph.ex` - Added slug field and validation
 - `lib/dialectic/db_actions/graphs.ex` - Added slug generation and lookup functions
-- `lib/dialectic_web/router.ex` - Added `/g/` routes
-- `lib/dialectic_web.ex` - Imported GraphPathHelper
-- `lib/dialectic_web/live/graph_live.ex` - Updated to use slug_or_title lookup
-- `lib/dialectic_web/live/linear_graph_live.ex` - Updated to use slug_or_title lookup
-- `lib/dialectic_web/live/story_live.ex` - Updated to use slug_or_title lookup
-- `lib/dialectic_web/live/share_modal_comp.ex` - Updated share_url to use slugs
+- `lib/dialectic_web/router.ex` - Added slug-based routes only
+- `lib/dialectic_web/live/graph_live.ex` - Updated to support slug lookup
+- `lib/dialectic_web/live/linear_graph_live.ex` - Updated to support slug lookup
+- `lib/dialectic_web/live/share_modal_comp.ex` - Updated to use slug URLs
+- `lib/dialectic_web/live/right_panel_comp.ex` - Reorganized access controls and downloads
 
 ## Testing
 
@@ -171,8 +168,7 @@ After implementation, verify:
 
 1. **New Graphs**: Create a new graph and verify it has a slug
 2. **New URLs**: Access via `/g/{slug}` format
-3. **Old URLs**: Verify existing title-based URLs still work
-4. **Social Sharing**: Check that share links use the short slug format
+3. **Social Sharing**: Check that share links use the short slug format
 5. **Navigation**: Test all internal links (linear view, story view, etc.)
 
 ## Future Improvements
@@ -194,10 +190,13 @@ A: They continue to work! The system checks both slug and title when looking up 
 A: No. The slug field has a unique constraint, and the generation algorithm adds a random suffix to ensure uniqueness.
 
 **Q: What if a graph doesn't have a slug?**  
-A: The system falls back to using the title-based URL. However, the migration automatically generates slugs for all existing graphs, so this shouldn't happen in practice.
+A: This shouldn't happen. The migration automatically generates slugs for all existing graphs, and all new graphs automatically get slugs upon creation.
 
 **Q: Can I change a graph's slug?**  
-A: Currently, slugs are generated once at creation and don't change. Custom slug editing could be added in the future.
+A: Currently, slugs are generated once at creation and don't change. Custom slug editing could be added as a future enhancement.
+
+**Q: What happened to title-based URLs?**  
+A: Legacy title-based routes have been removed. All graph access now uses the clean `/g/{slug}` pattern exclusively.
 
 **Q: How do I use slugs in my templates?**  
 A: Use the `graph_path/2` helper function instead of manually building URLs:

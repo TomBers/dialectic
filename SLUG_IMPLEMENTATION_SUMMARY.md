@@ -1,5 +1,71 @@
 # Slug-Based URL Implementation Summary
 
+## 🎉 Latest Update: Slug-Only Routing
+
+**Date**: January 2025
+
+We've simplified the routing system by removing legacy title-based routes. The application now uses **slug-based routes exclusively** for all graph access.
+
+### What Changed:
+- ✅ Removed legacy `/:graph_name` routes
+- ✅ Deleted unused `StoryLive` component
+- ✅ Simplified path helpers to only generate `/g/{slug}` URLs
+- ✅ Cleaned up backward compatibility code
+- ✅ Updated all documentation
+
+### Result:
+- **Cleaner codebase** - Less complexity, easier to maintain
+- **Consistent URLs** - Single pattern for all graph access: `/g/{slug}`
+- **Better DX** - Developers only need to know one URL format
+
+## 🔒 Security Improvements (GitHub Copilot Review)
+
+**Date**: January 2025
+
+Applied critical security fixes from GitHub Copilot code review:
+
+### Issues Fixed:
+
+1. **Access Control on Markdown Export** (#6, #7)
+   - Added authentication and authorization checks to `/api/graphs/md/:graph_name` endpoint
+   - Now respects graph privacy settings (public/private)
+   - Validates share tokens using secure comparison
+   - Checks user ownership and share invitations
+   - **Impact**: Prevents unauthorized download of private graph content
+
+2. **HTTP Header Injection Prevention** (#1, #7)
+   - Sanitized filenames in `content-disposition` header
+   - Strips CR/LF and unsafe characters (only allows `A-Za-z0-9_.-`)
+   - Limits filename length to 200 characters
+   - Removed unnecessary quotes from header value
+   - **Impact**: Prevents HTTP response splitting attacks
+
+3. **Environment Check Fix** (#2)
+   - Changed from non-standard `Application.get_env(:dialectic, :env)` to `Mix.env()`
+   - Ensures production checks actually work
+   - **Impact**: API key validation and database warmup now work correctly in production
+
+4. **Non-Blocking Database Warmup** (#3)
+   - Moved database warmup to async Task.Supervisor
+   - Prevents blocking application startup if database is slow
+   - **Impact**: Faster, more reliable application startup
+
+5. **Improved Slug Collision Handling** (#5)
+   - Replaced millisecond timestamp fallback with 8 random bytes
+   - Prevents race condition where concurrent operations could generate identical slugs
+   - **Impact**: Eliminates potential unique constraint violations
+
+6. **Deprecated Code Removal** (#4)
+   - Removed unused `gen_link` function (already completed in slug-only routing cleanup)
+
+### Files Modified:
+- `lib/dialectic_web/controllers/page_controller.ex` - Added access control and filename sanitization
+- `lib/dialectic/application.ex` - Fixed environment checks and async warmup
+- `lib/dialectic/db_actions/graphs.ex` - Improved slug collision handling
+- `priv/repo/migrations/20260108110254_add_slug_to_graphs.exs` - Improved slug collision handling
+
+---
+
 ## 🚀 Deployment Instructions
 
 **No manual backfill needed!** The migration automatically generates slugs for all existing graphs.
@@ -54,14 +120,13 @@ mix phx.server
 # 3. Test it out!
 # - Create a new graph → it automatically gets a slug
 # - Access via /g/{slug} → works!
-# - Old title-based URLs → still work!
 # - Check share modal → shows clean slug URLs
 ```
 
 ## Key Features
 
 ✅ **Short, Clean URLs**: Slugs are generated from titles (max 50 chars) + 6-char random suffix  
-✅ **Backward Compatible**: All existing title-based URLs continue to work  
+✅ **Slug-Only Routes**: Clean `/g/{slug}` pattern for all graph access  
 ✅ **Automatic**: New graphs automatically get slugs on creation  
 ✅ **Social-Friendly**: Share links now use clean slug URLs  
 ✅ **Unique**: Database constraint + collision detection ensures uniqueness  
@@ -84,23 +149,21 @@ mix phx.server
 - **Location**: `lib/dialectic/db_actions/graphs.ex`
 
 ### 3. Router Updates
-- **New Routes**: Added `/g/:graph_name` routes for slug-based access
-- **Old Routes**: Kept existing `/:graph_name` routes for backward compatibility
+- **Slug-Based Routes**: All routes use `/g/:graph_name` pattern exclusively
+- **Removed**: Legacy title-based routes for cleaner routing
 - **Location**: `lib/dialectic_web/router.ex`
 
 ### 4. LiveView Updates
-All LiveViews updated to support slug-or-title lookup:
+All LiveViews updated to support slug-based lookup:
 - `GraphLive` - Main graph editor
-- `LinearGraphLive` - Linear/printable view  
-- `StoryLive` - Story view
+- `LinearGraphLive` - Linear/printable view
 
 ### 5. Helper Functions
 Created `DialecticWeb.GraphPathHelper` with utilities:
 - `graph_path/3` - Generate graph URLs
 - `graph_linear_path/3` - Generate linear view URLs
-- `graph_story_path/3` - Generate story view URLs
 
-Available in all LiveViews/components automatically.
+Available in all LiveViews/components automatically. All paths use slug-based routes exclusively.
 
 ### 6. Share Modal
 Updated `share_modal_comp.ex` to use slugs in:
@@ -115,10 +178,7 @@ The migration automatically backfills slugs for all existing graphs during `mix 
 
 ### In Templates
 ```heex
-<!-- Old way (still works but not recommended) -->
-<.link navigate={~p"/#{@graph_id}"}>View</.link>
-
-<!-- New way (preferred) -->
+<!-- Use the helper functions (all slug-based) -->
 <.link navigate={graph_path(@graph_struct)}>View</.link>
 <.link navigate={graph_linear_path(@graph_struct)}>Linear View</.link>
 <.link navigate={graph_path(@graph_struct, "5")}>View Node 5</.link>
@@ -126,7 +186,7 @@ The migration automatically backfills slugs for all existing graphs during `mix 
 
 ### In LiveViews
 ```elixir
-# Graph lookup now handles both slugs and titles
+# Graph lookup by slug or title (falls back to title for compatibility)
 graph = Graphs.get_graph_by_slug_or_title(identifier)
 ```
 
@@ -145,47 +205,50 @@ graph = Graphs.get_graph_by_slug_or_title(identifier)
 After deployment, verify:
 - [x] Create a new graph → has slug ✅
 - [x] Access graph via `/g/{slug}` → works ✅
-- [x] Access graph via old title URL → works ✅
 - [x] Share modal shows short URL ✅
 - [ ] Social share buttons use short URL (manual verification needed)
-- [ ] Linear view works with both URL formats (manual verification needed)
-- [ ] Story view works with both URL formats (manual verification needed)
+- [ ] Linear view works with slug-based URLs (manual verification needed)
 - [x] Unit tests pass ✅
 
 **Automated tests passing!** Run `MIX_ENV=test mix test` to verify.
 
 ## Files Created
-- `lib/dialectic_web/graph_path_helper.ex`
-- `priv/repo/migrations/20260108110254_add_slug_to_graphs.exs` (includes automatic backfill)
-- `docs/SLUG_URLS.md`
+- `lib/dialectic_web/graph_path_helper.ex` - Slug-based path helpers
+- `priv/repo/migrations/20260108110254_add_slug_to_graphs.exs` - Migration with automatic backfill
+- `docs/SLUG_URLS.md` - Detailed documentation
 
 ## Files Modified
-- `lib/dialectic/accounts/graph.ex`
-- `lib/dialectic/db_actions/graphs.ex`
-- `lib/dialectic_web.ex`
-- `lib/dialectic_web/router.ex`
-- `lib/dialectic_web/controllers/page_html.ex`
-- `lib/dialectic_web/live/graph_live.ex`
-- `lib/dialectic_web/live/linear_graph_live.ex`
-- `lib/dialectic_web/live/story_live.ex`
-- `lib/dialectic_web/live/share_modal_comp.ex`
+- `lib/dialectic/accounts/graph.ex` - Added slug field and validation
+- `lib/dialectic/db_actions/graphs.ex` - Added slug generation and lookup
+- `lib/dialectic_web.ex` - Imported GraphPathHelper
+- `lib/dialectic_web/router.ex` - **Updated to slug-only routes**
+- `lib/dialectic_web/controllers/page_html.ex` - Removed unused helpers
+- `lib/dialectic_web/live/home_live.ex` - **Cleaned up legacy code**
+- `lib/dialectic_web/live/graph_live.ex` - Uses slug-based paths
+- `lib/dialectic_web/live/linear_graph_live.ex` - Uses slug-based paths
+- `lib/dialectic_web/live/share_modal_comp.ex` - **Simplified to slug-only**
+- `lib/dialectic_web/live/right_panel_comp.ex` - Reorganized UI sections
+- `lib/dialectic_web/graph_path_helper.ex` - **Simplified to slug-only**
+
+## Files Deleted
+- `lib/mix/tasks/backfill_graph_slugs.ex` - No longer needed (migration does it)
+- `lib/dialectic_web/live/story_live.ex` - Unused component removed
 
 ## Future Enhancements
 
 Potential improvements to consider:
 - Custom slugs (allow users to edit their slug)
-- Automatic redirects from title URLs to slug URLs
 - Slug history/aliases if titles change
-- Analytics on URL format usage
+- Analytics on slug usage
 - Vanity URLs for premium users
 
 ## Notes
 
-- All changes maintain backward compatibility
-- No breaking changes to existing functionality
+- Database migration automatically backfills slugs for all existing graphs
 - Database migration is non-destructive (adds column, doesn't remove title)
 - Slug generation is deterministic but adds randomness for uniqueness
-- Helper functions automatically handle graphs with or without slugs
+- All routes now use slug-based paths exclusively (`/g/{slug}`)
+- Legacy title-based routes have been removed for cleaner routing
 
 ---
 

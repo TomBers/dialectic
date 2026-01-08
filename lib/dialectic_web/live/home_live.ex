@@ -130,7 +130,8 @@ defmodule DialecticWeb.HomeLive do
     # Fetch the newly created graph to get its slug
     case Graphs.get_graph_by_title(title) do
       nil ->
-        {:noreply, redirect(socket, to: ~p"/#{title}")}
+        # This shouldn't happen since we just created the graph
+        {:noreply, put_flash(socket, :error, "Graph not found after creation")}
 
       graph ->
         {:noreply, redirect(socket, to: graph_path(graph))}
@@ -498,12 +499,5 @@ defmodule DialecticWeb.HomeLive do
       is_binary(search) and search != "" -> "Search: #{search}"
       true -> "MuDG"
     end
-  end
-
-  # Note: gen_link is deprecated - use graph_path(graph) instead
-  # Kept for backward compatibility but should not be used for new code
-  defp gen_link(title) do
-    # Fallback to title-based URL (backward compatibility)
-    "/#{URI.encode(title)}"
   end
 end
