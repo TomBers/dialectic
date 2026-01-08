@@ -31,7 +31,8 @@ total_count = Repo.one(from g in Graph, select: count())
 IO.puts("  ✅ #{slug_count} out of #{total_count} graphs have slugs")
 
 if slug_count < total_count do
-  IO.puts("  ⚠️  Run 'mix backfill_graph_slugs' to add slugs to remaining graphs")
+  IO.puts("  ⚠️  Some graphs are missing slugs. This shouldn't happen with the latest migration.")
+  IO.puts("     Try running: mix ecto.migrate")
 end
 
 IO.puts("")
@@ -169,14 +170,13 @@ cond do
 
   slug_count > 0 and slug_count < total_count ->
     IO.puts("⚠️  #{slug_count}/#{total_count} graphs have slugs")
-    IO.puts("   Run: mix backfill_graph_slugs")
-    IO.puts("\n✅ Implementation is working but needs backfill")
+    IO.puts("   This shouldn't happen. Try: mix ecto.rollback && mix ecto.migrate")
+    IO.puts("\n⚠️  Implementation is working but some slugs are missing")
 
   true ->
     IO.puts("❌ No graphs with slugs found")
-    IO.puts("   1. Run: mix ecto.migrate")
-    IO.puts("   2. Run: mix backfill_graph_slugs")
-    IO.puts("   3. Or create a new graph to test")
+    IO.puts("   1. Run: mix ecto.migrate (automatically backfills slugs)")
+    IO.puts("   2. Or create a new graph to test")
 end
 
 IO.puts(String.duplicate("=", 60) <> "\n")

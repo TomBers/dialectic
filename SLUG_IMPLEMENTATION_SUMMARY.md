@@ -1,5 +1,25 @@
 # Slug-Based URL Implementation Summary
 
+## 🚀 Deployment Instructions
+
+**No manual backfill needed!** The migration automatically generates slugs for all existing graphs.
+
+### Steps to Deploy:
+1. Pull the latest changes
+2. Run `mix ecto.migrate` - this will:
+   - Add the `slug` column to the `graphs` table
+   - Automatically backfill slugs for all existing graphs (200 graphs ~2 seconds)
+3. Restart your server
+
+That's it! No mix tasks to run manually.
+
+### What Changed:
+- ✅ Migration now includes automatic backfill logic
+- ✅ No need for `mix backfill_graph_slugs` task (deleted)
+- ✅ Deployment is a single migration step
+
+---
+
 ## Problem Solved
 
 The social sharing functionality was generating extremely long, unfriendly URLs because graph titles were being used directly as URL identifiers. For example:
@@ -25,16 +45,13 @@ http://localhost:4000/g/roman-empire-anxieties-k3m9
 After pulling these changes:
 
 ```bash
-# 1. Run the migration
+# 1. Run the migration (automatically backfills slugs!)
 mix ecto.migrate
 
-# 2. Backfill existing graphs with slugs
-mix backfill_graph_slugs
-
-# 3. Start the server
+# 2. Start the server
 mix phx.server
 
-# 4. Test it out!
+# 3. Test it out!
 # - Create a new graph → it automatically gets a slug
 # - Access via /g/{slug} → works!
 # - Old title-based URLs → still work!
@@ -53,6 +70,7 @@ mix phx.server
 
 ### 1. Database
 - **Migration**: Added `slug` field to `graphs` table with unique index
+- **Automatic Backfill**: Migration automatically generates slugs for existing graphs
 - **Schema**: Updated `Graph` schema with slug field and validation
 - **Location**: `priv/repo/migrations/20260108110254_add_slug_to_graphs.exs`
 
@@ -90,11 +108,8 @@ Updated `share_modal_comp.ex` to use slugs in:
 - Social media buttons (Twitter, LinkedIn, Reddit)
 - Embed codes
 
-### 7. Backfill Tool
-Created Mix task to add slugs to existing graphs:
-```bash
-mix backfill_graph_slugs
-```
+### 7. Automatic Backfill
+The migration automatically backfills slugs for all existing graphs during `mix ecto.migrate`. No manual task needed!
 
 ## Usage Examples
 
@@ -117,12 +132,11 @@ graph = Graphs.get_graph_by_slug_or_title(identifier)
 
 ## Migration Steps
 
-1. ✅ Run migration: `mix ecto.migrate`
-2. ✅ Run backfill: `mix backfill_graph_slugs`
-3. ✅ Compile: `mix compile`
-4. ✅ Test new graphs get slugs automatically
-5. ✅ Verify old URLs still work
-6. ✅ Check social sharing uses short URLs
+1. ✅ Run migration: `mix ecto.migrate` (automatically backfills existing graphs)
+2. ✅ Compile: `mix compile`
+3. ✅ Test new graphs get slugs automatically
+4. ✅ Verify old URLs still work
+5. ✅ Check social sharing uses short URLs
 
 **All steps completed successfully!** ✅
 
@@ -142,8 +156,7 @@ After deployment, verify:
 
 ## Files Created
 - `lib/dialectic_web/graph_path_helper.ex`
-- `lib/mix/tasks/backfill_graph_slugs.ex`
-- `priv/repo/migrations/20260108110254_add_slug_to_graphs.exs`
+- `priv/repo/migrations/20260108110254_add_slug_to_graphs.exs` (includes automatic backfill)
 - `docs/SLUG_URLS.md`
 
 ## Files Modified

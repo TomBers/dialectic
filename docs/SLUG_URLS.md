@@ -127,10 +127,7 @@ Check out this map on MuDG: Considering the cyclical nature of societal anxietie
 ## Backfilling Existing Graphs
 
 For existing graphs without slugs, run the backfill task:
-
-```bash
-mix backfill_graph_slugs
-```
+The migration automatically backfills slugs for all existing graphs during `mix ecto.migrate`. No manual task needed!
 
 This task:
 - Finds all graphs without a slug
@@ -197,7 +194,7 @@ A: They continue to work! The system checks both slug and title when looking up 
 A: No. The slug field has a unique constraint, and the generation algorithm adds a random suffix to ensure uniqueness.
 
 **Q: What if a graph doesn't have a slug?**  
-A: The system falls back to using the title-based URL. Run `mix backfill_graph_slugs` to add slugs to all existing graphs.
+A: The system falls back to using the title-based URL. However, the migration automatically generates slugs for all existing graphs, so this shouldn't happen in practice.
 
 **Q: Can I change a graph's slug?**  
 A: Currently, slugs are generated once at creation and don't change. Custom slug editing could be added in the future.
