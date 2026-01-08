@@ -10,7 +10,8 @@ defmodule DialecticWeb.LinearGraphLive do
   def mount(%{"graph_name" => graph_id_uri} = params, _session, socket) do
     graph_id = URI.decode(graph_id_uri)
 
-    case Dialectic.DbActions.Graphs.get_graph_by_title(graph_id) do
+    # Try slug first, then title for backward compatibility
+    case Dialectic.DbActions.Graphs.get_graph_by_slug_or_title(graph_id) do
       nil ->
         socket =
           socket
@@ -30,8 +31,8 @@ defmodule DialecticWeb.LinearGraphLive do
 
         if has_access do
           try do
-            # Ensure graph is loaded and available
-            {_graph_struct, graph} = GraphManager.get_graph(graph_id)
+            # Ensure graph is loaded and available (use title for internal GraphManager)
+            {_graph_struct, graph} = GraphManager.get_graph(graph_db.title)
 
             # Generate flat list for HTML minimap
             map_nodes =
@@ -46,9 +47,9 @@ defmodule DialecticWeb.LinearGraphLive do
             # Otherwise, fall back to the "latest" leaf node to show a full conversation.
             target_node =
               if params["node_id"] do
-                GraphActions.find_node(graph_id, params["node_id"])
+                GraphActions.find_node(graph_db.title, params["node_id"])
               else
-                GraphManager.find_leaf_nodes(graph_id)
+                GraphManager.find_leaf_nodes(graph_db.title)
                 |> Enum.sort_by(
                   fn node ->
                     case Integer.parse(node.id) do
@@ -58,13 +59,13 @@ defmodule DialecticWeb.LinearGraphLive do
                   end,
                   :desc
                 )
-                |> List.first() || GraphManager.best_node(graph_id, nil)
+                |> List.first() || GraphManager.best_node(graph_db.title, nil)
               end
 
             # Build the linear path from Root -> Target
             linear_path =
               if target_node do
-                GraphManager.path_to_node(graph_id, target_node)
+                GraphManager.path_to_node(graph_db.title, target_node)
                 |> Enum.reverse()
                 |> Enum.map(fn node -> Map.put(node, :title, clean_title(node.content)) end)
               else
@@ -72,18 +73,19 @@ defmodule DialecticWeb.LinearGraphLive do
               end
 
             if connected?(socket) do
-              Highlights.subscribe(graph_id)
+              Highlights.subscribe(graph_db.title)
             end
 
             socket =
               assign(socket,
                 linear_path: linear_path,
                 map_nodes: map_nodes,
-                graph_id: graph_id,
-                show_minimap: false,
+                graph_id: graph_db.title,
+                graph_struct: graph_db,
+                show_minimap: true,
                 show_highlights: true,
                 show_highlights_list: false,
-                highlights: Highlights.list_highlights(mudg_id: graph_id),
+                highlights: Highlights.list_highlights(mudg_id: graph_db.title),
                 selected_node_id: if(target_node, do: target_node.id, else: nil)
               )
 
@@ -164,10 +166,6 @@ defmodule DialecticWeb.LinearGraphLive do
     else
       {:noreply, socket}
     end
-  end
-
-  def handle_event("prepare_for_print", _params, socket) do
-    {:noreply, socket}
   end
 
   def handle_event("update_exploration_progress", _params, socket) do

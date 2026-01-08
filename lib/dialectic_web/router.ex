@@ -48,9 +48,10 @@ defmodule DialecticWeb.Router do
     get "/intro/how", PageController, :guide
 
     live "/inspiration", InspirationLive
-    live "/:graph_name", GraphLive
-    live "/:graph_name/linear", LinearGraphLive
-    live "/:graph_name/story/:node_id", StoryLive
+
+    # Slug-based routes
+    live "/g/:graph_name", GraphLive
+    live "/g/:graph_name/linear", LinearGraphLive
   end
 
   # Other scopes may use custom stacks.

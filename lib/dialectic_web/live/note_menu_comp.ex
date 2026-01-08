@@ -34,7 +34,7 @@ defmodule DialecticWeb.NoteMenuComp do
           </button>
 
           <.link
-            navigate={~p"/#{@graph_id}/linear"}
+            navigate={graph_linear_path(@graph_struct)}
             target="_blank"
             rel="noopener noreferrer"
             class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-red-200 text-red-600 hover:bg-red-50"
@@ -57,8 +57,16 @@ defmodule DialecticWeb.NoteMenuComp do
           </.link>
 
           <.link
-            href={"/api/graphs/md/#{@graph_id}"}
-            download={"#{@graph_id}.md"}
+            href={
+              if @graph_struct && @graph_struct.slug,
+                do: "/api/graphs/md/#{@graph_struct.slug}",
+                else: "/api/graphs/md/#{URI.encode(@graph_id)}"
+            }
+            download={
+              if @graph_struct && @graph_struct.slug,
+                do: "#{@graph_struct.slug}.md",
+                else: "#{@graph_id}.md"
+            }
             class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-purple-200 text-purple-600 hover:bg-purple-50"
             title="Download Markdown"
           >

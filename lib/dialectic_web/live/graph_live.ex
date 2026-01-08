@@ -17,17 +17,20 @@ defmodule DialecticWeb.GraphLive do
     graph_id = URI.decode(graph_id_uri)
     user = UserUtils.current_identity(socket.assigns)
 
-    maybe_set_mode(graph_id, params)
-
     case fetch_graph(socket.assigns[:current_user], graph_id, params) do
       {:ok, {graph_struct, _}, graph_db} ->
-        # Ensure a main group exists
-        _ = ensure_main_group(graph_id)
+        # Use the actual title for all internal operations
+        graph_title = graph_db.title
 
-        {node_id, initial_highlight_id} = resolve_target_node(graph_id, params)
+        maybe_set_mode(graph_title, params)
+
+        # Ensure a main group exists
+        _ = ensure_main_group(graph_title)
+
+        {node_id, initial_highlight_id} = resolve_target_node(graph_title, params)
 
         node =
-          case GraphManager.best_node(graph_id, node_id) do
+          case GraphManager.best_node(graph_title, node_id) do
             nil -> default_node()
             v -> v
           end
@@ -35,8 +38,8 @@ defmodule DialecticWeb.GraphLive do
         socket =
           socket
           |> assign_defaults()
-          |> subscribe_to_topics(graph_id, user)
-          |> assign_graph_data(graph_db, graph_struct, node, graph_id, user)
+          |> subscribe_to_topics(graph_title, user)
+          |> assign_graph_data(graph_db, graph_struct, node, graph_title, user)
           |> handle_initial_highlight(initial_highlight_id)
 
         {:ok, socket}
@@ -1133,7 +1136,8 @@ defmodule DialecticWeb.GraphLive do
   end
 
   defp fetch_graph(user, graph_id, params) do
-    case Dialectic.DbActions.Graphs.get_graph_by_title(graph_id) do
+    # Try slug first, then title for backward compatibility
+    case Dialectic.DbActions.Graphs.get_graph_by_slug_or_title(graph_id) do
       nil ->
         {:error, "Graph not found: #{graph_id}"}
 
@@ -1147,12 +1151,13 @@ defmodule DialecticWeb.GraphLive do
 
         if has_access do
           try do
-            {:ok, GraphManager.get_graph(graph_id), graph_db}
+            # Always use title for GraphManager lookup (internal identifier)
+            {:ok, GraphManager.get_graph(graph_db.title), graph_db}
           rescue
             _e ->
               require Logger
-              Logger.error("Failed to load graph: #{graph_id}")
-              {:error, "Error loading graph: #{graph_id}"}
+              Logger.error("Failed to load graph: #{graph_db.title}")
+              {:error, "Error loading graph: #{graph_db.title}"}
           end
         else
           {:error, "You do not have permission to view this graph."}

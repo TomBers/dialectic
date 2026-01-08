@@ -93,8 +93,10 @@ defmodule DialecticWeb.HomeLive do
     if title == "untitled-idea" do
       {:noreply, put_flash(socket, :error, "Please enter a question or topic.")}
     else
-      if Graphs.get_graph_by_title(title) do
-        {:noreply, redirect(socket, to: ~p"/#{title}")}
+      existing_graph = Graphs.get_graph_by_title(title)
+
+      if existing_graph do
+        {:noreply, redirect(socket, to: graph_path(existing_graph))}
       else
         parent_pid = self()
         assigns = socket.assigns
@@ -125,7 +127,15 @@ defmodule DialecticWeb.HomeLive do
 
   @impl true
   def handle_async(:create_graph_flow, {:ok, {:ok, title}}, socket) do
-    {:noreply, redirect(socket, to: ~p"/#{title}")}
+    # Fetch the newly created graph to get its slug
+    case Graphs.get_graph_by_title(title) do
+      nil ->
+        # This shouldn't happen since we just created the graph
+        {:noreply, put_flash(socket, :error, "Graph not found after creation")}
+
+      graph ->
+        {:noreply, redirect(socket, to: graph_path(graph))}
+    end
   end
 
   def handle_async(:create_graph_flow, {:ok, _}, socket) do
@@ -435,7 +445,7 @@ defmodule DialecticWeb.HomeLive do
                           <DialecticWeb.PageHtml.GraphComp.render
                             title={g.title}
                             is_public={g.is_public}
-                            link={gen_link(g.title)}
+                            link={graph_path(g)}
                             count={count}
                             tags={g.tags}
                             node_count={
@@ -489,10 +499,5 @@ defmodule DialecticWeb.HomeLive do
       is_binary(search) and search != "" -> "Search: #{search}"
       true -> "MuDG"
     end
-  end
-
-  defp gen_link(title) do
-    # Simple helper to generate link, matching logic in controller/views
-    "/#{URI.encode(title)}"
   end
 end

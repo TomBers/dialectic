@@ -95,6 +95,9 @@ defmodule DialecticWeb do
 
       # Routes generation with the ~p sigil
       unquote(verified_routes())
+
+      # Helper for generating graph paths with slug support
+      import DialecticWeb.GraphPathHelper
     end
   end
 

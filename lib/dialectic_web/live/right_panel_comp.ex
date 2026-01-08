@@ -219,8 +219,15 @@ defmodule DialecticWeb.RightPanelComp do
           <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
             Access
           </div>
-          <div class="p-1">
+          <div class="p-1 space-y-2">
             <DialecticWeb.LockComp.render id="lock-graph" graph_struct={@graph_struct} />
+            <button
+              phx-click="open_share_modal"
+              class="w-full flex items-center justify-center px-2 py-1 border border-indigo-200 rounded bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors text-xs"
+            >
+              <.icon name="hero-user-plus" class="w-3 h-3 mr-1" />
+              <span>Manage Collaborators</span>
+            </button>
           </div>
         </div>
       <% end %>
@@ -374,59 +381,21 @@ defmodule DialecticWeb.RightPanelComp do
         </div>
       </div>
 
-      <div class="group bg-white border border-gray-200 rounded-md">
+      <div class="bg-white border border-gray-200 rounded-md">
         <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
-          Share
+          Download
         </div>
-        <div class="p-1 text-[11px] text-gray-700 space-y-1">
-          <%= if owner?(@graph_struct, @current_user) do %>
-            <button
-              phx-click="open_share_modal"
-              class="w-full flex items-center justify-center px-2 py-1 mb-2 border border-indigo-200 rounded bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors"
-            >
-              <.icon name="hero-user-plus" class="w-3 h-3 mr-1" />
-              <span>Manage Access</span>
-            </button>
-          <% end %>
-          <div class="flex items-center gap-2">
-            <span
-              class="flex-1 truncate bg-gray-50 border border-gray-200 rounded px-2 py-1 font-mono select-all cursor-pointer"
-              title="Shareable URL path"
-              onclick={"navigator.clipboard.writeText(window.location.origin + '#{@share_path}').then(() => alert('Link copied to clipboard!'))"}
-            >
-              {@share_path}
-            </span>
-            <button
-              class="inline-flex items-center gap-1 text-gray-600 hover:text-gray-800 transition-colors p-1.5 border border-gray-300 rounded"
-              title="Copy shareable link"
-              onclick={"navigator.clipboard.writeText(window.location.origin + '#{@share_path}').then(() => alert('Link copied to clipboard!'))"}
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-              </svg>
-              <span class="sr-only">Copy link</span>
-            </button>
-          </div>
-          <div class="flex items-center justify-center gap-2">
+        <div class="p-1 space-y-2">
+          <div class="flex flex-col gap-1.5">
             <button
               type="button"
-              class="download-png inline-flex items-center justify-center w-8 h-8 rounded-md border border-green-200 text-green-600 hover:bg-green-50"
+              class="download-png w-full flex items-center justify-center px-2 py-1 rounded-md border border-green-200 bg-green-50 text-green-700 hover:bg-green-100 transition-colors text-xs"
               aria-label="Download PNG"
               title="Download PNG (Alt-click to capture full graph)"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                class="h-4 w-4"
+                class="h-3.5 w-3.5 mr-1"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -438,18 +407,19 @@ defmodule DialecticWeb.RightPanelComp do
                   d="M3 7h4l2-2h6l2 2h4v12H3zM12 17a5 5 0 100-10 5 5 0 000 10z"
                 />
               </svg>
+              <span>Download PNG</span>
             </button>
 
             <.link
-              navigate={~p"/#{@graph_id}/linear"}
+              navigate={graph_linear_path(@graph_struct)}
               target="_blank"
               rel="noopener noreferrer"
-              class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-red-200 text-red-600 hover:bg-red-50"
+              class="w-full flex items-center justify-center px-2 py-1 rounded-md border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition-colors text-xs"
               title="Open printable PDF"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                class="h-4 w-4"
+                class="h-3.5 w-3.5 mr-1"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -461,17 +431,26 @@ defmodule DialecticWeb.RightPanelComp do
                   d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                 />
               </svg>
+              <span>Print to PDF</span>
             </.link>
 
             <.link
-              href={"/api/graphs/md/#{@graph_id}"}
-              download={"#{@graph_id}.md"}
-              class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-purple-200 text-purple-600 hover:bg-purple-50"
+              href={
+                if @graph_struct && @graph_struct.slug,
+                  do: "/api/graphs/md/#{@graph_struct.slug}",
+                  else: "/api/graphs/md/#{URI.encode(@graph_id)}"
+              }
+              download={
+                if @graph_struct && @graph_struct.slug,
+                  do: "#{@graph_struct.slug}.md",
+                  else: "#{@graph_id}.md"
+              }
+              class="w-full flex items-center justify-center px-2 py-1 rounded-md border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors text-xs"
               title="Download Markdown"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                class="h-4 w-4"
+                class="h-3.5 w-3.5 mr-1"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -483,6 +462,7 @@ defmodule DialecticWeb.RightPanelComp do
                   d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
                 />
               </svg>
+              <span>Download Markdown</span>
             </.link>
           </div>
         </div>

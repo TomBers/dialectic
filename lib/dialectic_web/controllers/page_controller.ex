@@ -44,23 +44,57 @@ defmodule DialecticWeb.PageController do
   #   json(conn, graph)
   # end
 
-  def graph_md(conn, %{"graph_name" => graph_id_uri}) do
+  def graph_md(conn, %{"graph_name" => graph_id_uri} = params) do
     graph_name = URI.decode(graph_id_uri)
-    graph_struct = Dialectic.DbActions.Graphs.get_graph_by_title(graph_name)
-    graph = Dialectic.Graph.Serialise.json_to_graph(graph_struct.data)
+    graph_struct = Dialectic.DbActions.Graphs.get_graph_by_slug_or_title(graph_name)
+    current_user = conn.assigns[:current_user]
 
-    # Convert the graph to markdown
-    markdown_content =
-      Dialectic.Linear.ThreadedConv.prepare_conversation(graph)
-      |> Enum.map(&(&1.content <> "\n\n"))
+    cond do
+      is_nil(graph_struct) ->
+        conn
+        |> put_status(:not_found)
+        |> text("Graph not found")
 
-    # Set filename
-    filename = "#{graph_name}.md"
+      # Check access control: public, owner, shared, or valid token
+      not has_access?(current_user, graph_struct, params) ->
+        conn
+        |> put_status(:forbidden)
+        |> text("You do not have permission to access this graph")
 
-    conn
-    |> put_resp_content_type("text/markdown")
-    |> put_resp_header("content-disposition", "attachment; filename=#{filename}")
-    |> send_resp(200, markdown_content)
+      true ->
+        graph = Dialectic.Graph.Serialise.json_to_graph(graph_struct.data)
+
+        # Convert the graph to markdown
+        markdown_content =
+          Dialectic.Linear.ThreadedConv.prepare_conversation(graph)
+          |> Enum.map(&(&1.content <> "\n\n"))
+
+        # Use slug for filename if available, otherwise title
+        # Sanitize filename to remove any CR/LF or unsafe characters
+        base_filename =
+          if graph_struct.slug, do: graph_struct.slug, else: graph_struct.title
+
+        safe_filename =
+          base_filename
+          |> String.replace(~r/[^A-Za-z0-9_.-]/, "_")
+          |> String.slice(0, 200)
+
+        safe_filename = "#{safe_filename}.md"
+
+        conn
+        |> put_resp_content_type("text/markdown")
+        |> put_resp_header("content-disposition", "attachment; filename=#{safe_filename}")
+        |> send_resp(200, markdown_content)
+    end
+  end
+
+  # Check if user has access to the graph (same logic as LiveViews)
+  defp has_access?(user, graph_struct, params) do
+    token_param = Map.get(params, "token")
+
+    Dialectic.DbActions.Sharing.can_access?(user, graph_struct) or
+      (is_binary(token_param) and is_binary(graph_struct.share_token) and
+         Plug.Crypto.secure_compare(token_param, graph_struct.share_token))
   end
 
   def guide(conn, _params) do

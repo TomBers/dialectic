@@ -8,10 +8,5 @@ defmodule DialecticWeb.PageHTML do
 
   embed_templates "page_html/*"
 
-  def gen_link(graph, node \\ nil) do
-    case node do
-      nil -> ~p"/#{URI.encode(graph)}"
-      _ -> ~p"/#{URI.encode(graph)}?node=#{node}"
-    end
-  end
+  # graph_path is now imported from DialecticWeb.GraphPathHelper
 end

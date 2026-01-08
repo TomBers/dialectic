@@ -7,7 +7,20 @@ defmodule Dialectic.DbActions.Notes do
   def get_my_stats(nil), do: %{graphs: [], notes: []}
 
   def get_my_stats(user) do
-    Repo.get(Dialectic.Accounts.User, user.id) |> Repo.preload([:notes, graphs: [:notes]])
+    user = Repo.get(Dialectic.Accounts.User, user.id) |> Repo.preload(graphs: [:notes])
+
+    # Preload notes with their associated graphs (to get slug info)
+    notes_query =
+      from n in Note,
+        where: n.user_id == ^user.id,
+        preload: [:graph]
+
+    notes = Repo.all(notes_query)
+
+    %{
+      graphs: user.graphs,
+      notes: notes
+    }
   end
 
   def top_graphs(limit \\ 12) do

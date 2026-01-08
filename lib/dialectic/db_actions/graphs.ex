@@ -5,6 +5,38 @@ defmodule Dialectic.DbActions.Graphs do
   import Ecto.Query
 
   @doc """
+  Generates a URL-friendly slug from a title.
+  Creates a slug like "my-graph-title-a1b2c3" with a short random suffix for uniqueness.
+  """
+  def generate_slug(title) do
+    base_slug =
+      title
+      |> String.downcase()
+      |> String.slice(0, 50)
+      |> String.replace(~r/[^a-z0-9\s-]/, "")
+      |> String.replace(~r/\s+/, "-")
+      |> String.replace(~r/-+/, "-")
+      |> String.trim("-")
+
+    base_slug = if base_slug == "", do: "graph", else: base_slug
+
+    # Add a short random suffix for uniqueness
+    suffix = :crypto.strong_rand_bytes(3) |> Base.encode16(case: :lower)
+    "#{base_slug}-#{suffix}"
+  end
+
+  @doc """
+  Generates a unique slug, checking for collisions and retrying if necessary.
+  """
+  def generate_unique_slug(title, max_attempts \\ 5) do
+    Enum.find_value(1..max_attempts, fn _ ->
+      slug = generate_slug(title)
+      if Repo.get_by(Graph, slug: slug), do: nil, else: slug
+    end) ||
+      generate_slug(title <> "-#{:crypto.strong_rand_bytes(8) |> Base.encode16(case: :lower)}")
+  end
+
+  @doc """
   Sanitizes a graph title to ensure it is valid for URLs and storage.
   """
   def sanitize_title(title) do
@@ -38,6 +70,7 @@ defmodule Dialectic.DbActions.Graphs do
     }
 
     token = generate_share_token()
+    slug = generate_unique_slug(title)
 
     result =
       %Graph{}
@@ -49,7 +82,8 @@ defmodule Dialectic.DbActions.Graphs do
         is_locked: false,
         is_deleted: false,
         is_published: true,
-        share_token: token
+        share_token: token,
+        slug: slug
       })
       |> Repo.insert()
 
@@ -145,6 +179,21 @@ defmodule Dialectic.DbActions.Graphs do
   """
   def get_graph_by_title(title) do
     Repo.get_by(Graph, title: title)
+  end
+
+  @doc """
+  Retrieves a graph by its slug.
+  """
+  def get_graph_by_slug(slug) do
+    Repo.get_by(Graph, slug: slug)
+  end
+
+  @doc """
+  Retrieves a graph by either slug or title (for backward compatibility).
+  Tries slug first, then falls back to title.
+  """
+  def get_graph_by_slug_or_title(identifier) do
+    get_graph_by_slug(identifier) || get_graph_by_title(identifier)
   end
 
   @doc """

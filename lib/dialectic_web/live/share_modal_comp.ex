@@ -118,7 +118,7 @@ defmodule DialecticWeb.ShareModalComp do
                   </h3>
                   <div class="mt-2">
                     <p class="text-sm text-gray-500">
-                      Manage access to <strong>{@graph_struct.title}</strong>
+                      Manage access to <strong>{share_url(@graph_struct)}</strong>
                     </p>
                   </div>
 
@@ -292,8 +292,7 @@ defmodule DialecticWeb.ShareModalComp do
 
   defp share_url(graph) do
     base = DialecticWeb.Endpoint.url()
-    # graph.title needs to be URL encoded properly if it contains spaces
-    path = "/" <> URI.encode(graph.title)
+    path = "/g/#{graph.slug}"
 
     if graph.is_public do
       "#{base}#{path}"

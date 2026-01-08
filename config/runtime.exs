@@ -28,6 +28,8 @@ if config_env() == :prod do
       For example: ecto://USER:PASS@HOST/DATABASE
       """
 
+  maybe_ipv6 = if System.get_env("ECTO_IPV6") in ~w(true 1), do: [:inet6], else: []
+
   config :dialectic, Dialectic.Repo,
     url: database_url,
     pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
@@ -35,7 +37,12 @@ if config_env() == :prod do
     queue_interval: 1000,
     timeout: 15_000,
     connect_timeout: 15_000,
-    socket_options: [:inet6]
+    handshake_timeout: 15_000,
+    ownership_timeout: 60_000,
+    socket_options: maybe_ipv6,
+    # Prevent idle connection drops on Fly.io
+    after_connect: {Postgrex, :query!, ["SET application_name = 'dialectic'", []]},
+    prepare: :unnamed
 
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you
