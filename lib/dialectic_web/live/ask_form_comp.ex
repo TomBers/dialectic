@@ -1,6 +1,5 @@
 defmodule DialecticWeb.AskFormComp do
   use DialecticWeb, :live_component
-  alias Dialectic.Responses.ModeServer
 
   @moduledoc """
   LiveComponent that renders the bottom ask/comment form used by GraphLive.
@@ -16,6 +15,7 @@ defmodule DialecticWeb.AskFormComp do
   - `input_id` (string, optional): DOM id for the text input. Defaults to `"global-chat-input"`.
   - `placeholder` (string, optional): Placeholder text for the input. Will be derived from `graph_id`/`ask_question` if not provided.
   - `show_hint` (boolean, optional): When true and `graph_id` is nil, show a hint above the input. Defaults to `true`.
+  - `prompt_mode` (string, optional): Current AI mode ("structured" or "creative"). Used for display only.
   """
 
   @impl true
@@ -30,19 +30,8 @@ defmodule DialecticWeb.AskFormComp do
       |> assign_new(:submit_label, fn -> nil end)
       |> assign_new(:input_id, fn -> "global-chat-input" end)
       |> assign_new(:show_hint, fn -> true end)
-      |> assign_new(:prompt_mode, fn ->
-        gid = assigns[:graph_id]
-        mode = if is_binary(gid), do: ModeServer.get_mode(gid), else: :structured
-        Atom.to_string(mode)
-      end)
+      |> assign_new(:prompt_mode, fn -> "structured" end)
       |> then(fn s ->
-        s =
-          if Map.has_key?(assigns, :prompt_mode) and not is_nil(assigns[:prompt_mode]) do
-            assign(s, :prompt_mode, String.downcase(to_string(assigns[:prompt_mode])))
-          else
-            s
-          end
-
         if Map.has_key?(assigns, :placeholder) and not is_nil(assigns[:placeholder]) do
           assign(s, :placeholder, assigns[:placeholder])
         else
@@ -57,42 +46,12 @@ defmodule DialecticWeb.AskFormComp do
     {:ok, socket}
   end
 
-  @impl true
-  def handle_event("cycle_prompt_mode", _params, socket) do
-    gid = socket.assigns[:graph_id]
-
-    if is_binary(gid) do
-      current = ModeServer.get_mode(gid)
-
-      next =
-        case current do
-          :structured -> :creative
-          _ -> :structured
-        end
-
-      :ok = ModeServer.set_mode(gid, next)
-
-      send_update(
-        DialecticWeb.RightPanelComp,
-        id: "right-panel-comp",
-        prompt_mode: Atom.to_string(next)
-      )
-
-      new_mode = Atom.to_string(next)
-      ask_q = Map.get(socket.assigns, :ask_question, true)
-
-      placeholder = placeholder_for(ask_q, new_mode)
-
-      {:noreply, assign(socket, prompt_mode: new_mode, placeholder: placeholder)}
+  defp placeholder_for(ask_q, _mode) do
+    if ask_q do
+      "Ask a question"
     else
-      {:noreply, socket}
+      "Add your comment..."
     end
-  end
-
-  defp placeholder_for(ask_q, mode) do
-    if ask_q,
-      do: "Ask a " <> (mode || "structured") <> " question…",
-      else: "Add a comment…"
   end
 
   @impl true
@@ -106,41 +65,70 @@ defmodule DialecticWeb.AskFormComp do
         class="w-full min-w-0"
       >
         <div class="flex items-center gap-2 w-full">
-          <button
-            type="button"
-            phx-click="toggle_ask_question"
-            class={"px-2 py-1 text-xs rounded-full flex-none " <> if @ask_question, do: "bg-blue-50 text-blue-600 border border-blue-200", else: "bg-emerald-50 text-emerald-600 border border-emerald-200"}
-            title="Toggle ask/comment"
-          >
-            {if @ask_question, do: "Ask", else: "Comment"}
-          </button>
+          <%!-- Ask/Comment Segmented Control - Compact text-only --%>
+          <div class="inline-flex rounded-md border border-gray-200 bg-gray-50 flex-none">
+            <button
+              type="button"
+              phx-click="toggle_ask_question"
+              class={[
+                "px-2 py-1 text-xs font-medium transition-all",
+                if @ask_question do
+                  "bg-blue-500 text-white rounded-md"
+                else
+                  "text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-l-md"
+                end
+              ]}
+              title="Get an AI-generated response"
+            >
+              Ask
+            </button>
+            <button
+              type="button"
+              phx-click="toggle_ask_question"
+              class={[
+                "px-2 py-1 text-xs font-medium transition-all",
+                if !@ask_question do
+                  "bg-emerald-500 text-white rounded-md"
+                else
+                  "text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-r-md"
+                end
+              ]}
+              title="Add your own thought directly"
+            >
+              Comment
+            </button>
+          </div>
 
-          <button
-            type="button"
-            phx-click="cycle_prompt_mode"
-            phx-target={@myself}
-            class="bg-white border border-gray-300 text-gray-700 text-xs leading-none px-2 h-8 rounded-full hover:bg-gray-50 flex-none"
-            title="Cycle LLM mode"
-          >
-            {String.capitalize(@prompt_mode || "structured")}
-          </button>
-
-          <div class="relative min-w-0 flex-1 overflow-hidden rounded-full transition-shadow focus-within:ring-2 focus-within:ring-indigo-400 focus-within:ring-offset-1 focus-within:ring-offset-white">
+          <%!-- Input Field with Submit Button - Enhanced prominence --%>
+          <div class="relative min-w-0 flex-1 overflow-hidden rounded-full shadow-sm transition-all focus-within:shadow-md">
             <.input
               field={@form[:content]}
               type="text"
               id={@input_id}
               placeholder={@placeholder}
-              class="box-border w-full h-10 rounded-full pl-3 pr-16 text-sm border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400 focus:ring-opacity-50 focus:outline-none"
+              class="box-border w-full h-12 rounded-full pl-4 pr-20 text-base border-2 border-gray-300 focus:border-indigo-500 focus:ring-0 focus:outline-none bg-white"
             />
 
             <button
               type="submit"
-              class="absolute right-2 inset-y-0 my-auto bg-indigo-600 hover:bg-indigo-700 text-white text-sm leading-none px-2.5 h-8 rounded-full font-medium"
+              class="absolute right-2 inset-y-0 my-auto bg-indigo-600 hover:bg-indigo-700 text-white text-sm leading-none px-3.5 h-9 rounded-full font-medium shadow-sm transition-all hover:shadow-md"
             >
               {if @submit_label, do: @submit_label, else: if(@ask_question, do: "Ask", else: "Post")}
             </button>
           </div>
+        </div>
+
+        <%!-- Explanatory text below form --%>
+        <div class="mt-1.5 text-[11px] text-gray-600 text-center">
+          <%= if @ask_question do %>
+            Ask a question to get an AI-generated
+            <span class="font-medium">{String.capitalize(@prompt_mode)}</span>
+            response • <span class="text-gray-500">Change mode in settings panel</span>
+          <% else %>
+            <span class="text-gray-600">
+              Add your comment directly to the graph • No AI response will be generated
+            </span>
+          <% end %>
         </div>
       </.form>
     </div>
