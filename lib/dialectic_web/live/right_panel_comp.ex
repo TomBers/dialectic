@@ -225,8 +225,13 @@ defmodule DialecticWeb.RightPanelComp do
               phx-click="open_share_modal"
               class="w-full flex items-center justify-center px-2 py-1 border border-indigo-200 rounded bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors text-xs"
             >
-              <.icon name="hero-user-plus" class="w-3 h-3 mr-1" />
-              <span>Manage Collaborators</span>
+              <%= if @graph_struct.is_public do %>
+                <.icon name="hero-share" class="w-3 h-3 mr-1" />
+                <span>Share Map</span>
+              <% else %>
+                <.icon name="hero-user-plus" class="w-3 h-3 mr-1" />
+                <span>Manage Collaborators</span>
+              <% end %>
             </button>
           </div>
         </div>
@@ -340,8 +345,9 @@ defmodule DialecticWeb.RightPanelComp do
                           type="button"
                           data-copy-url={
                             DialecticWeb.Endpoint.url() <>
-                              "/" <>
-                              URI.encode(highlight.mudg_id) <> "?highlight=" <> to_string(highlight.id)
+                              "/g/" <>
+                              @graph_struct.slug <>
+                              "?highlight=" <> to_string(highlight.id)
                           }
                           onclick="navigator.clipboard.writeText(this.dataset.copyUrl).then(() => alert('Link copied to clipboard!'))"
                           class="text-gray-400 hover:text-indigo-500 p-0.5 rounded"
