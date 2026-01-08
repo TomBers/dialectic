@@ -29,9 +29,13 @@ defmodule DialecticWeb.Router do
     plug :protect_from_forgery
   end
 
-  # Health check endpoints
+  pipeline :health do
+    plug :accepts, ["json"]
+  end
+
+  # Health check endpoints (no rate limiting)
   scope "/health", DialecticWeb do
-    pipe_through :api
+    pipe_through :health
 
     get "/", HealthController, :check
     get "/deep", HealthController, :deep

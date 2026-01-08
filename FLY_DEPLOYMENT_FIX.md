@@ -30,6 +30,11 @@ This indicated the application was crashing during startup, causing Fly.io to ra
 
 **Impact**: TaskSupervisor might not be fully initialized when warmup tried to use it.
 
+### 4. Health Check Rate Limiting
+**Problem**: Health check endpoints (`/health` and `/health/deep`) were going through the `:api` pipeline which includes rate limiting. Fly.io's frequent health checks were being rate-limited, returning `429 Too Many Requests`, causing health checks to fail.
+
+**Impact**: Fly.io thought the application was unhealthy and kept restarting it, creating a restart loop.
+
 ## Solutions Implemented
 
 ### Fix #1: Non-Fatal API Key Validation
@@ -161,6 +166,70 @@ end
 - Non-blocking with proper initialization delay
 - Graceful failure handling
 
+### Fix #4: Remove Rate Limiting from Health Checks
+
+**File**: `lib/dialectic_web/router.ex`
+
+Changed from:
+```elixir
+# Health check endpoints
+scope "/health", DialecticWeb do
+  pipe_through :api  # This includes rate limiting!
+
+  get "/", HealthController, :check
+  get "/deep", HealthController, :deep
+end
+```
+
+To:
+```elixir
+pipeline :health do
+  plug :accepts, ["json"]
+  # No rate limiting!
+end
+
+# Health check endpoints (no rate limiting)
+scope "/health", DialecticWeb do
+  pipe_through :health
+
+  get "/", HealthController, :check
+  get "/deep", HealthController, :deep
+end
+```
+
+**File**: `lib/dialectic_web/controllers/health_controller.ex`
+
+Simplified deep health check:
+```elixir
+def deep(conn, _params) do
+  db_status = check_database()
+  is_healthy = db_status == "ok"
+
+  conn
+  |> put_status(if is_healthy, do: 200, else: 503)
+  |> json(%{
+    status: if(is_healthy, do: "ok", else: "error"),
+    database: db_status,
+    timestamp: DateTime.utc_now() |> DateTime.to_iso8601()
+  })
+end
+
+defp check_database do
+  case Ecto.Adapters.SQL.query(Dialectic.Repo, "SELECT 1", [], timeout: 1000) do
+    {:ok, _} -> "ok"
+    _ -> "error"
+  end
+rescue
+  _ -> "error"
+end
+```
+
+**Benefits**:
+- Health checks no longer rate-limited
+- Faster health check (1 second timeout)
+- Fly.io can check health frequently without issues
+- Removed Oban and application checks for speed
+
 ## Deployment Instructions
 
 ### 1. Verify Environment Variables on Fly.io
@@ -206,6 +275,7 @@ Look for:
 ## Expected Behavior After Fix
 
 ### Successful Startup
+**Expected log output**:
 ```
 Running in production mode - validating API keys
 LLM Provider: openai
@@ -222,6 +292,19 @@ Application will start but LLM features may not work.
 ```
 
 Application will still start and serve requests, but LLM features won't work until the key is added.
+
+### Health Check Behavior
+```bash
+# Basic health check (always fast)
+curl https://your-app.fly.dev/health
+# {"status":"ok","timestamp":"2025-01-08T13:20:00Z"}
+
+# Deep health check (checks database)
+curl https://your-app.fly.dev/health/deep
+# {"status":"ok","database":"ok","timestamp":"2025-01-08T13:20:00Z"}
+```
+
+No rate limiting on health checks - Fly.io can poll as frequently as needed.
 
 ## Troubleshooting
 
