@@ -114,12 +114,38 @@ defmodule DialecticWeb.ShareModalComp do
                 </div>
                 <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
                   <h3 class="text-lg font-medium leading-6 text-gray-900" id="modal-title">
-                    Share Graph
+                    <%= if @graph_struct.is_public do %>
+                      Share Map
+                    <% else %>
+                      Manage Collaborators
+                    <% end %>
                   </h3>
                   <div class="mt-2">
-                    <p class="text-sm text-gray-500">
-                      Manage access to <strong>{share_url(@graph_struct)}</strong>
-                    </p>
+                    <%= if @graph_struct.is_public do %>
+                      <div class="p-2 bg-green-50 border border-green-200 rounded-md">
+                        <div class="flex items-center">
+                          <.icon name="hero-globe-alt" class="w-4 h-4 text-green-600 mr-2" />
+                          <p class="text-sm text-green-800 font-medium">
+                            Public Map
+                          </p>
+                        </div>
+                        <p class="text-xs text-green-700 mt-1">
+                          Anyone with the link can view this map. Share it freely on social media or embed it on your website.
+                        </p>
+                      </div>
+                    <% else %>
+                      <div class="p-2 bg-amber-50 border border-amber-200 rounded-md">
+                        <div class="flex items-center">
+                          <.icon name="hero-lock-closed" class="w-4 h-4 text-amber-600 mr-2" />
+                          <p class="text-sm text-amber-800 font-medium">
+                            Private Map
+                          </p>
+                        </div>
+                        <p class="text-xs text-amber-700 mt-1">
+                          Only people with the access token can view this map. Make it public to share more widely.
+                        </p>
+                      </div>
+                    <% end %>
                   </div>
 
                   <%= if Map.get(@graph_struct.data || %{}, "preview_image") do %>
@@ -138,7 +164,13 @@ defmodule DialecticWeb.ShareModalComp do
                   
     <!-- Public Link Section -->
                   <div class="mt-4 p-3 bg-gray-50 rounded-md">
-                    <label class="block text-sm font-medium text-gray-700">Share Link</label>
+                    <label class="block text-sm font-medium text-gray-700">
+                      <%= if @graph_struct.is_public do %>
+                        Public Share Link
+                      <% else %>
+                        Private Access Link
+                      <% end %>
+                    </label>
                     <div class="mt-1 flex rounded-md shadow-sm">
                       <input
                         type="text"
@@ -158,67 +190,74 @@ defmodule DialecticWeb.ShareModalComp do
                     </div>
                     <p class="mt-1 text-xs text-gray-500">
                       <%= if @graph_struct.is_public do %>
-                        Publicly accessible link.
+                        Anyone can access this link without authentication.
                       <% else %>
-                        Private link with access token.
+                        Includes secure access token. Only share with trusted collaborators.
                       <% end %>
                     </p>
                   </div>
                   
     <!-- Social Share Section -->
-                  <div class="mt-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                      Share on Social
-                    </label>
-                    <div class="flex space-x-2">
-                      <a
-                        href={"https://twitter.com/intent/tweet?text=#{URI.encode_www_form("Check out this map on MuDG: " <> @graph_struct.title)}&url=#{URI.encode_www_form(share_url(@graph_struct))}"}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                      >
-                        X (Twitter)
-                      </a>
-                      <a
-                        href={"https://www.linkedin.com/sharing/share-offsite/?url=#{URI.encode_www_form(share_url(@graph_struct))}"}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                      >
-                        LinkedIn
-                      </a>
-                      <a
-                        href={"https://www.reddit.com/submit?url=#{URI.encode_www_form(share_url(@graph_struct))}&title=#{URI.encode_www_form(@graph_struct.title)}"}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                      >
-                        Reddit
-                      </a>
+                  <%= if @graph_struct.is_public do %>
+                    <div class="mt-4">
+                      <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Share on Social
+                      </label>
+                      <div class="flex space-x-2">
+                        <a
+                          href={"https://twitter.com/intent/tweet?text=#{URI.encode_www_form("Check out this map on MuDG: " <> @graph_struct.title)}&url=#{URI.encode_www_form(share_url(@graph_struct))}"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        >
+                          X (Twitter)
+                        </a>
+                        <a
+                          href={"https://www.linkedin.com/sharing/share-offsite/?url=#{URI.encode_www_form(share_url(@graph_struct))}"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        >
+                          LinkedIn
+                        </a>
+                        <a
+                          href={"https://www.reddit.com/submit?url=#{URI.encode_www_form(share_url(@graph_struct))}&title=#{URI.encode_www_form(@graph_struct.title)}"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        >
+                          Reddit
+                        </a>
+                      </div>
                     </div>
-                  </div>
+                  <% end %>
                   
     <!-- Embed Code Section -->
-                  <div class="mt-4 p-3 bg-gray-50 rounded-md">
-                    <label class="block text-sm font-medium text-gray-700">Embed Code</label>
-                    <div class="mt-1 flex rounded-md shadow-sm">
-                      <textarea
-                        readonly
-                        rows="3"
-                        class="flex-1 min-w-0 block w-full px-3 py-2 rounded-l-md border-gray-300 sm:text-sm bg-white text-gray-500 font-mono text-xs"
-                        onclick="this.select()"
-                      ><iframe src={share_url(@graph_struct)} width="100%" height="600px" frameborder="0" allowfullscreen></iframe></textarea>
-                      <button
-                        type="button"
-                        class="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 rounded-r-md bg-gray-50 text-gray-500 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                        data-copy-text={"<iframe src=\"#{share_url(@graph_struct)}\" width=\"100%\" height=\"600px\" frameborder=\"0\" allowfullscreen></iframe>"}
-                        onclick="navigator.clipboard.writeText(this.dataset.copyText).then(() => alert('Embed code copied!'))"
-                        aria-label="Copy embed code"
-                      >
-                        <.icon name="hero-clipboard-document" class="w-4 h-4" />
-                      </button>
+                  <%= if @graph_struct.is_public do %>
+                    <div class="mt-4 p-3 bg-gray-50 rounded-md">
+                      <label class="block text-sm font-medium text-gray-700">Embed Code</label>
+                      <div class="mt-1 flex rounded-md shadow-sm">
+                        <textarea
+                          readonly
+                          rows="3"
+                          class="flex-1 min-w-0 block w-full px-3 py-2 rounded-l-md border-gray-300 sm:text-sm bg-white text-gray-500 font-mono text-xs"
+                          onclick="this.select()"
+                        ><iframe src={share_url(@graph_struct)} width="100%" height="600px" frameborder="0" allowfullscreen></iframe></textarea>
+                        <button
+                          type="button"
+                          class="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 rounded-r-md bg-gray-50 text-gray-500 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                          data-copy-text={"<iframe src=\"#{share_url(@graph_struct)}\" width=\"100%\" height=\"600px\" frameborder=\"0\" allowfullscreen></iframe>"}
+                          onclick="navigator.clipboard.writeText(this.dataset.copyText).then(() => alert('Embed code copied!'))"
+                          aria-label="Copy embed code"
+                        >
+                          <.icon name="hero-clipboard-document" class="w-4 h-4" />
+                        </button>
+                      </div>
+                      <p class="mt-1 text-xs text-gray-500">
+                        Embed this public map on your website or blog.
+                      </p>
                     </div>
-                  </div>
+                  <% end %>
                   
     <!-- Invite Section (Hidden) -->
                   <%!-- <div class="mt-6">
