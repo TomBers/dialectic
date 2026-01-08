@@ -33,7 +33,12 @@ defmodule Dialectic.Application do
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Dialectic.Supervisor]
-    Supervisor.start_link(children, opts)
+    result = Supervisor.start_link(children, opts)
+
+    # Warm up database connections after startup
+    warm_up_database()
+
+    result
   end
 
   # Tell Phoenix to update the endpoint configuration
@@ -83,5 +88,19 @@ defmodule Dialectic.Application do
       _key ->
         :ok
     end
+  end
+
+  defp warm_up_database do
+    # Only warm up in production to prevent connection issues on Fly.io
+    if Application.get_env(:dialectic, :env) == :prod do
+      try do
+        Ecto.Adapters.SQL.query(Dialectic.Repo, "SELECT 1", [])
+        :ok
+      rescue
+        _ -> :ok
+      end
+    end
+
+    :ok
   end
 end

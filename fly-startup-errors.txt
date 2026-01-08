@@ -1,0 +1,76 @@
+11:20:33
+2026-01-08T11:20:33.706018166 [01KEEM3BFBNQMP2P0Z7MVM2FHF:fc_api] The API server received a Put request on "/logger" with body "{\"log_path\":\"logs.fifo\",\"level\":\"info\"}".
+11:20:33
+11:20:33.772 request_id=GIi9Xo4l17RKy7cAAAhS [info] GET /health
+11:20:33
+11:20:33.776 request_id=GIi9Xo4l17RKy7cAAAhS [info] Sent 200 in 4ms
+11:20:33
+Machine started in 186ms
+11:20:33
+machine started in 334.891757ms
+11:20:33
+machine became reachable in 9.526375ms
+11:20:33
+11:20:33.912 request_id=GIi9XpaHBzvYKLMAAAhi [info] GET /
+11:20:33
+11:20:33.917 request_id=GIi9XpaHBzvYKLMAAAhi [info] Sent 500 in 5ms
+11:20:33
+11:20:33.918 [error] Postgrex.Protocol (#PID<0.2755.0>) disconnected: ** (DBConnection.ConnectionError) tcp recv (idle): closed
+11:20:33
+11:20:33.920 request_id=GIi9XpaHBzvYKLMAAAhi [error] ** (DBConnection.ConnectionError) tcp recv (idle): closed
+11:20:33
+    (ecto_sql 3.13.2) lib/ecto/adapters/sql.ex:1098: Ecto.Adapters.SQL.raise_sql_call_error/1
+11:20:33
+    (ecto_sql 3.13.2) lib/ecto/adapters/sql.ex:996: Ecto.Adapters.SQL.execute/6
+11:20:33
+    (ecto 3.13.2) lib/ecto/repo/queryable.ex:241: Ecto.Repo.Queryable.execute/4
+11:20:33
+    (ecto 3.13.2) lib/ecto/repo/queryable.ex:19: Ecto.Repo.Queryable.all/3
+11:20:33
+    (ecto 3.13.2) lib/ecto/repo/queryable.ex:163: Ecto.Repo.Queryable.one/3
+11:20:33
+    (dialectic 0.1.0) lib/dialectic_web/user_auth.ex:95: DialecticWeb.UserAuth.fetch_current_user/2
+11:20:33
+    (dialectic 0.1.0) DialecticWeb.Router.browser/2
+11:20:33
+    (dialectic 0.1.0) lib/dialectic_web/router.ex:1: DialecticWeb.Router.__pipe_through1__/1
+11:20:34
+11:20:34.026 [error] Postgrex.Protocol (#PID<0.2750.0>) disconnected: ** (DBConnection.ConnectionError) tcp recv (idle): closed
+11:20:34
+11:20:34.059 [error] Postgrex.Protocol (#PID<0.2746.0>) disconnected: ** (DBConnection.ConnectionError) tcp recv (idle): closed
+11:20:34
+11:20:34.508 [error] Postgrex.Protocol (#PID<0.2749.0>) disconnected: ** (DBConnection.ConnectionError) tcp recv (idle): closed
+11:20:34
+11:20:34.549 request_id=GIi9Xrx6ZqFcZRgAAAiC [info] GET /
+11:20:34
+11:20:34.551 [error] Postgrex.Protocol (#PID<0.2756.0>) disconnected: ** (DBConnection.ConnectionError) tcp recv (idle): closed
+11:20:34
+11:20:34.551 request_id=GIi9Xrx6ZqFcZRgAAAiC [info] Sent 500 in 1ms
+11:20:34
+11:20:34.553 request_id=GIi9Xrx6ZqFcZRgAAAiC [error] ** (DBConnection.ConnectionError) tcp recv (idle): closed
+11:20:34
+    (ecto_sql 3.13.2) lib/ecto/adapters/sql.ex:1098: Ecto.Adapters.SQL.raise_sql_call_error/1
+11:20:34
+    (ecto_sql 3.13.2) lib/ecto/adapters/sql.ex:996: Ecto.Adapters.SQL.execute/6
+11:20:34
+    (ecto 3.13.2) lib/ecto/repo/queryable.ex:241: Ecto.Repo.Queryable.execute/4
+11:20:34
+    (ecto 3.13.2) lib/ecto/repo/queryable.ex:19: Ecto.Repo.Queryable.all/3
+11:20:34
+    (ecto 3.13.2) lib/ecto/repo/queryable.ex:163: Ecto.Repo.Queryable.one/3
+11:20:34
+    (dialectic 0.1.0) lib/dialectic_web/user_auth.ex:95: DialecticWeb.UserAuth.fetch_current_user/2
+11:20:34
+    (dialectic 0.1.0) DialecticWeb.Router.browser/2
+11:20:34
+    (dialectic 0.1.0) lib/dialectic_web/router.ex:1: DialecticWeb.Router.__pipe_through1__/1
+11:20:35
+11:20:35.228 [error] Postgrex.Protocol (#PID<0.2751.0>) disconnected: ** (DBConnection.ConnectionError) tcp recv (idle): closed
+11:20:35
+11:20:35.228 [error] Postgrex.Protocol (#PID<0.2754.0>) disconnected: ** (DBConnection.ConnectionError) tcp recv (idle): closed
+11:20:35
+11:20:35.229 [error] Postgrex.Protocol (#PID<0.2753.0>) disconnected: ** (DBConnection.ConnectionError) tcp recv (idle): closed
+11:20:35
+11:20:35.229 [error] Postgrex.Protocol (#PID<0.2752.0>) disconnected: ** (DBConnection.ConnectionError) tcp recv (idle): closed
+11:20:35
+11:20:35.229 [error] Postgrex.Protocol (#PID<0.2745.0>) disconnected: ** (DBConnection.ConnectionError) tcp recv (idle): closed

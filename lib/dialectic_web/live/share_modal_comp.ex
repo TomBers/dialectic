@@ -292,8 +292,14 @@ defmodule DialecticWeb.ShareModalComp do
 
   defp share_url(graph) do
     base = DialecticWeb.Endpoint.url()
-    # graph.title needs to be URL encoded properly if it contains spaces
-    path = "/" <> URI.encode(graph.title)
+
+    # Use slug if available, otherwise fall back to title (for backward compatibility)
+    path =
+      if graph.slug do
+        "/g/#{graph.slug}"
+      else
+        "/" <> URI.encode(graph.title)
+      end
 
     if graph.is_public do
       "#{base}#{path}"

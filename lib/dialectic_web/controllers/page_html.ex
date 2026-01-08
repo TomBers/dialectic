@@ -14,4 +14,6 @@ defmodule DialecticWeb.PageHTML do
       _ -> ~p"/#{URI.encode(graph)}?node=#{node}"
     end
   end
+
+  # graph_path is now imported from DialecticWeb.GraphPathHelper
 end

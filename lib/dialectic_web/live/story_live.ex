@@ -5,15 +5,33 @@ defmodule DialecticWeb.StoryLive do
     graph_id = URI.decode(graph_id_uri)
     node_id = URI.decode(node_id_uri)
 
-    # Ensure graph is started
-    GraphManager.get_graph(graph_id)
+    # Try slug first, then title for backward compatibility
+    case Dialectic.DbActions.Graphs.get_graph_by_slug_or_title(graph_id) do
+      nil ->
+        socket =
+          socket
+          |> put_flash(:error, "Graph not found: #{graph_id}")
+          |> redirect(to: ~p"/")
 
-    node = GraphManager.find_node_by_id(graph_id, node_id)
+        {:ok, socket}
 
-    path =
-      GraphManager.path_to_node(graph_id, node)
-      |> Enum.reverse()
+      graph_db ->
+        # Ensure graph is started (use title for internal GraphManager)
+        GraphManager.get_graph(graph_db.title)
 
-    {:ok, assign(socket, graph_id: graph_id, node_id: node_id, path: path)}
+        node = GraphManager.find_node_by_id(graph_db.title, node_id)
+
+        path =
+          GraphManager.path_to_node(graph_db.title, node)
+          |> Enum.reverse()
+
+        {:ok,
+         assign(socket,
+           graph_id: graph_db.title,
+           graph_struct: graph_db,
+           node_id: node_id,
+           path: path
+         )}
+    end
   end
 end

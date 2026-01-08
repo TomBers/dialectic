@@ -11,6 +11,7 @@ defmodule Dialectic.Accounts.Graph do
     field :is_deleted, :boolean
     field :is_locked, :boolean, default: false
     field :share_token, :string
+    field :slug, :string
     field :tags, {:array, :string}, default: []
 
     belongs_to :user, Dialectic.Accounts.User
@@ -31,14 +32,17 @@ defmodule Dialectic.Accounts.Graph do
       :is_locked,
       :user_id,
       :share_token,
+      :slug,
       :tags
     ])
     |> validate_required([:title, :data])
     |> validate_length(:title, min: 1, max: 255)
     |> validate_title_format()
     |> validate_data_size()
+    |> validate_slug_format()
     |> unique_constraint(:title, name: :graphs_pkey)
     |> unique_constraint(:share_token)
+    |> unique_constraint(:slug)
   end
 
   defp validate_title_format(changeset) do
@@ -65,6 +69,20 @@ defmodule Dialectic.Accounts.Graph do
 
       _ ->
         changeset
+    end
+  end
+
+  defp validate_slug_format(changeset) do
+    case get_change(changeset, :slug) do
+      nil ->
+        changeset
+
+      slug ->
+        if String.match?(slug, ~r/^[a-z0-9]+(?:-[a-z0-9]+)*$/) do
+          changeset
+        else
+          add_error(changeset, :slug, "must be lowercase alphanumeric with hyphens")
+        end
     end
   end
 end

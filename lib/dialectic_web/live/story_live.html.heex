@@ -1,6 +1,6 @@
 <div class="story-container" id="story-readability-container" phx-hook="StoryReadability">
   <.link
-    navigate={~p"/#{@graph_id}?node=#{@node_id}"}
+    navigate={graph_path(@graph_struct, @node_id)}
     id="graph-link"
     class="inline-flex items-center text-xs font-semibold px-3 py-1.5 rounded-md bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 hover:text-blue-800 transition-colors shadow-sm fixed top-4 left-4 z-10"
     title="Return to interactive graph view"
@@ -111,7 +111,7 @@
           <% end %>
           <span class="node-actions">
             <.link
-              navigate={~p"/#{@graph_id}?node=#{node.id}"}
+              navigate={graph_path(@graph_struct, node.id)}
               class="text-xs font-medium text-white hover:text-gray-200 bg-blue-600 hover:bg-blue-700 px-1.5 py-0.5 rounded mr-1 ml-2 inline-flex items-center"
               title="View this node in graph"
             >

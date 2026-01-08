@@ -31,16 +31,43 @@
         
 <!-- Content - hidden by default -->
         <div id="graphs-content" class="mt-4 space-y-4" phx-update="replace">
-          <%= for g <- @stats.graphs do %>
-            <DialecticWeb.PageHtml.GraphComp.render
-              title={g.title}
-              is_public={g.is_public}
-              link={gen_link(g.title)}
-              count={g.notes |> Enum.filter(& &1.is_noted) |> length()}
-              tags={g.tags}
-              node_count={length(g.data["nodes"] || [])}
-              id={"my-graph-comp-#{g.title}"}
-            />
+          <%= if @stats.graphs == [] do %>
+            <div class="text-center py-8 text-gray-500">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-12 w-12 mx-auto mb-3 text-gray-300"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+              <p class="text-sm">You haven't created any graphs yet.</p>
+              <a
+                href="/"
+                class="text-[#4361ee] hover:text-[#3a0ca3] text-sm font-medium mt-2 inline-block"
+              >
+                Create your first graph →
+              </a>
+            </div>
+          <% else %>
+            <%= for g <- @stats.graphs do %>
+              <DialecticWeb.PageHtml.GraphComp.render
+                title={g.title}
+                is_public={g.is_public}
+                link={graph_path(g)}
+                count={g.notes |> Enum.filter(& &1.is_noted) |> length()}
+                tags={g.tags}
+                node_count={length(g.data["nodes"] || [])}
+                variant={:light}
+                id={"my-graph-comp-#{g.title}"}
+              />
+            <% end %>
           <% end %>
         </div>
       </div>
@@ -73,15 +100,37 @@
         </div>
         
 <!-- Content - hidden by default -->
-        <div id="notes-content" class="mt-4" phx-update="replace">
-          <%= for note <- @stats.notes |> Enum.filter(& &1.is_noted) do %>
-            <DialecticWeb.PageHtml.GraphComp.render
-              title={"#{note.graph_title} | Node: #{note.node_id}"}
-              is_public={true}
-              link={gen_link(note.graph_title, note.node_id)}
-              count={0}
-              id={"notes-graph-comp-#{note.graph_title}"}
-            />
+        <div id="notes-content" class="mt-4 space-y-4" phx-update="replace">
+          <%= if @stats.notes |> Enum.filter(& &1.is_noted) == [] do %>
+            <div class="text-center py-8 text-gray-500">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-12 w-12 mx-auto mb-3 text-gray-300"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
+                />
+              </svg>
+              <p class="text-sm">You haven't noted any ideas yet.</p>
+              <p class="text-xs text-gray-400 mt-1">
+                Click the note icon on any node to save it here.
+              </p>
+            </div>
+          <% else %>
+            <%= for note <- @stats.notes |> Enum.filter(& &1.is_noted) do %>
+              <div class="border border-gray-200 rounded-lg p-3 hover:border-[#7209b7] hover:bg-purple-50/30 transition-all">
+                <a href={graph_path(note.graph, note.node_id)} class="block">
+                  <div class="text-sm font-medium text-gray-900 mb-1">{note.graph_title}</div>
+                  <div class="text-xs text-gray-500">Node: {note.node_id}</div>
+                </a>
+              </div>
+            <% end %>
           <% end %>
         </div>
       </div>
