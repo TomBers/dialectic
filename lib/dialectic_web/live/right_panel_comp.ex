@@ -340,8 +340,11 @@ defmodule DialecticWeb.RightPanelComp do
                           type="button"
                           data-copy-url={
                             DialecticWeb.Endpoint.url() <>
-                              "/" <>
-                              URI.encode(highlight.mudg_id) <> "?highlight=" <> to_string(highlight.id)
+                              "/g/" <>
+                              (if @graph_struct && @graph_struct.slug,
+                                do: @graph_struct.slug,
+                                else: URI.encode(highlight.mudg_id)) <>
+                              "?highlight=" <> to_string(highlight.id)
                           }
                           onclick="navigator.clipboard.writeText(this.dataset.copyUrl).then(() => alert('Link copied to clipboard!'))"
                           class="text-gray-400 hover:text-indigo-500 p-0.5 rounded"
