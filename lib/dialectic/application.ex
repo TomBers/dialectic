@@ -7,8 +7,10 @@ defmodule Dialectic.Application do
 
   @impl true
   def start(_type, _args) do
-    # Validate required API keys at startup
-    validate_api_keys!()
+    require Logger
+
+    # Validate required API keys at startup (non-fatal)
+    validate_api_keys()
 
     # Map GOOGLE_API_KEY to :google_api_key for ReqLLM
     if key = System.get_env("GOOGLE_API_KEY") do
@@ -36,7 +38,8 @@ defmodule Dialectic.Application do
     result = Supervisor.start_link(children, opts)
 
     # Warm up database connections after startup without blocking application start
-    Task.Supervisor.start_child(Dialectic.TaskSupervisor, fn -> warm_up_database() end)
+    # Use spawn instead of TaskSupervisor to avoid race condition during startup
+    spawn(fn -> warm_up_database() end)
 
     result
   end
@@ -49,58 +52,88 @@ defmodule Dialectic.Application do
     :ok
   end
 
-  defp validate_api_keys! do
+  defp validate_api_keys do
+    require Logger
+
     # Only validate in production to avoid breaking dev/test environments
-    if Mix.env() == :prod do
+    # In production (Fly.io), PHX_SERVER is always set
+    if System.get_env("PHX_SERVER") do
+      Logger.info("Running in production mode - validating API keys")
+
       # Check which LLM provider is configured
       provider = System.get_env("LLM_PROVIDER") || "openai"
+      Logger.info("LLM Provider: #{provider}")
 
       case String.downcase(provider) do
         p when p in ["google", "gemini"] ->
-          validate_key!("GOOGLE_API_KEY", "Google/Gemini")
+          validate_key("GOOGLE_API_KEY", "Google/Gemini")
 
         "openai" ->
-          validate_key!("OPENAI_API_KEY", "OpenAI")
+          validate_key("OPENAI_API_KEY", "OpenAI")
 
         _ ->
-          validate_key!("OPENAI_API_KEY", "OpenAI (default)")
+          validate_key("OPENAI_API_KEY", "OpenAI (default)")
       end
+    else
+      Logger.info("Running in development mode - skipping API key validation")
     end
 
     :ok
   end
 
-  defp validate_key!(env_var, provider_name) do
+  defp validate_key(env_var, provider_name) do
+    require Logger
+
     case System.get_env(env_var) do
       nil ->
-        raise """
+        Logger.error("""
         Missing required environment variable: #{env_var}
         #{provider_name} API key is required for production.
         Please set #{env_var} in your environment.
-        """
+        Application will start but LLM features may not work.
+        """)
+
+        :ok
 
       "" ->
-        raise """
+        Logger.error("""
         Empty environment variable: #{env_var}
         #{provider_name} API key cannot be empty in production.
-        """
+        Application will start but LLM features may not work.
+        """)
+
+        :ok
 
       _key ->
+        Logger.info("✓ #{provider_name} API key is configured")
         :ok
     end
   end
 
   defp warm_up_database do
     # Only warm up in production to prevent connection issues on Fly.io
-    if Mix.env() == :prod do
+    # In production (Fly.io), PHX_SERVER is always set
+    if System.get_env("PHX_SERVER") do
+      require Logger
+
       try do
-        Ecto.Adapters.SQL.query(Dialectic.Repo, "SELECT 1", [])
-        :ok
+        # Give the repo a moment to fully initialize
+        Process.sleep(100)
+
+        case Ecto.Adapters.SQL.query(Dialectic.Repo, "SELECT 1", []) do
+          {:ok, _} ->
+            Logger.info("Database warmup completed successfully")
+            :ok
+
+          {:error, error} ->
+            Logger.warning("Database warmup failed: #{inspect(error)}")
+            :ok
+        end
       rescue
-        _ -> :ok
+        error ->
+          Logger.warning("Database warmup error: #{inspect(error)}")
+          :ok
       end
     end
-
-    :ok
   end
 end

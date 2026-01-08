@@ -115,14 +115,17 @@ This key is never set, so production-only features (API key validation, database
 # Before
 if Application.get_env(:dialectic, :env) == :prod do
 
-# After
-if Mix.env() == :prod do
+# After (Final Fix for Production Releases)
+if System.get_env("PHX_SERVER") do
 ```
+
+**Note**: Initial fix used `Mix.env()`, but Mix is not available in production releases. Final fix uses `PHX_SERVER` environment variable which is always set on Fly.io production deployments.
 
 ### Impact
 - ✅ API key validation now runs in production
 - ✅ Database warmup now runs in production
-- ✅ Uses standard Elixir environment detection
+- ✅ Works correctly in both development and production releases
+- ✅ No dependency on Mix module in release builds
 
 ---
 
@@ -145,15 +148,36 @@ If the database query failed or was slow, it could significantly delay applicati
 # Before
 warm_up_database()
 
-# After
-Task.Supervisor.start_child(Dialectic.TaskSupervisor, fn -> warm_up_database() end)
+# After (Final Fix)
+spawn(fn -> warm_up_database() end)
+```
+
+**Note**: Initial fix used `Task.Supervisor.start_child`, but this caused a race condition during startup. Final fix uses `spawn` to avoid timing issues.
+
+Additionally, added better error handling and logging:
+```elixir
+defp warm_up_database do
+  if System.get_env("PHX_SERVER") do
+    require Logger
+    try do
+      Process.sleep(100)  # Give repo time to initialize
+      case Ecto.Adapters.SQL.query(Dialectic.Repo, "SELECT 1", []) do
+        {:ok, _} -> Logger.info("Database warmup completed successfully")
+        {:error, error} -> Logger.warning("Database warmup failed: #{inspect(error)}")
+      end
+    rescue
+      error -> Logger.warning("Database warmup error: #{inspect(error)}")
+    end
+  end
+end
 ```
 
 ### Impact
 - ✅ Application startup is no longer blocked by database operations
 - ✅ Faster, more reliable deployments
 - ✅ Database failures during warmup don't prevent application from starting
-- ✅ Uses existing TaskSupervisor for proper error handling
+- ✅ No race condition with TaskSupervisor during startup
+- ✅ Better error logging for troubleshooting
 
 ---
 
