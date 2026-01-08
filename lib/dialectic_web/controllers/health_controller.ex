@@ -17,25 +17,18 @@ defmodule DialecticWeb.HealthController do
   end
 
   @doc """
-  Deep health check that verifies database connectivity and critical services.
-  Returns 200 OK if all systems are healthy, 503 Service Unavailable otherwise.
+  Deep health check that verifies database connectivity.
+  Returns 200 OK if healthy, 503 Service Unavailable otherwise.
   """
   def deep(conn, _params) do
-    checks = %{
-      database: check_database(),
-      oban: check_oban(),
-      application: check_application()
-    }
-
-    all_healthy? = Enum.all?(checks, fn {_name, status} -> status == "ok" end)
-
-    status_code = if all_healthy?, do: 200, else: 503
+    db_status = check_database()
+    is_healthy = db_status == "ok"
 
     conn
-    |> put_status(status_code)
+    |> put_status(if is_healthy, do: 200, else: 503)
     |> json(%{
-      status: if(all_healthy?, do: "ok", else: "degraded"),
-      checks: checks,
+      status: if(is_healthy, do: "ok", else: "error"),
+      database: db_status,
       timestamp: DateTime.utc_now() |> DateTime.to_iso8601()
     })
   end
@@ -43,34 +36,11 @@ defmodule DialecticWeb.HealthController do
   # Private helper functions
 
   defp check_database do
-    try do
-      case Ecto.Adapters.SQL.query(Dialectic.Repo, "SELECT 1", []) do
-        {:ok, _} -> "ok"
-        {:error, _} -> "error"
-      end
-    rescue
+    case Ecto.Adapters.SQL.query(Dialectic.Repo, "SELECT 1", [], timeout: 1000) do
+      {:ok, _} -> "ok"
       _ -> "error"
     end
-  end
-
-  defp check_oban do
-    try do
-      # Check if Oban is running by checking for the Oban process
-      case Process.whereis(Oban) do
-        nil -> "error"
-        _pid -> "ok"
-      end
-    rescue
-      _ -> "error"
-    end
-  end
-
-  defp check_application do
-    # Basic check that the application is running
-    if Application.started_applications() |> Enum.any?(fn {app, _, _} -> app == :dialectic end) do
-      "ok"
-    else
-      "error"
-    end
+  rescue
+    _ -> "error"
   end
 end
