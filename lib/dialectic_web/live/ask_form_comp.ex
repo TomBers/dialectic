@@ -64,70 +64,38 @@ defmodule DialecticWeb.AskFormComp do
         id={@id}
         class="w-full min-w-0"
       >
-        <div class="flex items-center gap-3 w-full">
-          <%!-- Ask/Comment Segmented Control - Softer styling --%>
-          <div class="inline-flex rounded-lg border border-gray-200 p-0.5 bg-gray-50 flex-none">
+        <div class="flex items-center gap-2 w-full">
+          <%!-- Ask/Comment Segmented Control - Compact text-only --%>
+          <div class="inline-flex rounded-md border border-gray-200 bg-gray-50 flex-none">
             <button
               type="button"
               phx-click="toggle_ask_question"
               class={[
-                "px-2.5 py-1.5 text-xs font-medium rounded-md transition-all min-w-[75px]",
+                "px-2 py-1 text-xs font-medium transition-all",
                 if @ask_question do
-                  "bg-blue-500 text-white"
+                  "bg-blue-500 text-white rounded-md"
                 else
-                  "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                  "text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-l-md"
                 end
               ]}
               title="Get an AI-generated response"
             >
-              <span class="inline-flex items-center gap-1.5">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-3.5 w-3.5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456Z"
-                  />
-                </svg>
-                <span>Ask</span>
-              </span>
+              Ask
             </button>
             <button
               type="button"
               phx-click="toggle_ask_question"
               class={[
-                "px-2.5 py-1.5 text-xs font-medium rounded-md transition-all min-w-[75px]",
+                "px-2 py-1 text-xs font-medium transition-all",
                 if !@ask_question do
-                  "bg-emerald-500 text-white"
+                  "bg-emerald-500 text-white rounded-md"
                 else
-                  "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                  "text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-r-md"
                 end
               ]}
               title="Add your own thought directly"
             >
-              <span class="inline-flex items-center gap-1.5">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-3.5 w-3.5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
-                  />
-                </svg>
-                <span>Comment</span>
-              </span>
+              Comment
             </button>
           </div>
 
