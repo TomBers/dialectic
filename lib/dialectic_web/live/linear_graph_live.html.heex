@@ -1,6 +1,9 @@
 <div class="flex h-[calc(100vh-2.5rem)] w-full bg-white overflow-hidden">
   <!-- Main Area: Linear Path -->
-  <div class={"flex-1 flex-col h-full min-w-0 relative " <> if(@show_minimap, do: "hidden lg:flex", else: "flex")}>
+  <div
+    id="linear-main-content"
+    class={"flex-1 flex-col h-full min-w-0 relative " <> if(@show_minimap, do: "hidden lg:flex", else: "flex")}
+  >
     <!-- Toolbar -->
     <div class="flex-none flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white z-20 shadow-sm">
       <div class="flex items-center gap-3">
@@ -101,16 +104,15 @@
           <% end %>
         </div>
 
-        <.button
-          phx-click="prepare_for_print"
+        <button
           phx-hook="PrintConversation"
           id="print-btn"
-          data-graph-name={@graph_id}
+          data-graph-name={@graph_struct.title}
           aria-label="Print conversation as PDF"
-          class="text-xs px-2.5 py-1.5 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm hidden sm:inline-flex"
+          class="text-xs px-2.5 py-1.5 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm hidden sm:inline-flex rounded-md font-medium inline-flex items-center"
         >
           <.icon name="hero-printer" class="h-4 w-4 mr-1.5 inline-block" /> PDF
-        </.button>
+        </button>
       </div>
     </div>
     
@@ -267,44 +269,93 @@
 
 <!-- Print Styles -->
 <style media="print">
-  /* Global resets for layout containers */
-  body, html, #app, .flex, .h-screen, .overflow-hidden, .flex-col, .relative {
-    height: auto !important;
-    overflow: visible !important;
-    display: block !important;
-    position: static !important;
-    width: 100% !important;
+  @page {
+    margin: 2cm;
+    size: A4;
   }
 
-  /* Hide UI elements */
-  header, .back-button, button, #cy-minimap-container, #linear-minimap, .hidden.lg\:flex, .flex-none {
+  /* Add document title at top */
+  body::before {
+    content: attr(data-graph-name);
+    display: block;
+    font-size: 18pt;
+    font-weight: bold;
+    margin-bottom: 1cm;
+    padding-bottom: 0.5cm;
+    border-bottom: 2px solid #000;
+  }
+
+  /* Hide UI elements only */
+  header,
+  nav,
+  button,
+  #linear-minimap,
+  .border-b.shadow-sm {
     display: none !important;
   }
 
-  /* Content styling */
-  .prose { font-size: 11pt !important; }
-
-  .node {
-    break-inside: avoid;
-    border: 1px solid #ddd !important;
-    box-shadow: none !important;
-    margin-bottom: 1.5rem;
-    page-break-inside: avoid;
-    display: block !important; /* Ensure block display for nodes */
+  /* Force all containers to expand fully */
+  body, html, #app {
+    height: auto !important;
+    overflow: visible !important;
+    position: static !important;
   }
 
-  /* Specific resets for scroll container */
-  #linear-scroller {
+  /* Force all scrollable and flex containers to expand */
+  .overflow-y-auto,
+  .overflow-auto,
+  .overflow-hidden,
+  .flex-1,
+  .h-full,
+  .h-screen,
+  .min-h-0,
+  .max-h-full {
     overflow: visible !important;
     height: auto !important;
-    padding: 0 !important;
-    background: white !important;
+    max-height: none !important;
+    min-height: 0 !important;
     display: block !important;
   }
 
-  .max-w-3xl { max-width: none !important; margin: 0 !important; }
+  #linear-main-content {
+    display: block !important;
+    visibility: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    position: static !important;
+  }
 
-  @page { margin: 2cm; }
+  #linear-scroller {
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    display: block !important;
+    position: static !important;
+  }
+
+  /* Ensure content container expands */
+  .max-w-3xl {
+    max-width: 100% !important;
+  }
+
+  .space-y-6 {
+    display: block !important;
+  }
+
+  /* Node styling for print */
+  .node {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    margin-bottom: 1rem;
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  .prose {
+    font-size: 11pt;
+    max-width: 100%;
+  }
 </style>
 
 <style>

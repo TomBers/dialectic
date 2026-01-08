@@ -168,10 +168,6 @@ defmodule DialecticWeb.LinearGraphLive do
     end
   end
 
-  def handle_event("prepare_for_print", _params, socket) do
-    {:noreply, socket}
-  end
-
   def handle_event("update_exploration_progress", _params, socket) do
     {:noreply, socket}
   end
