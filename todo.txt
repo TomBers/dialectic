@@ -1,3 +1,7 @@
+Fix graph creation, it breaks with parenthesis
+
+
+
 Think of reading the whole graph and squashing it into a summary - Git Squash and Merge semantics
 
 Idea - completely copy Git semantics.

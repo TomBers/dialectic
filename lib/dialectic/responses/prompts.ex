@@ -35,6 +35,24 @@ defmodule Dialectic.Responses.Prompts do
     """
   end
 
+  defp frame_minimal_context(context_text) do
+    # Only include context if it's short enough; otherwise omit for maximum freedom
+    if String.length(context_text) < 500 do
+      """
+      ### Foundation (for reference)
+
+      ```text
+      #{context_text}
+      ```
+
+      ↑ Background context. You may reference this but are not bound by it.
+      """
+    else
+      # For longer contexts, skip it entirely to allow free exploration
+      ""
+    end
+  end
+
   defp join_blocks(blocks) do
     blocks
     |> Enum.reject(&(&1 in [nil, ""]))
@@ -103,19 +121,19 @@ defmodule Dialectic.Responses.Prompts do
   @spec selection(String.t(), String.t()) :: String.t()
   def selection(context, selection_text) do
     join_blocks([
-      frame_context(context),
+      frame_minimal_context(context),
       """
       A specific phrase was highlighted: **#{sanitize_title(selection_text)}**
 
-      **Your task:** Provide deeper insight into this specific concept by:
-      - Unpacking technical terms or implicit assumptions
-      - Providing concrete examples or applications
-      - Connecting to broader implications
-      - Exploring edge cases or nuances
+      **Your task:** Treat this as a NEW exploration starting point. Explain this concept in depth, opening up new directions:
+      - What is this concept and why does it matter?
+      - Provide concrete examples or applications
+      - Explore different perspectives or frameworks
+      - Identify related concepts or questions worth exploring
+      - Consider implications, edge cases, or nuances
 
-      Add details and perspectives NOT already covered in the Foundation.
-      """,
-      anti_repetition_footer()
+      While the Foundation provides context, feel free to explore this concept in directions that may diverge from the original discussion. The goal is depth and breadth on THIS specific concept.
+      """
     ])
   end
 

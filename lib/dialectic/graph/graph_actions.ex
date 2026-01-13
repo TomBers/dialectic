@@ -135,11 +135,20 @@ defmodule Dialectic.Graph.GraphActions do
         user
       )
 
+    # Use minimal context for text selection explanations to allow free exploration
+    use_minimal_context = String.starts_with?(question_text, "Please explain:")
+
     {nil,
      GraphManager.add_child(
        graph_id,
        [question_node],
-       fn n -> LlmInterface.gen_response(question_node, n, graph_id, live_view_topic) end,
+       fn n ->
+         if use_minimal_context do
+           LlmInterface.gen_response_minimal_context(question_node, n, graph_id, live_view_topic)
+         else
+           LlmInterface.gen_response(question_node, n, graph_id, live_view_topic)
+         end
+       end,
        "answer",
        user
      )}
