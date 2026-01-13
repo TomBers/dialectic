@@ -7,8 +7,8 @@ defmodule Dialectic.Responses.PromptsTest do
   # through the public selection/2 function which uses it internally
 
   describe "selection/2 - minimal context behavior" do
-    test "includes context when shorter than threshold (500 characters)" do
-      short_context = "This is a short context that is well under the 500 character limit."
+    test "includes context when shorter than max length (1000 characters)" do
+      short_context = "This is a short context that is well under the 1000 character limit."
       selection_text = "test selection"
       result = Prompts.selection(short_context, selection_text)
 
@@ -17,35 +17,38 @@ defmodule Dialectic.Responses.PromptsTest do
       assert result =~ "Background context. You may reference this but are not bound by it."
     end
 
-    test "omits context when longer than threshold (500 characters)" do
-      # Create a string longer than 500 characters
-      long_context = String.duplicate("a", 501)
+    test "truncates context when longer than max length (1000 characters)" do
+      # Create a string longer than 1000 characters
+      long_context = String.duplicate("a", 1500)
       selection_text = "test selection"
       result = Prompts.selection(long_context, selection_text)
 
-      # Should not include the Foundation section for long contexts
-      refute result =~ "### Foundation"
+      # Should still include the Foundation section
+      assert result =~ "### Foundation (for reference)"
+      # Should include truncated content with indicator
+      assert result =~ "[... truncated for brevity ...]"
+      # Should not include the full long context
       refute result =~ long_context
-      # But should still include the selection text and instructions
       assert result =~ selection_text
     end
 
-    test "includes context at exactly 499 characters (just under threshold)" do
-      edge_case_context = String.duplicate("x", 499)
+    test "includes full context at exactly 999 characters (just under max)" do
+      edge_case_context = String.duplicate("x", 999)
       selection_text = "test selection"
       result = Prompts.selection(edge_case_context, selection_text)
 
       assert result =~ "### Foundation (for reference)"
       assert result =~ edge_case_context
+      refute result =~ "[... truncated for brevity ...]"
     end
 
-    test "omits context at exactly 500 characters (at threshold)" do
-      edge_case_context = String.duplicate("x", 500)
+    test "truncates context at exactly 1000 characters (at threshold)" do
+      edge_case_context = String.duplicate("x", 1001)
       selection_text = "test selection"
       result = Prompts.selection(edge_case_context, selection_text)
 
-      refute result =~ "### Foundation"
-      refute result =~ edge_case_context
+      assert result =~ "### Foundation (for reference)"
+      assert result =~ "[... truncated for brevity ...]"
     end
 
     test "handles empty string context" do
@@ -66,18 +69,32 @@ defmodule Dialectic.Responses.PromptsTest do
       assert result =~ whitespace_context
     end
 
-    test "preserves markdown formatting in context" do
+    test "preserves markdown formatting in short context" do
       markdown_context = "# Title\n\n- List item\n- Another item"
       selection_text = "test selection"
       result = Prompts.selection(markdown_context, selection_text)
 
       assert result =~ markdown_context
       assert result =~ "```text"
+      refute result =~ "[... truncated for brevity ...]"
+    end
+
+    test "truncates long context preserving beginning" do
+      # Create a context with identifiable start and end
+      long_context = "START_MARKER" <> String.duplicate("x", 1000) <> "END_MARKER"
+      selection_text = "test selection"
+      result = Prompts.selection(long_context, selection_text)
+
+      # Should include the start
+      assert result =~ "START_MARKER"
+      # Should not include the end (truncated)
+      refute result =~ "END_MARKER"
+      assert result =~ "[... truncated for brevity ...]"
     end
   end
 
   describe "selection/2 - general behavior" do
-    test "uses minimal context framing for short contexts" do
+    test "always includes context with minimal framing" do
       short_context = "Brief background information"
       selection_text = "consciousness"
 
@@ -89,14 +106,15 @@ defmodule Dialectic.Responses.PromptsTest do
       assert result =~ "NEW exploration starting point"
     end
 
-    test "omits context for long contexts to allow free exploration" do
-      long_context = String.duplicate("a", 501)
+    test "truncates long contexts while maintaining foundation structure" do
+      long_context = String.duplicate("a", 1500)
       selection_text = "consciousness"
 
       result = Prompts.selection(long_context, selection_text)
 
-      refute result =~ "### Foundation"
-      refute result =~ long_context
+      # Should still have Foundation section, just truncated
+      assert result =~ "### Foundation (for reference)"
+      assert result =~ "[... truncated for brevity ...]"
       assert result =~ selection_text
       assert result =~ "NEW exploration starting point"
     end

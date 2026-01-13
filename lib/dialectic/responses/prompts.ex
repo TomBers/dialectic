@@ -19,12 +19,11 @@ defmodule Dialectic.Responses.Prompts do
   3. Tasks are framed as continuations, not standalone answers
   """
 
-  # Maximum character length for context to be included in minimal context prompts.
-  # Contexts shorter than this threshold are included with a permissive framing
-  # that allows divergence. Longer contexts are omitted entirely to maximize
-  # exploratory freedom and prevent the LLM from being overly constrained by
-  # existing discussion.
-  @minimal_context_threshold 500
+  # Maximum character length for context in minimal context prompts.
+  # Longer contexts are truncated to this length to keep prompts focused
+  # while still providing grounding from the immediate parent node.
+  # This ensures consistent behavior regardless of parent node length.
+  @minimal_context_max_length 1000
 
   # ---- Helpers ---------------------------------------------------------------
 
@@ -43,21 +42,25 @@ defmodule Dialectic.Responses.Prompts do
   end
 
   defp frame_minimal_context(context_text) do
-    # Only include context if it's short enough; otherwise omit for maximum freedom
-    if String.length(context_text) < @minimal_context_threshold do
-      """
-      ### Foundation (for reference)
+    # Always include immediate parent context, truncating if needed
+    # This provides consistent grounding regardless of parent length
+    truncated_context =
+      if String.length(context_text) > @minimal_context_max_length do
+        String.slice(context_text, 0, @minimal_context_max_length) <>
+          "\n\n[... truncated for brevity ...]"
+      else
+        context_text
+      end
 
-      ```text
-      #{context_text}
-      ```
+    """
+    ### Foundation (for reference)
 
-      ↑ Background context. You may reference this but are not bound by it.
-      """
-    else
-      # For longer contexts, skip it entirely to allow free exploration
-      ""
-    end
+    ```text
+    #{truncated_context}
+    ```
+
+    ↑ Background context. You may reference this but are not bound by it.
+    """
   end
 
   defp join_blocks(blocks) do

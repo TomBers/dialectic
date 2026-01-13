@@ -60,22 +60,34 @@ Modified the `selection/2` prompt in `Prompts` module to:
 **Key changes:**
 ```elixir
 defp frame_minimal_context(context_text) do
-  if String.length(context_text) < 500 do
-    """
-    ### Foundation (for reference)
-    
-    ```text
-    #{context_text}
-    ```
-    
-    ↑ Background context. You may reference this but are not bound by it.
-    """
-  else
-    # For longer contexts, skip it entirely to allow free exploration
-    ""
-  end
+  # Always include immediate parent context, truncating if needed
+  truncated_context =
+    if String.length(context_text) > 1000 do
+      String.slice(context_text, 0, 1000) <>
+        "\n\n[... truncated for brevity ...]"
+    else
+      context_text
+    end
+
+  """
+  ### Foundation (for reference)
+  
+  ```text
+  #{truncated_context}
+  ```
+  
+  ↑ Background context. You may reference this but are not bound by it.
+  """
 end
 ```
+
+**Philosophy:**
+- **Always include immediate parent** as Foundation (the node where selection came from)
+- **Smart truncation** if parent is > 1000 chars (preserves beginning, indicates truncation)
+- **Permissive framing** tells LLM the context is for reference, not constraint
+- **Prompt encourages divergence** - treat as "NEW exploration starting point"
+
+This ensures consistent behavior: users always get grounding from the source node, while the prompt explicitly encourages exploring in new directions.
 
 **New instruction:**
 ```
@@ -130,25 +142,25 @@ end
 
 ## Behavior Comparison
 
-### Before (Constrained)
+### Before (Constrained - Full Parent Chain)
 
 **Graph:** "What is quantum mechanics?"
 **Selected text:** "wave function collapse"
-**Frontend:** Sends `prefix: "explain"`
-**Backend:** Sets `minimal_context: true`
 **Context sent to LLM:** Full parent chain (origin → answer → explanation → ...)
 **Prompt:** "Extend beyond what's in the Foundation..."
 **Result:** Explanation stays within quantum mechanics, references existing discussion
 
-### After (Expansive)
+### After (Expansive - Immediate Parent Only)
 
 **Graph:** "What is quantum mechanics?"
 **Selected text:** "wave function collapse"
 **Frontend:** Sends `prefix: "explain"`
 **Backend:** Sets `minimal_context: true`
-**Context sent to LLM:** Only immediate parent node (or none)
+**Context sent to LLM:** Only immediate parent node (truncated if > 1000 chars)
 **Prompt:** "Treat this as a NEW exploration starting point..."
 **Result:** Can explore philosophical implications, consciousness debates, measurement problem, related fields, etc.
+
+**Key difference:** The immediate parent provides grounding (what was the user reading?), but the prompt explicitly encourages divergence.
 
 ## Examples
 
@@ -156,13 +168,19 @@ Now when users select text, they can:
 
 ✓ **Diverge into new fields:**
 - Select "consciousness" from a neuroscience discussion → explore philosophy of mind
-- Select "entropy" from a physics discussion → explore thermodynamics, information theory, or even social systems
+- The neuroscience answer provides grounding, but LLM is encouraged to explore broadly
 
 ✓ **Explore related concepts freely:**
-- Select "dialectic" → explore Hegel, Marx, synthesis thinking, regardless of original context
+- Select "entropy" from a physics discussion → explore thermodynamics, information theory, or even social systems
+- The physics context is present for reference, but exploration isn't constrained by it
 
 ✓ **Go deeper without constraint:**
-- Select technical term → get comprehensive explanation without being forced to relate back
+- Select technical term → get comprehensive explanation grounded in source but not bound by it
+
+✓ **Consistent behavior:**
+- Short parent (< 1000 chars): Full context included
+- Long parent (> 1000 chars): First 1000 chars + truncation indicator
+- Always have Foundation section for grounding
 
 ## Files Changed
 
@@ -170,7 +188,8 @@ Now when users select text, they can:
    - Added `gen_response_minimal_context/4` function
 
 2. **`lib/dialectic/responses/prompts.ex`**
-   - Added `frame_minimal_context/1` helper
+   - Added `frame_minimal_context/1` helper with smart truncation
+   - Always includes immediate parent (truncated if > 1000 chars)
    - Updated `selection/2` prompt to encourage divergence
 
 3. **`lib/dialectic/graph/graph_actions.ex`**
@@ -196,10 +215,29 @@ To test the fix:
 
 This change aligns with the core vision of Dialectic as a tool for **exploratory thinking**:
 
-- **Freedom to diverge:** Users can follow interesting tangents without artificial constraints
+- **Consistent grounding:** Always include immediate parent for context (what was the user reading?)
+- **Smart limits:** Truncate long contexts to keep prompts focused, but never omit entirely
+- **Freedom to diverge:** Prompt explicitly encourages exploration in new directions
 - **Bottom-up exploration:** Selected text becomes a new seed for branching discussions
-- **Minimal assumptions:** The system doesn't assume the user wants to stay on the original topic
-- **Serendipitous discovery:** Allows unexpected connections and directions to emerge
+- **No binary thresholds:** Avoid "all-or-nothing" behavior based on arbitrary character counts
 - **Explicit signaling:** Frontend explicitly indicates when minimal context is desired, avoiding brittle string matching
 
 The original behavior (full context, "extend beyond") is preserved for regular questions and node explanations, where maintaining coherence with the parent discussion is valuable.
+
+## Why This Approach?
+
+**Previous approach had a 500-char threshold:**
+- Parent < 500 chars: Include context
+- Parent ≥ 500 chars: Omit context entirely
+
+**Problems:**
+- Binary cutoff created inconsistent behavior
+- Longer, detailed answers gave NO context (counterintuitive)
+- User selecting from a specific answer inherently makes that answer relevant
+
+**Current approach:**
+- **Always include immediate parent** (consistency)
+- **Truncate if needed** (keeps prompts manageable)
+- **Rely on prompt for divergence** (the key innovation)
+
+The prompt change ("NEW exploration starting point") is the primary mechanism for encouraging divergence. Context reduction (full chain → immediate parent) helps, but complete context omission was unnecessary.
