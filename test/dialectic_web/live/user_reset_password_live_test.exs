@@ -21,7 +21,7 @@ defmodule DialecticWeb.UserResetPasswordLiveTest do
     test "renders reset password with valid token", %{conn: conn, token: token} do
       {:ok, _lv, html} = live(conn, ~p"/users/reset_password/#{token}")
 
-      assert html =~ "Reset Password"
+      assert html =~ "Reset password"
     end
 
     test "does not render reset password with invalid token", %{conn: conn} do
@@ -81,7 +81,7 @@ defmodule DialecticWeb.UserResetPasswordLiveTest do
         )
         |> render_submit()
 
-      assert result =~ "Reset Password"
+      assert result =~ "Reset password"
       assert result =~ "should be at least 12 character(s)"
       assert result =~ "does not match password"
     end
@@ -93,7 +93,7 @@ defmodule DialecticWeb.UserResetPasswordLiveTest do
 
       {:ok, conn} =
         lv
-        |> element(~s|main a:fl-contains("Log in")|)
+        |> element(~s|main a:fl-contains("Back to log in")|)
         |> render_click()
         |> follow_redirect(conn, ~p"/users/log_in")
 
@@ -108,11 +108,11 @@ defmodule DialecticWeb.UserResetPasswordLiveTest do
 
       {:ok, conn} =
         lv
-        |> element(~s|main a:fl-contains("Register")|)
+        |> element(~s|main a:fl-contains("Create an account")|)
         |> render_click()
         |> follow_redirect(conn, ~p"/users/register")
 
-      assert conn.resp_body =~ "Register"
+      assert conn.resp_body =~ "Create an account"
     end
   end
 end

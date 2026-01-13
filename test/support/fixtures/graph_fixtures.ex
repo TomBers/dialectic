@@ -2,6 +2,7 @@ defmodule Dialectic.GraphFixtures do
   alias Dialectic.Repo
   alias Dialectic.Accounts.Graph
   alias Dialectic.Graph.Serialise
+  alias Dialectic.DbActions.Graphs
 
   def insert_graph_fixture(graph_name) do
     data =
@@ -15,6 +16,8 @@ defmodule Dialectic.GraphFixtures do
   end
 
   def insert_data(data, title) do
+    slug = Graphs.generate_unique_slug(title)
+
     graph =
       %Graph{}
       |> Graph.changeset(%{
@@ -24,7 +27,8 @@ defmodule Dialectic.GraphFixtures do
         is_public: true,
         is_locked: false,
         is_deleted: false,
-        is_published: true
+        is_published: true,
+        slug: slug
       })
       |> Repo.insert!()
 
