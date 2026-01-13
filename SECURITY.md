@@ -182,7 +182,7 @@ API keys are validated at application startup to fail fast:
 ```elixir
 # Title validation
 validate_length(:title, min: 1, max: 255)
-validate_format(:title, ~r/^[a-zA-Z0-9\s\-_\.]+$/)
+validate_format(:title, ~r/^[^\x00-\x1F\x7F]+$/u)  # Blocks control characters only
 
 # Data size validation
 Maximum JSON size: 10MB

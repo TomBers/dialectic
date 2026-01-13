@@ -30,7 +30,7 @@ defmodule DialecticWeb.UserRegistrationLiveTest do
         |> element("#registration_form")
         |> render_change(user: %{"email" => "with spaces", "password" => "too short"})
 
-      assert result =~ "Register"
+      assert result =~ "Create an account"
       assert result =~ "must have the @ sign and no spaces"
       assert result =~ "should be at least 12 character"
     end

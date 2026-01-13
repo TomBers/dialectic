@@ -19,6 +19,12 @@ defmodule Dialectic.Responses.Prompts do
   3. Tasks are framed as continuations, not standalone answers
   """
 
+  # Maximum character length for context in minimal context prompts.
+  # Longer contexts are truncated to this length to keep prompts focused
+  # while still providing grounding from the immediate parent node.
+  # This ensures consistent behavior regardless of parent node length.
+  @minimal_context_max_length 1000
+
   # ---- Helpers ---------------------------------------------------------------
 
   defp frame_context(context_text) do
@@ -32,6 +38,28 @@ defmodule Dialectic.Responses.Prompts do
     ```
 
     ↑ This is already covered. Your response should ADD NEW insights beyond what's shown above.
+    """
+  end
+
+  defp frame_minimal_context(context_text) do
+    # Always include immediate parent context, truncating if needed
+    # This provides consistent grounding regardless of parent length
+    truncated_context =
+      if String.length(context_text) > @minimal_context_max_length do
+        String.slice(context_text, 0, @minimal_context_max_length) <>
+          "\n\n[... truncated for brevity ...]"
+      else
+        context_text
+      end
+
+    """
+    ### Foundation (for reference)
+
+    ```text
+    #{truncated_context}
+    ```
+
+    ↑ Background context. You may reference this but are not bound by it.
     """
   end
 
@@ -103,19 +131,19 @@ defmodule Dialectic.Responses.Prompts do
   @spec selection(String.t(), String.t()) :: String.t()
   def selection(context, selection_text) do
     join_blocks([
-      frame_context(context),
+      frame_minimal_context(context),
       """
       A specific phrase was highlighted: **#{sanitize_title(selection_text)}**
 
-      **Your task:** Provide deeper insight into this specific concept by:
-      - Unpacking technical terms or implicit assumptions
-      - Providing concrete examples or applications
-      - Connecting to broader implications
-      - Exploring edge cases or nuances
+      **Your task:** Treat this as a NEW exploration starting point. Explain this concept in depth, opening up new directions:
+      - What is this concept and why does it matter?
+      - Provide concrete examples or applications
+      - Explore different perspectives or frameworks
+      - Identify related concepts or questions worth exploring
+      - Consider implications, edge cases, or nuances
 
-      Add details and perspectives NOT already covered in the Foundation.
-      """,
-      anti_repetition_footer()
+      While the Foundation provides context, feel free to explore this concept in directions that may diverge from the original discussion. The goal is depth and breadth on THIS specific concept.
+      """
     ])
   end
 

@@ -5,13 +5,32 @@ const HighlightUtils = {
    * @param {Array} highlights - Array of highlight objects {id, selection_start, selection_end, ...}
    */
   renderHighlights(container, highlights) {
-    if (!container || !highlights || highlights.length === 0) return;
+    if (!container || !highlights) return;
 
-    // 1. Remove existing highlights to avoid duplication/nesting issues on re-render
+    // Get existing highlight IDs
+    const existingSpans = container.querySelectorAll(".highlight-span");
+    const existingIds = new Set(
+      Array.from(existingSpans).map((span) => span.dataset.highlightId),
+    );
+
+    // Get new highlight IDs
+    const newIds = new Set(highlights.map((h) => h.id.toString()));
+
+    // Only proceed if there are actual changes
+    const hasChanges =
+      existingIds.size !== newIds.size ||
+      Array.from(existingIds).some((id) => !newIds.has(id)) ||
+      Array.from(newIds).some((id) => !existingIds.has(id));
+
+    if (!hasChanges) {
+      // No changes needed - highlights are already up to date
+      return;
+    }
+
+    // 1. Remove existing highlights
     this.removeHighlights(container);
 
     // 2. Sort highlights by start position
-    // We process them to ensure consistent application order
     const sortedHighlights = [...highlights].sort(
       (a, b) => a.selection_start - b.selection_start,
     );

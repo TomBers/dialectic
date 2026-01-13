@@ -9,11 +9,12 @@ defmodule DialecticWeb.HealthControllerTest do
   test "GET /health/deep", %{conn: conn} do
     conn = get(conn, ~p"/health/deep")
 
-    # We accept 200 or 503 depending on whether all services (like Oban) are running in test env
+    # We accept 200 or 503 depending on whether database connectivity works
     assert conn.status in [200, 503]
 
     response = json_response(conn, conn.status)
-    assert response["status"] in ["ok", "degraded"]
-    assert %{"application" => _, "database" => _, "oban" => _} = response["checks"]
+    assert response["status"] in ["ok", "error"]
+    assert response["database"] in ["ok", "error"]
+    assert response["timestamp"]
   end
 end

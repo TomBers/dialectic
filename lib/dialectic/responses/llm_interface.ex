@@ -20,6 +20,37 @@ defmodule Dialectic.Responses.LlmInterface do
     ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
   end
 
+  @doc """
+  Generate a response with minimal context for selected text explanations.
+  Uses only the immediate parent node as context to allow free exploration.
+  """
+  def gen_response_minimal_context(node, child, graph_id, live_view_topic) do
+    # Build minimal context - only the immediate parent node
+    context =
+      case node.parents do
+        [parent_id | _] ->
+          case GraphManager.find_node_by_id(graph_id, parent_id) do
+            nil -> ""
+            parent -> parent.content || ""
+          end
+
+        _ ->
+          ""
+      end
+
+    # Extract the selected text from the question node
+    selection =
+      node.content
+      |> String.replace(~r/^Please explain:\s*/, "")
+      |> String.trim()
+
+    instruction = Prompts.selection(context, selection)
+
+    system_prompt = get_system_prompt(graph_id)
+    log_prompt("selection_minimal", graph_id, system_prompt, instruction)
+    ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
+  end
+
   def gen_selection_response(node, child, graph_id, selection, live_view_topic) do
     context = GraphManager.build_context(graph_id, node)
 

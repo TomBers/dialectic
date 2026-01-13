@@ -124,7 +124,9 @@ defmodule Dialectic.Graph.GraphActions do
     GraphManager.find_node_by_id(graph_id, node_id)
   end
 
-  def ask_and_answer({graph_id, node, user, live_view_topic}, question_text) do
+  def ask_and_answer({graph_id, node, user, live_view_topic}, question_text, opts \\ []) do
+    minimal_context = Keyword.get(opts, :minimal_context, false)
+
     # Otherwise, use a 'question' node for follow-up questions
     question_node =
       GraphManager.add_child(
@@ -139,7 +141,13 @@ defmodule Dialectic.Graph.GraphActions do
      GraphManager.add_child(
        graph_id,
        [question_node],
-       fn n -> LlmInterface.gen_response(question_node, n, graph_id, live_view_topic) end,
+       fn n ->
+         if minimal_context do
+           LlmInterface.gen_response_minimal_context(question_node, n, graph_id, live_view_topic)
+         else
+           LlmInterface.gen_response(question_node, n, graph_id, live_view_topic)
+         end
+       end,
        "answer",
        user
      )}
