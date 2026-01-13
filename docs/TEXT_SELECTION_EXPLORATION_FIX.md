@@ -91,22 +91,40 @@ A specific phrase was highlighted: **[selected text]**
 While the Foundation provides context, feel free to explore this concept in directions that may diverge from the original discussion.
 ```
 
-### 3. Automatic Detection
+### 3. Explicit Parameter Detection
 
-Updated `ask_and_answer/2` to automatically detect text selection explanations:
-- Checks if the question starts with "Please explain:"
+Updated `ask_and_answer/3` to accept an explicit `minimal_context` option:
+- Frontend passes `prefix: "explain"` for text selections
+- Backend uses this prefix to set `minimal_context: true`
 - Uses minimal context flow for selections
 - Uses full context for regular questions
 
 ```elixir
-use_minimal_context = String.starts_with?(question_text, "Please explain:")
-
-fn n ->
-  if use_minimal_context do
-    LlmInterface.gen_response_minimal_context(question_node, n, graph_id, live_view_topic)
-  else
-    LlmInterface.gen_response(question_node, n, graph_id, live_view_topic)
+def ask_and_answer({graph_id, node, user, live_view_topic}, question_text, opts \\ []) do
+  minimal_context = Keyword.get(opts, :minimal_context, false)
+  
+  # ...
+  
+  fn n ->
+    if minimal_context do
+      LlmInterface.gen_response_minimal_context(question_node, n, graph_id, live_view_topic)
+    else
+      LlmInterface.gen_response(question_node, n, graph_id, live_view_topic)
+    end
   end
+end
+```
+
+In `graph_live.ex`:
+```elixir
+def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}, "prefix" => prefix}, socket) do
+  minimal_context = prefix == "explain"
+  
+  GraphActions.ask_and_answer(
+    graph_action_params(socket, socket.assigns.node),
+    answer,
+    minimal_context: minimal_context
+  )
 end
 ```
 
@@ -116,6 +134,8 @@ end
 
 **Graph:** "What is quantum mechanics?"
 **Selected text:** "wave function collapse"
+**Frontend:** Sends `prefix: "explain"`
+**Backend:** Sets `minimal_context: true`
 **Context sent to LLM:** Full parent chain (origin → answer → explanation → ...)
 **Prompt:** "Extend beyond what's in the Foundation..."
 **Result:** Explanation stays within quantum mechanics, references existing discussion
@@ -124,6 +144,8 @@ end
 
 **Graph:** "What is quantum mechanics?"
 **Selected text:** "wave function collapse"
+**Frontend:** Sends `prefix: "explain"`
+**Backend:** Sets `minimal_context: true`
 **Context sent to LLM:** Only immediate parent node (or none)
 **Prompt:** "Treat this as a NEW exploration starting point..."
 **Result:** Can explore philosophical implications, consciousness debates, measurement problem, related fields, etc.
@@ -152,7 +174,10 @@ Now when users select text, they can:
    - Updated `selection/2` prompt to encourage divergence
 
 3. **`lib/dialectic/graph/graph_actions.ex`**
-   - Updated `ask_and_answer/2` to detect and use minimal context for selections
+   - Updated `ask_and_answer/3` to accept explicit `minimal_context` option
+
+4. **`lib/dialectic_web/live/graph_live.ex`**
+   - Updated `handle_event("reply-and-answer", ...)` to use `prefix` parameter
 
 ## Testing
 
@@ -175,5 +200,6 @@ This change aligns with the core vision of Dialectic as a tool for **exploratory
 - **Bottom-up exploration:** Selected text becomes a new seed for branching discussions
 - **Minimal assumptions:** The system doesn't assume the user wants to stay on the original topic
 - **Serendipitous discovery:** Allows unexpected connections and directions to emerge
+- **Explicit signaling:** Frontend explicitly indicates when minimal context is desired, avoiding brittle string matching
 
 The original behavior (full context, "extend beyond") is preserved for regular questions and node explanations, where maintaining coherence with the parent discussion is valuable.

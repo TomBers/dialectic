@@ -19,6 +19,13 @@ defmodule Dialectic.Responses.Prompts do
   3. Tasks are framed as continuations, not standalone answers
   """
 
+  # Maximum character length for context to be included in minimal context prompts.
+  # Contexts shorter than this threshold are included with a permissive framing
+  # that allows divergence. Longer contexts are omitted entirely to maximize
+  # exploratory freedom and prevent the LLM from being overly constrained by
+  # existing discussion.
+  @minimal_context_threshold 500
+
   # ---- Helpers ---------------------------------------------------------------
 
   defp frame_context(context_text) do
@@ -37,7 +44,7 @@ defmodule Dialectic.Responses.Prompts do
 
   defp frame_minimal_context(context_text) do
     # Only include context if it's short enough; otherwise omit for maximum freedom
-    if String.length(context_text) < 500 do
+    if String.length(context_text) < @minimal_context_threshold do
       """
       ### Foundation (for reference)
 
