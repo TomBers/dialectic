@@ -132,12 +132,55 @@ defmodule Dialectic.Graph.Vertex do
   end
 
   def collect_parents(graph, vertex, allowed_parent) do
-    collect_parents(graph, vertex, [], allowed_parent)
+    # Start BFS from the given vertex's parents
+    initial_parents = :digraph.in_neighbours(graph, vertex)
+    bfs_parents(graph, initial_parents, MapSet.new(), [], allowed_parent)
   end
 
   def collect_parents(graph, vertex) do
     # Default behavior: no group scoping when parent is not specified
-    collect_parents(graph, vertex, [], nil)
+    collect_parents(graph, vertex, nil)
+  end
+
+  # BFS implementation to collect ancestors without duplicates
+  # Returns list in BFS order (closest ancestors first)
+  defp bfs_parents(_graph, [], _visited, result, _allowed_parent), do: Enum.reverse(result)
+
+  defp bfs_parents(graph, [current_id | rest_queue], visited, result, allowed_parent) do
+    if MapSet.member?(visited, current_id) do
+      bfs_parents(graph, rest_queue, visited, result, allowed_parent)
+    else
+      new_visited = MapSet.put(visited, current_id)
+
+      case :digraph.vertex(graph, current_id) do
+        {^current_id, label} ->
+          parent_group = Map.get(label, :parent)
+          is_compound = Map.get(label, :compound, false)
+          is_question = Map.get(label, :class) == "question"
+
+          # Check validity
+          valid? =
+            not is_compound and
+              not is_question and
+              (is_nil(allowed_parent) or parent_group == allowed_parent)
+
+          if valid? do
+            # It's a valid context node. Add to result.
+            # And add its parents to queue for further traversal.
+            parents = :digraph.in_neighbours(graph, current_id)
+            # Append new parents to end of queue for BFS
+            new_queue = rest_queue ++ parents
+
+            bfs_parents(graph, new_queue, new_visited, [current_id | result], allowed_parent)
+          else
+            # Invalid node (stop traversal on this branch)
+            bfs_parents(graph, rest_queue, new_visited, result, allowed_parent)
+          end
+
+        _ ->
+          bfs_parents(graph, rest_queue, new_visited, result, allowed_parent)
+      end
+    end
   end
 
   def find_leaf_nodes(graph) do
@@ -151,45 +194,6 @@ defmodule Dialectic.Graph.Vertex do
     end)
     |> Enum.reject(fn node ->
       node.compound == true
-    end)
-  end
-
-  # Private recursive function that carries along a list of visited vertices.
-  # Traversal rules:
-  # - Stop at group boundaries (do not cross into a different `parent` group).
-  # - Exclude and stop at "question" nodes so prior questions don't bleed into the current one.
-  # - Skip compound (group) vertices entirely.
-  defp collect_parents(graph, vertex, visited, allowed_parent) do
-    parents =
-      :digraph.in_neighbours(graph, vertex)
-      |> Enum.reject(&(&1 in visited))
-
-    Enum.reduce(parents, [], fn parent, acc ->
-      case :digraph.vertex(graph, parent) do
-        {^parent, label} ->
-          parent_group = Map.get(label, :parent)
-
-          cond do
-            # Never include compound/group vertices
-            Map.get(label, :compound, false) ->
-              acc
-
-            # Do not include questions in context and do not traverse beyond them
-            Map.get(label, :class) == "question" ->
-              acc
-
-            # Respect group boundaries: if current node is in a group, only include ancestors in the same group
-            not is_nil(allowed_parent) and parent_group != allowed_parent ->
-              acc
-
-            true ->
-              new_visited = [parent | visited]
-              acc ++ [parent] ++ collect_parents(graph, parent, new_visited, allowed_parent)
-          end
-
-        _ ->
-          acc
-      end
     end)
   end
 
