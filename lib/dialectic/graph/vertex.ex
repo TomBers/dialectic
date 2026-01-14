@@ -169,7 +169,12 @@ defmodule Dialectic.Graph.Vertex do
             # And add its parents to queue for further traversal.
             parents = :digraph.in_neighbours(graph, current_id)
             # Append new parents to end of queue for BFS
-            new_queue = rest_queue ++ parents
+            queue =
+              Enum.reduce(parents, :queue.from_list(rest_queue), fn parent, acc ->
+                :queue.in(parent, acc)
+              end)
+
+            new_queue = :queue.to_list(queue)
 
             bfs_parents(graph, new_queue, new_visited, [current_id | result], allowed_parent)
           else
