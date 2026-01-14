@@ -56,21 +56,6 @@ defmodule DialecticWeb.GraphLiveE2ETest do
     end
   end
 
-  defp find_children_by_parent(_graph, parent_id) do
-    {_, graph} = GraphManager.get_graph(@graph_id)
-
-    :digraph.vertices(graph)
-    |> Enum.reduce([], fn vid, acc ->
-      case :digraph.vertex(graph, vid) do
-        {^vid, v} ->
-          if Map.get(v, :parent) == parent_id, do: [v | acc], else: acc
-
-        _ ->
-          acc
-      end
-    end)
-  end
-
   describe "GraphLive end-to-end interactions" do
     test "node click, answer, delete, branch, combine, move, related ideas, branch list, explore submit, reply-and-answer, note/unnote, toggle lock",
          %{

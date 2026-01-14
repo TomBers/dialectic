@@ -439,9 +439,7 @@ defmodule GraphManager do
     GenServer.call(via_tuple(path), {:find_node_by_id, node_id})
   end
 
-  def add_child(graph_id, parents, llm_fn, class, user, opts \\ []) do
-    save? = Keyword.get(opts, :save, true)
-
+  def add_child(graph_id, parents, llm_fn, class, user) do
     content =
       case class do
         c when c in ["user", "question"] ->
@@ -473,11 +471,7 @@ defmodule GraphManager do
     end
 
     result = add_edges(graph_id, node, parents)
-
-    if save? do
-      save_graph(graph_id)
-    end
-
+    save_graph(graph_id)
     result
   end
 
@@ -564,7 +558,7 @@ defmodule GraphManager do
         # Create the group and assign children (safe server-side mutation)
         _ = create_group(path, "Main", child_ids)
         # Persist immediately so the new group isn't lost until a later save
-        Dialectic.DbActions.DbWorker.save_graph(path)
+        save_graph(path)
         :ok
     end
   end
