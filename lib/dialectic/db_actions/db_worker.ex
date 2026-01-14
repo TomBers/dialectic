@@ -44,10 +44,10 @@ defmodule Dialectic.DbActions.DbWorker do
       "ts" => DateTime.utc_now() |> DateTime.to_iso8601()
     }
 
-    create_job(args, false)
+    create_job(args)
   end
 
-  def save_graph(path, wait \\ false) do
+  def save_graph(path, _wait \\ false) do
     # Build a portable JSON snapshot without exposing the raw digraph handle
     {nodes, edges} =
       GraphManager.vertices(path)
@@ -91,17 +91,11 @@ defmodule Dialectic.DbActions.DbWorker do
       "ts" => DateTime.utc_now() |> DateTime.to_iso8601()
     }
 
-    create_job(args, wait)
+    create_job(args)
   end
 
-  defp create_job(args, true) do
-    args
-    |> new(unique: [period: 5, keys: [:id], states: [:available, :scheduled, :executing]])
-    |> Oban.insert()
-  end
-
-  defp create_job(args, false) do
-    # Prevent duplicate saves even for non-wait jobs
+  defp create_job(args) do
+    # Prevent duplicate saves
     args
     |> new(unique: [period: 5, keys: [:id], states: [:available, :scheduled, :executing]])
     |> Oban.insert()

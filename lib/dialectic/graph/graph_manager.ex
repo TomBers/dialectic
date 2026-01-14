@@ -209,7 +209,7 @@ defmodule GraphManager do
   end
 
   def handle_call({:save_graph, path}, _from, {graph_struct, graph}) do
-    if Application.get_env(:dialectic, :sync_graph_save, false) do
+    if Application.get_env(:dialectic, :sync_tasks_for_testing, false) do
       save_graph_to_db(path, graph)
     else
       Task.Supervisor.start_child(Dialectic.TaskSupervisor, fn ->
@@ -466,7 +466,7 @@ defmodule GraphManager do
       add_node(graph_id, %Vertex{content: content, class: class, user: user, parent: parent_group})
 
     # Stream response to the Node using supervised task
-    if Application.get_env(:dialectic, :sync_graph_save, false) do
+    if Application.get_env(:dialectic, :sync_tasks_for_testing, false) do
       llm_fn.(node)
     else
       Task.Supervisor.start_child(Dialectic.TaskSupervisor, fn -> llm_fn.(node) end)
