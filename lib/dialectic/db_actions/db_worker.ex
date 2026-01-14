@@ -96,14 +96,14 @@ defmodule Dialectic.DbActions.DbWorker do
 
   defp create_job(args, true) do
     args
-    |> new(unique: [period: 1, keys: [:id]])
+    |> new(unique: [period: 5, keys: [:id], states: [:available, :scheduled, :executing]])
     |> Oban.insert()
   end
 
   defp create_job(args, false) do
-    # Always save on completed request
+    # Prevent duplicate saves even for non-wait jobs
     args
-    |> new()
+    |> new(unique: [period: 5, keys: [:id], states: [:available, :scheduled, :executing]])
     |> Oban.insert()
   end
 end

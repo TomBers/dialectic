@@ -752,10 +752,18 @@ const graphHook = {
           explored.has(n.id()),
         ).length;
 
-        this.pushEvent("update_exploration_progress", {
-          explored: exploredCount,
-          total: total,
-        });
+        // Only send progress update if values have changed (debounce)
+        if (
+          !this._lastProgress ||
+          this._lastProgress.explored !== exploredCount ||
+          this._lastProgress.total !== total
+        ) {
+          this.pushEvent("update_exploration_progress", {
+            explored: exploredCount,
+            total: total,
+          });
+          this._lastProgress = { explored: exploredCount, total: total };
+        }
       }
     } catch (e) {
       // no-op

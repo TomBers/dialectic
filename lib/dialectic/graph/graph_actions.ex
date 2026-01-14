@@ -65,16 +65,23 @@ defmodule Dialectic.Graph.GraphActions do
       [node],
       fn n -> LlmInterface.gen_thesis(node, n, graph_id, live_view_topic) end,
       "thesis",
-      user
+      user,
+      save: false
     )
 
-    GraphManager.add_child(
-      graph_id,
-      [node],
-      fn n -> LlmInterface.gen_antithesis(node, n, graph_id, live_view_topic) end,
-      "antithesis",
-      user
-    )
+    result =
+      GraphManager.add_child(
+        graph_id,
+        [node],
+        fn n -> LlmInterface.gen_antithesis(node, n, graph_id, live_view_topic) end,
+        "antithesis",
+        user,
+        save: false
+      )
+
+    # Save once after both nodes are created
+    GraphManager.save_graph(graph_id)
+    result
   end
 
   def combine({graph_id, node1, user, live_view_topic}, combine_node_id) do
@@ -134,23 +141,30 @@ defmodule Dialectic.Graph.GraphActions do
         [node],
         fn _ -> question_text end,
         "question",
-        user
+        user,
+        save: false
       )
 
-    {nil,
-     GraphManager.add_child(
-       graph_id,
-       [question_node],
-       fn n ->
-         if minimal_context do
-           LlmInterface.gen_response_minimal_context(question_node, n, graph_id, live_view_topic)
-         else
-           LlmInterface.gen_response(question_node, n, graph_id, live_view_topic)
-         end
-       end,
-       "answer",
-       user
-     )}
+    answer_node =
+      GraphManager.add_child(
+        graph_id,
+        [question_node],
+        fn n ->
+          if minimal_context do
+            LlmInterface.gen_response_minimal_context(question_node, n, graph_id, live_view_topic)
+          else
+            LlmInterface.gen_response(question_node, n, graph_id, live_view_topic)
+          end
+        end,
+        "answer",
+        user,
+        save: false
+      )
+
+    # Save once after both nodes are created
+    GraphManager.save_graph(graph_id)
+
+    {nil, answer_node}
   end
 
   def regenerate_node({graph_id, _node, user, live_view_topic}, stuck_node_id) do

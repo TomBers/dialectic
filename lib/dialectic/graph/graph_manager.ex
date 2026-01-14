@@ -431,7 +431,9 @@ defmodule GraphManager do
     GenServer.call(via_tuple(path), {:find_node_by_id, node_id})
   end
 
-  def add_child(graph_id, parents, llm_fn, class, user) do
+  def add_child(graph_id, parents, llm_fn, class, user, opts \\ []) do
+    save? = Keyword.get(opts, :save, true)
+
     content =
       case class do
         c when c in ["user", "question"] ->
@@ -459,7 +461,11 @@ defmodule GraphManager do
     Task.Supervisor.start_child(Dialectic.TaskSupervisor, fn -> llm_fn.(node) end)
 
     result = add_edges(graph_id, node, parents)
-    save_graph(graph_id)
+
+    if save? do
+      save_graph(graph_id)
+    end
+
     result
   end
 
