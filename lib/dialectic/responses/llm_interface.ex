@@ -1,4 +1,5 @@
 defmodule Dialectic.Responses.LlmInterface do
+  # Force recompile
   alias Dialectic.Responses.{
     RequestQueue,
     ModeServer,
