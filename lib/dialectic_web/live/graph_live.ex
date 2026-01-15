@@ -3,7 +3,7 @@ defmodule DialecticWeb.GraphLive do
 
   alias Dialectic.Graph.{Vertex, GraphActions, Siblings}
   alias DialecticWeb.{CombineComp, NodeComp}
-  alias Dialectic.DbActions.DbWorker
+
   alias DialecticWeb.Utils.UserUtils
   alias Dialectic.Highlights
 
@@ -88,7 +88,7 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event("node:join_group", %{"node" => nid, "parent" => gid}, socket) do
     _graph = GraphManager.set_parent(socket.assigns.graph_id, nid, gid)
-    DbWorker.save_graph(socket.assigns.graph_id)
+    GraphManager.save_graph(socket.assigns.graph_id)
 
     {:noreply,
      socket
@@ -119,7 +119,7 @@ defmodule DialecticWeb.GraphLive do
             {:noreply, socket}
           else
             _graph = GraphManager.remove_parent(socket.assigns.graph_id, nid)
-            DbWorker.save_graph(socket.assigns.graph_id)
+            GraphManager.save_graph(socket.assigns.graph_id)
 
             {:noreply,
              socket
@@ -286,7 +286,7 @@ defmodule DialecticWeb.GraphLive do
                 next_node =
                   GraphActions.delete_node(graph_action_params(socket), node_id)
 
-                DbWorker.save_graph(socket.assigns.graph_id)
+                GraphManager.save_graph(socket.assigns.graph_id)
                 {_, _graph2} = GraphManager.get_graph(socket.assigns.graph_id)
 
                 # Ensure we navigate to a valid, non-deleted node.
@@ -662,7 +662,7 @@ defmodule DialecticWeb.GraphLive do
 
       if group_id do
         GraphManager.create_group(socket.assigns.graph_id, group_id, [])
-        DbWorker.save_graph(socket.assigns.graph_id)
+        GraphManager.save_graph(socket.assigns.graph_id)
       end
 
       # 2) Create a new root node under the group (if provided)
@@ -679,7 +679,7 @@ defmodule DialecticWeb.GraphLive do
 
       # 3) Load updated graph and node-with-relatives and update assigns/UI
       node2 = GraphManager.find_node_by_id(socket.assigns.graph_id, new_node.id)
-      DbWorker.save_graph(socket.assigns.graph_id)
+      GraphManager.save_graph(socket.assigns.graph_id)
 
       final_node =
         if Map.get(params, "auto_answer") in ["on", "true", "1"] do

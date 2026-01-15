@@ -43,33 +43,43 @@ defmodule Dialectic.Graph.Serialise do
 
     # Convert vertices to cytoscape nodes format
     nodes =
-      Enum.map(vertices, fn vertex ->
+      Enum.flat_map(vertices, fn vertex ->
         # Get the vertex label/data from the digraph
-        {_vertex_data, data} = :digraph.vertex(graph, vertex)
-
-        Vertex.serialize(data)
+        case :digraph.vertex(graph, vertex) do
+          {_vertex_data, data} -> [Vertex.serialize(data)]
+          false -> []
+        end
       end)
 
     # Convert edges to cytoscape edges format
     edges =
-      Enum.map(edges, fn edge ->
-        {_, v1, v2, _} = :digraph.edge(graph, edge)
+      Enum.flat_map(edges, fn edge ->
+        case :digraph.edge(graph, edge) do
+          {_, v1, v2, _} ->
+            # Get vertex data for source and target
+            case {:digraph.vertex(graph, v1), :digraph.vertex(graph, v2)} do
+              {{source_data, _}, {target_data, _}} ->
+                # Create edge ID from source and target names
+                edge_id = source_data <> target_data
 
-        # Get vertex data for source and target
-        {source_data, _} = :digraph.vertex(graph, v1)
-        {target_data, _} = :digraph.vertex(graph, v2)
+                # Create cytoscape edge format
+                [
+                  %{
+                    data: %{
+                      id: edge_id,
+                      source: source_data,
+                      target: target_data
+                    }
+                  }
+                ]
 
-        # Create edge ID from source and target names
-        edge_id = source_data <> target_data
+              _ ->
+                []
+            end
 
-        # Create cytoscape edge format
-        %{
-          data: %{
-            id: edge_id,
-            source: source_data,
-            target: target_data
-          }
-        }
+          false ->
+            []
+        end
       end)
 
     # Combine nodes and edges into final format

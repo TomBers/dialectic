@@ -137,20 +137,22 @@ defmodule Dialectic.Graph.GraphActions do
         user
       )
 
-    {nil,
-     GraphManager.add_child(
-       graph_id,
-       [question_node],
-       fn n ->
-         if minimal_context do
-           LlmInterface.gen_response_minimal_context(question_node, n, graph_id, live_view_topic)
-         else
-           LlmInterface.gen_response(question_node, n, graph_id, live_view_topic)
-         end
-       end,
-       "answer",
-       user
-     )}
+    answer_node =
+      GraphManager.add_child(
+        graph_id,
+        [question_node],
+        fn n ->
+          if minimal_context do
+            LlmInterface.gen_response_minimal_context(question_node, n, graph_id, live_view_topic)
+          else
+            LlmInterface.gen_response(question_node, n, graph_id, live_view_topic)
+          end
+        end,
+        "answer",
+        user
+      )
+
+    {nil, answer_node}
   end
 
   def regenerate_node({graph_id, _node, user, live_view_topic}, stuck_node_id) do

@@ -209,7 +209,16 @@ defmodule GraphManager do
   end
 
   def handle_call({:save_graph, path}, _from, {graph_struct, graph}) do
-    {:reply, save_graph_to_db(path, graph), {graph_struct, graph}}
+    result =
+      if Application.get_env(:dialectic, :sync_tasks_for_testing, false) do
+        save_graph_to_db(path, graph)
+      else
+        Task.Supervisor.start_child(Dialectic.TaskSupervisor, fn ->
+          save_graph_to_db(path, graph)
+        end)
+      end
+
+    {:reply, result, {graph_struct, graph}}
   end
 
   def handle_call({:update_node, {node_id, data}}, _from, {graph_struct, graph}) do
@@ -456,7 +465,11 @@ defmodule GraphManager do
       add_node(graph_id, %Vertex{content: content, class: class, user: user, parent: parent_group})
 
     # Stream response to the Node using supervised task
-    Task.Supervisor.start_child(Dialectic.TaskSupervisor, fn -> llm_fn.(node) end)
+    if Application.get_env(:dialectic, :sync_tasks_for_testing, false) do
+      llm_fn.(node)
+    else
+      Task.Supervisor.start_child(Dialectic.TaskSupervisor, fn -> llm_fn.(node) end)
+    end
 
     result = add_edges(graph_id, node, parents)
     save_graph(graph_id)
@@ -546,7 +559,7 @@ defmodule GraphManager do
         # Create the group and assign children (safe server-side mutation)
         _ = create_group(path, "Main", child_ids)
         # Persist immediately so the new group isn't lost until a later save
-        Dialectic.DbActions.DbWorker.save_graph(path)
+        save_graph(path)
         :ok
     end
   end

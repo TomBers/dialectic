@@ -6,6 +6,8 @@ config :hammer,
 
 config :dialectic, Oban, testing: :manual
 
+config :dialectic, sync_tasks_for_testing: true
+
 # Only in tests, remove the complexity from the password hashing algorithm
 config :bcrypt_elixir, :log_rounds, 1
 
