@@ -209,15 +209,16 @@ defmodule GraphManager do
   end
 
   def handle_call({:save_graph, path}, _from, {graph_struct, graph}) do
-    if Application.get_env(:dialectic, :sync_tasks_for_testing, false) do
-      save_graph_to_db(path, graph)
-    else
-      Task.Supervisor.start_child(Dialectic.TaskSupervisor, fn ->
+    result =
+      if Application.get_env(:dialectic, :sync_tasks_for_testing, false) do
         save_graph_to_db(path, graph)
-      end)
-    end
+      else
+        Task.Supervisor.start_child(Dialectic.TaskSupervisor, fn ->
+          save_graph_to_db(path, graph)
+        end)
+      end
 
-    {:reply, :ok, {graph_struct, graph}}
+    {:reply, result, {graph_struct, graph}}
   end
 
   def handle_call({:update_node, {node_id, data}}, _from, {graph_struct, graph}) do

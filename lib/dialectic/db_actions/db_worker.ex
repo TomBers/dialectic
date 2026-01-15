@@ -50,7 +50,7 @@ defmodule Dialectic.DbActions.DbWorker do
   defp create_job(args) do
     # Prevent duplicate saves
     args
-    |> new(unique: [period: 5, keys: [:id], states: [:available, :scheduled, :executing]])
+    |> new(unique: [period: 2, keys: [:id], states: [:available, :scheduled, :executing]])
     |> Oban.insert()
   end
 end
