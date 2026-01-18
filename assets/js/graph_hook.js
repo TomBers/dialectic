@@ -20,6 +20,7 @@ const layoutGraph = (cy, opts, onDone) => {
 
   // Determine layout based on view mode
   const viewMode = localStorage.getItem("graph_view_mode") || "spaced";
+  const graphDirection = localStorage.getItem("graph_direction") || "TB";
   const baseLayout =
     viewMode === "compact"
       ? layoutConfig.compactLayout
@@ -31,6 +32,7 @@ const layoutGraph = (cy, opts, onDone) => {
 
   const layoutOptions = {
     ...baseLayout,
+    rankDir: graphDirection,
     padding: isSmallGraph ? 200 : baseLayout.padding,
     ...(opts || {}),
   };
@@ -247,11 +249,13 @@ const graphHook = {
 
     // Get view mode from localStorage or default to "spaced"
     const viewMode = localStorage.getItem("graph_view_mode") || "spaced";
+    const graphDirection = localStorage.getItem("graph_direction") || "TB";
 
     this.cy = draw_graph(container, this, JSON.parse(graph), node, viewMode);
 
-    // Track view mode for detecting changes
+    // Track view mode and direction for detecting changes
     this._lastViewMode = viewMode;
+    this._lastGraphDirection = graphDirection;
 
     // Store container reference for reinitializing
     this._container = container;
@@ -302,6 +306,23 @@ const graphHook = {
     };
 
     this.el.addEventListener("viewModeChanged", this._onViewModeChange);
+
+    // Handle graph direction changes via custom event
+    this._onGraphDirectionChange = (e) => {
+      const newDirection = e.detail.direction || "TB";
+
+      if (this._lastGraphDirection === newDirection) return;
+
+      const currentNode = this.el.dataset.node;
+      const graph = this.el.dataset.graph;
+
+      this._handleGraphDirectionChange(newDirection, graph, currentNode);
+    };
+
+    this.el.addEventListener(
+      "graphDirectionChanged",
+      this._onGraphDirectionChange,
+    );
 
     // Layout/centering coordination state
     this._layoutRunning = false;
@@ -704,8 +725,9 @@ const graphHook = {
       } catch (_e) {}
     }
 
-    // Update tracked view mode
+    // Update tracked view mode and direction
     this._lastViewMode = currentViewMode;
+    this._lastGraphDirection = localStorage.getItem("graph_direction") || "TB";
 
     // Re-bind all event handlers and update state
     if (this._updateExploredStatus) this._updateExploredStatus();
@@ -715,6 +737,26 @@ const graphHook = {
     if (this.cy && currentNode) {
       this.cy.elements().removeClass("selected");
       this.cy.getElementById(currentNode).addClass("selected");
+    }
+  },
+
+  _handleGraphDirectionChange(newDirection, graphStr, currentNode) {
+    // Store the current zoom and pan
+    const zoom = this.cy ? this.cy.zoom() : 1;
+    const pan = this.cy ? this.cy.pan() : { x: 0, y: 0 };
+
+    // Simply re-layout with the new direction
+    if (this.cy) {
+      layoutGraph(this.cy, {}, () => {
+        // Restore zoom and pan after layout
+        try {
+          this.cy.zoom(zoom);
+          this.cy.pan(pan);
+        } catch (_e) {}
+
+        // Update tracked direction AFTER layout completes successfully
+        this._lastGraphDirection = newDirection;
+      });
     }
   },
 
@@ -937,6 +979,12 @@ const graphHook = {
   destroyed() {
     if (this._onViewModeChange) {
       this.el.removeEventListener("viewModeChanged", this._onViewModeChange);
+    }
+    if (this._onGraphDirectionChange) {
+      this.el.removeEventListener(
+        "graphDirectionChanged",
+        this._onGraphDirectionChange,
+      );
     }
     // Debug overlay cleanup and listener removal
     if (

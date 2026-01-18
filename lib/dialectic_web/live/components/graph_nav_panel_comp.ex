@@ -64,9 +64,9 @@ defmodule DialecticWeb.GraphNavPanelComp do
             <div class="p-3 space-y-3">
               <!-- View Mode Section -->
               <div>
-                <div class="block text-xs font-medium text-gray-600 mb-1.5">View Mode</div>
+                <div class="block text-sm font-semibold text-gray-900 mb-2">View Mode</div>
                 <label class="flex items-center cursor-pointer">
-                  <span class="mr-2 text-xs font-medium text-gray-700">
+                  <span class="mr-2 text-xs text-gray-600">
                     Spaced
                   </span>
                   <div class="relative">
@@ -80,15 +80,39 @@ defmodule DialecticWeb.GraphNavPanelComp do
                     <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition transform">
                     </div>
                   </div>
-                  <span class="ml-2 text-xs font-medium text-gray-700">
+                  <span class="ml-2 text-xs text-gray-600">
                     Compact
+                  </span>
+                </label>
+              </div>
+              
+    <!-- Graph Direction Section -->
+              <div>
+                <div class="block text-sm font-semibold text-gray-900 mb-2">Graph Direction</div>
+                <label class="flex items-center cursor-pointer">
+                  <span class="mr-2 text-xs text-gray-600">
+                    Top-Down
+                  </span>
+                  <div class="relative">
+                    <input
+                      type="checkbox"
+                      class="sr-only"
+                      data-graph-direction-toggle="toggle"
+                      aria-label="Toggle graph direction"
+                    />
+                    <div class="w-10 h-6 bg-gray-300 rounded-full transition"></div>
+                    <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition transform">
+                    </div>
+                  </div>
+                  <span class="ml-2 text-xs text-gray-600">
+                    Bottom-Up
                   </span>
                 </label>
               </div>
               
     <!-- Zoom Controls Section -->
               <div>
-                <div class="block text-xs font-medium text-gray-600 mb-1.5">Zoom</div>
+                <div class="block text-sm font-semibold text-gray-900 mb-2">Zoom</div>
                 <div class="flex items-center rounded-md border border-gray-200 overflow-hidden">
                   <button
                     id="zoom-out"
@@ -122,7 +146,7 @@ defmodule DialecticWeb.GraphNavPanelComp do
               
     <!-- Keyboard Shortcuts Section -->
               <div class="pt-2 border-t border-gray-200">
-                <div class="block text-xs font-medium text-gray-600 mb-2">Shortcuts</div>
+                <div class="block text-sm font-semibold text-gray-900 mb-2.5">Shortcuts</div>
                 <div class="space-y-1.5 text-xs text-gray-600">
                   <div class="flex items-center justify-between">
                     <span>Pan graph</span>
