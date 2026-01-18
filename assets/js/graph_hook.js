@@ -316,7 +316,7 @@ const graphHook = {
       const currentNode = this.el.dataset.node;
       const graph = this.el.dataset.graph;
 
-      this._handleGraphDirectionChange(newDirection, graph, currentNode);
+      this._handleGraphDirectionChange(newDirection);
     };
 
     this.el.addEventListener(
@@ -740,7 +740,7 @@ const graphHook = {
     }
   },
 
-  _handleGraphDirectionChange(newDirection, graphStr, currentNode) {
+  _handleGraphDirectionChange(newDirection) {
     // Store the current zoom and pan
     const zoom = this.cy ? this.cy.zoom() : 1;
     const pan = this.cy ? this.cy.pan() : { x: 0, y: 0 };
