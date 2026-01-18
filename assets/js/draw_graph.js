@@ -22,6 +22,9 @@ export function draw_graph(
 
   const isSmallGraph = edgeCount === 1;
 
+  // Get graph direction from localStorage
+  const graphDirection = localStorage.getItem("graph_direction") || "TB";
+
   // Select layout based on view mode
   const baseLayoutConfig =
     viewMode === "compact"
@@ -31,6 +34,7 @@ export function draw_graph(
   // Create a modified layout config for small graphs
   const layoutOptions = {
     ...baseLayoutConfig,
+    rankDir: graphDirection,
     // For small graphs, use a larger padding to prevent excessive zoom
     padding: isSmallGraph ? 200 : baseLayoutConfig.padding,
   };

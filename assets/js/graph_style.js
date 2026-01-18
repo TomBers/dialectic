@@ -176,7 +176,7 @@ export function graphStyle(viewMode = "spaced") {
         "line-height": isCompact ? 1.2 : 1.4,
 
         /* aesthetics ------------------------------------------------------ */
-        shape: "roundrectangle",
+        shape: "rectangle",
         "corner-radius": isCompact ? 6 : 12,
         "border-width": isCompact ? 0.75 : 1.5,
         "border-color": "#e5e7eb",
