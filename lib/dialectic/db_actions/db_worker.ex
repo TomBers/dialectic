@@ -37,11 +37,11 @@ defmodule Dialectic.DbActions.DbWorker do
     :ok
   end
 
-  def save_snapshot(path, data) do
+  def save_snapshot(path, data, ts) do
     args = %{
       "id" => path,
       "data" => data,
-      "ts" => DateTime.utc_now() |> DateTime.to_iso8601()
+      "ts" => ts
     }
 
     create_job(args)

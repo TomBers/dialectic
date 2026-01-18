@@ -73,8 +73,9 @@ defmodule GraphManager do
 
   def save_graph_to_db(path, graph) do
     Logger.info("Queuing Save: " <> path)
+    ts = DateTime.utc_now() |> DateTime.to_iso8601()
     json = Serialise.graph_to_json(graph)
-    Dialectic.DbActions.DbWorker.save_snapshot(path, json)
+    Dialectic.DbActions.DbWorker.save_snapshot(path, json, ts)
   end
 
   def handle_call(:get_graph, _from, {graph_struct, graph}) do
