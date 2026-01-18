@@ -439,7 +439,7 @@ defmodule DialecticWeb.HomeLive do
 
                 <div class="border-t border-white/10">
                   <div class="p-5 sm:p-6">
-                    <div class="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6 overflow-auto pr-1 max-h-[60vh] lg:max-h-[calc(100vh-4rem-22rem)]">
+                    <div class="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6">
                       <%= for {g, count} <- @graphs do %>
                         <div class="break-inside-avoid">
                           <DialecticWeb.PageHtml.GraphComp.render
