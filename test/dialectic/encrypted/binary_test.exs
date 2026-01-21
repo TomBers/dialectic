@@ -80,9 +80,15 @@ defmodule Dialectic.Encrypted.BinaryTest do
       assert {:ok, ^plaintext} = Binary.load(encrypted2)
     end
 
-    test "rejects invalid encrypted data" do
-      assert :error = Binary.load("not_encrypted_data")
+    test "handles legacy unencrypted data and rejects invalid encrypted data" do
+      # Legacy unencrypted data (printable strings) are accepted for migration purposes
+      assert {:ok, "legacy_oauth_token"} = Binary.load("legacy_oauth_token")
+
+      # Invalid encrypted data (starts with version byte 1 but too short) is rejected
       assert :error = Binary.load(<<1, 2, 3>>)
+
+      # Non-printable binary data that isn't properly encrypted is rejected
+      assert :error = Binary.load(<<255, 254, 253, 0, 1, 2>>)
     end
 
     test "rejects non-binary values in dump" do

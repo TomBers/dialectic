@@ -83,3 +83,8 @@ config :phoenix_live_view,
 
 # Disable swoosh api client as it is only required for production adapters.
 config :swoosh, :api_client, false
+
+# Configure encryption key for development
+# This is a fixed key for development only - NEVER use this in production
+config :dialectic, Dialectic.Encrypted.Binary,
+  encryption_key: "dev_encryption_key_32_bytes_long!!"

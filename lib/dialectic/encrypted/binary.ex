@@ -48,13 +48,24 @@ defmodule Dialectic.Encrypted.Binary do
 
   @doc """
   Converts from the database binary to a decrypted string.
+
+  This function handles both encrypted and legacy unencrypted data for migration purposes.
+  If decryption fails, it assumes the data is legacy unencrypted text and returns it as-is.
   """
   def load(nil), do: {:ok, nil}
 
   def load(encrypted_data) when is_binary(encrypted_data) do
     case decrypt(encrypted_data) do
-      {:ok, decrypted} -> {:ok, decrypted}
-      :error -> :error
+      {:ok, decrypted} ->
+        {:ok, decrypted}
+
+      :error ->
+        # Fallback: if decryption fails, check if this might be legacy unencrypted data
+        # This handles the migration period where some tokens may still be unencrypted
+        case is_legacy_unencrypted?(encrypted_data) do
+          true -> {:ok, encrypted_data}
+          false -> :error
+        end
     end
   end
 
@@ -114,6 +125,19 @@ defmodule Dialectic.Encrypted.Binary do
   end
 
   defp decrypt(_), do: :error
+
+  # Check if the data appears to be legacy unencrypted text
+  # Encrypted data starts with version byte (1), followed by IV and tag
+  # Legacy OAuth tokens typically start with alphanumeric characters
+  defp is_legacy_unencrypted?(<<1::8, _rest::binary>>), do: false
+
+  defp is_legacy_unencrypted?(data) when is_binary(data) do
+    # If it looks like a readable string (OAuth tokens are typically alphanumeric with dots/dashes)
+    # and doesn't match our encryption format, treat it as legacy data
+    String.valid?(data) and String.printable?(data)
+  end
+
+  defp is_legacy_unencrypted?(_), do: false
 
   defp get_encryption_key do
     config = Application.get_env(:dialectic, __MODULE__)
