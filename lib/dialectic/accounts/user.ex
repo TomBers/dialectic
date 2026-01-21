@@ -2,6 +2,8 @@ defmodule Dialectic.Accounts.User do
   use Ecto.Schema
   import Ecto.Changeset
 
+  alias Dialectic.Encrypted.Binary, as: EncryptedBinary
+
   schema "users" do
     field :email, :string
     field :password, :string, virtual: true, redact: true
@@ -10,8 +12,8 @@ defmodule Dialectic.Accounts.User do
     field :confirmed_at, :utc_datetime
     field :provider, :string
     field :provider_id, :string
-    field :provider_token, :string, redact: true
-    field :provider_refresh_token, :string, redact: true
+    field :provider_token, EncryptedBinary
+    field :provider_refresh_token, EncryptedBinary
 
     has_many :graphs, Dialectic.Accounts.Graph, on_delete: :delete_all
     has_many :notes, Dialectic.Accounts.Note, on_delete: :delete_all
@@ -182,6 +184,9 @@ defmodule Dialectic.Accounts.User do
     |> cast(attrs, [:email, :provider, :provider_id, :provider_token, :provider_refresh_token])
     |> validate_required([:email, :provider, :provider_id])
     |> validate_email([])
+    |> unsafe_validate_unique(:email, Dialectic.Repo)
+    |> unique_constraint(:email)
+    |> unique_constraint([:provider, :provider_id])
     |> put_change(:confirmed_at, DateTime.utc_now() |> DateTime.truncate(:second))
   end
 end

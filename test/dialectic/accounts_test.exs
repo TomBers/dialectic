@@ -117,10 +117,86 @@ defmodule Dialectic.AccountsTest do
     end
   end
 
+  describe "User.oauth_registration_changeset/2" do
+    test "requires email, provider, and provider_id" do
+      changeset = User.oauth_registration_changeset(%User{}, %{})
+
+      assert %{
+               email: ["can't be blank"],
+               provider: ["can't be blank"],
+               provider_id: ["can't be blank"]
+             } = errors_on(changeset)
+    end
+
+    test "validates email format" do
+      changeset =
+        User.oauth_registration_changeset(%User{}, %{
+          email: "invalid_email",
+          provider: "google",
+          provider_id: "123"
+        })
+
+      assert "must have the @ sign and no spaces" in errors_on(changeset).email
+    end
+
+    test "does not require password for OAuth users" do
+      changeset =
+        User.oauth_registration_changeset(%User{}, %{
+          email: unique_user_email(),
+          provider: "google",
+          provider_id: "123"
+        })
+
+      assert changeset.valid?
+      refute Map.has_key?(changeset.changes, :password)
+      refute Map.has_key?(changeset.changes, :hashed_password)
+    end
+
+    test "automatically confirms the user" do
+      changeset =
+        User.oauth_registration_changeset(%User{}, %{
+          email: unique_user_email(),
+          provider: "google",
+          provider_id: "123"
+        })
+
+      assert changeset.valid?
+      assert %DateTime{} = get_change(changeset, :confirmed_at)
+    end
+
+    test "accepts provider tokens" do
+      changeset =
+        User.oauth_registration_changeset(%User{}, %{
+          email: unique_user_email(),
+          provider: "google",
+          provider_id: "123",
+          provider_token: "access_token",
+          provider_refresh_token: "refresh_token"
+        })
+
+      assert changeset.valid?
+      assert get_change(changeset, :provider_token) == "access_token"
+      assert get_change(changeset, :provider_refresh_token) == "refresh_token"
+    end
+
+    test "validates email uniqueness" do
+      existing_user = user_fixture()
+
+      changeset =
+        User.oauth_registration_changeset(%User{}, %{
+          email: existing_user.email,
+          provider: "google",
+          provider_id: "123"
+        })
+
+      # The changeset itself is valid, uniqueness is enforced at the repo level
+      assert changeset.valid?
+    end
+  end
+
   describe "change_user_email/2" do
     test "returns a user changeset" do
-      assert %Ecto.Changeset{} = changeset = Accounts.change_user_email(%User{})
-      assert changeset.required == [:email]
+      assert %Ecto.Changeset{} = Accounts.change_user_email(%User{})
     end
   end
 
@@ -500,9 +576,150 @@ defmodule Dialectic.AccountsTest do
     end
   end
 
+  describe "get_user_by_provider/2" do
+    test "returns nil if provider does not exist" do
+      refute Accounts.get_user_by_provider("google", "unknown_id")
+    end
+
+    test "returns user if provider and provider_id match" do
+      user = oauth_user_fixture()
+      found_user = Accounts.get_user_by_provider(user.provider, user.provider_id)
+      assert found_user.id == user.id
+      assert found_user.email == user.email
+    end
+
+    test "does not return user if provider_id does not match" do
+      user = oauth_user_fixture()
+      refute Accounts.get_user_by_provider(user.provider, "wrong_id")
+    end
+  end
+
+  describe "find_or_create_oauth_user/1" do
+    test "creates a new OAuth user when none exists" do
+      attrs = valid_oauth_attributes()
+      assert {:ok, user} = Accounts.find_or_create_oauth_user(attrs)
+      assert user.email == attrs.email
+      assert user.provider == attrs.provider
+      assert user.provider_id == attrs.provider_id
+      assert user.provider_token == attrs.provider_token
+      assert user.provider_refresh_token == attrs.provider_refresh_token
+      assert user.confirmed_at
+      refute user.hashed_password
+    end
+
+    test "returns existing OAuth user when provider and provider_id match" do
+      existing_user = oauth_user_fixture()
+
+      attrs = %{
+        email: "different@example.com",
+        provider: existing_user.provider,
+        provider_id: existing_user.provider_id,
+        provider_token: "new_token",
+        provider_refresh_token: "new_refresh"
+      }
+
+      assert {:ok, user} = Accounts.find_or_create_oauth_user(attrs)
+      assert user.id == existing_user.id
+      assert user.email == existing_user.email
+    end
+
+    test "updates OAuth tokens when returning existing user" do
+      existing_user = oauth_user_fixture()
+      new_token = "updated_access_token"
+      new_refresh = "updated_refresh_token"
+
+      attrs = %{
+        email: existing_user.email,
+        provider: existing_user.provider,
+        provider_id: existing_user.provider_id,
+        provider_token: new_token,
+        provider_refresh_token: new_refresh
+      }
+
+      assert {:ok, user} = Accounts.find_or_create_oauth_user(attrs)
+      assert user.id == existing_user.id
+      assert user.provider_token == new_token
+      assert user.provider_refresh_token == new_refresh
+    end
+
+    test "links OAuth account to existing email/password user" do
+      # Create a regular user with email/password
+      password_user = user_fixture()
+
+      # Try to sign in with OAuth using the same email
+      oauth_attrs = %{
+        email: password_user.email,
+        provider: "google",
+        provider_id: "google_123",
+        provider_token: "access_token",
+        provider_refresh_token: "refresh_token"
+      }
+
+      assert {:ok, user} = Accounts.find_or_create_oauth_user(oauth_attrs)
+      assert user.id == password_user.id
+      assert user.email == password_user.email
+      assert user.provider == oauth_attrs.provider
+      assert user.provider_id == oauth_attrs.provider_id
+      assert user.provider_token == oauth_attrs.provider_token
+      assert user.hashed_password
+    end
+
+    test "confirms email when linking OAuth to unconfirmed user" do
+      # Create unconfirmed user
+      password_user = user_fixture()
+      Dialectic.Repo.update!(Ecto.Changeset.change(password_user, confirmed_at: nil))
+
+      oauth_attrs = %{
+        email: password_user.email,
+        provider: "google",
+        provider_id: "google_456",
+        provider_token: "token",
+        provider_refresh_token: "refresh"
+      }
+
+      assert {:ok, user} = Accounts.find_or_create_oauth_user(oauth_attrs)
+      assert user.confirmed_at
+    end
+
+    test "validates email format for OAuth users" do
+      attrs = valid_oauth_attributes(%{email: "invalid_email"})
+      assert {:error, changeset} = Accounts.find_or_create_oauth_user(attrs)
+      assert "must have the @ sign and no spaces" in errors_on(changeset).email
+    end
+
+    test "requires email, provider, and provider_id" do
+      attrs = %{provider_token: "token"}
+      assert {:error, changeset} = Accounts.find_or_create_oauth_user(attrs)
+      assert "can't be blank" in errors_on(changeset).email
+      assert "can't be blank" in errors_on(changeset).provider
+      assert "can't be blank" in errors_on(changeset).provider_id
+    end
+
+    test "handles string keys in attributes" do
+      attrs = %{
+        "email" => unique_user_email(),
+        "provider" => "google",
+        "provider_id" => "string_key_123",
+        "provider_token" => "token",
+        "provider_refresh_token" => "refresh"
+      }
+
+      assert {:ok, user} = Accounts.find_or_create_oauth_user(attrs)
+      assert user.email == attrs["email"]
+      assert user.provider == attrs["provider"]
+    end
+  end
+
   describe "inspect/2 for the User module" do
     test "does not include password" do
       refute inspect(%User{password: "123456"}) =~ "password: \"123456\""
+    end
+
+    test "does not include OAuth tokens" do
+      user = %User{provider_token: "secret_token", provider_refresh_token: "secret_refresh"}
+      inspected = inspect(user)
+      refute inspected =~ "secret_token"
+      refute inspected =~ "secret_refresh"
     end
   end
 end

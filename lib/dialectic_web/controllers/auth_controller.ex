@@ -5,6 +5,12 @@ defmodule DialecticWeb.AuthController do
   alias Dialectic.Accounts
   alias DialecticWeb.UserAuth
 
+  def request(conn, _params) do
+    # This action is handled by Ueberauth plug
+    # It redirects to the OAuth provider (e.g., Google)
+    conn
+  end
+
   def callback(%{assigns: %{ueberauth_failure: _fails}} = conn, _params) do
     conn
     |> put_flash(:error, "Failed to authenticate with Google. Please try again.")
@@ -43,7 +49,15 @@ defmodule DialecticWeb.AuthController do
   defp translate_errors(changeset) do
     Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
       Regex.replace(~r"%{(\w+)}", msg, fn _, key ->
-        opts |> Keyword.get(String.to_existing_atom(key), key) |> to_string()
+        value =
+          try do
+            Keyword.get(opts, String.to_existing_atom(key), key)
+          rescue
+            ArgumentError ->
+              key
+          end
+
+        to_string(value)
       end)
     end)
     |> Enum.map(fn {field, errors} ->

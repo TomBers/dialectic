@@ -130,3 +130,18 @@ if api_key = System.get_env("RESEND_API_KEY") do
     adapter: Swoosh.Adapters.Resend,
     api_key: api_key
 end
+
+# Configure OAuth at runtime to ensure environment variables are read when the app starts
+if google_client_id = System.get_env("GOOGLE_CLIENT_ID") do
+  if google_client_secret = System.get_env("GOOGLE_CLIENT_SECRET") do
+    config :ueberauth, Ueberauth.Strategy.Google.OAuth,
+      client_id: google_client_id,
+      client_secret: google_client_secret
+  end
+end
+
+# Configure encryption key for sensitive data (OAuth tokens, etc.)
+# Generate a key with: mix phx.gen.secret 32
+if encryption_key = System.get_env("ENCRYPTION_KEY") do
+  config :dialectic, Dialectic.Encrypted.Binary, encryption_key: encryption_key
+end

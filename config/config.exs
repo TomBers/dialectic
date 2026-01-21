@@ -88,9 +88,8 @@ config :ueberauth, Ueberauth,
     google: {Ueberauth.Strategy.Google, []}
   ]
 
-config :ueberauth, Ueberauth.Strategy.Google.OAuth,
-  client_id: System.get_env("GOOGLE_CLIENT_ID"),
-  client_secret: System.get_env("GOOGLE_CLIENT_SECRET")
+# OAuth credentials are configured in runtime.exs to ensure
+# they are read at runtime, not compile time
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

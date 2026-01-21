@@ -28,4 +28,23 @@ defmodule Dialectic.AccountsFixtures do
     [_, token | _] = String.split(captured_email.text_body, "[TOKEN]")
     token
   end
+
+  def valid_oauth_attributes(attrs \\ %{}) do
+    Enum.into(attrs, %{
+      email: unique_user_email(),
+      provider: "google",
+      provider_id: "google_#{System.unique_integer()}",
+      provider_token: "test_access_token_#{System.unique_integer()}",
+      provider_refresh_token: "test_refresh_token_#{System.unique_integer()}"
+    })
+  end
+
+  def oauth_user_fixture(attrs \\ %{}) do
+    {:ok, user} =
+      attrs
+      |> valid_oauth_attributes()
+      |> Dialectic.Accounts.find_or_create_oauth_user()
+
+    user
+  end
 end

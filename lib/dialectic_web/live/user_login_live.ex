@@ -85,6 +85,7 @@ defmodule DialecticWeb.UserLoginLive do
             <a
               href={~p"/auth/google"}
               class="flex w-full items-center justify-center gap-3 rounded-xl bg-white px-4 py-3 text-sm font-semibold text-zinc-900 shadow-sm ring-1 ring-inset ring-zinc-300 hover:bg-zinc-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-600"
+              aria-label="Sign in using your Google account"
             >
               <svg class="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
                 <path
