@@ -8,6 +8,9 @@ defmodule Dialectic.Accounts.User do
     field :hashed_password, :string, redact: true
     field :current_password, :string, virtual: true, redact: true
     field :confirmed_at, :utc_datetime
+    field :provider, :string
+    field :provider_id, :string
+    field :access_token, :string
 
     has_many :graphs, Dialectic.Accounts.Graph, on_delete: :delete_all
     has_many :notes, Dialectic.Accounts.Note, on_delete: :delete_all
@@ -54,14 +57,19 @@ defmodule Dialectic.Accounts.User do
   end
 
   defp validate_password(changeset, opts) do
-    changeset
-    |> validate_required([:password])
-    |> validate_length(:password, min: 12, max: 72)
-    # Examples of additional password validation:
-    # |> validate_format(:password, ~r/[a-z]/, message: "at least one lower case character")
-    # |> validate_format(:password, ~r/[A-Z]/, message: "at least one upper case character")
-    # |> validate_format(:password, ~r/[!?@#$%^&*_0-9]/, message: "at least one digit or punctuation character")
-    |> maybe_hash_password(opts)
+    # Skip password validation for OAuth users
+    if get_field(changeset, :provider) do
+      changeset
+    else
+      changeset
+      |> validate_required([:password])
+      |> validate_length(:password, min: 12, max: 72)
+      # Examples of additional password validation:
+      # |> validate_format(:password, ~r/[a-z]/, message: "at least one lower case character")
+      # |> validate_format(:password, ~r/[A-Z]/, message: "at least one upper case character")
+      # |> validate_format(:password, ~r/[!?@#$%^&*_0-9]/, message: "at least one digit or punctuation character")
+      |> maybe_hash_password(opts)
+    end
   end
 
   defp maybe_hash_password(changeset, opts) do
@@ -160,5 +168,19 @@ defmodule Dialectic.Accounts.User do
     else
       add_error(changeset, :current_password, "is not valid")
     end
+  end
+
+  @doc """
+  A user changeset for OAuth registration.
+  """
+  def oauth_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:email, :provider, :provider_id, :access_token])
+    |> validate_required([:email, :provider, :provider_id])
+    |> validate_format(:email, ~r/^[^\s]+@[^\s]+$/, message: "must have the @ sign and no spaces")
+    |> validate_length(:email, max: 160)
+    |> unsafe_validate_unique(:email, Dialectic.Repo)
+    |> unique_constraint(:email)
+    |> put_change(:confirmed_at, DateTime.utc_now() |> DateTime.truncate(:second))
   end
 end

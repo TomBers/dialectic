@@ -60,6 +60,13 @@ defmodule Dialectic.Accounts do
   """
   def get_user!(id), do: Repo.get!(User, id)
 
+  @doc """
+  Gets a user by OAuth provider and provider ID.
+  """
+  def get_user_by_provider(provider, provider_id) do
+    Repo.get_by(User, provider: provider, provider_id: provider_id)
+  end
+
   ## User registration
 
   @doc """
@@ -91,6 +98,33 @@ defmodule Dialectic.Accounts do
   """
   def change_user_registration(%User{} = user, attrs \\ %{}) do
     User.registration_changeset(user, attrs, hash_password: false, validate_email: false)
+  end
+
+  @doc """
+  Finds or creates a user from OAuth data.
+
+  Handles concurrent requests gracefully by using on_conflict to update
+  the access token if the user already exists.
+  """
+  def find_or_create_oauth_user(attrs) do
+    provider = attrs[:provider] || attrs["provider"]
+    provider_id = attrs[:provider_id] || attrs["provider_id"]
+
+    case get_user_by_provider(provider, provider_id) do
+      nil ->
+        %User{}
+        |> User.oauth_changeset(attrs)
+        |> Repo.insert(
+          on_conflict: {:replace, [:access_token, :updated_at]},
+          conflict_target: [:provider, :provider_id]
+        )
+
+      user ->
+        # Update access token if provided
+        user
+        |> Ecto.Changeset.change(access_token: attrs[:access_token] || attrs["access_token"])
+        |> Repo.update()
+    end
   end
 
   ## Settings

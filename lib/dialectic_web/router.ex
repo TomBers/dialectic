@@ -105,6 +105,14 @@ defmodule DialecticWeb.Router do
     post "/users/log_in", UserSessionController, :create
   end
 
+  # OAuth routes
+  scope "/auth", DialecticWeb do
+    pipe_through [:browser, :auth]
+
+    get "/:provider", AuthController, :request
+    get "/:provider/callback", AuthController, :callback
+  end
+
   scope "/", DialecticWeb do
     pipe_through [:browser, :require_authenticated_user]
 
