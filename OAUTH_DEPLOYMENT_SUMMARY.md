@@ -28,6 +28,7 @@ A simple, clean Google OAuth authentication system that allows users to sign in 
 **Accounts Context** (`lib/dialectic/accounts.ex`)
 - Added `get_user_by_provider/2` to lookup users by OAuth credentials
 - Added `find_or_create_oauth_user/1` to handle OAuth login flow
+- Uses `on_conflict` to handle concurrent OAuth requests gracefully
 
 **AuthController** (`lib/dialectic_web/controllers/auth_controller.ex`)
 - New controller to handle OAuth callbacks
@@ -129,6 +130,8 @@ This implementation:
 - One migration
 - 300+ lines of changes
 - Reuses existing test infrastructure
+- Handles race conditions with `on_conflict` for concurrent OAuth requests
+- Comprehensive test coverage (4 new OAuth tests)
 
 ## Security Considerations
 
