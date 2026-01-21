@@ -18,6 +18,8 @@ defmodule DialecticWeb.AuthController do
   end
 
   def callback(%{assigns: %{ueberauth_auth: auth}} = conn, _params) do
+    # Note: OAuth providers may not always return a refresh token (e.g., if the user
+    # has already granted permissions). The system handles nil tokens gracefully.
     user_params = %{
       email: auth.info.email,
       provider: to_string(auth.provider),

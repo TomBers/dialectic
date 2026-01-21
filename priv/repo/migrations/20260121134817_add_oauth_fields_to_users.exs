@@ -9,7 +9,7 @@ defmodule Dialectic.Repo.Migrations.AddOauthFieldsToUsers do
       add :provider_refresh_token, :binary
     end
 
-    create unique_index(:users, [:provider, :provider_id])
+    create unique_index(:users, [:provider, :provider_id], where: "provider IS NOT NULL")
 
     # Make hashed_password nullable for OAuth users
     execute "ALTER TABLE users ALTER COLUMN hashed_password DROP NOT NULL"
@@ -27,7 +27,7 @@ defmodule Dialectic.Repo.Migrations.AddOauthFieldsToUsers do
 
     execute "ALTER TABLE users ALTER COLUMN hashed_password SET NOT NULL"
 
-    drop unique_index(:users, [:provider, :provider_id])
+    drop unique_index(:users, [:provider, :provider_id], where: "provider IS NOT NULL")
 
     alter table(:users) do
       remove :provider_refresh_token

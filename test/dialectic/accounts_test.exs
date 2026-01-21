@@ -197,7 +197,8 @@ defmodule Dialectic.AccountsTest do
 
   describe "change_user_email/2" do
     test "returns a user changeset" do
-      assert %Ecto.Changeset{} = Accounts.change_user_email(%User{})
+      assert %Ecto.Changeset{} = changeset = Accounts.change_user_email(%User{})
+      assert changeset.required == [:email]
     end
   end
 
@@ -715,13 +716,13 @@ defmodule Dialectic.AccountsTest do
       refute inspect(%User{password: "123456"}) =~ "password: \"123456\""
     end
 
-    test "does not include OAuth tokens" do
-      # Note: EncryptedBinary type shows values in inspect during development
-      # In production, tokens are encrypted in the database
-      # The redact: true option only applies to string fields with Ecto's default inspect
+    test "includes encrypted OAuth token field names in inspect" do
+      # Note: EncryptedBinary fields show their field names in inspect output
+      # The actual token values are encrypted when stored in the database
+      # This test verifies the field names are present (not redacted in struct inspection)
       user = %User{provider_token: "secret_token", provider_refresh_token: "secret_refresh"}
       inspected = inspect(user)
-      # Tokens will be visible in struct inspect, but are encrypted in database
+      # Field names will be visible in struct inspect, values are encrypted in database
       assert inspected =~ "provider_token:"
       assert inspected =~ "provider_refresh_token:"
     end

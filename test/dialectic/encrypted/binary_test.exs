@@ -28,13 +28,21 @@ defmodule Dialectic.Encrypted.BinaryTest do
 
   describe "dump/1 and load/1" do
     setup do
+      # Save the original config to restore it after the test
+      original_config = Application.get_env(:dialectic, Dialectic.Encrypted.Binary)
+
       # Set up encryption key for tests
       Application.put_env(:dialectic, Dialectic.Encrypted.Binary,
         encryption_key: "test_key_for_encryption_#{System.unique_integer()}"
       )
 
       on_exit(fn ->
-        Application.delete_env(:dialectic, Dialectic.Encrypted.Binary)
+        # Restore original config instead of deleting it
+        if original_config do
+          Application.put_env(:dialectic, Dialectic.Encrypted.Binary, original_config)
+        else
+          Application.delete_env(:dialectic, Dialectic.Encrypted.Binary)
+        end
       end)
 
       :ok
@@ -128,10 +136,18 @@ defmodule Dialectic.Encrypted.BinaryTest do
         provider_refresh_token: "refresh_token_xyz"
       }
 
-      # Set up encryption key
+      # Save and set up encryption key
+      original_config = Application.get_env(:dialectic, Dialectic.Encrypted.Binary)
+
       Application.put_env(:dialectic, Dialectic.Encrypted.Binary,
         encryption_key: "test_key_#{System.unique_integer()}"
       )
+
+      on_exit(fn ->
+        if original_config do
+          Application.put_env(:dialectic, Dialectic.Encrypted.Binary, original_config)
+        end
+      end)
 
       changeset =
         Dialectic.Accounts.User.oauth_registration_changeset(%Dialectic.Accounts.User{}, attrs)

@@ -91,7 +91,9 @@ defmodule Dialectic.Encrypted.Binary do
       end
     rescue
       _e in [ErlangError, ArgumentError] ->
-        # Only catch crypto-specific errors, not RuntimeError
+        # Only catch crypto-specific errors, not RuntimeError.
+        # RuntimeError from get_encryption_key (missing config) intentionally propagates
+        # to ensure configuration errors are not silently ignored.
         :error
     end
   end

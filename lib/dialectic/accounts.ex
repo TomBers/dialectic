@@ -394,18 +394,14 @@ defmodule Dialectic.Accounts do
           nil ->
             # No existing OAuth user, check email or create new
             case email && get_user_by_email(email) do
-              nil ->
-                %User{}
-                |> User.oauth_registration_changeset(attrs)
-                |> Repo.insert()
-
-              false ->
-                %User{}
-                |> User.oauth_registration_changeset(attrs)
-                |> Repo.insert()
-
-              user ->
+              user when not is_nil(user) and user != false ->
                 link_oauth_account(user, attrs)
+
+              _ ->
+                # No existing user with email, or email is nil - create new OAuth user
+                %User{}
+                |> User.oauth_registration_changeset(attrs)
+                |> Repo.insert()
             end
 
           user ->
