@@ -102,11 +102,18 @@ defmodule Dialectic.Encrypted.BinaryTest do
 
   describe "encryption key configuration" do
     test "raises when encryption key is not configured" do
-      Application.delete_env(:dialectic, Dialectic.Encrypted.Binary)
+      # Save the current config
+      original_config = Application.get_env(:dialectic, Dialectic.Encrypted.Binary)
+
+      # Set config without encryption_key
+      Application.put_env(:dialectic, Dialectic.Encrypted.Binary, [])
 
       assert_raise RuntimeError, ~r/Encryption key not configured/, fn ->
         Binary.dump("test")
       end
+
+      # Restore the original config
+      Application.put_env(:dialectic, Dialectic.Encrypted.Binary, original_config)
     end
   end
 

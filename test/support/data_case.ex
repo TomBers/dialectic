@@ -29,6 +29,12 @@ defmodule Dialectic.DataCase do
 
   setup tags do
     Dialectic.DataCase.setup_sandbox(tags)
+
+    # Set up encryption key for OAuth token encryption in tests
+    Application.put_env(:dialectic, Dialectic.Encrypted.Binary,
+      encryption_key: "test_encryption_key_for_oauth_tokens_32bytes_long_string"
+    )
+
     :ok
   end
 

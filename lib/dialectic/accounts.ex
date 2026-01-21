@@ -388,14 +388,42 @@ defmodule Dialectic.Accounts do
     email = attrs[:email] || attrs["email"]
 
     cond do
-      # User exists with this OAuth provider
-      user = get_user_by_provider(provider, provider_id) ->
-        # Update token if provided
-        update_oauth_tokens(user, attrs)
+      # User exists with this OAuth provider (only check if both provider and provider_id are present)
+      provider && provider_id ->
+        case get_user_by_provider(provider, provider_id) do
+          nil ->
+            # No existing OAuth user, check email or create new
+            case email && get_user_by_email(email) do
+              nil ->
+                %User{}
+                |> User.oauth_registration_changeset(attrs)
+                |> Repo.insert()
+
+              false ->
+                %User{}
+                |> User.oauth_registration_changeset(attrs)
+                |> Repo.insert()
+
+              user ->
+                link_oauth_account(user, attrs)
+            end
+
+          user ->
+            # Update token if provided
+            update_oauth_tokens(user, attrs)
+        end
 
       # User exists with this email (link accounts)
-      user = get_user_by_email(email) ->
-        link_oauth_account(user, attrs)
+      email ->
+        case get_user_by_email(email) do
+          nil ->
+            %User{}
+            |> User.oauth_registration_changeset(attrs)
+            |> Repo.insert()
+
+          user ->
+            link_oauth_account(user, attrs)
+        end
 
       # Create new OAuth user
       true ->

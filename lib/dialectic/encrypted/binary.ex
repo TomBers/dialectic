@@ -37,6 +37,16 @@ defmodule Dialectic.Encrypted.Binary do
   def cast(_), do: :error
 
   @doc """
+  Checks if two values are equal. Used by Ecto to detect changes.
+  """
+  def equal?(a, b), do: a == b
+
+  @doc """
+  Embeds the value as-is for dumping.
+  """
+  def embed_as(_), do: :self
+
+  @doc """
   Converts from the database binary to a decrypted string.
   """
   def load(nil), do: {:ok, nil}
@@ -69,36 +79,49 @@ defmodule Dialectic.Encrypted.Binary do
     key = get_encryption_key()
     iv = :crypto.strong_rand_bytes(16)
 
-    case :crypto.crypto_one_time_aead(:aes_256_gcm, key, iv, plaintext, "", 16, true) do
-      {ciphertext, tag} ->
-        # Store: version (1 byte) || iv (16 bytes) || tag (16 bytes) || ciphertext
-        encrypted = <<1::8, iv::binary-16, tag::binary-16, ciphertext::binary>>
-        {:ok, encrypted}
+    try do
+      case :crypto.crypto_one_time_aead(:aes_256_gcm, key, iv, plaintext, "", 16, true) do
+        {ciphertext, tag} ->
+          # Store: version (1 byte) || iv (16 bytes) || tag (16 bytes) || ciphertext
+          encrypted = <<1::8, iv::binary-16, tag::binary-16, ciphertext::binary>>
+          {:ok, encrypted}
 
-      _ ->
+        _ ->
+          :error
+      end
+    rescue
+      _e in [ErlangError, ArgumentError] ->
+        # Only catch crypto-specific errors, not RuntimeError
         :error
     end
-  rescue
-    _ -> :error
   end
 
   defp decrypt(<<1::8, iv::binary-16, tag::binary-16, ciphertext::binary>>) do
     key = get_encryption_key()
 
-    case :crypto.crypto_one_time_aead(:aes_256_gcm, key, iv, ciphertext, "", tag, false) do
-      plaintext when is_binary(plaintext) -> {:ok, plaintext}
-      _ -> :error
+    try do
+      case :crypto.crypto_one_time_aead(:aes_256_gcm, key, iv, ciphertext, "", tag, false) do
+        plaintext when is_binary(plaintext) -> {:ok, plaintext}
+        _ -> :error
+      end
+    rescue
+      _e in [ErlangError, ArgumentError] ->
+        # Only catch crypto-specific errors, not RuntimeError
+        :error
     end
-  rescue
-    _ -> :error
   end
 
   defp decrypt(_), do: :error
 
   defp get_encryption_key do
+    config = Application.get_env(:dialectic, __MODULE__)
+
     key =
-      Application.get_env(:dialectic, __MODULE__)
-      |> Keyword.get(:encryption_key)
+      if config do
+        Keyword.get(config, :encryption_key)
+      else
+        nil
+      end
 
     unless key do
       raise """
