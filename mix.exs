@@ -66,7 +66,9 @@ defmodule Dialectic.MixProject do
       {:igniter, "~> 0.5"},
       {:oban, "~> 2.19"},
       {:req_llm, "~> 1.0.0"},
-      {:hammer, "~> 6.1"}
+      {:hammer, "~> 6.1"},
+      {:ueberauth, "~> 0.10"},
+      {:ueberauth_google, "~> 0.10"}
     ]
   end
 

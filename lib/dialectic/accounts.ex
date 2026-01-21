@@ -350,4 +350,91 @@ defmodule Dialectic.Accounts do
       {:error, :user, changeset, _} -> {:error, changeset}
     end
   end
+
+  ## OAuth
+
+  @doc """
+  Gets a user by provider and provider ID.
+
+  ## Examples
+
+      iex> get_user_by_provider("google", "123456")
+      %User{}
+
+      iex> get_user_by_provider("google", "unknown")
+      nil
+
+  """
+  def get_user_by_provider(provider, provider_id) do
+    Repo.get_by(User, provider: provider, provider_id: provider_id)
+  end
+
+  @doc """
+  Finds or creates a user from OAuth data.
+
+  If a user with the given provider and provider_id exists, returns that user.
+  If a user with the given email exists (from password registration), links the OAuth account.
+  Otherwise, creates a new user.
+
+  ## Examples
+
+      iex> find_or_create_oauth_user(%{email: "user@example.com", provider: "google", provider_id: "123"})
+      {:ok, %User{}}
+
+  """
+  def find_or_create_oauth_user(attrs) do
+    provider = attrs[:provider] || attrs["provider"]
+    provider_id = attrs[:provider_id] || attrs["provider_id"]
+    email = attrs[:email] || attrs["email"]
+
+    cond do
+      # User exists with this OAuth provider
+      user = get_user_by_provider(provider, provider_id) ->
+        # Update token if provided
+        update_oauth_tokens(user, attrs)
+
+      # User exists with this email (link accounts)
+      user = get_user_by_email(email) ->
+        link_oauth_account(user, attrs)
+
+      # Create new OAuth user
+      true ->
+        %User{}
+        |> User.oauth_registration_changeset(attrs)
+        |> Repo.insert()
+    end
+  end
+
+  defp update_oauth_tokens(user, attrs) do
+    token = attrs[:provider_token] || attrs["provider_token"]
+    refresh_token = attrs[:provider_refresh_token] || attrs["provider_refresh_token"]
+
+    changes =
+      %{}
+      |> maybe_put(:provider_token, token)
+      |> maybe_put(:provider_refresh_token, refresh_token)
+
+    if map_size(changes) > 0 do
+      user
+      |> Ecto.Changeset.change(changes)
+      |> Repo.update()
+    else
+      {:ok, user}
+    end
+  end
+
+  defp link_oauth_account(user, attrs) do
+    user
+    |> Ecto.Changeset.change(%{
+      provider: attrs[:provider] || attrs["provider"],
+      provider_id: attrs[:provider_id] || attrs["provider_id"],
+      provider_token: attrs[:provider_token] || attrs["provider_token"],
+      provider_refresh_token: attrs[:provider_refresh_token] || attrs["provider_refresh_token"],
+      confirmed_at: user.confirmed_at || DateTime.utc_now() |> DateTime.truncate(:second)
+    })
+    |> Repo.update()
+  end
+
+  defp maybe_put(map, _key, nil), do: map
+  defp maybe_put(map, key, value), do: Map.put(map, key, value)
 end

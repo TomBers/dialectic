@@ -91,6 +91,14 @@ defmodule DialecticWeb.Router do
 
   ## Authentication routes
 
+  scope "/auth", DialecticWeb do
+    pipe_through [:browser, :auth]
+
+    get "/:provider", AuthController, :request
+    get "/:provider/callback", AuthController, :callback
+    post "/:provider/callback", AuthController, :callback
+  end
+
   scope "/", DialecticWeb do
     pipe_through [:browser, :redirect_if_user_is_authenticated, :auth]
 
