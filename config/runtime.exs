@@ -132,10 +132,11 @@ if api_key = System.get_env("RESEND_API_KEY") do
 end
 
 # Configure Google OAuth at runtime
-if google_client_id = System.get_env("GOOGLE_CLIENT_ID") do
-  if google_client_secret = System.get_env("GOOGLE_CLIENT_SECRET") do
-    config :ueberauth, Ueberauth.Strategy.Google.OAuth,
-      client_id: google_client_id,
-      client_secret: google_client_secret
-  end
+google_client_id = System.get_env("GOOGLE_CLIENT_ID")
+google_client_secret = System.get_env("GOOGLE_CLIENT_SECRET")
+
+if google_client_id && google_client_secret do
+  config :ueberauth, Ueberauth.Strategy.Google.OAuth,
+    client_id: google_client_id,
+    client_secret: google_client_secret
 end

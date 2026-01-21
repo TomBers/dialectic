@@ -102,6 +102,9 @@ defmodule Dialectic.Accounts do
 
   @doc """
   Finds or creates a user from OAuth data.
+
+  Handles concurrent requests gracefully by using on_conflict to update
+  the access token if the user already exists.
   """
   def find_or_create_oauth_user(attrs) do
     provider = attrs[:provider] || attrs["provider"]
@@ -111,7 +114,10 @@ defmodule Dialectic.Accounts do
       nil ->
         %User{}
         |> User.oauth_changeset(attrs)
-        |> Repo.insert()
+        |> Repo.insert(
+          on_conflict: {:replace, [:access_token, :updated_at]},
+          conflict_target: [:provider, :provider_id]
+        )
 
       user ->
         # Update access token if provided

@@ -505,4 +505,96 @@ defmodule Dialectic.AccountsTest do
       refute inspect(%User{password: "123456"}) =~ "password: \"123456\""
     end
   end
+
+  describe "find_or_create_oauth_user/1" do
+    test "creates a new OAuth user" do
+      oauth_attrs = %{
+        email: "oauth@example.com",
+        provider: "google",
+        provider_id: "12345",
+        access_token: "token123"
+      }
+
+      assert {:ok, user} = Accounts.find_or_create_oauth_user(oauth_attrs)
+      assert user.email == "oauth@example.com"
+      assert user.provider == "google"
+      assert user.provider_id == "12345"
+      assert user.access_token == "token123"
+      assert is_nil(user.hashed_password)
+      assert not is_nil(user.confirmed_at)
+    end
+
+    test "updates access token for existing OAuth user" do
+      oauth_attrs = %{
+        email: "oauth@example.com",
+        provider: "google",
+        provider_id: "12345",
+        access_token: "token123"
+      }
+
+      assert {:ok, user} = Accounts.find_or_create_oauth_user(oauth_attrs)
+      original_id = user.id
+
+      # Try to create again with new token - should update
+      updated_attrs = %{
+        email: "oauth@example.com",
+        provider: "google",
+        provider_id: "12345",
+        access_token: "new_token456"
+      }
+
+      assert {:ok, updated_user} = Accounts.find_or_create_oauth_user(updated_attrs)
+      assert updated_user.id == original_id
+      assert updated_user.access_token == "new_token456"
+    end
+
+    test "handles concurrent OAuth requests gracefully" do
+      oauth_attrs = %{
+        email: "concurrent@example.com",
+        provider: "google",
+        provider_id: "concurrent123",
+        access_token: "token1"
+      }
+
+      # Simulate concurrent requests by calling twice
+      task1 = Task.async(fn -> Accounts.find_or_create_oauth_user(oauth_attrs) end)
+      task2 = Task.async(fn -> Accounts.find_or_create_oauth_user(oauth_attrs) end)
+
+      result1 = Task.await(task1)
+      result2 = Task.await(task2)
+
+      # Both should succeed
+      assert {:ok, user1} = result1
+      assert {:ok, user2} = result2
+
+      # Should be the same user
+      assert user1.id == user2.id
+      assert user1.provider_id == "concurrent123"
+    end
+
+    test "validates email uniqueness across all users" do
+      email = "unique@example.com"
+
+      google_attrs = %{
+        email: email,
+        provider: "google",
+        provider_id: "google123",
+        access_token: "google_token"
+      }
+
+      github_attrs = %{
+        email: email,
+        provider: "github",
+        provider_id: "github123",
+        access_token: "github_token"
+      }
+
+      # First OAuth user succeeds
+      assert {:ok, _google_user} = Accounts.find_or_create_oauth_user(google_attrs)
+
+      # Second OAuth user with same email fails due to unique email constraint
+      assert {:error, changeset} = Accounts.find_or_create_oauth_user(github_attrs)
+      assert "has already been taken" in errors_on(changeset).email
+    end
+  end
 end

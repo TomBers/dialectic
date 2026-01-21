@@ -177,7 +177,10 @@ defmodule Dialectic.Accounts.User do
     user
     |> cast(attrs, [:email, :provider, :provider_id, :access_token])
     |> validate_required([:email, :provider, :provider_id])
-    |> validate_email([])
+    |> validate_format(:email, ~r/^[^\s]+@[^\s]+$/, message: "must have the @ sign and no spaces")
+    |> validate_length(:email, max: 160)
+    |> unsafe_validate_unique(:email, Dialectic.Repo)
+    |> unique_constraint(:email)
     |> put_change(:confirmed_at, DateTime.utc_now() |> DateTime.truncate(:second))
   end
 end
