@@ -156,18 +156,25 @@ Complete redesign to icon-only, color-coded buttons:
 ### ✅ Ticket 9: Custom Questions for Highlights
 
 **What Changed:**
-- Significantly enhanced `assets/js/text_selection_hook.js`:
-  - Added `showCustomQuestionInput()` method
-  - Inline textarea for custom questions
-  - Three buttons: "Ask" (custom), "Just Explain", "Cancel"
-  - Keyboard shortcuts: Cmd/Ctrl+Enter, Escape
-- Modified `lib/dialectic_web/live/node_comp.ex`:
-  - Three-button selection UI:
-    - 🔵 "Ask Custom Question" (indigo)
-    - 🔵 "Explain" (blue)
-    - ⚪ "Highlight" (gray)
+- Simplified `assets/js/text_selection_hook.js`:
+  - Removed complex modal/popover logic
+  - Direct inline form handling
+  - Keyboard shortcuts: Enter to submit, Escape to close
+  - 67% less code than original design
+- Redesigned `lib/dialectic_web/live/node_comp.ex`:
+  - **Top row:** Two quick action buttons side-by-side
+    - 🔵 "Explain" (blue) - One-click explanation
+    - ⚪ "Highlight" (gray) - Save selection
+  - **Bottom row:** Custom question form
+    - Text input field
+    - "Ask" submit button
+    - Helpful keyboard hints
 
-**User Impact:** Ask specific questions about selected text, not just get generic explanations.
+**User Impact:** 
+- Simple, clean interface - everything visible at once
+- Quick actions (1 click) OR custom questions (type + submit)
+- No confusing modals or hidden UI
+- Reduced from 4 steps to 2 steps for custom questions
 
 ---
 
@@ -294,9 +301,10 @@ This applies the unique constraint for duplicate highlight prevention.
 - Active node always indicated
 
 **More Flexible:**
-- Custom questions on text selections
+- Custom questions on text selections (inline, simple form)
 - Auto-expanding input for long questions
 - Thread view for context
+- Quick explain OR detailed custom questions
 
 **More Intelligent:**
 - No duplicate highlights
@@ -339,6 +347,7 @@ This applies the unique constraint for duplicate highlight prevention.
 
 **Developer Documentation:**
 - `ACTION_TOOLBAR_REDESIGN.md` - Button redesign rationale
+- `TEXT_SELECTION_UI_REDESIGN.md` - Simplified selection interface
 - Migration files with inline comments
 
 ---

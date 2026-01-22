@@ -46,20 +46,75 @@ const textSelectionHook = {
     this.el.addEventListener("mouseup", this.handleSelection);
     this.el.addEventListener("touchend", this.handleSelection);
 
-    // Handle clicks outside the selection
-    document.addEventListener("mousedown", (e) => {
-      if (!this.el.contains(e.target)) {
-        this.hideSelectionActions();
-      }
-    });
+    // Handle clicks outside - close panel only if clicking truly outside
+    this.handleOutsideClick = (e) => {
+      const selectionActionsEl = this.el.querySelector(".selection-actions");
 
-    // Handle selection clearing
-    document.addEventListener("selectionchange", () => {
-      const selection = window.getSelection();
-      if (selection.isCollapsed) {
-        this.hideSelectionActions();
+      console.log("Click detected:", {
+        target: e.target,
+        panelExists: !!selectionActionsEl,
+        panelHidden: selectionActionsEl?.classList.contains("hidden"),
+        isInsidePanel: selectionActionsEl?.contains(e.target),
+      });
+
+      // If panel is not visible, nothing to do
+      if (
+        !selectionActionsEl ||
+        selectionActionsEl.classList.contains("hidden")
+      ) {
+        console.log("Panel not visible, ignoring click");
+        return;
       }
-    });
+
+      // Check if click is inside the selection actions panel
+      if (selectionActionsEl.contains(e.target)) {
+        console.log("Click inside panel, keeping it open");
+        return; // Don't close
+      }
+
+      // Close if clicking outside
+      console.log("Click outside panel, closing");
+      this.hideSelectionActions();
+    };
+    document.addEventListener("click", this.handleOutsideClick);
+
+    // Handle selection clearing (but not when focused on input)
+    this.handleSelectionChange = () => {
+      const selection = window.getSelection();
+      const selectionActionsEl = this.el.querySelector(".selection-actions");
+
+      console.log("Selection change:", {
+        collapsed: selection.isCollapsed,
+        activeElement: document.activeElement,
+        focusInPanel: selectionActionsEl?.contains(document.activeElement),
+      });
+
+      // Don't close if user has focus in the panel (e.g., typing in input)
+      if (
+        selectionActionsEl &&
+        selectionActionsEl.contains(document.activeElement)
+      ) {
+        console.log("Focus in panel, keeping it open");
+        return;
+      }
+
+      if (selection.isCollapsed) {
+        console.log("Selection collapsed, checking after delay...");
+        // Add delay to allow focus to register (focus fires after selection change)
+        setTimeout(() => {
+          const stillNoFocus =
+            !selectionActionsEl ||
+            !selectionActionsEl.contains(document.activeElement);
+          if (stillNoFocus) {
+            console.log("Still no focus in panel after delay, closing");
+            this.hideSelectionActions();
+          } else {
+            console.log("Focus detected after delay, keeping panel open");
+          }
+        }, 50);
+      }
+    };
+    document.addEventListener("selectionchange", this.handleSelectionChange);
 
     // Initial highlight load
     this.refreshHighlights();
@@ -76,6 +131,8 @@ const textSelectionHook = {
     clearTimeout(this._fetchTimeout);
     this.el.removeEventListener("mouseup", this.handleSelection);
     this.el.removeEventListener("touchend", this.handleSelection);
+    document.removeEventListener("click", this.handleOutsideClick);
+    document.removeEventListener("selectionchange", this.handleSelectionChange);
     window.removeEventListener("highlight:created", this.refreshHighlights);
     this.el.removeEventListener("markdown:rendered", this.refreshHighlights);
   },
@@ -219,11 +276,16 @@ const textSelectionHook = {
       selectionActionsEl.style.top = `${top}px`;
       selectionActionsEl.style.left = `${leftPos}px`;
 
-      // Set up "Ask" button - show input on click
-      const askButton = selectionActionsEl.querySelector(".ask-btn");
-      if (askButton) {
-        askButton.onclick = () => {
-          this.showCustomQuestionInput(selectedText);
+      // Set up "Explain" quick action button
+      const explainButton = selectionActionsEl.querySelector(".explain-btn");
+      if (explainButton) {
+        explainButton.onclick = () => {
+          this.pushEvent("reply-and-answer", {
+            vertex: { content: `Please explain: ${selectedText}` },
+            prefix: "explain",
+            highlight_context: selectedText,
+          });
+          this.hideSelectionActions();
         };
       }
 
@@ -236,16 +298,48 @@ const textSelectionHook = {
         };
       }
 
-      // Set up "Explain" quick action button
-      const explainButton = selectionActionsEl.querySelector(".explain-btn");
-      if (explainButton) {
-        explainButton.onclick = () => {
-          this.pushEvent("reply-and-answer", {
-            vertex: { content: `Please explain: ${selectedText}` },
-            prefix: "explain",
-            highlight_context: selectedText,
-          });
-          this.hideSelectionActions();
+      // Set up custom question input and submit
+      const customInput = selectionActionsEl.querySelector(
+        ".custom-question-input",
+      );
+      const submitButton = selectionActionsEl.querySelector(
+        ".submit-custom-question",
+      );
+
+      if (customInput && submitButton) {
+        customInput.value = "";
+        customInput.placeholder = "What would you like to know?";
+
+        // Auto-focus the input for better UX (after a small delay to ensure panel is visible)
+        setTimeout(() => {
+          if (!selectionActionsEl.classList.contains("hidden")) {
+            customInput.focus();
+          }
+        }, 100);
+
+        submitButton.onclick = () => {
+          const question = customInput.value.trim();
+          if (question) {
+            this.pushEvent("reply-and-answer", {
+              vertex: {
+                content: `${question}\n\nRegarding: "${selectedText}"`,
+              },
+              prefix: "explain",
+              highlight_context: selectedText,
+            });
+            this.hideSelectionActions();
+          }
+        };
+
+        // Handle Enter key to submit
+        customInput.onkeydown = (e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            submitButton.click();
+          } else if (e.key === "Escape") {
+            e.preventDefault();
+            this.hideSelectionActions();
+          }
         };
       }
     }, 10); // 10ms delay
@@ -308,121 +402,14 @@ const textSelectionHook = {
     if (selectionActionsEl) {
       selectionActionsEl.classList.add("hidden");
       selectionActionsEl.classList.remove("flex");
-    }
 
-    // Also hide custom question input if it exists
-    const customInputEl = this.el.querySelector(".custom-question-input");
-    if (customInputEl) {
-      customInputEl.classList.add("hidden");
-      customInputEl.classList.remove("flex");
-    }
-  },
-
-  showCustomQuestionInput(selectedText) {
-    // Hide the initial action buttons
-    const selectionActionsEl = this.el.querySelector(".selection-actions");
-    if (selectionActionsEl) {
-      selectionActionsEl.classList.add("hidden");
-      selectionActionsEl.classList.remove("flex");
-    }
-
-    // Show or create custom question input
-    let customInputEl = this.el.querySelector(".custom-question-input");
-    if (!customInputEl) {
-      // Create the input element
-      customInputEl = document.createElement("div");
-      customInputEl.className =
-        "custom-question-input hidden absolute bg-white shadow-lg rounded-lg p-2 z-10 border border-indigo-200 min-w-[300px]";
-
-      customInputEl.innerHTML = `
-        <div class="flex flex-col gap-2">
-          <div class="text-xs font-medium text-gray-700">Ask about this selection:</div>
-          <textarea
-            class="custom-question-textarea w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 resize-none"
-            rows="2"
-            placeholder="What would you like to know about this text?"
-          ></textarea>
-          <div class="flex gap-2">
-            <button class="submit-custom-question flex-1 bg-indigo-500 hover:bg-indigo-600 text-white text-xs py-1.5 px-3 rounded-md">
-              Ask
-            </button>
-            <button class="explain-default flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs py-1.5 px-3 rounded-md">
-              Just Explain
-            </button>
-            <button class="cancel-custom-question bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs py-1.5 px-3 rounded-md">
-              Cancel
-            </button>
-          </div>
-        </div>
-      `;
-
-      this.el.appendChild(customInputEl);
-    }
-
-    // Position it where the actions were
-    if (selectionActionsEl) {
-      customInputEl.style.top = selectionActionsEl.style.top;
-      customInputEl.style.left = selectionActionsEl.style.left;
-    }
-
-    // Show the input
-    customInputEl.classList.remove("hidden");
-    customInputEl.classList.add("flex");
-
-    // Focus the textarea
-    const textarea = customInputEl.querySelector(".custom-question-textarea");
-    if (textarea) {
-      textarea.value = "";
-      textarea.focus();
-    }
-
-    // Set up event handlers
-    const submitBtn = customInputEl.querySelector(".submit-custom-question");
-    const explainBtn = customInputEl.querySelector(".explain-default");
-    const cancelBtn = customInputEl.querySelector(".cancel-custom-question");
-
-    if (submitBtn) {
-      submitBtn.onclick = () => {
-        const question = textarea.value.trim();
-        if (question) {
-          this.pushEvent("reply-and-answer", {
-            vertex: { content: `${question}\n\nRegarding: "${selectedText}"` },
-            prefix: "explain",
-            highlight_context: selectedText,
-          });
-        }
-        this.hideSelectionActions();
-      };
-    }
-
-    if (explainBtn) {
-      explainBtn.onclick = () => {
-        this.pushEvent("reply-and-answer", {
-          vertex: { content: `Please explain: ${selectedText}` },
-          prefix: "explain",
-          highlight_context: selectedText,
-        });
-        this.hideSelectionActions();
-      };
-    }
-
-    if (cancelBtn) {
-      cancelBtn.onclick = () => {
-        this.hideSelectionActions();
-      };
-    }
-
-    // Handle Enter key to submit
-    if (textarea) {
-      textarea.onkeydown = (e) => {
-        if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-          e.preventDefault();
-          submitBtn.click();
-        } else if (e.key === "Escape") {
-          e.preventDefault();
-          this.hideSelectionActions();
-        }
-      };
+      // Clear custom input if present
+      const customInput = selectionActionsEl.querySelector(
+        ".custom-question-input",
+      );
+      if (customInput) {
+        customInput.value = "";
+      }
     }
   },
 
