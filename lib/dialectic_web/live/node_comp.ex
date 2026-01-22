@@ -1,6 +1,74 @@
 defmodule DialecticWeb.NodeComp do
   use DialecticWeb, :live_component
 
+  # Helper to extract a readable title from node content
+  defp extract_node_title(node) do
+    case node do
+      %{content: content} when is_binary(content) and content != "" ->
+        content
+        |> String.replace(~r/\r\n|\r/, "\n")
+        |> String.split("\n")
+        |> List.first()
+        |> Kernel.||("")
+        |> String.replace(~r/^\s*\#{1,6}\s*/, "")
+        |> String.replace(~r/^\s*title\s*:?\s*/i, "")
+        |> String.replace("**", "")
+        |> String.trim()
+        |> case do
+          "" -> Map.get(node, :id, "Untitled")
+          title -> String.slice(title, 0, 80) <> if String.length(title) > 80, do: "...", else: ""
+        end
+
+      _ ->
+        if is_map(node) && Map.get(node, :id), do: Map.get(node, :id), else: "Untitled"
+    end
+  end
+
+  @impl true
+  def update(assigns, socket) do
+    base_node =
+      case Map.get(assigns, :node) do
+        %{} = n -> n
+        _ -> %{}
+      end
+
+    # Normalize required fields so template can use @node.id/content/children directly
+    node =
+      base_node
+      |> Map.put_new(:id, "")
+      |> Map.put_new(:content, "")
+      |> Map.put_new(:children, [])
+
+    node_id = Map.get(node, :id, "")
+
+    # Check if we should show the thread view (default open if there are parents)
+    has_parents = length(Map.get(node, :parents, [])) > 0
+    show_thread = Map.get(assigns, :show_thread, has_parents)
+
+    {:ok,
+     assign(socket,
+       node_id: node_id,
+       node: node,
+       user: Map.get(assigns, :user, nil),
+       form: Map.get(assigns, :form, nil),
+       cut_off: Map.get(assigns, :cut_off, 500),
+       ask_question: Map.get(assigns, :ask_question, true),
+       graph_id: Map.get(assigns, :graph_id, ""),
+       graph_owner_id: Map.get(assigns, :graph_owner_id, nil),
+       current_user: Map.get(assigns, :current_user, nil),
+       menu_visible: Map.get(assigns, :menu_visible, true),
+       streaming: Map.get(assigns, :streaming, false),
+       exploration_stats: Map.get(assigns, :exploration_stats, nil),
+       show_thread: show_thread
+     )}
+  end
+
+  @impl true
+  def handle_event("toggle_thread", _params, socket) do
+    {:noreply, assign(socket, show_thread: !socket.assigns.show_thread)}
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div>
@@ -16,6 +84,69 @@ defmodule DialecticWeb.NodeComp do
         <%= if @node.id == "start" do %>
           <.live_component module={DialecticWeb.StartTutorialComp} id="start-tutorial" />
         <% else %>
+          <%!-- Thread View (Ancestor Chain) --%>
+          <%= if length(@node.parents || []) > 0 do %>
+            <div class="border-b border-gray-200 bg-gray-50 px-3 sm:px-4 py-2">
+              <button
+                type="button"
+                phx-click="toggle_thread"
+                phx-target={@myself}
+                class="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900 w-full"
+              >
+                <svg
+                  class={"w-4 h-4 transition-transform " <> if(@show_thread, do: "rotate-90", else: "")}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+                <span>
+                  Thread ({length(@node.parents || [])} ancestor{if length(@node.parents || []) != 1,
+                    do: "s",
+                    else: ""})
+                </span>
+              </button>
+
+              <%= if @show_thread do %>
+                <div class="mt-3 space-y-2">
+                  <%= for {parent, index} <- Enum.with_index(@node.parents || []) do %>
+                    <div class="bg-white rounded-lg border border-gray-200 p-2 hover:border-indigo-300 transition-colors">
+                      <div class="flex items-start gap-2">
+                        <div class="flex-none text-xs font-mono text-gray-500 pt-0.5">
+                          {index + 1}.
+                        </div>
+                        <div class="flex-1 min-w-0">
+                          <div class="flex items-center gap-2 mb-1">
+                            <span class={"inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium " <> DialecticWeb.ColUtils.badge_class(parent.class || "")}>
+                              {DialecticWeb.ColUtils.node_type_label(parent.class || "")}
+                            </span>
+                          </div>
+                          <div class="text-sm font-medium text-gray-900 mb-1">
+                            {extract_node_title(parent)}
+                          </div>
+                          <button
+                            type="button"
+                            phx-click="node_clicked"
+                            phx-value-id={parent.id}
+                            class="text-xs text-indigo-600 hover:text-indigo-800 hover:underline"
+                          >
+                            View this node →
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+
           <div
             class={"flex-grow overflow-auto scroll-smooth pt-2 pb-10 px-3 sm:px-4 " <> if(String.length(@node.content) == 0, do: "hidden", else: "")}
             id={"tt-node-" <> @node.id}
@@ -57,7 +188,7 @@ defmodule DialecticWeb.NodeComp do
                 </div>
               </div>
               <div class="selection-actions hidden absolute bg-white shadow-lg rounded-lg p-1 sm:p-2 z-10 border border-gray-200 gap-2">
-                <button class="ask-btn bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 sm:py-1.5 px-2 sm:px-3 rounded-full flex items-center">
+                <button class="ask-btn bg-indigo-500 hover:bg-indigo-600 text-white text-xs py-1 sm:py-1.5 px-2 sm:px-3 rounded-full flex items-center">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     class="h-3 w-3 mr-0.5 sm:mr-1"
@@ -72,7 +203,24 @@ defmodule DialecticWeb.NodeComp do
                       d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
-                  Ask about selection
+                  Ask Custom Question
+                </button>
+                <button class="explain-btn bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 sm:py-1.5 px-2 sm:px-3 rounded-full flex items-center">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-3 w-3 mr-0.5 sm:mr-1"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  Explain
                 </button>
                 <button class="add-note-btn bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs py-1 sm:py-1.5 px-2 sm:px-3 rounded-full flex items-center transition-colors">
                   <svg
@@ -141,38 +289,5 @@ defmodule DialecticWeb.NodeComp do
       </div>
     </div>
     """
-  end
-
-  def update(assigns, socket) do
-    base_node =
-      case Map.get(assigns, :node) do
-        %{} = n -> n
-        _ -> %{}
-      end
-
-    # Normalize required fields so template can use @node.id/content/children directly
-    node =
-      base_node
-      |> Map.put_new(:id, "")
-      |> Map.put_new(:content, "")
-      |> Map.put_new(:children, [])
-
-    node_id = Map.get(node, :id, "")
-
-    {:ok,
-     assign(socket,
-       node_id: node_id,
-       node: node,
-       user: Map.get(assigns, :user, nil),
-       form: Map.get(assigns, :form, nil),
-       cut_off: Map.get(assigns, :cut_off, 500),
-       ask_question: Map.get(assigns, :ask_question, true),
-       graph_id: Map.get(assigns, :graph_id, ""),
-       graph_owner_id: Map.get(assigns, :graph_owner_id, nil),
-       current_user: Map.get(assigns, :current_user, nil),
-       menu_visible: Map.get(assigns, :menu_visible, true),
-       streaming: Map.get(assigns, :streaming, false),
-       exploration_stats: Map.get(assigns, :exploration_stats, nil)
-     )}
   end
 end

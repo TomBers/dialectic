@@ -476,6 +476,70 @@ defmodule DialecticWeb.RightPanelComp do
 
       <div class="bg-white border border-gray-200 rounded-md">
         <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
+          Node Colors
+        </div>
+        <div class="p-1 text-[11px] text-gray-700 space-y-1.5">
+          <div class="flex items-start gap-1.5">
+            <div class={"w-3 h-3 rounded-full flex-shrink-0 mt-0.5 " <> DialecticWeb.ColUtils.dot_class("user")}>
+            </div>
+            <div class="flex-1">
+              <div class="font-medium">{DialecticWeb.ColUtils.node_type_label("user")}</div>
+              <div class="text-[10px] text-gray-600">Your questions and comments</div>
+            </div>
+          </div>
+          <div class="flex items-start gap-1.5">
+            <div class={"w-3 h-3 rounded-full flex-shrink-0 mt-0.5 " <> DialecticWeb.ColUtils.dot_class("answer")}>
+            </div>
+            <div class="flex-1">
+              <div class="font-medium">{DialecticWeb.ColUtils.node_type_label("answer")}</div>
+              <div class="text-[10px] text-gray-600">AI-generated responses</div>
+            </div>
+          </div>
+          <div class="flex items-start gap-1.5">
+            <div class={"w-3 h-3 rounded-full flex-shrink-0 mt-0.5 " <> DialecticWeb.ColUtils.dot_class("thesis")}>
+            </div>
+            <div class="flex-1">
+              <div class="font-medium">{DialecticWeb.ColUtils.node_type_label("thesis")}</div>
+              <div class="text-[10px] text-gray-600">Supporting arguments</div>
+            </div>
+          </div>
+          <div class="flex items-start gap-1.5">
+            <div class={"w-3 h-3 rounded-full flex-shrink-0 mt-0.5 " <> DialecticWeb.ColUtils.dot_class("antithesis")}>
+            </div>
+            <div class="flex-1">
+              <div class="font-medium">{DialecticWeb.ColUtils.node_type_label("antithesis")}</div>
+              <div class="text-[10px] text-gray-600">Counterarguments</div>
+            </div>
+          </div>
+          <div class="flex items-start gap-1.5">
+            <div class={"w-3 h-3 rounded-full flex-shrink-0 mt-0.5 " <> DialecticWeb.ColUtils.dot_class("synthesis")}>
+            </div>
+            <div class="flex-1">
+              <div class="font-medium">{DialecticWeb.ColUtils.node_type_label("synthesis")}</div>
+              <div class="text-[10px] text-gray-600">Balanced perspectives</div>
+            </div>
+          </div>
+          <div class="flex items-start gap-1.5">
+            <div class={"w-3 h-3 rounded-full flex-shrink-0 mt-0.5 " <> DialecticWeb.ColUtils.dot_class("ideas")}>
+            </div>
+            <div class="flex-1">
+              <div class="font-medium">{DialecticWeb.ColUtils.node_type_label("ideas")}</div>
+              <div class="text-[10px] text-gray-600">Related concepts</div>
+            </div>
+          </div>
+          <div class="flex items-start gap-1.5">
+            <div class={"w-3 h-3 rounded-full flex-shrink-0 mt-0.5 " <> DialecticWeb.ColUtils.dot_class("deepdive")}>
+            </div>
+            <div class="flex-1">
+              <div class="font-medium">{DialecticWeb.ColUtils.node_type_label("deepdive")}</div>
+              <div class="text-[10px] text-gray-600">In-depth explorations</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white border border-gray-200 rounded-md">
+        <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
           Keyboard Shortcuts
         </div>
         <div class="p-1 text-[11px] text-gray-700 space-y-1">

@@ -49,4 +49,35 @@ defmodule DialecticWeb.ColUtils do
   def dot_class("ideas"), do: "bg-orange-500"
   def dot_class("deepdive"), do: "bg-cyan-500"
   def dot_class(_), do: "bg-gray-300"
+
+  @doc """
+  Returns a human-readable label for a node type.
+  """
+  def node_type_label("origin"), do: "Origin"
+  def node_type_label("question"), do: "Question"
+  def node_type_label("user"), do: "User Comment"
+  def node_type_label("answer"), do: "Answer"
+  def node_type_label("thesis"), do: "Pro / Supporting Point"
+  def node_type_label("antithesis"), do: "Con / Counterpoint"
+  def node_type_label("synthesis"), do: "Synthesis / Balanced View"
+  def node_type_label("ideas"), do: "Related Ideas"
+  def node_type_label("deepdive"), do: "Deep Dive"
+  def node_type_label(_), do: "Node"
+
+  @doc """
+  Returns a description explaining the node type and its color.
+  """
+  def node_type_description("origin"), do: "The starting point of the conversation (Black)"
+  def node_type_description("question"), do: "A question posed to the AI (Blue)"
+  def node_type_description("user"), do: "A comment or thought from a user (Blue)"
+  def node_type_description("answer"), do: "An AI-generated response (Gray)"
+  def node_type_description("thesis"), do: "A supporting argument or pro point (Green)"
+  def node_type_description("antithesis"), do: "A counterargument or con point (Red)"
+
+  def node_type_description("synthesis"),
+    do: "A balanced synthesis of multiple perspectives (Purple)"
+
+  def node_type_description("ideas"), do: "Related ideas and connections (Orange)"
+  def node_type_description("deepdive"), do: "An in-depth exploration of a topic (Cyan)"
+  def node_type_description(_), do: "A node in the conversation"
 end

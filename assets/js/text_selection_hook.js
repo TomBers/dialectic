@@ -219,17 +219,11 @@ const textSelectionHook = {
       selectionActionsEl.style.top = `${top}px`;
       selectionActionsEl.style.left = `${leftPos}px`;
 
-      // Set up "Ask" button
+      // Set up "Ask" button - show input on click
       const askButton = selectionActionsEl.querySelector(".ask-btn");
       if (askButton) {
         askButton.onclick = () => {
-          this.pushEvent("reply-and-answer", {
-            vertex: { content: `Please explain: ${selectedText}` },
-            prefix: "explain",
-          });
-
-          // Hide the action button after clicking
-          this.hideSelectionActions();
+          this.showCustomQuestionInput(selectedText);
         };
       }
 
@@ -238,6 +232,19 @@ const textSelectionHook = {
       if (addNoteButton) {
         addNoteButton.onclick = () => {
           this.createHighlight(selectedText);
+          this.hideSelectionActions();
+        };
+      }
+
+      // Set up "Explain" quick action button
+      const explainButton = selectionActionsEl.querySelector(".explain-btn");
+      if (explainButton) {
+        explainButton.onclick = () => {
+          this.pushEvent("reply-and-answer", {
+            vertex: { content: `Please explain: ${selectedText}` },
+            prefix: "explain",
+            highlight_context: selectedText,
+          });
           this.hideSelectionActions();
         };
       }
@@ -302,6 +309,121 @@ const textSelectionHook = {
       selectionActionsEl.classList.add("hidden");
       selectionActionsEl.classList.remove("flex");
     }
+
+    // Also hide custom question input if it exists
+    const customInputEl = this.el.querySelector(".custom-question-input");
+    if (customInputEl) {
+      customInputEl.classList.add("hidden");
+      customInputEl.classList.remove("flex");
+    }
+  },
+
+  showCustomQuestionInput(selectedText) {
+    // Hide the initial action buttons
+    const selectionActionsEl = this.el.querySelector(".selection-actions");
+    if (selectionActionsEl) {
+      selectionActionsEl.classList.add("hidden");
+      selectionActionsEl.classList.remove("flex");
+    }
+
+    // Show or create custom question input
+    let customInputEl = this.el.querySelector(".custom-question-input");
+    if (!customInputEl) {
+      // Create the input element
+      customInputEl = document.createElement("div");
+      customInputEl.className =
+        "custom-question-input hidden absolute bg-white shadow-lg rounded-lg p-2 z-10 border border-indigo-200 min-w-[300px]";
+
+      customInputEl.innerHTML = `
+        <div class="flex flex-col gap-2">
+          <div class="text-xs font-medium text-gray-700">Ask about this selection:</div>
+          <textarea
+            class="custom-question-textarea w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 resize-none"
+            rows="2"
+            placeholder="What would you like to know about this text?"
+          ></textarea>
+          <div class="flex gap-2">
+            <button class="submit-custom-question flex-1 bg-indigo-500 hover:bg-indigo-600 text-white text-xs py-1.5 px-3 rounded-md">
+              Ask
+            </button>
+            <button class="explain-default flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs py-1.5 px-3 rounded-md">
+              Just Explain
+            </button>
+            <button class="cancel-custom-question bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs py-1.5 px-3 rounded-md">
+              Cancel
+            </button>
+          </div>
+        </div>
+      `;
+
+      this.el.appendChild(customInputEl);
+    }
+
+    // Position it where the actions were
+    if (selectionActionsEl) {
+      customInputEl.style.top = selectionActionsEl.style.top;
+      customInputEl.style.left = selectionActionsEl.style.left;
+    }
+
+    // Show the input
+    customInputEl.classList.remove("hidden");
+    customInputEl.classList.add("flex");
+
+    // Focus the textarea
+    const textarea = customInputEl.querySelector(".custom-question-textarea");
+    if (textarea) {
+      textarea.value = "";
+      textarea.focus();
+    }
+
+    // Set up event handlers
+    const submitBtn = customInputEl.querySelector(".submit-custom-question");
+    const explainBtn = customInputEl.querySelector(".explain-default");
+    const cancelBtn = customInputEl.querySelector(".cancel-custom-question");
+
+    if (submitBtn) {
+      submitBtn.onclick = () => {
+        const question = textarea.value.trim();
+        if (question) {
+          this.pushEvent("reply-and-answer", {
+            vertex: { content: `${question}\n\nRegarding: "${selectedText}"` },
+            prefix: "explain",
+            highlight_context: selectedText,
+          });
+        }
+        this.hideSelectionActions();
+      };
+    }
+
+    if (explainBtn) {
+      explainBtn.onclick = () => {
+        this.pushEvent("reply-and-answer", {
+          vertex: { content: `Please explain: ${selectedText}` },
+          prefix: "explain",
+          highlight_context: selectedText,
+        });
+        this.hideSelectionActions();
+      };
+    }
+
+    if (cancelBtn) {
+      cancelBtn.onclick = () => {
+        this.hideSelectionActions();
+      };
+    }
+
+    // Handle Enter key to submit
+    if (textarea) {
+      textarea.onkeydown = (e) => {
+        if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+          e.preventDefault();
+          submitBtn.click();
+        } else if (e.key === "Escape") {
+          e.preventDefault();
+          this.hideSelectionActions();
+        }
+      };
+    }
   },
 
   createHighlight(text) {
@@ -343,6 +465,39 @@ const textSelectionHook = {
         if (response.status === 401) {
           this.pushEvent("show_login_required", {});
           return null;
+        }
+
+        if (response.status === 422) {
+          // Duplicate highlight - find and focus existing one
+          return response.json().then((errorData) => {
+            // Check if it's a duplicate constraint error
+            if (
+              errorData.errors &&
+              errorData.errors.some((e) =>
+                e.includes("highlight already exists"),
+              )
+            ) {
+              // Try to find the existing highlight with same offsets
+              return fetch(
+                `/api/highlights?mudg_id=${this.mudgId}&node_id=${this.nodeId}`,
+                { credentials: "include" },
+              )
+                .then((res) => res.json())
+                .then((json) => {
+                  const existingHighlight = json.data.find(
+                    (h) =>
+                      h.selection_start === offsets.start &&
+                      h.selection_end === offsets.end,
+                  );
+                  if (existingHighlight) {
+                    // Scroll to and pulse the existing highlight
+                    this.scrollToHighlight({ id: existingHighlight.id });
+                  }
+                  return null;
+                });
+            }
+            throw new Error("Failed to create highlight");
+          });
         }
 
         if (!response.ok) throw new Error("Failed to create highlight");

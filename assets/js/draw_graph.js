@@ -415,12 +415,30 @@ export function draw_graph(
   });
 
   // Node selection handling
+  let lastTapTime = 0;
+  let lastTapNode = null;
+
   cy.on("tap", "node", function (event) {
     const n = this;
     // exit early for compound/group nodes so they are not navigable
     if (n.isParent()) return;
 
     const nodeId = n.id();
+
+    // Double-tap detection (within 300ms)
+    const now = Date.now();
+    const timeDiff = now - lastTapTime;
+
+    if (timeDiff < 300 && lastTapNode === nodeId) {
+      // Double-tap detected - open reader panel
+      context.pushEvent("toggle_drawer", {});
+      lastTapTime = 0;
+      lastTapNode = null;
+      return;
+    }
+
+    lastTapTime = now;
+    lastTapNode = nodeId;
 
     // Send basic click event
     context.pushEvent("node_clicked", { id: nodeId });

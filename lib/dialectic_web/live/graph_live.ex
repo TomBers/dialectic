@@ -565,7 +565,7 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event(
         "reply-and-answer",
-        %{"vertex" => %{"content" => answer}, "prefix" => prefix} = _params,
+        %{"vertex" => %{"content" => answer}, "prefix" => prefix} = params,
         socket
       ) do
     cond do
@@ -574,30 +574,35 @@ defmodule DialecticWeb.GraphLive do
 
       true ->
         minimal_context = prefix == "explain"
+        highlight_context = Map.get(params, "highlight_context")
 
         update_graph(
           socket,
           GraphActions.ask_and_answer(
             graph_action_params(socket, socket.assigns.node),
             answer,
-            minimal_context: minimal_context
+            minimal_context: minimal_context,
+            highlight_context: highlight_context
           ),
           "answer"
         )
     end
   end
 
-  def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}} = _params, socket) do
+  def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}} = params, socket) do
     cond do
       not socket.assigns.can_edit ->
         {:noreply, socket |> put_flash(:error, "This graph is locked")}
 
       true ->
+        highlight_context = Map.get(params, "highlight_context")
+
         update_graph(
           socket,
           GraphActions.ask_and_answer(
             graph_action_params(socket, socket.assigns.node),
-            answer
+            answer,
+            highlight_context: highlight_context
           ),
           "answer"
         )
@@ -1052,6 +1057,14 @@ defmodule DialecticWeb.GraphLive do
            ] &&
              node && Map.get(node, :id) do
           push_event(s, "center_node", %{id: node.id})
+        else
+          s
+        end
+      end)
+      |> then(fn s ->
+        # Auto-open drawer panel when new answer is created
+        if operation in ["answer", "explain"] && node && Map.get(node, :id) do
+          assign(s, drawer_open: true)
         else
           s
         end

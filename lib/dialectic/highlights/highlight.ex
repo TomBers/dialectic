@@ -62,6 +62,10 @@ defmodule Dialectic.Highlights.Highlight do
     |> validate_number(:selection_start, greater_than_or_equal_to: 0)
     |> validate_number(:selection_end, greater_than_or_equal_to: 0)
     |> validate_range_order()
+    |> unique_constraint([:mudg_id, :node_id, :selection_start, :selection_end],
+      name: :highlights_unique_span,
+      message: "A highlight already exists for this text selection"
+    )
   end
 
   defp validate_range_order(changeset) do

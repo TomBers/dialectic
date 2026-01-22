@@ -126,6 +126,7 @@ defmodule Dialectic.Graph.GraphActions do
 
   def ask_and_answer({graph_id, node, user, live_view_topic}, question_text, opts \\ []) do
     minimal_context = Keyword.get(opts, :minimal_context, false)
+    highlight_context = Keyword.get(opts, :highlight_context)
 
     # Otherwise, use a 'question' node for follow-up questions
     question_node =
@@ -136,6 +137,17 @@ defmodule Dialectic.Graph.GraphActions do
         "question",
         user
       )
+
+    # Store highlight context as metadata if provided
+    question_node =
+      if highlight_context do
+        GraphManager.update_vertex(graph_id, question_node.id, %{
+          question_node
+          | source_highlight_id: highlight_context
+        })
+      else
+        question_node
+      end
 
     answer_node =
       GraphManager.add_child(
