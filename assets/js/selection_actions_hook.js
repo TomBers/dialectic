@@ -1,4 +1,7 @@
 const SelectionActionsHook = {
+  // Delay to allow modal CSS transitions to complete before focusing input
+  FOCUS_DELAY_MS: 100,
+
   mounted() {
     this.selectedText = "";
     this.nodeId = null;
@@ -13,38 +16,54 @@ const SelectionActionsHook = {
     this.handleKeydown = this.handleKeydown.bind(this);
 
     // Set up event listeners
-    this.el.querySelector('[data-action="close"]')?.addEventListener('click', this.hide);
-    this.el.querySelector('[data-action="explain"]')?.addEventListener('click', this.handleExplain);
-    this.el.querySelector('[data-action="highlight"]')?.addEventListener('click', this.handleHighlight);
+    this.el
+      .querySelector('[data-action="close"]')
+      ?.addEventListener("click", this.hide);
+    this.el
+      .querySelector('[data-action="explain"]')
+      ?.addEventListener("click", this.handleExplain);
+    this.el
+      .querySelector('[data-action="highlight"]')
+      ?.addEventListener("click", this.handleHighlight);
 
-    const form = this.el.querySelector('form');
+    const form = this.el.querySelector("form");
     if (form) {
-      form.addEventListener('submit', this.handleSubmitQuestion);
+      form.addEventListener("submit", this.handleSubmitQuestion);
     }
 
     // Backdrop click to close
-    this.el.querySelector('[data-backdrop]')?.addEventListener('click', this.hide);
+    this.el
+      .querySelector("[data-backdrop]")
+      ?.addEventListener("click", this.hide);
 
     // Window keydown for escape
-    window.addEventListener('keydown', this.handleKeydown);
+    window.addEventListener("keydown", this.handleKeydown);
 
     // Listen for custom event to show modal
-    window.addEventListener('selection:show', this.show);
+    window.addEventListener("selection:show", this.show);
   },
 
   destroyed() {
-    this.el.querySelector('[data-action="close"]')?.removeEventListener('click', this.hide);
-    this.el.querySelector('[data-action="explain"]')?.removeEventListener('click', this.handleExplain);
-    this.el.querySelector('[data-action="highlight"]')?.removeEventListener('click', this.handleHighlight);
+    this.el
+      .querySelector('[data-action="close"]')
+      ?.removeEventListener("click", this.hide);
+    this.el
+      .querySelector('[data-action="explain"]')
+      ?.removeEventListener("click", this.handleExplain);
+    this.el
+      .querySelector('[data-action="highlight"]')
+      ?.removeEventListener("click", this.handleHighlight);
 
-    const form = this.el.querySelector('form');
+    const form = this.el.querySelector("form");
     if (form) {
-      form.removeEventListener('submit', this.handleSubmitQuestion);
+      form.removeEventListener("submit", this.handleSubmitQuestion);
     }
 
-    this.el.querySelector('[data-backdrop]')?.removeEventListener('click', this.hide);
-    window.removeEventListener('keydown', this.handleKeydown);
-    window.removeEventListener('selection:show', this.show);
+    this.el
+      .querySelector("[data-backdrop]")
+      ?.removeEventListener("click", this.hide);
+    window.removeEventListener("keydown", this.handleKeydown);
+    window.removeEventListener("selection:show", this.show);
   },
 
   show(event) {
@@ -55,7 +74,7 @@ const SelectionActionsHook = {
     this.offsets = offsets;
 
     // Update the displayed text
-    const textDisplay = this.el.querySelector('[data-selected-text]');
+    const textDisplay = this.el.querySelector("[data-selected-text]");
     if (textDisplay) {
       textDisplay.textContent = selectedText;
     }
@@ -63,22 +82,22 @@ const SelectionActionsHook = {
     // Clear any previous question input
     const input = this.el.querySelector('input[name="question"]');
     if (input) {
-      input.value = '';
+      input.value = "";
     }
 
     // Show the modal
-    this.el.classList.remove('hidden');
+    this.el.classList.remove("hidden");
 
-    // Focus the input after a short delay
+    // Focus the input after CSS transitions complete to prevent visual jumps
     setTimeout(() => {
       if (input) {
         input.focus();
       }
-    }, 100);
+    }, this.FOCUS_DELAY_MS);
   },
 
   hide() {
-    this.el.classList.add('hidden');
+    this.el.classList.add("hidden");
     this.selectedText = "";
     this.nodeId = null;
     this.offsets = null;
@@ -88,7 +107,7 @@ const SelectionActionsHook = {
   },
 
   handleKeydown(e) {
-    if (e.key === 'Escape' && !this.el.classList.contains('hidden')) {
+    if (e.key === "Escape" && !this.el.classList.contains("hidden")) {
       e.preventDefault();
       this.hide();
     }
@@ -103,7 +122,7 @@ const SelectionActionsHook = {
     // Send event to server
     this.pushEvent("selection_explain", {
       selected_text: this.selectedText,
-      node_id: this.nodeId
+      node_id: this.nodeId,
     });
 
     this.hide();
@@ -119,7 +138,7 @@ const SelectionActionsHook = {
     this.pushEvent("selection_highlight", {
       selected_text: this.selectedText,
       node_id: this.nodeId,
-      offsets: this.offsets
+      offsets: this.offsets,
     });
 
     this.hide();
@@ -130,7 +149,7 @@ const SelectionActionsHook = {
     e.stopPropagation();
 
     const formData = new FormData(e.target);
-    const question = formData.get('question')?.trim();
+    const question = formData.get("question")?.trim();
 
     if (!question || !this.selectedText) return;
 
@@ -138,11 +157,11 @@ const SelectionActionsHook = {
     this.pushEvent("selection_ask", {
       question: question,
       selected_text: this.selectedText,
-      node_id: this.nodeId
+      node_id: this.nodeId,
     });
 
     this.hide();
-  }
+  },
 };
 
 export default SelectionActionsHook;
