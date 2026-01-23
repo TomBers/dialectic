@@ -32,6 +32,17 @@ dialectic-*.tar
 # Ignore digested assets cache.
 /priv/static/cache_manifest.json
 
+# Ignore digested static files (favicon, robots.txt, images with hash suffixes)
+/priv/static/favicon-*.ico
+/priv/static/robots-*.txt
+/priv/static/robots-*.txt.gz
+/priv/static/robots.txt.gz
+/priv/static/images/*-*.svg
+/priv/static/images/*-*.svg.gz
+/priv/static/images/*.svg.gz
+/priv/static/images/*-*.webp
+/priv/static/images/*-*.mp4
+
 # In case you use Node.js/npm, you want to ignore these.
 npm-debug.log
 /assets/node_modules/

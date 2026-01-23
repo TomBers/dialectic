@@ -1474,11 +1474,17 @@ button[type="submit"]:active {
 
 /* Add a small link icon indicator using pseudo-element */
 .highlight-span.has-linked-node::after {
-    content: "🔗";
-    font-size: 0.7em;
-    margin-left: 2px;
+    content: "";
+    display: inline-block;
+    width: 0.75em;
+    height: 0.75em;
+    margin-left: 3px;
+    margin-bottom: -1px;
     opacity: 0.6;
-    vertical-align: super;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%236366f1'%3E%3Cpath d='M8.914 6.025a.75.75 0 0 1 1.06 0 3.5 3.5 0 0 1 0 4.95l-2 2a3.5 3.5 0 0 1-4.95-4.95l1.06-1.06a.75.75 0 0 1 1.061 1.06l-1.06 1.06a2 2 0 0 0 2.828 2.83l2-2a2 2 0 0 0 0-2.83.75.75 0 0 1 0-1.06Z'/%3E%3Cpath d='M7.086 9.975a.75.75 0 0 1-1.06 0 3.5 3.5 0 0 1 0-4.95l2-2a3.5 3.5 0 0 1 4.95 4.95l-1.06 1.06a.75.75 0 1 1-1.061-1.06l1.06-1.06a2 2 0 0 0-2.828-2.83l-2 2a2 2 0 0 0 0 2.83.75.75 0 0 1 0 1.06Z'/%3E%3C/svg%3E");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
 }
 
 .highlight-span.has-linked-node:hover::after {
