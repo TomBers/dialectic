@@ -344,21 +344,23 @@ const textSelectionHook = {
             console.log("Is duplicate error:", isDuplicateError);
 
             if (isDuplicateError) {
-              // Try to find the existing highlight with same offsets
+              // Try to find the overlapping highlight
               return fetch(
                 `/api/highlights?mudg_id=${this.mudgId}&node_id=${this.nodeId}`,
                 { credentials: "include" },
               )
                 .then((res) => res.json())
                 .then((json) => {
-                  const existingHighlight = json.data.find(
+                  // Find any highlight that overlaps with our selection
+                  // Two ranges overlap if: start1 < end2 AND start2 < end1
+                  const overlappingHighlight = json.data.find(
                     (h) =>
-                      h.selection_start === offsets.start &&
-                      h.selection_end === offsets.end,
+                      h.selection_start < offsets.end &&
+                      h.selection_end > offsets.start,
                   );
-                  if (existingHighlight) {
-                    // Scroll to and pulse the existing highlight
-                    this.scrollToHighlight({ id: existingHighlight.id });
+                  if (overlappingHighlight) {
+                    // Scroll to and pulse the overlapping highlight
+                    this.scrollToHighlight({ id: overlappingHighlight.id });
                   }
                   return null;
                 });

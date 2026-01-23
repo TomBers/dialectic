@@ -21,8 +21,8 @@ defmodule DialecticWeb.NodeComp do
     node_id = Map.get(node, :id, "")
 
     # Check if we should show the thread view (default open if there are parents)
-    has_parents = length(Map.get(node, :parents, [])) > 0
-    show_thread = Map.get(assigns, :show_thread, has_parents)
+    # has_parents = length(Map.get(node, :parents, [])) > 0
+    show_thread = Map.get(assigns, :show_thread, false)
 
     {:ok,
      assign(socket,
