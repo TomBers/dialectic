@@ -170,6 +170,26 @@ defmodule DialecticWeb.LinearGraphLive do
     {:noreply, push_event(socket, "scroll_to_highlight", %{id: highlight_id})}
   end
 
+  def handle_event("navigate_to_node", %{"node_id" => node_id} = _params, socket) do
+    # Navigate to a node (e.g., from clicking a highlight link)
+    node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+    if node do
+      # Rebuild the path to the clicked node
+      path =
+        GraphManager.path_to_node(socket.assigns.graph_id, node)
+        |> Enum.reverse()
+        |> Enum.map(fn n -> Map.put(n, :title, NodeTitleHelper.extract_node_title(n)) end)
+
+      {:noreply,
+       socket
+       |> assign(selected_node_id: node.id, linear_path: path)
+       |> push_event("scroll_to_node", %{id: node.id})}
+    else
+      {:noreply, socket |> put_flash(:error, "Node not found")}
+    end
+  end
+
   def handle_event("node_clicked", %{"id" => id}, socket) do
     node = GraphActions.find_node(socket.assigns.graph_id, id)
 
