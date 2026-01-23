@@ -565,6 +565,75 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event(
+        "selection_explain",
+        %{
+          "selected_text" => selected_text,
+          "node_id" => _node_id
+        },
+        socket
+      ) do
+    cond do
+      not socket.assigns.can_edit ->
+        {:noreply, socket |> put_flash(:error, "This graph is locked")}
+
+      true ->
+        update_graph(
+          socket,
+          GraphActions.ask_and_answer(
+            graph_action_params(socket, socket.assigns.node),
+            "Please explain: #{selected_text}",
+            minimal_context: true
+          ),
+          "answer"
+        )
+    end
+  end
+
+  def handle_event(
+        "selection_highlight",
+        %{
+          "selected_text" => selected_text,
+          "node_id" => node_id,
+          "offsets" => offsets
+        },
+        socket
+      ) do
+    {:noreply,
+     socket
+     |> push_event("create_highlight", %{
+       text: selected_text,
+       offsets: offsets,
+       node_id: node_id
+     })}
+  end
+
+  def handle_event(
+        "selection_ask",
+        %{
+          "question" => question_text,
+          "selected_text" => selected_text,
+          "node_id" => _node_id
+        },
+        socket
+      ) do
+    cond do
+      not socket.assigns.can_edit ->
+        {:noreply, socket |> put_flash(:error, "This graph is locked")}
+
+      true ->
+        update_graph(
+          socket,
+          GraphActions.ask_about_selection(
+            graph_action_params(socket, socket.assigns.node),
+            "#{question_text}\n\nRegarding: \"#{selected_text}\"",
+            selected_text
+          ),
+          "answer"
+        )
+    end
+  end
+
+  def handle_event(
         "reply-and-answer",
         %{"vertex" => %{"content" => answer}, "prefix" => prefix} = params,
         socket

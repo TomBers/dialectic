@@ -166,61 +166,6 @@ defmodule DialecticWeb.NodeComp do
                   </article>
                 </div>
               </div>
-              <div class="selection-actions hidden absolute bg-white shadow-lg rounded-lg p-2 sm:p-3 z-10 border border-gray-200 flex flex-col gap-2 min-w-[280px] sm:min-w-[320px]">
-                <%!-- Action buttons - side by side --%>
-                <div class="flex gap-2">
-                  <button class="explain-btn bg-blue-500 hover:bg-blue-600 text-white text-xs py-1.5 px-3 rounded-md flex items-center justify-center flex-1 transition-colors">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="h-3.5 w-3.5 mr-1"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    Explain
-                  </button>
-                  <button class="add-note-btn bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs py-1.5 px-3 rounded-md flex items-center justify-center flex-1 transition-colors">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="h-3.5 w-3.5 mr-1"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                      />
-                    </svg>
-                    Highlight
-                  </button>
-                </div>
-
-                <%!-- Custom question input - below buttons --%>
-                <div class="flex flex-col gap-1.5">
-                  <label class="text-xs font-medium text-gray-700">Or ask a custom question:</label>
-                  <div class="flex gap-2">
-                    <input
-                      type="text"
-                      class="custom-question-input flex-1 px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
-                      placeholder="What would you like to know?"
-                    />
-                    <button class="submit-custom-question bg-indigo-500 hover:bg-indigo-600 text-white text-xs py-1.5 px-3 rounded-md font-medium transition-colors whitespace-nowrap">
-                      Ask
-                    </button>
-                  </div>
-                  <div class="text-[10px] text-gray-500">Press Enter to submit, Escape to close</div>
-                </div>
-              </div>
             </div>
           </div>
 

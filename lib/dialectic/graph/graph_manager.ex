@@ -247,6 +247,18 @@ defmodule GraphManager do
     end
   end
 
+  def handle_call({:update_vertex_fields, {node_id, fields}}, _from, {graph_struct, graph}) do
+    case :digraph.vertex(graph, node_id) do
+      {_id, vertex} ->
+        updated_vertex = Map.merge(vertex, fields)
+        :digraph.add_vertex(graph, node_id, updated_vertex)
+        {:reply, updated_vertex, {graph_struct, graph}}
+
+      false ->
+        {:reply, nil, {graph_struct, graph}}
+    end
+  end
+
   def handle_call({:toggle_graph_locked}, _from, {graph_struct, graph}) do
     updated_graph_struct = Dialectic.DbActions.Graphs.toggle_graph_locked(graph_struct)
     {:reply, updated_graph_struct, {updated_graph_struct, graph}}
@@ -479,6 +491,10 @@ defmodule GraphManager do
 
   def update_vertex(path, node_id, data) do
     GenServer.call(via_tuple(path), {:update_node, {node_id, data}})
+  end
+
+  def update_vertex_fields(path, node_id, fields) do
+    GenServer.call(via_tuple(path), {:update_vertex_fields, {node_id, fields}})
   end
 
   def set_node_content(path, node_id, content) do

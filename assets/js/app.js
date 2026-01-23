@@ -23,6 +23,7 @@ import { LiveSocket } from "phoenix_live_view";
 
 import topbar from "../vendor/topbar";
 import textSelectionHook from "./text_selection_hook.js";
+import SelectionActionsHook from "./selection_actions_hook.js";
 import graphHook from "./graph_hook.js";
 import highlightNodeHook from "./highlight_node_hook.js";
 import printConversationHook from "./print_conversation_hook.js";
@@ -33,16 +34,19 @@ import MarkdownHook from "./markdown_hook.js";
 import InterfaceHighlightHook from "./how/interface_highlight_hook.js";
 import { ViewModeHook } from "./view_mode_hook.js";
 import AutoExpandTextareaHook from "./auto_expand_textarea_hook.js";
+import StopPropagationHook from "./stop_propagation_hook.js";
 
 let hooks = {};
 
 // Hook - handles all positioning logic
 hooks.TextSelectionHook = textSelectionHook;
+hooks.SelectionActions = SelectionActionsHook;
 hooks.Graph = graphHook;
 hooks.HighlightNode = highlightNodeHook;
 hooks.PrintConversation = printConversationHook;
 hooks.StoryReadability = storyReadabilityHook;
 hooks.ListDetection = listDetectionHook;
+hooks.StopPropagation = StopPropagationHook;
 hooks.TranslatePopover = translatePopoverHook;
 hooks.Markdown = MarkdownHook;
 hooks.InterfaceHighlight = InterfaceHighlightHook;

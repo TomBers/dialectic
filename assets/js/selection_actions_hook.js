@@ -1,0 +1,148 @@
+const SelectionActionsHook = {
+  mounted() {
+    this.selectedText = "";
+    this.nodeId = null;
+    this.offsets = null;
+
+    // Bind methods
+    this.show = this.show.bind(this);
+    this.hide = this.hide.bind(this);
+    this.handleExplain = this.handleExplain.bind(this);
+    this.handleHighlight = this.handleHighlight.bind(this);
+    this.handleSubmitQuestion = this.handleSubmitQuestion.bind(this);
+    this.handleKeydown = this.handleKeydown.bind(this);
+
+    // Set up event listeners
+    this.el.querySelector('[data-action="close"]')?.addEventListener('click', this.hide);
+    this.el.querySelector('[data-action="explain"]')?.addEventListener('click', this.handleExplain);
+    this.el.querySelector('[data-action="highlight"]')?.addEventListener('click', this.handleHighlight);
+
+    const form = this.el.querySelector('form');
+    if (form) {
+      form.addEventListener('submit', this.handleSubmitQuestion);
+    }
+
+    // Backdrop click to close
+    this.el.querySelector('[data-backdrop]')?.addEventListener('click', this.hide);
+
+    // Window keydown for escape
+    window.addEventListener('keydown', this.handleKeydown);
+
+    // Listen for custom event to show modal
+    window.addEventListener('selection:show', this.show);
+  },
+
+  destroyed() {
+    this.el.querySelector('[data-action="close"]')?.removeEventListener('click', this.hide);
+    this.el.querySelector('[data-action="explain"]')?.removeEventListener('click', this.handleExplain);
+    this.el.querySelector('[data-action="highlight"]')?.removeEventListener('click', this.handleHighlight);
+
+    const form = this.el.querySelector('form');
+    if (form) {
+      form.removeEventListener('submit', this.handleSubmitQuestion);
+    }
+
+    this.el.querySelector('[data-backdrop]')?.removeEventListener('click', this.hide);
+    window.removeEventListener('keydown', this.handleKeydown);
+    window.removeEventListener('selection:show', this.show);
+  },
+
+  show(event) {
+    const { selectedText, nodeId, offsets } = event.detail;
+
+    this.selectedText = selectedText;
+    this.nodeId = nodeId;
+    this.offsets = offsets;
+
+    // Update the displayed text
+    const textDisplay = this.el.querySelector('[data-selected-text]');
+    if (textDisplay) {
+      textDisplay.textContent = selectedText;
+    }
+
+    // Clear any previous question input
+    const input = this.el.querySelector('input[name="question"]');
+    if (input) {
+      input.value = '';
+    }
+
+    // Show the modal
+    this.el.classList.remove('hidden');
+
+    // Focus the input after a short delay
+    setTimeout(() => {
+      if (input) {
+        input.focus();
+      }
+    }, 100);
+  },
+
+  hide() {
+    this.el.classList.add('hidden');
+    this.selectedText = "";
+    this.nodeId = null;
+    this.offsets = null;
+
+    // Clear selection
+    window.getSelection().removeAllRanges();
+  },
+
+  handleKeydown(e) {
+    if (e.key === 'Escape' && !this.el.classList.contains('hidden')) {
+      e.preventDefault();
+      this.hide();
+    }
+  },
+
+  handleExplain(e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!this.selectedText) return;
+
+    // Send event to server
+    this.pushEvent("selection_explain", {
+      selected_text: this.selectedText,
+      node_id: this.nodeId
+    });
+
+    this.hide();
+  },
+
+  handleHighlight(e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!this.selectedText || !this.offsets) return;
+
+    // Send event to server
+    this.pushEvent("selection_highlight", {
+      selected_text: this.selectedText,
+      node_id: this.nodeId,
+      offsets: this.offsets
+    });
+
+    this.hide();
+  },
+
+  handleSubmitQuestion(e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const formData = new FormData(e.target);
+    const question = formData.get('question')?.trim();
+
+    if (!question || !this.selectedText) return;
+
+    // Send event to server
+    this.pushEvent("selection_ask", {
+      question: question,
+      selected_text: this.selectedText,
+      node_id: this.nodeId
+    });
+
+    this.hide();
+  }
+};
+
+export default SelectionActionsHook;

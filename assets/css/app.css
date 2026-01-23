@@ -70,17 +70,33 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Add to your app.css */
+/* Selection actions panel - modal-style behavior */
 .selection-actions {
-    transition: opacity 0.2s ease;
+    transition:
+        opacity 0.2s ease,
+        transform 0.2s ease;
     z-index: 1000;
     pointer-events: auto;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.selection-actions.hidden {
+    opacity: 0;
+    transform: translateY(-4px);
+    pointer-events: none;
 }
 
 .selection-actions button {
     white-space: nowrap;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     font-size: 0.75rem;
+}
+
+.selection-actions .close-panel-btn {
+    box-shadow: none;
+}
+
+.selection-actions .close-panel-btn:hover {
+    background-color: rgba(0, 0, 0, 0.05);
 }
 
 /* For touch devices */

@@ -3,7 +3,6 @@ import HighlightUtils from "./highlight_utils.js";
 const textSelectionHook = {
   mounted() {
     this.handleSelection = this.handleSelection.bind(this);
-    this.hideSelectionActions = this.hideSelectionActions.bind(this);
 
     this.fetchHighlights = this.fetchHighlights.bind(this);
     const originalFetch = this.fetchHighlights;
@@ -46,75 +45,7 @@ const textSelectionHook = {
     this.el.addEventListener("mouseup", this.handleSelection);
     this.el.addEventListener("touchend", this.handleSelection);
 
-    // Handle clicks outside - close panel only if clicking truly outside
-    this.handleOutsideClick = (e) => {
-      const selectionActionsEl = this.el.querySelector(".selection-actions");
-
-      console.log("Click detected:", {
-        target: e.target,
-        panelExists: !!selectionActionsEl,
-        panelHidden: selectionActionsEl?.classList.contains("hidden"),
-        isInsidePanel: selectionActionsEl?.contains(e.target),
-      });
-
-      // If panel is not visible, nothing to do
-      if (
-        !selectionActionsEl ||
-        selectionActionsEl.classList.contains("hidden")
-      ) {
-        console.log("Panel not visible, ignoring click");
-        return;
-      }
-
-      // Check if click is inside the selection actions panel
-      if (selectionActionsEl.contains(e.target)) {
-        console.log("Click inside panel, keeping it open");
-        return; // Don't close
-      }
-
-      // Close if clicking outside
-      console.log("Click outside panel, closing");
-      this.hideSelectionActions();
-    };
-    document.addEventListener("click", this.handleOutsideClick);
-
-    // Handle selection clearing (but not when focused on input)
-    this.handleSelectionChange = () => {
-      const selection = window.getSelection();
-      const selectionActionsEl = this.el.querySelector(".selection-actions");
-
-      console.log("Selection change:", {
-        collapsed: selection.isCollapsed,
-        activeElement: document.activeElement,
-        focusInPanel: selectionActionsEl?.contains(document.activeElement),
-      });
-
-      // Don't close if user has focus in the panel (e.g., typing in input)
-      if (
-        selectionActionsEl &&
-        selectionActionsEl.contains(document.activeElement)
-      ) {
-        console.log("Focus in panel, keeping it open");
-        return;
-      }
-
-      if (selection.isCollapsed) {
-        console.log("Selection collapsed, checking after delay...");
-        // Add delay to allow focus to register (focus fires after selection change)
-        setTimeout(() => {
-          const stillNoFocus =
-            !selectionActionsEl ||
-            !selectionActionsEl.contains(document.activeElement);
-          if (stillNoFocus) {
-            console.log("Still no focus in panel after delay, closing");
-            this.hideSelectionActions();
-          } else {
-            console.log("Focus detected after delay, keeping panel open");
-          }
-        }, 50);
-      }
-    };
-    document.addEventListener("selectionchange", this.handleSelectionChange);
+    // LiveComponent handles all panel interactions - no manual event listeners needed
 
     // Initial highlight load
     this.refreshHighlights();
@@ -125,14 +56,17 @@ const textSelectionHook = {
 
     this.handleEvent("scroll_to_highlight", this.scrollToHighlight.bind(this));
     this.handleEvent("refresh_highlights", this.refreshHighlights);
+    this.handleEvent("create_highlight", this.handleCreateHighlight.bind(this));
+  },
+
+  handleCreateHighlight({ text, offsets }) {
+    this.createHighlight(text, offsets);
   },
 
   destroyed() {
     clearTimeout(this._fetchTimeout);
     this.el.removeEventListener("mouseup", this.handleSelection);
     this.el.removeEventListener("touchend", this.handleSelection);
-    document.removeEventListener("click", this.handleOutsideClick);
-    document.removeEventListener("selectionchange", this.handleSelectionChange);
     window.removeEventListener("highlight:created", this.refreshHighlights);
     this.el.removeEventListener("markdown:rendered", this.refreshHighlights);
   },
@@ -215,37 +149,35 @@ const textSelectionHook = {
 
   handleSelection(event) {
     if (this.el.dataset.streaming === "true") {
-      this.hideSelectionActions();
       return;
     }
 
     // Add small delay to ensure selection is properly registered
     setTimeout(() => {
-      const selection = window.getSelection();
-      const selectionActionsEl = this.el.querySelector(".selection-actions");
+      // IMPORTANT: Only handle events that originated within THIS hook's container
+      // This prevents multiple hook instances from interfering with each other
+      if (!this.el.contains(event.target)) {
+        return; // Event didn't happen in this hook's container, ignore it
+      }
 
-      if (!selectionActionsEl) return;
+      const selection = window.getSelection();
 
       // Check if selection is empty or not within this component
       if (selection.isCollapsed || !this.isSelectionInComponent(selection)) {
-        this.hideSelectionActions();
         return;
       }
 
       const selectedText = selection.toString().trim();
       if (selectedText.length === 0) {
-        this.hideSelectionActions();
         return;
       }
 
       // If we're not the closest container to the selection, don't show our button
       if (!this.isClosestSelectionContainer()) {
-        this.hideSelectionActions();
         return;
       }
 
-      // IMPORTANT: Capture offsets NOW while selection is still active
-      // Find the markdown container to calculate offsets relative to it
+      // Capture offsets for highlight creation
       const mdContainer = this.el.querySelector(
         '[phx-hook="Markdown"][data-body-only="true"]',
       );
@@ -253,112 +185,27 @@ const textSelectionHook = {
         ? this.getSelectionOffsets(mdContainer)
         : null;
 
-      console.log(
-        "Captured selection offsets:",
-        capturedOffsets,
-        "for text:",
-        selectedText,
+      // Dispatch custom event to show modal (client-side only, no server round trip)
+      window.dispatchEvent(
+        new CustomEvent("selection:show", {
+          detail: {
+            selectedText: selectedText,
+            nodeId: this.nodeId,
+            offsets: capturedOffsets,
+          },
+        }),
       );
+    }, 10);
+  },
 
-      // Get the range and its bounding rectangle
-      const range = selection.getRangeAt(0);
-      const rect = range.getBoundingClientRect();
+  // Store offsets for highlight creation
+  storeOffsetsForHighlight(offsets) {
+    this._highlightOffsets = offsets;
+  },
 
-      // Get the container's bounding rectangle
-      const containerRect = this.el.getBoundingClientRect();
-
-      // Make the button visible so we can measure its width
-      selectionActionsEl.classList.remove("hidden");
-      selectionActionsEl.classList.add("flex");
-
-      // Get button dimensions after making it visible
-      const buttonWidth = selectionActionsEl.offsetWidth;
-      const buttonHeight = selectionActionsEl.offsetHeight;
-
-      // Calculate position relative to the container
-      // Position below the selection with some padding
-      const top = rect.bottom - containerRect.top + 8;
-
-      // Center the button on the selection, but keep it within bounds
-      let leftPos =
-        rect.left + rect.width / 2 - buttonWidth / 2 - containerRect.left;
-
-      // Ensure button stays within container bounds with padding
-      const padding = 8;
-      leftPos = Math.max(padding, leftPos);
-      leftPos = Math.min(this.el.clientWidth - buttonWidth - padding, leftPos);
-
-      // Apply the calculated positions
-      selectionActionsEl.style.top = `${top}px`;
-      selectionActionsEl.style.left = `${leftPos}px`;
-
-      // Set up "Explain" quick action button
-      const explainButton = selectionActionsEl.querySelector(".explain-btn");
-      if (explainButton) {
-        explainButton.onclick = () => {
-          this.pushEvent("reply-and-answer", {
-            vertex: { content: `Please explain: ${selectedText}` },
-            prefix: "explain",
-            highlight_context: selectedText,
-          });
-          this.hideSelectionActions();
-        };
-      }
-
-      // Set up "Add Note" button - pass captured offsets
-      const addNoteButton = selectionActionsEl.querySelector(".add-note-btn");
-      if (addNoteButton) {
-        addNoteButton.onclick = () => {
-          this.createHighlight(selectedText, capturedOffsets);
-          this.hideSelectionActions();
-        };
-      }
-
-      // Set up custom question input and submit
-      const customInput = selectionActionsEl.querySelector(
-        ".custom-question-input",
-      );
-      const submitButton = selectionActionsEl.querySelector(
-        ".submit-custom-question",
-      );
-
-      if (customInput && submitButton) {
-        customInput.value = "";
-        customInput.placeholder = "What would you like to know?";
-
-        // Auto-focus the input for better UX (after a small delay to ensure panel is visible)
-        setTimeout(() => {
-          if (!selectionActionsEl.classList.contains("hidden")) {
-            customInput.focus();
-          }
-        }, 100);
-
-        submitButton.onclick = () => {
-          const question = customInput.value.trim();
-          if (question) {
-            this.pushEvent("reply-and-answer", {
-              vertex: {
-                content: `${question}\n\nRegarding: "${selectedText}"`,
-              },
-              prefix: "explain",
-              highlight_context: selectedText,
-            });
-            this.hideSelectionActions();
-          }
-        };
-
-        // Handle Enter key to submit
-        customInput.onkeydown = (e) => {
-          if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            submitButton.click();
-          } else if (e.key === "Escape") {
-            e.preventDefault();
-            this.hideSelectionActions();
-          }
-        };
-      }
-    }, 10); // 10ms delay
+  // Get stored offsets for highlight creation
+  getStoredOffsets() {
+    return this._highlightOffsets;
   },
 
   isSelectionInComponent(selection) {
@@ -411,22 +258,6 @@ const textSelectionHook = {
 
     // Return true if this hook's element is the closest container
     return closestContainer === this.el;
-  },
-
-  hideSelectionActions() {
-    const selectionActionsEl = this.el.querySelector(".selection-actions");
-    if (selectionActionsEl) {
-      selectionActionsEl.classList.add("hidden");
-      selectionActionsEl.classList.remove("flex");
-
-      // Clear custom input if present
-      const customInput = selectionActionsEl.querySelector(
-        ".custom-question-input",
-      );
-      if (customInput) {
-        customInput.value = "";
-      }
-    }
   },
 
   createHighlight(text, capturedOffsets = null) {

@@ -515,4 +515,117 @@
     </div>
     <!-- Right side: Chat (Drawer) -->
   </div>
+
+  <%!-- Selection Actions Modal (client-side only, no server round trip) --%>
+  <div id="selection-actions-modal" phx-hook="SelectionActions" class="hidden">
+    <!-- Modal backdrop -->
+    <div
+      data-backdrop
+      class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-[999] transition-opacity duration-200"
+    >
+    </div>
+    <!-- Modal content -->
+    <div class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white shadow-2xl rounded-xl p-4 sm:p-6 z-[1000] border border-gray-200 flex flex-col gap-3 w-[90vw] max-w-[500px] transition-all duration-200 opacity-100 scale-100">
+      <%!-- Header with close button --%>
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-lg font-semibold text-gray-900">Selection Actions</h3>
+        <button
+          type="button"
+          data-action="close"
+          class="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100 transition-colors"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+      </div>
+      <%!-- Selected text display --%>
+      <div class="p-3 bg-indigo-50 rounded-lg border border-indigo-100">
+        <div class="text-xs text-indigo-600 mb-1 font-medium">Selected text:</div>
+        <div class="text-sm text-gray-800 line-clamp-3 leading-relaxed" data-selected-text></div>
+      </div>
+      <%!-- Action buttons - side by side --%>
+      <div class="flex gap-3">
+        <button
+          type="button"
+          data-action="explain"
+          class="bg-blue-500 hover:bg-blue-600 text-white text-sm py-2.5 px-4 rounded-lg flex items-center justify-center flex-1 transition-all hover:shadow-lg font-medium"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 mr-1.5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          Explain
+        </button>
+        <button
+          type="button"
+          data-action="highlight"
+          class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm py-2.5 px-4 rounded-lg flex items-center justify-center flex-1 transition-all hover:shadow-lg font-medium"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 mr-1.5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+            />
+          </svg>
+          Highlight
+        </button>
+      </div>
+      <%!-- Custom question form --%>
+      <div class="border-t border-gray-200 pt-3 mt-1">
+        <form class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-gray-700">Or ask a custom question:</label>
+          <div class="flex gap-2">
+            <input
+              type="text"
+              name="question"
+              value=""
+              class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none"
+              placeholder="What would you like to know?"
+              autofocus
+              autocomplete="off"
+            />
+            <button
+              type="submit"
+              class="bg-indigo-500 hover:bg-indigo-600 text-white text-sm py-2 px-4 rounded-lg font-medium transition-all hover:shadow-lg whitespace-nowrap"
+            >
+              Ask
+            </button>
+          </div>
+          <div class="text-xs text-gray-500">
+            Press Enter to submit • Escape to close
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 </div>
