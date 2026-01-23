@@ -244,6 +244,22 @@ const textSelectionHook = {
         return;
       }
 
+      // IMPORTANT: Capture offsets NOW while selection is still active
+      // Find the markdown container to calculate offsets relative to it
+      const mdContainer = this.el.querySelector(
+        '[phx-hook="Markdown"][data-body-only="true"]',
+      );
+      const capturedOffsets = mdContainer
+        ? this.getSelectionOffsets(mdContainer)
+        : null;
+
+      console.log(
+        "Captured selection offsets:",
+        capturedOffsets,
+        "for text:",
+        selectedText,
+      );
+
       // Get the range and its bounding rectangle
       const range = selection.getRangeAt(0);
       const rect = range.getBoundingClientRect();
@@ -289,11 +305,11 @@ const textSelectionHook = {
         };
       }
 
-      // Set up "Add Note" button
+      // Set up "Add Note" button - pass captured offsets
       const addNoteButton = selectionActionsEl.querySelector(".add-note-btn");
       if (addNoteButton) {
         addNoteButton.onclick = () => {
-          this.createHighlight(selectedText);
+          this.createHighlight(selectedText, capturedOffsets);
           this.hideSelectionActions();
         };
       }
@@ -413,16 +429,35 @@ const textSelectionHook = {
     }
   },
 
-  createHighlight(text) {
-    if (!this.mudgId || !this.nodeId) return;
+  createHighlight(text, capturedOffsets = null) {
+    if (!this.mudgId || !this.nodeId) {
+      console.warn("Cannot create highlight: missing mudgId or nodeId");
+      return;
+    }
 
-    // Find the markdown container to calculate offsets relative to it
-    const mdContainer = this.el.querySelector(
-      '[phx-hook="Markdown"][data-body-only="true"]',
-    );
-    if (!mdContainer) return;
+    // Use captured offsets if provided, otherwise try to get them from current selection
+    let offsets = capturedOffsets;
 
-    const offsets = this.getSelectionOffsets(mdContainer);
+    if (!offsets) {
+      // Find the markdown container to calculate offsets relative to it
+      const mdContainer = this.el.querySelector(
+        '[phx-hook="Markdown"][data-body-only="true"]',
+      );
+      if (!mdContainer) {
+        console.error(
+          "Cannot create highlight: markdown container not found. Content may not be rendered yet.",
+        );
+        return;
+      }
+
+      offsets = this.getSelectionOffsets(mdContainer);
+    }
+
+    // Validate offsets
+    if (!offsets || offsets.start >= offsets.end) {
+      console.error("Cannot create highlight: invalid offsets", offsets);
+      return;
+    }
 
     const csrfToken = document
       .querySelector("meta[name='csrf-token']")
@@ -433,20 +468,24 @@ const textSelectionHook = {
       return;
     }
 
+    const highlightData = {
+      mudg_id: this.mudgId,
+      node_id: this.nodeId,
+      text_source_type: "node",
+      selection_start: offsets.start,
+      selection_end: offsets.end,
+      selected_text_snapshot: text,
+    };
+
+    console.log("Creating highlight with data:", highlightData);
+
     fetch("/api/highlights", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-CSRF-Token": csrfToken,
       },
-      body: JSON.stringify({
-        mudg_id: this.mudgId,
-        node_id: this.nodeId,
-        text_source_type: "node",
-        selection_start: offsets.start,
-        selection_end: offsets.end,
-        selected_text_snapshot: text,
-      }),
+      body: JSON.stringify(highlightData),
     })
       .then((response) => {
         if (response.status === 401) {
@@ -457,13 +496,23 @@ const textSelectionHook = {
         if (response.status === 422) {
           // Duplicate highlight - find and focus existing one
           return response.json().then((errorData) => {
+            console.log("422 Error response:", errorData);
+
             // Check if it's a duplicate constraint error
-            if (
+            // Phoenix returns errors as an object with field keys mapping to arrays of messages
+            const isDuplicateError =
               errorData.errors &&
-              errorData.errors.some((e) =>
-                e.includes("highlight already exists"),
-              )
-            ) {
+              Object.values(errorData.errors).some(
+                (errorArray) =>
+                  Array.isArray(errorArray) &&
+                  errorArray.some((msg) =>
+                    msg.includes("highlight already exists"),
+                  ),
+              );
+
+            console.log("Is duplicate error:", isDuplicateError);
+
+            if (isDuplicateError) {
               // Try to find the existing highlight with same offsets
               return fetch(
                 `/api/highlights?mudg_id=${this.mudgId}&node_id=${this.nodeId}`,
@@ -483,7 +532,12 @@ const textSelectionHook = {
                   return null;
                 });
             }
-            throw new Error("Failed to create highlight");
+
+            // Log non-duplicate validation errors
+            console.error("Highlight creation validation error:", errorData);
+            throw new Error(
+              "Failed to create highlight: " + JSON.stringify(errorData.errors),
+            );
           });
         }
 

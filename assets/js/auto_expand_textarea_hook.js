@@ -1,8 +1,11 @@
 const AutoExpandTextareaHook = {
   mounted() {
     this.textarea = this.el;
-    this.minHeight = 48; // Match the h-12 default height (3rem = 48px)
+    this.minHeight = 56; // Match the min-h-[3.5rem] default height (3.5rem = 56px)
     this.maxHeight = 240; // ~6 lines of text maximum
+
+    // Store the initial border radius class (if using rounded-full)
+    this.usesRoundedFull = this.textarea.classList.contains("rounded-full");
 
     // Set initial styles
     this.textarea.style.resize = "none";
@@ -45,8 +48,21 @@ const AutoExpandTextareaHook = {
       } else {
         this.textarea.style.overflowY = "hidden";
       }
+
+      // Adjust border radius for multi-line text
+      if (this.usesRoundedFull && newHeight > this.minHeight + 10) {
+        // Switch from rounded-full to rounded-3xl when expanding
+        this.textarea.classList.remove("rounded-full");
+        this.textarea.classList.add("rounded-3xl");
+      }
     } else {
       this.textarea.style.overflowY = "hidden";
+
+      // Restore rounded-full for single line
+      if (this.usesRoundedFull) {
+        this.textarea.classList.remove("rounded-3xl");
+        this.textarea.classList.add("rounded-full");
+      }
     }
   },
 };

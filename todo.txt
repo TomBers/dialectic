@@ -1,4 +1,15 @@
-Fix graph creation, it breaks with parenthesis
+Current PR too complex, try and keep what is good.
+
+** The Highlighting is broken
+**The ask a question in the select modal is also broken.
+
+(I think the Node Title code was written from scratch instead of using existing function)
+
+Need to Add the text input resize to home page
+
+Is the Thread at the top of the Answer worth it?
+
+DONT Merge As is.
 
 
 

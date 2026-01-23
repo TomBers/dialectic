@@ -1,28 +1,6 @@
 defmodule DialecticWeb.AskFormComp do
   use DialecticWeb, :live_component
-
-  # Helper to extract a readable title from node content
-  defp extract_node_title(node) do
-    case node do
-      %{content: content} when is_binary(content) and content != "" ->
-        content
-        |> String.replace(~r/\r\n|\r/, "\n")
-        |> String.split("\n")
-        |> List.first()
-        |> Kernel.||("")
-        |> String.replace(~r/^\s*\#{1,6}\s*/, "")
-        |> String.replace(~r/^\s*title\s*:?\s*/i, "")
-        |> String.replace("**", "")
-        |> String.trim()
-        |> case do
-          "" -> node[:id] || "Untitled"
-          title -> String.slice(title, 0, 50) <> if String.length(title) > 50, do: "...", else: ""
-        end
-
-      _ ->
-        if is_map(node) && Map.get(node, :id), do: Map.get(node, :id), else: "Untitled"
-    end
-  end
+  alias DialecticWeb.Utils.NodeTitleHelper
 
   @moduledoc """
   LiveComponent that renders the bottom ask/comment form used by GraphLive.
@@ -94,9 +72,9 @@ defmodule DialecticWeb.AskFormComp do
               phx-click="node_clicked"
               phx-value-id={@node.id}
               class="text-indigo-700 hover:text-indigo-900 font-semibold hover:underline transition-colors max-w-[300px] truncate"
-              title={"Click to focus: " <> extract_node_title(@node)}
+              title={"Click to focus: " <> NodeTitleHelper.extract_node_title(@node)}
             >
-              {extract_node_title(@node)}
+              {NodeTitleHelper.extract_node_title(@node, max_length: 50)}
             </button>
           </div>
         </div>

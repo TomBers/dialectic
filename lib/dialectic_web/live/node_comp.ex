@@ -1,28 +1,6 @@
 defmodule DialecticWeb.NodeComp do
   use DialecticWeb, :live_component
-
-  # Helper to extract a readable title from node content
-  defp extract_node_title(node) do
-    case node do
-      %{content: content} when is_binary(content) and content != "" ->
-        content
-        |> String.replace(~r/\r\n|\r/, "\n")
-        |> String.split("\n")
-        |> List.first()
-        |> Kernel.||("")
-        |> String.replace(~r/^\s*\#{1,6}\s*/, "")
-        |> String.replace(~r/^\s*title\s*:?\s*/i, "")
-        |> String.replace("**", "")
-        |> String.trim()
-        |> case do
-          "" -> Map.get(node, :id, "Untitled")
-          title -> String.slice(title, 0, 80) <> if String.length(title) > 80, do: "...", else: ""
-        end
-
-      _ ->
-        if is_map(node) && Map.get(node, :id), do: Map.get(node, :id), else: "Untitled"
-    end
-  end
+  alias DialecticWeb.Utils.NodeTitleHelper
 
   @impl true
   def update(assigns, socket) do
@@ -32,12 +10,13 @@ defmodule DialecticWeb.NodeComp do
         _ -> %{}
       end
 
-    # Normalize required fields so template can use @node.id/content/children directly
+    # Normalize required fields so template can use @node.id/content/children/parents directly
     node =
       base_node
       |> Map.put_new(:id, "")
       |> Map.put_new(:content, "")
       |> Map.put_new(:children, [])
+      |> Map.put_new(:parents, [])
 
     node_id = Map.get(node, :id, "")
 
@@ -128,7 +107,7 @@ defmodule DialecticWeb.NodeComp do
                             </span>
                           </div>
                           <div class="text-sm font-medium text-gray-900 mb-1">
-                            {extract_node_title(parent)}
+                            {NodeTitleHelper.extract_node_title(parent)}
                           </div>
                           <button
                             type="button"
@@ -187,7 +166,7 @@ defmodule DialecticWeb.NodeComp do
                   </article>
                 </div>
               </div>
-              <div class="selection-actions hidden absolute bg-white shadow-lg rounded-lg p-2 sm:p-3 z-10 border border-gray-200 flex-col gap-2 min-w-[280px] sm:min-w-[320px]">
+              <div class="selection-actions hidden absolute bg-white shadow-lg rounded-lg p-2 sm:p-3 z-10 border border-gray-200 flex flex-col gap-2 min-w-[280px] sm:min-w-[320px]">
                 <%!-- Action buttons - side by side --%>
                 <div class="flex gap-2">
                   <button class="explain-btn bg-blue-500 hover:bg-blue-600 text-white text-xs py-1.5 px-3 rounded-md flex items-center justify-center flex-1 transition-colors">
