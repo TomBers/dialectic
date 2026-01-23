@@ -328,8 +328,18 @@ defmodule DialecticWeb.RightPanelComp do
                         phx-value-id={highlight.id}
                         phx-value-node-id={highlight.node_id}
                       >
-                        <div class="font-medium text-gray-600 truncate pr-12">
-                          "{highlight.selected_text_snapshot}"
+                        <div class="flex items-start gap-1">
+                          <%= if highlight.linked_node_id do %>
+                            <span
+                              class="flex-shrink-0 text-blue-500 mt-0.5"
+                              title={"Linked to node: #{highlight.linked_node_id} (#{highlight.link_type})"}
+                            >
+                              <.icon name="hero-arrow-top-right-on-square" class="w-3 h-3" />
+                            </span>
+                          <% end %>
+                          <div class="font-medium text-gray-600 truncate pr-12 flex-1">
+                            "{highlight.selected_text_snapshot}"
+                          </div>
                         </div>
                         <%= if highlight.note && highlight.note != "" do %>
                           <div class="text-gray-500 italic truncate">

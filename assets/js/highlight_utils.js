@@ -95,6 +95,13 @@ const HighlightUtils = {
       span.className = "highlight-span";
       span.dataset.highlightId = highlight.id;
 
+      // Add linked node styling and data if present
+      if (highlight.linked_node_id) {
+        span.classList.add("has-linked-node");
+        span.dataset.linkedNodeId = highlight.linked_node_id;
+        span.dataset.linkType = highlight.link_type || "";
+      }
+
       try {
         range.surroundContents(span);
       } catch (e) {

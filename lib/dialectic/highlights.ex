@@ -176,4 +176,36 @@ defmodule Dialectic.Highlights do
   def change_highlight(%Highlight{} = highlight, attrs \\ %{}) do
     Highlight.changeset(highlight, attrs)
   end
+
+  @doc """
+  Links a highlight to a node.
+
+  ## Examples
+
+      iex> link_to_node(highlight, "node_123", "explain")
+      {:ok, %Highlight{}}
+
+  """
+  def link_to_node(%Highlight{} = highlight, node_id, link_type) do
+    update_highlight(highlight, %{
+      linked_node_id: node_id,
+      link_type: link_type
+    })
+  end
+
+  @doc """
+  Unlinks a highlight from a node.
+
+  ## Examples
+
+      iex> unlink_from_node(highlight)
+      {:ok, %Highlight{}}
+
+  """
+  def unlink_from_node(%Highlight{} = highlight) do
+    update_highlight(highlight, %{
+      linked_node_id: nil,
+      link_type: nil
+    })
+  end
 end

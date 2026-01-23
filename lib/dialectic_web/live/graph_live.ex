@@ -572,18 +572,44 @@ defmodule DialecticWeb.GraphLive do
       not socket.assigns.can_edit ->
         {:noreply, socket |> put_flash(:error, "This graph is locked")}
 
+      is_nil(socket.assigns.current_user) and prefix == "explain" ->
+        {:noreply, assign(socket, show_login_modal: true)}
+
       true ->
         minimal_context = prefix == "explain"
 
-        update_graph(
-          socket,
+        {_graph, answer_node} =
           GraphActions.ask_and_answer(
             graph_action_params(socket, socket.assigns.node),
             answer,
             minimal_context: minimal_context
-          ),
-          "answer"
-        )
+          )
+
+        # Create highlight for explain actions
+        if prefix == "explain" && answer_node && socket.assigns.current_user do
+          selected_text =
+            answer
+            |> String.replace_prefix("Please explain: ", "")
+            |> String.trim()
+
+          if selected_text != "" do
+            highlight_attrs = %{
+              mudg_id: socket.assigns.graph_id,
+              node_id: socket.assigns.node.id,
+              text_source_type: "node",
+              selection_start: 0,
+              selection_end: String.length(selected_text),
+              selected_text_snapshot: selected_text,
+              created_by_user_id: socket.assigns.current_user.id,
+              linked_node_id: answer_node.id,
+              link_type: "explain"
+            }
+
+            Highlights.create_highlight(highlight_attrs)
+          end
+        end
+
+        update_graph(socket, {nil, answer_node}, "answer")
     end
   end
 
@@ -629,6 +655,19 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event("close_share_modal", _params, socket) do
     {:noreply, assign(socket, show_share_modal: false)}
+  end
+
+  def handle_event("navigate_to_node", %{"node_id" => node_id} = _params, socket) do
+    node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+    if node do
+      {:noreply,
+       socket
+       |> assign(node: node)
+       |> push_event("center_node", %{node_id: node_id})}
+    else
+      {:noreply, socket}
+    end
   end
 
   # Triggered by the client-side JS hook (text_selection_hook.js) when it receives a 401

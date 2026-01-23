@@ -1442,3 +1442,14 @@ button[type="submit"]:active {
 .highlight-span:hover {
     background-color: rgba(255, 235, 59, 0.7);
 }
+
+.highlight-span.has-linked-node {
+    background-color: rgba(59, 130, 246, 0.3);
+    border-bottom: 2px solid rgba(59, 130, 246, 0.6);
+    cursor: pointer;
+}
+
+.highlight-span.has-linked-node:hover {
+    background-color: rgba(59, 130, 246, 0.5);
+    border-bottom-color: rgba(59, 130, 246, 0.8);
+}
