@@ -1,5 +1,6 @@
 defmodule DialecticWeb.RightPanelComp do
   use DialecticWeb, :live_component
+  alias DialecticWeb.Utils.NodeTitleHelper
 
   @moduledoc """
   Accordion-style right panel with:
@@ -164,10 +165,7 @@ defmodule DialecticWeb.RightPanelComp do
                       {node.id} • {node.class}
                     </div>
                     <div class="truncate">
-                      {String.replace_prefix(node.content, "Title:", "")
-                      |> String.slice(0, 100)}{if String.length(node.content) > 100,
-                        do: "...",
-                        else: ""}
+                      {NodeTitleHelper.extract_node_title(node, max_length: 100)}
                     </div>
                   </li>
                 <% end %>

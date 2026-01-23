@@ -5,6 +5,7 @@ defmodule DialecticWeb.GraphLive do
   alias DialecticWeb.{CombineComp, NodeComp}
 
   alias DialecticWeb.Utils.UserUtils
+  alias DialecticWeb.Utils.NodeTitleHelper
   alias Dialectic.Highlights
 
   alias Phoenix.PubSub
@@ -824,7 +825,7 @@ defmodule DialecticWeb.GraphLive do
     updated_vertex = GraphManager.update_vertex(socket.assigns.graph_id, node_id, error)
 
     if socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
-      label = extract_title(Map.get(updated_vertex, :content, ""))
+      label = NodeTitleHelper.extract_node_title(updated_vertex)
 
       socket =
         socket
@@ -1107,25 +1108,12 @@ defmodule DialecticWeb.GraphLive do
     updated_socket
   end
 
-  defp extract_title(content) do
-    content
-    |> to_string()
-    |> String.replace(~r/\r\n|\r/, "\n")
-    |> String.split("\n")
-    |> List.first()
-    |> Kernel.||("")
-    |> String.replace(~r/^\s*\#{1,6}\s*/, "")
-    |> String.replace(~r/^\s*title\s*:?\s*/i, "")
-    |> String.replace("**", "")
-    |> String.trim()
-  end
-
   defp update_streaming_node(socket, updated_vertex, node_id) do
     new_content = Map.get(updated_vertex, :content, "")
 
     # Check if we've already set the title for this node on this socket
     already_titled = MapSet.member?(socket.assigns.titled_nodes, node_id)
-    new_title = extract_title(new_content)
+    new_title = NodeTitleHelper.extract_node_title(updated_vertex)
     needs_title_set = !already_titled && new_title != ""
 
     # Push label update to Cytoscape for all users, regardless of which node they're viewing
