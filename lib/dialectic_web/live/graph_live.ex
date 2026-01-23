@@ -284,6 +284,11 @@ defmodule DialecticWeb.GraphLive do
                  socket |> put_flash(:error, "Cannot delete a node that has non-deleted children")}
 
               true ->
+                # Unlink any highlights that point to this node
+                Highlights.list_highlights(mudg_id: socket.assigns.graph_id)
+                |> Enum.filter(fn h -> h.linked_node_id == node_id end)
+                |> Enum.each(fn h -> Highlights.unlink_from_node(h) end)
+
                 next_node =
                   GraphActions.delete_node(graph_action_params(socket), node_id)
 
@@ -488,6 +493,30 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
+  def handle_event("navigate_to_node", %{"node_id" => node_id} = _params, socket) do
+    # Navigate to a node (e.g., from clicking a highlight link)
+    node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+    if node do
+      {:noreply, updated_socket} =
+        update_graph(
+          socket,
+          {nil, node},
+          "node_clicked"
+        )
+
+      # Center and expand the node
+      updated_socket =
+        updated_socket
+        |> push_event("center_node", %{id: node_id})
+        |> push_event("expand_node", %{id: node_id})
+
+      {:noreply, updated_socket}
+    else
+      {:noreply, socket |> put_flash(:error, "Node not found")}
+    end
+  end
+
   def handle_event("node_clicked", %{"id" => id}, socket) do
     # Determine if this was triggered from search results
     from_search = socket.assigns.search_term != "" and length(socket.assigns.search_results) > 0
@@ -568,7 +597,8 @@ defmodule DialecticWeb.GraphLive do
         "selection_explain",
         %{
           "selected_text" => selected_text,
-          "node_id" => _node_id
+          "node_id" => node_id,
+          "offsets" => offsets
         },
         socket
       ) do
@@ -577,15 +607,52 @@ defmodule DialecticWeb.GraphLive do
         {:noreply, socket |> put_flash(:error, "This graph is locked")}
 
       true ->
-        update_graph(
-          socket,
-          GraphActions.ask_and_answer(
-            graph_action_params(socket, socket.assigns.node),
-            "Please explain: #{selected_text}",
-            minimal_context: true
-          ),
-          "answer"
-        )
+        # Check if user is logged in
+        if socket.assigns.current_user == nil do
+          {:noreply, assign(socket, show_login_modal: true)}
+        else
+          # Create the highlight first
+          highlight_attrs = %{
+            mudg_id: socket.assigns.graph_id,
+            node_id: node_id,
+            text_source_type: "node",
+            selection_start: offsets["start"],
+            selection_end: offsets["end"],
+            selected_text_snapshot: selected_text,
+            created_by_user_id: socket.assigns.current_user.id
+          }
+
+          # Create highlight and get the spawned answer node
+          case Highlights.create_highlight(highlight_attrs) do
+            {:ok, highlight} ->
+              # Create the question/answer sequence
+              {_graph, answer_node} =
+                GraphActions.ask_and_answer(
+                  graph_action_params(socket, socket.assigns.node),
+                  "Please explain: #{selected_text}",
+                  minimal_context: true
+                )
+
+              # Link the highlight to the answer node (skip the redundant question)
+              if answer_node do
+                Highlights.link_to_node(highlight, answer_node.id, "explain")
+              end
+
+              update_graph(socket, {nil, answer_node}, "answer")
+
+            {:error, _changeset} ->
+              # If highlight creation fails, still create the nodes
+              update_graph(
+                socket,
+                GraphActions.ask_and_answer(
+                  graph_action_params(socket, socket.assigns.node),
+                  "Please explain: #{selected_text}",
+                  minimal_context: true
+                ),
+                "answer"
+              )
+          end
+        end
     end
   end
 
@@ -612,7 +679,8 @@ defmodule DialecticWeb.GraphLive do
         %{
           "question" => question_text,
           "selected_text" => selected_text,
-          "node_id" => _node_id
+          "node_id" => node_id,
+          "offsets" => offsets
         },
         socket
       ) do
@@ -621,15 +689,51 @@ defmodule DialecticWeb.GraphLive do
         {:noreply, socket |> put_flash(:error, "This graph is locked")}
 
       true ->
-        update_graph(
-          socket,
-          GraphActions.ask_about_selection(
-            graph_action_params(socket, socket.assigns.node),
-            "#{question_text}\n\nRegarding: \"#{selected_text}\"",
-            selected_text
-          ),
-          "answer"
-        )
+        # Check if user is logged in
+        if socket.assigns.current_user == nil do
+          {:noreply, assign(socket, show_login_modal: true)}
+        else
+          # Create the highlight first
+          highlight_attrs = %{
+            mudg_id: socket.assigns.graph_id,
+            node_id: node_id,
+            text_source_type: "node",
+            selection_start: offsets["start"],
+            selection_end: offsets["end"],
+            selected_text_snapshot: selected_text,
+            created_by_user_id: socket.assigns.current_user.id
+          }
+
+          case Highlights.create_highlight(highlight_attrs) do
+            {:ok, highlight} ->
+              # Create the question/answer sequence
+              {_graph, answer_node} =
+                GraphActions.ask_about_selection(
+                  graph_action_params(socket, socket.assigns.node),
+                  "#{question_text}\n\nRegarding: \"#{selected_text}\"",
+                  selected_text
+                )
+
+              # Link the highlight to the answer node (skip the redundant question)
+              if answer_node do
+                Highlights.link_to_node(highlight, answer_node.id, "question")
+              end
+
+              update_graph(socket, {nil, answer_node}, "answer")
+
+            {:error, _changeset} ->
+              # If highlight creation fails, still create the nodes
+              update_graph(
+                socket,
+                GraphActions.ask_about_selection(
+                  graph_action_params(socket, socket.assigns.node),
+                  "#{question_text}\n\nRegarding: \"#{selected_text}\"",
+                  selected_text
+                ),
+                "answer"
+              )
+          end
+        end
     end
   end
 

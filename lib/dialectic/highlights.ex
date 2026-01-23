@@ -148,6 +148,42 @@ defmodule Dialectic.Highlights do
   end
 
   @doc """
+  Links a highlight to a node.
+
+  ## Examples
+
+      iex> link_to_node(highlight, "node_123", "explain")
+      {:ok, %Highlight{}}
+
+      iex> link_to_node(highlight, "node_123", "question")
+      {:ok, %Highlight{}}
+
+  """
+  def link_to_node(%Highlight{} = highlight, node_id, link_type)
+      when link_type in ["explain", "question"] do
+    update_highlight(highlight, %{
+      linked_node_id: node_id,
+      link_type: link_type
+    })
+  end
+
+  @doc """
+  Unlinks a highlight from a node (used when node is deleted).
+
+  ## Examples
+
+      iex> unlink_from_node(highlight)
+      {:ok, %Highlight{}}
+
+  """
+  def unlink_from_node(%Highlight{} = highlight) do
+    update_highlight(highlight, %{
+      linked_node_id: nil,
+      link_type: nil
+    })
+  end
+
+  @doc """
   Deletes a highlight.
 
   ## Examples

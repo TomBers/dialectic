@@ -3,6 +3,7 @@ import HighlightUtils from "./highlight_utils.js";
 const textSelectionHook = {
   mounted() {
     this.handleSelection = this.handleSelection.bind(this);
+    this.handleHighlightClick = this.handleHighlightClick.bind(this);
 
     this.fetchHighlights = this.fetchHighlights.bind(this);
     const originalFetch = this.fetchHighlights;
@@ -44,6 +45,7 @@ const textSelectionHook = {
     // Add event listeners for this specific container
     this.el.addEventListener("mouseup", this.handleSelection);
     this.el.addEventListener("touchend", this.handleSelection);
+    this.el.addEventListener("click", this.handleHighlightClick);
 
     // LiveComponent handles all panel interactions - no manual event listeners needed
 
@@ -67,8 +69,33 @@ const textSelectionHook = {
     clearTimeout(this._fetchTimeout);
     this.el.removeEventListener("mouseup", this.handleSelection);
     this.el.removeEventListener("touchend", this.handleSelection);
+    this.el.removeEventListener("click", this.handleHighlightClick);
     window.removeEventListener("highlight:created", this.refreshHighlights);
     this.el.removeEventListener("markdown:rendered", this.refreshHighlights);
+  },
+
+  handleHighlightClick(event) {
+    // Check if the clicked element is a highlight with a linked node
+    const highlightSpan = event.target.closest(
+      ".highlight-span.has-linked-node",
+    );
+
+    if (highlightSpan) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const linkedNodeId = highlightSpan.dataset.linkedNodeId;
+      const linkType = highlightSpan.dataset.linkType || "discussion";
+
+      if (linkedNodeId) {
+        // Send event to navigate to the linked node
+        this.pushEvent("navigate_to_node", {
+          node_id: linkedNodeId,
+          source: "highlight_link",
+          link_type: linkType,
+        });
+      }
+    }
   },
 
   scrollToHighlight({ id }) {

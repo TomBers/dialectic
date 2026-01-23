@@ -95,6 +95,14 @@ const HighlightUtils = {
       span.className = "highlight-span";
       span.dataset.highlightId = highlight.id;
 
+      // Add linked node indicator if this highlight has a linked node
+      if (highlight.linked_node_id) {
+        span.classList.add("has-linked-node");
+        span.dataset.linkedNodeId = highlight.linked_node_id;
+        span.dataset.linkType = highlight.link_type;
+        span.title = `This highlight has a linked ${highlight.link_type || "discussion"}. Click to view.`;
+      }
+
       try {
         range.surroundContents(span);
       } catch (e) {

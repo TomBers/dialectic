@@ -125,6 +125,7 @@ const SelectionActionsHook = {
     this.pushEvent("selection_explain", {
       selected_text: this.selectedText,
       node_id: this.nodeId,
+      offsets: this.offsets,
     });
 
     this.hide();
@@ -160,6 +161,7 @@ const SelectionActionsHook = {
       question: question,
       selected_text: this.selectedText,
       node_id: this.nodeId,
+      offsets: this.offsets,
     });
 
     this.hide();

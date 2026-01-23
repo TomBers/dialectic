@@ -1458,3 +1458,29 @@ button[type="submit"]:active {
 .highlight-span:hover {
     background-color: rgba(255, 235, 59, 0.7);
 }
+
+/* Highlights with linked nodes have a subtle border and different color */
+.highlight-span.has-linked-node {
+    background-color: rgba(99, 102, 241, 0.15);
+    border-bottom: 2px solid rgba(99, 102, 241, 0.5);
+    padding-bottom: 1px;
+    cursor: pointer;
+}
+
+.highlight-span.has-linked-node:hover {
+    background-color: rgba(99, 102, 241, 0.25);
+    border-bottom-color: rgba(99, 102, 241, 0.8);
+}
+
+/* Add a small link icon indicator using pseudo-element */
+.highlight-span.has-linked-node::after {
+    content: "🔗";
+    font-size: 0.7em;
+    margin-left: 2px;
+    opacity: 0.6;
+    vertical-align: super;
+}
+
+.highlight-span.has-linked-node:hover::after {
+    opacity: 1;
+}
