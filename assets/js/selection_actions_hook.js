@@ -79,19 +79,21 @@ const SelectionActionsHook = {
       textDisplay.textContent = selectedText;
     }
 
-    // Clear any previous question input
-    const input = this.el.querySelector('input[name="question"]');
-    if (input) {
-      input.value = "";
+    // Clear any previous question textarea
+    const textarea = this.el.querySelector('textarea[name="question"]');
+    if (textarea) {
+      textarea.value = "";
+      // Reset height for auto-expand textarea
+      textarea.style.height = "";
     }
 
     // Show the modal
     this.el.classList.remove("hidden");
 
-    // Focus the input after CSS transitions complete to prevent visual jumps
+    // Focus the textarea after CSS transitions complete to prevent visual jumps
     setTimeout(() => {
-      if (input) {
-        input.focus();
+      if (textarea) {
+        textarea.focus();
       }
     }, this.FOCUS_DELAY_MS);
   },
