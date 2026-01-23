@@ -35,6 +35,9 @@ defmodule Dialectic.Graph.Vertex do
 
   # IMPORTANT - defines fields that should be serialised
   def serialize(vertex) do
+    # Handle backward compatibility: prefer source_text, fall back to source_highlight_id
+    source_text_value = Map.get(vertex, :source_text) || Map.get(vertex, :source_highlight_id)
+
     %{
       id: vertex.id,
       content: vertex.content,
@@ -44,13 +47,16 @@ defmodule Dialectic.Graph.Vertex do
       noted_by: vertex.noted_by,
       deleted: vertex.deleted,
       compound: vertex.compound,
-      source_text: vertex.source_text
+      source_text: source_text_value
     }
   end
 
   def deserialize(%Dialectic.Graph.Vertex{} = data), do: data
 
   def deserialize(data) do
+    # Handle backward compatibility: prefer source_text, fall back to source_highlight_id
+    source_text_value = data["source_text"] || data["source_highlight_id"]
+
     %Dialectic.Graph.Vertex{
       id: data["id"],
       content: data["content"],
@@ -60,7 +66,7 @@ defmodule Dialectic.Graph.Vertex do
       noted_by: data["noted_by"],
       deleted: data["deleted"],
       compound: data["compound"],
-      source_text: data["source_text"]
+      source_text: source_text_value
     }
   end
 
