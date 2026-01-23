@@ -517,7 +517,15 @@
   </div>
 
   <%!-- Selection Actions Modal (client-side only, no server round trip) --%>
-  <div id="selection-actions-modal" phx-hook="SelectionActions" class="hidden">
+  <style>
+    #selection-actions-modal[data-view="linear"] [data-graph-only] {
+      display: none !important;
+    }
+    #selection-actions-modal[data-view="graph"] [data-linear-only] {
+      display: none !important;
+    }
+  </style>
+  <div id="selection-actions-modal" phx-hook="SelectionActions" class="hidden" data-view="graph">
     <!-- Modal backdrop -->
     <div
       data-backdrop

@@ -242,7 +242,15 @@
   <% end %>
 
   <%!-- Selection Actions Modal (client-side only, no server round trip) --%>
-  <div id="selection-actions-modal" phx-hook="SelectionActions" class="hidden">
+  <style>
+    #selection-actions-modal[data-view="linear"] [data-graph-only] {
+      display: none !important;
+    }
+    #selection-actions-modal[data-view="graph"] [data-linear-only] {
+      display: none !important;
+    }
+  </style>
+  <div id="selection-actions-modal" phx-hook="SelectionActions" class="hidden" data-view="linear">
     <!-- Modal backdrop -->
     <div
       data-backdrop
@@ -285,6 +293,7 @@
         <button
           type="button"
           data-action="explain"
+          data-graph-only
           class="bg-blue-500 hover:bg-blue-600 text-white text-sm py-2.5 px-4 rounded-lg flex items-center justify-center flex-1 transition-all hover:shadow-lg font-medium"
         >
           <svg
@@ -326,7 +335,7 @@
         </button>
       </div>
       <%!-- Custom question form --%>
-      <div class="border-t border-gray-200 pt-3 mt-1">
+      <div data-graph-only class="border-t border-gray-200 pt-3 mt-1">
         <form class="flex flex-col gap-2">
           <label class="text-sm font-medium text-gray-700">Or ask a custom question:</label>
           <div class="flex gap-2">
@@ -350,6 +359,17 @@
             Press Enter to submit • Escape to close
           </div>
         </form>
+      </div>
+      <%!-- Linear view help text --%>
+      <div
+        data-linear-only
+        class="text-sm text-gray-600 text-center py-2 border-t border-gray-200 pt-3 mt-1"
+      >
+        <p>📖 Highlighting available in read-only view.</p>
+        <p class="text-xs text-gray-500 mt-1">
+          Switch to <span class="font-medium">Graph View</span>
+          (top-left button) to ask questions or get explanations.
+        </p>
       </div>
     </div>
   </div>

@@ -114,18 +114,6 @@ defmodule DialecticWeb.LinearGraphLive do
   end
 
   def handle_event(
-        "selection_explain",
-        %{
-          "selected_text" => _selected_text,
-          "node_id" => _node_id
-        },
-        socket
-      ) do
-    # Linear view is read-only, just ignore the action
-    {:noreply, socket}
-  end
-
-  def handle_event(
         "selection_highlight",
         %{
           "selected_text" => selected_text,
@@ -142,19 +130,6 @@ defmodule DialecticWeb.LinearGraphLive do
        offsets: offsets,
        node_id: node_id
      })}
-  end
-
-  def handle_event(
-        "selection_ask",
-        %{
-          "question" => _question_text,
-          "selected_text" => _selected_text,
-          "node_id" => _node_id
-        },
-        socket
-      ) do
-    # Linear view is read-only, just ignore the action
-    {:noreply, socket}
   end
 
   def handle_event("toggle_minimap", _, socket) do
