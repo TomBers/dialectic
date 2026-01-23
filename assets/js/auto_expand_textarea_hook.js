@@ -1,10 +1,35 @@
 const AutoExpandTextareaHook = {
   mounted() {
     this.textarea = this.el;
-    this.minHeight = 56; // Match the min-h-[3.5rem] default height (3.5rem = 56px)
-    this.maxHeight = 240; // ~6 lines of text maximum
+    const computedStyle = window.getComputedStyle(this.textarea);
+
+    // Derive minHeight from CSS (min-height), fallback to 56px to match min-h-[3.5rem] (3.5rem = 56px)
+    const parsedMinHeight = parseFloat(computedStyle.minHeight);
+    this.minHeight =
+      Number.isFinite(parsedMinHeight) && parsedMinHeight > 0
+        ? parsedMinHeight
+        : 56;
+
+    // Derive maxHeight from CSS custom property if available, otherwise fallback to ~6 lines (240px)
+    const maxHeightVar = computedStyle.getPropertyValue(
+      "--auto-expand-max-height",
+    );
+    const parsedMaxHeight = parseFloat(maxHeightVar);
+    this.maxHeight =
+      Number.isFinite(parsedMaxHeight) && parsedMaxHeight > 0
+        ? parsedMaxHeight
+        : 240; // ~6 lines of text maximum
+
     // Threshold above minHeight to trigger border radius change (prevents flickering on single-line expansion)
-    this.borderRadiusThreshold = 10;
+    // Can be customized via the --auto-expand-border-threshold CSS custom property.
+    const borderThresholdVar = computedStyle.getPropertyValue(
+      "--auto-expand-border-threshold",
+    );
+    const parsedBorderThreshold = parseFloat(borderThresholdVar);
+    this.borderRadiusThreshold =
+      Number.isFinite(parsedBorderThreshold) && parsedBorderThreshold >= 0
+        ? parsedBorderThreshold
+        : 10;
 
     // Store the initial border radius class (if using rounded-full)
     this.usesRoundedFull = this.textarea.classList.contains("rounded-full");

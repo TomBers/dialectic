@@ -176,7 +176,7 @@ defmodule Dialectic.Graph.GraphActions do
 
     # Store the selected text as metadata on the question node
     GraphManager.update_vertex_fields(graph_id, question_node.id, %{
-      source_highlight_id: selected_text
+      source_text: selected_text
     })
 
     # Reload the question node to get the updated version

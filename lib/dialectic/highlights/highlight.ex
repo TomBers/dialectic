@@ -71,10 +71,6 @@ defmodule Dialectic.Highlights.Highlight do
     |> validate_number(:selection_end, greater_than_or_equal_to: 0)
     |> validate_range_order()
     |> validate_no_overlap()
-    |> unique_constraint([:mudg_id, :node_id, :selection_start, :selection_end],
-      name: :highlights_unique_span,
-      message: "A highlight already exists for this text selection"
-    )
   end
 
   defp validate_range_order(changeset) do
@@ -88,6 +84,11 @@ defmodule Dialectic.Highlights.Highlight do
     end
   end
 
+  # WARNING: Performance implications
+  # This validation performs a database query during changeset validation, which can cause
+  # performance issues when validating multiple highlights in batch (N+1 query problem).
+  # Consider moving this validation to the context layer (Highlights module) for better
+  # control over batch operations, or implement database-level constraints/triggers.
   defp validate_no_overlap(changeset) do
     mudg_id = get_field(changeset, :mudg_id)
     node_id = get_field(changeset, :node_id)

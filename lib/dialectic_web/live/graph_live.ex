@@ -1237,6 +1237,9 @@ defmodule DialecticWeb.GraphLive do
       end)
       |> then(fn s ->
         # Auto-open drawer panel when new answer is created
+        # TODO: This behavior could be disruptive to user workflow. Consider making it configurable
+        # via user preferences, or making it less intrusive (e.g., only auto-open on first answer,
+        # or provide a visual indicator without forcing the drawer open).
         if operation in ["answer", "explain"] && node && Map.get(node, :id) do
           assign(s, drawer_open: true)
         else
