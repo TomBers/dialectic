@@ -34,7 +34,6 @@ import MarkdownHook from "./markdown_hook.js";
 import InterfaceHighlightHook from "./how/interface_highlight_hook.js";
 import { ViewModeHook } from "./view_mode_hook.js";
 import AutoExpandTextareaHook from "./auto_expand_textarea_hook.js";
-import StopPropagationHook from "./stop_propagation_hook.js";
 
 let hooks = {};
 
@@ -46,7 +45,7 @@ hooks.HighlightNode = highlightNodeHook;
 hooks.PrintConversation = printConversationHook;
 hooks.StoryReadability = storyReadabilityHook;
 hooks.ListDetection = listDetectionHook;
-hooks.StopPropagation = StopPropagationHook;
+
 hooks.TranslatePopover = translatePopoverHook;
 hooks.Markdown = MarkdownHook;
 hooks.InterfaceHighlight = InterfaceHighlightHook;
