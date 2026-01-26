@@ -204,6 +204,14 @@ const textSelectionHook = {
         return; // Event didn't happen in this hook's container, ignore it
       }
 
+      // Ignore clicks on highlight link icons to prevent modal from reopening
+      if (
+        event.target.closest(".highlight-link-icon") ||
+        event.target.closest(".highlight-links-container")
+      ) {
+        return;
+      }
+
       const selection = window.getSelection();
 
       // Check if selection is empty or not within this component
