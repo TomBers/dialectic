@@ -184,7 +184,12 @@ defmodule DialecticWeb.SelectionActionsComp do
               type="button"
               phx-click="explain"
               phx-target={@myself}
-              disabled={!@can_edit}
+              disabled={!@can_edit || has_link_type?(@links, "explain")}
+              title={
+                if has_link_type?(@links, "explain"),
+                  do: "Explanation already exists for this text",
+                  else: "Create an AI explanation"
+              }
               class="bg-blue-500 hover:bg-blue-600 text-white text-sm py-2.5 px-4 rounded-lg flex items-center justify-center transition-all hover:shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg
@@ -236,7 +241,12 @@ defmodule DialecticWeb.SelectionActionsComp do
               type="button"
               phx-click="pros_cons"
               phx-target={@myself}
-              disabled={!@can_edit}
+              disabled={!@can_edit || has_pros_or_cons?(@links)}
+              title={
+                if has_pros_or_cons?(@links),
+                  do: "Pros/Cons already exist for this text",
+                  else: "Analyze pros and cons"
+              }
               class="bg-gradient-to-r from-emerald-500 to-rose-500 hover:from-emerald-600 hover:to-rose-600 text-white text-sm py-2.5 px-4 rounded-lg flex items-center justify-center transition-all hover:shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg
@@ -264,7 +274,12 @@ defmodule DialecticWeb.SelectionActionsComp do
               type="button"
               phx-click="related_ideas"
               phx-target={@myself}
-              disabled={!@can_edit}
+              disabled={!@can_edit || has_link_type?(@links, "related_idea")}
+              title={
+                if has_link_type?(@links, "related_idea"),
+                  do: "Related ideas already exist for this text",
+                  else: "Find related ideas"
+              }
               class="bg-orange-500 hover:bg-orange-600 text-white text-sm py-2.5 px-4 rounded-lg flex items-center justify-center transition-all hover:shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg
