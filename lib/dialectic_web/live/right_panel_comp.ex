@@ -379,12 +379,11 @@ defmodule DialecticWeb.RightPanelComp do
                                   phx-click="node_clicked"
                                   phx-value-id={link.node_id}
                                   title={"Navigate to " <> link_type_label(link.link_type) <> ": " <> link.node_id}
-                                  onclick="event.stopPropagation()"
                                   class="hover:scale-125 hover:opacity-80 transition-all cursor-pointer rounded-sm"
                                 >
                                   <.icon
                                     name={link_type_icon(link.link_type)}
-                                    class={"w-3.5 h-3.5 " <> link_type_color(link.link_type)}
+                                    class={"w-4 h-4 " <> link_type_color(link.link_type)}
                                   />
                                 </button>
                               <% end %>

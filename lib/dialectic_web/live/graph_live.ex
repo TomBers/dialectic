@@ -599,6 +599,152 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
+  def handle_event(
+        "reply-and-answer",
+        %{"vertex" => %{"content" => answer}, "prefix" => prefix} = params,
+        socket
+      ) do
+    cond do
+      not socket.assigns.can_edit ->
+        {:noreply, socket |> put_flash(:error, "This graph is locked")}
+
+      true ->
+        minimal_context = prefix == "explain"
+        highlight_context = Map.get(params, "highlight_context")
+
+        update_graph(
+          socket,
+          GraphActions.ask_and_answer(
+            graph_action_params(socket, socket.assigns.node),
+            answer,
+            minimal_context: minimal_context,
+            highlight_context: highlight_context
+          ),
+          "answer"
+        )
+    end
+  end
+
+  def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}} = params, socket) do
+    cond do
+      not socket.assigns.can_edit ->
+        {:noreply, socket |> put_flash(:error, "This graph is locked")}
+
+      true ->
+        highlight_context = Map.get(params, "highlight_context")
+
+        update_graph(
+          socket,
+          GraphActions.ask_and_answer(
+            graph_action_params(socket, socket.assigns.node),
+            answer,
+            highlight_context: highlight_context
+          ),
+          "answer"
+        )
+    end
+  end
+
+  def handle_event("modal_closed", _, socket) do
+    {:noreply, assign(socket, show_combine: false)}
+  end
+
+  # Start stream handlers grouped with other handle_event clauses
+  def handle_event("open_share_modal", _params, socket) do
+    socket =
+      socket
+      |> assign(show_share_modal: true)
+      |> push_event("request_screenshot", %{})
+
+    {:noreply, socket}
+  end
+
+  def handle_event("save_screenshot", %{"image" => image_data}, socket) do
+    graph = socket.assigns.graph_struct
+    # Update in memory only for modal display
+    new_data = Map.put(graph.data || %{}, "preview_image", image_data)
+    updated_graph = %{graph | data: new_data}
+
+    {:noreply, assign(socket, graph_struct: updated_graph)}
+  end
+
+  def handle_event("close_share_modal", _params, socket) do
+    {:noreply, assign(socket, show_share_modal: false)}
+  end
+
+  # Triggered by the client-side JS hook (text_selection_hook.js) when it receives a 401
+  def handle_event("show_login_required", _, socket) do
+    {:noreply, assign(socket, show_login_modal: true)}
+  end
+
+  def handle_event("close_login_modal", _, socket) do
+    {:noreply, assign(socket, show_login_modal: false)}
+  end
+
+  def handle_event("open_start_stream_modal", _params, socket) do
+    {:noreply, assign(socket, show_start_stream_modal: true)}
+  end
+
+  def handle_event("cancel_start_stream", _params, socket) do
+    {:noreply, assign(socket, show_start_stream_modal: false)}
+  end
+
+  def handle_event("start_stream", %{"title" => title} = params, socket) do
+    if !socket.assigns.can_edit do
+      {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    else
+      # 1) Optionally create a compound group to visually contain the stream
+      group_id =
+        if is_binary(title) and String.trim(title) != "" do
+          title
+        else
+          nil
+        end
+
+      if group_id do
+        GraphManager.create_group(socket.assigns.graph_id, group_id, [])
+        GraphManager.save_graph(socket.assigns.graph_id)
+      end
+
+      # 2) Create a new root node under the group (if provided)
+      content = title
+
+      vertex = %Vertex{
+        content: content,
+        class: "origin",
+        user: socket.assigns.user,
+        parent: group_id
+      }
+
+      new_node = GraphManager.add_node(socket.assigns.graph_id, vertex)
+
+      # 3) Load updated graph and node-with-relatives and update assigns/UI
+      node2 = GraphManager.find_node_by_id(socket.assigns.graph_id, new_node.id)
+      GraphManager.save_graph(socket.assigns.graph_id)
+
+      final_node =
+        if Map.get(params, "auto_answer") in ["on", "true", "1"] do
+          GraphActions.answer(graph_action_params(socket, node2))
+        else
+          node2
+        end
+
+      update_graph(socket, {nil, final_node}, "start_stream")
+    end
+  end
+
+  def handle_event("focus_stream", %{"id" => group_id}, socket) do
+    {:noreply, push_event(socket, "focus_group", %{id: group_id})}
+  end
+
+  def handle_event("toggle_stream", %{"id" => group_id}, socket) do
+    {:noreply, push_event(socket, "toggle_group", %{id: group_id})}
+  end
+
+  def handle_event("update_exploration_progress", params, socket) do
+    {:noreply, assign(socket, :exploration_stats, params)}
+  end
+
   # Handle selection action messages from SelectionActionsComp
   def handle_info({:selection_action, params}, socket) do
     %{
@@ -626,6 +772,139 @@ defmodule DialecticWeb.GraphLive do
           params,
           socket
         )
+    end
+  end
+
+  def handle_info(:close_share_modal, socket) do
+    {:noreply, assign(socket, show_share_modal: false)}
+  end
+
+  def handle_info({:created, highlight}, socket) do
+    # Preload links for display in right panel
+    highlight = Repo.preload(highlight, :links)
+    highlights = [highlight | socket.assigns.highlights]
+
+    {:noreply,
+     assign(socket, highlights: highlights)
+     |> push_event("refresh_highlights", %{data: highlight})}
+  end
+
+  def handle_info({:updated, highlight}, socket) do
+    # Preload links for display in right panel
+    highlight = Repo.preload(highlight, :links)
+
+    highlights =
+      Enum.map(socket.assigns.highlights, fn h ->
+        if h.id == highlight.id, do: highlight, else: h
+      end)
+
+    {:noreply,
+     assign(socket, highlights: highlights)
+     |> push_event("refresh_highlights", %{data: highlight})}
+  end
+
+  def handle_info({:deleted, highlight}, socket) do
+    highlights =
+      Enum.reject(socket.assigns.highlights, fn h -> h.id == highlight.id end)
+
+    {:noreply,
+     assign(socket, highlights: highlights)
+     |> push_event("refresh_highlights", %{data: highlight})}
+  end
+
+  def handle_info({DialecticWeb.Presence, {:join, presence}}, socket) do
+    if is_connected_to_graph?(presence, socket.assigns.graph_id) do
+      {:noreply, stream_insert(socket, :presences, presence)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_info({DialecticWeb.Presence, {:leave, presence}}, socket) do
+    if presence.metas == [] do
+      {:noreply, stream_delete(socket, :presences, presence)}
+    else
+      {:noreply, stream_insert(socket, :presences, presence)}
+    end
+  end
+
+  def handle_info({:other_user_change, sender_pid}, socket) do
+    # Skip if it's our own change - we've already updated our view
+    if self() != sender_pid do
+      {_graph_struct, _graph} = GraphManager.get_graph(socket.assigns.graph_id)
+
+      # Update f_graph so other users see structural changes (new nodes, etc.)
+      {:noreply,
+       assign(socket,
+         f_graph: GraphManager.format_graph_json(socket.assigns.graph_id),
+         work_streams: list_streams(socket.assigns.graph_id)
+       )}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_info({:stream_chunk, updated_vertex, :node_id, node_id}, socket) do
+    # This is the streamed LLM response into a node
+    # Re-broadcast to all users on the graph so they see real-time streaming
+    PubSub.broadcast(
+      Dialectic.PubSub,
+      socket.assigns.graph_topic,
+      {:stream_chunk_broadcast, updated_vertex, :node_id, node_id, self()}
+    )
+
+    {:noreply, update_streaming_node(socket, updated_vertex, node_id)}
+  end
+
+  def handle_info(
+        {:stream_chunk_broadcast, updated_vertex, :node_id, node_id, sender_pid},
+        socket
+      ) do
+    # Skip if this is our own broadcast (we already handled it above)
+    if self() == sender_pid do
+      {:noreply, socket}
+    else
+      # Another user is streaming - update our view if we're viewing this node
+      {:noreply, update_streaming_node(socket, updated_vertex, node_id)}
+    end
+  end
+
+  def handle_info({:llm_request_complete, node_id}, socket) do
+    Logger.debug(fn ->
+      "[GraphLive] llm_request_complete node_id=#{inspect(node_id)} current=#{inspect(socket.assigns.node && Map.get(socket.assigns.node, :id))}"
+    end)
+
+    socket =
+      socket
+      |> assign(streaming_nodes: MapSet.delete(socket.assigns.streaming_nodes, node_id))
+      |> assign(work_streams: list_streams(socket.assigns.graph_id))
+
+    # Don't broadcast or call update_graph - the streaming already updated the node content
+    # and we don't want to cause a flash/rerender for the user watching the stream
+    # Other users will see the node when it was created, not when it completes
+    {:noreply, socket}
+  end
+
+  def handle_info({:stream_error, error, :node_id, node_id}, socket) do
+    Logger.debug(fn ->
+      "[GraphLive] stream_error node_id=#{inspect(node_id)} current=#{inspect(socket.assigns.node && Map.get(socket.assigns.node, :id))} error=#{inspect(error)}"
+    end)
+
+    # This is the streamed LLM response into a node
+    # TODO - broadcast to all users??? - only want to update the node that is being worked on, just rerender the others
+    updated_vertex = GraphManager.update_vertex(socket.assigns.graph_id, node_id, error)
+
+    if socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
+      label = NodeTitleHelper.extract_node_title(updated_vertex)
+
+      socket =
+        socket
+        |> assign(node: updated_vertex)
+        |> push_event("update_node_label", %{id: node_id, label: label})
+
+      {:noreply, socket}
+    else
+      {:noreply, socket}
     end
   end
 
@@ -861,285 +1140,6 @@ defmodule DialecticWeb.GraphLive do
     case Highlights.create_highlight(highlight_attrs) do
       {:ok, highlight} -> highlight
       {:error, _changeset} -> nil
-    end
-  end
-
-  def handle_event(
-        "reply-and-answer",
-        %{"vertex" => %{"content" => answer}, "prefix" => prefix} = params,
-        socket
-      ) do
-    cond do
-      not socket.assigns.can_edit ->
-        {:noreply, socket |> put_flash(:error, "This graph is locked")}
-
-      true ->
-        minimal_context = prefix == "explain"
-        highlight_context = Map.get(params, "highlight_context")
-
-        update_graph(
-          socket,
-          GraphActions.ask_and_answer(
-            graph_action_params(socket, socket.assigns.node),
-            answer,
-            minimal_context: minimal_context,
-            highlight_context: highlight_context
-          ),
-          "answer"
-        )
-    end
-  end
-
-  def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}} = params, socket) do
-    cond do
-      not socket.assigns.can_edit ->
-        {:noreply, socket |> put_flash(:error, "This graph is locked")}
-
-      true ->
-        highlight_context = Map.get(params, "highlight_context")
-
-        update_graph(
-          socket,
-          GraphActions.ask_and_answer(
-            graph_action_params(socket, socket.assigns.node),
-            answer,
-            highlight_context: highlight_context
-          ),
-          "answer"
-        )
-    end
-  end
-
-  def handle_event("modal_closed", _, socket) do
-    {:noreply, assign(socket, show_combine: false)}
-  end
-
-  # Start stream handlers grouped with other handle_event clauses
-  def handle_event("open_share_modal", _params, socket) do
-    socket =
-      socket
-      |> assign(show_share_modal: true)
-      |> push_event("request_screenshot", %{})
-
-    {:noreply, socket}
-  end
-
-  def handle_event("save_screenshot", %{"image" => image_data}, socket) do
-    graph = socket.assigns.graph_struct
-    # Update in memory only for modal display
-    new_data = Map.put(graph.data || %{}, "preview_image", image_data)
-    updated_graph = %{graph | data: new_data}
-
-    {:noreply, assign(socket, graph_struct: updated_graph)}
-  end
-
-  def handle_event("close_share_modal", _params, socket) do
-    {:noreply, assign(socket, show_share_modal: false)}
-  end
-
-  # Triggered by the client-side JS hook (text_selection_hook.js) when it receives a 401
-  def handle_event("show_login_required", _, socket) do
-    {:noreply, assign(socket, show_login_modal: true)}
-  end
-
-  def handle_event("close_login_modal", _, socket) do
-    {:noreply, assign(socket, show_login_modal: false)}
-  end
-
-  def handle_event("open_start_stream_modal", _params, socket) do
-    {:noreply, assign(socket, show_start_stream_modal: true)}
-  end
-
-  def handle_event("cancel_start_stream", _params, socket) do
-    {:noreply, assign(socket, show_start_stream_modal: false)}
-  end
-
-  def handle_event("start_stream", %{"title" => title} = params, socket) do
-    if !socket.assigns.can_edit do
-      {:noreply, socket |> put_flash(:error, "This graph is locked")}
-    else
-      # 1) Optionally create a compound group to visually contain the stream
-      group_id =
-        if is_binary(title) and String.trim(title) != "" do
-          title
-        else
-          nil
-        end
-
-      if group_id do
-        GraphManager.create_group(socket.assigns.graph_id, group_id, [])
-        GraphManager.save_graph(socket.assigns.graph_id)
-      end
-
-      # 2) Create a new root node under the group (if provided)
-      content = title
-
-      vertex = %Vertex{
-        content: content,
-        class: "origin",
-        user: socket.assigns.user,
-        parent: group_id
-      }
-
-      new_node = GraphManager.add_node(socket.assigns.graph_id, vertex)
-
-      # 3) Load updated graph and node-with-relatives and update assigns/UI
-      node2 = GraphManager.find_node_by_id(socket.assigns.graph_id, new_node.id)
-      GraphManager.save_graph(socket.assigns.graph_id)
-
-      final_node =
-        if Map.get(params, "auto_answer") in ["on", "true", "1"] do
-          GraphActions.answer(graph_action_params(socket, node2))
-        else
-          node2
-        end
-
-      update_graph(socket, {nil, final_node}, "start_stream")
-    end
-  end
-
-  def handle_event("focus_stream", %{"id" => group_id}, socket) do
-    {:noreply, push_event(socket, "focus_group", %{id: group_id})}
-  end
-
-  def handle_event("toggle_stream", %{"id" => group_id}, socket) do
-    {:noreply, push_event(socket, "toggle_group", %{id: group_id})}
-  end
-
-  def handle_event("update_exploration_progress", params, socket) do
-    {:noreply, assign(socket, :exploration_stats, params)}
-  end
-
-  def handle_info(:close_share_modal, socket) do
-    {:noreply, assign(socket, show_share_modal: false)}
-  end
-
-  def handle_info({:created, highlight}, socket) do
-    # Preload links for display in right panel
-    highlight = Repo.preload(highlight, :links)
-    highlights = [highlight | socket.assigns.highlights]
-
-    {:noreply,
-     assign(socket, highlights: highlights)
-     |> push_event("refresh_highlights", %{data: highlight})}
-  end
-
-  def handle_info({:updated, highlight}, socket) do
-    # Preload links for display in right panel
-    highlight = Repo.preload(highlight, :links)
-
-    highlights =
-      Enum.map(socket.assigns.highlights, fn h ->
-        if h.id == highlight.id, do: highlight, else: h
-      end)
-
-    {:noreply,
-     assign(socket, highlights: highlights)
-     |> push_event("refresh_highlights", %{data: highlight})}
-  end
-
-  def handle_info({:deleted, highlight}, socket) do
-    highlights =
-      Enum.reject(socket.assigns.highlights, fn h -> h.id == highlight.id end)
-
-    {:noreply,
-     assign(socket, highlights: highlights)
-     |> push_event("refresh_highlights", %{data: highlight})}
-  end
-
-  def handle_info({DialecticWeb.Presence, {:join, presence}}, socket) do
-    if is_connected_to_graph?(presence, socket.assigns.graph_id) do
-      {:noreply, stream_insert(socket, :presences, presence)}
-    else
-      {:noreply, socket}
-    end
-  end
-
-  def handle_info({DialecticWeb.Presence, {:leave, presence}}, socket) do
-    if presence.metas == [] do
-      {:noreply, stream_delete(socket, :presences, presence)}
-    else
-      {:noreply, stream_insert(socket, :presences, presence)}
-    end
-  end
-
-  def handle_info({:other_user_change, sender_pid}, socket) do
-    # Skip if it's our own change - we've already updated our view
-    if self() != sender_pid do
-      {_graph_struct, _graph} = GraphManager.get_graph(socket.assigns.graph_id)
-
-      # Update f_graph so other users see structural changes (new nodes, etc.)
-      {:noreply,
-       assign(socket,
-         f_graph: GraphManager.format_graph_json(socket.assigns.graph_id),
-         work_streams: list_streams(socket.assigns.graph_id)
-       )}
-    else
-      {:noreply, socket}
-    end
-  end
-
-  def handle_info({:stream_chunk, updated_vertex, :node_id, node_id}, socket) do
-    # This is the streamed LLM response into a node
-    # Re-broadcast to all users on the graph so they see real-time streaming
-    PubSub.broadcast(
-      Dialectic.PubSub,
-      socket.assigns.graph_topic,
-      {:stream_chunk_broadcast, updated_vertex, :node_id, node_id, self()}
-    )
-
-    {:noreply, update_streaming_node(socket, updated_vertex, node_id)}
-  end
-
-  def handle_info(
-        {:stream_chunk_broadcast, updated_vertex, :node_id, node_id, sender_pid},
-        socket
-      ) do
-    # Skip if this is our own broadcast (we already handled it above)
-    if self() == sender_pid do
-      {:noreply, socket}
-    else
-      # Another user is streaming - update our view if we're viewing this node
-      {:noreply, update_streaming_node(socket, updated_vertex, node_id)}
-    end
-  end
-
-  def handle_info({:llm_request_complete, node_id}, socket) do
-    Logger.debug(fn ->
-      "[GraphLive] llm_request_complete node_id=#{inspect(node_id)} current=#{inspect(socket.assigns.node && Map.get(socket.assigns.node, :id))}"
-    end)
-
-    socket =
-      socket
-      |> assign(streaming_nodes: MapSet.delete(socket.assigns.streaming_nodes, node_id))
-      |> assign(work_streams: list_streams(socket.assigns.graph_id))
-
-    # Don't broadcast or call update_graph - the streaming already updated the node content
-    # and we don't want to cause a flash/rerender for the user watching the stream
-    # Other users will see the node when it was created, not when it completes
-    {:noreply, socket}
-  end
-
-  def handle_info({:stream_error, error, :node_id, node_id}, socket) do
-    Logger.debug(fn ->
-      "[GraphLive] stream_error node_id=#{inspect(node_id)} current=#{inspect(socket.assigns.node && Map.get(socket.assigns.node, :id))} error=#{inspect(error)}"
-    end)
-
-    # This is the streamed LLM response into a node
-    # TODO - broadcast to all users??? - only want to update the node that is being worked on, just rerender the others
-    updated_vertex = GraphManager.update_vertex(socket.assigns.graph_id, node_id, error)
-
-    if socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
-      label = NodeTitleHelper.extract_node_title(updated_vertex)
-
-      socket =
-        socket
-        |> assign(node: updated_vertex)
-        |> push_event("update_node_label", %{id: node_id, label: label})
-
-      {:noreply, socket}
-    else
-      {:noreply, socket}
     end
   end
 
