@@ -105,7 +105,6 @@ const HighlightUtils = {
    * @param {Array} highlights - Array of highlight objects {id, selection_start, selection_end, links: [...]}
    */
   renderHighlights(container, highlights) {
-    console.log("[HighlightUtils] renderHighlights called with:", highlights);
     if (!container || !highlights) return;
 
     // Get existing highlight IDs
@@ -147,12 +146,6 @@ const HighlightUtils = {
    * Handles ranges that cross element boundaries by creating multiple spans.
    */
   applySingleHighlight(container, highlight) {
-    console.log(
-      "[HighlightUtils] applySingleHighlight:",
-      highlight.id,
-      "links:",
-      highlight.links,
-    );
     const start = highlight.selection_start;
     const end = highlight.selection_end;
 
@@ -213,19 +206,7 @@ const HighlightUtils = {
       try {
         range.surroundContents(span);
 
-        // Add link icons after the highlight span if there are links
-        console.log(
-          "[HighlightUtils] Checking links for highlight",
-          highlight.id,
-          ":",
-          highlight.links,
-        );
         if (highlight.links && highlight.links.length > 0) {
-          console.log(
-            "[HighlightUtils] Adding icons for",
-            highlight.links.length,
-            "links",
-          );
           const iconContainer = document.createElement("span");
           iconContainer.className = "highlight-links-container";
           iconContainer.style.cssText =
@@ -242,7 +223,6 @@ const HighlightUtils = {
           } else {
             span.parentNode.appendChild(iconContainer);
           }
-          console.log("[HighlightUtils] Icons inserted after highlight span");
         }
       } catch (e) {
         console.warn("HighlightUtils: Failed to wrap node", e);
