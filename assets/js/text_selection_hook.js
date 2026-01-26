@@ -4,6 +4,7 @@ const textSelectionHook = {
   mounted() {
     this.handleSelection = this.handleSelection.bind(this);
     this.handleHighlightClick = this.handleHighlightClick.bind(this);
+    this.handleLinkIconClick = this.handleLinkIconClick.bind(this);
 
     this.fetchHighlights = this.fetchHighlights.bind(this);
     const originalFetch = this.fetchHighlights;
@@ -46,6 +47,10 @@ const textSelectionHook = {
     this.el.addEventListener("mouseup", this.handleSelection);
     this.el.addEventListener("touchend", this.handleSelection);
     this.el.addEventListener("click", this.handleHighlightClick);
+    this.el.addEventListener(
+      "highlight-link-clicked",
+      this.handleLinkIconClick,
+    );
 
     // LiveComponent handles all panel interactions - no manual event listeners needed
 
@@ -68,10 +73,22 @@ const textSelectionHook = {
   destroyed() {
     clearTimeout(this._fetchTimeout);
     this.el.removeEventListener("mouseup", this.handleSelection);
+    this.el.removeEventListener(
+      "highlight-link-clicked",
+      this.handleLinkIconClick,
+    );
     this.el.removeEventListener("touchend", this.handleSelection);
     this.el.removeEventListener("click", this.handleHighlightClick);
     window.removeEventListener("highlight:created", this.refreshHighlights);
     this.el.removeEventListener("markdown:rendered", this.refreshHighlights);
+  },
+
+  handleLinkIconClick(event) {
+    const nodeId = event.detail?.nodeId;
+    if (!nodeId) return;
+
+    // Push event to parent LiveView to navigate to the linked node
+    this.pushEvent("node_clicked", { id: nodeId });
   },
 
   handleHighlightClick(event) {

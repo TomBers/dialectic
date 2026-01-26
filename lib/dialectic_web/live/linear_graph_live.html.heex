@@ -241,144 +241,15 @@
     </div>
   <% end %>
 
-  <%!-- Selection Actions Modal (client-side only, no server round trip) --%>
-  <style>
-    #selection-actions-modal[data-view="linear"] [data-graph-only] {
-      display: none !important;
-    }
-    #selection-actions-modal[data-view="graph"] [data-linear-only] {
-      display: none !important;
-    }
-  </style>
-  <div id="selection-actions-modal" phx-hook="SelectionActions" class="hidden" data-view="linear">
-    <!-- Modal backdrop -->
-    <div
-      data-backdrop
-      class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-[999] transition-opacity duration-200"
-    >
-    </div>
-    <!-- Modal content -->
-    <div class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white shadow-2xl rounded-xl p-4 sm:p-6 z-[1000] border border-gray-200 flex flex-col gap-3 w-[90vw] max-w-[500px] transition-all duration-200 opacity-100 scale-100">
-      <%!-- Header with close button --%>
-      <div class="flex items-center justify-between mb-2">
-        <h3 class="text-lg font-semibold text-gray-900">Selection Actions</h3>
-        <button
-          type="button"
-          data-action="close"
-          class="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100 transition-colors"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
-        </button>
-      </div>
-      <%!-- Selected text display - with more emphasis --%>
-      <div class="p-4 bg-gradient-to-br from-indigo-50 to-blue-50 rounded-lg border-2 border-indigo-200 shadow-sm">
-        <div class="text-xs text-indigo-700 mb-2 font-semibold uppercase tracking-wide">
-          Selected text:
-        </div>
-        <div
-          class="text-base text-gray-900 font-medium leading-relaxed max-h-32 overflow-y-auto"
-          data-selected-text
-        >
-        </div>
-      </div>
-      <%!-- Action buttons - side by side --%>
-      <div class="flex gap-3">
-        <button
-          type="button"
-          data-action="explain"
-          data-graph-only
-          class="bg-blue-500 hover:bg-blue-600 text-white text-sm py-2.5 px-4 rounded-lg flex items-center justify-center flex-1 transition-all hover:shadow-lg font-medium"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5 mr-1.5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="2.5"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"
-            />
-          </svg>
-          Explain
-        </button>
-        <button
-          type="button"
-          data-action="highlight"
-          class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm py-2.5 px-4 rounded-lg flex items-center justify-center flex-1 transition-all hover:shadow-lg font-medium"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-4 w-4 mr-1.5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-            />
-          </svg>
-          Highlight
-        </button>
-      </div>
-      <%!-- Custom question form --%>
-      <div data-graph-only class="border-t border-gray-200 pt-3 mt-1">
-        <form class="flex flex-col gap-2">
-          <label class="text-sm font-medium text-gray-700">Or ask a custom question:</label>
-          <div class="flex gap-2 items-start">
-            <textarea
-              name="question"
-              rows="1"
-              phx-hook="AutoExpandTextarea"
-              id="selection-question-input-linear"
-              class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none resize-none min-h-[2.5rem] max-h-[8rem]"
-              placeholder="What would you like to know?"
-              autofocus
-              autocomplete="off"
-            ></textarea>
-            <button
-              type="submit"
-              class="bg-indigo-500 hover:bg-indigo-600 text-white text-sm py-2 px-4 rounded-lg font-medium transition-all hover:shadow-lg whitespace-nowrap self-start"
-            >
-              Ask
-            </button>
-          </div>
-          <div class="text-xs text-gray-500">
-            Press Enter to submit • Escape to close
-          </div>
-        </form>
-      </div>
-      <%!-- Linear view help text --%>
-      <div
-        data-linear-only
-        class="text-sm text-gray-600 text-center py-2 border-t border-gray-200 pt-3 mt-1"
-      >
-        <p>📖 Highlighting available in read-only view.</p>
-        <p class="text-xs text-gray-500 mt-1">
-          Switch to <span class="font-medium">Graph View</span>
-          (top-left button) to ask questions or get explanations.
-        </p>
-      </div>
-    </div>
+  <%!-- Selection Actions Modal --%>
+  <div phx-hook="SelectionActions" id="selection-actions-hook-linear">
+    <.live_component
+      module={DialecticWeb.SelectionActionsComp}
+      id="selection-actions-linear"
+      current_user={@current_user}
+      graph_id={@graph_id}
+      can_edit={false}
+    />
   </div>
 </div>
 

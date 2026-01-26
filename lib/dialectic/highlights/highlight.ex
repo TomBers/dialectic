@@ -15,8 +15,7 @@ defmodule Dialectic.Highlights.Highlight do
              :selection_end,
              :selected_text_snapshot,
              :note,
-             :linked_node_id,
-             :link_type,
+             :links,
              :created_by_user_id,
              :inserted_at,
              :updated_at
@@ -29,8 +28,6 @@ defmodule Dialectic.Highlights.Highlight do
     field :selection_end, :integer
     field :selected_text_snapshot, :string
     field :note, :string
-    field :linked_node_id, :string
-    field :link_type, :string
 
     belongs_to :mudg, Dialectic.Accounts.Graph,
       foreign_key: :mudg_id,
@@ -38,6 +35,8 @@ defmodule Dialectic.Highlights.Highlight do
       type: :string
 
     belongs_to :creator, Dialectic.Accounts.User, foreign_key: :created_by_user_id
+
+    has_many :links, Dialectic.Highlights.HighlightLink
 
     timestamps(type: :utc_datetime)
   end
@@ -54,8 +53,6 @@ defmodule Dialectic.Highlights.Highlight do
       :selection_end,
       :selected_text_snapshot,
       :note,
-      :linked_node_id,
-      :link_type,
       :created_by_user_id
     ])
     |> validate_required([

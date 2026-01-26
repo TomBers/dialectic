@@ -101,6 +101,40 @@ defmodule DialecticWeb.RightPanelComp do
     current_user && graph_struct && graph_struct.user_id == current_user.id
   end
 
+  defp link_type_icon("explain"), do: "hero-information-circle"
+  defp link_type_icon("question"), do: "hero-question-mark-circle"
+  defp link_type_icon("pro"), do: "hero-arrow-up-circle"
+  defp link_type_icon("con"), do: "hero-arrow-down-circle"
+  defp link_type_icon("related_idea"), do: "hero-light-bulb"
+  defp link_type_icon("deep_dive"), do: "hero-magnifying-glass-circle"
+  defp link_type_icon(_), do: "hero-link"
+
+  defp link_type_color("explain"), do: "text-blue-500"
+  defp link_type_color("question"), do: "text-sky-500"
+  defp link_type_color("pro"), do: "text-emerald-500"
+  defp link_type_color("con"), do: "text-red-500"
+  defp link_type_color("related_idea"), do: "text-orange-500"
+  defp link_type_color("deep_dive"), do: "text-cyan-500"
+  defp link_type_color(_), do: "text-gray-500"
+
+  defp link_type_label("explain"), do: "Explanation"
+  defp link_type_label("question"), do: "Question"
+  defp link_type_label("pro"), do: "Pro"
+  defp link_type_label("con"), do: "Con"
+  defp link_type_label("related_idea"), do: "Related Idea"
+  defp link_type_label("deep_dive"), do: "Deep Dive"
+  defp link_type_label(_), do: "Link"
+
+  defp has_links?(highlight) do
+    case highlight.links do
+      %Ecto.Association.NotLoaded{} -> false
+      [] -> false
+      nil -> false
+      links when is_list(links) -> true
+      _ -> false
+    end
+  end
+
   @impl true
   def render(assigns) do
     ~H"""
@@ -334,8 +368,28 @@ defmodule DialecticWeb.RightPanelComp do
                             {highlight.note}
                           </div>
                         <% end %>
-                        <div class="text-[10px] text-gray-400">
-                          Node: {highlight.node_id}
+                        <div class="flex items-center gap-2 text-[10px] text-gray-400">
+                          <span>Node: {highlight.node_id}</span>
+                          <%= if has_links?(highlight) do %>
+                            <span class="text-gray-300">•</span>
+                            <div class="flex items-center gap-1">
+                              <%= for link <- highlight.links do %>
+                                <button
+                                  type="button"
+                                  phx-click="node_clicked"
+                                  phx-value-id={link.node_id}
+                                  title={"Navigate to " <> link_type_label(link.link_type) <> ": " <> link.node_id}
+                                  onclick="event.stopPropagation()"
+                                  class="hover:scale-125 hover:opacity-80 transition-all cursor-pointer rounded-sm"
+                                >
+                                  <.icon
+                                    name={link_type_icon(link.link_type)}
+                                    class={"w-3.5 h-3.5 " <> link_type_color(link.link_type)}
+                                  />
+                                </button>
+                              <% end %>
+                            </div>
+                          <% end %>
                         </div>
                       </div>
                       <div class="absolute top-1 right-1 hidden group-hover:flex gap-1 bg-white/80 rounded">
