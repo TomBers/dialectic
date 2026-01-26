@@ -1544,7 +1544,8 @@ defmodule DialecticWeb.GraphLive do
       work_streams: [],
       exploration_stats: nil,
       show_login_modal: false,
-      show_graph_nav_panel: true
+      show_graph_nav_panel: true,
+      highlights: []
     )
   end
 
@@ -1561,9 +1562,19 @@ defmodule DialecticWeb.GraphLive do
 
       presences = DialecticWeb.Presence.list_online_users(graph_id)
 
-      stream(socket, :presences, presences)
+      # Load highlights asynchronously after connection - doesn't block initial render
+      highlights = Highlights.list_highlights_with_links(mudg_id: graph_id)
+
+      socket
+      |> stream(:presences, presences)
+      |> assign(highlights: highlights)
     else
-      stream(socket, :presences, [])
+      # Load highlights even when not connected (e.g., during tests or initial render)
+      highlights = Highlights.list_highlights_with_links(mudg_id: graph_id)
+
+      socket
+      |> stream(:presences, [])
+      |> assign(highlights: highlights)
     end
   end
 
@@ -1591,8 +1602,7 @@ defmodule DialecticWeb.GraphLive do
       nav_can_left: nav_left,
       nav_can_right: nav_right,
       work_streams: list_streams(graph_id),
-      prompt_mode: Atom.to_string(Dialectic.Responses.ModeServer.get_mode(graph_id)),
-      highlights: Highlights.list_highlights_with_links(mudg_id: graph_id)
+      prompt_mode: Atom.to_string(Dialectic.Responses.ModeServer.get_mode(graph_id))
     )
   end
 
