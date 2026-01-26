@@ -67,6 +67,8 @@ defmodule Dialectic.Application do
       case String.downcase(provider) do
         p when p in ["google", "gemini"] ->
           validate_key("GOOGLE_API_KEY", "Google/Gemini")
+          thinking_level = System.get_env("GEMINI_THINKING_LEVEL", "low")
+          Logger.info("Gemini thinking level: #{thinking_level}")
 
         "openai" ->
           validate_key("OPENAI_API_KEY", "OpenAI")

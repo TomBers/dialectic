@@ -161,6 +161,9 @@ API keys are validated at application startup to fail fast:
 **Specify provider with:**
 - `LLM_PROVIDER` - Set to "openai" or "google"
 
+**Optional Gemini configuration:**
+- `GEMINI_THINKING_LEVEL` - Controls reasoning depth: "minimal", "low" (default), "medium", "high"
+
 ### Storage Best Practices
 
 **DO:**

@@ -3,12 +3,18 @@ defmodule Dialectic.LLM.Providers.Google do
   Google (Gemini) provider for the `Dialectic.LLM.Provider` behaviour.
 
   Simplified configuration:
-  - Required: GEMINI_API_KEY
-  - Hardcoded model: "gemini-2.0-flash-lite"
-  - provider_options: []
+  - Required: GOOGLE_API_KEY
+  - Hardcoded model: "gemini-3-flash-preview"
+  - Optional: GEMINI_THINKING_LEVEL (minimal, low, medium, high) - defaults to "low"
 
-  Note: We intentionally keep this minimal to reduce surface area. Add environment-driven
-  configuration only when you need it.
+  The thinking level controls how much reasoning the model performs:
+  - "minimal": Minimizes latency (thinking budget: 512 tokens)
+  - "low": Minimizes latency and cost for simple tasks (thinking budget: 2048 tokens, default)
+  - "medium": Balanced thinking for most tasks (thinking budget: 8192 tokens)
+  - "high": Maximizes reasoning depth (thinking budget: -1 for dynamic)
+
+  Note: Gemini 3 models accept thinkingBudget for backward compatibility.
+  We map thinking levels to appropriate token budgets.
   """
 
   @behaviour Dialectic.LLM.Provider
@@ -30,6 +36,21 @@ defmodule Dialectic.LLM.Providers.Google do
 
   @impl true
   def provider_options do
-    []
+    thinking_level = System.get_env("GEMINI_THINKING_LEVEL", "minimal")
+    thinking_budget = thinking_level_to_budget(thinking_level)
+
+    [
+      google_thinking_budget: thinking_budget
+    ]
   end
+
+  # Map thinking levels to token budgets
+  # Gemini 3 Flash supports budgets from 0 to 24576
+  # -1 enables dynamic thinking (default high)
+  defp thinking_level_to_budget("minimal"), do: 512
+  defp thinking_level_to_budget("low"), do: 2048
+  defp thinking_level_to_budget("medium"), do: 8192
+  defp thinking_level_to_budget("high"), do: -1
+  # Fallback to low for unknown values
+  defp thinking_level_to_budget(_), do: 2048
 end

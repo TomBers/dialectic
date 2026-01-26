@@ -288,6 +288,9 @@ SafeLogger.error("Error occurred", data: sensitive_data)
 OPENAI_API_KEY=sk-...
 GOOGLE_API_KEY=...
 
+# Optional: Gemini thinking level control
+GEMINI_THINKING_LEVEL=low  # Options: minimal, low (default), medium, high
+
 # Optional but recommended
 DATABASE_SSL=true           # Default: true
 POOL_SIZE=10               # Default: 10
