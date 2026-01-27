@@ -217,7 +217,12 @@ defmodule DialecticWeb.SelectionActionsComp do
               type="button"
               phx-click="highlight_only"
               phx-target={@myself}
-              disabled={!@can_edit}
+              disabled={!@can_edit || length(@links) > 0}
+              title={
+                if length(@links) > 0,
+                  do: "This selection already has linked actions",
+                  else: "Save this text selection as a highlight"
+              }
               class="bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-sm py-2.5 px-4 rounded-lg flex items-center justify-center transition-all hover:shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg
