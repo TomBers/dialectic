@@ -144,6 +144,39 @@
         />
       </div>
     </div>
+    
+<!-- Graph Nav Drawer (Right panel style) -->
+    <div
+      id="graph-nav-drawer"
+      class={
+        if @show_graph_nav_panel,
+          do:
+            "fixed top-10 bottom-0 right-0 w-full sm:w-96 bg-white border-l border-gray-200 z-40 overflow-y-auto transform translate-x-0 opacity-100 transition-all duration-300 ease-in-out",
+          else:
+            "fixed top-10 bottom-0 right-0 w-0 overflow-hidden bg-white border-l border-gray-200 z-50 transform translate-x-full opacity-0 transition-all duration-300 ease-in-out"
+      }
+    >
+      <div class="p-2">
+        <div class="flex items-center justify-end mb-2">
+          <button
+            type="button"
+            phx-click="toggle_graph_nav_panel"
+            class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50"
+            aria-label="Close navigation panel"
+            title="Close panel"
+          >
+            <.icon name="hero-x-mark" class="w-4 h-4" />
+          </button>
+        </div>
+        <.live_component
+          module={DialecticWeb.GraphNavPanelComp}
+          id="graph-nav-panel"
+          show={@show_graph_nav_panel}
+          right_panel_open={@right_panel_open}
+          bottom_menu_open={@bottom_menu_open}
+        />
+      </div>
+    </div>
   <% end %>
   
 <!-- Main content with drawer menu -->
@@ -203,15 +236,6 @@
       <%= if @graph_id do %>
         <span phx-window-keydown={show_modal("modal-graph-live-modal-comp")} phx-key="Enter">
         </span>
-        
-<!-- Graph Navigation Panel Component -->
-        <.live_component
-          module={DialecticWeb.GraphNavPanelComp}
-          id="graph-nav-panel"
-          show={@show_graph_nav_panel}
-          right_panel_open={@right_panel_open}
-          bottom_menu_open={@bottom_menu_open}
-        />
       <% end %>
       
 <!-- Streams panel -->
@@ -368,36 +392,13 @@
       </button>
     <% end %>
     
-<!-- Right panel toggle -->
-    <%= if @graph_id do %>
-      <button
-        id="right-panel-toggle"
-        phx-click="toggle_right_panel"
-        aria-controls="right-panel"
-        aria-expanded={@right_panel_open}
-        aria-label={if @right_panel_open, do: "Hide right panel", else: "Show right panel"}
-        class={"fixed top-11 z-30 transition-all duration-300 shadow-sm border border-gray-200 " <>
-      if(@right_panel_open,
-        do: "right-80 sm:right-96 p-2 rounded-l-md bg-white text-gray-500 hover:text-gray-700 rounded-r-none border-r-0",
-        else: "right-4 px-4 py-2 bg-white rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-      )}
-      >
-        <%= if @right_panel_open do %>
-          <.icon name="hero-chevron-right" class="h-5 w-5" />
-        <% else %>
-          <.icon name="hero-adjustments-horizontal" class="h-5 w-5 text-gray-500" />
-          <span>Settings</span>
-        <% end %>
-      </button>
-    <% end %>
-    
 <!-- Bottom menu toggle -->
     <div
       :if={!@bottom_menu_open}
       class={
         "fixed bottom-0 z-30 px-3 pb-3 pointer-events-none " <>
           if(@drawer_open, do: "left-0 right-0 md:left-[40%]", else: "inset-x-0") <>
-          if(@right_panel_open, do: " right-80 sm:right-96", else: "")
+          if(@right_panel_open || @show_graph_nav_panel, do: " right-80 sm:right-96", else: "")
       }
       style="padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem);"
     >
@@ -440,11 +441,17 @@
           do:
             "fixed bottom-0 z-30 transform origin-bottom scale-100 opacity-100 visible transition-all duration-200 ease-out px-3 pb-3 pointer-events-none " <>
               if(@drawer_open, do: "left-0 right-0 md:left-[40%]", else: "inset-x-0") <>
-              if(@right_panel_open, do: " right-80 sm:right-96", else: ""),
+              if(@right_panel_open || @show_graph_nav_panel,
+                do: " right-80 sm:right-96",
+                else: ""
+              ),
           else:
             "fixed bottom-0 z-30 transform origin-bottom scale-90 opacity-0 invisible transition-all duration-150 ease-in px-3 pb-3 pointer-events-none " <>
               if(@drawer_open, do: "left-0 right-0 md:left-[40%]", else: "inset-x-0") <>
-              if(@right_panel_open, do: " right-80 sm:right-96", else: "")
+              if(@right_panel_open || @show_graph_nav_panel,
+                do: " right-80 sm:right-96",
+                else: ""
+              )
       }
       style="padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem);"
     >
@@ -494,6 +501,25 @@
                 inline={true}
                 icons_only={false}
               />
+              <div class="h-6 w-px bg-gray-200 mx-1"></div>
+              <button
+                type="button"
+                phx-click="toggle_graph_nav_panel"
+                class={"p-1.5 rounded-lg transition-colors " <> if(@show_graph_nav_panel, do: "bg-indigo-50 text-indigo-600", else: "text-gray-500 hover:bg-gray-100 hover:text-gray-900")}
+                aria-label="Toggle graph settings"
+                title="Graph Settings"
+              >
+                <.icon name="hero-map" class="w-5 h-5" />
+              </button>
+              <button
+                type="button"
+                phx-click="toggle_right_panel"
+                class={"p-1.5 rounded-lg transition-colors " <> if(@right_panel_open, do: "bg-indigo-50 text-indigo-600", else: "text-gray-500 hover:bg-gray-100 hover:text-gray-900")}
+                aria-label="Toggle settings"
+                title="Settings"
+              >
+                <.icon name="hero-adjustments-horizontal" class="w-5 h-5" />
+              </button>
             </div>
             <div class="flex items-center gap-2 min-w-0">
               <div class="flex items-center gap-1 flex-none"></div>
