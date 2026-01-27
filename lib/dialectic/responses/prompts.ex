@@ -133,16 +133,17 @@ defmodule Dialectic.Responses.Prompts do
     join_blocks([
       frame_minimal_context(context),
       """
-      A specific phrase was highlighted: **#{sanitize_title(selection_text)}**
+      A specific topic was highlighted from the text above: **#{sanitize_title(selection_text)}**
 
-      **Your task:** Treat this as a NEW exploration starting point. Explain this concept in depth, opening up new directions:
-      - What is this concept and why does it matter?
-      - Provide concrete examples or applications
-      - Explore different perspectives or frameworks
-      - Identify related concepts or questions worth exploring
-      - Consider implications, edge cases, or nuances
+      **Your task:** Explain **#{sanitize_title(selection_text)}** in depth, treating it as a new exploration starting point.
 
-      While the Foundation provides context, feel free to explore this concept in directions that may diverge from the original discussion. The goal is depth and breadth on THIS specific concept.
+      Focus on:
+      - Defining what this concept is and why it matters
+      - Providing concrete examples or applications
+      - Exploring different perspectives or frameworks
+      - Identifying related concepts or questions worth exploring
+
+      While the Foundation provides context, focus on depth and breadth regarding THIS specific concept.
       """
     ])
   end
@@ -181,6 +182,28 @@ defmodule Dialectic.Responses.Prompts do
   end
 
   @doc """
+  Present reasons in favor of a selected claim/concept.
+  """
+  @spec thesis_selection(String.t(), String.t()) :: String.t()
+  def thesis_selection(context, selection_text) do
+    join_blocks([
+      frame_minimal_context(context),
+      """
+      A specific statement or concept was highlighted from the text above: **#{sanitize_title(selection_text)}**
+
+      **Your task:** Build a strong argument **IN FAVOR OF** the ideas or claims within this selection.
+
+      Provide:
+      - Reasoning, evidence, or examples supporting this selection
+      - Novel angles or supporting frameworks
+      - Fresh perspectives that strengthen the case
+
+      Focus specifically on supporting the selected text.
+      """
+    ])
+  end
+
+  @doc """
   Present reasons in favor of a claim, grounded in context.
   """
   @spec thesis(String.t(), String.t()) :: String.t()
@@ -200,6 +223,28 @@ defmodule Dialectic.Responses.Prompts do
       Avoid simply restating points already made in the Foundation.
       """,
       anti_repetition_footer()
+    ])
+  end
+
+  @doc """
+  Present reasons against a selected claim/concept.
+  """
+  @spec antithesis_selection(String.t(), String.t()) :: String.t()
+  def antithesis_selection(context, selection_text) do
+    join_blocks([
+      frame_minimal_context(context),
+      """
+      A specific statement or concept was highlighted from the text above: **#{sanitize_title(selection_text)}**
+
+      **Your task:** Build a strong argument **AGAINST** the ideas or claims within this selection.
+
+      Provide:
+      - Counterarguments, contradicting evidence, or counterexamples
+      - Alternative frameworks that challenge the selection
+      - Critical perspectives
+
+      Focus specifically on critiquing the selected text.
+      """
     ])
   end
 
@@ -243,6 +288,50 @@ defmodule Dialectic.Responses.Prompts do
       - What new dimension it would add to understanding
 
       Prioritize suggestions that open NEW directions, not just variations on what's already been discussed.
+      """
+    ])
+  end
+
+  @doc """
+  Suggest adjacent topics or thinkers based on a specific text selection within context.
+  """
+  @spec related_ideas_selection(String.t(), String.t()) :: String.t()
+  def related_ideas_selection(context, selection_text) do
+    join_blocks([
+      frame_minimal_context(context),
+      """
+      A specific topic was highlighted from the text above: **#{sanitize_title(selection_text)}**
+
+      **Your task:** Identify 3-5 adjacent topics, thinkers, or concepts specifically related to **#{sanitize_title(selection_text)}**.
+
+      For each suggestion, briefly explain:
+      - How it connects to this specific concept
+      - What new dimension it would add to understanding
+
+      Prioritize suggestions that open NEW directions, not just variations on what's already been discussed.
+      """
+    ])
+  end
+
+  @doc """
+  Provide a deeper exploration of a specific text selection.
+  """
+  @spec deep_dive_selection(String.t(), String.t()) :: String.t()
+  def deep_dive_selection(context, selection_text) do
+    join_blocks([
+      frame_minimal_context(context),
+      """
+      A specific topic was highlighted from the text above: **#{sanitize_title(selection_text)}**
+
+      **Your task:** Write a deep dive specifically on **#{sanitize_title(selection_text)}** that goes significantly deeper than the context provided.
+
+      Focus on:
+      - Adding technical depth, nuance, or complexity specific to this concept
+      - Providing concrete examples, case studies, or applications
+      - Exploring implications, edge cases, or subtleties
+      - Addressing questions the context raises but doesn't answer
+
+      You may write at length (beyond normal 500-word limit). Focus on adding substantial new understanding.
       """
     ])
   end

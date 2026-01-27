@@ -1007,7 +1007,7 @@ defmodule DialecticWeb.GraphLive do
 
     # Create pros/cons branches
     parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-    GraphActions.branch(graph_action_params(socket, parent_node))
+    GraphActions.branch(graph_action_params(socket, parent_node), content_override: selected_text)
 
     # Store highlight ID for linking after graph updates
     socket =
@@ -1035,7 +1035,11 @@ defmodule DialecticWeb.GraphLive do
     if highlight do
       # Create related ideas node
       parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-      ideas_node = GraphActions.related_ideas(graph_action_params(socket, parent_node))
+
+      ideas_node =
+        GraphActions.related_ideas(graph_action_params(socket, parent_node),
+          content_override: selected_text
+        )
 
       # Link highlight to the ideas node
       if ideas_node do
@@ -1049,7 +1053,10 @@ defmodule DialecticWeb.GraphLive do
 
       update_graph(
         socket,
-        {nil, GraphActions.related_ideas(graph_action_params(socket, parent_node))},
+        {nil,
+         GraphActions.related_ideas(graph_action_params(socket, parent_node),
+           content_override: selected_text
+         )},
         "ideas"
       )
     end
