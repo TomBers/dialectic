@@ -1,5 +1,6 @@
 defmodule DialecticWeb.RightPanelComp do
   use DialecticWeb, :live_component
+  alias Dialectic.Repo
   alias DialecticWeb.Utils.NodeTitleHelper
 
   @moduledoc """
@@ -66,6 +67,8 @@ defmodule DialecticWeb.RightPanelComp do
     with {int_id, ""} <- Integer.parse(id),
          highlight when not is_nil(highlight) <- Dialectic.Highlights.get_highlight(int_id) do
       if current_user && current_user.id == highlight.created_by_user_id do
+        # Preload links before deleting to avoid JSON encoding error during broadcast
+        highlight = Repo.preload(highlight, :links)
         Dialectic.Highlights.delete_highlight(highlight)
       end
     end
