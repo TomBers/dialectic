@@ -1,5 +1,7 @@
 defmodule DialecticWeb.RightPanelComp do
   use DialecticWeb, :live_component
+  alias Dialectic.Repo
+  alias DialecticWeb.Utils.NodeTitleHelper
 
   @moduledoc """
   Accordion-style right panel with:
@@ -65,6 +67,8 @@ defmodule DialecticWeb.RightPanelComp do
     with {int_id, ""} <- Integer.parse(id),
          highlight when not is_nil(highlight) <- Dialectic.Highlights.get_highlight(int_id) do
       if current_user && current_user.id == highlight.created_by_user_id do
+        # Preload links before deleting to avoid JSON encoding error during broadcast
+        highlight = Repo.preload(highlight, :links)
         Dialectic.Highlights.delete_highlight(highlight)
       end
     end
@@ -98,6 +102,40 @@ defmodule DialecticWeb.RightPanelComp do
 
   defp owner?(graph_struct, current_user) do
     current_user && graph_struct && graph_struct.user_id == current_user.id
+  end
+
+  defp link_type_icon("explain"), do: "hero-information-circle"
+  defp link_type_icon("question"), do: "hero-question-mark-circle"
+  defp link_type_icon("pro"), do: "hero-arrow-up-circle"
+  defp link_type_icon("con"), do: "hero-arrow-down-circle"
+  defp link_type_icon("related_idea"), do: "hero-light-bulb"
+  defp link_type_icon("deep_dive"), do: "hero-magnifying-glass-circle"
+  defp link_type_icon(_), do: "hero-link"
+
+  defp link_type_color("explain"), do: "text-blue-500"
+  defp link_type_color("question"), do: "text-sky-500"
+  defp link_type_color("pro"), do: "text-emerald-500"
+  defp link_type_color("con"), do: "text-red-500"
+  defp link_type_color("related_idea"), do: "text-orange-500"
+  defp link_type_color("deep_dive"), do: "text-cyan-500"
+  defp link_type_color(_), do: "text-gray-500"
+
+  defp link_type_label("explain"), do: "Explanation"
+  defp link_type_label("question"), do: "Question"
+  defp link_type_label("pro"), do: "Pro"
+  defp link_type_label("con"), do: "Con"
+  defp link_type_label("related_idea"), do: "Related Idea"
+  defp link_type_label("deep_dive"), do: "Deep Dive"
+  defp link_type_label(_), do: "Link"
+
+  defp has_links?(highlight) do
+    case highlight.links do
+      %Ecto.Association.NotLoaded{} -> false
+      [] -> false
+      nil -> false
+      links when is_list(links) -> true
+      _ -> false
+    end
   end
 
   @impl true
@@ -164,10 +202,7 @@ defmodule DialecticWeb.RightPanelComp do
                       {node.id} • {node.class}
                     </div>
                     <div class="truncate">
-                      {String.replace_prefix(node.content, "Title:", "")
-                      |> String.slice(0, 100)}{if String.length(node.content) > 100,
-                        do: "...",
-                        else: ""}
+                      {NodeTitleHelper.extract_node_title(node, max_length: 100)}
                     </div>
                   </li>
                 <% end %>
@@ -336,8 +371,27 @@ defmodule DialecticWeb.RightPanelComp do
                             {highlight.note}
                           </div>
                         <% end %>
-                        <div class="text-[10px] text-gray-400">
-                          Node: {highlight.node_id}
+                        <div class="flex items-center gap-2 text-[10px] text-gray-400">
+                          <span>Node: {highlight.node_id}</span>
+                          <%= if has_links?(highlight) do %>
+                            <span class="text-gray-300">•</span>
+                            <div class="flex items-center gap-1">
+                              <%= for link <- highlight.links do %>
+                                <button
+                                  type="button"
+                                  phx-click="node_clicked"
+                                  phx-value-id={link.node_id}
+                                  title={"Navigate to " <> link_type_label(link.link_type) <> ": " <> link.node_id}
+                                  class="hover:scale-125 hover:opacity-80 transition-all cursor-pointer rounded-sm"
+                                >
+                                  <.icon
+                                    name={link_type_icon(link.link_type)}
+                                    class={"w-4 h-4 " <> link_type_color(link.link_type)}
+                                  />
+                                </button>
+                              <% end %>
+                            </div>
+                          <% end %>
                         </div>
                       </div>
                       <div class="absolute top-1 right-1 hidden group-hover:flex gap-1 bg-white/80 rounded">
@@ -470,6 +524,70 @@ defmodule DialecticWeb.RightPanelComp do
               </svg>
               <span>Download Markdown</span>
             </.link>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white border border-gray-200 rounded-md">
+        <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
+          Node Colors
+        </div>
+        <div class="p-1 text-[11px] text-gray-700 space-y-1.5">
+          <div class="flex items-start gap-1.5">
+            <div class={"w-3 h-3 rounded-full flex-shrink-0 mt-0.5 " <> DialecticWeb.ColUtils.dot_class("user")}>
+            </div>
+            <div class="flex-1">
+              <div class="font-medium">{DialecticWeb.ColUtils.node_type_label("user")}</div>
+              <div class="text-[10px] text-gray-600">Your questions and comments</div>
+            </div>
+          </div>
+          <div class="flex items-start gap-1.5">
+            <div class={"w-3 h-3 rounded-full flex-shrink-0 mt-0.5 " <> DialecticWeb.ColUtils.dot_class("answer")}>
+            </div>
+            <div class="flex-1">
+              <div class="font-medium">{DialecticWeb.ColUtils.node_type_label("answer")}</div>
+              <div class="text-[10px] text-gray-600">AI-generated responses</div>
+            </div>
+          </div>
+          <div class="flex items-start gap-1.5">
+            <div class={"w-3 h-3 rounded-full flex-shrink-0 mt-0.5 " <> DialecticWeb.ColUtils.dot_class("thesis")}>
+            </div>
+            <div class="flex-1">
+              <div class="font-medium">{DialecticWeb.ColUtils.node_type_label("thesis")}</div>
+              <div class="text-[10px] text-gray-600">Supporting arguments</div>
+            </div>
+          </div>
+          <div class="flex items-start gap-1.5">
+            <div class={"w-3 h-3 rounded-full flex-shrink-0 mt-0.5 " <> DialecticWeb.ColUtils.dot_class("antithesis")}>
+            </div>
+            <div class="flex-1">
+              <div class="font-medium">{DialecticWeb.ColUtils.node_type_label("antithesis")}</div>
+              <div class="text-[10px] text-gray-600">Counterarguments</div>
+            </div>
+          </div>
+          <div class="flex items-start gap-1.5">
+            <div class={"w-3 h-3 rounded-full flex-shrink-0 mt-0.5 " <> DialecticWeb.ColUtils.dot_class("synthesis")}>
+            </div>
+            <div class="flex-1">
+              <div class="font-medium">{DialecticWeb.ColUtils.node_type_label("synthesis")}</div>
+              <div class="text-[10px] text-gray-600">Balanced perspectives</div>
+            </div>
+          </div>
+          <div class="flex items-start gap-1.5">
+            <div class={"w-3 h-3 rounded-full flex-shrink-0 mt-0.5 " <> DialecticWeb.ColUtils.dot_class("ideas")}>
+            </div>
+            <div class="flex-1">
+              <div class="font-medium">{DialecticWeb.ColUtils.node_type_label("ideas")}</div>
+              <div class="text-[10px] text-gray-600">Related concepts</div>
+            </div>
+          </div>
+          <div class="flex items-start gap-1.5">
+            <div class={"w-3 h-3 rounded-full flex-shrink-0 mt-0.5 " <> DialecticWeb.ColUtils.dot_class("deepdive")}>
+            </div>
+            <div class="flex-1">
+              <div class="font-medium">{DialecticWeb.ColUtils.node_type_label("deepdive")}</div>
+              <div class="text-[10px] text-gray-600">In-depth explorations</div>
+            </div>
           </div>
         </div>
       </div>

@@ -3,7 +3,8 @@ import HighlightUtils from "./highlight_utils.js";
 const textSelectionHook = {
   mounted() {
     this.handleSelection = this.handleSelection.bind(this);
-    this.hideSelectionActions = this.hideSelectionActions.bind(this);
+    this.handleHighlightClick = this.handleHighlightClick.bind(this);
+    this.handleLinkIconClick = this.handleLinkIconClick.bind(this);
 
     this.fetchHighlights = this.fetchHighlights.bind(this);
     const originalFetch = this.fetchHighlights;
@@ -45,21 +46,13 @@ const textSelectionHook = {
     // Add event listeners for this specific container
     this.el.addEventListener("mouseup", this.handleSelection);
     this.el.addEventListener("touchend", this.handleSelection);
+    this.el.addEventListener("click", this.handleHighlightClick);
+    this.el.addEventListener(
+      "highlight-link-clicked",
+      this.handleLinkIconClick,
+    );
 
-    // Handle clicks outside the selection
-    document.addEventListener("mousedown", (e) => {
-      if (!this.el.contains(e.target)) {
-        this.hideSelectionActions();
-      }
-    });
-
-    // Handle selection clearing
-    document.addEventListener("selectionchange", () => {
-      const selection = window.getSelection();
-      if (selection.isCollapsed) {
-        this.hideSelectionActions();
-      }
-    });
+    // LiveComponent handles all panel interactions - no manual event listeners needed
 
     // Initial highlight load
     this.refreshHighlights();
@@ -70,14 +63,56 @@ const textSelectionHook = {
 
     this.handleEvent("scroll_to_highlight", this.scrollToHighlight.bind(this));
     this.handleEvent("refresh_highlights", this.refreshHighlights);
+    this.handleEvent("create_highlight", this.handleCreateHighlight.bind(this));
+  },
+
+  handleCreateHighlight({ text, offsets }) {
+    this.createHighlight(text, offsets);
   },
 
   destroyed() {
     clearTimeout(this._fetchTimeout);
     this.el.removeEventListener("mouseup", this.handleSelection);
+    this.el.removeEventListener(
+      "highlight-link-clicked",
+      this.handleLinkIconClick,
+    );
     this.el.removeEventListener("touchend", this.handleSelection);
+    this.el.removeEventListener("click", this.handleHighlightClick);
     window.removeEventListener("highlight:created", this.refreshHighlights);
     this.el.removeEventListener("markdown:rendered", this.refreshHighlights);
+  },
+
+  handleLinkIconClick(event) {
+    const nodeId = event.detail?.nodeId;
+    if (!nodeId) return;
+
+    // Push event to parent LiveView to navigate to the linked node
+    this.pushEvent("node_clicked", { id: nodeId });
+  },
+
+  handleHighlightClick(event) {
+    // Check if the clicked element is a highlight with a linked node
+    const highlightSpan = event.target.closest(
+      ".highlight-span.has-linked-node",
+    );
+
+    if (highlightSpan) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const linkedNodeId = highlightSpan.dataset.linkedNodeId;
+      const linkType = highlightSpan.dataset.linkType || "discussion";
+
+      if (linkedNodeId) {
+        // Send event to navigate to the linked node
+        this.pushEvent("navigate_to_node", {
+          node_id: linkedNodeId,
+          source: "highlight_link",
+          link_type: linkType,
+        });
+      }
+    }
   },
 
   scrollToHighlight({ id }) {
@@ -158,90 +193,71 @@ const textSelectionHook = {
 
   handleSelection(event) {
     if (this.el.dataset.streaming === "true") {
-      this.hideSelectionActions();
       return;
     }
 
     // Add small delay to ensure selection is properly registered
     setTimeout(() => {
-      const selection = window.getSelection();
-      const selectionActionsEl = this.el.querySelector(".selection-actions");
+      // IMPORTANT: Only handle events that originated within THIS hook's container
+      // This prevents multiple hook instances from interfering with each other
+      if (!this.el.contains(event.target)) {
+        return; // Event didn't happen in this hook's container, ignore it
+      }
 
-      if (!selectionActionsEl) return;
+      // Ignore clicks on highlight link icons to prevent modal from reopening
+      if (
+        event.target.closest(".highlight-link-icon") ||
+        event.target.closest(".highlight-links-container")
+      ) {
+        return;
+      }
+
+      const selection = window.getSelection();
 
       // Check if selection is empty or not within this component
       if (selection.isCollapsed || !this.isSelectionInComponent(selection)) {
-        this.hideSelectionActions();
         return;
       }
 
       const selectedText = selection.toString().trim();
       if (selectedText.length === 0) {
-        this.hideSelectionActions();
         return;
       }
 
       // If we're not the closest container to the selection, don't show our button
       if (!this.isClosestSelectionContainer()) {
-        this.hideSelectionActions();
         return;
       }
 
-      // Get the range and its bounding rectangle
-      const range = selection.getRangeAt(0);
-      const rect = range.getBoundingClientRect();
+      // Capture offsets for highlight creation
+      const mdContainer = this.el.querySelector(
+        '[phx-hook="Markdown"][data-body-only="true"]',
+      );
+      const capturedOffsets = mdContainer
+        ? this.getSelectionOffsets(mdContainer)
+        : null;
 
-      // Get the container's bounding rectangle
-      const containerRect = this.el.getBoundingClientRect();
+      // Dispatch custom event to show modal (client-side only, no server round trip)
+      window.dispatchEvent(
+        new CustomEvent("selection:show", {
+          detail: {
+            selectedText: selectedText,
+            nodeId: this.nodeId,
+            offsets: capturedOffsets,
+          },
+        }),
+      );
+    }, 10);
+  },
 
-      // Make the button visible so we can measure its width
-      selectionActionsEl.classList.remove("hidden");
-      selectionActionsEl.classList.add("flex");
+  // Store offsets for highlight creation
+  storeOffsetsForHighlight(offsets) {
+    this._highlightOffsets = offsets;
+  },
 
-      // Get button dimensions after making it visible
-      const buttonWidth = selectionActionsEl.offsetWidth;
-      const buttonHeight = selectionActionsEl.offsetHeight;
-
-      // Calculate position relative to the container
-      // Position below the selection with some padding
-      const top = rect.bottom - containerRect.top + 8;
-
-      // Center the button on the selection, but keep it within bounds
-      let leftPos =
-        rect.left + rect.width / 2 - buttonWidth / 2 - containerRect.left;
-
-      // Ensure button stays within container bounds with padding
-      const padding = 8;
-      leftPos = Math.max(padding, leftPos);
-      leftPos = Math.min(this.el.clientWidth - buttonWidth - padding, leftPos);
-
-      // Apply the calculated positions
-      selectionActionsEl.style.top = `${top}px`;
-      selectionActionsEl.style.left = `${leftPos}px`;
-
-      // Set up "Ask" button
-      const askButton = selectionActionsEl.querySelector(".ask-btn");
-      if (askButton) {
-        askButton.onclick = () => {
-          this.pushEvent("reply-and-answer", {
-            vertex: { content: `Please explain: ${selectedText}` },
-            prefix: "explain",
-          });
-
-          // Hide the action button after clicking
-          this.hideSelectionActions();
-        };
-      }
-
-      // Set up "Add Note" button
-      const addNoteButton = selectionActionsEl.querySelector(".add-note-btn");
-      if (addNoteButton) {
-        addNoteButton.onclick = () => {
-          this.createHighlight(selectedText);
-          this.hideSelectionActions();
-        };
-      }
-    }, 10); // 10ms delay
+  // Get stored offsets for highlight creation
+  getStoredOffsets() {
+    return this._highlightOffsets;
   },
 
   isSelectionInComponent(selection) {
@@ -296,24 +312,35 @@ const textSelectionHook = {
     return closestContainer === this.el;
   },
 
-  hideSelectionActions() {
-    const selectionActionsEl = this.el.querySelector(".selection-actions");
-    if (selectionActionsEl) {
-      selectionActionsEl.classList.add("hidden");
-      selectionActionsEl.classList.remove("flex");
+  createHighlight(text, capturedOffsets = null) {
+    if (!this.mudgId || !this.nodeId) {
+      console.warn("Cannot create highlight: missing mudgId or nodeId");
+      return;
     }
-  },
 
-  createHighlight(text) {
-    if (!this.mudgId || !this.nodeId) return;
+    // Use captured offsets if provided, otherwise try to get them from current selection
+    let offsets = capturedOffsets;
 
-    // Find the markdown container to calculate offsets relative to it
-    const mdContainer = this.el.querySelector(
-      '[phx-hook="Markdown"][data-body-only="true"]',
-    );
-    if (!mdContainer) return;
+    if (!offsets) {
+      // Find the markdown container to calculate offsets relative to it
+      const mdContainer = this.el.querySelector(
+        '[phx-hook="Markdown"][data-body-only="true"]',
+      );
+      if (!mdContainer) {
+        console.error(
+          "Cannot create highlight: markdown container not found. Content may not be rendered yet.",
+        );
+        return;
+      }
 
-    const offsets = this.getSelectionOffsets(mdContainer);
+      offsets = this.getSelectionOffsets(mdContainer);
+    }
+
+    // Validate offsets
+    if (!offsets || offsets.start >= offsets.end) {
+      console.error("Cannot create highlight: invalid offsets", offsets);
+      return;
+    }
 
     const csrfToken = document
       .querySelector("meta[name='csrf-token']")
@@ -324,25 +351,79 @@ const textSelectionHook = {
       return;
     }
 
+    const highlightData = {
+      mudg_id: this.mudgId,
+      node_id: this.nodeId,
+      text_source_type: "node",
+      selection_start: offsets.start,
+      selection_end: offsets.end,
+      selected_text_snapshot: text,
+    };
+
+    console.log("Creating highlight with data:", highlightData);
+
     fetch("/api/highlights", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-CSRF-Token": csrfToken,
       },
-      body: JSON.stringify({
-        mudg_id: this.mudgId,
-        node_id: this.nodeId,
-        text_source_type: "node",
-        selection_start: offsets.start,
-        selection_end: offsets.end,
-        selected_text_snapshot: text,
-      }),
+      body: JSON.stringify(highlightData),
     })
       .then((response) => {
         if (response.status === 401) {
           this.pushEvent("show_login_required", {});
           return null;
+        }
+
+        if (response.status === 422) {
+          // Duplicate highlight - find and focus existing one
+          return response.json().then((errorData) => {
+            console.log("422 Error response:", errorData);
+
+            // Check if it's a duplicate constraint error
+            // Phoenix returns errors as an object with field keys mapping to arrays of messages
+            const isDuplicateError =
+              errorData.errors &&
+              Object.values(errorData.errors).some(
+                (errorArray) =>
+                  Array.isArray(errorArray) &&
+                  errorArray.some((msg) =>
+                    msg.includes("highlight already exists"),
+                  ),
+              );
+
+            console.log("Is duplicate error:", isDuplicateError);
+
+            if (isDuplicateError) {
+              // Try to find the overlapping highlight
+              return fetch(
+                `/api/highlights?mudg_id=${this.mudgId}&node_id=${this.nodeId}`,
+                { credentials: "include" },
+              )
+                .then((res) => res.json())
+                .then((json) => {
+                  // Find any highlight that overlaps with our selection
+                  // Two ranges overlap if: start1 < end2 AND start2 < end1
+                  const overlappingHighlight = json.data.find(
+                    (h) =>
+                      h.selection_start < offsets.end &&
+                      h.selection_end > offsets.start,
+                  );
+                  if (overlappingHighlight) {
+                    // Scroll to and pulse the overlapping highlight
+                    this.scrollToHighlight({ id: overlappingHighlight.id });
+                  }
+                  return null;
+                });
+            }
+
+            // Log non-duplicate validation errors
+            console.error("Highlight creation validation error:", errorData);
+            throw new Error(
+              "Failed to create highlight: " + JSON.stringify(errorData.errors),
+            );
+          });
         }
 
         if (!response.ok) throw new Error("Failed to create highlight");

@@ -35,7 +35,7 @@ defmodule DialecticWeb.HighlightController do
             criteria
           end
 
-        highlights = Highlights.list_highlights(criteria)
+        highlights = Highlights.list_highlights_with_links(criteria)
         render(conn, :index, highlights: highlights)
 
       is_nil(current_user) ->

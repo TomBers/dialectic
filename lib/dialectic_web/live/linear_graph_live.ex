@@ -3,6 +3,7 @@ defmodule DialecticWeb.LinearGraphLive do
 
   alias Dialectic.Graph.GraphActions
   alias DialecticWeb.ColUtils
+  alias DialecticWeb.Utils.NodeTitleHelper
   alias Dialectic.Highlights
 
   on_mount {DialecticWeb.UserAuth, :mount_current_user}
@@ -39,7 +40,7 @@ defmodule DialecticWeb.LinearGraphLive do
               Dialectic.Linear.ThreadedConv.prepare_conversation(graph)
               |> Enum.reject(&(Map.get(&1, :compound, false) == true))
               |> Enum.map(fn node ->
-                Map.put(node, :title, clean_title(node.content))
+                Map.put(node, :title, NodeTitleHelper.extract_node_title(node))
               end)
 
             # Determine which node to focus on.
@@ -67,7 +68,9 @@ defmodule DialecticWeb.LinearGraphLive do
               if target_node do
                 GraphManager.path_to_node(graph_db.title, target_node)
                 |> Enum.reverse()
-                |> Enum.map(fn node -> Map.put(node, :title, clean_title(node.content)) end)
+                |> Enum.map(fn node ->
+                  Map.put(node, :title, NodeTitleHelper.extract_node_title(node))
+                end)
               else
                 []
               end
@@ -110,6 +113,25 @@ defmodule DialecticWeb.LinearGraphLive do
     end
   end
 
+  def handle_event(
+        "selection_highlight",
+        %{
+          "selected_text" => selected_text,
+          "node_id" => node_id,
+          "offsets" => offsets
+        },
+        socket
+      ) do
+    # Send to JS to create highlight (existing createHighlight function)
+    {:noreply,
+     socket
+     |> push_event("create_highlight", %{
+       text: selected_text,
+       offsets: offsets,
+       node_id: node_id
+     })}
+  end
+
   def handle_event("toggle_minimap", _, socket) do
     {:noreply, assign(socket, show_minimap: !socket.assigns.show_minimap)}
   end
@@ -137,7 +159,7 @@ defmodule DialecticWeb.LinearGraphLive do
           path =
             GraphManager.path_to_node(socket.assigns.graph_id, node)
             |> Enum.reverse()
-            |> Enum.map(fn n -> Map.put(n, :title, clean_title(n.content)) end)
+            |> Enum.map(fn n -> Map.put(n, :title, NodeTitleHelper.extract_node_title(n)) end)
 
           assign(socket, selected_node_id: node.id, linear_path: path)
         else
@@ -148,6 +170,26 @@ defmodule DialecticWeb.LinearGraphLive do
     {:noreply, push_event(socket, "scroll_to_highlight", %{id: highlight_id})}
   end
 
+  def handle_event("navigate_to_node", %{"node_id" => node_id} = _params, socket) do
+    # Navigate to a node (e.g., from clicking a highlight link)
+    node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+    if node do
+      # Rebuild the path to the clicked node
+      path =
+        GraphManager.path_to_node(socket.assigns.graph_id, node)
+        |> Enum.reverse()
+        |> Enum.map(fn n -> Map.put(n, :title, NodeTitleHelper.extract_node_title(n)) end)
+
+      {:noreply,
+       socket
+       |> assign(selected_node_id: node.id, linear_path: path)
+       |> push_event("scroll_to_node", %{id: node.id})}
+    else
+      {:noreply, socket |> put_flash(:error, "Node not found")}
+    end
+  end
+
   def handle_event("node_clicked", %{"id" => id}, socket) do
     node = GraphActions.find_node(socket.assigns.graph_id, id)
 
@@ -156,7 +198,7 @@ defmodule DialecticWeb.LinearGraphLive do
       path =
         GraphManager.path_to_node(socket.assigns.graph_id, node)
         |> Enum.reverse()
-        |> Enum.map(fn n -> Map.put(n, :title, clean_title(n.content)) end)
+        |> Enum.map(fn n -> Map.put(n, :title, NodeTitleHelper.extract_node_title(n)) end)
 
       {:noreply,
        socket
@@ -202,18 +244,5 @@ defmodule DialecticWeb.LinearGraphLive do
 
   defp message_border_class(class) do
     ColUtils.border_class(class)
-  end
-
-  defp clean_title(nil), do: ""
-
-  defp clean_title(content) do
-    content
-    |> String.split("\n", parts: 2)
-    |> List.first()
-    # Remove markdown headers
-    |> String.replace(~r/^\s*\#{1,6}\s*/, "")
-    # Remove bold
-    |> String.replace(~r/\*\*/, "")
-    |> String.trim()
   end
 end

@@ -57,4 +57,29 @@ defmodule Dialectic.Graph.GraphActionsTest do
       assert arity == 2
     end
   end
+
+  describe "selection-based query functionality" do
+    # Note: ask_about_selection/3 and answer_selection/3 are defined in the module
+    # but are integration-level functions that require full graph setup.
+    # They take a tuple {graph_id, node, user, live_view_topic} as first parameter.
+
+    # Comprehensive integration tests for these functions should cover:
+    # - ask_about_selection: Creating a question node with selected text stored in source_text field
+    # - ask_about_selection: Generating an answer node using minimal context
+    # - answer_selection: Creating response nodes based on selection and type
+    # - Handling locked graphs (should fail gracefully)
+    # - Handling missing or invalid nodes
+    # - Handling empty or nil selected_text
+    # - Proper node creation with selected text context
+    # - Graph locking constraints
+    # - Error handling for invalid selections
+    # - Integration with LlmInterface for answer generation
+    # - Verification that source_text field is properly set on created nodes
+
+    # These require:
+    # - Full graph setup with GraphManager
+    # - Mocked LlmInterface responses
+    # - Database fixtures for users and graphs
+    # - Phoenix PubSub for live_view_topic testing
+  end
 end

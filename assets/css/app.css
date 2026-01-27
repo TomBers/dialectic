@@ -70,17 +70,33 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Add to your app.css */
+/* Selection actions panel - modal-style behavior */
 .selection-actions {
-    transition: opacity 0.2s ease;
+    transition:
+        opacity 0.2s ease,
+        transform 0.2s ease;
     z-index: 1000;
     pointer-events: auto;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.selection-actions.hidden {
+    opacity: 0;
+    transform: translateY(-4px);
+    pointer-events: none;
 }
 
 .selection-actions button {
     white-space: nowrap;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     font-size: 0.75rem;
+}
+
+.selection-actions .close-panel-btn {
+    box-shadow: none;
+}
+
+.selection-actions .close-panel-btn:hover {
+    background-color: rgba(0, 0, 0, 0.05);
 }
 
 /* For touch devices */
@@ -1441,4 +1457,36 @@ button[type="submit"]:active {
 
 .highlight-span:hover {
     background-color: rgba(255, 235, 59, 0.7);
+}
+
+/* Highlights with linked nodes have a subtle border and different color */
+.highlight-span.has-linked-node {
+    background-color: rgba(99, 102, 241, 0.15);
+    border-bottom: 2px solid rgba(99, 102, 241, 0.5);
+    padding-bottom: 1px;
+    cursor: pointer;
+}
+
+.highlight-span.has-linked-node:hover {
+    background-color: rgba(99, 102, 241, 0.25);
+    border-bottom-color: rgba(99, 102, 241, 0.8);
+}
+
+/* Add a small link icon indicator using pseudo-element */
+.highlight-span.has-linked-node::after {
+    content: "";
+    display: inline-block;
+    width: 0.75em;
+    height: 0.75em;
+    margin-left: 3px;
+    margin-bottom: -1px;
+    opacity: 0.6;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%236366f1'%3E%3Cpath d='M8.914 6.025a.75.75 0 0 1 1.06 0 3.5 3.5 0 0 1 0 4.95l-2 2a3.5 3.5 0 0 1-4.95-4.95l1.06-1.06a.75.75 0 0 1 1.061 1.06l-1.06 1.06a2 2 0 0 0 2.828 2.83l2-2a2 2 0 0 0 0-2.83.75.75 0 0 1 0-1.06Z'/%3E%3Cpath d='M7.086 9.975a.75.75 0 0 1-1.06 0 3.5 3.5 0 0 1 0-4.95l2-2a3.5 3.5 0 0 1 4.95 4.95l-1.06 1.06a.75.75 0 1 1-1.061-1.06l1.06-1.06a2 2 0 0 0-2.828-2.83l-2 2a2 2 0 0 0 0 2.83.75.75 0 0 1 0 1.06Z'/%3E%3C/svg%3E");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.highlight-span.has-linked-node:hover::after {
+    opacity: 1;
 }

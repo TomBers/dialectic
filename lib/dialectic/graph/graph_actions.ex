@@ -127,7 +127,7 @@ defmodule Dialectic.Graph.GraphActions do
   def ask_and_answer({graph_id, node, user, live_view_topic}, question_text, opts \\ []) do
     minimal_context = Keyword.get(opts, :minimal_context, false)
 
-    # Otherwise, use a 'question' node for follow-up questions
+    # Use a 'question' node for follow-up questions
     question_node =
       GraphManager.add_child(
         graph_id,
@@ -147,6 +147,48 @@ defmodule Dialectic.Graph.GraphActions do
           else
             LlmInterface.gen_response(question_node, n, graph_id, live_view_topic)
           end
+        end,
+        "answer",
+        user
+      )
+
+    {nil, answer_node}
+  end
+
+  @doc """
+  Ask a question about a specific text selection.
+  Creates a question node with the user's question and stores the selected text as context.
+  """
+  def ask_about_selection(
+        {graph_id, node, user, live_view_topic},
+        question_text,
+        selected_text
+      ) do
+    # Create question node with both the question and the selected text context
+    question_node =
+      GraphManager.add_child(
+        graph_id,
+        [node],
+        fn _ -> question_text end,
+        "question",
+        user
+      )
+
+    # Store the selected text as metadata on the question node
+    GraphManager.update_vertex_fields(graph_id, question_node.id, %{
+      source_text: selected_text
+    })
+
+    # Reload the question node to get the updated version
+    question_node = GraphManager.find_node_by_id(graph_id, question_node.id)
+
+    # Generate answer with minimal context (focused on the selection)
+    answer_node =
+      GraphManager.add_child(
+        graph_id,
+        [question_node],
+        fn n ->
+          LlmInterface.gen_response_minimal_context(question_node, n, graph_id, live_view_topic)
         end,
         "answer",
         user

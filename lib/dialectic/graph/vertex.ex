@@ -1,7 +1,7 @@
 defmodule Dialectic.Graph.Vertex do
   require Logger
 
-  @derive {Jason.Encoder, only: [:id, :content, :class, :user, :noted_by, :deleted]}
+  @derive {Jason.Encoder, only: [:id, :content, :class, :user, :noted_by, :deleted, :source_text]}
   @valid_classes [
     "thesis",
     "antithesis",
@@ -26,7 +26,8 @@ defmodule Dialectic.Graph.Vertex do
             children: [],
             noted_by: [],
             deleted: false,
-            compound: false
+            compound: false,
+            source_text: nil
 
   # Add a function to validate the class
   def validate_class(class) when class in @valid_classes, do: {:ok, class}
@@ -34,6 +35,9 @@ defmodule Dialectic.Graph.Vertex do
 
   # IMPORTANT - defines fields that should be serialised
   def serialize(vertex) do
+    # Handle backward compatibility: prefer source_text, fall back to source_highlight_id
+    source_text_value = Map.get(vertex, :source_text) || Map.get(vertex, :source_highlight_id)
+
     %{
       id: vertex.id,
       content: vertex.content,
@@ -42,13 +46,17 @@ defmodule Dialectic.Graph.Vertex do
       parent: vertex.parent,
       noted_by: vertex.noted_by,
       deleted: vertex.deleted,
-      compound: vertex.compound
+      compound: vertex.compound,
+      source_text: source_text_value
     }
   end
 
   def deserialize(%Dialectic.Graph.Vertex{} = data), do: data
 
   def deserialize(data) do
+    # Handle backward compatibility: prefer source_text, fall back to source_highlight_id
+    source_text_value = data["source_text"] || data["source_highlight_id"]
+
     %Dialectic.Graph.Vertex{
       id: data["id"],
       content: data["content"],
@@ -57,7 +65,8 @@ defmodule Dialectic.Graph.Vertex do
       parent: data["parent"],
       noted_by: data["noted_by"],
       deleted: data["deleted"],
-      compound: data["compound"]
+      compound: data["compound"],
+      source_text: source_text_value
     }
   end
 

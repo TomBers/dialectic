@@ -148,6 +148,164 @@ defmodule Dialectic.Highlights do
   end
 
   @doc """
+  Adds a link between a highlight and a node.
+
+  ## Examples
+
+      iex> add_link(1, "node_123", "explain")
+      {:ok, %HighlightLink{}}
+
+      iex> add_link(1, "node_123", "pro")
+      {:ok, %HighlightLink{}}
+
+  """
+  def add_link(highlight_id, node_id, link_type) when is_integer(highlight_id) do
+    alias Dialectic.Highlights.HighlightLink
+
+    %HighlightLink{}
+    |> HighlightLink.changeset(%{
+      highlight_id: highlight_id,
+      node_id: node_id,
+      link_type: link_type
+    })
+    |> Repo.insert()
+  end
+
+  def add_link(%Highlight{id: highlight_id}, node_id, link_type) do
+    add_link(highlight_id, node_id, link_type)
+  end
+
+  @doc """
+  Gets all links for a highlight.
+
+  ## Examples
+
+      iex> get_links(1)
+      [%HighlightLink{}, ...]
+
+  """
+  def get_links(highlight_id) when is_integer(highlight_id) do
+    alias Dialectic.Highlights.HighlightLink
+
+    Repo.all(
+      from l in HighlightLink,
+        where: l.highlight_id == ^highlight_id,
+        order_by: [asc: l.inserted_at]
+    )
+  end
+
+  def get_links(%Highlight{id: highlight_id}) do
+    get_links(highlight_id)
+  end
+
+  @doc """
+  Gets links for a highlight filtered by type.
+
+  ## Examples
+
+      iex> get_links_by_type(1, "question")
+      [%HighlightLink{}, ...]
+
+  """
+  def get_links_by_type(highlight_id, link_type) when is_integer(highlight_id) do
+    alias Dialectic.Highlights.HighlightLink
+
+    Repo.all(
+      from l in HighlightLink,
+        where: l.highlight_id == ^highlight_id and l.link_type == ^link_type,
+        order_by: [asc: l.inserted_at]
+    )
+  end
+
+  def get_links_by_type(%Highlight{id: highlight_id}, link_type) do
+    get_links_by_type(highlight_id, link_type)
+  end
+
+  @doc """
+  Checks if a highlight has a link of a specific type.
+
+  ## Examples
+
+      iex> has_link?(1, "explain")
+      true
+
+  """
+  def has_link?(highlight_id, link_type) when is_integer(highlight_id) do
+    alias Dialectic.Highlights.HighlightLink
+
+    Repo.exists?(
+      from l in HighlightLink,
+        where: l.highlight_id == ^highlight_id and l.link_type == ^link_type
+    )
+  end
+
+  def has_link?(%Highlight{id: highlight_id}, link_type) do
+    has_link?(highlight_id, link_type)
+  end
+
+  @doc """
+  Removes a link between a highlight and a node.
+
+  ## Examples
+
+      iex> remove_link(1, "node_123")
+      {:ok, %HighlightLink{}}
+
+  """
+  def remove_link(highlight_id, node_id) when is_integer(highlight_id) do
+    alias Dialectic.Highlights.HighlightLink
+
+    case Repo.get_by(HighlightLink, highlight_id: highlight_id, node_id: node_id) do
+      nil -> {:error, :not_found}
+      link -> Repo.delete(link)
+    end
+  end
+
+  def remove_link(%Highlight{id: highlight_id}, node_id) do
+    remove_link(highlight_id, node_id)
+  end
+
+  @doc """
+  Lists highlights with their links preloaded.
+
+  Accepts the same criteria as `list_highlights/1`.
+
+  ## Examples
+
+      iex> list_highlights_with_links(mudg_id: "graph-title")
+      [%Highlight{links: [%HighlightLink{}, ...]}, ...]
+
+  """
+  def list_highlights_with_links(criteria) do
+    list_highlights(criteria)
+    |> Repo.preload(:links)
+  end
+
+  @doc """
+  Gets a highlight by selection range and node.
+
+  Returns the highlight with links preloaded if found, otherwise nil.
+
+  ## Examples
+
+      iex> get_highlight_for_selection("graph_id", "node_123", 10, 50)
+      %Highlight{links: [...]}
+
+  """
+  def get_highlight_for_selection(mudg_id, node_id, selection_start, selection_end) do
+    query =
+      from h in Highlight,
+        where:
+          h.mudg_id == ^mudg_id and
+            h.node_id == ^node_id and
+            h.selection_start == ^selection_start and
+            h.selection_end == ^selection_end,
+        preload: :links
+
+    Repo.one(query)
+  end
+
+  @doc """
   Deletes a highlight.
 
   ## Examples

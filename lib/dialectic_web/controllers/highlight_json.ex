@@ -26,6 +26,7 @@ defmodule DialecticWeb.HighlightJSON do
       selection_end: highlight.selection_end,
       selected_text_snapshot: highlight.selected_text_snapshot,
       note: highlight.note,
+      links: highlight.links || [],
       created_by_user_id: highlight.created_by_user_id,
       created_at: highlight.inserted_at,
       updated_at: highlight.updated_at

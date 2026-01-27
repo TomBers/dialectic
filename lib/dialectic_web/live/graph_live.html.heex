@@ -448,7 +448,7 @@
       }
       style="padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem);"
     >
-      <div class="mx-auto w-full max-w-3xl">
+      <div class="mx-auto w-full max-w-2xl">
         <div class="relative">
           <div class="flex justify-center -mt-4 mb-2">
             <button
@@ -505,6 +505,7 @@
                   ask_question={@ask_question}
                   prompt_mode={@prompt_mode}
                   graph_id={@graph_id}
+                  node={@node}
                 />
               </div>
             </div>
@@ -513,5 +514,16 @@
       </div>
     </div>
     <!-- Right side: Chat (Drawer) -->
+  </div>
+
+  <%!-- Selection Actions Modal --%>
+  <div phx-hook="SelectionActions" id="selection-actions-hook">
+    <.live_component
+      module={DialecticWeb.SelectionActionsComp}
+      id="selection-actions"
+      current_user={@current_user}
+      graph_id={@graph_id}
+      can_edit={@can_edit}
+    />
   </div>
 </div>

@@ -13,6 +13,7 @@ defmodule Dialectic.Highlights.Highlight do
              :selection_end,
              :selected_text_snapshot,
              :note,
+             :links,
              :created_by_user_id,
              :inserted_at,
              :updated_at
@@ -32,6 +33,8 @@ defmodule Dialectic.Highlights.Highlight do
       type: :string
 
     belongs_to :creator, Dialectic.Accounts.User, foreign_key: :created_by_user_id
+
+    has_many :links, Dialectic.Highlights.HighlightLink
 
     timestamps(type: :utc_datetime)
   end

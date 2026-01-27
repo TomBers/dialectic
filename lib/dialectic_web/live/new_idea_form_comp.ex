@@ -28,23 +28,25 @@ defmodule DialecticWeb.NewIdeaFormComp do
     ~H"""
     <div class="w-full">
       <.form for={@form} phx-submit="reply-and-answer" id={@id} class="w-full relative">
-        <.input
-          field={@form[:content]}
-          type="text"
-          id="new-idea-input"
-          placeholder={@placeholder}
-          class="w-full h-14 pl-6 pr-32 text-black text-lg rounded-full border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          autocomplete="off"
-          required
-        />
-        <div class="absolute inset-y-0 right-2 flex items-center">
-          <button
-            type="submit"
-            phx-disable-with="Starting..."
-            class="inline-flex items-center justify-center px-6 py-2 border border-transparent text-base font-medium rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {@submit_label}
-          </button>
+        <div class="relative">
+          <textarea
+            name={@form[:content].name}
+            id="new-idea-input"
+            placeholder={@placeholder}
+            phx-hook="AutoExpandTextarea"
+            class="box-border w-full min-h-[3.5rem] pl-6 pr-32 py-3.5 text-black text-lg rounded-full border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-0 focus:outline-none resize-none"
+            autocomplete="off"
+            required
+          >{Phoenix.HTML.Form.normalize_value("text", @form[:content].value)}</textarea>
+          <div class="absolute inset-y-0 right-2 flex items-center">
+            <button
+              type="submit"
+              phx-disable-with="Starting..."
+              class="inline-flex items-center justify-center px-6 py-2 border border-transparent text-base font-medium rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {@submit_label}
+            </button>
+          </div>
         </div>
       </.form>
     </div>

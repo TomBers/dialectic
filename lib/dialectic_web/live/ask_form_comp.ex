@@ -1,5 +1,6 @@
 defmodule DialecticWeb.AskFormComp do
   use DialecticWeb, :live_component
+  alias DialecticWeb.Utils.NodeTitleHelper
 
   @moduledoc """
   LiveComponent that renders the bottom ask/comment form used by GraphLive.
@@ -16,6 +17,7 @@ defmodule DialecticWeb.AskFormComp do
   - `placeholder` (string, optional): Placeholder text for the input. Will be derived from `graph_id`/`ask_question` if not provided.
   - `show_hint` (boolean, optional): When true and `graph_id` is nil, show a hint above the input. Defaults to `true`.
   - `prompt_mode` (string, optional): Current AI mode ("structured" or "creative"). Used for display only.
+  - `node` (map | nil, optional): The currently active node. Used to display current node indicator.
   """
 
   @impl true
@@ -31,6 +33,7 @@ defmodule DialecticWeb.AskFormComp do
       |> assign_new(:input_id, fn -> "global-chat-input" end)
       |> assign_new(:show_hint, fn -> true end)
       |> assign_new(:prompt_mode, fn -> "structured" end)
+      |> assign_new(:node, fn -> nil end)
       |> then(fn s ->
         if Map.has_key?(assigns, :placeholder) and not is_nil(assigns[:placeholder]) do
           assign(s, :placeholder, assigns[:placeholder])
@@ -57,7 +60,25 @@ defmodule DialecticWeb.AskFormComp do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="w-full min-w-0">
+    <div class="w-full min-w-0 space-y-1.5">
+      <%!-- Current Node Indicator --%>
+      <%= if @node && @node.id do %>
+        <div class="flex items-center justify-center gap-2 px-3 py-1.5 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 rounded-lg">
+          <div class="flex items-center gap-1.5 text-xs">
+            <div class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
+            <span class="font-medium text-indigo-900">Active:</span>
+            <button
+              type="button"
+              phx-click="node_clicked"
+              phx-value-id={@node.id}
+              class="text-indigo-700 hover:text-indigo-900 font-semibold hover:underline transition-colors max-w-[300px] truncate"
+              title={"Click to focus: " <> NodeTitleHelper.extract_node_title(@node)}
+            >
+              {NodeTitleHelper.extract_node_title(@node, max_length: 50)}
+            </button>
+          </div>
+        </div>
+      <% end %>
       <.form
         for={@form}
         phx-submit={@submit_event || if(@ask_question, do: "reply-and-answer", else: "answer")}
@@ -100,18 +121,18 @@ defmodule DialecticWeb.AskFormComp do
           </div>
 
           <%!-- Input Field with Submit Button - Enhanced prominence --%>
-          <div class="relative min-w-0 flex-1 overflow-hidden rounded-full shadow-sm transition-all focus-within:shadow-md">
-            <.input
-              field={@form[:content]}
-              type="text"
+          <div class="relative min-w-0 flex-1 overflow-hidden rounded-3xl shadow-sm transition-all focus-within:shadow-md">
+            <textarea
+              name={@form[:content].name}
               id={@input_id}
               placeholder={@placeholder}
-              class="box-border w-full h-12 rounded-full pl-4 pr-20 text-base border-2 border-gray-300 focus:border-indigo-500 focus:ring-0 focus:outline-none bg-white"
-            />
+              phx-hook="AutoExpandTextarea"
+              class="box-border w-full h-12 rounded-3xl pl-4 pr-20 py-3 text-base border-2 border-gray-300 focus:border-indigo-500 focus:ring-0 focus:outline-none bg-white resize-none"
+            >{Phoenix.HTML.Form.normalize_value("text", @form[:content].value)}</textarea>
 
             <button
               type="submit"
-              class="absolute right-2 inset-y-0 my-auto bg-indigo-600 hover:bg-indigo-700 text-white text-sm leading-none px-3.5 h-9 rounded-full font-medium shadow-sm transition-all hover:shadow-md"
+              class="absolute right-2 top-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm leading-none px-3.5 h-9 rounded-full font-medium shadow-sm transition-all hover:shadow-md"
             >
               {if @submit_label, do: @submit_label, else: if(@ask_question, do: "Ask", else: "Post")}
             </button>
@@ -119,7 +140,7 @@ defmodule DialecticWeb.AskFormComp do
         </div>
 
         <%!-- Explanatory text below form --%>
-        <div class="mt-1.5 text-[11px] text-gray-600 text-center">
+        <div class="text-[11px] text-gray-600 text-center">
           <%= if @ask_question do %>
             Ask a question to get an AI-generated
             <span class="font-medium">{String.capitalize(@prompt_mode)}</span>

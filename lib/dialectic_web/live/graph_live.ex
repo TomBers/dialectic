@@ -5,9 +5,13 @@ defmodule DialecticWeb.GraphLive do
   alias DialecticWeb.{CombineComp, NodeComp}
 
   alias DialecticWeb.Utils.UserUtils
+  alias DialecticWeb.Utils.NodeTitleHelper
   alias Dialectic.Highlights
+  alias Dialectic.Repo
 
   alias Phoenix.PubSub
+
+  import Ecto.Query
 
   require Logger
 
@@ -283,6 +287,14 @@ defmodule DialecticWeb.GraphLive do
                  socket |> put_flash(:error, "Cannot delete a node that has non-deleted children")}
 
               true ->
+                # Remove any highlight links that point to this node
+                alias Dialectic.Highlights.HighlightLink
+
+                Repo.delete_all(
+                  from l in HighlightLink,
+                    where: l.node_id == ^node_id
+                )
+
                 next_node =
                   GraphActions.delete_node(graph_action_params(socket), node_id)
 
@@ -487,6 +499,30 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
+  def handle_event("navigate_to_node", %{"node_id" => node_id} = _params, socket) do
+    # Navigate to a node (e.g., from clicking a highlight link)
+    node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+    if node do
+      {:noreply, updated_socket} =
+        update_graph(
+          socket,
+          {nil, node},
+          "node_clicked"
+        )
+
+      # Center and expand the node
+      updated_socket =
+        updated_socket
+        |> push_event("center_node", %{id: node_id})
+        |> push_event("expand_node", %{id: node_id})
+
+      {:noreply, updated_socket}
+    else
+      {:noreply, socket |> put_flash(:error, "Node not found")}
+    end
+  end
+
   def handle_event("node_clicked", %{"id" => id}, socket) do
     # Determine if this was triggered from search results
     from_search = socket.assigns.search_term != "" and length(socket.assigns.search_results) > 0
@@ -565,7 +601,7 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event(
         "reply-and-answer",
-        %{"vertex" => %{"content" => answer}, "prefix" => prefix} = _params,
+        %{"vertex" => %{"content" => answer}, "prefix" => prefix} = params,
         socket
       ) do
     cond do
@@ -574,30 +610,35 @@ defmodule DialecticWeb.GraphLive do
 
       true ->
         minimal_context = prefix == "explain"
+        highlight_context = Map.get(params, "highlight_context")
 
         update_graph(
           socket,
           GraphActions.ask_and_answer(
             graph_action_params(socket, socket.assigns.node),
             answer,
-            minimal_context: minimal_context
+            minimal_context: minimal_context,
+            highlight_context: highlight_context
           ),
           "answer"
         )
     end
   end
 
-  def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}} = _params, socket) do
+  def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}} = params, socket) do
     cond do
       not socket.assigns.can_edit ->
         {:noreply, socket |> put_flash(:error, "This graph is locked")}
 
       true ->
+        highlight_context = Map.get(params, "highlight_context")
+
         update_graph(
           socket,
           GraphActions.ask_and_answer(
             graph_action_params(socket, socket.assigns.node),
-            answer
+            answer,
+            highlight_context: highlight_context
           ),
           "answer"
         )
@@ -704,11 +745,43 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, assign(socket, :exploration_stats, params)}
   end
 
+  # Handle selection action messages from SelectionActionsComp
+  def handle_info({:selection_action, params}, socket) do
+    %{
+      action: action,
+      selected_text: selected_text,
+      node_id: node_id,
+      offsets: offsets,
+      highlight: existing_highlight
+    } = params
+
+    cond do
+      not socket.assigns.can_edit ->
+        {:noreply, socket |> put_flash(:error, "This graph is locked")}
+
+      socket.assigns.current_user == nil ->
+        {:noreply, assign(socket, show_login_modal: true)}
+
+      true ->
+        handle_selection_action(
+          action,
+          selected_text,
+          node_id,
+          offsets,
+          existing_highlight,
+          params,
+          socket
+        )
+    end
+  end
+
   def handle_info(:close_share_modal, socket) do
     {:noreply, assign(socket, show_share_modal: false)}
   end
 
   def handle_info({:created, highlight}, socket) do
+    # Preload links for display in right panel
+    highlight = Repo.preload(highlight, :links)
     highlights = [highlight | socket.assigns.highlights]
 
     {:noreply,
@@ -717,6 +790,9 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_info({:updated, highlight}, socket) do
+    # Preload links for display in right panel
+    highlight = Repo.preload(highlight, :links)
+
     highlights =
       Enum.map(socket.assigns.highlights, fn h ->
         if h.id == highlight.id, do: highlight, else: h
@@ -819,7 +895,7 @@ defmodule DialecticWeb.GraphLive do
     updated_vertex = GraphManager.update_vertex(socket.assigns.graph_id, node_id, error)
 
     if socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
-      label = extract_title(Map.get(updated_vertex, :content, ""))
+      label = NodeTitleHelper.extract_node_title(updated_vertex)
 
       socket =
         socket
@@ -829,6 +905,241 @@ defmodule DialecticWeb.GraphLive do
       {:noreply, socket}
     else
       {:noreply, socket}
+    end
+  end
+
+  defp handle_selection_action(
+         :explain,
+         selected_text,
+         node_id,
+         offsets,
+         existing_highlight,
+         _params,
+         socket
+       ) do
+    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
+
+    if highlight do
+      # Create the question/answer sequence
+      {_graph, answer_node} =
+        GraphActions.ask_and_answer(
+          graph_action_params(socket, socket.assigns.node),
+          "Please explain: #{selected_text}",
+          minimal_context: true
+        )
+
+      # Link the highlight to the answer node using new link system
+      if answer_node do
+        Highlights.add_link(highlight.id, answer_node.id, "explain")
+      end
+
+      update_graph(socket, {nil, answer_node}, "answer")
+    else
+      # If highlight creation fails, still create the nodes
+      update_graph(
+        socket,
+        GraphActions.ask_and_answer(
+          graph_action_params(socket, socket.assigns.node),
+          "Please explain: #{selected_text}",
+          minimal_context: true
+        ),
+        "answer"
+      )
+    end
+  end
+
+  defp handle_selection_action(
+         :highlight_only,
+         selected_text,
+         node_id,
+         offsets,
+         existing_highlight,
+         _params,
+         socket
+       ) do
+    if existing_highlight do
+      # Highlight already exists, just close modal
+      {:noreply, socket}
+    else
+      # Create new highlight without any linked nodes
+      _highlight = create_highlight(socket, node_id, offsets, selected_text)
+      {:noreply, socket}
+    end
+  end
+
+  defp handle_selection_action(
+         :pros_cons,
+         selected_text,
+         node_id,
+         offsets,
+         existing_highlight,
+         _params,
+         socket
+       ) do
+    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
+
+    # Create pros/cons branches
+    parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+    GraphActions.branch(graph_action_params(socket, parent_node))
+
+    # Store highlight ID for linking after graph updates
+    socket =
+      if highlight do
+        assign(socket, pending_link_highlight_id: highlight.id, pending_link_parent_id: node_id)
+      else
+        socket
+      end
+
+    {:noreply, updated_socket} = update_graph(socket, {nil, parent_node}, "branch")
+    {:noreply, create_pending_highlight_links(updated_socket)}
+  end
+
+  defp handle_selection_action(
+         :related_ideas,
+         selected_text,
+         node_id,
+         offsets,
+         existing_highlight,
+         _params,
+         socket
+       ) do
+    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
+
+    if highlight do
+      # Create related ideas node
+      parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+      ideas_node = GraphActions.related_ideas(graph_action_params(socket, parent_node))
+
+      # Link highlight to the ideas node
+      if ideas_node do
+        Highlights.add_link(highlight.id, ideas_node.id, "related_idea")
+      end
+
+      update_graph(socket, {nil, ideas_node}, "ideas")
+    else
+      # If highlight creation fails, still create the ideas node
+      parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+      update_graph(
+        socket,
+        {nil, GraphActions.related_ideas(graph_action_params(socket, parent_node))},
+        "ideas"
+      )
+    end
+  end
+
+  defp handle_selection_action(
+         :ask_question,
+         selected_text,
+         node_id,
+         offsets,
+         existing_highlight,
+         %{question: question_text},
+         socket
+       ) do
+    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
+
+    if highlight do
+      # Create the question/answer sequence
+      {_graph, answer_node} =
+        GraphActions.ask_about_selection(
+          graph_action_params(socket, socket.assigns.node),
+          "#{question_text}\n\nRegarding: \"#{selected_text}\"",
+          selected_text
+        )
+
+      # Link the highlight to the answer node using new link system
+      if answer_node do
+        Highlights.add_link(highlight.id, answer_node.id, "question")
+      end
+
+      update_graph(socket, {nil, answer_node}, "answer")
+    else
+      # If highlight creation fails, still create the nodes
+      update_graph(
+        socket,
+        GraphActions.ask_about_selection(
+          graph_action_params(socket, socket.assigns.node),
+          "#{question_text}\n\nRegarding: \"#{selected_text}\"",
+          selected_text
+        ),
+        "answer"
+      )
+    end
+  end
+
+  defp create_pending_highlight_links(socket) do
+    highlight_id = socket.assigns[:pending_link_highlight_id]
+    parent_id = socket.assigns[:pending_link_parent_id]
+
+    Logger.debug(
+      "[create_pending_highlight_links] Called with highlight_id=#{inspect(highlight_id)}, parent_id=#{inspect(parent_id)}"
+    )
+
+    if highlight_id && parent_id do
+      # Re-fetch parent to get newly created children
+      parent_node = GraphActions.find_node(socket.assigns.graph_id, parent_id)
+
+      Logger.debug(
+        "[create_pending_highlight_links] Parent node: #{inspect(parent_node && parent_node.id)}, children count: #{inspect(parent_node && length(parent_node.children || []))}"
+      )
+
+      Logger.debug(
+        "[create_pending_highlight_links] All children: #{inspect(parent_node && parent_node.children)}"
+      )
+
+      if parent_node && parent_node.children do
+        # Get the two most recent children (thesis and antithesis)
+        recent_children = Enum.take(parent_node.children, -2)
+
+        Logger.debug(
+          "[create_pending_highlight_links] Recent children (last 2): #{inspect(recent_children |> Enum.map(& &1.id))}"
+        )
+
+        Enum.each(recent_children, fn child_node ->
+          Logger.debug(
+            "[create_pending_highlight_links] Processing child node: #{inspect(child_node.id)}, class: #{inspect(child_node.class)}"
+          )
+
+          link_type =
+            case child_node.class do
+              "thesis" -> "pro"
+              "antithesis" -> "con"
+              _ -> nil
+            end
+
+          Logger.debug(
+            "[create_pending_highlight_links] Link type for #{child_node.id}: #{inspect(link_type)}"
+          )
+
+          if link_type do
+            result = Highlights.add_link(highlight_id, child_node.id, link_type)
+            Logger.debug("[create_pending_highlight_links] add_link result: #{inspect(result)}")
+          end
+        end)
+      end
+
+      # Clear pending link data
+      assign(socket, pending_link_highlight_id: nil, pending_link_parent_id: nil)
+    else
+      socket
+    end
+  end
+
+  defp create_highlight(socket, node_id, offsets, selected_text) do
+    highlight_attrs = %{
+      mudg_id: socket.assigns.graph_id,
+      node_id: node_id,
+      text_source_type: "node",
+      selection_start: offsets["start"],
+      selection_end: offsets["end"],
+      selected_text_snapshot: selected_text,
+      created_by_user_id: socket.assigns.current_user.id
+    }
+
+    case Highlights.create_highlight(highlight_attrs) do
+      {:ok, highlight} -> highlight
+      {:error, _changeset} -> nil
     end
   end
 
@@ -1056,6 +1367,17 @@ defmodule DialecticWeb.GraphLive do
           s
         end
       end)
+      |> then(fn s ->
+        # Auto-open drawer panel when new answer is created
+        # TODO: This behavior could be disruptive to user workflow. Consider making it configurable
+        # via user preferences, or making it less intrusive (e.g., only auto-open on first answer,
+        # or provide a visual indicator without forcing the drawer open).
+        if operation in ["answer", "explain"] && node && Map.get(node, :id) do
+          assign(s, drawer_open: true)
+        else
+          s
+        end
+      end)
 
     # Broadcast structural changes to other users (new nodes created, etc.)
     # Skip for operations that don't change graph structure
@@ -1094,25 +1416,12 @@ defmodule DialecticWeb.GraphLive do
     updated_socket
   end
 
-  defp extract_title(content) do
-    content
-    |> to_string()
-    |> String.replace(~r/\r\n|\r/, "\n")
-    |> String.split("\n")
-    |> List.first()
-    |> Kernel.||("")
-    |> String.replace(~r/^\s*\#{1,6}\s*/, "")
-    |> String.replace(~r/^\s*title\s*:?\s*/i, "")
-    |> String.replace("**", "")
-    |> String.trim()
-  end
-
   defp update_streaming_node(socket, updated_vertex, node_id) do
     new_content = Map.get(updated_vertex, :content, "")
 
     # Check if we've already set the title for this node on this socket
     already_titled = MapSet.member?(socket.assigns.titled_nodes, node_id)
-    new_title = extract_title(new_content)
+    new_title = NodeTitleHelper.extract_node_title(updated_vertex)
     needs_title_set = !already_titled && new_title != ""
 
     # Push label update to Cytoscape for all users, regardless of which node they're viewing
@@ -1235,7 +1544,8 @@ defmodule DialecticWeb.GraphLive do
       work_streams: [],
       exploration_stats: nil,
       show_login_modal: false,
-      show_graph_nav_panel: true
+      show_graph_nav_panel: true,
+      highlights: []
     )
   end
 
@@ -1252,9 +1562,19 @@ defmodule DialecticWeb.GraphLive do
 
       presences = DialecticWeb.Presence.list_online_users(graph_id)
 
-      stream(socket, :presences, presences)
+      # Load highlights asynchronously after connection - doesn't block initial render
+      highlights = Highlights.list_highlights_with_links(mudg_id: graph_id)
+
+      socket
+      |> stream(:presences, presences)
+      |> assign(highlights: highlights)
     else
-      stream(socket, :presences, [])
+      # Load highlights even when not connected (e.g., during tests or initial render)
+      highlights = Highlights.list_highlights_with_links(mudg_id: graph_id)
+
+      socket
+      |> stream(:presences, [])
+      |> assign(highlights: highlights)
     end
   end
 
@@ -1282,8 +1602,7 @@ defmodule DialecticWeb.GraphLive do
       nav_can_left: nav_left,
       nav_can_right: nav_right,
       work_streams: list_streams(graph_id),
-      prompt_mode: Atom.to_string(Dialectic.Responses.ModeServer.get_mode(graph_id)),
-      highlights: Highlights.list_highlights(mudg_id: graph_id)
+      prompt_mode: Atom.to_string(Dialectic.Responses.ModeServer.get_mode(graph_id))
     )
   end
 
