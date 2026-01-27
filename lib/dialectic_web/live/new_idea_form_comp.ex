@@ -34,7 +34,8 @@ defmodule DialecticWeb.NewIdeaFormComp do
             id="new-idea-input"
             placeholder={@placeholder}
             phx-hook="AutoExpandTextarea"
-            class="box-border w-full min-h-[3.5rem] pl-6 pr-32 py-3.5 text-black text-lg rounded-full border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-0 focus:outline-none resize-none"
+            rows="1"
+            class="box-border w-full h-[3.5rem] min-h-[3.5rem] overflow-hidden pl-6 pr-32 py-2.5 text-black text-lg rounded-full border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-0 focus:outline-none resize-none"
             autocomplete="off"
             required
           >{Phoenix.HTML.Form.normalize_value("text", @form[:content].value)}</textarea>
