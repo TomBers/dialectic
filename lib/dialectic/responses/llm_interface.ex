@@ -76,29 +76,37 @@ defmodule Dialectic.Responses.LlmInterface do
     ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
   end
 
-  def gen_thesis(node, child, graph_id, live_view_topic) do
-    context = GraphManager.build_context(graph_id, node)
+  def gen_thesis(node, child, graph_id, live_view_topic, content_override \\ nil) do
+    {context, content} = resolve_context_and_content(graph_id, node, content_override)
 
     instruction =
-      Prompts.thesis(context, node.content)
+      if content_override do
+        Prompts.thesis_selection(context, content)
+      else
+        Prompts.thesis(context, content)
+      end
 
     system_prompt = get_system_prompt(graph_id)
     log_prompt("thesis", graph_id, system_prompt, instruction)
     ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
   end
 
-  def gen_antithesis(node, child, graph_id, live_view_topic) do
-    context = GraphManager.build_context(graph_id, node)
+  def gen_antithesis(node, child, graph_id, live_view_topic, content_override \\ nil) do
+    {context, content} = resolve_context_and_content(graph_id, node, content_override)
 
     instruction =
-      Prompts.antithesis(context, node.content)
+      if content_override do
+        Prompts.antithesis_selection(context, content)
+      else
+        Prompts.antithesis(context, content)
+      end
 
     system_prompt = get_system_prompt(graph_id)
     log_prompt("antithesis", graph_id, system_prompt, instruction)
     ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
   end
 
-  def gen_related_ideas(node, child, graph_id, live_view_topic) do
+  def gen_related_ideas(node, child, graph_id, live_view_topic, content_override \\ nil) do
     base = GraphManager.build_context(graph_id, node)
 
     context =
@@ -107,22 +115,46 @@ defmodule Dialectic.Responses.LlmInterface do
       |> Enum.join("\n\n")
 
     instruction =
-      Prompts.related_ideas(context, node.content)
+      if content_override do
+        Prompts.related_ideas_selection(context, content_override)
+      else
+        Prompts.related_ideas(context, node.content)
+      end
 
     system_prompt = get_system_prompt(graph_id)
     log_prompt("related_ideas", graph_id, system_prompt, instruction)
     ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
   end
 
-  def gen_deepdive(node, child, graph_id, live_view_topic) do
+  def gen_deepdive(node, child, graph_id, live_view_topic, content_override \\ nil) do
     context = to_string(node.content || "")
 
     instruction =
-      Prompts.deep_dive(context, node.content)
+      if content_override do
+        Prompts.deep_dive_selection(context, content_override)
+      else
+        Prompts.deep_dive(context, node.content)
+      end
 
     system_prompt = get_system_prompt(graph_id)
     log_prompt("deep_dive", graph_id, system_prompt, instruction)
     ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
+  end
+
+  defp resolve_context_and_content(graph_id, node, content_override) do
+    base_context = GraphManager.build_context(graph_id, node)
+
+    if content_override do
+      # Include node content in context if we are focusing on a sub-selection
+      ctx =
+        [base_context, to_string(node.content || "")]
+        |> Enum.reject(&(&1 == ""))
+        |> Enum.join("\n\n")
+
+      {ctx, content_override}
+    else
+      {base_context, node.content}
+    end
   end
 
   defp get_system_prompt(graph_id) do

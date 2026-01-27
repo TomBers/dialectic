@@ -39,7 +39,7 @@ defmodule DialecticWeb.NewIdeaFormComp do
             autocomplete="off"
             required
           >{Phoenix.HTML.Form.normalize_value("text", @form[:content].value)}</textarea>
-          <div class="absolute inset-y-0 right-2 flex items-center">
+          <div class="absolute top-1/2 right-2 -translate-y-1/2 -mt-0.5">
             <button
               type="submit"
               phx-disable-with="Starting..."
