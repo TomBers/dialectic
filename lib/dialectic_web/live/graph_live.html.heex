@@ -108,7 +108,8 @@
       }
     >
       <div class="p-2">
-        <div class="flex items-center justify-end mb-2">
+        <div class="flex items-center justify-between mb-2 px-1">
+          <h2 class="text-sm font-semibold text-gray-900">Graph Controls</h2>
           <button
             type="button"
             phx-click="toggle_right_panel"
@@ -157,7 +158,8 @@
       }
     >
       <div class="p-2">
-        <div class="flex items-center justify-end mb-2">
+        <div class="flex items-center justify-between mb-2 px-1">
+          <h2 class="text-sm font-semibold text-gray-900">View Options</h2>
           <button
             type="button"
             phx-click="toggle_graph_nav_panel"
@@ -190,7 +192,8 @@
       }
     >
       <div class="p-2">
-        <div class="flex items-center justify-end mb-2">
+        <div class="flex items-center justify-between mb-2 px-1">
+          <h2 class="text-sm font-semibold text-gray-900">Highlights</h2>
           <button
             type="button"
             phx-click="toggle_highlights_panel"
@@ -539,10 +542,10 @@
                 type="button"
                 phx-click="toggle_graph_nav_panel"
                 class={"p-1.5 rounded-lg transition-colors " <> if(@show_graph_nav_panel, do: "bg-indigo-50 text-indigo-600", else: "text-gray-500 hover:bg-gray-100 hover:text-gray-900")}
-                aria-label="Toggle graph settings"
-                title="Graph Settings"
+                aria-label="Toggle view options"
+                title="View Options"
               >
-                <.icon name="hero-map" class="w-5 h-5" />
+                <.icon name="hero-eye" class="w-5 h-5" />
               </button>
               <button
                 type="button"

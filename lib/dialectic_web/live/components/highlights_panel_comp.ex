@@ -82,16 +82,6 @@ defmodule DialecticWeb.HighlightsPanelComp do
   def render(assigns) do
     ~H"""
     <div class="bg-white border border-gray-200 rounded-md">
-      <div class="px-2 py-1 text-[11px] font-semibold text-gray-700 flex justify-between items-center">
-        <span>Highlights ({length(@highlights)})</span>
-        <button
-          type="button"
-          phx-click="toggle_highlights_panel"
-          class="text-gray-400 hover:text-gray-600 sm:hidden"
-        >
-          <.icon name="hero-x-mark" class="w-4 h-4" />
-        </button>
-      </div>
       <div class="p-1 text-[11px] text-gray-700 space-y-1">
         <div class="max-h-[calc(100vh-12rem)] overflow-y-auto">
           <%= if length(@highlights) > 0 do %>
