@@ -77,20 +77,7 @@ defmodule Dialectic.Responses.LlmInterface do
   end
 
   def gen_thesis(node, child, graph_id, live_view_topic, content_override \\ nil) do
-    base_context = GraphManager.build_context(graph_id, node)
-
-    {context, content} =
-      if content_override do
-        # Include node content in context if we are focusing on a sub-selection
-        ctx =
-          [base_context, to_string(node.content || "")]
-          |> Enum.reject(&(&1 == ""))
-          |> Enum.join("\n\n")
-
-        {ctx, content_override}
-      else
-        {base_context, node.content}
-      end
+    {context, content} = resolve_context_and_content(graph_id, node, content_override)
 
     instruction =
       if content_override do
@@ -105,20 +92,7 @@ defmodule Dialectic.Responses.LlmInterface do
   end
 
   def gen_antithesis(node, child, graph_id, live_view_topic, content_override \\ nil) do
-    base_context = GraphManager.build_context(graph_id, node)
-
-    {context, content} =
-      if content_override do
-        # Include node content in context if we are focusing on a sub-selection
-        ctx =
-          [base_context, to_string(node.content || "")]
-          |> Enum.reject(&(&1 == ""))
-          |> Enum.join("\n\n")
-
-        {ctx, content_override}
-      else
-        {base_context, node.content}
-      end
+    {context, content} = resolve_context_and_content(graph_id, node, content_override)
 
     instruction =
       if content_override do
@@ -165,6 +139,22 @@ defmodule Dialectic.Responses.LlmInterface do
     system_prompt = get_system_prompt(graph_id)
     log_prompt("deep_dive", graph_id, system_prompt, instruction)
     ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
+  end
+
+  defp resolve_context_and_content(graph_id, node, content_override) do
+    base_context = GraphManager.build_context(graph_id, node)
+
+    if content_override do
+      # Include node content in context if we are focusing on a sub-selection
+      ctx =
+        [base_context, to_string(node.content || "")]
+        |> Enum.reject(&(&1 == ""))
+        |> Enum.join("\n\n")
+
+      {ctx, content_override}
+    else
+      {base_context, node.content}
+    end
   end
 
   defp get_system_prompt(graph_id) do
