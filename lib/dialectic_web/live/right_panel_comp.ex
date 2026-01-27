@@ -104,40 +104,6 @@ defmodule DialecticWeb.RightPanelComp do
     current_user && graph_struct && graph_struct.user_id == current_user.id
   end
 
-  defp link_type_icon("explain"), do: "hero-information-circle"
-  defp link_type_icon("question"), do: "hero-question-mark-circle"
-  defp link_type_icon("pro"), do: "hero-arrow-up-circle"
-  defp link_type_icon("con"), do: "hero-arrow-down-circle"
-  defp link_type_icon("related_idea"), do: "hero-light-bulb"
-  defp link_type_icon("deep_dive"), do: "hero-magnifying-glass-circle"
-  defp link_type_icon(_), do: "hero-link"
-
-  defp link_type_color("explain"), do: "text-blue-500"
-  defp link_type_color("question"), do: "text-sky-500"
-  defp link_type_color("pro"), do: "text-emerald-500"
-  defp link_type_color("con"), do: "text-red-500"
-  defp link_type_color("related_idea"), do: "text-orange-500"
-  defp link_type_color("deep_dive"), do: "text-cyan-500"
-  defp link_type_color(_), do: "text-gray-500"
-
-  defp link_type_label("explain"), do: "Explanation"
-  defp link_type_label("question"), do: "Question"
-  defp link_type_label("pro"), do: "Pro"
-  defp link_type_label("con"), do: "Con"
-  defp link_type_label("related_idea"), do: "Related Idea"
-  defp link_type_label("deep_dive"), do: "Deep Dive"
-  defp link_type_label(_), do: "Link"
-
-  defp has_links?(highlight) do
-    case highlight.links do
-      %Ecto.Association.NotLoaded{} -> false
-      [] -> false
-      nil -> false
-      links when is_list(links) -> true
-      _ -> false
-    end
-  end
-
   @impl true
   def render(assigns) do
     ~H"""

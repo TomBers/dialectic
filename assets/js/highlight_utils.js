@@ -4,14 +4,14 @@ const HighlightUtils = {
    */
   getHeroiconClass(linkType) {
     const icons = {
-      explain: "hero-information-circle",
+      explain: "hero-light-bulb",
       question: "hero-question-mark-circle",
-      pro: "hero-arrow-up-circle",
-      con: "hero-arrow-down-circle",
-      related_idea: "hero-light-bulb",
-      deep_dive: "hero-magnifying-glass-circle",
+      pro: "hero-hand-thumb-up",
+      con: "hero-hand-thumb-down",
+      related_idea: "hero-arrow-path",
+      deep_dive: "hero-book-open",
     };
-    return icons[linkType] || icons.explain;
+    return icons[linkType] || "hero-link";
   },
 
   /**
@@ -19,14 +19,14 @@ const HighlightUtils = {
    */
   getIconColorClass(linkType) {
     const colors = {
-      explain: "text-blue-500",
+      explain: "text-gray-500",
       question: "text-sky-500",
       pro: "text-emerald-500",
       con: "text-red-500",
       related_idea: "text-orange-500",
       deep_dive: "text-cyan-500",
     };
-    return colors[linkType] || colors.explain;
+    return colors[linkType] || "text-gray-500";
   },
 
   /**
@@ -36,8 +36,8 @@ const HighlightUtils = {
     const labels = {
       explain: "Explanation",
       question: "Question",
-      pro: "Pro",
-      con: "Con",
+      pro: "Pro Argument",
+      con: "Con Argument",
       related_idea: "Related Idea",
       deep_dive: "Deep Dive",
     };

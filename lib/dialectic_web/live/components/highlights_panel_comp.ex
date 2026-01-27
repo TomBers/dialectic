@@ -58,12 +58,12 @@ defmodule DialecticWeb.HighlightsPanelComp do
   defp link_type_icon("deep_dive"), do: "hero-book-open"
   defp link_type_icon(_), do: "hero-link"
 
-  defp link_type_color("explain"), do: "text-amber-500"
-  defp link_type_color("question"), do: "text-blue-500"
-  defp link_type_color("pro"), do: "text-green-500"
+  defp link_type_color("explain"), do: "text-gray-500"
+  defp link_type_color("question"), do: "text-sky-500"
+  defp link_type_color("pro"), do: "text-emerald-500"
   defp link_type_color("con"), do: "text-red-500"
-  defp link_type_color("related_idea"), do: "text-purple-500"
-  defp link_type_color("deep_dive"), do: "text-indigo-500"
+  defp link_type_color("related_idea"), do: "text-orange-500"
+  defp link_type_color("deep_dive"), do: "text-cyan-500"
   defp link_type_color(_), do: "text-gray-500"
 
   defp link_type_label("explain"), do: "Explanation"
