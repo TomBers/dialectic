@@ -177,6 +177,39 @@
         />
       </div>
     </div>
+    
+<!-- Highlights Drawer (Right panel style) -->
+    <div
+      id="highlights-drawer"
+      class={
+        if @show_highlights_panel,
+          do:
+            "fixed top-10 bottom-0 right-0 w-full sm:w-96 bg-white border-l border-gray-200 z-40 overflow-y-auto transform translate-x-0 opacity-100 transition-all duration-300 ease-in-out",
+          else:
+            "fixed top-10 bottom-0 right-0 w-0 overflow-hidden bg-white border-l border-gray-200 z-50 transform translate-x-full opacity-0 transition-all duration-300 ease-in-out"
+      }
+    >
+      <div class="p-2">
+        <div class="flex items-center justify-end mb-2">
+          <button
+            type="button"
+            phx-click="toggle_highlights_panel"
+            class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50"
+            aria-label="Close highlights panel"
+            title="Close panel"
+          >
+            <.icon name="hero-x-mark" class="w-4 h-4" />
+          </button>
+        </div>
+        <.live_component
+          module={DialecticWeb.HighlightsPanelComp}
+          id="highlights-panel"
+          highlights={@highlights}
+          current_user={@current_user}
+          graph_struct={@graph_struct}
+        />
+      </div>
+    </div>
   <% end %>
   
 <!-- Main content with drawer menu -->
@@ -398,7 +431,7 @@
       class={
         "fixed bottom-0 z-30 px-3 pb-3 pointer-events-none " <>
           if(@drawer_open, do: "left-0 right-0 md:left-[40%]", else: "inset-x-0") <>
-          if(@right_panel_open || @show_graph_nav_panel, do: " right-80 sm:right-96", else: "")
+          if(@right_panel_open || @show_graph_nav_panel || @show_highlights_panel, do: " right-80 sm:right-96", else: "")
       }
       style="padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem);"
     >
@@ -441,14 +474,14 @@
           do:
             "fixed bottom-0 z-30 transform origin-bottom scale-100 opacity-100 visible transition-all duration-200 ease-out px-3 pb-3 pointer-events-none " <>
               if(@drawer_open, do: "left-0 right-0 md:left-[40%]", else: "inset-x-0") <>
-              if(@right_panel_open || @show_graph_nav_panel,
+              if(@right_panel_open || @show_graph_nav_panel || @show_highlights_panel,
                 do: " right-80 sm:right-96",
                 else: ""
               ),
           else:
             "fixed bottom-0 z-30 transform origin-bottom scale-90 opacity-0 invisible transition-all duration-150 ease-in px-3 pb-3 pointer-events-none " <>
               if(@drawer_open, do: "left-0 right-0 md:left-[40%]", else: "inset-x-0") <>
-              if(@right_panel_open || @show_graph_nav_panel,
+              if(@right_panel_open || @show_graph_nav_panel || @show_highlights_panel,
                 do: " right-80 sm:right-96",
                 else: ""
               )
@@ -510,6 +543,15 @@
                 title="Graph Settings"
               >
                 <.icon name="hero-map" class="w-5 h-5" />
+              </button>
+              <button
+                type="button"
+                phx-click="toggle_highlights_panel"
+                class={"p-1.5 rounded-lg transition-colors " <> if(@show_highlights_panel, do: "bg-indigo-50 text-indigo-600", else: "text-gray-500 hover:bg-gray-100 hover:text-gray-900")}
+                aria-label="Toggle highlights"
+                title="Highlights"
+              >
+                <.icon name="hero-bookmark" class="w-5 h-5" />
               </button>
               <button
                 type="button"

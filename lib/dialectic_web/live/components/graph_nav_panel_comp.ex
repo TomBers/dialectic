@@ -88,6 +88,83 @@ defmodule DialecticWeb.GraphNavPanelComp do
           </div>
         </div>
         
+    <!-- Node Colors Section -->
+        <div class="pt-2 border-t border-gray-200">
+          <div class="block text-sm font-semibold text-gray-900 mb-2.5">Node Colors</div>
+          <div class="space-y-1.5">
+            <div class="flex items-start gap-2">
+              <div class={"w-3 h-3 rounded-full flex-shrink-0 mt-0.5 " <> DialecticWeb.ColUtils.dot_class("user")}>
+              </div>
+              <div class="flex-1">
+                <div class="text-xs font-medium text-gray-900">
+                  {DialecticWeb.ColUtils.node_type_label("user")}
+                </div>
+                <div class="text-[10px] text-gray-500">Your questions and comments</div>
+              </div>
+            </div>
+            <div class="flex items-start gap-2">
+              <div class={"w-3 h-3 rounded-full flex-shrink-0 mt-0.5 " <> DialecticWeb.ColUtils.dot_class("answer")}>
+              </div>
+              <div class="flex-1">
+                <div class="text-xs font-medium text-gray-900">
+                  {DialecticWeb.ColUtils.node_type_label("answer")}
+                </div>
+                <div class="text-[10px] text-gray-500">AI-generated responses</div>
+              </div>
+            </div>
+            <div class="flex items-start gap-2">
+              <div class={"w-3 h-3 rounded-full flex-shrink-0 mt-0.5 " <> DialecticWeb.ColUtils.dot_class("thesis")}>
+              </div>
+              <div class="flex-1">
+                <div class="text-xs font-medium text-gray-900">
+                  {DialecticWeb.ColUtils.node_type_label("thesis")}
+                </div>
+                <div class="text-[10px] text-gray-500">Supporting arguments</div>
+              </div>
+            </div>
+            <div class="flex items-start gap-2">
+              <div class={"w-3 h-3 rounded-full flex-shrink-0 mt-0.5 " <> DialecticWeb.ColUtils.dot_class("antithesis")}>
+              </div>
+              <div class="flex-1">
+                <div class="text-xs font-medium text-gray-900">
+                  {DialecticWeb.ColUtils.node_type_label("antithesis")}
+                </div>
+                <div class="text-[10px] text-gray-500">Counterarguments</div>
+              </div>
+            </div>
+            <div class="flex items-start gap-2">
+              <div class={"w-3 h-3 rounded-full flex-shrink-0 mt-0.5 " <> DialecticWeb.ColUtils.dot_class("synthesis")}>
+              </div>
+              <div class="flex-1">
+                <div class="text-xs font-medium text-gray-900">
+                  {DialecticWeb.ColUtils.node_type_label("synthesis")}
+                </div>
+                <div class="text-[10px] text-gray-500">Balanced perspectives</div>
+              </div>
+            </div>
+            <div class="flex items-start gap-2">
+              <div class={"w-3 h-3 rounded-full flex-shrink-0 mt-0.5 " <> DialecticWeb.ColUtils.dot_class("ideas")}>
+              </div>
+              <div class="flex-1">
+                <div class="text-xs font-medium text-gray-900">
+                  {DialecticWeb.ColUtils.node_type_label("ideas")}
+                </div>
+                <div class="text-[10px] text-gray-500">Related concepts</div>
+              </div>
+            </div>
+            <div class="flex items-start gap-2">
+              <div class={"w-3 h-3 rounded-full flex-shrink-0 mt-0.5 " <> DialecticWeb.ColUtils.dot_class("deepdive")}>
+              </div>
+              <div class="flex-1">
+                <div class="text-xs font-medium text-gray-900">
+                  {DialecticWeb.ColUtils.node_type_label("deepdive")}
+                </div>
+                <div class="text-[10px] text-gray-500">In-depth explorations</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
     <!-- Keyboard Shortcuts Section -->
         <div class="pt-2 border-t border-gray-200">
           <div class="block text-sm font-semibold text-gray-900 mb-2.5">Shortcuts</div>

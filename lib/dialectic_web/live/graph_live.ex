@@ -88,7 +88,13 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event("toggle_graph_nav_panel", _params, socket) do
     new_state = !socket.assigns.show_graph_nav_panel
-    {:noreply, assign(socket, show_graph_nav_panel: new_state, right_panel_open: false)}
+
+    {:noreply,
+     assign(socket,
+       show_graph_nav_panel: new_state,
+       right_panel_open: false,
+       show_highlights_panel: false
+     )}
   end
 
   def handle_event("node:join_group", %{"node" => nid, "parent" => gid}, socket) do
@@ -148,7 +154,26 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event("toggle_right_panel", _, socket) do
     new_state = !socket.assigns.right_panel_open
-    {:noreply, socket |> assign(right_panel_open: new_state, show_graph_nav_panel: false)}
+
+    {:noreply,
+     socket
+     |> assign(
+       right_panel_open: new_state,
+       show_graph_nav_panel: false,
+       show_highlights_panel: false
+     )}
+  end
+
+  def handle_event("toggle_highlights_panel", _, socket) do
+    new_state = !socket.assigns.show_highlights_panel
+
+    {:noreply,
+     socket
+     |> assign(
+       show_highlights_panel: new_state,
+       right_panel_open: false,
+       show_graph_nav_panel: false
+     )}
   end
 
   def handle_event("toggle_bottom_menu", _, socket) do
@@ -1547,6 +1572,7 @@ defmodule DialecticWeb.GraphLive do
       exploration_stats: nil,
       show_login_modal: false,
       show_graph_nav_panel: false,
+      show_highlights_panel: false,
       highlights: []
     )
   end
