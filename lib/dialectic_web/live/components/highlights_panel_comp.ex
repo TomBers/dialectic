@@ -1,6 +1,6 @@
 defmodule DialecticWeb.HighlightsPanelComp do
   use DialecticWeb, :live_component
-  alias Dialectic.Contexts.Highlights
+  alias Dialectic.Highlights
 
   @impl true
   def update(assigns, socket) do
@@ -43,7 +43,7 @@ defmodule DialecticWeb.HighlightsPanelComp do
 
       highlight ->
         if highlight.created_by_user_id == socket.assigns.current_user.id do
-          Highlights.update_highlight_note(highlight, note)
+          Highlights.update_highlight(highlight, %{note: note})
         end
 
         {:noreply, assign(socket, editing_highlight_id: nil)}

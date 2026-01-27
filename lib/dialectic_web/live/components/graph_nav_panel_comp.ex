@@ -91,7 +91,7 @@ defmodule DialecticWeb.GraphNavPanelComp do
     <!-- Node Colors Section -->
         <div class="pt-2 border-t border-gray-200">
           <div class="block text-sm font-semibold text-gray-900 mb-2.5">Node Colors</div>
-          <div class="space-y-1.5">
+          <div class="grid grid-cols-2 gap-2">
             <div class="flex items-start gap-2">
               <div class={"w-3 h-3 rounded-full flex-shrink-0 mt-0.5 " <> DialecticWeb.ColUtils.dot_class("user")}>
               </div>
