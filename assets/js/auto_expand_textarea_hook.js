@@ -3,12 +3,12 @@ const AutoExpandTextareaHook = {
     this.textarea = this.el;
     const computedStyle = window.getComputedStyle(this.textarea);
 
-    // Derive minHeight from CSS (min-height), fallback to 56px to match min-h-[3.5rem] (3.5rem = 56px)
+    // Derive minHeight from CSS (min-height), fallback to 48px to match h-12 (3rem = 48px)
     const parsedMinHeight = parseFloat(computedStyle.minHeight);
     this.minHeight =
       Number.isFinite(parsedMinHeight) && parsedMinHeight > 0
         ? parsedMinHeight
-        : 56;
+        : 48;
 
     // Derive maxHeight from CSS custom property if available, otherwise fallback to ~6 lines (240px)
     const maxHeightVar = computedStyle.getPropertyValue(
@@ -46,6 +46,10 @@ const AutoExpandTextareaHook = {
     this.textarea.addEventListener("input", this.handleInput);
 
     // Initial adjustment in case there's pre-filled content
+    this.adjustHeight();
+  },
+
+  updated() {
     this.adjustHeight();
   },
 
