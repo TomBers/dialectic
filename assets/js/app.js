@@ -52,6 +52,76 @@ hooks.InterfaceHighlight = InterfaceHighlightHook;
 hooks.ViewMode = ViewModeHook;
 hooks.AutoExpandTextarea = AutoExpandTextareaHook;
 
+hooks.GraphLayout = {
+  mounted() {
+    this.el.addEventListener("toggle-panel", (e) => {
+      const { id } = e.detail;
+      const panels = ["right-panel", "graph-nav-drawer", "highlights-drawer"];
+      const targetPanel = document.getElementById(id);
+
+      if (!targetPanel) return;
+
+      const isClosed = targetPanel.classList.contains("translate-x-full");
+
+      // Close all panels first
+      panels.forEach((pId) => {
+        const p = document.getElementById(pId);
+        if (p) {
+          p.classList.add("translate-x-full", "opacity-0", "w-0");
+          p.classList.remove(
+            "translate-x-0",
+            "opacity-100",
+            "w-full",
+            "sm:w-96",
+          );
+        }
+
+        const btn = document.querySelector(`[data-panel-toggle="${pId}"]`);
+        if (btn) {
+          btn.classList.remove("bg-indigo-50", "text-indigo-600");
+          btn.classList.add(
+            "text-gray-500",
+            "hover:bg-gray-100",
+            "hover:text-gray-900",
+          );
+        }
+      });
+
+      const elementsToShift = document.querySelectorAll(".shift-with-panel");
+
+      if (isClosed) {
+        // Open the target
+        targetPanel.classList.remove("translate-x-full", "opacity-0", "w-0");
+        targetPanel.classList.add(
+          "translate-x-0",
+          "opacity-100",
+          "w-full",
+          "sm:w-96",
+        );
+
+        elementsToShift.forEach((el) => {
+          el.classList.add("right-80", "sm:right-96");
+        });
+
+        const btn = document.querySelector(`[data-panel-toggle="${id}"]`);
+        if (btn) {
+          btn.classList.add("bg-indigo-50", "text-indigo-600");
+          btn.classList.remove(
+            "text-gray-500",
+            "hover:bg-gray-100",
+            "hover:text-gray-900",
+          );
+        }
+      } else {
+        // Everything is closed now
+        elementsToShift.forEach((el) => {
+          el.classList.remove("right-80", "sm:right-96");
+        });
+      }
+    });
+  },
+};
+
 hooks.LinearView = {
   mounted() {
     this.handleEvent("scroll_to_node", ({ id }) => {
