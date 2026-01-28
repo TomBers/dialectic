@@ -55,6 +55,18 @@ hooks.AutoExpandTextarea = AutoExpandTextareaHook;
 hooks.GraphLayout = {
   mounted() {
     this.activePanelId = null;
+    this.sideDrawerOpen = true;
+    this.bottomMenuOpen = true;
+
+    const drawer = document.getElementById("side-drawer");
+    if (drawer && drawer.classList.contains("-translate-x-full")) {
+      this.sideDrawerOpen = false;
+    }
+
+    const bottomMenu = document.getElementById("bottom-menu");
+    if (bottomMenu && !bottomMenu.classList.contains("visible")) {
+      this.bottomMenuOpen = false;
+    }
 
     this.el.addEventListener("toggle-panel", (e) => {
       const { id } = e.detail;
@@ -152,7 +164,10 @@ hooks.GraphLayout = {
         if (e.detail.force === "close") shouldOpen = false;
       }
 
+      this.sideDrawerOpen = shouldOpen;
+
       if (shouldOpen) {
+        this.sideDrawerOpen = true;
         // OPENING
         drawer.classList.remove(
           "-translate-x-full",
@@ -192,6 +207,7 @@ hooks.GraphLayout = {
           el.classList.add("md:left-[40%]");
         });
       } else {
+        this.sideDrawerOpen = false;
         // CLOSING
         drawer.classList.remove(
           "translate-x-0",
@@ -244,10 +260,12 @@ hooks.GraphLayout = {
       const isVisible = menu.classList.contains("visible");
 
       if (isVisible) {
+        this.bottomMenuOpen = false;
         menu.classList.remove("scale-100", "opacity-100", "visible");
         menu.classList.add("scale-90", "opacity-0", "invisible");
         if (handle) handle.classList.remove("hidden");
       } else {
+        this.bottomMenuOpen = true;
         menu.classList.remove("scale-90", "opacity-0", "invisible");
         menu.classList.add("scale-100", "opacity-100", "visible");
         if (handle) handle.classList.add("hidden");
@@ -261,6 +279,32 @@ hooks.GraphLayout = {
     this.restoreState();
   },
   restoreState() {
+    // Restore side drawer state
+    const drawer = document.getElementById("side-drawer");
+    if (drawer && this.sideDrawerOpen !== undefined) {
+      const isClosed = drawer.classList.contains("-translate-x-full");
+      if (this.sideDrawerOpen && isClosed) {
+        this.el.dispatchEvent(
+          new CustomEvent("toggle-side-drawer", { detail: { force: "open" } }),
+        );
+      } else if (!this.sideDrawerOpen && !isClosed) {
+        this.el.dispatchEvent(
+          new CustomEvent("toggle-side-drawer", { detail: { force: "close" } }),
+        );
+      }
+    }
+
+    // Restore bottom menu state
+    const bottomMenu = document.getElementById("bottom-menu");
+    if (bottomMenu && this.bottomMenuOpen !== undefined) {
+      const isVisible = bottomMenu.classList.contains("visible");
+      if (this.bottomMenuOpen && !isVisible) {
+        this.el.dispatchEvent(new Event("toggle-bottom-menu"));
+      } else if (!this.bottomMenuOpen && isVisible) {
+        this.el.dispatchEvent(new Event("toggle-bottom-menu"));
+      }
+    }
+
     if (!this.activePanelId) return;
     const panel = document.getElementById(this.activePanelId);
     if (!panel) return;
