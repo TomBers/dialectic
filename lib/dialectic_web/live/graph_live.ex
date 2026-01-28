@@ -534,6 +534,7 @@ defmodule DialecticWeb.GraphLive do
     socket =
       if socket.assigns.node && socket.assigns.node.id == node_id do
         socket
+        |> push_event("center_node", %{id: node_id})
       else
         case GraphManager.find_node_by_id(socket.assigns.graph_id, node_id) do
           nil ->
