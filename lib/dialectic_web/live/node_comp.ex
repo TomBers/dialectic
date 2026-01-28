@@ -111,8 +111,8 @@ defmodule DialecticWeb.NodeComp do
                           </div>
                           <button
                             type="button"
-                            phx-click="node_clicked"
-                            phx-value-id={parent.id}
+                            phx-click="navigate_to_node"
+                            phx-value-node_id={parent.id}
                             class="text-xs text-indigo-600 hover:text-indigo-800 hover:underline"
                           >
                             View this node →

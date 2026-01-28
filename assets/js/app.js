@@ -69,12 +69,18 @@ hooks.GraphLayout = {
       panels.forEach((pId) => {
         const p = document.getElementById(pId);
         if (p) {
-          p.classList.add("translate-x-full", "opacity-0", "w-0");
+          p.classList.add(
+            "translate-x-full",
+            "opacity-0",
+            "w-0",
+            "overflow-hidden",
+          );
           p.classList.remove(
             "translate-x-0",
             "opacity-100",
             "w-full",
             "sm:w-96",
+            "overflow-y-auto",
           );
         }
 
@@ -94,12 +100,18 @@ hooks.GraphLayout = {
       if (isClosed) {
         this.activePanelId = id;
         // Open the target
-        targetPanel.classList.remove("translate-x-full", "opacity-0", "w-0");
+        targetPanel.classList.remove(
+          "translate-x-full",
+          "opacity-0",
+          "w-0",
+          "overflow-hidden",
+        );
         targetPanel.classList.add(
           "translate-x-0",
           "opacity-100",
           "w-full",
           "sm:w-96",
+          "overflow-y-auto",
         );
 
         elementsToShift.forEach((el) => {
@@ -256,8 +268,19 @@ hooks.GraphLayout = {
     // Check if it got closed by server update
     if (panel.classList.contains("translate-x-full")) {
       // Re-open it
-      panel.classList.remove("translate-x-full", "opacity-0", "w-0");
-      panel.classList.add("translate-x-0", "opacity-100", "w-full", "sm:w-96");
+      panel.classList.remove(
+        "translate-x-full",
+        "opacity-0",
+        "w-0",
+        "overflow-hidden",
+      );
+      panel.classList.add(
+        "translate-x-0",
+        "opacity-100",
+        "w-full",
+        "sm:w-96",
+        "overflow-y-auto",
+      );
 
       // Re-apply shift
       const elementsToShift = document.querySelectorAll(".shift-with-panel");

@@ -57,8 +57,8 @@ const HighlightUtils = {
     button.title = `Navigate to ${this.getLinkLabel(link.link_type)}: ${link.node_id}`;
 
     // Add Phoenix LiveView attributes for click handling
-    button.setAttribute("phx-click", "node_clicked");
-    button.setAttribute("phx-value-id", link.node_id);
+    button.setAttribute("phx-click", "navigate_to_node");
+    button.setAttribute("phx-value-node_id", link.node_id);
 
     // Create the Heroicon span using the same pattern as Phoenix CoreComponents
     const iconSpan = document.createElement("span");
