@@ -471,7 +471,7 @@
             </button>
           </div>
           <div class="bg-white/95 backdrop-blur border border-gray-200 shadow-xl rounded-t-[1.75rem] rounded-2xl px-1 pt-1 pb-2 pointer-events-auto transform-gpu transition-all duration-200 ease-out translate-y-0">
-            <div class="flex items-center justify-center gap-2 mb-2">
+            <div class="flex items-center justify-center gap-1 mb-2">
               <.live_component
                 module={DialecticWeb.ActionToolbarComp}
                 id={"action-toolbar-#{@node && @node.id}"}
@@ -484,7 +484,7 @@
                 inline={true}
                 icons_only={false}
               />
-              <div class="h-6 w-px bg-gray-200 mx-1"></div>
+              <div class="h-6 w-px bg-gray-200 mr-1 -ml-0.5"></div>
               <button
                 type="button"
                 phx-click={

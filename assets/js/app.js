@@ -54,6 +54,8 @@ hooks.AutoExpandTextarea = AutoExpandTextareaHook;
 
 hooks.GraphLayout = {
   mounted() {
+    this.activePanelId = null;
+
     this.el.addEventListener("toggle-panel", (e) => {
       const { id } = e.detail;
       const panels = ["right-panel", "graph-nav-drawer", "highlights-drawer"];
@@ -90,6 +92,7 @@ hooks.GraphLayout = {
       const elementsToShift = document.querySelectorAll(".shift-with-panel");
 
       if (isClosed) {
+        this.activePanelId = id;
         // Open the target
         targetPanel.classList.remove("translate-x-full", "opacity-0", "w-0");
         targetPanel.classList.add(
@@ -113,6 +116,7 @@ hooks.GraphLayout = {
           );
         }
       } else {
+        this.activePanelId = null;
         // Everything is closed now
         elementsToShift.forEach((el) => {
           el.classList.remove("right-80", "sm:right-96");
@@ -237,6 +241,43 @@ hooks.GraphLayout = {
         if (handle) handle.classList.add("hidden");
       }
     });
+  },
+  updated() {
+    this.restoreState();
+  },
+  reconnected() {
+    this.restoreState();
+  },
+  restoreState() {
+    if (!this.activePanelId) return;
+    const panel = document.getElementById(this.activePanelId);
+    if (!panel) return;
+
+    // Check if it got closed by server update
+    if (panel.classList.contains("translate-x-full")) {
+      // Re-open it
+      panel.classList.remove("translate-x-full", "opacity-0", "w-0");
+      panel.classList.add("translate-x-0", "opacity-100", "w-full", "sm:w-96");
+
+      // Re-apply shift
+      const elementsToShift = document.querySelectorAll(".shift-with-panel");
+      elementsToShift.forEach((el) => {
+        el.classList.add("right-80", "sm:right-96");
+      });
+
+      // Re-activate button
+      const btn = document.querySelector(
+        `[data-panel-toggle="${this.activePanelId}"]`,
+      );
+      if (btn) {
+        btn.classList.add("bg-indigo-50", "text-indigo-600");
+        btn.classList.remove(
+          "text-gray-500",
+          "hover:bg-gray-100",
+          "hover:text-gray-900",
+        );
+      }
+    }
   },
 };
 
