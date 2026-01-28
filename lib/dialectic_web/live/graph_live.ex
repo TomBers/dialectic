@@ -86,17 +86,6 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, assign(socket, prompt_mode: mode_str)}
   end
 
-  def handle_event("toggle_graph_nav_panel", _params, socket) do
-    new_state = !socket.assigns.show_graph_nav_panel
-
-    {:noreply,
-     assign(socket,
-       show_graph_nav_panel: new_state,
-       right_panel_open: false,
-       show_highlights_panel: false
-     )}
-  end
-
   def handle_event("node:join_group", %{"node" => nid, "parent" => gid}, socket) do
     _graph = GraphManager.set_parent(socket.assigns.graph_id, nid, gid)
     GraphManager.save_graph(socket.assigns.graph_id)
@@ -146,38 +135,6 @@ defmodule DialecticWeb.GraphLive do
       _ ->
         {:noreply, socket}
     end
-  end
-
-  def handle_event("toggle_drawer", _, socket) do
-    {:noreply, socket |> assign(drawer_open: !socket.assigns.drawer_open)}
-  end
-
-  def handle_event("toggle_right_panel", _, socket) do
-    new_state = !socket.assigns.right_panel_open
-
-    {:noreply,
-     socket
-     |> assign(
-       right_panel_open: new_state,
-       show_graph_nav_panel: false,
-       show_highlights_panel: false
-     )}
-  end
-
-  def handle_event("toggle_highlights_panel", _, socket) do
-    new_state = !socket.assigns.show_highlights_panel
-
-    {:noreply,
-     socket
-     |> assign(
-       show_highlights_panel: new_state,
-       right_panel_open: false,
-       show_graph_nav_panel: false
-     )}
-  end
-
-  def handle_event("toggle_bottom_menu", _, socket) do
-    {:noreply, socket |> assign(bottom_menu_open: !socket.assigns.bottom_menu_open)}
   end
 
   # Handle form submission and change events
@@ -577,6 +534,7 @@ defmodule DialecticWeb.GraphLive do
     socket =
       if socket.assigns.node && socket.assigns.node.id == node_id do
         socket
+        |> push_event("center_node", %{id: node_id})
       else
         case GraphManager.find_node_by_id(socket.assigns.graph_id, node_id) do
           nil ->
@@ -1401,17 +1359,6 @@ defmodule DialecticWeb.GraphLive do
           s
         end
       end)
-      |> then(fn s ->
-        # Auto-open drawer panel when new answer is created
-        # TODO: This behavior could be disruptive to user workflow. Consider making it configurable
-        # via user preferences, or making it less intrusive (e.g., only auto-open on first answer,
-        # or provide a visual indicator without forcing the drawer open).
-        if operation in ["answer", "explain"] && node && Map.get(node, :id) do
-          assign(s, drawer_open: true)
-        else
-          s
-        end
-      end)
 
     # Broadcast structural changes to other users (new nodes created, etc.)
     # Skip for operations that don't change graph structure
@@ -1557,9 +1504,6 @@ defmodule DialecticWeb.GraphLive do
       streaming_nodes: MapSet.new(),
       titled_nodes: MapSet.new(),
       show_combine: false,
-      drawer_open: true,
-      right_panel_open: false,
-      bottom_menu_open: true,
       graph_operation: "",
       ask_question: true,
       group_states: %{},
@@ -1578,8 +1522,6 @@ defmodule DialecticWeb.GraphLive do
       work_streams: [],
       exploration_stats: nil,
       show_login_modal: false,
-      show_graph_nav_panel: false,
-      show_highlights_panel: false,
       highlights: []
     )
   end

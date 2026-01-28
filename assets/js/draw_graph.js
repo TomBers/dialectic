@@ -431,7 +431,16 @@ export function draw_graph(
 
     if (timeDiff < 300 && lastTapNode === nodeId) {
       // Double-tap detected - open reader panel
-      context.pushEvent("toggle_drawer", {});
+      setTimeout(() => {
+        const layout = document.getElementById("graph-layout");
+        if (layout) {
+          layout.dispatchEvent(
+            new CustomEvent("toggle-side-drawer", {
+              detail: { force: "open" },
+            }),
+          );
+        }
+      }, 200);
       lastTapTime = 0;
       lastTapNode = null;
       return;
@@ -444,14 +453,21 @@ export function draw_graph(
     context.pushEvent("node_clicked", { id: nodeId });
 
     // Ensure node is within visible bounds using model-space + zoom/pan; pan minimally if off-screen
-    const panel = document.getElementById("right-panel");
     const rect = container.getBoundingClientRect();
-    const panelRect = panel ? panel.getBoundingClientRect() : null;
+    const panels = ["right-panel", "graph-nav-drawer", "highlights-drawer"];
+    let overlap = 0;
 
-    // Only the overlap of the right panel over the graph container
-    const overlap = panelRect
-      ? Math.min(rect.width, Math.max(0, rect.right - panelRect.left))
-      : 0;
+    panels.forEach((id) => {
+      const panel = document.getElementById(id);
+      const pr = panel ? panel.getBoundingClientRect() : null;
+      if (pr) {
+        const currentOverlap = Math.min(
+          rect.width,
+          Math.max(0, rect.right - pr.left),
+        );
+        if (currentOverlap > overlap) overlap = currentOverlap;
+      }
+    });
 
     // Visible region inside the container
     const margin = 16; // outer margin from container edges

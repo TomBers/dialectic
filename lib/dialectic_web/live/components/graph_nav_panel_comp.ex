@@ -152,16 +152,6 @@ defmodule DialecticWeb.GraphNavPanelComp do
                 <div class="text-[10px] text-gray-500">Related concepts</div>
               </div>
             </div>
-            <div class="flex items-start gap-2">
-              <div class={"w-3 h-3 rounded-full flex-shrink-0 mt-0.5 " <> DialecticWeb.ColUtils.dot_class("deepdive")}>
-              </div>
-              <div class="flex-1">
-                <div class="text-xs font-medium text-gray-900">
-                  {DialecticWeb.ColUtils.node_type_label("deepdive")}
-                </div>
-                <div class="text-[10px] text-gray-500">In-depth explorations</div>
-              </div>
-            </div>
           </div>
         </div>
         

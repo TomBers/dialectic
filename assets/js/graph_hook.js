@@ -157,13 +157,21 @@ const ensureVisible = (cy, container, nodeId) => {
     if (!n || n.length === 0) return;
 
     const rect = container.getBoundingClientRect();
-    const panel = document.getElementById("right-panel");
-    const pr = panel ? panel.getBoundingClientRect() : null;
 
-    // Only the overlap of the right panel over the graph container
-    const overlap = pr
-      ? Math.min(rect.width, Math.max(0, rect.right - pr.left))
-      : 0;
+    const panels = ["right-panel", "graph-nav-drawer", "highlights-drawer"];
+    let overlap = 0;
+
+    panels.forEach((id) => {
+      const panel = document.getElementById(id);
+      const pr = panel ? panel.getBoundingClientRect() : null;
+      if (pr) {
+        const currentOverlap = Math.min(
+          rect.width,
+          Math.max(0, rect.right - pr.left),
+        );
+        if (currentOverlap > overlap) overlap = currentOverlap;
+      }
+    });
 
     // Visible region inside the container
     const getNum = (k, d) => {
@@ -220,21 +228,11 @@ const ensureVisible = (cy, container, nodeId) => {
     else if (rbbBottom > okBottom) dy = okBottom - rbbBottom;
 
     if (dx !== 0 || dy !== 0) {
-      const now = performance.now ? performance.now() : Date.now();
-      if (!cy.__evMeta) cy.__evMeta = { last: 0, animating: false };
-      // Throttle and coalesce animations to avoid visible double renders/bounce
-      if (cy.__evMeta.animating || now - cy.__evMeta.last < 120) {
-        return;
-      }
-      cy.__evMeta.animating = true;
+      cy.stop();
       cy.animate({
         pan: { x: pan.x + dx, y: pan.y + dy },
-        duration: 120,
+        duration: 150,
         easing: "ease-in-out-quad",
-        complete: () => {
-          cy.__evMeta.last = performance.now ? performance.now() : Date.now();
-          cy.__evMeta.animating = false;
-        },
       });
     }
   } catch (_e) {}
@@ -332,11 +330,6 @@ const graphHook = {
         const n = this.cy.getElementById(id);
         if (!n || n.length === 0) return;
 
-        const rect = this._container.getBoundingClientRect();
-        const panel = document.getElementById("right-panel");
-        const pr = panel ? panel.getBoundingClientRect() : null;
-        const pw = pr && pr.width > 10 ? pr.width : 0;
-
         // Keep structure stable: only pan if the node is off screen
         // Compute visible bounds (exclude right panel) with small margins
         requestAnimationFrame(() => ensureVisible(this.cy, container, id));
@@ -391,11 +384,19 @@ const graphHook = {
         if (!debugBoundsEnabled()) return;
 
         const rect = this._container.getBoundingClientRect();
-        const panel = document.getElementById("right-panel");
-        const pr = panel ? panel.getBoundingClientRect() : null;
-        const overlap = pr
-          ? Math.min(rect.width, Math.max(0, rect.right - pr.left))
-          : 0;
+        const panels = ["right-panel", "graph-nav-drawer", "highlights-drawer"];
+        let overlap = 0;
+        panels.forEach((id) => {
+          const panel = document.getElementById(id);
+          const pr = panel ? panel.getBoundingClientRect() : null;
+          if (pr) {
+            const currentOverlap = Math.min(
+              rect.width,
+              Math.max(0, rect.right - pr.left),
+            );
+            if (currentOverlap > overlap) overlap = currentOverlap;
+          }
+        });
 
         const n = this.cy.getElementById(currentId);
         if (!n || n.length === 0) return;
@@ -441,10 +442,18 @@ const graphHook = {
     };
 
     const getRightPanelWidth = () => {
-      const panel = document.getElementById("right-panel");
-      if (!panel) return 0;
-      const rect = panel.getBoundingClientRect();
-      return rect && rect.width > 10 ? rect.width : 0;
+      const panels = ["right-panel", "graph-nav-drawer", "highlights-drawer"];
+      let maxWidth = 0;
+      panels.forEach((id) => {
+        const panel = document.getElementById(id);
+        if (panel) {
+          const rect = panel.getBoundingClientRect();
+          if (rect && rect.width > 10 && rect.left < window.innerWidth) {
+            if (rect.width > maxWidth) maxWidth = rect.width;
+          }
+        }
+      });
+      return maxWidth;
     };
 
     const centerPoint = () => {
