@@ -431,7 +431,16 @@ export function draw_graph(
 
     if (timeDiff < 300 && lastTapNode === nodeId) {
       // Double-tap detected - open reader panel
-      context.pushEvent("toggle_drawer", {});
+      setTimeout(() => {
+        const layout = document.getElementById("graph-layout");
+        if (layout) {
+          layout.dispatchEvent(
+            new CustomEvent("toggle-side-drawer", {
+              detail: { force: "open" },
+            }),
+          );
+        }
+      }, 200);
       lastTapTime = 0;
       lastTapNode = null;
       return;

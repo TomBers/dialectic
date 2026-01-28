@@ -137,14 +137,6 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_event("toggle_drawer", _, socket) do
-    {:noreply, socket |> assign(drawer_open: !socket.assigns.drawer_open)}
-  end
-
-  def handle_event("toggle_bottom_menu", _, socket) do
-    {:noreply, socket |> assign(bottom_menu_open: !socket.assigns.bottom_menu_open)}
-  end
-
   # Handle form submission and change events
   def handle_event("search_nodes", params, socket) do
     search_term = params["search_term"] || params["value"] || ""
@@ -1366,17 +1358,6 @@ defmodule DialecticWeb.GraphLive do
           s
         end
       end)
-      |> then(fn s ->
-        # Auto-open drawer panel when new answer is created
-        # TODO: This behavior could be disruptive to user workflow. Consider making it configurable
-        # via user preferences, or making it less intrusive (e.g., only auto-open on first answer,
-        # or provide a visual indicator without forcing the drawer open).
-        if operation in ["answer", "explain"] && node && Map.get(node, :id) do
-          assign(s, drawer_open: true)
-        else
-          s
-        end
-      end)
 
     # Broadcast structural changes to other users (new nodes created, etc.)
     # Skip for operations that don't change graph structure
@@ -1522,8 +1503,6 @@ defmodule DialecticWeb.GraphLive do
       streaming_nodes: MapSet.new(),
       titled_nodes: MapSet.new(),
       show_combine: false,
-      drawer_open: true,
-      bottom_menu_open: true,
       graph_operation: "",
       ask_question: true,
       group_states: %{},

@@ -119,6 +119,124 @@ hooks.GraphLayout = {
         });
       }
     });
+
+    this.el.addEventListener("toggle-side-drawer", (e) => {
+      const drawer = document.getElementById("side-drawer");
+      const graphContainer = document.getElementById("graph-main-container");
+      const toggleBtn = document.getElementById("drawer-toggle");
+      const bottomElements = document.querySelectorAll(".shift-with-panel");
+
+      if (!drawer) return;
+
+      const isClosed = drawer.classList.contains("-translate-x-full");
+      let shouldOpen = isClosed;
+
+      if (e.detail && e.detail.force) {
+        if (e.detail.force === "open") shouldOpen = true;
+        if (e.detail.force === "close") shouldOpen = false;
+      }
+
+      if (shouldOpen) {
+        // OPENING
+        drawer.classList.remove(
+          "-translate-x-full",
+          "opacity-0",
+          "w-0",
+          "md:w-0",
+          "overflow-hidden",
+        );
+        drawer.classList.add(
+          "translate-x-0",
+          "opacity-100",
+          "w-full",
+          "md:w-2/5",
+          "p-4",
+        );
+
+        if (graphContainer) {
+          graphContainer.classList.remove("w-full");
+          graphContainer.classList.add("md:w-3/5");
+        }
+
+        if (toggleBtn) {
+          toggleBtn.classList.remove("left-2");
+          toggleBtn.classList.add(
+            "right-2",
+            "md:left-[40%]",
+            "md:ml-2",
+            "md:right-auto",
+          );
+          const path = toggleBtn.querySelector("path");
+          if (path) path.setAttribute("d", "M11 19l-7-7 7-7");
+          toggleBtn.setAttribute("aria-expanded", "true");
+          toggleBtn.setAttribute("aria-label", "Hide menu");
+        }
+
+        bottomElements.forEach((el) => {
+          el.classList.add("md:left-[40%]");
+        });
+      } else {
+        // CLOSING
+        drawer.classList.remove(
+          "translate-x-0",
+          "opacity-100",
+          "w-full",
+          "md:w-2/5",
+          "p-4",
+        );
+        drawer.classList.add(
+          "-translate-x-full",
+          "opacity-0",
+          "w-0",
+          "md:w-0",
+          "overflow-hidden",
+        );
+
+        if (graphContainer) {
+          graphContainer.classList.remove("md:w-3/5");
+          graphContainer.classList.add("w-full");
+        }
+
+        if (toggleBtn) {
+          toggleBtn.classList.remove(
+            "right-2",
+            "md:left-[40%]",
+            "md:ml-2",
+            "md:right-auto",
+          );
+          toggleBtn.classList.add("left-2");
+          const path = toggleBtn.querySelector("path");
+          if (path) path.setAttribute("d", "M13 5l7 7-7 7");
+          toggleBtn.setAttribute("aria-expanded", "false");
+          toggleBtn.setAttribute("aria-label", "Show menu");
+        }
+
+        bottomElements.forEach((el) => {
+          el.classList.remove("md:left-[40%]");
+        });
+      }
+
+      window.dispatchEvent(new Event("resize"));
+    });
+
+    this.el.addEventListener("toggle-bottom-menu", () => {
+      const menu = document.getElementById("bottom-menu");
+      const handle = document.getElementById("bottom-menu-handle");
+
+      if (!menu) return;
+
+      const isVisible = menu.classList.contains("visible");
+
+      if (isVisible) {
+        menu.classList.remove("scale-100", "opacity-100", "visible");
+        menu.classList.add("scale-90", "opacity-0", "invisible");
+        if (handle) handle.classList.remove("hidden");
+      } else {
+        menu.classList.remove("scale-90", "opacity-0", "invisible");
+        menu.classList.add("scale-100", "opacity-100", "visible");
+        if (handle) handle.classList.add("hidden");
+      }
+    });
   },
 };
 
