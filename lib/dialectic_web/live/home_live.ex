@@ -139,14 +139,16 @@ defmodule DialecticWeb.HomeLive do
   end
 
   def handle_async(:create_graph_flow, {:ok, _}, socket) do
-    {:noreply, put_flash(socket, :error, "Failed to create graph") |> assign(:loading_graph, nil)}
+    {:noreply,
+     put_flash(socket, :error, "Failed to create mind map") |> assign(:loading_graph, nil)}
   end
 
   def handle_async(:create_graph_flow, {:exit, reason}, socket) do
-    Logger.error("Graph creation task exited: #{inspect(reason)}")
+    # Log the crash reason if needed
+    Logger.error("Mind map creation crashed: #{inspect(reason)}")
 
     {:noreply,
-     put_flash(socket, :error, "Graph creation failed. Please try again.")
+     put_flash(socket, :error, "Mind map creation failed. Please try again.")
      |> assign(:loading_graph, nil)}
   end
 
@@ -254,10 +256,10 @@ defmodule DialecticWeb.HomeLive do
                 <div class="flex flex-col items-center text-center gap-7">
                   <div class="space-y-4">
                     <h1 class="text-4xl font-bold tracking-tight text-white sm:text-5xl">
-                      Start a new thought map
+                      MuDG
                     </h1>
-                    <p class="text-lg text-indigo-100">
-                      Ask a question or state a premise to begin exploring a new dialectic map.
+                    <p class="text-xl font-medium text-indigo-100">
+                      A shared AI-powered whiteboard; explore ideas deeply, structure thinking, and sharpen arguments.
                     </p>
                   </div>
 
@@ -316,7 +318,7 @@ defmodule DialecticWeb.HomeLive do
                         <% @search_term != "" -> %>
                           Search results for "{@search_term}"
                         <% true -> %>
-                          Existing Maps
+                          Existing Mind Maps
                       <% end %>
                     </h2>
 
