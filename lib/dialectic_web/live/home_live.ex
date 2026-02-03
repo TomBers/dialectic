@@ -145,7 +145,7 @@ defmodule DialecticWeb.HomeLive do
 
   def handle_async(:create_graph_flow, {:exit, reason}, socket) do
     # Log the crash reason if needed
-    IO.warn("Mind map creation crashed: #{inspect(reason)}")
+    Logger.error("Mind map creation crashed: #{inspect(reason)}")
 
     {:noreply,
      put_flash(socket, :error, "Mind map creation failed. Please try again.")
