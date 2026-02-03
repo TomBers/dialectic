@@ -17,7 +17,9 @@ defmodule DialecticWeb.NewIdeaFormComp do
       socket
       |> assign(assigns)
       |> assign_new(:id, fn -> "new-idea-form" end)
-      |> assign_new(:placeholder, fn -> "What's on your mind?" end)
+      |> assign_new(:placeholder, fn ->
+        "Ask a question to begin exploring a new topic."
+      end)
       |> assign_new(:submit_label, fn -> "Start" end)
 
     {:ok, socket}
