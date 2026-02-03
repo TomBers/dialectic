@@ -20,7 +20,7 @@ defmodule DialecticWeb.NewIdeaFormComp do
       |> assign_new(:placeholder, fn ->
         "Ask a question to begin exploring a new topic."
       end)
-      |> assign_new(:submit_label, fn -> "Start" end)
+      |> assign_new(:submit_label, fn -> "Ask" end)
 
     {:ok, socket}
   end

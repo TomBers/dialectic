@@ -139,14 +139,16 @@ defmodule DialecticWeb.HomeLive do
   end
 
   def handle_async(:create_graph_flow, {:ok, _}, socket) do
-    {:noreply, put_flash(socket, :error, "Failed to create graph") |> assign(:loading_graph, nil)}
+    {:noreply,
+     put_flash(socket, :error, "Failed to create mind map") |> assign(:loading_graph, nil)}
   end
 
   def handle_async(:create_graph_flow, {:exit, reason}, socket) do
-    Logger.error("Graph creation task exited: #{inspect(reason)}")
+    # Log the crash reason if needed
+    IO.warn("Mind map creation crashed: #{inspect(reason)}")
 
     {:noreply,
-     put_flash(socket, :error, "Graph creation failed. Please try again.")
+     put_flash(socket, :error, "Mind map creation failed. Please try again.")
      |> assign(:loading_graph, nil)}
   end
 
