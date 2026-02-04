@@ -89,11 +89,19 @@ defmodule Dialectic.DbActions.Graphs do
 
     case result do
       {:ok, graph} ->
-        Dialectic.Categorisation.AutoTagger.tag_graph(graph)
+        maybe_tag_graph(graph)
         {:ok, graph}
 
       error ->
         error
+    end
+  end
+
+  defp maybe_tag_graph(graph) do
+    if Mix.env() == :test do
+      :ok
+    else
+      Dialectic.Categorisation.AutoTagger.tag_graph(graph)
     end
   end
 
