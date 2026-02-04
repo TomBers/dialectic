@@ -18,7 +18,8 @@ defmodule DialecticWeb.SelectionActionsComp do
        node_id: nil,
        offsets: nil,
        highlight: nil,
-       links: []
+       links: [],
+       ask_question: true
      )}
   end
 
@@ -92,8 +93,18 @@ defmodule DialecticWeb.SelectionActionsComp do
   end
 
   @impl true
-  def handle_event("ask_question", %{"question" => question}, socket) do
-    send_action_to_parent(socket, :ask_question, %{question: question})
+  def handle_event("toggle_ask_question", _params, socket) do
+    {:noreply, update(socket, :ask_question, &(!&1))}
+  end
+
+  @impl true
+  def handle_event("submit_input", %{"question" => content}, socket) do
+    if socket.assigns.ask_question do
+      send_action_to_parent(socket, :ask_question, %{question: content})
+    else
+      send_action_to_parent(socket, :comment, %{comment: content})
+    end
+
     {:noreply, assign(socket, visible: false)}
   end
 
@@ -312,10 +323,54 @@ defmodule DialecticWeb.SelectionActionsComp do
               <% end %>
             </button>
           </div>
-          <%!-- Custom question form --%>
+          <%!-- Custom question/comment form --%>
           <div class="border-t border-gray-200 pt-3 mt-1">
-            <form phx-submit="ask_question" phx-target={@myself} class="flex flex-col gap-2">
-              <label class="text-sm font-medium text-gray-700">Or ask a custom question:</label>
+            <form phx-submit="submit_input" phx-target={@myself} class="flex flex-col gap-2">
+              <div class="flex items-center justify-between">
+                <label class="text-sm font-medium text-gray-700">
+                  <%= if @ask_question do %>
+                    Ask a custom question:
+                  <% else %>
+                    Add a comment:
+                  <% end %>
+                </label>
+                <%!-- Ask/Comment Segmented Control --%>
+                <div class="inline-flex rounded-md border border-gray-200 bg-gray-50 flex-none scale-90 origin-right">
+                  <button
+                    type="button"
+                    phx-click="toggle_ask_question"
+                    phx-target={@myself}
+                    class={[
+                      "px-2 py-1 text-xs font-medium transition-all",
+                      if @ask_question do
+                        "bg-blue-500 text-white rounded-md"
+                      else
+                        "text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-l-md"
+                      end
+                    ]}
+                    title="Get an AI-generated response"
+                  >
+                    Ask
+                  </button>
+                  <button
+                    type="button"
+                    phx-click="toggle_ask_question"
+                    phx-target={@myself}
+                    class={[
+                      "px-2 py-1 text-xs font-medium transition-all",
+                      if !@ask_question do
+                        "bg-emerald-500 text-white rounded-md"
+                      else
+                        "text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-r-md"
+                      end
+                    ]}
+                    title="Add your own thought directly"
+                  >
+                    Comment
+                  </button>
+                </div>
+              </div>
+
               <div class="flex gap-2 items-start">
                 <textarea
                   name="question"
@@ -323,25 +378,46 @@ defmodule DialecticWeb.SelectionActionsComp do
                   phx-hook="AutoExpandTextarea"
                   id={"selection-question-input-#{@id}"}
                   class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none resize-none min-h-[2.5rem] max-h-[8rem]"
-                  placeholder="What would you like to know?"
+                  placeholder={
+                    if @ask_question,
+                      do: "What would you like to know?",
+                      else: "Add your thought about this selection..."
+                  }
                   autocomplete="off"
                   disabled={!@can_edit}
                 ></textarea>
                 <button
                   type="submit"
                   disabled={!@can_edit}
-                  class="bg-indigo-500 hover:bg-indigo-600 text-white text-sm py-2 px-4 rounded-lg font-medium transition-all hover:shadow-lg whitespace-nowrap self-start disabled:opacity-50 disabled:cursor-not-allowed"
+                  class={[
+                    "text-white text-sm py-2 px-4 rounded-lg font-medium transition-all hover:shadow-lg whitespace-nowrap self-start disabled:opacity-50 disabled:cursor-not-allowed",
+                    if(@ask_question,
+                      do: "bg-indigo-500 hover:bg-indigo-600",
+                      else: "bg-emerald-500 hover:bg-emerald-600"
+                    )
+                  ]}
                 >
-                  Ask
+                  <%= if @ask_question do %>
+                    Ask
+                  <% else %>
+                    Post
+                  <% end %>
                 </button>
               </div>
               <div class="text-xs text-gray-500 flex items-center justify-between">
                 <span>Press Enter to submit • Escape to close</span>
-                <%= if count_link_type(@links, "question") > 0 do %>
-                  <span class="text-indigo-600 font-medium">
-                    {count_link_type(@links, "question")} question(s) linked
-                  </span>
-                <% end %>
+                <div class="flex gap-2">
+                  <%= if count_link_type(@links, "question") > 0 do %>
+                    <span class="text-indigo-600 font-medium">
+                      {count_link_type(@links, "question")} question(s)
+                    </span>
+                  <% end %>
+                  <%= if count_link_type(@links, "comment") > 0 do %>
+                    <span class="text-emerald-600 font-medium">
+                      {count_link_type(@links, "comment")} comment(s)
+                    </span>
+                  <% end %>
+                </div>
               </div>
             </form>
           </div>
