@@ -1,7 +1,7 @@
 defmodule Dialectic.Responses.ModeServer do
   @moduledoc """
   GenServer that owns the ETS table used to persist the per-graph prompt mode
-  (e.g., `:expert`, `:university`, `:high_school`, or `:eli5`) for the duration of the BEAM session.
+  (e.g., `:expert`, `:university`, `:high_school`, or `:simple`) for the duration of the BEAM session.
 
   Why this exists:
   - Centralizes creation/ownership of the ETS table to avoid scattered, ad-hoc creation.
@@ -20,11 +20,11 @@ defmodule Dialectic.Responses.ModeServer do
   @type graph_id :: String.t()
 
   @typedoc "Current UI/LLM mode selection."
-  @type mode :: :expert | :university | :high_school | :eli5
+  @type mode :: :expert | :university | :high_school | :simple
 
   @table :dialectic_mode_store
   @default_mode :university
-  @modes [:expert, :university, :high_school, :eli5]
+  @modes [:expert, :university, :high_school, :simple]
 
   # -- Public API --------------------------------------------------------------
 
@@ -39,7 +39,7 @@ defmodule Dialectic.Responses.ModeServer do
   end
 
   @doc """
-  Returns the mode for the given `graph_id`. Falls back to `:structured` when unset.
+  Returns the mode for the given `graph_id`. Falls back to `:university` when unset.
   """
   @spec get_mode(graph_id) :: mode
   def get_mode(graph_id) when is_binary(graph_id) do
@@ -49,7 +49,7 @@ defmodule Dialectic.Responses.ModeServer do
   @doc """
   Sets the mode for a given `graph_id`.
 
-  Accepts atoms (`:expert` | `:university` | `:high_school` | `:eli5`) or strings.
+  Accepts atoms (`:expert` | `:university` | `:high_school` | `:simple`) or strings.
   Returns `:ok` or `{:error, :invalid_mode}` if the value isn't supported.
   """
   @spec set_mode(graph_id, mode | String.t()) :: :ok | {:error, :invalid_mode}
@@ -159,7 +159,7 @@ defmodule Dialectic.Responses.ModeServer do
       "expert" -> {:ok, :expert}
       "university" -> {:ok, :university}
       "high_school" -> {:ok, :high_school}
-      "eli5" -> {:ok, :eli5}
+      "simple" -> {:ok, :simple}
       # Backwards compatibility: "structured" was the previous name for :university mode.
       # TODO: Remove this fallback once all clients no longer send "structured".
       "structured" -> {:ok, :university}

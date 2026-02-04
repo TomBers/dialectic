@@ -10,8 +10,8 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
       assert prompt =~ "highly technical, rigorous, and nuanced analysis"
     end
 
-    test "returns eli5 persona" do
-      prompt = PromptsStructured.system_preamble(:eli5)
+    test "returns simple persona" do
+      prompt = PromptsStructured.system_preamble(:simple)
       assert prompt =~ "SYSTEM"
 
       assert prompt =~

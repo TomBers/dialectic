@@ -26,7 +26,7 @@ defmodule DialecticWeb.HomeLive do
           case String.downcase(mode) do
             "expert" -> "expert"
             "high_school" -> "high_school"
-            "eli5" -> "eli5"
+            "simple" -> "simple"
             _ -> "university"
           end
 
@@ -197,7 +197,7 @@ defmodule DialecticWeb.HomeLive do
       case mode_str do
         "expert" -> :expert
         "high_school" -> :high_school
-        "eli5" -> :eli5
+        "simple" -> :simple
         _ -> :university
       end
 

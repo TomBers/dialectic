@@ -18,7 +18,7 @@ defmodule Dialectic.Graph.Creator do
   - `user`: The User Ecto struct (for DB ownership).
   - `user_identity`: Map/Struct representing the user for Vertex attribution.
   - `opts`: Keyword list of options.
-    - `:mode` - :expert, :university (default), :high_school, or :eli5.
+    - `:mode` - :expert, :university (default), :high_school, or :simple.
     - `:title` - Optional title override.
     - `:progress_callback` - Function/1 to receive status strings.
   """

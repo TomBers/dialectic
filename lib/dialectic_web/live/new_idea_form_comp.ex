@@ -62,10 +62,10 @@ defmodule DialecticWeb.NewIdeaFormComp do
 
         <div class="mt-4 flex items-center justify-center gap-3 animate-fade-in-up">
           <span class="text-xs font-semibold text-indigo-200/80 uppercase tracking-wide">
-            Reading Level
+            Level
           </span>
           <div class="inline-flex rounded-lg bg-white/10 p-1 border border-white/5 backdrop-blur-sm">
-            <%= for {mode, label} <- [{"expert", "Expert"}, {"university", "University"}, {"high_school", "High School"}, {"eli5", "ELI5"}] do %>
+            <%= for {mode, label} <- [{"expert", "Expert"}, {"university", "University"}, {"high_school", "High School"}, {"simple", "Simple"}] do %>
               <button
                 type="button"
                 phx-click="select_mode"

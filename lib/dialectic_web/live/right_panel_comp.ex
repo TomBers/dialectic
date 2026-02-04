@@ -188,7 +188,7 @@ defmodule DialecticWeb.RightPanelComp do
 
       <div class="bg-white border border-gray-200 rounded-md">
         <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
-          Reading Level
+          Level
         </div>
         <div class="p-1">
           <form phx-change="set_prompt_mode" class="flex items-center gap-2">
@@ -202,7 +202,7 @@ defmodule DialecticWeb.RightPanelComp do
               <option value="high_school" selected={@prompt_mode == "high_school"}>
                 High School
               </option>
-              <option value="eli5" selected={@prompt_mode == "eli5"}>ELI5</option>
+              <option value="simple" selected={@prompt_mode == "simple"}>Simple</option>
             </select>
           </form>
           <div class="mt-2 text-[11px] text-gray-600 space-y-1">
