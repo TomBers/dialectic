@@ -1,6 +1,6 @@
 defmodule Dialectic.Responses.PromptsStructured do
   @moduledoc """
-  Structured-mode prompt builders (v3, simplified).
+  System prompts for all reading levels (expert, university, high school, and ELI5) with varying personas.
   Minimal prompts favoring short, structured answers.
   """
 
@@ -21,7 +21,7 @@ defmodule Dialectic.Responses.PromptsStructured do
       end
 
     """
-    SYSTEM — Structured Mode
+    SYSTEM
 
     Persona: #{persona}
 

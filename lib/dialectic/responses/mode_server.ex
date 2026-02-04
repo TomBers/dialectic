@@ -160,7 +160,10 @@ defmodule Dialectic.Responses.ModeServer do
       "university" -> {:ok, :university}
       "high_school" -> {:ok, :high_school}
       "eli5" -> {:ok, :eli5}
+      # Backwards compatibility: "structured" was the previous name for :university mode.
+      # TODO: Remove this fallback once all clients no longer send "structured".
       "structured" -> {:ok, :university}
+      "creative" -> {:ok, :university}
       _ -> {:error, :invalid_mode}
     end
   end

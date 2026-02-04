@@ -1478,6 +1478,7 @@ defmodule DialecticWeb.GraphLive do
           "eli5" -> :eli5
           "university" -> :university
           "structured" -> :university
+          "creative" -> :university
           _ -> nil
         end
 
