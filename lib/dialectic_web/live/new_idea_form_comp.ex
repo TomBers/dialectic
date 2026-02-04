@@ -21,8 +21,14 @@ defmodule DialecticWeb.NewIdeaFormComp do
         "Ask a question to begin exploring a new topic."
       end)
       |> assign_new(:submit_label, fn -> "Ask" end)
+      |> assign_new(:selected_mode, fn -> "university" end)
 
     {:ok, socket}
+  end
+
+  @impl true
+  def handle_event("select_mode", %{"mode" => mode}, socket) do
+    {:noreply, assign(socket, selected_mode: mode)}
   end
 
   @impl true
@@ -30,6 +36,8 @@ defmodule DialecticWeb.NewIdeaFormComp do
     ~H"""
     <div class="w-full">
       <.form for={@form} phx-submit="reply-and-answer" id={@id} class="w-full relative">
+        <input type="hidden" name="mode" value={@selected_mode} />
+
         <div class="relative">
           <textarea
             name={@form[:content].name}
@@ -52,27 +60,29 @@ defmodule DialecticWeb.NewIdeaFormComp do
           </div>
         </div>
 
-        <div class="mt-3 flex items-center justify-center gap-2 animate-fade-in-up">
-          <span class="text-sm text-indigo-200">Reading Level:</span>
-          <div class="relative">
-            <select
-              name="mode"
-              class="appearance-none bg-black/20 text-white text-sm rounded-lg pl-3 pr-8 py-1.5 border border-white/10 hover:bg-black/30 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors cursor-pointer"
-            >
-              <option value="university" class="bg-slate-900 text-white">University</option>
-              <option value="high_school" class="bg-slate-900 text-white">High School</option>
-              <option value="eli5" class="bg-slate-900 text-white">ELI5</option>
-            </select>
-            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white/60">
-              <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </div>
+        <div class="mt-4 flex items-center justify-center gap-3 animate-fade-in-up">
+          <span class="text-xs font-semibold text-indigo-200/80 uppercase tracking-wide">
+            Reading Level
+          </span>
+          <div class="inline-flex rounded-lg bg-white/10 p-1 border border-white/5 backdrop-blur-sm">
+            <%= for {mode, label} <- [{"expert", "Expert"}, {"university", "University"}, {"high_school", "High School"}, {"eli5", "ELI5"}] do %>
+              <button
+                type="button"
+                phx-click="select_mode"
+                phx-value-mode={mode}
+                phx-target={@myself}
+                class={[
+                  "px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200",
+                  if @selected_mode == mode do
+                    "bg-white text-[#3a0ca3] shadow-sm scale-105"
+                  else
+                    "text-white/70 hover:text-white hover:bg-white/5"
+                  end
+                ]}
+              >
+                {label}
+              </button>
+            <% end %>
           </div>
         </div>
       </.form>

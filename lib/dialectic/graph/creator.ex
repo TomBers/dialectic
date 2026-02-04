@@ -27,6 +27,8 @@ defmodule Dialectic.Graph.Creator do
     title = Keyword.get(opts, :title) || Graphs.sanitize_title(question)
     mode = Keyword.get(opts, :mode, :university)
 
+    Logger.debug("Creator.create called with mode: #{inspect(mode)}")
+
     callback.("Creating mind map structure...")
 
     if Graphs.get_graph_by_title(title) do
@@ -39,6 +41,7 @@ defmodule Dialectic.Graph.Creator do
   defp do_create(title, question, user, user_identity, mode, callback) do
     case Graphs.create_new_graph(title, user) do
       {:ok, _} ->
+        Logger.debug("Setting mode for #{title}: #{inspect(mode)}")
         ModeServer.set_mode(title, mode)
 
         callback.("Initializing whiteboard...")
@@ -58,6 +61,7 @@ defmodule Dialectic.Graph.Creator do
         # Generate LLM response synchronously
         case generate_response(title, updated_origin, mode) do
           {:ok, content} ->
+            Logger.debug("LLM response generated successfully (length: #{byte_size(content)})")
             GraphManager.set_node_content(title, answer_node.id, content)
             GraphManager.finalize_node_content(title, answer_node.id)
             GraphManager.save_graph(title)
@@ -98,6 +102,7 @@ defmodule Dialectic.Graph.Creator do
   end
 
   defp generate_response(title, origin_node, mode) do
+    Logger.debug("Generating response for #{title} with mode: #{inspect(mode)}")
     context = GraphManager.build_context(title, origin_node)
     instruction = Prompts.initial_explainer(context, origin_node.content)
 
@@ -105,7 +110,8 @@ defmodule Dialectic.Graph.Creator do
 
     opts = [
       system_prompt: system_prompt,
-      model: "gemini-3-flash-preview"
+      model: "gemini-3-flash-preview",
+      provider: :google
     ]
 
     Dialectic.LLM.Generator.generate(instruction, opts)

@@ -7,9 +7,17 @@ defmodule Dialectic.Responses.PromptsStructured do
   def system_preamble(mode \\ :university) do
     persona =
       case mode do
-        :eli5 -> "An explainer aiming to explain concepts simply as if to a 5-year-old."
-        :high_school -> "A clear teacher aiming to explain concepts to a high school student."
-        _ -> "A precise lecturer aiming to provide a university level introduction to the topic."
+        :expert ->
+          "A world-class subject matter expert providing a highly technical, rigorous, and nuanced analysis suitable for post-graduate or professional review."
+
+        :eli5 ->
+          "An explainer aiming to explain concepts simply as if to a 5-year-old."
+
+        :high_school ->
+          "A clear teacher aiming to explain concepts to a high school student."
+
+        _ ->
+          "A precise lecturer aiming to provide a university level introduction to the topic."
       end
 
     """

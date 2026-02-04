@@ -197,6 +197,7 @@ defmodule DialecticWeb.RightPanelComp do
               name="prompt_mode"
               class="block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6 border-zinc-300 focus:border-zinc-800"
             >
+              <option value="expert" selected={@prompt_mode == "expert"}>Expert</option>
               <option
                 value="university"
                 selected={@prompt_mode == "university" or @prompt_mode == "structured"}

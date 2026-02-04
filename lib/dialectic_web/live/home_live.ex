@@ -24,6 +24,7 @@ defmodule DialecticWeb.HomeLive do
       case params do
         %{"mode" => mode} when is_binary(mode) ->
           case String.downcase(mode) do
+            "expert" -> "expert"
             "high_school" -> "high_school"
             "eli5" -> "eli5"
             _ -> "university"
@@ -89,10 +90,16 @@ defmodule DialecticWeb.HomeLive do
 
   @impl true
   def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}} = params, socket) do
+    require Logger
+    Logger.debug("HomeLive reply-and-answer params: #{inspect(params)}")
     title = Graphs.sanitize_title(answer)
     # Allow updating the mode from the form submission
     mode_param = Map.get(params, "mode")
     socket = if mode_param, do: assign(socket, prompt_mode: mode_param), else: socket
+
+    Logger.debug(
+      "HomeLive mode_param: #{inspect(mode_param)}, socket prompt_mode: #{inspect(socket.assigns[:prompt_mode])}"
+    )
 
     if title == "untitled-idea" do
       {:noreply, put_flash(socket, :error, "Please enter a question or topic.")}
@@ -190,14 +197,18 @@ defmodule DialecticWeb.HomeLive do
   end
 
   defp create_graph_task(title, answer, assigns, parent_pid) do
+    Logger.debug("create_graph_task assigns[:prompt_mode]: #{inspect(assigns[:prompt_mode])}")
     mode_str = assigns[:prompt_mode] || "university"
 
     mode =
       case mode_str do
+        "expert" -> :expert
         "high_school" -> :high_school
         "eli5" -> :eli5
         _ -> :university
       end
+
+    Logger.debug("create_graph_task resolved mode: #{inspect(mode)}")
 
     user_identity = UserUtils.current_identity(assigns)
     current_user = assigns[:current_user]

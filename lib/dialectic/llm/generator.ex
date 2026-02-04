@@ -40,25 +40,29 @@ defmodule Dialectic.LLM.Generator do
     {connect_timeout, receive_timeout} = Provider.timeouts(provider_mod)
     provider_options = provider_mod.provider_options()
 
-    # Handle Authentication:
-    # 1. Check if the Provider abstraction has a key.
-    # 2. If so, pass it in a way `ReqLLM` / `Req` accepts.
-    #    - Google: needs `google_api_key`. Passing via `req_http_options` or config.
-    #    - OpenAI: needs `auth: {:bearer, key}` or `api_key` (handled by ReqLLM adapter).
     req_http_options = [connect_options: [timeout: connect_timeout]]
 
     req_http_options =
       case Provider.api_key(provider_mod) do
         {:ok, key} ->
           case provider_mod.id() do
-            :google -> req_http_options
-            _ -> Keyword.put(req_http_options, :auth, {:bearer, key})
+            :google ->
+              # Pass API Key as header for Google/Gemini
+              headers = Keyword.get(req_http_options, :headers, [])
+              headers = [{"x-goog-api-key", key} | headers]
+              Keyword.put(req_http_options, :headers, headers)
+
+            _ ->
+              Keyword.put(req_http_options, :auth, {:bearer, key})
           end
 
         _ ->
-          # If not returned by Provider, assume it's in App config or Env
           req_http_options
       end
+
+    Logger.debug(
+      "ReqLLM.generate_text calling model: #{inspect(model_spec)} provider: #{inspect(provider_mod.id())}"
+    )
 
     case ReqLLM.generate_text(
            model_spec,

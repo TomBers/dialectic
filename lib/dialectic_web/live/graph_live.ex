@@ -67,6 +67,7 @@ defmodule DialecticWeb.GraphLive do
 
     normalized =
       case String.downcase(to_string(mode)) do
+        "expert" -> :expert
         "high_school" -> :high_school
         "eli5" -> :eli5
         "creative" -> :high_school
@@ -1473,6 +1474,7 @@ defmodule DialecticWeb.GraphLive do
     if is_binary(mode_param) do
       normalized =
         case String.downcase(mode_param) do
+          "expert" -> :expert
           "high_school" -> :high_school
           "eli5" -> :eli5
           "university" -> :university
