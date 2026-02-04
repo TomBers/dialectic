@@ -103,7 +103,7 @@ defmodule Dialectic.Responses.PromptsTest do
       assert result =~ "### Foundation (for reference)"
       assert result =~ short_context
       assert result =~ selection_text
-      assert result =~ "NEW exploration starting point"
+      assert result =~ "new exploration starting point"
     end
 
     test "truncates long contexts while maintaining foundation structure" do
@@ -116,7 +116,7 @@ defmodule Dialectic.Responses.PromptsTest do
       assert result =~ "### Foundation (for reference)"
       assert result =~ "[... truncated for brevity ...]"
       assert result =~ selection_text
-      assert result =~ "NEW exploration starting point"
+      assert result =~ "new exploration starting point"
     end
 
     test "includes selection text in the instruction" do
@@ -125,7 +125,8 @@ defmodule Dialectic.Responses.PromptsTest do
 
       result = Prompts.selection(context, selection_text)
 
-      assert result =~ "A specific phrase was highlighted: **#{selection_text}**"
+      assert result =~
+               "A specific topic was highlighted from the text above: **#{selection_text}**"
     end
 
     test "encourages divergence from original discussion" do
@@ -135,7 +136,7 @@ defmodule Dialectic.Responses.PromptsTest do
       result = Prompts.selection(context, selection_text)
 
       assert result =~
-               "feel free to explore this concept in directions that may diverge from the original discussion"
+               "focus on depth and breadth regarding THIS specific concept"
     end
   end
 

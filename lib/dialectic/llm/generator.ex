@@ -43,6 +43,9 @@ defmodule Dialectic.LLM.Generator do
     req_http_options = [connect_options: [timeout: connect_timeout]]
 
     req_http_options =
+      Keyword.merge(req_http_options, Application.get_env(:dialectic, :llm_req_options, []))
+
+    req_http_options =
       case Provider.api_key(provider_mod) do
         {:ok, key} ->
           case provider_mod.id() do
