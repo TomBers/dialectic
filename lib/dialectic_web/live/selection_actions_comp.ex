@@ -343,7 +343,7 @@ defmodule DialecticWeb.SelectionActionsComp do
                     class={[
                       "px-2 py-1 text-xs font-medium transition-all",
                       if @ask_question do
-                        "bg-blue-500 text-white rounded-md"
+                        "bg-blue-500 text-white rounded-l-md"
                       else
                         "text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-l-md"
                       end
@@ -359,7 +359,7 @@ defmodule DialecticWeb.SelectionActionsComp do
                     class={[
                       "px-2 py-1 text-xs font-medium transition-all",
                       if !@ask_question do
-                        "bg-emerald-500 text-white rounded-md"
+                        "bg-emerald-500 text-white rounded-r-md"
                       else
                         "text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-r-md"
                       end
