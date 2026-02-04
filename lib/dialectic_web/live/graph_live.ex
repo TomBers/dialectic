@@ -70,7 +70,6 @@ defmodule DialecticWeb.GraphLive do
         "expert" -> :expert
         "high_school" -> :high_school
         "eli5" -> :eli5
-        "creative" -> :high_school
         _ -> :university
       end
 
@@ -1478,7 +1477,6 @@ defmodule DialecticWeb.GraphLive do
           "high_school" -> :high_school
           "eli5" -> :eli5
           "university" -> :university
-          "creative" -> :high_school
           "structured" -> :university
           _ -> nil
         end

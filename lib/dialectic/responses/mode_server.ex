@@ -161,7 +161,6 @@ defmodule Dialectic.Responses.ModeServer do
       "high_school" -> {:ok, :high_school}
       "eli5" -> {:ok, :eli5}
       "structured" -> {:ok, :university}
-      "creative" -> {:ok, :high_school}
       _ -> {:error, :invalid_mode}
     end
   end

@@ -198,16 +198,8 @@ defmodule DialecticWeb.RightPanelComp do
               class="block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6 border-zinc-300 focus:border-zinc-800"
             >
               <option value="expert" selected={@prompt_mode == "expert"}>Expert</option>
-              <option
-                value="university"
-                selected={@prompt_mode == "university" or @prompt_mode == "structured"}
-              >
-                University
-              </option>
-              <option
-                value="high_school"
-                selected={@prompt_mode == "high_school" or @prompt_mode == "creative"}
-              >
+              <option value="university" selected={@prompt_mode == "university"}>University</option>
+              <option value="high_school" selected={@prompt_mode == "high_school"}>
                 High School
               </option>
               <option value="eli5" selected={@prompt_mode == "eli5"}>ELI5</option>
