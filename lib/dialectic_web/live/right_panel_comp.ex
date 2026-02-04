@@ -53,7 +53,7 @@ defmodule DialecticWeb.RightPanelComp do
       |> assign_new(:search_term, fn -> "" end)
       |> assign_new(:search_results, fn -> [] end)
       |> assign_new(:group_states, fn -> %{} end)
-      |> assign_new(:prompt_mode, fn -> "structured" end)
+      |> assign_new(:prompt_mode, fn -> "university" end)
       |> assign_new(:highlights, fn -> [] end)
       |> assign_new(:editing_highlight_id, fn -> nil end)
 
@@ -188,28 +188,33 @@ defmodule DialecticWeb.RightPanelComp do
 
       <div class="bg-white border border-gray-200 rounded-md">
         <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
-          Mode
+          Reading Level
         </div>
         <div class="p-1">
           <form phx-change="set_prompt_mode" class="flex items-center gap-2">
-            <label for="prompt_mode" class="text-xs text-gray-700">LLM Mode</label>
             <select
               id="prompt_mode"
               name="prompt_mode"
               class="block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6 border-zinc-300 focus:border-zinc-800"
             >
-              <option value="structured" selected={@prompt_mode == "structured"}>Structured</option>
-              <option value="creative" selected={@prompt_mode == "creative"}>Creative</option>
+              <option
+                value="university"
+                selected={@prompt_mode == "university" or @prompt_mode == "structured"}
+              >
+                University
+              </option>
+              <option
+                value="high_school"
+                selected={@prompt_mode == "high_school" or @prompt_mode == "creative"}
+              >
+                High School
+              </option>
+              <option value="eli5" selected={@prompt_mode == "eli5"}>ELI5</option>
             </select>
           </form>
           <div class="mt-2 text-[11px] text-gray-600 space-y-1">
             <p>
-              <span class="font-semibold">Structured:</span>
-              organized sections, concise bullets, and clear constraints.
-            </p>
-            <p>
-              <span class="font-semibold">Creative:</span>
-              freer narrative, analogies, and playful exploration.
+              Adjusts the complexity and tone of AI responses.
             </p>
           </div>
         </div>

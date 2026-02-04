@@ -4,8 +4,7 @@ defmodule Dialectic.Responses.LlmInterface do
     RequestQueue,
     ModeServer,
     Prompts,
-    PromptsStructured,
-    PromptsCreative
+    PromptsStructured
   }
 
   require Logger
@@ -158,10 +157,8 @@ defmodule Dialectic.Responses.LlmInterface do
   end
 
   defp get_system_prompt(graph_id) do
-    case ModeServer.get_mode(graph_id) do
-      :creative -> PromptsCreative.system_preamble()
-      _ -> PromptsStructured.system_preamble()
-    end
+    mode = ModeServer.get_mode(graph_id)
+    PromptsStructured.system_preamble(mode)
   end
 
   defp log_prompt(action, graph_id, system_prompt, instruction) do

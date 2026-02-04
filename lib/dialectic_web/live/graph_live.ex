@@ -67,8 +67,10 @@ defmodule DialecticWeb.GraphLive do
 
     normalized =
       case String.downcase(to_string(mode)) do
-        "creative" -> :creative
-        _ -> :structured
+        "high_school" -> :high_school
+        "eli5" -> :eli5
+        "creative" -> :high_school
+        _ -> :university
       end
 
     if is_binary(graph_id) do
@@ -1471,8 +1473,11 @@ defmodule DialecticWeb.GraphLive do
     if is_binary(mode_param) do
       normalized =
         case String.downcase(mode_param) do
-          "creative" -> :creative
-          "structured" -> :structured
+          "high_school" -> :high_school
+          "eli5" -> :eli5
+          "university" -> :university
+          "creative" -> :high_school
+          "structured" -> :university
           _ -> nil
         end
 

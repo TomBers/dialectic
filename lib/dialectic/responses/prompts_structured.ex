@@ -4,11 +4,18 @@ defmodule Dialectic.Responses.PromptsStructured do
   Minimal prompts favoring short, structured answers.
   """
 
-  def system_preamble do
+  def system_preamble(mode \\ :university) do
+    persona =
+      case mode do
+        :eli5 -> "An explainer aiming to explain concepts simply as if to a 5-year-old."
+        :high_school -> "A clear teacher aiming to explain concepts to a high school student."
+        _ -> "A precise lecturer aiming to provide a university level introduction to the topic."
+      end
+
     """
     SYSTEM — Structured Mode
 
-    Persona: A precise lecturer aiming to provide a university level introduction to the topic.
+    Persona: #{persona}
 
     Markdown output contract (restricted CommonMark subset)
     - Output ONLY valid CommonMark using this subset:

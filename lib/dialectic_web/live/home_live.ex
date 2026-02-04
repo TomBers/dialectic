@@ -24,12 +24,13 @@ defmodule DialecticWeb.HomeLive do
       case params do
         %{"mode" => mode} when is_binary(mode) ->
           case String.downcase(mode) do
-            "creative" -> "creative"
-            _ -> "structured"
+            "high_school" -> "high_school"
+            "eli5" -> "eli5"
+            _ -> "university"
           end
 
         _ ->
-          "structured"
+          "university"
       end
 
     {:ok,
@@ -87,8 +88,11 @@ defmodule DialecticWeb.HomeLive do
   end
 
   @impl true
-  def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}}, socket) do
+  def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}} = params, socket) do
     title = Graphs.sanitize_title(answer)
+    # Allow updating the mode from the form submission
+    mode_param = Map.get(params, "mode")
+    socket = if mode_param, do: assign(socket, prompt_mode: mode_param), else: socket
 
     if title == "untitled-idea" do
       {:noreply, put_flash(socket, :error, "Please enter a question or topic.")}
@@ -186,8 +190,15 @@ defmodule DialecticWeb.HomeLive do
   end
 
   defp create_graph_task(title, answer, assigns, parent_pid) do
-    mode_str = assigns[:prompt_mode] || "structured"
-    mode = if mode_str == "creative", do: :creative, else: :structured
+    mode_str = assigns[:prompt_mode] || "university"
+
+    mode =
+      case mode_str do
+        "high_school" -> :high_school
+        "eli5" -> :eli5
+        _ -> :university
+      end
+
     user_identity = UserUtils.current_identity(assigns)
     current_user = assigns[:current_user]
 
