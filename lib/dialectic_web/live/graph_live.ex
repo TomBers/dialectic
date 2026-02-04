@@ -1060,6 +1060,39 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
+  defp handle_selection_action(
+         :comment,
+         selected_text,
+         node_id,
+         offsets,
+         existing_highlight,
+         %{comment: comment_text},
+         socket
+       ) do
+    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
+    parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+    full_comment = "#{comment_text}\n\nRegarding: \"#{selected_text}\""
+
+    comment_node =
+      GraphActions.comment(
+        graph_action_params(socket, parent_node),
+        full_comment
+      )
+
+    if comment_node do
+      GraphManager.update_vertex_fields(socket.assigns.graph_id, comment_node.id, %{
+        source_text: selected_text
+      })
+
+      if highlight do
+        Highlights.add_link(highlight.id, comment_node.id, "comment")
+      end
+    end
+
+    update_graph(socket, {nil, comment_node}, "user")
+  end
+
   defp create_pending_highlight_links(socket) do
     highlight_id = socket.assigns[:pending_link_highlight_id]
     parent_id = socket.assigns[:pending_link_parent_id]

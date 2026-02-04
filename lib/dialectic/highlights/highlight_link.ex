@@ -26,7 +26,7 @@ defmodule Dialectic.Highlights.HighlightLink do
     timestamps(type: :utc_datetime, updated_at: false)
   end
 
-  @valid_link_types ~w(explain question pro con related_idea deep_dive)
+  @valid_link_types ~w(explain question pro con related_idea deep_dive comment)
 
   @doc """
   Valid link types for highlights:
@@ -36,6 +36,7 @@ defmodule Dialectic.Highlights.HighlightLink do
   - `con`: A counter argument (antithesis) node
   - `related_idea`: A related ideas node
   - `deep_dive`: A deep dive exploration node
+  - `comment`: A user comment on the selection
   """
   def valid_link_types, do: @valid_link_types
 
