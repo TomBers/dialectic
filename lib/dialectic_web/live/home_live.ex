@@ -79,6 +79,8 @@ defmodule DialecticWeb.HomeLive do
   @impl true
   def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}} = params, socket) do
     title = Graphs.sanitize_title(answer)
+    mode_param = Map.get(params, "mode")
+    socket = if mode_param, do: assign(socket, prompt_mode: mode_param), else: socket
 
     if title == "untitled-idea" do
       {:noreply, put_flash(socket, :error, "Please enter a question or topic.")}
