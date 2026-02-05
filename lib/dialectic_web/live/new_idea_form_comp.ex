@@ -65,7 +65,7 @@ defmodule DialecticWeb.NewIdeaFormComp do
             Level
           </span>
           <div class="inline-flex rounded-lg bg-white/10 p-1 border border-white/5 backdrop-blur-sm">
-            <%= for {mode, label} <- [{"expert", "Expert"}, {"university", "University"}, {"high_school", "High School"}, {"simple", "Simple"}] do %>
+            <%= for {mode, label} <- [{"simple", "Simple"}, {"high_school", "High School"}, {"university", "University"}, {"expert", "Expert"}] do %>
               <button
                 type="button"
                 phx-click="select_mode"
