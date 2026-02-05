@@ -22,6 +22,9 @@ defmodule DialecticWeb.NewIdeaFormComp do
       end)
       |> assign_new(:submit_label, fn -> "Ask" end)
       |> assign_new(:selected_mode, fn -> "university" end)
+      |> assign_new(:content, fn %{form: form} ->
+        Phoenix.HTML.Form.normalize_value("text", form[:content].value)
+      end)
 
     {:ok, socket}
   end
@@ -32,10 +35,22 @@ defmodule DialecticWeb.NewIdeaFormComp do
   end
 
   @impl true
+  def handle_event("update_content", %{"vertex" => %{"content" => content}}, socket) do
+    {:noreply, assign(socket, :content, content)}
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="w-full">
-      <.form for={@form} phx-submit="reply-and-answer" id={@id} class="w-full relative">
+      <.form
+        for={@form}
+        phx-submit="reply-and-answer"
+        phx-change="update_content"
+        phx-target={@myself}
+        id={@id}
+        class="w-full relative"
+      >
         <input type="hidden" name="mode" value={@selected_mode} />
 
         <div class="relative">
@@ -48,7 +63,7 @@ defmodule DialecticWeb.NewIdeaFormComp do
             class="box-border w-full h-[3.5rem] min-h-[3.5rem] overflow-hidden pl-6 pr-32 py-2.5 text-black text-lg rounded-full border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-0 focus:outline-none resize-none"
             autocomplete="off"
             required
-          >{Phoenix.HTML.Form.normalize_value("text", @form[:content].value)}</textarea>
+          >{@content}</textarea>
           <div class="absolute top-1/2 right-2 -translate-y-1/2 -mt-0.5">
             <button
               type="submit"
