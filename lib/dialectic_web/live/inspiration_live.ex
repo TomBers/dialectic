@@ -9,10 +9,8 @@ defmodule DialecticWeb.InspirationLive do
      socket
      |> assign(:page_title, "Question Inspiration")
      |> assign(:reality, 50)
-     |> assign(:focus, 50)
      |> assign(:timeframe, 50)
      |> assign(:depth, 50)
-     |> assign(:tone, 50)
      |> assign(:questions, [])
      |> assign(:loading, false)}
   end
@@ -22,10 +20,8 @@ defmodule DialecticWeb.InspirationLive do
     socket =
       socket
       |> assign(:reality, parse_slider_value(params["reality"], 50))
-      |> assign(:focus, parse_slider_value(params["focus"], 50))
       |> assign(:timeframe, parse_slider_value(params["timeframe"], 50))
       |> assign(:depth, parse_slider_value(params["depth"], 50))
-      |> assign(:tone, parse_slider_value(params["tone"], 50))
 
     {:noreply, socket}
   end
@@ -88,10 +84,11 @@ defmodule DialecticWeb.InspirationLive do
 
   defp build_prompt(assigns) do
     """
-    Act as a muse to spark curiosity and a desire to explore.
-    Generate exactly 5 distinct, open-ended questions that invite elaboration and allow multiple valid perspectives.
-    Do not generate yes/no questions or simple fact-retrieval questions.
-    The questions should be accessible and intriguing, even if the depth is high.
+    You are a muse for focused curiosity.
+    Generate exactly 5 distinct, open-ended questions that are specific, vivid, and easy to grasp without extra setup.
+    Each question must be a single sentence, 10–22 words, and clearly invites more than one plausible answer.
+    Avoid yes/no questions, trivia, or broad prompts like “What do you think about X?”
+    Ensure each question points to a concrete object, mechanism, tension, or scenario.
 
     Adhere to these stylistic and thematic preferences:
 
@@ -99,22 +96,14 @@ defmodule DialecticWeb.InspirationLive do
        - Pure Fiction: invent imagined worlds, scenarios, or hypothetical settings.
        - Reality-Grounded: focus on real-world phenomena, history, science, society, or evidence-based topics.
 
-    2. Focus: #{describe_scale(assigns.focus, "Mainstream/Popular", "Esoteric/Niche")}
-       - Mainstream/Popular: use widely-known topics, events, technologies, stories, and references.
-       - Esoteric/Niche: feel free to draw on specialised theories, obscure topics, subcultures, or lesser-known thinkers.
-
-    3. Timeframe: #{describe_scale(assigns.timeframe, "The Past", "The Future")}
+    2. Timeframe: #{describe_scale(assigns.timeframe, "The Past", "The Future")}
        - Past: root questions in historical events, long-term trends, and origins.
        - Future: emphasise possibilities, scenarios, and foresight.
        - Mid-range: allow present-focused questions connecting past -> present -> future.
 
-    4. Depth: #{describe_scale(assigns.depth, "Beginner/General Audience", "Expert/Technical")}
+    3. Depth: #{describe_scale(assigns.depth, "Beginner/General Audience", "Expert/Technical")}
        - Beginner/General: avoid jargon, explain assumptions, rely on everyday language and analogies.
        - Expert/Technical: assume prior knowledge; reference specific theories, models, methods, or technical debates.
-
-    5. Tone: #{describe_scale(assigns.tone, "Serious/Academic", "Playful/Whimsical")}
-       - Serious/Academic: grounded, respectful, reflective; not jokey; still engaging.
-       - Playful/Whimsical: light, imaginative, surprising, but must remain coherent and meaningful.
 
     Output the questions as a JSON array of strings.
     """
@@ -156,14 +145,6 @@ defmodule DialecticWeb.InspirationLive do
                 />
 
                 <.slider
-                  label="Focus"
-                  name="focus"
-                  value={@focus}
-                  left_label="Mainstream"
-                  right_label="Esoteric"
-                />
-
-                <.slider
                   label="Timeframe"
                   name="timeframe"
                   value={@timeframe}
@@ -177,14 +158,6 @@ defmodule DialecticWeb.InspirationLive do
                   value={@depth}
                   left_label="Beginner"
                   right_label="Expert"
-                />
-
-                <.slider
-                  label="Tone"
-                  name="tone"
-                  value={@tone}
-                  left_label="Serious"
-                  right_label="Playful"
                 />
               </div>
 

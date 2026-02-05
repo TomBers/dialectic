@@ -582,32 +582,87 @@ defmodule GraphManager do
   end
 
   # Returns a robust "best" node to render:
+  # - auto-select the answer node when the graph is a simple origin + answer + group
   # - try desired_id
   # - else try "1"
   # - else first non-deleted vertex
   # - else nil
   def best_node(path, desired_id) do
-    with nil <- find_node_by_id(path, desired_id),
-         nil <- find_node_by_id(path, "1") do
-      fallback_id =
-        vertices(path)
-        |> Enum.find_value(fn vid ->
-          case vertex_label(path, vid) do
-            %{} = v ->
-              if not Map.get(v, :deleted, false), do: v.id, else: nil
+    vertex_ids =
+      vertices(path)
+      |> Enum.filter(fn vid ->
+        case vertex_label(path, vid) do
+          %{} = v -> not Map.get(v, :deleted, false)
+          _ -> false
+        end
+      end)
 
-            _ ->
-              nil
-          end
-        end)
+    auto_answer_node =
+      if length(vertex_ids) == 3 do
+        answer_id =
+          Enum.find_value(vertex_ids, fn vid ->
+            case vertex_label(path, vid) do
+              %{} = v ->
+                if Map.get(v, :class) == "answer" and not Map.get(v, :deleted, false) do
+                  v.id
+                else
+                  nil
+                end
 
-      if is_binary(fallback_id) do
-        find_node_by_id(path, fallback_id)
+              _ ->
+                nil
+            end
+          end)
+
+        origin_id =
+          Enum.find_value(vertex_ids, fn vid ->
+            case vertex_label(path, vid) do
+              %{} = v ->
+                if Map.get(v, :class) == "origin" and not Map.get(v, :deleted, false) do
+                  v.id
+                else
+                  nil
+                end
+
+              _ ->
+                nil
+            end
+          end)
+
+        if is_binary(answer_id) and is_binary(origin_id) do
+          find_node_by_id(path, answer_id)
+        else
+          nil
+        end
       else
         nil
       end
+
+    if auto_answer_node do
+      auto_answer_node
     else
-      node -> node
+      with nil <- find_node_by_id(path, desired_id),
+           nil <- find_node_by_id(path, "1") do
+        fallback_id =
+          vertex_ids
+          |> Enum.find_value(fn vid ->
+            case vertex_label(path, vid) do
+              %{} = v ->
+                if not Map.get(v, :deleted, false), do: v.id, else: nil
+
+              _ ->
+                nil
+            end
+          end)
+
+        if is_binary(fallback_id) do
+          find_node_by_id(path, fallback_id)
+        else
+          nil
+        end
+      else
+        node -> node
+      end
     end
   end
 end

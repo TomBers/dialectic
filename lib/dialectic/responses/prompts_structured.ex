@@ -1,14 +1,29 @@
 defmodule Dialectic.Responses.PromptsStructured do
   @moduledoc """
-  Structured-mode prompt builders (v3, simplified).
+  System prompts for all reading levels (expert, university, high school, and simple) with varying personas.
   Minimal prompts favoring short, structured answers.
   """
 
-  def system_preamble do
-    """
-    SYSTEM — Structured Mode
+  def system_preamble(mode \\ :university) do
+    persona =
+      case mode do
+        :expert ->
+          "A world-class subject matter expert providing a highly technical, rigorous, and nuanced analysis suitable for post-graduate or professional review."
 
-    Persona: A precise lecturer aiming to provide a university level introduction to the topic.
+        :simple ->
+          "An explainer aiming to explain concepts simply as if to a 5-year-old."
+
+        :high_school ->
+          "A clear teacher aiming to explain concepts to a high school student."
+
+        _ ->
+          "A precise lecturer aiming to provide a university level introduction to the topic."
+      end
+
+    """
+    SYSTEM
+
+    Persona: #{persona}
 
     Markdown output contract (restricted CommonMark subset)
     - Output ONLY valid CommonMark using this subset:

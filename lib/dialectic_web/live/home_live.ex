@@ -20,17 +20,7 @@ defmodule DialecticWeb.HomeLive do
       GraphActions.create_new_node(user)
       |> Vertex.changeset(if initial_content, do: %{content: initial_content}, else: %{})
 
-    prompt_mode =
-      case params do
-        %{"mode" => mode} when is_binary(mode) ->
-          case String.downcase(mode) do
-            "creative" -> "creative"
-            _ -> "structured"
-          end
-
-        _ ->
-          "structured"
-      end
+    prompt_mode = "university"
 
     {:ok,
      assign(socket,
@@ -87,8 +77,10 @@ defmodule DialecticWeb.HomeLive do
   end
 
   @impl true
-  def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}}, socket) do
+  def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}} = params, socket) do
     title = Graphs.sanitize_title(answer)
+    mode_param = Map.get(params, "mode")
+    socket = if mode_param, do: assign(socket, prompt_mode: mode_param), else: socket
 
     if title == "untitled-idea" do
       {:noreply, put_flash(socket, :error, "Please enter a question or topic.")}
@@ -186,8 +178,16 @@ defmodule DialecticWeb.HomeLive do
   end
 
   defp create_graph_task(title, answer, assigns, parent_pid) do
-    mode_str = assigns[:prompt_mode] || "structured"
-    mode = if mode_str == "creative", do: :creative, else: :structured
+    mode_str = assigns[:prompt_mode] || "university"
+
+    mode =
+      case mode_str do
+        "expert" -> :expert
+        "high_school" -> :high_school
+        "simple" -> :simple
+        _ -> :university
+      end
+
     user_identity = UserUtils.current_identity(assigns)
     current_user = assigns[:current_user]
 

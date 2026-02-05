@@ -53,7 +53,7 @@ defmodule DialecticWeb.RightPanelComp do
       |> assign_new(:search_term, fn -> "" end)
       |> assign_new(:search_results, fn -> [] end)
       |> assign_new(:group_states, fn -> %{} end)
-      |> assign_new(:prompt_mode, fn -> "structured" end)
+      |> assign_new(:prompt_mode, fn -> "university" end)
       |> assign_new(:highlights, fn -> [] end)
       |> assign_new(:editing_highlight_id, fn -> nil end)
 
@@ -188,28 +188,31 @@ defmodule DialecticWeb.RightPanelComp do
 
       <div class="bg-white border border-gray-200 rounded-md">
         <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
-          Mode
+          Level
         </div>
         <div class="p-1">
-          <form phx-change="set_prompt_mode" class="flex items-center gap-2">
-            <label for="prompt_mode" class="text-xs text-gray-700">LLM Mode</label>
-            <select
-              id="prompt_mode"
-              name="prompt_mode"
-              class="block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6 border-zinc-300 focus:border-zinc-800"
-            >
-              <option value="structured" selected={@prompt_mode == "structured"}>Structured</option>
-              <option value="creative" selected={@prompt_mode == "creative"}>Creative</option>
-            </select>
-          </form>
+          <div class="inline-flex rounded-lg bg-gray-50 p-1 border border-gray-200">
+            <%= for {mode, label} <- [{"simple", "Simple"}, {"high_school", "High School"}, {"university", "University"}, {"expert", "Expert"}] do %>
+              <button
+                type="button"
+                phx-click="set_prompt_mode"
+                phx-value-prompt_mode={mode}
+                class={[
+                  "px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200",
+                  if @prompt_mode == mode do
+                    "bg-white text-indigo-700 shadow-sm scale-105"
+                  else
+                    "text-gray-600 hover:text-gray-900 hover:bg-white"
+                  end
+                ]}
+              >
+                {label}
+              </button>
+            <% end %>
+          </div>
           <div class="mt-2 text-[11px] text-gray-600 space-y-1">
             <p>
-              <span class="font-semibold">Structured:</span>
-              organized sections, concise bullets, and clear constraints.
-            </p>
-            <p>
-              <span class="font-semibold">Creative:</span>
-              freer narrative, analogies, and playful exploration.
+              Adjusts the complexity and tone of AI responses.
             </p>
           </div>
         </div>

@@ -28,7 +28,8 @@ defmodule Dialectic.GraphFixtures do
         is_locked: false,
         is_deleted: false,
         is_published: true,
-        slug: slug
+        slug: slug,
+        prompt_mode: "university"
       })
       |> Repo.insert!()
 

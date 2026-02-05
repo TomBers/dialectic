@@ -21,8 +21,14 @@ defmodule DialecticWeb.NewIdeaFormComp do
         "Ask a question to begin exploring a new topic."
       end)
       |> assign_new(:submit_label, fn -> "Ask" end)
+      |> assign_new(:selected_mode, fn -> "university" end)
 
     {:ok, socket}
+  end
+
+  @impl true
+  def handle_event("select_mode", %{"mode" => mode}, socket) do
+    {:noreply, assign(socket, selected_mode: mode)}
   end
 
   @impl true
@@ -30,6 +36,8 @@ defmodule DialecticWeb.NewIdeaFormComp do
     ~H"""
     <div class="w-full">
       <.form for={@form} phx-submit="reply-and-answer" id={@id} class="w-full relative">
+        <input type="hidden" name="mode" value={@selected_mode} />
+
         <div class="relative">
           <textarea
             name={@form[:content].name}
@@ -49,6 +57,32 @@ defmodule DialecticWeb.NewIdeaFormComp do
             >
               {@submit_label}
             </button>
+          </div>
+        </div>
+
+        <div class="mt-4 flex items-center justify-center gap-3 animate-fade-in-up">
+          <span class="text-xs font-semibold text-indigo-200/80 uppercase tracking-wide">
+            Level
+          </span>
+          <div class="inline-flex rounded-lg bg-white/10 p-1 border border-white/5 backdrop-blur-sm">
+            <%= for {mode, label} <- [{"simple", "Simple"}, {"high_school", "High School"}, {"university", "University"}, {"expert", "Expert"}] do %>
+              <button
+                type="button"
+                phx-click="select_mode"
+                phx-value-mode={mode}
+                phx-target={@myself}
+                class={[
+                  "px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200",
+                  if @selected_mode == mode do
+                    "bg-white text-[#3a0ca3] shadow-sm scale-105"
+                  else
+                    "text-white/70 hover:text-white hover:bg-white/5"
+                  end
+                ]}
+              >
+                {label}
+              </button>
+            <% end %>
           </div>
         </div>
       </.form>

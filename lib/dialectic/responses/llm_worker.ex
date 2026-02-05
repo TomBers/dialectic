@@ -30,7 +30,7 @@ defmodule Dialectic.Workers.LLMWorker do
   require Logger
 
   alias Dialectic.Responses.Utils
-  alias Dialectic.Responses.{PromptsStructured, PromptsCreative, ModeServer}
+  alias Dialectic.Responses.{PromptsStructured, ModeServer}
 
   @buffer_size 50
 
@@ -188,10 +188,8 @@ defmodule Dialectic.Workers.LLMWorker do
   # -- Internals ----------------------------------------------------------------
 
   defp get_system_prompt(graph_id) do
-    case ModeServer.get_mode(graph_id) do
-      :creative -> PromptsCreative.system_preamble()
-      _ -> PromptsStructured.system_preamble()
-    end
+    mode = ModeServer.get_mode(graph_id)
+    PromptsStructured.system_preamble(mode)
   end
 
   defp finalize(graph, to_node, live_view_topic) do

@@ -145,7 +145,7 @@ defmodule DialecticWeb.AskFormComp do
           <%= if @ask_question do %>
             Ask a question to get an AI-generated
             <span class="font-medium">{String.capitalize(@prompt_mode)}</span>
-            response • <span class="text-gray-500">Change mode in settings panel</span>
+            level response • <span class="text-gray-500">Change level in settings panel</span>
           <% else %>
             <span class="text-gray-600">
               Add your comment directly to the graph • No AI response will be generated

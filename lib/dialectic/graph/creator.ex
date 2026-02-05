@@ -8,7 +8,7 @@ defmodule Dialectic.Graph.Creator do
   alias Dialectic.DbActions.Graphs
   alias GraphManager
   alias Dialectic.Graph.Vertex
-  alias Dialectic.Responses.{ModeServer, Prompts, PromptsStructured, PromptsCreative}
+  alias Dialectic.Responses.{ModeServer, Prompts, PromptsStructured}
 
   @doc """
   Creates a graph, adds the initial question, generates an answer, and saves it.
@@ -18,14 +18,14 @@ defmodule Dialectic.Graph.Creator do
   - `user`: The User Ecto struct (for DB ownership).
   - `user_identity`: Map/Struct representing the user for Vertex attribution.
   - `opts`: Keyword list of options.
-    - `:mode` - :structured (default) or :creative.
+    - `:mode` - :expert, :university (default), :high_school, or :simple.
     - `:title` - Optional title override.
     - `:progress_callback` - Function/1 to receive status strings.
   """
   def create(question, user, user_identity, opts \\ []) do
     callback = Keyword.get(opts, :progress_callback, fn _ -> :ok end)
     title = Keyword.get(opts, :title) || Graphs.sanitize_title(question)
-    mode = Keyword.get(opts, :mode, :structured)
+    mode = Keyword.get(opts, :mode, :university)
 
     callback.("Creating mind map structure...")
 
@@ -37,7 +37,7 @@ defmodule Dialectic.Graph.Creator do
   end
 
   defp do_create(title, question, user, user_identity, mode, callback) do
-    case Graphs.create_new_graph(title, user) do
+    case Graphs.create_new_graph(title, user, Atom.to_string(mode)) do
       {:ok, _} ->
         ModeServer.set_mode(title, mode)
 
@@ -101,11 +101,7 @@ defmodule Dialectic.Graph.Creator do
     context = GraphManager.build_context(title, origin_node)
     instruction = Prompts.initial_explainer(context, origin_node.content)
 
-    system_prompt =
-      case mode do
-        :creative -> PromptsCreative.system_preamble()
-        _ -> PromptsStructured.system_preamble()
-      end
+    system_prompt = PromptsStructured.system_preamble(mode)
 
     opts = [
       system_prompt: system_prompt,
