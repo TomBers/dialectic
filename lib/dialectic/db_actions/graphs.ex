@@ -99,11 +99,14 @@ defmodule Dialectic.DbActions.Graphs do
   end
 
   defp maybe_tag_graph(graph) do
-    if Mix.env() == :test do
-      :ok
-    else
-      Dialectic.Categorisation.AutoTagger.tag_graph(graph)
-    end
+    auto_tagger =
+      Application.get_env(
+        :dialectic,
+        :auto_tagger_module,
+        Dialectic.Categorisation.AutoTagger
+      )
+
+    auto_tagger.tag_graph(graph)
   end
 
   def list_graphs do
