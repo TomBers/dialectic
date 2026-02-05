@@ -13,6 +13,7 @@ defmodule Dialectic.Accounts.Graph do
     field :share_token, :string
     field :slug, :string
     field :tags, {:array, :string}, default: []
+    field :prompt_mode, :string, default: "university"
 
     belongs_to :user, Dialectic.Accounts.User
     has_many :notes, Dialectic.Accounts.Note, on_delete: :delete_all
@@ -33,7 +34,8 @@ defmodule Dialectic.Accounts.Graph do
       :user_id,
       :share_token,
       :slug,
-      :tags
+      :tags,
+      :prompt_mode
     ])
     |> validate_required([:title, :data])
     |> validate_length(:title, min: 1, max: 255)

@@ -52,7 +52,7 @@ defmodule Dialectic.DbActions.Graphs do
   @doc """
   Creates a new graph with the given title.
   """
-  def create_new_graph(title, user \\ nil) do
+  def create_new_graph(title, user \\ nil, prompt_mode \\ "university") do
     data = %{
       "nodes" => [
         %{
@@ -83,7 +83,8 @@ defmodule Dialectic.DbActions.Graphs do
         is_deleted: false,
         is_published: true,
         share_token: token,
-        slug: slug
+        slug: slug,
+        prompt_mode: prompt_mode
       })
       |> Repo.insert()
 

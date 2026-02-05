@@ -26,7 +26,11 @@ defmodule DialecticWeb.GraphLive do
         # Use the actual title for all internal operations
         graph_title = graph_db.title
 
-        maybe_set_mode(graph_title, params)
+        _ =
+          Dialectic.Responses.ModeServer.set_mode(
+            graph_title,
+            graph_db.prompt_mode || "university"
+          )
 
         # Ensure a main group exists
         _ = ensure_main_group(graph_title)
@@ -73,11 +77,21 @@ defmodule DialecticWeb.GraphLive do
         _ -> :university
       end
 
+    mode_str = Atom.to_string(normalized)
+
     if is_binary(graph_id) do
       _ = Dialectic.Responses.ModeServer.set_mode(graph_id, normalized)
-    end
 
-    mode_str = Atom.to_string(normalized)
+      case Dialectic.DbActions.Graphs.get_graph_by_title(graph_id) do
+        nil ->
+          :noop
+
+        graph ->
+          graph
+          |> Dialectic.Accounts.Graph.changeset(%{prompt_mode: mode_str})
+          |> Dialectic.Repo.update()
+      end
+    end
 
     send_update(
       DialecticWeb.RightPanelComp,
@@ -1464,27 +1478,6 @@ defmodule DialecticWeb.GraphLive do
       end
     else
       socket
-    end
-  end
-
-  defp maybe_set_mode(graph_id, params) do
-    mode_param = Map.get(params, "mode")
-
-    if is_binary(mode_param) do
-      normalized =
-        case String.downcase(mode_param) do
-          "expert" -> :expert
-          "high_school" -> :high_school
-          "simple" -> :simple
-          "university" -> :university
-          "structured" -> :university
-          "creative" -> :university
-          _ -> nil
-        end
-
-      if normalized do
-        _ = Dialectic.Responses.ModeServer.set_mode(graph_id, normalized)
-      end
     end
   end
 

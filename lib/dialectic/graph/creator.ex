@@ -37,7 +37,7 @@ defmodule Dialectic.Graph.Creator do
   end
 
   defp do_create(title, question, user, user_identity, mode, callback) do
-    case Graphs.create_new_graph(title, user) do
+    case Graphs.create_new_graph(title, user, Atom.to_string(mode)) do
       {:ok, _} ->
         ModeServer.set_mode(title, mode)
 

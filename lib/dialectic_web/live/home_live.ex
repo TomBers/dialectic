@@ -20,19 +20,7 @@ defmodule DialecticWeb.HomeLive do
       GraphActions.create_new_node(user)
       |> Vertex.changeset(if initial_content, do: %{content: initial_content}, else: %{})
 
-    prompt_mode =
-      case params do
-        %{"mode" => mode} when is_binary(mode) ->
-          case String.downcase(mode) do
-            "expert" -> "expert"
-            "high_school" -> "high_school"
-            "simple" -> "simple"
-            _ -> "university"
-          end
-
-        _ ->
-          "university"
-      end
+    prompt_mode = "university"
 
     {:ok,
      assign(socket,
@@ -91,9 +79,6 @@ defmodule DialecticWeb.HomeLive do
   @impl true
   def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}} = params, socket) do
     title = Graphs.sanitize_title(answer)
-    # Allow updating the mode from the form submission
-    mode_param = Map.get(params, "mode")
-    socket = if mode_param, do: assign(socket, prompt_mode: mode_param), else: socket
 
     if title == "untitled-idea" do
       {:noreply, put_flash(socket, :error, "Please enter a question or topic.")}
