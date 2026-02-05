@@ -191,20 +191,25 @@ defmodule DialecticWeb.RightPanelComp do
           Level
         </div>
         <div class="p-1">
-          <form phx-change="set_prompt_mode" class="flex items-center gap-2">
-            <select
-              id="prompt_mode"
-              name="prompt_mode"
-              class="block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6 border-zinc-300 focus:border-zinc-800"
-            >
-              <option value="expert" selected={@prompt_mode == "expert"}>Expert</option>
-              <option value="university" selected={@prompt_mode == "university"}>University</option>
-              <option value="high_school" selected={@prompt_mode == "high_school"}>
-                High School
-              </option>
-              <option value="simple" selected={@prompt_mode == "simple"}>Simple</option>
-            </select>
-          </form>
+          <div class="inline-flex rounded-lg bg-gray-50 p-1 border border-gray-200">
+            <%= for {mode, label} <- [{"simple", "Simple"}, {"high_school", "High School"}, {"university", "University"}, {"expert", "Expert"}] do %>
+              <button
+                type="button"
+                phx-click="set_prompt_mode"
+                phx-value-prompt_mode={mode}
+                class={[
+                  "px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200",
+                  if @prompt_mode == mode do
+                    "bg-white text-indigo-700 shadow-sm scale-105"
+                  else
+                    "text-gray-600 hover:text-gray-900 hover:bg-white"
+                  end
+                ]}
+              >
+                {label}
+              </button>
+            <% end %>
+          </div>
           <div class="mt-2 text-[11px] text-gray-600 space-y-1">
             <p>
               Adjusts the complexity and tone of AI responses.
