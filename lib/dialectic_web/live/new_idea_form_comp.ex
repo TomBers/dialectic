@@ -43,14 +43,7 @@ defmodule DialecticWeb.NewIdeaFormComp do
   def render(assigns) do
     ~H"""
     <div class="w-full">
-      <.form
-        for={@form}
-        phx-submit="reply-and-answer"
-        phx-change="update_content"
-        phx-target={@myself}
-        id={@id}
-        class="w-full relative"
-      >
+      <.form for={@form} phx-submit="reply-and-answer" id={@id} class="w-full relative">
         <input type="hidden" name="mode" value={@selected_mode} />
 
         <div class="relative">
@@ -59,6 +52,8 @@ defmodule DialecticWeb.NewIdeaFormComp do
             id="new-idea-input"
             placeholder={@placeholder}
             phx-hook="AutoExpandTextarea"
+            phx-change="update_content"
+            phx-target={@myself}
             rows="1"
             class="box-border w-full h-[3.5rem] min-h-[3.5rem] overflow-hidden pl-6 pr-32 py-2.5 text-black text-lg rounded-full border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-0 focus:outline-none resize-none"
             autocomplete="off"
