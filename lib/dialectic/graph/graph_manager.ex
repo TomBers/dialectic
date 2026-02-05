@@ -588,7 +588,14 @@ defmodule GraphManager do
   # - else first non-deleted vertex
   # - else nil
   def best_node(path, desired_id) do
-    vertex_ids = vertices(path)
+    vertex_ids =
+      vertices(path)
+      |> Enum.filter(fn vid ->
+        case vertex_label(path, vid) do
+          %{} = v -> not Map.get(v, :deleted, false)
+          _ -> false
+        end
+      end)
 
     auto_answer_node =
       if length(vertex_ids) == 3 do
