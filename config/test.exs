@@ -11,6 +11,9 @@ config :dialectic, sync_tasks_for_testing: true
 # Mock LLM requests
 config :dialectic, :llm_req_options, plug: Dialectic.Test.LLMTestPlug
 
+# No-op auto-tagger for tests
+config :dialectic, :auto_tagger_module, Dialectic.Test.AutoTaggerTest
+
 # Only in tests, remove the complexity from the password hashing algorithm
 config :bcrypt_elixir, :log_rounds, 1
 
