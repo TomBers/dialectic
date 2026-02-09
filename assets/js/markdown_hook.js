@@ -96,8 +96,6 @@ marked.use(katexPlugin);
 marked.setOptions({
   gfm: true,
   breaks: true,
-  headerIds: true,
-  mangle: false, // keep emails readable; set true to obfuscate
 });
 
 /**
