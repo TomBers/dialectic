@@ -5,14 +5,14 @@ defmodule DialecticWeb.WhatsNextComp do
   def render(assigns) do
     ~H"""
     <div
-      id="whats-next-panel"
+      id={@id}
       phx-hook="WhatsNext"
       class="hidden mb-4 rounded-lg bg-indigo-50 border border-indigo-100 p-4 relative shadow-sm"
     >
       <button
         type="button"
         class="absolute top-2 right-2 p-1 rounded-md text-indigo-400 hover:text-indigo-600 hover:bg-indigo-100 transition-colors"
-        phx-click={JS.dispatch("dismiss", to: "#whats-next-panel")}
+        phx-click={JS.dispatch("dismiss", to: "##{@id}")}
         aria-label="Dismiss"
       >
         <.icon name="hero-x-mark" class="w-4 h-4" />
@@ -59,7 +59,7 @@ defmodule DialecticWeb.WhatsNextComp do
         <button
           type="button"
           class="font-medium text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-md shadow-sm transition-colors flex items-center gap-1"
-          phx-click={JS.dispatch("trigger-related", to: "#whats-next-panel")}
+          phx-click={JS.dispatch("trigger-related", to: "##{@id}")}
         >
           Try "Related ideas"
         </button>
