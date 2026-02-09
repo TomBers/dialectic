@@ -19,14 +19,83 @@
 
 import { marked } from "marked";
 import DOMPurify from "dompurify";
+import katex from "katex";
 import { extractTitle, hashTitle as hashString } from "./title_utils.js";
 
+const katexPlugin = {
+  extensions: [
+    {
+      name: "katexBlock",
+      level: "block",
+      start(src) {
+        return src.indexOf("$$");
+      },
+      tokenizer(src, _tokens) {
+        // Block math $$...$$
+        const blockMatch = /^\$\$([\s\S]+?)\$\$/.exec(src);
+        if (blockMatch) {
+          return {
+            type: "katexBlock",
+            raw: blockMatch[0],
+            text: blockMatch[1].trim(),
+            displayMode: true,
+          };
+        }
+      },
+      renderer(token) {
+        return katex.renderToString(token.text, {
+          displayMode: true,
+          throwOnError: false,
+        });
+      },
+    },
+    {
+      name: "katex",
+      level: "inline",
+      start(src) {
+        return src.indexOf("$");
+      },
+      tokenizer(src, _tokens) {
+        // Inline math $...$
+        const inlineMatch = /^\$([^$\n]+?)\$/.exec(src);
+        if (inlineMatch) {
+          return {
+            type: "katex",
+            raw: inlineMatch[0],
+            text: inlineMatch[1].trim(),
+            displayMode: false,
+          };
+        }
+      },
+      renderer(token) {
+        return katex.renderToString(token.text, {
+          displayMode: false,
+          throwOnError: false,
+        });
+      },
+    },
+  ],
+};
+
+// Configure DOMPurify to only allow styles on KaTeX elements
+DOMPurify.addHook("uponSanitizeAttribute", (node, data) => {
+  if (data.attrName === "style") {
+    if (
+      node.closest &&
+      (node.closest(".katex") || node.closest(".katex-display"))
+    ) {
+      data.keepAttr = true;
+    } else {
+      data.keepAttr = false;
+    }
+  }
+});
+
 // Configure marked defaults (tweak as needed)
+marked.use(katexPlugin);
 marked.setOptions({
   gfm: true,
   breaks: true,
-  headerIds: true,
-  mangle: false, // keep emails readable; set true to obfuscate
 });
 
 /**
@@ -131,7 +200,9 @@ function renderMdInto(el) {
 
   // Markdown -> HTML -> sanitize
   const html = marked.parse(md);
-  const safe = DOMPurify.sanitize(html);
+  const safe = DOMPurify.sanitize(html, {
+    USE_PROFILES: { html: true, mathMl: true },
+  });
 
   // Inject result
   el.innerHTML = safe;
