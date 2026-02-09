@@ -67,7 +67,8 @@ const WhatsNext = {
       body.onboarding-active [data-panel-toggle="highlights-drawer"],
       body.onboarding-active [data-role="reader-view"],
       body.onboarding-active [data-role="star-node"],
-      body.onboarding-active [data-role="translate-node"] {
+      body.onboarding-active [data-role="translate-node"],
+      body.onboarding-active [phx-click="open_share_modal"] {
         transition: box-shadow 1s ease-in-out;
       }
 
@@ -98,6 +99,11 @@ const WhatsNext = {
       body.onboarding-active [data-panel-toggle="graph-nav-drawer"],
       body.onboarding-active [data-panel-toggle="highlights-drawer"] {
         box-shadow: 0 0 0 2px #fff, 0 0 0 4px #ec4899;
+      }
+
+      /* 6. Share (Indigo) */
+      body.onboarding-active [phx-click="open_share_modal"] {
+        box-shadow: 0 0 0 2px #fff, 0 0 0 4px #6366f1;
       }
     `;
     document.head.appendChild(style);

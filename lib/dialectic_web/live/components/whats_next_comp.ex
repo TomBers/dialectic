@@ -154,6 +154,27 @@ defmodule DialecticWeb.WhatsNextComp do
               /></span>.
           </span>
         </li>
+        <li class="flex gap-2 items-start">
+          <span class="flex-none flex items-center justify-center w-5 h-5 rounded-full bg-white text-indigo-600 text-xs font-bold ring-2 ring-offset-2 ring-indigo-500">
+            6
+          </span>
+          <span>
+            <strong>Share</strong>: Invite others. Share the URL so many people can work on the same page at the same time <span class="inline-flex items-center justify-center p-0.5 rounded-sm bg-indigo-100 text-indigo-600 align-text-bottom mx-0.5"><svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="w-3.5 h-3.5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              ><path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"
+              /></svg></span>.
+          </span>
+        </li>
       </ul>
 
       <div class="flex flex-wrap gap-2 text-sm">
