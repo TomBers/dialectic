@@ -208,6 +208,9 @@
       class="fixed bottom-0 left-0 md:relative w-full p-4 md:p-0 md:w-2/5 flex flex-col bg-white md:border-r md:border-gray-200 z-90 transform translate-x-0 opacity-100 transition-all duration-300 ease-in-out"
     >
       <div class="flex-1 overflow-y-auto">
+        <%= if @graph_id do %>
+          <.live_component module={DialecticWeb.WhatsNextComp} id="whats-next-onboarding" />
+        <% end %>
         <.live_component
           module={NodeComp}
           id="node-comp"

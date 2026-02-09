@@ -331,6 +331,7 @@ defmodule DialecticWeb.ActionToolbarComp do
           phx-value-id={@node && @node.id}
           disabled={is_nil(@graph_id)}
           title="Related ideas"
+          data-action="related-ideas"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
