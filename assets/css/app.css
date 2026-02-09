@@ -1,6 +1,7 @@
 @import "tailwindcss/base";
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
+@import "katex/dist/katex.min.css";
 
 :root {
     font-family: Inter, sans-serif;
