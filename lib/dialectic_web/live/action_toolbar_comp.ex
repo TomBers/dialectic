@@ -172,6 +172,7 @@ defmodule DialecticWeb.ActionToolbarComp do
         }
         style={unless @inline, do: "bottom: calc(5.5rem + env(safe-area-inset-bottom));"}
         data-external="true"
+        data-role="action-toolbar"
       >
         <%= if @can_edit == false do %>
           <span
@@ -212,6 +213,7 @@ defmodule DialecticWeb.ActionToolbarComp do
           phx-value-node={@node && @node.id}
           disabled={is_nil(@graph_id)}
           title={if noted?, do: "Remove from your notes", else: "Add to your notes"}
+          data-role="star-node"
         >
           <%= if noted? do %>
             <svg
@@ -253,6 +255,7 @@ defmodule DialecticWeb.ActionToolbarComp do
             }
             class="inline-flex items-center justify-center w-9 h-9 bg-gray-700 text-white rounded-md transition-all hover:bg-gray-800 hover:shadow-md"
             title="Open linear view"
+            data-role="reader-view"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -461,6 +464,7 @@ defmodule DialecticWeb.ActionToolbarComp do
           phx-hook="TranslatePopover"
           phx-update="ignore"
           data-popover-align="center"
+          data-role="translate-node"
         >
           <button
             type="button"

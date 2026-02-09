@@ -22,18 +22,36 @@ defmodule DialecticWeb.WhatsNextComp do
         <span class="text-xl">👋</span> What's Next?
       </h3>
 
-      <ul class="space-y-2 text-sm text-indigo-800 mb-4 list-none">
+      <ul class="space-y-3 text-sm text-indigo-800 mb-4 list-none">
         <li class="flex gap-2 items-start">
-          <span class="font-bold text-indigo-400 select-none">•</span>
-          <span>Click a node to focus it and read details here.</span>
+          <span class="flex-none flex items-center justify-center w-5 h-5 rounded-full bg-white text-blue-600 text-xs font-bold ring-2 ring-offset-2 ring-blue-500">
+            1
+          </span>
+          <span><strong>Content</strong>: Read the focused node details here.</span>
         </li>
         <li class="flex gap-2 items-start">
-          <span class="font-bold text-indigo-400 select-none">•</span>
-          <span>Use the toolbar below to branch, compare pros/cons, or explore related ideas.</span>
+          <span class="flex-none flex items-center justify-center w-5 h-5 rounded-full bg-white text-emerald-600 text-xs font-bold ring-2 ring-offset-2 ring-emerald-500">
+            2
+          </span>
+          <span><strong>Ask / Comment</strong>: Chat with AI or add notes below.</span>
         </li>
         <li class="flex gap-2 items-start">
-          <span class="font-bold text-indigo-400 select-none">•</span>
-          <span>Highlight text inside a node to create linked questions and notes.</span>
+          <span class="flex-none flex items-center justify-center w-5 h-5 rounded-full bg-white text-orange-600 text-xs font-bold ring-2 ring-offset-2 ring-orange-500">
+            3
+          </span>
+          <span><strong>Actions</strong>: Branch, explore related ideas, and compare pros/cons.</span>
+        </li>
+        <li class="flex gap-2 items-start">
+          <span class="flex-none flex items-center justify-center w-5 h-5 rounded-full bg-white text-purple-600 text-xs font-bold ring-2 ring-offset-2 ring-purple-500">
+            4
+          </span>
+          <span><strong>Tools</strong>: Star to save, Reader View, and Translation.</span>
+        </li>
+        <li class="flex gap-2 items-start">
+          <span class="flex-none flex items-center justify-center w-5 h-5 rounded-full bg-white text-pink-600 text-xs font-bold ring-2 ring-offset-2 ring-pink-500">
+            5
+          </span>
+          <span><strong>Settings</strong>: Access view options and highlights on the right.</span>
         </li>
       </ul>
 
