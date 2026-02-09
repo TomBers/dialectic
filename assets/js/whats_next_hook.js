@@ -97,7 +97,11 @@ const WhatsNext = {
   dismiss() {
     this.el.classList.add("hidden");
     document.body.classList.remove("onboarding-active");
-    sessionStorage.setItem(this.storageKey, "true");
+    try {
+      sessionStorage.setItem(this.storageKey, "true");
+    } catch (e) {
+      console.warn("Failed to save onboarding state", e);
+    }
   },
 };
 
