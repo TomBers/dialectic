@@ -45,7 +45,7 @@ defmodule DialecticWeb.WhatsNextComp do
             3
           </span>
           <span>
-            <strong>Actions</strong>: Expand the discussion. Generate related ideas <span class="inline-flex items-center justify-center p-0.5 rounded-sm bg-orange-100 text-orange-600 align-text-bottom mx-0.5"><svg
+            <strong>Explore tools</strong>: Expand the discussion. Generate related ideas <span class="inline-flex items-center justify-center p-0.5 rounded-sm bg-orange-100 text-orange-600 align-text-bottom mx-0.5"><svg
                 xmlns="http://www.w3.org/2000/svg"
                 class="w-3.5 h-3.5"
                 viewBox="0 0 24 24"
@@ -94,7 +94,7 @@ defmodule DialecticWeb.WhatsNextComp do
             4
           </span>
           <span>
-            <strong>Tools</strong>: Save nodes
+            <strong>Reading & remembering</strong>: Save nodes
             <span class="inline-flex items-center justify-center p-0.5 rounded-sm bg-yellow-100 text-yellow-600 align-text-bottom mx-0.5">
               <svg
                 xmlns="http://www.w3.org/2000/svg"

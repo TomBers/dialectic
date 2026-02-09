@@ -61,13 +61,9 @@ const WhatsNext = {
       /* Common transition */
       body.onboarding-active [data-role="node-content"],
       body.onboarding-active [data-role="ask-form-container"],
-      body.onboarding-active [data-role="action-toolbar"],
-      body.onboarding-active [data-panel-toggle="right-panel"],
-      body.onboarding-active [data-panel-toggle="graph-nav-drawer"],
-      body.onboarding-active [data-panel-toggle="highlights-drawer"],
-      body.onboarding-active [data-role="reader-view"],
-      body.onboarding-active [data-role="star-node"],
-      body.onboarding-active [data-role="translate-node"],
+      body.onboarding-active [data-role="action-buttons-group"],
+      body.onboarding-active [data-role="settings-buttons-group"],
+      body.onboarding-active [data-role="reading-tools-group"],
       body.onboarding-active [phx-click="open_share_modal"] {
         transition: box-shadow 1s ease-in-out;
       }
@@ -83,22 +79,21 @@ const WhatsNext = {
       }
 
       /* 3. Actions (Orange) */
-      body.onboarding-active [data-role="action-toolbar"] {
+      body.onboarding-active [data-role="action-buttons-group"] {
         box-shadow: 0 0 0 2px #fff, 0 0 0 4px #f97316;
+        border-radius: 6px;
       }
 
       /* 4. Tools (Purple) */
-      body.onboarding-active [data-role="reader-view"],
-      body.onboarding-active [data-role="star-node"],
-      body.onboarding-active [data-role="translate-node"] {
+      body.onboarding-active [data-role="reading-tools-group"] {
         box-shadow: 0 0 0 2px #fff, 0 0 0 4px #a855f7;
+        border-radius: 6px;
       }
 
       /* 5. Settings (Pink) */
-      body.onboarding-active [data-panel-toggle="right-panel"],
-      body.onboarding-active [data-panel-toggle="graph-nav-drawer"],
-      body.onboarding-active [data-panel-toggle="highlights-drawer"] {
+      body.onboarding-active [data-role="settings-buttons-group"] {
         box-shadow: 0 0 0 2px #fff, 0 0 0 4px #ec4899;
+        border-radius: 8px;
       }
 
       /* 6. Share (Indigo) */
