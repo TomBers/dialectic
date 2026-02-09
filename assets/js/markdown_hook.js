@@ -19,9 +19,52 @@
 
 import { marked } from "marked";
 import DOMPurify from "dompurify";
+import katex from "katex";
 import { extractTitle, hashTitle as hashString } from "./title_utils.js";
 
+const katexPlugin = {
+  extensions: [
+    {
+      name: "katex",
+      level: "inline",
+      start(src) {
+        return src.indexOf("$");
+      },
+      tokenizer(src, _tokens) {
+        // Block math $$...$$
+        const blockMatch = /^\$\$([\s\S]+?)\$\$/.exec(src);
+        if (blockMatch) {
+          return {
+            type: "katex",
+            raw: blockMatch[0],
+            text: blockMatch[1].trim(),
+            displayMode: true,
+          };
+        }
+
+        // Inline math $...$
+        const inlineMatch = /^\$([^$\n]+?)\$/.exec(src);
+        if (inlineMatch) {
+          return {
+            type: "katex",
+            raw: inlineMatch[0],
+            text: inlineMatch[1].trim(),
+            displayMode: false,
+          };
+        }
+      },
+      renderer(token) {
+        return katex.renderToString(token.text, {
+          displayMode: token.displayMode,
+          throwOnError: false,
+        });
+      },
+    },
+  ],
+};
+
 // Configure marked defaults (tweak as needed)
+marked.use(katexPlugin);
 marked.setOptions({
   gfm: true,
   breaks: true,
@@ -131,7 +174,10 @@ function renderMdInto(el) {
 
   // Markdown -> HTML -> sanitize
   const html = marked.parse(md);
-  const safe = DOMPurify.sanitize(html);
+  const safe = DOMPurify.sanitize(html, {
+    USE_PROFILES: { html: true, mathMl: true },
+    ADD_ATTR: ["style"],
+  });
 
   // Inject result
   el.innerHTML = safe;
