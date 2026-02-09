@@ -94,7 +94,7 @@ defmodule DialecticWeb.WhatsNextComp do
             4
           </span>
           <span>
-            <strong>Reading & remembering</strong>: Save nodes
+            <strong>Reading & personal tools</strong>: Save nodes
             <span class="inline-flex items-center justify-center p-0.5 rounded-sm bg-yellow-100 text-yellow-600 align-text-bottom mx-0.5">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -159,7 +159,7 @@ defmodule DialecticWeb.WhatsNextComp do
             6
           </span>
           <span>
-            <strong>Share</strong>: Invite others. Share the URL so many people can work on the same page at the same time <span class="inline-flex items-center justify-center p-0.5 rounded-sm bg-indigo-100 text-indigo-600 align-text-bottom mx-0.5"><svg
+            <strong>Collaboration</strong>: Invite others. Share the URL so many people can work on the same page at the same time <span class="inline-flex items-center justify-center p-0.5 rounded-sm bg-indigo-100 text-indigo-600 align-text-bottom mx-0.5"><svg
                 xmlns="http://www.w3.org/2000/svg"
                 class="w-3.5 h-3.5"
                 viewBox="0 0 24 24"
