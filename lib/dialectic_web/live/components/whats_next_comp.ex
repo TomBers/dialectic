@@ -21,8 +21,8 @@ defmodule DialecticWeb.WhatsNextComp do
       <h3 class="font-bold text-zinc-900 mb-4 flex items-center gap-2">
         <span class="text-xl">👋</span> What's Next?
       </h3>
-      <p class="text-sm text-zinc-700 mb-6">
-        New here? Dialectic helps you explore ideas by growing a shared graph of questions and answers. Start by reading the focused node, then ask, branch, or add your own take.
+      <p class="text-base text-zinc-700 mb-6">
+        New here? Explore ideas by growing a shared whiteboard of questions and answers. Start by reading the focused node, then ask, branch, or add your own thoughts.
       </p>
 
       <div class="space-y-6 mb-6">
@@ -30,7 +30,7 @@ defmodule DialecticWeb.WhatsNextComp do
           <h4 class="font-bold text-zinc-900 text-xs uppercase tracking-wider mb-2 border-b border-zinc-200 pb-1 ml-1">
             Reading & Personal
           </h4>
-          <ul class="space-y-3 text-sm text-zinc-700 list-none pl-3">
+          <ul class="space-y-3 text-base text-zinc-700 list-none pl-3">
             <li class="flex gap-2 items-start">
               <span class="flex-none flex items-center justify-center w-5 h-5 rounded-full bg-white text-blue-600 text-xs font-bold ring-2 ring-offset-2 ring-blue-500">
                 1
@@ -54,7 +54,7 @@ defmodule DialecticWeb.WhatsNextComp do
           <h4 class="font-bold text-zinc-900 text-xs uppercase tracking-wider mb-2 border-b border-zinc-200 pb-1 ml-1">
             Exploring
           </h4>
-          <ul class="space-y-3 text-sm text-zinc-700 list-none pl-3">
+          <ul class="space-y-3 text-base text-zinc-700 list-none pl-3">
             <li class="flex gap-2 items-start">
               <span class="flex-none flex items-center justify-center w-5 h-5 rounded-full bg-white text-emerald-600 text-xs font-bold ring-2 ring-offset-2 ring-emerald-500">
                 3
@@ -78,7 +78,7 @@ defmodule DialecticWeb.WhatsNextComp do
           <h4 class="font-bold text-zinc-900 text-xs uppercase tracking-wider mb-2 border-b border-zinc-200 pb-1 ml-1">
             Collaborating & Settings
           </h4>
-          <ul class="space-y-3 text-sm text-zinc-700 list-none pl-3">
+          <ul class="space-y-3 text-base text-zinc-700 list-none pl-3">
             <li class="flex gap-2 items-start">
               <span class="flex-none flex items-center justify-center w-5 h-5 rounded-full bg-white text-indigo-600 text-xs font-bold ring-2 ring-offset-2 ring-indigo-500">
                 5
@@ -99,22 +99,7 @@ defmodule DialecticWeb.WhatsNextComp do
         </div>
       </div>
 
-      <div class="flex flex-wrap gap-2 text-sm pl-3">
-        <button
-          type="button"
-          class="font-medium text-white bg-zinc-900 hover:bg-zinc-700 px-4 py-2 rounded-lg shadow-sm transition-colors flex items-center gap-1"
-          phx-click={JS.dispatch("trigger-related", to: "##{@id}")}
-        >
-          Try "Related ideas"
-        </button>
-
-        <.link
-          navigate={~p"/intro/how"}
-          class="font-medium text-zinc-700 hover:text-zinc-900 px-4 py-2 rounded-lg hover:bg-zinc-200 transition-colors"
-        >
-          Read the guide
-        </.link>
-      </div>
+      <%!-- Footer actions removed to keep the node content visible --%>
     </div>
     """
   end
