@@ -360,6 +360,7 @@ defmodule DialecticWeb.ActionToolbarComp do
 
         <div class="h-6 w-px bg-gray-200 mx-1"></div>
 
+        <% info = delete_info(assigns) %>
         <span class="flex items-center gap-1" data-role="action-buttons-group">
           <button
             type="button"
@@ -488,6 +489,38 @@ defmodule DialecticWeb.ActionToolbarComp do
               <path d="M11 8v6M8 11h6" />
             </svg>
           </button>
+
+          <button
+            id={"delete-node-#{@graph_id}-#{@node && @node.id}"}
+            type="button"
+            disabled={is_nil(@graph_id)}
+            phx-click={if info.deletable, do: "delete_node", else: nil}
+            phx-value-node={@node && @node.id}
+            data-confirm={
+              if info.deletable, do: "Are you sure you want to delete this node?", else: nil
+            }
+            aria-disabled={not info.deletable}
+            data-disabled={not info.deletable}
+            class={[
+              "inline-flex items-center justify-center w-9 h-9 rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed",
+              info.deletable && "bg-red-500 text-white hover:bg-red-600 hover:shadow-md",
+              !info.deletable && "bg-gray-200 text-gray-400 cursor-not-allowed"
+            ]}
+            title={info.title}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0a1 1 0 01-1-1V5a1 1 0 011-1h2a2 2 0 012-2h0a2 2 0 012 2h2a1 1 0 011 1v1" />
+            </svg>
+          </button>
         </span>
 
         <div class="h-6 w-px bg-gray-200 mx-1"></div>
@@ -514,40 +547,6 @@ defmodule DialecticWeb.ActionToolbarComp do
               stroke-linejoin="round"
               d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"
             />
-          </svg>
-        </button>
-
-        <% info = delete_info(assigns) %>
-
-        <button
-          id={"delete-node-#{@graph_id}-#{@node && @node.id}"}
-          type="button"
-          disabled={is_nil(@graph_id)}
-          phx-click={if info.deletable, do: "delete_node", else: nil}
-          phx-value-node={@node && @node.id}
-          data-confirm={
-            if info.deletable, do: "Are you sure you want to delete this node?", else: nil
-          }
-          aria-disabled={not info.deletable}
-          data-disabled={not info.deletable}
-          class={[
-            "inline-flex items-center justify-center w-9 h-9 rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed",
-            info.deletable && "bg-red-500 text-white hover:bg-red-600 hover:shadow-md",
-            !info.deletable && "bg-gray-200 text-gray-400 cursor-not-allowed"
-          ]}
-          title={info.title}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0a1 1 0 01-1-1V5a1 1 0 011-1h2a2 2 0 012-2h0a2 2 0 012 2h2a1 1 0 011 1v1" />
           </svg>
         </button>
       </div>

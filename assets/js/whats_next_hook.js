@@ -70,35 +70,35 @@ const WhatsNext = {
 
       /* 1. Content (Blue) */
       body.onboarding-active [data-role="node-content"] {
-        box-shadow: 0 0 0 2px #fff, 0 0 0 4px #3b82f6;
+        box-shadow: 0 0 0 3px #fff, 0 0 0 7px #3b82f6;
       }
 
       /* 2. Ask / Comment (Emerald) */
       body.onboarding-active [data-role="ask-form-container"] {
-        box-shadow: 0 0 0 2px #fff, 0 0 0 4px #10b981;
+        box-shadow: 0 0 0 3px #fff, 0 0 0 7px #10b981;
       }
 
       /* 3. Actions (Orange) */
       body.onboarding-active [data-role="action-buttons-group"] {
-        box-shadow: 0 0 0 2px #fff, 0 0 0 4px #f97316;
+        box-shadow: 0 0 0 3px #fff, 0 0 0 7px #f97316;
         border-radius: 6px;
       }
 
       /* 4. Tools (Purple) */
       body.onboarding-active [data-role="reading-tools-group"] {
-        box-shadow: 0 0 0 2px #fff, 0 0 0 4px #a855f7;
+        box-shadow: 0 0 0 3px #fff, 0 0 0 7px #a855f7;
         border-radius: 6px;
       }
 
       /* 5. Settings (Pink) */
       body.onboarding-active [data-role="settings-buttons-group"] {
-        box-shadow: 0 0 0 2px #fff, 0 0 0 4px #ec4899;
+        box-shadow: 0 0 0 3px #fff, 0 0 0 7px #ec4899;
         border-radius: 8px;
       }
 
       /* 6. Share (Indigo) */
       body.onboarding-active [phx-click="open_share_modal"] {
-        box-shadow: 0 0 0 2px #fff, 0 0 0 4px #6366f1;
+        box-shadow: 0 0 0 3px #fff, 0 0 0 7px #6366f1;
       }
     `;
     document.head.appendChild(style);
