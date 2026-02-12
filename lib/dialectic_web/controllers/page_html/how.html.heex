@@ -175,9 +175,7 @@
   <%!-- Interface walkthrough --%>
   <section class="mx-auto max-w-5xl px-4 py-10 sm:py-14">
     <div
-      class="group rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8 space-y-6"
-      phx-hook="InterfaceHighlight"
-      data-interface-highlight-initial=""
+      class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8 space-y-8"
       id="interface-highlight"
     >
       <div class="space-y-3">
@@ -188,104 +186,228 @@
           Everything in one view
         </h3>
         <p class="text-gray-600 text-sm">
-          Hover the labels below to see how each area of the workspace helps you.
+          The workspace is split into three areas that stay visible at once: a reading panel on the left, an interactive graph on the right, and a toolbar at the bottom.
         </p>
       </div>
 
-      <%!-- Compact workspace mockup --%>
-      <div class="rounded-xl border border-gray-200 bg-gradient-to-br from-slate-50 to-white p-4 shadow-md">
-        <div class="grid gap-3 sm:grid-cols-[1.2fr_1fr_0.8fr]">
-          <div class="rounded-lg border border-indigo-100 bg-white p-3 shadow-sm transition">
-            <div class="rounded-md border border-indigo-100 bg-indigo-50/50 p-2 text-xs font-semibold uppercase tracking-wide text-indigo-700">
-              Focused Node
-            </div>
-            <div class="mt-2 space-y-2 rounded-lg border border-dashed border-indigo-100 bg-white p-3 text-sm text-gray-700 group-data-[interface-highlight-active=responses]:ring-2 group-data-[interface-highlight-active=responses]:ring-indigo-300">
-              <p class="font-semibold text-gray-900">Current response</p>
-              <p class="text-xs text-gray-500">
-                Read, highlight key terms, and branch into deeper explanations.
-              </p>
-            </div>
-            <div class="mt-3 grid grid-cols-2 gap-2 text-xs text-gray-600">
-              <div class="rounded-md border border-gray-200 bg-gray-50 px-2 py-1">Notes</div>
-              <div class="rounded-md border border-gray-200 bg-gray-50 px-2 py-1">Translate</div>
-              <div class="rounded-md border border-gray-200 bg-gray-50 px-2 py-1">
-                Linear View
+      <%!-- 1. Reading Panel --%>
+      <div class="rounded-xl border border-indigo-100 bg-gradient-to-br from-indigo-50/40 to-white p-5 space-y-4">
+        <div class="flex items-center gap-2">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-100">
+            <.icon name="hero-document-text" class="h-5 w-5 text-indigo-600" />
+          </span>
+          <h4 class="text-lg font-semibold text-gray-900">Reading Panel</h4>
+        </div>
+        <p class="text-sm text-gray-600">
+          The left side shows the full AI response for the currently selected node. Read the content, then interact with it directly:
+        </p>
+
+        <div class="rounded-lg border border-indigo-100 bg-white p-4">
+          <p class="text-xs font-semibold uppercase tracking-wide text-indigo-600 mb-3">
+            Select any text to&hellip;
+          </p>
+          <div class="grid gap-2 sm:grid-cols-2">
+            <div class="flex items-start gap-2.5">
+              <span class="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-indigo-100">
+                <.icon name="hero-chat-bubble-left-ellipsis" class="h-4 w-4 text-indigo-600" />
+              </span>
+              <div>
+                <p class="text-sm font-medium text-gray-900">Explain</p>
+                <p class="text-xs text-gray-500">
+                  Get a deeper explanation linked to the exact phrase
+                </p>
               </div>
-              <div class="rounded-md border border-gray-200 bg-gray-50 px-2 py-1">Save</div>
             </div>
-          </div>
-
-          <div class="rounded-lg border border-sky-100 bg-white p-3 shadow-sm transition">
-            <div class="rounded-md border border-sky-100 bg-sky-50/50 p-2 text-xs font-semibold uppercase tracking-wide text-sky-700">
-              Graph Workspace
+            <div class="flex items-start gap-2.5">
+              <span class="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-sky-100">
+                <.icon name="hero-question-mark-circle" class="h-4 w-4 text-sky-600" />
+              </span>
+              <div>
+                <p class="text-sm font-medium text-gray-900">Ask a question</p>
+                <p class="text-xs text-gray-500">
+                  Type your own follow-up about the highlighted passage
+                </p>
+              </div>
             </div>
-            <div class="mt-2 grid h-[120px] place-items-center rounded-lg border border-dashed border-sky-100 bg-white text-sm text-sky-700 group-data-[interface-highlight-active=graph]:ring-2 group-data-[interface-highlight-active=graph]:ring-sky-300">
-              Interactive idea map
+            <div class="flex items-start gap-2.5">
+              <span class="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-amber-100">
+                <.icon name="hero-paint-brush" class="h-4 w-4 text-amber-600" />
+              </span>
+              <div>
+                <p class="text-sm font-medium text-gray-900">Highlight</p>
+                <p class="text-xs text-gray-500">Save an important passage for later reference</p>
+              </div>
             </div>
-            <div class="mt-3 flex flex-wrap gap-2 text-xs text-gray-600 group-data-[interface-highlight-active=tools]:ring-2 group-data-[interface-highlight-active=tools]:ring-amber-300 rounded-md">
-              <span class="rounded-md bg-amber-50 px-2 py-1 text-amber-700">Related ideas</span>
-              <span class="rounded-md bg-emerald-50 px-2 py-1 text-emerald-700">Pros / Cons</span>
-              <span class="rounded-md bg-violet-50 px-2 py-1 text-violet-700">Combine</span>
-              <span class="rounded-md bg-rose-50 px-2 py-1 text-rose-700">Explore all</span>
+            <div class="flex items-start gap-2.5">
+              <span class="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-emerald-100">
+                <.icon
+                  name="hero-chat-bubble-bottom-center-text"
+                  class="h-4 w-4 text-emerald-600"
+                />
+              </span>
+              <div>
+                <p class="text-sm font-medium text-gray-900">Comment</p>
+                <p class="text-xs text-gray-500">
+                  Add your own annotation or note to any passage
+                </p>
+              </div>
             </div>
-          </div>
-
-          <div class="rounded-lg border border-emerald-100 bg-white p-3 shadow-sm transition group-data-[interface-highlight-active=admin]:ring-2 group-data-[interface-highlight-active=admin]:ring-emerald-300">
-            <div class="rounded-md border border-emerald-100 bg-emerald-50/50 p-2 text-xs font-semibold uppercase tracking-wide text-emerald-700">
-              Sharing &amp; Controls
-            </div>
-            <ul class="mt-2 space-y-2 text-sm text-gray-700">
-              <li class="rounded-md border border-gray-200 bg-gray-50 px-2 py-1">Search map</li>
-              <li class="rounded-md border border-gray-200 bg-gray-50 px-2 py-1">Highlights</li>
-              <li class="rounded-md border border-gray-200 bg-gray-50 px-2 py-1">
-                Access controls
-              </li>
-              <li class="rounded-md border border-gray-200 bg-gray-50 px-2 py-1">
-                Share &amp; download
-              </li>
-            </ul>
           </div>
         </div>
       </div>
 
-      <%!-- Hover triggers --%>
-      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <div
-          class="rounded-lg border border-gray-200 bg-gray-50/60 p-3 transition-colors hover:border-indigo-200 hover:bg-indigo-50/50 cursor-pointer"
-          data-interface-highlight-trigger="responses"
-        >
-          <p class="text-sm font-semibold text-indigo-700">Responses</p>
-          <p class="text-xs text-gray-600">
-            Read answers, highlight terms, branch from exact concepts.
-          </p>
+      <%!-- 2. Graph Canvas --%>
+      <div class="rounded-xl border border-sky-100 bg-gradient-to-br from-sky-50/40 to-white p-5 space-y-4">
+        <div class="flex items-center gap-2">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-sky-100">
+            <.icon name="hero-map" class="h-5 w-5 text-sky-600" />
+          </span>
+          <h4 class="text-lg font-semibold text-gray-900">Graph Canvas</h4>
         </div>
+        <p class="text-sm text-gray-600">
+          The right side is an interactive node-and-edge map of your entire whiteboard. Click any node to read it, drag to rearrange, and scroll to zoom. You always see how the current idea fits into the bigger picture.
+        </p>
+      </div>
 
-        <div
-          class="rounded-lg border border-gray-200 bg-gray-50/60 p-3 transition-colors hover:border-sky-200 hover:bg-sky-50/60 cursor-pointer"
-          data-interface-highlight-trigger="graph"
-        >
-          <p class="text-sm font-semibold text-sky-700">Idea map</p>
-          <p class="text-xs text-gray-600">See where every claim sits in the broader picture.</p>
+      <%!-- 3. Action Toolbar --%>
+      <div class="rounded-xl border border-amber-100 bg-gradient-to-br from-amber-50/40 to-white p-5 space-y-4">
+        <div class="flex items-center gap-2">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100">
+            <.icon name="hero-wrench-screwdriver" class="h-5 w-5 text-amber-600" />
+          </span>
+          <h4 class="text-lg font-semibold text-gray-900">Action Toolbar</h4>
         </div>
+        <p class="text-sm text-gray-600">
+          The bottom bar gives you one-click tools that operate on whichever node is selected. Each generates new connected nodes on your map:
+        </p>
 
-        <div
-          class="rounded-lg border border-gray-200 bg-gray-50/60 p-3 transition-colors hover:border-amber-200 hover:bg-amber-50/60 cursor-pointer"
-          data-interface-highlight-trigger="tools"
-        >
-          <p class="text-sm font-semibold text-amber-700">Action tools</p>
-          <p class="text-xs text-gray-600">
-            Expand with related ideas, test positions, merge branches.
-          </p>
+        <div class="grid gap-3 sm:grid-cols-2">
+          <%!-- Related Ideas --%>
+          <div class="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3">
+            <span class="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-orange-500 text-white">
+              <.icon name="hero-light-bulb" class="h-5 w-5" />
+            </span>
+            <div>
+              <p class="text-sm font-semibold text-gray-900">Related Ideas</p>
+              <p class="text-xs text-gray-500">
+                Generate connected concepts, counterpoints, or tangential topics branching from the current node.
+              </p>
+            </div>
+          </div>
+
+          <%!-- Pros & Cons --%>
+          <div class="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3">
+            <span class="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-gradient-to-r from-emerald-500 to-rose-500 text-white">
+              <.icon name="hero-scale" class="h-5 w-5" />
+            </span>
+            <div>
+              <p class="text-sm font-semibold text-gray-900">Pros &amp; Cons</p>
+              <p class="text-xs text-gray-500">
+                Create a balanced argument map with supporting and opposing points linked to the claim.
+              </p>
+            </div>
+          </div>
+
+          <%!-- Combine --%>
+          <div class="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3">
+            <span class="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-violet-500 text-white">
+              <.icon name="hero-arrows-pointing-in" class="h-5 w-5" />
+            </span>
+            <div>
+              <p class="text-sm font-semibold text-gray-900">Combine</p>
+              <p class="text-xs text-gray-500">
+                Merge two nodes into a synthesized response that draws on both perspectives.
+              </p>
+            </div>
+          </div>
+
+          <%!-- Explore All --%>
+          <div class="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3">
+            <span class="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-gradient-to-r from-fuchsia-500 via-rose-500 to-amber-500 text-white">
+              <.icon name="hero-sparkles" class="h-5 w-5" />
+            </span>
+            <div>
+              <p class="text-sm font-semibold text-gray-900">Explore All</p>
+              <p class="text-xs text-gray-500">
+                Auto-detect every key point in a response and branch into each one at once.
+              </p>
+            </div>
+          </div>
         </div>
+      </div>
 
-        <div
-          class="rounded-lg border border-gray-200 bg-gray-50/60 p-3 transition-colors hover:border-emerald-200 hover:bg-emerald-50/60 cursor-pointer"
-          data-interface-highlight-trigger="admin"
-        >
-          <p class="text-sm font-semibold text-emerald-700">Sharing</p>
-          <p class="text-xs text-gray-600">
-            Manage access, create links, collaborate on a shared board.
-          </p>
+      <%!-- 4. Reading & Controls --%>
+      <div class="rounded-xl border border-emerald-100 bg-gradient-to-br from-emerald-50/40 to-white p-5 space-y-4">
+        <div class="flex items-center gap-2">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100">
+            <.icon name="hero-cog-6-tooth" class="h-5 w-5 text-emerald-600" />
+          </span>
+          <h4 class="text-lg font-semibold text-gray-900">Reading Tools &amp; Controls</h4>
+        </div>
+        <p class="text-sm text-gray-600">
+          Additional tools sit alongside the action buttons for navigating, saving, and sharing your work:
+        </p>
+
+        <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          <div class="flex items-center gap-2.5 rounded-lg border border-gray-200 bg-white px-3 py-2.5">
+            <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-yellow-100">
+              <.icon name="hero-star" class="h-4 w-4 text-yellow-600" />
+            </span>
+            <div>
+              <p class="text-sm font-medium text-gray-900">Notes</p>
+              <p class="text-xs text-gray-500">Star nodes you want to revisit</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2.5 rounded-lg border border-gray-200 bg-white px-3 py-2.5">
+            <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gray-700">
+              <.icon name="hero-document-text" class="h-4 w-4 text-white" />
+            </span>
+            <div>
+              <p class="text-sm font-medium text-gray-900">Linear View</p>
+              <p class="text-xs text-gray-500">Read the full thread as a page</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2.5 rounded-lg border border-gray-200 bg-white px-3 py-2.5">
+            <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gray-100">
+              <.icon name="hero-globe-alt" class="h-4 w-4 text-gray-600" />
+            </span>
+            <div>
+              <p class="text-sm font-medium text-gray-900">Translate</p>
+              <p class="text-xs text-gray-500">Open any node in Google Translate</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2.5 rounded-lg border border-gray-200 bg-white px-3 py-2.5">
+            <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gray-100">
+              <.icon name="hero-eye" class="h-4 w-4 text-gray-600" />
+            </span>
+            <div>
+              <p class="text-sm font-medium text-gray-900">View Options</p>
+              <p class="text-xs text-gray-500">Change graph layout and display</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2.5 rounded-lg border border-gray-200 bg-white px-3 py-2.5">
+            <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gray-100">
+              <.icon name="hero-bookmark" class="h-4 w-4 text-gray-600" />
+            </span>
+            <div>
+              <p class="text-sm font-medium text-gray-900">Highlights</p>
+              <p class="text-xs text-gray-500">See all saved highlights in one panel</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2.5 rounded-lg border border-gray-200 bg-white px-3 py-2.5">
+            <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-indigo-500">
+              <.icon name="hero-arrow-up-tray" class="h-4 w-4 text-white" />
+            </span>
+            <div>
+              <p class="text-sm font-medium text-gray-900">Share</p>
+              <p class="text-xs text-gray-500">Share the map or control who can edit</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
