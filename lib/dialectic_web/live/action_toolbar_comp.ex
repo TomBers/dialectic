@@ -250,9 +250,11 @@ defmodule DialecticWeb.ActionToolbarComp do
           <%= if @graph_id do %>
             <.link
               navigate={
-                if @node,
-                  do: graph_linear_path(@graph_struct, @node.id),
-                  else: graph_linear_path(@graph_struct)
+                graph_linear_path(
+                  @graph_struct,
+                  if(@node, do: @node.id, else: nil),
+                  if(assigns[:token], do: [token: assigns[:token]], else: [])
+                )
               }
               class="inline-flex items-center justify-center w-9 h-9 bg-gray-700 text-white rounded-md transition-all hover:bg-gray-800 hover:shadow-md"
               title="Open linear view"

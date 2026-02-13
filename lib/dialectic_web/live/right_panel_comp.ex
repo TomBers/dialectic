@@ -315,7 +315,13 @@ defmodule DialecticWeb.RightPanelComp do
             </button>
 
             <.link
-              navigate={graph_linear_path(@graph_struct)}
+              navigate={
+                graph_linear_path(
+                  @graph_struct,
+                  nil,
+                  if(assigns[:token], do: [token: assigns[:token]], else: [])
+                )
+              }
               target="_blank"
               rel="noopener noreferrer"
               class="w-full flex items-center justify-center px-2 py-1 rounded-md border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition-colors text-xs"
@@ -340,9 +346,12 @@ defmodule DialecticWeb.RightPanelComp do
 
             <.link
               href={
-                if @graph_struct && @graph_struct.slug,
-                  do: "/api/graphs/md/#{@graph_struct.slug}",
-                  else: "/api/graphs/md/#{URI.encode(@graph_id)}"
+                path =
+                  if @graph_struct && @graph_struct.slug,
+                    do: "/api/graphs/md/#{@graph_struct.slug}",
+                    else: "/api/graphs/md/#{URI.encode(@graph_id)}"
+
+                if assigns[:token], do: "#{path}?token=#{assigns[:token]}", else: path
               }
               download={
                 if @graph_struct && @graph_struct.slug,

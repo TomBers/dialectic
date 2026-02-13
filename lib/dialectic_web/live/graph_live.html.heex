@@ -20,7 +20,7 @@
       <%= if assigns[:graph_id] do %>
         <div class="pt-2">
           <.link
-            navigate={graph_linear_path(@graph_struct)}
+            navigate={graph_linear_path(@graph_struct, nil, token: @token)}
             class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 w-full"
           >
             <.icon name="hero-list-bullet" class="w-5 h-5 mr-2" /> Switch to Linear View
@@ -142,6 +142,7 @@
           group_states={@group_states}
           highlights={@highlights}
           prompt_mode={@prompt_mode}
+          token={@token}
         />
       </div>
     </div>
@@ -486,6 +487,7 @@
                 can_edit={@can_edit}
                 inline={true}
                 icons_only={false}
+                token={@token}
               />
               <div class="h-6 w-px bg-gray-200 mr-1 -ml-0.5"></div>
               <div class="flex items-center gap-1" data-role="settings-buttons-group">
