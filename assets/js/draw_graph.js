@@ -1230,15 +1230,17 @@ function _injectDepthToggleStyles() {
   background: #e2e8f0;
   transform: translate(-50%, 0) scale(0.95);
 }
-/* collapsed → blue tint "+N" pill */
+/* collapsed → warm amber "+N" pill — stands out from all node types */
 .depth-toggle-btn.depth-collapsed-btn {
-  background: #f0f9ff;
-  border-color: #7dd3fc;
-  color: #0369a1;
+  background: #fef3c7;
+  border-color: #f59e0b;
+  color: #92400e;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.45), 0 1px 2px rgba(0,0,0,0.08);
 }
 .depth-toggle-btn.depth-collapsed-btn:hover {
-  background: #e0f2fe;
-  border-color: #38bdf8;
+  background: #fde68a;
+  border-color: #d97706;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.6), 0 2px 4px rgba(0,0,0,0.12);
 }
 /* expanded → subtle grey "−" circle */
 .depth-toggle-btn.depth-expanded-btn {
