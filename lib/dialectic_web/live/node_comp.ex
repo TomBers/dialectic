@@ -133,7 +133,10 @@ defmodule DialecticWeb.NodeComp do
             <div class="summary-content modal-responsive" id={"tt-summary-content-" <> @node.id}>
               <div id={"node-content-#{@node.id}"}>
                 <div id={"node-content-inner-#{@node.id}"}>
-                  <article class="prose prose-stone prose-lg md:prose-xl max-w-none w-full prose-headings:mt-0 prose-p:leading-relaxed prose-li:leading-relaxed">
+                  <article
+                    class="prose prose-stone prose-lg md:prose-xl max-w-none w-full prose-headings:mt-0 prose-p:leading-relaxed prose-li:leading-relaxed"
+                    data-role="node-content"
+                  >
                     <%!-- Client-side Markdown rendering via Markdown hook --%>
                     <h3 class="mt-0 text-lg sm:text-xl md:text-2xl mb-2 sm:mb-3 pb-2 border-b border-gray-200 flex items-start justify-between gap-4">
                       <span

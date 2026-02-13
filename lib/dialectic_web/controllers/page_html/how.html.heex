@@ -1,372 +1,590 @@
 <div class="bg-white text-gray-900">
+  <%!-- Hero: headline + starter questions for immediate action --%>
   <section class="relative isolate overflow-hidden bg-gradient-to-br from-sky-50 via-white to-indigo-50">
-    <div class="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-16 sm:py-20">
-      <p class="inline-flex w-fit items-center gap-2 rounded-full bg-white/70 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-sky-700 ring-1 ring-sky-200">
-        Guide
-      </p>
+    <div class="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-16 sm:py-20">
       <div class="max-w-3xl space-y-4">
-        <h1 class="text-4xl font-bold leading-tight text-gray-900 sm:text-5xl">
-          How to Use MuDG
-        </h1>
-        <p class="text-lg text-gray-700">
-          Explore arguments with friends or students, build whiteboards together, and keep every thread of the conversation linked to evidence.
+        <p class="inline-flex w-fit items-center gap-2 rounded-full bg-white/70 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-sky-700 ring-1 ring-sky-200">
+          <.icon name="hero-book-open" class="h-3.5 w-3.5" /> Quick-start Guide
         </p>
+        <h1 class="text-4xl font-bold leading-tight text-gray-900 sm:text-5xl">
+          Turn any question into a visual knowledge map
+        </h1>
+        <p class="text-lg text-gray-600">
+          Ask a question, get an AI response, then branch into deeper follow-ups. Every answer becomes a connected node on a shared whiteboard you can revisit and grow.
+        </p>
+      </div>
 
-        <div class="flex flex-wrap gap-x-6 gap-y-2 pt-2">
+      <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-lg sm:p-8">
+        <p class="text-sm font-semibold uppercase tracking-wide text-indigo-600 mb-4">
+          Try it now &mdash; pick a question to start your first whiteboard
+        </p>
+        <div class="grid gap-3 sm:grid-cols-2">
           <a
-            href="#why"
-            class="text-sm font-semibold text-sky-700 hover:text-sky-900 hover:underline"
+            href={"/?#{URI.encode_query(%{"initial_prompt" => "What are the strongest arguments for and against universal basic income?"})}"}
+            class="group flex items-start gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4 transition hover:border-indigo-300 hover:bg-indigo-50 hover:shadow-md"
           >
-            Why MuDG?
+            <span class="mt-0.5 shrink-0 rounded-lg bg-indigo-100 p-2 text-indigo-600 group-hover:bg-indigo-200">
+              <.icon name="hero-scale" class="h-5 w-5" />
+            </span>
+            <div>
+              <p class="font-medium text-gray-900 group-hover:text-indigo-900">
+                Arguments for and against universal basic income?
+              </p>
+              <p class="mt-0.5 text-xs text-gray-500">Economics &middot; Policy</p>
+            </div>
           </a>
+
           <a
-            href="#walkthrough"
-            class="text-sm font-semibold text-sky-700 hover:text-sky-900 hover:underline"
+            href={"/?#{URI.encode_query(%{"initial_prompt" => "How does CRISPR gene editing work and what are its ethical implications?"})}"}
+            class="group flex items-start gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4 transition hover:border-indigo-300 hover:bg-indigo-50 hover:shadow-md"
           >
-            Walkthrough
+            <span class="mt-0.5 shrink-0 rounded-lg bg-emerald-100 p-2 text-emerald-600 group-hover:bg-emerald-200">
+              <.icon name="hero-beaker" class="h-5 w-5" />
+            </span>
+            <div>
+              <p class="font-medium text-gray-900 group-hover:text-indigo-900">
+                How does CRISPR gene editing work and what are its ethical implications?
+              </p>
+              <p class="mt-0.5 text-xs text-gray-500">Science &middot; Ethics</p>
+            </div>
           </a>
+
           <a
-            href="#teaching"
-            class="text-sm font-semibold text-sky-700 hover:text-sky-900 hover:underline"
+            href={"/?#{URI.encode_query(%{"initial_prompt" => "Compare the philosophies of Stoicism and Existentialism on finding meaning in life"})}"}
+            class="group flex items-start gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4 transition hover:border-indigo-300 hover:bg-indigo-50 hover:shadow-md"
           >
-            For Teachers
+            <span class="mt-0.5 shrink-0 rounded-lg bg-violet-100 p-2 text-violet-600 group-hover:bg-violet-200">
+              <.icon name="hero-light-bulb" class="h-5 w-5" />
+            </span>
+            <div>
+              <p class="font-medium text-gray-900 group-hover:text-indigo-900">
+                Compare Stoicism and Existentialism on finding meaning in life
+              </p>
+              <p class="mt-0.5 text-xs text-gray-500">Philosophy &middot; Comparison</p>
+            </div>
           </a>
+
           <a
-            href="#about"
-            class="text-sm font-semibold text-sky-700 hover:text-sky-900 hover:underline"
+            href={"/?#{URI.encode_query(%{"initial_prompt" => "What caused the fall of the Roman Empire and what parallels exist today?"})}"}
+            class="group flex items-start gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4 transition hover:border-indigo-300 hover:bg-indigo-50 hover:shadow-md"
           >
-            About
+            <span class="mt-0.5 shrink-0 rounded-lg bg-amber-100 p-2 text-amber-600 group-hover:bg-amber-200">
+              <.icon name="hero-globe-alt" class="h-5 w-5" />
+            </span>
+            <div>
+              <p class="font-medium text-gray-900 group-hover:text-indigo-900">
+                What caused the fall of the Roman Empire and what parallels exist today?
+              </p>
+              <p class="mt-0.5 text-xs text-gray-500">History &middot; Analysis</p>
+            </div>
           </a>
+        </div>
+
+        <div class="mt-5 flex flex-col items-center gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:justify-between">
+          <p class="text-sm text-gray-500">Or write your own question&hellip;</p>
+          <div class="flex flex-wrap gap-3">
+            <a
+              href="/"
+              class="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 transition"
+            >
+              <.icon name="hero-plus" class="h-4 w-4" /> Create a whiteboard
+            </a>
+            <a
+              href="/inspiration"
+              class="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-indigo-700 ring-1 ring-indigo-200 hover:bg-indigo-50 transition"
+            >
+              <.icon name="hero-sparkles" class="h-4 w-4" /> Get inspired
+            </a>
+          </div>
         </div>
       </div>
     </div>
   </section>
-  
-<!-- Why section -->
-  <section id="why" class="mx-auto max-w-6xl px-4 py-8">
-    <div class="relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-200">
-      <div
-        class="absolute inset-0 bg-gradient-to-r from-indigo-50 via-white to-sky-50"
-        aria-hidden="true"
-      >
-      </div>
 
-      <div class="relative p-8 sm:p-10">
-        <div class="mx-auto max-w-3xl text-center">
-          <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Why MuDG?</h2>
-          <p class="mt-3 text-lg text-gray-600">
-            A better way to explore complex topics: structured, collaborative, and easy to share.
+  <%!-- How it works: 3 clear steps --%>
+  <section id="steps" class="mx-auto max-w-5xl px-4 py-12 sm:py-16">
+    <div class="text-center mb-10">
+      <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+        How it works
+      </h2>
+      <p class="mt-2 text-gray-600">Three steps from question to knowledge map</p>
+    </div>
+
+    <div class="grid gap-8 sm:grid-cols-3">
+      <div class="relative rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div class="mb-4 inline-flex items-center justify-center rounded-full bg-sky-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-sky-700">
+          1
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900">Ask a question</h3>
+        <p class="mt-2 text-sm text-gray-600">
+          Type any topic or question. The AI generates a structured response that becomes the first node on your whiteboard.
+        </p>
+        <div class="mt-4 rounded-lg bg-gray-50 border border-gray-100 p-3">
+          <p class="text-xs text-gray-400 mb-1">Example</p>
+          <p class="text-sm text-gray-700 italic">
+            &ldquo;What are the main theories of consciousness?&rdquo;
           </p>
         </div>
-
-        <ul class="mt-8 grid gap-4 sm:grid-cols-3">
-          <li class="rounded-xl bg-white/60 p-5 transition hover:bg-white/80">
-            <div class="flex items-start gap-3">
-              <span class="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white">
-                <.icon name="hero-sparkles" class="h-6 w-6 shrink-0 text-[#3a0ca3]" />
-              </span>
-              <div>
-                <p class="font-semibold text-gray-900">See the structure of your thinking</p>
-                <p class="mt-1 text-sm text-gray-600">
-                  Turn messy, linear chat into a visual map of how ideas branch, connect, and evolve, so you can dive deep without losing the bigger picture.
-                </p>
-              </div>
-            </div>
-          </li>
-
-          <li class="rounded-xl bg-white/60 p-5 transition hover:bg-white/80">
-            <div class="flex items-start gap-3">
-              <span class="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white">
-                <.icon name="hero-user-group" class="h-6 w-6 shrink-0 text-[#3e35c9]" />
-              </span>
-              <div>
-                <p class="font-semibold text-gray-900">Explore together in real time</p>
-                <p class="mt-1 text-sm text-gray-600">
-                  Invite others into the same MuDG to add questions, examples, and perspectives as you go, turning solitary learning into a shared exploration.
-                </p>
-              </div>
-            </div>
-          </li>
-
-          <li class="rounded-xl bg-white/60 p-5 transition hover:bg-white/80">
-            <div class="flex items-start gap-3">
-              <span class="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white">
-                <.icon name="hero-circle-stack" class="h-6 w-6 shrink-0 text-[#4361ee]" />
-              </span>
-              <div>
-                <p class="font-semibold text-gray-900">Build on a living knowledge base</p>
-                <p class="mt-1 text-sm text-gray-600">
-                  Reuse existing whiteboards, follow others’ explorations, and connect your own ideas to what the community is already mapping.
-                </p>
-              </div>
-            </div>
-          </li>
-        </ul>
       </div>
+
+      <div class="relative rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div class="mb-4 inline-flex items-center justify-center rounded-full bg-amber-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-amber-700">
+          2
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900">Branch deeper</h3>
+        <p class="mt-2 text-sm text-gray-600">
+          Highlight any word or phrase in a response and ask a follow-up. Each new answer links to the exact concept it came from.
+        </p>
+        <div class="mt-4 rounded-lg bg-gray-50 border border-gray-100 p-3">
+          <div class="flex flex-wrap gap-1.5 text-xs">
+            <span class="rounded bg-indigo-100 px-2 py-0.5 text-indigo-700">Related ideas</span>
+            <span class="rounded bg-emerald-100 px-2 py-0.5 text-emerald-700">
+              Pros &amp; Cons
+            </span>
+            <span class="rounded bg-violet-100 px-2 py-0.5 text-violet-700">Combine</span>
+            <span class="rounded bg-rose-100 px-2 py-0.5 text-rose-700">Explore all</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="relative rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div class="mb-4 inline-flex items-center justify-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-emerald-700">
+          3
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900">Share &amp; revisit</h3>
+        <p class="mt-2 text-sm text-gray-600">
+          Your whiteboard persists. Share the link so others can explore the same map, add their own branches, or pick up where you left off.
+        </p>
+        <div class="mt-4 rounded-lg bg-gray-50 border border-gray-100 p-3 text-xs text-gray-500 flex items-center gap-2">
+          <.icon name="hero-link" class="h-4 w-4 text-gray-400" />
+          <span>Share a direct link to the full map or any single node</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-8 text-center">
+      <a
+        href="/"
+        class="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 transition"
+      >
+        Create your whiteboard now <.icon name="hero-arrow-right" class="h-4 w-4" />
+      </a>
     </div>
   </section>
 
-  <section id="walkthrough" class="mx-auto max-w-6xl px-4 py-10 sm:py-14 space-y-12">
-    <div class="grid gap-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:grid-cols-2 sm:p-8">
-      <div class="space-y-3">
-        <div class="inline-flex items-center rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-sky-700 ring-1 ring-sky-200">
-          Step 1
-        </div>
-        <h2 class="text-2xl font-semibold text-gray-900">Start a conversation</h2>
-        <p class="text-gray-700">
-          Pick a topic, invite collaborators, and ask MuDG to map the ideas. Every reply becomes part of the shared whiteboard so you can reference it later.
-          <br /><br />
-          If you’re not sure where to start, try the <a
-            href="/inspiration"
-            class="font-medium text-sky-700 underline hover:text-sky-800"
-          >
-            Inspire me
-          </a>page for ideas.
-        </p>
-      </div>
-      <div class="rounded-xl bg-gradient-to-r from-indigo-50 to-sky-50 p-6 ring-1 ring-indigo-100">
-        <p class="text-base font-medium text-gray-800">Quick tips</p>
-        <ul class="mt-3 list-disc space-y-2 pl-4 text-gray-700">
-          <li>
-            Use follow-up questions to expand the whiteboard with evidence and counter-points.
-          </li>
-          <li>Use actions to quickly create chains of thought</li>
-          <li>Save snapshots when you reach agreement to revisit the reasoning later.</li>
-        </ul>
-      </div>
-    </div>
-
+  <%!-- Interface walkthrough --%>
+  <section class="mx-auto max-w-5xl px-4 py-10 sm:py-14">
     <div
-      class="group grid gap-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8"
-      phx-hook="InterfaceHighlight"
-      data-interface-highlight-initial=""
+      class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8 space-y-8"
       id="interface-highlight"
     >
-      <div class="space-y-4">
+      <div class="space-y-3">
         <div class="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-indigo-700 ring-1 ring-indigo-200">
-          Step 2
+          Your workspace
         </div>
-        <h3 class="text-2xl font-semibold text-gray-900">Get comfortable with the interface</h3>
-        <p class="text-gray-700">
-          Hover the labels to see which part of the workspace they control.
+        <h3 class="text-2xl font-semibold text-gray-900">
+          Everything in one view
+        </h3>
+        <p class="text-gray-600 text-sm">
+          The workspace is split into three areas that stay visible at once: a reading panel on the left, an interactive graph on the right, and a toolbar at the bottom.
         </p>
       </div>
 
-      <div class="relative">
-        <div class="overflow-hidden rounded-xl border border-gray-200 bg-gray-900/5 shadow-md">
-          <img
-            src="/images/graph_live.webp"
-            alt="MuDG interface showing responses, mind map visualisation, action tools, and admin panel"
-            class="block w-full h-auto"
-          />
-          <div class="pointer-events-none absolute inset-0">
-            <div
-              class="absolute rounded-lg ring-4 ring-yellow-300 bg-yellow-300/10 shadow-[0_0_0_6px_rgba(253,224,71,0.45)] transition-opacity duration-200 opacity-0 group-data-[interface-highlight-active=responses]:opacity-100"
-              aria-hidden="true"
-              style="left: 0.8%; top: 0.8%; width: 37.586%; height: 98.4%;"
-            >
+      <%!-- 1. Reading Panel --%>
+      <div class="rounded-xl border border-indigo-100 bg-gradient-to-br from-indigo-50/40 to-white p-5 space-y-4">
+        <div class="flex items-center gap-2">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-100">
+            <.icon name="hero-document-text" class="h-5 w-5 text-indigo-600" />
+          </span>
+          <h4 class="text-lg font-semibold text-gray-900">Reading Panel</h4>
+        </div>
+        <p class="text-sm text-gray-600">
+          The left side shows the full AI response for the currently selected node. Read the content, then interact with it directly:
+        </p>
+
+        <div class="rounded-lg border border-indigo-100 bg-white p-4">
+          <p class="text-xs font-semibold uppercase tracking-wide text-indigo-600 mb-3">
+            Select any text to&hellip;
+          </p>
+          <div class="grid gap-2 sm:grid-cols-2">
+            <div class="flex items-start gap-2.5">
+              <span class="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-indigo-100">
+                <.icon name="hero-chat-bubble-left-ellipsis" class="h-4 w-4 text-indigo-600" />
+              </span>
+              <div>
+                <p class="text-sm font-medium text-gray-900">Explain</p>
+                <p class="text-xs text-gray-500">
+                  Get a deeper explanation linked to the exact phrase
+                </p>
+              </div>
             </div>
-            <div
-              class="absolute rounded-lg ring-4 ring-yellow-300 bg-yellow-300/10 shadow-[0_0_0_6px_rgba(253,224,71,0.45)] transition-opacity duration-200 opacity-0 group-data-[interface-highlight-active=graph]:opacity-100"
-              aria-hidden="true"
-              style="left: 39.986%; top: 0.8%; width: 29.225%; height: 76.854%;"
-            >
+            <div class="flex items-start gap-2.5">
+              <span class="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-sky-100">
+                <.icon name="hero-question-mark-circle" class="h-4 w-4 text-sky-600" />
+              </span>
+              <div>
+                <p class="text-sm font-medium text-gray-900">Ask a question</p>
+                <p class="text-xs text-gray-500">
+                  Type your own follow-up about the highlighted passage
+                </p>
+              </div>
             </div>
-            <div
-              class="absolute rounded-lg ring-4 ring-yellow-300 bg-yellow-300/10 shadow-[0_0_0_6px_rgba(253,224,71,0.45)] transition-opacity duration-200 opacity-0 group-data-[interface-highlight-active=tools]:opacity-100"
-              aria-hidden="true"
-              style="left: 43.172%; top: 85.461%; width: 33.666%; height: 13.622%;"
-            >
+            <div class="flex items-start gap-2.5">
+              <span class="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-amber-100">
+                <.icon name="hero-paint-brush" class="h-4 w-4 text-amber-600" />
+              </span>
+              <div>
+                <p class="text-sm font-medium text-gray-900">Highlight</p>
+                <p class="text-xs text-gray-500">Save an important passage for later reference</p>
+              </div>
             </div>
-            <div
-              class="absolute rounded-lg ring-4 ring-yellow-300 bg-yellow-300/10 shadow-[0_0_0_6px_rgba(253,224,71,0.45)] transition-opacity duration-200 opacity-0 group-data-[interface-highlight-active=admin]:opacity-100"
-              aria-hidden="true"
-              style="left: 80.8%; top: 0.8%; width: 18.254%; height: 98.166%;"
-            >
+            <div class="flex items-start gap-2.5">
+              <span class="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-emerald-100">
+                <.icon
+                  name="hero-chat-bubble-bottom-center-text"
+                  class="h-4 w-4 text-emerald-600"
+                />
+              </span>
+              <div>
+                <p class="text-sm font-medium text-gray-900">Comment</p>
+                <p class="text-xs text-gray-500">
+                  Add your own annotation or note to any passage
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="grid gap-3 sm:grid-cols-2">
-        <div
-          class="rounded-lg border border-gray-200 bg-gray-50/60 p-3 transition-colors hover:border-indigo-200 hover:bg-indigo-50/50"
-          data-interface-highlight-trigger="responses"
-        >
-          <p class="text-sm font-semibold text-indigo-700">Responses</p>
-          <p class="text-sm text-gray-700">
-            The text content.
-          </p>
+      <%!-- 2. Graph Canvas --%>
+      <div class="rounded-xl border border-sky-100 bg-gradient-to-br from-sky-50/40 to-white p-5 space-y-4">
+        <div class="flex items-center gap-2">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-sky-100">
+            <.icon name="hero-map" class="h-5 w-5 text-sky-600" />
+          </span>
+          <h4 class="text-lg font-semibold text-gray-900">Graph Canvas</h4>
         </div>
-
-        <div
-          class="rounded-lg border border-gray-200 bg-gray-50/60 p-3 transition-colors hover:border-sky-200 hover:bg-sky-50/60"
-          data-interface-highlight-trigger="graph"
-        >
-          <p class="text-sm font-semibold text-sky-700">Mind Map</p>
-          <p class="text-sm text-gray-700">
-            An interactive whiteboard of ideas and their relationships.
-          </p>
-        </div>
-
-        <div
-          class="rounded-lg border border-gray-200 bg-gray-50/60 p-3 transition-colors hover:border-amber-200 hover:bg-amber-50/60"
-          data-interface-highlight-trigger="tools"
-        >
-          <p class="text-sm font-semibold text-amber-700">Action tools</p>
-          <p class="text-sm text-gray-700">
-            Controls for common actions: Pros / Cons, exploring related ideas, combining concepts, Translate and Deep Dive.
-          </p>
-        </div>
-
-        <div
-          class="rounded-lg border border-gray-200 bg-gray-50/60 p-3 transition-colors hover:border-emerald-200 hover:bg-emerald-50/60"
-          data-interface-highlight-trigger="admin"
-        >
-          <p class="text-sm font-semibold text-emerald-700">Admin panel</p>
-          <p class="text-sm text-gray-700">
-            Search, set LLM personality, control who has access, create groups, see notes others have written, share the whiteboard, and download the content.
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <div class="flex justify-center">
-      <a
-        href="/"
-        class={[
-          "group inline-flex items-center justify-center gap-2 rounded-lg px-6 py-3 text-md font-semibold text-white shadow-sm",
-          "bg-gradient-to-r from-[#3a0ca3] to-[#4361ee] ring-1 ring-white/15 transition",
-          "hover:shadow-md hover:-translate-y-0.5 hover:ring-white/25",
-          "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4361ee]"
-        ]}
-      >
-        <span>Get started</span>
-        <.icon
-          name="hero-arrow-right"
-          class="h-4 w-4 transition-transform group-hover:translate-x-0.5"
-        />
-      </a>
-    </div>
-
-    <div class="grid gap-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
-      <div class="space-y-3">
-        <div class="inline-flex items-center rounded-full bg-violet-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-violet-700 ring-1 ring-violet-200">
-          Step 3
-        </div>
-        <h3 class="text-2xl font-semibold text-gray-900">Share and download your work</h3>
-        <p class="text-gray-700">
-          MuDG makes it easy to share what you’ve built and take it offline.
-        </p>
-        <ul class="mt-4 list-disc space-y-2 pl-5 text-gray-700">
-          <li>
-            <span class="font-semibold text-gray-900">Unique URLs:</span>
-            every mind map and every node has its own unique URL, so you can share a specific overview or a single point with anyone.
-          </li>
-          <li>
-            <span class="font-semibold text-gray-900">Private mind maps:</span>
-            mind maps can be made private so only people with the access code can view them.
-          </li>
-          <li>
-            <span class="font-semibold text-gray-900">Download anything:</span>
-            export your work as PDF, PNG, or Markdown for printing, sharing, or editing offline.
-          </li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="grid gap-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:grid-cols-2 sm:p-8">
-      <div class="space-y-3">
-        <div class="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-700 ring-1 ring-amber-200">
-          Important Info
-        </div>
-        <h3 class="text-2xl font-semibold text-gray-900">Desktop Recommended</h3>
-        <p class="text-gray-700">
-          For the best experience, MuDG is designed to be used on a <strong>desktop computer</strong>.
-          <br /><br />
-          The mobile version is optimized for <strong>read-only access</strong>, allowing you to explore existing conversations in a linear format, but creating and editing mind maps requires the screen real estate of a desktop.
+        <p class="text-sm text-gray-600">
+          The right side is an interactive node-and-edge map of your entire whiteboard. Click any node to read it, drag to rearrange, and scroll to zoom. You always see how the current idea fits into the bigger picture.
         </p>
       </div>
 
-      <div class="space-y-3">
-        <div class="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-blue-700 ring-1 ring-blue-200">
-          Why Register?
+      <%!-- 3. Action Toolbar --%>
+      <div class="rounded-xl border border-amber-100 bg-gradient-to-br from-amber-50/40 to-white p-5 space-y-4">
+        <div class="flex items-center gap-2">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100">
+            <.icon name="hero-wrench-screwdriver" class="h-5 w-5 text-amber-600" />
+          </span>
+          <h4 class="text-lg font-semibold text-gray-900">Action Toolbar</h4>
         </div>
-        <h3 class="text-2xl font-semibold text-gray-900">Create an Account</h3>
-        <p class="text-gray-700">
-          While you can explore without logging in, creating an account unlocks the full potential of MuDG:
+        <p class="text-sm text-gray-600">
+          The bottom bar gives you one-click tools that operate on whichever node is selected. Each generates new connected nodes on your map:
         </p>
-        <ul class="mt-2 list-disc space-y-2 pl-5 text-gray-700">
+
+        <div class="grid gap-3 sm:grid-cols-2">
+          <%!-- Related Ideas --%>
+          <div class="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3">
+            <span class="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-orange-500 text-white">
+              <.icon name="hero-light-bulb" class="h-5 w-5" />
+            </span>
+            <div>
+              <p class="text-sm font-semibold text-gray-900">Related Ideas</p>
+              <p class="text-xs text-gray-500">
+                Generate connected concepts, counterpoints, or tangential topics branching from the current node.
+              </p>
+            </div>
+          </div>
+
+          <%!-- Pros & Cons --%>
+          <div class="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3">
+            <span class="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-gradient-to-r from-emerald-500 to-rose-500 text-white">
+              <.icon name="hero-scale" class="h-5 w-5" />
+            </span>
+            <div>
+              <p class="text-sm font-semibold text-gray-900">Pros &amp; Cons</p>
+              <p class="text-xs text-gray-500">
+                Create a balanced argument map with supporting and opposing points linked to the claim.
+              </p>
+            </div>
+          </div>
+
+          <%!-- Combine --%>
+          <div class="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3">
+            <span class="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-violet-500 text-white">
+              <.icon name="hero-arrows-pointing-in" class="h-5 w-5" />
+            </span>
+            <div>
+              <p class="text-sm font-semibold text-gray-900">Combine</p>
+              <p class="text-xs text-gray-500">
+                Merge two nodes into a synthesized response that draws on both perspectives.
+              </p>
+            </div>
+          </div>
+
+          <%!-- Explore All --%>
+          <div class="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3">
+            <span class="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-gradient-to-r from-fuchsia-500 via-rose-500 to-amber-500 text-white">
+              <.icon name="hero-sparkles" class="h-5 w-5" />
+            </span>
+            <div>
+              <p class="text-sm font-semibold text-gray-900">Explore All</p>
+              <p class="text-xs text-gray-500">
+                Auto-detect every key point in a response and branch into each one at once.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <%!-- 4. Reading & Controls --%>
+      <div class="rounded-xl border border-emerald-100 bg-gradient-to-br from-emerald-50/40 to-white p-5 space-y-4">
+        <div class="flex items-center gap-2">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100">
+            <.icon name="hero-cog-6-tooth" class="h-5 w-5 text-emerald-600" />
+          </span>
+          <h4 class="text-lg font-semibold text-gray-900">Reading Tools &amp; Controls</h4>
+        </div>
+        <p class="text-sm text-gray-600">
+          Additional tools sit alongside the action buttons for navigating, saving, and sharing your work:
+        </p>
+
+        <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          <div class="flex items-center gap-2.5 rounded-lg border border-gray-200 bg-white px-3 py-2.5">
+            <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-yellow-100">
+              <.icon name="hero-star" class="h-4 w-4 text-yellow-600" />
+            </span>
+            <div>
+              <p class="text-sm font-medium text-gray-900">Notes</p>
+              <p class="text-xs text-gray-500">Star nodes you want to revisit</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2.5 rounded-lg border border-gray-200 bg-white px-3 py-2.5">
+            <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gray-700">
+              <.icon name="hero-document-text" class="h-4 w-4 text-white" />
+            </span>
+            <div>
+              <p class="text-sm font-medium text-gray-900">Linear View</p>
+              <p class="text-xs text-gray-500">Read the full thread as a page</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2.5 rounded-lg border border-gray-200 bg-white px-3 py-2.5">
+            <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gray-100">
+              <.icon name="hero-globe-alt" class="h-4 w-4 text-gray-600" />
+            </span>
+            <div>
+              <p class="text-sm font-medium text-gray-900">Translate</p>
+              <p class="text-xs text-gray-500">Open any node in Google Translate</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2.5 rounded-lg border border-gray-200 bg-white px-3 py-2.5">
+            <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gray-100">
+              <.icon name="hero-eye" class="h-4 w-4 text-gray-600" />
+            </span>
+            <div>
+              <p class="text-sm font-medium text-gray-900">View Options</p>
+              <p class="text-xs text-gray-500">Change graph layout and display</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2.5 rounded-lg border border-gray-200 bg-white px-3 py-2.5">
+            <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gray-100">
+              <.icon name="hero-bookmark" class="h-4 w-4 text-gray-600" />
+            </span>
+            <div>
+              <p class="text-sm font-medium text-gray-900">Highlights</p>
+              <p class="text-xs text-gray-500">See all saved highlights in one panel</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2.5 rounded-lg border border-gray-200 bg-white px-3 py-2.5">
+            <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-indigo-500">
+              <.icon name="hero-arrow-up-tray" class="h-4 w-4 text-white" />
+            </span>
+            <div>
+              <p class="text-sm font-medium text-gray-900">Share</p>
+              <p class="text-xs text-gray-500">Share the map or control who can edit</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <%!-- Why this is better than chat (compact) --%>
+  <section id="why" class="mx-auto max-w-5xl px-4 py-10 sm:py-14">
+    <div class="rounded-2xl border border-gray-200 bg-gradient-to-br from-gray-50 to-white p-6 shadow-sm sm:p-8">
+      <h2 class="text-2xl font-bold tracking-tight text-gray-900 text-center mb-8">
+        Why a whiteboard instead of a chat?
+      </h2>
+
+      <div class="grid gap-6 sm:grid-cols-3">
+        <div class="flex items-start gap-3">
+          <span class="mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-50">
+            <.icon name="hero-sparkles" class="h-5 w-5 text-indigo-600" />
+          </span>
+          <div>
+            <p class="font-semibold text-gray-900">Structure is visible</p>
+            <p class="mt-1 text-sm text-gray-600">
+              See how claims, evidence, and counterpoints connect instead of scrolling through a flat thread.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-3">
+          <span class="mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sky-50">
+            <.icon name="hero-user-group" class="h-5 w-5 text-sky-600" />
+          </span>
+          <div>
+            <p class="font-semibold text-gray-900">Collaborative by default</p>
+            <p class="mt-1 text-sm text-gray-600">
+              Share one link. Multiple people explore the same map and add their own branches.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-3">
+          <span class="mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-50">
+            <.icon name="hero-circle-stack" class="h-5 w-5 text-violet-600" />
+          </span>
+          <div>
+            <p class="font-semibold text-gray-900">Learning compounds</p>
+            <p class="mt-1 text-sm text-gray-600">
+              Your map persists. Come back later, review branches, and continue from where you stopped.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-8 flex justify-center">
+        <a
+          href="/"
+          class="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 transition"
+        >
+          Start building yours <.icon name="hero-arrow-right" class="h-4 w-4" />
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <%!-- Feature grid (compressed) --%>
+  <section class="mx-auto max-w-5xl px-4 py-10 sm:py-14">
+    <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+      <h3 class="text-xl font-semibold text-gray-900 mb-6">Key capabilities</h3>
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="flex items-start gap-3">
+          <.icon name="hero-share" class="h-5 w-5 shrink-0 text-indigo-500 mt-0.5" />
+          <div>
+            <p class="text-sm font-semibold text-gray-900">Graph-native answers</p>
+            <p class="text-xs text-gray-600">
+              Every AI response is a node in a connected structure.
+            </p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <.icon name="hero-cursor-arrow-rays" class="h-5 w-5 shrink-0 text-sky-500 mt-0.5" />
+          <div>
+            <p class="text-sm font-semibold text-gray-900">Term-level deep dives</p>
+            <p class="text-xs text-gray-600">
+              Highlight a phrase to generate focused sub-branches.
+            </p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <.icon name="hero-users" class="h-5 w-5 shrink-0 text-emerald-500 mt-0.5" />
+          <div>
+            <p class="text-sm font-semibold text-gray-900">Shared whiteboards</p>
+            <p class="text-xs text-gray-600">
+              Multiple people build understanding on the same map.
+            </p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <.icon name="hero-clock" class="h-5 w-5 shrink-0 text-violet-500 mt-0.5" />
+          <div>
+            <p class="text-sm font-semibold text-gray-900">Persistent &amp; searchable</p>
+            <p class="text-xs text-gray-600">
+              Maps remain available, searchable, and linkable over time.
+            </p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <.icon name="hero-link" class="h-5 w-5 shrink-0 text-amber-500 mt-0.5" />
+          <div>
+            <p class="text-sm font-semibold text-gray-900">Linkable context</p>
+            <p class="text-xs text-gray-600">
+              Share the full map or direct links to specific nodes.
+            </p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <.icon name="hero-arrow-down-tray" class="h-5 w-5 shrink-0 text-rose-500 mt-0.5" />
+          <div>
+            <p class="text-sm font-semibold text-gray-900">Portable output</p>
+            <p class="text-xs text-gray-600">
+              Export your work for review, teaching, or documentation.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <%!-- Teacher's guide (compact) --%>
+  <section id="teaching" class="mx-auto max-w-5xl px-4 py-10 sm:py-14">
+    <div class="grid gap-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:grid-cols-3 sm:p-8">
+      <div class="sm:col-span-2 space-y-3">
+        <p class="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-700 ring-1 ring-emerald-200">
+          <.icon name="hero-academic-cap" class="h-3.5 w-3.5 mr-1" /> For educators
+        </p>
+        <h3 class="text-2xl font-semibold text-gray-900">
+          Set up a classroom whiteboard
+        </h3>
+        <p class="text-gray-600 text-sm">
+          Create a structured idea map for a lesson, then share one URL so students explore the same concept together.
+        </p>
+        <ol class="list-decimal space-y-1.5 pl-5 text-sm text-gray-700">
           <li>
-            <strong>Save your work:</strong>
-            Keep track of all your mind maps and notes in one place.
+            <span class="font-semibold text-gray-900">Seed the map</span>
+            with key questions, claims, or sources.
           </li>
           <li>
-            <strong>Contribute:</strong>
-            Your usage and feedback help shape the future of this project.
+            <span class="font-semibold text-gray-900">Guide exploration</span>
+            &mdash; direct students to specific nodes.
           </li>
-        </ul>
+          <li>
+            <span class="font-semibold text-gray-900">Share one link</span>
+            &mdash; everyone works on the same whiteboard.
+          </li>
+        </ol>
         <div class="pt-2">
           <a
-            href="/users/register"
-            class="text-sm font-semibold text-blue-600 hover:text-blue-500"
+            href="/"
+            class="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 transition"
           >
-            Sign up for free &rarr;
+            <.icon name="hero-plus" class="h-4 w-4" /> Create a class whiteboard
           </a>
         </div>
       </div>
-    </div>
 
-    <div
-      id="teaching"
-      class="grid gap-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:grid-cols-3 sm:p-8"
-    >
-      <div class="sm:col-span-2 space-y-3">
-        <p class="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-700 ring-1 ring-emerald-200">
-          Teacher's Guide
-        </p>
-        <h3 class="text-2xl font-semibold text-gray-900">
-          Create, lock, and share a classroom whiteboard
-        </h3>
-        <p class="text-gray-700">
-          Use MuDG to build a structured “map” of a topic, then lock it so students explore the learning path you designed.
-          Share a URL so everyone can join the same whiteboard.
-        </p>
-        <ol class="list-decimal space-y-2 pl-5 text-gray-700">
-          <li>
-            <span class="font-semibold text-gray-900">Create a whiteboard:</span>
-            start an exploration and build out the key nodes, claims, and sources for your topic.
-          </li>
-          <li>
-            <span class="font-semibold text-gray-900">Lock it in the Admin panel:</span>
-            use the lock feature to prevent unintended edits while students navigate and discuss.
-          </li>
-          <li>
-            <span class="font-semibold text-gray-900">Share the URL:</span>
-            send the link to students so they can follow the whiteboard, ask questions, and add notes where allowed.
-          </li>
-        </ol>
-        <p class="text-gray-700">
-          You can also have groups build competing whiteboards and then merge the best claims into a shared synthesis.
-        </p>
-      </div>
-
-      <div class="rounded-xl bg-gradient-to-br from-emerald-50 to-white p-5 ring-1 ring-emerald-100">
-        <p class="text-sm font-semibold text-emerald-800">Share the guide</p>
-        <p class="mt-2 text-sm text-gray-700">
-          Copy this page URL and paste it into your lesson plan, LMS, or class chat.
-        </p>
+      <div class="rounded-xl bg-gradient-to-br from-emerald-50 to-white p-5 ring-1 ring-emerald-100 flex flex-col justify-between">
+        <div>
+          <p class="text-sm font-semibold text-emerald-800">Share this guide</p>
+          <p class="mt-2 text-sm text-gray-600">
+            Copy this page URL into your LMS or class chat.
+          </p>
+        </div>
         <button
           type="button"
-          class="mt-4 inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+          class="mt-4 inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
           onclick="
             (async () => {
               const btn = this;
               const original = btn.dataset.originalText || btn.textContent.trim();
               btn.dataset.originalText = original;
-
               const url = window.location.href;
-
               try {
                 if (navigator.clipboard && navigator.clipboard.writeText) {
                   await navigator.clipboard.writeText(url);
@@ -376,18 +594,15 @@
                   ta.setAttribute('readonly', 'true');
                   ta.style.position = 'fixed';
                   ta.style.top = '-9999px';
-                  ta.style.left = '-9999px';
                   document.body.appendChild(ta);
                   ta.select();
                   document.execCommand('copy');
                   document.body.removeChild(ta);
                 }
-
                 btn.textContent = 'Copied!';
               } catch (_e) {
                 btn.textContent = 'Copy failed';
               }
-
               window.clearTimeout(btn._copyResetTimer);
               btn._copyResetTimer = window.setTimeout(() => {
                 btn.textContent = original;
@@ -395,130 +610,64 @@
             })();
           "
         >
-          Copy lesson link
+          <.icon name="hero-clipboard-document" class="h-4 w-4" /> Copy lesson link
         </button>
-        <p class="mt-2 text-xs text-emerald-900/70">
-          Clicking will copy the current page URL to your clipboard.
-        </p>
-      </div>
-    </div>
-
-    <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
-      <div class="space-y-4">
-        <p class="inline-flex items-center rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-sky-700 ring-1 ring-sky-200">
-          Teaching Tips
-        </p>
-        <h3 class="text-2xl font-semibold text-gray-900">Teaching Tips</h3>
-        <div class="grid gap-4 sm:grid-cols-2">
-          <div class="rounded-xl bg-gray-50/60 p-4 ring-1 ring-gray-200">
-            <p class="font-semibold text-gray-900">Multiple Whiteboards</p>
-            <p class="mt-1 text-gray-700">
-              Create different whiteboards for various units or difficulty levels
-            </p>
-          </div>
-
-          <div class="rounded-xl bg-gray-50/60 p-4 ring-1 ring-gray-200">
-            <p class="font-semibold text-gray-900">Collaborative Learning</p>
-            <p class="mt-1 text-gray-700">
-              Use MuDG as a tool during class discussions
-            </p>
-          </div>
-
-          <div class="rounded-xl bg-gray-50/60 p-4 ring-1 ring-gray-200">
-            <p class="font-semibold text-gray-900">Student Presentations</p>
-            <p class="mt-1 text-gray-700">
-              Have students present their path explorations
-            </p>
-          </div>
-
-          <div class="rounded-xl bg-gray-50/60 p-4 ring-1 ring-gray-200">
-            <p class="font-semibold text-gray-900">Assessment</p>
-            <p class="mt-1 text-gray-700">
-              Compare student-created whiteboards for evaluation
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   </section>
-  
-<!-- About section -->
-  <section id="about" class="mx-auto max-w-6xl px-4 py-12 sm:py-16">
+
+  <%!-- About (minimal) --%>
+  <section id="about" class="mx-auto max-w-5xl px-4 py-10 sm:py-14">
     <div class="rounded-2xl bg-gray-50 border border-gray-200 p-8 sm:p-12">
-      <div class="mx-auto max-w-3xl">
-        <h2 class="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl mb-6 text-center">
+      <div class="mx-auto max-w-2xl text-center space-y-4">
+        <h2 class="text-2xl font-bold tracking-tight text-gray-900">
           About Dialectic
         </h2>
-
-        <div class="prose prose-lg text-gray-600 max-w-none space-y-6">
-          <p>
-            Dialectic (MuDG) was built on the belief that the future of learning isn't linear—it's networked. While traditional AI assistants offer ephemeral exchanges, we aim to transform interactions into persistent, evolving mind maps that mirror how human curiosity naturally branches and connects.
-          </p>
-
-          <p>
-            Our philosophy is simple:
-          </p>
-          <ul class="list-disc pl-5 space-y-2">
-            <li>
-              <strong>Speed matters:</strong>
-              We optimize for cognitive flow by minimizing technical friction.
-            </li>
-            <li>
-              <strong>Simplicity enables depth:</strong>
-              A clean interface allows deeper engagement with complex ideas.
-            </li>
-            <li>
-              <strong>Persistence creates value:</strong>
-              Unlike fleeting chats, mind maps accumulate insights over time.
-            </li>
-          </ul>
-
-          <div class="mt-8 pt-6 border-t border-gray-200 text-sm text-center">
-            <p>
-              Dialectic is an open source, single-person project by <a
-                href="https://github.com/TomBers"
-                class="text-indigo-600 font-medium hover:underline"
-              >Tom Berman</a>. <a
-                href="https://github.com/TomBers/dialectic"
-                class="text-indigo-600 font-medium hover:underline ml-2"
-              >View source on GitHub</a>.
-            </p>
-          </div>
+        <p class="text-gray-600">
+          Built on a simple idea: learning branches, loops, and connects. Dialectic transforms AI conversations into visual, persistent knowledge maps so insight accumulates instead of disappearing in a scrollback.
+        </p>
+        <div class="pt-2 text-sm text-gray-500">
+          An open source project by <a
+            href="https://github.com/TomBers"
+            class="text-indigo-600 font-medium hover:underline"
+          >Tom Berman</a>. <a
+            href="https://github.com/TomBers/dialectic"
+            class="text-indigo-600 font-medium hover:underline ml-2"
+          >View source on GitHub</a>.
         </div>
       </div>
     </div>
   </section>
 
-  <footer class="mt-16 relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen bg-gradient-to-r from-[#3a0ca3] to-[#4361ee]">
-    <section class="mx-auto max-w-7xl px-6 py-8 text-center text-white">
-      <div class="flex flex-col md:flex-row items-center justify-center gap-6">
-        <h2 class="text-xl font-semibold tracking-tight">
-          Ready to transform your learning?
-        </h2>
-        <div class="flex flex-wrap justify-center gap-3">
-          <a
-            href="/"
-            class="inline-flex items-center rounded-full bg-white text-[#3a0ca3] px-4 py-1.5 text-sm font-semibold shadow-sm ring-1 ring-white/20 hover:bg-white/90 transition"
-          >
-            Start exploring
-          </a>
-          <a
-            href="https://x.com/TJCBerman"
-            target="_blank"
-            class="inline-flex items-center gap-2 rounded-full bg-white/10 text-white px-4 py-1.5 text-sm font-semibold ring-1 ring-white/20 hover:bg-white/15 transition"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-4 w-4"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-            </svg>
-            Follow
-          </a>
-        </div>
+  <%!-- Final CTA banner --%>
+  <footer class="mt-10 relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen bg-gradient-to-r from-[#3a0ca3] to-[#4361ee]">
+    <section class="mx-auto max-w-5xl px-6 py-10 text-center text-white space-y-6">
+      <h2 class="text-2xl font-bold tracking-tight">
+        Ready to build your first knowledge map?
+      </h2>
+      <p class="text-indigo-200 max-w-xl mx-auto">
+        Pick a starter question or ask your own. Your whiteboard is one click away.
+      </p>
+      <div class="flex flex-wrap justify-center gap-3">
+        <a
+          href="/"
+          class="inline-flex items-center gap-2 rounded-full bg-white text-[#3a0ca3] px-6 py-2.5 text-sm font-semibold shadow-sm ring-1 ring-white/20 hover:bg-white/90 transition"
+        >
+          <.icon name="hero-plus" class="h-4 w-4" /> Create a whiteboard
+        </a>
+        <a
+          href="/view_all/graphs"
+          class="inline-flex items-center gap-2 rounded-full bg-white/10 text-white px-6 py-2.5 text-sm font-semibold ring-1 ring-white/20 hover:bg-white/15 transition"
+        >
+          <.icon name="hero-eye" class="h-4 w-4" /> Browse existing maps
+        </a>
+        <a
+          href="https://x.com/TJCBerman"
+          target="_blank"
+          class="inline-flex items-center gap-2 rounded-full bg-white/10 text-white px-6 py-2.5 text-sm font-semibold ring-1 ring-white/20 hover:bg-white/15 transition"
+        >
+          <.icon name="hero-arrow-right" class="h-4 w-4" /> Follow
+        </a>
       </div>
     </section>
   </footer>

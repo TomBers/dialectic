@@ -208,6 +208,9 @@
       class="fixed bottom-0 left-0 md:relative w-full p-4 md:p-0 md:w-2/5 flex flex-col bg-white md:border-r md:border-gray-200 z-90 transform translate-x-0 opacity-100 transition-all duration-300 ease-in-out"
     >
       <div class="flex-1 overflow-y-auto">
+        <%= if @graph_id do %>
+          <.live_component module={DialecticWeb.WhatsNextComp} id="whats-next-onboarding" />
+        <% end %>
         <.live_component
           module={NodeComp}
           id="node-comp"
@@ -485,48 +488,50 @@
                 icons_only={false}
               />
               <div class="h-6 w-px bg-gray-200 mr-1 -ml-0.5"></div>
-              <button
-                type="button"
-                phx-click={
-                  JS.dispatch("toggle-panel",
-                    to: "#graph-layout",
-                    detail: %{id: "graph-nav-drawer"}
-                  )
-                }
-                class="p-1.5 rounded-lg transition-colors text-gray-500 hover:bg-gray-100 hover:text-gray-900"
-                data-panel-toggle="graph-nav-drawer"
-                aria-label="Toggle view options"
-                title="View Options"
-              >
-                <.icon name="hero-eye" class="w-5 h-5" />
-              </button>
-              <button
-                type="button"
-                phx-click={
-                  JS.dispatch("toggle-panel",
-                    to: "#graph-layout",
-                    detail: %{id: "highlights-drawer"}
-                  )
-                }
-                class="p-1.5 rounded-lg transition-colors text-gray-500 hover:bg-gray-100 hover:text-gray-900"
-                data-panel-toggle="highlights-drawer"
-                aria-label="Toggle highlights"
-                title="Highlights"
-              >
-                <.icon name="hero-bookmark" class="w-5 h-5" />
-              </button>
-              <button
-                type="button"
-                phx-click={
-                  JS.dispatch("toggle-panel", to: "#graph-layout", detail: %{id: "right-panel"})
-                }
-                class="p-1.5 rounded-lg transition-colors text-gray-500 hover:bg-gray-100 hover:text-gray-900"
-                data-panel-toggle="right-panel"
-                aria-label="Toggle settings"
-                title="Settings"
-              >
-                <.icon name="hero-adjustments-horizontal" class="w-5 h-5" />
-              </button>
+              <div class="flex items-center gap-1" data-role="settings-buttons-group">
+                <button
+                  type="button"
+                  phx-click={
+                    JS.dispatch("toggle-panel",
+                      to: "#graph-layout",
+                      detail: %{id: "graph-nav-drawer"}
+                    )
+                  }
+                  class="p-1.5 rounded-lg transition-colors text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+                  data-panel-toggle="graph-nav-drawer"
+                  aria-label="Toggle view options"
+                  title="View Options"
+                >
+                  <.icon name="hero-eye" class="w-5 h-5" />
+                </button>
+                <button
+                  type="button"
+                  phx-click={
+                    JS.dispatch("toggle-panel",
+                      to: "#graph-layout",
+                      detail: %{id: "highlights-drawer"}
+                    )
+                  }
+                  class="p-1.5 rounded-lg transition-colors text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+                  data-panel-toggle="highlights-drawer"
+                  aria-label="Toggle highlights"
+                  title="Highlights"
+                >
+                  <.icon name="hero-bookmark" class="w-5 h-5" />
+                </button>
+                <button
+                  type="button"
+                  phx-click={
+                    JS.dispatch("toggle-panel", to: "#graph-layout", detail: %{id: "right-panel"})
+                  }
+                  class="p-1.5 rounded-lg transition-colors text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+                  data-panel-toggle="right-panel"
+                  aria-label="Toggle settings"
+                  title="Settings"
+                >
+                  <.icon name="hero-adjustments-horizontal" class="w-5 h-5" />
+                </button>
+              </div>
             </div>
             <div class="flex items-center gap-2 min-w-0">
               <div class="flex items-center gap-1 flex-none"></div>

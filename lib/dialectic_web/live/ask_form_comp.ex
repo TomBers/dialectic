@@ -60,7 +60,7 @@ defmodule DialecticWeb.AskFormComp do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="w-full min-w-0 space-y-1.5">
+    <div class="w-full min-w-0 space-y-1.5" data-role="ask-form-container">
       <%!-- Current Node Indicator --%>
       <%= if @node && @node.id do %>
         <div class="flex items-center justify-center gap-2 px-3 py-1.5 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 rounded-lg">
