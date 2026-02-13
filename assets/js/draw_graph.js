@@ -651,6 +651,36 @@ export function draw_graph(
   cy.collapseNodeChildren = (n) =>
     collapseNodeChildren(cy, typeof n === "string" ? cy.getElementById(n) : n);
 
+  // ── Depth-toggle overlay buttons (expand/collapse via mouse click) ──
+  _injectDepthToggleStyles();
+
+  // Rebuild overlay buttons after every layout completes (covers init + expand/collapse relayouts)
+  cy.on("layoutstop", () => {
+    _rebuildDepthToggleOverlays(cy, container);
+  });
+
+  // Keep button positions in sync with pan / zoom / animation
+  cy.on("render", () => {
+    _updateDepthTogglePositions(cy);
+  });
+
+  // Build initial overlays — the first layoutstop may fire before the listener
+  // above is registered (if dagre finishes synchronously), so schedule a fallback.
+  requestAnimationFrame(() => {
+    _rebuildDepthToggleOverlays(cy, container);
+  });
+
+  // Expose cleanup so graph_hook.js can remove the overlay on destroy
+  cy.cleanupDepthOverlay = () => {
+    try {
+      if (cy._depthToggleOverlay && cy._depthToggleOverlay.parentNode) {
+        cy._depthToggleOverlay.parentNode.removeChild(cy._depthToggleOverlay);
+      }
+      cy._depthToggleOverlay = null;
+      cy._depthToggleButtons = null;
+    } catch (_e) {}
+  };
+
   return cy;
 }
 
@@ -1074,4 +1104,193 @@ function _relayoutAfterDepthChange(cy) {
       animationDuration: 250,
     }).run();
   } catch (_e) {}
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Depth-toggle overlay buttons (DOM elements over the canvas)
+   ═══════════════════════════════════════════════════════════ */
+
+/** Inject the CSS for toggle buttons once into <head> */
+function _injectDepthToggleStyles() {
+  if (document.getElementById("depth-toggle-styles")) return;
+  const s = document.createElement("style");
+  s.id = "depth-toggle-styles";
+  s.textContent = `
+.depth-toggle-overlay {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 10;
+  overflow: hidden;
+}
+.depth-toggle-btn {
+  pointer-events: auto;
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  color: #475569;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease,
+              box-shadow 0.15s ease, transform 0.1s ease;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  user-select: none;
+  transform: translate(-50%, 0);
+  line-height: 1;
+  white-space: nowrap;
+}
+.depth-toggle-btn:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+}
+.depth-toggle-btn:active {
+  background: #e2e8f0;
+  transform: translate(-50%, 0) scale(0.95);
+}
+/* collapsed → blue tint "+N" pill */
+.depth-toggle-btn.depth-collapsed-btn {
+  background: #f0f9ff;
+  border-color: #7dd3fc;
+  color: #0369a1;
+}
+.depth-toggle-btn.depth-collapsed-btn:hover {
+  background: #e0f2fe;
+  border-color: #38bdf8;
+}
+/* expanded → subtle grey "−" circle */
+.depth-toggle-btn.depth-expanded-btn {
+  background: #ffffff;
+  border-color: #d1d5db;
+  color: #6b7280;
+}
+.depth-toggle-btn.depth-expanded-btn:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}`;
+  document.head.appendChild(s);
+}
+
+/**
+ * (Re)build all toggle buttons for the current set of visible, expandable
+ * nodes.  Called after every layout-stop and after the initial render.
+ */
+function _rebuildDepthToggleOverlays(cy, container) {
+  if (!container) return;
+
+  _injectDepthToggleStyles();
+
+  // Create or reuse the overlay container
+  let overlay = container.querySelector(".depth-toggle-overlay");
+  if (!overlay) {
+    overlay = document.createElement("div");
+    overlay.className = "depth-toggle-overlay";
+    // Ensure the graph container is a positioning context
+    const pos = getComputedStyle(container).position;
+    if (pos === "static") container.style.position = "relative";
+    container.appendChild(overlay);
+  }
+
+  // Clear old buttons
+  overlay.innerHTML = "";
+
+  // Store refs on the cy instance for position updates
+  cy._depthToggleOverlay = overlay;
+  cy._depthToggleButtons = new Map();
+
+  // Find visible, non-compound nodes that have DAG children
+  const visible = cy
+    .nodes()
+    .filter(
+      (n) =>
+        !n.isParent() && !n.hasClass("depth-hidden") && !n.hasClass("hidden"),
+    );
+
+  visible.forEach((n) => {
+    const children = n.outgoers("node").filter((m) => !m.isParent());
+    if (children.length === 0) return; // leaf — no button
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "depth-toggle-btn";
+    btn.dataset.nodeId = n.id();
+
+    const collapsed = isDepthCollapsed(n);
+    const hiddenCount = n.data("_hiddenChildCount") || children.length;
+
+    if (collapsed) {
+      btn.textContent = `+${hiddenCount}`;
+      btn.classList.add("depth-collapsed-btn");
+      btn.title = `Expand ${hiddenCount} hidden child${hiddenCount === 1 ? "" : "ren"} (E)`;
+    } else {
+      btn.textContent = "\u2212"; // minus sign
+      btn.classList.add("depth-expanded-btn");
+      btn.title = `Collapse ${children.length} child${children.length === 1 ? "" : "ren"} (C)`;
+    }
+
+    // Stop events from reaching the Cytoscape canvas beneath
+    btn.addEventListener("mousedown", (e) => e.stopPropagation());
+    btn.addEventListener("pointerdown", (e) => e.stopPropagation());
+
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (isDepthCollapsed(n)) {
+        expandNodeChildren(cy, n);
+      } else {
+        collapseNodeChildren(cy, n);
+      }
+      // layoutstop from _relayoutAfterDepthChange will rebuild overlays
+    });
+
+    overlay.appendChild(btn);
+    cy._depthToggleButtons.set(n.id(), btn);
+  });
+
+  _updateDepthTogglePositions(cy);
+}
+
+/**
+ * Reposition every toggle button to sit at the bottom-centre of its node.
+ * Called on every Cytoscape render frame so buttons track pan/zoom smoothly.
+ */
+function _updateDepthTogglePositions(cy) {
+  if (!cy._depthToggleButtons) return;
+
+  cy._depthToggleButtons.forEach((btn, nodeId) => {
+    const node = cy.getElementById(nodeId);
+    if (
+      !node ||
+      node.length === 0 ||
+      node.hasClass("depth-hidden") ||
+      node.hasClass("hidden")
+    ) {
+      btn.style.display = "none";
+      return;
+    }
+
+    const bb = node.renderedBoundingBox({ includeLabels: false });
+    if (!bb || bb.w === 0) {
+      btn.style.display = "none";
+      return;
+    }
+
+    // Centre horizontally, 2 px below node bottom
+    const x = (bb.x1 + bb.x2) / 2;
+    const y = bb.y2 + 2;
+
+    btn.style.display = "";
+    btn.style.left = `${x}px`;
+    btn.style.top = `${y}px`;
+  });
 }

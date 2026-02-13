@@ -1088,6 +1088,12 @@ const graphHook = {
       this._zoomToast.parentNode.removeChild(this._zoomToast);
       this._zoomToast = null;
     }
+    // Clean up depth-toggle overlay buttons
+    if (this.cy && typeof this.cy.cleanupDepthOverlay === "function") {
+      try {
+        this.cy.cleanupDepthOverlay();
+      } catch (_e) {}
+    }
     if (this.cy && typeof this.cy.destroy === "function") {
       try {
         this.cy.destroy();
