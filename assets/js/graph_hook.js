@@ -240,7 +240,7 @@ const ensureVisible = (cy, container, nodeId) => {
 
 const graphHook = {
   mounted() {
-    const { graph, node, div } = this.el.dataset;
+    const { graph, node, div, graphId } = this.el.dataset;
 
     const container =
       this.el.querySelector(`#${div}`) || document.getElementById(div);
@@ -249,7 +249,14 @@ const graphHook = {
     const viewMode = localStorage.getItem("graph_view_mode") || "spaced";
     const graphDirection = localStorage.getItem("graph_direction") || "TB";
 
-    this.cy = draw_graph(container, this, JSON.parse(graph), node, viewMode);
+    this.cy = draw_graph(
+      container,
+      this,
+      JSON.parse(graph),
+      node,
+      viewMode,
+      graphId,
+    );
 
     // Track view mode and direction for detecting changes
     this._lastViewMode = viewMode;
@@ -724,12 +731,14 @@ const graphHook = {
     }
 
     // Recreate with new view mode
+    const graphId = this.el.dataset.graphId;
     this.cy = draw_graph(
       this._container,
       this,
       JSON.parse(graphStr),
       currentNode,
       currentViewMode,
+      graphId,
     );
 
     // Restore zoom and pan

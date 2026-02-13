@@ -19,6 +19,7 @@ export function draw_graph(
   elements,
   node,
   viewMode = "spaced",
+  graphId = null,
 ) {
   // Check if we have a small graph (2 nodes)
 
@@ -57,12 +58,42 @@ export function draw_graph(
     maxZoom: layoutConfig.zoomSettings.max || 4.0,
   });
 
-  // ── Auto-collapse large graphs before first layout ──
-  const didCollapse = autoCollapseGraph(cy);
+  // Store graphId on the cy instance so persistence helpers can find it
+  cy._graphId = graphId || null;
+
+  // ── Restore or auto-collapse large graphs before first layout ──
+  // savedState is:
+  //   null           → never saved (first visit) → auto-collapse if large
+  //   {}  (empty)    → user explicitly expanded everything → honour that
+  //   {id: true, …}  → specific collapse state → restore it
+  let didCollapse = false;
+  const savedState = _loadDepthStateFromStorage(graphId);
+
+  if (savedState !== null && Object.keys(savedState).length > 0) {
+    // Persisted collapse state exists — restore it
+    computeNodeDepths(cy);
+    Object.keys(savedState).forEach((id) => {
+      const n = cy.getElementById(id);
+      if (n && n.length > 0 && !n.isParent()) {
+        n.data("_depthCollapsed", "true");
+        n.addClass("node-collapsed");
+      }
+    });
+    recomputeDepthVisibility(cy);
+    didCollapse = true;
+  } else if (savedState === null) {
+    // No saved state at all (first visit) — auto-collapse if the graph is large
+    didCollapse = autoCollapseGraph(cy);
+    if (didCollapse) {
+      _persistDepthState(cy);
+    }
+  }
+  // else: savedState is {} → user previously expanded all, leave graph fully open
 
   // If the target node ended up hidden, expand its ancestors so it's visible
   if (didCollapse && node) {
     ensureDepthVisible(cy, node);
+    _persistDepthState(cy);
   }
 
   // Now run the initial layout (only visible nodes are positioned)
@@ -934,6 +965,7 @@ function collapseNodeChildren(cy, node) {
   node.data("_depthCollapsed", "true");
   node.addClass("node-collapsed");
   recomputeDepthVisibility(cy);
+  _persistDepthState(cy);
   _relayoutAfterDepthChange(cy);
 }
 
@@ -948,6 +980,7 @@ function expandNodeChildren(cy, node) {
   node.removeData("_depthCollapsed");
   node.removeClass("node-collapsed");
   recomputeDepthVisibility(cy);
+  _persistDepthState(cy);
   _relayoutAfterDepthChange(cy);
 }
 
@@ -969,6 +1002,7 @@ function expandAllDepth(cy) {
       n.removeClass("node-collapsed");
     });
   recomputeDepthVisibility(cy);
+  _persistDepthState(cy);
   _relayoutAfterDepthChange(cy);
 }
 
@@ -985,6 +1019,7 @@ function collapseAllDepth(cy, maxDepth) {
     }
   });
   recomputeDepthVisibility(cy);
+  _persistDepthState(cy);
   _relayoutAfterDepthChange(cy);
 }
 
@@ -1049,6 +1084,7 @@ function ensureDepthVisible(cy, nodeId) {
 
   if (changed) {
     recomputeDepthVisibility(cy);
+    _persistDepthState(cy);
   }
 }
 
@@ -1082,6 +1118,42 @@ function restoreDepthCollapseState(cy, state) {
   });
 
   recomputeDepthVisibility(cy);
+}
+
+/* ─── localStorage persistence for depth-collapse state ─── */
+
+/** Build the localStorage key for a given graph */
+function _depthStorageKey(graphId) {
+  return graphId ? `dialectic_depth_collapse_${graphId}` : null;
+}
+
+/** Persist the current collapse flags to localStorage.
+ *  An empty object ({}) is stored intentionally — it means
+ *  "user explicitly expanded everything" and must be distinguished
+ *  from a missing key (null) which means "first visit".
+ */
+function _persistDepthState(cy) {
+  const key = _depthStorageKey(cy._graphId);
+  if (!key) return;
+  try {
+    const state = saveDepthCollapseState(cy);
+    localStorage.setItem(key, JSON.stringify(state));
+  } catch (_e) {}
+}
+
+/** Load saved collapse flags from localStorage (returns object or null) */
+function _loadDepthStateFromStorage(graphId) {
+  const key = _depthStorageKey(graphId);
+  if (!key) return null;
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return parsed;
+    }
+  } catch (_e) {}
+  return null;
 }
 
 /**
