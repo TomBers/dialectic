@@ -96,9 +96,6 @@ export function draw_graph(
     _persistDepthState(cy);
   }
 
-  // Now run the initial layout (only visible nodes are positioned)
-  cy.layout(layoutOptions).run();
-
   // Figma-like navigation controls
   // - Scroll to pan (Shift for horizontal bias)
   // - Cmd/Ctrl+Scroll or trackpad pinch to zoom at cursor
@@ -113,6 +110,10 @@ export function draw_graph(
   cy.on("layoutstop", () => {
     layoutRunning = false;
   });
+
+  // Now run the initial layout (only visible nodes are positioned)
+  // Placed after layoutRunning listeners so the initial layout is tracked
+  cy.layout(layoutOptions).run();
 
   // Disable Cytoscape's default wheel zoom so we fully control it
   cy.userZoomingEnabled(false);
@@ -653,8 +654,9 @@ export function draw_graph(
   context.handleEvent("collapse_all_depth", (payload) => {
     try {
       const maxDepth =
-        (payload && payload.max_depth) ||
-        DEPTH_COLLAPSE_DEFAULTS.initialMaxDepth;
+        payload && payload.max_depth != null
+          ? payload.max_depth
+          : DEPTH_COLLAPSE_DEFAULTS.initialMaxDepth;
       collapseAllDepth(cy, maxDepth);
     } catch (_e) {}
   });
@@ -690,9 +692,16 @@ export function draw_graph(
     _rebuildDepthToggleOverlays(cy, container);
   });
 
-  // Keep button positions in sync with pan / zoom / animation
+  // Keep button positions in sync with pan / zoom / animation (throttled to 1 rAF)
+  let _depthToggleRafPending = false;
   cy.on("render", () => {
-    _updateDepthTogglePositions(cy);
+    if (!_depthToggleRafPending) {
+      _depthToggleRafPending = true;
+      requestAnimationFrame(() => {
+        _depthToggleRafPending = false;
+        _updateDepthTogglePositions(cy);
+      });
+    }
   });
 
   // Build initial overlays — the first layoutstop may fire before the listener
@@ -870,8 +879,9 @@ function computeNodeDepths(cy) {
     queue.push(n);
   });
 
-  while (queue.length > 0) {
-    const current = queue.shift();
+  let qi = 0;
+  while (qi < queue.length) {
+    const current = queue[qi++];
     const currentDepth = current.data("_depth");
     const children = current.outgoers("node").filter((n) => !n.isParent());
     children.forEach((child) => {
@@ -909,8 +919,9 @@ function recomputeDepthVisibility(cy) {
   const queue = [...roots.toArray()];
   const visited = new Set(roots.toArray().map((n) => n.id()));
 
-  while (queue.length > 0) {
-    const current = queue.shift();
+  let qi = 0;
+  while (qi < queue.length) {
+    const current = queue[qi++];
     if (isDepthCollapsed(current)) continue; // don't reveal children
 
     const children = current.outgoers("node").filter((n) => !n.isParent());
@@ -984,15 +995,6 @@ function expandNodeChildren(cy, node) {
   _relayoutAfterDepthChange(cy);
 }
 
-/** Toggle collapse state of a node */
-function toggleNodeCollapse(cy, node) {
-  if (isDepthCollapsed(node)) {
-    expandNodeChildren(cy, node);
-  } else {
-    collapseNodeChildren(cy, node);
-  }
-}
-
 /** Expand every depth-collapsed node in the graph */
 function expandAllDepth(cy) {
   cy.nodes()
@@ -1060,8 +1062,9 @@ function ensureDepthVisible(cy, nodeId) {
   // Collect all ancestors via upward BFS
   const ancestors = new Set();
   const queue = [node];
-  while (queue.length > 0) {
-    const current = queue.shift();
+  let qi = 0;
+  while (qi < queue.length) {
+    const current = queue[qi++];
     const parents = current.incomers("node").filter((n) => !n.isParent());
     parents.forEach((p) => {
       if (!ancestors.has(p.id())) {
@@ -1297,6 +1300,7 @@ function _rebuildDepthToggleOverlays(cy, container) {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "depth-toggle-btn";
+    btn.tabIndex = -1; // keep out of tab order — canvas controls aren't keyboard-navigable
     btn.dataset.nodeId = n.id();
 
     const collapsed = isDepthCollapsed(n);
@@ -1306,10 +1310,18 @@ function _rebuildDepthToggleOverlays(cy, container) {
       btn.textContent = `+${hiddenCount}`;
       btn.classList.add("depth-collapsed-btn");
       btn.title = `Expand ${hiddenCount} hidden child${hiddenCount === 1 ? "" : "ren"} (E)`;
+      btn.setAttribute(
+        "aria-label",
+        `Expand ${hiddenCount} hidden child${hiddenCount === 1 ? "" : "ren"} of node ${n.id()}`,
+      );
     } else {
       btn.textContent = "\u2212"; // minus sign
       btn.classList.add("depth-expanded-btn");
       btn.title = `Collapse ${children.length} child${children.length === 1 ? "" : "ren"} (C)`;
+      btn.setAttribute(
+        "aria-label",
+        `Collapse ${children.length} child${children.length === 1 ? "" : "ren"} of node ${n.id()}`,
+      );
     }
 
     // Stop events from reaching the Cytoscape canvas beneath

@@ -163,11 +163,7 @@ export function graphStyle(viewMode = "spaced") {
 
         /* label ----------------------------------------------------------- */
         label: (ele) => {
-          let text = processNodeContent(ele.data("content") || "");
-          const hiddenCount = ele.data("_hiddenChildCount");
-          if (hiddenCount && hiddenCount > 0) {
-            text += `  \u25B8 +${hiddenCount}`;
-          }
+          const text = processNodeContent(ele.data("content") || "");
           return text;
         },
 
