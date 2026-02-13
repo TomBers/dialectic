@@ -163,7 +163,12 @@ export function graphStyle(viewMode = "spaced") {
 
         /* label ----------------------------------------------------------- */
         label: (ele) => {
-          return processNodeContent(ele.data("content") || "");
+          let text = processNodeContent(ele.data("content") || "");
+          const hiddenCount = ele.data("_hiddenChildCount");
+          if (hiddenCount && hiddenCount > 0) {
+            text += `  \u25B8 +${hiddenCount}`;
+          }
+          return text;
         },
 
         /* font & layout --------------------------------------------------- */
@@ -219,6 +224,16 @@ export function graphStyle(viewMode = "spaced") {
       },
     },
     { selector: ".hidden", style: { display: "none" } },
+    { selector: ".depth-hidden", style: { display: "none" } },
+
+    /* Visual indicator for nodes whose children are collapsed */
+    {
+      selector: ".node-collapsed",
+      style: {
+        "border-style": "double",
+        "border-width": isCompact ? 2.5 : 3.5,
+      },
+    },
 
     /* draw the parent differently when it's collapsed --- */
     {

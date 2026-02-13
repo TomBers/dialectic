@@ -647,6 +647,13 @@ const graphHook = {
         this.cy.elements().removeClass("selected");
         const nodeToCenter = this.cy.getElementById(id);
         if (nodeToCenter.length > 0) {
+          // If the node is depth-hidden, expand its ancestors to make it visible
+          if (
+            nodeToCenter.hasClass("depth-hidden") &&
+            typeof this.cy.ensureDepthVisible === "function"
+          ) {
+            this.cy.ensureDepthVisible(id);
+          }
           nodeToCenter.addClass("selected");
 
           // Keep the dataset in sync so other consumers (and hooks) can rely on it
@@ -841,6 +848,14 @@ const graphHook = {
     if (!sameGraph) this._lastGraphStr = graphStr;
 
     if (!sameGraph) {
+      // Save depth-collapse state before replacing elements
+      let savedDepthState = null;
+      if (this.cy && typeof this.cy.saveDepthCollapseState === "function") {
+        try {
+          savedDepthState = this.cy.saveDepthCollapseState();
+        } catch (_e) {}
+      }
+
       if (this.cy && typeof this.cy.startBatch === "function")
         this.cy.startBatch();
       if (this.cy && typeof this.cy.scratch === "function") {
@@ -856,6 +871,17 @@ const graphHook = {
       }
       if (typeof this.cy.enforceCollapsedState === "function") {
         this.cy.enforceCollapsedState();
+      }
+
+      // Restore depth-collapse state after element reload
+      if (
+        savedDepthState &&
+        Object.keys(savedDepthState).length > 0 &&
+        typeof this.cy.restoreDepthCollapseState === "function"
+      ) {
+        try {
+          this.cy.restoreDepthCollapseState(savedDepthState);
+        } catch (_e) {}
       }
     }
 

@@ -7,6 +7,12 @@ import { layoutConfig } from "./layout_config.js";
 cytoscape.use(dagre);
 cytoscape.use(compoundDragAndDrop);
 
+/* ─── Depth-based collapse configuration ─── */
+export const DEPTH_COLLAPSE_DEFAULTS = {
+  nodeThreshold: 10, // Auto-collapse when graph has more non-compound nodes than this
+  initialMaxDepth: 1, // Show root (depth 0) + depth 1; collapse children of depth ≥ 1
+};
+
 export function draw_graph(
   graph,
   context,
@@ -46,10 +52,21 @@ export function draw_graph(
 
     boxSelectionEnabled: false, // box selection disabled
     autounselectify: false, // allow multi‑select
-    layout: layoutOptions,
+    // Layout is deferred — we apply depth-collapse first, then run layout manually
     minZoom: layoutConfig.zoomSettings.min || 0.05,
     maxZoom: layoutConfig.zoomSettings.max || 4.0,
   });
+
+  // ── Auto-collapse large graphs before first layout ──
+  const didCollapse = autoCollapseGraph(cy);
+
+  // If the target node ended up hidden, expand its ancestors so it's visible
+  if (didCollapse && node) {
+    ensureDepthVisible(cy, node);
+  }
+
+  // Now run the initial layout (only visible nodes are positioned)
+  cy.layout(layoutOptions).run();
 
   // Figma-like navigation controls
   // - Scroll to pan (Shift for horizontal bias)
@@ -214,6 +231,27 @@ export function draw_graph(
       cy.boxSelectionEnabled(false); // disable box to allow background drag to pan
       container.style.cursor = "grab";
       e.preventDefault();
+    }
+
+    // E = expand selected node's children, C = collapse
+    if (e.key === "e" || e.key === "E") {
+      const selected = cy.$(".selected").filter((n) => !n.isParent());
+      if (selected.length > 0 && isDepthCollapsed(selected[0])) {
+        expandNodeChildren(cy, selected[0]);
+        e.preventDefault();
+      }
+    }
+    if (e.key === "c" || e.key === "C") {
+      const selected = cy.$(".selected").filter((n) => !n.isParent());
+      if (selected.length > 0) {
+        const children = selected[0]
+          .outgoers("node")
+          .filter((n) => !n.isParent());
+        if (children.length > 0) {
+          collapseNodeChildren(cy, selected[0]);
+          e.preventDefault();
+        }
+      }
     }
   };
 
@@ -556,6 +594,40 @@ export function draw_graph(
     } catch (_e) {}
   });
 
+  // Depth-collapse events from LiveView
+  context.handleEvent("expand_node", ({ id }) => {
+    try {
+      const n = cy.getElementById(id);
+      if (n && n.length > 0 && !n.isParent()) {
+        expandNodeChildren(cy, n);
+      }
+    } catch (_e) {}
+  });
+
+  context.handleEvent("collapse_node", ({ id }) => {
+    try {
+      const n = cy.getElementById(id);
+      if (n && n.length > 0 && !n.isParent()) {
+        collapseNodeChildren(cy, n);
+      }
+    } catch (_e) {}
+  });
+
+  context.handleEvent("expand_all_depth", () => {
+    try {
+      expandAllDepth(cy);
+    } catch (_e) {}
+  });
+
+  context.handleEvent("collapse_all_depth", (payload) => {
+    try {
+      const maxDepth =
+        (payload && payload.max_depth) ||
+        DEPTH_COLLAPSE_DEFAULTS.initialMaxDepth;
+      collapseAllDepth(cy, maxDepth);
+    } catch (_e) {}
+  });
+
   // Enforce collapsed state for compound groups on init and common lifecycle hooks
   try {
     enforceCollapsedState(cy);
@@ -566,6 +638,18 @@ export function draw_graph(
 
   // Expose collapsed-state enforcement for external callers
   cy.enforceCollapsedState = () => enforceCollapsedState(cy);
+
+  // Expose depth-collapse helpers on the cy instance for graph_hook.js
+  cy.saveDepthCollapseState = () => saveDepthCollapseState(cy);
+  cy.restoreDepthCollapseState = (state) =>
+    restoreDepthCollapseState(cy, state);
+  cy.recomputeDepthVisibility = () => recomputeDepthVisibility(cy);
+  cy.autoCollapseGraph = (cfg) => autoCollapseGraph(cy, cfg);
+  cy.ensureDepthVisible = (id) => ensureDepthVisible(cy, id);
+  cy.expandNodeChildren = (n) =>
+    expandNodeChildren(cy, typeof n === "string" ? cy.getElementById(n) : n);
+  cy.collapseNodeChildren = (n) =>
+    collapseNodeChildren(cy, typeof n === "string" ? cy.getElementById(n) : n);
 
   return cy;
 }
@@ -699,5 +783,295 @@ function enforceCollapsedState(cy) {
       .forEach((n) => {
         collapse(n);
       });
+  } catch (_e) {}
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Depth-based progressive disclosure (DAG collapse/expand)
+   ═══════════════════════════════════════════════════════════ */
+
+/**
+ * BFS from root nodes to assign a `_depth` value to every non-compound node.
+ * Roots (no incoming edges from non-compound nodes) get depth 0.
+ */
+function computeNodeDepths(cy) {
+  const nodes = cy.nodes().filter((n) => !n.isParent());
+  const roots = nodes.filter(
+    (n) => n.incomers("node").filter((m) => !m.isParent()).length === 0,
+  );
+
+  // Initialise all depths to Infinity (unreachable)
+  nodes.forEach((n) => n.data("_depth", Infinity));
+
+  const queue = [];
+  roots.forEach((n) => {
+    n.data("_depth", 0);
+    queue.push(n);
+  });
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+    const currentDepth = current.data("_depth");
+    const children = current.outgoers("node").filter((n) => !n.isParent());
+    children.forEach((child) => {
+      const newDepth = currentDepth + 1;
+      if (newDepth < child.data("_depth")) {
+        child.data("_depth", newDepth);
+        queue.push(child);
+      }
+    });
+  }
+}
+
+/** Check whether a node's children are depth-collapsed */
+function isDepthCollapsed(node) {
+  if (!node || node.length === 0) return false;
+  const v = node.data("_depthCollapsed");
+  return v === true || v === "true";
+}
+
+/**
+ * Recompute visibility of every node/edge based on the current
+ * `_depthCollapsed` flags.  Visible = reachable from a root via a chain
+ * of non-collapsed ancestors.
+ */
+function recomputeDepthVisibility(cy) {
+  const nodes = cy.nodes().filter((n) => !n.isParent());
+  const roots = nodes.filter(
+    (n) => n.incomers("node").filter((m) => !m.isParent()).length === 0,
+  );
+
+  // Start: hide everything, then reveal reachable nodes
+  nodes.addClass("depth-hidden");
+  roots.forEach((n) => n.removeClass("depth-hidden"));
+
+  const queue = [...roots.toArray()];
+  const visited = new Set(roots.toArray().map((n) => n.id()));
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (isDepthCollapsed(current)) continue; // don't reveal children
+
+    const children = current.outgoers("node").filter((n) => !n.isParent());
+    children.forEach((child) => {
+      child.removeClass("depth-hidden");
+      if (!visited.has(child.id())) {
+        visited.add(child.id());
+        queue.push(child);
+      }
+    });
+  }
+
+  // Edges: hide if either endpoint is depth-hidden
+  cy.edges().forEach((edge) => {
+    const src = edge.source();
+    const tgt = edge.target();
+    if (src.hasClass("depth-hidden") || tgt.hasClass("depth-hidden")) {
+      edge.addClass("depth-hidden");
+    } else {
+      edge.removeClass("depth-hidden");
+    }
+  });
+
+  // Update badge counts on visible nodes
+  nodes
+    .filter((n) => !n.hasClass("depth-hidden"))
+    .forEach((n) => {
+      const allChildren = n.outgoers("node").filter((m) => !m.isParent());
+      const hiddenChildren = allChildren.filter((c) =>
+        c.hasClass("depth-hidden"),
+      );
+      n.data("_hiddenChildCount", hiddenChildren.length);
+    });
+
+  // Clear badge on hidden nodes so stale counts don't persist
+  nodes
+    .filter((n) => n.hasClass("depth-hidden"))
+    .forEach((n) => {
+      n.data("_hiddenChildCount", 0);
+    });
+}
+
+/**
+ * Collapse a node's children: mark it as depth-collapsed, recompute
+ * visibility, and re-run the layout so visible nodes reposition cleanly.
+ */
+function collapseNodeChildren(cy, node) {
+  if (!node || node.length === 0 || node.isParent()) return;
+  const children = node.outgoers("node").filter((n) => !n.isParent());
+  if (children.length === 0) return; // leaf node, nothing to collapse
+
+  node.data("_depthCollapsed", "true");
+  node.addClass("node-collapsed");
+  recomputeDepthVisibility(cy);
+  _relayoutAfterDepthChange(cy);
+}
+
+/**
+ * Expand a node's direct children: clear the collapsed flag, recompute
+ * visibility, and re-run the layout.
+ */
+function expandNodeChildren(cy, node) {
+  if (!node || node.length === 0 || node.isParent()) return;
+  if (!isDepthCollapsed(node)) return;
+
+  node.removeData("_depthCollapsed");
+  node.removeClass("node-collapsed");
+  recomputeDepthVisibility(cy);
+  _relayoutAfterDepthChange(cy);
+}
+
+/** Toggle collapse state of a node */
+function toggleNodeCollapse(cy, node) {
+  if (isDepthCollapsed(node)) {
+    expandNodeChildren(cy, node);
+  } else {
+    collapseNodeChildren(cy, node);
+  }
+}
+
+/** Expand every depth-collapsed node in the graph */
+function expandAllDepth(cy) {
+  cy.nodes()
+    .filter((n) => !n.isParent() && isDepthCollapsed(n))
+    .forEach((n) => {
+      n.removeData("_depthCollapsed");
+      n.removeClass("node-collapsed");
+    });
+  recomputeDepthVisibility(cy);
+  _relayoutAfterDepthChange(cy);
+}
+
+/** Collapse all nodes at or beyond `maxDepth` that have children */
+function collapseAllDepth(cy, maxDepth) {
+  computeNodeDepths(cy);
+  const nodes = cy.nodes().filter((n) => !n.isParent());
+  nodes.forEach((n) => {
+    const depth = n.data("_depth");
+    const children = n.outgoers("node").filter((m) => !m.isParent());
+    if (depth >= maxDepth && children.length > 0) {
+      n.data("_depthCollapsed", "true");
+      n.addClass("node-collapsed");
+    }
+  });
+  recomputeDepthVisibility(cy);
+  _relayoutAfterDepthChange(cy);
+}
+
+/**
+ * Auto-collapse a graph if it exceeds the node threshold.
+ * Returns `true` if collapse was applied.
+ */
+function autoCollapseGraph(cy, config) {
+  const cfg = { ...DEPTH_COLLAPSE_DEFAULTS, ...(config || {}) };
+  const nodes = cy.nodes().filter((n) => !n.isParent());
+
+  if (nodes.length <= cfg.nodeThreshold) return false;
+
+  computeNodeDepths(cy);
+
+  // Collapse every node at depth ≥ initialMaxDepth that has children
+  nodes.forEach((n) => {
+    const depth = n.data("_depth");
+    const children = n.outgoers("node").filter((m) => !m.isParent());
+    if (depth >= cfg.initialMaxDepth && children.length > 0) {
+      n.data("_depthCollapsed", "true");
+      n.addClass("node-collapsed");
+    }
+  });
+
+  recomputeDepthVisibility(cy);
+  return true;
+}
+
+/**
+ * Ensure a specific node is visible by expanding any collapsed ancestors
+ * along the path from a root to it.
+ */
+function ensureDepthVisible(cy, nodeId) {
+  const node = cy.getElementById(nodeId);
+  if (!node || node.length === 0 || !node.hasClass("depth-hidden")) return;
+
+  // Collect all ancestors via upward BFS
+  const ancestors = new Set();
+  const queue = [node];
+  while (queue.length > 0) {
+    const current = queue.shift();
+    const parents = current.incomers("node").filter((n) => !n.isParent());
+    parents.forEach((p) => {
+      if (!ancestors.has(p.id())) {
+        ancestors.add(p.id());
+        queue.push(p);
+      }
+    });
+  }
+
+  // Expand any collapsed ancestors along the path
+  let changed = false;
+  ancestors.forEach((id) => {
+    const anc = cy.getElementById(id);
+    if (anc && anc.length > 0 && isDepthCollapsed(anc)) {
+      anc.removeData("_depthCollapsed");
+      anc.removeClass("node-collapsed");
+      changed = true;
+    }
+  });
+
+  if (changed) {
+    recomputeDepthVisibility(cy);
+  }
+}
+
+/** Save current depth-collapse flags (node id → true) for persistence across cy.json() reloads */
+function saveDepthCollapseState(cy) {
+  const state = {};
+  try {
+    cy.nodes()
+      .filter((n) => !n.isParent())
+      .forEach((n) => {
+        if (isDepthCollapsed(n)) {
+          state[n.id()] = true;
+        }
+      });
+  } catch (_e) {}
+  return state;
+}
+
+/** Restore depth-collapse flags after a cy.json() reload and recompute visibility */
+function restoreDepthCollapseState(cy, state) {
+  if (!state || Object.keys(state).length === 0) return;
+
+  computeNodeDepths(cy);
+
+  Object.keys(state).forEach((id) => {
+    const node = cy.getElementById(id);
+    if (node && node.length > 0 && !node.isParent()) {
+      node.data("_depthCollapsed", "true");
+      node.addClass("node-collapsed");
+    }
+  });
+
+  recomputeDepthVisibility(cy);
+}
+
+/**
+ * Internal helper: re-run the dagre layout after a depth visibility change
+ * so that visible nodes reposition into a clean arrangement.
+ */
+function _relayoutAfterDepthChange(cy) {
+  try {
+    const viewMode = localStorage.getItem("graph_view_mode") || "spaced";
+    const graphDirection = localStorage.getItem("graph_direction") || "TB";
+    const baseLayout =
+      viewMode === "compact"
+        ? layoutConfig.compactLayout
+        : layoutConfig.baseLayout;
+
+    cy.layout({
+      ...baseLayout,
+      rankDir: graphDirection,
+      animate: true,
+      animationDuration: 250,
+    }).run();
   } catch (_e) {}
 }
