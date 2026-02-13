@@ -89,7 +89,8 @@ defmodule DialecticWeb.LinearGraphLive do
                 show_highlights: true,
                 show_highlights_list: false,
                 highlights: Highlights.list_highlights(mudg_id: graph_db.title),
-                selected_node_id: if(target_node, do: target_node.id, else: nil)
+                selected_node_id: if(target_node, do: target_node.id, else: nil),
+                token: token_param
               )
 
             {:ok, socket}

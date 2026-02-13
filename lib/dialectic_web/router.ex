@@ -56,6 +56,7 @@ defmodule DialecticWeb.Router do
     # Slug-based routes
     live "/g/:graph_name", GraphLive
     live "/g/:graph_name/linear", LinearGraphLive
+    get "/api/graphs/md/:graph_name", PageController, :graph_md
   end
 
   # Other scopes may use custom stacks.
@@ -63,7 +64,6 @@ defmodule DialecticWeb.Router do
     pipe_through :api
 
     # get "/graphs/json/:graph_name", PageController, :graph_json
-    get "/graphs/md/:graph_name", PageController, :graph_md
   end
 
   scope "/api", DialecticWeb do

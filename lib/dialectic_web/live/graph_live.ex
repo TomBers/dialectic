@@ -48,6 +48,7 @@ defmodule DialecticWeb.GraphLive do
           |> assign_defaults()
           |> subscribe_to_topics(graph_title, user)
           |> assign_graph_data(graph_db, graph_struct, node, graph_title, user)
+          |> assign(token: params["token"])
           |> handle_initial_highlight(initial_highlight_id)
 
         {:ok, socket}
