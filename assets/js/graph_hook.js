@@ -654,18 +654,50 @@ const graphHook = {
         this.cy.elements().removeClass("selected");
         const nodeToCenter = this.cy.getElementById(id);
         if (nodeToCenter.length > 0) {
+          // Track whether we need a full reflow
+          let needsReflow = false;
+
+          // If the node is inside a collapsed compound group, expand it
+          if (
+            nodeToCenter.hasClass("hidden") &&
+            typeof this.cy.ensureGroupVisible === "function"
+          ) {
+            needsReflow = this.cy.ensureGroupVisible(id) || needsReflow;
+          }
           // If the node is depth-hidden, expand its ancestors to make it visible
           if (
             nodeToCenter.hasClass("depth-hidden") &&
             typeof this.cy.ensureDepthVisible === "function"
           ) {
             this.cy.ensureDepthVisible(id);
+            needsReflow = true;
           }
           nodeToCenter.addClass("selected");
 
           // Keep the dataset in sync so other consumers (and hooks) can rely on it
           this.el.dataset.node = id;
           if (this._debugRedraw) this._debugRedraw();
+
+          // If we expanded a group or depth-hidden ancestors, run a full
+          // reflow through layoutGraph so nodes don't overlap, then center.
+          if (needsReflow) {
+            this._pendingCenterId = id;
+            this._layoutRunning = true;
+            layoutGraph(this.cy, {}, () => {
+              this._pendingCenterId = null;
+              // Force Cytoscape to recalculate all styles and re-render
+              // node textures so that text on newly-expanded parents
+              // isn't blurry from stale cached label bitmaps.
+              try {
+                this.cy.style().update();
+              } catch (_e) {}
+              requestAnimationFrame(() =>
+                ensureVisible(this.cy, container, id),
+              );
+              if (this._updateExploredStatus) this._updateExploredStatus();
+            });
+            return;
+          }
 
           // If a layout is in progress, defer the visibility nudge until after layoutstop
           if (this._layoutRunning) {

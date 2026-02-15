@@ -679,6 +679,7 @@ export function draw_graph(
   cy.recomputeDepthVisibility = () => recomputeDepthVisibility(cy);
   cy.autoCollapseGraph = (cfg) => autoCollapseGraph(cy, cfg);
   cy.ensureDepthVisible = (id) => ensureDepthVisible(cy, id);
+  cy.ensureGroupVisible = (id) => ensureGroupVisible(cy, id);
   cy.expandNodeChildren = (n) =>
     expandNodeChildren(cy, typeof n === "string" ? cy.getElementById(n) : n);
   cy.collapseNodeChildren = (n) =>
@@ -1055,6 +1056,33 @@ function autoCollapseGraph(cy, config) {
  * Ensure a specific node is visible by expanding any collapsed ancestors
  * along the path from a root to it.
  */
+/**
+ * If the target node is inside a collapsed compound group (.hidden),
+ * expand that group so the node becomes visible on the canvas.
+ */
+function ensureGroupVisible(cy, nodeId) {
+  const node = cy.getElementById(nodeId);
+  if (!node || node.length === 0 || !node.hasClass("hidden")) return false;
+
+  // Walk up compound parents until we find the collapsed one
+  let expanded = false;
+  let current = node;
+  while (current && current.length > 0) {
+    const parent = current.parent();
+    if (parent && parent.length > 0 && isCollapsed(parent)) {
+      expand(parent);
+      expanded = true;
+      // After expanding, the node should be visible — but if it's still
+      // hidden (nested collapse), keep walking up.
+      if (!node.hasClass("hidden")) break;
+    }
+    current = parent;
+  }
+
+  // Return whether we expanded anything so the caller can trigger a reflow
+  return expanded;
+}
+
 function ensureDepthVisible(cy, nodeId) {
   const node = cy.getElementById(nodeId);
   if (!node || node.length === 0 || !node.hasClass("depth-hidden")) return;
