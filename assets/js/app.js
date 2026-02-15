@@ -431,11 +431,20 @@ let liveSocket = new LiveSocket("/live", Socket, {
     keydown: (e, el) => {
       // console.log(e);
       // console.log(el);
+      const target = e.target;
+      const tag = (target && target.tagName) || "";
+      const isEditable =
+        tag === "INPUT" ||
+        tag === "TEXTAREA" ||
+        (target &&
+          (target.isContentEditable ||
+            target.closest('[contenteditable="true"], [contenteditable=""]')));
       return {
         key: e.key,
         cmdKey: e.ctrlKey,
         metaKey: e.metaKey,
         repeat: e.repeat,
+        isEditable: !!isEditable,
       };
     },
   },

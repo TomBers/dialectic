@@ -246,7 +246,7 @@ export function draw_graph(
   let prevBoxSelect = cy.boxSelectionEnabled();
 
   const keydownHandler = (e) => {
-    // Don't hijack Space when typing in form fields or contenteditable areas
+    // Don't hijack keyboard shortcuts when typing in form fields or contenteditable areas
     const target = e.target;
     const tag = (target && target.tagName) || "";
     const isEditable =
