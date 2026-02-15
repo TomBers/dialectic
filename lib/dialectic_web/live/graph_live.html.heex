@@ -46,6 +46,7 @@
     show={@show_share_modal}
     graph_struct={@graph_struct}
     current_user={@current_user}
+    selected_node={@node}
   />
 
   <.modal :if={@show_login_modal} id="login-modal" show on_cancel={JS.push("close_login_modal")}>
