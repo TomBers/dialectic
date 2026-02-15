@@ -365,16 +365,21 @@ export function graphStyle(viewMode = "spaced") {
       },
     });
 
-    /* selected — prominent border + underlay glow ring (bg stays readable) */
+    /* selected — prominent border + wide underlay halo */
     base_style.push({
       selector: `node.${nodeType}.selected`,
       style: {
         "background-color": cols[nodeType].selectedBackground,
         "border-color": cols[nodeType].selectedBorder,
-        "border-width": isCompact ? 2.5 : 3,
+        "border-width": isCompact ? 3 : 4,
         "border-style": "solid",
         color: cols[nodeType].selectedText,
-        "ghost-opacity": 0.18, // stronger shadow when selected
+        /* wide halo well outside the border so it reads as a glow, not a second border */
+        "underlay-color": cols[nodeType].selectedBorder,
+        "underlay-opacity": 0.12,
+        "underlay-padding": isCompact ? 10 : 14,
+        "underlay-shape": "roundrectangle",
+        "ghost-opacity": 0.22,
       },
     });
 
