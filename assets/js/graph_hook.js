@@ -188,10 +188,25 @@ const ensureVisible = (cy, container, nodeId) => {
     const deadzone = getNum("graph_nudge_deadzone", 8); // hysteresis to avoid bounce
     const pad = getNum("graph_nudge_pad", 12); // ensure node box + padding is visible
 
+    // Account for the bottom toolbar that overlays the graph canvas
+    let bottomOverlap = 0;
+    const bottomMenu = document.getElementById("bottom-menu");
+    if (bottomMenu) {
+      const bmRect = bottomMenu.getBoundingClientRect();
+      // Only count it if it's visible (opacity > 0 and intersects the container)
+      const isVisible =
+        bmRect.height > 0 &&
+        !bottomMenu.classList.contains("invisible") &&
+        !bottomMenu.classList.contains("opacity-0");
+      if (isVisible) {
+        bottomOverlap = Math.max(0, rect.bottom - bmRect.top);
+      }
+    }
+
     const visLeft = margin;
     const visTop = margin;
     const visRight = Math.max(margin, rect.width - overlap - margin);
-    const visBottom = Math.max(margin, rect.height - margin);
+    const visBottom = Math.max(margin, rect.height - bottomOverlap - margin);
 
     // Deadzone-shrunk inner box to prevent small back-and-forth nudges
     const okLeft = visLeft + deadzone;
