@@ -56,10 +56,6 @@ defmodule DialecticWeb.Live.ModalComp do
   def render(assigns) do
     ~H"""
     <div>
-      <span phx-window-keydown="node_move" phx-key="ArrowUp" phx-value-direction="up"></span>
-      <span phx-window-keydown="node_move" phx-key="ArrowDown" phx-value-direction="down"></span>
-      <span phx-window-keydown="node_move" phx-key="ArrowLeft" phx-value-direction="left"></span>
-      <span phx-window-keydown="node_move" phx-key="ArrowRight" phx-value-direction="right"></span>
       <.modal
         on_cancel={JS.push("modal_closed")}
         class={ColUtils.message_border_class(Map.get(@node || %{}, :class, "default")) <> " modal-responsive"}

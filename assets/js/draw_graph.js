@@ -265,6 +265,137 @@ export function draw_graph(
       e.preventDefault();
     }
 
+    // Arrow-key navigation — direction-aware
+    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+      const selected = cy.$(".selected").filter((n) => !n.isParent());
+      if (selected.length > 0) {
+        const current = selected[0];
+        const dir = localStorage.getItem("graph_direction") || "TB";
+
+        // Map arrow keys to semantic actions based on graph orientation
+        const actionMap = {
+          TB: {
+            ArrowUp: "parent",
+            ArrowDown: "child",
+            ArrowLeft: "prev",
+            ArrowRight: "next",
+          },
+          BT: {
+            ArrowUp: "child",
+            ArrowDown: "parent",
+            ArrowLeft: "prev",
+            ArrowRight: "next",
+          },
+          LR: {
+            ArrowLeft: "parent",
+            ArrowRight: "child",
+            ArrowUp: "prev",
+            ArrowDown: "next",
+          },
+          RL: {
+            ArrowLeft: "child",
+            ArrowRight: "parent",
+            ArrowUp: "prev",
+            ArrowDown: "next",
+          },
+        };
+        const action = (actionMap[dir] || actionMap.TB)[e.key];
+        let target = null;
+
+        if (action === "parent") {
+          // Direct parents: sources of incoming edges
+          const parents = current.incomers("node").filter((n) => !n.isParent());
+          if (parents.length > 0) target = parents[0];
+        } else if (action === "child") {
+          // Direct children: targets of outgoing edges
+          const children = current
+            .outgoers("node")
+            .filter((n) => !n.isParent());
+          if (children.length > 0) target = children[0];
+        } else {
+          // prev / next sibling — sorted by visual position
+          const parents = current.incomers("node").filter((n) => !n.isParent());
+          if (parents.length > 0) {
+            const siblings = parents[0]
+              .outgoers("node")
+              .filter(
+                (n) =>
+                  !n.isParent() &&
+                  !n.hasClass("depth-hidden") &&
+                  !n.hasClass("hidden"),
+              );
+            if (siblings.length > 1) {
+              // Sort perpendicular to the flow axis
+              const sorted = siblings.toArray().sort((a, b) => {
+                if (dir === "TB" || dir === "BT") {
+                  return a.position("x") - b.position("x");
+                }
+                return a.position("y") - b.position("y");
+              });
+              const idx = sorted.findIndex((n) => n.id() === current.id());
+              if (action === "prev" && idx > 0) {
+                target = sorted[idx - 1];
+              } else if (action === "next" && idx < sorted.length - 1) {
+                target = sorted[idx + 1];
+              }
+            }
+          }
+        }
+
+        if (target) {
+          context.pushEvent("node_clicked", { id: target.id() });
+
+          // Update selection visuals immediately for responsiveness
+          cy.elements().removeClass("selected");
+          target.addClass("selected");
+
+          // Ensure the target is visible (expand depth/group if needed)
+          if (
+            target.hasClass("depth-hidden") &&
+            typeof cy.ensureDepthVisible === "function"
+          ) {
+            cy.ensureDepthVisible(target.id());
+          }
+
+          // Minimal pan to keep target in view
+          requestAnimationFrame(() => {
+            const zoom = cy.zoom();
+            const pan = cy.pan();
+            const bb = target.boundingBox();
+            const pad = 12;
+            const rect = container.getBoundingClientRect();
+
+            const rbbLeft = bb.x1 * zoom + pan.x - pad;
+            const rbbRight = bb.x2 * zoom + pan.x + pad;
+            const rbbTop = bb.y1 * zoom + pan.y - pad;
+            const rbbBottom = bb.y2 * zoom + pan.y + pad;
+
+            const margin = 16;
+            let dx = 0;
+            let dy = 0;
+
+            if (rbbLeft < margin) dx = margin - rbbLeft;
+            else if (rbbRight > rect.width - margin)
+              dx = rect.width - margin - rbbRight;
+            if (rbbTop < margin) dy = margin - rbbTop;
+            else if (rbbBottom > rect.height - margin)
+              dy = rect.height - margin - rbbBottom;
+
+            if (dx !== 0 || dy !== 0) {
+              cy.animate({
+                pan: { x: pan.x + dx, y: pan.y + dy },
+                duration: 150,
+                easing: "ease-in-out-quad",
+              });
+            }
+          });
+
+          enforceCollapsedState(cy);
+        }
+        e.preventDefault();
+      }
+    }
+
     // E = expand selected node's children, C = collapse
     if (e.key === "e" || e.key === "E") {
       const selected = cy.$(".selected").filter((n) => !n.isParent());
