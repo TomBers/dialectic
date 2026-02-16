@@ -762,6 +762,7 @@ const graphHook = {
 
         const idSet = new Set(ids);
         const allNodes = this.cy.nodes().filter((n) => !n.data("compound"));
+        let needsReflow = false;
 
         allNodes.forEach((n) => {
           if (idSet.has(n.id())) {
@@ -772,12 +773,15 @@ const graphHook = {
               typeof this.cy.ensureDepthVisible === "function"
             ) {
               this.cy.ensureDepthVisible(n.id());
+              needsReflow = true;
             }
             if (
               n.hasClass("hidden") &&
               typeof this.cy.ensureGroupVisible === "function"
             ) {
-              this.cy.ensureGroupVisible(n.id());
+              if (this.cy.ensureGroupVisible(n.id())) {
+                needsReflow = true;
+              }
             }
           } else {
             n.addClass("search-dimmed");
@@ -794,6 +798,19 @@ const graphHook = {
             e.addClass("search-dimmed");
           }
         });
+
+        // If we expanded any collapsed/depth-hidden nodes, run a full
+        // reflow so they don't overlap, then refresh styles.
+        if (needsReflow) {
+          this._layoutRunning = true;
+          layoutGraph(this.cy, {}, () => {
+            this._layoutRunning = false;
+            try {
+              this.cy.style().update();
+            } catch (_e) {}
+            if (this._updateExploredStatus) this._updateExploredStatus();
+          });
+        }
       } catch (_e) {}
     });
 
