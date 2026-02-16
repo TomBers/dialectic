@@ -581,7 +581,8 @@ defmodule DialecticWeb.GraphLive do
         |> push_event("clear_search_highlights", %{})
         |> push_event("center_node", %{id: id})
       else
-        updated_socket
+        # Always center the node on the graph (e.g. when clicked from the ask form indicator)
+        push_event(updated_socket, "center_node", %{id: id})
       end
 
     {:noreply, updated_socket}
