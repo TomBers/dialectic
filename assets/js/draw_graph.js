@@ -1248,18 +1248,34 @@ function _injectDepthToggleStyles() {
               box-shadow 0.15s ease, transform 0.1s ease;
   box-shadow: 0 1px 2px rgba(0,0,0,0.08);
   user-select: none;
-  transform: translate(-50%, 0);
   line-height: 1;
   white-space: nowrap;
 }
+/* direction-aware centering */
+.depth-toggle-btn.depth-dir-tb { transform: translate(-50%, 0); }
+.depth-toggle-btn.depth-dir-bt { transform: translate(-50%, -100%); }
+.depth-toggle-btn.depth-dir-lr { transform: translate(0, -50%); }
+.depth-toggle-btn.depth-dir-rl { transform: translate(-100%, -50%); }
 .depth-toggle-btn:hover {
   background: #f1f5f9;
   border-color: #94a3b8;
   box-shadow: 0 2px 4px rgba(0,0,0,0.12);
 }
-.depth-toggle-btn:active {
+.depth-toggle-btn.depth-dir-tb:active {
   background: #e2e8f0;
   transform: translate(-50%, 0) scale(0.95);
+}
+.depth-toggle-btn.depth-dir-bt:active {
+  background: #e2e8f0;
+  transform: translate(-50%, -100%) scale(0.95);
+}
+.depth-toggle-btn.depth-dir-lr:active {
+  background: #e2e8f0;
+  transform: translate(0, -50%) scale(0.95);
+}
+.depth-toggle-btn.depth-dir-rl:active {
+  background: #e2e8f0;
+  transform: translate(-100%, -50%) scale(0.95);
 }
 /* collapsed → warm amber "+N" pill — stands out from all node types */
 .depth-toggle-btn.depth-collapsed-btn {
@@ -1381,6 +1397,8 @@ function _rebuildDepthToggleOverlays(cy, container) {
 function _updateDepthTogglePositions(cy) {
   if (!cy._depthToggleButtons) return;
 
+  const dir = localStorage.getItem("graph_direction") || "TB";
+
   cy._depthToggleButtons.forEach((btn, nodeId) => {
     const node = cy.getElementById(nodeId);
     if (
@@ -1399,9 +1417,34 @@ function _updateDepthTogglePositions(cy) {
       return;
     }
 
-    // Centre horizontally, 2 px below node bottom
-    const x = (bb.x1 + bb.x2) / 2;
-    const y = bb.y2 + 2;
+    let x, y;
+    switch (dir) {
+      case "BT": // children above → button above the node
+        x = (bb.x1 + bb.x2) / 2;
+        y = bb.y1 - 2;
+        break;
+      case "LR": // children to the right → button to the right
+        x = bb.x2 + 2;
+        y = (bb.y1 + bb.y2) / 2;
+        break;
+      case "RL": // children to the left → button to the left
+        x = bb.x1 - 2;
+        y = (bb.y1 + bb.y2) / 2;
+        break;
+      default: // TB — children below → button below (original behaviour)
+        x = (bb.x1 + bb.x2) / 2;
+        y = bb.y2 + 2;
+        break;
+    }
+
+    // Swap direction class so the CSS transform centres correctly
+    btn.classList.remove(
+      "depth-dir-tb",
+      "depth-dir-bt",
+      "depth-dir-lr",
+      "depth-dir-rl",
+    );
+    btn.classList.add(`depth-dir-${dir.toLowerCase()}`);
 
     btn.style.display = "";
     btn.style.left = `${x}px`;
