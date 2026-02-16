@@ -1,3 +1,5 @@
+import { INDIGO_500 } from "./colors.js";
+
 const WhatsNext = {
   mounted() {
     this.storageKey = "dialectic_whats_next_seen";
@@ -84,7 +86,7 @@ const WhatsNext = {
 
       /* 6. Share (Indigo) */
       body.onboarding-active [phx-click="open_share_modal"] {
-        box-shadow: 0 0 0 3px #fff, 0 0 0 7px #6366f1;
+        box-shadow: 0 0 0 3px #fff, 0 0 0 7px ${INDIGO_500};
       }
     `;
     document.head.appendChild(style);

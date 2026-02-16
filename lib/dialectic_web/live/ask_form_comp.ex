@@ -63,21 +63,32 @@ defmodule DialecticWeb.AskFormComp do
     <div class="w-full min-w-0 space-y-1.5" data-role="ask-form-container">
       <%!-- Current Node Indicator --%>
       <%= if @node && @node.id do %>
-        <div class="flex items-center justify-center gap-2 px-3 py-1.5 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 rounded-lg">
-          <div class="flex items-center gap-1.5 text-xs">
-            <div class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
-            <span class="font-medium text-indigo-900">Active:</span>
-            <button
-              type="button"
-              phx-click="node_clicked"
-              phx-value-id={@node.id}
-              class="text-indigo-700 hover:text-indigo-900 font-semibold hover:underline transition-colors max-w-[300px] truncate"
-              title={"Click to focus: " <> NodeTitleHelper.extract_node_title(@node)}
-            >
-              {NodeTitleHelper.extract_node_title(@node, max_length: 50)}
-            </button>
+        <button
+          type="button"
+          phx-click="node_clicked"
+          phx-value-id={@node.id}
+          class={[
+            "flex items-start gap-2.5 w-full text-left px-3 py-2 rounded-lg border-l-[3px] bg-gray-50/80 hover:bg-gray-100/80 transition-colors cursor-pointer group",
+            DialecticWeb.ColUtils.border_class(@node.class || "")
+          ]}
+          title="Click to focus this node on the graph"
+        >
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-1.5 mb-0.5">
+              <span class="text-[10px] text-gray-400 font-medium">Replying to</span>
+              <span class={"inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium " <> DialecticWeb.ColUtils.badge_class(@node.class || "")}>
+                {DialecticWeb.ColUtils.node_type_label(@node.class || "")}
+              </span>
+            </div>
+            <div class="text-sm text-gray-800 group-hover:text-indigo-700 transition-colors leading-snug line-clamp-2">
+              {NodeTitleHelper.extract_node_title(@node)}
+            </div>
           </div>
-        </div>
+          <.icon
+            name="hero-arrow-top-right-on-square-mini"
+            class="w-3.5 h-3.5 text-gray-300 group-hover:text-indigo-400 transition-colors mt-1 shrink-0"
+          />
+        </button>
       <% end %>
       <.form
         for={@form}

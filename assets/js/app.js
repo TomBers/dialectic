@@ -35,6 +35,7 @@ import MarkdownHook from "./markdown_hook.js";
 import { ViewModeHook } from "./view_mode_hook.js";
 import AutoExpandTextareaHook from "./auto_expand_textarea_hook.js";
 import WhatsNext from "./whats_next_hook.js";
+import SearchNav from "./search_nav_hook.js";
 
 let hooks = {};
 
@@ -53,6 +54,7 @@ hooks.Markdown = MarkdownHook;
 hooks.ViewMode = ViewModeHook;
 hooks.AutoExpandTextarea = AutoExpandTextareaHook;
 hooks.WhatsNext = WhatsNext;
+hooks.SearchNav = SearchNav;
 
 hooks.GraphLayout = {
   mounted() {

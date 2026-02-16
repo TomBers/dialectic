@@ -1,3 +1,5 @@
+import { INDIGO_500 } from "./colors.js";
+
 const defaultNodeStyle = {
   text: "#1f2937", // gray-800
   background: "#ffffff",
@@ -408,6 +410,58 @@ export function graphStyle(viewMode = "spaced") {
       events: "no",
     },
   });
+
+  /* ── Search highlighting ── */
+
+  // Dimmed nodes: fade out so matches stand out
+  base_style.push({
+    selector: "node.search-dimmed",
+    style: {
+      opacity: 0.15,
+      "transition-property": "opacity",
+      "transition-duration": "200ms",
+      "transition-timing-function": "ease-in-out-quad",
+    },
+  });
+
+  // Dimmed edges: fade out
+  base_style.push({
+    selector: "edge.search-dimmed",
+    style: {
+      opacity: 0.08,
+      "transition-property": "opacity",
+      "transition-duration": "200ms",
+      "transition-timing-function": "ease-in-out-quad",
+    },
+  });
+
+  // Matched nodes: bright underlay glow to draw the eye
+  base_style.push({
+    selector: "node.search-match",
+    style: {
+      opacity: 1,
+      "underlay-color": INDIGO_500,
+      "underlay-opacity": 0.18,
+      "underlay-padding": isCompact ? 10 : 14,
+      "underlay-shape": "roundrectangle",
+      "border-width": isCompact ? 3 : 4,
+      "transition-property": "opacity, underlay-opacity, border-width",
+      "transition-duration": "200ms",
+      "transition-timing-function": "ease-in-out-quad",
+    },
+  });
+
+  // Matched edges: keep visible
+  base_style.push({
+    selector: "edge.search-match",
+    style: {
+      opacity: 0.7,
+      "transition-property": "opacity",
+      "transition-duration": "200ms",
+      "transition-timing-function": "ease-in-out-quad",
+    },
+  });
+
   return base_style;
 }
 

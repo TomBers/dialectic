@@ -188,10 +188,25 @@ const ensureVisible = (cy, container, nodeId) => {
     const deadzone = getNum("graph_nudge_deadzone", 8); // hysteresis to avoid bounce
     const pad = getNum("graph_nudge_pad", 12); // ensure node box + padding is visible
 
+    // Account for the bottom toolbar that overlays the graph canvas
+    let bottomOverlap = 0;
+    const bottomMenu = document.getElementById("bottom-menu");
+    if (bottomMenu) {
+      const bmRect = bottomMenu.getBoundingClientRect();
+      // Only count it if it's visible (opacity > 0 and intersects the container)
+      const isVisible =
+        bmRect.height > 0 &&
+        !bottomMenu.classList.contains("invisible") &&
+        !bottomMenu.classList.contains("opacity-0");
+      if (isVisible) {
+        bottomOverlap = Math.max(0, rect.bottom - bmRect.top);
+      }
+    }
+
     const visLeft = margin;
     const visTop = margin;
     const visRight = Math.max(margin, rect.width - overlap - margin);
-    const visBottom = Math.max(margin, rect.height - margin);
+    const visBottom = Math.max(margin, rect.height - bottomOverlap - margin);
 
     // Deadzone-shrunk inner box to prevent small back-and-forth nudges
     const okLeft = visLeft + deadzone;
@@ -748,6 +763,78 @@ const graphHook = {
         this._exploreBtnEl = btn;
       }
     }).call(this);
+
+    // ── Search highlighting on graph ──
+    // When the server pushes matching node IDs, highlight them on the
+    // Cytoscape canvas and dim everything else so matches pop out.
+    this.handleEvent("highlight_search_results", ({ ids }) => {
+      if (!this.cy) return;
+      try {
+        // Remove any previous search highlighting
+        this.cy.elements().removeClass("search-match search-dimmed");
+
+        if (!ids || ids.length === 0) return;
+
+        const idSet = new Set(ids);
+        const allNodes = this.cy.nodes().filter((n) => !n.data("compound"));
+        let needsReflow = false;
+
+        allNodes.forEach((n) => {
+          if (idSet.has(n.id())) {
+            n.addClass("search-match");
+            // If the node is depth-hidden or group-hidden, reveal it
+            if (
+              n.hasClass("depth-hidden") &&
+              typeof this.cy.ensureDepthVisible === "function"
+            ) {
+              this.cy.ensureDepthVisible(n.id());
+              needsReflow = true;
+            }
+            if (
+              n.hasClass("hidden") &&
+              typeof this.cy.ensureGroupVisible === "function"
+            ) {
+              if (this.cy.ensureGroupVisible(n.id())) {
+                needsReflow = true;
+              }
+            }
+          } else {
+            n.addClass("search-dimmed");
+          }
+        });
+
+        // Also dim edges that don't connect two matched nodes
+        this.cy.edges().forEach((e) => {
+          const srcMatch = idSet.has(e.source().id());
+          const tgtMatch = idSet.has(e.target().id());
+          if (srcMatch || tgtMatch) {
+            e.addClass("search-match");
+          } else {
+            e.addClass("search-dimmed");
+          }
+        });
+
+        // If we expanded any collapsed/depth-hidden nodes, run a full
+        // reflow so they don't overlap, then refresh styles.
+        if (needsReflow) {
+          this._layoutRunning = true;
+          layoutGraph(this.cy, {}, () => {
+            this._layoutRunning = false;
+            try {
+              this.cy.style().update();
+            } catch (_e) {}
+            if (this._updateExploredStatus) this._updateExploredStatus();
+          });
+        }
+      } catch (_e) {}
+    });
+
+    this.handleEvent("clear_search_highlights", () => {
+      if (!this.cy) return;
+      try {
+        this.cy.elements().removeClass("search-match search-dimmed");
+      } catch (_e) {}
+    });
   },
 
   _handleViewModeChange(currentViewMode, graphStr, currentNode) {

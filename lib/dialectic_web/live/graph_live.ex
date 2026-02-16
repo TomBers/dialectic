@@ -159,7 +159,10 @@ defmodule DialecticWeb.GraphLive do
     search_term = params["search_term"] || params["value"] || ""
 
     if search_term == "" do
-      {:noreply, socket |> assign(search_term: "", search_results: [])}
+      {:noreply,
+       socket
+       |> assign(search_term: "", search_results: [])
+       |> push_event("clear_search_highlights", %{})}
     else
       search_results =
         try do
@@ -188,12 +191,43 @@ defmodule DialecticWeb.GraphLive do
           _ -> []
         end
 
-      {:noreply, socket |> assign(search_term: search_term, search_results: search_results)}
+      matching_ids = Enum.map(search_results, & &1.id)
+
+      {:noreply,
+       socket
+       |> assign(search_term: search_term, search_results: search_results)
+       |> push_event("highlight_search_results", %{ids: matching_ids})}
     end
   end
 
   def handle_event("clear_search", _, socket) do
-    {:noreply, socket |> assign(search_term: "", search_results: [])}
+    {:noreply,
+     socket
+     |> assign(search_term: "", search_results: [])
+     |> push_event("clear_search_highlights", %{})}
+  end
+
+  def handle_event("open_search_overlay_click", _params, socket) do
+    {:noreply, assign(socket, show_search_overlay: true)}
+  end
+
+  def handle_event("open_search_overlay", params, socket) do
+    meta = params["metaKey"] in [true, "true"]
+    cmd = params["cmdKey"] in [true, "true"]
+    editable = params["isEditable"] in [true, "true"]
+
+    if (meta || cmd) && !editable do
+      {:noreply, assign(socket, show_search_overlay: true)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_event("close_search_overlay", _, socket) do
+    {:noreply,
+     socket
+     |> assign(show_search_overlay: false, search_term: "", search_results: [])
+     |> push_event("clear_search_highlights", %{})}
   end
 
   def handle_event("toggle_ask_question", _, socket) do
@@ -524,9 +558,9 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_event("node_clicked", %{"id" => id}, socket) do
-    # Determine if this was triggered from search results
-    from_search = socket.assigns.search_term != "" and length(socket.assigns.search_results) > 0
+  def handle_event("node_clicked", %{"id" => id} = params, socket) do
+    # Determine if this was triggered from search results via explicit param
+    from_search = params["from-search"] == "true"
 
     # Update the graph
     {:noreply, updated_socket} =
@@ -539,12 +573,19 @@ defmodule DialecticWeb.GraphLive do
     # Preserve and re-apply panel/menu state across node changes
     updated_socket = reapply_right_panel_state(socket, updated_socket)
 
-    # Push event to center the node if coming from search
-    if from_search do
-      {:noreply, push_event(updated_socket, "center_node", %{id: id})}
-    else
-      {:noreply, updated_socket}
-    end
+    # Close the quick search overlay and clear highlights when navigating from search
+    updated_socket =
+      if from_search do
+        updated_socket
+        |> assign(show_search_overlay: false, search_term: "", search_results: [])
+        |> push_event("clear_search_highlights", %{})
+        |> push_event("center_node", %{id: id})
+      else
+        # Always center the node on the graph (e.g. when clicked from the ask form indicator)
+        push_event(updated_socket, "center_node", %{id: id})
+      end
+
+    {:noreply, updated_socket}
   end
 
   def handle_event("highlight_clicked", %{"id" => highlight_id, "node-id" => node_id}, socket) do
@@ -1545,6 +1586,7 @@ defmodule DialecticWeb.GraphLive do
       group_states: %{},
       search_term: "",
       search_results: [],
+      show_search_overlay: false,
       nav_can_up: false,
       nav_can_down: false,
       nav_can_left: false,
