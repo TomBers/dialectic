@@ -240,7 +240,7 @@ const ensureVisible = (cy, container, nodeId) => {
 
 const graphHook = {
   mounted() {
-    const { graph, node, div } = this.el.dataset;
+    const { graph, node, div, graphId } = this.el.dataset;
 
     const container =
       this.el.querySelector(`#${div}`) || document.getElementById(div);
@@ -249,7 +249,14 @@ const graphHook = {
     const viewMode = localStorage.getItem("graph_view_mode") || "spaced";
     const graphDirection = localStorage.getItem("graph_direction") || "TB";
 
-    this.cy = draw_graph(container, this, JSON.parse(graph), node, viewMode);
+    this.cy = draw_graph(
+      container,
+      this,
+      JSON.parse(graph),
+      node,
+      viewMode,
+      graphId,
+    );
 
     // Track view mode and direction for detecting changes
     this._lastViewMode = viewMode;
@@ -647,11 +654,50 @@ const graphHook = {
         this.cy.elements().removeClass("selected");
         const nodeToCenter = this.cy.getElementById(id);
         if (nodeToCenter.length > 0) {
+          // Track whether we need a full reflow
+          let needsReflow = false;
+
+          // If the node is inside a collapsed compound group, expand it
+          if (
+            nodeToCenter.hasClass("hidden") &&
+            typeof this.cy.ensureGroupVisible === "function"
+          ) {
+            needsReflow = this.cy.ensureGroupVisible(id) || needsReflow;
+          }
+          // If the node is depth-hidden, expand its ancestors to make it visible
+          if (
+            nodeToCenter.hasClass("depth-hidden") &&
+            typeof this.cy.ensureDepthVisible === "function"
+          ) {
+            this.cy.ensureDepthVisible(id);
+            needsReflow = true;
+          }
           nodeToCenter.addClass("selected");
 
           // Keep the dataset in sync so other consumers (and hooks) can rely on it
           this.el.dataset.node = id;
           if (this._debugRedraw) this._debugRedraw();
+
+          // If we expanded a group or depth-hidden ancestors, run a full
+          // reflow through layoutGraph so nodes don't overlap, then center.
+          if (needsReflow) {
+            this._pendingCenterId = id;
+            this._layoutRunning = true;
+            layoutGraph(this.cy, {}, () => {
+              this._pendingCenterId = null;
+              // Force Cytoscape to recalculate all styles and re-render
+              // node textures so that text on newly-expanded parents
+              // isn't blurry from stale cached label bitmaps.
+              try {
+                this.cy.style().update();
+              } catch (_e) {}
+              requestAnimationFrame(() =>
+                ensureVisible(this.cy, container, id),
+              );
+              if (this._updateExploredStatus) this._updateExploredStatus();
+            });
+            return;
+          }
 
           // If a layout is in progress, defer the visibility nudge until after layoutstop
           if (this._layoutRunning) {
@@ -717,12 +763,14 @@ const graphHook = {
     }
 
     // Recreate with new view mode
+    const graphId = this.el.dataset.graphId;
     this.cy = draw_graph(
       this._container,
       this,
       JSON.parse(graphStr),
       currentNode,
       currentViewMode,
+      graphId,
     );
 
     // Restore zoom and pan
@@ -841,6 +889,14 @@ const graphHook = {
     if (!sameGraph) this._lastGraphStr = graphStr;
 
     if (!sameGraph) {
+      // Save depth-collapse state before replacing elements
+      let savedDepthState = null;
+      if (this.cy && typeof this.cy.saveDepthCollapseState === "function") {
+        try {
+          savedDepthState = this.cy.saveDepthCollapseState();
+        } catch (_e) {}
+      }
+
       if (this.cy && typeof this.cy.startBatch === "function")
         this.cy.startBatch();
       if (this.cy && typeof this.cy.scratch === "function") {
@@ -856,6 +912,17 @@ const graphHook = {
       }
       if (typeof this.cy.enforceCollapsedState === "function") {
         this.cy.enforceCollapsedState();
+      }
+
+      // Restore depth-collapse state after element reload
+      if (
+        savedDepthState &&
+        Object.keys(savedDepthState).length > 0 &&
+        typeof this.cy.restoreDepthCollapseState === "function"
+      ) {
+        try {
+          this.cy.restoreDepthCollapseState(savedDepthState);
+        } catch (_e) {}
       }
     }
 
@@ -1061,6 +1128,12 @@ const graphHook = {
     if (this._zoomToast && this._zoomToast.parentNode) {
       this._zoomToast.parentNode.removeChild(this._zoomToast);
       this._zoomToast = null;
+    }
+    // Clean up depth-toggle overlay buttons
+    if (this.cy && typeof this.cy.cleanupDepthOverlay === "function") {
+      try {
+        this.cy.cleanupDepthOverlay();
+      } catch (_e) {}
     }
     if (this.cy && typeof this.cy.destroy === "function") {
       try {

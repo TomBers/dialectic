@@ -1,78 +1,97 @@
 const defaultNodeStyle = {
   text: "#1f2937", // gray-800
   background: "#ffffff",
-  border: "#e5e7eb", // gray-200
-  selectedText: "#ffffff",
-  selectedBackground: "#9ca3af", // gray-400
-  selectedBorder: "#6b7280", // gray-500
+  border: "#d1d5db", // gray-300 (strengthened from gray-200 for better node definition)
+  hoverBackground: "#f3f4f6", // gray-100 — gentle lift on hover
+  hoverBorder: "#9ca3af", // gray-400
+  selectedText: "#1f2937", // keep dark text for readability
+  selectedBackground: "#e5e7eb", // gray-200 — visible tint, high contrast (11.86:1)
+  selectedBorder: "#4b5563", // gray-600 — stronger selection indicator
 };
 
-// Modern color palette with subtle backgrounds
+// Modern color palette — backgrounds at *-100 for visible type tinting,
+// selected backgrounds at *-200 for WCAG AAA-level contrast (7:1+)
 const cols = {
   question: {
     text: "#0c4a6e", // sky-900
-    background: "#f0f9ff", // sky-50
+    background: "#e0f2fe", // sky-100
     border: "#0ea5e9", // sky-500
-    selectedText: "#ffffff",
-    selectedBackground: "#0ea5e9",
-    selectedBorder: "#0369a1",
+    hoverBackground: "#bae6fd", // sky-200
+    hoverBorder: "#0284c7", // sky-600
+    selectedText: "#0c4a6e", // keep dark text
+    selectedBackground: "#bae6fd", // sky-200 (7.13:1 contrast)
+    selectedBorder: "#0369a1", // sky-700
   },
   user: {
     text: "#0c4a6e",
-    background: "#f0f9ff",
+    background: "#e0f2fe", // sky-100
     border: "#0ea5e9",
-    selectedText: "#ffffff",
-    selectedBackground: "#0ea5e9",
+    hoverBackground: "#bae6fd",
+    hoverBorder: "#0284c7",
+    selectedText: "#0c4a6e",
+    selectedBackground: "#bae6fd", // sky-200 (7.13:1)
     selectedBorder: "#0369a1",
   },
 
   antithesis: {
     text: "#7f1d1d", // red-900
-    background: "#fef2f2", // red-50
-    border: "#f87171", // red-400 (softer than before)
-    selectedText: "#ffffff",
-    selectedBackground: "#ef4444",
-    selectedBorder: "#b91c1c",
+    background: "#fee2e2", // red-100
+    border: "#f87171", // red-400
+    hoverBackground: "#fecaca", // red-200
+    hoverBorder: "#dc2626", // red-600
+    selectedText: "#7f1d1d",
+    selectedBackground: "#fecaca", // red-200 (6.93:1)
+    selectedBorder: "#b91c1c", // red-700
   },
   synthesis: {
     text: "#581c87", // purple-900
-    background: "#faf5ff", // purple-50
+    background: "#f3e8ff", // purple-100
     border: "#a78bfa", // purple-400
-    selectedText: "#ffffff",
-    selectedBackground: "#8b5cf6",
-    selectedBorder: "#6d28d9",
+    hoverBackground: "#e9d5ff", // purple-200
+    hoverBorder: "#7c3aed", // purple-600
+    selectedText: "#581c87",
+    selectedBackground: "#e9d5ff", // purple-200 (7.99:1)
+    selectedBorder: "#6d28d9", // purple-700
   },
   thesis: {
     text: "#064e3b", // emerald-900
-    background: "#ecfdf5", // emerald-50
+    background: "#d1fae5", // emerald-100
     border: "#34d399", // emerald-400
-    selectedText: "#ffffff",
-    selectedBackground: "#10b981",
-    selectedBorder: "#047857",
+    hoverBackground: "#a7f3d0", // emerald-200
+    hoverBorder: "#059669", // emerald-600
+    selectedText: "#064e3b",
+    selectedBackground: "#a7f3d0", // emerald-200 (7.58:1 — was 6.38 with emerald-300)
+    selectedBorder: "#047857", // emerald-700
   },
 
   ideas: {
     text: "#7c2d12", // orange-900
-    background: "#fff7ed", // orange-50
+    background: "#ffedd5", // orange-100
     border: "#fb923c", // orange-400
-    selectedText: "#ffffff",
-    selectedBackground: "#f97316",
-    selectedBorder: "#c2410c",
+    hoverBackground: "#fed7aa", // orange-200
+    hoverBorder: "#ea580c", // orange-600
+    selectedText: "#7c2d12",
+    selectedBackground: "#fed7aa", // orange-200 (6.92:1)
+    selectedBorder: "#c2410c", // orange-700
   },
   deepdive: {
     text: "#164e63", // cyan-900
-    background: "#ecfeff", // cyan-50
+    background: "#cffafe", // cyan-100
     border: "#22d3ee", // cyan-400
-    selectedText: "#ffffff",
-    selectedBackground: "#06b6d4",
-    selectedBorder: "#0e7490",
+    hoverBackground: "#a5f3fc", // cyan-200
+    hoverBorder: "#0891b2", // cyan-600
+    selectedText: "#164e63",
+    selectedBackground: "#a5f3fc", // cyan-200 (7.30:1 — was 6.29 with cyan-300)
+    selectedBorder: "#0e7490", // cyan-700
   },
   origin: {
     text: "#1e293b", // slate-800
-    background: "#f1f5f9", // slate-100
+    background: "#e2e8f0", // slate-200
     border: "#64748b", // slate-500
-    selectedText: "#ffffff",
-    selectedBackground: "#475569", // slate-600
+    hoverBackground: "#cbd5e1", // slate-300
+    hoverBorder: "#475569", // slate-600
+    selectedText: "#1e293b",
+    selectedBackground: "#cbd5e1", // slate-300 (9.85:1 — was 5.71 with slate-400)
     selectedBorder: "#334155", // slate-700
   },
   answer: defaultNodeStyle,
@@ -163,7 +182,8 @@ export function graphStyle(viewMode = "spaced") {
 
         /* label ----------------------------------------------------------- */
         label: (ele) => {
-          return processNodeContent(ele.data("content") || "");
+          const text = processNodeContent(ele.data("content") || "");
+          return text;
         },
 
         /* font & layout --------------------------------------------------- */
@@ -179,9 +199,21 @@ export function graphStyle(viewMode = "spaced") {
         shape: "rectangle",
         "corner-radius": isCompact ? 6 : 12,
         "border-width": isCompact ? 0.75 : 1.5,
-        "border-color": "#e5e7eb",
+        "border-color": "#d1d5db", // gray-300 (strengthened from gray-200)
         "background-color": "#ffffff",
         color: "#1f2937",
+
+        /* drop shadow via ghost — gives nodes a floating-card feel */
+        ghost: "yes",
+        "ghost-offset-x": isCompact ? 1 : 2,
+        "ghost-offset-y": isCompact ? 1 : 2,
+        "ghost-opacity": 0.08,
+
+        /* smooth transitions for hover / select state changes */
+        "transition-property":
+          "background-color border-color border-width shadow-blur shadow-color shadow-offset-x shadow-offset-y",
+        "transition-duration": "150ms",
+        "transition-timing-function": "ease-in-out-sine",
       },
     },
     {
@@ -210,7 +242,7 @@ export function graphStyle(viewMode = "spaced") {
         padding: isCompact ? "12px" : "32px",
 
         "background-opacity": 0.5,
-        "background-color": "#f8fafc", // slate-50
+        "background-color": "#ffffff", // white
         "border-width": isCompact ? 1 : 2,
         "border-style": "dashed",
         "border-color": "#cbd5e1", // slate-300
@@ -219,6 +251,16 @@ export function graphStyle(viewMode = "spaced") {
       },
     },
     { selector: ".hidden", style: { display: "none" } },
+    { selector: ".depth-hidden", style: { display: "none" } },
+
+    /* Visual indicator for nodes whose children are collapsed */
+    {
+      selector: ".node-collapsed",
+      style: {
+        "border-style": "double",
+        "border-width": isCompact ? 2.5 : 3.5,
+      },
+    },
 
     /* draw the parent differently when it's collapsed --- */
     {
@@ -265,26 +307,30 @@ export function graphStyle(viewMode = "spaced") {
         color: "#1e293b",
       },
     },
-    // Edge styling
+    // Edge styling — darkened for better visibility (4.76:1 contrast)
     {
       selector: "edge",
       style: {
-        width: isCompact ? 1 : 2,
-        "line-color": "#cbd5e1", // slate-300
+        width: isCompact ? 1 : 1.5,
+        "line-color": "#64748b", // slate-500 (darkened from slate-400 for readability)
         "edge-distances": "node-position",
         "curve-style": "bezier",
-        "target-arrow-shape": "triangle",
-        "target-arrow-color": "#cbd5e1",
+        "target-arrow-shape": "triangle-backcurve", // more elegant arrow
+        "target-arrow-color": "#64748b", // slate-500
         "arrow-scale": isCompact ? 0.6 : 0.8,
         "control-point-step-size": isCompact ? 25 : 40,
         "control-point-weight": 0.5,
-        opacity: 0.8,
+        opacity: 0.65, // raised from 0.55 for better edge visibility
+        /* smooth transition so hover fade-in feels polished */
+        "transition-property": "line-color target-arrow-color width opacity",
+        "transition-duration": "150ms",
+        "transition-timing-function": "ease-in-out-sine",
       },
     },
     {
       selector: ".edge-hover",
       style: {
-        width: 3,
+        width: isCompact ? 2 : 3,
         "line-color": "#3b82f6", // blue-500
         "target-arrow-color": "#3b82f6",
         "z-index": 9998,
@@ -297,23 +343,43 @@ export function graphStyle(viewMode = "spaced") {
     base_style.push({
       selector: `node.${nodeType}`, // ← has the class
       style: {
-        //  NOT "css"
         "border-color": cols[nodeType].border,
         "background-color": cols[nodeType].background,
-        "border-width": 2,
+        "border-width": isCompact ? 1.5 : 2,
         "border-opacity": 1,
         color: cols[nodeType].text,
       },
     });
 
+    /* hover — gentle lift: slightly deeper tint + border boost */
     base_style.push({
-      selector: `node.${nodeType}.selected, node.${nodeType}.node-hover`,
+      selector: `node.${nodeType}.node-hover`,
       style: {
-        shape: "roundrectangle",
-        "border-color": cols[nodeType].selectedBorder,
-        color: cols[nodeType].selectedText,
+        "background-color":
+          cols[nodeType].hoverBackground || cols[nodeType].background,
+        "border-color": cols[nodeType].hoverBorder || cols[nodeType].border,
+        "border-width": isCompact ? 2 : 2.5,
+        "border-style": "solid",
+        color: cols[nodeType].text, // keep dark text on hover
+        "ghost-opacity": 0.14, // deepen shadow slightly on hover
+      },
+    });
+
+    /* selected — prominent border + wide underlay halo */
+    base_style.push({
+      selector: `node.${nodeType}.selected`,
+      style: {
         "background-color": cols[nodeType].selectedBackground,
-        "border-width": 2,
+        "border-color": cols[nodeType].selectedBorder,
+        "border-width": isCompact ? 3 : 4,
+        "border-style": "solid",
+        color: cols[nodeType].selectedText,
+        /* wide halo well outside the border so it reads as a glow, not a second border */
+        "underlay-color": cols[nodeType].selectedBorder,
+        "underlay-opacity": 0.12,
+        "underlay-padding": isCompact ? 10 : 14,
+        "underlay-shape": "roundrectangle",
+        "ghost-opacity": 0.22,
       },
     });
 

@@ -569,6 +569,9 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, push_event(socket, "scroll_to_highlight", %{id: highlight_id})}
   end
 
+  # Ignore arrow-key navigation when the user is typing in a text field
+  def handle_event("node_move", %{"isEditable" => true}, socket), do: {:noreply, socket}
+
   def handle_event("node_move", %{"direction" => direction}, socket) do
     if socket.assigns.node do
       {:noreply, updated_socket} =

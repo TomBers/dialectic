@@ -190,6 +190,18 @@ defmodule DialecticWeb.GraphNavPanelComp do
               </kbd>
             </div>
             <div class="flex items-center justify-between">
+              <span>Expand children</span>
+              <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-[10px] font-mono">
+                E
+              </kbd>
+            </div>
+            <div class="flex items-center justify-between">
+              <span>Collapse children</span>
+              <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-[10px] font-mono">
+                C
+              </kbd>
+            </div>
+            <div class="flex items-center justify-between">
               <span>Open node</span>
               <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-[10px] font-mono">
                 Enter
