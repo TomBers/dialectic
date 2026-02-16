@@ -228,9 +228,18 @@ export function graphStyle(viewMode = "spaced") {
       selector: "node[compound]",
       style: {
         label: "data(id)", // ← use the id field
-        "text-halign": "center",
-        "text-valign": "top",
-        "text-margin-y": 8,
+        "text-halign": () => {
+          const dir = localStorage.getItem("graph_direction") || "TB";
+          return dir === "RL" ? "right" : dir === "LR" ? "left" : "center";
+        },
+        "text-valign": () => {
+          const dir = localStorage.getItem("graph_direction") || "TB";
+          return dir === "BT" ? "bottom" : "top";
+        },
+        "text-margin-y": () => {
+          const dir = localStorage.getItem("graph_direction") || "TB";
+          return dir === "BT" ? -8 : 8;
+        },
         "font-family":
           'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif',
         "font-size": 12,

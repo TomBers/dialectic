@@ -804,6 +804,11 @@ const graphHook = {
 
     // Simply re-layout with the new direction
     if (this.cy) {
+      // Re-evaluate style function mappers (e.g. compound label position)
+      try {
+        this.cy.style().update();
+      } catch (_e) {}
+
       layoutGraph(this.cy, {}, () => {
         // Restore zoom and pan after layout
         try {
