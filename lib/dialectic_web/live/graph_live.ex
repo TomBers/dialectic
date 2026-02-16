@@ -207,20 +207,20 @@ defmodule DialecticWeb.GraphLive do
      |> push_event("clear_search_highlights", %{})}
   end
 
-  def handle_event("open_search_overlay", %{"metaKey" => true} = params, socket) do
-    if params["isEditable"],
-      do: {:noreply, socket},
-      else: {:noreply, assign(socket, show_search_overlay: true)}
+  def handle_event("open_search_overlay_click", _params, socket) do
+    {:noreply, assign(socket, show_search_overlay: true)}
   end
 
-  def handle_event("open_search_overlay", %{"cmdKey" => true} = params, socket) do
-    if params["isEditable"],
-      do: {:noreply, socket},
-      else: {:noreply, assign(socket, show_search_overlay: true)}
-  end
+  def handle_event("open_search_overlay", params, socket) do
+    meta = params["metaKey"] in [true, "true"]
+    cmd = params["cmdKey"] in [true, "true"]
+    editable = params["isEditable"] in [true, "true"]
 
-  def handle_event("open_search_overlay", _params, socket) do
-    {:noreply, socket}
+    if (meta || cmd) && !editable do
+      {:noreply, assign(socket, show_search_overlay: true)}
+    else
+      {:noreply, socket}
+    end
   end
 
   def handle_event("close_search_overlay", _, socket) do

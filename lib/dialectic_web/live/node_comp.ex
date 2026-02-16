@@ -63,6 +63,20 @@ defmodule DialecticWeb.NodeComp do
         <%= if @node.id == "start" do %>
           <.live_component module={DialecticWeb.StartTutorialComp} id="start-tutorial" />
         <% else %>
+          <%!-- Search hint bar --%>
+          <button
+            type="button"
+            phx-click="open_search_overlay_click"
+            id="search-hint-bar"
+            class="flex items-center gap-2 w-full px-3 sm:px-4 py-2 bg-gray-50 border-b border-gray-200 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer group"
+          >
+            <.icon name="hero-magnifying-glass" class="w-4 h-4 shrink-0" />
+            <span class="text-xs">Search topics...</span>
+            <kbd class="ml-auto hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-medium text-gray-400 group-hover:text-gray-500 bg-white rounded border border-gray-200">
+              <span class="text-[11px]">⌘</span>K
+            </kbd>
+          </button>
+
           <%!-- Thread View (Ancestor Chain) --%>
           <%= if length(@node.parents || []) > 0 do %>
             <div class="border-b border-gray-200 bg-gray-50 px-3 sm:px-4 py-2">
