@@ -1,3 +1,5 @@
+import { INDIGO_500 } from "./colors.js";
+
 const defaultNodeStyle = {
   text: "#1f2937", // gray-800
   background: "#ffffff",
@@ -438,7 +440,7 @@ export function graphStyle(viewMode = "spaced") {
     selector: "node.search-match",
     style: {
       opacity: 1,
-      "underlay-color": "#6366f1",
+      "underlay-color": INDIGO_500,
       "underlay-opacity": 0.18,
       "underlay-padding": isCompact ? 10 : 14,
       "underlay-shape": "roundrectangle",

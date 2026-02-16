@@ -57,6 +57,7 @@ defmodule DialecticWeb.NodeComp do
             type="button"
             phx-click="open_search_overlay_click"
             id="search-hint-bar"
+            aria-label="Open search overlay"
             class="flex items-center gap-2 w-full px-3 sm:px-4 py-2 bg-gray-50 border-b border-gray-200 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer group"
           >
             <.icon name="hero-magnifying-glass" class="w-4 h-4 shrink-0" />

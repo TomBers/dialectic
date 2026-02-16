@@ -558,9 +558,9 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_event("node_clicked", %{"id" => id}, socket) do
-    # Determine if this was triggered from search results
-    from_search = socket.assigns.search_term != "" and length(socket.assigns.search_results) > 0
+  def handle_event("node_clicked", %{"id" => id} = params, socket) do
+    # Determine if this was triggered from search results via explicit param
+    from_search = params["from-search"] == "true"
 
     # Update the graph
     {:noreply, updated_socket} =
