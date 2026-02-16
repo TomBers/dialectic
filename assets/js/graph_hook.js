@@ -748,6 +748,61 @@ const graphHook = {
         this._exploreBtnEl = btn;
       }
     }).call(this);
+
+    // ── Search highlighting on graph ──
+    // When the server pushes matching node IDs, highlight them on the
+    // Cytoscape canvas and dim everything else so matches pop out.
+    this.handleEvent("highlight_search_results", ({ ids }) => {
+      if (!this.cy) return;
+      try {
+        // Remove any previous search highlighting
+        this.cy.elements().removeClass("search-match search-dimmed");
+
+        if (!ids || ids.length === 0) return;
+
+        const idSet = new Set(ids);
+        const allNodes = this.cy.nodes().filter((n) => !n.data("compound"));
+
+        allNodes.forEach((n) => {
+          if (idSet.has(n.id())) {
+            n.addClass("search-match");
+            // If the node is depth-hidden or group-hidden, reveal it
+            if (
+              n.hasClass("depth-hidden") &&
+              typeof this.cy.ensureDepthVisible === "function"
+            ) {
+              this.cy.ensureDepthVisible(n.id());
+            }
+            if (
+              n.hasClass("hidden") &&
+              typeof this.cy.ensureGroupVisible === "function"
+            ) {
+              this.cy.ensureGroupVisible(n.id());
+            }
+          } else {
+            n.addClass("search-dimmed");
+          }
+        });
+
+        // Also dim edges that don't connect two matched nodes
+        this.cy.edges().forEach((e) => {
+          const srcMatch = idSet.has(e.source().id());
+          const tgtMatch = idSet.has(e.target().id());
+          if (srcMatch || tgtMatch) {
+            e.addClass("search-match");
+          } else {
+            e.addClass("search-dimmed");
+          }
+        });
+      } catch (_e) {}
+    });
+
+    this.handleEvent("clear_search_highlights", () => {
+      if (!this.cy) return;
+      try {
+        this.cy.elements().removeClass("search-match search-dimmed");
+      } catch (_e) {}
+    });
   },
 
   _handleViewModeChange(currentViewMode, graphStr, currentNode) {
