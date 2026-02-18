@@ -80,6 +80,24 @@ defmodule Dialectic.Responses.Prompts do
     """
   end
 
+  defp citation_encouragement do
+    """
+    **Source references:** Where relevant, ground your response in primary sources. Quote key thinkers or texts directly using blockquotes (> ) when a passage is particularly illuminating. Attribute ideas to their originators with enough detail (author, work title) for the reader to explore further. Prioritize quality references that genuinely strengthen your points over quantity.
+    """
+  end
+
+  defp citation_encouragement_for_arguments do
+    """
+    **Source references:** Strengthen your argument by citing primary sources, empirical evidence, or authoritative texts. Use direct quotes (> ) from key works when they powerfully support or illustrate your reasoning. Attribute claims to specific thinkers or studies so the reader can evaluate the evidence.
+    """
+  end
+
+  defp citation_encouragement_for_deep_dive do
+    """
+    **Source references:** A deep dive benefits greatly from engagement with primary texts. Quote directly from foundational works, seminal papers, or authoritative sources using blockquotes (> ). Reference specific authors, titles, chapters, or studies. Where scholars or thinkers disagree, cite the specific works representing each position.
+    """
+  end
+
   # ---- Templates -------------------------------------------------------------
 
   @doc """
@@ -100,6 +118,7 @@ defmodule Dialectic.Responses.Prompts do
       - Different perspectives or frameworks
       - Connections to related concepts
       """,
+      citation_encouragement(),
       anti_repetition_footer()
     ])
   end
@@ -121,7 +140,8 @@ defmodule Dialectic.Responses.Prompts do
       2. 2-3 extension questions or related topics that would enrich understanding
 
       Build on the Foundation without repeating it.
-      """
+      """,
+      citation_encouragement()
     ])
   end
 
@@ -144,7 +164,8 @@ defmodule Dialectic.Responses.Prompts do
       - Identifying related concepts or questions worth exploring
 
       While the Foundation provides context, focus on depth and breadth regarding THIS specific concept.
-      """
+      """,
+      citation_encouragement()
     ])
   end
 
@@ -177,7 +198,8 @@ defmodule Dialectic.Responses.Prompts do
       - New understanding that emerges from their combination
 
       Do not simply summarize—create something new from their integration.
-      """
+      """,
+      citation_encouragement()
     ])
   end
 
@@ -199,7 +221,8 @@ defmodule Dialectic.Responses.Prompts do
       - Fresh perspectives that strengthen the case
 
       Focus specifically on supporting the selected text.
-      """
+      """,
+      citation_encouragement_for_arguments()
     ])
   end
 
@@ -222,6 +245,7 @@ defmodule Dialectic.Responses.Prompts do
 
       Avoid simply restating points already made in the Foundation.
       """,
+      citation_encouragement_for_arguments(),
       anti_repetition_footer()
     ])
   end
@@ -244,7 +268,8 @@ defmodule Dialectic.Responses.Prompts do
       - Critical perspectives
 
       Focus specifically on critiquing the selected text.
-      """
+      """,
+      citation_encouragement_for_arguments()
     ])
   end
 
@@ -267,6 +292,7 @@ defmodule Dialectic.Responses.Prompts do
 
       Avoid simply restating points already made in the Foundation.
       """,
+      citation_encouragement_for_arguments(),
       anti_repetition_footer()
     ])
   end
@@ -286,6 +312,7 @@ defmodule Dialectic.Responses.Prompts do
       For each suggestion, briefly explain:
       - How it connects to the current topic
       - What new dimension it would add to understanding
+      - A specific work, text, or primary source the reader could turn to for that topic
 
       Prioritize suggestions that open NEW directions, not just variations on what's already been discussed.
       """
@@ -307,6 +334,7 @@ defmodule Dialectic.Responses.Prompts do
       For each suggestion, briefly explain:
       - How it connects to this specific concept
       - What new dimension it would add to understanding
+      - A specific work, text, or primary source the reader could turn to for that topic
 
       Prioritize suggestions that open NEW directions, not just variations on what's already been discussed.
       """
@@ -332,7 +360,8 @@ defmodule Dialectic.Responses.Prompts do
       - Addressing questions the context raises but doesn't answer
 
       You may write at length (beyond normal 500-word limit). Focus on adding substantial new understanding.
-      """
+      """,
+      citation_encouragement_for_deep_dive()
     ])
   end
 
@@ -354,6 +383,7 @@ defmodule Dialectic.Responses.Prompts do
 
       You may write at length (beyond normal 500-word limit). Focus on adding substantial new understanding.
       """,
+      citation_encouragement_for_deep_dive(),
       anti_repetition_footer()
     ])
   end

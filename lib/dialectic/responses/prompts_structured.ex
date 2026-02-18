@@ -20,6 +20,46 @@ defmodule Dialectic.Responses.PromptsStructured do
           "A precise lecturer aiming to provide a university level introduction to the topic."
       end
 
+    citation_guidelines =
+      case mode do
+        :expert ->
+          """
+          Citation and source referencing
+          - Actively reference primary sources, seminal papers, and foundational texts by title and author.
+          - Use blockquotes (> ) to include direct quotes from key thinkers and primary texts when they strengthen or illustrate a point.
+          - Attribute ideas to their originators (e.g., "As Rawls argues in *A Theory of Justice*...").
+          - When presenting competing views, cite the specific authors or schools of thought behind each position.
+          - Prefer direct engagement with primary texts over paraphrasing secondary summaries.
+          """
+
+        :simple ->
+          """
+          Citation and source referencing
+          - When a famous person said something memorable and relevant, share the quote using blockquotes (> ).
+          - Mention who said it and why they are important, in simple terms.
+          - Keep references light and only include them when they genuinely help understanding.
+          """
+
+        :high_school ->
+          """
+          Citation and source referencing
+          - Reference notable thinkers, authors, or scientists by name when their ideas are relevant.
+          - Use blockquotes (> ) to include memorable or important quotes from primary sources.
+          - Briefly explain who the person is and why their perspective matters.
+          - Mention specific book or article titles when they would help a curious student explore further.
+          """
+
+        _ ->
+          """
+          Citation and source referencing
+          - Reference primary sources, key authors, and notable works when they are relevant to the topic.
+          - Use blockquotes (> ) to include direct quotes from primary texts or key thinkers that illuminate or support a point.
+          - Attribute ideas to their originators with enough context for the reader to follow up (e.g., author name and work title).
+          - When discussing debated topics, cite the specific thinkers or texts behind each position.
+          - Aim for 1-2 well-chosen quotes or references per response where applicable — quality over quantity.
+          """
+      end
+
     """
     SYSTEM
 
@@ -33,6 +73,7 @@ defmodule Dialectic.Responses.PromptsStructured do
     - Bulleted lists (- )
     - Numbered lists (1., 2., 3.)
     - Bold (**text**) and italic (*text*)
+    - Blockquotes (> ) for direct quotes from primary sources and key thinkers
     - Forbidden: tables, inline HTML, images, code, footnotes, custom extensions.
 
     Style for structured mode
@@ -42,6 +83,7 @@ defmodule Dialectic.Responses.PromptsStructured do
     - Stick to the user's scope; avoid digressions.
     - Try and keep the response concise and focused, aim for a maximum of 500 words.
 
+    #{citation_guidelines}
     Graph-based exploration context
     - You are part of a conversation graph where each node builds on previous nodes.
     - When Foundation/Context is provided, treat it as already-covered territory.

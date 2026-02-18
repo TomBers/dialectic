@@ -4,14 +4,17 @@ defmodule Dialectic.Responses.PrintPromptsTest do
   @moduledoc """
   Console-printing test for visually inspecting all LLM PromptsStructured.
 
-  Run:
-    mix test test/dialectic/responses/print_prompts_test.exs
+  Skipped by default to keep test output clean. To run it explicitly:
+
+    mix test test/dialectic/responses/print_prompts_test.exs --include skip
 
   Notes:
   - This test prints to the actual console by writing to the `:user` device,
     bypassing ExUnit's IO capture.
   - No assertions are made; it simply outputs each prompt variant.
   """
+
+  @moduletag :skip
 
   alias Dialectic.Responses.{Prompts, PromptsStructured, PromptsCreative}
 
