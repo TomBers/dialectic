@@ -12,6 +12,7 @@ defmodule DialecticWeb.ExportMenuComp do
 
   Assigns:
   - `graph_id` (required): The current graph identifier.
+  - `node` (optional): The currently selected node. When present, the reader view opens focused on this node.
   - `label` (optional): Custom label for the dropdown trigger (default: "Export").
   - `class` (optional): Extra classes added to the wrapper container.
   - `align` (optional): "left" or "right" alignment of the dropdown (default: "right").
@@ -24,6 +25,7 @@ defmodule DialecticWeb.ExportMenuComp do
       |> Map.put_new(:label, "Export")
       |> Map.put_new(:class, "")
       |> Map.put_new(:align, "right")
+      |> Map.put_new(:node, nil)
 
     {:ok, assign(socket, assigns)}
   end
@@ -88,7 +90,7 @@ defmodule DialecticWeb.ExportMenuComp do
           
     <!-- PDF -->
           <.link
-            navigate={graph_linear_path(@graph_struct)}
+            navigate={graph_linear_path(@graph_struct, if(@node, do: Map.get(@node, :id), else: nil))}
             target="_blank"
             rel="noopener noreferrer"
             class="w-full inline-flex items-center gap-2 text-xs font-medium px-2.5 py-2 rounded-md hover:bg-gray-50 transition-colors"

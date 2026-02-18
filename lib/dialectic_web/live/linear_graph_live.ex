@@ -93,6 +93,15 @@ defmodule DialecticWeb.LinearGraphLive do
                 token: token_param
               )
 
+            # When a specific node_id was requested via URL params, scroll to it
+            # after the view is connected and rendered.
+            socket =
+              if connected?(socket) && params["node_id"] && target_node do
+                push_event(socket, "scroll_to_node", %{id: target_node.id})
+              else
+                socket
+              end
+
             {:ok, socket}
           rescue
             _e ->

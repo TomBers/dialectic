@@ -2,6 +2,7 @@ defmodule DialecticWeb.NoteMenuComp do
   use DialecticWeb, :live_component
 
   def update(assigns, socket) do
+    assigns = Map.put_new(assigns, :node, nil)
     {:ok, socket |> assign(assigns)}
   end
 
@@ -34,7 +35,7 @@ defmodule DialecticWeb.NoteMenuComp do
           </button>
 
           <.link
-            navigate={graph_linear_path(@graph_struct)}
+            navigate={graph_linear_path(@graph_struct, if(@node, do: Map.get(@node, :id), else: nil))}
             target="_blank"
             rel="noopener noreferrer"
             class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-red-200 text-red-600 hover:bg-red-50"
