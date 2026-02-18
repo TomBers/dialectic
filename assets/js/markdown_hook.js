@@ -149,7 +149,6 @@ function enhanceLinks(root) {
       const badge = document.createElement("span");
       badge.className = "link-domain";
       badge.textContent = hostname;
-      badge.setAttribute("aria-hidden", "true");
       a.appendChild(badge);
     }
   });
