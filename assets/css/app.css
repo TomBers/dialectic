@@ -980,6 +980,11 @@ button[type="submit"]:active {
     color: #fff;
 }
 
+.message-wrapper.user .message-bubble .prose .link-domain {
+    background: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.75);
+}
+
 /* Code and pre blocks inside blue bubbles */
 .message-wrapper.user .message-bubble .prose code {
     color: rgba(255, 255, 255, 0.95);
@@ -995,6 +1000,22 @@ button[type="submit"]:active {
     color: rgba(255, 255, 255, 0.95);
     border-left-color: rgba(255, 255, 255, 0.35);
 }
+/* Domain badge on LLM-generated external links */
+.link-domain {
+    display: inline-block;
+    margin-left: 0.3em;
+    padding: 0.05em 0.4em;
+    font-size: 0.7em;
+    line-height: 1.4;
+    font-weight: 500;
+    color: #6b7280; /* gray-500 */
+    background: #f3f4f6; /* gray-100 */
+    border-radius: 4px;
+    vertical-align: baseline;
+    text-decoration: none;
+    pointer-events: none;
+}
+
 .message-wrapper.user .message-bubble .prose hr {
     border-color: rgba(255, 255, 255, 0.3);
 }

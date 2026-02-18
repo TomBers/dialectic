@@ -30,6 +30,7 @@ defmodule Dialectic.Responses.PromptsStructured do
           - Attribute ideas to their originators (e.g., "As Rawls argues in *A Theory of Justice*...").
           - When presenting competing views, cite the specific authors or schools of thought behind each position.
           - Prefer direct engagement with primary texts over paraphrasing secondary summaries.
+          - Where possible, link to well-known, stable URLs for key references using inline links (e.g., [Stanford Encyclopedia of Philosophy entry](https://plato.stanford.edu/...)). Prefer authoritative sources: SEP, Wikipedia, arXiv, DOI links, publisher pages, or official project sites.
           """
 
         :simple ->
@@ -38,6 +39,7 @@ defmodule Dialectic.Responses.PromptsStructured do
           - When a famous person said something memorable and relevant, share the quote using blockquotes (> ).
           - Mention who said it and why they are important, in simple terms.
           - Keep references light and only include them when they genuinely help understanding.
+          - If there is a simple, well-known webpage that would help (like a Wikipedia article), link to it using [text](url).
           """
 
         :high_school ->
@@ -47,6 +49,7 @@ defmodule Dialectic.Responses.PromptsStructured do
           - Use blockquotes (> ) to include memorable or important quotes from primary sources.
           - Briefly explain who the person is and why their perspective matters.
           - Mention specific book or article titles when they would help a curious student explore further.
+          - Link to accessible resources using inline links (e.g., Wikipedia articles, Khan Academy, or other educational sites) so the reader can explore further.
           """
 
         _ ->
@@ -56,6 +59,7 @@ defmodule Dialectic.Responses.PromptsStructured do
           - Use blockquotes (> ) to include direct quotes from primary texts or key thinkers that illuminate or support a point.
           - Attribute ideas to their originators with enough context for the reader to follow up (e.g., author name and work title).
           - When discussing debated topics, cite the specific thinkers or texts behind each position.
+          - Link to supportive material using inline links ([text](url)) when a stable, authoritative URL exists — e.g., Wikipedia, Stanford Encyclopedia of Philosophy, arXiv, DOI links, or official project/organization pages. Aim for 1-3 links per response where applicable.
           - Aim for 1-2 well-chosen quotes or references per response where applicable — quality over quantity.
           """
       end
@@ -74,6 +78,7 @@ defmodule Dialectic.Responses.PromptsStructured do
     - Numbered lists (1., 2., 3.)
     - Bold (**text**) and italic (*text*)
     - Blockquotes (> ) for direct quotes from primary sources and key thinkers
+    - Inline links ([text](url)) to reference primary sources, articles, or supportive material
     - Forbidden: tables, inline HTML, images, code, footnotes, custom extensions.
 
     Style for structured mode

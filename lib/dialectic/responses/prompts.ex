@@ -82,19 +82,19 @@ defmodule Dialectic.Responses.Prompts do
 
   defp citation_encouragement do
     """
-    **Source references:** Where relevant, ground your response in primary sources. Quote key thinkers or texts directly using blockquotes (> ) when a passage is particularly illuminating. Attribute ideas to their originators with enough detail (author, work title) for the reader to explore further. Prioritize quality references that genuinely strengthen your points over quantity.
+    **Source references:** Where relevant, ground your response in primary sources. Quote key thinkers or texts directly using blockquotes (> ) when a passage is particularly illuminating. Attribute ideas to their originators with enough detail (author, work title) for the reader to explore further. Link to supportive material using inline links ([text](url)) when a stable, authoritative URL exists (e.g., Wikipedia, Stanford Encyclopedia of Philosophy, arXiv, DOI links). Prioritize quality references that genuinely strengthen your points over quantity.
     """
   end
 
   defp citation_encouragement_for_arguments do
     """
-    **Source references:** Strengthen your argument by citing primary sources, empirical evidence, or authoritative texts. Use direct quotes (> ) from key works when they powerfully support or illustrate your reasoning. Attribute claims to specific thinkers or studies so the reader can evaluate the evidence.
+    **Source references:** Strengthen your argument by citing primary sources, empirical evidence, or authoritative texts. Use direct quotes (> ) from key works when they powerfully support or illustrate your reasoning. Attribute claims to specific thinkers or studies so the reader can evaluate the evidence. Where available, link to the referenced works or supporting material using inline links ([text](url)).
     """
   end
 
   defp citation_encouragement_for_deep_dive do
     """
-    **Source references:** A deep dive benefits greatly from engagement with primary texts. Quote directly from foundational works, seminal papers, or authoritative sources using blockquotes (> ). Reference specific authors, titles, chapters, or studies. Where scholars or thinkers disagree, cite the specific works representing each position.
+    **Source references:** A deep dive benefits greatly from engagement with primary texts. Quote directly from foundational works, seminal papers, or authoritative sources using blockquotes (> ). Reference specific authors, titles, chapters, or studies. Where scholars or thinkers disagree, cite the specific works representing each position. Link to key references using inline links ([text](url)) — prefer stable, authoritative URLs such as DOI links, arXiv, Wikipedia, Stanford Encyclopedia of Philosophy, or official publisher pages.
     """
   end
 
