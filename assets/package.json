@@ -9,6 +9,11 @@
     "marked": "^17.0.0"
   },
   "scripts": {
-    "deploy": "npm install && npm run build"
+    "deploy": "npm install && npm run build",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "jsdom": "^27.0.1",
+    "vitest": "^3.2.4"
   }
 }

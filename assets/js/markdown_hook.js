@@ -101,12 +101,12 @@ marked.setOptions({
 /** Allowed URL protocols for links rendered from LLM markdown output.
  * Anything else (javascript:, data:, vbscript:, etc.) is stripped.
  */
-const ALLOWED_PROTOCOLS = ["https:", "http:"];
+export const ALLOWED_PROTOCOLS = ["https:", "http:"];
 /**
  * Enhances anchor tags for safer external navigation.
  * Ensures new-tab behavior and prevents reverse tabnabbing.
  */
-function enhanceLinks(root) {
+export function enhanceLinks(root) {
   const links = root.querySelectorAll("a[href]");
   links.forEach((a) => {
     const href = a.getAttribute("href") || "";
@@ -114,6 +114,13 @@ function enhanceLinks(root) {
     // --- Protocol allowlist ---
     // Reject anything that isn't http(s). Relative URLs are also removed
     // because LLM-generated links should always be fully qualified.
+    //
+    // Note: Protocol-relative URLs (starting with "//") are intentionally
+    // allowed. The `new URL()` constructor resolves them to absolute URLs
+    // using the current page's protocol (e.g. "//example.com/path" becomes
+    // "https://example.com/path" when served over HTTPS). This is acceptable
+    // for LLM-generated content since the resulting URL will always use the
+    // same protocol as the host page and pass the allowlist check below.
     let url;
     try {
       url = new URL(href, window.location.origin);

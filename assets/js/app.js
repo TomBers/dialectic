@@ -370,21 +370,6 @@ hooks.LinearView = {
     this.handleEvent("scroll_to_node", ({ id }) => {
       scrollToNode(id);
     });
-
-    // On initial mount, scroll to the selected node (from URL ?node_id= param).
-    // Use a short delay to let the DOM render and markdown hooks finish.
-    const selectedEl = this.el.querySelector("[id^='node-']");
-    if (selectedEl) {
-      // Find the last node in the linear path — that's the target node
-      const allNodes = this.el.querySelectorAll("[id^='node-']");
-      const lastNode = allNodes[allNodes.length - 1];
-      if (lastNode) {
-        const nodeId = lastNode.id.replace("node-", "");
-        requestAnimationFrame(() => {
-          setTimeout(() => scrollToNode(nodeId, "instant"), 150);
-        });
-      }
-    }
   },
 };
 
