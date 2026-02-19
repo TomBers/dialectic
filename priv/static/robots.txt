@@ -11,6 +11,3 @@ Disallow: /dev/
 Disallow: /my/
 Disallow: /api/
 Disallow: /health/
-
-# Sitemap
-Sitemap: https://mudg.fly.dev/sitemap.xml

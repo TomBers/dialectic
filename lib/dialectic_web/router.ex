@@ -41,11 +41,6 @@ defmodule DialecticWeb.Router do
     get "/deep", HealthController, :deep
   end
 
-  # Sitemap for search engine discovery (no session/CSRF needed)
-  scope "/", DialecticWeb do
-    get "/sitemap.xml", SitemapController, :index
-  end
-
   scope "/", DialecticWeb do
     pipe_through :browser
     live "/", HomeLive
