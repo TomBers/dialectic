@@ -22,7 +22,8 @@ defmodule DialecticWeb.SitemapController do
         where: not is_nil(g.slug),
         where: g.slug != "",
         select: %{slug: g.slug, updated_at: g.updated_at},
-        order_by: [desc: g.updated_at]
+        order_by: [desc: g.updated_at],
+        limit: 50_000
       )
       |> Repo.all()
 
@@ -30,6 +31,7 @@ defmodule DialecticWeb.SitemapController do
 
     conn
     |> put_resp_content_type("application/xml")
+    |> put_resp_header("cache-control", "public, max-age=3600")
     |> send_resp(200, xml)
   end
 
