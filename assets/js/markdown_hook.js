@@ -98,16 +98,14 @@ marked.setOptions({
   breaks: true,
 });
 
+/** Allowed URL protocols for links rendered from LLM markdown output.
+ * Anything else (javascript:, data:, vbscript:, etc.) is stripped.
+ */
+const ALLOWED_PROTOCOLS = ["https:", "http:"];
 /**
  * Enhances anchor tags for safer external navigation.
  * Ensures new-tab behavior and prevents reverse tabnabbing.
  */
-/**
- * Allowed URL protocols for links rendered from LLM markdown output.
- * Anything else (javascript:, data:, vbscript:, etc.) is stripped.
- */
-const ALLOWED_PROTOCOLS = ["https:", "http:"];
-
 function enhanceLinks(root) {
   const links = root.querySelectorAll("a[href]");
   links.forEach((a) => {
