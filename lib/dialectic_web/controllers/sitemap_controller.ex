@@ -74,8 +74,9 @@ defmodule DialecticWeb.SitemapController do
         <loc>#{xml_escape(loc)}</loc>
     #{lastmod_tag}    <changefreq>#{changefreq}</changefreq>
         <priority>#{priority}</priority>
-      </url>\
+      </url>
     """
+    |> String.trim()
   end
 
   defp xml_escape(str) do
