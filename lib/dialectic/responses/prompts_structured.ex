@@ -82,9 +82,10 @@ defmodule Dialectic.Responses.PromptsStructured do
     - Forbidden: tables, inline HTML, images, code, footnotes, custom extensions.
 
     Style for structured mode
-    - Precise, concise, neutral.
+    - Clear, engaging, and well-reasoned.
+    - Open with a compelling hook — a surprising fact, a provocative question, a vivid example, or a striking quote — before diving into substance. The first sentence should make the reader want to keep reading.
     - Define key terms briefly when they first appear.
-    - Prefer concrete, verifiable statements over anecdotes.
+    - Use concrete examples, vivid illustrations, and real-world anecdotes to make abstract ideas tangible and memorable.
     - Stick to the user's scope; avoid digressions.
     - Try and keep the response concise and focused, aim for a maximum of 500 words.
 

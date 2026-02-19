@@ -173,7 +173,7 @@ defmodule Dialectic.Responses.PromptsTest do
       result = Prompts.initial_explainer(context, topic)
 
       assert result =~ topic
-      assert result =~ "extension questions"
+      assert result =~ "follow-up questions"
       assert result =~ "Build on the Foundation"
     end
   end
@@ -190,7 +190,7 @@ defmodule Dialectic.Responses.PromptsTest do
       assert result =~ pos1
       assert result =~ pos2
       assert result =~ "Synthesize these positions"
-      assert result =~ "Common ground"
+      assert result =~ "common ground"
     end
   end
 
@@ -203,7 +203,7 @@ defmodule Dialectic.Responses.PromptsTest do
 
       assert result =~ claim
       assert result =~ "IN FAVOR OF"
-      assert result =~ "strong argument"
+      assert result =~ "compelling, persuasive argument"
     end
   end
 
@@ -216,7 +216,7 @@ defmodule Dialectic.Responses.PromptsTest do
 
       assert result =~ claim
       assert result =~ "AGAINST"
-      assert result =~ "counterarguments"
+      assert result =~ "counterexamples"
     end
   end
 
@@ -228,7 +228,7 @@ defmodule Dialectic.Responses.PromptsTest do
       result = Prompts.related_ideas(context, current_idea)
 
       assert result =~ current_idea
-      assert result =~ "3-5 adjacent topics"
+      assert result =~ "3-5 fascinating rabbit holes"
       assert result =~ "thinkers, or concepts"
     end
   end

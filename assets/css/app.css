@@ -1046,6 +1046,14 @@ button[type="submit"]:active {
 .selection-content {
     line-height: 1.65;
     font-variant-numeric: lining-nums;
+    letter-spacing: -0.003em;
+}
+
+/* Bold text — subtle visual lift for key terms */
+.selection-content strong {
+    color: #111827; /* gray-900 */
+    font-weight: 700;
+    letter-spacing: -0.01em;
 }
 
 /* Lead paragraph and H1 within selection-content */
@@ -1123,8 +1131,8 @@ button[type="submit"]:active {
     color: #9ca3af; /* gray-400 */
 }
 .selection-content :where(ol > li)::marker {
-    color: #6b7280; /* gray-500 */
-    font-weight: 600;
+    color: #4338ca; /* indigo-700 */
+    font-weight: 700;
 }
 .selection-content li > ul,
 .selection-content li > ol {
@@ -1148,6 +1156,31 @@ button[type="submit"]:active {
     font-style: italic;
     line-height: 1.55;
     box-shadow: 0 1px 3px rgba(99, 102, 241, 0.08);
+    transition:
+        border-left-color 0.2s ease,
+        box-shadow 0.2s ease,
+        transform 0.2s ease;
+}
+
+.selection-content blockquote:hover {
+    border-left-color: #6366f1; /* indigo-500 */
+    box-shadow: 0 3px 12px rgba(99, 102, 241, 0.15);
+    transform: translateX(2px);
+}
+
+/* Promote the first blockquote as a lead/hero quote */
+.selection-content > blockquote:first-child,
+.selection-content > p:first-child + blockquote {
+    padding: 1.25em 1.5em 1.25em 1.75em;
+    font-size: 1.1em;
+    border-left-width: 5px;
+    border-left-color: #6366f1; /* indigo-500 */
+    background: linear-gradient(
+        135deg,
+        #e0e7ff,
+        #ede9fe
+    ); /* indigo-100 → violet-100 */
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.12);
 }
 
 /* Opening quotation mark decoration */
@@ -1162,6 +1195,11 @@ button[type="submit"]:active {
     font-style: normal;
     font-family: Georgia, "Times New Roman", serif;
     pointer-events: none;
+    transition: color 0.2s ease;
+}
+
+.selection-content blockquote:hover::before {
+    color: #818cf8; /* indigo-400 */
 }
 
 /* Reset italic for nested elements that shouldn't be italic */
@@ -1217,12 +1255,28 @@ button[type="submit"]:active {
     color: inherit;
 }
 
-/* Horizontal rules */
+/* Horizontal rules — section dividers with centered accent */
 .selection-content hr {
     border: 0;
-    height: 1px;
-    background: linear-gradient(to right, transparent, #e5e7eb, transparent);
-    margin: 1.25rem 0;
+    height: 0;
+    margin: 1.75rem auto;
+    max-width: 80%;
+    border-top: 1px solid #e5e7eb;
+    overflow: visible;
+    position: relative;
+}
+
+.selection-content hr::after {
+    content: "◆";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 0 0.75em;
+    font-size: 0.5em;
+    color: #a5b4fc; /* indigo-300 */
+    letter-spacing: 0.3em;
 }
 
 /* Definition lists */
@@ -1246,19 +1300,25 @@ button[type="submit"]:active {
     color: #4338ca; /* indigo-700 */
     text-decoration: underline;
     text-decoration-color: #c7d2fe; /* indigo-200 */
-    text-underline-offset: 2px;
+    text-underline-offset: 3px;
     text-decoration-thickness: 1.5px;
     font-weight: 500;
+    border-radius: 2px;
     transition:
         color 0.15s ease,
-        text-decoration-color 0.15s ease;
+        text-decoration-color 0.15s ease,
+        background-color 0.15s ease,
+        text-decoration-thickness 0.15s ease;
 }
 .selection-content a[href]:hover {
     color: #3730a3; /* indigo-800 */
-    text-decoration-color: #818cf8; /* indigo-400 */
+    text-decoration-color: #6366f1; /* indigo-500 */
+    text-decoration-thickness: 2px;
+    background-color: rgba(238, 242, 255, 0.6); /* indigo-50 tinted */
 }
 .selection-content a[href]:active {
     color: #312e81; /* indigo-900 */
+    background-color: rgba(224, 231, 255, 0.7); /* indigo-100 tinted */
 }
 
 /* Domain badges inside selection-content — slightly bolder */

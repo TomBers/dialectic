@@ -143,8 +143,9 @@
               data-node-id={node.id}
               data-mudg-id={@graph_id}
               class={[
-                "group relative bg-white rounded-xl shadow-sm border transition-all duration-200 scroll-mt-32",
+                "group relative bg-white rounded-xl shadow-sm border transition-all duration-200 scroll-mt-32 hover:shadow-md hover:-translate-y-0.5",
                 "border-l-[6px]",
+                "animate-fade-in-up",
                 message_border_class(node.class),
                 if(@show_highlights, do: "highlights-visible", else: "highlights-hidden")
               ]}
@@ -165,7 +166,7 @@
               </div>
               
 <!-- Content -->
-              <div class="p-5 sm:p-6 prose prose-stone max-w-none text-[15px] sm:text-base leading-relaxed prose-headings:font-semibold prose-a:text-blue-600 hover:prose-a:text-blue-500 prose-pre:bg-gray-800 prose-pre:text-gray-100">
+              <div class="p-5 sm:p-6 prose prose-stone max-w-none text-[15px] sm:text-base leading-relaxed prose-headings:font-semibold prose-pre:bg-gray-800 prose-pre:text-gray-100 selection-content">
                 <div
                   phx-hook="Markdown"
                   id={"md-#{node.id}"}
@@ -347,5 +348,19 @@
 <style>
   .highlights-hidden .highlight-span {
     background-color: transparent !important;
+  }
+
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .animate-fade-in-up {
+    animation: fade-in-up 0.4s ease-out both;
   }
 </style>
