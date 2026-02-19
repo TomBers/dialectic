@@ -973,11 +973,22 @@ button[type="submit"]:active {
 
 /* Links inside blue bubbles */
 .message-wrapper.user .message-bubble .prose a {
-    color: rgba(255, 255, 255, 0.9);
-    text-decoration-color: rgba(255, 255, 255, 0.7);
+    color: rgba(255, 255, 255, 0.95);
+    text-decoration: underline;
+    text-decoration-color: rgba(255, 255, 255, 0.5);
+    text-underline-offset: 2px;
+    text-decoration-thickness: 1px;
 }
 .message-wrapper.user .message-bubble .prose a:hover {
     color: #fff;
+    text-decoration-color: rgba(255, 255, 255, 0.9);
+}
+
+.message-wrapper.user .message-bubble .prose .link-domain {
+    background: rgba(255, 255, 255, 0.18);
+    color: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    text-decoration: none;
 }
 
 /* Code and pre blocks inside blue bubbles */
@@ -993,8 +1004,34 @@ button[type="submit"]:active {
 /* Blockquotes and rules inside blue bubbles */
 .message-wrapper.user .message-bubble .prose blockquote {
     color: rgba(255, 255, 255, 0.95);
-    border-left-color: rgba(255, 255, 255, 0.35);
+    border-left-color: rgba(255, 255, 255, 0.45);
+    background: rgba(255, 255, 255, 0.08);
 }
+.message-wrapper.user .message-bubble .prose blockquote .quote-source {
+    color: rgba(255, 255, 255, 0.65);
+}
+
+/* ── Domain badge on LLM-generated external links ── */
+.link-domain {
+    display: inline-block;
+    margin-left: 0.35em;
+    padding: 0.1em 0.45em;
+    font-size: 0.65em;
+    line-height: 1.4;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    color: #6b7280; /* gray-500 */
+    background: #f9fafb; /* gray-50 */
+    border: 1px solid #e5e7eb; /* gray-200 */
+    border-radius: 4px;
+    vertical-align: baseline;
+    text-decoration: none !important;
+    pointer-events: none;
+    font-family:
+        ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    white-space: nowrap;
+}
+
 .message-wrapper.user .message-bubble .prose hr {
     border-color: rgba(255, 255, 255, 0.3);
 }
@@ -1007,18 +1044,32 @@ button[type="submit"]:active {
 
 /* Node content readability inside selection-content */
 .selection-content {
-    line-height: 1.65;
+    line-height: 1.75;
     font-variant-numeric: lining-nums;
+    letter-spacing: -0.003em;
+    color: #1f2937; /* gray-800 — darker than prose-stone default for sustained reading */
+    word-spacing: 0.02em;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    max-width: 65ch; /* optimal measure: ~60-75 characters per line */
 }
 
-/* Lead paragraph and H1 within selection-content */
+/* Bold text — subtle visual lift for key terms */
+.selection-content strong {
+    color: #111827; /* gray-900 */
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+/* Lead paragraph — larger and slightly heavier, but NOT italic (Inter italic is harder to read at body size) */
 .selection-content > p:first-child {
-    font-size: 1.15em;
-    line-height: 1.35;
-    font-style: italic;
-    color: #1f2937;
+    font-size: 1.1em;
+    line-height: 1.55;
+    font-weight: 450; /* Inter variable weight: slightly heavier than normal */
+    color: #111827; /* gray-900 */
     margin-top: 0.1em;
-    margin-bottom: 0.6em;
+    margin-bottom: 0.85em;
 }
 
 .selection-content h1 {
@@ -1030,35 +1081,45 @@ button[type="submit"]:active {
     letter-spacing: -0.01em;
 }
 
-/* Headings with subtle accents */
+/* Headings with subtle accents — generous top margin to mark new sections clearly */
 .selection-content h2 {
-    margin-top: 0.75em;
-    margin-bottom: 0.45em;
+    margin-top: 1.4em;
+    margin-bottom: 0.5em;
     font-size: 1.25rem;
     font-weight: 700;
     line-height: 1.25;
     padding-left: 0.6em;
     border-left: 3px solid #e5e7eb;
+    color: #111827; /* gray-900 */
 }
 .selection-content h3 {
-    margin-top: 0.75em;
-    margin-bottom: 0.35em;
+    margin-top: 1.2em;
+    margin-bottom: 0.4em;
     font-size: 1.1rem;
     font-weight: 600;
     line-height: 1.3;
+    color: #1f2937; /* gray-800 */
 }
 
-/* Paragraph rhythm */
+/* Paragraph rhythm — generous spacing so paragraphs breathe */
 .selection-content p {
-    margin: 0.55em 0;
+    margin: 0.85em 0;
+}
+
+/* Tighten paragraphs immediately after headings so they feel connected */
+.selection-content h1 + p,
+.selection-content h2 + p,
+.selection-content h3 + p {
+    margin-top: 0.3em;
 }
 
 /* Lists and markers */
 .selection-content ul,
 .selection-content ol {
-    margin: 0.5em 0 0.85em 1.25em;
+    margin: 0.65em 0 1em 1.25em;
     padding-left: 1.25em;
     font-size: 1em;
+    line-height: 1.7;
 }
 
 /* Normalize first-child lists so they don't inherit lead sizing */
@@ -1074,7 +1135,7 @@ button[type="submit"]:active {
     margin-top: 0.25em;
 }
 .selection-content li {
-    margin: 0.3em 0;
+    margin: 0.4em 0;
 }
 .selection-content ul {
     list-style: disc;
@@ -1086,8 +1147,8 @@ button[type="submit"]:active {
     color: #9ca3af; /* gray-400 */
 }
 .selection-content :where(ol > li)::marker {
-    color: #6b7280; /* gray-500 */
-    font-weight: 600;
+    color: #4338ca; /* indigo-700 */
+    font-weight: 700;
 }
 .selection-content li > ul,
 .selection-content li > ol {
@@ -1095,14 +1156,91 @@ button[type="submit"]:active {
     margin-bottom: 0.25em;
 }
 
-/* Blockquotes as callouts */
+/* ── Blockquotes — primary source callouts ── */
 .selection-content blockquote {
-    margin: 0.9em 0;
-    padding: 0.75em 1em;
-    border-left: 4px solid #9ca3af; /* gray-400 */
-    background: #f9fafb; /* gray-50 */
-    color: #374151; /* gray-700 */
-    border-radius: 0 8px 8px 0;
+    position: relative;
+    margin: 1.1em 0;
+    padding: 1em 1.25em 1em 1.5em;
+    border-left: 4px solid #818cf8; /* indigo-400 */
+    background: linear-gradient(
+        135deg,
+        #eef2ff,
+        #f5f3ff
+    ); /* indigo-50 → violet-50 */
+    color: #1e1b4b; /* indigo-950 */
+    border-radius: 0 10px 10px 0;
+    font-style: italic;
+    line-height: 1.55;
+    box-shadow: 0 1px 3px rgba(99, 102, 241, 0.08);
+    transition:
+        border-left-color 0.2s ease,
+        box-shadow 0.2s ease,
+        transform 0.2s ease;
+}
+
+.selection-content blockquote:hover {
+    border-left-color: #6366f1; /* indigo-500 */
+    box-shadow: 0 3px 12px rgba(99, 102, 241, 0.15);
+    transform: translateX(2px);
+}
+
+/* Promote the first blockquote as a lead/hero quote */
+.selection-content > blockquote:first-child,
+.selection-content > p:first-child + blockquote {
+    padding: 1.25em 1.5em 1.25em 1.75em;
+    font-size: 1.1em;
+    border-left-width: 5px;
+    border-left-color: #6366f1; /* indigo-500 */
+    background: linear-gradient(
+        135deg,
+        #e0e7ff,
+        #ede9fe
+    ); /* indigo-100 → violet-100 */
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.12);
+}
+
+/* Opening quotation mark decoration */
+.selection-content blockquote::before {
+    content: "\201C"; /* left double quotation mark */
+    position: absolute;
+    top: -0.1em;
+    left: 0.25em;
+    font-size: 2.5em;
+    line-height: 1;
+    color: #a5b4fc; /* indigo-300 */
+    font-style: normal;
+    font-family: Georgia, "Times New Roman", serif;
+    pointer-events: none;
+    transition: color 0.2s ease;
+}
+
+.selection-content blockquote:hover::before {
+    color: #818cf8; /* indigo-400 */
+}
+
+/* Reset italic for nested elements that shouldn't be italic */
+.selection-content blockquote strong {
+    font-style: normal;
+}
+
+/* Attribution lines inside blockquotes (e.g., "— Author, *Work*") */
+.selection-content blockquote p:last-child em:only-child,
+.selection-content blockquote footer,
+.selection-content blockquote cite {
+    display: block;
+    margin-top: 0.5em;
+    font-size: 0.85em;
+    font-style: normal;
+    font-weight: 600;
+    color: #4338ca; /* indigo-700 */
+    letter-spacing: 0.01em;
+}
+
+/* Nested blockquotes (rare, but handle gracefully) */
+.selection-content blockquote blockquote {
+    margin: 0.75em 0 0.25em;
+    border-left-color: #c7d2fe; /* indigo-200 */
+    background: rgba(238, 242, 255, 0.5);
 }
 
 /* Code and pre formatting */
@@ -1133,12 +1271,28 @@ button[type="submit"]:active {
     color: inherit;
 }
 
-/* Horizontal rules */
+/* Horizontal rules — section dividers with centered accent */
 .selection-content hr {
     border: 0;
-    height: 1px;
-    background: linear-gradient(to right, transparent, #e5e7eb, transparent);
-    margin: 1.25rem 0;
+    height: 0;
+    margin: 1.75rem auto;
+    max-width: 80%;
+    border-top: 1px solid #e5e7eb;
+    overflow: visible;
+    position: relative;
+}
+
+.selection-content hr::after {
+    content: "◆";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 0 0.75em;
+    font-size: 0.5em;
+    color: #a5b4fc; /* indigo-300 */
+    letter-spacing: 0.3em;
 }
 
 /* Definition lists */
@@ -1155,6 +1309,39 @@ button[type="submit"]:active {
 .selection-content dd {
     margin: 0;
     color: #4b5563;
+}
+
+/* ── Links — clearly actionable with external indicator ── */
+.selection-content a[href] {
+    color: #4338ca; /* indigo-700 */
+    text-decoration: underline;
+    text-decoration-color: #c7d2fe; /* indigo-200 */
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1.5px;
+    font-weight: 500;
+    border-radius: 2px;
+    transition:
+        color 0.15s ease,
+        text-decoration-color 0.15s ease,
+        background-color 0.15s ease,
+        text-decoration-thickness 0.15s ease;
+}
+.selection-content a[href]:hover {
+    color: #3730a3; /* indigo-800 */
+    text-decoration-color: #6366f1; /* indigo-500 */
+    text-decoration-thickness: 2px;
+    background-color: rgba(238, 242, 255, 0.6); /* indigo-50 tinted */
+}
+.selection-content a[href]:active {
+    color: #312e81; /* indigo-900 */
+    background-color: rgba(224, 231, 255, 0.7); /* indigo-100 tinted */
+}
+
+/* Domain badges inside selection-content — slightly bolder */
+.selection-content .link-domain {
+    color: #6366f1; /* indigo-500 */
+    background: #eef2ff; /* indigo-50 */
+    border-color: #c7d2fe; /* indigo-200 */
 }
 
 /* Tag/badge style (use with spans or links) */

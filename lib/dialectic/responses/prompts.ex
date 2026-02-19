@@ -80,6 +80,24 @@ defmodule Dialectic.Responses.Prompts do
     """
   end
 
+  defp citation_encouragement do
+    """
+    **Source references:** Where relevant, ground your response in primary sources. Quote key thinkers or texts directly using blockquotes (> ) when a passage is particularly illuminating. Attribute ideas to their originators with enough detail (author, work title) for the reader to explore further. Link to supportive material using inline links ([text](url)) when a stable, authoritative URL exists (e.g., Wikipedia, Stanford Encyclopedia of Philosophy, arXiv, DOI links). Prioritize quality references that genuinely strengthen your points over quantity.
+    """
+  end
+
+  defp citation_encouragement_for_arguments do
+    """
+    **Source references:** Strengthen your argument by citing primary sources, empirical evidence, or authoritative texts. Use direct quotes (> ) from key works when they powerfully support or illustrate your reasoning. Attribute claims to specific thinkers or studies so the reader can evaluate the evidence. Where available, link to the referenced works or supporting material using inline links ([text](url)).
+    """
+  end
+
+  defp citation_encouragement_for_deep_dive do
+    """
+    **Source references:** A deep dive benefits greatly from engagement with primary texts. Quote directly from foundational works, seminal papers, or authoritative sources using blockquotes (> ). Reference specific authors, titles, chapters, or studies. Where scholars or thinkers disagree, cite the specific works representing each position. Link to key references using inline links ([text](url)) — prefer stable, authoritative URLs such as DOI links, arXiv, Wikipedia, Stanford Encyclopedia of Philosophy, or official publisher pages.
+    """
+  end
+
   # ---- Templates -------------------------------------------------------------
 
   @doc """
@@ -95,11 +113,13 @@ defmodule Dialectic.Responses.Prompts do
       **Your task:** Explain **#{sanitize_title(topic)}** by ADDING new perspectives, details, or insights that EXTEND BEYOND what's already in the Foundation.
 
       Focus on aspects not yet discussed, such as:
+      - Surprising or counterintuitive angles that challenge common assumptions
       - Deeper mechanisms or processes
-      - Concrete examples or applications
-      - Different perspectives or frameworks
-      - Connections to related concepts
+      - Vivid real-world examples, case studies, or analogies that make the concept click
+      - Unexpected connections to other fields or ideas
+      - Different perspectives or frameworks, especially ones that create productive tension
       """,
+      citation_encouragement(),
       anti_repetition_footer()
     ])
   end
@@ -114,14 +134,16 @@ defmodule Dialectic.Responses.Prompts do
       """
       You are beginning an exploration. The Foundation provides background.
 
-      **Your task:** Answer **#{sanitize_title(topic)}** while identifying promising directions for deeper exploration.
+      **Your task:** Answer **#{sanitize_title(topic)}** in a way that sparks genuine curiosity.
 
       Include:
-      1. A clear, substantive answer
-      2. 2-3 extension questions or related topics that would enrich understanding
+      1. A compelling opening — lead with a surprising fact, a counterintuitive insight, or a thought-provoking quote that reframes how the reader thinks about this topic
+      2. A clear, substantive answer that rewards the reader's attention
+      3. 2-3 provocative follow-up questions or related topics that make the reader want to explore further
 
       Build on the Foundation without repeating it.
-      """
+      """,
+      citation_encouragement()
     ])
   end
 
@@ -138,13 +160,14 @@ defmodule Dialectic.Responses.Prompts do
       **Your task:** Explain **#{sanitize_title(selection_text)}** in depth, treating it as a new exploration starting point.
 
       Focus on:
-      - Defining what this concept is and why it matters
-      - Providing concrete examples or applications
-      - Exploring different perspectives or frameworks
-      - Identifying related concepts or questions worth exploring
+      - Opening with what makes this concept fascinating, surprising, or important — why should someone care?
+      - Defining what it is with vivid examples or analogies that make it click
+      - Exploring different perspectives or frameworks, especially where thinkers disagree
+      - Raising compelling questions or connections that invite further exploration
 
       While the Foundation provides context, focus on depth and breadth regarding THIS specific concept.
-      """
+      """,
+      citation_encouragement()
     ])
   end
 
@@ -171,13 +194,14 @@ defmodule Dialectic.Responses.Prompts do
       **Position A:** #{sanitize_title(pos1)}
       **Position B:** #{sanitize_title(pos2)}
 
-      **Your task:** Synthesize these positions by identifying:
-      - Common ground or complementary insights
-      - A unified framework that integrates both perspectives
-      - New understanding that emerges from their combination
+      **Your task:** Synthesize these positions by:
+      1. First, vividly articulating the **tension** between them — where do they genuinely conflict, and why does that friction matter?
+      2. Then, identifying surprising common ground or complementary insights that aren't immediately obvious
+      3. Finally, forging a unified framework that integrates both perspectives into something neither could achieve alone
 
-      Do not simply summarize—create something new from their integration.
-      """
+      Make the reader feel the intellectual stakes before you resolve them. Do not simply summarize — create something new from their integration.
+      """,
+      citation_encouragement()
     ])
   end
 
@@ -191,15 +215,17 @@ defmodule Dialectic.Responses.Prompts do
       """
       A specific statement or concept was highlighted from the text above: **#{sanitize_title(selection_text)}**
 
-      **Your task:** Build a strong argument **IN FAVOR OF** the ideas or claims within this selection.
+      **Your task:** Build a compelling, persuasive argument **IN FAVOR OF** the ideas or claims within this selection.
 
       Provide:
-      - Reasoning, evidence, or examples supporting this selection
-      - Novel angles or supporting frameworks
-      - Fresh perspectives that strengthen the case
+      - A vivid opening that captures why this position deserves serious consideration
+      - Concrete evidence, real-world examples, or empirical data that make the case viscerally convincing
+      - Novel angles, analogies, or supporting frameworks the reader likely hasn't considered
+      - Where possible, a powerful quote from a notable thinker that crystallizes the argument
 
-      Focus specifically on supporting the selected text.
-      """
+      Focus specifically on supporting the selected text. Make the reader *feel* why this matters, not just understand it logically.
+      """,
+      citation_encouragement_for_arguments()
     ])
   end
 
@@ -213,15 +239,17 @@ defmodule Dialectic.Responses.Prompts do
       """
       The Foundation represents existing discussion.
 
-      **Your task:** Build a strong argument **IN FAVOR OF** this claim: **#{sanitize_title(claim)}**
+      **Your task:** Build a compelling, persuasive argument **IN FAVOR OF** this claim: **#{sanitize_title(claim)}**
 
       Provide:
-      - New reasoning, evidence, or examples not yet mentioned
-      - Novel angles or supporting frameworks
-      - Fresh perspectives that strengthen the case
+      - A vivid opening that captures why this position deserves serious consideration
+      - New concrete evidence, real-world examples, or empirical data not yet mentioned that make the case viscerally convincing
+      - Novel angles, analogies, or supporting frameworks the reader likely hasn't considered
+      - Where possible, a powerful quote from a notable thinker that crystallizes the argument
 
-      Avoid simply restating points already made in the Foundation.
+      Make the reader *feel* why this matters, not just understand it logically. Avoid simply restating points already made in the Foundation.
       """,
+      citation_encouragement_for_arguments(),
       anti_repetition_footer()
     ])
   end
@@ -236,15 +264,17 @@ defmodule Dialectic.Responses.Prompts do
       """
       A specific statement or concept was highlighted from the text above: **#{sanitize_title(selection_text)}**
 
-      **Your task:** Build a strong argument **AGAINST** the ideas or claims within this selection.
+      **Your task:** Build a compelling, persuasive argument **AGAINST** the ideas or claims within this selection.
 
       Provide:
-      - Counterarguments, contradicting evidence, or counterexamples
-      - Alternative frameworks that challenge the selection
-      - Critical perspectives
+      - An opening that exposes the most striking weakness, blind spot, or hidden assumption in this position
+      - Concrete counterexamples, contradicting evidence, or real-world failures that undermine the claim
+      - Alternative frameworks or thinkers who offer a fundamentally different view
+      - Where possible, a sharp quote from a notable critic or contrarian thinker that captures the core objection
 
-      Focus specifically on critiquing the selected text.
-      """
+      Focus specifically on critiquing the selected text. Make the reader genuinely reconsider what they thought they knew.
+      """,
+      citation_encouragement_for_arguments()
     ])
   end
 
@@ -258,15 +288,17 @@ defmodule Dialectic.Responses.Prompts do
       """
       The Foundation represents existing discussion.
 
-      **Your task:** Build a strong argument **AGAINST** this claim: **#{sanitize_title(claim)}**
+      **Your task:** Build a compelling, persuasive argument **AGAINST** this claim: **#{sanitize_title(claim)}**
 
       Provide:
-      - New counterarguments, contradicting evidence, or counterexamples
-      - Alternative frameworks that challenge the claim
-      - Fresh critical perspectives not yet explored
+      - An opening that exposes the most striking weakness, blind spot, or hidden assumption in this position
+      - New concrete counterexamples, contradicting evidence, or real-world failures not yet mentioned
+      - Alternative frameworks or thinkers who offer a fundamentally different view
+      - Where possible, a sharp quote from a notable critic or contrarian thinker that captures the core objection
 
-      Avoid simply restating points already made in the Foundation.
+      Make the reader genuinely reconsider what they thought they knew. Avoid simply restating points already made in the Foundation.
       """,
+      citation_encouragement_for_arguments(),
       anti_repetition_footer()
     ])
   end
@@ -281,13 +313,15 @@ defmodule Dialectic.Responses.Prompts do
       """
       The exploration has covered: **#{sanitize_title(current_idea_title)}**
 
-      **Your task:** Identify 3-5 adjacent topics, thinkers, or concepts that would enrich this exploration.
+      **Your task:** Identify 3-5 fascinating rabbit holes — adjacent topics, thinkers, or concepts that would electrify this exploration.
 
-      For each suggestion, briefly explain:
-      - How it connects to the current topic
-      - What new dimension it would add to understanding
+      For each suggestion:
+      - Open with a one-line hook that makes the reader think "I need to know more about this"
+      - Explain the surprising or non-obvious connection to the current topic
+      - Describe what new dimension or unexpected insight it would unlock
+      - Name a specific work, text, or primary source worth exploring, with a brief note on why it's compelling
 
-      Prioritize suggestions that open NEW directions, not just variations on what's already been discussed.
+      Prioritize suggestions that open genuinely NEW directions and create "aha" moments, not just variations on what's already been discussed.
       """
     ])
   end
@@ -302,13 +336,15 @@ defmodule Dialectic.Responses.Prompts do
       """
       A specific topic was highlighted from the text above: **#{sanitize_title(selection_text)}**
 
-      **Your task:** Identify 3-5 adjacent topics, thinkers, or concepts specifically related to **#{sanitize_title(selection_text)}**.
+      **Your task:** Identify 3-5 fascinating rabbit holes — adjacent topics, thinkers, or concepts specifically related to **#{sanitize_title(selection_text)}**.
 
-      For each suggestion, briefly explain:
-      - How it connects to this specific concept
-      - What new dimension it would add to understanding
+      For each suggestion:
+      - Open with a one-line hook that makes the reader think "I need to know more about this"
+      - Explain the surprising or non-obvious connection to this specific concept
+      - Describe what new dimension or unexpected insight it would unlock
+      - Name a specific work, text, or primary source worth exploring, with a brief note on why it's compelling
 
-      Prioritize suggestions that open NEW directions, not just variations on what's already been discussed.
+      Prioritize suggestions that open genuinely NEW directions and create "aha" moments, not just variations on what's already been discussed.
       """
     ])
   end
@@ -326,13 +362,15 @@ defmodule Dialectic.Responses.Prompts do
       **Your task:** Write a deep dive specifically on **#{sanitize_title(selection_text)}** that goes significantly deeper than the context provided.
 
       Focus on:
+      - Surprising or counterintuitive aspects that challenge common understanding of this concept
       - Adding technical depth, nuance, or complexity specific to this concept
-      - Providing concrete examples, case studies, or applications
-      - Exploring implications, edge cases, or subtleties
-      - Addressing questions the context raises but doesn't answer
+      - Vivid real-world examples, case studies, or historical episodes that bring the concept to life
+      - Active debates, unresolved tensions, or open questions among experts
+      - Exploring implications, edge cases, or subtleties that most treatments overlook
 
       You may write at length (beyond normal 500-word limit). Focus on adding substantial new understanding.
-      """
+      """,
+      citation_encouragement_for_deep_dive()
     ])
   end
 
@@ -347,13 +385,15 @@ defmodule Dialectic.Responses.Prompts do
       The Foundation provides an overview of **#{sanitize_title(topic)}**.
 
       **Your task:** Write a deep dive that goes BEYOND the overview by:
+      - Leading with the most surprising, counterintuitive, or commonly misunderstood aspect of this topic
       - Adding technical depth, nuance, or complexity
-      - Providing concrete examples, case studies, or applications
-      - Exploring implications, edge cases, or subtleties
-      - Addressing questions the overview raises but doesn't answer
+      - Using vivid real-world examples, case studies, or historical episodes that make abstract ideas tangible
+      - Surfacing active debates, unresolved tensions, or open questions among experts
+      - Exploring implications, edge cases, or subtleties that most treatments overlook
 
       You may write at length (beyond normal 500-word limit). Focus on adding substantial new understanding.
       """,
+      citation_encouragement_for_deep_dive(),
       anti_repetition_footer()
     ])
   end

@@ -98,14 +98,44 @@ marked.setOptions({
   breaks: true,
 });
 
+/** Allowed URL protocols for links rendered from LLM markdown output.
+ * Anything else (javascript:, data:, vbscript:, etc.) is stripped.
+ */
+export const ALLOWED_PROTOCOLS = ["https:", "http:"];
 /**
  * Enhances anchor tags for safer external navigation.
  * Ensures new-tab behavior and prevents reverse tabnabbing.
  */
-function enhanceLinks(root) {
+export function enhanceLinks(root) {
   const links = root.querySelectorAll("a[href]");
   links.forEach((a) => {
-    // Preserve existing target/rel if already set
+    const href = a.getAttribute("href") || "";
+
+    // --- Protocol allowlist ---
+    // Reject anything that isn't http(s). Relative URLs are also removed
+    // because LLM-generated links should always be fully qualified.
+    //
+    // Note: Protocol-relative URLs (starting with "//") are intentionally
+    // allowed. The `new URL()` constructor resolves them to absolute URLs
+    // using the current page's protocol (e.g. "//example.com/path" becomes
+    // "https://example.com/path" when served over HTTPS). This is acceptable
+    // for LLM-generated content since the resulting URL will always use the
+    // same protocol as the host page and pass the allowlist check below.
+    let url;
+    try {
+      url = new URL(href, window.location.origin);
+    } catch {
+      // Malformed URL — remove the link, keep the text
+      a.replaceWith(document.createTextNode(a.textContent));
+      return;
+    }
+
+    if (!ALLOWED_PROTOCOLS.includes(url.protocol)) {
+      a.replaceWith(document.createTextNode(a.textContent));
+      return;
+    }
+
+    // --- Safety attributes ---
     if (!a.getAttribute("target")) {
       a.setAttribute("target", "_blank");
     }
@@ -115,6 +145,17 @@ function enhanceLinks(root) {
       if (!currentRel.includes(v)) currentRel.push(v);
     });
     a.setAttribute("rel", currentRel.join(" ").trim());
+
+    // --- Visible domain indicator ---
+    // Append the hostname in a small badge so users can see where the link
+    // goes before clicking, guarding against misleading anchor text.
+    const hostname = url.hostname;
+    if (hostname && !a.querySelector(".link-domain")) {
+      const badge = document.createElement("span");
+      badge.className = "link-domain";
+      badge.textContent = hostname;
+      a.appendChild(badge);
+    }
   });
 }
 

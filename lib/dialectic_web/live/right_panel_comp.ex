@@ -318,7 +318,7 @@ defmodule DialecticWeb.RightPanelComp do
               navigate={
                 graph_linear_path(
                   @graph_struct,
-                  nil,
+                  if(@node, do: Map.get(@node, :id), else: nil),
                   if(assigns[:token], do: [token: assigns[:token]], else: [])
                 )
               }

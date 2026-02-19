@@ -79,6 +79,10 @@ defmodule DialecticWeb.LinearGraphLive do
               Highlights.subscribe(graph_db.title)
             end
 
+            # Canonical URL points to the main graph page (linear is an alternate view)
+            canonical_url =
+              DialecticWeb.Endpoint.url() <> "/g/#{graph_db.slug}"
+
             socket =
               assign(socket,
                 linear_path: linear_path,
@@ -90,8 +94,22 @@ defmodule DialecticWeb.LinearGraphLive do
                 show_highlights_list: false,
                 highlights: Highlights.list_highlights(mudg_id: graph_db.title),
                 selected_node_id: if(target_node, do: target_node.id, else: nil),
-                token: token_param
+                token: token_param,
+                page_title: "#{graph_db.title} — Linear View",
+                page_description:
+                  "Read through \"#{graph_db.title}\" as a linear conversation. Follow the full thread of arguments and ideas on MuDG.",
+                canonical_url: canonical_url,
+                noindex: true
               )
+
+            # When a specific node_id was requested via URL params, scroll to it
+            # after the view is connected and rendered.
+            socket =
+              if connected?(socket) && params["node_id"] && target_node do
+                push_event(socket, "scroll_to_node", %{id: target_node.id})
+              else
+                socket
+              end
 
             {:ok, socket}
           rescue
