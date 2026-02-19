@@ -1044,9 +1044,15 @@ button[type="submit"]:active {
 
 /* Node content readability inside selection-content */
 .selection-content {
-    line-height: 1.65;
+    line-height: 1.75;
     font-variant-numeric: lining-nums;
     letter-spacing: -0.003em;
+    color: #1f2937; /* gray-800 — darker than prose-stone default for sustained reading */
+    word-spacing: 0.02em;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    max-width: 65ch; /* optimal measure: ~60-75 characters per line */
 }
 
 /* Bold text — subtle visual lift for key terms */
@@ -1056,14 +1062,14 @@ button[type="submit"]:active {
     letter-spacing: -0.01em;
 }
 
-/* Lead paragraph and H1 within selection-content */
+/* Lead paragraph — larger and slightly heavier, but NOT italic (Inter italic is harder to read at body size) */
 .selection-content > p:first-child {
-    font-size: 1.15em;
-    line-height: 1.35;
-    font-style: italic;
-    color: #1f2937;
+    font-size: 1.1em;
+    line-height: 1.55;
+    font-weight: 450; /* Inter variable weight: slightly heavier than normal */
+    color: #111827; /* gray-900 */
     margin-top: 0.1em;
-    margin-bottom: 0.6em;
+    margin-bottom: 0.85em;
 }
 
 .selection-content h1 {
@@ -1075,35 +1081,45 @@ button[type="submit"]:active {
     letter-spacing: -0.01em;
 }
 
-/* Headings with subtle accents */
+/* Headings with subtle accents — generous top margin to mark new sections clearly */
 .selection-content h2 {
-    margin-top: 0.75em;
-    margin-bottom: 0.45em;
+    margin-top: 1.4em;
+    margin-bottom: 0.5em;
     font-size: 1.25rem;
     font-weight: 700;
     line-height: 1.25;
     padding-left: 0.6em;
     border-left: 3px solid #e5e7eb;
+    color: #111827; /* gray-900 */
 }
 .selection-content h3 {
-    margin-top: 0.75em;
-    margin-bottom: 0.35em;
+    margin-top: 1.2em;
+    margin-bottom: 0.4em;
     font-size: 1.1rem;
     font-weight: 600;
     line-height: 1.3;
+    color: #1f2937; /* gray-800 */
 }
 
-/* Paragraph rhythm */
+/* Paragraph rhythm — generous spacing so paragraphs breathe */
 .selection-content p {
-    margin: 0.55em 0;
+    margin: 0.85em 0;
+}
+
+/* Tighten paragraphs immediately after headings so they feel connected */
+.selection-content h1 + p,
+.selection-content h2 + p,
+.selection-content h3 + p {
+    margin-top: 0.3em;
 }
 
 /* Lists and markers */
 .selection-content ul,
 .selection-content ol {
-    margin: 0.5em 0 0.85em 1.25em;
+    margin: 0.65em 0 1em 1.25em;
     padding-left: 1.25em;
     font-size: 1em;
+    line-height: 1.7;
 }
 
 /* Normalize first-child lists so they don't inherit lead sizing */
@@ -1119,7 +1135,7 @@ button[type="submit"]:active {
     margin-top: 0.25em;
 }
 .selection-content li {
-    margin: 0.3em 0;
+    margin: 0.4em 0;
 }
 .selection-content ul {
     list-style: disc;
