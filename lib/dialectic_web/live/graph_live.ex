@@ -1638,11 +1638,41 @@ defmodule DialecticWeb.GraphLive do
     can_edit = !graph_struct.is_locked
     {nav_up, nav_down, nav_left, nav_right} = compute_nav_flags(graph_id, node)
 
+    base_url = DialecticWeb.Endpoint.url()
+    canonical = base_url <> "/g/#{graph_struct.slug}"
+
+    description =
+      "Explore the interactive map for \"#{graph_struct.title}\". Visualize arguments, discover connections, and collaborate on MuDG."
+
+    # JSON-LD structured data for search engine rich results
+    json_ld =
+      Jason.encode!(%{
+        "@context" => "https://schema.org",
+        "@type" => "Article",
+        "name" => graph_struct.title,
+        "headline" => graph_struct.title,
+        "description" => description,
+        "url" => canonical,
+        "image" => base_url <> ~p"/images/graph_live.webp",
+        "dateModified" => DateTime.to_iso8601(graph_struct.updated_at),
+        "datePublished" => DateTime.to_iso8601(graph_struct.inserted_at),
+        "publisher" => %{
+          "@type" => "Organization",
+          "name" => "MuDG",
+          "url" => base_url
+        },
+        "keywords" => graph_struct.tags || [],
+        "isAccessibleForFree" => true
+      })
+
     assign(socket,
       page_title: graph_struct.title,
-      og_image: DialecticWeb.Endpoint.url() <> ~p"/images/graph_live.webp",
-      page_description:
-        "Explore the interactive map for \"#{graph_struct.title}\". Visualize arguments, discover connections, and collaborate on MuDG.",
+      og_image: base_url <> ~p"/images/graph_live.webp",
+      page_description: description,
+      canonical_url: canonical,
+      og_type: "article",
+      json_ld: json_ld,
+      noindex: !graph_struct.is_public,
       live_view_topic: "graph_update:#{socket.id}",
       graph_topic: "graph_update:#{graph_id}",
       graph_struct: graph_struct,
