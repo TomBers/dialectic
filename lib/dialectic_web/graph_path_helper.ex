@@ -37,7 +37,7 @@ defmodule DialecticWeb.GraphPathHelper do
   Generates a path to the linear view of a graph.
 
   For private graphs with a share_token, the token is automatically
-  included as a query parameter so the link grants access.
+  appended as a query parameter so the link grants access.
 
   ## Examples
 
