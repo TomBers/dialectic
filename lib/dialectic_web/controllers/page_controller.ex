@@ -6,8 +6,20 @@ defmodule DialecticWeb.PageController do
   def my_graphs(conn, _params) do
     stats = Notes.get_my_stats(conn.assigns.current_user)
 
-    # IO.inspect(stats, label: "Stats")
-    render(conn, :my_graphs, stats: stats)
+    noted_notes =
+      stats.notes
+      |> Enum.filter(& &1.is_noted)
+      |> Enum.map(fn note ->
+        node_title =
+          (note.graph.data["nodes"] || [])
+          |> Enum.find_value(fn n ->
+            if n["id"] == note.node_id, do: node_content_to_title(n["content"])
+          end)
+
+        Map.put(note, :node_title, node_title || "Node #{note.node_id}")
+      end)
+
+    render(conn, :my_graphs, stats: stats, noted_notes: noted_notes)
   end
 
   def view_all(conn, params) do
@@ -99,5 +111,21 @@ defmodule DialecticWeb.PageController do
 
   def guide(conn, _params) do
     render(conn, :how)
+  end
+
+  # Extracts a short title from node markdown content
+  defp node_content_to_title(nil), do: nil
+
+  defp node_content_to_title(content) do
+    content
+    |> String.split("\n", trim: true)
+    |> List.first("")
+    |> String.replace(~r/^#+\s*/, "")
+    |> String.trim()
+    |> String.slice(0, 80)
+    |> case do
+      "" -> nil
+      title -> title
+    end
   end
 end

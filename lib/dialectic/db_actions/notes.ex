@@ -1,15 +1,38 @@
 defmodule Dialectic.DbActions.Notes do
   alias Dialectic.Repo
   alias Dialectic.Accounts.Note
+  alias Dialectic.Accounts.Graph
 
   import Ecto.Query
 
   def get_my_stats(nil), do: %{graphs: [], notes: []}
 
   def get_my_stats(user) do
-    user = Repo.get(Dialectic.Accounts.User, user.id) |> Repo.preload(graphs: [:notes])
+    # Load graphs without the heavy `data` column, computing counts in SQL
+    graphs =
+      from(g in Graph,
+        where: g.user_id == ^user.id,
+        left_join: n in Note,
+        on: n.graph_title == g.title and n.is_noted == true,
+        group_by: g.title,
+        select: %{
+          title: g.title,
+          is_public: g.is_public,
+          is_published: g.is_published,
+          slug: g.slug,
+          share_token: g.share_token,
+          tags: g.tags,
+          noted_count: count(n.id),
+          node_count:
+            fragment(
+              "coalesce(jsonb_array_length(?.\"data\"->'nodes'), 0)",
+              g
+            )
+        }
+      )
+      |> Repo.all()
 
-    # Preload notes with their associated graphs (to get slug info)
+    # Load notes with their associated graphs (need graph data for node title lookup)
     notes_query =
       from n in Note,
         where: n.user_id == ^user.id,
@@ -18,7 +41,7 @@ defmodule Dialectic.DbActions.Notes do
     notes = Repo.all(notes_query)
 
     %{
-      graphs: user.graphs,
+      graphs: graphs,
       notes: notes
     }
   end
