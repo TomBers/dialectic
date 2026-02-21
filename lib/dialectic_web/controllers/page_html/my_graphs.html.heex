@@ -1,89 +1,137 @@
-<div class="container mx-auto p-6 max-w-7xl">
-  <section class="mb-12">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <%!-- My Ideas Card --%>
-      <div class="bg-white shadow-[0_10px_30px_rgba(0,0,0,0.08)] rounded-xl p-6 border-t-4 border-[#4361ee] transform transition-all duration-300 hover:shadow-xl">
-        <div class="flex items-center justify-between mb-5">
-          <div class="flex items-center">
-            <.icon name="hero-light-bulb" class="h-8 w-8 text-[#4361ee] mr-3" />
-            <h3 class="text-xl font-semibold text-[#2d3748]">
-              My Ideas
-              <span class="bg-[#4361ee]/10 text-[#4361ee] text-sm font-semibold py-1 px-2 rounded-full">
-                ({length(@stats.graphs)})
-              </span>
-            </h3>
-          </div>
-        </div>
+<div class="min-h-[calc(100vh-4rem)] w-screen bg-slate-950 text-white">
+  <div class="relative min-h-[calc(100vh-4rem)] w-screen overflow-hidden">
+    <%!-- Background gradient matching home page --%>
+    <div class="absolute inset-0 z-0">
+      <div class="absolute inset-0 bg-gradient-to-br from-[#3a0ca3]/95 via-slate-950 to-[#4361ee]/80">
+      </div>
+      <%!-- Subtle decorative shapes --%>
+      <div class="absolute -top-40 -right-40 h-96 w-96 rounded-full bg-[#4361ee]/20 blur-3xl">
+      </div>
+      <div class="absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-[#7209b7]/20 blur-3xl">
+      </div>
+    </div>
 
-        <div id="graphs-content" class="mt-4 space-y-4">
-          <%= if @stats.graphs == [] do %>
-            <div class="text-center py-8 text-gray-500">
-              <.icon name="hero-document-text" class="h-12 w-12 mx-auto mb-3 text-gray-300" />
-              <p class="text-sm">You haven't created any graphs yet.</p>
-              <.link
-                navigate="/"
-                class="text-[#4361ee] hover:text-[#3a0ca3] text-sm font-medium mt-2 inline-block"
-              >
-                Create your first graph →
-              </.link>
-            </div>
-          <% else %>
-            <%= for g <- @stats.graphs do %>
-              <DialecticWeb.PageHtml.GraphComp.render
-                title={g.title}
-                is_public={g.is_public}
-                link={graph_path(g)}
-                count={g.noted_count}
-                tags={g.tags}
-                node_count={g.node_count}
-                variant={:light}
-                id={"my-graph-comp-#{g.title}"}
-              />
-            <% end %>
-          <% end %>
-        </div>
+    <div class="relative z-10 mx-auto max-w-7xl px-6 py-12">
+      <%!-- Page hero --%>
+      <div class="mb-10 flex flex-col items-center text-center gap-3">
+        <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-white">
+          My Ideas
+        </h1>
+        <p class="text-indigo-200 max-w-lg">
+          Your whiteboards and saved notes, all in one place.
+        </p>
       </div>
 
-      <%!-- My Notes Card --%>
-      <div class="bg-white shadow-[0_10px_30px_rgba(0,0,0,0.08)] rounded-xl p-6 border-t-4 border-[#7209b7] transform transition-all duration-300 hover:shadow-xl">
-        <div class="flex items-center justify-between mb-5">
-          <div class="flex items-center">
-            <.icon name="hero-pencil-square" class="h-8 w-8 text-[#7209b7] mr-3" />
-            <h3 class="text-xl font-semibold text-[#2d3748]">
-              My Notes
-              <span class="bg-[#7209b7]/10 text-[#7209b7] text-sm font-semibold py-1 px-2 rounded-full">
-                ({length(@noted_notes)})
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <%!-- My Ideas Card --%>
+        <div class="rounded-2xl border border-white/15 bg-white/10 backdrop-blur-md shadow-xl">
+          <div class="p-5 sm:p-6">
+            <div class="flex items-center gap-3 mb-5">
+              <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#4361ee]/20 ring-1 ring-[#4361ee]/30">
+                <.icon name="hero-light-bulb" class="h-5 w-5 text-[#4361ee]" />
               </span>
-            </h3>
+              <div>
+                <h2 class="text-lg font-semibold text-white">
+                  Ideas
+                  <span class="ml-2 inline-flex items-center rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-medium text-indigo-200 ring-1 ring-inset ring-white/15">
+                    {length(@stats.graphs)}
+                  </span>
+                </h2>
+                <p class="text-xs text-white/50">Your whiteboards</p>
+              </div>
+            </div>
+
+            <div id="graphs-content" class="space-y-3">
+              <%= if @stats.graphs == [] do %>
+                <div class="text-center py-12">
+                  <div class="mx-auto w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4 ring-1 ring-white/10">
+                    <.icon name="hero-document-text" class="h-8 w-8 text-white/30" />
+                  </div>
+                  <p class="text-sm text-white/60 mb-1">No whiteboards yet</p>
+                  <p class="text-xs text-white/40 mb-4">
+                    Ask a question to create your first one
+                  </p>
+                  <.link
+                    navigate="/"
+                    class={[
+                      "inline-flex items-center gap-2 rounded-xl px-4 py-2.5",
+                      "bg-white text-[#3a0ca3] text-sm font-semibold shadow-lg ring-1 ring-white/30",
+                      "hover:bg-white/95 hover:shadow-xl transition"
+                    ]}
+                  >
+                    <.icon name="hero-plus" class="h-4 w-4" /> Create a whiteboard
+                  </.link>
+                </div>
+              <% else %>
+                <%= for g <- @stats.graphs do %>
+                  <DialecticWeb.PageHtml.GraphComp.render
+                    title={g.title}
+                    is_public={g.is_public}
+                    link={graph_path(g)}
+                    count={g.noted_count}
+                    tags={g.tags}
+                    node_count={g.node_count}
+                    id={"my-graph-comp-#{g.title}"}
+                  />
+                <% end %>
+              <% end %>
+            </div>
           </div>
         </div>
 
-        <div id="notes-content" class="mt-4 space-y-4">
-          <%= if @noted_notes == [] do %>
-            <div class="text-center py-8 text-gray-500">
-              <.icon
-                name="hero-chat-bubble-left-ellipsis"
-                class="h-12 w-12 mx-auto mb-3 text-gray-300"
-              />
-              <p class="text-sm">You haven't noted any ideas yet.</p>
-              <p class="text-xs text-gray-400 mt-1">
-                Click the note icon on any node to save it here.
-              </p>
-            </div>
-          <% else %>
-            <%= for note <- @noted_notes do %>
-              <div class="border border-gray-200 rounded-lg p-3 hover:border-[#7209b7] hover:bg-purple-50/30 transition-all">
-                <.link navigate={graph_path(note.graph, note.node_id)} class="block">
-                  <div class="text-sm font-medium text-gray-900 mb-1 line-clamp-2">
-                    {note.node_title}
-                  </div>
-                  <div class="text-xs text-gray-500">{note.graph_title}</div>
-                </.link>
+        <%!-- My Notes Card --%>
+        <div class="rounded-2xl border border-white/15 bg-white/10 backdrop-blur-md shadow-xl">
+          <div class="p-5 sm:p-6">
+            <div class="flex items-center gap-3 mb-5">
+              <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#7209b7]/20 ring-1 ring-[#7209b7]/30">
+                <.icon name="hero-pencil-square" class="h-5 w-5 text-[#7209b7]" />
+              </span>
+              <div>
+                <h2 class="text-lg font-semibold text-white">
+                  Notes
+                  <span class="ml-2 inline-flex items-center rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-medium text-purple-200 ring-1 ring-inset ring-white/15">
+                    {length(@noted_notes)}
+                  </span>
+                </h2>
+                <p class="text-xs text-white/50">Saved from your explorations</p>
               </div>
-            <% end %>
-          <% end %>
+            </div>
+
+            <div id="notes-content" class="space-y-3">
+              <%= if @noted_notes == [] do %>
+                <div class="text-center py-12">
+                  <div class="mx-auto w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4 ring-1 ring-white/10">
+                    <.icon name="hero-bookmark" class="h-8 w-8 text-white/30" />
+                  </div>
+                  <p class="text-sm text-white/60 mb-1">No notes yet</p>
+                  <p class="text-xs text-white/40">
+                    Click the note icon on any node to save it here.
+                  </p>
+                </div>
+              <% else %>
+                <%= for note <- @noted_notes do %>
+                  <.link
+                    navigate={graph_path(note.graph, note.node_id)}
+                    class={[
+                      "block rounded-xl p-4 transition-all",
+                      "bg-white/5 ring-1 ring-white/10",
+                      "hover:bg-white/10 hover:ring-purple-400/30 hover:shadow-lg hover:shadow-purple-500/5"
+                    ]}
+                  >
+                    <div class="text-sm font-medium text-white/90 mb-1.5 line-clamp-2">
+                      {note.node_title}
+                    </div>
+                    <div class="flex items-center gap-1.5 text-xs text-white/40">
+                      <.icon name="hero-arrow-top-right-on-square" class="h-3 w-3" />
+                      {note.graph_title}
+                    </div>
+                  </.link>
+                <% end %>
+              <% end %>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  </section>
+  </div>
 </div>
