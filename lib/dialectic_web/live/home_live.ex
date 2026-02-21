@@ -318,7 +318,7 @@ defmodule DialecticWeb.HomeLive do
                         <% @search_term != "" -> %>
                           Search results for "{@search_term}"
                         <% true -> %>
-                          Existing Mind Maps
+                          Existing Ideas
                       <% end %>
                     </h2>
 

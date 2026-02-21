@@ -19,7 +19,7 @@ defmodule DialecticWeb.PageController do
         Map.put(note, :node_title, node_title || "Node #{note.node_id}")
       end)
 
-    render(conn, :my_graphs, stats: stats, noted_notes: noted_notes)
+    render(conn, :my_graphs, page_title: "My Ideas", stats: stats, noted_notes: noted_notes)
   end
 
   def view_all(conn, params) do
