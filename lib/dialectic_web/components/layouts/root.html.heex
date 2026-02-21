@@ -78,16 +78,16 @@
   <body class="bg-white">
     <% active_path = @conn.request_path %>
     <header
-      class="sticky top-0 flex items-center h-12 bg-gradient-to-r from-[#3a0ca3]/90 to-[#4361ee]/90 backdrop-blur-md shadow-sm z-[9999]"
+      class="sticky top-0 flex items-center h-9 bg-gradient-to-r from-[#3a0ca3]/90 to-[#4361ee]/90 backdrop-blur-md shadow-sm z-[9999]"
       id="userHeader"
     >
-      <nav class="flex items-center justify-between px-4 w-full text-sm">
+      <nav class="flex items-center justify-between px-3 w-full text-xs">
         <div class="flex items-center gap-4">
           <.link
             href={~p"/"}
             class="flex items-center gap-2 text-white hover:text-white/90 transition"
           >
-            <img src={~p"/images/favicon.svg"} alt="MuDG" class="h-6 w-6" />
+            <img src={~p"/images/favicon.svg"} alt="MuDG" class="h-5 w-5" />
             <span class="font-bold tracking-tight hidden sm:inline">MuDG</span>
           </.link>
         </div>
@@ -95,60 +95,60 @@
           <.link
             href={~p"/intro/how"}
             class={[
-              "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition",
+              "inline-flex items-center gap-1 rounded-md px-2 py-1 font-medium transition",
               if(active_path == "/intro/how",
                 do: "bg-white/20 text-white",
                 else: "text-white/70 hover:text-white hover:bg-white/10"
               )
             ]}
           >
-            <.icon name="hero-book-open" class="h-4 w-4" />
+            <.icon name="hero-book-open" class="h-3.5 w-3.5" />
             <span class="hidden sm:inline">Guide</span>
           </.link>
           <%= if @current_user do %>
             <.link
               href={~p"/my/ideas"}
               class={[
-                "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition",
+                "inline-flex items-center gap-1 rounded-md px-2 py-1 font-medium transition",
                 if(active_path == "/my/ideas",
                   do: "bg-white/20 text-white",
                   else: "text-white/70 hover:text-white hover:bg-white/10"
                 )
               ]}
             >
-              <.icon name="hero-light-bulb" class="h-4 w-4" />
+              <.icon name="hero-light-bulb" class="h-3.5 w-3.5" />
               <span class="hidden sm:inline">My Ideas</span>
             </.link>
             <.link
               href={~p"/"}
-              class="inline-flex items-center gap-1.5 rounded-lg bg-white/15 px-3 py-1.5 text-sm font-semibold text-white ring-1 ring-white/20 hover:bg-white/25 transition"
+              class="inline-flex items-center gap-1 rounded-md bg-white/15 px-2 py-1 font-semibold text-white ring-1 ring-white/20 hover:bg-white/25 transition"
             >
-              <.icon name="hero-plus" class="h-4 w-4" />
+              <.icon name="hero-plus" class="h-3.5 w-3.5" />
               <span class="hidden sm:inline">New</span>
             </.link>
             <.link
               href={~p"/users/settings"}
               class={[
-                "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition",
+                "inline-flex items-center gap-1 rounded-md px-2 py-1 font-medium transition",
                 if(active_path == "/users/settings",
                   do: "bg-white/20 text-white",
                   else: "text-white/70 hover:text-white hover:bg-white/10"
                 )
               ]}
             >
-              <.icon name="hero-cog-6-tooth" class="h-4 w-4" />
+              <.icon name="hero-cog-6-tooth" class="h-3.5 w-3.5" />
               <span class="hidden sm:inline">{@current_user.email}</span>
             </.link>
           <% else %>
             <.link
               href={~p"/users/register"}
-              class="inline-flex items-center gap-1.5 rounded-lg bg-white/15 px-3 py-1.5 text-sm font-semibold text-white ring-1 ring-white/20 hover:bg-white/25 transition"
+              class="inline-flex items-center gap-1 rounded-md bg-white/15 px-2 py-1 font-semibold text-white ring-1 ring-white/20 hover:bg-white/25 transition"
             >
               Register
             </.link>
             <.link
               href={~p"/users/log_in"}
-              class="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition"
+              class="inline-flex items-center gap-1 rounded-md px-2 py-1 font-medium text-white/70 hover:text-white hover:bg-white/10 transition"
             >
               Log in
             </.link>

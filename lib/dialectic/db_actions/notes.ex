@@ -25,8 +25,8 @@ defmodule Dialectic.DbActions.Notes do
           noted_count: count(n.id),
           node_count:
             fragment(
-              "coalesce(jsonb_array_length(?.\"data\"->'nodes'), 0)",
-              g
+              "coalesce(jsonb_array_length(?->'nodes'), 0)",
+              g.data
             )
         }
       )
