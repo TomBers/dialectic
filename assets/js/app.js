@@ -112,6 +112,7 @@ hooks.GraphLayout = {
       });
 
       const elementsToShift = document.querySelectorAll(".shift-with-panel");
+      const bottomMenu = document.getElementById("bottom-menu");
 
       if (isClosed) {
         this.activePanelId = id;
@@ -134,6 +135,8 @@ hooks.GraphLayout = {
           el.classList.add("right-80", "sm:right-96");
         });
 
+        if (bottomMenu) bottomMenu.classList.add("panel-open");
+
         const btn = document.querySelector(`[data-panel-toggle="${id}"]`);
         if (btn) {
           btn.classList.add(
@@ -149,6 +152,8 @@ hooks.GraphLayout = {
         elementsToShift.forEach((el) => {
           el.classList.remove("right-80", "sm:right-96");
         });
+
+        if (bottomMenu) bottomMenu.classList.remove("panel-open");
       }
     });
 
@@ -335,6 +340,9 @@ hooks.GraphLayout = {
       elementsToShift.forEach((el) => {
         el.classList.add("right-80", "sm:right-96");
       });
+
+      const bottomMenu = document.getElementById("bottom-menu");
+      if (bottomMenu) bottomMenu.classList.add("panel-open");
 
       // Re-activate button
       const btn = document.querySelector(
