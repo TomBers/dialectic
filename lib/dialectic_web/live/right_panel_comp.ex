@@ -126,13 +126,53 @@ defmodule DialecticWeb.RightPanelComp do
       |> Map.get(:content, "")
       |> to_string()
 
-    # Truncate to keep URL under ~2000 chars
-    max_text = 1500
+    base_url = "https://translate.google.com/?sl=auto&tl=#{tl}&text="
+    suffix = "&op=translate"
+    max_url_len = 2000
+    max_text_encoded_len = max_url_len - String.length(base_url) - String.length(suffix)
 
-    truncated =
-      if String.length(content) > max_text, do: String.slice(content, 0, max_text), else: content
+    truncated = truncate_for_encoded_length(content, max_text_encoded_len)
 
-    "https://translate.google.com/?sl=auto&tl=#{tl}&text=#{URI.encode_www_form(truncated)}&op=translate"
+    base_url <> URI.encode_www_form(truncated) <> suffix
+  end
+
+  # Truncates content so that URI.encode_www_form(result) fits within max_encoded_len.
+  # Uses binary search on grapheme count to find the longest prefix that encodes within budget.
+  defp truncate_for_encoded_length(content, max_encoded_len) do
+    encoded = URI.encode_www_form(content)
+
+    if String.length(encoded) <= max_encoded_len do
+      content
+    else
+      total_graphemes = String.length(content)
+      do_truncate_search(content, 0, total_graphemes, max_encoded_len)
+    end
+  end
+
+  defp do_truncate_search(_content, low, high, _max_encoded_len) when low >= high do
+    ""
+  end
+
+  defp do_truncate_search(content, low, high, max_encoded_len) when high - low <= 1 do
+    candidate = String.slice(content, 0, low)
+
+    if String.length(URI.encode_www_form(candidate)) <= max_encoded_len do
+      candidate
+    else
+      ""
+    end
+  end
+
+  defp do_truncate_search(content, low, high, max_encoded_len) do
+    mid = div(low + high, 2)
+    candidate = String.slice(content, 0, mid)
+    encoded_len = String.length(URI.encode_www_form(candidate))
+
+    if encoded_len <= max_encoded_len do
+      do_truncate_search(content, mid, high, max_encoded_len)
+    else
+      do_truncate_search(content, low, mid, max_encoded_len)
+    end
   end
 
   @impl true
