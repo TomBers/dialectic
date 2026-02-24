@@ -84,10 +84,9 @@ defmodule DialecticWeb.ActionToolbarComp do
       <div
         class={
           if @inline,
-            do:
-              "relative z-10 flex flex-wrap items-center justify-between w-full pointer-events-auto",
+            do: "relative z-10 flex items-center justify-between w-full pointer-events-auto",
             else:
-              "hidden sm:flex fixed left-1/2 -translate-x-1/2 z-10 bg-white shadow border border-gray-200 px-1.5 py-1 rounded-md flex-wrap items-center justify-center gap-1 pointer-events-auto max-w-[90vw]"
+              "hidden sm:flex fixed left-1/2 -translate-x-1/2 z-10 bg-white shadow border border-gray-200 px-1.5 py-1 rounded-md items-center justify-center gap-1 pointer-events-auto max-w-[90vw]"
         }
         style={unless @inline, do: "bottom: calc(5.5rem + env(safe-area-inset-bottom));"}
         data-external="true"
@@ -118,11 +117,11 @@ defmodule DialecticWeb.ActionToolbarComp do
 
         <% noted? = Enum.any?(Map.get(@node || %{}, :noted_by, []), fn u -> u == @user end) %>
 
-        <span class="flex items-center gap-1.5" data-role="reading-tools-group">
+        <span class="contents" data-role="reading-tools-group">
           <button
             type="button"
             class={[
-              "inline-flex flex-col items-center justify-center gap-0.5 px-2 py-1 rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed",
+              "inline-flex flex-col items-center justify-center gap-0.5 px-1.5 py-1 rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed",
               if(noted?,
                 do: "bg-yellow-400 text-gray-900 hover:bg-yellow-500 hover:shadow-md",
                 else:
@@ -178,7 +177,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                   if(assigns[:token], do: [token: assigns[:token]], else: [])
                 )
               }
-              class="inline-flex flex-col items-center justify-center gap-0.5 px-2 py-1 bg-gray-700 text-white rounded-md transition-all hover:bg-gray-800 hover:shadow-md"
+              class="inline-flex flex-col items-center justify-center gap-0.5 px-1.5 py-1 bg-gray-700 text-white rounded-md transition-all hover:bg-gray-800 hover:shadow-md"
               title="Open linear view"
               data-role="reader-view"
             >
@@ -203,7 +202,7 @@ defmodule DialecticWeb.ActionToolbarComp do
           <% else %>
             <button
               type="button"
-              class="inline-flex flex-col items-center justify-center gap-0.5 px-2 py-1 rounded-md transition-colors opacity-50 cursor-not-allowed bg-gray-300 text-gray-500"
+              class="inline-flex flex-col items-center justify-center gap-0.5 px-1.5 py-1 rounded-md transition-colors opacity-50 cursor-not-allowed bg-gray-300 text-gray-500"
               disabled
               title="Open reader"
             >
@@ -229,7 +228,7 @@ defmodule DialecticWeb.ActionToolbarComp do
 
           <button
             type="button"
-            class="inline-flex flex-col items-center justify-center gap-0.5 px-2 py-1 bg-indigo-500 text-white rounded-md transition-all hover:bg-indigo-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            class="inline-flex flex-col items-center justify-center gap-0.5 px-1.5 py-1 bg-indigo-500 text-white rounded-md transition-all hover:bg-indigo-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             phx-click="open_share_modal"
             disabled={is_nil(@graph_id)}
             title="Share graph"
@@ -254,13 +253,13 @@ defmodule DialecticWeb.ActionToolbarComp do
           </button>
         </span>
 
-        <div class="h-8 w-px bg-gray-200 mx-0.5"></div>
+        <div class="h-7 w-px bg-gray-300 flex-none"></div>
 
         <% info = delete_info(assigns) %>
-        <span class="flex items-center gap-1.5" data-role="action-buttons-group">
+        <span class="contents" data-role="action-buttons-group">
           <button
             type="button"
-            class="inline-flex flex-col items-center justify-center gap-0.5 px-2 py-1 bg-orange-500 text-white rounded-md transition-all hover:bg-orange-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            class="inline-flex flex-col items-center justify-center gap-0.5 px-1.5 py-1 bg-orange-500 text-white rounded-md transition-all hover:bg-orange-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             phx-click="node_related_ideas"
             phx-value-id={@node && @node.id}
             disabled={is_nil(@graph_id)}
@@ -288,7 +287,7 @@ defmodule DialecticWeb.ActionToolbarComp do
 
           <button
             type="button"
-            class="inline-flex flex-col items-center justify-center gap-0.5 px-2 py-1 text-white rounded-md transition-all bg-gradient-to-r from-emerald-500 to-rose-500 hover:from-emerald-600 hover:to-rose-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            class="inline-flex flex-col items-center justify-center gap-0.5 px-1.5 py-1 text-white rounded-md transition-all bg-gradient-to-r from-emerald-500 to-rose-500 hover:from-emerald-600 hover:to-rose-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             phx-click="node_branch"
             phx-value-id={@node && @node.id}
             disabled={is_nil(@graph_id)}
@@ -315,7 +314,7 @@ defmodule DialecticWeb.ActionToolbarComp do
 
           <button
             type="button"
-            class="inline-flex flex-col items-center justify-center gap-0.5 px-2 py-1 bg-violet-500 text-white rounded-md transition-all hover:bg-violet-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            class="inline-flex flex-col items-center justify-center gap-0.5 px-1.5 py-1 bg-violet-500 text-white rounded-md transition-all hover:bg-violet-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             phx-click="node_combine"
             phx-value-id={@node && @node.id}
             disabled={is_nil(@graph_id)}
@@ -344,7 +343,7 @@ defmodule DialecticWeb.ActionToolbarComp do
             id="explore-all-points"
             type="button"
             disabled={is_nil(@graph_id)}
-            class="inline-flex flex-col items-center justify-center gap-0.5 px-2 py-1 text-white rounded-md transition-all bg-gradient-to-r from-fuchsia-500 via-rose-500 to-amber-500 hover:from-fuchsia-600 hover:via-rose-600 hover:to-amber-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            class="inline-flex flex-col items-center justify-center gap-0.5 px-1.5 py-1 text-white rounded-md transition-all bg-gradient-to-r from-fuchsia-500 via-rose-500 to-amber-500 hover:from-fuchsia-600 hover:via-rose-600 hover:to-amber-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             title="Explore all points"
           >
             <svg
@@ -368,7 +367,7 @@ defmodule DialecticWeb.ActionToolbarComp do
 
           <button
             type="button"
-            class="hidden inline-flex flex-col items-center justify-center gap-0.5 px-2 py-1 bg-cyan-500 text-white rounded-md transition-all hover:bg-cyan-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            class="hidden inline-flex flex-col items-center justify-center gap-0.5 px-1.5 py-1 bg-cyan-500 text-white rounded-md transition-all hover:bg-cyan-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             phx-click="node_deepdive"
             phx-value-id={@node && @node.id}
             disabled={is_nil(@graph_id)}
@@ -403,7 +402,7 @@ defmodule DialecticWeb.ActionToolbarComp do
             aria-disabled={not info.deletable}
             data-disabled={not info.deletable}
             class={[
-              "inline-flex flex-col items-center justify-center gap-0.5 px-2 py-1 rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed",
+              "inline-flex flex-col items-center justify-center gap-0.5 px-1.5 py-1 rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed",
               info.deletable && "bg-red-500 text-white hover:bg-red-600 hover:shadow-md",
               !info.deletable && "bg-gray-200 text-gray-400 cursor-not-allowed"
             ]}
@@ -422,6 +421,63 @@ defmodule DialecticWeb.ActionToolbarComp do
               <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0a1 1 0 01-1-1V5a1 1 0 011-1h2a2 2 0 012-2h0a2 2 0 012 2h2a1 1 0 011 1v1" />
             </svg>
             <span :if={!@icons_only} class="text-[10px] leading-tight font-medium">Delete</span>
+          </button>
+        </span>
+
+        <div class="h-7 w-px bg-gray-300 flex-none"></div>
+
+        <span class="contents" data-role="settings-buttons-group">
+          <button
+            type="button"
+            phx-click={
+              Phoenix.LiveView.JS.dispatch("toggle-panel",
+                to: "#graph-layout",
+                detail: %{id: "graph-nav-drawer"}
+              )
+            }
+            class="inline-flex flex-col items-center justify-center gap-0.5 px-1.5 py-1 bg-sky-500 text-white rounded-md transition-all hover:bg-sky-600 hover:shadow-md"
+            data-panel-toggle="graph-nav-drawer"
+            aria-label="Toggle view options"
+            title="View Options"
+          >
+            <.icon name="hero-eye" class="w-4 h-4" />
+            <span :if={!@icons_only} class="text-[10px] leading-tight font-medium">Views</span>
+          </button>
+          <button
+            type="button"
+            phx-click={
+              Phoenix.LiveView.JS.dispatch("toggle-panel",
+                to: "#graph-layout",
+                detail: %{id: "highlights-drawer"}
+              )
+            }
+            class="inline-flex flex-col items-center justify-center gap-0.5 px-1.5 py-1 bg-amber-500 text-white rounded-md transition-all hover:bg-amber-600 hover:shadow-md"
+            data-panel-toggle="highlights-drawer"
+            aria-label="Toggle highlights"
+            title="Highlights"
+          >
+            <.icon name="hero-bookmark" class="w-4 h-4" />
+            <span :if={!@icons_only} class="text-[10px] leading-tight font-medium">
+              Highlights
+            </span>
+          </button>
+          <button
+            type="button"
+            phx-click={
+              Phoenix.LiveView.JS.dispatch("toggle-panel",
+                to: "#graph-layout",
+                detail: %{id: "right-panel"}
+              )
+            }
+            class="inline-flex flex-col items-center justify-center gap-0.5 px-1.5 py-1 bg-gray-600 text-white rounded-md transition-all hover:bg-gray-700 hover:shadow-md"
+            data-panel-toggle="right-panel"
+            aria-label="Toggle settings"
+            title="Settings"
+          >
+            <.icon name="hero-adjustments-horizontal" class="w-4 h-4" />
+            <span :if={!@icons_only} class="text-[10px] leading-tight font-medium">
+              Settings
+            </span>
           </button>
         </span>
       </div>
