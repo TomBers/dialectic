@@ -84,7 +84,8 @@ defmodule DialecticWeb.ActionToolbarComp do
       <div
         class={
           if @inline,
-            do: "relative z-10 flex items-center justify-between w-full pointer-events-auto",
+            do:
+              "relative z-10 flex flex-wrap items-center justify-start gap-1 w-full pointer-events-auto",
             else:
               "hidden sm:flex fixed left-1/2 -translate-x-1/2 z-10 bg-white shadow border border-gray-200 px-1.5 py-1 rounded-md items-center justify-center gap-1 pointer-events-auto max-w-[90vw]"
         }

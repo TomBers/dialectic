@@ -45,8 +45,8 @@ defmodule DialecticWeb.StartTutorialComp do
             — save nodes for later, open the linear reader, or share your graph.
           </li>
           <li>
-            <span class="font-semibold">Ideas · Pro/Con · Combine · Explore · Delete</span>
-            — generate related ideas, weigh pros and cons, combine nodes, explore all points, or remove a node.
+            <span class="font-semibold">Ideas · Pro/Con · Blend · Explore · Delete</span>
+            — generate related ideas, weigh pros and cons, blend nodes, explore all points, or remove a node.
           </li>
           <li>
             <span class="font-semibold">Views · Highlights · Settings</span>

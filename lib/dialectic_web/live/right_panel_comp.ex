@@ -119,21 +119,25 @@ defmodule DialecticWeb.RightPanelComp do
     ]
   end
 
-  defp google_translate_url(node, tl) do
+  defp encoded_node_text(node) do
     content =
       node
       |> Kernel.||(%{})
       |> Map.get(:content, "")
       |> to_string()
 
-    base_url = "https://translate.google.com/?sl=auto&tl=#{tl}&text="
+    # Use the longest target language code ("zh-CN", 5 chars) to compute a conservative max
+    base_url = "https://translate.google.com/?sl=auto&tl=zh-CN&text="
     suffix = "&op=translate"
     max_url_len = 2000
     max_text_encoded_len = max_url_len - String.length(base_url) - String.length(suffix)
 
     truncated = truncate_for_encoded_length(content, max_text_encoded_len)
+    URI.encode_www_form(truncated)
+  end
 
-    base_url <> URI.encode_www_form(truncated) <> suffix
+  defp google_translate_url(encoded_text, tl) do
+    "https://translate.google.com/?sl=auto&tl=#{tl}&text=#{encoded_text}&op=translate"
   end
 
   # Truncates content so that URI.encode_www_form(result) fits within max_encoded_len.
@@ -145,33 +149,27 @@ defmodule DialecticWeb.RightPanelComp do
       content
     else
       total_graphemes = String.length(content)
-      do_truncate_search(content, 0, total_graphemes, max_encoded_len)
+      # Start with an empty best candidate and search for the longest valid prefix.
+      do_truncate_search(content, 0, total_graphemes, "", max_encoded_len)
     end
   end
 
-  defp do_truncate_search(_content, low, high, _max_encoded_len) when low >= high do
-    ""
+  # Binary search helper that carries the best (longest valid) prefix found so far.
+  defp do_truncate_search(_content, low, high, best, _max_encoded_len) when low >= high do
+    best
   end
 
-  defp do_truncate_search(content, low, high, max_encoded_len) when high - low <= 1 do
-    candidate = String.slice(content, 0, low)
-
-    if String.length(URI.encode_www_form(candidate)) <= max_encoded_len do
-      candidate
-    else
-      ""
-    end
-  end
-
-  defp do_truncate_search(content, low, high, max_encoded_len) do
+  defp do_truncate_search(content, low, high, best, max_encoded_len) do
     mid = div(low + high, 2)
     candidate = String.slice(content, 0, mid)
     encoded_len = String.length(URI.encode_www_form(candidate))
 
     if encoded_len <= max_encoded_len do
-      do_truncate_search(content, mid, high, max_encoded_len)
+      # Candidate fits: it becomes the new best, and we try a longer prefix.
+      do_truncate_search(content, mid + 1, high, candidate, max_encoded_len)
     else
-      do_truncate_search(content, low, mid, max_encoded_len)
+      # Candidate too long: search the lower half without changing best.
+      do_truncate_search(content, low, mid, best, max_encoded_len)
     end
   end
 
@@ -184,12 +182,13 @@ defmodule DialecticWeb.RightPanelComp do
           Translate
         </div>
         <div class="p-1">
+          <% encoded_text = encoded_node_text(@node) %>
           <div class="flex flex-wrap gap-1">
             <%= for {label, code} <- translate_targets() do %>
               <a
-                href={google_translate_url(@node, code)}
+                href={google_translate_url(encoded_text, code)}
                 target="_blank"
-                rel="noopener"
+                rel="noopener noreferrer"
                 class="inline-flex items-center px-2 py-1 rounded-md border border-gray-200 bg-gray-50 text-xs text-gray-700 hover:bg-gray-100 hover:border-gray-300 transition-colors"
               >
                 {label}

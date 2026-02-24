@@ -29,7 +29,7 @@ import highlightNodeHook from "./highlight_node_hook.js";
 import printConversationHook from "./print_conversation_hook.js";
 import storyReadabilityHook from "./story_readability_hook.js";
 import listDetectionHook from "./list_detection_hook.js";
-import translatePopoverHook from "./translate_popover_hook.js";
+
 import MarkdownHook from "./markdown_hook.js";
 
 import { ViewModeHook } from "./view_mode_hook.js";
@@ -48,7 +48,6 @@ hooks.PrintConversation = printConversationHook;
 hooks.StoryReadability = storyReadabilityHook;
 hooks.ListDetection = listDetectionHook;
 
-hooks.TranslatePopover = translatePopoverHook;
 hooks.Markdown = MarkdownHook;
 
 hooks.ViewMode = ViewModeHook;
