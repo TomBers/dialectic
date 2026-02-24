@@ -102,7 +102,12 @@ hooks.GraphLayout = {
 
         const btn = document.querySelector(`[data-panel-toggle="${pId}"]`);
         if (btn) {
-          btn.classList.remove("scale-110");
+          btn.classList.remove(
+            "ring-2",
+            "ring-offset-1",
+            "ring-white",
+            "scale-110",
+          );
         }
       });
 
@@ -131,7 +136,12 @@ hooks.GraphLayout = {
 
         const btn = document.querySelector(`[data-panel-toggle="${id}"]`);
         if (btn) {
-          btn.classList.add("scale-110");
+          btn.classList.add(
+            "ring-2",
+            "ring-offset-1",
+            "ring-white",
+            "scale-110",
+          );
         }
       } else {
         this.activePanelId = null;
@@ -331,7 +341,7 @@ hooks.GraphLayout = {
         `[data-panel-toggle="${this.activePanelId}"]`,
       );
       if (btn) {
-        btn.classList.add("scale-110");
+        btn.classList.add("ring-2", "ring-offset-1", "ring-white", "scale-110");
       }
     }
   },
