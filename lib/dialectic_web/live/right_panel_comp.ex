@@ -104,10 +104,64 @@ defmodule DialecticWeb.RightPanelComp do
     current_user && graph_struct && graph_struct.user_id == current_user.id
   end
 
+  defp translate_targets do
+    [
+      {"English (en)", "en"},
+      {"Spanish (es)", "es"},
+      {"French (fr)", "fr"},
+      {"German (de)", "de"},
+      {"Portuguese (pt)", "pt"},
+      {"Chinese Simplified (zh-CN)", "zh-CN"},
+      {"Japanese (ja)", "ja"},
+      {"Russian (ru)", "ru"},
+      {"Arabic (ar)", "ar"},
+      {"Hindi (hi)", "hi"}
+    ]
+  end
+
+  defp google_translate_url(node, tl) do
+    content =
+      node
+      |> Kernel.||(%{})
+      |> Map.get(:content, "")
+      |> to_string()
+
+    # Truncate to keep URL under ~2000 chars
+    max_text = 1500
+
+    truncated =
+      if String.length(content) > max_text, do: String.slice(content, 0, max_text), else: content
+
+    "https://translate.google.com/?sl=auto&tl=#{tl}&text=#{URI.encode_www_form(truncated)}&op=translate"
+  end
+
   @impl true
   def render(assigns) do
     ~H"""
     <div class="space-y-2">
+      <div class="bg-white border border-gray-200 rounded-md">
+        <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
+          Translate
+        </div>
+        <div class="p-1">
+          <div class="flex flex-wrap gap-1">
+            <%= for {label, code} <- translate_targets() do %>
+              <a
+                href={google_translate_url(@node, code)}
+                target="_blank"
+                rel="noopener"
+                class="inline-flex items-center px-2 py-1 rounded-md border border-gray-200 bg-gray-50 text-xs text-gray-700 hover:bg-gray-100 hover:border-gray-300 transition-colors"
+              >
+                {label}
+              </a>
+            <% end %>
+          </div>
+          <p class="mt-1.5 text-[10px] text-gray-400">
+            Opens Google Translate with the current node's content.
+          </p>
+        </div>
+      </div>
+
       <div class="bg-white border border-gray-200 rounded-md">
         <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
           Search

@@ -406,7 +406,7 @@
 <!-- Bottom menu toggle -->
     <div
       id="bottom-menu-handle"
-      class="hidden fixed bottom-0 z-30 px-3 pb-3 pointer-events-none shift-with-panel transition-[right] duration-300 ease-in-out left-0 right-0 md:left-[40%]"
+      class="hidden fixed bottom-0 z-30 px-1 pb-3 pointer-events-none shift-with-panel transition-[right] duration-300 ease-in-out left-0 right-0 md:left-[40%]"
       style="padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem);"
     >
       <div class="mx-auto w-full max-w-xl">
@@ -443,7 +443,7 @@
 <!-- Chat input bar -->
     <div
       id="bottom-menu"
-      class="fixed bottom-0 z-30 transform origin-bottom scale-100 opacity-100 visible transition-all duration-200 ease-out px-3 pb-3 pointer-events-none shift-with-panel transition-[right] duration-300 ease-in-out left-0 right-0 md:left-[40%]"
+      class="fixed bottom-0 z-30 transform origin-bottom scale-100 opacity-100 visible transition-all duration-200 ease-out px-1 pb-3 pointer-events-none shift-with-panel transition-[right] duration-300 ease-in-out left-0 right-0 md:left-[40%]"
       style="padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem);"
     >
       <div class="mx-auto w-full max-w-2xl">
@@ -475,7 +475,7 @@
               <span class="sr-only">Close bottom menu</span>
             </button>
           </div>
-          <div class="bg-white/95 backdrop-blur border border-gray-200 shadow-xl rounded-t-[1.75rem] rounded-2xl px-1 pt-1 pb-2 pointer-events-auto transform-gpu transition-all duration-200 ease-out translate-y-0">
+          <div class="bg-white/95 backdrop-blur border border-gray-200 shadow-xl rounded-t-[1.75rem] rounded-2xl px-3 pt-2 pb-2 pointer-events-auto transform-gpu transition-all duration-200 ease-out translate-y-0">
             <div class="flex items-center gap-2 min-w-0 mb-2">
               <div class="flex items-center gap-1 flex-none"></div>
               <div class="flex-1 min-w-0">
@@ -490,7 +490,7 @@
                 />
               </div>
             </div>
-            <div class="flex items-center justify-center gap-1">
+            <div class="flex items-center justify-between w-full">
               <.live_component
                 module={DialecticWeb.ActionToolbarComp}
                 id={"action-toolbar-#{@node && @node.id}"}
@@ -504,8 +504,7 @@
                 icons_only={false}
                 token={@token}
               />
-              <div class="h-6 w-px bg-gray-200 mr-1 -ml-0.5"></div>
-              <div class="flex items-center gap-1" data-role="settings-buttons-group">
+              <div class="flex items-center gap-1.5" data-role="settings-buttons-group">
                 <button
                   type="button"
                   phx-click={
@@ -514,12 +513,13 @@
                       detail: %{id: "graph-nav-drawer"}
                     )
                   }
-                  class="p-1.5 rounded-lg transition-colors text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+                  class="inline-flex flex-col items-center justify-center gap-0.5 px-2 py-1 bg-sky-500 text-white rounded-md transition-all hover:bg-sky-600 hover:shadow-md"
                   data-panel-toggle="graph-nav-drawer"
                   aria-label="Toggle view options"
                   title="View Options"
                 >
-                  <.icon name="hero-eye" class="w-5 h-5" />
+                  <.icon name="hero-eye" class="w-4 h-4" />
+                  <span class="text-[10px] leading-tight font-medium">Views</span>
                 </button>
                 <button
                   type="button"
@@ -529,24 +529,26 @@
                       detail: %{id: "highlights-drawer"}
                     )
                   }
-                  class="p-1.5 rounded-lg transition-colors text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+                  class="inline-flex flex-col items-center justify-center gap-0.5 px-2 py-1 bg-amber-500 text-white rounded-md transition-all hover:bg-amber-600 hover:shadow-md"
                   data-panel-toggle="highlights-drawer"
                   aria-label="Toggle highlights"
                   title="Highlights"
                 >
-                  <.icon name="hero-bookmark" class="w-5 h-5" />
+                  <.icon name="hero-bookmark" class="w-4 h-4" />
+                  <span class="text-[10px] leading-tight font-medium">Highlights</span>
                 </button>
                 <button
                   type="button"
                   phx-click={
                     JS.dispatch("toggle-panel", to: "#graph-layout", detail: %{id: "right-panel"})
                   }
-                  class="p-1.5 rounded-lg transition-colors text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+                  class="inline-flex flex-col items-center justify-center gap-0.5 px-2 py-1 bg-gray-600 text-white rounded-md transition-all hover:bg-gray-700 hover:shadow-md"
                   data-panel-toggle="right-panel"
                   aria-label="Toggle settings"
                   title="Settings"
                 >
-                  <.icon name="hero-adjustments-horizontal" class="w-5 h-5" />
+                  <.icon name="hero-adjustments-horizontal" class="w-4 h-4" />
+                  <span class="text-[10px] leading-tight font-medium">Settings</span>
                 </button>
               </div>
             </div>
