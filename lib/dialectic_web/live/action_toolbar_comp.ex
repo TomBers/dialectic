@@ -121,7 +121,7 @@ defmodule DialecticWeb.ActionToolbarComp do
           <button
             type="button"
             class={[
-              "inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed",
+              "inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed",
               if(noted?,
                 do: "bg-yellow-400 text-gray-900 hover:bg-yellow-500 hover:shadow-md",
                 else:
@@ -177,7 +177,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                   if(assigns[:token], do: [token: assigns[:token]], else: [])
                 )
               }
-              class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 bg-gray-700 text-white rounded-md transition-all hover:bg-gray-800 hover:shadow-md"
+              class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm bg-gray-700 text-white rounded-md transition-all hover:bg-gray-800 hover:shadow-md"
               title="Open linear view"
               data-role="reader-view"
             >
@@ -202,7 +202,7 @@ defmodule DialecticWeb.ActionToolbarComp do
           <% else %>
             <button
               type="button"
-              class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 rounded-md transition-colors opacity-50 cursor-not-allowed bg-gray-300 text-gray-500"
+              class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm rounded-md transition-colors opacity-50 cursor-not-allowed bg-gray-300 text-gray-500"
               disabled
               title="Open reader"
             >
@@ -228,7 +228,7 @@ defmodule DialecticWeb.ActionToolbarComp do
 
           <button
             type="button"
-            class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 bg-indigo-500 text-white rounded-md transition-all hover:bg-indigo-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm bg-indigo-500 text-white rounded-md transition-all hover:bg-indigo-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             phx-click="open_share_modal"
             disabled={is_nil(@graph_id)}
             title="Share graph"
@@ -259,7 +259,7 @@ defmodule DialecticWeb.ActionToolbarComp do
         <span class="contents" data-role="action-buttons-group">
           <button
             type="button"
-            class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 bg-orange-500 text-white rounded-md transition-all hover:bg-orange-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm bg-orange-500 text-white rounded-md transition-all hover:bg-orange-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             phx-click="node_related_ideas"
             phx-value-id={@node && @node.id}
             disabled={is_nil(@graph_id)}
@@ -287,7 +287,7 @@ defmodule DialecticWeb.ActionToolbarComp do
 
           <button
             type="button"
-            class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 text-white rounded-md transition-all bg-gradient-to-r from-emerald-500 to-rose-500 hover:from-emerald-600 hover:to-rose-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm text-white rounded-md transition-all bg-gradient-to-r from-emerald-500 to-rose-500 hover:from-emerald-600 hover:to-rose-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             phx-click="node_branch"
             phx-value-id={@node && @node.id}
             disabled={is_nil(@graph_id)}
@@ -314,7 +314,7 @@ defmodule DialecticWeb.ActionToolbarComp do
 
           <button
             type="button"
-            class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 bg-violet-500 text-white rounded-md transition-all hover:bg-violet-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm bg-violet-500 text-white rounded-md transition-all hover:bg-violet-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             phx-click="node_combine"
             phx-value-id={@node && @node.id}
             disabled={is_nil(@graph_id)}
@@ -343,7 +343,7 @@ defmodule DialecticWeb.ActionToolbarComp do
             id="explore-all-points"
             type="button"
             disabled={is_nil(@graph_id)}
-            class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 text-white rounded-md transition-all bg-gradient-to-r from-fuchsia-500 via-rose-500 to-amber-500 hover:from-fuchsia-600 hover:via-rose-600 hover:to-amber-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm text-white rounded-md transition-all bg-gradient-to-r from-fuchsia-500 via-rose-500 to-amber-500 hover:from-fuchsia-600 hover:via-rose-600 hover:to-amber-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             title="Explore all points"
           >
             <svg
@@ -367,7 +367,7 @@ defmodule DialecticWeb.ActionToolbarComp do
 
           <button
             type="button"
-            class="hidden inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 bg-cyan-500 text-white rounded-md transition-all hover:bg-cyan-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            class="hidden inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm bg-cyan-500 text-white rounded-md transition-all hover:bg-cyan-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             phx-click="node_deepdive"
             phx-value-id={@node && @node.id}
             disabled={is_nil(@graph_id)}
@@ -402,7 +402,7 @@ defmodule DialecticWeb.ActionToolbarComp do
             aria-disabled={not info.deletable}
             data-disabled={not info.deletable}
             class={[
-              "inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed",
+              "inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed",
               info.deletable && "bg-red-500 text-white hover:bg-red-600 hover:shadow-md",
               !info.deletable && "bg-gray-200 text-gray-400 cursor-not-allowed"
             ]}
@@ -435,7 +435,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                 detail: %{id: "graph-nav-drawer"}
               )
             }
-            class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 bg-sky-500 text-white rounded-md transition-all hover:bg-sky-600 hover:shadow-md"
+            class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm bg-sky-500 text-white rounded-md transition-all hover:bg-sky-600 hover:shadow-md"
             data-panel-toggle="graph-nav-drawer"
             aria-label="Toggle view options"
             title="View Options"
@@ -451,7 +451,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                 detail: %{id: "highlights-drawer"}
               )
             }
-            class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 bg-amber-500 text-white rounded-md transition-all hover:bg-amber-600 hover:shadow-md"
+            class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm bg-amber-500 text-white rounded-md transition-all hover:bg-amber-600 hover:shadow-md"
             data-panel-toggle="highlights-drawer"
             aria-label="Toggle highlights"
             title="Highlights"
@@ -469,7 +469,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                 detail: %{id: "right-panel"}
               )
             }
-            class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 bg-gray-600 text-white rounded-md transition-all hover:bg-gray-700 hover:shadow-md"
+            class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm bg-gray-600 text-white rounded-md transition-all hover:bg-gray-700 hover:shadow-md"
             data-panel-toggle="right-panel"
             aria-label="Toggle settings"
             title="Settings"
