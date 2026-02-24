@@ -35,9 +35,24 @@ defmodule DialecticWeb.StartTutorialComp do
           <li>Type a question in the box below to create your first node.</li>
           <li>Drag to pan, scroll or pinch to zoom. Click any node to center it.</li>
           <li>
-            Open a node’s toolbar to Save, Read, Explore related ideas, compare Pros/Cons, Translate, Combine, Deep Dive, or Delete.
+            Use the toolbar below the input to work with nodes. It's organized into three groups:
           </li>
         </ol>
+
+        <ul class="list-disc pl-6 space-y-1 mt-1 text-stone-600">
+          <li>
+            <span class="font-semibold">Star · Read · Share</span>
+            — save nodes for later, open the linear reader, or share your graph.
+          </li>
+          <li>
+            <span class="font-semibold">Ideas · Pro/Con · Blend · Explore · Delete</span>
+            — generate related ideas, weigh pros and cons, blend nodes, explore all points, or remove a node.
+          </li>
+          <li>
+            <span class="font-semibold">Views · Highlights · Settings</span>
+            — change the graph layout, review highlights, or open settings (including Translate).
+          </li>
+        </ul>
 
         <div class="mt-6">
           <p class="text-sm text-stone-700">
@@ -62,9 +77,8 @@ defmodule DialecticWeb.StartTutorialComp do
             <li>Drag to pan, scroll or pinch to zoom.</li>
             <li>Click any node to center it.</li>
             <li>Use keyboard controls to move between nodes.</li>
-            <li>
-              Use the node toolbar to Save, Read, Explore related ideas, compare Pros/Cons, Translate, Combine, Deep Dive, or Delete.
-            </li>
+            <li>The toolbar groups are separated by a vertical divider for quick scanning.</li>
+            <li>Find Translate options inside the Settings panel.</li>
           </ul>
         </div>
       </article>

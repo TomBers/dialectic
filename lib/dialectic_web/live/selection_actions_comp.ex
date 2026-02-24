@@ -180,7 +180,7 @@ defmodule DialecticWeb.SelectionActionsComp do
             </button>
           </div>
           <%!-- Selected text display --%>
-          <div class="p-4 bg-gradient-to-br from-indigo-50 to-blue-50 rounded-lg border-2 border-indigo-200 shadow-sm">
+          <div class="p-4 bg-gradient-to-br from-indigo-50 to-blue-50 rounded-lg border border-indigo-200 shadow-sm">
             <div class="text-xs text-indigo-700 mb-2 font-semibold uppercase tracking-wide">
               Selected text:
             </div>

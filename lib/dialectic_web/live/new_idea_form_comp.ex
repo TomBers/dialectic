@@ -55,7 +55,7 @@ defmodule DialecticWeb.NewIdeaFormComp do
             phx-change="update_content"
             phx-target={@myself}
             rows="1"
-            class="box-border w-full h-[3.5rem] min-h-[3.5rem] overflow-hidden pl-6 pr-32 py-2.5 text-black text-lg rounded-full border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-0 focus:outline-none resize-none"
+            class="box-border w-full h-[3.5rem] min-h-[3.5rem] overflow-hidden pl-6 pr-32 py-2.5 text-black text-lg rounded-full border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-0 focus:outline-none resize-none"
             autocomplete="off"
             required
           >{@content}</textarea>

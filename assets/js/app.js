@@ -29,7 +29,7 @@ import highlightNodeHook from "./highlight_node_hook.js";
 import printConversationHook from "./print_conversation_hook.js";
 import storyReadabilityHook from "./story_readability_hook.js";
 import listDetectionHook from "./list_detection_hook.js";
-import translatePopoverHook from "./translate_popover_hook.js";
+
 import MarkdownHook from "./markdown_hook.js";
 
 import { ViewModeHook } from "./view_mode_hook.js";
@@ -48,7 +48,6 @@ hooks.PrintConversation = printConversationHook;
 hooks.StoryReadability = storyReadabilityHook;
 hooks.ListDetection = listDetectionHook;
 
-hooks.TranslatePopover = translatePopoverHook;
 hooks.Markdown = MarkdownHook;
 
 hooks.ViewMode = ViewModeHook;
@@ -102,16 +101,17 @@ hooks.GraphLayout = {
 
         const btn = document.querySelector(`[data-panel-toggle="${pId}"]`);
         if (btn) {
-          btn.classList.remove("bg-indigo-50", "text-indigo-600");
-          btn.classList.add(
-            "text-gray-500",
-            "hover:bg-gray-100",
-            "hover:text-gray-900",
+          btn.classList.remove(
+            "ring-2",
+            "ring-offset-1",
+            "ring-white",
+            "scale-110",
           );
         }
       });
 
       const elementsToShift = document.querySelectorAll(".shift-with-panel");
+      const bottomMenu = document.getElementById("bottom-menu");
 
       if (isClosed) {
         this.activePanelId = id;
@@ -134,13 +134,15 @@ hooks.GraphLayout = {
           el.classList.add("right-80", "sm:right-96");
         });
 
+        if (bottomMenu) bottomMenu.classList.add("panel-open");
+
         const btn = document.querySelector(`[data-panel-toggle="${id}"]`);
         if (btn) {
-          btn.classList.add("bg-indigo-50", "text-indigo-600");
-          btn.classList.remove(
-            "text-gray-500",
-            "hover:bg-gray-100",
-            "hover:text-gray-900",
+          btn.classList.add(
+            "ring-2",
+            "ring-offset-1",
+            "ring-white",
+            "scale-110",
           );
         }
       } else {
@@ -149,6 +151,8 @@ hooks.GraphLayout = {
         elementsToShift.forEach((el) => {
           el.classList.remove("right-80", "sm:right-96");
         });
+
+        if (bottomMenu) bottomMenu.classList.remove("panel-open");
       }
     });
 
@@ -336,17 +340,15 @@ hooks.GraphLayout = {
         el.classList.add("right-80", "sm:right-96");
       });
 
+      const bottomMenu = document.getElementById("bottom-menu");
+      if (bottomMenu) bottomMenu.classList.add("panel-open");
+
       // Re-activate button
       const btn = document.querySelector(
         `[data-panel-toggle="${this.activePanelId}"]`,
       );
       if (btn) {
-        btn.classList.add("bg-indigo-50", "text-indigo-600");
-        btn.classList.remove(
-          "text-gray-500",
-          "hover:bg-gray-100",
-          "hover:text-gray-900",
-        );
+        btn.classList.add("ring-2", "ring-offset-1", "ring-white", "scale-110");
       }
     }
   },

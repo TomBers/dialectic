@@ -139,7 +139,7 @@ defmodule DialecticWeb.AskFormComp do
               rows="1"
               placeholder={@placeholder}
               phx-hook="AutoExpandTextarea"
-              class="box-border w-full h-[3rem] min-h-[3rem] overflow-hidden rounded-3xl pl-4 pr-20 py-2 text-base border-2 border-gray-300 focus:border-indigo-500 focus:ring-0 focus:outline-none bg-white resize-none"
+              class="box-border w-full h-[3rem] min-h-[3rem] overflow-hidden rounded-3xl pl-4 pr-20 py-2 text-base border border-gray-300 focus:border-indigo-500 focus:ring-0 focus:outline-none bg-white resize-none"
             >{Phoenix.HTML.Form.normalize_value("text", @form[:content].value)}</textarea>
 
             <button

@@ -77,87 +77,6 @@ defmodule DialecticWeb.ActionToolbarComp do
      |> assign_new(:icons_only, fn -> false end)}
   end
 
-  # Translation helpers
-  defp translate_targets do
-    [
-      {"English (en)", "en"},
-      {"Spanish (es)", "es"},
-      {"French (fr)", "fr"},
-      {"German (de)", "de"},
-      {"Portuguese (pt)", "pt"},
-      {"Chinese Simplified (zh-CN)", "zh-CN"},
-      {"Japanese (ja)", "ja"},
-      {"Russian (ru)", "ru"},
-      {"Arabic (ar)", "ar"},
-      {"Hindi (hi)", "hi"}
-    ]
-  end
-
-  # Max safe URL length for Google Translate links (conservative)
-  defp google_translate_max_url_len, do: 2000
-
-  # Truncate content so that the final URL-encoded text fits within max URL length
-  # Returns {truncated_text, truncated?}
-  defp truncate_for_google_translate(content, tl) do
-    base_prefix = "https://translate.google.com/?sl=auto&tl=#{tl}&text="
-    suffix = "&op=translate"
-    max_len = google_translate_max_url_len()
-    content = to_string(content)
-    base_len = String.length(base_prefix)
-    suffix_len = String.length(suffix)
-
-    enc = URI.encode_www_form(content)
-
-    if base_len + String.length(enc) + suffix_len <= max_len do
-      {content, false}
-    else
-      total = String.length(content)
-      bs_truncate(content, base_len, suffix_len, max_len, 0, total, "")
-    end
-  end
-
-  # Binary search helper for truncate_for_google_translate/2
-  defp bs_truncate(content, base_len, suffix_len, max_len, low, high, best) do
-    if low > high do
-      {best, true}
-    else
-      mid = div(low + high, 2)
-      slice = String.slice(content, 0, mid)
-      enc_len = slice |> URI.encode_www_form() |> String.length()
-      url_len = base_len + enc_len + suffix_len
-
-      if url_len <= max_len do
-        bs_truncate(content, base_len, suffix_len, max_len, mid + 1, high, slice)
-      else
-        bs_truncate(content, base_len, suffix_len, max_len, low, mid - 1, best)
-      end
-    end
-  end
-
-  defp google_translate_url(node, tl) do
-    content =
-      node
-      |> Kernel.||(%{})
-      |> Map.get(:content, "")
-      |> to_string()
-
-    {truncated_text, _truncated?} = truncate_for_google_translate(content, tl)
-
-    "https://translate.google.com/?sl=auto&tl=#{tl}&text=#{URI.encode_www_form(truncated_text)}&op=translate"
-  end
-
-  # Expose if the translation text would be truncated (used for tooltip)
-  defp translate_truncated?(node) do
-    content =
-      node
-      |> Kernel.||(%{})
-      |> Map.get(:content, "")
-      |> to_string()
-
-    {_txt, truncated?} = truncate_for_google_translate(content, "en")
-    truncated?
-  end
-
   @impl true
   def render(assigns) do
     ~H"""
@@ -166,9 +85,9 @@ defmodule DialecticWeb.ActionToolbarComp do
         class={
           if @inline,
             do:
-              "relative z-10 px-1.5 py-1 flex flex-wrap items-center justify-center gap-1 pointer-events-auto max-w-full",
+              "relative z-10 flex flex-nowrap items-center justify-start gap-1 w-full overflow-x-auto pointer-events-auto",
             else:
-              "hidden sm:flex fixed left-1/2 -translate-x-1/2 z-10 bg-white shadow border border-gray-200 px-1.5 py-1 rounded-md flex-wrap items-center justify-center gap-1 pointer-events-auto max-w-[90vw]"
+              "hidden sm:flex fixed left-1/2 -translate-x-1/2 z-10 bg-white shadow border border-gray-200 px-1.5 py-1 rounded-md items-center justify-center gap-1 pointer-events-auto max-w-[90vw]"
         }
         style={unless @inline, do: "bottom: calc(5.5rem + env(safe-area-inset-bottom));"}
         data-external="true"
@@ -199,11 +118,11 @@ defmodule DialecticWeb.ActionToolbarComp do
 
         <% noted? = Enum.any?(Map.get(@node || %{}, :noted_by, []), fn u -> u == @user end) %>
 
-        <span class="flex items-center gap-1" data-role="reading-tools-group">
+        <span class="contents" data-role="reading-tools-group">
           <button
             type="button"
             class={[
-              "inline-flex items-center justify-center w-9 h-9 rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed",
+              "inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm ring-1 ring-inset ring-black/10 rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed",
               if(noted?,
                 do: "bg-yellow-400 text-gray-900 hover:bg-yellow-500 hover:shadow-md",
                 else:
@@ -219,7 +138,7 @@ defmodule DialecticWeb.ActionToolbarComp do
             <%= if noted? do %>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                class="h-5 w-5"
+                class="h-4 w-4"
                 viewBox="0 0 24 24"
                 fill="currentColor"
               >
@@ -232,7 +151,7 @@ defmodule DialecticWeb.ActionToolbarComp do
             <% else %>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                class="h-5 w-5"
+                class="h-4 w-4"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -245,6 +164,9 @@ defmodule DialecticWeb.ActionToolbarComp do
                 />
               </svg>
             <% end %>
+            <span :if={!@icons_only} class="toolbar-label text-[10px] leading-tight font-medium">
+              {if noted?, do: "Starred", else: "Star"}
+            </span>
           </button>
 
           <%= if @graph_id do %>
@@ -256,13 +178,13 @@ defmodule DialecticWeb.ActionToolbarComp do
                   if(assigns[:token], do: [token: assigns[:token]], else: [])
                 )
               }
-              class="inline-flex items-center justify-center w-9 h-9 bg-gray-700 text-white rounded-md transition-all hover:bg-gray-800 hover:shadow-md"
+              class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm ring-1 ring-inset ring-black/10 bg-gray-700 text-white rounded-md transition-all hover:bg-gray-800 hover:shadow-md"
               title="Open linear view"
               data-role="reader-view"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                class="h-5 w-5"
+                class="h-4 w-4"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -276,17 +198,20 @@ defmodule DialecticWeb.ActionToolbarComp do
                   d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
                 />
               </svg>
+              <span :if={!@icons_only} class="toolbar-label text-[10px] leading-tight font-medium">
+                Read
+              </span>
             </.link>
           <% else %>
             <button
               type="button"
-              class="inline-flex items-center justify-center w-9 h-9 rounded-md transition-colors opacity-50 cursor-not-allowed bg-gray-300 text-gray-500"
+              class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm ring-1 ring-inset ring-black/10 rounded-md transition-colors opacity-50 cursor-not-allowed bg-gray-300 text-gray-500"
               disabled
               title="Open reader"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                class="h-5 w-5"
+                class="h-4 w-4"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -300,73 +225,48 @@ defmodule DialecticWeb.ActionToolbarComp do
                   d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
                 />
               </svg>
+              <span :if={!@icons_only} class="toolbar-label text-[10px] leading-tight font-medium">
+                Read
+              </span>
             </button>
           <% end %>
 
-          <div
-            class="relative group"
-            tabindex="0"
-            id={"translate-popover-#{@node && @node.id}"}
-            phx-hook="TranslatePopover"
-            phx-update="ignore"
-            data-popover-align="center"
-            data-role="translate-node"
-          >
-            <button
-              type="button"
-              data-role="trigger"
-              class="inline-flex items-center justify-center w-9 h-9 bg-gray-100 text-gray-700 rounded-md transition-all hover:bg-gray-200 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={is_nil(@graph_id)}
-              title={
-                if translate_truncated?(@node),
-                  do: "Translate (content truncated for length)",
-                  else: "Translate"
-              }
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-5 w-5"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <circle cx="12" cy="12" r="9" />
-                <path d="M3 12h18" />
-                <path d="M12 3a15 15 0 0 1 0 18" />
-                <path d="M12 3a15 15 0 0 0 0 18" />
-              </svg>
-            </button>
-            <div
-              data-role="panel"
-              hidden
-              class="bg-white border border-gray-200 rounded-md shadow-lg z-20 min-w-[12rem]"
-            >
-              <div class="py-1">
-                <%= for {label, code} <- translate_targets() do %>
-                  <a
-                    href={google_translate_url(@node, code)}
-                    target="_blank"
-                    rel="noopener"
-                    class="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100"
-                  >
-                    {label}
-                  </a>
-                <% end %>
-              </div>
-            </div>
-          </div>
-        </span>
-
-        <div class="h-6 w-px bg-gray-200 mx-1"></div>
-
-        <% info = delete_info(assigns) %>
-        <span class="flex items-center gap-1" data-role="action-buttons-group">
           <button
             type="button"
-            class="inline-flex items-center justify-center w-9 h-9 bg-orange-500 text-white rounded-md transition-all hover:bg-orange-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm ring-1 ring-inset ring-black/10 bg-indigo-500 text-white rounded-md transition-all hover:bg-indigo-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            phx-click="open_share_modal"
+            disabled={is_nil(@graph_id)}
+            title="Share graph"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"
+              />
+            </svg>
+            <span :if={!@icons_only} class="toolbar-label text-[10px] leading-tight font-medium">
+              Share
+            </span>
+          </button>
+        </span>
+
+        <div class="toolbar-divider h-8 w-0.5 bg-gray-400 rounded-full flex-none"></div>
+
+        <% info = delete_info(assigns) %>
+        <span class="contents" data-role="action-buttons-group">
+          <button
+            type="button"
+            class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm ring-1 ring-inset ring-black/10 bg-orange-500 text-white rounded-md transition-all hover:bg-orange-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             phx-click="node_related_ideas"
             phx-value-id={@node && @node.id}
             disabled={is_nil(@graph_id)}
@@ -375,7 +275,7 @@ defmodule DialecticWeb.ActionToolbarComp do
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5"
+              class="h-4 w-4"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -389,11 +289,14 @@ defmodule DialecticWeb.ActionToolbarComp do
                 d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.517 0c.85.493 1.509 1.333 1.509 2.316V18"
               />
             </svg>
+            <span :if={!@icons_only} class="toolbar-label text-[10px] leading-tight font-medium">
+              Ideas
+            </span>
           </button>
 
           <button
             type="button"
-            class="inline-flex items-center justify-center w-9 h-9 text-white rounded-md transition-all bg-gradient-to-r from-emerald-500 to-rose-500 hover:from-emerald-600 hover:to-rose-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm ring-1 ring-inset ring-black/10 text-white rounded-md transition-all bg-gradient-to-r from-emerald-500 to-rose-500 hover:from-emerald-600 hover:to-rose-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             phx-click="node_branch"
             phx-value-id={@node && @node.id}
             disabled={is_nil(@graph_id)}
@@ -401,7 +304,7 @@ defmodule DialecticWeb.ActionToolbarComp do
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5"
+              class="h-4 w-4"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -415,19 +318,22 @@ defmodule DialecticWeb.ActionToolbarComp do
                 d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z"
               />
             </svg>
+            <span :if={!@icons_only} class="toolbar-label text-[10px] leading-tight font-medium">
+              Pro/Con
+            </span>
           </button>
 
           <button
             type="button"
-            class="inline-flex items-center justify-center w-9 h-9 bg-violet-500 text-white rounded-md transition-all hover:bg-violet-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm ring-1 ring-inset ring-black/10 bg-violet-500 text-white rounded-md transition-all hover:bg-violet-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             phx-click="node_combine"
             phx-value-id={@node && @node.id}
             disabled={is_nil(@graph_id)}
-            title="Combine with another"
+            title="Blend with another"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5"
+              class="h-4 w-4"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -441,18 +347,21 @@ defmodule DialecticWeb.ActionToolbarComp do
                 d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0 0 12 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 0 1-2.031.352 5.988 5.988 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.971Zm-16.5.52c.99-.203 1.99-.377 3-.52m0 0 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.989 5.989 0 0 1-2.031.352 5.989 5.989 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L5.25 4.971Z"
               />
             </svg>
+            <span :if={!@icons_only} class="toolbar-label text-[10px] leading-tight font-medium">
+              Blend
+            </span>
           </button>
 
           <button
             id="explore-all-points"
             type="button"
             disabled={is_nil(@graph_id)}
-            class="inline-flex items-center justify-center w-9 h-9 text-white rounded-md transition-all bg-gradient-to-r from-fuchsia-500 via-rose-500 to-amber-500 hover:from-fuchsia-600 hover:via-rose-600 hover:to-amber-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm ring-1 ring-inset ring-black/10 text-white rounded-md transition-all bg-gradient-to-r from-fuchsia-500 via-rose-500 to-amber-500 hover:from-fuchsia-600 hover:via-rose-600 hover:to-amber-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             title="Explore all points"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5"
+              class="h-4 w-4"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -466,11 +375,14 @@ defmodule DialecticWeb.ActionToolbarComp do
                 d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z"
               />
             </svg>
+            <span :if={!@icons_only} class="toolbar-label text-[10px] leading-tight font-medium">
+              Explore
+            </span>
           </button>
 
           <button
             type="button"
-            class="hidden inline-flex items-center justify-center w-9 h-9 bg-cyan-500 text-white rounded-md transition-all hover:bg-cyan-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            class="hidden inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm ring-1 ring-inset ring-black/10 bg-cyan-500 text-white rounded-md transition-all hover:bg-cyan-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             phx-click="node_deepdive"
             phx-value-id={@node && @node.id}
             disabled={is_nil(@graph_id)}
@@ -478,7 +390,7 @@ defmodule DialecticWeb.ActionToolbarComp do
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5"
+              class="h-4 w-4"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -490,6 +402,9 @@ defmodule DialecticWeb.ActionToolbarComp do
               <path d="M21 21l-4.35-4.35" />
               <path d="M11 8v6M8 11h6" />
             </svg>
+            <span :if={!@icons_only} class="toolbar-label text-[10px] leading-tight font-medium">
+              Deep Dive
+            </span>
           </button>
 
           <button
@@ -504,7 +419,7 @@ defmodule DialecticWeb.ActionToolbarComp do
             aria-disabled={not info.deletable}
             data-disabled={not info.deletable}
             class={[
-              "inline-flex items-center justify-center w-9 h-9 rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed",
+              "inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm ring-1 ring-inset ring-black/10 rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed",
               info.deletable && "bg-red-500 text-white hover:bg-red-600 hover:shadow-md",
               !info.deletable && "bg-gray-200 text-gray-400 cursor-not-allowed"
             ]}
@@ -512,7 +427,7 @@ defmodule DialecticWeb.ActionToolbarComp do
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5"
+              class="h-4 w-4"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -522,35 +437,70 @@ defmodule DialecticWeb.ActionToolbarComp do
             >
               <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0a1 1 0 01-1-1V5a1 1 0 011-1h2a2 2 0 012-2h0a2 2 0 012 2h2a1 1 0 011 1v1" />
             </svg>
+            <span :if={!@icons_only} class="toolbar-label text-[10px] leading-tight font-medium">
+              Delete
+            </span>
           </button>
         </span>
 
-        <div class="h-6 w-px bg-gray-200 mx-1"></div>
+        <div class="toolbar-divider h-8 w-0.5 bg-gray-400 rounded-full flex-none"></div>
 
-        <button
-          type="button"
-          class="inline-flex items-center justify-center w-9 h-9 bg-indigo-500 text-white rounded-md transition-all hover:bg-indigo-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-          phx-click="open_share_modal"
-          disabled={is_nil(@graph_id)}
-          title="Share graph"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+        <span class="contents" data-role="settings-buttons-group">
+          <button
+            type="button"
+            phx-click={
+              Phoenix.LiveView.JS.dispatch("toggle-panel",
+                to: "#graph-layout",
+                detail: %{id: "graph-nav-drawer"}
+              )
+            }
+            class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm ring-1 ring-inset ring-black/10 bg-sky-500 text-white rounded-md transition-all hover:bg-sky-600 hover:shadow-md"
+            data-panel-toggle="graph-nav-drawer"
+            aria-label="Toggle view options"
+            title="View Options"
           >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"
-            />
-          </svg>
-        </button>
+            <.icon name="hero-eye" class="w-4 h-4" />
+            <span :if={!@icons_only} class="toolbar-label text-[10px] leading-tight font-medium">
+              Views
+            </span>
+          </button>
+          <button
+            type="button"
+            phx-click={
+              Phoenix.LiveView.JS.dispatch("toggle-panel",
+                to: "#graph-layout",
+                detail: %{id: "highlights-drawer"}
+              )
+            }
+            class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm ring-1 ring-inset ring-black/10 bg-amber-500 text-white rounded-md transition-all hover:bg-amber-600 hover:shadow-md"
+            data-panel-toggle="highlights-drawer"
+            aria-label="Toggle highlights"
+            title="Highlights"
+          >
+            <.icon name="hero-bookmark" class="w-4 h-4" />
+            <span :if={!@icons_only} class="toolbar-label text-[10px] leading-tight font-medium">
+              Highlights
+            </span>
+          </button>
+          <button
+            type="button"
+            phx-click={
+              Phoenix.LiveView.JS.dispatch("toggle-panel",
+                to: "#graph-layout",
+                detail: %{id: "right-panel"}
+              )
+            }
+            class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm ring-1 ring-inset ring-black/10 bg-gray-600 text-white rounded-md transition-all hover:bg-gray-700 hover:shadow-md"
+            data-panel-toggle="right-panel"
+            aria-label="Toggle settings"
+            title="Settings"
+          >
+            <.icon name="hero-adjustments-horizontal" class="w-4 h-4" />
+            <span :if={!@icons_only} class="toolbar-label text-[10px] leading-tight font-medium">
+              Settings
+            </span>
+          </button>
+        </span>
       </div>
     </div>
     """

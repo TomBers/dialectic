@@ -104,10 +104,103 @@ defmodule DialecticWeb.RightPanelComp do
     current_user && graph_struct && graph_struct.user_id == current_user.id
   end
 
+  defp translate_targets do
+    [
+      {"English (en)", "en"},
+      {"Spanish (es)", "es"},
+      {"French (fr)", "fr"},
+      {"German (de)", "de"},
+      {"Portuguese (pt)", "pt"},
+      {"Chinese Simplified (zh-CN)", "zh-CN"},
+      {"Japanese (ja)", "ja"},
+      {"Russian (ru)", "ru"},
+      {"Arabic (ar)", "ar"},
+      {"Hindi (hi)", "hi"}
+    ]
+  end
+
+  defp encoded_node_text(node) do
+    content =
+      node
+      |> Kernel.||(%{})
+      |> Map.get(:content, "")
+      |> to_string()
+
+    # Use the longest target language code ("zh-CN", 5 chars) to compute a conservative max
+    base_url = "https://translate.google.com/?sl=auto&tl=zh-CN&text="
+    suffix = "&op=translate"
+    max_url_len = 2000
+    max_text_encoded_len = max_url_len - String.length(base_url) - String.length(suffix)
+
+    truncated = truncate_for_encoded_length(content, max_text_encoded_len)
+    URI.encode_www_form(truncated)
+  end
+
+  defp google_translate_url(encoded_text, tl) do
+    "https://translate.google.com/?sl=auto&tl=#{tl}&text=#{encoded_text}&op=translate"
+  end
+
+  # Truncates content so that URI.encode_www_form(result) fits within max_encoded_len.
+  # Uses binary search on grapheme count to find the longest prefix that encodes within budget.
+  defp truncate_for_encoded_length(content, max_encoded_len) do
+    encoded = URI.encode_www_form(content)
+
+    if String.length(encoded) <= max_encoded_len do
+      content
+    else
+      total_graphemes = String.length(content)
+      # Start with an empty best candidate and search for the longest valid prefix.
+      do_truncate_search(content, 0, total_graphemes, "", max_encoded_len)
+    end
+  end
+
+  # Binary search helper that carries the best (longest valid) prefix found so far.
+  defp do_truncate_search(_content, low, high, best, _max_encoded_len) when low >= high do
+    best
+  end
+
+  defp do_truncate_search(content, low, high, best, max_encoded_len) do
+    mid = div(low + high, 2)
+    candidate = String.slice(content, 0, mid)
+    encoded_len = String.length(URI.encode_www_form(candidate))
+
+    if encoded_len <= max_encoded_len do
+      # Candidate fits: it becomes the new best, and we try a longer prefix.
+      do_truncate_search(content, mid + 1, high, candidate, max_encoded_len)
+    else
+      # Candidate too long: search the lower half without changing best.
+      do_truncate_search(content, low, mid, best, max_encoded_len)
+    end
+  end
+
   @impl true
   def render(assigns) do
     ~H"""
     <div class="space-y-2">
+      <div class="bg-white border border-gray-200 rounded-md">
+        <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
+          Translate
+        </div>
+        <div class="p-1">
+          <% encoded_text = encoded_node_text(@node) %>
+          <div class="flex flex-wrap gap-1">
+            <%= for {label, code} <- translate_targets() do %>
+              <a
+                href={google_translate_url(encoded_text, code)}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center px-2 py-1 rounded-md border border-gray-200 bg-gray-50 text-xs text-gray-700 hover:bg-gray-100 hover:border-gray-300 transition-colors"
+              >
+                {label}
+              </a>
+            <% end %>
+          </div>
+          <p class="mt-1.5 text-[10px] text-gray-400">
+            Opens Google Translate with the current node's content.
+          </p>
+        </div>
+      </div>
+
       <div class="bg-white border border-gray-200 rounded-md">
         <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
           Search
