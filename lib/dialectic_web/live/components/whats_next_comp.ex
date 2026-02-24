@@ -105,7 +105,7 @@ defmodule DialecticWeb.WhatsNextComp do
 
         <div>
           <h4 class="font-bold text-zinc-900 text-xs uppercase tracking-wider mb-2 border-b border-zinc-200 pb-1 ml-1">
-            Ideas · Pro/Con · Combine · Explore · Delete
+            Ideas · Pro/Con · Blend · Explore · Delete
           </h4>
           <ul class="space-y-3 text-base text-zinc-700 list-none pl-3">
             <li class="flex gap-2.5 items-start">
@@ -174,7 +174,7 @@ defmodule DialecticWeb.WhatsNextComp do
                 </svg>
               </span>
               <span>
-                <strong>Combine</strong> — merge two nodes together.
+                <strong>Blend</strong> — merge two nodes together.
               </span>
             </li>
             <li class="flex gap-2.5 items-start">
