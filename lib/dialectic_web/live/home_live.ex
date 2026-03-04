@@ -34,6 +34,7 @@ defmodule DialecticWeb.HomeLive do
        generating: MapSet.new(),
        user: user,
        form: to_form(changeset),
+       orgs: DialecticWeb.OrgLive.list_orgs(),
        prompt_mode: prompt_mode,
        ask_question: true,
        graph_id: nil
@@ -263,7 +264,14 @@ defmodule DialecticWeb.HomeLive do
                     </p>
                   </div>
 
+                  <%!-- Main query box: Public MuDG --%>
                   <div class="w-full bg-white/10 backdrop-blur-md rounded-2xl shadow-xl border border-white/15 p-6">
+                    <h2 class="text-2xl font-bold text-white text-center mb-4">
+                      <.icon
+                        name="hero-globe-alt"
+                        class="w-7 h-7 inline-block mr-2 align-text-bottom"
+                      /> Public MuDG
+                    </h2>
                     <.live_component
                       module={DialecticWeb.NewIdeaFormComp}
                       id="new-idea-form"
@@ -271,6 +279,64 @@ defmodule DialecticWeb.HomeLive do
                     />
                   </div>
 
+                  <%!-- Organisation spaces: Special MuDG --%>
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
+                    <%= for org <- @orgs do %>
+                      <.link
+                        navigate={~p"/org/#{org.slug}"}
+                        id={"org-card-#{org.slug}"}
+                        class={[
+                          "group block bg-white/10 backdrop-blur-md rounded-xl shadow-lg border border-white/15 p-5",
+                          "hover:bg-white/15 hover:border-white/25 hover:shadow-xl transition-all"
+                        ]}
+                      >
+                        <div class="flex items-center gap-3 mb-3">
+                          <div class={[
+                            "w-10 h-10 rounded-lg flex items-center justify-center border",
+                            org.accent_bg,
+                            org.accent_ring
+                          ]}>
+                            <.icon name={org.icon} class="w-5 h-5 text-white" />
+                          </div>
+                          <div>
+                            <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ring-inset bg-white/10 text-white/80 ring-white/15">
+                              <.icon name="hero-star" class="w-3 h-3 mr-0.5 align-text-bottom" />
+                              Special MuDG
+                            </span>
+                          </div>
+                        </div>
+                        <h3 class="text-sm font-bold text-white mb-1 group-hover:text-white/90">
+                          {org.short_name}
+                        </h3>
+                        <p class="text-xs text-white/60 leading-relaxed line-clamp-2">
+                          {org.description}
+                        </p>
+                        <div class="mt-3 flex items-center gap-3 text-[10px] text-white/40">
+                          <span>
+                            <.icon
+                              name="hero-users"
+                              class="w-3 h-3 inline-block mr-0.5 align-text-bottom"
+                            /> {org.stats.members}
+                          </span>
+                          <span>
+                            <.icon
+                              name="hero-map"
+                              class="w-3 h-3 inline-block mr-0.5 align-text-bottom"
+                            /> {org.stats.graphs} maps
+                          </span>
+                        </div>
+                        <div class="mt-3 flex items-center text-xs font-medium text-white/70 group-hover:text-white transition-colors">
+                          Explore space
+                          <.icon
+                            name="hero-arrow-right"
+                            class="w-3.5 h-3.5 ml-1 group-hover:translate-x-0.5 transition-transform"
+                          />
+                        </div>
+                      </.link>
+                    <% end %>
+                  </div>
+
+                  <%!-- Action links --%>
                   <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 text-sm font-semibold w-full">
                     <.link
                       navigate={~p"/inspiration"}
