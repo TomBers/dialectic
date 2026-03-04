@@ -21,6 +21,7 @@ defmodule DialecticWeb.NewIdeaFormComp do
         "Ask a question to begin exploring a new topic."
       end)
       |> assign_new(:submit_label, fn -> "Ask" end)
+      |> assign_new(:compact, fn -> false end)
       |> assign_new(:selected_mode, fn -> "university" end)
       |> assign_new(:content, fn %{form: form} ->
         Phoenix.HTML.Form.normalize_value("text", form[:content].value)
@@ -49,52 +50,63 @@ defmodule DialecticWeb.NewIdeaFormComp do
         <div class="relative">
           <textarea
             name={@form[:content].name}
-            id="new-idea-input"
+            id={@id <> "-input"}
             placeholder={@placeholder}
             phx-hook="AutoExpandTextarea"
             phx-change="update_content"
             phx-target={@myself}
             rows="1"
-            class="box-border w-full h-[3.5rem] min-h-[3.5rem] overflow-hidden pl-6 pr-32 py-2.5 text-black text-lg rounded-full border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-0 focus:outline-none resize-none"
+            class={[
+              "box-border w-full overflow-hidden text-black border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-0 focus:outline-none resize-none",
+              if(@compact,
+                do: "h-[2.5rem] min-h-[2.5rem] pl-4 pr-20 py-1.5 text-sm rounded-full",
+                else: "h-[3.5rem] min-h-[3.5rem] pl-6 pr-32 py-2.5 text-lg rounded-full"
+              )
+            ]}
             autocomplete="off"
             required
           >{@content}</textarea>
           <div class="absolute top-1/2 right-2 -translate-y-1/2 -mt-0.5">
             <button
               type="submit"
-              phx-disable-with="Starting..."
-              class="inline-flex items-center justify-center px-6 py-2 border border-transparent text-base font-medium rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              phx-disable-with="..."
+              class={[
+                "inline-flex items-center justify-center border border-transparent font-medium rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed",
+                if(@compact, do: "px-3 py-1 text-sm", else: "px-6 py-2 text-base")
+              ]}
             >
               {@submit_label}
             </button>
           </div>
         </div>
 
-        <div class="mt-4 flex items-center justify-center gap-3 animate-fade-in-up">
-          <span class="text-xs font-semibold text-indigo-200/80 uppercase tracking-wide">
-            Level
-          </span>
-          <div class="inline-flex rounded-lg bg-white/10 p-1 border border-white/5 backdrop-blur-sm">
-            <%= for {mode, label} <- [{"simple", "Simple"}, {"high_school", "High School"}, {"university", "University"}, {"expert", "Expert"}] do %>
-              <button
-                type="button"
-                phx-click="select_mode"
-                phx-value-mode={mode}
-                phx-target={@myself}
-                class={[
-                  "px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200",
-                  if @selected_mode == mode do
-                    "bg-white text-[#3a0ca3] shadow-sm scale-105"
-                  else
-                    "text-white/70 hover:text-white hover:bg-white/5"
-                  end
-                ]}
-              >
-                {label}
-              </button>
-            <% end %>
+        <%= unless @compact do %>
+          <div class="mt-4 flex items-center justify-center gap-3 animate-fade-in-up">
+            <span class="text-xs font-semibold text-indigo-200/80 uppercase tracking-wide">
+              Level
+            </span>
+            <div class="inline-flex rounded-lg bg-white/10 p-1 border border-white/5 backdrop-blur-sm">
+              <%= for {mode, label} <- [{"simple", "Simple"}, {"high_school", "High School"}, {"university", "University"}, {"expert", "Expert"}] do %>
+                <button
+                  type="button"
+                  phx-click="select_mode"
+                  phx-value-mode={mode}
+                  phx-target={@myself}
+                  class={[
+                    "px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200",
+                    if @selected_mode == mode do
+                      "bg-white text-[#3a0ca3] shadow-sm scale-105"
+                    else
+                      "text-white/70 hover:text-white hover:bg-white/5"
+                    end
+                  ]}
+                >
+                  {label}
+                </button>
+              <% end %>
+            </div>
           </div>
-        </div>
+        <% end %>
       </.form>
     </div>
     """
