@@ -398,23 +398,10 @@ defmodule Dialectic.Accounts do
   @doc """
   Finds a user for public profile display.
 
-  Looks up by stored username first. If not found, searches for a user
-  whose email local-part matches the given identifier (so derived
-  usernames work before users explicitly set one).
+  Looks up the user by their stored, unique username.
   """
   def get_user_for_profile(identifier) when is_binary(identifier) do
-    case get_user_by_username(identifier) do
-      %User{} = user ->
-        user
-
-      nil ->
-        # Fall back: look for a user whose email starts with identifier@
-        from(u in User,
-          where: fragment("split_part(?, '@', 1) = ?", u.email, ^identifier),
-          limit: 1
-        )
-        |> Repo.one()
-    end
+    get_user_by_username(identifier)
   end
 
   @doc """

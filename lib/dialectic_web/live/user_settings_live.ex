@@ -5,6 +5,7 @@ defmodule DialecticWeb.UserSettingsLive do
   alias Dialectic.Accounts.User
   alias Dialectic.Accounts.Gravatar
 
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="mx-auto max-w-3xl px-6 py-14">
@@ -384,6 +385,7 @@ defmodule DialecticWeb.UserSettingsLive do
     """
   end
 
+  @impl true
   def mount(%{"token" => token}, _session, socket) do
     socket =
       case Accounts.update_user_email(socket.assigns.current_user, token) do
@@ -397,6 +399,7 @@ defmodule DialecticWeb.UserSettingsLive do
     {:ok, push_navigate(socket, to: ~p"/users/settings")}
   end
 
+  @impl true
   def mount(_params, _session, socket) do
     user = socket.assigns.current_user
     email_changeset = Accounts.change_user_email(user)
@@ -414,16 +417,6 @@ defmodule DialecticWeb.UserSettingsLive do
 
     profile_changeset = Accounts.change_user_profile(user, profile_attrs)
 
-    %{
-      avatar_url: avatar_preview_url,
-      header_image_url: header_preview_url,
-      verified_accounts: verified_accounts
-    } =
-      case user.gravatar_id do
-        id when is_binary(id) and id != "" -> Gravatar.get_profile_data(id)
-        _ -> %{avatar_url: nil, header_image_url: nil, verified_accounts: [], location: nil}
-      end
-
     theme_preview = user.theme || "default"
 
     socket =
@@ -436,16 +429,29 @@ defmodule DialecticWeb.UserSettingsLive do
       |> assign(:profile_form, to_form(profile_changeset))
       |> assign(:trigger_submit, false)
       |> assign(:effective_username, effective_username)
-      |> assign(:avatar_preview_url, avatar_preview_url)
-      |> assign(:header_preview_url, header_preview_url)
-      |> assign(:verified_accounts, verified_accounts)
+      |> assign(:avatar_preview_url, nil)
+      |> assign(:header_preview_url, nil)
+      |> assign(:verified_accounts, [])
       |> assign(:theme_preview, theme_preview)
+
+    # Fetch Gravatar data asynchronously to avoid blocking initial render
+    socket =
+      case user.gravatar_id do
+        id when is_binary(id) and id != "" ->
+          start_async(socket, :fetch_gravatar, fn ->
+            Gravatar.get_profile_data(id)
+          end)
+
+        _ ->
+          socket
+      end
 
     {:ok, socket}
   end
 
   # --- Profile events ---
 
+  @impl true
   def handle_event("validate_profile", %{"user" => profile_params}, socket) do
     user = socket.assigns.current_user
 
@@ -482,32 +488,30 @@ defmodule DialecticWeb.UserSettingsLive do
 
         profile_changeset = Accounts.change_user_profile(updated_user)
 
-        {:noreply,
-         socket
-         |> assign(:current_user, updated_user)
-         |> assign(:profile_form, to_form(profile_changeset))
-         |> assign(:effective_username, effective_username)
-         |> then(fn socket ->
-           %{
-             avatar_url: avatar_url,
-             header_image_url: header_image_url,
-             verified_accounts: verified_accounts
-           } =
-             case updated_user.gravatar_id do
-               id when is_binary(id) and id != "" ->
-                 Gravatar.get_profile_data(id)
+        socket =
+          socket
+          |> assign(:current_user, updated_user)
+          |> assign(:profile_form, to_form(profile_changeset))
+          |> assign(:effective_username, effective_username)
+          |> assign(:theme_preview, updated_user.theme || "default")
+          |> put_flash(:info, "Profile updated successfully.")
 
-               _ ->
-                 %{avatar_url: nil, header_image_url: nil, verified_accounts: [], location: nil}
-             end
+        # Fetch updated Gravatar data asynchronously
+        socket =
+          case updated_user.gravatar_id do
+            id when is_binary(id) and id != "" ->
+              start_async(socket, :fetch_gravatar, fn ->
+                Gravatar.get_profile_data(id)
+              end)
 
-           socket
-           |> assign(:avatar_preview_url, avatar_url)
-           |> assign(:header_preview_url, header_image_url)
-           |> assign(:verified_accounts, verified_accounts)
-         end)
-         |> assign(:theme_preview, updated_user.theme || "default")
-         |> put_flash(:info, "Profile updated successfully.")}
+            _ ->
+              socket
+              |> assign(:avatar_preview_url, nil)
+              |> assign(:header_preview_url, nil)
+              |> assign(:verified_accounts, [])
+          end
+
+        {:noreply, socket}
 
       {:error, changeset} ->
         {:noreply, assign(socket, :profile_form, to_form(Map.put(changeset, :action, :insert)))}
@@ -578,6 +582,29 @@ defmodule DialecticWeb.UserSettingsLive do
       {:error, changeset} ->
         {:noreply, assign(socket, password_form: to_form(changeset))}
     end
+  end
+
+  # --- Async callbacks ---
+
+  @impl true
+  def handle_async(:fetch_gravatar, {:ok, result}, socket) do
+    %{
+      avatar_url: avatar_url,
+      header_image_url: header_image_url,
+      verified_accounts: verified_accounts
+    } = result
+
+    {:noreply,
+     socket
+     |> assign(:avatar_preview_url, avatar_url)
+     |> assign(:header_preview_url, header_image_url)
+     |> assign(:verified_accounts, verified_accounts)}
+  end
+
+  @impl true
+  def handle_async(:fetch_gravatar, {:exit, _reason}, socket) do
+    # Gravatar fetch failed; keep the default nil/empty assigns
+    {:noreply, socket}
   end
 
   # --- Private helpers ---

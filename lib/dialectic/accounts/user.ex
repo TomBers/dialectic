@@ -260,7 +260,7 @@ defmodule Dialectic.Accounts.User do
     ])
     |> validate_required([:username])
     |> validate_length(:username, min: 2, max: 30)
-    |> validate_format(:username, ~r/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]{1,2}$/,
+    |> validate_format(:username, ~r/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]{2}$/,
       message:
         "must be lowercase alphanumeric with optional hyphens, cannot start or end with a hyphen"
     )

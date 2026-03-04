@@ -36,6 +36,26 @@ defmodule Dialectic.Accounts.Gravatar do
       {:ok, %Req.Response{status: 200, body: body}} when is_map(body) ->
         {:ok, body}
 
+      {:ok, %Req.Response{status: 200, body: body}} when is_binary(body) ->
+        case Jason.decode(body) do
+          {:ok, decoded} when is_map(decoded) ->
+            {:ok, decoded}
+
+          {:ok, decoded} ->
+            Logger.error(
+              "Gravatar API returned non-map JSON body for slug #{slug}: #{inspect(decoded)}"
+            )
+
+            {:error, :invalid_response}
+
+          {:error, reason} ->
+            Logger.error(
+              "Gravatar API returned invalid JSON for slug #{slug}: #{inspect(reason)}"
+            )
+
+            {:error, {:decode_failed, reason}}
+        end
+
       {:ok, %Req.Response{status: 404}} ->
         {:error, :not_found}
 

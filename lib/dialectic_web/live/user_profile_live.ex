@@ -22,37 +22,62 @@ defmodule DialecticWeb.UserProfileLive do
         common_tags = Accounts.get_common_tags(profile_user)
         theme = profile_user.theme || "default"
 
-        # Fetch all profile data from Gravatar in a single API call
-        %{
-          avatar_url: avatar_url,
-          header_image_url: header_image_url,
-          verified_accounts: verified_accounts,
-          location: location
-        } =
-          case profile_user.gravatar_id do
-            id when is_binary(id) and id != "" -> Gravatar.get_profile_data(id)
-            _ -> %{avatar_url: nil, header_image_url: nil, verified_accounts: [], location: nil}
-          end
-
         is_own_profile? =
           socket.assigns[:current_user] &&
             socket.assigns.current_user.id == profile_user.id
 
-        {:ok,
-         socket
-         |> assign(:page_title, "#{effective_username} — MuDG Profile")
-         |> assign(:profile_user, profile_user)
-         |> assign(:effective_username, effective_username)
-         |> assign(:avatar_url, avatar_url)
-         |> assign(:header_image_url, header_image_url)
-         |> assign(:theme, theme)
-         |> assign(:stats, stats)
-         |> assign(:graphs, graphs)
-         |> assign(:common_tags, common_tags)
-         |> assign(:verified_accounts, verified_accounts)
-         |> assign(:location, location)
-         |> assign(:is_own_profile?, is_own_profile?)}
+        socket =
+          socket
+          |> assign(:page_title, "#{effective_username} — MuDG Profile")
+          |> assign(:profile_user, profile_user)
+          |> assign(:effective_username, effective_username)
+          |> assign(:avatar_url, nil)
+          |> assign(:header_image_url, nil)
+          |> assign(:theme, theme)
+          |> assign(:stats, stats)
+          |> assign(:graphs, graphs)
+          |> assign(:common_tags, common_tags)
+          |> assign(:verified_accounts, [])
+          |> assign(:location, nil)
+          |> assign(:is_own_profile?, is_own_profile?)
+
+        # Fetch Gravatar data asynchronously to avoid blocking initial render
+        socket =
+          case profile_user.gravatar_id do
+            id when is_binary(id) and id != "" ->
+              start_async(socket, :fetch_gravatar, fn ->
+                Gravatar.get_profile_data(id)
+              end)
+
+            _ ->
+              socket
+          end
+
+        {:ok, socket}
     end
+  end
+
+  @impl true
+  def handle_async(:fetch_gravatar, {:ok, result}, socket) do
+    %{
+      avatar_url: avatar_url,
+      header_image_url: header_image_url,
+      verified_accounts: verified_accounts,
+      location: location
+    } = result
+
+    {:noreply,
+     socket
+     |> assign(:avatar_url, avatar_url)
+     |> assign(:header_image_url, header_image_url)
+     |> assign(:verified_accounts, verified_accounts)
+     |> assign(:location, location)}
+  end
+
+  @impl true
+  def handle_async(:fetch_gravatar, {:exit, _reason}, socket) do
+    # Gravatar fetch failed; keep the default nil/empty assigns
+    {:noreply, socket}
   end
 
   @impl true

@@ -64,7 +64,9 @@ defmodule DialecticWeb.Router do
     get "/api/graphs/md/:graph_name", PageController, :graph_md
 
     # User profile
-    live "/u/:username", UserProfileLive
+    live_session :user_profile, on_mount: [{DialecticWeb.UserAuth, :mount_current_user}] do
+      live "/u/:username", UserProfileLive
+    end
   end
 
   # Other scopes may use custom stacks.

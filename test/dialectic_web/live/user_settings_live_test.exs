@@ -207,4 +207,110 @@ defmodule DialecticWeb.UserSettingsLiveTest do
       assert message == "You must log in to access this page."
     end
   end
+
+  describe "update profile form" do
+    setup %{conn: conn} do
+      password = valid_user_password()
+      user = user_fixture(%{password: password})
+      %{conn: log_in_user(conn, user), user: user}
+    end
+
+    test "renders the profile form", %{conn: conn} do
+      {:ok, _lv, html} = live(conn, ~p"/users/settings")
+
+      assert html =~ "Profile"
+      assert html =~ "Username"
+      assert html =~ "Save profile"
+    end
+
+    test "renders errors with invalid data (phx-change)", %{conn: conn} do
+      {:ok, lv, _html} = live(conn, ~p"/users/settings")
+
+      result =
+        lv
+        |> element("#profile_form")
+        |> render_change(%{
+          "user" => %{"username" => ""}
+        })
+
+      assert result =~ "can&#39;t be blank"
+    end
+
+    test "renders format errors for invalid username (phx-change)", %{conn: conn} do
+      {:ok, lv, _html} = live(conn, ~p"/users/settings")
+
+      result =
+        lv
+        |> element("#profile_form")
+        |> render_change(%{
+          "user" => %{"username" => "INVALID!"}
+        })
+
+      assert result =~ "must be lowercase alphanumeric"
+    end
+
+    test "renders length error for short username (phx-change)", %{conn: conn} do
+      {:ok, lv, _html} = live(conn, ~p"/users/settings")
+
+      result =
+        lv
+        |> element("#profile_form")
+        |> render_change(%{
+          "user" => %{"username" => "a"}
+        })
+
+      assert result =~ "should be at least 2 character(s)"
+    end
+
+    test "updates the user profile successfully", %{conn: conn, user: user} do
+      {:ok, lv, _html} = live(conn, ~p"/users/settings")
+
+      result =
+        lv
+        |> form("#profile_form", %{
+          "user" => %{
+            "username" => "newname42",
+            "bio" => "Hello world!",
+            "theme" => "indigo"
+          }
+        })
+        |> render_submit()
+
+      assert result =~ "Profile updated successfully"
+
+      updated_user = Accounts.get_user!(user.id)
+      assert updated_user.username == "newname42"
+      assert updated_user.bio == "Hello world!"
+      assert updated_user.theme == "indigo"
+    end
+
+    test "renders errors with invalid data (phx-submit)", %{conn: conn} do
+      {:ok, lv, _html} = live(conn, ~p"/users/settings")
+
+      result =
+        lv
+        |> form("#profile_form", %{
+          "user" => %{"username" => ""}
+        })
+        |> render_submit()
+
+      assert result =~ "can&#39;t be blank"
+    end
+
+    test "renders uniqueness error when username is taken", %{conn: conn} do
+      other_user = user_fixture()
+      Accounts.update_user_profile(other_user, %{username: "taken99"})
+
+      {:ok, lv, _html} = live(conn, ~p"/users/settings")
+
+      result =
+        lv
+        |> form("#profile_form", %{
+          "user" => %{"username" => "taken99"}
+        })
+        |> render_submit()
+
+      assert result =~ "has already been taken"
+    end
+  end
 end
