@@ -243,10 +243,10 @@ defmodule DialecticWeb.UserSettingsLiveTest do
         lv
         |> element("#profile_form")
         |> render_change(%{
-          "user" => %{"username" => "INVALID!"}
+          "user" => %{"username" => "no spaces!"}
         })
 
-      assert result =~ "must be lowercase alphanumeric"
+      assert result =~ "must be alphanumeric with optional hyphens"
     end
 
     test "renders length error for short username (phx-change)", %{conn: conn} do
