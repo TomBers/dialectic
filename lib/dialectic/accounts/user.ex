@@ -3,7 +3,6 @@ defmodule Dialectic.Accounts.User do
   import Ecto.Changeset
 
   @valid_themes ~w(default indigo violet emerald amber rose)
-  @valid_avatar_types ~w(default gravatar)
 
   schema "users" do
     field :email, :string
@@ -17,13 +16,9 @@ defmodule Dialectic.Accounts.User do
 
     # Profile fields
     field :username, :string
-    field :display_name, :string
     field :bio, :string
-    field :avatar_type, :string, default: "default"
+    field :gravatar_id, :string
     field :theme, :string, default: "default"
-    field :website_url, :string
-    field :twitter_handle, :string
-    field :linkedin_url, :string
 
     has_many :graphs, Dialectic.Accounts.Graph, on_delete: :delete_all
     has_many :notes, Dialectic.Accounts.Note, on_delete: :delete_all
@@ -35,11 +30,6 @@ defmodule Dialectic.Accounts.User do
   Returns the list of valid theme names.
   """
   def valid_themes, do: @valid_themes
-
-  @doc """
-  Returns the list of valid avatar type names.
-  """
-  def valid_avatar_types, do: @valid_avatar_types
 
   @doc """
   Derives a default username from the user's email address.
@@ -64,10 +54,8 @@ defmodule Dialectic.Accounts.User do
   def default_username_from_email(_), do: "user"
 
   @doc """
-  Returns a display-ready name: display_name if set, otherwise username,
-  otherwise derived from email.
+  Returns a display-ready name: username if set, otherwise derived from email.
   """
-  def display_name(%__MODULE__{display_name: name}) when is_binary(name) and name != "", do: name
   def display_name(%__MODULE__{username: name}) when is_binary(name) and name != "", do: name
 
   def display_name(%__MODULE__{email: email}) when is_binary(email),
@@ -88,24 +76,6 @@ defmodule Dialectic.Accounts.User do
   end
 
   def effective_username(_), do: "user"
-
-  @doc """
-  Returns the avatar URL for the user based on their avatar_type setting.
-  For "gravatar", uses the Gravatar service. For "default", returns nil
-  (the UI should render a default icon).
-  """
-  def avatar_url(%__MODULE__{avatar_type: "gravatar", email: email}) when is_binary(email) do
-    hash =
-      email
-      |> String.trim()
-      |> String.downcase()
-      |> then(&:crypto.hash(:md5, &1))
-      |> Base.encode16(case: :lower)
-
-    "https://www.gravatar.com/avatar/#{hash}?s=200&d=identicon"
-  end
-
-  def avatar_url(_), do: nil
 
   @doc """
   A user changeset for registration.
@@ -274,20 +244,19 @@ defmodule Dialectic.Accounts.User do
   end
 
   @doc """
-  A user changeset for updating profile fields (username, display name, bio,
-  avatar type, theme, and social links).
+  A user changeset for updating profile fields (username, bio,
+  gravatar_id, and theme).
+
+  Social links are derived from Gravatar at page load time and are
+  not stored in the database.
   """
   def profile_changeset(user, attrs) do
     user
     |> cast(attrs, [
       :username,
-      :display_name,
       :bio,
-      :avatar_type,
-      :theme,
-      :website_url,
-      :twitter_handle,
-      :linkedin_url
+      :gravatar_id,
+      :theme
     ])
     |> validate_required([:username])
     |> validate_length(:username, min: 2, max: 30)
@@ -295,51 +264,13 @@ defmodule Dialectic.Accounts.User do
       message:
         "must be lowercase alphanumeric with optional hyphens, cannot start or end with a hyphen"
     )
-    |> validate_length(:display_name, max: 100)
     |> validate_length(:bio, max: 500)
-    |> validate_inclusion(:avatar_type, @valid_avatar_types)
-    |> validate_inclusion(:theme, @valid_themes)
-    |> validate_length(:website_url, max: 255)
-    |> validate_format(:website_url, ~r/^(https?:\/\/)?.+\..+$/, message: "must be a valid URL")
-    |> validate_length(:twitter_handle, max: 100)
-    |> validate_format(:twitter_handle, ~r/^@?[A-Za-z0-9_]+$/,
-      message: "must be a valid Twitter/X handle"
+    |> validate_length(:gravatar_id, max: 100)
+    |> validate_format(:gravatar_id, ~r/^[a-z0-9]+$/,
+      message: "must be a valid Gravatar profile slug (lowercase alphanumeric)"
     )
-    |> validate_length(:linkedin_url, max: 255)
+    |> validate_inclusion(:theme, @valid_themes)
     |> unsafe_validate_unique(:username, Dialectic.Repo)
     |> unique_constraint(:username)
-    |> normalize_twitter_handle()
-    |> normalize_website_url()
-  end
-
-  defp normalize_twitter_handle(changeset) do
-    case get_change(changeset, :twitter_handle) do
-      nil ->
-        changeset
-
-      "" ->
-        changeset
-
-      handle ->
-        normalized = String.replace_leading(handle, "@", "")
-        put_change(changeset, :twitter_handle, normalized)
-    end
-  end
-
-  defp normalize_website_url(changeset) do
-    case get_change(changeset, :website_url) do
-      nil ->
-        changeset
-
-      "" ->
-        changeset
-
-      url ->
-        if String.starts_with?(url, "http://") or String.starts_with?(url, "https://") do
-          changeset
-        else
-          put_change(changeset, :website_url, "https://" <> url)
-        end
-    end
   end
 end

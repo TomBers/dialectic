@@ -3,6 +3,7 @@ defmodule DialecticWeb.UserSettingsLive do
 
   alias Dialectic.Accounts
   alias Dialectic.Accounts.User
+  alias Dialectic.Accounts.Gravatar
 
   def render(assigns) do
     ~H"""
@@ -60,35 +61,50 @@ defmodule DialecticWeb.UserSettingsLive do
                 </div>
               </div>
 
-              <div class="rounded-2xl border border-zinc-200/60 bg-zinc-50/50 p-5 sm:p-6">
-                <%!-- Avatar Preview --%>
-                <div class="mb-6 flex items-center gap-4">
-                  <div class="h-16 w-16 rounded-full border-2 border-zinc-200 flex items-center justify-center overflow-hidden flex-shrink-0">
-                    <%= if @avatar_preview_url do %>
-                      <img
-                        src={@avatar_preview_url}
-                        alt="Avatar preview"
-                        class="h-full w-full object-cover rounded-full"
-                      />
-                    <% else %>
-                      <div class="h-full w-full flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600 text-xl font-bold">
-                        {String.first(@display_name_preview) |> String.upcase()}
-                      </div>
-                    <% end %>
+              <div class="rounded-2xl border border-zinc-200/60 bg-zinc-50/50 overflow-hidden">
+                <%!-- Header Image Preview --%>
+                <%= if @header_preview_url do %>
+                  <div class="h-24 sm:h-32 overflow-hidden">
+                    <img
+                      src={@header_preview_url}
+                      alt="Header image preview"
+                      class="h-full w-full object-cover"
+                    />
                   </div>
-                  <div>
-                    <p class="text-sm font-medium text-zinc-900">{@display_name_preview}</p>
-                    <p class="text-xs text-zinc-500">@{@effective_username}</p>
-                  </div>
-                </div>
+                <% else %>
+                  <div class="h-24 sm:h-32 bg-gradient-to-r from-indigo-500 to-blue-400"></div>
+                <% end %>
 
-                <.simple_form
-                  for={@profile_form}
-                  id="profile_form"
-                  phx-submit="update_profile"
-                  phx-change="validate_profile"
-                >
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                <div class="p-5 sm:p-6">
+                  <%!-- Avatar Preview --%>
+                  <div class="mb-6 flex items-center gap-4 -mt-10">
+                    <div class="h-16 w-16 rounded-full border-2 border-white shadow-sm flex items-center justify-center overflow-hidden flex-shrink-0">
+                      <%= if @avatar_preview_url do %>
+                        <img
+                          src={@avatar_preview_url}
+                          alt="Avatar preview"
+                          class="h-full w-full object-cover rounded-full"
+                        />
+                      <% else %>
+                        <div class="h-full w-full flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600 text-xl font-bold">
+                          {String.first(@effective_username) |> String.upcase()}
+                        </div>
+                      <% end %>
+                    </div>
+                    <div class="pt-4">
+                      <p class="text-sm font-medium text-zinc-900">{@effective_username}</p>
+                      <%= if @avatar_preview_url do %>
+                        <p class="text-xs text-emerald-600 mt-0.5">Gravatar connected</p>
+                      <% end %>
+                    </div>
+                  </div>
+
+                  <.simple_form
+                    for={@profile_form}
+                    id="profile_form"
+                    phx-submit="update_profile"
+                    phx-change="validate_profile"
+                  >
                     <.input
                       field={@profile_form[:username]}
                       type="text"
@@ -98,98 +114,126 @@ defmodule DialecticWeb.UserSettingsLive do
                     />
 
                     <.input
-                      field={@profile_form[:display_name]}
-                      type="text"
-                      label="Display name"
-                      placeholder="How you want to be known"
-                      class="mt-2 block w-full rounded-lg border border-zinc-200 bg-white text-zinc-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm sm:leading-6"
-                    />
-                  </div>
-
-                  <.input
-                    field={@profile_form[:bio]}
-                    type="textarea"
-                    label="Bio"
-                    placeholder="Tell people a bit about yourself and what you explore on MuDG..."
-                    class="mt-2 block w-full rounded-lg border border-zinc-200 bg-white text-zinc-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm sm:leading-6"
-                  />
-
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-                    <.input
-                      field={@profile_form[:avatar_type]}
-                      type="select"
-                      label="Avatar"
-                      options={[{"Default icon", "default"}, {"Gravatar", "gravatar"}]}
+                      field={@profile_form[:bio]}
+                      type="textarea"
+                      label="Bio"
+                      placeholder="Tell people a bit about yourself and what you explore on MuDG..."
                       class="mt-2 block w-full rounded-lg border border-zinc-200 bg-white text-zinc-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm sm:leading-6"
                     />
 
-                    <.input
-                      field={@profile_form[:theme]}
-                      type="select"
-                      label="Profile theme"
-                      options={[
-                        {"Light (default)", "default"},
-                        {"Indigo", "indigo"},
-                        {"Violet", "violet"},
-                        {"Emerald", "emerald"},
-                        {"Amber", "amber"},
-                        {"Rose", "rose"}
-                      ]}
-                      class="mt-2 block w-full rounded-lg border border-zinc-200 bg-white text-zinc-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm sm:leading-6"
-                    />
-                  </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                      <div>
+                        <.input
+                          field={@profile_form[:gravatar_id]}
+                          type="text"
+                          label="Gravatar ID"
+                          placeholder="e.g. phenomenal1a25bedd6b"
+                          class="mt-2 block w-full rounded-lg border border-zinc-200 bg-white text-zinc-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm sm:leading-6"
+                        />
+                        <p class="mt-1 text-xs text-zinc-500">
+                          Your Gravatar profile slug — the last part of your
+                          <a
+                            href="https://gravatar.com"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="text-indigo-600 hover:text-indigo-500 underline"
+                          >
+                            gravatar.com
+                          </a>
+                          profile URL. Leave blank for the default icon.
+                        </p>
+                      </div>
 
-                  <%!-- Theme Preview --%>
-                  <div class="mt-2">
-                    <p class="text-xs font-medium text-zinc-500 mb-2">Theme preview</p>
-                    <div class={[
-                      "h-10 w-full rounded-lg border transition-colors",
-                      theme_preview_class(@theme_preview)
-                    ]}>
+                      <.input
+                        field={@profile_form[:theme]}
+                        type="select"
+                        label="Profile theme"
+                        options={[
+                          {"Light (default)", "default"},
+                          {"Indigo", "indigo"},
+                          {"Violet", "violet"},
+                          {"Emerald", "emerald"},
+                          {"Amber", "amber"},
+                          {"Rose", "rose"}
+                        ]}
+                        class="mt-2 block w-full rounded-lg border border-zinc-200 bg-white text-zinc-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm sm:leading-6"
+                      />
                     </div>
-                  </div>
 
-                  <div class="h-px bg-zinc-100 my-2"></div>
+                    <%!-- Theme Preview --%>
+                    <div class="mt-2">
+                      <p class="text-xs font-medium text-zinc-500 mb-2">Theme preview</p>
+                      <div class={[
+                        "h-10 w-full rounded-lg border transition-colors",
+                        theme_preview_class(@theme_preview)
+                      ]}>
+                      </div>
+                    </div>
 
-                  <p class="text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                    Social links
-                  </p>
+                    <%!-- Connected Accounts from Gravatar --%>
+                    <%= if @verified_accounts != [] do %>
+                      <div class="h-px bg-zinc-100 my-2"></div>
 
-                  <.input
-                    field={@profile_form[:website_url]}
-                    type="text"
-                    label="Website"
-                    placeholder="https://yoursite.com"
-                    class="mt-2 block w-full rounded-lg border border-zinc-200 bg-white text-zinc-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm sm:leading-6"
-                  />
+                      <p class="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-2">
+                        Connected accounts
+                      </p>
 
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-                    <.input
-                      field={@profile_form[:twitter_handle]}
-                      type="text"
-                      label="X / Twitter"
-                      placeholder="@handle"
-                      class="mt-2 block w-full rounded-lg border border-zinc-200 bg-white text-zinc-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm sm:leading-6"
-                    />
+                      <div class="flex flex-wrap gap-2">
+                        <%= for account <- @verified_accounts do %>
+                          <a
+                            href={account.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-700 shadow-sm hover:bg-zinc-50 transition"
+                          >
+                            <img
+                              src={account.service_icon}
+                              alt={account.service_label}
+                              class="w-4 h-4"
+                            />
+                            {account.service_label}
+                          </a>
+                        <% end %>
+                      </div>
 
-                    <.input
-                      field={@profile_form[:linkedin_url]}
-                      type="text"
-                      label="LinkedIn"
-                      placeholder="https://linkedin.com/in/yourprofile"
-                      class="mt-2 block w-full rounded-lg border border-zinc-200 bg-white text-zinc-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm sm:leading-6"
-                    />
-                  </div>
+                      <p class="mt-1.5 text-xs text-zinc-500">
+                        Social links are pulled from your
+                        <a
+                          href="https://gravatar.com/profile"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="text-indigo-600 hover:text-indigo-500 underline"
+                        >
+                          Gravatar profile
+                        </a>
+                      </p>
+                    <% else %>
+                      <div class="h-px bg-zinc-100 my-2"></div>
 
-                  <:actions>
-                    <.button
-                      phx-disable-with="Saving..."
-                      class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                    >
-                      Save profile
-                    </.button>
-                  </:actions>
-                </.simple_form>
+                      <p class="text-xs text-zinc-500">
+                        Social links are pulled from your
+                        <a
+                          href="https://gravatar.com/profile"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="text-indigo-600 hover:text-indigo-500 underline"
+                        >
+                          Gravatar profile
+                        </a>
+                        — add verified accounts there to display them here.
+                      </p>
+                    <% end %>
+
+                    <:actions>
+                      <.button
+                        phx-disable-with="Saving..."
+                        class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                      >
+                        Save profile
+                      </.button>
+                    </:actions>
+                  </.simple_form>
+                </div>
               </div>
             </section>
 
@@ -359,7 +403,6 @@ defmodule DialecticWeb.UserSettingsLive do
     password_changeset = Accounts.change_user_password(user)
 
     effective_username = User.effective_username(user)
-    display_name = User.display_name(user)
 
     # Pre-fill the profile form with the effective username if the user hasn't set one yet
     profile_attrs =
@@ -371,7 +414,16 @@ defmodule DialecticWeb.UserSettingsLive do
 
     profile_changeset = Accounts.change_user_profile(user, profile_attrs)
 
-    avatar_preview_url = compute_avatar_preview(user.avatar_type, user.email)
+    %{
+      avatar_url: avatar_preview_url,
+      header_image_url: header_preview_url,
+      verified_accounts: verified_accounts
+    } =
+      case user.gravatar_id do
+        id when is_binary(id) and id != "" -> Gravatar.get_profile_data(id)
+        _ -> %{avatar_url: nil, header_image_url: nil, verified_accounts: [], location: nil}
+      end
+
     theme_preview = user.theme || "default"
 
     socket =
@@ -384,8 +436,9 @@ defmodule DialecticWeb.UserSettingsLive do
       |> assign(:profile_form, to_form(profile_changeset))
       |> assign(:trigger_submit, false)
       |> assign(:effective_username, effective_username)
-      |> assign(:display_name_preview, display_name)
       |> assign(:avatar_preview_url, avatar_preview_url)
+      |> assign(:header_preview_url, header_preview_url)
+      |> assign(:verified_accounts, verified_accounts)
       |> assign(:theme_preview, theme_preview)
 
     {:ok, socket}
@@ -403,34 +456,19 @@ defmodule DialecticWeb.UserSettingsLive do
       |> to_form()
 
     # Compute live previews
-    display_name_preview =
-      case Map.get(profile_params, "display_name", "") do
-        name when is_binary(name) and name != "" ->
-          name
-
-        _ ->
-          case Map.get(profile_params, "username", "") do
-            u when is_binary(u) and u != "" -> u
-            _ -> User.display_name(user)
-          end
-      end
-
-    avatar_type = Map.get(profile_params, "avatar_type", user.avatar_type || "default")
-    avatar_preview_url = compute_avatar_preview(avatar_type, user.email)
-
-    theme_preview = Map.get(profile_params, "theme", user.theme || "default")
-
     effective_username =
       case Map.get(profile_params, "username", "") do
         u when is_binary(u) and u != "" -> u
         _ -> User.effective_username(user)
       end
 
+    theme_preview = Map.get(profile_params, "theme", user.theme || "default")
+
+    # Avatar preview stays as the currently saved URL — it only updates
+    # after saving because we need to call the Gravatar API server-side
     {:noreply,
      socket
      |> assign(:profile_form, profile_form)
-     |> assign(:display_name_preview, display_name_preview)
-     |> assign(:avatar_preview_url, avatar_preview_url)
      |> assign(:theme_preview, theme_preview)
      |> assign(:effective_username, effective_username)}
   end
@@ -441,8 +479,6 @@ defmodule DialecticWeb.UserSettingsLive do
     case Accounts.update_user_profile(user, profile_params) do
       {:ok, updated_user} ->
         effective_username = User.effective_username(updated_user)
-        display_name = User.display_name(updated_user)
-        avatar_preview_url = compute_avatar_preview(updated_user.avatar_type, updated_user.email)
 
         profile_changeset = Accounts.change_user_profile(updated_user)
 
@@ -451,8 +487,25 @@ defmodule DialecticWeb.UserSettingsLive do
          |> assign(:current_user, updated_user)
          |> assign(:profile_form, to_form(profile_changeset))
          |> assign(:effective_username, effective_username)
-         |> assign(:display_name_preview, display_name)
-         |> assign(:avatar_preview_url, avatar_preview_url)
+         |> then(fn socket ->
+           %{
+             avatar_url: avatar_url,
+             header_image_url: header_image_url,
+             verified_accounts: verified_accounts
+           } =
+             case updated_user.gravatar_id do
+               id when is_binary(id) and id != "" ->
+                 Gravatar.get_profile_data(id)
+
+               _ ->
+                 %{avatar_url: nil, header_image_url: nil, verified_accounts: [], location: nil}
+             end
+
+           socket
+           |> assign(:avatar_preview_url, avatar_url)
+           |> assign(:header_preview_url, header_image_url)
+           |> assign(:verified_accounts, verified_accounts)
+         end)
          |> assign(:theme_preview, updated_user.theme || "default")
          |> put_flash(:info, "Profile updated successfully.")}
 
@@ -528,19 +581,6 @@ defmodule DialecticWeb.UserSettingsLive do
   end
 
   # --- Private helpers ---
-
-  defp compute_avatar_preview("gravatar", email) when is_binary(email) do
-    hash =
-      email
-      |> String.trim()
-      |> String.downcase()
-      |> then(&:crypto.hash(:md5, &1))
-      |> Base.encode16(case: :lower)
-
-    "https://www.gravatar.com/avatar/#{hash}?s=200&d=identicon"
-  end
-
-  defp compute_avatar_preview(_, _), do: nil
 
   defp theme_preview_class("indigo"),
     do: "bg-gradient-to-r from-indigo-600 to-blue-500 border-indigo-300"

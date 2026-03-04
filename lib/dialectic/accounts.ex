@@ -465,6 +465,21 @@ defmodule Dialectic.Accounts do
   end
 
   @doc """
+  Returns the most common tags across a user's public graphs,
+  sorted by frequency (descending). Returns up to `limit` tags.
+  """
+  def get_common_tags(%User{} = user, limit \\ 5) do
+    graphs = list_user_public_graphs(user)
+
+    graphs
+    |> Enum.flat_map(fn graph -> graph.tags || [] end)
+    |> Enum.frequencies()
+    |> Enum.sort_by(fn {_tag, count} -> count end, :desc)
+    |> Enum.take(limit)
+    |> Enum.map(fn {tag, _count} -> tag end)
+  end
+
+  @doc """
   Lists all public, published, non-deleted graphs created by a user,
   ordered by most recently updated.
   """

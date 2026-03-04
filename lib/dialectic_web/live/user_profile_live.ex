@@ -3,6 +3,7 @@ defmodule DialecticWeb.UserProfileLive do
 
   alias Dialectic.Accounts
   alias Dialectic.Accounts.User
+  alias Dialectic.Accounts.Gravatar
 
   @impl true
   def mount(%{"username" => username}, _session, socket) do
@@ -18,9 +19,20 @@ defmodule DialecticWeb.UserProfileLive do
         graphs = Accounts.list_user_public_graphs(profile_user)
 
         effective_username = User.effective_username(profile_user)
-        display_name = User.display_name(profile_user)
-        avatar_url = User.avatar_url(profile_user)
+        common_tags = Accounts.get_common_tags(profile_user)
         theme = profile_user.theme || "default"
+
+        # Fetch all profile data from Gravatar in a single API call
+        %{
+          avatar_url: avatar_url,
+          header_image_url: header_image_url,
+          verified_accounts: verified_accounts,
+          location: location
+        } =
+          case profile_user.gravatar_id do
+            id when is_binary(id) and id != "" -> Gravatar.get_profile_data(id)
+            _ -> %{avatar_url: nil, header_image_url: nil, verified_accounts: [], location: nil}
+          end
 
         is_own_profile? =
           socket.assigns[:current_user] &&
@@ -28,14 +40,17 @@ defmodule DialecticWeb.UserProfileLive do
 
         {:ok,
          socket
-         |> assign(:page_title, "#{display_name} — MuDG Profile")
+         |> assign(:page_title, "#{effective_username} — MuDG Profile")
          |> assign(:profile_user, profile_user)
          |> assign(:effective_username, effective_username)
-         |> assign(:display_name, display_name)
          |> assign(:avatar_url, avatar_url)
+         |> assign(:header_image_url, header_image_url)
          |> assign(:theme, theme)
          |> assign(:stats, stats)
          |> assign(:graphs, graphs)
+         |> assign(:common_tags, common_tags)
+         |> assign(:verified_accounts, verified_accounts)
+         |> assign(:location, location)
          |> assign(:is_own_profile?, is_own_profile?)}
     end
   end
@@ -51,7 +66,17 @@ defmodule DialecticWeb.UserProfileLive do
           theme_card_class(@theme)
         ]}>
           <%!-- Banner area --%>
-          <div class={["h-32 sm:h-40", theme_banner_class(@theme)]}></div>
+          <%= if @header_image_url do %>
+            <div class="h-32 sm:h-40 overflow-hidden">
+              <img
+                src={@header_image_url}
+                alt={"#{@effective_username}'s header image"}
+                class="h-full w-full object-cover"
+              />
+            </div>
+          <% else %>
+            <div class={["h-32 sm:h-40", theme_banner_class(@theme)]}></div>
+          <% end %>
 
           <div class="relative px-6 pb-6">
             <%!-- Avatar --%>
@@ -63,7 +88,7 @@ defmodule DialecticWeb.UserProfileLive do
                 <%= if @avatar_url do %>
                   <img
                     src={@avatar_url}
-                    alt={"#{@display_name}'s avatar"}
+                    alt={"#{@effective_username}'s avatar"}
                     class="h-full w-full object-cover rounded-full"
                   />
                 <% else %>
@@ -71,7 +96,7 @@ defmodule DialecticWeb.UserProfileLive do
                     "h-full w-full flex items-center justify-center rounded-full text-3xl font-bold",
                     theme_avatar_default_class(@theme)
                   ]}>
-                    {String.first(@display_name) |> String.upcase()}
+                    {String.first(@effective_username) |> String.upcase()}
                   </div>
                 <% end %>
               </div>
@@ -81,11 +106,8 @@ defmodule DialecticWeb.UserProfileLive do
                   "text-2xl sm:text-3xl font-bold tracking-tight truncate",
                   theme_heading_class(@theme)
                 ]}>
-                  {@display_name}
+                  {@effective_username}
                 </h1>
-                <p class={["text-sm font-medium", theme_subtext_class(@theme)]}>
-                  @{@effective_username}
-                </p>
               </div>
 
               <div class="flex items-center gap-2 pb-1">
@@ -111,11 +133,28 @@ defmodule DialecticWeb.UserProfileLive do
               </p>
             <% end %>
 
-            <%!-- Social Links --%>
+            <%!-- Common Tags --%>
+            <%= if @common_tags != [] do %>
+              <div class="mt-3 flex flex-wrap items-center gap-1.5">
+                <span class={["text-xs font-medium", theme_subtext_class(@theme)]}>
+                  Mainly talking about:
+                </span>
+                <%= for tag <- @common_tags do %>
+                  <span class={[
+                    "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+                    theme_tag_class(@theme)
+                  ]}>
+                    {tag}
+                  </span>
+                <% end %>
+              </div>
+            <% end %>
+
+            <%!-- Social Links & Info --%>
             <div class="mt-4 flex flex-wrap items-center gap-3">
-              <%= if @profile_user.website_url && @profile_user.website_url != "" do %>
+              <%= for account <- @verified_accounts do %>
                 <a
-                  href={@profile_user.website_url}
+                  href={account.url}
                   target="_blank"
                   rel="noopener noreferrer"
                   class={[
@@ -123,43 +162,16 @@ defmodule DialecticWeb.UserProfileLive do
                     theme_link_class(@theme)
                   ]}
                 >
-                  <.icon name="hero-globe-alt" class="w-4 h-4" />
-                  {URI.parse(@profile_user.website_url).host || @profile_user.website_url}
+                  <img src={account.service_icon} alt={account.service_label} class="w-4 h-4" />
+                  {account.service_label}
                 </a>
               <% end %>
 
-              <%= if @profile_user.twitter_handle && @profile_user.twitter_handle != "" do %>
-                <a
-                  href={"https://x.com/#{@profile_user.twitter_handle}"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class={[
-                    "inline-flex items-center gap-1.5 text-sm font-medium transition",
-                    theme_link_class(@theme)
-                  ]}
-                >
-                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                  </svg>
-                  @{@profile_user.twitter_handle}
-                </a>
-              <% end %>
-
-              <%= if @profile_user.linkedin_url && @profile_user.linkedin_url != "" do %>
-                <a
-                  href={@profile_user.linkedin_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class={[
-                    "inline-flex items-center gap-1.5 text-sm font-medium transition",
-                    theme_link_class(@theme)
-                  ]}
-                >
-                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-                  </svg>
-                  LinkedIn
-                </a>
+              <%= if @location do %>
+                <span class={["inline-flex items-center gap-1.5 text-sm", theme_subtext_class(@theme)]}>
+                  <.icon name="hero-map-pin" class="w-4 h-4" />
+                  {@location}
+                </span>
               <% end %>
 
               <span class={["inline-flex items-center gap-1.5 text-sm", theme_subtext_class(@theme)]}>
@@ -212,7 +224,7 @@ defmodule DialecticWeb.UserProfileLive do
             <%= if @is_own_profile? do %>
               Your Public Graphs
             <% else %>
-              Graphs by {@display_name}
+              Graphs by {@effective_username}
             <% end %>
           </h2>
 
@@ -355,4 +367,14 @@ defmodule DialecticWeb.UserProfileLive do
   defp theme_button_class("amber"), do: "bg-amber-500 text-white hover:bg-amber-400"
   defp theme_button_class("rose"), do: "bg-rose-500 text-white hover:bg-rose-400"
   defp theme_button_class(_), do: "bg-indigo-600 text-white hover:bg-indigo-500"
+
+  defp theme_tag_class("indigo"), do: "bg-indigo-500/20 text-indigo-200 ring-1 ring-indigo-400/30"
+  defp theme_tag_class("violet"), do: "bg-violet-500/20 text-violet-200 ring-1 ring-violet-400/30"
+
+  defp theme_tag_class("emerald"),
+    do: "bg-emerald-500/20 text-emerald-200 ring-1 ring-emerald-400/30"
+
+  defp theme_tag_class("amber"), do: "bg-amber-500/20 text-amber-200 ring-1 ring-amber-400/30"
+  defp theme_tag_class("rose"), do: "bg-rose-500/20 text-rose-200 ring-1 ring-rose-400/30"
+  defp theme_tag_class(_), do: "bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200"
 end
