@@ -6,7 +6,7 @@ defmodule Dialectic.Accounts do
   import Ecto.Query, warn: false
   alias Dialectic.Repo
 
-  alias Dialectic.Accounts.{User, UserToken, UserNotifier}
+  alias Dialectic.Accounts.{User, UserToken, UserNotifier, Graph}
 
   ## Database getters
 
@@ -383,5 +383,99 @@ defmodule Dialectic.Accounts do
       {:ok, %{user: user}} -> {:ok, user}
       {:error, :user, changeset, _} -> {:error, changeset}
     end
+  end
+
+  ## Profile
+
+  @doc """
+  Gets a user by their username (exact, case-insensitive match).
+  Returns nil if no user has that username.
+  """
+  def get_user_by_username(username) when is_binary(username) do
+    Repo.get_by(User, username: username)
+  end
+
+  @doc """
+  Finds a user for public profile display.
+
+  Looks up by stored username first. If not found, searches for a user
+  whose email local-part matches the given identifier (so derived
+  usernames work before users explicitly set one).
+  """
+  def get_user_for_profile(identifier) when is_binary(identifier) do
+    case get_user_by_username(identifier) do
+      %User{} = user ->
+        user
+
+      nil ->
+        # Fall back: look for a user whose email starts with identifier@
+        from(u in User,
+          where: fragment("split_part(?, '@', 1) = ?", u.email, ^identifier),
+          limit: 1
+        )
+        |> Repo.one()
+    end
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for changing profile fields.
+  """
+  def change_user_profile(%User{} = user, attrs \\ %{}) do
+    User.profile_changeset(user, attrs)
+  end
+
+  @doc """
+  Updates the user profile fields.
+
+  ## Examples
+
+      iex> update_user_profile(user, %{username: "tom", bio: "Hello!"})
+      {:ok, %User{}}
+
+      iex> update_user_profile(user, %{username: ""})
+      {:error, %Ecto.Changeset{}}
+  """
+  def update_user_profile(%User{} = user, attrs) do
+    user
+    |> User.profile_changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Returns profile statistics for a user:
+  - graphs_created: number of public, published graphs
+  - total_nodes: sum of non-compound nodes across those graphs
+  - member_since: the user's inserted_at timestamp
+  """
+  def get_profile_stats(%User{} = user) do
+    graphs = list_user_public_graphs(user)
+
+    total_nodes =
+      Enum.reduce(graphs, 0, fn graph, acc ->
+        nodes = graph.data["nodes"] || []
+        count = Enum.count(nodes, fn n -> !Map.get(n, "compound", false) end)
+        acc + count
+      end)
+
+    %{
+      graphs_created: length(graphs),
+      total_nodes: total_nodes,
+      member_since: user.inserted_at
+    }
+  end
+
+  @doc """
+  Lists all public, published, non-deleted graphs created by a user,
+  ordered by most recently updated.
+  """
+  def list_user_public_graphs(%User{id: user_id}) do
+    from(g in Graph,
+      where: g.user_id == ^user_id,
+      where: g.is_published == true,
+      where: g.is_public == true,
+      where: g.is_deleted == false or is_nil(g.is_deleted),
+      order_by: [desc: g.updated_at]
+    )
+    |> Repo.all()
   end
 end

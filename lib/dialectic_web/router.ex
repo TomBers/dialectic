@@ -62,6 +62,9 @@ defmodule DialecticWeb.Router do
     live "/g/:graph_name", GraphLive
     live "/g/:graph_name/linear", LinearGraphLive
     get "/api/graphs/md/:graph_name", PageController, :graph_md
+
+    # User profile
+    live "/u/:username", UserProfileLive
   end
 
   # Other scopes may use custom stacks.
