@@ -623,6 +623,13 @@ defmodule Dialectic.AccountsTest do
     test "returns a fallback for nil input" do
       username = Accounts.generate_unique_username(nil)
       assert is_binary(username)
+      assert username == "user" or String.starts_with?(username, "user-")
+    end
+
+    test "returns a suffixed fallback for nil input when 'user' is taken" do
+      _user = user_fixture(%{email: "user@example.com"})
+      username = Accounts.generate_unique_username(nil)
+      assert is_binary(username)
       assert String.starts_with?(username, "user-")
     end
   end

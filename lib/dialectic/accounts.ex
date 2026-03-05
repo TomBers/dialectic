@@ -401,7 +401,7 @@ defmodule Dialectic.Accounts do
     do_generate_unique_username(base, 0)
   end
 
-  def generate_unique_username(_), do: "user-#{:rand.uniform(999_999)}"
+  def generate_unique_username(_), do: do_generate_unique_username("user", 0)
 
   defp do_generate_unique_username(base, 0) do
     if get_user_by_username(base) == nil do

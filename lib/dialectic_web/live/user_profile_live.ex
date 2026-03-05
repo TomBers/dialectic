@@ -3,7 +3,7 @@ defmodule DialecticWeb.UserProfileLive do
 
   alias Dialectic.Accounts
   alias Dialectic.Accounts.User
-  alias Dialectic.Accounts.Gravatar
+  alias Dialectic.Accounts.GravatarCache
 
   @impl true
   def mount(%{"username" => username}, _session, socket) do
@@ -43,13 +43,27 @@ defmodule DialecticWeb.UserProfileLive do
           |> assign(:location, nil)
           |> assign(:is_own_profile?, is_own_profile?)
 
-        # Fetch Gravatar data asynchronously to avoid blocking initial render
+        # Load Gravatar data — served from ETS cache when available,
+        # fetched async on cache miss to avoid blocking initial render
+        # and to avoid redundant external API calls on repeated mounts.
         socket =
           case profile_user.gravatar_id do
             id when is_binary(id) and id != "" ->
-              start_async(socket, :fetch_gravatar, fn ->
-                Gravatar.get_profile_data(id)
-              end)
+              case GravatarCache.get(id) do
+                {:ok, data} ->
+                  # Cache hit — apply immediately, no async fetch needed
+                  socket
+                  |> assign(:avatar_url, data.avatar_url)
+                  |> assign(:header_image_url, data.header_image_url)
+                  |> assign(:verified_accounts, data.verified_accounts)
+                  |> assign(:location, data.location)
+
+                :miss ->
+                  # Cache miss — fetch asynchronously so we don't block render
+                  start_async(socket, :fetch_gravatar, fn ->
+                    GravatarCache.fetch(id)
+                  end)
+              end
 
             _ ->
               socket
@@ -60,7 +74,7 @@ defmodule DialecticWeb.UserProfileLive do
   end
 
   @impl true
-  def handle_async(:fetch_gravatar, {:ok, result}, socket) do
+  def handle_async(:fetch_gravatar, {:ok, {:ok, result}}, socket) do
     %{
       avatar_url: avatar_url,
       header_image_url: header_image_url,
@@ -74,6 +88,12 @@ defmodule DialecticWeb.UserProfileLive do
      |> assign(:header_image_url, header_image_url)
      |> assign(:verified_accounts, verified_accounts)
      |> assign(:location, location)}
+  end
+
+  @impl true
+  def handle_async(:fetch_gravatar, {:ok, _error}, socket) do
+    # Cache fetch returned an error; keep default nil/empty assigns
+    {:noreply, socket}
   end
 
   @impl true

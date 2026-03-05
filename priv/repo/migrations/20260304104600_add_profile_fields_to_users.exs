@@ -54,6 +54,13 @@ defmodule Dialectic.Repo.Migrations.AddProfileFieldsToUsers do
       "UPDATE users SET username = NULL"
     )
 
+    # Now that every row has a username, enforce NOT NULL at the DB level
+    # so no future insert/update can leave username empty.
+    execute(
+      "ALTER TABLE users ALTER COLUMN username SET NOT NULL",
+      "ALTER TABLE users ALTER COLUMN username DROP NOT NULL"
+    )
+
     create unique_index(:users, [:username])
   end
 end

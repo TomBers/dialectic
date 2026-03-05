@@ -105,10 +105,13 @@ defmodule Dialectic.Highlights.HighlightTest do
   describe "validate_no_overlap/1 - creating non-overlapping highlights" do
     setup do
       # Create a user fixture
+      unique = System.unique_integer([:positive])
+
       user =
         Repo.insert!(%User{
-          email: "test@example.com",
-          hashed_password: "hashed"
+          email: "test-#{unique}@example.com",
+          hashed_password: "hashed",
+          username: "test-#{unique}"
         })
 
       # Create a graph fixture
@@ -275,10 +278,13 @@ defmodule Dialectic.Highlights.HighlightTest do
     # TODO: Overlap validation not yet implemented in Highlight.changeset/2
     setup do
       # Create a user fixture
+      unique = System.unique_integer([:positive])
+
       user =
         Repo.insert!(%User{
-          email: "test@example.com",
-          hashed_password: "hashed"
+          email: "test-#{unique}@example.com",
+          hashed_password: "hashed",
+          username: "test-#{unique}"
         })
 
       # Create a graph fixture
@@ -482,10 +488,13 @@ defmodule Dialectic.Highlights.HighlightTest do
     # TODO: Overlap validation not yet implemented in Highlight.changeset/2
     setup do
       # Create a user fixture
+      unique = System.unique_integer([:positive])
+
       user =
         Repo.insert!(%User{
-          email: "test@example.com",
-          hashed_password: "hashed"
+          email: "test-#{unique}@example.com",
+          hashed_password: "hashed",
+          username: "test-#{unique}"
         })
 
       # Create a graph fixture
