@@ -269,7 +269,7 @@ defmodule DialecticWeb.UserProfileLive do
             theme_heading_class(@theme)
           ]}>
             <%= if @is_own_profile? do %>
-              Your Public Graphs
+              Public Graphs
             <% else %>
               Graphs by {@effective_username}
             <% end %>

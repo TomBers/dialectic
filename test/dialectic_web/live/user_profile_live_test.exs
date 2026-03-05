@@ -104,7 +104,7 @@ defmodule DialecticWeb.UserProfileLiveTest do
 
       assert html =~ "Edit Profile"
       assert html =~ "edit-profile-link"
-      assert html =~ "Your Public Graphs"
+      assert html =~ "Public Graphs"
     end
 
     test "does not show 'Edit Profile' link when viewing another user's profile", %{conn: conn} do
