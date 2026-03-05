@@ -84,6 +84,7 @@ defmodule Dialectic.Accounts do
   def register_user(attrs) do
     %User{}
     |> User.registration_changeset(attrs)
+    |> maybe_put_default_username()
     |> Repo.insert()
   end
 
@@ -114,6 +115,7 @@ defmodule Dialectic.Accounts do
       nil ->
         %User{}
         |> User.oauth_changeset(attrs)
+        |> maybe_put_default_username()
         |> Repo.insert(
           on_conflict: {:replace, [:access_token, :updated_at]},
           conflict_target: [:provider, :provider_id]
@@ -386,6 +388,60 @@ defmodule Dialectic.Accounts do
   end
 
   ## Profile
+
+  @doc """
+  Generates a unique username derived from the given email address.
+
+  Starts with the base username from `User.default_username_from_email/1`,
+  then appends a random numeric suffix if the base is already taken.
+  Retries up to 10 times before falling back to a fully random username.
+  """
+  def generate_unique_username(email) when is_binary(email) do
+    base = User.default_username_from_email(email)
+    do_generate_unique_username(base, 0)
+  end
+
+  def generate_unique_username(_), do: "user-#{:rand.uniform(999_999)}"
+
+  defp do_generate_unique_username(base, 0) do
+    if get_user_by_username(base) == nil do
+      base
+    else
+      do_generate_unique_username(base, 1)
+    end
+  end
+
+  defp do_generate_unique_username(base, attempt) when attempt > 10 do
+    "#{base}-#{:rand.uniform(999_999)}"
+  end
+
+  defp do_generate_unique_username(base, attempt) do
+    # Truncate base so the suffix still fits within the 30-char limit
+    suffix = Integer.to_string(:rand.uniform(9999))
+    max_base = 30 - byte_size(suffix) - 1
+    truncated = String.slice(base, 0, max_base)
+    candidate = "#{truncated}-#{suffix}"
+
+    if get_user_by_username(candidate) == nil do
+      candidate
+    else
+      do_generate_unique_username(base, attempt + 1)
+    end
+  end
+
+  # Puts a default username on the changeset if one isn't already set.
+  # Called during registration to ensure every new user gets a username.
+  defp maybe_put_default_username(changeset) do
+    email = Ecto.Changeset.get_field(changeset, :email)
+    username = Ecto.Changeset.get_field(changeset, :username)
+
+    if is_nil(username) or username == "" do
+      unique = generate_unique_username(email)
+      Ecto.Changeset.put_change(changeset, :username, unique)
+    else
+      changeset
+    end
+  end
 
   @doc """
   Gets a user by their username (exact, case-insensitive match).

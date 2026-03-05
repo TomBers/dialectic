@@ -600,6 +600,67 @@ defmodule Dialectic.AccountsTest do
 
   ## Profile
 
+  describe "generate_unique_username/1" do
+    test "derives username from email local part" do
+      username = Accounts.generate_unique_username("alice@example.com")
+      assert username == "alice"
+    end
+
+    test "strips invalid characters and normalizes" do
+      username = Accounts.generate_unique_username("Alice.O'Brien@example.com")
+      assert username == "aliceobrien"
+    end
+
+    test "appends suffix when base username is already taken" do
+      user = user_fixture(%{email: "taken@example.com"})
+      assert user.username == "taken"
+
+      username = Accounts.generate_unique_username("taken@example.com")
+      assert username != "taken"
+      assert String.starts_with?(username, "taken-")
+    end
+
+    test "returns a fallback for nil input" do
+      username = Accounts.generate_unique_username(nil)
+      assert is_binary(username)
+      assert String.starts_with?(username, "user-")
+    end
+  end
+
+  describe "auto-assigned username at registration" do
+    test "register_user/1 auto-assigns a username from the email" do
+      email = unique_user_email()
+      {:ok, user} = Accounts.register_user(%{email: email, password: valid_user_password()})
+
+      expected_base = Dialectic.Accounts.User.default_username_from_email(email)
+      assert user.username == expected_base
+    end
+
+    test "register_user/1 handles username collision with suffix" do
+      email = "collide@example.com"
+      {:ok, first} = Accounts.register_user(%{email: email, password: valid_user_password()})
+      assert first.username == "collide"
+
+      email2 = "collide@other.com"
+      {:ok, second} = Accounts.register_user(%{email: email2, password: valid_user_password()})
+      assert second.username != "collide"
+      assert String.starts_with?(second.username, "collide-")
+    end
+
+    test "find_or_create_oauth_user/1 auto-assigns a username" do
+      attrs = %{
+        email: "oauth-#{System.unique_integer([:positive])}@example.com",
+        provider: "google",
+        provider_id: "google-#{System.unique_integer([:positive])}",
+        access_token: "token123"
+      }
+
+      {:ok, user} = Accounts.find_or_create_oauth_user(attrs)
+      assert is_binary(user.username)
+      assert user.username != ""
+    end
+  end
+
   describe "get_user_by_username/1" do
     test "returns nil when no user has the given username" do
       assert Accounts.get_user_by_username("nonexistent") == nil
@@ -630,9 +691,9 @@ defmodule Dialectic.AccountsTest do
       assert Accounts.get_user_for_profile("bob99").id == user.id
     end
 
-    test "does not fall back to email local-part" do
-      _user = user_fixture(%{email: "alice@example.com"})
-      assert Accounts.get_user_for_profile("alice") == nil
+    test "finds user by auto-assigned username derived from email" do
+      user = user_fixture(%{email: "alice@example.com"})
+      assert Accounts.get_user_for_profile("alice").id == user.id
     end
   end
 

@@ -21,15 +21,13 @@ defmodule DialecticWeb.UserSettingsLive do
           </div>
 
           <div class="flex items-center gap-3">
-            <%= if @has_stored_username? do %>
-              <.link
-                navigate={~p"/u/#{@effective_username}"}
-                id="user-settings-view-profile"
-                class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-              >
-                <.icon name="hero-user" class="w-4 h-4 mr-1.5" /> View Profile
-              </.link>
-            <% end %>
+            <.link
+              navigate={~p"/u/#{@effective_username}"}
+              id="user-settings-view-profile"
+              class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+            >
+              <.icon name="hero-user" class="w-4 h-4 mr-1.5" /> View Profile
+            </.link>
             <.link
               href={~p"/users/log_out"}
               method="delete"
@@ -409,15 +407,7 @@ defmodule DialecticWeb.UserSettingsLive do
 
     effective_username = User.effective_username(user)
 
-    # Pre-fill the profile form with the effective username if the user hasn't set one yet
-    profile_attrs =
-      if is_nil(user.username) or user.username == "" do
-        %{username: effective_username}
-      else
-        %{}
-      end
-
-    profile_changeset = Accounts.change_user_profile(user, profile_attrs)
+    profile_changeset = Accounts.change_user_profile(user)
 
     theme_preview = user.theme || "default"
 
@@ -431,7 +421,6 @@ defmodule DialecticWeb.UserSettingsLive do
       |> assign(:profile_form, to_form(profile_changeset))
       |> assign(:trigger_submit, false)
       |> assign(:effective_username, effective_username)
-      |> assign(:has_stored_username?, is_binary(user.username) and user.username != "")
       |> assign(:avatar_preview_url, nil)
       |> assign(:header_preview_url, nil)
       |> assign(:verified_accounts, [])
@@ -496,10 +485,6 @@ defmodule DialecticWeb.UserSettingsLive do
           |> assign(:current_user, updated_user)
           |> assign(:profile_form, to_form(profile_changeset))
           |> assign(:effective_username, effective_username)
-          |> assign(
-            :has_stored_username?,
-            is_binary(updated_user.username) and updated_user.username != ""
-          )
           |> assign(:theme_preview, updated_user.theme || "default")
           |> put_flash(:info, "Profile updated successfully.")
 
