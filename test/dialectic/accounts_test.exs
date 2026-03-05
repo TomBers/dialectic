@@ -597,4 +597,287 @@ defmodule Dialectic.AccountsTest do
       assert "has already been taken" in errors_on(changeset).email
     end
   end
+
+  ## Profile
+
+  describe "get_user_by_username/1" do
+    test "returns nil when no user has the given username" do
+      assert Accounts.get_user_by_username("nonexistent") == nil
+    end
+
+    test "returns the user with a matching stored username" do
+      user = user_fixture()
+      {:ok, user} = Accounts.update_user_profile(user, %{username: "alice42"})
+      assert Accounts.get_user_by_username("alice42").id == user.id
+    end
+
+    test "lookup is case-insensitive (citext column)" do
+      user = user_fixture()
+      {:ok, _user} = Accounts.update_user_profile(user, %{username: "Alice42"})
+      assert Accounts.get_user_by_username("alice42").id == user.id
+      assert Accounts.get_user_by_username("ALICE42").id == user.id
+    end
+  end
+
+  describe "get_user_for_profile/1" do
+    test "returns nil when no user has the given username" do
+      assert Accounts.get_user_for_profile("nobody") == nil
+    end
+
+    test "returns the user by stored username" do
+      user = user_fixture()
+      {:ok, user} = Accounts.update_user_profile(user, %{username: "bob99"})
+      assert Accounts.get_user_for_profile("bob99").id == user.id
+    end
+
+    test "does not fall back to email local-part" do
+      _user = user_fixture(%{email: "alice@example.com"})
+      assert Accounts.get_user_for_profile("alice") == nil
+    end
+  end
+
+  describe "update_user_profile/2" do
+    test "updates username, bio, and theme" do
+      user = user_fixture()
+
+      assert {:ok, updated} =
+               Accounts.update_user_profile(user, %{
+                 username: "newname",
+                 bio: "Hello!",
+                 theme: "indigo"
+               })
+
+      assert updated.username == "newname"
+      assert updated.bio == "Hello!"
+      assert updated.theme == "indigo"
+    end
+
+    test "rejects blank username" do
+      user = user_fixture()
+      assert {:error, changeset} = Accounts.update_user_profile(user, %{username: ""})
+      assert "can't be blank" in errors_on(changeset).username
+    end
+
+    test "rejects username shorter than 2 characters" do
+      user = user_fixture()
+      assert {:error, changeset} = Accounts.update_user_profile(user, %{username: "a"})
+      assert "should be at least 2 character(s)" in errors_on(changeset).username
+    end
+
+    test "rejects username with invalid characters" do
+      user = user_fixture()
+      assert {:error, changeset} = Accounts.update_user_profile(user, %{username: "bad name!"})
+
+      assert "must be alphanumeric with optional hyphens, cannot start or end with a hyphen" in errors_on(
+               changeset
+             ).username
+    end
+
+    test "enforces username uniqueness" do
+      user1 = user_fixture()
+      user2 = user_fixture()
+
+      {:ok, _} = Accounts.update_user_profile(user1, %{username: "unique99"})
+      assert {:error, changeset} = Accounts.update_user_profile(user2, %{username: "unique99"})
+      assert "has already been taken" in errors_on(changeset).username
+    end
+
+    test "allows empty gravatar_id (normalizes blank to nil)" do
+      user = user_fixture()
+
+      assert {:ok, updated} =
+               Accounts.update_user_profile(user, %{username: "test22", gravatar_id: ""})
+
+      assert updated.gravatar_id == nil
+    end
+
+    test "rejects invalid theme" do
+      user = user_fixture()
+
+      assert {:error, changeset} =
+               Accounts.update_user_profile(user, %{username: "test22", theme: "neon"})
+
+      assert "is invalid" in errors_on(changeset).theme
+    end
+  end
+
+  describe "get_profile_stats/2" do
+    test "returns zero stats for user with no graphs" do
+      user = user_fixture()
+      stats = Accounts.get_profile_stats(user)
+      assert stats.graphs_created == 0
+      assert stats.total_nodes == 0
+      assert stats.member_since == user.inserted_at
+    end
+
+    test "counts public published graphs and their non-compound nodes" do
+      user = user_fixture()
+
+      nodes = [
+        %{"id" => "1", "label" => "A"},
+        %{"id" => "2", "label" => "B"},
+        %{"id" => "3", "label" => "C", "compound" => true}
+      ]
+
+      Dialectic.Repo.insert!(%Dialectic.Accounts.Graph{
+        title: "graph-stats-#{System.unique_integer([:positive])}",
+        slug: "slug-stats-#{System.unique_integer([:positive])}",
+        data: %{"nodes" => nodes},
+        is_public: true,
+        is_published: true,
+        is_deleted: false,
+        user_id: user.id
+      })
+
+      stats = Accounts.get_profile_stats(user)
+      assert stats.graphs_created == 1
+      # 2 non-compound nodes
+      assert stats.total_nodes == 2
+    end
+
+    test "accepts pre-fetched graphs list" do
+      user = user_fixture()
+      graphs = Accounts.list_user_public_graphs(user)
+      stats = Accounts.get_profile_stats(user, graphs)
+      assert stats.graphs_created == 0
+    end
+  end
+
+  describe "get_common_tags/2" do
+    test "returns empty list for user with no graphs" do
+      user = user_fixture()
+      assert Accounts.get_common_tags(user) == []
+    end
+
+    test "returns tags sorted by frequency" do
+      user = user_fixture()
+
+      Dialectic.Repo.insert!(%Dialectic.Accounts.Graph{
+        title: "graph-tags1-#{System.unique_integer([:positive])}",
+        slug: "slug-tags1-#{System.unique_integer([:positive])}",
+        data: %{},
+        tags: ["elixir", "phoenix"],
+        is_public: true,
+        is_published: true,
+        is_deleted: false,
+        user_id: user.id
+      })
+
+      Dialectic.Repo.insert!(%Dialectic.Accounts.Graph{
+        title: "graph-tags2-#{System.unique_integer([:positive])}",
+        slug: "slug-tags2-#{System.unique_integer([:positive])}",
+        data: %{},
+        tags: ["elixir", "liveview"],
+        is_public: true,
+        is_published: true,
+        is_deleted: false,
+        user_id: user.id
+      })
+
+      tags = Accounts.get_common_tags(user)
+      # "elixir" appears twice, so it should be first
+      assert hd(tags) == "elixir"
+      assert length(tags) == 3
+    end
+
+    test "respects limit option" do
+      user = user_fixture()
+
+      Dialectic.Repo.insert!(%Dialectic.Accounts.Graph{
+        title: "graph-taglimit-#{System.unique_integer([:positive])}",
+        slug: "slug-taglimit-#{System.unique_integer([:positive])}",
+        data: %{},
+        tags: ["a", "b", "c", "d", "e", "f"],
+        is_public: true,
+        is_published: true,
+        is_deleted: false,
+        user_id: user.id
+      })
+
+      assert length(Accounts.get_common_tags(user, limit: 2)) == 2
+    end
+
+    test "accepts pre-fetched graphs" do
+      user = user_fixture()
+      graphs = Accounts.list_user_public_graphs(user)
+      assert Accounts.get_common_tags(user, graphs: graphs) == []
+    end
+  end
+
+  describe "list_user_public_graphs/1" do
+    test "returns empty list for user with no graphs" do
+      user = user_fixture()
+      assert Accounts.list_user_public_graphs(user) == []
+    end
+
+    test "returns only public, published, non-deleted graphs" do
+      user = user_fixture()
+
+      # Public + published — should appear
+      Dialectic.Repo.insert!(%Dialectic.Accounts.Graph{
+        title: "visible-#{System.unique_integer([:positive])}",
+        slug: "slug-visible-#{System.unique_integer([:positive])}",
+        data: %{},
+        is_public: true,
+        is_published: true,
+        is_deleted: false,
+        user_id: user.id
+      })
+
+      # Private — should not appear
+      Dialectic.Repo.insert!(%Dialectic.Accounts.Graph{
+        title: "private-#{System.unique_integer([:positive])}",
+        slug: "slug-private-#{System.unique_integer([:positive])}",
+        data: %{},
+        is_public: false,
+        is_published: true,
+        is_deleted: false,
+        user_id: user.id
+      })
+
+      # Deleted — should not appear
+      Dialectic.Repo.insert!(%Dialectic.Accounts.Graph{
+        title: "deleted-#{System.unique_integer([:positive])}",
+        slug: "slug-deleted-#{System.unique_integer([:positive])}",
+        data: %{},
+        is_public: true,
+        is_published: true,
+        is_deleted: true,
+        user_id: user.id
+      })
+
+      # Not published — should not appear
+      Dialectic.Repo.insert!(%Dialectic.Accounts.Graph{
+        title: "draft-#{System.unique_integer([:positive])}",
+        slug: "slug-draft-#{System.unique_integer([:positive])}",
+        data: %{},
+        is_public: true,
+        is_published: false,
+        is_deleted: false,
+        user_id: user.id
+      })
+
+      graphs = Accounts.list_user_public_graphs(user)
+      assert length(graphs) == 1
+      assert hd(graphs).is_public == true
+      assert hd(graphs).is_published == true
+    end
+
+    test "does not return graphs from other users" do
+      user1 = user_fixture()
+      user2 = user_fixture()
+
+      Dialectic.Repo.insert!(%Dialectic.Accounts.Graph{
+        title: "other-user-graph-#{System.unique_integer([:positive])}",
+        slug: "slug-other-#{System.unique_integer([:positive])}",
+        data: %{},
+        is_public: true,
+        is_published: true,
+        is_deleted: false,
+        user_id: user2.id
+      })
+
+      assert Accounts.list_user_public_graphs(user1) == []
+    end
+  end
 end

@@ -157,7 +157,7 @@ defmodule Dialectic.Accounts.Gravatar do
       {:ok, body} ->
         avatar_url =
           case Map.get(body, "avatar_url") do
-            url when is_binary(url) and url != "" -> url
+            url when is_binary(url) and url != "" -> safe_url(url)
             _ -> nil
           end
 
@@ -192,11 +192,11 @@ defmodule Dialectic.Accounts.Gravatar do
   defp extract_header_image_url(body) do
     case Map.get(body, "header_image") do
       %{"url" => url} when is_binary(url) and url != "" ->
-        url
+        safe_url(url)
 
       css when is_binary(css) and css != "" ->
         case Regex.run(~r/url\(['"]?(https?:\/\/[^'")\s]+)['"]?\)/, css) do
-          [_, url] -> url
+          [_, url] -> safe_url(url)
           _ -> nil
         end
 
@@ -207,6 +207,7 @@ defmodule Dialectic.Accounts.Gravatar do
 
   # Extracts visible verified accounts from the Gravatar profile response.
   # Each account is normalized to a map with atom keys for consistency.
+  # URLs are sanitized to only allow http/https schemes.
   defp extract_verified_accounts(body) do
     case Map.get(body, "verified_accounts") do
       accounts when is_list(accounts) ->
@@ -216,8 +217,8 @@ defmodule Dialectic.Accounts.Gravatar do
           %{
             service_type: Map.get(acct, "service_type", ""),
             service_label: Map.get(acct, "service_label", ""),
-            service_icon: Map.get(acct, "service_icon", ""),
-            url: Map.get(acct, "url", "")
+            service_icon: safe_url(Map.get(acct, "service_icon", "")),
+            url: safe_url(Map.get(acct, "url", ""))
           }
         end)
 
@@ -225,4 +226,20 @@ defmodule Dialectic.Accounts.Gravatar do
         []
     end
   end
+
+  @doc """
+  Validates that a URL uses only http or https schemes.
+
+  Returns the original URL if it uses a safe scheme, or nil otherwise.
+  This prevents stored XSS via `javascript:`, `data:`, `vbscript:`, or
+  other dangerous URI schemes injected through Gravatar profile data.
+  """
+  def safe_url(url) when is_binary(url) and url != "" do
+    case URI.parse(url) do
+      %URI{scheme: scheme} when scheme in ["http", "https"] -> url
+      _ -> nil
+    end
+  end
+
+  def safe_url(_), do: nil
 end

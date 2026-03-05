@@ -15,16 +15,18 @@ defmodule DialecticWeb.UserProfileLive do
          |> redirect(to: ~p"/")}
 
       profile_user ->
-        stats = Accounts.get_profile_stats(profile_user)
         graphs = Accounts.list_user_public_graphs(profile_user)
+        stats = Accounts.get_profile_stats(profile_user, graphs)
 
         effective_username = User.effective_username(profile_user)
-        common_tags = Accounts.get_common_tags(profile_user)
+        common_tags = Accounts.get_common_tags(profile_user, graphs: graphs)
         theme = profile_user.theme || "default"
 
         is_own_profile? =
-          socket.assigns[:current_user] &&
-            socket.assigns.current_user.id == profile_user.id
+          case socket.assigns[:current_user] do
+            %User{id: id} when id == profile_user.id -> true
+            _ -> false
+          end
 
         socket =
           socket
@@ -292,7 +294,12 @@ defmodule DialecticWeb.UserProfileLive do
                     is_live={false}
                     generating={false}
                     variant={theme_graph_variant(@theme)}
-                    id={"profile-graph-#{graph.slug || graph.title}"}
+                    id={
+                      "profile-graph-" <>
+                        (graph.slug ||
+                           "title-" <>
+                             Integer.to_string(:erlang.phash2(graph.title || "")))
+                    }
                   />
                 </div>
               <% end %>

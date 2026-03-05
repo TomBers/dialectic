@@ -433,9 +433,12 @@ defmodule Dialectic.Accounts do
   - graphs_created: number of public, published graphs
   - total_nodes: sum of non-compound nodes across those graphs
   - member_since: the user's inserted_at timestamp
+
+  Accepts an optional pre-fetched list of graphs to avoid a duplicate
+  DB query when the caller has already loaded them.
   """
-  def get_profile_stats(%User{} = user) do
-    graphs = list_user_public_graphs(user)
+  def get_profile_stats(%User{} = user, graphs \\ nil) do
+    graphs = graphs || list_user_public_graphs(user)
 
     total_nodes =
       Enum.reduce(graphs, 0, fn graph, acc ->
@@ -454,9 +457,15 @@ defmodule Dialectic.Accounts do
   @doc """
   Returns the most common tags across a user's public graphs,
   sorted by frequency (descending). Returns up to `limit` tags.
+
+  ## Options
+
+    * `:graphs` - pre-fetched list of graphs to avoid a duplicate DB query
+    * `:limit` - maximum number of tags to return (default: 5)
   """
-  def get_common_tags(%User{} = user, limit \\ 5) do
-    graphs = list_user_public_graphs(user)
+  def get_common_tags(%User{} = user, opts \\ []) do
+    graphs = Keyword.get(opts, :graphs) || list_user_public_graphs(user)
+    limit = Keyword.get(opts, :limit, 5)
 
     graphs
     |> Enum.flat_map(fn graph -> graph.tags || [] end)

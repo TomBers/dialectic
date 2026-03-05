@@ -258,6 +258,7 @@ defmodule Dialectic.Accounts.User do
       :gravatar_id,
       :theme
     ])
+    |> normalize_blank(:gravatar_id)
     |> validate_required([:username])
     |> validate_length(:username, min: 2, max: 30)
     |> validate_format(:username, ~r/^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$|^[a-zA-Z0-9]{2}$/,
@@ -271,5 +272,14 @@ defmodule Dialectic.Accounts.User do
     |> validate_inclusion(:theme, @valid_themes)
     |> unsafe_validate_unique(:username, Dialectic.Repo)
     |> unique_constraint(:username)
+  end
+
+  # Normalizes a blank string change to nil so optional fields don't
+  # fail format validations when left empty in the form.
+  defp normalize_blank(changeset, field) do
+    case get_change(changeset, field) do
+      "" -> put_change(changeset, field, nil)
+      _ -> changeset
+    end
   end
 end
