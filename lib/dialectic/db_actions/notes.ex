@@ -14,7 +14,8 @@ defmodule Dialectic.DbActions.Notes do
         where: g.user_id == ^user.id,
         left_join: n in Note,
         on: n.graph_title == g.title and n.is_noted == true,
-        group_by: g.title,
+        group_by: [g.title, g.inserted_at],
+        order_by: [desc: g.inserted_at],
         select: %{
           title: g.title,
           is_public: g.is_public,
@@ -36,6 +37,7 @@ defmodule Dialectic.DbActions.Notes do
     notes_query =
       from n in Note,
         where: n.user_id == ^user.id,
+        order_by: [desc: n.updated_at],
         preload: [:graph]
 
     notes = Repo.all(notes_query)
