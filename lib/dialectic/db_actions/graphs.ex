@@ -125,6 +125,7 @@ defmodule Dialectic.DbActions.Graphs do
         where: g.is_published == true,
         where: g.is_public == true,
         where: ilike(g.title, ^search_pattern),
+        where: fragment("jsonb_array_length(?->'nodes') >= ?", g.data, 4),
         left_join: n in assoc(g, :notes),
         group_by: g.title,
         order_by: [desc: g.inserted_at],
