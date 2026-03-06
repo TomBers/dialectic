@@ -37,6 +37,7 @@ defmodule Dialectic.DbActions.Notes do
     notes_query =
       from n in Note,
         where: n.user_id == ^user.id,
+        order_by: [desc: n.updated_at],
         preload: [:graph]
 
     notes = Repo.all(notes_query)
