@@ -6,7 +6,7 @@ defmodule Dialectic.Accounts do
   import Ecto.Query, warn: false
   alias Dialectic.Repo
 
-  alias Dialectic.Accounts.{User, UserToken, UserNotifier}
+  alias Dialectic.Accounts.{User, UserToken, UserNotifier, Graph}
 
   ## Database getters
 
@@ -84,6 +84,7 @@ defmodule Dialectic.Accounts do
   def register_user(attrs) do
     %User{}
     |> User.registration_changeset(attrs)
+    |> maybe_put_default_username()
     |> Repo.insert()
   end
 
@@ -114,6 +115,7 @@ defmodule Dialectic.Accounts do
       nil ->
         %User{}
         |> User.oauth_changeset(attrs)
+        |> maybe_put_default_username()
         |> Repo.insert(
           on_conflict: {:replace, [:access_token, :updated_at]},
           conflict_target: [:provider, :provider_id]
@@ -383,5 +385,164 @@ defmodule Dialectic.Accounts do
       {:ok, %{user: user}} -> {:ok, user}
       {:error, :user, changeset, _} -> {:error, changeset}
     end
+  end
+
+  ## Profile
+
+  @doc """
+  Generates a unique username derived from the given email address.
+
+  Starts with the base username from `User.default_username_from_email/1`,
+  then appends a random numeric suffix if the base is already taken.
+  Retries up to 10 times before falling back to a fully random username.
+  """
+  def generate_unique_username(email) when is_binary(email) do
+    base = User.default_username_from_email(email)
+    do_generate_unique_username(base, 0)
+  end
+
+  def generate_unique_username(_), do: do_generate_unique_username("user", 0)
+
+  defp do_generate_unique_username(base, 0) do
+    if get_user_by_username(base) == nil do
+      base
+    else
+      do_generate_unique_username(base, 1)
+    end
+  end
+
+  defp do_generate_unique_username(base, attempt) when attempt > 10 do
+    "#{base}-#{:rand.uniform(999_999)}"
+  end
+
+  defp do_generate_unique_username(base, attempt) do
+    # Truncate base so the suffix still fits within the 30-char limit
+    suffix = Integer.to_string(:rand.uniform(9999))
+    max_base = 30 - byte_size(suffix) - 1
+    truncated = String.slice(base, 0, max_base)
+    candidate = "#{truncated}-#{suffix}"
+
+    if get_user_by_username(candidate) == nil do
+      candidate
+    else
+      do_generate_unique_username(base, attempt + 1)
+    end
+  end
+
+  # Puts a default username on the changeset if one isn't already set.
+  # Called during registration to ensure every new user gets a username.
+  defp maybe_put_default_username(changeset) do
+    email = Ecto.Changeset.get_field(changeset, :email)
+    username = Ecto.Changeset.get_field(changeset, :username)
+
+    if is_nil(username) or username == "" do
+      unique = generate_unique_username(email)
+      Ecto.Changeset.put_change(changeset, :username, unique)
+    else
+      changeset
+    end
+  end
+
+  @doc """
+  Gets a user by their username (exact, case-insensitive match).
+  Returns nil if no user has that username.
+  """
+  def get_user_by_username(username) when is_binary(username) do
+    Repo.get_by(User, username: username)
+  end
+
+  @doc """
+  Finds a user for public profile display.
+
+  Looks up the user by their stored, unique username.
+  """
+  def get_user_for_profile(identifier) when is_binary(identifier) do
+    get_user_by_username(identifier)
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for changing profile fields.
+  """
+  def change_user_profile(%User{} = user, attrs \\ %{}) do
+    User.profile_changeset(user, attrs)
+  end
+
+  @doc """
+  Updates the user profile fields.
+
+  ## Examples
+
+      iex> update_user_profile(user, %{username: "tom", bio: "Hello!"})
+      {:ok, %User{}}
+
+      iex> update_user_profile(user, %{username: ""})
+      {:error, %Ecto.Changeset{}}
+  """
+  def update_user_profile(%User{} = user, attrs) do
+    user
+    |> User.profile_changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Returns profile statistics for a user:
+  - graphs_created: number of public, published graphs
+  - total_nodes: sum of non-compound nodes across those graphs
+  - member_since: the user's inserted_at timestamp
+
+  Accepts an optional pre-fetched list of graphs to avoid a duplicate
+  DB query when the caller has already loaded them.
+  """
+  def get_profile_stats(%User{} = user, graphs \\ nil) do
+    graphs = graphs || list_user_public_graphs(user)
+
+    total_nodes =
+      Enum.reduce(graphs, 0, fn graph, acc ->
+        nodes = graph.data["nodes"] || []
+        count = Enum.count(nodes, fn n -> !Map.get(n, "compound", false) end)
+        acc + count
+      end)
+
+    %{
+      graphs_created: length(graphs),
+      total_nodes: total_nodes,
+      member_since: user.inserted_at
+    }
+  end
+
+  @doc """
+  Returns the most common tags across a user's public graphs,
+  sorted by frequency (descending). Returns up to `limit` tags.
+
+  ## Options
+
+    * `:graphs` - pre-fetched list of graphs to avoid a duplicate DB query
+    * `:limit` - maximum number of tags to return (default: 5)
+  """
+  def get_common_tags(%User{} = user, opts \\ []) do
+    graphs = Keyword.get(opts, :graphs) || list_user_public_graphs(user)
+    limit = Keyword.get(opts, :limit, 5)
+
+    graphs
+    |> Enum.flat_map(fn graph -> graph.tags || [] end)
+    |> Enum.frequencies()
+    |> Enum.sort_by(fn {_tag, count} -> count end, :desc)
+    |> Enum.take(limit)
+    |> Enum.map(fn {tag, _count} -> tag end)
+  end
+
+  @doc """
+  Lists all public, published, non-deleted graphs created by a user,
+  ordered by most recently updated.
+  """
+  def list_user_public_graphs(%User{id: user_id}) do
+    from(g in Graph,
+      where: g.user_id == ^user_id,
+      where: g.is_published == true,
+      where: g.is_public == true,
+      where: g.is_deleted == false or is_nil(g.is_deleted),
+      order_by: [desc: g.updated_at]
+    )
+    |> Repo.all()
   end
 end

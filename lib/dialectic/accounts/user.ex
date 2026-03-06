@@ -2,6 +2,8 @@ defmodule Dialectic.Accounts.User do
   use Ecto.Schema
   import Ecto.Changeset
 
+  @valid_themes ~w(default indigo violet emerald amber rose)
+
   schema "users" do
     field :email, :string
     field :password, :string, virtual: true, redact: true
@@ -12,11 +14,68 @@ defmodule Dialectic.Accounts.User do
     field :provider_id, :string
     field :access_token, :string
 
+    # Profile fields
+    field :username, :string
+    field :bio, :string
+    field :gravatar_id, :string
+    field :theme, :string, default: "default"
+
     has_many :graphs, Dialectic.Accounts.Graph, on_delete: :delete_all
     has_many :notes, Dialectic.Accounts.Note, on_delete: :delete_all
 
     timestamps(type: :utc_datetime)
   end
+
+  @doc """
+  Returns the list of valid theme names.
+  """
+  def valid_themes, do: @valid_themes
+
+  @doc """
+  Derives a default username from the user's email address.
+  Takes the local part before the '@', lowercases it, strips non-alphanumeric
+  characters (except hyphens), and truncates to 30 characters.
+  """
+  def default_username_from_email(email) when is_binary(email) do
+    email
+    |> String.split("@")
+    |> List.first("")
+    |> String.downcase()
+    |> String.replace(~r/[^a-z0-9-]/, "")
+    |> String.replace(~r/-+/, "-")
+    |> String.trim("-")
+    |> String.slice(0, 30)
+    |> case do
+      "" -> "user"
+      username -> username
+    end
+  end
+
+  def default_username_from_email(_), do: "user"
+
+  @doc """
+  Returns a display-ready name: username if set, otherwise derived from email.
+  """
+  def display_name(%__MODULE__{username: name}) when is_binary(name) and name != "", do: name
+
+  def display_name(%__MODULE__{email: email}) when is_binary(email),
+    do: default_username_from_email(email)
+
+  def display_name(_), do: "Anonymous"
+
+  @doc """
+  Returns the effective username for the user (stored or derived from email).
+  """
+  def effective_username(%__MODULE__{username: username})
+      when is_binary(username) and username != "" do
+    username
+  end
+
+  def effective_username(%__MODULE__{email: email}) when is_binary(email) do
+    default_username_from_email(email)
+  end
+
+  def effective_username(_), do: "user"
 
   @doc """
   A user changeset for registration.
@@ -182,5 +241,45 @@ defmodule Dialectic.Accounts.User do
     |> unsafe_validate_unique(:email, Dialectic.Repo)
     |> unique_constraint(:email)
     |> put_change(:confirmed_at, DateTime.utc_now() |> DateTime.truncate(:second))
+  end
+
+  @doc """
+  A user changeset for updating profile fields (username, bio,
+  gravatar_id, and theme).
+
+  Social links are derived from Gravatar at page load time and are
+  not stored in the database.
+  """
+  def profile_changeset(user, attrs) do
+    user
+    |> cast(attrs, [
+      :username,
+      :bio,
+      :gravatar_id,
+      :theme
+    ])
+    |> normalize_blank(:gravatar_id)
+    |> validate_required([:username])
+    |> validate_length(:username, min: 2, max: 30)
+    |> validate_format(:username, ~r/^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$|^[a-zA-Z0-9]{2}$/,
+      message: "must be alphanumeric with optional hyphens, cannot start or end with a hyphen"
+    )
+    |> validate_length(:bio, max: 500)
+    |> validate_length(:gravatar_id, max: 100)
+    |> validate_format(:gravatar_id, ~r/^[a-z0-9]+$/,
+      message: "must be a valid Gravatar profile slug (lowercase alphanumeric)"
+    )
+    |> validate_inclusion(:theme, @valid_themes)
+    |> unsafe_validate_unique(:username, Dialectic.Repo)
+    |> unique_constraint(:username)
+  end
+
+  # Normalizes a blank string change to nil so optional fields don't
+  # fail format validations when left empty in the form.
+  defp normalize_blank(changeset, field) do
+    case get_change(changeset, field) do
+      "" -> put_change(changeset, field, nil)
+      _ -> changeset
+    end
   end
 end
