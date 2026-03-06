@@ -17,30 +17,35 @@ defmodule Dialectic.DbActions.GraphsTest do
     graph
   end
 
-  defp insert_graph_with_nodes!(title, node_count \\ 4) do
-    nodes =
-      for i <- 1..node_count do
-        %{
-          "id" => "#{i}",
-          "content" => "## Node #{i} of #{title}",
-          "class" => if(i == 1, do: "origin", else: "answer"),
-          "user" => "",
-          "parent" => if(i == 1, do: nil, else: "#{i - 1}"),
-          "noted_by" => [],
-          "deleted" => false,
-          "compound" => false
-        }
-      end
+  defp build_nodes(count) do
+    for i <- 1..count do
+      %{
+        "id" => "#{i}",
+        "content" => "## Node #{i}",
+        "class" => if(i == 1, do: "origin", else: "answer"),
+        "user" => "",
+        "parent" => if(i == 1, do: nil, else: "#{i - 1}"),
+        "noted_by" => [],
+        "deleted" => false,
+        "compound" => false
+      }
+    end
+  end
+
+  defp insert_graph_with_nodes!(title, opts \\ []) do
+    node_count = Keyword.get(opts, :node_count, 4)
+    is_public = Keyword.get(opts, :is_public, true)
+    is_published = Keyword.get(opts, :is_published, true)
 
     {:ok, graph} =
       %Graph{}
       |> Graph.changeset(%{
         title: title,
-        data: %{"nodes" => nodes, "edges" => []},
-        is_public: true,
+        data: %{"nodes" => build_nodes(node_count), "edges" => []},
+        is_public: is_public,
         is_locked: false,
         is_deleted: false,
-        is_published: true
+        is_published: is_published
       })
       |> Repo.insert()
 
@@ -165,31 +170,7 @@ defmodule Dialectic.DbActions.GraphsTest do
       # Create an unpublished graph (should be excluded)
       unpub_title = unique_title("unpub")
 
-      unpub_nodes =
-        for i <- 1..4 do
-          %{
-            "id" => "#{i}",
-            "content" => "## Node #{i}",
-            "class" => if(i == 1, do: "origin", else: "answer"),
-            "user" => "",
-            "parent" => if(i == 1, do: nil, else: "#{i - 1}"),
-            "noted_by" => [],
-            "deleted" => false,
-            "compound" => false
-          }
-        end
-
-      {:ok, _unpub} =
-        %Graph{}
-        |> Graph.changeset(%{
-          title: unpub_title,
-          data: %{"nodes" => unpub_nodes, "edges" => []},
-          is_public: true,
-          is_locked: false,
-          is_deleted: false,
-          is_published: false
-        })
-        |> Repo.insert()
+      insert_graph_with_nodes!(unpub_title, is_published: false)
 
       # 1) No search term: should include only published graphs and counts should be 0
       results = Graphs.all_graphs_with_notes("")
@@ -216,31 +197,7 @@ defmodule Dialectic.DbActions.GraphsTest do
       insert_graph_with_nodes!(public_title)
 
       # Insert private graph with >= 4 nodes
-      private_nodes =
-        for i <- 1..4 do
-          %{
-            "id" => "#{i}",
-            "content" => "## Node #{i}",
-            "class" => if(i == 1, do: "origin", else: "answer"),
-            "user" => "",
-            "parent" => if(i == 1, do: nil, else: "#{i - 1}"),
-            "noted_by" => [],
-            "deleted" => false,
-            "compound" => false
-          }
-        end
-
-      {:ok, _private} =
-        %Graph{}
-        |> Graph.changeset(%{
-          title: private_title,
-          data: %{"nodes" => private_nodes, "edges" => []},
-          is_public: false,
-          is_published: true,
-          is_locked: false,
-          is_deleted: false
-        })
-        |> Repo.insert()
+      insert_graph_with_nodes!(private_title, is_public: false)
 
       results = Graphs.all_graphs_with_notes("")
       result_titles = Enum.map(results, fn {g, _count} -> g.title end)

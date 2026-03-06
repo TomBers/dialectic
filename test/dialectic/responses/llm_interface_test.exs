@@ -3,11 +3,6 @@ defmodule Dialectic.Responses.LlmInterfaceTest do
 
   alias Dialectic.Responses.LlmInterface
 
-  setup_all do
-    Code.ensure_loaded!(Dialectic.Responses.LlmInterface)
-    :ok
-  end
-
   describe "LlmInterface API" do
     test "exports all the expected functions" do
       # Verify all expected methods exist with the correct arity

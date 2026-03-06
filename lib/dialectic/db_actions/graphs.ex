@@ -4,6 +4,8 @@ defmodule Dialectic.DbActions.Graphs do
 
   import Ecto.Query
 
+  @min_node_count 4
+
   @doc """
   Generates a URL-friendly slug from a title.
   Creates a slug like "my-graph-title-a1b2c3" with a short random suffix for uniqueness.
@@ -125,7 +127,13 @@ defmodule Dialectic.DbActions.Graphs do
         where: g.is_published == true,
         where: g.is_public == true,
         where: ilike(g.title, ^search_pattern),
-        where: fragment("jsonb_array_length(?->'nodes') >= ?", g.data, 4),
+        where:
+          fragment(
+            "COALESCE(CASE WHEN jsonb_typeof(?->'nodes') = 'array' THEN jsonb_array_length(?->'nodes') ELSE 0 END, 0) >= ?",
+            g.data,
+            g.data,
+            ^@min_node_count
+          ),
         left_join: n in assoc(g, :notes),
         group_by: g.title,
         order_by: [desc: g.inserted_at],
