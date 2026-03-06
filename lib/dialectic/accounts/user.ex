@@ -303,10 +303,12 @@ defmodule Dialectic.Accounts.User do
 
   defp validate_reserved_username(changeset) do
     validate_change(changeset, :username, fn :username, username ->
-      if String.downcase(username) in @reserved_usernames do
-        [username: "is reserved and cannot be used"]
-      else
-        []
+      cond do
+        is_binary(username) and String.downcase(username) in @reserved_usernames ->
+          [username: "is reserved and cannot be used"]
+
+        true ->
+          []
       end
     end)
   end
