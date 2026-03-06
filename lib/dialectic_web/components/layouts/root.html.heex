@@ -107,6 +107,19 @@
           </.link>
           <%= if @current_user do %>
             <.link
+              href={~p"/feed"}
+              class={[
+                "inline-flex items-center gap-1 rounded-md px-2 py-1 font-medium transition",
+                if(active_path == "/feed",
+                  do: "bg-white/20 text-white",
+                  else: "text-white/70 hover:text-white hover:bg-white/10"
+                )
+              ]}
+            >
+              <.icon name="hero-rss" class="h-3.5 w-3.5" />
+              <span class="hidden sm:inline">Feed</span>
+            </.link>
+            <.link
               href={~p"/my/ideas"}
               class={[
                 "inline-flex items-center gap-1 rounded-md px-2 py-1 font-medium transition",

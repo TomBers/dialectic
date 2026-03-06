@@ -4,6 +4,7 @@ defmodule DialecticWeb.UserProfileLive do
   alias Dialectic.Accounts
   alias Dialectic.Accounts.User
   alias Dialectic.Accounts.GravatarCache
+  alias Dialectic.Social
 
   @impl true
   def mount(%{"username" => username}, _session, socket) do
@@ -42,6 +43,9 @@ defmodule DialecticWeb.UserProfileLive do
           |> assign(:verified_accounts, [])
           |> assign(:location, nil)
           |> assign(:is_own_profile?, is_own_profile?)
+          |> assign(:is_following?, is_following?(socket.assigns[:current_user], profile_user))
+          |> assign(:follower_count, Social.follower_count(profile_user))
+          |> assign(:following_count, Social.following_count(profile_user))
 
         # Load Gravatar data — served from ETS cache when available,
         # fetched async on cache miss to avoid blocking initial render
@@ -100,6 +104,40 @@ defmodule DialecticWeb.UserProfileLive do
   def handle_async(:fetch_gravatar, {:exit, _reason}, socket) do
     # Gravatar fetch failed; keep the default nil/empty assigns
     {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("follow", _params, socket) do
+    current_user = socket.assigns.current_user
+    profile_user = socket.assigns.profile_user
+
+    case Social.follow_user(current_user, profile_user) do
+      {:ok, _follow} ->
+        {:noreply,
+         socket
+         |> assign(:is_following?, true)
+         |> assign(:follower_count, Social.follower_count(profile_user))}
+
+      {:error, _changeset} ->
+        {:noreply, put_flash(socket, :error, "Unable to follow this user.")}
+    end
+  end
+
+  @impl true
+  def handle_event("unfollow", _params, socket) do
+    current_user = socket.assigns.current_user
+    profile_user = socket.assigns.profile_user
+
+    case Social.unfollow_user(current_user, profile_user) do
+      {:ok, _follow} ->
+        {:noreply,
+         socket
+         |> assign(:is_following?, false)
+         |> assign(:follower_count, Social.follower_count(profile_user))}
+
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Unable to unfollow this user.")}
+    end
   end
 
   @impl true
@@ -169,6 +207,32 @@ defmodule DialecticWeb.UserProfileLive do
                   >
                     <.icon name="hero-pencil-square" class="w-4 h-4" /> Edit Profile
                   </.link>
+                <% else %>
+                  <%= if @current_user do %>
+                    <%= if @is_following? do %>
+                      <button
+                        id="unfollow-button"
+                        phx-click="unfollow"
+                        class={[
+                          "inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold shadow-sm transition",
+                          theme_button_class(@theme)
+                        ]}
+                      >
+                        <.icon name="hero-user-minus" class="w-4 h-4" /> Unfollow
+                      </button>
+                    <% else %>
+                      <button
+                        id="follow-button"
+                        phx-click="follow"
+                        class={[
+                          "inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold shadow-sm transition",
+                          theme_button_class(@theme)
+                        ]}
+                      >
+                        <.icon name="hero-user-plus" class="w-4 h-4" /> Follow
+                      </button>
+                    <% end %>
+                  <% end %>
                 <% end %>
               </div>
             </div>
@@ -230,7 +294,7 @@ defmodule DialecticWeb.UserProfileLive do
         </div>
 
         <%!-- Stats Bar --%>
-        <div class="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <div class="mt-6 grid grid-cols-2 sm:grid-cols-5 gap-4">
           <div class={["rounded-xl border p-4 text-center shadow-sm", theme_card_class(@theme)]}>
             <p class={["text-2xl sm:text-3xl font-bold", theme_heading_class(@theme)]}>
               {@stats.graphs_created}
@@ -246,6 +310,24 @@ defmodule DialecticWeb.UserProfileLive do
             </p>
             <p class={["text-xs sm:text-sm font-medium mt-1", theme_subtext_class(@theme)]}>
               Ideas Explored
+            </p>
+          </div>
+
+          <div class={["rounded-xl border p-4 text-center shadow-sm", theme_card_class(@theme)]}>
+            <p class={["text-2xl sm:text-3xl font-bold", theme_heading_class(@theme)]}>
+              {@follower_count}
+            </p>
+            <p class={["text-xs sm:text-sm font-medium mt-1", theme_subtext_class(@theme)]}>
+              Followers
+            </p>
+          </div>
+
+          <div class={["rounded-xl border p-4 text-center shadow-sm", theme_card_class(@theme)]}>
+            <p class={["text-2xl sm:text-3xl font-bold", theme_heading_class(@theme)]}>
+              {@following_count}
+            </p>
+            <p class={["text-xs sm:text-sm font-medium mt-1", theme_subtext_class(@theme)]}>
+              Following
             </p>
           </div>
 
@@ -345,6 +427,13 @@ defmodule DialecticWeb.UserProfileLive do
   end
 
   # --- Helper functions ---
+
+  defp is_following?(nil, _profile_user), do: false
+  defp is_following?(%User{id: id}, %User{id: id}), do: false
+
+  defp is_following?(current_user, profile_user) do
+    Social.following?(current_user, profile_user)
+  end
 
   defp format_member_duration(inserted_at) do
     days = Date.diff(Date.utc_today(), DateTime.to_date(inserted_at))
