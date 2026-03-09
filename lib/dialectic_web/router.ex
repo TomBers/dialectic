@@ -144,4 +144,14 @@ defmodule DialecticWeb.Router do
       live "/users/confirm", UserConfirmationInstructionsLive, :new
     end
   end
+
+  # Legacy redirect: catch old title-based graph URLs (e.g. /My%20Graph%20Title)
+  # and 301 redirect them to the new slug-based /g/{slug} URLs.
+  # This must be the LAST scope so it only fires for unmatched paths.
+  scope "/" do
+    pipe_through [:browser]
+
+    get "/:legacy_title", DialecticWeb.Plugs.LegacyRedirect, :redirect_graph
+    get "/:legacy_title/linear", DialecticWeb.Plugs.LegacyRedirect, :redirect_linear
+  end
 end
