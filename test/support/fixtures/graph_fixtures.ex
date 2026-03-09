@@ -1,8 +1,65 @@
 defmodule Dialectic.GraphFixtures do
+  @moduledoc """
+  Shared test helpers for creating graph entities.
+  """
+
   alias Dialectic.Repo
   alias Dialectic.Accounts.Graph
   alias Dialectic.Graph.Serialise
   alias Dialectic.DbActions.Graphs
+
+  @doc """
+  Inserts a graph with sensible defaults, allowing individual attributes to be
+  overridden via the `attrs` map.
+
+  Returns the inserted `%Graph{}` struct.
+
+  ## Examples
+
+      insert_graph(%{title: "My Graph"})
+      insert_graph(%{title: "Private Graph", is_public: false})
+  """
+  def insert_graph(attrs) do
+    defaults = %{
+      data: %{
+        "nodes" => [
+          %{
+            "id" => "1",
+            "content" => "## Test",
+            "class" => "origin",
+            "user" => "",
+            "parent" => nil,
+            "noted_by" => [],
+            "deleted" => false,
+            "compound" => false
+          }
+        ],
+        "edges" => []
+      },
+      is_public: true,
+      is_published: true,
+      is_locked: false,
+      is_deleted: false,
+      prompt_mode: "university"
+    }
+
+    merged = Map.merge(defaults, attrs)
+    slug = merged[:slug] || Graphs.generate_unique_slug(merged.title)
+
+    %Graph{}
+    |> Graph.changeset(%{
+      title: merged.title,
+      user_id: nil,
+      data: merged.data,
+      is_public: merged.is_public,
+      is_published: merged.is_published,
+      is_locked: merged.is_locked,
+      is_deleted: merged.is_deleted,
+      slug: slug,
+      prompt_mode: merged.prompt_mode
+    })
+    |> Repo.insert!()
+  end
 
   def insert_graph_fixture(graph_name) do
     data =
