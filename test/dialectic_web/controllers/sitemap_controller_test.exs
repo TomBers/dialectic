@@ -3,49 +3,8 @@ defmodule DialecticWeb.SitemapControllerTest do
 
   alias Dialectic.Repo
   alias Dialectic.Accounts.Graph
-  alias Dialectic.DbActions.Graphs
 
-  defp insert_graph(attrs) do
-    defaults = %{
-      data: %{
-        "nodes" => [
-          %{
-            "id" => "1",
-            "content" => "## Test",
-            "class" => "origin",
-            "user" => "",
-            "parent" => nil,
-            "noted_by" => [],
-            "deleted" => false,
-            "compound" => false
-          }
-        ],
-        "edges" => []
-      },
-      is_public: true,
-      is_published: true,
-      is_locked: false,
-      is_deleted: false,
-      prompt_mode: "university"
-    }
-
-    merged = Map.merge(defaults, attrs)
-    slug = merged[:slug] || Graphs.generate_unique_slug(merged.title)
-
-    %Graph{}
-    |> Graph.changeset(%{
-      title: merged.title,
-      user_id: nil,
-      data: merged.data,
-      is_public: merged.is_public,
-      is_published: merged.is_published,
-      is_locked: merged.is_locked,
-      is_deleted: merged.is_deleted,
-      slug: slug,
-      prompt_mode: merged.prompt_mode
-    })
-    |> Repo.insert!()
-  end
+  import Dialectic.GraphFixtures
 
   describe "GET /sitemap.xml" do
     test "returns 200 with XML content type", %{conn: conn} do

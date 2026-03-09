@@ -3,6 +3,9 @@
 User-agent: *
 Allow: /
 Allow: /g/
+Allow: /u/
+Allow: /intro/
+Allow: /inspiration
 
 # Private / auth pages — not useful for indexing
 Disallow: /users/
@@ -11,6 +14,16 @@ Disallow: /dev/
 Disallow: /my/
 Disallow: /api/
 Disallow: /health/
+Disallow: /socket/
+Disallow: /phoenix/
+Disallow: /live/
+
+# Block query-parameterized home page variants (search, filters)
+# These create duplicate content and waste crawl budget
+Disallow: /*?search=
+Disallow: /*?tag=
+Disallow: /*?category=
+Disallow: /*?token=
 
 # Sitemap
 Sitemap: https://mudg.fly.dev/sitemap.xml
