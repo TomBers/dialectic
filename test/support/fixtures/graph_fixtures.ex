@@ -12,6 +12,9 @@ defmodule Dialectic.GraphFixtures do
   Inserts a graph with sensible defaults, allowing individual attributes to be
   overridden via the `attrs` map.
 
+  The `:title` key (atom) is **required** in `attrs`. All other keys are optional
+  and fall back to sensible defaults.
+
   Returns the inserted `%Graph{}` struct.
 
   ## Examples
@@ -20,6 +23,11 @@ defmodule Dialectic.GraphFixtures do
       insert_graph(%{title: "Private Graph", is_public: false})
   """
   def insert_graph(attrs) do
+    unless Map.has_key?(attrs, :title) do
+      raise ArgumentError,
+            "insert_graph/1 requires a :title atom key in attrs, got: #{inspect(Map.keys(attrs))}"
+    end
+
     defaults = %{
       data: %{
         "nodes" => [
