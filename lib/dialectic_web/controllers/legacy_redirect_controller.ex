@@ -1,4 +1,4 @@
-defmodule DialecticWeb.Plugs.LegacyRedirect do
+defmodule DialecticWeb.LegacyRedirectController do
   @moduledoc """
   Controller that redirects legacy title-based graph URLs to new slug-based `/g/{slug}` URLs.
 
@@ -7,15 +7,22 @@ defmodule DialecticWeb.Plugs.LegacyRedirect do
   `/g/{slug}`. Google still has the old URLs indexed and crawls them, producing
   795+ 404 errors in Search Console.
 
-  This controller intercepts requests that don't match any known route and attempts
-  to find a graph by title, issuing a 301 (permanent) redirect to the new
-  slug-based URL if found. This tells search engines to transfer ranking
-  signals to the canonical URL.
+  This controller is routed via catch-all routes at the bottom of the router:
+
+    - `GET /:legacy_title` — matches single-segment paths not claimed by earlier routes
+    - `GET /:legacy_title/linear` — matches legacy linear view URLs
+
+  When a graph is found by title, a **301 permanent redirect** is issued to the
+  corresponding `/g/{slug}` URL. Any query string on the original request
+  (e.g. `?token=...`, `?node=...`, `?highlight=...`) is preserved on the
+  redirect target so that legacy share links and deep-link params keep working.
+
+  When no graph matches, a 404 is returned.
 
   ## Placement
 
-  This should be added to the router **after** all normal routes, as a
-  catch-all scope, so it only fires for paths that would otherwise 404.
+  The catch-all routes must be defined **after** all other routes in the router
+  so they only match paths that would otherwise 404.
   """
 
   use DialecticWeb, :controller
@@ -27,14 +34,17 @@ defmodule DialecticWeb.Plugs.LegacyRedirect do
 
     case Graphs.get_graph_by_title(decoded) do
       %{slug: slug} when is_binary(slug) and slug != "" ->
+        destination = build_destination("/g/#{slug}", conn.query_string)
+
         conn
         |> put_resp_header("cache-control", "public, max-age=86400")
         |> put_status(301)
-        |> redirect(to: "/g/#{slug}")
+        |> redirect(to: destination)
 
       _ ->
         conn
         |> put_status(:not_found)
+        |> put_layout(false)
         |> put_view(html: DialecticWeb.ErrorHTML)
         |> render(:"404")
         |> halt()
@@ -46,17 +56,23 @@ defmodule DialecticWeb.Plugs.LegacyRedirect do
 
     case Graphs.get_graph_by_title(decoded) do
       %{slug: slug} when is_binary(slug) and slug != "" ->
+        destination = build_destination("/g/#{slug}/linear", conn.query_string)
+
         conn
         |> put_resp_header("cache-control", "public, max-age=86400")
         |> put_status(301)
-        |> redirect(to: "/g/#{slug}/linear")
+        |> redirect(to: destination)
 
       _ ->
         conn
         |> put_status(:not_found)
+        |> put_layout(false)
         |> put_view(html: DialecticWeb.ErrorHTML)
         |> render(:"404")
         |> halt()
     end
   end
+
+  defp build_destination(path, query_string) when query_string in [nil, ""], do: path
+  defp build_destination(path, query_string), do: "#{path}?#{query_string}"
 end

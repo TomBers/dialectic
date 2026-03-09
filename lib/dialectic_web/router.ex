@@ -33,6 +33,10 @@ defmodule DialecticWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :legacy_redirect do
+    plug :accepts, ["html"]
+  end
+
   # Health check endpoints (no rate limiting)
   scope "/health", DialecticWeb do
     pipe_through :health
@@ -148,10 +152,12 @@ defmodule DialecticWeb.Router do
   # Legacy redirect: catch old title-based graph URLs (e.g. /My%20Graph%20Title)
   # and 301 redirect them to the new slug-based /g/{slug} URLs.
   # This must be the LAST scope so it only fires for unmatched paths.
-  scope "/" do
-    pipe_through [:browser]
+  # Uses a lightweight pipeline (no session/CSRF/current_user) since these are
+  # high-volume SEO/bot redirect paths that don't need auth context.
+  scope "/", DialecticWeb do
+    pipe_through [:legacy_redirect]
 
-    get "/:legacy_title", DialecticWeb.Plugs.LegacyRedirect, :redirect_graph
-    get "/:legacy_title/linear", DialecticWeb.Plugs.LegacyRedirect, :redirect_linear
+    get "/:legacy_title", LegacyRedirectController, :redirect_graph
+    get "/:legacy_title/linear", LegacyRedirectController, :redirect_linear
   end
 end
