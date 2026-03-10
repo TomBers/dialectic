@@ -125,6 +125,170 @@ defmodule Dialectic.Graph.GraphActions do
     )
   end
 
+  # ===========================================================================
+  # Cluster 1 — Core Inquiry Moves
+  # ===========================================================================
+
+  def clarify({graph_id, node, user, live_view_topic}, opts \\ []) do
+    content_override = Keyword.get(opts, :content_override)
+
+    GraphManager.add_child(
+      graph_id,
+      [node],
+      fn n -> LlmInterface.gen_clarify(node, n, graph_id, live_view_topic, content_override) end,
+      "clarify",
+      user
+    )
+  end
+
+  def assumptions({graph_id, node, user, live_view_topic}, opts \\ []) do
+    content_override = Keyword.get(opts, :content_override)
+
+    GraphManager.add_child(
+      graph_id,
+      [node],
+      fn n ->
+        LlmInterface.gen_assumptions(node, n, graph_id, live_view_topic, content_override)
+      end,
+      "assumptions",
+      user
+    )
+  end
+
+  def counterexample({graph_id, node, user, live_view_topic}, opts \\ []) do
+    content_override = Keyword.get(opts, :content_override)
+
+    GraphManager.add_child(
+      graph_id,
+      [node],
+      fn n ->
+        LlmInterface.gen_counterexample(node, n, graph_id, live_view_topic, content_override)
+      end,
+      "counterexample",
+      user
+    )
+  end
+
+  def implications({graph_id, node, user, live_view_topic}, opts \\ []) do
+    content_override = Keyword.get(opts, :content_override)
+
+    GraphManager.add_child(
+      graph_id,
+      [node],
+      fn n ->
+        LlmInterface.gen_implications(node, n, graph_id, live_view_topic, content_override)
+      end,
+      "implications",
+      user
+    )
+  end
+
+  def blind_spots({graph_id, node, user, live_view_topic}, opts \\ []) do
+    content_override = Keyword.get(opts, :content_override)
+
+    GraphManager.add_child(
+      graph_id,
+      [node],
+      fn n ->
+        LlmInterface.gen_blind_spots(node, n, graph_id, live_view_topic, content_override)
+      end,
+      "blind_spots",
+      user
+    )
+  end
+
+  # ===========================================================================
+  # Cluster 2 — Context and Dialectical Expansion
+  # ===========================================================================
+
+  def says_who({graph_id, node, user, live_view_topic}, opts \\ []) do
+    content_override = Keyword.get(opts, :content_override)
+
+    GraphManager.add_child(
+      graph_id,
+      [node],
+      fn n ->
+        LlmInterface.gen_says_who(node, n, graph_id, live_view_topic, content_override)
+      end,
+      "says_who",
+      user
+    )
+  end
+
+  def who_disagrees({graph_id, node, user, live_view_topic}, opts \\ []) do
+    content_override = Keyword.get(opts, :content_override)
+
+    GraphManager.add_child(
+      graph_id,
+      [node],
+      fn n ->
+        LlmInterface.gen_who_disagrees(node, n, graph_id, live_view_topic, content_override)
+      end,
+      "who_disagrees",
+      user
+    )
+  end
+
+  def analogy({graph_id, node, user, live_view_topic}, opts \\ []) do
+    content_override = Keyword.get(opts, :content_override)
+
+    GraphManager.add_child(
+      graph_id,
+      [node],
+      fn n ->
+        LlmInterface.gen_analogy(node, n, graph_id, live_view_topic, content_override)
+      end,
+      "analogy",
+      user
+    )
+  end
+
+  def steel_man({graph_id, node, user, live_view_topic}, opts \\ []) do
+    content_override = Keyword.get(opts, :content_override)
+
+    GraphManager.add_child(
+      graph_id,
+      [node],
+      fn n ->
+        LlmInterface.gen_steel_man(node, n, graph_id, live_view_topic, content_override)
+      end,
+      "steel_man",
+      user
+    )
+  end
+
+  def what_if({graph_id, node, user, live_view_topic}, opts \\ []) do
+    content_override = Keyword.get(opts, :content_override)
+
+    GraphManager.add_child(
+      graph_id,
+      [node],
+      fn n ->
+        LlmInterface.gen_what_if(node, n, graph_id, live_view_topic, content_override)
+      end,
+      "what_if",
+      user
+    )
+  end
+
+  # ===========================================================================
+  # Cluster 3 — Clarity and Communication
+  # ===========================================================================
+
+  def simplify({graph_id, node, user, live_view_topic}, opts \\ []) do
+    content_override = Keyword.get(opts, :content_override)
+
+    GraphManager.add_child(
+      graph_id,
+      [node],
+      fn n ->
+        LlmInterface.gen_simplify(node, n, graph_id, live_view_topic, content_override)
+      end,
+      "simplify",
+      user
+    )
+  end
+
   def new_stream({graph_id, _node, user, _live_view_topic}, content, opts) do
     parent_group_id = Keyword.get(opts, :group_id)
     vertex = %Vertex{content: content || "", class: "origin", user: user, parent: parent_group_id}
@@ -220,7 +384,25 @@ defmodule Dialectic.Graph.GraphActions do
 
         {valid?, error_msg} =
           case stuck_node.class do
-            c when c in ["thesis", "antithesis", "deepdive", "ideas", "answer"] ->
+            c
+            when c in [
+                   "thesis",
+                   "antithesis",
+                   "deepdive",
+                   "ideas",
+                   "answer",
+                   "clarify",
+                   "assumptions",
+                   "counterexample",
+                   "implications",
+                   "blind_spots",
+                   "says_who",
+                   "who_disagrees",
+                   "analogy",
+                   "steel_man",
+                   "what_if",
+                   "simplify"
+                 ] ->
               if List.first(parents) != nil,
                 do: {true, nil},
                 else: {false, "Missing parent node"}
@@ -273,6 +455,50 @@ defmodule Dialectic.Graph.GraphActions do
               "answer" ->
                 parent = List.first(parents)
                 answer({graph_id, parent, user, live_view_topic})
+
+              "clarify" ->
+                parent = List.first(parents)
+                clarify({graph_id, parent, user, live_view_topic})
+
+              "assumptions" ->
+                parent = List.first(parents)
+                assumptions({graph_id, parent, user, live_view_topic})
+
+              "counterexample" ->
+                parent = List.first(parents)
+                counterexample({graph_id, parent, user, live_view_topic})
+
+              "implications" ->
+                parent = List.first(parents)
+                implications({graph_id, parent, user, live_view_topic})
+
+              "blind_spots" ->
+                parent = List.first(parents)
+                blind_spots({graph_id, parent, user, live_view_topic})
+
+              "says_who" ->
+                parent = List.first(parents)
+                says_who({graph_id, parent, user, live_view_topic})
+
+              "who_disagrees" ->
+                parent = List.first(parents)
+                who_disagrees({graph_id, parent, user, live_view_topic})
+
+              "analogy" ->
+                parent = List.first(parents)
+                analogy({graph_id, parent, user, live_view_topic})
+
+              "steel_man" ->
+                parent = List.first(parents)
+                steel_man({graph_id, parent, user, live_view_topic})
+
+              "what_if" ->
+                parent = List.first(parents)
+                what_if({graph_id, parent, user, live_view_topic})
+
+              "simplify" ->
+                parent = List.first(parents)
+                simplify({graph_id, parent, user, live_view_topic})
 
               "synthesis" ->
                 [p1, p2 | _] = parents

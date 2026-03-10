@@ -140,6 +140,183 @@ defmodule Dialectic.Responses.LlmInterface do
     ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
   end
 
+  # ===========================================================================
+  # Cluster 1 — Core Inquiry Moves
+  # ===========================================================================
+
+  def gen_clarify(node, child, graph_id, live_view_topic, content_override \\ nil) do
+    {context, content} = resolve_context_and_content(graph_id, node, content_override)
+
+    instruction =
+      if content_override do
+        Prompts.clarify_selection(context, content)
+      else
+        Prompts.clarify(context, content)
+      end
+
+    system_prompt = get_system_prompt(graph_id)
+    log_prompt("clarify", graph_id, system_prompt, instruction)
+    ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
+  end
+
+  def gen_assumptions(node, child, graph_id, live_view_topic, content_override \\ nil) do
+    {context, content} = resolve_context_and_content(graph_id, node, content_override)
+
+    instruction =
+      if content_override do
+        Prompts.assumptions_selection(context, content)
+      else
+        Prompts.assumptions(context, content)
+      end
+
+    system_prompt = get_system_prompt(graph_id)
+    log_prompt("assumptions", graph_id, system_prompt, instruction)
+    ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
+  end
+
+  def gen_counterexample(node, child, graph_id, live_view_topic, content_override \\ nil) do
+    {context, content} = resolve_context_and_content(graph_id, node, content_override)
+
+    instruction =
+      if content_override do
+        Prompts.counterexample_selection(context, content)
+      else
+        Prompts.counterexample(context, content)
+      end
+
+    system_prompt = get_system_prompt(graph_id)
+    log_prompt("counterexample", graph_id, system_prompt, instruction)
+    ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
+  end
+
+  def gen_implications(node, child, graph_id, live_view_topic, content_override \\ nil) do
+    {context, content} = resolve_context_and_content(graph_id, node, content_override)
+
+    instruction =
+      if content_override do
+        Prompts.implications_selection(context, content)
+      else
+        Prompts.implications(context, content)
+      end
+
+    system_prompt = get_system_prompt(graph_id)
+    log_prompt("implications", graph_id, system_prompt, instruction)
+    ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
+  end
+
+  def gen_blind_spots(node, child, graph_id, live_view_topic, content_override \\ nil) do
+    {context, content} = resolve_context_and_content(graph_id, node, content_override)
+
+    instruction =
+      if content_override do
+        Prompts.blind_spots_selection(context, content)
+      else
+        Prompts.blind_spots(context, content)
+      end
+
+    system_prompt = get_system_prompt(graph_id)
+    log_prompt("blind_spots", graph_id, system_prompt, instruction)
+    ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
+  end
+
+  # ===========================================================================
+  # Cluster 2 — Context and Dialectical Expansion
+  # ===========================================================================
+
+  def gen_says_who(node, child, graph_id, live_view_topic, content_override \\ nil) do
+    {context, content} = resolve_context_and_content(graph_id, node, content_override)
+
+    instruction =
+      if content_override do
+        Prompts.says_who_selection(context, content)
+      else
+        Prompts.says_who(context, content)
+      end
+
+    system_prompt = get_system_prompt(graph_id)
+    log_prompt("says_who", graph_id, system_prompt, instruction)
+    ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
+  end
+
+  def gen_who_disagrees(node, child, graph_id, live_view_topic, content_override \\ nil) do
+    {context, content} = resolve_context_and_content(graph_id, node, content_override)
+
+    instruction =
+      if content_override do
+        Prompts.who_disagrees_selection(context, content)
+      else
+        Prompts.who_disagrees(context, content)
+      end
+
+    system_prompt = get_system_prompt(graph_id)
+    log_prompt("who_disagrees", graph_id, system_prompt, instruction)
+    ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
+  end
+
+  def gen_analogy(node, child, graph_id, live_view_topic, content_override \\ nil) do
+    {context, content} = resolve_context_and_content(graph_id, node, content_override)
+
+    instruction =
+      if content_override do
+        Prompts.analogy_selection(context, content)
+      else
+        Prompts.analogy(context, content)
+      end
+
+    system_prompt = get_system_prompt(graph_id)
+    log_prompt("analogy", graph_id, system_prompt, instruction)
+    ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
+  end
+
+  def gen_steel_man(node, child, graph_id, live_view_topic, content_override \\ nil) do
+    {context, content} = resolve_context_and_content(graph_id, node, content_override)
+
+    instruction =
+      if content_override do
+        Prompts.steel_man_selection(context, content)
+      else
+        Prompts.steel_man(context, content)
+      end
+
+    system_prompt = get_system_prompt(graph_id)
+    log_prompt("steel_man", graph_id, system_prompt, instruction)
+    ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
+  end
+
+  def gen_what_if(node, child, graph_id, live_view_topic, content_override \\ nil) do
+    {context, content} = resolve_context_and_content(graph_id, node, content_override)
+
+    instruction =
+      if content_override do
+        Prompts.what_if_selection(context, content)
+      else
+        Prompts.what_if(context, content)
+      end
+
+    system_prompt = get_system_prompt(graph_id)
+    log_prompt("what_if", graph_id, system_prompt, instruction)
+    ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
+  end
+
+  # ===========================================================================
+  # Cluster 3 — Clarity and Communication
+  # ===========================================================================
+
+  def gen_simplify(node, child, graph_id, live_view_topic, content_override \\ nil) do
+    {context, content} = resolve_context_and_content(graph_id, node, content_override)
+
+    instruction =
+      if content_override do
+        Prompts.simplify_selection(context, content)
+      else
+        Prompts.simplify(context, content)
+      end
+
+    system_prompt = get_system_prompt(graph_id)
+    log_prompt("simplify", graph_id, system_prompt, instruction)
+    ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
+  end
+
   defp resolve_context_and_content(graph_id, node, content_override) do
     base_context = GraphManager.build_context(graph_id, node)
 
