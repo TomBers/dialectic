@@ -3,7 +3,9 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>RationalGrid — Turn Any Question into a Visual Knowledge Map</title>
+        <title>
+            RationalGrid — Turn Any Question into a Visual Knowledge Map
+        </title>
         <meta
             name="description"
             content="RationalGrid is a shared AI-powered whiteboard that turns questions into visual knowledge maps. Explore ideas deeply, structure thinking, and sharpen arguments — together."
@@ -1303,6 +1305,8 @@
                     class="mobile-toggle"
                     id="menu-toggle"
                     aria-label="Toggle menu"
+                    aria-controls="nav-menu"
+                    aria-expanded="false"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -1346,8 +1350,8 @@
                             Turn any question into a visual&nbsp;knowledge map
                         </h1>
                         <p class="hero-subtitle">
-                            RationalGrid is a shared AI-powered whiteboard. Ask a
-                            question, get an AI response, then branch into
+                            RationalGrid is a shared AI-powered whiteboard. Ask
+                            a question, get an AI response, then branch into
                             deeper follow-ups. Every answer becomes a connected
                             node you can revisit and
                             grow&nbsp;&mdash;&nbsp;together.
@@ -1366,7 +1370,13 @@
                         </div>
                     </div>
 
-                    <div class="hero-media" id="heroMediaWrapper">
+                    <div
+                        class="hero-media"
+                        id="heroMediaWrapper"
+                        tabindex="0"
+                        role="button"
+                        aria-label="Expand video"
+                    >
                         <video id="heroVideo" autoplay muted loop playsinline>
                             <source
                                 src="media/videos/MuDG_nav.mp4"
@@ -1496,8 +1506,8 @@
                     </h2>
                     <p class="section-desc">
                         Traditional AI chats present knowledge as linear walls
-                        of text. RationalGrid structures information spatially so you
-                        can explore multiple directions at once.
+                        of text. RationalGrid structures information spatially
+                        so you can explore multiple directions at once.
                     </p>
                 </div>
 
@@ -1569,7 +1579,9 @@
                             expanded to branch into new directions, creating a
                             rich web of connected knowledge.
                         </p>
-                        <a href="https://rationalgrid.ai" class="btn btn-primary"
+                        <a
+                            href="https://rationalgrid.ai"
+                            class="btn btn-primary"
                             >Try It Now &rarr;</a
                         >
                     </div>
@@ -1629,7 +1641,9 @@
                             comprehension. Create using the graph tool, review
                             using the reader view.
                         </p>
-                        <a href="https://rationalgrid.ai" class="btn btn-primary"
+                        <a
+                            href="https://rationalgrid.ai"
+                            class="btn btn-primary"
                             >Try It Now &rarr;</a
                         >
                     </div>
@@ -2054,8 +2068,8 @@
                             access, yet the quality of discourse often feels
                             lacking. Echo chambers and motivated reasoning lead
                             to people talking past each other rather than
-                            engaging meaningfully. We built RationalGrid because we
-                            believe meaningful exchanges happen when you can
+                            engaging meaningfully. We built RationalGrid because
+                            we believe meaningful exchanges happen when you can
                             explore assumptions at a fundamental level and see
                             how different starting points lead to different
                             conclusions.
@@ -2089,11 +2103,11 @@
                         >
                             Language models provide unprecedented access to
                             knowledge, but traditional chat interfaces limit
-                            their potential for deep learning. RationalGrid transforms
-                            AI interaction into an active, exploratory process
-                            where learners branch out in multiple directions,
-                            creating a personalized knowledge map that evolves
-                            with their curiosity.
+                            their potential for deep learning. RationalGrid
+                            transforms AI interaction into an active,
+                            exploratory process where learners branch out in
+                            multiple directions, creating a personalized
+                            knowledge map that evolves with their curiosity.
                         </p>
                     </div>
 
@@ -2241,7 +2255,9 @@
                     one click away &mdash; free, no account required.
                 </p>
                 <div class="cta-buttons">
-                    <a href="https://rationalgrid.ai" class="btn btn-white btn-lg"
+                    <a
+                        href="https://rationalgrid.ai"
+                        class="btn btn-white btn-lg"
                         >Start Exploring</a
                     >
                     <a
@@ -2310,12 +2326,15 @@
 
                 menuToggle.addEventListener("click", function () {
                     navMenu.classList.toggle("active");
+                    const expanded = navMenu.classList.contains("active");
+                    menuToggle.setAttribute("aria-expanded", expanded);
                 });
 
                 // Close menu when a link is clicked
                 navMenu.querySelectorAll(".nav-link").forEach(function (link) {
                     link.addEventListener("click", function () {
                         navMenu.classList.remove("active");
+                        menuToggle.setAttribute("aria-expanded", "false");
                     });
                 });
 
@@ -2364,6 +2383,12 @@
                     heroWrapper.addEventListener("click", function () {
                         openModal(heroVideo);
                     });
+                    heroWrapper.addEventListener("keydown", function (e) {
+                        if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            openModal(heroVideo);
+                        }
+                    });
                 }
 
                 if (expandableVideo) {
@@ -2396,9 +2421,12 @@
                     .querySelectorAll('a[href^="#"]')
                     .forEach(function (anchor) {
                         anchor.addEventListener("click", function (e) {
-                            const target = document.querySelector(
-                                this.getAttribute("href"),
-                            );
+                            const href = this.getAttribute("href");
+                            // Ignore empty or "#" hrefs to avoid invalid selectors
+                            if (!href || href === "#") {
+                                return;
+                            }
+                            const target = document.querySelector(href);
                             if (target) {
                                 e.preventDefault();
                                 target.scrollIntoView({
