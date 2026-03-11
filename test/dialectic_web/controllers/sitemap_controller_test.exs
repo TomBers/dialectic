@@ -32,10 +32,11 @@ defmodule DialecticWeb.SitemapControllerTest do
     test "includes static pages", %{conn: conn} do
       conn = get(conn, "/sitemap.xml")
 
+      base_url = DialecticWeb.Endpoint.url()
       body = conn.resp_body
-      assert body =~ "https://mudg.fly.dev/"
-      assert body =~ "https://mudg.fly.dev/intro/how"
-      assert body =~ "https://mudg.fly.dev/inspiration"
+      assert body =~ "#{base_url}/"
+      assert body =~ "#{base_url}/intro/how"
+      assert body =~ "#{base_url}/inspiration"
     end
 
     test "includes public published graphs with slugs", %{conn: conn} do

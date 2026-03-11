@@ -26,4 +26,4 @@ Disallow: /*?category=
 Disallow: /*?token=
 
 # Sitemap
-Sitemap: https://mudg.fly.dev/sitemap.xml
+Sitemap: https://rationalgrid.ai/sitemap.xml
