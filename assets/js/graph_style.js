@@ -98,6 +98,122 @@ const cols = {
   },
   answer: defaultNodeStyle,
   explain: defaultNodeStyle,
+
+  // ── Cluster 1 — Core Inquiry Moves ──────────────────────────────────
+  clarify: {
+    text: "#134e4a", // teal-900
+    background: "#ccfbf1", // teal-100
+    border: "#14b8a6", // teal-500
+    hoverBackground: "#99f6e4", // teal-200
+    hoverBorder: "#0d9488", // teal-600
+    selectedText: "#134e4a",
+    selectedBackground: "#99f6e4", // teal-200
+    selectedBorder: "#0f766e", // teal-700
+  },
+  assumptions: {
+    text: "#78350f", // amber-900
+    background: "#fef3c7", // amber-100
+    border: "#f59e0b", // amber-500
+    hoverBackground: "#fde68a", // amber-200
+    hoverBorder: "#d97706", // amber-600
+    selectedText: "#78350f",
+    selectedBackground: "#fde68a", // amber-200
+    selectedBorder: "#b45309", // amber-700
+  },
+  counterexample: {
+    text: "#7f1d1d", // red-900
+    background: "#fee2e2", // red-100
+    border: "#ef4444", // red-500
+    hoverBackground: "#fecaca", // red-200
+    hoverBorder: "#dc2626", // red-600
+    selectedText: "#7f1d1d",
+    selectedBackground: "#fecaca", // red-200
+    selectedBorder: "#b91c1c", // red-700
+  },
+  implications: {
+    text: "#312e81", // indigo-900
+    background: "#e0e7ff", // indigo-100
+    border: "#6366f1", // indigo-500
+    hoverBackground: "#c7d2fe", // indigo-200
+    hoverBorder: "#4f46e5", // indigo-600
+    selectedText: "#312e81",
+    selectedBackground: "#c7d2fe", // indigo-200
+    selectedBorder: "#4338ca", // indigo-700
+  },
+  blind_spots: {
+    text: "#581c87", // purple-900
+    background: "#f3e8ff", // purple-100
+    border: "#a855f7", // purple-500
+    hoverBackground: "#e9d5ff", // purple-200
+    hoverBorder: "#9333ea", // purple-600
+    selectedText: "#581c87",
+    selectedBackground: "#e9d5ff", // purple-200
+    selectedBorder: "#7e22ce", // purple-700
+  },
+
+  // ── Cluster 2 — Context & Dialectical Expansion ─────────────────────
+  says_who: {
+    text: "#0c4a6e", // sky-900
+    background: "#e0f2fe", // sky-100
+    border: "#0ea5e9", // sky-500
+    hoverBackground: "#bae6fd", // sky-200
+    hoverBorder: "#0284c7", // sky-600
+    selectedText: "#0c4a6e",
+    selectedBackground: "#bae6fd", // sky-200
+    selectedBorder: "#0369a1", // sky-700
+  },
+  who_disagrees: {
+    text: "#881337", // rose-900
+    background: "#ffe4e6", // rose-100
+    border: "#f43f5e", // rose-500
+    hoverBackground: "#fecdd3", // rose-200
+    hoverBorder: "#e11d48", // rose-600
+    selectedText: "#881337",
+    selectedBackground: "#fecdd3", // rose-200
+    selectedBorder: "#be123c", // rose-700
+  },
+  analogy: {
+    text: "#064e3b", // emerald-900
+    background: "#d1fae5", // emerald-100
+    border: "#10b981", // emerald-500
+    hoverBackground: "#a7f3d0", // emerald-200
+    hoverBorder: "#059669", // emerald-600
+    selectedText: "#064e3b",
+    selectedBackground: "#a7f3d0", // emerald-200
+    selectedBorder: "#047857", // emerald-700
+  },
+  steel_man: {
+    text: "#713f12", // yellow-900
+    background: "#fef9c3", // yellow-100
+    border: "#eab308", // yellow-500
+    hoverBackground: "#fef08a", // yellow-200
+    hoverBorder: "#ca8a04", // yellow-600
+    selectedText: "#713f12",
+    selectedBackground: "#fef08a", // yellow-200
+    selectedBorder: "#a16207", // yellow-700
+  },
+  what_if: {
+    text: "#701a75", // fuchsia-900
+    background: "#fae8ff", // fuchsia-100
+    border: "#d946ef", // fuchsia-500
+    hoverBackground: "#f5d0fe", // fuchsia-200
+    hoverBorder: "#c026d3", // fuchsia-600
+    selectedText: "#701a75",
+    selectedBackground: "#f5d0fe", // fuchsia-200
+    selectedBorder: "#a21caf", // fuchsia-700
+  },
+
+  // ── Cluster 3 — Clarity & Communication ─────────────────────────────
+  simplify: {
+    text: "#7c2d12", // orange-900
+    background: "#fff7ed", // orange-50
+    border: "#fb923c", // orange-400
+    hoverBackground: "#ffedd5", // orange-100
+    hoverBorder: "#f97316", // orange-500
+    selectedText: "#7c2d12",
+    selectedBackground: "#ffedd5", // orange-100
+    selectedBorder: "#ea580c", // orange-600
+  },
 };
 
 const cutoff = 140;
