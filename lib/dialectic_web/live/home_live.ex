@@ -499,7 +499,7 @@ defmodule DialecticWeb.HomeLive do
       category == "deep_dives" -> "Deep Dives"
       category == "seedlings" -> "Seedlings"
       is_binary(search) and search != "" -> "Search: #{search}"
-      true -> "Rationalgrid"
+      true -> "RationalGrid"
     end
   end
 end
