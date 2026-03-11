@@ -1642,7 +1642,7 @@ defmodule DialecticWeb.GraphLive do
     canonical = base_url <> "/g/#{graph_struct.slug}"
 
     description =
-      "Explore the interactive map for \"#{graph_struct.title}\". Visualize arguments, discover connections, and collaborate on MuDG."
+      "Explore the interactive map for \"#{graph_struct.title}\". Visualize arguments, discover connections, and collaborate on RationalGrid."
 
     # JSON-LD structured data for search engine rich results
     json_ld =

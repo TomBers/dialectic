@@ -13,7 +13,7 @@ defmodule DialecticWeb.SitemapController do
   import Ecto.Query
 
   def index(conn, _params) do
-    base_url = "https://mudg.fly.dev"
+    base_url = DialecticWeb.Endpoint.url()
 
     graphs =
       from(g in Graph,

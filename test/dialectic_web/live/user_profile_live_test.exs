@@ -36,7 +36,7 @@ defmodule DialecticWeb.UserProfileLiveTest do
       {:ok, _lv, html} = live(conn, ~p"/u/profiletest")
 
       assert html =~ "profiletest"
-      assert html =~ "MuDG Profile"
+      assert html =~ "— Profile"
       assert html =~ "Member since"
       assert html =~ "Graphs Created"
       assert html =~ "Ideas Explored"
