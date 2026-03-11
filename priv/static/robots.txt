@@ -27,3 +27,4 @@ Disallow: /*?token=
 
 # Sitemap
 Sitemap: https://rationalgrid.ai/sitemap.xml
+Sitemap: https://mudg.fly.dev/sitemap.xml
