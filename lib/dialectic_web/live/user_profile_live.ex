@@ -30,7 +30,7 @@ defmodule DialecticWeb.UserProfileLive do
 
         socket =
           socket
-          |> assign(:page_title, "#{effective_username} — MuDG Profile")
+          |> assign(:page_title, "#{effective_username} — Profile")
           |> assign(:profile_user, profile_user)
           |> assign(:effective_username, effective_username)
           |> assign(:avatar_url, nil)

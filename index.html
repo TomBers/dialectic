@@ -4,164 +4,100 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>
-            Dialectic - Collaborative Knowledge Exploration Platform | MuDG
+            RationalGrid — Turn Any Question into a Visual Knowledge Map
         </title>
         <meta
             name="description"
-            content="Dialectic is a mind mapping tool that combines AI assistance with human collaboration to explore complex ideas and visualize the learning process."
+            content="RationalGrid is a shared AI-powered whiteboard that turns questions into visual knowledge maps. Explore ideas deeply, structure thinking, and sharpen arguments — together."
         />
         <meta
             name="keywords"
-            content="knowledge graph, collaborative learning, AI-powered insights, idea exploration, mind mapping, dialectic"
+            content="knowledge map, AI whiteboard, collaborative learning, argument mapping, idea exploration, dialectic, visual thinking, knowledge graph"
         />
-        <meta name="author" content="Dialectic" />
+        <meta name="author" content="RationalGrid" />
         <meta name="robots" content="index, follow" />
 
         <!-- Open Graph / Facebook -->
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://mudg.fly.dev/" />
+        <meta property="og:url" content="https://rationalgrid.ai/" />
         <meta
             property="og:title"
-            content="Dialectic - Collaborative Knowledge Exploration"
+            content="RationalGrid — Shared AI-Powered Whiteboard for Deep Thinking"
         />
         <meta
             property="og:description"
-            content="Transform complex ideas into visual knowledge graphs with AI-powered collaboration."
+            content="Turn any question into a visual knowledge map. Explore ideas deeply, structure thinking, and sharpen arguments — together."
         />
         <meta property="og:image" content="media/images/graph.webp" />
 
         <!-- Twitter -->
         <meta property="twitter:card" content="summary_large_image" />
-        <meta property="twitter:url" content="https://mudg.fly.dev/" />
+        <meta property="twitter:url" content="https://rationalgrid.ai/" />
         <meta
             property="twitter:title"
-            content="Dialectic - Collaborative Knowledge Exploration"
+            content="RationalGrid — Shared AI-Powered Whiteboard for Deep Thinking"
         />
         <meta
             property="twitter:description"
-            content="Transform complex ideas into visual knowledge graphs with AI-powered collaboration."
+            content="Turn any question into a visual knowledge map. Explore ideas deeply, structure thinking, and sharpen arguments — together."
         />
         <meta property="twitter:image" content="media/images/graph.webp" />
 
         <!-- Canonical URL -->
-        <link rel="canonical" href="https://mudg.fly.dev/" />
+        <link rel="canonical" href="https://rationalgrid.ai/" />
+
+        <!-- LD+JSON Structured Data -->
+        <script type="application/ld+json">
+            {
+                "@context": "https://schema.org",
+                "@type": "SoftwareApplication",
+                "name": "RationalGrid - Visual Knowledge Maps",
+                "applicationCategory": "Knowledge Management",
+                "operatingSystem": "Web",
+                "offers": {
+                    "@type": "Offer",
+                    "price": "0",
+                    "priceCurrency": "USD"
+                },
+                "description": "A shared AI-powered whiteboard that turns questions into visual knowledge maps. Explore ideas deeply, structure thinking, and sharpen arguments — together.",
+                "creator": {
+                    "@type": "Person",
+                    "name": "Tom Berman",
+                    "url": "https://github.com/TomBers"
+                }
+            }
+        </script>
 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
-            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
             rel="stylesheet"
         />
         <style>
-            /* Video expansion styles */
-            .expandable-video {
-                cursor: pointer;
-                transition: all 0.3s ease;
-                position: relative;
-                z-index: 1;
-                box-shadow: 0 0 0 transparent;
-                border: none;
-                display: block;
-                margin: 0;
-                padding: 0;
-                object-fit: cover;
-                object-position: center;
-            }
-
-            .expandable-video:hover {
-                /* transform: scale(1.02); */
-                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
-                outline: 3px solid var(--primary-color);
-                filter: brightness(1.05);
-            }
-
-            .video-overlay {
-                position: absolute;
-                bottom: 10px;
-                right: 10px;
-                background: rgba(0, 0, 0, 0.8);
-                color: white;
-                padding: 10px 15px;
-                border-radius: 4px;
-                font-size: 1rem;
-                opacity: 0;
-                cursor: pointer;
-                transition: all 0.3s ease;
-                pointer-events: auto;
-                display: flex;
-                align-items: center;
-                gap: 5px;
-                border: 1px solid rgba(255, 255, 255, 0.5);
-                font-weight: 500;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            }
-
-            .video-overlay::before {
-                content: "⤢";
-                font-size: 1.2rem;
-            }
-
-            .showcase-media {
-                position: relative;
-                overflow: hidden;
-                font-size: 0;
-                line-height: 0;
-            }
-
-            .showcase-media:hover .video-overlay,
-            .hero-image:hover .video-overlay {
-                opacity: 1;
-                transform: translateY(-5px);
-            }
-
-            .modal-overlay {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background-color: rgba(0, 0, 0, 0.8);
-                z-index: 1000;
-                justify-content: center;
-                align-items: center;
-            }
-
-            .modal-content {
-                position: relative;
-                width: 80%;
-                max-width: 1200px;
-            }
-
-            .modal-content video {
-                width: 100%;
-                height: auto;
-            }
-
-            .close-modal {
-                position: absolute;
-                top: -40px;
-                right: 0;
-                color: white;
-                font-size: 30px;
-                cursor: pointer;
-                background: none;
-                border: none;
-            }
-
             :root {
-                --primary-color: #4361ee;
-                --secondary-color: #3a0ca3;
-                --accent-color: #7209b7;
-                --light-accent: #f72585;
-                --bg-color: #f8f9fa;
-                --dark-bg: #121212;
-                --text-color: #2d3748;
-                --light-text: #4a5568;
+                --primary: #4361ee;
+                --primary-dark: #3a0ca3;
+                --primary-light: #6380f5;
+                --accent: #7209b7;
+                --accent-pink: #f72585;
+                --bg: #f8fafc;
+                --bg-alt: #f1f5f9;
+                --dark: #0f172a;
+                --dark-mid: #1e293b;
+                --text: #1e293b;
+                --text-secondary: #475569;
+                --text-muted: #94a3b8;
                 --white: #ffffff;
-                --card-bg: #ffffff;
-                --border-radius: 12px;
-                --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+                --border: #e2e8f0;
+                --border-light: #f1f5f9;
+                --radius: 16px;
+                --radius-sm: 10px;
+                --radius-xs: 6px;
+                --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+                --shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+                --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.1);
+                --shadow-glow: 0 0 60px rgba(67, 97, 238, 0.15);
             }
 
             * {
@@ -170,465 +106,1208 @@
                 box-sizing: border-box;
             }
 
+            html {
+                scroll-behavior: smooth;
+            }
+
             body {
                 font-family:
                     "Inter",
                     -apple-system,
                     BlinkMacSystemFont,
                     sans-serif;
-                line-height: 1.8;
-                color: var(--text-color);
-                background-color: var(--bg-color);
+                line-height: 1.7;
+                color: var(--text);
+                background-color: var(--white);
                 font-size: 16px;
                 overflow-x: hidden;
+                -webkit-font-smoothing: antialiased;
             }
 
             .container {
-                max-width: 1200px;
+                max-width: 1140px;
                 margin: 0 auto;
                 padding: 0 1.5rem;
-                position: relative;
             }
 
-            /* Hero Section */
-            .hero-section {
-                position: relative;
-                background: linear-gradient(
-                    135deg,
-                    var(--primary-color),
-                    var(--secondary-color)
-                );
-                color: white;
-                padding: 8rem 0 6rem;
-                overflow: hidden;
-            }
-
-            .hero-pattern {
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-                opacity: 0.2;
-            }
-
-            .hero-content {
-                display: flex;
-                align-items: center;
-                position: relative;
-                z-index: 2;
-                gap: 2rem;
-            }
-
-            .hero-text {
-                flex: 1;
-                padding-right: 0;
-            }
-
-            .hero-image {
-                flex: 1;
-                position: relative;
-            }
-
-            .hero-image {
-                flex: 1.5;
-                position: relative;
-                overflow: hidden;
-                border-radius: var(--border-radius);
-                max-width: 750px;
-                box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
-                font-size: 0;
-                line-height: 0;
-                background-color: #000;
-            }
-
-            .hero-image video {
-                width: 100%;
-                border-radius: var(--border-radius);
-                display: block;
-                margin: 0;
-                padding: 0;
-                line-height: 0;
-                vertical-align: top;
-            }
-
-            .hero-title {
-                font-size: 3.5rem;
-                font-weight: 700;
-                line-height: 1.2;
-                margin-bottom: 1.5rem;
-                background: linear-gradient(to right, #fff, #e0e0ff);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-            }
-
-            .hero-subtitle {
-                font-size: 1.5rem;
-                margin-bottom: 2rem;
-                opacity: 0.9;
-            }
-
-            .hero-buttons {
-                display: flex;
-                gap: 1rem;
-                margin-top: 2rem;
-            }
-
-            /* Button Styles */
-            .btn {
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                padding: 0.8rem 1.8rem;
-                border-radius: 30px;
-                text-decoration: none;
-                font-weight: 600;
-                font-size: 1rem;
-                transition: all 0.3s ease;
-                cursor: pointer;
-            }
-
-            .btn-primary {
-                background-color: var(--light-accent);
-                color: white;
-                border: none;
-            }
-
-            .btn-secondary {
-                background-color: rgba(255, 255, 255, 0.15);
-                color: white;
-                border: 1px solid rgba(255, 255, 255, 0.3);
-                backdrop-filter: blur(10px);
-            }
-
-            .btn:hover {
-                transform: translateY(-3px);
-                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-            }
-
-            .btn-primary:hover {
-                background-color: var(--accent-color);
-            }
-
-            .btn-secondary:hover {
-                background-color: rgba(255, 255, 255, 0.25);
-            }
-
-            /* Navigation */
+            /* ─── Navbar ────────────────────────────────────────── */
             .navbar {
-                position: absolute;
+                position: fixed;
                 top: 0;
                 left: 0;
                 right: 0;
-                padding: 1.5rem 0;
                 z-index: 100;
+                background: rgba(255, 255, 255, 0.85);
+                backdrop-filter: blur(16px);
+                -webkit-backdrop-filter: blur(16px);
+                border-bottom: 1px solid var(--border);
+                transition: box-shadow 0.3s;
             }
 
-            .nav-container {
+            .navbar.scrolled {
+                box-shadow: var(--shadow-sm);
+            }
+
+            .nav-inner {
                 display: flex;
-                justify-content: space-between;
                 align-items: center;
+                justify-content: space-between;
+                height: 64px;
             }
 
             .logo {
-                font-size: 1.8rem;
-                font-weight: 700;
-                color: white;
+                font-size: 1.25rem;
+                font-weight: 800;
+                color: var(--primary-dark);
                 text-decoration: none;
+                letter-spacing: -0.02em;
+            }
+
+            .logo span {
+                color: var(--primary);
             }
 
             .nav-links {
                 display: flex;
-                list-style: none;
-                gap: 2rem;
                 align-items: center;
-                transition: all 0.3s ease;
-            }
-
-            .mobile-menu-toggle {
-                display: none;
-                background: transparent;
-                border: none;
-                color: white;
-                font-size: 1.5rem;
-                cursor: pointer;
-                z-index: 1000;
+                gap: 2rem;
+                list-style: none;
             }
 
             .nav-link {
-                color: white;
+                color: var(--text-secondary);
                 text-decoration: none;
+                font-size: 0.875rem;
                 font-weight: 500;
-                font-size: 1rem;
-                transition: all 0.3s ease;
-                opacity: 0.8;
+                transition: color 0.2s;
             }
 
             .nav-link:hover {
+                color: var(--primary);
+            }
+
+            .btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.5rem;
+                padding: 0.625rem 1.5rem;
+                font-size: 0.875rem;
+                font-weight: 600;
+                border-radius: var(--radius-sm);
+                text-decoration: none;
+                cursor: pointer;
+                border: none;
+                transition: all 0.2s;
+                line-height: 1.4;
+            }
+
+            .btn-primary {
+                background: var(--primary);
+                color: var(--white);
+                box-shadow: 0 2px 8px rgba(67, 97, 238, 0.3);
+            }
+
+            .btn-primary:hover {
+                background: var(--primary-dark);
+                box-shadow: 0 4px 16px rgba(58, 12, 163, 0.35);
+                transform: translateY(-1px);
+            }
+
+            .btn-secondary {
+                background: var(--white);
+                color: var(--primary);
+                border: 1.5px solid var(--border);
+            }
+
+            .btn-secondary:hover {
+                border-color: var(--primary);
+                background: rgba(67, 97, 238, 0.04);
+            }
+
+            .btn-white {
+                background: var(--white);
+                color: var(--primary-dark);
+                font-weight: 700;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            }
+
+            .btn-white:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+            }
+
+            .btn-ghost {
+                background: rgba(255, 255, 255, 0.12);
+                color: var(--white);
+                border: 1.5px solid rgba(255, 255, 255, 0.25);
+            }
+
+            .btn-ghost:hover {
+                background: rgba(255, 255, 255, 0.2);
+            }
+
+            .btn-lg {
+                padding: 0.875rem 2rem;
+                font-size: 1rem;
+                border-radius: var(--radius);
+            }
+
+            .mobile-toggle {
+                display: none;
+                background: none;
+                border: none;
+                cursor: pointer;
+                color: var(--text);
+                padding: 0.5rem;
+            }
+
+            /* ─── Hero ──────────────────────────────────────────── */
+            .hero {
+                position: relative;
+                overflow: hidden;
+                background: linear-gradient(
+                    145deg,
+                    var(--primary-dark) 0%,
+                    var(--primary) 50%,
+                    #5a7cf7 100%
+                );
+                padding: 10rem 0 5rem;
+                color: var(--white);
+            }
+
+            .hero-bg-video {
+                position: absolute;
+                inset: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                opacity: 0.18;
+                pointer-events: none;
+            }
+
+            .hero-overlay {
+                position: absolute;
+                inset: 0;
+                background: linear-gradient(
+                    145deg,
+                    rgba(58, 12, 163, 0.88) 0%,
+                    rgba(67, 97, 238, 0.85) 50%,
+                    rgba(90, 124, 247, 0.82) 100%
+                );
+            }
+
+            .hero-inner {
+                position: relative;
+                z-index: 2;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 3rem;
+                align-items: center;
+            }
+
+            .hero-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                background: rgba(255, 255, 255, 0.12);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                padding: 0.375rem 1rem;
+                border-radius: 100px;
+                font-size: 0.8rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                margin-bottom: 1.5rem;
+                backdrop-filter: blur(8px);
+            }
+
+            .hero-title {
+                font-size: 3.25rem;
+                font-weight: 800;
+                line-height: 1.12;
+                letter-spacing: -0.03em;
+                margin-bottom: 1.25rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1.2rem;
+                line-height: 1.7;
+                color: rgba(255, 255, 255, 0.85);
+                margin-bottom: 2rem;
+                max-width: 520px;
+            }
+
+            .hero-cta {
+                display: flex;
+                gap: 0.75rem;
+                flex-wrap: wrap;
+            }
+
+            .hero-media {
+                position: relative;
+                border-radius: var(--radius);
+                overflow: hidden;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+                cursor: pointer;
+                transition:
+                    transform 0.3s,
+                    box-shadow 0.3s;
+            }
+
+            .hero-media:hover {
+                transform: scale(1.015);
+                box-shadow: 0 24px 70px rgba(0, 0, 0, 0.4);
+            }
+
+            .hero-media video {
+                display: block;
+                width: 100%;
+                height: auto;
+                background: #000;
+            }
+
+            .hero-media .click-hint {
+                position: absolute;
+                bottom: 12px;
+                right: 12px;
+                background: rgba(0, 0, 0, 0.75);
+                color: white;
+                padding: 6px 12px;
+                border-radius: 6px;
+                font-size: 0.75rem;
+                font-weight: 500;
+                opacity: 0;
+                transition: opacity 0.3s;
+                pointer-events: none;
+            }
+
+            .hero-media:hover .click-hint {
                 opacity: 1;
             }
 
-            /* Features Section */
-            .section {
-                padding: 6rem 0;
+            /* ─── Social proof strip ────────────────────────────── */
+            .social-proof {
+                background: var(--white);
+                border-bottom: 1px solid var(--border);
+                padding: 2rem 0;
             }
 
-            .section:nth-child(even) {
-                background-color: white;
+            .proof-inner {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 3rem;
+                flex-wrap: wrap;
+                text-align: center;
+            }
+
+            .proof-item {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 0.25rem;
+            }
+
+            .proof-number {
+                font-size: 1.75rem;
+                font-weight: 800;
+                color: var(--primary-dark);
+                line-height: 1.2;
+            }
+
+            .proof-label {
+                font-size: 0.8rem;
+                color: var(--text-muted);
+                font-weight: 500;
+            }
+
+            /* ─── Sections common ───────────────────────────────── */
+            .section {
+                padding: 5rem 0;
+            }
+
+            .section-alt {
+                background: var(--bg);
             }
 
             .section-header {
                 text-align: center;
-                max-width: 800px;
-                margin: 0 auto 4rem;
+                margin-bottom: 3.5rem;
+                max-width: 640px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .section-eyebrow {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.4rem;
+                font-size: 0.75rem;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                color: var(--primary);
+                margin-bottom: 0.75rem;
             }
 
             .section-title {
-                font-size: 2.6rem;
-                color: var(--primary-color);
-                margin-bottom: 1.2rem;
-                font-weight: 700;
+                font-size: 2.25rem;
+                font-weight: 800;
                 line-height: 1.2;
-            }
-
-            .section-subtitle {
-                font-size: 1.2rem;
-                color: var(--light-text);
-                max-width: 600px;
-                margin: 0 auto;
-            }
-
-            .feature-grid {
-                display: grid;
-                grid-template-columns: repeat(2, 1fr);
-                gap: 2rem;
-                margin-top: 3rem;
-            }
-
-            .feature-card {
-                background: var(--card-bg);
-                border-radius: var(--border-radius);
-                padding: 2rem;
-                box-shadow: var(--box-shadow);
-                transition: transform 0.3s ease;
-            }
-
-            .feature-card:hover {
-                transform: translateY(-5px);
-            }
-
-            .feature-icon {
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                width: 60px;
-                height: 60px;
-                background: linear-gradient(
-                    135deg,
-                    var(--primary-color),
-                    var(--secondary-color)
-                );
-                border-radius: 50%;
-                margin-bottom: 1.5rem;
-            }
-
-            .feature-icon svg {
-                width: 30px;
-                height: 30px;
-                color: white;
-            }
-
-            .feature-title {
-                font-size: 1.5rem;
+                letter-spacing: -0.02em;
+                color: var(--dark);
                 margin-bottom: 1rem;
-                color: var(--secondary-color);
             }
 
-            .feature-text {
-                color: var(--light-text);
-                font-size: 1rem;
+            .section-desc {
+                font-size: 1.05rem;
+                color: var(--text-secondary);
                 line-height: 1.7;
             }
 
-            /* Showcase Section */
-            .showcase {
+            /* ─── How It Works ──────────────────────────────────── */
+            .steps-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 2rem;
+            }
+
+            .step-card {
+                background: var(--white);
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                padding: 2rem;
+                position: relative;
+                transition:
+                    box-shadow 0.3s,
+                    transform 0.2s;
+            }
+
+            .step-card:hover {
+                box-shadow: var(--shadow);
+                transform: translateY(-2px);
+            }
+
+            .step-number {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 36px;
+                height: 36px;
+                border-radius: 50%;
+                font-size: 0.8rem;
+                font-weight: 800;
+                margin-bottom: 1.25rem;
+            }
+
+            .step-number-1 {
+                background: #e0f2fe;
+                color: #0369a1;
+            }
+            .step-number-2 {
+                background: #fef3c7;
+                color: #b45309;
+            }
+            .step-number-3 {
+                background: #d1fae5;
+                color: #047857;
+            }
+
+            .step-title {
+                font-size: 1.15rem;
+                font-weight: 700;
+                color: var(--dark);
+                margin-bottom: 0.5rem;
+            }
+
+            .step-text {
+                font-size: 0.9rem;
+                color: var(--text-secondary);
+                line-height: 1.65;
+            }
+
+            .step-example {
+                margin-top: 1rem;
+                background: var(--bg);
+                border: 1px solid var(--border-light);
+                border-radius: var(--radius-xs);
+                padding: 0.75rem 1rem;
+            }
+
+            .step-example-label {
+                font-size: 0.7rem;
+                color: var(--text-muted);
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                font-weight: 600;
+                margin-bottom: 0.25rem;
+            }
+
+            .step-example-text {
+                font-size: 0.85rem;
+                color: var(--text-secondary);
+                font-style: italic;
+            }
+
+            .step-tags {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.4rem;
+                margin-top: 1rem;
+            }
+
+            .step-tag {
+                font-size: 0.72rem;
+                font-weight: 600;
+                padding: 0.25rem 0.6rem;
+                border-radius: 4px;
+            }
+
+            .step-tag-indigo {
+                background: #e0e7ff;
+                color: #4338ca;
+            }
+            .step-tag-emerald {
+                background: #d1fae5;
+                color: #047857;
+            }
+            .step-tag-violet {
+                background: #ede9fe;
+                color: #6d28d9;
+            }
+            .step-tag-rose {
+                background: #ffe4e6;
+                color: #be123c;
+            }
+
+            /* ─── Features Grid ─────────────────────────────────── */
+            .features-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 1.5rem;
+            }
+
+            .feature-card {
+                background: var(--white);
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                padding: 1.75rem;
+                transition:
+                    box-shadow 0.3s,
+                    transform 0.2s;
+            }
+
+            .feature-card:hover {
+                box-shadow: var(--shadow);
+                transform: translateY(-2px);
+            }
+
+            .feature-icon {
+                width: 44px;
+                height: 44px;
                 display: flex;
                 align-items: center;
-                margin-bottom: 4rem;
-                gap: 4rem;
+                justify-content: center;
+                border-radius: var(--radius-sm);
+                margin-bottom: 1rem;
             }
 
-            .showcase:nth-child(even) {
-                flex-direction: row-reverse;
+            .feature-icon svg {
+                width: 22px;
+                height: 22px;
             }
 
-            .showcase-content {
-                flex: 1;
+            .feature-title {
+                font-size: 1rem;
+                font-weight: 700;
+                color: var(--dark);
+                margin-bottom: 0.4rem;
+            }
+
+            .feature-text {
+                font-size: 0.875rem;
+                color: var(--text-secondary);
+                line-height: 1.6;
+            }
+
+            /* ─── Showcase (alternating) ────────────────────────── */
+            .showcase-row {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 3.5rem;
+                align-items: center;
+                margin-bottom: 5rem;
+            }
+
+            .showcase-row:last-child {
+                margin-bottom: 0;
+            }
+
+            .showcase-row.reversed .showcase-text-col {
+                order: 2;
+            }
+
+            .showcase-row.reversed .showcase-media-col {
+                order: 1;
+            }
+
+            .showcase-eyebrow {
+                font-size: 0.75rem;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+                color: var(--primary);
+                margin-bottom: 0.75rem;
             }
 
             .showcase-title {
-                font-size: 2rem;
-                margin-bottom: 1.2rem;
-                color: var(--secondary-color);
+                font-size: 1.75rem;
+                font-weight: 800;
+                color: var(--dark);
+                line-height: 1.25;
+                letter-spacing: -0.015em;
+                margin-bottom: 1rem;
             }
 
-            .showcase-text {
+            .showcase-desc {
+                font-size: 0.95rem;
+                color: var(--text-secondary);
+                line-height: 1.7;
                 margin-bottom: 1.5rem;
-                color: var(--light-text);
             }
 
-            .showcase-media {
-                flex: 1;
-                border-radius: var(--border-radius);
+            .showcase-media-col {
+                position: relative;
+                border-radius: var(--radius);
                 overflow: hidden;
-                box-shadow: var(--box-shadow);
+                box-shadow: var(--shadow-lg);
+                border: 1px solid var(--border);
             }
 
-            .showcase-media img,
-            .showcase-media video {
-                width: 100%;
-                border-radius: var(--border-radius);
+            .showcase-media-col img,
+            .showcase-media-col video {
                 display: block;
-                margin: 0;
-                padding: 0;
-                border: none;
-                vertical-align: top;
-                object-fit: cover;
-                background-color: #000;
+                width: 100%;
+                height: auto;
+                background: #000;
             }
 
-            /* Media Queries */
+            .expandable-video {
+                cursor: pointer;
+                transition: filter 0.3s;
+            }
+
+            .expandable-video:hover {
+                filter: brightness(1.05);
+            }
+
+            /* ─── Workspace overview ────────────────────────────── */
+            .workspace-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 1.5rem;
+            }
+
+            .workspace-card {
+                border-radius: var(--radius);
+                padding: 1.75rem;
+                border: 1px solid;
+            }
+
+            .workspace-card-indigo {
+                background: linear-gradient(
+                    135deg,
+                    rgba(224, 231, 255, 0.5),
+                    var(--white)
+                );
+                border-color: #c7d2fe;
+            }
+
+            .workspace-card-sky {
+                background: linear-gradient(
+                    135deg,
+                    rgba(224, 242, 254, 0.5),
+                    var(--white)
+                );
+                border-color: #bae6fd;
+            }
+
+            .workspace-card-amber {
+                background: linear-gradient(
+                    135deg,
+                    rgba(254, 243, 199, 0.5),
+                    var(--white)
+                );
+                border-color: #fde68a;
+            }
+
+            .workspace-icon {
+                width: 40px;
+                height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: var(--radius-xs);
+                margin-bottom: 1rem;
+            }
+
+            .workspace-icon svg {
+                width: 20px;
+                height: 20px;
+            }
+
+            .workspace-title {
+                font-size: 1.05rem;
+                font-weight: 700;
+                color: var(--dark);
+                margin-bottom: 0.4rem;
+            }
+
+            .workspace-text {
+                font-size: 0.85rem;
+                color: var(--text-secondary);
+                line-height: 1.6;
+            }
+
+            /* ─── Testimonial ───────────────────────────────────── */
+            .testimonial-card {
+                max-width: 640px;
+                margin: 0 auto;
+                background: var(--white);
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                padding: 2.5rem;
+                position: relative;
+                text-align: center;
+            }
+
+            .testimonial-quote-mark {
+                font-size: 5rem;
+                color: var(--primary);
+                opacity: 0.15;
+                line-height: 1;
+                position: absolute;
+                top: 0.5rem;
+                left: 1.5rem;
+                font-family: Georgia, serif;
+            }
+
+            .testimonial-text {
+                font-size: 1.1rem;
+                line-height: 1.8;
+                color: var(--text);
+                font-style: italic;
+                margin-bottom: 1.5rem;
+                position: relative;
+                z-index: 1;
+            }
+
+            .testimonial-author {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 1rem;
+            }
+
+            .testimonial-avatar {
+                width: 48px;
+                height: 48px;
+                border-radius: 50%;
+                background: var(--primary);
+                color: var(--white);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 700;
+                font-size: 0.875rem;
+                flex-shrink: 0;
+            }
+
+            .testimonial-name {
+                font-weight: 700;
+                color: var(--dark);
+                font-size: 0.95rem;
+            }
+
+            .testimonial-role {
+                font-size: 0.8rem;
+                color: var(--text-muted);
+            }
+
+            .testimonial-role a {
+                color: var(--primary);
+                text-decoration: none;
+            }
+
+            .testimonial-role a:hover {
+                text-decoration: underline;
+            }
+
+            /* ─── Chat Comparison ───────────────────────────────── */
+            .comparison-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 2rem;
+                max-width: 800px;
+                margin: 0 auto;
+            }
+
+            .comparison-card {
+                border-radius: var(--radius);
+                padding: 2rem;
+                border: 1.5px solid;
+            }
+
+            .comparison-bad {
+                background: #fef2f2;
+                border-color: #fecaca;
+            }
+
+            .comparison-good {
+                background: #f0fdf4;
+                border-color: #bbf7d0;
+            }
+
+            .comparison-label {
+                font-size: 0.75rem;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+                margin-bottom: 0.75rem;
+            }
+
+            .comparison-bad .comparison-label {
+                color: #b91c1c;
+            }
+
+            .comparison-good .comparison-label {
+                color: #15803d;
+            }
+
+            .comparison-title {
+                font-size: 1.1rem;
+                font-weight: 700;
+                color: var(--dark);
+                margin-bottom: 0.75rem;
+            }
+
+            .comparison-list {
+                list-style: none;
+                padding: 0;
+            }
+
+            .comparison-list li {
+                font-size: 0.875rem;
+                color: var(--text-secondary);
+                padding: 0.35rem 0;
+                padding-left: 1.5rem;
+                position: relative;
+            }
+
+            .comparison-list li::before {
+                position: absolute;
+                left: 0;
+                top: 0.35rem;
+            }
+
+            .comparison-bad .comparison-list li::before {
+                content: "✕";
+                color: #dc2626;
+                font-weight: 700;
+                font-size: 0.75rem;
+            }
+
+            .comparison-good .comparison-list li::before {
+                content: "✓";
+                color: #16a34a;
+                font-weight: 700;
+                font-size: 0.85rem;
+            }
+
+            /* ─── Educator section ──────────────────────────────── */
+            .educator-card {
+                display: grid;
+                grid-template-columns: 2fr 1fr;
+                gap: 2.5rem;
+                background: var(--white);
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                padding: 2.5rem;
+                max-width: 900px;
+                margin: 0 auto;
+            }
+
+            .educator-steps {
+                list-style: none;
+                padding: 0;
+                counter-reset: edu-step;
+            }
+
+            .educator-steps li {
+                counter-increment: edu-step;
+                padding: 0.5rem 0;
+                padding-left: 2rem;
+                position: relative;
+                font-size: 0.9rem;
+                color: var(--text-secondary);
+                line-height: 1.6;
+            }
+
+            .educator-steps li::before {
+                content: counter(edu-step);
+                position: absolute;
+                left: 0;
+                top: 0.5rem;
+                width: 22px;
+                height: 22px;
+                border-radius: 50%;
+                background: #d1fae5;
+                color: #047857;
+                font-size: 0.7rem;
+                font-weight: 800;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .educator-steps li strong {
+                color: var(--dark);
+            }
+
+            .educator-sidebar {
+                background: linear-gradient(
+                    135deg,
+                    rgba(209, 250, 229, 0.4),
+                    var(--white)
+                );
+                border: 1px solid #bbf7d0;
+                border-radius: var(--radius-sm);
+                padding: 1.5rem;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                gap: 1rem;
+            }
+
+            .educator-sidebar p {
+                font-size: 0.875rem;
+                color: var(--text-secondary);
+                line-height: 1.6;
+            }
+
+            /* ─── CTA ───────────────────────────────────────────── */
+            .cta {
+                background: linear-gradient(
+                    145deg,
+                    var(--primary-dark),
+                    var(--primary),
+                    #5a7cf7
+                );
+                color: var(--white);
+                padding: 5rem 0;
+                text-align: center;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .cta-pattern {
+                position: absolute;
+                inset: 0;
+                background:
+                    radial-gradient(
+                        circle at 20% 50%,
+                        rgba(255, 255, 255, 0.05) 0%,
+                        transparent 50%
+                    ),
+                    radial-gradient(
+                        circle at 80% 50%,
+                        rgba(255, 255, 255, 0.03) 0%,
+                        transparent 50%
+                    );
+            }
+
+            .cta-inner {
+                position: relative;
+                z-index: 1;
+            }
+
+            .cta-title {
+                font-size: 2.5rem;
+                font-weight: 800;
+                line-height: 1.2;
+                letter-spacing: -0.02em;
+                margin-bottom: 1rem;
+            }
+
+            .cta-desc {
+                font-size: 1.1rem;
+                color: rgba(255, 255, 255, 0.8);
+                max-width: 560px;
+                margin: 0 auto 2rem;
+                line-height: 1.7;
+            }
+
+            .cta-buttons {
+                display: flex;
+                justify-content: center;
+                gap: 0.75rem;
+                flex-wrap: wrap;
+            }
+
+            /* ─── Footer ────────────────────────────────────────── */
+            .footer {
+                background: var(--dark);
+                color: rgba(255, 255, 255, 0.7);
+                padding: 2.5rem 0;
+                text-align: center;
+                font-size: 0.85rem;
+            }
+
+            .footer-inner {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 1rem;
+            }
+
+            .footer-links {
+                display: flex;
+                gap: 1.5rem;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .footer-links a {
+                color: rgba(255, 255, 255, 0.6);
+                text-decoration: none;
+                font-size: 0.8rem;
+                transition: color 0.2s;
+            }
+
+            .footer-links a:hover {
+                color: var(--white);
+            }
+
+            /* ─── Video Modal ───────────────────────────────────── */
+            .modal-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                z-index: 1000;
+                background: rgba(0, 0, 0, 0.85);
+                backdrop-filter: blur(4px);
+                align-items: center;
+                justify-content: center;
+                padding: 2rem;
+            }
+
+            .modal-content {
+                position: relative;
+                max-width: 900px;
+                width: 100%;
+            }
+
+            .modal-content video {
+                width: 100%;
+                border-radius: var(--radius-sm);
+            }
+
+            .close-modal {
+                position: absolute;
+                top: -2.5rem;
+                right: 0;
+                background: none;
+                border: none;
+                color: var(--white);
+                font-size: 1.75rem;
+                cursor: pointer;
+                opacity: 0.8;
+                transition: opacity 0.2s;
+            }
+
+            .close-modal:hover {
+                opacity: 1;
+            }
+
+            /* ─── Responsive ────────────────────────────────────── */
             @media (max-width: 992px) {
-                .hero-content {
-                    flex-direction: column;
+                .hero-inner {
+                    grid-template-columns: 1fr;
                     text-align: center;
                 }
 
-                .hero-text {
-                    padding-right: 0;
-                    margin-bottom: 3rem;
+                .hero-subtitle {
+                    margin-left: auto;
+                    margin-right: auto;
                 }
 
-                .hero-image {
-                    max-width: 90%;
-                    margin: 0 auto;
-                }
-
-                .hero-buttons {
+                .hero-cta {
                     justify-content: center;
                 }
 
-                .showcase {
-                    flex-direction: column !important;
+                .hero-media {
+                    max-width: 600px;
+                    margin: 0 auto;
+                }
+
+                .steps-grid {
+                    grid-template-columns: 1fr;
+                    max-width: 480px;
+                    margin: 0 auto;
+                }
+
+                .features-grid {
+                    grid-template-columns: repeat(2, 1fr);
+                }
+
+                .showcase-row {
+                    grid-template-columns: 1fr;
                     gap: 2rem;
                 }
 
-                .feature-grid {
-                    grid-template-columns: 1fr 1fr;
+                .showcase-row.reversed .showcase-text-col,
+                .showcase-row.reversed .showcase-media-col {
+                    order: unset;
+                }
+
+                .workspace-grid {
+                    grid-template-columns: 1fr;
+                    max-width: 480px;
+                    margin: 0 auto;
+                }
+
+                .comparison-grid {
+                    grid-template-columns: 1fr;
+                    max-width: 440px;
+                }
+
+                .educator-card {
+                    grid-template-columns: 1fr;
                 }
             }
 
             @media (max-width: 768px) {
-                .hero-section {
-                    padding: 6rem 0 4rem;
+                .hero {
+                    padding: 7rem 0 3.5rem;
                 }
 
                 .hero-title {
-                    font-size: 2.5rem;
+                    font-size: 2.25rem;
                 }
 
                 .hero-subtitle {
-                    font-size: 1.2rem;
+                    font-size: 1.05rem;
+                }
+
+                .section {
+                    padding: 3.5rem 0;
                 }
 
                 .section-title {
-                    font-size: 2.2rem;
+                    font-size: 1.75rem;
                 }
 
-                .feature-grid {
+                .features-grid {
                     grid-template-columns: 1fr;
                 }
 
+                .cta-title {
+                    font-size: 1.75rem;
+                }
+
                 .nav-links {
-                    position: fixed;
-                    top: 0;
-                    right: -100%;
-                    width: 80%;
-                    max-width: 300px;
-                    height: 100vh;
-                    background: var(--primary-color);
+                    display: none;
+                    position: absolute;
+                    top: 64px;
+                    left: 0;
+                    right: 0;
+                    background: var(--white);
                     flex-direction: column;
-                    justify-content: center;
-                    align-items: center;
-                    padding: 2rem;
-                    z-index: 999;
-                    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+                    padding: 1.5rem;
+                    border-bottom: 1px solid var(--border);
+                    box-shadow: var(--shadow);
+                    gap: 0.75rem;
                 }
 
                 .nav-links.active {
-                    right: 0;
+                    display: flex;
                 }
 
                 .nav-links li {
-                    margin: 1rem 0;
+                    list-style: none;
                 }
 
-                .mobile-menu-toggle {
+                .mobile-toggle {
                     display: block;
                 }
             }
 
             @media (max-width: 576px) {
-                .feature-grid {
-                    grid-template-columns: 1fr;
-                }
-
                 .hero-title {
-                    font-size: 2.2rem;
-                }
-
-                .hero-subtitle {
-                    font-size: 1.1rem;
+                    font-size: 1.85rem;
                 }
 
                 .section-title {
-                    font-size: 1.8rem;
+                    font-size: 1.5rem;
                 }
 
                 .showcase-title {
-                    font-size: 1.6rem;
+                    font-size: 1.35rem;
                 }
-            }
 
-            @media (min-width: 769px) and (max-width: 992px) {
-                .feature-grid {
-                    grid-template-columns: repeat(2, 1fr);
+                .proof-inner {
+                    gap: 1.5rem;
                 }
             }
         </style>
     </head>
     <body>
-        <!-- Navigation -->
-        <nav class="navbar" aria-label="Main Navigation">
-            <div class="container nav-container">
-                <a href="#" class="logo" aria-label="Dialectic Home"
-                    >Dialectic</a
+        <!-- ── Navbar ──────────────────────────────────────── -->
+        <nav class="navbar" id="navbar" aria-label="Main navigation">
+            <div class="container nav-inner">
+                <a href="#" class="logo" aria-label="RationalGrid Home"
+                    >Rational<span>Grid</span></a
                 >
                 <ul class="nav-links" id="nav-menu">
-                    <li><a href="#showcase" class="nav-link">Learn More</a></li>
-                    <li><a href="#features" class="nav-link">Why</a></li>
-                    <li><a href="#about" class="nav-link">About</a></li>
+                    <li>
+                        <a href="#how-it-works" class="nav-link"
+                            >How It Works</a
+                        >
+                    </li>
+                    <li>
+                        <a href="#features" class="nav-link">Features</a>
+                    </li>
+                    <li>
+                        <a href="#showcase" class="nav-link">See It</a>
+                    </li>
+                    <li>
+                        <a href="#about" class="nav-link">About</a>
+                    </li>
                     <li>
                         <a
-                            href="https://mudg.fly.dev"
-                            class="nav-link btn btn-primary"
-                            aria-label="Try Dialectic Platform"
-                            >Try It</a
+                            href="https://rationalgrid.ai/intro/how"
+                            class="nav-link"
+                            >Guide</a
+                        >
+                    </li>
+                    <li>
+                        <a
+                            href="https://rationalgrid.ai"
+                            class="btn btn-primary"
+                            style="padding: 0.5rem 1.25rem"
+                            aria-label="Try RationalGrid now"
+                            >Try It Free</a
                         >
                     </li>
                 </ul>
-                <button class="mobile-menu-toggle" id="menu-toggle">
+                <button
+                    class="mobile-toggle"
+                    id="menu-toggle"
+                    aria-label="Toggle menu"
+                    aria-controls="nav-menu"
+                    aria-expanded="false"
+                >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="24"
@@ -640,335 +1319,273 @@
                         stroke-linecap="round"
                         stroke-linejoin="round"
                     >
-                        <line x1="3" y1="12" x2="21" y2="12"></line>
                         <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
                         <line x1="3" y1="18" x2="21" y2="18"></line>
                     </svg>
                 </button>
             </div>
         </nav>
 
-        <!-- Hero Section -->
-        <section class="hero-section">
-            <div class="hero-pattern"></div>
+        <!-- ── Hero ────────────────────────────────────────── -->
+        <section class="hero">
+            <video
+                autoplay
+                muted
+                loop
+                playsinline
+                preload="metadata"
+                class="hero-bg-video"
+                aria-hidden="true"
+            >
+                <source src="media/videos/MuDG_nav.mp4" type="video/mp4" />
+            </video>
+            <div class="hero-overlay"></div>
+
             <div class="container">
-                <div class="hero-content">
-                    <div class="hero-text">
+                <div class="hero-inner">
+                    <div class="hero-text-col">
+                        <div class="hero-badge">✦ Free &amp; Open Source</div>
                         <h1 class="hero-title">
-                            Explore Ideas Collaboratively
+                            Turn any question into a visual&nbsp;knowledge map
                         </h1>
                         <p class="hero-subtitle">
-                            Dialectic is a mind mapping tool that combines AI
-                            assistance with human collaboration to explore
-                            complex ideas and visualize the learning process.
+                            RationalGrid is a shared AI-powered whiteboard. Ask
+                            a question, get an AI response, then branch into
+                            deeper follow-ups. Every answer becomes a connected
+                            node you can revisit and
+                            grow&nbsp;&mdash;&nbsp;together.
                         </p>
-                        <div class="hero-buttons">
+                        <div class="hero-cta">
                             <a
-                                href="https://mudg.fly.dev"
-                                class="btn btn-primary"
-                                aria-label="Start using Dialectic"
+                                href="https://rationalgrid.ai"
+                                class="btn btn-white btn-lg"
                                 >Start Exploring</a
                             >
                             <a
-                                href="#showcase"
-                                class="btn btn-secondary"
-                                aria-label="Learn more about Dialectic"
-                                >Learn More</a
+                                href="https://rationalgrid.ai/intro/how"
+                                class="btn btn-ghost btn-lg"
+                                >Read the Guide</a
                             >
                         </div>
                     </div>
-                    <div class="hero-image">
-                        <video
-                            id="heroVideo"
-                            autoplay
-                            muted
-                            loop
-                            playsinline
-                            class="expandable-video"
-                            style="
-                                height: auto;
-                                min-height: 420px;
-                                display: block;
-                                margin: 0;
-                                padding: 0;
-                                border: none;
-                                vertical-align: top;
-                                object-fit: cover;
-                                background-color: #000;
-                            "
-                        >
+
+                    <div
+                        class="hero-media"
+                        id="heroMediaWrapper"
+                        tabindex="0"
+                        role="button"
+                        aria-label="Expand video"
+                    >
+                        <video id="heroVideo" autoplay muted loop playsinline>
                             <source
                                 src="media/videos/MuDG_nav.mp4"
                                 type="video/mp4"
                             />
-                            Your browser does not support the video tag.
                         </video>
-                        <div
-                            class="video-overlay"
-                            style="z-index: 10; opacity: 0.9"
-                        >
-                            Click to expand
+                        <div class="click-hint">⤢ Click to expand</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── Social Proof Strip ──────────────────────────── -->
+        <section class="social-proof">
+            <div class="container">
+                <div class="proof-inner">
+                    <div class="proof-item">
+                        <div class="proof-number">100%</div>
+                        <div class="proof-label">Free to use</div>
+                    </div>
+                    <div class="proof-item">
+                        <div class="proof-number">∞</div>
+                        <div class="proof-label">Whiteboards per user</div>
+                    </div>
+                    <div class="proof-item">
+                        <div class="proof-number">Multi-user</div>
+                        <div class="proof-label">Real-time collaboration</div>
+                    </div>
+                    <div class="proof-item">
+                        <div class="proof-number">Open</div>
+                        <div class="proof-label">
+                            Export to PDF, JSON, Markdown
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Testimonials Section -->
-        <section id="testimonials" class="section">
+        <!-- ── How It Works ────────────────────────────────── -->
+        <section id="how-it-works" class="section section-alt">
             <div class="container">
                 <div class="section-header">
-                    <h2 class="section-title">What Our Users Say</h2>
+                    <div class="section-eyebrow">⚡ Quick Start</div>
+                    <h2 class="section-title">
+                        Three steps from question to knowledge&nbsp;map
+                    </h2>
+                    <p class="section-desc">
+                        No setup, no accounts required. Just ask a question and
+                        start building.
+                    </p>
                 </div>
 
-                <div
-                    class="feature-grid"
-                    style="display: flex; justify-content: center"
-                >
-                    <!-- Single Testimonial -->
-                    <div
-                        class="feature-card"
-                        style="
-                            position: relative;
-                            padding-top: 2.5rem;
-                            max-width: 600px;
-                        "
+                <div class="steps-grid">
+                    <div class="step-card">
+                        <div class="step-number step-number-1">1</div>
+                        <h3 class="step-title">Ask a question</h3>
+                        <p class="step-text">
+                            Type any topic or question. The AI generates a
+                            structured response that becomes the first node on
+                            your whiteboard.
+                        </p>
+                        <div class="step-example">
+                            <div class="step-example-label">Example</div>
+                            <div class="step-example-text">
+                                &ldquo;What are the main theories of
+                                consciousness?&rdquo;
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number step-number-2">2</div>
+                        <h3 class="step-title">Branch deeper</h3>
+                        <p class="step-text">
+                            Highlight any word or phrase in a response and ask a
+                            follow-up. Each new answer links to the exact
+                            concept it came from.
+                        </p>
+                        <div class="step-tags">
+                            <span class="step-tag step-tag-indigo"
+                                >Related Ideas</span
+                            >
+                            <span class="step-tag step-tag-emerald"
+                                >Pros &amp; Cons</span
+                            >
+                            <span class="step-tag step-tag-violet">Blend</span>
+                            <span class="step-tag step-tag-rose"
+                                >Explore All</span
+                            >
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number step-number-3">3</div>
+                        <h3 class="step-title">Share &amp; revisit</h3>
+                        <p class="step-text">
+                            Your whiteboard persists. Share the link so others
+                            can explore the same map, add their own branches, or
+                            pick up where you left off.
+                        </p>
+                        <div class="step-example">
+                            <div class="step-example-label">Share</div>
+                            <div class="step-example-text">
+                                A direct link to the full map or any single node
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin-top: 2.5rem">
+                    <a
+                        href="https://rationalgrid.ai"
+                        class="btn btn-primary btn-lg"
+                        >Create Your First Whiteboard &rarr;</a
                     >
-                        <div
-                            style="
-                                position: absolute;
-                                top: -1rem;
-                                left: 1.5rem;
-                                font-size: 4rem;
-                                color: var(--primary-color);
-                                opacity: 0.3;
-                            "
-                        >
-                            "
-                        </div>
-                        <p
-                            class="feature-text"
-                            style="
-                                font-style: italic;
-                                margin-bottom: 1.5rem;
-                                font-size: 1.2rem;
-                            "
-                        >
-                            An amazing free specialised AI tool to explore
-                            philosophical ideas around pretty much anything -
-                            from academic questions to films to... hamsters! All
-                            at one's fingertips, in a matter of seconds, with
-                            in-built tools for a sophisticated, yet accessible
-                            dialectic. Bravo!
-                        </p>
-                        <div
-                            style="
-                                display: flex;
-                                align-items: center;
-                                margin-top: auto;
-                            "
-                        >
-                            <div
-                                style="
-                                    width: 50px;
-                                    height: 50px;
-                                    border-radius: 50%;
-                                    background-color: var(--primary-color);
-                                    display: flex;
-                                    justify-content: center;
-                                    align-items: center;
-                                    margin-right: 1rem;
-                                    color: white;
-                                    font-weight: bold;
-                                "
-                            >
-                                AK
-                            </div>
-                            <div>
-                                <h4 style="font-weight: 600; margin: 0">
-                                    Alexandra Konoplyanik
-                                </h4>
-                                <p style="margin: 0; color: #666">
-                                    <a
-                                        href="https://pfalondon.org/"
-                                        target="_blank"
-                                        style="
-                                            color: var(--primary-color);
-                                            text-decoration: none;
-                                        "
-                                        >Philosophy for All</a
-                                    >
-                                </p>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- Features Section -->
-        <section id="features" class="section">
+        <!-- ── Why Not Chat? ───────────────────────────────── -->
+        <section class="section">
             <div class="container">
                 <div class="section-header">
-                    <h2 class="section-title">Why Dialectic?</h2>
-                    <p class="section-subtitle">
-                        Discover how our platform transforms the way you explore
-                        and understand complex ideas
-                    </p>
-                </div>
-                <!-- LD+JSON Structured Data -->
-                <script type="application/ld+json">
-                    {
-                        "@context": "https://schema.org",
-                        "@type": "SoftwareApplication",
-                        "name": "Dialectic",
-                        "applicationCategory": "Knowledge Management",
-                        "operatingSystem": "Web",
-                        "offers": {
-                            "@type": "Offer",
-                            "price": "0",
-                            "priceCurrency": "USD"
-                        },
-                        "description": "A collaborative mind mapping tool that combines AI assistance with human collaboration to explore complex ideas.",
-                        "creator": {
-                            "@type": "Organization",
-                            "name": "Dialectic"
-                        }
-                    }
-                </script>
-
-                <div class="feature-grid">
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M13 10V3L4 14h7v7l9-11h-7z"
-                                />
-                            </svg>
-                        </div>
-                        <h3 class="feature-title">Visualized Knowledge</h3>
-                        <p class="feature-text">
-                            Transform complex ideas into visual knowledge graphs
-                            that make connections explicit and easy to navigate.
-                        </p>
-                    </div>
-
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                                />
-                            </svg>
-                        </div>
-                        <h3 class="feature-title">Collaborative Learning</h3>
-                        <p class="feature-text">
-                            Invite others to join your exploration in real-time,
-                            sharing different perspectives and building
-                            knowledge together.
-                        </p>
-                    </div>
-
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                                />
-                            </svg>
-                        </div>
-                        <h3 class="feature-title">AI-Powered Insights</h3>
-                        <p class="feature-text">
-                            Leverage the analytical power of language models to
-                            explore ideas in depth while maintaining human
-                            guidance.
-                        </p>
-                    </div>
-
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                />
-                            </svg>
-                        </div>
-                        <h3 class="feature-title">Persistent Knowledge</h3>
-                        <p class="feature-text">
-                            Unlike ephemeral chats, your knowledge graphs
-                            persist and grow over time, becoming valuable
-                            resources. Export to PDF, JSON, or Markdown - the
-                            data is yours!
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Showcase Section -->
-        <section id="showcase" class="section" style="background-color: white">
-            <div class="container">
-                <div class="section-header">
-                    <h2 class="section-title">See It In Action</h2>
-                    <p class="section-subtitle">
-                        Explore how Dialectic transforms knowledge
-                        representation and collaborative learning
+                    <div class="section-eyebrow">💡 The Problem</div>
+                    <h2 class="section-title">
+                        Why a whiteboard instead of a&nbsp;chat?
+                    </h2>
+                    <p class="section-desc">
+                        Traditional AI chats present knowledge as linear walls
+                        of text. RationalGrid structures information spatially
+                        so you can explore multiple directions at once.
                     </p>
                 </div>
 
-                <div class="showcase">
-                    <div class="showcase-content">
-                        <h3 class="showcase-title">
-                            Interactive Knowledge Graphs
+                <div class="comparison-grid">
+                    <div class="comparison-card comparison-bad">
+                        <div class="comparison-label">Traditional AI Chat</div>
+                        <h3 class="comparison-title">Linear &amp; ephemeral</h3>
+                        <ul class="comparison-list">
+                            <li>Single-thread conversations disappear</li>
+                            <li>
+                                Can&rsquo;t explore multiple directions at once
+                            </li>
+                            <li>Impossible to see connections between ideas</li>
+                            <li>
+                                No collaboration &mdash; one person, one chat
+                            </li>
+                            <li>No way to revisit or build on past work</li>
+                        </ul>
+                    </div>
+                    <div class="comparison-card comparison-good">
+                        <div class="comparison-label">
+                            RationalGrid Knowledge Whiteboard
+                        </div>
+                        <h3 class="comparison-title">
+                            Branching &amp; persistent
                         </h3>
-                        <p class="showcase-text">
+                        <ul class="comparison-list">
+                            <li>
+                                Visual map shows how claims and evidence connect
+                            </li>
+                            <li>
+                                Branch into multiple directions simultaneously
+                            </li>
+                            <li>Every node links back to its parent context</li>
+                            <li>
+                                Share a link &mdash; anyone can add branches
+                            </li>
+                            <li>Maps persist, grow, and compound over time</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── Showcase ────────────────────────────────────── -->
+        <section id="showcase" class="section section-alt">
+            <div class="container">
+                <div class="section-header">
+                    <div class="section-eyebrow">🎬 See It In Action</div>
+                    <h2 class="section-title">
+                        Explore how ideas come to&nbsp;life
+                    </h2>
+                </div>
+
+                <!-- Showcase 1: Knowledge Graphs -->
+                <div class="showcase-row">
+                    <div class="showcase-text-col">
+                        <div class="showcase-eyebrow">
+                            Interactive Knowledge Maps
+                        </div>
+                        <h3 class="showcase-title">
+                            Navigate ideas visually, not&nbsp;linearly
+                        </h3>
+                        <p class="showcase-desc">
                             Transform complex ideas into intuitive visual
                             networks. Unlike linear conversations, knowledge
-                            graphs let you explore multiple paths simultaneously
-                            and see relationships at a glance.
+                            maps let you explore multiple paths simultaneously
+                            and see relationships at a glance. Each node can be
+                            expanded to branch into new directions, creating a
+                            rich web of connected knowledge.
                         </p>
-                        <p class="showcase-text">
-                            Each node can be expanded to reveal more details or
-                            branch into new directions, creating a rich web of
-                            connected knowledge.
-                        </p>
-                        <a href="https://mudg.fly.dev" class="btn btn-primary"
-                            >Try It Now</a
+                        <a
+                            href="https://rationalgrid.ai"
+                            class="btn btn-primary"
+                            >Try It Now &rarr;</a
                         >
                     </div>
-                    <div class="showcase-media">
+                    <div class="showcase-media-col">
                         <video
                             id="expandableVideo"
                             autoplay
@@ -976,368 +1593,723 @@
                             loop
                             playsinline
                             class="expandable-video"
-                            style="background-color: #000; object-fit: cover"
                         >
                             <source
                                 src="media/videos/MuDG_nav.mp4"
                                 type="video/mp4"
                             />
-                            Your browser does not support the video tag.
                         </video>
-                        <div class="video-overlay">Click to expand</div>
                     </div>
                 </div>
 
-                <div class="showcase">
-                    <div class="showcase-content">
-                        <h3 class="showcase-title">Beyond Traditional Chat</h3>
-                        <p class="showcase-text">
-                            Traditional AI chat interfaces present knowledge as
-                            linear walls of text, making it difficult to explore
-                            multiple directions at once or revisit specific
-                            points.
-                        </p>
-                        <p class="showcase-text">
-                            Dialectic's graph-based approach solves this problem
-                            by structuring information spatially, allowing for
-                            non-linear exploration while maintaining context.
+                <!-- Showcase 2: Beyond Chat -->
+                <div class="showcase-row reversed">
+                    <div class="showcase-text-col">
+                        <div class="showcase-eyebrow">Beyond Chat</div>
+                        <h3 class="showcase-title">
+                            Structure is visible, not&nbsp;buried
+                        </h3>
+                        <p class="showcase-desc">
+                            See how claims, evidence, and counterpoints connect
+                            instead of scrolling through a flat thread.
+                            RationalGrid&rsquo;s graph-based approach structures
+                            information spatially, allowing for non-linear
+                            exploration while maintaining context.
                         </p>
                     </div>
-                    <div class="showcase-media">
+                    <div class="showcase-media-col">
                         <video autoplay muted loop playsinline>
                             <source
                                 src="media/videos/LLM-Chat.mp4"
                                 type="video/mp4"
                             />
-                            Your browser does not support the video tag.
                         </video>
                     </div>
                 </div>
-                <div class="showcase">
-                    <div class="showcase-content">
-                        <h3 class="showcase-title">Enhanced Readability</h3>
-                        <p class="showcase-text">
-                            Deep dive on particular conversations within the
-                            graph. Any node can be shown as a conversation.
+
+                <!-- Showcase 3: Reader View -->
+                <div class="showcase-row">
+                    <div class="showcase-text-col">
+                        <div class="showcase-eyebrow">Enhanced Readability</div>
+                        <h3 class="showcase-title">
+                            Deep dive any branch as a threaded&nbsp;conversation
+                        </h3>
+                        <p class="showcase-desc">
+                            Any node can be shown as a flowing conversation.
+                            Highlight important passages, add comments, and use
+                            focus mode with accessibility features to improve
+                            comprehension. Create using the graph tool, review
+                            using the reader view.
                         </p>
-                        <p class="showcase-text">
-                            Adding Focus mode, Low fixation reading and
-                            accessibility features to improve comprehension.
-                        </p>
-                        <a href="https://mudg.fly.dev" class="btn btn-primary"
-                            >Try It Now</a
+                        <a
+                            href="https://rationalgrid.ai"
+                            class="btn btn-primary"
+                            >Try It Now &rarr;</a
                         >
                     </div>
-                    <div class="showcase-media">
-                        <img src="media/images/conv.webp" alt="Idea Explorer" />
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Why Section -->
-        <section id="why" class="section">
-            <div class="container">
-                <div class="section-header">
-                    <h2 class="section-title">Why We Built It</h2>
-                    <p class="section-subtitle">
-                        Our motivation for developing a new approach to
-                        collaborative learning and knowledge exploration
-                    </p>
-                </div>
-
-                <div class="showcase">
-                    <div class="showcase-content">
-                        <h3 class="showcase-title">
-                            The Information Age Paradox
-                        </h3>
-                        <p class="showcase-text">
-                            We live in an era of unprecedented information
-                            access, yet the quality of discourse often feels
-                            lacking. Echo chambers and motivated reasoning lead
-                            to people talking past each other rather than
-                            engaging meaningfully.
-                        </p>
-                        <p class="showcase-text">
-                            We built Dialectic because we believe that
-                            meaningful exchanges happen when we can explore
-                            assumptions at a fundamental level and see how
-                            different starting points lead to different
-                            conclusions.
-                        </p>
-                    </div>
-                    <div class="showcase-media">
+                    <div class="showcase-media-col">
                         <img
-                            src="media/images/graph.webp"
-                            alt="Knowledge Graph"
-                        />
-                    </div>
-                </div>
-
-                <div class="showcase">
-                    <div class="showcase-content">
-                        <h3 class="showcase-title">
-                            AI Revolution & Active Learning
-                        </h3>
-                        <p class="showcase-text">
-                            Language models provide unprecedented access to
-                            knowledge, but traditional chat interfaces limit
-                            their potential for deep learning. Linear
-                            conversations make it difficult to explore multiple
-                            directions simultaneously or revisit specific points
-                            of interest.
-                        </p>
-                        <p class="showcase-text">
-                            Dialectic transforms AI interaction into an active,
-                            exploratory process where learners can branch out in
-                            multiple directions, creating a personalized
-                            knowledge map that evolves with their curiosity.
-                        </p>
-                    </div>
-                    <div class="showcase-media">
-                        <img
-                            src="media/images/Ideas.webp"
-                            alt="Idea Explorer"
-                        />
-                    </div>
-                </div>
-                <div class="showcase">
-                    <div class="showcase-content">
-                        <h3 class="showcase-title">Ownership and Openness</h3>
-                        <p class="showcase-text">
-                            As well as contributing to collective knowledge, we
-                            want the data to be open, and useful going forward.
-                            You can view the graph as a threaded conversation,
-                            export as a PDF, get the full graph in JSON and get
-                            the content in Markdown for use in a range of
-                            editors.
-                        </p>
-                        <p>
-                            Create using the graph tool, review using the
-                            conversation view and edit into personalised notes.
-                        </p>
-                    </div>
-                    <div class="showcase-media">
-                        <img
-                            src="media/images/open.webp"
-                            alt="Alternative formats"
+                            src="media/images/conv.webp"
+                            alt="Conversation reader view in RationalGrid"
+                            loading="lazy"
                         />
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- About Section -->
-        <section id="about" class="section" style="background-color: white">
+        <!-- ── Your Workspace ──────────────────────────────── -->
+        <section class="section">
             <div class="container">
                 <div class="section-header">
-                    <h2 class="section-title">About Dialectic</h2>
-                    <p class="section-subtitle">
-                        Our vision, philosophy, and the story behind the project
+                    <div class="section-eyebrow">🖥️ The Workspace</div>
+                    <h2 class="section-title">Everything in one view</h2>
+                    <p class="section-desc">
+                        A reading panel, an interactive graph, and an action
+                        toolbar — all visible at once so you never lose context.
                     </p>
                 </div>
 
-                <div style="max-width: 900px; margin: 0 auto">
-                    <div class="feature-card" style="margin-bottom: 2rem">
-                        <h3 class="feature-title">Our Vision</h3>
-                        <p class="feature-text">
-                            <strong>Multi-user Dialectical Graph (MuDG)</strong>
-                            began with a simple observation: the revolutionary
-                            potential of large language models for education
-                            remains largely untapped. While today's AI
-                            assistants offer impressive capabilities, they exist
-                            primarily as isolated, ephemeral exchanges. Our
-                            vision is to transform these interactions into
-                            persistent, evolving idea structures that grow
-                            richer with each exploration.
+                <div class="workspace-grid">
+                    <div class="workspace-card workspace-card-indigo">
+                        <div class="workspace-icon" style="background: #e0e7ff">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="#4338ca"
+                                stroke-width="2"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
+                                />
+                            </svg>
+                        </div>
+                        <h3 class="workspace-title">Reading Panel</h3>
+                        <p class="workspace-text">
+                            Read the full AI response for the selected node.
+                            Select any text to explain, ask a follow-up,
+                            highlight, or comment directly.
                         </p>
                     </div>
 
-                    <div class="feature-card" style="margin-bottom: 2rem">
-                        <h3 class="feature-title">
-                            The Knowledge Graph Paradigm
-                        </h3>
-                        <p class="feature-text">
-                            At Dialectic, we believe the future of learning
-                            isn't linear—it's networked. Traditional educational
-                            paths often follow predetermined sequences, but
-                            human curiosity rarely operates this way. We
-                            naturally branch, connect, and integrate ideas
-                            across domains. Our knowledge graph approach mirrors
-                            this natural thought process, allowing learners to
-                            move freely between concepts while maintaining
-                            coherent connections.
+                    <div class="workspace-card workspace-card-sky">
+                        <div class="workspace-icon" style="background: #e0f2fe">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="#0369a1"
+                                stroke-width="2"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
+                                />
+                            </svg>
+                        </div>
+                        <h3 class="workspace-title">Graph Canvas</h3>
+                        <p class="workspace-text">
+                            An interactive node-and-edge map of your entire
+                            whiteboard. Click to read, drag to rearrange, scroll
+                            to zoom. Always see the big picture.
                         </p>
+                    </div>
+
+                    <div class="workspace-card workspace-card-amber">
+                        <div class="workspace-icon" style="background: #fef3c7">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="#b45309"
+                                stroke-width="2"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M11.42 15.17l-5.384-3.192A1 1 0 015 11.17V5.83a1 1 0 011.036-.808l5.384.768a1 1 0 01.808.808l.768 5.384a1 1 0 01-.808 1.036l-5.384.768a1 1 0 01-1.036-.808zM15 11l6-6m0 0v4m0-4h-4"
+                                />
+                            </svg>
+                        </div>
+                        <h3 class="workspace-title">Action Toolbar</h3>
+                        <p class="workspace-text">
+                            One-click tools: Related Ideas, Pros &amp; Cons,
+                            Blend nodes, Explore All. Each generates new
+                            connected branches on your map.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── Features Grid ───────────────────────────────── -->
+        <section id="features" class="section section-alt">
+            <div class="container">
+                <div class="section-header">
+                    <div class="section-eyebrow">✨ Key Capabilities</div>
+                    <h2 class="section-title">
+                        Built for deep thinking, not shallow&nbsp;prompts
+                    </h2>
+                    <p class="section-desc">
+                        Everything you need to explore ideas thoroughly and make
+                        your thinking visible.
+                    </p>
+                </div>
+
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon" style="background: #e0e7ff">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="#4338ca"
+                                stroke-width="2"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                                />
+                            </svg>
+                        </div>
+                        <h3 class="feature-title">Graph-native answers</h3>
                         <p class="feature-text">
-                            Each node in a Dialectic graph represents a discrete
-                            concept, question, or insight. Unlike traditional
-                            learning materials that might bury important
-                            connections in paragraphs of text, our graph
-                            structure makes relationships explicit and
-                            navigable.
+                            Every AI response is a node in a connected
+                            structure, not a flat block of text lost in a
+                            scrollback.
                         </p>
                     </div>
 
                     <div class="feature-card">
-                        <h3 class="feature-title">Our Technical Philosophy</h3>
+                        <div class="feature-icon" style="background: #e0f2fe">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="#0369a1"
+                                stroke-width="2"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"
+                                />
+                            </svg>
+                        </div>
+                        <h3 class="feature-title">Term-level deep dives</h3>
                         <p class="feature-text">
-                            Our technical approach is guided by several core
-                            principles:
+                            Highlight any phrase in a response to generate
+                            focused sub-branches linked to the exact concept.
                         </p>
-                        <ul
-                            style="
-                                list-style-type: disc;
-                                padding-left: 2rem;
-                                margin: 1rem 0;
-                            "
-                        >
-                            <li style="margin-bottom: 0.5rem">
-                                <strong>Speed matters.</strong> Cognitive flow
-                                is easily disrupted by technical friction. We've
-                                optimized every aspect of the interface to
-                                minimize latency.
-                            </li>
-                            <li style="margin-bottom: 0.5rem">
-                                <strong>Simplicity enables depth.</strong>
-                                Complex ideas don't require complex interfaces.
-                                By eliminating unnecessary elements, we allow
-                                deeper engagement with content.
-                            </li>
-                            <li style="margin-bottom: 0.5rem">
-                                <strong>Persistence creates value.</strong>
-                                Unlike ephemeral chats that disappear, Dialectic
-                                knowledge graphs persist, accumulating value
-                                over time.
-                            </li>
-                        </ul>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon" style="background: #d1fae5">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="#047857"
+                                stroke-width="2"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
+                                />
+                            </svg>
+                        </div>
+                        <h3 class="feature-title">Shared whiteboards</h3>
+                        <p class="feature-text">
+                            Share a link. Multiple people explore the same map
+                            and add their own branches in real time.
+                        </p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon" style="background: #ede9fe">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="#6d28d9"
+                                stroke-width="2"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
+                            </svg>
+                        </div>
+                        <h3 class="feature-title">
+                            Persistent &amp; searchable
+                        </h3>
+                        <p class="feature-text">
+                            Maps remain available, searchable, and linkable over
+                            time. Learning compounds instead of disappearing.
+                        </p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon" style="background: #fef3c7">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="#b45309"
+                                stroke-width="2"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                                />
+                            </svg>
+                        </div>
+                        <h3 class="feature-title">Portable output</h3>
+                        <p class="feature-text">
+                            Export to PDF, JSON, or Markdown. Your knowledge is
+                            yours &mdash; use it in notes, presentations, or
+                            documentation.
+                        </p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon" style="background: #ffe4e6">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="#be123c"
+                                stroke-width="2"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                                />
+                            </svg>
+                        </div>
+                        <h3 class="feature-title">AI-powered branching</h3>
+                        <p class="feature-text">
+                            Related Ideas, Pros &amp; Cons, Blend, and Explore
+                            All &mdash; one-click tools to expand any concept in
+                            multiple directions.
+                        </p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Call to Action Section -->
-        <section
-            id="cta"
-            style="
-                background: linear-gradient(
-                    135deg,
-                    var(--primary-color),
-                    var(--secondary-color)
-                );
-                color: white;
-                text-align: center;
-                padding: 4rem 0;
-            "
-        >
+        <!-- ── Testimonial ─────────────────────────────────── -->
+        <section id="testimonials" class="section">
             <div class="container">
-                <h2
-                    style="
-                        font-size: 2.5rem;
-                        margin-bottom: 1.5rem;
-                        color: white;
-                    "
-                >
-                    Ready to Transform Your Learning?
-                </h2>
-                <p
-                    style="
-                        font-size: 1.2rem;
-                        margin-bottom: 2rem;
-                        max-width: 700px;
-                        margin-left: auto;
-                        margin-right: auto;
-                    "
-                >
-                    Join our growing community of collaborative thinkers and
-                    discover a new way to explore ideas.
-                </p>
-                <div
-                    style="
-                        display: flex;
-                        justify-content: center;
-                        gap: 1rem;
-                        flex-wrap: wrap;
-                    "
-                >
-                    <a
-                        href="https://mudg.fly.dev"
-                        class="btn btn-primary"
-                        style="
-                            background-color: white;
-                            color: var(--primary-color);
-                            font-weight: 700;
-                        "
-                    >
-                        Try it Now
-                    </a>
-                    <a
-                        href="https://x.com/TJCBerman"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="btn btn-secondary"
-                    >
-                        Follow @TJCBerman
-                    </a>
+                <div class="section-header">
+                    <div class="section-eyebrow">💬 From Our Users</div>
+                    <h2 class="section-title">
+                        People are exploring ideas in a whole new&nbsp;way
+                    </h2>
+                </div>
+
+                <div class="testimonial-card">
+                    <div class="testimonial-quote-mark">&ldquo;</div>
+                    <p class="testimonial-text">
+                        An amazing free specialised AI tool to explore
+                        philosophical ideas around pretty much anything &mdash;
+                        from academic questions to films to&hellip; hamsters!
+                        All at one&rsquo;s fingertips, in a matter of seconds,
+                        with in-built tools for a sophisticated, yet accessible
+                        dialectic. Bravo!
+                    </p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">AK</div>
+                        <div>
+                            <div class="testimonial-name">
+                                Alexandra Konoplyanik
+                            </div>
+                            <div class="testimonial-role">
+                                <a
+                                    href="https://pfalondon.org/"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    >Philosophy for All</a
+                                >
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- Footer -->
-        <footer
-            style="
-                background-color: var(--dark-bg);
-                color: white;
-                padding: 2rem 0;
-                text-align: center;
-            "
-        >
+        <!-- ── For Educators ───────────────────────────────── -->
+        <section class="section section-alt">
             <div class="container">
-                <p>&copy; 2025 Dialectic - Multi-user Dialectical Graph</p>
-                <div style="margin-top: 1rem">
-                    <nav aria-label="Footer Navigation">
-                        <a
-                            href="#"
+                <div class="section-header">
+                    <div class="section-eyebrow">🎓 For Educators</div>
+                    <h2 class="section-title">
+                        Set up a classroom whiteboard in&nbsp;minutes
+                    </h2>
+                    <p class="section-desc">
+                        Create a structured idea map for a lesson, then share
+                        one URL so students explore the same concept together.
+                    </p>
+                </div>
+
+                <div class="educator-card">
+                    <div>
+                        <h3
                             style="
-                                color: white;
-                                margin: 0 10px;
-                                text-decoration: none;
+                                font-size: 1.15rem;
+                                font-weight: 700;
+                                color: var(--dark);
+                                margin-bottom: 1rem;
                             "
-                            >Home</a
                         >
+                            How it works for teachers
+                        </h3>
+                        <ol class="educator-steps">
+                            <li>
+                                <strong>Seed the map</strong> with key
+                                questions, claims, or source materials for the
+                                lesson.
+                            </li>
+                            <li>
+                                <strong>Guide exploration</strong> &mdash;
+                                direct students to specific nodes and encourage
+                                branching.
+                            </li>
+                            <li>
+                                <strong>Share one link</strong> &mdash; everyone
+                                works on the same whiteboard, building
+                                understanding together.
+                            </li>
+                            <li>
+                                <strong>Review &amp; export</strong> &mdash;
+                                browse the final map, export to PDF, or revisit
+                                it in the next class.
+                            </li>
+                        </ol>
+                        <div style="margin-top: 1.5rem">
+                            <a
+                                href="https://rationalgrid.ai"
+                                class="btn btn-primary"
+                                >Create a Class Whiteboard &rarr;</a
+                            >
+                        </div>
+                    </div>
+                    <div class="educator-sidebar">
+                        <p style="font-weight: 700; color: var(--dark)">
+                            Share this guide
+                        </p>
+                        <p>
+                            Copy the guide page URL into your LMS or class chat
+                            so students can learn the tool at their own pace.
+                        </p>
                         <a
-                            href="#features"
-                            style="
-                                color: white;
-                                margin: 0 10px;
-                                text-decoration: none;
-                            "
-                            >Features</a
+                            href="https://rationalgrid.ai/intro/how"
+                            class="btn btn-secondary"
+                            style="width: 100%"
+                            >View the Guide &rarr;</a
                         >
-                        <a
-                            href="#testimonials"
-                            style="
-                                color: white;
-                                margin: 0 10px;
-                                text-decoration: none;
-                            "
-                            >Testimonials</a
-                        >
-                        <a
-                            href="https://x.com/TJCBerman"
-                            style="
-                                color: white;
-                                margin: 0 10px;
-                                text-decoration: none;
-                            "
-                            >Twitter</a
-                        >
-                    </nav>
+                    </div>
                 </div>
             </div>
+        </section>
+
+        <!-- ── About ───────────────────────────────────────── -->
+        <section id="about" class="section">
+            <div class="container">
+                <div class="section-header">
+                    <div class="section-eyebrow">🔍 About</div>
+                    <h2 class="section-title">Why we built RationalGrid</h2>
+                </div>
+
+                <div
+                    style="
+                        max-width: 760px;
+                        margin: 0 auto;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 2rem;
+                    "
+                >
+                    <div
+                        style="
+                            background: var(--bg);
+                            border: 1px solid var(--border);
+                            border-radius: var(--radius);
+                            padding: 2rem;
+                        "
+                    >
+                        <h3
+                            style="
+                                font-size: 1.1rem;
+                                font-weight: 700;
+                                color: var(--dark);
+                                margin-bottom: 0.75rem;
+                            "
+                        >
+                            The Information Age Paradox
+                        </h3>
+                        <p
+                            style="
+                                font-size: 0.9rem;
+                                color: var(--text-secondary);
+                                line-height: 1.7;
+                            "
+                        >
+                            We live in an era of unprecedented information
+                            access, yet the quality of discourse often feels
+                            lacking. Echo chambers and motivated reasoning lead
+                            to people talking past each other rather than
+                            engaging meaningfully. We built RationalGrid because
+                            we believe meaningful exchanges happen when you can
+                            explore assumptions at a fundamental level and see
+                            how different starting points lead to different
+                            conclusions.
+                        </p>
+                    </div>
+
+                    <div
+                        style="
+                            background: var(--bg);
+                            border: 1px solid var(--border);
+                            border-radius: var(--radius);
+                            padding: 2rem;
+                        "
+                    >
+                        <h3
+                            style="
+                                font-size: 1.1rem;
+                                font-weight: 700;
+                                color: var(--dark);
+                                margin-bottom: 0.75rem;
+                            "
+                        >
+                            Active Learning, Not Passive Consumption
+                        </h3>
+                        <p
+                            style="
+                                font-size: 0.9rem;
+                                color: var(--text-secondary);
+                                line-height: 1.7;
+                            "
+                        >
+                            Language models provide unprecedented access to
+                            knowledge, but traditional chat interfaces limit
+                            their potential for deep learning. RationalGrid
+                            transforms AI interaction into an active,
+                            exploratory process where learners branch out in
+                            multiple directions, creating a personalized
+                            knowledge map that evolves with their curiosity.
+                        </p>
+                    </div>
+
+                    <div
+                        style="
+                            background: var(--bg);
+                            border: 1px solid var(--border);
+                            border-radius: var(--radius);
+                            padding: 2rem;
+                        "
+                    >
+                        <h3
+                            style="
+                                font-size: 1.1rem;
+                                font-weight: 700;
+                                color: var(--dark);
+                                margin-bottom: 0.75rem;
+                            "
+                        >
+                            Our Principles
+                        </h3>
+                        <div
+                            style="
+                                display: grid;
+                                grid-template-columns: repeat(
+                                    auto-fit,
+                                    minmax(200px, 1fr)
+                                );
+                                gap: 1rem;
+                                margin-top: 0.5rem;
+                            "
+                        >
+                            <div>
+                                <p
+                                    style="
+                                        font-size: 0.875rem;
+                                        font-weight: 700;
+                                        color: var(--dark);
+                                        margin-bottom: 0.25rem;
+                                    "
+                                >
+                                    Speed matters
+                                </p>
+                                <p
+                                    style="
+                                        font-size: 0.8rem;
+                                        color: var(--text-secondary);
+                                        line-height: 1.5;
+                                    "
+                                >
+                                    Cognitive flow is easily disrupted. Every
+                                    interaction is optimized to minimize
+                                    latency.
+                                </p>
+                            </div>
+                            <div>
+                                <p
+                                    style="
+                                        font-size: 0.875rem;
+                                        font-weight: 700;
+                                        color: var(--dark);
+                                        margin-bottom: 0.25rem;
+                                    "
+                                >
+                                    Simplicity enables depth
+                                </p>
+                                <p
+                                    style="
+                                        font-size: 0.8rem;
+                                        color: var(--text-secondary);
+                                        line-height: 1.5;
+                                    "
+                                >
+                                    Complex ideas don&rsquo;t need complex
+                                    interfaces. Less UI, more thinking.
+                                </p>
+                            </div>
+                            <div>
+                                <p
+                                    style="
+                                        font-size: 0.875rem;
+                                        font-weight: 700;
+                                        color: var(--dark);
+                                        margin-bottom: 0.25rem;
+                                    "
+                                >
+                                    Persistence creates value
+                                </p>
+                                <p
+                                    style="
+                                        font-size: 0.8rem;
+                                        color: var(--text-secondary);
+                                        line-height: 1.5;
+                                    "
+                                >
+                                    Knowledge graphs accumulate value over time.
+                                    Your work is never lost.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center">
+                        <p
+                            style="
+                                font-size: 0.875rem;
+                                color: var(--text-muted);
+                            "
+                        >
+                            An open source project by
+                            <a
+                                href="https://github.com/TomBers"
+                                style="
+                                    color: var(--primary);
+                                    font-weight: 600;
+                                    text-decoration: none;
+                                "
+                                >Tom Berman</a
+                            >.
+                            <a
+                                href="https://github.com/TomBers/dialectic"
+                                style="
+                                    color: var(--primary);
+                                    font-weight: 600;
+                                    text-decoration: none;
+                                    margin-left: 0.5rem;
+                                "
+                                >View source on GitHub &rarr;</a
+                            >
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── CTA ─────────────────────────────────────────── -->
+        <section class="cta">
+            <div class="cta-pattern"></div>
+            <div class="container cta-inner">
+                <h2 class="cta-title">
+                    Ready to build your first knowledge&nbsp;map?
+                </h2>
+                <p class="cta-desc">
+                    Pick a starter question or ask your own. Your whiteboard is
+                    one click away &mdash; free, no account required.
+                </p>
+                <div class="cta-buttons">
+                    <a
+                        href="https://rationalgrid.ai"
+                        class="btn btn-white btn-lg"
+                        >Start Exploring</a
+                    >
+                    <a
+                        href="https://rationalgrid.ai/intro/how"
+                        class="btn btn-ghost btn-lg"
+                        >Read the Guide</a
+                    >
+                    <a
+                        href="https://x.com/TJCBerman"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="btn btn-ghost btn-lg"
+                        >Follow @TJCBerman</a
+                    >
+                </div>
+            </div>
+        </section>
+
+        <!-- ── Footer ──────────────────────────────────────── -->
+        <footer class="footer">
+            <div class="container footer-inner">
+                <p>&copy; 2025 RationalGrid</p>
+                <nav class="footer-links" aria-label="Footer navigation">
+                    <a href="#">Home</a>
+                    <a href="#how-it-works">How It Works</a>
+                    <a href="#features">Features</a>
+                    <a href="#showcase">See It</a>
+                    <a href="#testimonials">Testimonials</a>
+                    <a href="#about">About</a>
+                    <a href="https://rationalgrid.ai/intro/how">Guide</a>
+                    <a
+                        href="https://github.com/TomBers/dialectic"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        >GitHub</a
+                    >
+                    <a
+                        href="https://x.com/TJCBerman"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        >Twitter</a
+                    >
+                </nav>
+            </div>
         </footer>
+
+        <!-- ── Video Modal ─────────────────────────────────── -->
         <div id="videoModal" class="modal-overlay">
             <div class="modal-content">
-                <button class="close-modal">&times;</button>
+                <button class="close-modal" aria-label="Close video">
+                    &times;
+                </button>
                 <video id="modalVideo" controls>
                     <source src="media/videos/MuDG_nav.mp4" type="video/mp4" />
                     Your browser does not support the video tag.
@@ -1345,184 +2317,125 @@
             </div>
         </div>
 
+        <!-- ── Scripts ─────────────────────────────────────── -->
         <script>
             document.addEventListener("DOMContentLoaded", function () {
-                const originalVideo =
-                    document.getElementById("expandableVideo");
+                // ── Mobile menu toggle
+                const menuToggle = document.getElementById("menu-toggle");
+                const navMenu = document.getElementById("nav-menu");
+
+                menuToggle.addEventListener("click", function () {
+                    navMenu.classList.toggle("active");
+                    const expanded = navMenu.classList.contains("active");
+                    menuToggle.setAttribute("aria-expanded", expanded);
+                });
+
+                // Close menu when a link is clicked
+                navMenu.querySelectorAll(".nav-link").forEach(function (link) {
+                    link.addEventListener("click", function () {
+                        navMenu.classList.remove("active");
+                        menuToggle.setAttribute("aria-expanded", "false");
+                    });
+                });
+
+                // ── Navbar scroll shadow
+                const navbar = document.getElementById("navbar");
+                window.addEventListener("scroll", function () {
+                    if (window.scrollY > 10) {
+                        navbar.classList.add("scrolled");
+                    } else {
+                        navbar.classList.remove("scrolled");
+                    }
+                });
+
+                // ── Video modal
                 const heroVideo = document.getElementById("heroVideo");
+                const heroWrapper = document.getElementById("heroMediaWrapper");
+                const expandableVideo =
+                    document.getElementById("expandableVideo");
                 const videoModal = document.getElementById("videoModal");
                 const modalVideo = document.getElementById("modalVideo");
                 const closeBtn = document.querySelector(".close-modal");
 
-                // Add meta description based on content if user scrolls
-                const updateMetaDescription = () => {
-                    if (window.scrollY > 300) {
-                        const metaDescription = document.querySelector(
-                            'meta[name="description"]',
-                        );
-                        if (metaDescription) {
-                            metaDescription.setAttribute(
-                                "content",
-                                "Dialectic MuDG - Visualize knowledge graphs, collaborate in real-time, and leverage AI-powered insights to explore complex ideas.",
-                            );
-                        }
-                    }
-                };
-
-                window.addEventListener("scroll", updateMetaDescription);
-
-                // Function to open modal and play video
-                function openVideoModal() {
+                function openModal(sourceVideo) {
                     videoModal.style.display = "flex";
-                    modalVideo.currentTime = originalVideo.currentTime;
+                    const modalSource = modalVideo.querySelector("source");
+                    const originalSource = sourceVideo.querySelector("source");
+                    if (originalSource) {
+                        modalSource.src = originalSource.src;
+                        modalVideo.load();
+                    }
+                    modalVideo.currentTime = sourceVideo.currentTime;
                     modalVideo.play();
-                    originalVideo.pause();
+                    sourceVideo.pause();
                 }
 
-                // Function to close modal
-                function closeVideoModal() {
+                function closeModal() {
                     videoModal.style.display = "none";
                     modalVideo.pause();
-                    // Determine which video was playing before and resume it
-                    if (originalVideo.paused) {
-                        originalVideo.play();
-                    } else if (heroVideo.paused) {
-                        heroVideo.play();
-                    }
+                    // Resume any paused videos
+                    if (heroVideo && heroVideo.paused) heroVideo.play();
+                    if (expandableVideo && expandableVideo.paused)
+                        expandableVideo.play();
                 }
 
-                // Function to open modal for hero video
-                function openHeroVideoModal() {
-                    videoModal.style.display = "flex";
-                    modalVideo.currentTime = heroVideo.currentTime;
-                    modalVideo.play();
-                    heroVideo.pause();
+                if (heroWrapper) {
+                    heroWrapper.addEventListener("click", function () {
+                        openModal(heroVideo);
+                    });
+                    heroWrapper.addEventListener("keydown", function (e) {
+                        if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            openModal(heroVideo);
+                        }
+                    });
                 }
 
-                // Add click event listeners
-                originalVideo.addEventListener("click", openVideoModal);
-                originalVideo.parentElement
-                    .querySelector(".video-overlay")
-                    .addEventListener("click", openVideoModal);
+                if (expandableVideo) {
+                    expandableVideo.addEventListener("click", function () {
+                        openModal(expandableVideo);
+                    });
+                }
 
-                heroVideo.addEventListener("click", openHeroVideoModal);
-                heroVideo.parentElement
-                    .querySelector(".video-overlay")
-                    .addEventListener("click", openHeroVideoModal);
+                if (closeBtn) {
+                    closeBtn.addEventListener("click", closeModal);
+                }
 
-                closeBtn.addEventListener("click", function () {
-                    videoModal.style.display = "none";
-                    modalVideo.pause();
-                    // Check which video was playing and resume it
-                    if (heroVideo.paused) {
-                        heroVideo.play();
-                    }
-                    if (originalVideo.paused) {
-                        originalVideo.play();
+                videoModal.addEventListener("click", function (e) {
+                    if (e.target === videoModal) {
+                        closeModal();
                     }
                 });
 
-                // Add hover class for better visual indication
-                originalVideo.addEventListener("mouseover", function () {
-                    this.classList.add("video-hover");
-                });
-
-                originalVideo.addEventListener("mouseout", function () {
-                    this.classList.remove("video-hover");
-                });
-
-                heroVideo.addEventListener("mouseover", function () {
-                    this.classList.add("video-hover");
-                });
-
-                heroVideo.addEventListener("mouseout", function () {
-                    this.classList.remove("video-hover");
-                });
-
-                heroVideo.addEventListener("mouseover", function () {
-                    this.classList.add("video-hover");
-                });
-
-                heroVideo.addEventListener("mouseout", function () {
-                    this.classList.remove("video-hover");
-                });
-
-                // Close modal when clicking outside the video
-                videoModal.addEventListener("click", function (event) {
-                    if (event.target === videoModal) {
-                        videoModal.style.display = "none";
-                        modalVideo.pause();
-                        // Resume whichever video was playing before
-                        if (heroVideo.paused) {
-                            heroVideo.play();
-                        }
-                        if (originalVideo.paused) {
-                            originalVideo.play();
-                        }
-                    }
-                });
-
-                // Add lazy loading to images that aren't in the viewport
-                const lazyLoadImages = () => {
-                    const images = document.querySelectorAll(
-                        'img[loading="lazy"]',
-                    );
-                    if ("IntersectionObserver" in window) {
-                        const imageObserver = new IntersectionObserver(
-                            (entries) => {
-                                entries.forEach((entry) => {
-                                    if (entry.isIntersecting) {
-                                        const image = entry.target;
-                                        image.src = image.dataset.src;
-                                        imageObserver.unobserve(image);
-                                    }
-                                });
-                            },
-                        );
-
-                        images.forEach((image) => imageObserver.observe(image));
-                    }
-                };
-
-                lazyLoadImages();
-
-                // Close modal with Escape key
-                document.addEventListener("keydown", function (event) {
+                document.addEventListener("keydown", function (e) {
                     if (
-                        event.key === "Escape" &&
+                        e.key === "Escape" &&
                         videoModal.style.display === "flex"
                     ) {
-                        closeVideoModal();
+                        closeModal();
                     }
                 });
 
-                // Make sure the video source in modal matches the video that was clicked
-                heroVideo.addEventListener("click", function () {
-                    const modalVideoSource =
-                        document.querySelector("#modalVideo source");
-                    modalVideoSource.src = "media/videos/MuDG_nav.mp4";
-                    modalVideo.load();
-                });
-
-                originalVideo.addEventListener("click", function () {
-                    const modalVideoSource =
-                        document.querySelector("#modalVideo source");
-                    modalVideoSource.src = "media/videos/MuDG_nav.mp4";
-                    modalVideo.load();
-                });
-                heroVideo.addEventListener("click", function () {
-                    const modalVideoSource =
-                        document.querySelector("#modalVideo source");
-                    modalVideoSource.src = "media/videos/MuDG_nav.mp4";
-                    modalVideo.load();
-                });
-
-                originalVideo.addEventListener("click", function () {
-                    const modalVideoSource =
-                        document.querySelector("#modalVideo source");
-                    modalVideoSource.src = "media/videos/MuDG_nav.mp4";
-                    modalVideo.load();
-                });
+                // ── Smooth scroll for anchor links
+                document
+                    .querySelectorAll('a[href^="#"]')
+                    .forEach(function (anchor) {
+                        anchor.addEventListener("click", function (e) {
+                            const href = this.getAttribute("href");
+                            // Ignore empty or "#" hrefs to avoid invalid selectors
+                            if (!href || href === "#") {
+                                return;
+                            }
+                            const target = document.querySelector(href);
+                            if (target) {
+                                e.preventDefault();
+                                target.scrollIntoView({
+                                    behavior: "smooth",
+                                    block: "start",
+                                });
+                            }
+                        });
+                    });
             });
         </script>
     </body>

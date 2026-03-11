@@ -1,4 +1,4 @@
-# Dialectic
+# RationalGrid
 
 To start your Phoenix server:
 

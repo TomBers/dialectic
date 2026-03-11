@@ -1658,7 +1658,7 @@ defmodule DialecticWeb.GraphLive do
         "datePublished" => DateTime.to_iso8601(graph_struct.inserted_at),
         "publisher" => %{
           "@type" => "Organization",
-          "name" => "MuDG",
+          "name" => "RationalGrid",
           "url" => base_url
         },
         "keywords" => graph_struct.tags || [],
