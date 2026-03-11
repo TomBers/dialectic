@@ -572,7 +572,7 @@ defmodule Dialectic.AccountsTest do
       assert user1.provider_id == "concurrent123"
     end
 
-    test "validates email uniqueness across all users" do
+    test "links OAuth provider to existing user with same email" do
       email = "unique@example.com"
 
       google_attrs = %{
@@ -590,11 +590,33 @@ defmodule Dialectic.AccountsTest do
       }
 
       # First OAuth user succeeds
-      assert {:ok, _google_user} = Accounts.find_or_create_oauth_user(google_attrs)
+      assert {:ok, google_user} = Accounts.find_or_create_oauth_user(google_attrs)
+      assert google_user.provider == "google"
+      assert google_user.provider_id == "google123"
 
-      # Second OAuth user with same email fails due to unique email constraint
-      assert {:error, changeset} = Accounts.find_or_create_oauth_user(github_attrs)
-      assert "has already been taken" in errors_on(changeset).email
+      # Second OAuth provider with same email links to existing user
+      assert {:ok, updated_user} = Accounts.find_or_create_oauth_user(github_attrs)
+      assert updated_user.id == google_user.id
+      assert updated_user.provider == "github"
+      assert updated_user.provider_id == "github123"
+      assert updated_user.access_token == "github_token"
+    end
+
+    test "links OAuth provider to existing email/password user" do
+      user_fixture(%{email: "existing@example.com"})
+
+      oauth_attrs = %{
+        email: "existing@example.com",
+        provider: "google",
+        provider_id: "google456",
+        access_token: "google_token"
+      }
+
+      assert {:ok, linked_user} = Accounts.find_or_create_oauth_user(oauth_attrs)
+      assert linked_user.email == "existing@example.com"
+      assert linked_user.provider == "google"
+      assert linked_user.provider_id == "google456"
+      assert linked_user.access_token == "google_token"
     end
   end
 

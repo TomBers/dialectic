@@ -110,21 +110,38 @@ defmodule Dialectic.Accounts do
   def find_or_create_oauth_user(attrs) do
     provider = attrs[:provider] || attrs["provider"]
     provider_id = attrs[:provider_id] || attrs["provider_id"]
+    email = attrs[:email] || attrs["email"]
+    access_token = attrs[:access_token] || attrs["access_token"]
 
     case get_user_by_provider(provider, provider_id) do
       nil ->
-        %User{}
-        |> User.oauth_changeset(attrs)
-        |> maybe_put_default_username()
-        |> Repo.insert(
-          on_conflict: {:replace, [:access_token, :updated_at]},
-          conflict_target: [:provider, :provider_id]
-        )
+        # No user found by provider — check if a user with this email already exists
+        case get_user_by_email(email) do
+          nil ->
+            # Brand new user — create via OAuth
+            %User{}
+            |> User.oauth_changeset(attrs)
+            |> maybe_put_default_username()
+            |> Repo.insert(
+              on_conflict: {:replace, [:access_token, :updated_at]},
+              conflict_target: [:provider, :provider_id]
+            )
+
+          existing_user ->
+            # Existing email/password user — link OAuth provider to their account
+            existing_user
+            |> Ecto.Changeset.change(%{
+              provider: provider,
+              provider_id: provider_id,
+              access_token: access_token
+            })
+            |> Repo.update()
+        end
 
       user ->
         # Update access token if provided
         user
-        |> Ecto.Changeset.change(access_token: attrs[:access_token] || attrs["access_token"])
+        |> Ecto.Changeset.change(access_token: access_token)
         |> Repo.update()
     end
   end
