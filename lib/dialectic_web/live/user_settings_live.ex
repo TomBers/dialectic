@@ -51,7 +51,7 @@ defmodule DialecticWeb.UserSettingsLive do
                 <div>
                   <h2 class="text-base font-semibold text-zinc-900">Profile</h2>
                   <p class="mt-1 text-sm text-zinc-600">
-                    Customize how others see you on MuDG. Your profile is publicly visible at
+                    Customize how others see you on RationalGrid. Your profile is publicly visible at
                     <.link
                       navigate={~p"/u/#{@effective_username}"}
                       class="font-medium text-indigo-600 hover:text-indigo-500"

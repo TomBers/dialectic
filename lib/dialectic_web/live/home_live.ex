@@ -256,7 +256,7 @@ defmodule DialecticWeb.HomeLive do
                 <div class="flex flex-col items-center text-center gap-7">
                   <div class="space-y-4">
                     <h1 class="text-4xl font-bold tracking-tight text-white sm:text-5xl">
-                      MuDG
+                      RationalGrid
                     </h1>
                     <p class="text-xl font-medium text-indigo-100">
                       A shared AI-powered whiteboard; explore ideas deeply, structure thinking, and sharpen arguments.
@@ -499,7 +499,7 @@ defmodule DialecticWeb.HomeLive do
       category == "deep_dives" -> "Deep Dives"
       category == "seedlings" -> "Seedlings"
       is_binary(search) and search != "" -> "Search: #{search}"
-      true -> "MuDG"
+      true -> "Rationalgrid"
     end
   end
 end
