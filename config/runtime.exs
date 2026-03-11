@@ -74,7 +74,8 @@ if config_env() == :prod do
     check_origin: [
       "https://#{host}",
       "https://rationalgrid.ai",
-      "https://www.rationalgrid.ai"
+      "https://www.rationalgrid.ai",
+      "https://mudg.fly.dev"
     ],
     secret_key_base: secret_key_base,
     force_ssl: [hsts: true, rewrite_on: [:x_forwarded_proto]]
