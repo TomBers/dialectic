@@ -51,7 +51,7 @@
 
     <%= if assigns[:json_ld] do %>
       <script type="application/ld+json">
-        {raw(@json_ld)}
+        <%= raw(@json_ld) %>
       </script>
     <% end %>
 
