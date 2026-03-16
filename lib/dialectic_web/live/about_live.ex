@@ -12,7 +12,59 @@ defmodule DialecticWeb.AboutLive do
      |> assign(
        :page_description,
        "Learn about #{Dialectic.Branding.app_name()}'s mission to improve public understanding and discourse using AI-powered collaborative knowledge mapping."
-     )}
+     )
+     |> assign(
+       :feedback_form,
+       to_form(
+         %{
+           "feedback_type" => "Comments",
+           "feedback" => "",
+           "suggestions" => "",
+           "name" => "",
+           "email" => ""
+         },
+         as: :feedback
+       )
+     )
+     |> assign(:feedback_submitted, false)
+     |> assign(:feedback_submitting, false)}
+  end
+
+  @impl true
+  def handle_event("submit_feedback", %{"feedback" => params}, socket) do
+    feedback = Map.get(params, "feedback", "")
+
+    if String.trim(feedback) == "" do
+      {:noreply, put_flash(socket, :error, "Please enter some feedback before submitting.")}
+    else
+      {:noreply,
+       socket
+       |> assign(:feedback_submitting, true)
+       |> start_async(:submit_feedback, fn -> Dialectic.Feedback.submit(params) end)}
+    end
+  end
+
+  @impl true
+  def handle_async(:submit_feedback, {:ok, {:ok, :submitted}}, socket) do
+    {:noreply,
+     socket
+     |> assign(:feedback_submitting, false)
+     |> assign(:feedback_submitted, true)
+     |> put_flash(:info, "Thank you for your feedback!")}
+  end
+
+  def handle_async(:submit_feedback, {:ok, {:error, _reason}}, socket) do
+    {:noreply,
+     socket
+     |> assign(:feedback_submitting, false)
+     |> put_flash(:error, "Something went wrong submitting your feedback. Please try again.")}
+  end
+
+  def handle_async(:submit_feedback, {:exit, _reason}, socket) do
+    {:noreply,
+     socket
+     |> assign(:feedback_submitting, false)
+     |> put_flash(:error, "Something went wrong submitting your feedback. Please try again.")}
   end
 
   @impl true
@@ -463,7 +515,137 @@ defmodule DialecticWeb.AboutLive do
       </div>
     </section>
 
-    <%!-- 10. CTA / Footer --%>
+    <%!-- 10. Feedback Form --%>
+    <section class="bg-slate-50 py-20" id="feedback">
+      <div class="mx-auto max-w-2xl px-6">
+        <div class="text-center mb-10">
+          <div class="flex items-center justify-center gap-3 mb-4">
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#3a0ca3] text-white">
+              <.icon name="hero-chat-bubble-left-ellipsis" class="w-5 h-5" />
+            </div>
+            <h2 class="text-3xl font-bold text-gray-900">We'd Love Your Feedback</h2>
+          </div>
+          <p class="text-gray-500">
+            Help us improve {Dialectic.Branding.app_name()} — tell us what's working, what's not, or what you'd like to see.
+          </p>
+        </div>
+
+        <%= if @feedback_submitted do %>
+          <div class="rounded-2xl bg-white p-10 shadow-sm ring-1 ring-gray-200 text-center">
+            <div class="flex items-center justify-center mb-4">
+              <div class="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                <.icon name="hero-check" class="w-7 h-7" />
+              </div>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Thank you!</h3>
+            <p class="text-gray-500">
+              Your feedback has been submitted. We really appreciate you taking the time.
+            </p>
+          </div>
+        <% else %>
+          <.form
+            for={@feedback_form}
+            id="feedback-form"
+            phx-submit="submit_feedback"
+            class="rounded-2xl bg-white p-8 shadow-sm ring-1 ring-gray-200 space-y-6"
+          >
+            <div>
+              <label for="feedback_type" class="block text-sm font-semibold text-gray-800 mb-2">
+                Feedback Type
+              </label>
+              <select
+                id="feedback_type"
+                name="feedback[feedback_type]"
+                class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm focus:border-[#4361ee] focus:ring-2 focus:ring-[#4361ee]/20"
+              >
+                <option value="Comments">General Comment</option>
+                <option value="Questions">Question</option>
+                <option value="Feature Request">Feature Request</option>
+                <option value="Bug Reports">Bug Report</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="feedback_text" class="block text-sm font-semibold text-gray-800 mb-2">
+                Feedback <span class="text-red-500">*</span>
+              </label>
+              <textarea
+                id="feedback_text"
+                name="feedback[feedback]"
+                rows="4"
+                required
+                placeholder="What's on your mind?"
+                class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm focus:border-[#4361ee] focus:ring-2 focus:ring-[#4361ee]/20 placeholder:text-gray-400"
+              ></textarea>
+            </div>
+
+            <div>
+              <label for="feedback_suggestions" class="block text-sm font-semibold text-gray-800 mb-2">
+                Suggestions for improvement
+              </label>
+              <textarea
+                id="feedback_suggestions"
+                name="feedback[suggestions]"
+                rows="2"
+                placeholder="Any ideas on how we could make things better?"
+                class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm focus:border-[#4361ee] focus:ring-2 focus:ring-[#4361ee]/20 placeholder:text-gray-400"
+              ></textarea>
+            </div>
+
+            <div class="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label for="feedback_name" class="block text-sm font-semibold text-gray-800 mb-2">
+                  Name <span class="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  id="feedback_name"
+                  name="feedback[name]"
+                  placeholder="Your name"
+                  class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm focus:border-[#4361ee] focus:ring-2 focus:ring-[#4361ee]/20 placeholder:text-gray-400"
+                />
+              </div>
+              <div>
+                <label for="feedback_email" class="block text-sm font-semibold text-gray-800 mb-2">
+                  Email <span class="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <input
+                  type="email"
+                  id="feedback_email"
+                  name="feedback[email]"
+                  placeholder="you@example.com"
+                  class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm focus:border-[#4361ee] focus:ring-2 focus:ring-[#4361ee]/20 placeholder:text-gray-400"
+                />
+              </div>
+            </div>
+
+            <div class="pt-2">
+              <button
+                type="submit"
+                disabled={@feedback_submitting}
+                class={[
+                  "w-full inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold text-white shadow-sm transition",
+                  "bg-[#3a0ca3] hover:bg-[#4361ee] focus:outline-none focus:ring-2 focus:ring-[#4361ee]/50 focus:ring-offset-2",
+                  @feedback_submitting && "opacity-60 cursor-not-allowed"
+                ]}
+              >
+                <%= if @feedback_submitting do %>
+                  <.icon name="hero-arrow-path" class="w-4 h-4 animate-spin" /> Submitting...
+                <% else %>
+                  <.icon name="hero-paper-airplane" class="w-4 h-4" /> Send Feedback
+                <% end %>
+              </button>
+            </div>
+
+            <p class="text-xs text-gray-400 text-center">
+              Your feedback is anonymous unless you choose to provide your name or email.
+            </p>
+          </.form>
+        <% end %>
+      </div>
+    </section>
+
+    <%!-- 11. CTA / Footer --%>
     <section class="bg-gradient-to-br from-[#3a0ca3] to-[#4361ee] py-20 text-white">
       <div class="mx-auto max-w-3xl px-6 text-center">
         <h2 class="text-3xl sm:text-4xl font-bold mb-4">Ready to explore?</h2>

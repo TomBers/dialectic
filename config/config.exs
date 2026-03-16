@@ -37,6 +37,17 @@ config :dialectic, :branding,
   github_url: "https://github.com/TomBers/dialectic",
   github_profile_url: "https://github.com/TomBers"
 
+# Google Form feedback — POST submissions to a Google Form without needing email
+config :dialectic, :feedback,
+  form_id: "1FAIpQLScenRphrhdZmcfswnIPwve_4-AYtHio2qipH3CAFeTkoWB_jw",
+  fields: %{
+    feedback_type: "entry.1591633300",
+    feedback: "entry.326955045",
+    suggestions: "entry.1696159737",
+    name: "entry.485428648",
+    email: "entry.879531967"
+  }
+
 # Configures the endpoint
 config :dialectic, DialecticWeb.Endpoint,
   url: [host: "localhost"],
