@@ -105,6 +105,19 @@
             <.icon name="hero-book-open" class="h-3.5 w-3.5" />
             <span class="hidden sm:inline">Guide</span>
           </.link>
+          <.link
+            href={~p"/about"}
+            class={[
+              "inline-flex items-center gap-1 rounded-md px-2 py-1 font-medium transition",
+              if(active_path == "/about",
+                do: "bg-white/20 text-white",
+                else: "text-white/70 hover:text-white hover:bg-white/10"
+              )
+            ]}
+          >
+            <.icon name="hero-information-circle" class="h-3.5 w-3.5" />
+            <span class="hidden sm:inline">About</span>
+          </.link>
           <%= if @current_user do %>
             <.link
               href={~p"/my/ideas"}
