@@ -1642,7 +1642,7 @@ defmodule DialecticWeb.GraphLive do
     canonical = base_url <> "/g/#{graph_struct.slug}"
 
     description =
-      "Explore the interactive map for \"#{graph_struct.title}\". Visualize arguments, discover connections, and collaborate on RationalGrid."
+      "Explore the interactive map for \"#{graph_struct.title}\". Visualize arguments, discover connections, and collaborate on #{Dialectic.Branding.app_name()}."
 
     # JSON-LD structured data for search engine rich results
     json_ld =
@@ -1658,7 +1658,7 @@ defmodule DialecticWeb.GraphLive do
         "datePublished" => DateTime.to_iso8601(graph_struct.inserted_at),
         "publisher" => %{
           "@type" => "Organization",
-          "name" => "RationalGrid",
+          "name" => Dialectic.Branding.app_name(),
           "url" => base_url
         },
         "keywords" => graph_struct.tags || [],

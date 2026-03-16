@@ -8,7 +8,7 @@
       name="description"
       content={
         assigns[:page_description] ||
-          "Turn messy linear chat into visual maps. Explore complex topics, reason together, and build a living knowledge base with RationalGrid."
+          "Turn messy linear chat into visual maps. Explore complex topics, reason together, and build a living knowledge base with #{Dialectic.Branding.app_name()}."
       }
     />
     <%= if assigns[:noindex] do %>
@@ -19,17 +19,20 @@
       href={assigns[:canonical_url] || DialecticWeb.Endpoint.url() <> (@conn.request_path || "")}
     />
     <meta property="og:url" content={DialecticWeb.Endpoint.url() <> (@conn.request_path || "")} />
-    <meta property="og:site_name" content="RationalGrid" />
+    <meta property="og:site_name" content={Dialectic.Branding.app_name()} />
     <meta property="og:type" content={assigns[:og_type] || "website"} />
     <meta
       property="og:title"
-      content={assigns[:page_title] || "RationalGrid - Collaborative AI-Augmented Learning"}
+      content={
+        assigns[:page_title] ||
+          "#{Dialectic.Branding.app_name()} - Collaborative AI-Augmented Learning"
+      }
     />
     <meta
       property="og:description"
       content={
         assigns[:page_description] ||
-          "Turn messy linear chat into visual maps. Explore complex topics, reason together, and build a living knowledge base with RationalGrid."
+          "Turn messy linear chat into visual maps. Explore complex topics, reason together, and build a living knowledge base with #{Dialectic.Branding.app_name()}."
       }
     />
     <%= if assigns[:og_image] do %>
@@ -39,13 +42,16 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta
       name="twitter:title"
-      content={assigns[:page_title] || "RationalGrid - Collaborative AI-Augmented Learning"}
+      content={
+        assigns[:page_title] ||
+          "#{Dialectic.Branding.app_name()} - Collaborative AI-Augmented Learning"
+      }
     />
     <meta
       name="twitter:description"
       content={
         assigns[:page_description] ||
-          "Turn messy linear chat into visual maps. Explore complex topics, reason together, and build a living knowledge base with RationalGrid."
+          "Turn messy linear chat into visual maps. Explore complex topics, reason together, and build a living knowledge base with #{Dialectic.Branding.app_name()}."
       }
     />
 
@@ -55,7 +61,7 @@
       </script>
     <% end %>
 
-    <.live_title default="RationalGrid" suffix=" : Explore Ideas Together">
+    <.live_title default={Dialectic.Branding.app_name()} suffix=" : Explore Ideas Together">
       {assigns[:page_title]}
     </.live_title>
     <link rel="icon" type="image/svg+xml" href={~p"/images/favicon.svg"} />
@@ -87,8 +93,14 @@
             href={~p"/"}
             class="flex items-center gap-2 text-white hover:text-white/90 transition"
           >
-            <img src={~p"/images/favicon.svg"} alt="RationalGrid" class="h-5 w-5" />
-            <span class="font-bold tracking-tight hidden sm:inline">RationalGrid</span>
+            <img
+              src={~p"/images/favicon.svg"}
+              alt={Dialectic.Branding.app_name()}
+              class="h-5 w-5"
+            />
+            <span class="font-bold tracking-tight hidden sm:inline">
+              {Dialectic.Branding.app_name()}
+            </span>
           </.link>
         </div>
         <div class="flex items-center gap-1 sm:gap-2">

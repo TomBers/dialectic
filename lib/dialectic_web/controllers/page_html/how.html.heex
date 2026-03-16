@@ -621,10 +621,10 @@
     <div class="rounded-2xl bg-gray-50 border border-gray-200 p-8 sm:p-12">
       <div class="mx-auto max-w-2xl text-center space-y-4">
         <h2 class="text-2xl font-bold tracking-tight text-gray-900">
-          About RationalGrid
+          About {Dialectic.Branding.app_name()}
         </h2>
         <p class="text-gray-600">
-          Built on a simple idea: learning branches, loops, and connects. RationalGrid transforms AI conversations into visual, persistent knowledge maps so insight accumulates instead of disappearing in a scrollback.
+          Built on a simple idea: learning branches, loops, and connects. {Dialectic.Branding.app_name()} transforms AI conversations into visual, persistent knowledge maps so insight accumulates instead of disappearing in a scrollback.
         </p>
         <div class="pt-2 text-sm text-gray-500">
           An open source project by <a
@@ -662,7 +662,7 @@
           <.icon name="hero-eye" class="h-4 w-4" /> Browse existing maps
         </a>
         <a
-          href="mailto:hello@rationalgrid.ai"
+          href={"mailto:" <> Dialectic.Branding.contact_email()}
           class="inline-flex items-center gap-2 rounded-full bg-white/10 text-white px-6 py-2.5 text-sm font-semibold ring-1 ring-white/20 hover:bg-white/15 transition"
         >
           <.icon name="hero-envelope" class="h-4 w-4" /> Contact us

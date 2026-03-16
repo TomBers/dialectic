@@ -51,7 +51,7 @@ defmodule DialecticWeb.UserSettingsLive do
                 <div>
                   <h2 class="text-base font-semibold text-zinc-900">Profile</h2>
                   <p class="mt-1 text-sm text-zinc-600">
-                    Customize how others see you on RationalGrid. Your profile is publicly visible at
+                    Customize how others see you on {Dialectic.Branding.app_name()}. Your profile is publicly visible at
                     <.link
                       navigate={~p"/u/#{@effective_username}"}
                       class="font-medium text-indigo-600 hover:text-indigo-500"
@@ -118,7 +118,7 @@ defmodule DialecticWeb.UserSettingsLive do
                       field={@profile_form[:bio]}
                       type="textarea"
                       label="Bio"
-                      placeholder="Tell people a bit about yourself and what you explore on RationalGrid..."
+                      placeholder={"Tell people a bit about yourself and what you explore on #{Dialectic.Branding.app_name()}..."}
                       class="mt-2 block w-full rounded-lg border border-zinc-200 bg-white text-zinc-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm sm:leading-6"
                     />
 

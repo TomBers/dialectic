@@ -243,7 +243,7 @@ defmodule DialecticWeb.ShareModalComp do
                       </label>
                       <div class="flex space-x-2">
                         <a
-                          href={"https://twitter.com/intent/tweet?text=#{URI.encode_www_form("Check out this map on RationalGrid: " <> @graph_struct.title)}&url=#{URI.encode_www_form(share_url(@graph_struct, @share_node && @selected_node))}"}
+                          href={"https://twitter.com/intent/tweet?text=#{URI.encode_www_form("Check out this map on #{Dialectic.Branding.app_name()}: " <> @graph_struct.title)}&url=#{URI.encode_www_form(share_url(@graph_struct, @share_node && @selected_node))}"}
                           target="_blank"
                           rel="noopener noreferrer"
                           class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"

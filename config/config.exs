@@ -29,6 +29,14 @@ config :dialectic,
   generators: [timestamp_type: :utc_datetime],
   env: config_env()
 
+# Branding — single source of truth for app name, emails, and links
+config :dialectic, :branding,
+  app_name: "RationalGrid",
+  contact_email: "hello@rationalgrid.ai",
+  noreply_email: "no-reply@rationalgrid.ai",
+  github_url: "https://github.com/TomBers/dialectic",
+  github_profile_url: "https://github.com/TomBers"
+
 # Configures the endpoint
 config :dialectic, DialecticWeb.Endpoint,
   url: [host: "localhost"],

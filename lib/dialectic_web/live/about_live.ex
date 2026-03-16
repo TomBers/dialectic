@@ -7,10 +7,11 @@ defmodule DialecticWeb.AboutLive do
   def mount(_params, _session, socket) do
     {:ok,
      socket
-     |> assign(:page_title, "About RationalGrid")
+     |> assign(:page_title, "About #{Dialectic.Branding.app_name()}")
+     |> assign(:contact_mailto, Dialectic.Branding.contact_mailto())
      |> assign(
        :page_description,
-       "Learn about RationalGrid's mission to improve public understanding and discourse using AI-powered collaborative knowledge mapping."
+       "Learn about #{Dialectic.Branding.app_name()}'s mission to improve public understanding and discourse using AI-powered collaborative knowledge mapping."
      )}
   end
 
@@ -25,10 +26,10 @@ defmodule DialecticWeb.AboutLive do
       </div>
       <div class="relative mx-auto max-w-5xl px-6 py-24 sm:py-32 text-center">
         <div class="flex items-center justify-center gap-3 mb-6">
-          <img src={~p"/images/favicon.svg"} alt="RationalGrid" class="h-12 w-12" />
+          <img src={~p"/images/favicon.svg"} alt={Dialectic.Branding.app_name()} class="h-12 w-12" />
         </div>
         <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6">
-          About RationalGrid
+          About {Dialectic.Branding.app_name()}
         </h1>
         <p class="mx-auto max-w-2xl text-lg sm:text-xl text-white/80 leading-relaxed">
           Transforming how people explore ideas, engage with arguments, and build shared understanding — one node at a time.
@@ -68,12 +69,12 @@ defmodule DialecticWeb.AboutLive do
       </div>
     </section>
 
-    <%!-- 3. What is RationalGrid? --%>
+    <%!-- 3. What is app_name? --%>
     <section class="bg-white py-20">
       <div class="mx-auto max-w-5xl px-6">
         <div class="text-center mb-14">
           <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-            What is RationalGrid?
+            What is {Dialectic.Branding.app_name()}?
           </h2>
           <p class="text-gray-500 max-w-2xl mx-auto">
             A new kind of tool for a new kind of thinking.
@@ -89,7 +90,7 @@ defmodule DialecticWeb.AboutLive do
               <h3 class="text-xl font-bold text-gray-900">The Information Age Paradox</h3>
             </div>
             <p class="text-gray-700 leading-relaxed">
-              We live in an era of unprecedented information access, yet the quality of discourse often feels lacking. Echo chambers and motivated reasoning lead to people talking past each other rather than engaging meaningfully. We built RationalGrid because we believe meaningful exchanges happen when you can explore assumptions at a fundamental level and see how different starting points lead to different conclusions.
+              We live in an era of unprecedented information access, yet the quality of discourse often feels lacking. Echo chambers and motivated reasoning lead to people talking past each other rather than engaging meaningfully. We built {Dialectic.Branding.app_name()} because we believe meaningful exchanges happen when you can explore assumptions at a fundamental level and see how different starting points lead to different conclusions.
             </p>
           </div>
 
@@ -103,7 +104,7 @@ defmodule DialecticWeb.AboutLive do
               </h3>
             </div>
             <p class="text-gray-700 leading-relaxed">
-              Language models provide unprecedented access to knowledge, but traditional chat interfaces limit their potential for deep learning. RationalGrid transforms AI interaction into an active, exploratory process where learners branch out in multiple directions, creating a personalized knowledge map that evolves with their curiosity.
+              Language models provide unprecedented access to knowledge, but traditional chat interfaces limit their potential for deep learning. {Dialectic.Branding.app_name()} transforms AI interaction into an active, exploratory process where learners branch out in multiple directions, creating a personalized knowledge map that evolves with their curiosity.
             </p>
           </div>
         </div>
@@ -238,7 +239,7 @@ defmodule DialecticWeb.AboutLive do
               <h2 class="text-3xl font-bold text-gray-900">For Educators</h2>
             </div>
             <p class="text-gray-700 leading-relaxed mb-6">
-              RationalGrid is a powerful classroom tool. Students can explore complex topics collaboratively, map out arguments visually, and develop critical thinking skills through structured inquiry.
+              {Dialectic.Branding.app_name()} is a powerful classroom tool. Students can explore complex topics collaboratively, map out arguments visually, and develop critical thinking skills through structured inquiry.
             </p>
             <ul class="space-y-3">
               <li class="flex items-start gap-3">
@@ -387,7 +388,7 @@ defmodule DialecticWeb.AboutLive do
         <div class="mt-10 text-center">
           <p class="text-gray-500">
             Interested in partnering with us? <.link
-              href="mailto:hello@rationalgrid.ai"
+              href={@contact_mailto}
               class="font-medium text-[#3a0ca3] hover:underline"
             >
               Get in touch
@@ -402,7 +403,7 @@ defmodule DialecticWeb.AboutLive do
       <div class="mx-auto max-w-5xl px-6">
         <div class="text-center mb-14">
           <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-            The People Behind RationalGrid
+            The People Behind {Dialectic.Branding.app_name()}
           </h2>
           <p class="text-gray-500 max-w-2xl mx-auto">
             Built with care by a small, passionate team.
@@ -496,7 +497,7 @@ defmodule DialecticWeb.AboutLive do
             <span class="text-white/60 text-sm">Open Source</span>
           </div>
           <p class="text-white/50 text-sm mb-4">
-            RationalGrid is open source. Explore the code, report issues, or contribute.
+            {Dialectic.Branding.app_name()} is open source. Explore the code, report issues, or contribute.
           </p>
           <.link
             href="https://github.com/TomBers/dialectic"

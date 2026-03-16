@@ -97,7 +97,7 @@ defmodule DialecticWeb.LinearGraphLive do
                 token: token_param,
                 page_title: "#{graph_db.title} — Linear View",
                 page_description:
-                  "Read through \"#{graph_db.title}\" as a linear conversation. Follow the full thread of arguments and ideas on RationalGrid.",
+                  "Read through \"#{graph_db.title}\" as a linear conversation. Follow the full thread of arguments and ideas on #{Dialectic.Branding.app_name()}.",
                 canonical_url: canonical_url,
                 noindex: true
               )
