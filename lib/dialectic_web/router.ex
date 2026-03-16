@@ -66,6 +66,7 @@ defmodule DialecticWeb.Router do
     # User profile
     live_session :user_profile, on_mount: [{DialecticWeb.UserAuth, :mount_current_user}] do
       live "/u/:username", UserProfileLive
+      live "/about", AboutLive
     end
   end
 
