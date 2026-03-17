@@ -490,9 +490,11 @@ defmodule DialecticWeb.AboutLive do
           <%!-- Placeholder team members --%>
           <div class="text-center">
             <div class="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-gray-100 text-gray-300 shadow">
-              <.icon name="hero-user-circle" class="w-12 h-12" />
+              <div class="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-[#3a0ca3] to-[#4361ee] text-white text-2xl font-bold shadow-lg group-hover:shadow-xl transition">
+                ML
+              </div>
             </div>
-            <h3 class="font-bold text-gray-400">Coming Soon</h3>
+            <h3 class="font-bold text-gray-400">Martin Loat</h3>
             <p class="text-sm text-gray-300">Community Lead</p>
           </div>
 
