@@ -36,6 +36,7 @@ import { ViewModeHook } from "./view_mode_hook.js";
 import AutoExpandTextareaHook from "./auto_expand_textarea_hook.js";
 import WhatsNext from "./whats_next_hook.js";
 import SearchNav from "./search_nav_hook.js";
+import SwipeNav from "./swipe_nav_hook.js";
 
 let hooks = {};
 
@@ -54,6 +55,7 @@ hooks.ViewMode = ViewModeHook;
 hooks.AutoExpandTextarea = AutoExpandTextareaHook;
 hooks.WhatsNext = WhatsNext;
 hooks.SearchNav = SearchNav;
+hooks.SwipeNav = SwipeNav;
 
 hooks.MobileRedirect = {
   mounted() {

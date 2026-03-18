@@ -3,24 +3,21 @@
   style="height: calc(100vh - 2.5rem); height: calc(100dvh - 2.5rem);"
 >
   <%!-- Desktop hint banner — only on small screens --%>
-  <div class="lg:hidden flex-none bg-indigo-50 border-b border-indigo-100 px-4 py-2 flex items-center gap-2 z-30">
-    <.icon name="hero-device-phone-mobile" class="w-4 h-4 text-indigo-600 flex-none" />
-    <p class="text-xs text-indigo-700 flex-1">
-      Mobile view — for the full graph editing experience, visit on a laptop or desktop.
-    </p>
-    <.link
-      navigate={
-        graph_path(
-          @graph_struct,
-          @selected_node_id,
-          if(@token, do: [token: @token], else: [])
-        )
-      }
-      class="flex-none text-[10px] font-medium text-indigo-500 hover:text-indigo-700 underline underline-offset-2"
-    >
-      Graph view
-    </.link>
-  </div>
+  <%= if @show_mobile_hint do %>
+    <div class="lg:hidden flex-none bg-indigo-50 border-b border-indigo-100 px-3 py-1.5 flex items-center gap-2 z-30">
+      <p class="text-[11px] text-indigo-600 flex-1 truncate">
+        Mobile view — full editing on desktop
+      </p>
+      <button
+        type="button"
+        phx-click="dismiss_mobile_hint"
+        class="flex-none rounded p-0.5 text-indigo-400 hover:text-indigo-600 hover:bg-indigo-100 transition-colors"
+        aria-label="Dismiss"
+      >
+        <.icon name="hero-x-mark" class="w-3.5 h-3.5" />
+      </button>
+    </div>
+  <% end %>
 
   <%!-- Locked banner --%>
   <%= if !@can_edit do %>
@@ -149,11 +146,11 @@
       
 <!-- Scroll Container -->
       <div
-        class={"flex-1 overflow-y-auto p-4 sm:p-8 scroll-smooth bg-gray-50/50 " <> if(@can_edit, do: "pb-48", else: "pb-20")}
+        class={"flex-1 overflow-y-auto px-2 py-4 sm:p-8 scroll-smooth bg-gray-50/50 " <> if(@can_edit, do: "pb-48", else: "pb-20")}
         id="linear-scroller"
         phx-hook="LinearView"
       >
-        <div class="max-w-3xl mx-auto space-y-6 pb-20">
+        <div class="max-w-3xl mx-auto space-y-3 sm:space-y-6 pb-20">
           <%= if @linear_path == [] do %>
             <div class="text-center py-24 text-gray-500">
               <div class="mx-auto h-12 w-12 text-gray-300 mb-3">
@@ -175,34 +172,34 @@
                 data-node-id={node.id}
                 data-mudg-id={@graph_id}
                 class={[
-                  "group relative bg-white rounded-xl shadow-sm border transition-all duration-200 scroll-mt-32 hover:shadow-md hover:-translate-y-0.5",
-                  "border-l-[6px]",
+                  "group relative bg-white rounded-lg sm:rounded-xl shadow-sm border transition-all duration-200 scroll-mt-32",
+                  "border-l-4 sm:border-l-[6px]",
                   "animate-fade-in-up",
                   message_border_class(node.class),
                   if(@show_highlights, do: "highlights-visible", else: "highlights-hidden"),
                   if(is_streaming, do: "ring-2 ring-indigo-200 ring-offset-1", else: "")
                 ]}
               >
-                <!-- Node Header / Controls -->
-                <div class="flex items-center justify-between px-4 py-2 border-b border-gray-100 bg-gray-50/30 rounded-t-xl">
-                  <div class="flex items-center gap-2 min-w-0">
+                <!-- Node Header -->
+                <div class="flex items-center justify-between px-3 py-1.5 sm:px-4 sm:py-2 border-b border-gray-100 bg-gray-50/30 rounded-t-lg sm:rounded-t-xl">
+                  <div class="flex items-center gap-1.5 sm:gap-2 min-w-0">
                     <span class={[
-                      "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider flex-none",
+                      "inline-flex items-center px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-bold uppercase tracking-wider flex-none",
                       DialecticWeb.ColUtils.badge_class(node.class)
                     ]}>
                       {node.class}
                     </span>
-                    <h3 class="text-sm font-semibold text-gray-900 ml-1 truncate">
+                    <h3 class="text-xs sm:text-sm font-semibold text-gray-900 truncate">
                       {node.title}
                     </h3>
                   </div>
                   <%!-- Streaming indicator --%>
                   <%= if is_streaming do %>
-                    <span class="inline-flex items-center gap-1.5 text-xs text-indigo-600 font-medium animate-pulse flex-none">
-                      <span class="relative flex h-2 w-2">
+                    <span class="inline-flex items-center gap-1 text-[10px] sm:text-xs text-indigo-600 font-medium animate-pulse flex-none">
+                      <span class="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2">
                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75">
                         </span>
-                        <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500">
+                        <span class="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 bg-indigo-500">
                         </span>
                       </span>
                       <span class="hidden sm:inline">Generating...</span>
@@ -211,7 +208,7 @@
                 </div>
                 
 <!-- Content -->
-                <div class="p-5 sm:p-6 prose prose-stone max-w-none text-base sm:text-lg leading-relaxed prose-headings:font-semibold prose-pre:bg-gray-800 prose-pre:text-gray-100 selection-content">
+                <div class="px-3 py-3 sm:p-6 prose prose-stone prose-sm sm:prose-base max-w-none leading-relaxed sm:leading-relaxed prose-headings:font-semibold prose-headings:text-sm sm:prose-headings:text-base prose-p:my-2 sm:prose-p:my-3 prose-pre:bg-gray-800 prose-pre:text-gray-100 prose-pre:text-xs prose-pre:overflow-x-auto selection-content">
                   <div
                     phx-hook="Markdown"
                     id={"md-#{node.id}"}
@@ -222,14 +219,14 @@
                 </div>
 
                 <%!-- Per-node action bar --%>
-                <div class="flex items-center gap-1.5 px-3 sm:px-4 py-2 border-t border-gray-100 bg-gray-50/50 rounded-b-xl flex-wrap">
+                <div class="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-4 py-1.5 sm:py-2 border-t border-gray-100 bg-gray-50/50 rounded-b-lg sm:rounded-b-xl flex-wrap">
                   <%!-- Select as active node / reply button --%>
                   <button
                     type="button"
                     phx-click="select_node"
                     phx-value-id={node.id}
                     class={[
-                      "inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all",
+                      "inline-flex items-center gap-1 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-md sm:rounded-lg text-[11px] sm:text-xs font-medium transition-all",
                       if(@selected_node_id == node.id,
                         do: "bg-indigo-600 text-white shadow-sm",
                         else: "bg-gray-100 text-gray-600 hover:bg-indigo-50 hover:text-indigo-700"
@@ -241,7 +238,10 @@
                         else: "Select this node to reply"
                     }
                   >
-                    <.icon name="hero-chat-bubble-left-ellipsis" class="w-3.5 h-3.5" />
+                    <.icon
+                      name="hero-chat-bubble-left-ellipsis"
+                      class="w-3 h-3 sm:w-3.5 sm:h-3.5"
+                    />
                     <span>
                       {if @selected_node_id == node.id, do: "Replying ✓", else: "Reply"}
                     </span>
@@ -257,7 +257,7 @@
                     phx-value-node={node.id}
                     disabled={is_nil(@graph_id)}
                     class={[
-                      "inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-40",
+                      "inline-flex items-center gap-1 px-1.5 py-1 sm:px-2 sm:py-1.5 rounded-md sm:rounded-lg text-[11px] sm:text-xs font-medium transition-all disabled:opacity-40",
                       if(noted?,
                         do: "bg-yellow-100 text-yellow-700",
                         else: "bg-gray-100 text-gray-600 hover:bg-yellow-50 hover:text-yellow-700"
@@ -266,9 +266,9 @@
                     title={if noted?, do: "Remove star", else: "Star this node"}
                   >
                     <%= if noted? do %>
-                      <.icon name="hero-star-solid" class="w-3.5 h-3.5" />
+                      <.icon name="hero-star-solid" class="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                     <% else %>
-                      <.icon name="hero-star" class="w-3.5 h-3.5" />
+                      <.icon name="hero-star" class="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                     <% end %>
                   </button>
 
@@ -279,10 +279,10 @@
                       phx-click="node_related_ideas"
                       phx-value-id={node.id}
                       disabled={is_nil(@graph_id)}
-                      class="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-orange-600 hover:bg-orange-50 transition-all disabled:opacity-40"
+                      class="inline-flex items-center gap-1 px-1.5 py-1 sm:px-2 sm:py-1.5 rounded-md sm:rounded-lg text-[11px] sm:text-xs font-medium bg-gray-100 text-orange-600 hover:bg-orange-50 transition-all disabled:opacity-40"
                       title="Generate related ideas"
                     >
-                      <.icon name="hero-light-bulb" class="w-3.5 h-3.5" />
+                      <.icon name="hero-light-bulb" class="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                       <span class="hidden sm:inline">Ideas</span>
                     </button>
 
@@ -292,24 +292,39 @@
                       phx-click="node_branch"
                       phx-value-id={node.id}
                       disabled={is_nil(@graph_id)}
-                      class="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-emerald-600 hover:bg-emerald-50 transition-all disabled:opacity-40"
+                      class="inline-flex items-center gap-1 px-1.5 py-1 sm:px-2 sm:py-1.5 rounded-md sm:rounded-lg text-[11px] sm:text-xs font-medium bg-gray-100 text-emerald-600 hover:bg-emerald-50 transition-all disabled:opacity-40"
                       title="Generate pros and cons"
                     >
-                      <.icon name="hero-scale" class="w-3.5 h-3.5" />
+                      <.icon name="hero-scale" class="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                       <span class="hidden sm:inline">Pro/Con</span>
                     </button>
                   <% end %>
 
-                  <%!-- Branch indicator --%>
+                  <%!-- Branch indicator / picker trigger --%>
                   <% children = Map.get(node, :children, []) %>
-                  <%= if is_list(children) && length(children) > 0 do %>
-                    <span
-                      class="ml-auto text-[10px] text-gray-400 flex items-center gap-1"
-                      title={"This node has #{length(children)} child response(s)"}
+                  <%= if is_list(children) && length(children) > 1 do %>
+                    <button
+                      type="button"
+                      phx-click="open_branch_picker"
+                      phx-value-node-id={node.id}
+                      class="ml-auto inline-flex items-center gap-1 px-1.5 py-1 sm:px-2 sm:py-1.5 rounded-md sm:rounded-lg text-[11px] sm:text-xs font-medium bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-all border border-indigo-100"
+                      title={"This node has #{length(children)} branches — tap to explore"}
                     >
-                      <.icon name="hero-arrow-down-circle" class="w-3 h-3" />
-                      {length(children)}
-                    </span>
+                      <.icon
+                        name="hero-arrow-path-rounded-square"
+                        class="w-3 h-3 sm:w-3.5 sm:h-3.5"
+                      />
+                      <span>{length(children)}</span>
+                    </button>
+                  <% else %>
+                    <%= if is_list(children) && length(children) == 1 do %>
+                      <span
+                        class="ml-auto text-[10px] text-gray-400 flex items-center gap-1"
+                        title="This node has 1 child response"
+                      >
+                        <.icon name="hero-arrow-down-circle" class="w-3 h-3" /> 1
+                      </span>
+                    <% end %>
                   <% end %>
                 </div>
               </div>
@@ -438,6 +453,106 @@
   </.modal>
 
   <%!-- Selection Actions Modal --%>
+  <%!-- Branch Picker Bottom Sheet --%>
+  <%= if @show_branch_picker do %>
+    <div
+      id="branch-picker-backdrop"
+      class="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm transition-opacity"
+      phx-click="close_branch_picker"
+    >
+    </div>
+    <div
+      id="branch-picker-sheet"
+      class="fixed inset-x-0 bottom-0 z-50 transform transition-transform duration-300 ease-out"
+      style="padding-bottom: env(safe-area-inset-bottom);"
+    >
+      <div class="mx-auto max-w-lg bg-white rounded-t-2xl shadow-2xl border-t border-gray-200 overflow-hidden">
+        <%!-- Drag handle --%>
+        <div class="flex justify-center pt-3 pb-1">
+          <div class="w-10 h-1 rounded-full bg-gray-300"></div>
+        </div>
+        <%!-- Header --%>
+        <div class="flex items-center justify-between px-5 pb-3 border-b border-gray-100">
+          <div class="flex items-center gap-2">
+            <.icon name="hero-arrow-path-rounded-square" class="w-5 h-5 text-indigo-500" />
+            <h3 class="text-base font-semibold text-gray-900">
+              Choose a branch
+            </h3>
+          </div>
+          <button
+            type="button"
+            phx-click="close_branch_picker"
+            class="rounded-full p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            aria-label="Close branch picker"
+          >
+            <.icon name="hero-x-mark" class="w-5 h-5" />
+          </button>
+        </div>
+        <%!-- Children list --%>
+        <div class="max-h-[60vh] overflow-y-auto px-3 py-3 space-y-2">
+          <%= for child <- @branch_picker_children do %>
+            <button
+              type="button"
+              id={"branch-child-#{child.id}"}
+              phx-click="switch_branch"
+              phx-value-child-id={child.id}
+              class={[
+                "w-full text-left rounded-xl p-4 border transition-all duration-150",
+                "hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98]",
+                if(Enum.any?(@linear_path, &(&1.id == child.id)),
+                  do: "bg-indigo-50 border-indigo-200 ring-2 ring-indigo-300 ring-offset-1",
+                  else: "bg-white border-gray-200 hover:border-indigo-200"
+                )
+              ]}
+            >
+              <div class="flex items-start gap-3">
+                <div class={[
+                  "flex-none mt-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-offset-1",
+                  DialecticWeb.ColUtils.dot_class(child.class)
+                ]}>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class={[
+                      "inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider",
+                      DialecticWeb.ColUtils.badge_class(child.class)
+                    ]}>
+                      {child.class}
+                    </span>
+                    <%= if Enum.any?(@linear_path, &(&1.id == child.id)) do %>
+                      <span class="text-[10px] font-medium text-indigo-600 bg-indigo-100 px-1.5 py-0.5 rounded-full">
+                        Current path
+                      </span>
+                    <% end %>
+                  </div>
+                  <h4 class="text-sm font-semibold text-gray-900 truncate">
+                    {child.title}
+                  </h4>
+                  <%= if child.content_preview != "" do %>
+                    <p class="text-xs text-gray-500 mt-1 line-clamp-2 leading-relaxed">
+                      {child.content_preview}
+                    </p>
+                  <% end %>
+                </div>
+                <.icon name="hero-chevron-right" class="w-4 h-4 text-gray-300 flex-none mt-1" />
+              </div>
+            </button>
+          <% end %>
+        </div>
+        <%!-- Swipe hint --%>
+        <div class="px-5 py-3 border-t border-gray-100 bg-gray-50/80">
+          <p class="text-[11px] text-gray-400 text-center flex items-center justify-center gap-1.5">
+            <.icon name="hero-hand-raised" class="w-3.5 h-3.5" />
+            Swipe left or right on the conversation to switch branches
+          </p>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <%!-- Swipe Navigation Hook --%>
+  <div phx-hook="SwipeNav" id="swipe-nav-hook" class="hidden"></div>
+
   <div phx-hook="SelectionActions" id="selection-actions-hook-linear">
     <.live_component
       module={DialecticWeb.SelectionActionsComp}
@@ -560,5 +675,34 @@
   }
   .animate-fade-in-up {
     animation: fade-in-up 0.4s ease-out both;
+  }
+
+  /* Branch picker slide-up animation */
+  #branch-picker-sheet {
+    animation: slide-up 0.3s ease-out both;
+  }
+  @keyframes slide-up {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+
+  #branch-picker-backdrop {
+    animation: fade-in 0.2s ease-out both;
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* Line clamp utility */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 </style>

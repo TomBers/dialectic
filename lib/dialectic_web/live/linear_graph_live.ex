@@ -159,7 +159,11 @@ defmodule DialecticWeb.LinearGraphLive do
         live_view_topic: live_view_topic,
         graph_topic: graph_topic,
         prompt_mode: prompt_mode,
-        show_login_modal: false
+        show_login_modal: false,
+        show_mobile_hint: true,
+        show_branch_picker: false,
+        branch_picker_children: [],
+        branch_picker_parent_id: nil
       )
 
     # When a specific node_id was requested via URL params, scroll to it
@@ -373,10 +377,7 @@ defmodule DialecticWeb.LinearGraphLive do
         node = GraphActions.find_node(socket.assigns.graph_id, node_id)
 
         if node do
-          path =
-            GraphManager.path_to_node(socket.assigns.graph_id, node)
-            |> Enum.reverse()
-            |> Enum.map(fn n -> Map.put(n, :title, NodeTitleHelper.extract_node_title(n)) end)
+          path = build_linear_path(socket.assigns.graph_id, node)
 
           assign(socket, selected_node_id: node.id, linear_path: path)
         else
@@ -391,10 +392,7 @@ defmodule DialecticWeb.LinearGraphLive do
     node = GraphActions.find_node(socket.assigns.graph_id, node_id)
 
     if node do
-      path =
-        GraphManager.path_to_node(socket.assigns.graph_id, node)
-        |> Enum.reverse()
-        |> Enum.map(fn n -> Map.put(n, :title, NodeTitleHelper.extract_node_title(n)) end)
+      path = build_linear_path(socket.assigns.graph_id, node)
 
       {:noreply,
        socket
@@ -409,10 +407,7 @@ defmodule DialecticWeb.LinearGraphLive do
     node = GraphActions.find_node(socket.assigns.graph_id, id)
 
     if node do
-      path =
-        GraphManager.path_to_node(socket.assigns.graph_id, node)
-        |> Enum.reverse()
-        |> Enum.map(fn n -> Map.put(n, :title, NodeTitleHelper.extract_node_title(n)) end)
+      path = build_linear_path(socket.assigns.graph_id, node)
 
       {:noreply,
        socket
@@ -425,6 +420,113 @@ defmodule DialecticWeb.LinearGraphLive do
 
   def handle_event("update_exploration_progress", _params, socket) do
     {:noreply, socket}
+  end
+
+  def handle_event("dismiss_mobile_hint", _, socket) do
+    {:noreply, assign(socket, show_mobile_hint: false)}
+  end
+
+  def handle_event("open_branch_picker", %{"node-id" => node_id}, socket) do
+    children = get_children_summaries(socket.assigns.graph_id, node_id)
+
+    {:noreply,
+     assign(socket,
+       show_branch_picker: true,
+       branch_picker_children: children,
+       branch_picker_parent_id: node_id
+     )}
+  end
+
+  def handle_event("close_branch_picker", _, socket) do
+    {:noreply,
+     assign(socket,
+       show_branch_picker: false,
+       branch_picker_children: [],
+       branch_picker_parent_id: nil
+     )}
+  end
+
+  def handle_event("switch_branch", %{"child-id" => child_id}, socket) do
+    node = GraphActions.find_node(socket.assigns.graph_id, child_id)
+
+    if node do
+      # Find the deepest leaf from this child to show the full branch
+      leaf = find_deepest_leaf(socket.assigns.graph_id, node)
+      target = leaf || node
+
+      path = build_linear_path(socket.assigns.graph_id, target)
+
+      {:noreply,
+       socket
+       |> assign(
+         selected_node_id: target.id,
+         linear_path: path,
+         node: target,
+         show_branch_picker: false,
+         branch_picker_children: [],
+         branch_picker_parent_id: nil
+       )
+       |> push_event("scroll_to_node", %{id: child_id})}
+    else
+      {:noreply, assign(socket, show_branch_picker: false)}
+    end
+  end
+
+  def handle_event("swipe_navigate", %{"direction" => direction}, socket) do
+    # Find the current node's parent, then find siblings
+    current_node_id = socket.assigns.selected_node_id
+    current_node = GraphActions.find_node(socket.assigns.graph_id, current_node_id)
+
+    if current_node do
+      parent_ids = GraphManager.in_neighbours(socket.assigns.graph_id, current_node_id)
+
+      case parent_ids do
+        [parent_id | _] ->
+          sibling_ids = GraphManager.out_neighbours(socket.assigns.graph_id, parent_id)
+
+          siblings =
+            sibling_ids
+            |> Enum.map(&GraphActions.find_node(socket.assigns.graph_id, &1))
+            |> Enum.reject(&is_nil/1)
+            |> Enum.reject(&(Map.get(&1, :deleted, false) == true))
+
+          current_index = Enum.find_index(siblings, &(&1.id == current_node_id))
+
+          next_index =
+            case direction do
+              "left" ->
+                if current_index && current_index > 0, do: current_index - 1, else: nil
+
+              "right" ->
+                if current_index && current_index < length(siblings) - 1,
+                  do: current_index + 1,
+                  else: nil
+
+              _ ->
+                nil
+            end
+
+          if next_index do
+            target = Enum.at(siblings, next_index)
+            leaf = find_deepest_leaf(socket.assigns.graph_id, target)
+            final_target = leaf || target
+
+            path = build_linear_path(socket.assigns.graph_id, final_target)
+
+            {:noreply,
+             socket
+             |> assign(selected_node_id: final_target.id, linear_path: path, node: final_target)
+             |> push_event("scroll_to_node", %{id: target.id})}
+          else
+            {:noreply, socket}
+          end
+
+        _ ->
+          {:noreply, socket}
+      end
+    else
+      {:noreply, socket}
+    end
   end
 
   # ── Selection Actions (from SelectionActionsComp) ──────────────────────
@@ -635,12 +737,56 @@ defmodule DialecticWeb.LinearGraphLive do
     {:noreply, socket}
   end
 
+  defp get_children_summaries(graph_id, node_id) do
+    GraphManager.out_neighbours(graph_id, node_id)
+    |> Enum.map(&GraphActions.find_node(graph_id, &1))
+    |> Enum.reject(&is_nil/1)
+    |> Enum.reject(&(Map.get(&1, :deleted, false) == true))
+    |> Enum.map(fn node ->
+      content = Map.get(node, :content, "") || ""
+
+      content_preview =
+        content
+        |> String.replace(~r/[#*_`~\[\]\(\)>!\-]/, "")
+        |> String.trim()
+        |> String.slice(0, 120)
+
+      %{
+        id: node.id,
+        title: NodeTitleHelper.extract_node_title(node),
+        class: Map.get(node, :class, nil),
+        content_preview: content_preview
+      }
+    end)
+  end
+
+  defp find_deepest_leaf(graph_id, node) do
+    children_ids = GraphManager.out_neighbours(graph_id, node.id)
+
+    non_deleted_children =
+      children_ids
+      |> Enum.map(&GraphActions.find_node(graph_id, &1))
+      |> Enum.reject(&is_nil/1)
+      |> Enum.reject(&(Map.get(&1, :deleted, false) == true))
+
+    case non_deleted_children do
+      [] -> node
+      [first | _] -> find_deepest_leaf(graph_id, first)
+    end
+  end
+
   defp build_linear_path(graph_id, target_node) do
     if target_node do
       GraphManager.path_to_node(graph_id, target_node)
       |> Enum.reverse()
       |> Enum.map(fn node ->
-        Map.put(node, :title, NodeTitleHelper.extract_node_title(node))
+        # Enrich with actual children from the graph (path_to_node returns raw
+        # vertex labels where children is always [])
+        children_ids = GraphManager.out_neighbours(graph_id, node.id)
+
+        node
+        |> Map.put(:title, NodeTitleHelper.extract_node_title(node))
+        |> Map.put(:children, children_ids)
       end)
     else
       []
