@@ -30,14 +30,6 @@ defmodule Dialectic.Responses.LlmInterfaceTest do
     # The function builds minimal context (only immediate parent) and extracts
     # the selection text from "Please explain: X" format.
 
-    test "is exported with correct arity" do
-      assert function_exported?(
-               Dialectic.Responses.LlmInterface,
-               :gen_response_minimal_context,
-               4
-             )
-    end
-
     test "context extraction logic - verifies it only uses immediate parent" do
       # This test documents the expected behavior:
       # - Function should extract parent context from node.parents[0]

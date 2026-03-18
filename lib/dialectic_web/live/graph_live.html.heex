@@ -3,40 +3,35 @@
   phx-hook="GraphLayout"
   class="h-[calc(100vh-2.5rem)] overflow-hidden flex flex-col relative"
 >
-  <div class="lg:hidden absolute inset-0 z-50 bg-white flex flex-col items-center justify-center p-6 text-center">
-    <div class="max-w-md space-y-6">
-      <div class="mx-auto w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center">
-        <.icon name="hero-device-phone-mobile" class="w-8 h-8 text-indigo-600" />
+  <%!-- Mobile: Auto-redirect to linear view --%>
+  <div
+    id="mobile-redirect"
+    class="lg:hidden absolute inset-0 z-50 bg-white flex flex-col items-center justify-center p-6 text-center"
+    phx-hook="MobileRedirect"
+    data-linear-url={
+      graph_linear_path(@graph_struct, nil, if(@token, do: [token: @token], else: []))
+    }
+  >
+    <div class="max-w-sm space-y-5">
+      <div class="mx-auto w-14 h-14 bg-indigo-50 rounded-full flex items-center justify-center">
+        <.icon name="hero-device-phone-mobile" class="w-7 h-7 text-indigo-600" />
       </div>
-
-      <h2 class="text-2xl font-bold text-gray-900">
-        Desktop Required for Editing
+      <h2 class="text-xl font-bold text-gray-900">
+        Redirecting to mobile view...
       </h2>
-
-      <p class="text-gray-600">
-        The RationalGrid graph editor is optimized for desktop screens. On mobile, we recommend using the Linear View to explore the conversation.
+      <p class="text-sm text-gray-500">
+        For the full graph editing experience, visit on a laptop or desktop.
       </p>
-
-      <%= if assigns[:graph_id] do %>
-        <div class="pt-2">
-          <.link
-            navigate={graph_linear_path(@graph_struct, nil, token: @token)}
-            class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 w-full"
-          >
-            <.icon name="hero-list-bullet" class="w-5 h-5 mr-2" /> Switch to Linear View
-          </.link>
-        </div>
-      <% end %>
-
-      <div class="mt-2">
-        <.link navigate={~p"/"} class="text-sm font-medium text-gray-500 hover:text-gray-900">
-          Go back Home
+      <div class="pt-1">
+        <.link
+          navigate={
+            graph_linear_path(@graph_struct, nil, if(@token, do: [token: @token], else: []))
+          }
+          class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 w-full"
+        >
+          <.icon name="hero-arrow-right" class="w-4 h-4 mr-2" /> Open Mobile View
         </.link>
       </div>
-
-      <p class="text-xs text-gray-400 mt-8">
-        Please visit on a computer to edit or create graphs.
-      </p>
     </div>
   </div>
 

@@ -55,6 +55,18 @@ hooks.AutoExpandTextarea = AutoExpandTextareaHook;
 hooks.WhatsNext = WhatsNext;
 hooks.SearchNav = SearchNav;
 
+hooks.MobileRedirect = {
+  mounted() {
+    // Only redirect on small screens (matches lg:hidden breakpoint)
+    if (window.innerWidth < 1024) {
+      const url = this.el.dataset.linearUrl;
+      if (url) {
+        window.location.href = url;
+      }
+    }
+  },
+};
+
 hooks.GraphLayout = {
   mounted() {
     this.activePanelId = null;

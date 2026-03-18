@@ -1,258 +1,440 @@
-<div class="flex h-[calc(100vh-2.5rem)] w-full bg-white overflow-hidden">
-  <!-- Main Area: Linear Path -->
-  <div
-    id="linear-main-content"
-    class={"flex-1 flex-col h-full min-w-0 relative " <> if(@show_minimap, do: "hidden lg:flex", else: "flex")}
-  >
-    <!-- Toolbar -->
-    <div class="flex-none flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white z-20 shadow-sm">
-      <div class="flex items-center gap-3">
-        <.link
-          navigate={
-            graph_path(
-              @graph_struct,
-              @selected_node_id,
-              if(@token, do: [token: @token], else: [])
-            )
-          }
-          class="hidden md:flex h-8 w-8 rounded-full bg-white border border-gray-200 items-center justify-center text-zinc-500 hover:text-zinc-700 hover:bg-gray-50 transition-all shadow-sm"
-          title="Back to graph editor"
-          aria-label="Back to graph editor"
-        >
-          <.icon name="hero-arrow-left" class="h-4 w-4" />
-        </.link>
+<div
+  class="flex flex-col w-full bg-white overflow-hidden"
+  style="height: calc(100vh - 2.5rem); height: calc(100dvh - 2.5rem);"
+>
+  <%!-- Desktop hint banner — only on small screens --%>
+  <div class="lg:hidden flex-none bg-indigo-50 border-b border-indigo-100 px-4 py-2 flex items-center gap-2 z-30">
+    <.icon name="hero-device-phone-mobile" class="w-4 h-4 text-indigo-600 flex-none" />
+    <p class="text-xs text-indigo-700 flex-1">
+      Mobile view — for the full graph editing experience, visit on a laptop or desktop.
+    </p>
+    <.link
+      navigate={
+        graph_path(
+          @graph_struct,
+          @selected_node_id,
+          if(@token, do: [token: @token], else: [])
+        )
+      }
+      class="flex-none text-[10px] font-medium text-indigo-500 hover:text-indigo-700 underline underline-offset-2"
+    >
+      Graph view
+    </.link>
+  </div>
 
-        <.link
-          navigate={
-            graph_path(
-              @graph_struct,
-              @selected_node_id,
-              if(@token, do: [token: @token], else: [])
-            )
-          }
-          class="md:hidden h-8 w-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-zinc-500 hover:text-zinc-700 hover:bg-gray-50 transition-all shadow-sm"
-          title="Back to graph editor"
-          aria-label="Back to graph editor"
-        >
-          <.icon name="hero-arrow-left" class="h-4 w-4" />
-        </.link>
+  <%!-- Locked banner --%>
+  <%= if !@can_edit do %>
+    <div class="flex-none bg-amber-50 border-b border-amber-100 px-4 py-1.5 flex items-center gap-2 z-30">
+      <.icon name="hero-lock-closed" class="w-3.5 h-3.5 text-amber-600" />
+      <span class="text-xs text-amber-700 font-medium">This graph is locked — read only</span>
+    </div>
+  <% end %>
 
-        <h1 class="text-sm font-semibold text-gray-700 hidden sm:block">
-          Map
-        </h1>
-      </div>
-
-      <div class="flex items-center gap-2">
-        <.button
-          phx-click="toggle_minimap"
-          class={"text-xs px-2.5 py-1.5 border shadow-sm transition-colors " <> if(@show_minimap, do: "bg-blue-50 border-blue-200 text-blue-700", else: "bg-white border-gray-300 text-gray-700 hover:bg-gray-50")}
-        >
-          <.icon name="hero-map" class="h-4 w-4 sm:mr-1.5 inline-block" />
-          <span class="hidden sm:inline">
-            {if @show_minimap, do: "Hide Map", else: "Show Map"}
-          </span>
-          <span class="sm:hidden">{if @show_minimap, do: "Hide Map", else: "Show Map"}</span>
-        </.button>
-
-        <div class="flex items-center rounded-md shadow-sm isolate">
-          <button
-            type="button"
-            phx-click="toggle_highlights"
-            class={"relative inline-flex items-center px-2.5 py-1.5 text-xs border border-gray-300 rounded-l-md focus:z-10 transition-colors " <> if(@show_highlights, do: "bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100", else: "bg-white text-gray-700 hover:bg-gray-50")}
-            title={if @show_highlights, do: "Hide Highlights", else: "Show Highlights"}
+  <%!-- Main content area: flex row with linear content + optional minimap --%>
+  <div class="flex flex-1 min-h-0 overflow-hidden">
+    <!-- Main Area: Linear Path -->
+    <div
+      id="linear-main-content"
+      class={"flex-1 flex-col h-full min-w-0 relative " <> if(@show_minimap, do: "hidden lg:flex", else: "flex")}
+    >
+      <!-- Toolbar -->
+      <div class="flex-none flex items-center justify-between px-4 py-2 border-b border-gray-200 bg-white z-20 shadow-sm">
+        <div class="flex items-center gap-3">
+          <.link
+            navigate={
+              graph_path(
+                @graph_struct,
+                @selected_node_id,
+                if(@token, do: [token: @token], else: [])
+              )
+            }
+            class="hidden md:flex h-8 w-8 rounded-full bg-white border border-gray-200 items-center justify-center text-zinc-500 hover:text-zinc-700 hover:bg-gray-50 transition-all shadow-sm"
+            title="Back to graph editor"
+            aria-label="Back to graph editor"
           >
-            <.icon name="hero-pencil" class="h-4 w-4 sm:mr-1.5" />
-            <span class="hidden sm:inline">
-              {if @show_highlights, do: "Hide Highlights", else: "Show Highlights"}
-            </span>
-            <span class="sm:hidden">{if @show_highlights, do: "Hide", else: "Show"}</span>
-          </button>
+            <.icon name="hero-arrow-left" class="h-4 w-4" />
+          </.link>
 
-          <%= if @highlights != [] do %>
-            <div class="relative">
-              <button
-                type="button"
-                phx-click="toggle_highlights_list"
-                phx-click-away={if @show_highlights_list, do: "toggle_highlights_list", else: nil}
-                class={"relative -ml-px inline-flex items-center px-2 py-1.5 text-xs border border-gray-300 rounded-r-md focus:z-10 transition-colors " <> if(@show_highlights_list, do: "bg-amber-100 border-amber-300 text-amber-800", else: "bg-white text-gray-700 hover:bg-gray-50")}
-              >
-                <span class="sr-only">Open highlights menu</span>
-                <span class="font-medium mr-1">{length(@highlights)}</span>
-                <.icon name="hero-chevron-down" class="h-3 w-3" />
-              </button>
-
-              <%= if @show_highlights_list do %>
-                <div class="absolute right-0 z-50 mt-2 w-72 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none max-h-96 overflow-y-auto">
-                  <div class="py-1">
-                    <%= for highlight <- @highlights do %>
-                      <button
-                        phx-click="jump_to_highlight"
-                        phx-value-id={highlight.id}
-                        phx-value-node_id={highlight.node_id}
-                        class="group w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100 hover:text-gray-900 border-b border-gray-50 last:border-0"
-                      >
-                        <div class="flex items-start gap-2">
-                          <div class="mt-1.5 w-1.5 h-1.5 rounded-full bg-amber-400 flex-none group-hover:bg-amber-500">
-                          </div>
-                          <div class="flex-1 min-w-0">
-                            <p class="truncate font-medium text-gray-900">
-                              "{highlight.selected_text_snapshot}"
-                            </p>
-                            <p class="text-gray-500 text-[10px] mt-0.5 truncate">
-                              Node {highlight.node_id}
-                            </p>
-                          </div>
-                        </div>
-                      </button>
-                    <% end %>
-                  </div>
-                </div>
-              <% end %>
-            </div>
-          <% else %>
-            <span class="relative -ml-px inline-flex items-center px-2 py-1.5 text-xs border border-gray-300 rounded-r-md bg-gray-50 text-gray-400 cursor-not-allowed">
-              0
-            </span>
-          <% end %>
+          <h1 class="text-sm font-semibold text-gray-700 hidden sm:block">
+            {@graph_struct.title}
+          </h1>
         </div>
 
-        <button
-          phx-hook="PrintConversation"
-          id="print-btn"
-          data-graph-name={@graph_struct.title}
-          aria-label="Print conversation as PDF"
-          class="text-xs px-2.5 py-1.5 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm hidden sm:inline-flex rounded-md font-medium inline-flex items-center"
-        >
-          <.icon name="hero-printer" class="h-4 w-4 mr-1.5 inline-block" /> PDF
-        </button>
+        <div class="flex items-center gap-2">
+          <.button
+            phx-click="toggle_minimap"
+            class={"text-xs px-2.5 py-1.5 border shadow-sm transition-colors " <> if(@show_minimap, do: "bg-blue-50 border-blue-200 text-blue-700", else: "bg-white border-gray-300 text-gray-700 hover:bg-gray-50")}
+          >
+            <.icon name="hero-map" class="h-4 w-4 sm:mr-1.5 inline-block" />
+            <span class="hidden sm:inline">
+              {if @show_minimap, do: "Hide Map", else: "Show Map"}
+            </span>
+            <span class="sm:hidden">{if @show_minimap, do: "Map", else: "Map"}</span>
+          </.button>
+
+          <div class="flex items-center rounded-md shadow-sm isolate">
+            <button
+              type="button"
+              phx-click="toggle_highlights"
+              class={"relative inline-flex items-center px-2.5 py-1.5 text-xs border border-gray-300 rounded-l-md focus:z-10 transition-colors " <> if(@show_highlights, do: "bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100", else: "bg-white text-gray-700 hover:bg-gray-50")}
+              title={if @show_highlights, do: "Hide Highlights", else: "Show Highlights"}
+            >
+              <.icon name="hero-pencil" class="h-4 w-4 sm:mr-1.5" />
+              <span class="hidden sm:inline">
+                {if @show_highlights, do: "Hide Highlights", else: "Show Highlights"}
+              </span>
+            </button>
+
+            <%= if @highlights != [] do %>
+              <div class="relative">
+                <button
+                  type="button"
+                  phx-click="toggle_highlights_list"
+                  phx-click-away={
+                    if @show_highlights_list, do: "toggle_highlights_list", else: nil
+                  }
+                  class={"relative -ml-px inline-flex items-center px-2 py-1.5 text-xs border border-gray-300 rounded-r-md focus:z-10 transition-colors " <> if(@show_highlights_list, do: "bg-amber-100 border-amber-300 text-amber-800", else: "bg-white text-gray-700 hover:bg-gray-50")}
+                >
+                  <span class="sr-only">Open highlights menu</span>
+                  <span class="font-medium mr-1">{length(@highlights)}</span>
+                  <.icon name="hero-chevron-down" class="h-3 w-3" />
+                </button>
+
+                <%= if @show_highlights_list do %>
+                  <div class="absolute right-0 z-50 mt-2 w-72 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none max-h-96 overflow-y-auto">
+                    <div class="py-1">
+                      <%= for highlight <- @highlights do %>
+                        <button
+                          phx-click="jump_to_highlight"
+                          phx-value-id={highlight.id}
+                          phx-value-node_id={highlight.node_id}
+                          class="group w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100 hover:text-gray-900 border-b border-gray-50 last:border-0"
+                        >
+                          <div class="flex items-start gap-2">
+                            <div class="mt-1.5 w-1.5 h-1.5 rounded-full bg-amber-400 flex-none group-hover:bg-amber-500">
+                            </div>
+                            <div class="flex-1 min-w-0">
+                              <p class="truncate font-medium text-gray-900">
+                                "{highlight.selected_text_snapshot}"
+                              </p>
+                              <p class="text-gray-500 text-[10px] mt-0.5 truncate">
+                                Node {highlight.node_id}
+                              </p>
+                            </div>
+                          </div>
+                        </button>
+                      <% end %>
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+            <% else %>
+              <span class="relative -ml-px inline-flex items-center px-2 py-1.5 text-xs border border-gray-300 rounded-r-md bg-gray-50 text-gray-400 cursor-not-allowed">
+                0
+              </span>
+            <% end %>
+          </div>
+
+          <button
+            phx-hook="PrintConversation"
+            id="print-btn"
+            data-graph-name={@graph_struct.title}
+            aria-label="Print conversation as PDF"
+            class="text-xs px-2.5 py-1.5 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm hidden sm:inline-flex rounded-md font-medium inline-flex items-center"
+          >
+            <.icon name="hero-printer" class="h-4 w-4 mr-1.5 inline-block" /> PDF
+          </button>
+        </div>
+      </div>
+      
+<!-- Scroll Container -->
+      <div
+        class={"flex-1 overflow-y-auto p-4 sm:p-8 scroll-smooth bg-gray-50/50 " <> if(@can_edit, do: "pb-48", else: "pb-20")}
+        id="linear-scroller"
+        phx-hook="LinearView"
+      >
+        <div class="max-w-3xl mx-auto space-y-6 pb-20">
+          <%= if @linear_path == [] do %>
+            <div class="text-center py-24 text-gray-500">
+              <div class="mx-auto h-12 w-12 text-gray-300 mb-3">
+                <.icon name="hero-chat-bubble-left-right" class="h-12 w-12" />
+              </div>
+              <h3 class="text-lg font-medium text-gray-900">No conversation path selected</h3>
+              <p class="text-sm mt-2 text-gray-500">
+                Select a node in the minimap to view the conversation thread leading up to it.
+              </p>
+            </div>
+          <% end %>
+
+          <%= for node <- @linear_path do %>
+            <%= unless Map.get(node, :deleted, false) do %>
+              <% is_streaming = MapSet.member?(@streaming_nodes, node.id) %>
+              <div
+                id={"node-#{node.id}"}
+                phx-hook="TextSelectionHook"
+                data-node-id={node.id}
+                data-mudg-id={@graph_id}
+                class={[
+                  "group relative bg-white rounded-xl shadow-sm border transition-all duration-200 scroll-mt-32 hover:shadow-md hover:-translate-y-0.5",
+                  "border-l-[6px]",
+                  "animate-fade-in-up",
+                  message_border_class(node.class),
+                  if(@show_highlights, do: "highlights-visible", else: "highlights-hidden"),
+                  if(is_streaming, do: "ring-2 ring-indigo-200 ring-offset-1", else: "")
+                ]}
+              >
+                <!-- Node Header / Controls -->
+                <div class="flex items-center justify-between px-4 py-2 border-b border-gray-100 bg-gray-50/30 rounded-t-xl">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <span class={[
+                      "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider flex-none",
+                      DialecticWeb.ColUtils.badge_class(node.class)
+                    ]}>
+                      {node.class}
+                    </span>
+                    <h3 class="text-sm font-semibold text-gray-900 ml-1 truncate">
+                      {node.title}
+                    </h3>
+                  </div>
+                  <%!-- Streaming indicator --%>
+                  <%= if is_streaming do %>
+                    <span class="inline-flex items-center gap-1.5 text-xs text-indigo-600 font-medium animate-pulse flex-none">
+                      <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75">
+                        </span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500">
+                        </span>
+                      </span>
+                      <span class="hidden sm:inline">Generating...</span>
+                    </span>
+                  <% end %>
+                </div>
+                
+<!-- Content -->
+                <div class="p-5 sm:p-6 prose prose-stone max-w-none text-base sm:text-lg leading-relaxed prose-headings:font-semibold prose-pre:bg-gray-800 prose-pre:text-gray-100 selection-content">
+                  <div
+                    phx-hook="Markdown"
+                    id={"md-#{node.id}"}
+                    data-md={node.content || ""}
+                    data-body-only="true"
+                  >
+                  </div>
+                </div>
+
+                <%!-- Per-node action bar --%>
+                <div class="flex items-center gap-1.5 px-3 sm:px-4 py-2 border-t border-gray-100 bg-gray-50/50 rounded-b-xl flex-wrap">
+                  <%!-- Select as active node / reply button --%>
+                  <button
+                    type="button"
+                    phx-click="select_node"
+                    phx-value-id={node.id}
+                    class={[
+                      "inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all",
+                      if(@selected_node_id == node.id,
+                        do: "bg-indigo-600 text-white shadow-sm",
+                        else: "bg-gray-100 text-gray-600 hover:bg-indigo-50 hover:text-indigo-700"
+                      )
+                    ]}
+                    title={
+                      if @selected_node_id == node.id,
+                        do: "Currently selected — type below to reply",
+                        else: "Select this node to reply"
+                    }
+                  >
+                    <.icon name="hero-chat-bubble-left-ellipsis" class="w-3.5 h-3.5" />
+                    <span>
+                      {if @selected_node_id == node.id, do: "Replying ✓", else: "Reply"}
+                    </span>
+                  </button>
+
+                  <%!-- Star / Bookmark --%>
+                  <% noted? =
+                    @user != nil &&
+                      Enum.any?(Map.get(node, :noted_by, []), fn u -> u == @user end) %>
+                  <button
+                    type="button"
+                    phx-click={if noted?, do: "unnote", else: "note"}
+                    phx-value-node={node.id}
+                    disabled={is_nil(@graph_id)}
+                    class={[
+                      "inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-40",
+                      if(noted?,
+                        do: "bg-yellow-100 text-yellow-700",
+                        else: "bg-gray-100 text-gray-600 hover:bg-yellow-50 hover:text-yellow-700"
+                      )
+                    ]}
+                    title={if noted?, do: "Remove star", else: "Star this node"}
+                  >
+                    <%= if noted? do %>
+                      <.icon name="hero-star-solid" class="w-3.5 h-3.5" />
+                    <% else %>
+                      <.icon name="hero-star" class="w-3.5 h-3.5" />
+                    <% end %>
+                  </button>
+
+                  <%= if @can_edit do %>
+                    <%!-- Related Ideas --%>
+                    <button
+                      type="button"
+                      phx-click="node_related_ideas"
+                      phx-value-id={node.id}
+                      disabled={is_nil(@graph_id)}
+                      class="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-orange-600 hover:bg-orange-50 transition-all disabled:opacity-40"
+                      title="Generate related ideas"
+                    >
+                      <.icon name="hero-light-bulb" class="w-3.5 h-3.5" />
+                      <span class="hidden sm:inline">Ideas</span>
+                    </button>
+
+                    <%!-- Pro/Con (Branch) --%>
+                    <button
+                      type="button"
+                      phx-click="node_branch"
+                      phx-value-id={node.id}
+                      disabled={is_nil(@graph_id)}
+                      class="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-emerald-600 hover:bg-emerald-50 transition-all disabled:opacity-40"
+                      title="Generate pros and cons"
+                    >
+                      <.icon name="hero-scale" class="w-3.5 h-3.5" />
+                      <span class="hidden sm:inline">Pro/Con</span>
+                    </button>
+                  <% end %>
+
+                  <%!-- Branch indicator --%>
+                  <% children = Map.get(node, :children, []) %>
+                  <%= if is_list(children) && length(children) > 0 do %>
+                    <span
+                      class="ml-auto text-[10px] text-gray-400 flex items-center gap-1"
+                      title={"This node has #{length(children)} child response(s)"}
+                    >
+                      <.icon name="hero-arrow-down-circle" class="w-3 h-3" />
+                      {length(children)}
+                    </span>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          <% end %>
+          
+<!-- End Spacer -->
+          <div class="h-24"></div>
+        </div>
       </div>
     </div>
     
-<!-- Scroll Container -->
-    <div
-      class="flex-1 overflow-y-auto p-4 sm:p-8 scroll-smooth bg-gray-50/50"
-      id="linear-scroller"
-      phx-hook="LinearView"
-    >
-      <div class="max-w-3xl mx-auto space-y-6 pb-20">
-        <%= if @linear_path == [] do %>
-          <div class="text-center py-24 text-gray-500">
-            <div class="mx-auto h-12 w-12 text-gray-300 mb-3">
-              <.icon name="hero-chat-bubble-left-right" class="h-12 w-12" />
-            </div>
-            <h3 class="text-lg font-medium text-gray-900">No conversation path selected</h3>
-            <p class="text-sm mt-2 text-gray-500">
-              Select a node in the minimap to view the conversation thread leading up to it.
-            </p>
-          </div>
-        <% end %>
-
-        <%= for node <- @linear_path do %>
-          <%= unless Map.get(node, :deleted, false) do %>
-            <div
-              id={"node-#{node.id}"}
-              phx-hook="TextSelectionHook"
-              data-node-id={node.id}
-              data-mudg-id={@graph_id}
-              class={[
-                "group relative bg-white rounded-xl shadow-sm border transition-all duration-200 scroll-mt-32 hover:shadow-md hover:-translate-y-0.5",
-                "border-l-[6px]",
-                "animate-fade-in-up",
-                message_border_class(node.class),
-                if(@show_highlights, do: "highlights-visible", else: "highlights-hidden")
-              ]}
-            >
-              <!-- Node Header / Controls -->
-              <div class="flex items-center justify-between px-4 py-2 border-b border-gray-100 bg-gray-50/30 rounded-t-xl">
-                <div class="flex items-center gap-2">
-                  <span class={[
-                    "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider",
-                    DialecticWeb.ColUtils.badge_class(node.class)
-                  ]}>
-                    {node.class}
-                  </span>
-                  <h3 class="text-sm font-semibold text-gray-900 ml-2">
-                    {node.title}
-                  </h3>
-                </div>
-              </div>
-              
-<!-- Content -->
-              <div class="p-5 sm:p-6 prose prose-stone max-w-none text-base sm:text-lg leading-relaxed prose-headings:font-semibold prose-pre:bg-gray-800 prose-pre:text-gray-100 selection-content">
-                <div
-                  phx-hook="Markdown"
-                  id={"md-#{node.id}"}
-                  data-md={node.content || ""}
-                  data-body-only="true"
-                >
-                </div>
-              </div>
-            </div>
-          <% end %>
-        <% end %>
-        
-<!-- End Spacer -->
-        <div class="h-24"></div>
-      </div>
-    </div>
-  </div>
-  
 <!-- Right Panel: Minimap -->
-  <%= if @show_minimap do %>
-    <div
-      id="linear-minimap"
-      phx-hook="MobileMinimap"
-      class="flex h-full w-full flex-col bg-gray-50 lg:w-[350px] lg:flex-none lg:border-l lg:border-gray-200"
-    >
-      <div class="flex-none px-4 py-3 border-b border-gray-200 bg-white flex justify-between items-center shadow-sm z-20">
-        <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-          Conversation Map
-        </h3>
-        <button
-          type="button"
-          phx-click="toggle_minimap"
-          class="lg:hidden rounded-md p-1 text-gray-500 hover:bg-gray-100"
-          aria-label="Close map"
-        >
-          <.icon name="hero-x-mark" class="h-5 w-5" />
-        </button>
-      </div>
-      <div class="flex-1 overflow-y-auto p-2 scroll-smooth">
-        <div class="space-y-0.5 min-h-0 pb-10">
-          <%= for node <- @map_nodes do %>
-            <button
-              id={"map-node-#{node.id}"}
-              phx-click="node_clicked"
-              phx-value-id={node.id}
-              class={[
-                "w-full text-left group flex items-start py-1.5 px-2 rounded-md text-xs transition-colors duration-150 border border-transparent scroll-mt-10",
-                cond do
-                  @selected_node_id == node.id ->
-                    "bg-gray-100 text-gray-900 font-semibold shadow-sm border-gray-200"
-
-                  Enum.any?(@linear_path, &(&1.id == node.id)) ->
-                    "text-gray-900 font-medium hover:bg-gray-50"
-
-                  true ->
-                    "text-gray-500 opacity-60 hover:opacity-100 hover:bg-gray-50 hover:text-gray-900"
-                end
-              ]}
-              style={"margin-left: #{node.indent * 12}px; width: calc(100% - #{node.indent * 12}px);"}
-            >
-              <div class={[
-                "flex-none w-2 h-2 rounded-full mt-1 mr-2 shadow-sm ring-1 ring-black/5",
-                DialecticWeb.ColUtils.dot_class(node.class)
-              ]}>
-              </div>
-              <span class="truncate leading-tight opacity-90">
-                {if node.title && node.title != "", do: node.title, else: "(Empty node)"}
-              </span>
-            </button>
-          <% end %>
+    <%= if @show_minimap do %>
+      <div
+        id="linear-minimap"
+        phx-hook="MobileMinimap"
+        class="flex h-full w-full flex-col bg-gray-50 lg:w-[350px] lg:flex-none lg:border-l lg:border-gray-200"
+      >
+        <div class="flex-none px-4 py-3 border-b border-gray-200 bg-white flex justify-between items-center shadow-sm z-20">
+          <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            Conversation Map
+          </h3>
+          <button
+            type="button"
+            phx-click="toggle_minimap"
+            class="lg:hidden rounded-md p-1 text-gray-500 hover:bg-gray-100"
+            aria-label="Close map"
+          >
+            <.icon name="hero-x-mark" class="h-5 w-5" />
+          </button>
         </div>
+        <div class="flex-1 overflow-y-auto p-2 scroll-smooth">
+          <div class="space-y-0.5 min-h-0 pb-10">
+            <%= for node <- @map_nodes do %>
+              <button
+                id={"map-node-#{node.id}"}
+                phx-click="node_clicked"
+                phx-value-id={node.id}
+                class={[
+                  "w-full text-left group flex items-start py-1.5 px-2 rounded-md text-xs transition-colors duration-150 border border-transparent scroll-mt-10",
+                  cond do
+                    @selected_node_id == node.id ->
+                      "bg-gray-100 text-gray-900 font-semibold shadow-sm border-gray-200"
+
+                    Enum.any?(@linear_path, &(&1.id == node.id)) ->
+                      "text-gray-900 font-medium hover:bg-gray-50"
+
+                    true ->
+                      "text-gray-500 opacity-60 hover:opacity-100 hover:bg-gray-50 hover:text-gray-900"
+                  end
+                ]}
+                style={"margin-left: #{node.indent * 12}px; width: calc(100% - #{node.indent * 12}px);"}
+              >
+                <div class={[
+                  "flex-none w-2 h-2 rounded-full mt-1 mr-2 shadow-sm ring-1 ring-black/5",
+                  DialecticWeb.ColUtils.dot_class(node.class)
+                ]}>
+                </div>
+                <span class="truncate leading-tight opacity-90">
+                  {if node.title && node.title != "", do: node.title, else: "(Empty node)"}
+                </span>
+              </button>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <%!-- Chat Input Bar — OUTSIDE the flex row so it is always visible --%>
+  <%= if @can_edit do %>
+    <div
+      id="linear-chat-bar"
+      class="flex-none border-t border-gray-200 bg-white/95 backdrop-blur px-3 sm:px-4 py-2 sm:py-3 z-30"
+      style="padding-bottom: calc(env(safe-area-inset-bottom) + 0.5rem);"
+    >
+      <div class="max-w-3xl mx-auto">
+        <.live_component
+          module={DialecticWeb.AskFormComp}
+          id="linear-chat-form"
+          form={@form}
+          ask_question={@ask_question}
+          prompt_mode={@prompt_mode}
+          graph_id={@graph_id}
+          node={@node}
+          input_id="linear-chat-input"
+        />
       </div>
     </div>
   <% end %>
+
+  <%!-- Login Required Modal --%>
+  <.modal
+    :if={@show_login_modal}
+    id="linear-login-modal"
+    show
+    on_cancel={JS.push("close_login_modal")}
+  >
+    <div class="p-4 text-center sm:p-6">
+      <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100 mb-4">
+        <.icon name="hero-lock-closed" class="h-6 w-6 text-zinc-600" />
+      </div>
+      <h3 id="linear-login-modal-title" class="text-lg font-semibold leading-6 text-zinc-900 mb-2">
+        Login Required
+      </h3>
+      <p id="linear-login-modal-description" class="text-sm text-zinc-500 mb-6">
+        You need to be signed in to perform this action. Please log in or create a new account to continue.
+      </p>
+      <div class="flex flex-col sm:flex-row justify-center gap-3">
+        <.link
+          href={~p"/users/log_in"}
+          class="inline-flex justify-center rounded-lg bg-zinc-900 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-zinc-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
+        >
+          Sign in
+        </.link>
+        <.link
+          href={~p"/users/register"}
+          class="inline-flex justify-center rounded-lg bg-white px-3 py-2 text-sm font-semibold text-zinc-900 shadow-sm ring-1 ring-inset ring-zinc-300 hover:bg-zinc-50"
+        >
+          Create account
+        </.link>
+      </div>
+    </div>
+  </.modal>
 
   <%!-- Selection Actions Modal --%>
   <div phx-hook="SelectionActions" id="selection-actions-hook-linear">
@@ -261,7 +443,7 @@
       id="selection-actions-linear"
       current_user={@current_user}
       graph_id={@graph_id}
-      can_edit={false}
+      can_edit={@can_edit}
     />
   </div>
 </div>
@@ -289,7 +471,10 @@
   nav,
   button,
   #linear-minimap,
-  .border-b.shadow-sm {
+  #linear-chat-bar,
+  .border-b.shadow-sm,
+  #selection-actions-hook-linear,
+  #linear-login-modal {
     display: none !important;
   }
 
