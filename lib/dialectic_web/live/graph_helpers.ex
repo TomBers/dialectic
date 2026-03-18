@@ -166,6 +166,44 @@ defmodule DialecticWeb.GraphHelpers do
     end
   end
 
+  # ── Selection action helpers ──────────────────────────────────────────
+
+  @doc """
+  Checks if a selection action can proceed based on socket assigns.
+
+  Returns:
+  - `:ok` — action is allowed
+  - `{:error, :locked}` — graph is locked (`can_edit` is false)
+  - `{:error, :unauthenticated}` — user is not logged in
+  """
+  def check_selection_action_allowed(socket) do
+    cond do
+      not socket.assigns.can_edit -> {:error, :locked}
+      socket.assigns.current_user == nil -> {:error, :unauthenticated}
+      true -> :ok
+    end
+  end
+
+  @doc """
+  Unpacks a `{:selection_action, params}` message into its constituent parts.
+
+  Returns a tuple of `{action, selected_text, node_id, offsets, existing_highlight, extra}`
+  where `extra` is a map of any additional keys beyond the standard ones.
+  """
+  def unpack_selection_action(params) do
+    %{
+      action: action,
+      selected_text: selected_text,
+      node_id: node_id,
+      offsets: offsets,
+      highlight: existing_highlight
+    } = params
+
+    extra = Map.drop(params, [:action, :selected_text, :node_id, :offsets, :highlight])
+
+    {action, selected_text, node_id, offsets, existing_highlight, extra}
+  end
+
   @doc """
   Handles the "reply-and-answer" (ask_and_answer) action.
 

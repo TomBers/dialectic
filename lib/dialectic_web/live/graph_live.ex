@@ -1,5 +1,6 @@
 defmodule DialecticWeb.GraphLive do
   use DialecticWeb, :live_view
+  use DialecticWeb.GraphStreaming, preload_highlight_links: true
 
   alias Dialectic.Graph.{Vertex, GraphActions, Siblings}
   alias DialecticWeb.{CombineComp, NodeComp}
@@ -734,29 +735,24 @@ defmodule DialecticWeb.GraphLive do
 
   # Handle selection action messages from SelectionActionsComp
   def handle_info({:selection_action, params}, socket) do
-    %{
-      action: action,
-      selected_text: selected_text,
-      node_id: node_id,
-      offsets: offsets,
-      highlight: existing_highlight
-    } = params
-
-    cond do
-      not socket.assigns.can_edit ->
+    case GraphHelpers.check_selection_action_allowed(socket) do
+      {:error, :locked} ->
         {:noreply, socket |> put_flash(:error, "This graph is locked")}
 
-      socket.assigns.current_user == nil ->
+      {:error, :unauthenticated} ->
         {:noreply, assign(socket, show_login_modal: true)}
 
-      true ->
+      :ok ->
+        {action, selected_text, node_id, offsets, existing_highlight, extra} =
+          GraphHelpers.unpack_selection_action(params)
+
         handle_selection_action(
           action,
           selected_text,
           node_id,
           offsets,
           existing_highlight,
-          params,
+          extra,
           socket
         )
     end
@@ -766,38 +762,7 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, assign(socket, show_share_modal: false)}
   end
 
-  def handle_info({:created, highlight}, socket) do
-    # Preload links for display in right panel
-    highlight = Repo.preload(highlight, :links)
-    highlights = [highlight | socket.assigns.highlights]
-
-    {:noreply,
-     assign(socket, highlights: highlights)
-     |> push_event("refresh_highlights", %{data: highlight})}
-  end
-
-  def handle_info({:updated, highlight}, socket) do
-    # Preload links for display in right panel
-    highlight = Repo.preload(highlight, :links)
-
-    highlights =
-      Enum.map(socket.assigns.highlights, fn h ->
-        if h.id == highlight.id, do: highlight, else: h
-      end)
-
-    {:noreply,
-     assign(socket, highlights: highlights)
-     |> push_event("refresh_highlights", %{data: highlight})}
-  end
-
-  def handle_info({:deleted, highlight}, socket) do
-    highlights =
-      Enum.reject(socket.assigns.highlights, fn h -> h.id == highlight.id end)
-
-    {:noreply,
-     assign(socket, highlights: highlights)
-     |> push_event("refresh_highlights", %{data: highlight})}
-  end
+  # Highlight PubSub (:created, :updated, :deleted) injected by GraphStreaming
 
   def handle_info({DialecticWeb.Presence, {:join, presence}}, socket) do
     if is_connected_to_graph?(presence, socket.assigns.graph_id) do
@@ -831,30 +796,7 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_info({:stream_chunk, updated_vertex, :node_id, node_id}, socket) do
-    # This is the streamed LLM response into a node
-    # Re-broadcast to all users on the graph so they see real-time streaming
-    PubSub.broadcast(
-      Dialectic.PubSub,
-      socket.assigns.graph_topic,
-      {:stream_chunk_broadcast, updated_vertex, :node_id, node_id, self()}
-    )
-
-    {:noreply, update_streaming_node(socket, updated_vertex, node_id)}
-  end
-
-  def handle_info(
-        {:stream_chunk_broadcast, updated_vertex, :node_id, node_id, sender_pid},
-        socket
-      ) do
-    # Skip if this is our own broadcast (we already handled it above)
-    if self() == sender_pid do
-      {:noreply, socket}
-    else
-      # Another user is streaming - update our view if we're viewing this node
-      {:noreply, update_streaming_node(socket, updated_vertex, node_id)}
-    end
-  end
+  # :stream_chunk and :stream_chunk_broadcast are injected by GraphStreaming
 
   def handle_info({:llm_request_complete, node_id}, socket) do
     Logger.debug(fn ->

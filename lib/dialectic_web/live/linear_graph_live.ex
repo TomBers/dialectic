@@ -1,5 +1,6 @@
 defmodule DialecticWeb.LinearGraphLive do
   use DialecticWeb, :live_view
+  use DialecticWeb.GraphStreaming, preload_highlight_links: false
 
   alias Dialectic.Graph.{Vertex, GraphActions}
   alias DialecticWeb.ColUtils
@@ -466,50 +467,31 @@ defmodule DialecticWeb.LinearGraphLive do
   # ── Selection Actions (from SelectionActionsComp) ──────────────────────
 
   def handle_info({:selection_action, params}, socket) do
-    %{
-      action: action,
-      selected_text: selected_text,
-      node_id: node_id,
-      offsets: offsets,
-      highlight: existing_highlight
-    } = params
+    case GraphHelpers.check_selection_action_allowed(socket) do
+      {:error, :locked} ->
+        {:noreply, socket |> put_flash(:error, "This graph is locked")}
 
-    extra = Map.drop(params, [:action, :selected_text, :node_id, :offsets, :highlight])
+      {:error, :unauthenticated} ->
+        {:noreply, assign(socket, show_login_modal: true)}
 
-    handle_selection_action(
-      action,
-      selected_text,
-      node_id,
-      offsets,
-      existing_highlight,
-      extra,
-      socket
-    )
+      :ok ->
+        {action, selected_text, node_id, offsets, existing_highlight, extra} =
+          GraphHelpers.unpack_selection_action(params)
+
+        handle_selection_action(
+          action,
+          selected_text,
+          node_id,
+          offsets,
+          existing_highlight,
+          extra,
+          socket
+        )
+    end
   end
 
   # ── Streaming / PubSub Handlers ────────────────────────────────────────
-
-  def handle_info({:stream_chunk, updated_vertex, :node_id, node_id}, socket) do
-    # Re-broadcast to all users on the graph
-    PubSub.broadcast(
-      Dialectic.PubSub,
-      socket.assigns.graph_topic,
-      {:stream_chunk_broadcast, updated_vertex, :node_id, node_id, self()}
-    )
-
-    {:noreply, update_streaming_node(socket, updated_vertex, node_id)}
-  end
-
-  def handle_info(
-        {:stream_chunk_broadcast, updated_vertex, :node_id, node_id, sender_pid},
-        socket
-      ) do
-    if self() == sender_pid do
-      {:noreply, socket}
-    else
-      {:noreply, update_streaming_node(socket, updated_vertex, node_id)}
-    end
-  end
+  # :stream_chunk and :stream_chunk_broadcast are injected by GraphStreaming
 
   def handle_info({:llm_request_complete, node_id}, socket) do
     Logger.debug(fn ->
@@ -553,35 +535,7 @@ defmodule DialecticWeb.LinearGraphLive do
     end
   end
 
-  # ── Highlight PubSub ───────────────────────────────────────────────────
-
-  def handle_info({:created, highlight}, socket) do
-    highlights = [highlight | socket.assigns.highlights]
-
-    {:noreply,
-     assign(socket, highlights: highlights)
-     |> push_event("refresh_highlights", %{data: highlight})}
-  end
-
-  def handle_info({:updated, highlight}, socket) do
-    highlights =
-      Enum.map(socket.assigns.highlights, fn h ->
-        if h.id == highlight.id, do: highlight, else: h
-      end)
-
-    {:noreply,
-     assign(socket, highlights: highlights)
-     |> push_event("refresh_highlights", %{data: highlight})}
-  end
-
-  def handle_info({:deleted, highlight}, socket) do
-    highlights =
-      Enum.reject(socket.assigns.highlights, fn h -> h.id == highlight.id end)
-
-    {:noreply,
-     assign(socket, highlights: highlights)
-     |> push_event("refresh_highlights", %{data: highlight})}
-  end
+  # Highlight PubSub (:created, :updated, :deleted) injected by GraphStreaming
 
   # Catch-all for any unhandled PubSub messages (e.g. Presence)
   def handle_info(_msg, socket) do

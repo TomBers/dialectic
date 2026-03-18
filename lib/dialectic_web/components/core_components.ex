@@ -17,6 +17,11 @@ defmodule DialecticWeb.CoreComponents do
   use Phoenix.Component
   use Gettext, backend: DialecticWeb.Gettext
 
+  use Phoenix.VerifiedRoutes,
+    endpoint: DialecticWeb.Endpoint,
+    router: DialecticWeb.Router,
+    statics: DialecticWeb.static_paths()
+
   alias Phoenix.LiveView.JS
 
   @doc """
@@ -655,6 +660,49 @@ defmodule DialecticWeb.CoreComponents do
     |> JS.hide(to: "##{id}", transition: {"block", "block", "hidden"})
     |> JS.remove_class("overflow-hidden", to: "body")
     |> JS.pop_focus()
+  end
+
+  @doc """
+  Renders a login-required modal.
+
+  ## Examples
+
+      <.login_required_modal id="login-modal" show={@show_login_modal} />
+  """
+  attr :id, :string, required: true
+  attr :show, :boolean, default: false
+
+  def login_required_modal(assigns) do
+    ~H"""
+    <.modal :if={@show} id={@id} show on_cancel={JS.push("close_login_modal")}>
+      <div class="p-4 text-center sm:p-6">
+        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100 mb-4">
+          <.icon name="hero-lock-closed" class="h-6 w-6 text-zinc-600" />
+        </div>
+        <h3 class="text-lg font-semibold leading-6 text-zinc-900 mb-2">
+          Login Required
+        </h3>
+        <p class="text-sm text-zinc-500 mb-6">
+          You need to be signed in to perform this action.
+          Please log in or create a new account to continue.
+        </p>
+        <div class="flex flex-col sm:flex-row justify-center gap-3">
+          <.link
+            href={~p"/users/log_in"}
+            class="inline-flex justify-center rounded-lg bg-zinc-900 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-zinc-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
+          >
+            Sign in
+          </.link>
+          <.link
+            href={~p"/users/register"}
+            class="inline-flex justify-center rounded-lg bg-white px-3 py-2 text-sm font-semibold text-zinc-900 shadow-sm ring-1 ring-inset ring-zinc-300 hover:bg-zinc-50"
+          >
+            Create account
+          </.link>
+        </div>
+      </div>
+    </.modal>
+    """
   end
 
   @doc """
