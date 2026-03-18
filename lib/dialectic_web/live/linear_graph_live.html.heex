@@ -3,21 +3,27 @@
   style="height: calc(100vh - 2.5rem); height: calc(100dvh - 2.5rem);"
 >
   <%!-- Desktop hint banner — only on small screens --%>
-  <%= if @show_mobile_hint do %>
-    <div class="lg:hidden flex-none bg-indigo-50 border-b border-indigo-100 px-3 py-1.5 flex items-center gap-2 z-30">
-      <p class="text-[11px] text-indigo-600 flex-1 truncate">
-        Mobile view — full editing on desktop
-      </p>
-      <button
-        type="button"
-        phx-click="dismiss_mobile_hint"
-        class="flex-none rounded p-0.5 text-indigo-400 hover:text-indigo-600 hover:bg-indigo-100 transition-colors"
-        aria-label="Dismiss"
-      >
-        <.icon name="hero-x-mark" class="w-3.5 h-3.5" />
-      </button>
-    </div>
-  <% end %>
+  <div
+    id="mobile-hint-banner"
+    class="lg:hidden flex-none bg-indigo-50 border-b border-indigo-100 px-3 py-1.5 flex items-center gap-2 z-30"
+  >
+    <p class="text-[11px] text-indigo-600 flex-1 truncate">
+      Mobile view — full editing on desktop
+    </p>
+    <button
+      type="button"
+      phx-click={
+        JS.hide(
+          to: "#mobile-hint-banner",
+          transition: {"transition-all duration-200", "opacity-100", "opacity-0 -translate-y-1"}
+        )
+      }
+      class="flex-none rounded p-0.5 text-indigo-400 hover:text-indigo-600 hover:bg-indigo-100 transition-colors"
+      aria-label="Dismiss"
+    >
+      <.icon name="hero-x-mark" class="w-3.5 h-3.5" />
+    </button>
+  </div>
 
   <%!-- Locked banner --%>
   <%= if !@can_edit do %>
@@ -86,44 +92,44 @@
               <div class="relative">
                 <button
                   type="button"
-                  phx-click="toggle_highlights_list"
-                  phx-click-away={
-                    if @show_highlights_list, do: "toggle_highlights_list", else: nil
-                  }
-                  class={"relative -ml-px inline-flex items-center px-2 py-1.5 text-xs border border-gray-300 rounded-r-md focus:z-10 transition-colors " <> if(@show_highlights_list, do: "bg-amber-100 border-amber-300 text-amber-800", else: "bg-white text-gray-700 hover:bg-gray-50")}
+                  id="highlights-list-toggle-btn"
+                  phx-click={JS.toggle(to: "#highlights-dropdown")}
+                  phx-click-away={JS.hide(to: "#highlights-dropdown")}
+                  class="relative -ml-px inline-flex items-center px-2 py-1.5 text-xs border border-gray-300 rounded-r-md focus:z-10 transition-colors bg-white text-gray-700 hover:bg-gray-50"
                 >
                   <span class="sr-only">Open highlights menu</span>
                   <span class="font-medium mr-1">{length(@highlights)}</span>
                   <.icon name="hero-chevron-down" class="h-3 w-3" />
                 </button>
 
-                <%= if @show_highlights_list do %>
-                  <div class="absolute right-0 z-50 mt-2 w-72 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none max-h-96 overflow-y-auto">
-                    <div class="py-1">
-                      <%= for highlight <- @highlights do %>
-                        <button
-                          phx-click="jump_to_highlight"
-                          phx-value-id={highlight.id}
-                          phx-value-node_id={highlight.node_id}
-                          class="group w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100 hover:text-gray-900 border-b border-gray-50 last:border-0"
-                        >
-                          <div class="flex items-start gap-2">
-                            <div class="mt-1.5 w-1.5 h-1.5 rounded-full bg-amber-400 flex-none group-hover:bg-amber-500">
-                            </div>
-                            <div class="flex-1 min-w-0">
-                              <p class="truncate font-medium text-gray-900">
-                                "{highlight.selected_text_snapshot}"
-                              </p>
-                              <p class="text-gray-500 text-[10px] mt-0.5 truncate">
-                                Node {highlight.node_id}
-                              </p>
-                            </div>
+                <div
+                  id="highlights-dropdown"
+                  class="hidden absolute right-0 z-50 mt-2 w-72 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none max-h-96 overflow-y-auto"
+                >
+                  <div class="py-1">
+                    <%= for highlight <- @highlights do %>
+                      <button
+                        phx-click="jump_to_highlight"
+                        phx-value-id={highlight.id}
+                        phx-value-node_id={highlight.node_id}
+                        class="group w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100 hover:text-gray-900 border-b border-gray-50 last:border-0"
+                      >
+                        <div class="flex items-start gap-2">
+                          <div class="mt-1.5 w-1.5 h-1.5 rounded-full bg-amber-400 flex-none group-hover:bg-amber-500">
                           </div>
-                        </button>
-                      <% end %>
-                    </div>
+                          <div class="flex-1 min-w-0">
+                            <p class="truncate font-medium text-gray-900">
+                              "{highlight.selected_text_snapshot}"
+                            </p>
+                            <p class="text-gray-500 text-[10px] mt-0.5 truncate">
+                              Node {highlight.node_id}
+                            </p>
+                          </div>
+                        </div>
+                      </button>
+                    <% end %>
                   </div>
-                <% end %>
+                </div>
               </div>
             <% else %>
               <span class="relative -ml-px inline-flex items-center px-2 py-1.5 text-xs border border-gray-300 rounded-r-md bg-gray-50 text-gray-400 cursor-not-allowed">
@@ -458,7 +464,11 @@
     <div
       id="branch-picker-backdrop"
       class="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm transition-opacity"
-      phx-click="close_branch_picker"
+      phx-click={
+        JS.hide(to: "#branch-picker-backdrop")
+        |> JS.hide(to: "#branch-picker-sheet")
+        |> JS.push("close_branch_picker")
+      }
     >
     </div>
     <div
@@ -481,7 +491,11 @@
           </div>
           <button
             type="button"
-            phx-click="close_branch_picker"
+            phx-click={
+              JS.hide(to: "#branch-picker-backdrop")
+              |> JS.hide(to: "#branch-picker-sheet")
+              |> JS.push("close_branch_picker")
+            }
             class="rounded-full p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
             aria-label="Close branch picker"
           >

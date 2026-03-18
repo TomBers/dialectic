@@ -3,6 +3,7 @@ defmodule DialecticWeb.LinearGraphLive do
 
   alias Dialectic.Graph.{Vertex, GraphActions}
   alias DialecticWeb.ColUtils
+  alias DialecticWeb.GraphHelpers
   alias DialecticWeb.Utils.{NodeTitleHelper, UserUtils}
   alias Dialectic.Highlights
 
@@ -139,7 +140,6 @@ defmodule DialecticWeb.LinearGraphLive do
         graph_struct: graph_db,
         show_minimap: false,
         show_highlights: true,
-        show_highlights_list: false,
         highlights: Highlights.list_highlights(mudg_id: graph_db.title),
         selected_node_id: if(target_node, do: target_node.id, else: nil),
         token: token_param,
@@ -160,7 +160,6 @@ defmodule DialecticWeb.LinearGraphLive do
         graph_topic: graph_topic,
         prompt_mode: prompt_mode,
         show_login_modal: false,
-        show_mobile_hint: true,
         show_branch_picker: false,
         branch_picker_children: [],
         branch_picker_parent_id: nil
@@ -186,11 +185,12 @@ defmodule DialecticWeb.LinearGraphLive do
   def handle_event("answer", %{"vertex" => %{"content" => ""}}, socket), do: {:noreply, socket}
 
   def handle_event("answer", %{"vertex" => %{"content" => answer}}, socket) do
-    if socket.assigns.can_edit do
-      result = GraphActions.comment(graph_action_params(socket), answer)
-      handle_graph_update(socket, {nil, result}, "comment")
-    else
-      {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    case GraphHelpers.handle_answer(socket, answer) do
+      {:ok, graph_result, operation} ->
+        handle_graph_update(socket, graph_result, operation)
+
+      {:error, :locked} ->
+        {:noreply, socket |> put_flash(:error, "This graph is locked")}
     end
   end
 
@@ -199,40 +199,32 @@ defmodule DialecticWeb.LinearGraphLive do
         %{"vertex" => %{"content" => answer}, "prefix" => prefix} = params,
         socket
       ) do
-    if not socket.assigns.can_edit do
-      {:noreply, socket |> put_flash(:error, "This graph is locked")}
-    else
-      minimal_context = prefix == "explain"
-      highlight_context = Map.get(params, "highlight_context")
+    minimal_context = prefix == "explain"
+    highlight_context = Map.get(params, "highlight_context")
 
-      handle_graph_update(
-        socket,
-        GraphActions.ask_and_answer(
-          graph_action_params(socket, socket.assigns.node),
-          answer,
-          minimal_context: minimal_context,
-          highlight_context: highlight_context
-        ),
-        "answer"
-      )
+    case GraphHelpers.handle_reply_and_answer(socket, answer,
+           minimal_context: minimal_context,
+           highlight_context: highlight_context
+         ) do
+      {:ok, graph_result, operation} ->
+        handle_graph_update(socket, graph_result, operation)
+
+      {:error, :locked} ->
+        {:noreply, socket |> put_flash(:error, "This graph is locked")}
     end
   end
 
   def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}} = params, socket) do
-    if not socket.assigns.can_edit do
-      {:noreply, socket |> put_flash(:error, "This graph is locked")}
-    else
-      highlight_context = Map.get(params, "highlight_context")
+    highlight_context = Map.get(params, "highlight_context")
 
-      handle_graph_update(
-        socket,
-        GraphActions.ask_and_answer(
-          graph_action_params(socket, socket.assigns.node),
-          answer,
-          highlight_context: highlight_context
-        ),
-        "answer"
-      )
+    case GraphHelpers.handle_reply_and_answer(socket, answer,
+           highlight_context: highlight_context
+         ) do
+      {:ok, graph_result, operation} ->
+        handle_graph_update(socket, graph_result, operation)
+
+      {:error, :locked} ->
+        {:noreply, socket |> put_flash(:error, "This graph is locked")}
     end
   end
 
@@ -252,76 +244,30 @@ defmodule DialecticWeb.LinearGraphLive do
   end
 
   def handle_event("note", %{"node" => node_id}, socket) do
-    if socket.assigns.current_user == nil do
-      {:noreply, assign(socket, show_login_modal: true)}
-    else
-      Dialectic.DbActions.Notes.add_note(
-        socket.assigns.graph_id,
-        node_id,
-        socket.assigns.current_user
-      )
-
-      handle_graph_update(
-        socket,
-        {nil,
-         GraphActions.change_noted_by(
-           graph_action_params(socket),
-           node_id,
-           &Vertex.add_noted_by/2
-         )},
-        "note"
-      )
+    case GraphHelpers.handle_note(socket, node_id, :note) do
+      {:noreply, socket} -> {:noreply, socket}
+      {:ok, graph_result, operation} -> handle_graph_update(socket, graph_result, operation)
     end
   end
 
   def handle_event("unnote", %{"node" => node_id}, socket) do
-    if socket.assigns.current_user == nil do
-      {:noreply, assign(socket, show_login_modal: true)}
-    else
-      Dialectic.DbActions.Notes.remove_note(
-        socket.assigns.graph_id,
-        node_id,
-        socket.assigns.current_user
-      )
-
-      handle_graph_update(
-        socket,
-        {nil,
-         GraphActions.change_noted_by(
-           graph_action_params(socket),
-           node_id,
-           &Vertex.remove_noted_by/2
-         )},
-        "unnote"
-      )
+    case GraphHelpers.handle_note(socket, node_id, :unnote) do
+      {:noreply, socket} -> {:noreply, socket}
+      {:ok, graph_result, operation} -> handle_graph_update(socket, graph_result, operation)
     end
   end
 
   def handle_event("node_branch", %{"id" => node_id}, socket) do
-    if not socket.assigns.can_edit do
-      {:noreply, socket |> put_flash(:error, "This graph is locked")}
-    else
-      node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-
-      handle_graph_update(
-        socket,
-        {nil, GraphActions.branch(graph_action_params(socket, node))},
-        "branch"
-      )
+    case GraphHelpers.handle_branch(socket, node_id) do
+      {:ok, graph_result, operation} -> handle_graph_update(socket, graph_result, operation)
+      {:error, :locked} -> {:noreply, socket |> put_flash(:error, "This graph is locked")}
     end
   end
 
   def handle_event("node_related_ideas", %{"id" => node_id}, socket) do
-    if not socket.assigns.can_edit do
-      {:noreply, socket |> put_flash(:error, "This graph is locked")}
-    else
-      node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-
-      handle_graph_update(
-        socket,
-        {nil, GraphActions.related_ideas(graph_action_params(socket, node))},
-        "ideas"
-      )
+    case GraphHelpers.handle_related_ideas(socket, node_id) do
+      {:ok, graph_result, operation} -> handle_graph_update(socket, graph_result, operation)
+      {:error, :locked} -> {:noreply, socket |> put_flash(:error, "This graph is locked")}
     end
   end
 
@@ -363,10 +309,6 @@ defmodule DialecticWeb.LinearGraphLive do
 
   def handle_event("toggle_highlights", _, socket) do
     {:noreply, assign(socket, show_highlights: !socket.assigns.show_highlights)}
-  end
-
-  def handle_event("toggle_highlights_list", _, socket) do
-    {:noreply, assign(socket, show_highlights_list: !socket.assigns.show_highlights_list)}
   end
 
   def handle_event("jump_to_highlight", %{"id" => highlight_id, "node_id" => node_id}, socket) do
@@ -416,14 +358,6 @@ defmodule DialecticWeb.LinearGraphLive do
     else
       {:noreply, socket}
     end
-  end
-
-  def handle_event("update_exploration_progress", _params, socket) do
-    {:noreply, socket}
-  end
-
-  def handle_event("dismiss_mobile_hint", _, socket) do
-    {:noreply, assign(socket, show_mobile_hint: false)}
   end
 
   def handle_event("open_branch_picker", %{"node-id" => node_id}, socket) do
@@ -656,27 +590,8 @@ defmodule DialecticWeb.LinearGraphLive do
 
   # ── Private Helpers ────────────────────────────────────────────────────
 
-  defp graph_action_params(socket, node \\ nil) do
-    node_to_use =
-      cond do
-        node != nil -> node
-        is_map(socket.assigns.node) -> socket.assigns.node
-        true -> %{id: "1", content: "", children: [], parents: []}
-      end
-
-    graph_id = socket.assigns.graph_id
-
-    unless GraphManager.exists?(graph_id) do
-      case Dialectic.DbActions.Graphs.get_graph_by_title(graph_id) do
-        nil ->
-          Logger.warning("Attempted to access non-existent graph: #{graph_id}")
-
-        _graph ->
-          DynamicSupervisor.start_child(GraphSupervisor, {GraphManager, graph_id})
-      end
-    end
-
-    {graph_id, node_to_use, socket.assigns.user, socket.assigns.live_view_topic}
+  defp graph_action_params(socket, node) do
+    GraphHelpers.graph_action_params(socket, node)
   end
 
   defp handle_graph_update(socket, {_graph, node}, operation) do
