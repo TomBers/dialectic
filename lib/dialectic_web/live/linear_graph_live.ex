@@ -850,7 +850,15 @@ defmodule DialecticWeb.LinearGraphLive do
     updated_path =
       Enum.map(socket.assigns.linear_path, fn n ->
         if n.id == node_id do
-          %{n | content: new_content}
+          n
+          |> Map.put(:content, new_content)
+          |> then(fn n_updated ->
+            if needs_title_set do
+              Map.put(n_updated, :title, new_title)
+            else
+              n_updated
+            end
+          end)
         else
           n
         end
@@ -862,10 +870,20 @@ defmodule DialecticWeb.LinearGraphLive do
     if socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
       current_content = Map.get(socket.assigns.node, :content, "")
 
-      if current_content == new_content do
+      if current_content == new_content and not needs_title_set do
         socket
       else
-        node = %{socket.assigns.node | content: new_content}
+        node =
+          socket.assigns.node
+          |> Map.put(:content, new_content)
+          |> then(fn node_updated ->
+            if needs_title_set do
+              Map.put(node_updated, :title, new_title)
+            else
+              node_updated
+            end
+          end)
+
         assign(socket, node: node)
       end
     else

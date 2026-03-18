@@ -56,7 +56,7 @@ const SwipeNav = {
       if (Math.abs(diffX) > 30 && diffY < this.maxVerticalDeviation) {
         this.swiping = true;
         this.showSwipeIndicator(
-          diffX > 0 ? "right" : "left",
+          diffX > 0 ? "left" : "right",
           Math.min(Math.abs(diffX) / this.minSwipeDistance, 1),
         );
       }
