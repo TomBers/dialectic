@@ -152,17 +152,19 @@ defmodule DialecticWeb.AskFormComp do
         </div>
 
         <%!-- Explanatory text below form --%>
-        <div class="text-[11px] text-gray-600 text-center">
-          <%= if @ask_question do %>
-            Ask a question to get an AI-generated
-            <span class="font-medium">{String.capitalize(@prompt_mode)}</span>
-            level response • <span class="text-gray-500">Change level in settings panel</span>
-          <% else %>
-            <span class="text-gray-600">
-              Add your comment directly to the graph • No AI response will be generated
-            </span>
-          <% end %>
-        </div>
+        <%= if @show_hint do %>
+          <div class="text-[11px] text-gray-600 text-center">
+            <%= if @ask_question do %>
+              Ask a question to get an AI-generated
+              <span class="font-medium">{String.capitalize(@prompt_mode)}</span>
+              level response • <span class="text-gray-500">Change level in settings panel</span>
+            <% else %>
+              <span class="text-gray-600">
+                Add your comment directly to the graph • No AI response will be generated
+              </span>
+            <% end %>
+          </div>
+        <% end %>
       </.form>
     </div>
     """
