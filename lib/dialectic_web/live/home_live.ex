@@ -109,7 +109,7 @@ defmodule DialecticWeb.HomeLive do
   def handle_event("generate_tags", %{"title" => title}, socket) do
     case Graphs.get_graph_by_title(title) do
       nil ->
-        {:noreply, put_flash(socket, :error, "Graph not found")}
+        {:noreply, put_flash(socket, :error, "Grid not found")}
 
       graph ->
         Dialectic.Categorisation.AutoTagger.tag_graph(graph)
@@ -123,7 +123,7 @@ defmodule DialecticWeb.HomeLive do
     case Graphs.get_graph_by_title(title) do
       nil ->
         # This shouldn't happen since we just created the graph
-        {:noreply, put_flash(socket, :error, "Graph not found after creation")}
+        {:noreply, put_flash(socket, :error, "Grid not found after creation")}
 
       graph ->
         {:noreply, redirect(socket, to: graph_path(graph))}
@@ -131,16 +131,15 @@ defmodule DialecticWeb.HomeLive do
   end
 
   def handle_async(:create_graph_flow, {:ok, _}, socket) do
-    {:noreply,
-     put_flash(socket, :error, "Failed to create mind map") |> assign(:loading_graph, nil)}
+    {:noreply, put_flash(socket, :error, "Failed to create grid") |> assign(:loading_graph, nil)}
   end
 
   def handle_async(:create_graph_flow, {:exit, reason}, socket) do
     # Log the crash reason if needed
-    Logger.error("Mind map creation crashed: #{inspect(reason)}")
+    Logger.error("Grid creation crashed: #{inspect(reason)}")
 
     {:noreply,
-     put_flash(socket, :error, "Mind map creation failed. Please try again.")
+     put_flash(socket, :error, "Grid creation failed. Please try again.")
      |> assign(:loading_graph, nil)}
   end
 
@@ -259,7 +258,7 @@ defmodule DialecticWeb.HomeLive do
                       RationalGrid
                     </h1>
                     <p class="text-base sm:text-xl font-medium text-indigo-100 px-2 sm:px-0">
-                      A shared AI-powered whiteboard; explore ideas deeply, structure thinking, and sharpen arguments.
+                      A shared AI-powered grid; explore ideas deeply, structure thinking, and sharpen arguments.
                     </p>
                   </div>
 

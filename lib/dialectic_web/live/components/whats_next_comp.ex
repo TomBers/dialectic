@@ -22,7 +22,7 @@ defmodule DialecticWeb.WhatsNextComp do
         <span class="text-xl">👋</span> What's Next?
       </h3>
       <p class="text-base text-zinc-700 mb-6">
-        New here? Explore ideas by growing a shared whiteboard of questions and answers. Start by reading the focused node, then ask, branch, or add your own thoughts.
+        New here? Explore ideas by growing a shared grid of questions and answers. Start by reading the focused node, then ask, branch, or add your own thoughts.
       </p>
 
       <div class="space-y-6 mb-6">
