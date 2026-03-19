@@ -36,7 +36,6 @@ import { ViewModeHook } from "./view_mode_hook.js";
 import AutoExpandTextareaHook from "./auto_expand_textarea_hook.js";
 import WhatsNext from "./whats_next_hook.js";
 import SearchNav from "./search_nav_hook.js";
-import SwipeNav from "./swipe_nav_hook.js";
 
 let hooks = {};
 
@@ -55,7 +54,6 @@ hooks.ViewMode = ViewModeHook;
 hooks.AutoExpandTextarea = AutoExpandTextareaHook;
 hooks.WhatsNext = WhatsNext;
 hooks.SearchNav = SearchNav;
-hooks.SwipeNav = SwipeNav;
 
 hooks.MobileRedirect = {
   mounted() {
@@ -370,21 +368,44 @@ hooks.GraphLayout = {
 
 hooks.LinearView = {
   mounted() {
-    // Scroll both the main content and the minimap to a given node
-    const scrollToNode = (id, behavior = "smooth") => {
-      const el = document.getElementById(`node-${id}`);
-      if (el) {
-        el.scrollIntoView({ behavior, block: "start" });
-      }
-      // Also scroll the minimap entry into view
-      const mapEntry = document.getElementById(`map-node-${id}`);
-      if (mapEntry) {
-        mapEntry.scrollIntoView({ behavior, block: "nearest" });
-      }
+    // Scroll both the main content and the minimap to a given node.
+    // `block` defaults to "nearest" so already-visible nodes don't jump.
+    // Callers that need the node pinned to the top can pass "start".
+    //
+    // Uses a short polling loop to wait for LiveView to finish patching
+    // the DOM before measuring positions — the target element may not
+    // exist yet when the event fires (e.g. after a branch switch).
+    const scrollToNode = (
+      id,
+      { behavior = "smooth", block = "nearest" } = {},
+    ) => {
+      let attempts = 0;
+      const maxAttempts = 10;
+
+      const tryScroll = () => {
+        const el = document.getElementById(`node-${id}`);
+        if (el) {
+          requestAnimationFrame(() => {
+            el.scrollIntoView({ behavior, block });
+
+            // Also scroll the minimap entry into view
+            const mapEntry = document.getElementById(`map-node-${id}`);
+            if (mapEntry) {
+              mapEntry.scrollIntoView({ behavior, block: "nearest" });
+            }
+          });
+        } else if (attempts < maxAttempts) {
+          attempts++;
+          // Retry after a short delay to let LiveView finish patching
+          setTimeout(tryScroll, 50);
+        }
+      };
+
+      tryScroll();
     };
 
-    this.handleEvent("scroll_to_node", ({ id }) => {
-      scrollToNode(id);
+    this.handleEvent("scroll_to_node", ({ id, block }) => {
+      scrollToNode(id, { block: block || "nearest" });
     });
   },
 };

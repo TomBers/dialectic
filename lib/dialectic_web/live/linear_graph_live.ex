@@ -169,7 +169,7 @@ defmodule DialecticWeb.LinearGraphLive do
     # When a specific node_id was requested via URL params, scroll to it
     socket =
       if connected?(socket) && params["node_id"] && target_node do
-        push_event(socket, "scroll_to_node", %{id: target_node.id})
+        push_event(socket, "scroll_to_node", %{id: target_node.id, block: "start"})
       else
         socket
       end
@@ -362,7 +362,7 @@ defmodule DialecticWeb.LinearGraphLive do
       {:noreply,
        socket
        |> assign(selected_node_id: node.id, linear_path: path, node: node)
-       |> push_event("scroll_to_node", %{id: node.id})}
+       |> push_event("scroll_to_node", %{id: node.id, block: "start"})}
     else
       {:noreply, socket |> put_flash(:error, "Node not found")}
     end
@@ -377,7 +377,7 @@ defmodule DialecticWeb.LinearGraphLive do
       {:noreply,
        socket
        |> assign(selected_node_id: node.id, linear_path: path, node: node)
-       |> push_event("scroll_to_node", %{id: node.id})}
+       |> push_event("scroll_to_node", %{id: node.id, block: "start"})}
     else
       {:noreply, socket}
     end
@@ -413,76 +413,23 @@ defmodule DialecticWeb.LinearGraphLive do
 
       path = build_linear_path(socket.assigns.graph_id, target)
 
-      {:noreply,
-       socket
-       |> assign(
-         selected_node_id: target.id,
-         linear_path: path,
-         node: target,
-         show_branch_picker: false,
-         branch_picker_children: [],
-         branch_picker_parent_id: nil
-       )
-       |> push_event("scroll_to_node", %{id: child_id})}
+      socket =
+        socket
+        |> assign(
+          selected_node_id: target.id,
+          linear_path: path,
+          node: target,
+          show_branch_picker: false,
+          branch_picker_children: [],
+          branch_picker_parent_id: nil
+        )
+
+      # No scrolling — the nodes above the branch point have the same
+      # DOM ids and stay in place. Only the content below the branch
+      # point changes, so the viewport position is naturally preserved.
+      {:noreply, socket}
     else
       {:noreply, assign(socket, show_branch_picker: false)}
-    end
-  end
-
-  def handle_event("swipe_navigate", %{"direction" => direction}, socket) do
-    # Find the current node's parent, then find siblings
-    current_node_id = socket.assigns.selected_node_id
-    current_node = GraphActions.find_node(socket.assigns.graph_id, current_node_id)
-
-    if current_node do
-      parent_ids = GraphManager.in_neighbours(socket.assigns.graph_id, current_node_id)
-
-      case parent_ids do
-        [parent_id | _] ->
-          sibling_ids = GraphManager.out_neighbours(socket.assigns.graph_id, parent_id)
-
-          siblings =
-            sibling_ids
-            |> Enum.map(&GraphActions.find_node(socket.assigns.graph_id, &1))
-            |> Enum.reject(&is_nil/1)
-            |> Enum.reject(&(Map.get(&1, :deleted, false) == true))
-
-          current_index = Enum.find_index(siblings, &(&1.id == current_node_id))
-
-          next_index =
-            case direction do
-              "left" ->
-                if current_index && current_index > 0, do: current_index - 1, else: nil
-
-              "right" ->
-                if current_index && current_index < length(siblings) - 1,
-                  do: current_index + 1,
-                  else: nil
-
-              _ ->
-                nil
-            end
-
-          if next_index do
-            target = Enum.at(siblings, next_index)
-            leaf = find_deepest_leaf(socket.assigns.graph_id, target)
-            final_target = leaf || target
-
-            path = build_linear_path(socket.assigns.graph_id, final_target)
-
-            {:noreply,
-             socket
-             |> assign(selected_node_id: final_target.id, linear_path: path, node: final_target)
-             |> push_event("scroll_to_node", %{id: target.id})}
-          else
-            {:noreply, socket}
-          end
-
-        _ ->
-          {:noreply, socket}
-      end
-    else
-      {:noreply, socket}
     end
   end
 
@@ -603,7 +550,7 @@ defmodule DialecticWeb.LinearGraphLive do
             node: node,
             linear_path: new_path
           )
-          |> push_event("scroll_to_node", %{id: node.id})
+          |> push_event("scroll_to_node", %{id: node.id, block: "start"})
         end
       else
         socket
@@ -668,16 +615,65 @@ defmodule DialecticWeb.LinearGraphLive do
 
   defp build_linear_path(graph_id, target_node) do
     if target_node do
-      GraphManager.path_to_node(graph_id, target_node)
-      |> Enum.reverse()
-      |> Enum.map(fn node ->
-        # Enrich with actual children from the graph (path_to_node returns raw
-        # vertex labels where children is always [])
-        children_ids = GraphManager.out_neighbours(graph_id, node.id)
+      nodes =
+        GraphManager.path_to_node(graph_id, target_node)
+        |> Enum.reverse()
+        |> Enum.map(fn node ->
+          # Enrich with actual children from the graph (path_to_node returns raw
+          # vertex labels where children is always [])
+          children_ids = GraphManager.out_neighbours(graph_id, node.id)
 
-        node
-        |> Map.put(:title, NodeTitleHelper.extract_node_title(node))
-        |> Map.put(:children, children_ids)
+          non_deleted_children =
+            children_ids
+            |> Enum.map(&GraphActions.find_node(graph_id, &1))
+            |> Enum.reject(&is_nil/1)
+            |> Enum.reject(&(Map.get(&1, :deleted, false) == true))
+            |> Enum.map(& &1.id)
+
+          node
+          |> Map.put(:title, NodeTitleHelper.extract_node_title(node))
+          |> Map.put(:children, non_deleted_children)
+        end)
+
+      # Annotate each node with sibling navigation info.
+      # For node at index i, its parent is at index i-1.
+      # The parent's :children list contains the siblings of node i.
+      nodes
+      |> Enum.with_index()
+      |> Enum.map(fn {node, idx} ->
+        sibling_nav =
+          if idx > 0 do
+            parent = Enum.at(nodes, idx - 1)
+            siblings = Map.get(parent, :children, [])
+            total = length(siblings)
+
+            if total > 1 do
+              current_index = Enum.find_index(siblings, &(&1 == node.id))
+
+              prev_id =
+                if current_index && current_index > 0,
+                  do: Enum.at(siblings, current_index - 1),
+                  else: nil
+
+              next_id =
+                if current_index && current_index < total - 1,
+                  do: Enum.at(siblings, current_index + 1),
+                  else: nil
+
+              %{
+                prev_id: prev_id,
+                next_id: next_id,
+                current_index: (current_index || 0) + 1,
+                total: total
+              }
+            else
+              nil
+            end
+          else
+            nil
+          end
+
+        Map.put(node, :sibling_nav, sibling_nav)
       end)
     else
       []

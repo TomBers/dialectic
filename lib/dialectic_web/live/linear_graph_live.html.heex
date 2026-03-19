@@ -212,6 +212,66 @@
                     </span>
                   <% end %>
                 </div>
+                <%!-- Sibling navigation strip — shown when this node is one of several branches --%>
+                <%= if Map.get(node, :sibling_nav) do %>
+                  <% nav = node.sibling_nav %>
+                  <div class="flex items-center justify-between px-3 py-1 sm:px-4 sm:py-1.5 border-b border-indigo-100 bg-indigo-50/50">
+                    <button
+                      type="button"
+                      phx-click="switch_branch"
+                      phx-value-child-id={nav.prev_id}
+                      disabled={is_nil(nav.prev_id)}
+                      class={[
+                        "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] sm:text-xs font-medium transition-all",
+                        if(nav.prev_id,
+                          do: "text-indigo-600 hover:bg-indigo-100 active:bg-indigo-200",
+                          else: "text-gray-300 cursor-not-allowed"
+                        )
+                      ]}
+                      title={if nav.prev_id, do: "Previous branch", else: "No previous branch"}
+                    >
+                      <.icon name="hero-chevron-left" class="w-3.5 h-3.5" />
+                      <span class="hidden sm:inline">Prev</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      phx-click="open_branch_picker"
+                      phx-value-node-id={
+                        Enum.at(
+                          @linear_path,
+                          Enum.find_index(@linear_path, &(&1.id == node.id)) - 1
+                        ).id
+                      }
+                      class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] sm:text-xs font-medium text-indigo-600 hover:bg-indigo-100 transition-all"
+                      title="Browse all branches"
+                    >
+                      <.icon
+                        name="hero-arrow-path-rounded-square"
+                        class="w-3 h-3 sm:w-3.5 sm:h-3.5"
+                      />
+                      <span>Branch {nav.current_index} of {nav.total}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      phx-click="switch_branch"
+                      phx-value-child-id={nav.next_id}
+                      disabled={is_nil(nav.next_id)}
+                      class={[
+                        "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] sm:text-xs font-medium transition-all",
+                        if(nav.next_id,
+                          do: "text-indigo-600 hover:bg-indigo-100 active:bg-indigo-200",
+                          else: "text-gray-300 cursor-not-allowed"
+                        )
+                      ]}
+                      title={if nav.next_id, do: "Next branch", else: "No next branch"}
+                    >
+                      <span class="hidden sm:inline">Next</span>
+                      <.icon name="hero-chevron-right" class="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                <% end %>
                 
 <!-- Content -->
                 <div class="px-3 py-3 sm:p-6 prose prose-stone prose-sm sm:prose-base max-w-none leading-relaxed sm:leading-relaxed prose-headings:font-semibold prose-headings:text-sm sm:prose-headings:text-base prose-p:my-2 sm:prose-p:my-3 prose-pre:bg-gray-800 prose-pre:text-gray-100 prose-pre:text-xs prose-pre:overflow-x-auto selection-content">
@@ -320,17 +380,8 @@
                         name="hero-arrow-path-rounded-square"
                         class="w-3 h-3 sm:w-3.5 sm:h-3.5"
                       />
-                      <span>{length(children)}</span>
+                      <span>{length(children)} branches</span>
                     </button>
-                  <% else %>
-                    <%= if is_list(children) && length(children) == 1 do %>
-                      <span
-                        class="ml-auto text-[10px] text-gray-400 flex items-center gap-1"
-                        title="This node has 1 child response"
-                      >
-                        <.icon name="hero-arrow-down-circle" class="w-3 h-3" /> 1
-                      </span>
-                    <% end %>
                   <% end %>
                 </div>
               </div>
@@ -580,19 +631,9 @@
             </button>
           <% end %>
         </div>
-        <%!-- Swipe hint --%>
-        <div class="px-5 py-3 border-t border-gray-100 bg-gray-50/80">
-          <p class="text-[11px] text-gray-400 text-center flex items-center justify-center gap-1.5">
-            <.icon name="hero-hand-raised" class="w-3.5 h-3.5" />
-            Swipe left or right on the conversation to switch branches
-          </p>
-        </div>
       </div>
     </div>
   <% end %>
-
-  <%!-- Swipe Navigation Hook --%>
-  <div phx-hook="SwipeNav" id="swipe-nav-hook" class="hidden"></div>
 
   <div phx-hook="SelectionActions" id="selection-actions-hook-linear">
     <.live_component
