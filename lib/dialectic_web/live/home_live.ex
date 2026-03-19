@@ -248,22 +248,22 @@ defmodule DialecticWeb.HomeLive do
         </div>
         
     <!-- Make the hero content scroll within the viewport naturally -->
-        <div class="relative z-10 mx-auto max-w-7xl px-6 pt-14 pb-10 min-h-[calc(100vh-4rem)]">
-          <div class="flex flex-col gap-10 items-stretch">
+        <div class="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 pt-8 sm:pt-14 pb-6 sm:pb-10 min-h-[calc(100vh-4rem)]">
+          <div class="flex flex-col gap-6 sm:gap-10 items-stretch">
             <!-- Top: Create new idea (primary action, centered stack with breathing room) -->
             <section class="w-full">
               <div class="mx-auto w-full max-w-3xl">
-                <div class="flex flex-col items-center text-center gap-7">
-                  <div class="space-y-4">
-                    <h1 class="text-4xl font-bold tracking-tight text-white sm:text-5xl">
+                <div class="flex flex-col items-center text-center gap-5 sm:gap-7">
+                  <div class="space-y-2 sm:space-y-4">
+                    <h1 class="text-3xl font-bold tracking-tight text-white sm:text-5xl">
                       RationalGrid
                     </h1>
-                    <p class="text-xl font-medium text-indigo-100">
+                    <p class="text-base sm:text-xl font-medium text-indigo-100 px-2 sm:px-0">
                       A shared AI-powered whiteboard; explore ideas deeply, structure thinking, and sharpen arguments.
                     </p>
                   </div>
 
-                  <div class="w-full bg-white/10 backdrop-blur-md rounded-2xl shadow-xl border border-white/15 p-6">
+                  <div class="w-full bg-white/10 backdrop-blur-md rounded-2xl shadow-xl border border-white/15 p-4 sm:p-6">
                     <.live_component
                       module={DialecticWeb.NewIdeaFormComp}
                       id="new-idea-form"
@@ -271,7 +271,7 @@ defmodule DialecticWeb.HomeLive do
                     />
                   </div>
 
-                  <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 text-sm font-semibold w-full">
+                  <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-2 sm:gap-3 text-sm font-semibold w-full px-1 sm:px-0">
                     <.link
                       navigate={~p"/inspiration"}
                       class={[
@@ -297,7 +297,7 @@ defmodule DialecticWeb.HomeLive do
                     </.link>
                   </div>
 
-                  <div class="h-6 sm:h-10" />
+                  <div class="h-3 sm:h-10" />
                 </div>
               </div>
             </section>
@@ -305,9 +305,9 @@ defmodule DialecticWeb.HomeLive do
     <!-- Below: Existing ideas (full-width on desktop, uses available space) -->
             <section class="w-full" id="explore">
               <div class="rounded-2xl border border-white/15 bg-white/10 backdrop-blur-md shadow-xl">
-                <div class="p-5 sm:p-6">
-                  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <h2 class="text-xl sm:text-2xl font-semibold tracking-tight text-white">
+                <div class="p-4 sm:p-6">
+                  <div class="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <h2 class="text-lg sm:text-2xl font-semibold tracking-tight text-white">
                       <%= cond do %>
                         <% @active_tag -> %>
                           Ideas tagged with "{@active_tag}"
@@ -335,7 +335,7 @@ defmodule DialecticWeb.HomeLive do
                           value={@search_term}
                           phx-debounce="300"
                           placeholder="Search ideas..."
-                          class="w-full px-4 py-2 rounded-l-md border border-white/15 bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-white/30"
+                          class="w-full px-4 py-2.5 sm:py-2 rounded-l-md border border-white/15 bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-white/30 text-base"
                           autocomplete="off"
                         />
                         <%= if @search_term && @search_term != "" do %>
@@ -384,12 +384,12 @@ defmodule DialecticWeb.HomeLive do
                     </div>
                   </div>
 
-                  <div class="mt-5 space-y-4">
-                    <div class="flex flex-wrap gap-2">
+                  <div class="mt-4 sm:mt-5 space-y-3 sm:space-y-4">
+                    <div class="flex flex-wrap gap-1.5 sm:gap-2">
                       <.link
                         patch={~p"/"}
                         class={[
-                          "px-3 py-1.5 rounded-full text-sm font-medium transition-colors",
+                          "px-4 py-2 sm:px-3 sm:py-1.5 rounded-full text-sm font-medium transition-colors",
                           (!@active_category && !@active_tag && @search_term == "" &&
                              "bg-white text-[#3a0ca3]") ||
                             "bg-white/10 text-white hover:bg-white/15 border border-white/10"
@@ -400,7 +400,7 @@ defmodule DialecticWeb.HomeLive do
                       <.link
                         patch={~p"/?category=deep_dives"}
                         class={[
-                          "px-3 py-1.5 rounded-full text-sm font-medium transition-colors",
+                          "px-4 py-2 sm:px-3 sm:py-1.5 rounded-full text-sm font-medium transition-colors",
                           (@active_category == "deep_dives" && "bg-white text-[#3a0ca3]") ||
                             "bg-white/10 text-white hover:bg-white/15 border border-white/10"
                         ]}
@@ -410,7 +410,7 @@ defmodule DialecticWeb.HomeLive do
                       <.link
                         patch={~p"/?category=seedlings"}
                         class={[
-                          "px-3 py-1.5 rounded-full text-sm font-medium transition-colors",
+                          "px-4 py-2 sm:px-3 sm:py-1.5 rounded-full text-sm font-medium transition-colors",
                           (@active_category == "seedlings" && "bg-white text-[#3a0ca3]") ||
                             "bg-white/10 text-white hover:bg-white/15 border border-white/10"
                         ]}
@@ -420,28 +420,32 @@ defmodule DialecticWeb.HomeLive do
                     </div>
 
                     <%= if @popular_tags != [] do %>
-                      <div class="flex flex-wrap items-center gap-2">
-                        <span class="text-sm text-white/70 mr-2">Popular topics:</span>
-                        <%= for {tag, count} <- @popular_tags do %>
-                          <.link
-                            patch={~p"/?tag=#{tag}"}
-                            class={[
-                              "text-xs font-medium px-2.5 py-0.5 rounded border transition-colors",
-                              (@active_tag == tag && "bg-white text-[#3a0ca3] border-white") ||
-                                "bg-white/10 text-white border-white/15 hover:border-white/30 hover:bg-white/15"
-                            ]}
-                          >
-                            #{tag} <span class="text-white/60 ml-0.5">(#{count})</span>
-                          </.link>
-                        <% end %>
+                      <div class="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-2">
+                        <span class="text-sm text-white/70 sm:mr-2 flex-shrink-0">
+                          Popular topics:
+                        </span>
+                        <div class="flex overflow-x-auto scrollbar-hide sm:flex-wrap gap-2 w-full sm:w-auto pb-1 sm:pb-0 -mb-1 sm:mb-0">
+                          <%= for {tag, count} <- @popular_tags do %>
+                            <.link
+                              patch={~p"/?tag=#{tag}"}
+                              class={[
+                                "text-xs font-medium px-3 py-1.5 sm:px-2.5 sm:py-0.5 rounded border transition-colors whitespace-nowrap flex-shrink-0",
+                                (@active_tag == tag && "bg-white text-[#3a0ca3] border-white") ||
+                                  "bg-white/10 text-white border-white/15 hover:border-white/30 hover:bg-white/15"
+                              ]}
+                            >
+                              #{tag} <span class="text-white/60 ml-0.5">({count})</span>
+                            </.link>
+                          <% end %>
+                        </div>
                       </div>
                     <% end %>
                   </div>
                 </div>
 
                 <div class="border-t border-white/10">
-                  <div class="p-5 sm:p-6">
-                    <div class="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6">
+                  <div class="p-4 sm:p-6">
+                    <div class="columns-1 sm:columns-2 lg:columns-3 gap-4 sm:gap-6 space-y-4 sm:space-y-6">
                       <%= for {g, count} <- @graphs do %>
                         <div class="break-inside-avoid">
                           <DialecticWeb.PageHtml.GraphComp.render
