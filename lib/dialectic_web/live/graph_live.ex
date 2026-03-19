@@ -599,13 +599,9 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  # "Post" button: submit_action=post routes to comment-only (no AI)
-  def handle_event(
-        "reply-and-answer",
-        %{"vertex" => %{"content" => ""}, "submit_action" => "post"},
-        socket
-      ),
-      do: {:noreply, socket}
+  # Ignore empty submissions for both Ask (AI) and Post (comment-only) paths
+  def handle_event("reply-and-answer", %{"vertex" => %{"content" => ""}}, socket),
+    do: {:noreply, socket}
 
   def handle_event(
         "reply-and-answer",

@@ -237,12 +237,7 @@
                     <button
                       type="button"
                       phx-click="open_branch_picker"
-                      phx-value-node-id={
-                        Enum.at(
-                          @linear_path,
-                          Enum.find_index(@linear_path, &(&1.id == node.id)) - 1
-                        ).id
-                      }
+                      phx-value-node-id={nav.parent_id}
                       class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] sm:text-xs font-medium text-indigo-600 hover:bg-indigo-100 transition-all"
                       title="Browse all branches"
                     >

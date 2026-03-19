@@ -206,13 +206,9 @@ defmodule DialecticWeb.LinearGraphLive do
     end
   end
 
-  # "Post" button: submit_action=post routes to comment-only (no AI)
-  def handle_event(
-        "reply-and-answer",
-        %{"vertex" => %{"content" => ""}, "submit_action" => "post"},
-        socket
-      ),
-      do: {:noreply, socket}
+  # Ignore empty submissions for both Ask (AI) and Post (comment-only) paths
+  def handle_event("reply-and-answer", %{"vertex" => %{"content" => ""}}, socket),
+    do: {:noreply, socket}
 
   def handle_event(
         "reply-and-answer",
@@ -672,6 +668,7 @@ defmodule DialecticWeb.LinearGraphLive do
                   else: nil
 
               %{
+                parent_id: parent.id,
                 prev_id: prev_id,
                 next_id: next_id,
                 current_index: (current_index || 0) + 1,
