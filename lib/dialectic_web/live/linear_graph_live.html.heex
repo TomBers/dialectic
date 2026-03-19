@@ -401,25 +401,83 @@
     <% end %>
   </div>
 
-  <%!-- Chat Input Bar — OUTSIDE the flex row so it is always visible --%>
+  <%!-- Chat Input Bar — Collapsible mobile-friendly bottom sheet --%>
   <%= if @can_edit do %>
+    <%!-- FAB toggle button — visible when chat bar is hidden --%>
+    <button
+      id="linear-chat-fab"
+      type="button"
+      phx-click={
+        JS.show(
+          to: "#linear-chat-bar",
+          transition:
+            {"transition-all duration-200 ease-out", "translate-y-full opacity-0",
+             "translate-y-0 opacity-100"}
+        )
+        |> JS.hide(
+          to: "#linear-chat-fab",
+          transition:
+            {"transition-all duration-150", "opacity-100 scale-100", "opacity-0 scale-75"}
+        )
+      }
+      class="hidden fixed right-4 z-40 w-14 h-14 rounded-full bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 active:scale-95 transition-all items-center justify-center ring-2 ring-white/20"
+      style="bottom: calc(env(safe-area-inset-bottom) + 1rem);"
+      aria-label="Open chat input"
+    >
+      <.icon name="hero-chat-bubble-left-ellipsis" class="w-6 h-6" />
+    </button>
+
+    <%!-- Collapsible chat bar --%>
     <div
       id="linear-chat-bar"
-      class="flex-none border-t border-gray-200 bg-white/95 backdrop-blur px-3 sm:px-4 py-2 sm:py-3 z-30"
-      style="padding-bottom: calc(env(safe-area-inset-bottom) + 0.5rem);"
+      class="flex-none z-30 bg-white/95 backdrop-blur-lg border-t border-gray-200 shadow-[0_-2px_10px_rgba(0,0,0,0.06)]"
+      style="padding-bottom: calc(env(safe-area-inset-bottom) + 0.25rem);"
     >
-      <div class="max-w-3xl mx-auto">
-        <.live_component
-          module={DialecticWeb.AskFormComp}
-          id="linear-chat-form"
-          form={@form}
-          ask_question={@ask_question}
-          prompt_mode={@prompt_mode}
-          graph_id={@graph_id}
-          node={@node}
-          input_id="linear-chat-input"
-          show_hint={false}
-        />
+      <%!-- Drag handle + collapse button row --%>
+      <div class="flex items-center justify-between px-3 pt-1.5 pb-0.5">
+        <div class="flex-1"></div>
+        <div class="w-8 h-1 rounded-full bg-gray-300 lg:hidden"></div>
+        <div class="flex-1 flex justify-end">
+          <button
+            id="linear-chat-hide-btn"
+            type="button"
+            phx-click={
+              JS.hide(
+                to: "#linear-chat-bar",
+                transition:
+                  {"transition-all duration-200 ease-in", "translate-y-0 opacity-100",
+                   "translate-y-full opacity-0"}
+              )
+              |> JS.show(
+                to: "#linear-chat-fab",
+                display: "flex",
+                transition:
+                  {"transition-all duration-200 ease-out delay-100", "opacity-0 scale-75",
+                   "opacity-100 scale-100"}
+              )
+            }
+            class="rounded-full p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            aria-label="Hide chat input"
+          >
+            <.icon name="hero-chevron-down" class="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      <div class="px-3 sm:px-4 pb-2 sm:pb-3">
+        <div class="max-w-3xl mx-auto">
+          <.live_component
+            module={DialecticWeb.AskFormComp}
+            id="linear-chat-form"
+            form={@form}
+            ask_question={@ask_question}
+            prompt_mode={@prompt_mode}
+            graph_id={@graph_id}
+            node={@node}
+            input_id="linear-chat-input"
+            show_hint={false}
+          />
+        </div>
       </div>
     </div>
   <% end %>
@@ -571,6 +629,7 @@
   button,
   #linear-minimap,
   #linear-chat-bar,
+  #linear-chat-fab,
   .border-b.shadow-sm,
   #selection-actions-hook-linear,
   #linear-login-modal {

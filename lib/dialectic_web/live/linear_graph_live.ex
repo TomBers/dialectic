@@ -195,6 +195,28 @@ defmodule DialecticWeb.LinearGraphLive do
     end
   end
 
+  # "Post" button: submit_action=post routes to comment-only (no AI)
+  def handle_event(
+        "reply-and-answer",
+        %{"vertex" => %{"content" => ""}, "submit_action" => "post"},
+        socket
+      ),
+      do: {:noreply, socket}
+
+  def handle_event(
+        "reply-and-answer",
+        %{"vertex" => %{"content" => answer}, "submit_action" => "post"},
+        socket
+      ) do
+    case GraphHelpers.handle_answer(socket, answer) do
+      {:ok, graph_result, operation} ->
+        handle_graph_update(socket, graph_result, operation)
+
+      {:error, :locked} ->
+        {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    end
+  end
+
   def handle_event(
         "reply-and-answer",
         %{"vertex" => %{"content" => answer}, "prefix" => prefix} = params,

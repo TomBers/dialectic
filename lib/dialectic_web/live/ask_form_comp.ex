@@ -5,16 +5,21 @@ defmodule DialecticWeb.AskFormComp do
   @moduledoc """
   LiveComponent that renders the bottom ask/comment form used by GraphLive.
 
+  Instead of a modal toggle between Ask and Comment modes, this component
+  renders two submit buttons side-by-side — "Ask" (AI responds) and "Post"
+  (no AI). The user types once and picks the action at submit time.
+
+  When "Post" is clicked, a hidden `submit_action=post` param is included
+  in the form data so the parent LiveView can route to the correct handler.
+
   Assigns:
   - `id` (string, optional): DOM id for the form. Defaults to `"ask-form"`.
   - `form` (Phoenix.Component.Form, required): The form generated via `to_form/2` in the parent.
-  - `ask_question` (boolean, optional): When true, uses the ask flow; otherwise comment flow. Defaults to `true`.
+  - `ask_question` (boolean, optional): Legacy assign, accepted but ignored. Kept for caller compatibility.
   - `graph_id` (string | nil, optional): Used to tailor the placeholder and hint for the empty graph state.
-  - `submit_event` (string, optional): Overrides the default submit event. Defaults to `"reply-and-answer"` when `ask_question` is true,
-    otherwise `"answer"`.
-  - `submit_label` (string, optional): Overrides the button label. Defaults to `"Ask"` or `"Post"`.
+  - `submit_event` (string, optional): Overrides the default submit event. Defaults to `"reply-and-answer"`.
   - `input_id` (string, optional): DOM id for the text input. Defaults to `"global-chat-input"`.
-  - `placeholder` (string, optional): Placeholder text for the input. Will be derived from `graph_id`/`ask_question` if not provided.
+  - `placeholder` (string, optional): Placeholder text for the input.
   - `show_hint` (boolean, optional): When true and `graph_id` is nil, show a hint above the input. Defaults to `true`.
   - `prompt_mode` (string, optional): Current AI mode ("structured" or "creative"). Used for display only.
   - `node` (map | nil, optional): The currently active node. Used to display current node indicator.
@@ -29,7 +34,6 @@ defmodule DialecticWeb.AskFormComp do
       |> assign_new(:ask_question, fn -> true end)
       |> assign_new(:graph_id, fn -> nil end)
       |> assign_new(:submit_event, fn -> nil end)
-      |> assign_new(:submit_label, fn -> nil end)
       |> assign_new(:input_id, fn -> "global-chat-input" end)
       |> assign_new(:show_hint, fn -> true end)
       |> assign_new(:prompt_mode, fn -> "structured" end)
@@ -38,23 +42,11 @@ defmodule DialecticWeb.AskFormComp do
         if Map.has_key?(assigns, :placeholder) and not is_nil(assigns[:placeholder]) do
           assign(s, :placeholder, assigns[:placeholder])
         else
-          assign(
-            s,
-            :placeholder,
-            placeholder_for(s.assigns[:ask_question], s.assigns[:prompt_mode])
-          )
+          assign(s, :placeholder, "Ask or comment...")
         end
       end)
 
     {:ok, socket}
-  end
-
-  defp placeholder_for(ask_q, _mode) do
-    if ask_q do
-      "Ask a question"
-    else
-      "Add your comment..."
-    end
   end
 
   @impl true
@@ -92,46 +84,12 @@ defmodule DialecticWeb.AskFormComp do
       <% end %>
       <.form
         for={@form}
-        phx-submit={@submit_event || if(@ask_question, do: "reply-and-answer", else: "answer")}
+        phx-submit={@submit_event || "reply-and-answer"}
         id={@id}
         class="w-full min-w-0"
       >
         <div class="flex items-center gap-2 w-full">
-          <%!-- Ask/Comment Segmented Control - Compact text-only --%>
-          <div class="inline-flex rounded-md border border-gray-200 bg-gray-50 flex-none">
-            <button
-              type="button"
-              phx-click="toggle_ask_question"
-              class={[
-                "px-2 py-1 text-xs font-medium transition-all",
-                if @ask_question do
-                  "bg-blue-500 text-white rounded-md"
-                else
-                  "text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-l-md"
-                end
-              ]}
-              title="Get an AI-generated response"
-            >
-              Ask
-            </button>
-            <button
-              type="button"
-              phx-click="toggle_ask_question"
-              class={[
-                "px-2 py-1 text-xs font-medium transition-all",
-                if !@ask_question do
-                  "bg-emerald-500 text-white rounded-md"
-                else
-                  "text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-r-md"
-                end
-              ]}
-              title="Add your own thought directly"
-            >
-              Comment
-            </button>
-          </div>
-
-          <%!-- Input Field with Submit Button - Enhanced prominence --%>
+          <%!-- Input Field --%>
           <div class="relative min-w-0 flex-1 overflow-hidden rounded-3xl shadow-sm transition-all focus-within:shadow-md">
             <textarea
               name={@form[:content].name}
@@ -139,30 +97,40 @@ defmodule DialecticWeb.AskFormComp do
               rows="1"
               placeholder={@placeholder}
               phx-hook="AutoExpandTextarea"
-              class="box-border w-full h-[3rem] min-h-[3rem] overflow-hidden rounded-3xl pl-4 pr-20 py-2 text-base border border-gray-300 focus:border-indigo-500 focus:ring-0 focus:outline-none bg-white resize-none"
+              class="box-border w-full h-[3rem] min-h-[3rem] overflow-hidden rounded-3xl pl-4 pr-[8.5rem] py-2 text-base border border-gray-300 focus:border-indigo-500 focus:ring-0 focus:outline-none bg-white resize-none"
             >{Phoenix.HTML.Form.normalize_value("text", @form[:content].value)}</textarea>
 
-            <button
-              type="submit"
-              class="absolute right-2 top-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm leading-none px-3.5 h-9 rounded-full font-medium shadow-sm transition-all hover:shadow-md"
-            >
-              {if @submit_label, do: @submit_label, else: if(@ask_question, do: "Ask", else: "Post")}
-            </button>
+            <%!-- Two submit buttons inside the input --%>
+            <div class="absolute right-1.5 top-1.5 flex items-center gap-1">
+              <%!-- Post button — adds submit_action=post to form params --%>
+              <button
+                type="submit"
+                name="submit_action"
+                value="post"
+                class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm leading-none px-3 h-9 rounded-full font-medium transition-all hover:shadow-sm"
+                title="Post your comment — no AI response"
+              >
+                Post
+              </button>
+              <%!-- Ask button — default submit (no name, so no submit_action param) --%>
+              <button
+                type="submit"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm leading-none px-3.5 h-9 rounded-full font-medium shadow-sm transition-all hover:shadow-md"
+                title="Ask and get an AI-generated response"
+              >
+                Ask
+              </button>
+            </div>
           </div>
         </div>
 
         <%!-- Explanatory text below form --%>
         <%= if @show_hint do %>
-          <div class="text-[11px] text-gray-600 text-center">
-            <%= if @ask_question do %>
-              Ask a question to get an AI-generated
-              <span class="font-medium">{String.capitalize(@prompt_mode)}</span>
-              level response • <span class="text-gray-500">Change level in settings panel</span>
-            <% else %>
-              <span class="text-gray-600">
-                Add your comment directly to the graph • No AI response will be generated
-              </span>
-            <% end %>
+          <div class="text-[11px] text-gray-500 text-center mt-1.5">
+            <span class="font-medium text-indigo-600">Ask</span>
+            gets an AI <span class="font-medium">{String.capitalize(@prompt_mode)}</span>
+            level response • <span class="font-medium text-gray-600">Post</span>
+            adds your comment directly
           </div>
         <% end %>
       </.form>
