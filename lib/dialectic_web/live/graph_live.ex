@@ -1331,6 +1331,16 @@ defmodule DialecticWeb.GraphLive do
           s
         end
       end)
+      |> then(fn s ->
+        # Reset the side-drawer scroll position when navigating to a
+        # different node.  Skip streaming updates — those append content
+        # to the current node and shouldn't jump the user back to top.
+        if operation not in ["llm_request_complete"] do
+          push_event(s, "scroll_to_top", %{})
+        else
+          s
+        end
+      end)
 
     # Broadcast structural changes to other users (new nodes created, etc.)
     # Skip for operations that don't change graph structure

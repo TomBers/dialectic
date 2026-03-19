@@ -29,6 +29,7 @@ import highlightNodeHook from "./highlight_node_hook.js";
 import printConversationHook from "./print_conversation_hook.js";
 import storyReadabilityHook from "./story_readability_hook.js";
 import listDetectionHook from "./list_detection_hook.js";
+import ScrollResetHook from "./scroll_reset_hook.js";
 
 import MarkdownHook from "./markdown_hook.js";
 
@@ -47,6 +48,7 @@ hooks.HighlightNode = highlightNodeHook;
 hooks.PrintConversation = printConversationHook;
 hooks.StoryReadability = storyReadabilityHook;
 hooks.ListDetection = listDetectionHook;
+hooks.ScrollReset = ScrollResetHook;
 
 hooks.Markdown = MarkdownHook;
 

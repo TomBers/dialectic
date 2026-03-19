@@ -18,30 +18,6 @@ const textSelectionHook = {
 
     this.refreshHighlights = this.refreshHighlights.bind(this);
 
-    // Reset scroll position for the drawer container to ensure we start at the top.
-    // Skip this in the linear view — nodes live in a shared scroll container
-    // and resetting scrollTop would jump the entire page to the top on every
-    // branch switch (each new node mounts a fresh hook instance).
-    const isLinearView = !!this.el.closest("#linear-scroller");
-
-    if (!isLinearView) {
-      const containers = [
-        this.el.closest(".overflow-y-auto"),
-        this.el.closest(".overflow-auto"),
-        this.el.querySelector(".overflow-y-auto"),
-        this.el.querySelector(".overflow-auto"),
-      ].filter((c) => c);
-
-      // Deduplicate
-      const uniqueContainers = [...new Set(containers)];
-
-      uniqueContainers.forEach((container) => {
-        container.style.scrollBehavior = "auto";
-        container.scrollTop = 0;
-        container.style.removeProperty("scroll-behavior");
-      });
-    }
-
     // Get node ID from data attribute
     this.nodeId = this.el.dataset.nodeId;
     this.mudgId = this.el.dataset.mudgId;
@@ -254,16 +230,6 @@ const textSelectionHook = {
         }),
       );
     }, 10);
-  },
-
-  // Store offsets for highlight creation
-  storeOffsetsForHighlight(offsets) {
-    this._highlightOffsets = offsets;
-  },
-
-  // Get stored offsets for highlight creation
-  getStoredOffsets() {
-    return this._highlightOffsets;
   },
 
   isSelectionInComponent(selection) {
