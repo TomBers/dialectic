@@ -275,11 +275,39 @@
                 
 <!-- Content -->
                 <div class="px-3 py-3 sm:p-6 prose prose-stone prose-sm sm:prose-base max-w-none leading-relaxed sm:leading-relaxed prose-headings:font-semibold prose-headings:text-sm sm:prose-headings:text-base prose-p:my-2 sm:prose-p:my-3 prose-pre:bg-gray-800 prose-pre:text-gray-100 prose-pre:text-xs prose-pre:overflow-x-auto selection-content">
+                  <%= if is_streaming && (node.content || "") == "" do %>
+                    <%!-- Shimmer skeleton while waiting for first chunk --%>
+                    <div class="space-y-3 py-1">
+                      <div class="h-4 rounded-md w-3/4 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_infinite]">
+                      </div>
+                      <div class="space-y-2">
+                        <div class="h-3 rounded-md w-full bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_0.1s_infinite]">
+                        </div>
+                        <div class="h-3 rounded-md w-5/6 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_0.2s_infinite]">
+                        </div>
+                        <div class="h-3 rounded-md w-4/6 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_0.3s_infinite]">
+                        </div>
+                      </div>
+                      <div class="flex items-center gap-1.5 pt-2">
+                        <span class="text-xs text-gray-400 font-medium">Thinking</span>
+                        <span class="flex gap-0.5">
+                          <span class="w-1 h-1 rounded-full bg-indigo-400 animate-[typing_1.4s_ease-in-out_infinite]">
+                          </span>
+                          <span class="w-1 h-1 rounded-full bg-indigo-400 animate-[typing_1.4s_ease-in-out_-0.16s_infinite]">
+                          </span>
+                          <span class="w-1 h-1 rounded-full bg-indigo-400 animate-[typing_1.4s_ease-in-out_-0.32s_infinite]">
+                          </span>
+                        </span>
+                      </div>
+                    </div>
+                  <% end %>
+                  <%!-- Always mount the Markdown hook so it's ready when content streams in --%>
                   <div
                     phx-hook="Markdown"
                     id={"md-#{node.id}"}
                     data-md={node.content || ""}
                     data-body-only="true"
+                    class={if(is_streaming && (node.content || "") == "", do: "hidden", else: "")}
                   >
                   </div>
                 </div>
