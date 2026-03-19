@@ -1511,6 +1511,9 @@ defmodule DialecticWeb.GraphLive do
       socket
       |> stream(:presences, presences)
       |> assign(highlights: highlights)
+      |> push_event("highlights_loaded", %{
+        highlights: serialize_highlights(highlights)
+      })
     else
       # Load highlights even when not connected (e.g., during tests or initial render)
       highlights = Highlights.list_highlights_with_links(mudg_id: graph_id)
@@ -1519,6 +1522,22 @@ defmodule DialecticWeb.GraphLive do
       |> stream(:presences, [])
       |> assign(highlights: highlights)
     end
+  end
+
+  defp serialize_highlights(highlights) do
+    Enum.map(highlights, fn h ->
+      %{
+        id: h.id,
+        node_id: h.node_id,
+        selection_start: h.selection_start,
+        selection_end: h.selection_end,
+        selected_text_snapshot: h.selected_text_snapshot,
+        links:
+          Enum.map(h.links || [], fn l ->
+            %{node_id: l.node_id, link_type: l.link_type}
+          end)
+      }
+    end)
   end
 
   defp assign_graph_data(socket, _graph_db, graph_struct, node, graph_id, user) do

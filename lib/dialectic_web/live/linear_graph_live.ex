@@ -1,6 +1,6 @@
 defmodule DialecticWeb.LinearGraphLive do
   use DialecticWeb, :live_view
-  use DialecticWeb.GraphStreaming, preload_highlight_links: false
+  use DialecticWeb.GraphStreaming, preload_highlight_links: true
 
   alias Dialectic.Graph.{Vertex, GraphActions}
   alias DialecticWeb.ColUtils
@@ -141,7 +141,7 @@ defmodule DialecticWeb.LinearGraphLive do
         graph_struct: graph_db,
         show_minimap: false,
         show_highlights: true,
-        highlights: Highlights.list_highlights(mudg_id: graph_db.title),
+        highlights: Highlights.list_highlights_with_links(mudg_id: graph_db.title),
         selected_node_id: if(target_node, do: target_node.id, else: nil),
         token: token_param,
         page_title: "#{graph_db.title} — Linear View",
@@ -170,6 +170,17 @@ defmodule DialecticWeb.LinearGraphLive do
     socket =
       if connected?(socket) && params["node_id"] && target_node do
         push_event(socket, "scroll_to_node", %{id: target_node.id, block: "start"})
+      else
+        socket
+      end
+
+    # Push all highlights to the client so hooks can render them
+    # without making separate HTTP requests per node.
+    socket =
+      if connected?(socket) do
+        push_event(socket, "highlights_loaded", %{
+          highlights: serialize_highlights(socket.assigns.highlights)
+        })
       else
         socket
       end
@@ -960,6 +971,22 @@ defmodule DialecticWeb.LinearGraphLive do
         {:error, _} -> socket
       end
     end
+  end
+
+  defp serialize_highlights(highlights) do
+    Enum.map(highlights, fn h ->
+      %{
+        id: h.id,
+        node_id: h.node_id,
+        selection_start: h.selection_start,
+        selection_end: h.selection_end,
+        selected_text_snapshot: h.selected_text_snapshot,
+        links:
+          Enum.map(h.links || [], fn l ->
+            %{node_id: l.node_id, link_type: l.link_type}
+          end)
+      }
+    end)
   end
 
   defp message_border_class(class) do

@@ -8,6 +8,7 @@ defmodule DialecticWeb.GraphStreaming do
 
   The using module must implement:
   - `update_streaming_node(socket, updated_vertex, node_id)` (private)
+  - `serialize_highlights(highlights)` (private) — returns a list of maps for client push
   - Have `streaming_nodes`, `graph_topic`, `node`, `highlights` in socket assigns
 
   ## Options
@@ -58,7 +59,9 @@ defmodule DialecticWeb.GraphStreaming do
 
         {:noreply,
          Phoenix.Component.assign(socket, highlights: highlights)
-         |> Phoenix.LiveView.push_event("refresh_highlights", %{data: highlight})}
+         |> Phoenix.LiveView.push_event("highlights_loaded", %{
+           highlights: serialize_highlights(highlights)
+         })}
       end
 
       def handle_info({:updated, highlight}, socket) do
@@ -78,7 +81,9 @@ defmodule DialecticWeb.GraphStreaming do
 
         {:noreply,
          Phoenix.Component.assign(socket, highlights: highlights)
-         |> Phoenix.LiveView.push_event("refresh_highlights", %{data: highlight})}
+         |> Phoenix.LiveView.push_event("highlights_loaded", %{
+           highlights: serialize_highlights(highlights)
+         })}
       end
 
       def handle_info({:deleted, highlight}, socket) do
@@ -87,7 +92,9 @@ defmodule DialecticWeb.GraphStreaming do
 
         {:noreply,
          Phoenix.Component.assign(socket, highlights: highlights)
-         |> Phoenix.LiveView.push_event("refresh_highlights", %{data: highlight})}
+         |> Phoenix.LiveView.push_event("highlights_loaded", %{
+           highlights: serialize_highlights(highlights)
+         })}
       end
     end
   end
