@@ -3,6 +3,15 @@
 @import "tailwindcss/utilities";
 @import "katex/dist/katex.min.css";
 
+/* Hide scrollbar for horizontally scrollable mobile elements */
+.scrollbar-hide {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+
 :root {
     font-family: Inter, sans-serif;
     font-feature-settings:
@@ -246,6 +255,15 @@
     }
     to {
         opacity: 1;
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
     }
 }
 

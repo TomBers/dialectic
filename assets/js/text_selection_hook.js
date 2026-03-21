@@ -5,36 +5,7 @@ const textSelectionHook = {
     this.handleSelection = this.handleSelection.bind(this);
     this.handleHighlightClick = this.handleHighlightClick.bind(this);
     this.handleLinkIconClick = this.handleLinkIconClick.bind(this);
-
-    this.fetchHighlights = this.fetchHighlights.bind(this);
-    const originalFetch = this.fetchHighlights;
-    this._fetchTimeout = null;
-    this.fetchHighlights = (...args) => {
-      clearTimeout(this._fetchTimeout);
-      this._fetchTimeout = setTimeout(() => {
-        originalFetch(...args);
-      }, 300);
-    };
-
-    this.refreshHighlights = this.refreshHighlights.bind(this);
-
-    // Reset scroll position for the drawer container to ensure we start at the top
-    // We target both parent containers and the internal content container
-    const containers = [
-      this.el.closest(".overflow-y-auto"),
-      this.el.closest(".overflow-auto"),
-      this.el.querySelector(".overflow-y-auto"),
-      this.el.querySelector(".overflow-auto"),
-    ].filter((c) => c);
-
-    // Deduplicate
-    const uniqueContainers = [...new Set(containers)];
-
-    uniqueContainers.forEach((container) => {
-      container.style.scrollBehavior = "auto";
-      container.scrollTop = 0;
-      container.style.removeProperty("scroll-behavior");
-    });
+    this.renderHighlightsForNode = this.renderHighlightsForNode.bind(this);
 
     // Get node ID from data attribute
     this.nodeId = this.el.dataset.nodeId;
@@ -42,6 +13,12 @@ const textSelectionHook = {
 
     // Store element ID to prevent duplicate events
     this.elId = this.el.id;
+
+    // Cache of all highlights pushed from server (shared across hook instances
+    // via the window object so every node card sees the same data).
+    if (!window.__highlightsCache) {
+      window.__highlightsCache = [];
+    }
 
     // Add event listeners for this specific container
     this.el.addEventListener("mouseup", this.handleSelection);
@@ -52,18 +29,23 @@ const textSelectionHook = {
       this.handleLinkIconClick,
     );
 
-    // LiveComponent handles all panel interactions - no manual event listeners needed
+    // When the Markdown hook finishes rendering, re-apply highlights from cache
+    this.el.addEventListener("markdown:rendered", this.renderHighlightsForNode);
 
-    // Initial highlight load
-    this.refreshHighlights();
-
-    // Listen for events
-    window.addEventListener("highlight:created", this.refreshHighlights);
-    this.el.addEventListener("markdown:rendered", this.refreshHighlights);
+    // Server pushes all highlights for the graph in one event.
+    // Every hook instance listens, updates the shared cache, and renders
+    // only the highlights relevant to its own node.
+    this.handleEvent(
+      "highlights_loaded",
+      this.handleHighlightsLoaded.bind(this),
+    );
 
     this.handleEvent("scroll_to_highlight", this.scrollToHighlight.bind(this));
-    this.handleEvent("refresh_highlights", this.refreshHighlights);
     this.handleEvent("create_highlight", this.handleCreateHighlight.bind(this));
+
+    // Render any highlights already in the cache (e.g. if this hook mounts
+    // after the initial highlights_loaded event already fired).
+    this.renderHighlightsForNode();
   },
 
   handleCreateHighlight({ text, offsets }) {
@@ -71,7 +53,6 @@ const textSelectionHook = {
   },
 
   destroyed() {
-    clearTimeout(this._fetchTimeout);
     this.el.removeEventListener("mouseup", this.handleSelection);
     this.el.removeEventListener(
       "highlight-link-clicked",
@@ -79,9 +60,36 @@ const textSelectionHook = {
     );
     this.el.removeEventListener("touchend", this.handleSelection);
     this.el.removeEventListener("click", this.handleHighlightClick);
-    window.removeEventListener("highlight:created", this.refreshHighlights);
-    this.el.removeEventListener("markdown:rendered", this.refreshHighlights);
+    this.el.removeEventListener(
+      "markdown:rendered",
+      this.renderHighlightsForNode,
+    );
   },
+
+  // ── Highlights from server ──────────────────────────────────────────
+
+  handleHighlightsLoaded({ highlights }) {
+    window.__highlightsCache = highlights || [];
+    this.renderHighlightsForNode();
+  },
+
+  renderHighlightsForNode() {
+    if (this.el.dataset.streaming === "true") return;
+    if (!this.nodeId) return;
+
+    const mdContainer = this.el.querySelector(
+      '[phx-hook="Markdown"][data-body-only="true"]',
+    );
+    if (!mdContainer) return;
+
+    const nodeHighlights = (window.__highlightsCache || []).filter(
+      (h) => h.node_id === this.nodeId,
+    );
+
+    HighlightUtils.renderHighlights(mdContainer, nodeHighlights);
+  },
+
+  // ── Link / click handling ───────────────────────────────────────────
 
   handleLinkIconClick(event) {
     const nodeId = event.detail?.nodeId;
@@ -150,46 +158,7 @@ const textSelectionHook = {
     findAndScroll();
   },
 
-  refreshHighlights(event) {
-    if (event && event.type === "highlight:created") {
-      const h = event.detail?.data;
-      if (h && (h.mudg_id !== this.mudgId || h.node_id !== this.nodeId)) return;
-    }
-
-    // Handle server push event payload
-    if (event && event.data && !event.type) {
-      const h = event.data;
-      if (h && (h.mudg_id !== this.mudgId || h.node_id !== this.nodeId)) return;
-    }
-
-    this.fetchHighlights();
-  },
-
-  fetchHighlights() {
-    if (this.el.dataset.streaming === "true") return;
-    if (!this.mudgId || !this.nodeId) return;
-
-    fetch(`/api/highlights?mudg_id=${this.mudgId}&node_id=${this.nodeId}`, {
-      credentials: "include",
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch highlights");
-        return res.json();
-      })
-      .then((json) => {
-        const highlights = json.data;
-
-        // Find container to render into
-        const mdContainer = this.el.querySelector(
-          '[phx-hook="Markdown"][data-body-only="true"]',
-        );
-
-        if (mdContainer) {
-          HighlightUtils.renderHighlights(mdContainer, highlights);
-        }
-      })
-      .catch((err) => console.error("Error loading highlights:", err));
-  },
+  // ── Text selection handling ─────────────────────────────────────────
 
   handleSelection(event) {
     if (this.el.dataset.streaming === "true") {
@@ -250,16 +219,6 @@ const textSelectionHook = {
     }, 10);
   },
 
-  // Store offsets for highlight creation
-  storeOffsetsForHighlight(offsets) {
-    this._highlightOffsets = offsets;
-  },
-
-  // Get stored offsets for highlight creation
-  getStoredOffsets() {
-    return this._highlightOffsets;
-  },
-
   isSelectionInComponent(selection) {
     if (selection.rangeCount === 0) return false;
 
@@ -312,6 +271,8 @@ const textSelectionHook = {
     return closestContainer === this.el;
   },
 
+  // ── Highlight creation (still uses the API for writes) ──────────────
+
   createHighlight(text, capturedOffsets = null) {
     if (!this.mudgId || !this.nodeId) {
       console.warn("Cannot create highlight: missing mudgId or nodeId");
@@ -360,8 +321,6 @@ const textSelectionHook = {
       selected_text_snapshot: text,
     };
 
-    console.log("Creating highlight with data:", highlightData);
-
     fetch("/api/highlights", {
       method: "POST",
       headers: {
@@ -377,12 +336,8 @@ const textSelectionHook = {
         }
 
         if (response.status === 422) {
-          // Duplicate highlight - find and focus existing one
           return response.json().then((errorData) => {
-            console.log("422 Error response:", errorData);
-
             // Check if it's a duplicate constraint error
-            // Phoenix returns errors as an object with field keys mapping to arrays of messages
             const isDuplicateError =
               errorData.errors &&
               Object.values(errorData.errors).some(
@@ -393,32 +348,20 @@ const textSelectionHook = {
                   ),
               );
 
-            console.log("Is duplicate error:", isDuplicateError);
-
             if (isDuplicateError) {
-              // Try to find the overlapping highlight
-              return fetch(
-                `/api/highlights?mudg_id=${this.mudgId}&node_id=${this.nodeId}`,
-                { credentials: "include" },
-              )
-                .then((res) => res.json())
-                .then((json) => {
-                  // Find any highlight that overlaps with our selection
-                  // Two ranges overlap if: start1 < end2 AND start2 < end1
-                  const overlappingHighlight = json.data.find(
-                    (h) =>
-                      h.selection_start < offsets.end &&
-                      h.selection_end > offsets.start,
-                  );
-                  if (overlappingHighlight) {
-                    // Scroll to and pulse the overlapping highlight
-                    this.scrollToHighlight({ id: overlappingHighlight.id });
-                  }
-                  return null;
-                });
+              // Find the overlapping highlight from the local cache
+              const overlapping = (window.__highlightsCache || []).find(
+                (h) =>
+                  h.node_id === this.nodeId &&
+                  h.selection_start < offsets.end &&
+                  h.selection_end > offsets.start,
+              );
+              if (overlapping) {
+                this.scrollToHighlight({ id: overlapping.id });
+              }
+              return null;
             }
 
-            // Log non-duplicate validation errors
             console.error("Highlight creation validation error:", errorData);
             throw new Error(
               "Failed to create highlight: " + JSON.stringify(errorData.errors),
@@ -430,11 +373,9 @@ const textSelectionHook = {
         return response.json();
       })
       .then((data) => {
+        // The server PubSub will push an updated highlights_loaded event,
+        // so we don't need to manually refresh here.
         if (!data) return;
-        console.log("Highlight created:", data);
-        window.dispatchEvent(
-          new CustomEvent("highlight:created", { detail: data }),
-        );
       })
       .catch((error) => {
         console.error("Error creating highlight:", error);

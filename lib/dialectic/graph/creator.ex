@@ -27,7 +27,7 @@ defmodule Dialectic.Graph.Creator do
     title = Keyword.get(opts, :title) || Graphs.sanitize_title(question)
     mode = Keyword.get(opts, :mode, :university)
 
-    callback.("Creating mind map structure...")
+    callback.("Creating grid structure...")
 
     if Graphs.get_graph_by_title(title) do
       {:ok, title}
@@ -41,7 +41,7 @@ defmodule Dialectic.Graph.Creator do
       {:ok, _} ->
         ModeServer.set_mode(title, mode)
 
-        callback.("Initializing whiteboard...")
+        callback.("Initializing grid...")
         GraphManager.get_graph(title)
 
         # Retrieve the origin node (ID "1") created by default during graph init
@@ -77,8 +77,7 @@ defmodule Dialectic.Graph.Creator do
   end
 
   defp update_origin_content(title, node, question) do
-    decoded_q = URI.decode_www_form(to_string(question))
-    new_content = "## " <> decoded_q
+    new_content = "## " <> to_string(question)
     GraphManager.set_node_content(title, node.id, new_content)
     # Explicitly return the updated node struct
     GraphManager.find_node_by_id(title, node.id)

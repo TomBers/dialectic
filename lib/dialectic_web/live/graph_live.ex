@@ -1,8 +1,10 @@
 defmodule DialecticWeb.GraphLive do
   use DialecticWeb, :live_view
+  use DialecticWeb.GraphStreaming, preload_highlight_links: true
 
   alias Dialectic.Graph.{Vertex, GraphActions, Siblings}
   alias DialecticWeb.{CombineComp, NodeComp}
+  alias DialecticWeb.GraphHelpers
 
   alias DialecticWeb.Utils.UserUtils
   alias DialecticWeb.Utils.NodeTitleHelper
@@ -64,7 +66,7 @@ defmodule DialecticWeb.GraphLive do
   end
 
   defp default_node do
-    %{id: "1", content: "", children: [], parents: []}
+    GraphHelpers.default_node()
   end
 
   def handle_event("set_prompt_mode", %{"prompt_mode" => mode}, socket) do
@@ -246,25 +248,9 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("note", %{"node" => node_id}, socket) do
-    if socket.assigns.current_user == nil do
-      {:noreply, assign(socket, show_login_modal: true)}
-    else
-      Dialectic.DbActions.Notes.add_note(
-        socket.assigns.graph_id,
-        node_id,
-        socket.assigns.current_user
-      )
-
-      update_graph(
-        socket,
-        {nil,
-         GraphActions.change_noted_by(
-           graph_action_params(socket),
-           node_id,
-           &Vertex.add_noted_by/2
-         )},
-        "note"
-      )
+    case GraphHelpers.handle_note(socket, node_id, :note) do
+      {:noreply, socket} -> {:noreply, socket}
+      {:ok, graph_result, operation} -> update_graph(socket, graph_result, operation)
     end
   end
 
@@ -275,25 +261,9 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("unnote", %{"node" => node_id}, socket) do
-    if socket.assigns.current_user == nil do
-      {:noreply, assign(socket, show_login_modal: true)}
-    else
-      Dialectic.DbActions.Notes.remove_note(
-        socket.assigns.graph_id,
-        node_id,
-        socket.assigns.current_user
-      )
-
-      update_graph(
-        socket,
-        {nil,
-         GraphActions.change_noted_by(
-           graph_action_params(socket),
-           node_id,
-           &Vertex.remove_noted_by/2
-         )},
-        "unnote"
-      )
+    case GraphHelpers.handle_note(socket, node_id, :unnote) do
+      {:noreply, socket} -> {:noreply, socket}
+      {:ok, graph_result, operation} -> update_graph(socket, graph_result, operation)
     end
   end
 
@@ -448,16 +418,9 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("node_branch", %{"id" => node_id}, socket) do
-    if !socket.assigns.can_edit do
-      {:noreply, socket |> put_flash(:error, "This graph is locked")}
-    else
-      node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-      # Ensure branching from the correct node
-      update_graph(
-        socket,
-        {nil, GraphActions.branch(graph_action_params(socket, node))},
-        "branch"
-      )
+    case GraphHelpers.handle_branch(socket, node_id) do
+      {:ok, graph_result, operation} -> update_graph(socket, graph_result, operation)
+      {:error, :locked} -> {:noreply, socket |> put_flash(:error, "This graph is locked")}
     end
   end
 
@@ -471,16 +434,9 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("node_related_ideas", %{"id" => node_id}, socket) do
-    if !socket.assigns.can_edit do
-      {:noreply, socket |> put_flash(:error, "This graph is locked")}
-    else
-      node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-
-      update_graph(
-        socket,
-        {nil, GraphActions.related_ideas(graph_action_params(socket, node))},
-        "ideas"
-      )
+    case GraphHelpers.handle_related_ideas(socket, node_id) do
+      {:ok, graph_result, operation} -> update_graph(socket, graph_result, operation)
+      {:error, :locked} -> {:noreply, socket |> put_flash(:error, "This graph is locked")}
     end
   end
 
@@ -563,29 +519,31 @@ defmodule DialecticWeb.GraphLive do
     from_search = params["from-search"] == "true"
 
     # Update the graph
-    {:noreply, updated_socket} =
-      update_graph(
-        socket,
-        {nil, GraphActions.find_node(socket.assigns.graph_id, id)},
-        "node_clicked"
-      )
+    node = GraphActions.find_node(socket.assigns.graph_id, id)
 
-    # Preserve and re-apply panel/menu state across node changes
-    updated_socket = reapply_right_panel_state(socket, updated_socket)
+    if node == nil do
+      {:noreply, socket}
+    else
+      {:noreply, updated_socket} =
+        update_graph(socket, {nil, node}, "node_clicked")
 
-    # Close the quick search overlay and clear highlights when navigating from search
-    updated_socket =
-      if from_search do
-        updated_socket
-        |> assign(show_search_overlay: false, search_term: "", search_results: [])
-        |> push_event("clear_search_highlights", %{})
-        |> push_event("center_node", %{id: id})
-      else
-        # Always center the node on the graph (e.g. when clicked from the ask form indicator)
-        push_event(updated_socket, "center_node", %{id: id})
-      end
+      # Preserve and re-apply panel/menu state across node changes
+      updated_socket = reapply_right_panel_state(socket, updated_socket)
 
-    {:noreply, updated_socket}
+      # Close the quick search overlay and clear highlights when navigating from search
+      updated_socket =
+        if from_search do
+          updated_socket
+          |> assign(show_search_overlay: false, search_term: "", search_results: [])
+          |> push_event("clear_search_highlights", %{})
+          |> push_event("center_node", %{id: id})
+        else
+          # Always center the node on the graph (e.g. when clicked from the ask form indicator)
+          push_event(updated_socket, "center_node", %{id: id})
+        end
+
+      {:noreply, updated_socket}
+    end
   end
 
   def handle_event("highlight_clicked", %{"id" => highlight_id, "node-id" => node_id}, socket) do
@@ -634,14 +592,30 @@ defmodule DialecticWeb.GraphLive do
   def handle_event("answer", %{"vertex" => %{"content" => ""}}, socket), do: {:noreply, socket}
 
   def handle_event("answer", %{"vertex" => %{"content" => answer}}, socket) do
-    if socket.assigns.can_edit do
-      update_graph(
-        socket,
-        {nil, GraphActions.comment(graph_action_params(socket), answer)},
-        "comment"
-      )
-    else
-      {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    case GraphHelpers.handle_answer(socket, answer) do
+      {:ok, graph_result, operation} ->
+        update_graph(socket, graph_result, operation)
+
+      {:error, :locked} ->
+        {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    end
+  end
+
+  # Ignore empty submissions for both Ask (AI) and Post (comment-only) paths
+  def handle_event("reply-and-answer", %{"vertex" => %{"content" => ""}}, socket),
+    do: {:noreply, socket}
+
+  def handle_event(
+        "reply-and-answer",
+        %{"vertex" => %{"content" => answer}, "submit_action" => "post"},
+        socket
+      ) do
+    case GraphHelpers.handle_answer(socket, answer) do
+      {:ok, graph_result, operation} ->
+        update_graph(socket, graph_result, operation)
+
+      {:error, :locked} ->
+        {:noreply, socket |> put_flash(:error, "This graph is locked")}
     end
   end
 
@@ -650,44 +624,32 @@ defmodule DialecticWeb.GraphLive do
         %{"vertex" => %{"content" => answer}, "prefix" => prefix} = params,
         socket
       ) do
-    cond do
-      not socket.assigns.can_edit ->
+    minimal_context = prefix == "explain"
+    highlight_context = Map.get(params, "highlight_context")
+
+    case GraphHelpers.handle_reply_and_answer(socket, answer,
+           minimal_context: minimal_context,
+           highlight_context: highlight_context
+         ) do
+      {:ok, graph_result, operation} ->
+        update_graph(socket, graph_result, operation)
+
+      {:error, :locked} ->
         {:noreply, socket |> put_flash(:error, "This graph is locked")}
-
-      true ->
-        minimal_context = prefix == "explain"
-        highlight_context = Map.get(params, "highlight_context")
-
-        update_graph(
-          socket,
-          GraphActions.ask_and_answer(
-            graph_action_params(socket, socket.assigns.node),
-            answer,
-            minimal_context: minimal_context,
-            highlight_context: highlight_context
-          ),
-          "answer"
-        )
     end
   end
 
   def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}} = params, socket) do
-    cond do
-      not socket.assigns.can_edit ->
+    highlight_context = Map.get(params, "highlight_context")
+
+    case GraphHelpers.handle_reply_and_answer(socket, answer,
+           highlight_context: highlight_context
+         ) do
+      {:ok, graph_result, operation} ->
+        update_graph(socket, graph_result, operation)
+
+      {:error, :locked} ->
         {:noreply, socket |> put_flash(:error, "This graph is locked")}
-
-      true ->
-        highlight_context = Map.get(params, "highlight_context")
-
-        update_graph(
-          socket,
-          GraphActions.ask_and_answer(
-            graph_action_params(socket, socket.assigns.node),
-            answer,
-            highlight_context: highlight_context
-          ),
-          "answer"
-        )
     end
   end
 
@@ -793,29 +755,24 @@ defmodule DialecticWeb.GraphLive do
 
   # Handle selection action messages from SelectionActionsComp
   def handle_info({:selection_action, params}, socket) do
-    %{
-      action: action,
-      selected_text: selected_text,
-      node_id: node_id,
-      offsets: offsets,
-      highlight: existing_highlight
-    } = params
-
-    cond do
-      not socket.assigns.can_edit ->
+    case GraphHelpers.check_selection_action_allowed(socket) do
+      {:error, :locked} ->
         {:noreply, socket |> put_flash(:error, "This graph is locked")}
 
-      socket.assigns.current_user == nil ->
+      {:error, :unauthenticated} ->
         {:noreply, assign(socket, show_login_modal: true)}
 
-      true ->
+      :ok ->
+        {action, selected_text, node_id, offsets, existing_highlight, extra} =
+          GraphHelpers.unpack_selection_action(params)
+
         handle_selection_action(
           action,
           selected_text,
           node_id,
           offsets,
           existing_highlight,
-          params,
+          extra,
           socket
         )
     end
@@ -825,38 +782,7 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, assign(socket, show_share_modal: false)}
   end
 
-  def handle_info({:created, highlight}, socket) do
-    # Preload links for display in right panel
-    highlight = Repo.preload(highlight, :links)
-    highlights = [highlight | socket.assigns.highlights]
-
-    {:noreply,
-     assign(socket, highlights: highlights)
-     |> push_event("refresh_highlights", %{data: highlight})}
-  end
-
-  def handle_info({:updated, highlight}, socket) do
-    # Preload links for display in right panel
-    highlight = Repo.preload(highlight, :links)
-
-    highlights =
-      Enum.map(socket.assigns.highlights, fn h ->
-        if h.id == highlight.id, do: highlight, else: h
-      end)
-
-    {:noreply,
-     assign(socket, highlights: highlights)
-     |> push_event("refresh_highlights", %{data: highlight})}
-  end
-
-  def handle_info({:deleted, highlight}, socket) do
-    highlights =
-      Enum.reject(socket.assigns.highlights, fn h -> h.id == highlight.id end)
-
-    {:noreply,
-     assign(socket, highlights: highlights)
-     |> push_event("refresh_highlights", %{data: highlight})}
-  end
+  # Highlight PubSub (:created, :updated, :deleted) injected by GraphStreaming
 
   def handle_info({DialecticWeb.Presence, {:join, presence}}, socket) do
     if is_connected_to_graph?(presence, socket.assigns.graph_id) do
@@ -890,30 +816,7 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_info({:stream_chunk, updated_vertex, :node_id, node_id}, socket) do
-    # This is the streamed LLM response into a node
-    # Re-broadcast to all users on the graph so they see real-time streaming
-    PubSub.broadcast(
-      Dialectic.PubSub,
-      socket.assigns.graph_topic,
-      {:stream_chunk_broadcast, updated_vertex, :node_id, node_id, self()}
-    )
-
-    {:noreply, update_streaming_node(socket, updated_vertex, node_id)}
-  end
-
-  def handle_info(
-        {:stream_chunk_broadcast, updated_vertex, :node_id, node_id, sender_pid},
-        socket
-      ) do
-    # Skip if this is our own broadcast (we already handled it above)
-    if self() == sender_pid do
-      {:noreply, socket}
-    else
-      # Another user is streaming - update our view if we're viewing this node
-      {:noreply, update_streaming_node(socket, updated_vertex, node_id)}
-    end
-  end
+  # :stream_chunk and :stream_chunk_broadcast are injected by GraphStreaming
 
   def handle_info({:llm_request_complete, node_id}, socket) do
     Logger.debug(fn ->
@@ -1302,39 +1205,14 @@ defmodule DialecticWeb.GraphLive do
   end
 
   defp graph_action_params(socket, node \\ nil) do
-    # Make sure we have a valid node to work with
-    node_to_use =
-      cond do
-        node != nil -> node
-        is_map(socket.assigns.node) -> socket.assigns.node
-        true -> default_node()
-      end
-
-    # Make sure the graph exists before making a call
-    graph_id = socket.assigns.graph_id
-
-    unless GraphManager.exists?(graph_id) do
-      # Check if the graph exists in the database
-      case Dialectic.DbActions.Graphs.get_graph_by_title(graph_id) do
-        nil ->
-          # If graph doesn't exist in DB, we shouldn't be here
-          # This is a safety check since the user should have been redirected already
-          # Just log a warning, don't create a new graph
-          require Logger
-          Logger.warning("Attempted to access non-existent graph: #{graph_id}")
-
-        _graph ->
-          # Graph exists in DB but not in memory, initialize it
-          DynamicSupervisor.start_child(GraphSupervisor, {GraphManager, graph_id})
-      end
-    end
-
-    {graph_id, node_to_use, socket.assigns.user, socket.assigns.live_view_topic}
+    GraphHelpers.graph_action_params(socket, node)
   end
 
+  defp compute_nav_flags(_graph, nil), do: {false, false, false, false}
+
   defp compute_nav_flags(graph, node) do
-    can_up = node != nil and is_list(node.parents) and List.first(node.parents) != nil
-    can_down = node != nil and is_list(node.children) and List.first(node.children) != nil
+    can_up = is_list(node.parents) and List.first(node.parents) != nil
+    can_down = is_list(node.children) and List.first(node.children) != nil
 
     siblings =
       try do
@@ -1449,6 +1327,16 @@ defmodule DialecticWeb.GraphLive do
            ] &&
              node && Map.get(node, :id) do
           push_event(s, "center_node", %{id: node.id})
+        else
+          s
+        end
+      end)
+      |> then(fn s ->
+        # Reset the side-drawer scroll position when navigating to a
+        # different node.  Skip streaming updates — those append content
+        # to the current node and shouldn't jump the user back to top.
+        if operation not in ["llm_request_complete"] do
+          push_event(s, "scroll_to_top", %{})
         else
           s
         end
@@ -1623,6 +1511,9 @@ defmodule DialecticWeb.GraphLive do
       socket
       |> stream(:presences, presences)
       |> assign(highlights: highlights)
+      |> push_event("highlights_loaded", %{
+        highlights: serialize_highlights(highlights)
+      })
     else
       # Load highlights even when not connected (e.g., during tests or initial render)
       highlights = Highlights.list_highlights_with_links(mudg_id: graph_id)
@@ -1631,6 +1522,22 @@ defmodule DialecticWeb.GraphLive do
       |> stream(:presences, [])
       |> assign(highlights: highlights)
     end
+  end
+
+  defp serialize_highlights(highlights) do
+    Enum.map(highlights, fn h ->
+      %{
+        id: h.id,
+        node_id: h.node_id,
+        selection_start: h.selection_start,
+        selection_end: h.selection_end,
+        selected_text_snapshot: h.selected_text_snapshot,
+        links:
+          Enum.map(h.links || [], fn l ->
+            %{node_id: l.node_id, link_type: l.link_type}
+          end)
+      }
+    end)
   end
 
   defp assign_graph_data(socket, _graph_db, graph_struct, node, graph_id, user) do

@@ -116,44 +116,37 @@ defmodule DialecticWeb.NodeComp do
           </div>
 
           <%= if String.length(@node.content) == 0 do %>
-            <div class="node mb-2 p-4 relative">
-              <div class="flex flex-col space-y-4 animate-pulse opacity-40">
-                <div class="h-6 bg-gray-200 rounded-md w-3/4"></div>
-                <div class="space-y-2">
-                  <div class="h-4 bg-gray-200 rounded-md w-full"></div>
-                  <div class="h-4 bg-gray-200 rounded-md w-5/6"></div>
-                  <div class="h-4 bg-gray-200 rounded-md w-4/6"></div>
+            <div class="node mb-2 p-6 sm:p-8">
+              <%!-- Animated shimmer skeleton lines --%>
+              <div class="space-y-4">
+                <div class="h-5 rounded-md w-3/4 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_infinite]">
                 </div>
-                <div class="flex items-center space-x-2 mt-2">
-                  <div class="h-8 w-8 bg-gray-200 rounded-full"></div>
-                  <div class="h-3 bg-gray-200 rounded-md w-24"></div>
+                <div class="space-y-2.5">
+                  <div class="h-3.5 rounded-md w-full bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_0.1s_infinite]">
+                  </div>
+                  <div class="h-3.5 rounded-md w-5/6 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_0.2s_infinite]">
+                  </div>
+                  <div class="h-3.5 rounded-md w-4/6 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_0.3s_infinite]">
+                  </div>
+                </div>
+                <div class="space-y-2.5 pt-2">
+                  <div class="h-3.5 rounded-md w-full bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_0.4s_infinite]">
+                  </div>
+                  <div class="h-3.5 rounded-md w-2/3 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_0.5s_infinite]">
+                  </div>
                 </div>
               </div>
-              <div class="absolute inset-0 flex items-center justify-center z-10">
-                <button
-                  phx-click="node_regenerate"
-                  phx-value-id={@node.id}
-                  phx-disable-with="Regenerating..."
-                  disabled={@streaming}
-                  class="bg-white shadow-sm border border-gray-300 px-3 py-1.5 rounded-full text-xs font-medium text-gray-700 hover:bg-gray-50 hover:text-indigo-600 flex items-center gap-1.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="Regenerate response"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="1.5"
-                    stroke="currentColor"
-                    class="w-3.5 h-3.5"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.992 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
-                    />
-                  </svg>
-                  {if @streaming, do: "Generating...", else: "Regenerate"}
-                </button>
+              <%!-- Typing indicator dots --%>
+              <div class="flex items-center gap-1.5 pt-6">
+                <span class="text-xs text-gray-400 font-medium">Thinking</span>
+                <span class="flex gap-0.5">
+                  <span class="w-1 h-1 rounded-full bg-indigo-400 animate-[typing_1.4s_ease-in-out_infinite]">
+                  </span>
+                  <span class="w-1 h-1 rounded-full bg-indigo-400 animate-[typing_1.4s_ease-in-out_-0.16s_infinite]">
+                  </span>
+                  <span class="w-1 h-1 rounded-full bg-indigo-400 animate-[typing_1.4s_ease-in-out_-0.32s_infinite]">
+                  </span>
+                </span>
               </div>
             </div>
           <% end %>

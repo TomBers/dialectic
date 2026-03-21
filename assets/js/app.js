@@ -29,6 +29,7 @@ import highlightNodeHook from "./highlight_node_hook.js";
 import printConversationHook from "./print_conversation_hook.js";
 import storyReadabilityHook from "./story_readability_hook.js";
 import listDetectionHook from "./list_detection_hook.js";
+import ScrollResetHook from "./scroll_reset_hook.js";
 
 import MarkdownHook from "./markdown_hook.js";
 
@@ -47,6 +48,7 @@ hooks.HighlightNode = highlightNodeHook;
 hooks.PrintConversation = printConversationHook;
 hooks.StoryReadability = storyReadabilityHook;
 hooks.ListDetection = listDetectionHook;
+hooks.ScrollReset = ScrollResetHook;
 
 hooks.Markdown = MarkdownHook;
 
@@ -54,6 +56,18 @@ hooks.ViewMode = ViewModeHook;
 hooks.AutoExpandTextarea = AutoExpandTextareaHook;
 hooks.WhatsNext = WhatsNext;
 hooks.SearchNav = SearchNav;
+
+hooks.MobileRedirect = {
+  mounted() {
+    // Only redirect on small screens (matches lg:hidden breakpoint)
+    if (window.innerWidth < 1024) {
+      const url = this.el.dataset.linearUrl;
+      if (url) {
+        window.location.href = url;
+      }
+    }
+  },
+};
 
 hooks.GraphLayout = {
   mounted() {
@@ -356,21 +370,44 @@ hooks.GraphLayout = {
 
 hooks.LinearView = {
   mounted() {
-    // Scroll both the main content and the minimap to a given node
-    const scrollToNode = (id, behavior = "smooth") => {
-      const el = document.getElementById(`node-${id}`);
-      if (el) {
-        el.scrollIntoView({ behavior, block: "start" });
-      }
-      // Also scroll the minimap entry into view
-      const mapEntry = document.getElementById(`map-node-${id}`);
-      if (mapEntry) {
-        mapEntry.scrollIntoView({ behavior, block: "nearest" });
-      }
+    // Scroll both the main content and the minimap to a given node.
+    // `block` defaults to "nearest" so already-visible nodes don't jump.
+    // Callers that need the node pinned to the top can pass "start".
+    //
+    // Uses a short polling loop to wait for LiveView to finish patching
+    // the DOM before measuring positions — the target element may not
+    // exist yet when the event fires (e.g. after a branch switch).
+    const scrollToNode = (
+      id,
+      { behavior = "smooth", block = "nearest" } = {},
+    ) => {
+      let attempts = 0;
+      const maxAttempts = 10;
+
+      const tryScroll = () => {
+        const el = document.getElementById(`node-${id}`);
+        if (el) {
+          requestAnimationFrame(() => {
+            el.scrollIntoView({ behavior, block });
+
+            // Also scroll the minimap entry into view
+            const mapEntry = document.getElementById(`map-node-${id}`);
+            if (mapEntry) {
+              mapEntry.scrollIntoView({ behavior, block: "nearest" });
+            }
+          });
+        } else if (attempts < maxAttempts) {
+          attempts++;
+          // Retry after a short delay to let LiveView finish patching
+          setTimeout(tryScroll, 50);
+        }
+      };
+
+      tryScroll();
     };
 
-    this.handleEvent("scroll_to_node", ({ id }) => {
-      scrollToNode(id);
+    this.handleEvent("scroll_to_node", ({ id, block }) => {
+      scrollToNode(id, { block: block || "nearest" });
     });
   },
 };
@@ -436,7 +473,7 @@ hooks.ChatScroll = {
 
 let csrfToken = document
   .querySelector("meta[name='csrf-token']")
-  .getAttribute("content");
+  ?.getAttribute("content");
 let liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
   hooks: hooks,

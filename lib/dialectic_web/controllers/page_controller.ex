@@ -65,7 +65,7 @@ defmodule DialecticWeb.PageController do
       is_nil(graph_struct) ->
         conn
         |> put_status(:not_found)
-        |> text("Graph not found")
+        |> text("Grid not found")
 
       # Check access control: public, owner, shared, or valid token
       not has_access?(current_user, graph_struct, params) ->
