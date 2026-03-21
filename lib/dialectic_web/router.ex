@@ -57,6 +57,7 @@ defmodule DialecticWeb.Router do
     get "/intro/how", PageController, :guide
 
     live "/inspiration", InspirationLive
+    live "/about", AboutLive
 
     # Slug-based routes
     live "/g/:graph_name", GraphLive
