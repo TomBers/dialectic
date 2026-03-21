@@ -163,50 +163,8 @@ defmodule DialecticWeb.AboutLive do
       </div>
     </section>
 
-    <%!-- 4. Key Principles --%>
-    <section class="bg-slate-950 py-20 text-white">
-      <div class="mx-auto max-w-5xl px-6">
-        <div class="text-center mb-14">
-          <h2 class="text-3xl sm:text-4xl font-bold mb-4">Key Principles</h2>
-          <p class="text-white/60">The ideas that guide everything we build.</p>
-        </div>
-
-        <div class="grid gap-6 md:grid-cols-3">
-          <div class="group rounded-2xl bg-white/5 p-8 ring-1 ring-white/10 hover:bg-white/10 transition">
-            <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/20 text-amber-400 mb-5">
-              <.icon name="hero-bolt" class="w-6 h-6" />
-            </div>
-            <h3 class="text-lg font-bold mb-2">Speed matters</h3>
-            <p class="text-white/60 leading-relaxed">
-              Cognitive flow is easily disrupted. Every interaction is optimized to minimize latency.
-            </p>
-          </div>
-
-          <div class="group rounded-2xl bg-white/5 p-8 ring-1 ring-white/10 hover:bg-white/10 transition">
-            <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400 mb-5">
-              <.icon name="hero-sparkles" class="w-6 h-6" />
-            </div>
-            <h3 class="text-lg font-bold mb-2">Simplicity enables depth</h3>
-            <p class="text-white/60 leading-relaxed">
-              Complex ideas don't need complex interfaces. Less UI, more thinking.
-            </p>
-          </div>
-
-          <div class="group rounded-2xl bg-white/5 p-8 ring-1 ring-white/10 hover:bg-white/10 transition">
-            <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/20 text-blue-400 mb-5">
-              <.icon name="hero-clock" class="w-6 h-6" />
-            </div>
-            <h3 class="text-lg font-bold mb-2">Persistence creates value</h3>
-            <p class="text-white/60 leading-relaxed">
-              Knowledge graphs accumulate value over time. Your work is never lost.
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-
     <%!-- 5. Key Capabilities --%>
-    <section class="bg-white py-20">
+    <section class="bg-slate-50 py-20">
       <div class="mx-auto max-w-5xl px-6">
         <div class="text-center mb-6">
           <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">What It Does</h2>
