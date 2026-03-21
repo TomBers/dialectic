@@ -91,13 +91,14 @@ defmodule DialecticWeb.HomeLive do
         {:noreply, redirect(socket, to: graph_path(existing_graph))}
       else
         parent_pid = self()
-        assigns = socket.assigns
+        prompt_mode = socket.assigns[:prompt_mode]
+        current_user = socket.assigns[:current_user]
 
         socket =
           socket
           |> assign(:loading_graph, %{title: title, status: "Initializing...", steps: []})
           |> start_async(:create_graph_flow, fn ->
-            create_graph_task(title, answer, assigns, parent_pid)
+            create_graph_task(title, answer, prompt_mode, current_user, parent_pid)
           end)
 
         {:noreply, socket}
@@ -176,8 +177,8 @@ defmodule DialecticWeb.HomeLive do
      )}
   end
 
-  defp create_graph_task(title, answer, assigns, parent_pid) do
-    mode_str = assigns[:prompt_mode] || "university"
+  defp create_graph_task(title, answer, prompt_mode, current_user, parent_pid) do
+    mode_str = prompt_mode || "university"
 
     mode =
       case mode_str do
@@ -187,8 +188,11 @@ defmodule DialecticWeb.HomeLive do
         _ -> :university
       end
 
-    user_identity = UserUtils.current_identity(assigns)
-    current_user = assigns[:current_user]
+    user_identity =
+      case current_user do
+        %{email: email} -> email
+        _ -> "anonymous"
+      end
 
     Dialectic.Graph.Creator.create(answer, current_user, user_identity,
       mode: mode,
