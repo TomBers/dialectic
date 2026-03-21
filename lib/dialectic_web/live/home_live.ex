@@ -82,27 +82,32 @@ defmodule DialecticWeb.HomeLive do
     mode_param = Map.get(params, "mode")
     socket = if mode_param, do: assign(socket, prompt_mode: mode_param), else: socket
 
-    if title == "untitled-idea" do
-      {:noreply, put_flash(socket, :error, "Please enter a question or topic.")}
-    else
-      existing_graph = Graphs.get_graph_by_title(title)
-
-      if existing_graph do
-        {:noreply, redirect(socket, to: graph_path(existing_graph))}
-      else
-        parent_pid = self()
-        prompt_mode = socket.assigns[:prompt_mode]
-        current_user = socket.assigns[:current_user]
-
-        socket =
-          socket
-          |> assign(:loading_graph, %{title: title, status: "Initializing...", steps: []})
-          |> start_async(:create_graph_flow, fn ->
-            create_graph_task(title, answer, prompt_mode, current_user, parent_pid)
-          end)
-
+    cond do
+      socket.assigns.loading_graph != nil ->
         {:noreply, socket}
-      end
+
+      title == "untitled-idea" ->
+        {:noreply, put_flash(socket, :error, "Please enter a question or topic.")}
+
+      true ->
+        existing_graph = Graphs.get_graph_by_title(title)
+
+        if existing_graph do
+          {:noreply, redirect(socket, to: graph_path(existing_graph))}
+        else
+          parent_pid = self()
+          prompt_mode = socket.assigns[:prompt_mode]
+          current_user = socket.assigns[:current_user]
+
+          socket =
+            socket
+            |> assign(:loading_graph, %{title: title, status: "Initializing...", steps: []})
+            |> start_async(:create_graph_flow, fn ->
+              create_graph_task(title, answer, prompt_mode, current_user, parent_pid)
+            end)
+
+          {:noreply, socket}
+        end
     end
   end
 

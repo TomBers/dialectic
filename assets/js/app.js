@@ -473,7 +473,7 @@ hooks.ChatScroll = {
 
 let csrfToken = document
   .querySelector("meta[name='csrf-token']")
-  .getAttribute("content");
+  ?.getAttribute("content");
 let liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
   hooks: hooks,

@@ -40,7 +40,11 @@ defmodule DialecticWeb.LinearGraphLive do
           try do
             mount_graph(socket, graph_db, params, token_param)
           rescue
-            _e ->
+            e ->
+              Logger.error(
+                "Error loading graph #{graph_id}: #{Exception.format(:error, e, __STACKTRACE__)}"
+              )
+
               socket =
                 socket
                 |> put_flash(:error, "Error loading graph: #{graph_id}")
@@ -957,15 +961,30 @@ defmodule DialecticWeb.LinearGraphLive do
     if existing_highlight do
       socket
     else
+      user_id =
+        case socket.assigns[:current_user] do
+          %{id: id} -> id
+          _ -> nil
+        end
+
       case Highlights.create_highlight(%{
              mudg_id: socket.assigns.graph_id,
              node_id: node_id,
-             start_offset: offsets["start"],
-             end_offset: offsets["end"],
-             selected_text_snapshot: selected_text
+             text_source_type: "node",
+             selection_start: offsets["start"],
+             selection_end: offsets["end"],
+             selected_text_snapshot: selected_text,
+             created_by_user_id: user_id
            }) do
-        {:ok, _highlight} -> socket
-        {:error, _} -> socket
+        {:ok, _highlight} ->
+          socket
+
+        {:error, changeset} ->
+          Logger.warning(
+            "Failed to create highlight for node #{node_id}: #{inspect(changeset.errors)}"
+          )
+
+          socket
       end
     end
   end

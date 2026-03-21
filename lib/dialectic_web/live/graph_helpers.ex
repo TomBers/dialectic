@@ -51,7 +51,16 @@ defmodule DialecticWeb.GraphHelpers do
           Logger.warning("Attempted to access non-existent graph: #{graph_id}")
 
         _graph ->
-          DynamicSupervisor.start_child(GraphSupervisor, {GraphManager, graph_id})
+          case DynamicSupervisor.start_child(GraphSupervisor, {GraphManager, graph_id}) do
+            {:ok, _pid} ->
+              :ok
+
+            {:error, {:already_started, _pid}} ->
+              :ok
+
+            {:error, reason} ->
+              Logger.error("Failed to start GraphManager for #{graph_id}: #{inspect(reason)}")
+          end
       end
     end
 

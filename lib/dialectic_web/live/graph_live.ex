@@ -519,29 +519,31 @@ defmodule DialecticWeb.GraphLive do
     from_search = params["from-search"] == "true"
 
     # Update the graph
-    {:noreply, updated_socket} =
-      update_graph(
-        socket,
-        {nil, GraphActions.find_node(socket.assigns.graph_id, id)},
-        "node_clicked"
-      )
+    node = GraphActions.find_node(socket.assigns.graph_id, id)
 
-    # Preserve and re-apply panel/menu state across node changes
-    updated_socket = reapply_right_panel_state(socket, updated_socket)
+    if node == nil do
+      {:noreply, socket}
+    else
+      {:noreply, updated_socket} =
+        update_graph(socket, {nil, node}, "node_clicked")
 
-    # Close the quick search overlay and clear highlights when navigating from search
-    updated_socket =
-      if from_search do
-        updated_socket
-        |> assign(show_search_overlay: false, search_term: "", search_results: [])
-        |> push_event("clear_search_highlights", %{})
-        |> push_event("center_node", %{id: id})
-      else
-        # Always center the node on the graph (e.g. when clicked from the ask form indicator)
-        push_event(updated_socket, "center_node", %{id: id})
-      end
+      # Preserve and re-apply panel/menu state across node changes
+      updated_socket = reapply_right_panel_state(socket, updated_socket)
 
-    {:noreply, updated_socket}
+      # Close the quick search overlay and clear highlights when navigating from search
+      updated_socket =
+        if from_search do
+          updated_socket
+          |> assign(show_search_overlay: false, search_term: "", search_results: [])
+          |> push_event("clear_search_highlights", %{})
+          |> push_event("center_node", %{id: id})
+        else
+          # Always center the node on the graph (e.g. when clicked from the ask form indicator)
+          push_event(updated_socket, "center_node", %{id: id})
+        end
+
+      {:noreply, updated_socket}
+    end
   end
 
   def handle_event("highlight_clicked", %{"id" => highlight_id, "node-id" => node_id}, socket) do
@@ -1206,9 +1208,11 @@ defmodule DialecticWeb.GraphLive do
     GraphHelpers.graph_action_params(socket, node)
   end
 
+  defp compute_nav_flags(_graph, nil), do: {false, false, false, false}
+
   defp compute_nav_flags(graph, node) do
-    can_up = node != nil and is_list(node.parents) and List.first(node.parents) != nil
-    can_down = node != nil and is_list(node.children) and List.first(node.children) != nil
+    can_up = is_list(node.parents) and List.first(node.parents) != nil
+    can_down = is_list(node.children) and List.first(node.children) != nil
 
     siblings =
       try do

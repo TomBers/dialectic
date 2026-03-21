@@ -77,8 +77,7 @@ defmodule Dialectic.Graph.Creator do
   end
 
   defp update_origin_content(title, node, question) do
-    decoded_q = URI.decode_www_form(to_string(question))
-    new_content = "## " <> decoded_q
+    new_content = "## " <> to_string(question)
     GraphManager.set_node_content(title, node.id, new_content)
     # Explicitly return the updated node struct
     GraphManager.find_node_by_id(title, node.id)
