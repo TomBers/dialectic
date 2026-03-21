@@ -11,6 +11,9 @@ config :dialectic, sync_tasks_for_testing: true
 # Mock LLM requests
 config :dialectic, :llm_req_options, plug: Dialectic.Test.LLMTestPlug
 
+# Stub Google Forms HTTP calls in tests
+config :dialectic, Dialectic.Feedback, req_plug: {Req.Test, Dialectic.Feedback}
+
 # No-op auto-tagger for tests
 config :dialectic, :auto_tagger_module, Dialectic.Test.AutoTaggerTest
 
