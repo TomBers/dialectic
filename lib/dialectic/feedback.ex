@@ -10,7 +10,10 @@ defmodule Dialectic.Feedback do
   Returns `{:ok, :submitted}` on success or `{:error, reason}` on failure.
   """
   def submit(params) do
-    Logger.info("Feedback received: #{inspect(params)}")
+    Logger.info("Feedback received",
+      feedback_type: Map.get(params, "feedback_type", "unknown")
+    )
+
     {:ok, :submitted}
   end
 end

@@ -35,11 +35,15 @@ defmodule DialecticWeb.AboutLive do
     feedback = Map.get(params, "feedback", "")
 
     if String.trim(feedback) == "" do
-      {:noreply, put_flash(socket, :error, "Please enter some feedback before submitting.")}
+      {:noreply,
+       socket
+       |> assign(:feedback_form, to_form(params, as: :feedback))
+       |> put_flash(:error, "Please enter some feedback before submitting.")}
     else
       {:noreply,
        socket
        |> assign(:feedback_submitting, true)
+       |> assign(:feedback_form, to_form(params, as: :feedback))
        |> start_async(:submit_feedback, fn -> Dialectic.Feedback.submit(params) end)}
     end
   end
@@ -369,6 +373,7 @@ defmodule DialecticWeb.AboutLive do
               <.link
                 href="https://pfalondon.org/"
                 target="_blank"
+                rel="noopener noreferrer"
                 class="text-[#3a0ca3] hover:underline"
               >
                 Philosophy for All
@@ -405,6 +410,7 @@ defmodule DialecticWeb.AboutLive do
             <.link
               href="https://pfalondon.org/"
               target="_blank"
+              rel="noopener noreferrer"
               class="inline-flex items-center gap-1 text-sm font-medium text-[#3a0ca3] hover:underline"
             >
               Visit website <.icon name="hero-arrow-top-right-on-square" class="w-3.5 h-3.5" />
@@ -475,6 +481,8 @@ defmodule DialecticWeb.AboutLive do
               <.link
                 href="https://github.com/TomBers"
                 target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Tom Berman GitHub profile (opens in a new tab)"
                 class="text-gray-400 hover:text-gray-700 transition"
               >
                 <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
@@ -543,6 +551,7 @@ defmodule DialecticWeb.AboutLive do
               <.link
                 href="https://github.com/TomBers"
                 target="_blank"
+                rel="noopener noreferrer"
                 class="inline-flex items-center gap-1.5 text-sm font-medium text-[#3a0ca3] hover:underline"
               >
                 <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
@@ -631,12 +640,30 @@ defmodule DialecticWeb.AboutLive do
               <select
                 id="feedback_type"
                 name="feedback[feedback_type]"
+                value={@feedback_form[:feedback_type].value}
                 class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm focus:border-[#4361ee] focus:ring-2 focus:ring-[#4361ee]/20"
               >
-                <option value="Comments">General Comment</option>
-                <option value="Questions">Question</option>
-                <option value="Feature Request">Feature Request</option>
-                <option value="Bug Reports">Bug Report</option>
+                <option value="Comments" selected={@feedback_form[:feedback_type].value == "Comments"}>
+                  General Comment
+                </option>
+                <option
+                  value="Questions"
+                  selected={@feedback_form[:feedback_type].value == "Questions"}
+                >
+                  Question
+                </option>
+                <option
+                  value="Feature Request"
+                  selected={@feedback_form[:feedback_type].value == "Feature Request"}
+                >
+                  Feature Request
+                </option>
+                <option
+                  value="Bug Reports"
+                  selected={@feedback_form[:feedback_type].value == "Bug Reports"}
+                >
+                  Bug Report
+                </option>
               </select>
             </div>
 
@@ -651,7 +678,7 @@ defmodule DialecticWeb.AboutLive do
                 required
                 placeholder="What's on your mind?"
                 class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm focus:border-[#4361ee] focus:ring-2 focus:ring-[#4361ee]/20 placeholder:text-gray-400"
-              ></textarea>
+              >{@feedback_form[:feedback].value}</textarea>
             </div>
 
             <div>
@@ -664,7 +691,7 @@ defmodule DialecticWeb.AboutLive do
                 rows="2"
                 placeholder="Any ideas on how we could make things better?"
                 class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm focus:border-[#4361ee] focus:ring-2 focus:ring-[#4361ee]/20 placeholder:text-gray-400"
-              ></textarea>
+              >{@feedback_form[:suggestions].value}</textarea>
             </div>
 
             <div class="grid gap-4 sm:grid-cols-2">
@@ -676,6 +703,7 @@ defmodule DialecticWeb.AboutLive do
                   type="text"
                   id="feedback_name"
                   name="feedback[name]"
+                  value={@feedback_form[:name].value}
                   placeholder="Your name"
                   class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm focus:border-[#4361ee] focus:ring-2 focus:ring-[#4361ee]/20 placeholder:text-gray-400"
                 />
@@ -688,6 +716,7 @@ defmodule DialecticWeb.AboutLive do
                   type="email"
                   id="feedback_email"
                   name="feedback[email]"
+                  value={@feedback_form[:email].value}
                   placeholder="you@example.com"
                   class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm focus:border-[#4361ee] focus:ring-2 focus:ring-[#4361ee]/20 placeholder:text-gray-400"
                 />
@@ -713,7 +742,7 @@ defmodule DialecticWeb.AboutLive do
             </div>
 
             <p class="text-xs text-gray-400 text-center">
-              Your feedback is anonymous unless you choose to provide your name or email.
+              You can send feedback without your name or email. If you choose to provide them, your contact details will be submitted with your feedback and may be stored.
             </p>
           </.form>
         <% end %>
@@ -759,6 +788,7 @@ defmodule DialecticWeb.AboutLive do
           <.link
             href="https://github.com/TomBers/dialectic"
             target="_blank"
+            rel="noopener noreferrer"
             class="inline-flex items-center gap-2 text-white/80 hover:text-white text-sm font-medium transition"
           >
             <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
