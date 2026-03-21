@@ -515,34 +515,70 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("node_clicked", %{"id" => id} = params, socket) do
-    # Determine if this was triggered from search results via explicit param
-    from_search = params["from-search"] == "true"
+    # When in presentation setup mode, clicking a node toggles it as a slide
+    if socket.assigns.presentation_mode == :setup do
+      ids = socket.assigns.presentation_slide_ids
 
-    # Update the graph
-    node = GraphActions.find_node(socket.assigns.graph_id, id)
-
-    if node == nil do
-      {:noreply, socket}
-    else
-      {:noreply, updated_socket} =
-        update_graph(socket, {nil, node}, "node_clicked")
-
-      # Preserve and re-apply panel/menu state across node changes
-      updated_socket = reapply_right_panel_state(socket, updated_socket)
-
-      # Close the quick search overlay and clear highlights when navigating from search
-      updated_socket =
-        if from_search do
-          updated_socket
-          |> assign(show_search_overlay: false, search_term: "", search_results: [])
-          |> push_event("clear_search_highlights", %{})
-          |> push_event("center_node", %{id: id})
+      updated_ids =
+        if id in ids do
+          List.delete(ids, id)
         else
-          # Always center the node on the graph (e.g. when clicked from the ask form indicator)
-          push_event(updated_socket, "center_node", %{id: id})
+          ids ++ [id]
         end
 
-      {:noreply, updated_socket}
+      # Still navigate to the node so the user can see its content
+      node = GraphActions.find_node(socket.assigns.graph_id, id)
+
+      if node == nil do
+        socket =
+          socket
+          |> assign(presentation_slide_ids: updated_ids)
+          |> push_presentation_highlights()
+
+        {:noreply, socket}
+      else
+        {:noreply, updated_socket} =
+          update_graph(socket, {nil, node}, "node_clicked")
+
+        updated_socket =
+          updated_socket
+          |> assign(presentation_slide_ids: updated_ids)
+          |> push_presentation_highlights()
+          |> push_event("center_node", %{id: id})
+
+        {:noreply, updated_socket}
+      end
+    else
+      # Normal mode — original behaviour
+      # Determine if this was triggered from search results via explicit param
+      from_search = params["from-search"] == "true"
+
+      # Update the graph
+      node = GraphActions.find_node(socket.assigns.graph_id, id)
+
+      if node == nil do
+        {:noreply, socket}
+      else
+        {:noreply, updated_socket} =
+          update_graph(socket, {nil, node}, "node_clicked")
+
+        # Preserve and re-apply panel/menu state across node changes
+        updated_socket = reapply_right_panel_state(socket, updated_socket)
+
+        # Close the quick search overlay and clear highlights when navigating from search
+        updated_socket =
+          if from_search do
+            updated_socket
+            |> assign(show_search_overlay: false, search_term: "", search_results: [])
+            |> push_event("clear_search_highlights", %{})
+            |> push_event("center_node", %{id: id})
+          else
+            # Always center the node on the graph (e.g. when clicked from the ask form indicator)
+            push_event(updated_socket, "center_node", %{id: id})
+          end
+
+        {:noreply, updated_socket}
+      end
     end
   end
 
@@ -751,6 +787,109 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event("update_exploration_progress", params, socket) do
     {:noreply, assign(socket, :exploration_stats, params)}
+  end
+
+  # ── Presentation mode events ──────────────────────────────────────
+
+  def handle_event("enter_presentation_setup", _params, socket) do
+    socket =
+      socket
+      |> assign(presentation_mode: :setup)
+      |> push_presentation_highlights()
+
+    {:noreply, socket}
+  end
+
+  def handle_event("exit_presentation", _params, socket) do
+    socket =
+      socket
+      |> assign(
+        presentation_mode: :off,
+        presentation_slide_ids: [],
+        presentation_index: 0
+      )
+      |> push_event("presentation_clear_slides", %{})
+
+    {:noreply, socket}
+  end
+
+  def handle_event("presentation_toggle_slide", %{"node-id" => node_id}, socket) do
+    ids = socket.assigns.presentation_slide_ids
+
+    updated_ids =
+      if node_id in ids do
+        List.delete(ids, node_id)
+      else
+        ids ++ [node_id]
+      end
+
+    socket =
+      socket
+      |> assign(presentation_slide_ids: updated_ids)
+      |> push_presentation_highlights()
+
+    {:noreply, socket}
+  end
+
+  def handle_event("presentation_remove_slide", %{"node-id" => node_id}, socket) do
+    updated_ids = List.delete(socket.assigns.presentation_slide_ids, node_id)
+
+    socket =
+      socket
+      |> assign(presentation_slide_ids: updated_ids)
+      |> push_presentation_highlights()
+
+    {:noreply, socket}
+  end
+
+  def handle_event("presentation_reorder", %{"order" => order}, socket) when is_list(order) do
+    socket =
+      socket
+      |> assign(presentation_slide_ids: order)
+      |> push_presentation_highlights()
+
+    {:noreply, socket}
+  end
+
+  def handle_event("presentation_clear_slides", _params, socket) do
+    socket =
+      socket
+      |> assign(presentation_slide_ids: [], presentation_index: 0)
+      |> push_event("presentation_clear_slides", %{})
+
+    {:noreply, socket}
+  end
+
+  def handle_event("start_presenting", _params, socket) do
+    if length(socket.assigns.presentation_slide_ids) > 0 do
+      # Clear graph highlights when entering full-screen presentation
+      socket =
+        socket
+        |> assign(presentation_mode: :presenting, presentation_index: 0)
+        |> push_event("presentation_clear_slides", %{})
+
+      {:noreply, socket}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_event("presentation_next", _params, socket) do
+    max_idx = length(socket.assigns.presentation_slide_ids) - 1
+    new_idx = min(socket.assigns.presentation_index + 1, max_idx)
+    {:noreply, assign(socket, presentation_index: new_idx)}
+  end
+
+  def handle_event("presentation_prev", _params, socket) do
+    new_idx = max(socket.assigns.presentation_index - 1, 0)
+    {:noreply, assign(socket, presentation_index: new_idx)}
+  end
+
+  def handle_event("presentation_goto", %{"index" => idx}, socket) do
+    idx = if is_binary(idx), do: String.to_integer(idx), else: idx
+    max_idx = length(socket.assigns.presentation_slide_ids) - 1
+    clamped = max(0, min(idx, max_idx))
+    {:noreply, assign(socket, presentation_index: clamped)}
   end
 
   # Handle selection action messages from SelectionActionsComp
@@ -1488,7 +1627,10 @@ defmodule DialecticWeb.GraphLive do
       work_streams: [],
       exploration_stats: nil,
       show_login_modal: false,
-      highlights: []
+      highlights: [],
+      presentation_mode: :off,
+      presentation_slide_ids: [],
+      presentation_index: 0
     )
   end
 
@@ -1604,5 +1746,22 @@ defmodule DialecticWeb.GraphLive do
     else
       socket
     end
+  end
+
+  # ── Presentation helpers ────────────────────────────────────────────
+
+  defp push_presentation_highlights(socket) do
+    ids = socket.assigns.presentation_slide_ids
+    push_event(socket, "presentation_highlight_slides", %{ids: ids})
+  end
+
+  @doc false
+  defp presentation_slides(%{graph_id: graph_id, presentation_slide_ids: ids}) do
+    Enum.reduce(ids, [], fn id, acc ->
+      case GraphActions.find_node(graph_id, id) do
+        nil -> acc
+        node -> acc ++ [node]
+      end
+    end)
   end
 end

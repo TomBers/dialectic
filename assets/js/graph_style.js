@@ -462,6 +462,23 @@ export function graphStyle(viewMode = "spaced") {
     },
   });
 
+  /* ── Presentation mode: purple glow on nodes in the slide deck ── */
+  base_style.push({
+    selector: "node.presentation-slide",
+    style: {
+      "underlay-color": "#a855f7", // purple-500
+      "underlay-opacity": 0.18,
+      "underlay-padding": isCompact ? 10 : 14,
+      "underlay-shape": "roundrectangle",
+      "border-width": isCompact ? 3 : 4,
+      "border-color": "#a855f7",
+      "border-style": "solid",
+      "transition-property": "underlay-opacity, border-width, border-color",
+      "transition-duration": "200ms",
+      "transition-timing-function": "ease-in-out-quad",
+    },
+  });
+
   return base_style;
 }
 

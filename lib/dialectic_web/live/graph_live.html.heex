@@ -3,6 +3,21 @@
   phx-hook="GraphLayout"
   class="h-[calc(100vh-2.5rem)] overflow-hidden flex flex-col relative"
 >
+  <%!-- Presentation: full-screen presenting overlay --%>
+  <%= if @presentation_mode == :presenting do %>
+    <.live_component
+      module={DialecticWeb.PresentationComp}
+      id="presentation-overlay"
+      mode={:presenting}
+      slides={presentation_slides(assigns)}
+      current_index={@presentation_index}
+      graph_title={@graph_struct && @graph_struct.title}
+      is_owner={@can_edit}
+      slide_node_ids={@presentation_slide_ids}
+      all_nodes={[]}
+    />
+  <% end %>
+
   <%!-- Mobile: Auto-redirect to linear view --%>
   <div
     id="mobile-redirect"
@@ -580,6 +595,26 @@
           </div>
         </div>
       <% end %>
+    </div>
+  <% end %>
+
+  <%!-- Presentation setup drawer --%>
+  <%= if @graph_id && @presentation_mode == :setup do %>
+    <div
+      id="presentation-setup-drawer"
+      class="fixed top-10 bottom-0 right-0 w-full sm:w-80 bg-white border-l border-gray-200 z-50 transform translate-x-0 opacity-100 transition-all duration-300 ease-in-out overflow-y-auto shadow-lg"
+    >
+      <.live_component
+        module={DialecticWeb.PresentationComp}
+        id="presentation-setup"
+        mode={:setup}
+        slides={presentation_slides(assigns)}
+        current_index={0}
+        graph_title={@graph_struct && @graph_struct.title}
+        is_owner={@can_edit}
+        slide_node_ids={@presentation_slide_ids}
+        all_nodes={[]}
+      />
     </div>
   <% end %>
 

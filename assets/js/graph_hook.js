@@ -829,11 +829,110 @@ const graphHook = {
       } catch (_e) {}
     });
 
+    // Reposition presentation badges when the viewport changes
+    if (this.cy) {
+      this.cy.on("pan zoom", () => {
+        if (this._presentationIds && this._presentationIds.length > 0) {
+          requestAnimationFrame(() => this._renderPresentationBadges());
+        }
+      });
+    }
+
     this.handleEvent("clear_search_highlights", () => {
       if (!this.cy) return;
       try {
         this.cy.elements().removeClass("search-match search-dimmed");
       } catch (_e) {}
+    });
+
+    // ── Presentation mode: highlight nodes in the slide deck ──
+    this.handleEvent("presentation_highlight_slides", ({ ids }) => {
+      if (!this.cy) return;
+      try {
+        // Remove previous presentation markers
+        this.cy.nodes().removeClass("presentation-slide");
+        this.cy.nodes().forEach((n) => n.removeData("presIndex"));
+
+        // Remove old badge overlays
+        const container = this._container || this.el;
+        container
+          .querySelectorAll(".pres-badge-overlay")
+          .forEach((el) => el.remove());
+
+        if (!ids || ids.length === 0) return;
+
+        // Store the ordered list so we can render badges after layout
+        this._presentationIds = ids;
+
+        ids.forEach((id, idx) => {
+          const n = this.cy.getElementById(id);
+          if (n && n.length > 0) {
+            n.addClass("presentation-slide");
+            n.data("presIndex", idx + 1);
+          }
+        });
+
+        // Render numbered badge overlays positioned on each node
+        this._renderPresentationBadges();
+      } catch (_e) {}
+    });
+
+    this.handleEvent("presentation_clear_slides", () => {
+      if (!this.cy) return;
+      try {
+        this.cy.nodes().removeClass("presentation-slide");
+        this.cy.nodes().forEach((n) => n.removeData("presIndex"));
+        this._presentationIds = null;
+        const container = this._container || this.el;
+        container
+          .querySelectorAll(".pres-badge-overlay")
+          .forEach((el) => el.remove());
+      } catch (_e) {}
+    });
+  },
+
+  _renderPresentationBadges() {
+    if (!this.cy || !this._presentationIds) return;
+    const container = this._container || this.el;
+
+    // Clear existing badges
+    container
+      .querySelectorAll(".pres-badge-overlay")
+      .forEach((el) => el.remove());
+
+    const zoom = this.cy.zoom();
+    const pan = this.cy.pan();
+
+    this._presentationIds.forEach((id, idx) => {
+      const n = this.cy.getElementById(id);
+      if (!n || n.length === 0) return;
+
+      const pos = n.renderedPosition();
+      const bb = n.renderedBoundingBox({ includeLabels: false });
+
+      const badge = document.createElement("div");
+      badge.className = "pres-badge-overlay";
+      badge.textContent = String(idx + 1);
+      badge.style.cssText = `
+        position: absolute;
+        top: ${bb.y1 - 8}px;
+        left: ${bb.x2 - 8}px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #a855f7;
+        color: white;
+        font-size: 10px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+        z-index: 10;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        line-height: 1;
+      `;
+      container.appendChild(badge);
     });
   },
 
