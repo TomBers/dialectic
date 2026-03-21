@@ -29,7 +29,7 @@ defmodule Dialectic.Feedback do
 
     form_data = build_form_data(params)
 
-    case Req.post(@form_url, form: form_data, redirect: false) do
+    case Req.post(build_request(), url: @form_url, form: form_data, redirect: false) do
       {:ok, %Req.Response{status: status}} when status in 200..399 ->
         Logger.info("Feedback submitted successfully", status: status)
         {:ok, :submitted}
@@ -45,6 +45,16 @@ defmodule Dialectic.Feedback do
       {:error, reason} ->
         Logger.error("Google Form submission request failed", error: inspect(reason))
         {:error, reason}
+    end
+  end
+
+  defp build_request do
+    opts = Application.get_env(:dialectic, __MODULE__, [])
+
+    if plug = opts[:req_plug] do
+      Req.new(plug: plug)
+    else
+      Req.new()
     end
   end
 

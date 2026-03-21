@@ -3,6 +3,14 @@ defmodule DialecticWeb.AboutLiveTest do
 
   import Phoenix.LiveViewTest
 
+  setup do
+    Req.Test.stub(Dialectic.Feedback, fn conn ->
+      Req.Test.json(conn, %{status: "ok"})
+    end)
+
+    :ok
+  end
+
   describe "about page" do
     test "renders the about page", %{conn: conn} do
       {:ok, _view, html} = live(conn, ~p"/about")
