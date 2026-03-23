@@ -4,6 +4,7 @@ defmodule DialecticWeb.UserProfileLive do
   alias Dialectic.Accounts
   alias Dialectic.Accounts.User
   alias Dialectic.Accounts.GravatarCache
+  alias DialecticWeb.Utils.NodeTitleHelper
 
   @impl true
   def mount(%{"username" => username}, _session, socket) do
@@ -40,7 +41,12 @@ defmodule DialecticWeb.UserProfileLive do
                 node_title =
                   (note.graph.data["nodes"] || [])
                   |> Enum.find_value(fn n ->
-                    if n["id"] == note.node_id, do: node_content_to_title(n["content"])
+                    if n["id"] == note.node_id do
+                      case NodeTitleHelper.extract_node_title(n) do
+                        "Untitled" -> nil
+                        title -> title
+                      end
+                    end
                   end)
 
                 Map.put(note, :node_title, node_title || "Node #{note.node_id}")
@@ -480,21 +486,6 @@ defmodule DialecticWeb.UserProfileLive do
   end
 
   # --- Helper functions ---
-
-  defp node_content_to_title(nil), do: nil
-
-  defp node_content_to_title(content) do
-    content
-    |> String.split("\n", trim: true)
-    |> List.first("")
-    |> String.replace(~r/^#+\s*/, "")
-    |> String.trim()
-    |> String.slice(0, 80)
-    |> case do
-      "" -> nil
-      title -> title
-    end
-  end
 
   defp format_member_duration(inserted_at) do
     days = Date.diff(Date.utc_today(), DateTime.to_date(inserted_at))

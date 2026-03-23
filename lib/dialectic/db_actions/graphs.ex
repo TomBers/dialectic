@@ -119,8 +119,9 @@ defmodule Dialectic.DbActions.Graphs do
     Repo.all(Graph)
   end
 
-  def all_graphs_with_notes(search_term \\ "") do
+  def all_graphs_with_notes(search_term \\ "", opts \\ []) do
     search_pattern = "%#{String.trim(search_term)}%"
+    limit = Keyword.get(opts, :limit)
 
     query =
       from g in Dialectic.Accounts.Graph,
@@ -138,6 +139,13 @@ defmodule Dialectic.DbActions.Graphs do
         group_by: g.title,
         order_by: [desc: g.inserted_at],
         select: {g, count(n.id)}
+
+    query =
+      if limit do
+        from q in query, limit: ^limit
+      else
+        query
+      end
 
     Dialectic.Repo.all(query)
   end
@@ -333,7 +341,10 @@ defmodule Dialectic.DbActions.Graphs do
 
     %CuratedGrid{}
     |> CuratedGrid.changeset(attrs)
-    |> Repo.insert(on_conflict: :replace_all, conflict_target: [:graph_title, :section])
+    |> Repo.insert(
+      on_conflict: {:replace, [:curator_id, :note, :position, :updated_at]},
+      conflict_target: [:graph_title, :section]
+    )
   end
 
   @doc """

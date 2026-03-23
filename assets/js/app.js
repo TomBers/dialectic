@@ -72,6 +72,11 @@ hooks.PasswordToggle = {
         eyeOpen.classList.toggle("hidden", !isPassword);
         eyeSlash.classList.toggle("hidden", isPassword);
       }
+      this.el.setAttribute("aria-pressed", isPassword ? "true" : "false");
+      this.el.setAttribute(
+        "aria-label",
+        isPassword ? "Hide password" : "Show password",
+      );
     });
   },
 };

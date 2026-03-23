@@ -123,7 +123,7 @@
               href={~p"/u/#{@current_user.username}"}
               class={[
                 "inline-flex items-center gap-1 rounded-md px-2 py-1 font-medium transition",
-                if(String.starts_with?(active_path, "/u/"),
+                if(active_path == "/u/#{@current_user.username}",
                   do: "bg-white/20 text-white",
                   else: "text-white/70 hover:text-white hover:bg-white/10"
                 )

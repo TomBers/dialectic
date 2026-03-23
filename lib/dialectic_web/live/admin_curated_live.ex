@@ -37,7 +37,7 @@ defmodule DialecticWeb.AdminCuratedLive do
       if String.trim(term) == "" do
         []
       else
-        Graphs.all_graphs_with_notes(term) |> Enum.take(20)
+        Graphs.all_graphs_with_notes(term, limit: 20)
       end
 
     {:noreply, assign(socket, search_term: term, search_results: results)}

@@ -59,8 +59,9 @@ defmodule DialecticWeb.UserRegistrationLive do
                 id="register-password-toggle"
                 phx-hook="PasswordToggle"
                 phx-update="ignore"
-                class="absolute right-3 top-[2.35rem] text-zinc-400 hover:text-zinc-600 transition-colors focus:outline-none"
+                class="absolute right-3 top-[2.35rem] text-zinc-400 hover:text-zinc-600 transition-colors focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                 aria-label="Show password"
+                aria-pressed="false"
               >
                 <span data-eye-open>
                   <.icon name="hero-eye" class="w-5 h-5" />

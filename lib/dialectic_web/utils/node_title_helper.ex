@@ -27,9 +27,12 @@ defmodule DialecticWeb.Utils.NodeTitleHelper do
   def extract_node_title(node, opts \\ []) do
     max_length = Keyword.get(opts, :max_length, 80)
 
-    case node do
-      %{content: content} when is_binary(content) and content != "" ->
-        content
+    content = get_content(node)
+    node_id = get_id(node)
+
+    case content do
+      c when is_binary(c) and c != "" ->
+        c
         |> String.replace(~r/\r\n|\r/, "\n")
         |> String.split("\n")
         |> List.first()
@@ -40,7 +43,7 @@ defmodule DialecticWeb.Utils.NodeTitleHelper do
         |> String.trim()
         |> case do
           "" ->
-            Map.get(node, :id, "Untitled")
+            node_id || "Untitled"
 
           title ->
             String.slice(title, 0, max_length) <>
@@ -48,7 +51,16 @@ defmodule DialecticWeb.Utils.NodeTitleHelper do
         end
 
       _ ->
-        if is_map(node) && Map.get(node, :id), do: Map.get(node, :id), else: "Untitled"
+        node_id || "Untitled"
     end
   end
+
+  # Support both atom-key maps (%{content: ...}) and string-key maps (%{"content" => ...})
+  defp get_content(%{content: content}), do: content
+  defp get_content(%{"content" => content}), do: content
+  defp get_content(_), do: nil
+
+  defp get_id(%{id: id}), do: id
+  defp get_id(%{"id" => id}), do: id
+  defp get_id(_), do: nil
 end
