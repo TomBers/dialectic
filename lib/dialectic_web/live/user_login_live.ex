@@ -31,13 +31,30 @@ defmodule DialecticWeb.UserLoginLive do
               class="mt-2 block w-full rounded-lg border border-zinc-200 bg-white text-zinc-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm sm:leading-6"
             />
 
-            <.input
-              field={@form[:password]}
-              type="password"
-              label="Password"
-              required
-              class="mt-2 block w-full rounded-lg border border-zinc-200 bg-white text-zinc-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm sm:leading-6"
-            />
+            <div class="relative" data-password-wrapper>
+              <.input
+                field={@form[:password]}
+                type="password"
+                label="Password"
+                required
+                class="mt-2 block w-full rounded-lg border border-zinc-200 bg-white text-zinc-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm sm:leading-6 pr-10"
+              />
+              <button
+                type="button"
+                id="login-password-toggle"
+                phx-hook="PasswordToggle"
+                phx-update="ignore"
+                class="absolute right-3 top-[2.35rem] text-zinc-400 hover:text-zinc-600 transition-colors focus:outline-none"
+                aria-label="Show password"
+              >
+                <span data-eye-open>
+                  <.icon name="hero-eye" class="w-5 h-5" />
+                </span>
+                <span data-eye-slash class="hidden">
+                  <.icon name="hero-eye-slash" class="w-5 h-5" />
+                </span>
+              </button>
+            </div>
 
             <:actions>
               <div class="flex items-center justify-between gap-4 w-full">

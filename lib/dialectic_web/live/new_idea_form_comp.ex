@@ -100,8 +100,8 @@ defmodule DialecticWeb.NewIdeaFormComp do
           <span class="text-xs font-semibold text-indigo-200/80 uppercase tracking-wide">
             Level
           </span>
-          <div class="w-full overflow-x-auto scrollbar-hide sm:w-auto">
-            <div class="inline-flex rounded-lg bg-white/10 p-1 border border-white/5 backdrop-blur-sm min-w-max mx-auto">
+          <div class="w-full sm:w-auto">
+            <div class="flex sm:inline-flex rounded-lg bg-white/10 p-1 border border-white/5 backdrop-blur-sm w-full sm:w-auto mx-auto">
               <%= for {mode, label} <- [{"simple", "Simple"}, {"high_school", "High School"}, {"university", "University"}, {"expert", "Expert"}] do %>
                 <button
                   type="button"
@@ -109,7 +109,7 @@ defmodule DialecticWeb.NewIdeaFormComp do
                   phx-value-mode={mode}
                   phx-target={@myself}
                   class={[
-                    "px-4 py-2 sm:px-3 sm:py-1.5 text-sm sm:text-xs font-medium rounded-md transition-all duration-200",
+                    "flex-1 sm:flex-initial px-3 py-2 sm:px-3 sm:py-1.5 text-xs sm:text-xs font-medium rounded-md transition-all duration-200 text-center",
                     if @selected_mode == mode do
                       "bg-white text-[#3a0ca3] shadow-sm scale-105"
                     else

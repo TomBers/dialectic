@@ -28,6 +28,29 @@ defmodule DialecticWeb.UserProfileLive do
             _ -> false
           end
 
+        # Load My Ideas data when viewing own profile
+        {my_stats, noted_notes} =
+          if is_own_profile? do
+            stats = Dialectic.DbActions.Notes.get_my_stats(profile_user)
+
+            noted =
+              stats.notes
+              |> Enum.filter(& &1.is_noted)
+              |> Enum.map(fn note ->
+                node_title =
+                  (note.graph.data["nodes"] || [])
+                  |> Enum.find_value(fn n ->
+                    if n["id"] == note.node_id, do: node_content_to_title(n["content"])
+                  end)
+
+                Map.put(note, :node_title, node_title || "Node #{note.node_id}")
+              end)
+
+            {stats, noted}
+          else
+            {nil, []}
+          end
+
         socket =
           socket
           |> assign(:page_title, "#{effective_username} — Profile")
@@ -42,6 +65,8 @@ defmodule DialecticWeb.UserProfileLive do
           |> assign(:verified_accounts, [])
           |> assign(:location, nil)
           |> assign(:is_own_profile?, is_own_profile?)
+          |> assign(:my_stats, my_stats)
+          |> assign(:noted_notes, noted_notes)
 
         # Load Gravatar data — served from ETS cache when available,
         # fetched async on cache miss to avoid blocking initial render
@@ -236,7 +261,7 @@ defmodule DialecticWeb.UserProfileLive do
               {@stats.graphs_created}
             </p>
             <p class={["text-xs sm:text-sm font-medium mt-1", theme_subtext_class(@theme)]}>
-              Graphs Created
+              Grids Created
             </p>
           </div>
 
@@ -269,9 +294,9 @@ defmodule DialecticWeb.UserProfileLive do
             theme_heading_class(@theme)
           ]}>
             <%= if @is_own_profile? do %>
-              Public Graphs
+              My Public Grids
             <% else %>
-              Graphs by {@effective_username}
+              Grids by {@effective_username}
             <% end %>
           </h2>
 
@@ -282,7 +307,7 @@ defmodule DialecticWeb.UserProfileLive do
                 class={"w-10 h-10 mx-auto mb-3 " <> theme_subtext_class(@theme)}
               />
               <p class={["text-sm", theme_subtext_class(@theme)]}>
-                No public graphs yet.
+                No public grids yet.
               </p>
               <%= if @is_own_profile? do %>
                 <.link
@@ -327,6 +352,116 @@ defmodule DialecticWeb.UserProfileLive do
           <% end %>
         </div>
 
+        <%!-- My Ideas Section (own profile only) --%>
+        <%= if @is_own_profile? && @my_stats do %>
+          <div class="mt-8">
+            <h2 class={[
+              "text-lg sm:text-xl font-semibold tracking-tight mb-4",
+              theme_heading_class(@theme)
+            ]}>
+              All My Grids
+              <span class={[
+                "ml-2 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+                theme_tag_class(@theme)
+              ]}>
+                {length(@my_stats.graphs)}
+              </span>
+            </h2>
+
+            <%= if @my_stats.graphs == [] do %>
+              <div class={["rounded-xl border p-8 text-center shadow-sm", theme_card_class(@theme)]}>
+                <.icon
+                  name="hero-document-text"
+                  class={"w-10 h-10 mx-auto mb-3 " <> theme_subtext_class(@theme)}
+                />
+                <p class={["text-sm", theme_subtext_class(@theme)]}>
+                  No grids yet. Ask a question to create your first one!
+                </p>
+                <.link
+                  navigate={~p"/"}
+                  class={[
+                    "mt-4 inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold shadow-sm transition",
+                    theme_button_class(@theme)
+                  ]}
+                >
+                  <.icon name="hero-plus" class="w-4 h-4" /> Create a grid
+                </.link>
+              </div>
+            <% else %>
+              <div class="columns-1 sm:columns-2 lg:columns-3 gap-5 space-y-5">
+                <%= for g <- @my_stats.graphs do %>
+                  <div class="break-inside-avoid">
+                    <DialecticWeb.PageHtml.GraphComp.render
+                      title={g.title}
+                      is_public={g.is_public}
+                      link={graph_path(g)}
+                      count={g.noted_count}
+                      tags={g.tags}
+                      node_count={g.node_count}
+                      is_live={false}
+                      generating={false}
+                      variant={theme_graph_variant(@theme)}
+                      id={"my-grid-" <> (g.slug || "title-" <> Integer.to_string(:erlang.phash2(g.title || "")))}
+                    />
+                  </div>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+
+          <%!-- My Notes Section --%>
+          <div class="mt-8">
+            <h2 class={[
+              "text-lg sm:text-xl font-semibold tracking-tight mb-4",
+              theme_heading_class(@theme)
+            ]}>
+              My Notes
+              <span class={[
+                "ml-2 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+                theme_tag_class(@theme)
+              ]}>
+                {length(@noted_notes)}
+              </span>
+            </h2>
+
+            <%= if @noted_notes == [] do %>
+              <div class={["rounded-xl border p-8 text-center shadow-sm", theme_card_class(@theme)]}>
+                <.icon
+                  name="hero-bookmark"
+                  class={"w-10 h-10 mx-auto mb-3 " <> theme_subtext_class(@theme)}
+                />
+                <p class={["text-sm", theme_subtext_class(@theme)]}>
+                  No notes yet. Click the note icon on any node to save it here.
+                </p>
+              </div>
+            <% else %>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <%= for note <- @noted_notes do %>
+                  <.link
+                    navigate={graph_path(note.graph, note.node_id)}
+                    class={[
+                      "block rounded-xl p-4 transition-all",
+                      theme_card_class(@theme),
+                      theme_link_class(@theme)
+                    ]}
+                  >
+                    <div class={[
+                      "text-sm font-medium mb-1.5 line-clamp-2",
+                      theme_heading_class(@theme)
+                    ]}>
+                      {note.node_title}
+                    </div>
+                    <div class={["flex items-center gap-1.5 text-xs", theme_subtext_class(@theme)]}>
+                      <.icon name="hero-arrow-top-right-on-square" class="h-3 w-3" />
+                      {note.graph_title}
+                    </div>
+                  </.link>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+
         <%!-- Back link --%>
         <div class="mt-10 flex items-center justify-between">
           <.link
@@ -345,6 +480,21 @@ defmodule DialecticWeb.UserProfileLive do
   end
 
   # --- Helper functions ---
+
+  defp node_content_to_title(nil), do: nil
+
+  defp node_content_to_title(content) do
+    content
+    |> String.split("\n", trim: true)
+    |> List.first("")
+    |> String.replace(~r/^#+\s*/, "")
+    |> String.trim()
+    |> String.slice(0, 80)
+    |> case do
+      "" -> nil
+      title -> title
+    end
+  end
 
   defp format_member_duration(inserted_at) do
     days = Date.diff(Date.utc_today(), DateTime.to_date(inserted_at))
