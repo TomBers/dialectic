@@ -1,7 +1,9 @@
+/**
+ * Lightweight hook for the presentation exit bar.
+ * Listens for Escape key to exit the filtered-graph presentation mode.
+ */
 const PresentationHook = {
   mounted() {
-    this._slideIndex = null;
-
     this.handleKeyDown = (e) => {
       // Don't capture keys when user is typing in an input/textarea
       const tag = (e.target && e.target.tagName) || "";
@@ -9,85 +11,17 @@ const PresentationHook = {
         return;
       }
 
-      switch (e.key) {
-        case "ArrowRight":
-        case "PageDown":
-          e.preventDefault();
-          this.pushEvent("presentation_next", {});
-          break;
-        case " ":
-          // Space advances unless Shift is held (Shift+Space = previous)
-          e.preventDefault();
-          if (e.shiftKey) {
-            this.pushEvent("presentation_prev", {});
-          } else {
-            this.pushEvent("presentation_next", {});
-          }
-          break;
-        case "ArrowLeft":
-        case "PageUp":
-          e.preventDefault();
-          this.pushEvent("presentation_prev", {});
-          break;
-        case "Escape":
-          e.preventDefault();
-          this.pushEvent("exit_presentation", {});
-          break;
+      if (e.key === "Escape") {
+        e.preventDefault();
+        this.pushEvent("exit_presentation", {});
       }
     };
 
     document.addEventListener("keydown", this.handleKeyDown);
-
-    // Run initial entrance animation
-    this._animateSlideIn();
-  },
-
-  updated() {
-    // Detect slide index changes from the server-rendered data
-    const counter = this.el.querySelector("[data-slide-index]");
-    const newIndex = counter
-      ? parseInt(counter.getAttribute("data-slide-index"), 10)
-      : null;
-
-    if (this._slideIndex !== null && newIndex !== this._slideIndex) {
-      this._animateSlideIn();
-    }
-    this._slideIndex = newIndex;
   },
 
   destroyed() {
     document.removeEventListener("keydown", this.handleKeyDown);
-  },
-
-  // ── Private helpers ──────────────────────────────────────────────
-
-  /**
-   * Applies a brief entrance animation to the slide card.
-   * Uses opacity + subtle translateY for a clean fade-up effect.
-   */
-  _animateSlideIn() {
-    const slideContent = this.el.querySelector(".presentation-slide-content");
-    if (!slideContent) return;
-
-    // Reset to starting state
-    slideContent.style.transition = "none";
-    slideContent.style.opacity = "0";
-    slideContent.style.transform = "translateY(12px)";
-
-    // Force reflow so the browser registers the starting position
-    slideContent.offsetHeight;
-
-    // Animate to final state
-    slideContent.style.transition =
-      "opacity 350ms ease-out, transform 350ms ease-out";
-    slideContent.style.opacity = "1";
-    slideContent.style.transform = "translateY(0)";
-
-    // Also scroll the content area back to top on slide change
-    const scrollArea = slideContent.querySelector(".overflow-y-auto");
-    if (scrollArea) {
-      scrollArea.scrollTop = 0;
-    }
   },
 };
 

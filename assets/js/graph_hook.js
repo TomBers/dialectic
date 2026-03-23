@@ -889,6 +889,148 @@ const graphHook = {
           .forEach((el) => el.remove());
       } catch (_e) {}
     });
+
+    // ── Presentation filter: hide all nodes NOT in the selected set ──
+    this.handleEvent("presentation_filter_graph", ({ ids }) => {
+      if (!this.cy) return;
+      try {
+        this._presentationIds = ids;
+        this._presentationFiltered = true;
+        this._applyPresentationFilter();
+
+        // Fit the viewport to the visible (selected) nodes with some padding
+        const visibleNodes = this.cy.nodes().not(".presentation-hidden");
+        if (visibleNodes.length > 0) {
+          this.cy.animate({
+            fit: { eles: visibleNodes, padding: 60 },
+            duration: 400,
+            easing: "ease-in-out-quad",
+          });
+        }
+      } catch (_e) {}
+    });
+
+    // ── Presentation unfilter: restore all hidden nodes and edges ──
+    this.handleEvent("presentation_unfilter_graph", () => {
+      if (!this.cy) return;
+      try {
+        this.cy.startBatch();
+        this.cy.elements().removeClass("presentation-hidden");
+        this.cy.nodes().removeClass("presentation-slide");
+        this.cy.nodes().forEach((n) => n.removeData("presIndex"));
+        this.cy.endBatch();
+
+        this._presentationFiltered = false;
+        this._presentationIds = null;
+
+        // Remove badge overlays
+        const container = this._container || this.el;
+        container
+          .querySelectorAll(".pres-badge-overlay")
+          .forEach((el) => el.remove());
+
+        // Fit to show all nodes again
+        if (this.cy.nodes().length > 0) {
+          this.cy.animate({
+            fit: { eles: this.cy.nodes(), padding: 40 },
+            duration: 400,
+            easing: "ease-in-out-quad",
+          });
+        }
+      } catch (_e) {}
+    });
+  },
+
+  /**
+   * Applies the presentation filter: hides nodes not in the selected set,
+   * preserves compound parents of visible nodes, and hides orphaned edges.
+   * Called both from the initial filter event and after cy.json() reloads.
+   */
+  _applyPresentationFilter() {
+    if (!this.cy || !this._presentationIds) return;
+    const ids = this._presentationIds;
+    const idSet = new Set(ids);
+
+    // First, ensure selected nodes are not stuck in depth-hidden or
+    // collapsed-group states — otherwise they'll remain invisible even
+    // after we remove presentation-hidden.
+    let needsReflow = false;
+    ids.forEach((id) => {
+      const n = this.cy.getElementById(id);
+      if (!n || n.length === 0) return;
+
+      if (
+        n.hasClass("depth-hidden") &&
+        typeof this.cy.ensureDepthVisible === "function"
+      ) {
+        this.cy.ensureDepthVisible(id);
+        needsReflow = true;
+      }
+      if (
+        n.hasClass("hidden") &&
+        typeof this.cy.ensureGroupVisible === "function"
+      ) {
+        if (this.cy.ensureGroupVisible(id)) {
+          needsReflow = true;
+        }
+      }
+    });
+
+    // Collect compound parents of every selected node so we
+    // don't accidentally hide a parent that contains visible children.
+    const keepParentIds = new Set();
+    ids.forEach((id) => {
+      const n = this.cy.getElementById(id);
+      if (n && n.length > 0) {
+        let p = n.parent();
+        while (p && p.length > 0) {
+          keepParentIds.add(p.id());
+          p = p.parent();
+        }
+      }
+    });
+
+    this.cy.startBatch();
+
+    this.cy.nodes().forEach((n) => {
+      if (idSet.has(n.id())) {
+        n.removeClass("presentation-hidden");
+        n.addClass("presentation-slide");
+      } else if (n.data("compound") || keepParentIds.has(n.id())) {
+        // Compound group that contains a visible child — keep it visible
+        n.removeClass("presentation-hidden");
+        n.removeClass("presentation-slide");
+      } else {
+        n.addClass("presentation-hidden");
+        n.removeClass("presentation-slide");
+      }
+    });
+
+    this.cy.edges().forEach((e) => {
+      const srcVisible =
+        idSet.has(e.source().id()) || keepParentIds.has(e.source().id());
+      const tgtVisible =
+        idSet.has(e.target().id()) || keepParentIds.has(e.target().id());
+      if (srcVisible && tgtVisible) {
+        e.removeClass("presentation-hidden");
+      } else {
+        e.addClass("presentation-hidden");
+      }
+    });
+
+    this.cy.endBatch();
+
+    this._renderPresentationBadges();
+
+    // If we expanded any collapsed/depth-hidden nodes, run a reflow
+    // so the revealed nodes get proper positions.
+    if (needsReflow) {
+      layoutGraph(this.cy, {}, () => {
+        try {
+          this.cy.style().update();
+        } catch (_e) {}
+      });
+    }
   },
 
   _renderPresentationBadges() {
@@ -1115,6 +1257,13 @@ const graphHook = {
           this.cy.restoreDepthCollapseState(savedDepthState);
         } catch (_e) {}
       }
+    }
+
+    // Re-apply presentation filter after element reload so hidden nodes stay hidden
+    if (!sameGraph && this._presentationFiltered && this._presentationIds) {
+      try {
+        this._applyPresentationFilter();
+      } catch (_e) {}
     }
 
     if (this._updateExploredStatus) this._updateExploredStatus();

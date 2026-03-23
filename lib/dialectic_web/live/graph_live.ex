@@ -808,6 +808,7 @@ defmodule DialecticWeb.GraphLive do
         presentation_slide_ids: [],
         presentation_index: 0
       )
+      |> push_event("presentation_unfilter_graph", %{})
       |> push_event("presentation_clear_slides", %{})
 
     {:noreply, socket}
@@ -861,35 +862,20 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("start_presenting", _params, socket) do
-    if length(socket.assigns.presentation_slide_ids) > 0 do
-      # Clear graph highlights when entering full-screen presentation
+    ids = socket.assigns.presentation_slide_ids
+
+    if length(ids) > 0 do
+      # Filter the graph to show only the selected nodes (no full-screen overlay)
       socket =
         socket
         |> assign(presentation_mode: :presenting, presentation_index: 0)
         |> push_event("presentation_clear_slides", %{})
+        |> push_event("presentation_filter_graph", %{ids: ids})
 
       {:noreply, socket}
     else
       {:noreply, socket}
     end
-  end
-
-  def handle_event("presentation_next", _params, socket) do
-    max_idx = length(socket.assigns.presentation_slide_ids) - 1
-    new_idx = min(socket.assigns.presentation_index + 1, max_idx)
-    {:noreply, assign(socket, presentation_index: new_idx)}
-  end
-
-  def handle_event("presentation_prev", _params, socket) do
-    new_idx = max(socket.assigns.presentation_index - 1, 0)
-    {:noreply, assign(socket, presentation_index: new_idx)}
-  end
-
-  def handle_event("presentation_goto", %{"index" => idx}, socket) do
-    idx = if is_binary(idx), do: String.to_integer(idx), else: idx
-    max_idx = length(socket.assigns.presentation_slide_ids) - 1
-    clamped = max(0, min(idx, max_idx))
-    {:noreply, assign(socket, presentation_index: clamped)}
   end
 
   # Handle selection action messages from SelectionActionsComp

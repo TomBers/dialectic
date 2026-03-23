@@ -3,19 +3,35 @@
   phx-hook="GraphLayout"
   class="h-[calc(100vh-2.5rem)] overflow-hidden flex flex-col relative"
 >
-  <%!-- Presentation: full-screen presenting overlay --%>
+  <%!-- Presentation: floating exit bar when graph is filtered to selected nodes --%>
   <%= if @presentation_mode == :presenting do %>
-    <.live_component
-      module={DialecticWeb.PresentationComp}
-      id="presentation-overlay"
-      mode={:presenting}
-      slides={presentation_slides(assigns)}
-      current_index={@presentation_index}
-      graph_title={@graph_struct && @graph_struct.title}
-      is_owner={@can_edit}
-      slide_node_ids={@presentation_slide_ids}
-      all_nodes={[]}
-    />
+    <div
+      id="presentation-exit-bar"
+      phx-hook="Presentation"
+      class="absolute top-3 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 px-4 py-2 bg-gray-900/90 backdrop-blur-sm rounded-full shadow-lg border border-gray-700/50"
+    >
+      <span class="text-xs font-medium text-gray-300">
+        Presenting <span class="text-white font-semibold">{length(@presentation_slide_ids)}</span>
+        nodes
+      </span>
+      <button
+        phx-click="exit_presentation"
+        class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-gray-300 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-full border border-gray-600 transition-colors"
+        title="Exit presentation and show all nodes"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="w-3.5 h-3.5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+        Exit
+      </button>
+    </div>
   <% end %>
 
   <%!-- Mobile: Auto-redirect to linear view --%>
