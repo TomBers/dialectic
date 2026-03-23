@@ -898,15 +898,26 @@ const graphHook = {
         this._presentationFiltered = true;
         this._applyPresentationFilter();
 
-        // Fit the viewport to the visible (selected) nodes with some padding
-        const visibleNodes = this.cy.nodes().not(".presentation-hidden");
-        if (visibleNodes.length > 0) {
-          this.cy.animate({
-            fit: { eles: visibleNodes, padding: 60 },
-            duration: 400,
-            easing: "ease-in-out-quad",
-          });
-        }
+        // Re-layout only the visible nodes so they spread out and fill the screen
+        this._layoutRunning = true;
+        layoutGraph(this.cy, {}, () => {
+          this._layoutRunning = false;
+          try {
+            this.cy.style().update();
+          } catch (_e) {}
+          // After layout, fit viewport to the visible nodes
+          const visibleNodes = this.cy
+            .nodes()
+            .not(".presentation-hidden")
+            .not(".presentation-hidden-parent");
+          if (visibleNodes.length > 0) {
+            this.cy.animate({
+              fit: { eles: visibleNodes, padding: 60 },
+              duration: 400,
+              easing: "ease-in-out-quad",
+            });
+          }
+        });
       } catch (_e) {}
     });
 
@@ -916,6 +927,7 @@ const graphHook = {
       try {
         this.cy.startBatch();
         this.cy.elements().removeClass("presentation-hidden");
+        this.cy.elements().removeClass("presentation-hidden-parent");
         this.cy.nodes().removeClass("presentation-slide");
         this.cy.nodes().forEach((n) => n.removeData("presIndex"));
         this.cy.endBatch();
@@ -929,14 +941,21 @@ const graphHook = {
           .querySelectorAll(".pres-badge-overlay")
           .forEach((el) => el.remove());
 
-        // Fit to show all nodes again
-        if (this.cy.nodes().length > 0) {
-          this.cy.animate({
-            fit: { eles: this.cy.nodes(), padding: 40 },
-            duration: 400,
-            easing: "ease-in-out-quad",
-          });
-        }
+        // Re-layout to restore original positions, then fit
+        this._layoutRunning = true;
+        layoutGraph(this.cy, {}, () => {
+          this._layoutRunning = false;
+          try {
+            this.cy.style().update();
+          } catch (_e) {}
+          if (this.cy.nodes().length > 0) {
+            this.cy.animate({
+              fit: { eles: this.cy.nodes(), padding: 40 },
+              duration: 400,
+              easing: "ease-in-out-quad",
+            });
+          }
+        });
       } catch (_e) {}
     });
   },
@@ -995,14 +1014,19 @@ const graphHook = {
     this.cy.nodes().forEach((n) => {
       if (idSet.has(n.id())) {
         n.removeClass("presentation-hidden");
+        n.removeClass("presentation-hidden-parent");
         n.addClass("presentation-slide");
       } else if (n.data("compound") || keepParentIds.has(n.id())) {
-        // Compound group that contains a visible child — keep it visible
+        // Compound group that contains a visible child — keep it
+        // structurally present (so children render) but visually hidden
+        // (no border, no background, no label).
         n.removeClass("presentation-hidden");
         n.removeClass("presentation-slide");
+        n.addClass("presentation-hidden-parent");
       } else {
         n.addClass("presentation-hidden");
         n.removeClass("presentation-slide");
+        n.removeClass("presentation-hidden-parent");
       }
     });
 

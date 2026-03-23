@@ -403,11 +403,16 @@
       </button>
     <% end %>
     
-<!-- Bottom menu toggle -->
+<!-- Bottom menu toggle (hidden during presentation) -->
     <div
       id="bottom-menu-handle"
       class="hidden fixed bottom-0 z-30 px-1 pb-3 pointer-events-none shift-with-panel transition-[right] duration-300 ease-in-out left-0 right-0 md:left-[40%]"
-      style="padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem);"
+      style={
+        if @presentation_mode == :presenting,
+          do:
+            "display:none !important; padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem);",
+          else: "padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem);"
+      }
     >
       <div class="mx-auto w-full max-w-xl">
         <div class="flex justify-center">
@@ -440,11 +445,16 @@
       </div>
     </div>
     
-<!-- Chat input bar -->
+<!-- Chat input bar (hidden during presentation) -->
     <div
       id="bottom-menu"
       class="fixed bottom-0 z-30 transform origin-bottom scale-100 opacity-100 visible transition-all duration-200 ease-out px-1 pb-3 pointer-events-none shift-with-panel transition-[right] duration-300 ease-in-out left-0 right-0 md:left-[40%]"
-      style="padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem);"
+      style={
+        if @presentation_mode == :presenting,
+          do:
+            "display:none !important; padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem);",
+          else: "padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem);"
+      }
     >
       <div class="mx-auto w-full max-w-2xl">
         <div class="relative">

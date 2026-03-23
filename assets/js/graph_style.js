@@ -264,6 +264,17 @@ export function graphStyle(viewMode = "spaced") {
     { selector: ".hidden", style: { display: "none" } },
     { selector: ".depth-hidden", style: { display: "none" } },
     { selector: ".presentation-hidden", style: { display: "none" } },
+    {
+      selector: ".presentation-hidden-parent",
+      style: {
+        "background-opacity": 0,
+        "border-width": 0,
+        "border-opacity": 0,
+        "text-opacity": 0,
+        "underlay-opacity": 0,
+        padding: "4px",
+      },
+    },
 
     /* Visual indicator for nodes whose children are collapsed */
     {
