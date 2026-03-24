@@ -349,7 +349,7 @@ defmodule DialecticWeb.HomeLive do
                                 }
                                 is_live={false}
                                 generating={false}
-                                id={"curated-#{item.graph.title}"}
+                                id={"curated-" <> (item.graph.slug || "t-" <> Integer.to_string(:erlang.phash2(item.graph.title || "")))}
                               />
                               <%= if item.curator_name do %>
                                 <div class="mt-1 flex items-center gap-1.5 px-1">
@@ -400,7 +400,7 @@ defmodule DialecticWeb.HomeLive do
                                 }
                                 is_live={false}
                                 generating={false}
-                                id={"featured-#{item.graph.title}"}
+                                id={"featured-" <> (item.graph.slug || "t-" <> Integer.to_string(:erlang.phash2(item.graph.title || "")))}
                               />
                               <%= if item.curator_name do %>
                                 <div class="mt-1 flex items-center gap-1.5 px-1">
@@ -582,7 +582,7 @@ defmodule DialecticWeb.HomeLive do
                             }
                             is_live={true}
                             generating={MapSet.member?(@generating, g.title)}
-                            id={"graph-comp-#{g.title}"}
+                            id={"graph-comp-" <> (g.slug || "t-" <> Integer.to_string(:erlang.phash2(g.title || "")))}
                           />
                         </div>
                       <% end %>
