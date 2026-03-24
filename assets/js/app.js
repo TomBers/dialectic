@@ -57,6 +57,30 @@ hooks.AutoExpandTextarea = AutoExpandTextareaHook;
 hooks.WhatsNext = WhatsNext;
 hooks.SearchNav = SearchNav;
 
+hooks.PasswordToggle = {
+  mounted() {
+    this.el.addEventListener("click", () => {
+      const wrapper = this.el.closest("[data-password-wrapper]");
+      if (!wrapper) return;
+      const input = wrapper.querySelector("input");
+      if (!input) return;
+      const isPassword = input.type === "password";
+      input.type = isPassword ? "text" : "password";
+      const eyeOpen = this.el.querySelector("[data-eye-open]");
+      const eyeSlash = this.el.querySelector("[data-eye-slash]");
+      if (eyeOpen && eyeSlash) {
+        eyeOpen.classList.toggle("hidden", !isPassword);
+        eyeSlash.classList.toggle("hidden", isPassword);
+      }
+      this.el.setAttribute("aria-pressed", isPassword ? "true" : "false");
+      this.el.setAttribute(
+        "aria-label",
+        isPassword ? "Hide password" : "Show password",
+      );
+    });
+  },
+};
+
 hooks.MobileRedirect = {
   mounted() {
     // Only redirect on small screens (matches lg:hidden breakpoint)

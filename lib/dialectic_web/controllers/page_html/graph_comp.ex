@@ -43,7 +43,7 @@ defmodule DialecticWeb.PageHtml.GraphComp do
 
             <span
               phx-hook="ExplorationStats"
-              id={"stats-" <> @title}
+              id={"stats-" <> @id}
               data-graph-id={@title}
               data-total={@node_count}
               class={[

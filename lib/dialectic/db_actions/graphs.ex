@@ -119,8 +119,9 @@ defmodule Dialectic.DbActions.Graphs do
     Repo.all(Graph)
   end
 
-  def all_graphs_with_notes(search_term \\ "") do
+  def all_graphs_with_notes(search_term \\ "", opts \\ []) do
     search_pattern = "%#{String.trim(search_term)}%"
+    limit = Keyword.get(opts, :limit)
 
     query =
       from g in Dialectic.Accounts.Graph,
@@ -138,6 +139,13 @@ defmodule Dialectic.DbActions.Graphs do
         group_by: g.title,
         order_by: [desc: g.inserted_at],
         select: {g, count(n.id)}
+
+    query =
+      if limit do
+        from q in query, limit: ^limit
+      else
+        query
+      end
 
     Dialectic.Repo.all(query)
   end
@@ -296,5 +304,59 @@ defmodule Dialectic.DbActions.Graphs do
 
   defp generate_share_token do
     :crypto.strong_rand_bytes(16) |> Base.url_encode64(padding: false)
+  end
+
+  @doc """
+  Lists curated grids for a given section, with their curator info.
+  Sections: "curated", "recent", "featured"
+  """
+  def list_curated_grids(section, limit \\ 12) do
+    alias Dialectic.Accounts.CuratedGrid
+
+    from(cg in CuratedGrid,
+      where: cg.section == ^section,
+      join: g in Graph,
+      on: g.title == cg.graph_title,
+      left_join: u in Dialectic.Accounts.User,
+      on: u.id == cg.curator_id,
+      where: g.is_published == true,
+      where: g.is_public == true,
+      order_by: [asc: cg.position, desc: cg.inserted_at],
+      limit: ^limit,
+      select: %{
+        graph: g,
+        curator_name: u.username,
+        note: cg.note,
+        section: cg.section
+      }
+    )
+    |> Repo.all()
+  end
+
+  @doc """
+  Adds a graph to a curated section.
+  """
+  def add_curated_grid(attrs) do
+    alias Dialectic.Accounts.CuratedGrid
+
+    %CuratedGrid{}
+    |> CuratedGrid.changeset(attrs)
+    |> Repo.insert(
+      on_conflict: {:replace, [:curator_id, :note, :position, :updated_at]},
+      conflict_target: [:graph_title, :section]
+    )
+  end
+
+  @doc """
+  Removes a graph from a curated section.
+  """
+  def remove_curated_grid(graph_title, section) do
+    alias Dialectic.Accounts.CuratedGrid
+
+    from(cg in CuratedGrid,
+      where: cg.graph_title == ^graph_title,
+      where: cg.section == ^section
+    )
+    |> Repo.delete_all()
   end
 end

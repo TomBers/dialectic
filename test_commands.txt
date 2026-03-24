@@ -1,3 +1,25 @@
+DB - Set user admin
+
+SSH into your app and use IEx remote console (most flexible)
+
+```/dev/null/bash#L1
+fly ssh console
+```
+
+Then inside the console:
+```/dev/null/bash#L1
+/app/bin/dialectic remote
+```
+
+This drops you into a live IEx session connected to your running app, where you can do:
+
+```/dev/null/elixir#L1-4
+user = Dialectic.Repo.get_by(Dialectic.Accounts.User, email: "your@email.com")
+user
+|> Ecto.Changeset.change(%{is_admin: true})
+|> Dialectic.Repo.update()
+'''
+
 Set model on Prod
 
 fly secrets set LLM_PROVIDER=gemini

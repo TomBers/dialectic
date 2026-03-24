@@ -19,6 +19,7 @@ defmodule Dialectic.Accounts.User do
     field :bio, :string
     field :gravatar_id, :string
     field :theme, :string, default: "default"
+    field :is_admin, :boolean, default: false
 
     has_many :graphs, Dialectic.Accounts.Graph, on_delete: :delete_all
     has_many :notes, Dialectic.Accounts.Note, on_delete: :delete_all
