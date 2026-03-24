@@ -316,110 +316,111 @@ defmodule DialecticWeb.HomeLive do
               </div>
             </section>
 
-            <%!-- Curated Grids Section --%>
-            <%= if @curated_grids != [] do %>
-              <section class="w-full">
-                <div class="rounded-2xl border border-white/15 bg-white/10 backdrop-blur-md shadow-xl">
-                  <div class="p-4 sm:p-6">
-                    <div class="flex items-center gap-3 mb-4">
-                      <.icon name="hero-star" class="w-6 h-6 text-amber-300" />
-                      <h2 class="text-lg sm:text-2xl font-semibold tracking-tight text-white">
-                        Curated Grids
-                      </h2>
-                    </div>
-                    <p class="text-sm text-white/60 mb-5">
-                      Hand-picked grids showcasing great thinking and exploration.
-                    </p>
-                    <div class="columns-1 sm:columns-2 lg:columns-3 gap-4 sm:gap-6 space-y-4 sm:space-y-6">
-                      <%= for item <- @curated_grids do %>
-                        <div class="break-inside-avoid">
-                          <div class="relative">
-                            <DialecticWeb.PageHtml.GraphComp.render
-                              title={item.graph.title}
-                              is_public={item.graph.is_public}
-                              link={graph_path(item.graph)}
-                              count={0}
-                              tags={item.graph.tags}
-                              node_count={
-                                Enum.count(item.graph.data["nodes"] || [], fn n ->
-                                  !Map.get(n, "compound", false)
-                                end)
-                              }
-                              is_live={false}
-                              generating={false}
-                              id={"curated-#{item.graph.title}"}
-                            />
-                            <%= if item.curator_name do %>
-                              <div class="mt-1 flex items-center gap-1.5 px-1">
-                                <.icon name="hero-user-circle" class="w-3.5 h-3.5 text-white/40" />
-                                <.link
-                                  navigate={~p"/u/#{item.curator_name}"}
-                                  class="text-xs text-white/50 hover:text-white/80 transition-colors"
-                                >
-                                  Curated by {item.curator_name}
-                                </.link>
-                              </div>
-                            <% end %>
-                          </div>
+            <%!-- Curated & Featured Grids – 2-column on desktop --%>
+            <%= if @curated_grids != [] or @featured_grids != [] do %>
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
+                <%!-- Curated Grids Column --%>
+                <%= if @curated_grids != [] do %>
+                  <section class="w-full min-w-0">
+                    <div class="rounded-2xl border border-white/15 bg-white/10 backdrop-blur-md shadow-xl h-full">
+                      <div class="p-4 sm:p-6">
+                        <div class="flex items-center gap-3 mb-4">
+                          <.icon name="hero-star" class="w-6 h-6 text-amber-300" />
+                          <h2 class="text-lg sm:text-2xl font-semibold tracking-tight text-white">
+                            Curated Grids
+                          </h2>
                         </div>
-                      <% end %>
+                        <p class="text-sm text-white/60 mb-5">
+                          Hand-picked grids showcasing great thinking and exploration.
+                        </p>
+                        <div class="space-y-4 sm:space-y-6">
+                          <%= for item <- @curated_grids do %>
+                            <div class="relative">
+                              <DialecticWeb.PageHtml.GraphComp.render
+                                title={item.graph.title}
+                                is_public={item.graph.is_public}
+                                link={graph_path(item.graph)}
+                                count={0}
+                                tags={item.graph.tags}
+                                node_count={
+                                  Enum.count(item.graph.data["nodes"] || [], fn n ->
+                                    !Map.get(n, "compound", false)
+                                  end)
+                                }
+                                is_live={false}
+                                generating={false}
+                                id={"curated-#{item.graph.title}"}
+                              />
+                              <%= if item.curator_name do %>
+                                <div class="mt-1 flex items-center gap-1.5 px-1">
+                                  <.icon name="hero-user-circle" class="w-3.5 h-3.5 text-white/40" />
+                                  <.link
+                                    navigate={~p"/u/#{item.curator_name}"}
+                                    class="text-xs text-white/50 hover:text-white/80 transition-colors"
+                                  >
+                                    Curated by {item.curator_name}
+                                  </.link>
+                                </div>
+                              <% end %>
+                            </div>
+                          <% end %>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </section>
-            <% end %>
+                  </section>
+                <% end %>
 
-            <%!-- Featured Partners / Curators Section --%>
-            <%= if @featured_grids != [] do %>
-              <section class="w-full">
-                <div class="rounded-2xl border border-white/15 bg-white/10 backdrop-blur-md shadow-xl">
-                  <div class="p-4 sm:p-6">
-                    <div class="flex items-center gap-3 mb-4">
-                      <.icon name="hero-users" class="w-6 h-6 text-indigo-300" />
-                      <h2 class="text-lg sm:text-2xl font-semibold tracking-tight text-white">
-                        Featured by Partners
-                      </h2>
-                    </div>
-                    <p class="text-sm text-white/60 mb-5">
-                      Grids curated by our invited partners and thought leaders.
-                    </p>
-                    <div class="columns-1 sm:columns-2 lg:columns-3 gap-4 sm:gap-6 space-y-4 sm:space-y-6">
-                      <%= for item <- @featured_grids do %>
-                        <div class="break-inside-avoid">
-                          <div class="relative">
-                            <DialecticWeb.PageHtml.GraphComp.render
-                              title={item.graph.title}
-                              is_public={item.graph.is_public}
-                              link={graph_path(item.graph)}
-                              count={0}
-                              tags={item.graph.tags}
-                              node_count={
-                                Enum.count(item.graph.data["nodes"] || [], fn n ->
-                                  !Map.get(n, "compound", false)
-                                end)
-                              }
-                              is_live={false}
-                              generating={false}
-                              id={"featured-#{item.graph.title}"}
-                            />
-                            <%= if item.curator_name do %>
-                              <div class="mt-1 flex items-center gap-1.5 px-1">
-                                <.icon name="hero-user-circle" class="w-3.5 h-3.5 text-white/40" />
-                                <.link
-                                  navigate={~p"/u/#{item.curator_name}"}
-                                  class="text-xs text-white/50 hover:text-white/80 transition-colors"
-                                >
-                                  {item.curator_name}
-                                </.link>
-                              </div>
-                            <% end %>
-                          </div>
+                <%!-- Featured Partners Column --%>
+                <%= if @featured_grids != [] do %>
+                  <section class="w-full min-w-0">
+                    <div class="rounded-2xl border border-white/15 bg-white/10 backdrop-blur-md shadow-xl h-full">
+                      <div class="p-4 sm:p-6">
+                        <div class="flex items-center gap-3 mb-4">
+                          <.icon name="hero-users" class="w-6 h-6 text-indigo-300" />
+                          <h2 class="text-lg sm:text-2xl font-semibold tracking-tight text-white">
+                            Featured by Partners
+                          </h2>
                         </div>
-                      <% end %>
+                        <p class="text-sm text-white/60 mb-5">
+                          Grids curated by our invited partners and thought leaders.
+                        </p>
+                        <div class="space-y-4 sm:space-y-6">
+                          <%= for item <- @featured_grids do %>
+                            <div class="relative">
+                              <DialecticWeb.PageHtml.GraphComp.render
+                                title={item.graph.title}
+                                is_public={item.graph.is_public}
+                                link={graph_path(item.graph)}
+                                count={0}
+                                tags={item.graph.tags}
+                                node_count={
+                                  Enum.count(item.graph.data["nodes"] || [], fn n ->
+                                    !Map.get(n, "compound", false)
+                                  end)
+                                }
+                                is_live={false}
+                                generating={false}
+                                id={"featured-#{item.graph.title}"}
+                              />
+                              <%= if item.curator_name do %>
+                                <div class="mt-1 flex items-center gap-1.5 px-1">
+                                  <.icon name="hero-user-circle" class="w-3.5 h-3.5 text-white/40" />
+                                  <.link
+                                    navigate={~p"/u/#{item.curator_name}"}
+                                    class="text-xs text-white/50 hover:text-white/80 transition-colors"
+                                  >
+                                    {item.curator_name}
+                                  </.link>
+                                </div>
+                              <% end %>
+                            </div>
+                          <% end %>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </section>
+                  </section>
+                <% end %>
+              </div>
             <% end %>
             
     <!-- Below: All ideas (full-width on desktop, uses available space) -->
