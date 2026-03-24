@@ -215,8 +215,8 @@ defmodule DialecticWeb.AdminCuratedLive do
                 <div>
                   <p class="text-sm font-medium text-gray-900">{item.graph.title}</p>
                   <p class="text-xs text-gray-500">
-                    <%= if item.curator_name do %>
-                      Curated by {item.curator_name}
+                    <%= if item.author_name do %>
+                      by {item.author_name}
                     <% end %>
                     <%= if item.note && item.note != "" do %>
                       — {item.note}
@@ -254,8 +254,8 @@ defmodule DialecticWeb.AdminCuratedLive do
                 <div>
                   <p class="text-sm font-medium text-gray-900">{item.graph.title}</p>
                   <p class="text-xs text-gray-500">
-                    <%= if item.curator_name do %>
-                      Featured by {item.curator_name}
+                    <%= if item.author_name do %>
+                      by {item.author_name}
                     <% end %>
                     <%= if item.note && item.note != "" do %>
                       — {item.note}

@@ -327,7 +327,7 @@ defmodule DialecticWeb.HomeLive do
                     title="Curated Grids"
                     description="Hand-picked grids showcasing great thinking and exploration."
                     id_prefix="curated"
-                    curator_label="Curated by"
+                    author_label="by"
                   />
                 <% end %>
                 <%= if @featured_grids != [] do %>
@@ -338,7 +338,7 @@ defmodule DialecticWeb.HomeLive do
                     title="Featured by Partners"
                     description="Grids curated by our invited partners and thought leaders."
                     id_prefix="featured"
-                    curator_label=""
+                    author_label="by"
                   />
                 <% end %>
               </div>
@@ -551,14 +551,14 @@ defmodule DialecticWeb.HomeLive do
                   generating={false}
                   id={@id_prefix <> "-" <> (item.graph.slug || "t-" <> Integer.to_string(:erlang.phash2(item.graph.title || "")))}
                 />
-                <%= if item.curator_name do %>
+                <%= if item.author_name do %>
                   <div class="mt-1 flex items-center gap-1.5 px-1">
                     <.icon name="hero-user-circle" class="w-3.5 h-3.5 text-white/40" />
                     <.link
-                      navigate={~p"/u/#{item.curator_name}"}
+                      navigate={~p"/u/#{item.author_name}"}
                       class="text-xs text-white/50 hover:text-white/80 transition-colors"
                     >
-                      {if @curator_label != "", do: @curator_label <> " ", else: ""}{item.curator_name}
+                      {if @author_label != "", do: @author_label <> " ", else: ""}{item.author_name}
                     </.link>
                   </div>
                 <% end %>
