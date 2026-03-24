@@ -141,6 +141,14 @@ defmodule DialecticWeb.PresentationComp do
     """
   end
 
+  # Catch-all for unexpected modes — renders nothing
+  @impl true
+  def render(assigns) do
+    ~H"""
+    <div id={@id}></div>
+    """
+  end
+
   # ────────────────────────────────────────────────────────────────────
   # Helpers
   # ────────────────────────────────────────────────────────────────────

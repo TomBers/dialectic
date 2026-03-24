@@ -40,6 +40,13 @@ const PresentationSetupHook = {
     this._setupDragAndDrop();
   },
 
+  destroyed() {
+    if (this._dragAbort) {
+      this._dragAbort.abort();
+      this._dragAbort = null;
+    }
+  },
+
   _ensureStyles() {
     if (document.getElementById("pres-drag-styles")) return;
     const style = document.createElement("style");
@@ -52,76 +59,100 @@ const PresentationSetupHook = {
   },
 
   _setupDragAndDrop() {
+    // Abort previous listeners to prevent stacking on re-renders
+    if (this._dragAbort) this._dragAbort.abort();
+    this._dragAbort = new AbortController();
+    const signal = this._dragAbort.signal;
+
     const list = this.el;
     let draggedItem = null;
 
-    // Clean up old listeners by cloning (avoids stacking)
     const items = list.querySelectorAll("li[draggable]");
     items.forEach((item) => {
-      item.addEventListener("dragstart", (e) => {
-        draggedItem = item;
-        item.classList.add("opacity-40");
-        e.dataTransfer.effectAllowed = "move";
-        e.dataTransfer.setData("text/plain", item.dataset.nodeId);
-      });
+      item.addEventListener(
+        "dragstart",
+        (e) => {
+          draggedItem = item;
+          item.classList.add("opacity-40");
+          e.dataTransfer.effectAllowed = "move";
+          e.dataTransfer.setData("text/plain", item.dataset.nodeId);
+        },
+        { signal },
+      );
 
-      item.addEventListener("dragend", () => {
-        if (draggedItem) {
-          draggedItem.classList.remove("opacity-40");
-        }
-        draggedItem = null;
-        // Remove all drag-over indicators
-        list
-          .querySelectorAll(".drag-over-above, .drag-over-below")
-          .forEach((el) => {
-            el.classList.remove("drag-over-above", "drag-over-below");
-          });
-      });
+      item.addEventListener(
+        "dragend",
+        () => {
+          if (draggedItem) {
+            draggedItem.classList.remove("opacity-40");
+          }
+          draggedItem = null;
+          // Remove all drag-over indicators
+          list
+            .querySelectorAll(".drag-over-above, .drag-over-below")
+            .forEach((el) => {
+              el.classList.remove("drag-over-above", "drag-over-below");
+            });
+        },
+        { signal },
+      );
 
-      item.addEventListener("dragover", (e) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = "move";
+      item.addEventListener(
+        "dragover",
+        (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
 
-        // Show position indicator based on cursor position
-        const rect = item.getBoundingClientRect();
-        const midY = rect.top + rect.height / 2;
+          // Show position indicator based on cursor position
+          const rect = item.getBoundingClientRect();
+          const midY = rect.top + rect.height / 2;
 
-        item.classList.remove("drag-over-above", "drag-over-below");
-        if (e.clientY < midY) {
-          item.classList.add("drag-over-above");
-        } else {
-          item.classList.add("drag-over-below");
-        }
-      });
+          item.classList.remove("drag-over-above", "drag-over-below");
+          if (e.clientY < midY) {
+            item.classList.add("drag-over-above");
+          } else {
+            item.classList.add("drag-over-below");
+          }
+        },
+        { signal },
+      );
 
-      item.addEventListener("dragleave", () => {
-        item.classList.remove("drag-over-above", "drag-over-below");
-      });
+      item.addEventListener(
+        "dragleave",
+        () => {
+          item.classList.remove("drag-over-above", "drag-over-below");
+        },
+        { signal },
+      );
 
-      item.addEventListener("drop", (e) => {
-        e.preventDefault();
-        item.classList.remove("drag-over-above", "drag-over-below");
+      item.addEventListener(
+        "drop",
+        (e) => {
+          e.preventDefault();
+          item.classList.remove("drag-over-above", "drag-over-below");
 
-        if (!draggedItem || draggedItem === item) return;
+          if (!draggedItem || draggedItem === item) return;
 
-        // Determine insert position
-        const rect = item.getBoundingClientRect();
-        const midY = rect.top + rect.height / 2;
-        const insertBefore = e.clientY < midY;
+          // Determine insert position
+          const rect = item.getBoundingClientRect();
+          const midY = rect.top + rect.height / 2;
+          const insertBefore = e.clientY < midY;
 
-        if (insertBefore) {
-          list.insertBefore(draggedItem, item);
-        } else {
-          list.insertBefore(draggedItem, item.nextSibling);
-        }
+          if (insertBefore) {
+            list.insertBefore(draggedItem, item);
+          } else {
+            list.insertBefore(draggedItem, item.nextSibling);
+          }
 
-        // Collect the new order and push to server
-        const newOrder = Array.from(
-          list.querySelectorAll("li[data-node-id]"),
-        ).map((li) => li.dataset.nodeId);
+          // Collect the new order and push to server
+          const newOrder = Array.from(
+            list.querySelectorAll("li[data-node-id]"),
+          ).map((li) => li.dataset.nodeId);
 
-        this.pushEvent("presentation_reorder", { order: newOrder });
-      });
+          this.pushEvent("presentation_reorder", { order: newOrder });
+        },
+        { signal },
+      );
     });
   },
 };

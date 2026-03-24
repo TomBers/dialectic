@@ -835,6 +835,7 @@ defmodule DialecticWeb.GraphLive do
     socket =
       socket
       |> assign(presentation_mode: :off)
+      |> push_event("presentation_clear_slides", %{})
 
     {:noreply, socket}
   end

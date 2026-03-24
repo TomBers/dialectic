@@ -1507,6 +1507,22 @@ const graphHook = {
       this._zoomToast.parentNode.removeChild(this._zoomToast);
       this._zoomToast = null;
     }
+    // Clean up presentation badge overlays and pan/zoom listener
+    if (this.cy && this._onCyPanZoom) {
+      try {
+        this.cy.off("pan zoom", this._onCyPanZoom);
+      } catch (_e) {}
+      this._onCyPanZoom = null;
+    }
+    try {
+      const container = this._container || this.el;
+      container
+        .querySelectorAll(".pres-badge-overlay")
+        .forEach((el) => el.remove());
+    } catch (_e) {}
+    this._presentationIds = null;
+    this._presentationFiltered = false;
+
     // Clean up depth-toggle overlay buttons
     if (this.cy && typeof this.cy.cleanupDepthOverlay === "function") {
       try {
