@@ -307,8 +307,8 @@ defmodule Dialectic.DbActions.Graphs do
   end
 
   @doc """
-  Lists curated grids for a given section, with their curator info.
-  Sections: "curated", "recent", "featured"
+  Lists curated grids for a given section, with the graph author info.
+  Sections: "curated", "featured"
   """
   def list_curated_grids(section, limit \\ 12) do
     alias Dialectic.Accounts.CuratedGrid
@@ -317,15 +317,15 @@ defmodule Dialectic.DbActions.Graphs do
       where: cg.section == ^section,
       join: g in Graph,
       on: g.title == cg.graph_title,
-      left_join: u in Dialectic.Accounts.User,
-      on: u.id == cg.curator_id,
+      left_join: author in Dialectic.Accounts.User,
+      on: author.id == g.user_id,
       where: g.is_published == true,
       where: g.is_public == true,
       order_by: [asc: cg.position, desc: cg.inserted_at],
       limit: ^limit,
       select: %{
         graph: g,
-        curator_name: u.username,
+        author_name: author.username,
         note: cg.note,
         section: cg.section
       }
