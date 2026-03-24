@@ -3,7 +3,7 @@ defmodule DialecticWeb.AdminCuratedLive do
 
   alias Dialectic.DbActions.Graphs
 
-  @sections ["curated", "featured", "recent"]
+  @sections ["curated", "featured"]
 
   @impl true
   def mount(_params, _session, socket) do
