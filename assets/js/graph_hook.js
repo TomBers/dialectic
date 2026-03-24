@@ -831,11 +831,16 @@ const graphHook = {
 
     // Reposition presentation badges when the viewport changes
     if (this.cy) {
-      this.cy.on("pan zoom", () => {
-        if (this._presentationIds && this._presentationIds.length > 0) {
-          requestAnimationFrame(() => this._renderPresentationBadges());
-        }
-      });
+      if (!this._onCyPanZoom) {
+        this._onCyPanZoom = () => {
+          if (this._presentationIds && this._presentationIds.length > 0) {
+            requestAnimationFrame(() => this._renderPresentationBadges());
+          }
+        };
+      }
+      // Avoid duplicate bindings if this code runs multiple times
+      this.cy.off("pan zoom", this._onCyPanZoom);
+      this.cy.on("pan zoom", this._onCyPanZoom);
     }
 
     this.handleEvent("clear_search_highlights", () => {
@@ -1137,6 +1142,19 @@ const graphHook = {
     // Re-bind all event handlers and update state
     if (this._updateExploredStatus) this._updateExploredStatus();
     if (this._bindPngButtons) this._bindPngButtons();
+
+    // Re-bind presentation badge tracking on the new cy instance
+    if (this.cy && this._onCyPanZoom) {
+      this.cy.off("pan zoom", this._onCyPanZoom);
+      this.cy.on("pan zoom", this._onCyPanZoom);
+    }
+
+    // Re-apply presentation filter if it was active
+    if (this._presentationFiltered && this._presentationIds) {
+      try {
+        this._applyPresentationFilter();
+      } catch (_e) {}
+    }
 
     // Highlight the selected node
     if (this.cy && currentNode) {

@@ -262,4 +262,144 @@ defmodule DialecticWeb.GraphLiveTest do
   #     refute state.assigns.edit
   #   end
   # end
+
+  describe "presentation mode" do
+    test "enter_presentation_setup transitions to :setup mode", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      render_click(view, "enter_presentation_setup", %{})
+      state = :sys.get_state(view.pid).socket.assigns
+
+      assert state.presentation_mode == :setup
+      assert state.presentation_slide_ids == []
+    end
+
+    test "close_presentation_setup hides drawer but keeps slide deck", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      # Enter setup and add a slide via node_clicked
+      render_click(view, "enter_presentation_setup", %{})
+      render_click(view, "node_clicked", %{"id" => "1"})
+      state = :sys.get_state(view.pid).socket.assigns
+      assert state.presentation_mode == :setup
+      assert "1" in state.presentation_slide_ids
+
+      # Close the setup drawer — slides should be preserved
+      render_click(view, "close_presentation_setup", %{})
+      state = :sys.get_state(view.pid).socket.assigns
+
+      assert state.presentation_mode == :off
+      assert "1" in state.presentation_slide_ids
+    end
+
+    test "exit_presentation without clear_slides keeps deck", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      render_click(view, "enter_presentation_setup", %{})
+      render_click(view, "node_clicked", %{"id" => "1"})
+
+      render_click(view, "exit_presentation", %{})
+      state = :sys.get_state(view.pid).socket.assigns
+
+      assert state.presentation_mode == :off
+      assert "1" in state.presentation_slide_ids
+    end
+
+    test "exit_presentation with clear_slides wipes deck", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      render_click(view, "enter_presentation_setup", %{})
+      render_click(view, "node_clicked", %{"id" => "1"})
+
+      render_click(view, "exit_presentation", %{"clear_slides" => "true"})
+      state = :sys.get_state(view.pid).socket.assigns
+
+      assert state.presentation_mode == :off
+      assert state.presentation_slide_ids == []
+    end
+
+    test "node_clicked in setup mode toggles slide IDs", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      render_click(view, "enter_presentation_setup", %{})
+
+      # Add node "1"
+      render_click(view, "node_clicked", %{"id" => "1"})
+      state = :sys.get_state(view.pid).socket.assigns
+      assert state.presentation_slide_ids == ["1"]
+
+      # Add node "2"
+      render_click(view, "node_clicked", %{"id" => "2"})
+      state = :sys.get_state(view.pid).socket.assigns
+      assert state.presentation_slide_ids == ["1", "2"]
+
+      # Toggle node "1" off
+      render_click(view, "node_clicked", %{"id" => "1"})
+      state = :sys.get_state(view.pid).socket.assigns
+      assert state.presentation_slide_ids == ["2"]
+    end
+
+    test "presentation_remove_slide removes the specified node", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      render_click(view, "enter_presentation_setup", %{})
+      render_click(view, "node_clicked", %{"id" => "1"})
+      render_click(view, "node_clicked", %{"id" => "2"})
+
+      render_click(view, "presentation_remove_slide", %{"node-id" => "1"})
+      state = :sys.get_state(view.pid).socket.assigns
+      assert state.presentation_slide_ids == ["2"]
+    end
+
+    test "presentation_clear_slides empties the deck", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      render_click(view, "enter_presentation_setup", %{})
+      render_click(view, "node_clicked", %{"id" => "1"})
+      render_click(view, "node_clicked", %{"id" => "2"})
+
+      render_click(view, "presentation_clear_slides", %{})
+      state = :sys.get_state(view.pid).socket.assigns
+      assert state.presentation_slide_ids == []
+    end
+
+    test "presentation_reorder sanitizes duplicates and unknown IDs", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      render_click(view, "enter_presentation_setup", %{})
+      render_click(view, "node_clicked", %{"id" => "1"})
+      render_click(view, "node_clicked", %{"id" => "2"})
+
+      # Reorder with duplicates and an unknown ID — should be sanitized
+      render_click(view, "presentation_reorder", %{
+        "order" => ["2", "1", "2", "unknown_id"]
+      })
+
+      state = :sys.get_state(view.pid).socket.assigns
+      assert state.presentation_slide_ids == ["2", "1"]
+    end
+
+    test "start_presenting transitions to :presenting mode", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      render_click(view, "enter_presentation_setup", %{})
+      render_click(view, "node_clicked", %{"id" => "1"})
+
+      render_click(view, "start_presenting", %{})
+      state = :sys.get_state(view.pid).socket.assigns
+
+      assert state.presentation_mode == :presenting
+      assert state.presentation_slide_ids == ["1"]
+    end
+
+    test "start_presenting with empty deck does not transition", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      render_click(view, "enter_presentation_setup", %{})
+      render_click(view, "start_presenting", %{})
+      state = :sys.get_state(view.pid).socket.assigns
+
+      assert state.presentation_mode == :setup
+    end
+  end
 end

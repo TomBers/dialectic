@@ -32,11 +32,23 @@ const PresentationHook = {
  */
 const PresentationSetupHook = {
   mounted() {
+    this._ensureStyles();
     this._setupDragAndDrop();
   },
 
   updated() {
     this._setupDragAndDrop();
+  },
+
+  _ensureStyles() {
+    if (document.getElementById("pres-drag-styles")) return;
+    const style = document.createElement("style");
+    style.id = "pres-drag-styles";
+    style.textContent = `
+      .drag-over-above { box-shadow: 0 -2px 0 0 #6366f1; }
+      .drag-over-below { box-shadow: 0 2px 0 0 #6366f1; }
+    `;
+    document.head.appendChild(style);
   },
 
   _setupDragAndDrop() {

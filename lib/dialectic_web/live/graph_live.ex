@@ -518,6 +518,7 @@ defmodule DialecticWeb.GraphLive do
     # When in presentation setup mode, clicking a node toggles it as a slide
     if socket.assigns.presentation_mode == :setup do
       ids = socket.assigns.presentation_slide_ids
+      from_search = params["from-search"] == "true"
 
       updated_ids =
         if id in ids do
@@ -534,17 +535,37 @@ defmodule DialecticWeb.GraphLive do
           socket
           |> assign(presentation_slide_ids: updated_ids)
           |> push_presentation_highlights()
+          |> then(fn s ->
+            if from_search do
+              s
+              |> assign(show_search_overlay: false, search_term: "", search_results: [])
+              |> push_event("clear_search_highlights", %{})
+            else
+              s
+            end
+          end)
 
         {:noreply, socket}
       else
         {:noreply, updated_socket} =
           update_graph(socket, {nil, node}, "node_clicked")
 
+        updated_socket = reapply_right_panel_state(socket, updated_socket)
+
         updated_socket =
           updated_socket
           |> assign(presentation_slide_ids: updated_ids)
           |> push_presentation_highlights()
           |> push_event("center_node", %{id: id})
+          |> then(fn s ->
+            if from_search do
+              s
+              |> assign(show_search_overlay: false, search_term: "", search_results: [])
+              |> push_event("clear_search_highlights", %{})
+            else
+              s
+            end
+          end)
 
         {:noreply, updated_socket}
       end
@@ -800,15 +821,20 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, socket}
   end
 
-  def handle_event("exit_presentation", _params, socket) do
+  def handle_event("exit_presentation", params, socket) do
     socket =
       socket
-      |> assign(
-        presentation_mode: :off,
-        presentation_slide_ids: []
-      )
+      |> assign(presentation_mode: :off)
       |> push_event("presentation_unfilter_graph", %{})
-      |> push_event("presentation_clear_slides", %{})
+      |> maybe_clear_presentation(params)
+
+    {:noreply, socket}
+  end
+
+  def handle_event("close_presentation_setup", _params, socket) do
+    socket =
+      socket
+      |> assign(presentation_mode: :off)
 
     {:noreply, socket}
   end
@@ -825,9 +851,17 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("presentation_reorder", %{"order" => order}, socket) when is_list(order) do
+    current_ids = socket.assigns.presentation_slide_ids || []
+    allowed_ids = MapSet.new(current_ids)
+
+    sanitized_order =
+      order
+      |> Enum.uniq()
+      |> Enum.filter(&MapSet.member?(allowed_ids, &1))
+
     socket =
       socket
-      |> assign(presentation_slide_ids: order)
+      |> assign(presentation_slide_ids: sanitized_order)
       |> push_presentation_highlights()
 
     {:noreply, socket}
@@ -858,6 +892,15 @@ defmodule DialecticWeb.GraphLive do
       {:noreply, socket}
     end
   end
+
+  defp maybe_clear_presentation(socket, %{"clear_slides" => value})
+       when value in [true, "true"] do
+    socket
+    |> assign(presentation_slide_ids: [])
+    |> push_event("presentation_clear_slides", %{})
+  end
+
+  defp maybe_clear_presentation(socket, _params), do: socket
 
   # Handle selection action messages from SelectionActionsComp
   def handle_info({:selection_action, params}, socket) do
@@ -1722,11 +1765,13 @@ defmodule DialecticWeb.GraphLive do
   end
 
   defp presentation_slides(%{graph_id: graph_id, presentation_slide_ids: ids}) do
-    Enum.reduce(ids, [], fn id, acc ->
+    ids
+    |> Enum.reduce([], fn id, acc ->
       case GraphActions.find_node(graph_id, id) do
         nil -> acc
-        node -> acc ++ [node]
+        node -> [node | acc]
       end
     end)
+    |> Enum.reverse()
   end
 end
