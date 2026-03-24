@@ -1066,14 +1066,10 @@ const graphHook = {
       .querySelectorAll(".pres-badge-overlay")
       .forEach((el) => el.remove());
 
-    const zoom = this.cy.zoom();
-    const pan = this.cy.pan();
-
     this._presentationIds.forEach((id, idx) => {
       const n = this.cy.getElementById(id);
       if (!n || n.length === 0) return;
 
-      const pos = n.renderedPosition();
       const bb = n.renderedBoundingBox({ includeLabels: false });
 
       const badge = document.createElement("div");

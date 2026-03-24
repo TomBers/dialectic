@@ -635,11 +635,6 @@
         id="presentation-setup"
         mode={:setup}
         slides={presentation_slides(assigns)}
-        current_index={0}
-        graph_title={@graph_struct && @graph_struct.title}
-        is_owner={@can_edit}
-        slide_node_ids={@presentation_slide_ids}
-        all_nodes={[]}
       />
     </div>
   <% end %>

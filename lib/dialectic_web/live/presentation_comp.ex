@@ -1,11 +1,7 @@
 defmodule DialecticWeb.PresentationComp do
   @moduledoc """
-  LiveComponent that renders a full-screen slideshow-style presentation
-  over the existing graph view. Each slide corresponds to a graph node,
-  rendered with markdown content and colored accents based on node type.
-
-  Also renders the setup panel (slide picker / reorder list) when
-  `mode` is `:setup`.
+  LiveComponent that renders the presentation setup panel (slide picker /
+  reorder list) as a right-side drawer.
   """
   use DialecticWeb, :live_component
 
@@ -19,38 +15,12 @@ defmodule DialecticWeb.PresentationComp do
   def update(assigns, socket) do
     mode = Map.get(assigns, :mode, :off)
     slides = Map.get(assigns, :slides, [])
-    current_index = Map.get(assigns, :current_index, 0)
-    total = length(slides)
-
-    current_slide =
-      if total > 0 do
-        Enum.at(slides, current_index) || List.first(slides)
-      else
-        nil
-      end
-
-    progress_percent =
-      if total > 1 do
-        Float.round(current_index / (total - 1) * 100, 1)
-      else
-        100.0
-      end
 
     {:ok,
      assign(socket,
        id: assigns.id,
        mode: mode,
-       slides: slides,
-       current_index: current_index,
-       total: total,
-       current_slide: current_slide,
-       graph_title: Map.get(assigns, :graph_title, ""),
-       is_owner: Map.get(assigns, :is_owner, false),
-       slide_node_ids: Map.get(assigns, :slide_node_ids, []),
-       all_nodes: Map.get(assigns, :all_nodes, []),
-       progress_percent: progress_percent,
-       can_prev: current_index > 0,
-       can_next: current_index < total - 1
+       slides: slides
      )}
   end
 
@@ -168,22 +138,6 @@ defmodule DialecticWeb.PresentationComp do
         </div>
       </div>
     </div>
-    """
-  end
-
-  # Presenting mode no longer renders an overlay — the graph is filtered
-  # in-place via Cytoscape (presentation_filter_graph / presentation_unfilter_graph).
-  # A floating exit bar is rendered directly in graph_live.html.heex.
-  def render(%{mode: :presenting} = assigns) do
-    ~H"""
-    <div id={@id}></div>
-    """
-  end
-
-  # Off — render nothing
-  def render(assigns) do
-    ~H"""
-    <div id={@id}></div>
     """
   end
 

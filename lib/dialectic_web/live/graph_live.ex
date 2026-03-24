@@ -805,29 +805,10 @@ defmodule DialecticWeb.GraphLive do
       socket
       |> assign(
         presentation_mode: :off,
-        presentation_slide_ids: [],
-        presentation_index: 0
+        presentation_slide_ids: []
       )
       |> push_event("presentation_unfilter_graph", %{})
       |> push_event("presentation_clear_slides", %{})
-
-    {:noreply, socket}
-  end
-
-  def handle_event("presentation_toggle_slide", %{"node-id" => node_id}, socket) do
-    ids = socket.assigns.presentation_slide_ids
-
-    updated_ids =
-      if node_id in ids do
-        List.delete(ids, node_id)
-      else
-        ids ++ [node_id]
-      end
-
-    socket =
-      socket
-      |> assign(presentation_slide_ids: updated_ids)
-      |> push_presentation_highlights()
 
     {:noreply, socket}
   end
@@ -855,7 +836,7 @@ defmodule DialecticWeb.GraphLive do
   def handle_event("presentation_clear_slides", _params, socket) do
     socket =
       socket
-      |> assign(presentation_slide_ids: [], presentation_index: 0)
+      |> assign(presentation_slide_ids: [])
       |> push_event("presentation_clear_slides", %{})
 
     {:noreply, socket}
@@ -868,7 +849,7 @@ defmodule DialecticWeb.GraphLive do
       # Filter the graph to show only the selected nodes (no full-screen overlay)
       socket =
         socket
-        |> assign(presentation_mode: :presenting, presentation_index: 0)
+        |> assign(presentation_mode: :presenting)
         |> push_event("presentation_clear_slides", %{})
         |> push_event("presentation_filter_graph", %{ids: ids})
 
@@ -1615,8 +1596,7 @@ defmodule DialecticWeb.GraphLive do
       show_login_modal: false,
       highlights: [],
       presentation_mode: :off,
-      presentation_slide_ids: [],
-      presentation_index: 0
+      presentation_slide_ids: []
     )
   end
 
@@ -1741,7 +1721,6 @@ defmodule DialecticWeb.GraphLive do
     push_event(socket, "presentation_highlight_slides", %{ids: ids})
   end
 
-  @doc false
   defp presentation_slides(%{graph_id: graph_id, presentation_slide_ids: ids}) do
     Enum.reduce(ids, [], fn id, acc ->
       case GraphActions.find_node(graph_id, id) do
