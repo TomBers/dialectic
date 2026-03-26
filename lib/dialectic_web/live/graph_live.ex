@@ -20,6 +20,52 @@ defmodule DialecticWeb.GraphLive do
 
   on_mount {DialecticWeb.UserAuth, :mount_current_user}
 
+  # ── handle_params: auto-start presentation from URL query params ──
+  # Called after mount on initial page load and on every live_patch.
+  # Detects ?present=true&slides=1,2,3&title=... and boots directly into
+  # presenting mode so shared links open the presentation automatically.
+  def handle_params(%{"present" => "true", "slides" => slides_str} = params, _uri, socket) do
+    slide_ids =
+      slides_str
+      |> String.split(",", trim: true)
+      |> Enum.map(&String.trim/1)
+      |> Enum.filter(&(&1 != ""))
+      |> Enum.map(&String.to_integer/1)
+      |> Enum.map(&to_string/1)
+
+    title =
+      case Map.get(params, "title") do
+        nil -> socket.assigns.graph_struct.title
+        "" -> socket.assigns.graph_struct.title
+        t -> t
+      end
+
+    if length(slide_ids) > 0 and connected?(socket) do
+      socket =
+        socket
+        |> assign(
+          presentation_mode: :presenting,
+          presentation_slide_ids: slide_ids,
+          presentation_title: title
+        )
+        |> push_event("presentation_clear_slides", %{})
+        |> push_event("presentation_filter_graph", %{ids: slide_ids})
+        |> push_event("toggle_site_header", %{visible: false})
+
+      {:noreply, socket}
+    else
+      # Static render or no valid slides – just store assigns for when we reconnect
+      {:noreply,
+       socket
+       |> assign(
+         presentation_slide_ids: slide_ids,
+         presentation_title: title
+       )}
+    end
+  end
+
+  def handle_params(_params, _uri, socket), do: {:noreply, socket}
+
   def mount(%{"graph_name" => graph_id_uri} = params, _session, socket) do
     graph_id = URI.decode(graph_id_uri)
     user = UserUtils.current_identity(socket.assigns)
@@ -967,6 +1013,17 @@ defmodule DialecticWeb.GraphLive do
     else
       {:noreply, socket}
     end
+  end
+
+  def handle_event("copy_presentation_link", _params, socket) do
+    slides = Enum.join(socket.assigns.presentation_slide_ids, ",")
+    title = URI.encode_www_form(socket.assigns.presentation_title)
+    slug = socket.assigns.graph_struct.slug
+
+    path = "/g/#{slug}?present=true&slides=#{slides}&title=#{title}"
+    url = DialecticWeb.Endpoint.url() <> path
+
+    {:noreply, push_event(socket, "copy_to_clipboard", %{text: url})}
   end
 
   defp maybe_clear_presentation(socket, %{"clear_slides" => value})

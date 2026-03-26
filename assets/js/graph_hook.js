@@ -906,42 +906,54 @@ const graphHook = {
     // ── Presentation filter: hide all nodes NOT in the selected set ──
     this.handleEvent("presentation_filter_graph", ({ ids }) => {
       if (!this.cy) return;
-      try {
-        this._presentationIds = ids;
-        this._presentationFiltered = true;
-        this._applyPresentationFilter();
 
-        // Re-layout only the visible nodes so they spread out and fill the screen
-        this._layoutRunning = true;
-        layoutGraph(this.cy, {}, () => {
-          this._layoutRunning = false;
-          try {
-            this.cy.style().update();
-          } catch (_e) {}
-          // After layout, fit viewport to the visible nodes
-          const visibleNodes = this.cy
-            .nodes()
-            .not(".presentation-hidden")
-            .not(".presentation-hidden-parent");
-          if (visibleNodes.length > 0) {
-            this.cy.animate({
-              fit: { eles: visibleNodes, padding: 60 },
-              duration: 400,
-              easing: "ease-in-out-quad",
-              complete: () => {
-                const { dx, dy } = this._getOverlayOffsets();
-                if (dx !== 0 || dy !== 0) {
-                  this.cy.animate({
-                    panBy: { x: dx, y: dy },
-                    duration: 200,
-                    easing: "ease-in-out-quad",
-                  });
-                }
-              },
-            });
-          }
-        });
-      } catch (_e) {}
+      const applyFilter = () => {
+        try {
+          this._presentationIds = ids;
+          this._presentationFiltered = true;
+          this._applyPresentationFilter();
+
+          // Re-layout only the visible nodes so they spread out and fill the screen
+          this._layoutRunning = true;
+          layoutGraph(this.cy, {}, () => {
+            this._layoutRunning = false;
+            try {
+              this.cy.style().update();
+            } catch (_e) {}
+            // After layout, fit viewport to the visible nodes
+            const visibleNodes = this.cy
+              .nodes()
+              .not(".presentation-hidden")
+              .not(".presentation-hidden-parent");
+            if (visibleNodes.length > 0) {
+              this.cy.animate({
+                fit: { eles: visibleNodes, padding: 60 },
+                duration: 400,
+                easing: "ease-in-out-quad",
+                complete: () => {
+                  const { dx, dy } = this._getOverlayOffsets();
+                  if (dx !== 0 || dy !== 0) {
+                    this.cy.animate({
+                      panBy: { x: dx, y: dy },
+                      duration: 200,
+                      easing: "ease-in-out-quad",
+                    });
+                  }
+                },
+              });
+            }
+          });
+        } catch (_e) {}
+      };
+
+      // If the initial layout is still running (e.g. shared presentation link
+      // where handle_params fires right after mount), defer the filter until
+      // layout finishes so nodes are properly positioned first.
+      if (this._layoutRunning) {
+        this.cy.one("layoutstop", () => applyFilter());
+      } else {
+        applyFilter();
+      }
     });
 
     // ── Presentation unfilter: restore all hidden nodes and edges ──
@@ -991,6 +1003,35 @@ const graphHook = {
         });
       } catch (_e) {}
     });
+
+    // ── Copy to clipboard: used by "Copy link" in presentation bar ──
+    this.handleEvent("copy_to_clipboard", ({ text }) => {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).catch(() => {
+          this._fallbackCopy(text);
+        });
+      } else {
+        this._fallbackCopy(text);
+      }
+    });
+  },
+
+  /**
+   * Fallback copy for browsers / contexts where navigator.clipboard is unavailable.
+   */
+  _fallbackCopy(text) {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      document.execCommand("copy");
+    } catch (_e) {
+      /* best-effort */
+    }
+    document.body.removeChild(ta);
   },
 
   /**

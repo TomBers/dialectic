@@ -28,24 +28,47 @@
         </h1>
       </div>
 
-      <%!-- Right: exit button --%>
-      <button
-        phx-click="exit_presentation"
-        class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-gray-300 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-full border border-gray-600 transition-colors shrink-0"
-        title="Exit presentation and show all nodes (Esc)"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="w-3.5 h-3.5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          stroke-width="2"
+      <%!-- Right: share + exit buttons --%>
+      <div class="flex items-center gap-2 shrink-0">
+        <button
+          phx-click="copy_presentation_link"
+          class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-gray-300 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-full border border-gray-600 transition-colors"
+          title="Copy shareable presentation link"
         >
-          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-        Exit
-      </button>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-3.5 h-3.5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+            />
+          </svg>
+          Share
+        </button>
+        <button
+          phx-click="exit_presentation"
+          class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-gray-300 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-full border border-gray-600 transition-colors"
+          title="Exit presentation and show all nodes (Esc)"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-3.5 h-3.5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          Exit
+        </button>
+      </div>
     </div>
 
     <%!-- Bottom: credit footer --%>
@@ -258,7 +281,7 @@
       class="fixed bottom-0 left-0 md:relative w-full p-4 md:p-0 md:w-2/5 flex flex-col bg-white md:border-r md:border-gray-200 z-90 transform translate-x-0 opacity-100 transition-all duration-300 ease-in-out"
     >
       <div id="side-drawer-scroll" class="flex-1 overflow-y-auto" phx-hook="ScrollReset">
-        <%= if @graph_id do %>
+        <%= if @graph_id && @presentation_mode != :presenting do %>
           <.live_component module={DialecticWeb.WhatsNextComp} id="whats-next-onboarding" />
         <% end %>
         <.live_component
