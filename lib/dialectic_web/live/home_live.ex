@@ -469,7 +469,7 @@ defmodule DialecticWeb.HomeLive do
                             }
                             is_live={true}
                             generating={MapSet.member?(@generating, g.title)}
-                            id={"graph-comp-#{g.title}"}
+                            id={"graph-comp-#{g.slug || Integer.to_string(:erlang.phash2(g.title || ""))}"}
                           />
                         </div>
                       <% end %>
@@ -500,8 +500,7 @@ defmodule DialecticWeb.HomeLive do
         |> Enum.map(&{&1, 0})
 
       true ->
-        Dialectic.DbActions.Graphs.all_graphs_with_notes(search_term)
-        |> Enum.take(limit)
+        Dialectic.DbActions.Graphs.all_graphs_with_notes(search_term, limit: limit)
     end
   end
 
