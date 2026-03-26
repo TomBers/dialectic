@@ -33,6 +33,16 @@ defmodule DialecticWeb.GraphLive do
       |> Enum.map(&String.to_integer/1)
       |> Enum.map(&to_string/1)
 
+    # Filter out IDs for nodes that no longer exist in the graph so that
+    # stale shared links degrade gracefully (correct slide count, no gaps
+    # in badge numbering, and an empty-slides fallback when all are gone).
+    graph_id = socket.assigns.graph_id
+
+    valid_slide_ids =
+      Enum.filter(slide_ids, fn id ->
+        GraphActions.find_node(graph_id, id) != nil
+      end)
+
     title =
       case Map.get(params, "title") do
         nil -> socket.assigns.graph_struct.title
@@ -40,25 +50,26 @@ defmodule DialecticWeb.GraphLive do
         t -> t
       end
 
-    if length(slide_ids) > 0 and connected?(socket) do
+    if length(valid_slide_ids) > 0 and connected?(socket) do
       socket =
         socket
         |> assign(
           presentation_mode: :presenting,
-          presentation_slide_ids: slide_ids,
+          presentation_slide_ids: valid_slide_ids,
           presentation_title: title
         )
         |> push_event("presentation_clear_slides", %{})
-        |> push_event("presentation_filter_graph", %{ids: slide_ids})
+        |> push_event("presentation_filter_graph", %{ids: valid_slide_ids})
         |> push_event("toggle_site_header", %{visible: false})
 
       {:noreply, socket}
     else
-      # Static render or no valid slides – just store assigns for when we reconnect
+      # No valid slides remain (all deleted) or static render — stay in
+      # normal mode so the user sees the full graph instead of a blank screen.
       {:noreply,
        socket
        |> assign(
-         presentation_slide_ids: slide_ids,
+         presentation_slide_ids: valid_slide_ids,
          presentation_title: title
        )}
     end

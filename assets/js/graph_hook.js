@@ -1006,14 +1006,53 @@ const graphHook = {
 
     // ── Copy to clipboard: used by "Copy link" in presentation bar ──
     this.handleEvent("copy_to_clipboard", ({ text }) => {
+      const onSuccess = () => this._showCopiedToast();
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).catch(() => {
-          this._fallbackCopy(text);
-        });
+        navigator.clipboard
+          .writeText(text)
+          .then(onSuccess)
+          .catch(() => {
+            this._fallbackCopy(text);
+            onSuccess();
+          });
       } else {
         this._fallbackCopy(text);
+        onSuccess();
       }
     });
+  },
+
+  /**
+   * Show a brief "Copied to clipboard!" toast near the top of the screen.
+   */
+  _showCopiedToast() {
+    const toast = document.createElement("div");
+    toast.textContent = "Copied to clipboard!";
+    Object.assign(toast.style, {
+      position: "fixed",
+      top: "56px",
+      left: "50%",
+      transform: "translateX(-50%)",
+      background: "#1f2937",
+      color: "#fff",
+      padding: "8px 16px",
+      borderRadius: "8px",
+      fontSize: "13px",
+      fontWeight: "500",
+      zIndex: "10000",
+      opacity: "0",
+      transition: "opacity 0.2s ease",
+      pointerEvents: "none",
+    });
+    document.body.appendChild(toast);
+    // Trigger fade-in on next frame
+    requestAnimationFrame(() => {
+      toast.style.opacity = "1";
+    });
+    setTimeout(() => {
+      toast.style.opacity = "0";
+      setTimeout(() => toast.remove(), 200);
+    }, 2000);
   },
 
   /**
