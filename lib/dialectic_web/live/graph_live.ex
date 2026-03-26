@@ -1026,17 +1026,6 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_event("copy_presentation_link", _params, socket) do
-    slides = Enum.join(socket.assigns.presentation_slide_ids, ",")
-    title = URI.encode_www_form(socket.assigns.presentation_title)
-    slug = socket.assigns.graph_struct.slug
-
-    path = "/g/#{slug}?present=true&slides=#{slides}&title=#{title}"
-    url = DialecticWeb.Endpoint.url() <> path
-
-    {:noreply, push_event(socket, "copy_to_clipboard", %{text: url})}
-  end
-
   defp maybe_clear_presentation(socket, %{"clear_slides" => value})
        when value in [true, "true"] do
     socket

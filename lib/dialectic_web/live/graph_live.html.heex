@@ -31,9 +31,9 @@
       <%!-- Right: share + exit buttons --%>
       <div class="flex items-center gap-2 shrink-0">
         <button
-          phx-click="copy_presentation_link"
+          phx-click="open_share_modal"
           class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-gray-300 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-full border border-gray-600 transition-colors"
-          title="Copy shareable presentation link"
+          title="Share this presentation"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -130,6 +130,9 @@
     graph_struct={@graph_struct}
     current_user={@current_user}
     selected_node={@node}
+    presentation_mode={@presentation_mode}
+    presentation_slide_ids={@presentation_slide_ids}
+    presentation_title={@presentation_title}
   />
 
   <.login_required_modal id="login-modal" show={@show_login_modal} />

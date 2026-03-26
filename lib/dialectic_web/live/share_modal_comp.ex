@@ -135,7 +135,7 @@ defmodule DialecticWeb.ShareModalComp do
                 <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
                   <h3 class="text-lg font-medium leading-6 text-gray-900" id="modal-title">
                     <%= if @graph_struct.is_public do %>
-                      Share Map
+                      Share Grid
                     <% else %>
                       Manage Collaborators
                     <% end %>
@@ -146,11 +146,11 @@ defmodule DialecticWeb.ShareModalComp do
                         <div class="flex items-center">
                           <.icon name="hero-globe-alt" class="w-4 h-4 text-green-600 mr-2" />
                           <p class="text-sm text-green-800 font-medium">
-                            Public Map
+                            Public Grid
                           </p>
                         </div>
                         <p class="text-xs text-green-700 mt-1">
-                          Anyone with the link can view this map. Share it freely on social media or embed it on your website.
+                          Anyone with the link can view this grid. Share it freely on social media or embed it on your website.
                         </p>
                       </div>
                     <% else %>
@@ -158,11 +158,11 @@ defmodule DialecticWeb.ShareModalComp do
                         <div class="flex items-center">
                           <.icon name="hero-lock-closed" class="w-4 h-4 text-amber-600 mr-2" />
                           <p class="text-sm text-amber-800 font-medium">
-                            Private Map
+                            Private Grid
                           </p>
                         </div>
                         <p class="text-xs text-amber-700 mt-1">
-                          Only people with the access token can view this map. Make it public to share more widely.
+                          Only people with the access token can view this grid. Make it public to share more widely.
                         </p>
                       </div>
                     <% end %>
@@ -225,14 +225,14 @@ defmodule DialecticWeb.ShareModalComp do
                       <input
                         type="text"
                         readonly
-                        value={share_url(@graph_struct, @share_node && @selected_node)}
+                        value={share_url(assigns)}
                         class="flex-1 min-w-0 block w-full px-3 py-2 rounded-l-md border-gray-300 sm:text-sm bg-white text-gray-500"
                         id="share-url-input"
                       />
                       <button
                         type="button"
                         class="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 rounded-r-md bg-gray-50 text-gray-500 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                        data-copy-url={share_url(@graph_struct, @share_node && @selected_node)}
+                        data-copy-url={share_url(assigns)}
                         onclick="navigator.clipboard.writeText(this.dataset.copyUrl).then(() => alert('Link copied to clipboard!'))"
                         aria-label="Copy to clipboard"
                         id="share-copy-btn"
@@ -257,7 +257,7 @@ defmodule DialecticWeb.ShareModalComp do
                       </label>
                       <div class="flex space-x-2">
                         <a
-                          href={"https://twitter.com/intent/tweet?text=#{URI.encode_www_form("Check out this map on RationalGrid: " <> @graph_struct.title)}&url=#{URI.encode_www_form(share_url(@graph_struct, @share_node && @selected_node))}"}
+                          href={"https://twitter.com/intent/tweet?text=#{URI.encode_www_form("Check out this grid on RationalGrid: " <> @graph_struct.title)}&url=#{URI.encode_www_form(share_url(assigns))}"}
                           target="_blank"
                           rel="noopener noreferrer"
                           class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
@@ -265,7 +265,7 @@ defmodule DialecticWeb.ShareModalComp do
                           X (Twitter)
                         </a>
                         <a
-                          href={"https://www.linkedin.com/sharing/share-offsite/?url=#{URI.encode_www_form(share_url(@graph_struct, @share_node && @selected_node))}"}
+                          href={"https://www.linkedin.com/sharing/share-offsite/?url=#{URI.encode_www_form(share_url(assigns))}"}
                           target="_blank"
                           rel="noopener noreferrer"
                           class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
@@ -273,7 +273,7 @@ defmodule DialecticWeb.ShareModalComp do
                           LinkedIn
                         </a>
                         <a
-                          href={"https://www.reddit.com/submit?url=#{URI.encode_www_form(share_url(@graph_struct, @share_node && @selected_node))}&title=#{URI.encode_www_form(@graph_struct.title)}"}
+                          href={"https://www.reddit.com/submit?url=#{URI.encode_www_form(share_url(assigns))}&title=#{URI.encode_www_form(@graph_struct.title)}"}
                           target="_blank"
                           rel="noopener noreferrer"
                           class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
@@ -294,11 +294,11 @@ defmodule DialecticWeb.ShareModalComp do
                           rows="3"
                           class="flex-1 min-w-0 block w-full px-3 py-2 rounded-l-md border-gray-300 sm:text-sm bg-white text-gray-500 font-mono text-xs"
                           onclick="this.select()"
-                        ><iframe src={share_url(@graph_struct, @share_node && @selected_node)} width="100%" height="600px" frameborder="0" allowfullscreen></iframe></textarea>
+                        ><iframe src={share_url(assigns)} width="100%" height="600px" frameborder="0" allowfullscreen></iframe></textarea>
                         <button
                           type="button"
                           class="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 rounded-r-md bg-gray-50 text-gray-500 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                          data-copy-text={"<iframe src=\"#{share_url(@graph_struct, @share_node && @selected_node)}\" width=\"100%\" height=\"600px\" frameborder=\"0\" allowfullscreen></iframe>"}
+                          data-copy-text={"<iframe src=\"#{share_url(assigns)}\" width=\"100%\" height=\"600px\" frameborder=\"0\" allowfullscreen></iframe>"}
                           onclick="navigator.clipboard.writeText(this.dataset.copyText).then(() => alert('Embed code copied!'))"
                           aria-label="Copy embed code"
                         >
@@ -306,7 +306,7 @@ defmodule DialecticWeb.ShareModalComp do
                         </button>
                       </div>
                       <p class="mt-1 text-xs text-gray-500">
-                        Embed this public map on your website or blog.
+                        Embed this public grid on your website or blog.
                       </p>
                     </div>
                   <% end %>
@@ -381,7 +381,9 @@ defmodule DialecticWeb.ShareModalComp do
     """
   end
 
-  defp share_url(graph, node) do
+  defp share_url(assigns) do
+    graph = assigns.graph_struct
+    node = assigns[:share_node] && assigns[:selected_node]
     base = DialecticWeb.Endpoint.url()
     path = "/g/#{graph.slug}"
 
@@ -389,6 +391,24 @@ defmodule DialecticWeb.ShareModalComp do
       []
       |> then(fn p -> if !graph.is_public, do: [{"token", graph.share_token} | p], else: p end)
       |> then(fn p -> if node, do: [{"node", Map.get(node, :id, "")} | p], else: p end)
+      |> then(fn p ->
+        if assigns[:presentation_mode] == :presenting and
+             is_list(assigns[:presentation_slide_ids]) and
+             length(assigns[:presentation_slide_ids]) > 0 do
+          slides = Enum.join(assigns.presentation_slide_ids, ",")
+
+          p =
+            [{"present", "true"}, {"slides", slides} | p]
+
+          if assigns[:presentation_title] && assigns[:presentation_title] != "" do
+            [{"title", assigns.presentation_title} | p]
+          else
+            p
+          end
+        else
+          p
+        end
+      end)
 
     case params do
       [] -> "#{base}#{path}"
