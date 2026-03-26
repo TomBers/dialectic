@@ -36,7 +36,7 @@ const PresentationHook = {
 
   /**
    * Show or hide the root-layout site header (#userHeader).
-   * Uses a CSS class so the transition is smooth and reversible.
+   * Directly toggles the element's display style to show or hide it.
    */
   _setSiteHeaderVisible(visible) {
     const header = document.getElementById("userHeader");

@@ -833,8 +833,16 @@ const graphHook = {
     if (this.cy) {
       if (!this._onCyPanZoom) {
         this._onCyPanZoom = () => {
-          if (this._presentationIds && this._presentationIds.length > 0) {
-            requestAnimationFrame(() => this._renderPresentationBadges());
+          if (
+            this._presentationIds &&
+            this._presentationIds.length > 0 &&
+            !this._panZoomPending
+          ) {
+            this._panZoomPending = true;
+            requestAnimationFrame(() => {
+              this._panZoomPending = false;
+              this._renderPresentationBadges();
+            });
           }
         };
       }
@@ -859,10 +867,10 @@ const graphHook = {
         this.cy.nodes().forEach((n) => n.removeData("presIndex"));
 
         // Remove old badge overlays
-        const container = this._container || this.el;
-        container
-          .querySelectorAll(".pres-badge-overlay")
-          .forEach((el) => el.remove());
+        if (this._badgeElements) {
+          this._badgeElements.forEach((el) => el.remove());
+          this._badgeElements.clear();
+        }
 
         if (!ids || ids.length === 0) return;
 
@@ -888,10 +896,10 @@ const graphHook = {
         this.cy.nodes().removeClass("presentation-slide");
         this.cy.nodes().forEach((n) => n.removeData("presIndex"));
         this._presentationIds = null;
-        const container = this._container || this.el;
-        container
-          .querySelectorAll(".pres-badge-overlay")
-          .forEach((el) => el.remove());
+        if (this._badgeElements) {
+          this._badgeElements.forEach((el) => el.remove());
+          this._badgeElements.clear();
+        }
       } catch (_e) {}
     });
 
@@ -920,6 +928,16 @@ const graphHook = {
               fit: { eles: visibleNodes, padding: 60 },
               duration: 400,
               easing: "ease-in-out-quad",
+              complete: () => {
+                const { dx, dy } = this._getOverlayOffsets();
+                if (dx !== 0 || dy !== 0) {
+                  this.cy.animate({
+                    panBy: { x: dx, y: dy },
+                    duration: 200,
+                    easing: "ease-in-out-quad",
+                  });
+                }
+              },
             });
           }
         });
@@ -941,10 +959,10 @@ const graphHook = {
         this._presentationIds = null;
 
         // Remove badge overlays
-        const container = this._container || this.el;
-        container
-          .querySelectorAll(".pres-badge-overlay")
-          .forEach((el) => el.remove());
+        if (this._badgeElements) {
+          this._badgeElements.forEach((el) => el.remove());
+          this._badgeElements.clear();
+        }
 
         // Re-layout to restore original positions, then fit
         this._layoutRunning = true;
@@ -958,11 +976,62 @@ const graphHook = {
               fit: { eles: this.cy.nodes(), padding: 40 },
               duration: 400,
               easing: "ease-in-out-quad",
+              complete: () => {
+                const { dx, dy } = this._getOverlayOffsets();
+                if (dx !== 0 || dy !== 0) {
+                  this.cy.animate({
+                    panBy: { x: dx, y: dy },
+                    duration: 200,
+                    easing: "ease-in-out-quad",
+                  });
+                }
+              },
             });
           }
         });
       } catch (_e) {}
     });
+  },
+
+  /**
+   * Compute pan offsets to compensate for right-panel and bottom-menu overlays.
+   * Returns { dx, dy } suitable for passing to cy.animate({ panBy: … }).
+   */
+  _getOverlayOffsets() {
+    const container = this._container || this.el;
+    const cRect = container.getBoundingClientRect();
+    let dx = 0;
+    let dy = 0;
+
+    // Right panel compensation
+    const panelIds = ["right-panel", "graph-nav-drawer", "highlights-drawer"];
+    let rightPanelWidth = 0;
+    panelIds.forEach((id) => {
+      const p = document.getElementById(id);
+      if (p) {
+        const pr = p.getBoundingClientRect();
+        if (pr && pr.width > 10 && pr.left < window.innerWidth) {
+          if (pr.width > rightPanelWidth) rightPanelWidth = pr.width;
+        }
+      }
+    });
+    if (rightPanelWidth > 0) dx = -(rightPanelWidth / 2);
+
+    // Bottom menu compensation
+    const bottomMenu = document.getElementById("bottom-menu");
+    if (bottomMenu) {
+      const bmRect = bottomMenu.getBoundingClientRect();
+      const bmVisible =
+        bmRect.height > 0 &&
+        !bottomMenu.classList.contains("invisible") &&
+        !bottomMenu.classList.contains("opacity-0");
+      if (bmVisible) {
+        const overlap = Math.max(0, cRect.bottom - bmRect.top);
+        if (overlap > 0) dy = -(overlap / 2);
+      }
+    }
+
+    return { dx, dy };
   },
 
   /**
@@ -1066,10 +1135,20 @@ const graphHook = {
     if (!this.cy || !this._presentationIds) return;
     const container = this._container || this.el;
 
-    // Clear existing badges
-    container
-      .querySelectorAll(".pres-badge-overlay")
-      .forEach((el) => el.remove());
+    if (!this._badgeElements) {
+      this._badgeElements = new Map();
+    }
+
+    // Track which ids are currently active so we can remove stale ones
+    const activeIds = new Set(this._presentationIds);
+
+    // Remove stale badges (ids no longer in _presentationIds)
+    for (const [id, el] of this._badgeElements) {
+      if (!activeIds.has(id)) {
+        el.remove();
+        this._badgeElements.delete(id);
+      }
+    }
 
     this._presentationIds.forEach((id, idx) => {
       const n = this.cy.getElementById(id);
@@ -1077,29 +1156,39 @@ const graphHook = {
 
       const bb = n.renderedBoundingBox({ includeLabels: false });
 
-      const badge = document.createElement("div");
-      badge.className = "pres-badge-overlay";
-      badge.textContent = String(idx + 1);
-      badge.style.cssText = `
-        position: absolute;
-        top: ${bb.y1 - 8}px;
-        left: ${bb.x2 - 8}px;
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        background: #a855f7;
-        color: white;
-        font-size: 10px;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        pointer-events: none;
-        z-index: 10;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-        line-height: 1;
-      `;
-      container.appendChild(badge);
+      let badge = this._badgeElements.get(id);
+      if (badge) {
+        // Reuse existing badge – only update position and text
+        badge.style.top = `${bb.y1 - 8}px`;
+        badge.style.left = `${bb.x2 - 8}px`;
+        badge.textContent = String(idx + 1);
+      } else {
+        // Create a new badge element
+        badge = document.createElement("div");
+        badge.className = "pres-badge-overlay";
+        badge.textContent = String(idx + 1);
+        badge.style.cssText = `
+          position: absolute;
+          top: ${bb.y1 - 8}px;
+          left: ${bb.x2 - 8}px;
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background: #a855f7;
+          color: white;
+          font-size: 10px;
+          font-weight: 700;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          pointer-events: none;
+          z-index: 10;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+          line-height: 1;
+        `;
+        container.appendChild(badge);
+        this._badgeElements.set(id, badge);
+      }
     });
   },
 
@@ -1515,10 +1604,10 @@ const graphHook = {
       this._onCyPanZoom = null;
     }
     try {
-      const container = this._container || this.el;
-      container
-        .querySelectorAll(".pres-badge-overlay")
-        .forEach((el) => el.remove());
+      if (this._badgeElements) {
+        this._badgeElements.forEach((el) => el.remove());
+        this._badgeElements.clear();
+      }
     } catch (_e) {}
     this._presentationIds = null;
     this._presentationFiltered = false;

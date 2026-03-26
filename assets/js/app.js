@@ -324,12 +324,18 @@ hooks.GraphLayout = {
         if (!graph_id) return;
         const key = `rg:pres:${graph_id}`;
         try {
-          if (!slide_ids || slide_ids.length === 0) {
+          const hasSlides = slide_ids && slide_ids.length > 0;
+          const hasTitle = title && title.length > 0;
+          if (!hasSlides && !hasTitle) {
             localStorage.removeItem(key);
           } else {
             localStorage.setItem(
               key,
-              JSON.stringify({ slide_ids, title: title || "", ts: Date.now() }),
+              JSON.stringify({
+                slide_ids: slide_ids || [],
+                title: title || "",
+                ts: Date.now(),
+              }),
             );
           }
         } catch (_e) {
@@ -345,15 +351,18 @@ hooks.GraphLayout = {
         const raw = localStorage.getItem(`rg:pres:${graphId}`);
         if (raw) {
           const saved = JSON.parse(raw);
-          if (
-            saved &&
-            Array.isArray(saved.slide_ids) &&
-            saved.slide_ids.length > 0
-          ) {
-            this.pushEvent("restore_presentation", {
-              slide_ids: saved.slide_ids,
-              title: saved.title || "",
-            });
+          if (saved) {
+            const hasSlides =
+              Array.isArray(saved.slide_ids) && saved.slide_ids.length > 0;
+            const hasTitle = saved.title && saved.title.length > 0;
+            if (hasSlides || hasTitle) {
+              this.pushEvent("restore_presentation", {
+                slide_ids: Array.isArray(saved.slide_ids)
+                  ? saved.slide_ids
+                  : [],
+                title: saved.title || "",
+              });
+            }
           }
         }
       } catch (_e) {

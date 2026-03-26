@@ -3,7 +3,6 @@ defmodule DialecticWeb.GraphLive do
   use DialecticWeb.GraphStreaming, preload_highlight_links: true
 
   alias Dialectic.Graph.{Vertex, GraphActions, Siblings}
-  alias Dialectic.Accounts
   alias Dialectic.Accounts.User
   alias DialecticWeb.{CombineComp, NodeComp}
   alias DialecticWeb.GraphHelpers
@@ -862,7 +861,6 @@ defmodule DialecticWeb.GraphLive do
       socket
       |> assign(presentation_mode: :off)
       |> push_event("presentation_clear_slides", %{})
-      |> push_presentation_highlights()
 
     {:noreply, socket}
   end
@@ -942,7 +940,6 @@ defmodule DialecticWeb.GraphLive do
       socket
       |> assign(presentation_slide_ids: [], presentation_title: "")
       |> push_event("presentation_clear_slides", %{})
-      |> push_presentation_persistence()
 
     {:noreply, socket}
   end
@@ -977,7 +974,6 @@ defmodule DialecticWeb.GraphLive do
     socket
     |> assign(presentation_slide_ids: [], presentation_title: "")
     |> push_event("presentation_clear_slides", %{})
-    |> push_presentation_persistence()
   end
 
   defp maybe_clear_presentation(socket, _params), do: socket
@@ -1807,13 +1803,15 @@ defmodule DialecticWeb.GraphLive do
 
     # Resolve the graph owner's display name for presentation credits
     owner_name =
-      try do
-        case graph_db.user_id do
-          nil -> nil
-          uid -> uid |> Accounts.get_user!() |> User.display_name()
-        end
-      rescue
-        _ -> nil
+      case graph_db.user_id do
+        nil ->
+          nil
+
+        uid ->
+          case Repo.get(User, uid) do
+            nil -> nil
+            user -> User.display_name(user)
+          end
       end
 
     assign(socket,
