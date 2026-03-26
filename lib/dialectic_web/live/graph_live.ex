@@ -3,6 +3,8 @@ defmodule DialecticWeb.GraphLive do
   use DialecticWeb.GraphStreaming, preload_highlight_links: true
 
   alias Dialectic.Graph.{Vertex, GraphActions, Siblings}
+  alias Dialectic.Accounts
+  alias Dialectic.Accounts.User
   alias DialecticWeb.{CombineComp, NodeComp}
   alias DialecticWeb.GraphHelpers
 
@@ -535,6 +537,7 @@ defmodule DialecticWeb.GraphLive do
           socket
           |> assign(presentation_slide_ids: updated_ids)
           |> push_presentation_highlights()
+          |> push_presentation_persistence()
           |> then(fn s ->
             if from_search do
               s
@@ -556,6 +559,7 @@ defmodule DialecticWeb.GraphLive do
           updated_socket
           |> assign(presentation_slide_ids: updated_ids)
           |> push_presentation_highlights()
+          |> push_presentation_persistence()
           |> push_event("center_node", %{id: id})
           |> then(fn s ->
             if from_search do
@@ -813,12 +817,31 @@ defmodule DialecticWeb.GraphLive do
   # ── Presentation mode events ──────────────────────────────────────
 
   def handle_event("enter_presentation_setup", _params, socket) do
-    socket =
-      socket
-      |> assign(presentation_mode: :setup)
-      |> push_presentation_highlights()
+    # Toggle: if already in setup, close the panel; otherwise open it
+    if socket.assigns.presentation_mode == :setup do
+      socket =
+        socket
+        |> assign(presentation_mode: :off)
+        |> push_event("presentation_clear_slides", %{})
 
-    {:noreply, socket}
+      {:noreply, socket}
+    else
+      # Auto-populate the title with the graph's starting question if not already set
+      socket =
+        if socket.assigns.presentation_title == "" do
+          assign(socket, presentation_title: socket.assigns.graph_struct.title)
+        else
+          socket
+        end
+
+      socket =
+        socket
+        |> assign(presentation_mode: :setup)
+        |> push_presentation_highlights()
+        |> push_presentation_persistence()
+
+      {:noreply, socket}
+    end
   end
 
   def handle_event("exit_presentation", params, socket) do
@@ -826,19 +849,63 @@ defmodule DialecticWeb.GraphLive do
       socket
       |> assign(presentation_mode: :off)
       |> push_event("presentation_unfilter_graph", %{})
+      |> push_event("toggle_site_header", %{visible: true})
       |> maybe_clear_presentation(params)
+      |> push_presentation_persistence()
 
     {:noreply, socket}
   end
 
   def handle_event("close_presentation_setup", _params, socket) do
+    # Just hide the panel and clear badge overlays — keep the slide deck intact
     socket =
       socket
       |> assign(presentation_mode: :off)
       |> push_event("presentation_clear_slides", %{})
+      |> push_presentation_highlights()
 
     {:noreply, socket}
   end
+
+  def handle_event("update_presentation_title", %{"title" => title}, socket) do
+    title = String.slice(title, 0, 120)
+
+    socket =
+      socket
+      |> assign(presentation_title: title)
+      |> push_presentation_persistence()
+
+    {:noreply, socket}
+  end
+
+  def handle_event(
+        "restore_presentation",
+        %{"slide_ids" => ids, "title" => title},
+        socket
+      )
+      when is_list(ids) and is_binary(title) do
+    # Only restore if we don't already have slides (i.e. fresh mount)
+    if socket.assigns.presentation_slide_ids == [] do
+      # Validate that the IDs actually exist in this graph
+      valid_ids =
+        Enum.filter(ids, fn id ->
+          GraphActions.find_node(socket.assigns.graph_id, id) != nil
+        end)
+
+      socket =
+        socket
+        |> assign(
+          presentation_slide_ids: valid_ids,
+          presentation_title: String.slice(title, 0, 120)
+        )
+
+      {:noreply, socket}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_event("restore_presentation", _params, socket), do: {:noreply, socket}
 
   def handle_event("presentation_remove_slide", %{"node-id" => node_id}, socket) do
     updated_ids = List.delete(socket.assigns.presentation_slide_ids, node_id)
@@ -847,6 +914,7 @@ defmodule DialecticWeb.GraphLive do
       socket
       |> assign(presentation_slide_ids: updated_ids)
       |> push_presentation_highlights()
+      |> push_presentation_persistence()
 
     {:noreply, socket}
   end
@@ -864,6 +932,7 @@ defmodule DialecticWeb.GraphLive do
       socket
       |> assign(presentation_slide_ids: sanitized_order)
       |> push_presentation_highlights()
+      |> push_presentation_persistence()
 
     {:noreply, socket}
   end
@@ -871,8 +940,9 @@ defmodule DialecticWeb.GraphLive do
   def handle_event("presentation_clear_slides", _params, socket) do
     socket =
       socket
-      |> assign(presentation_slide_ids: [])
+      |> assign(presentation_slide_ids: [], presentation_title: "")
       |> push_event("presentation_clear_slides", %{})
+      |> push_presentation_persistence()
 
     {:noreply, socket}
   end
@@ -881,12 +951,20 @@ defmodule DialecticWeb.GraphLive do
     ids = socket.assigns.presentation_slide_ids
 
     if length(ids) > 0 do
+      # Ensure the title defaults to the graph's starting question
+      title =
+        if socket.assigns.presentation_title == "",
+          do: socket.assigns.graph_struct.title,
+          else: socket.assigns.presentation_title
+
       # Filter the graph to show only the selected nodes (no full-screen overlay)
       socket =
         socket
-        |> assign(presentation_mode: :presenting)
+        |> assign(presentation_mode: :presenting, presentation_title: title)
         |> push_event("presentation_clear_slides", %{})
         |> push_event("presentation_filter_graph", %{ids: ids})
+        |> push_event("toggle_site_header", %{visible: false})
+        |> push_presentation_persistence()
 
       {:noreply, socket}
     else
@@ -897,8 +975,9 @@ defmodule DialecticWeb.GraphLive do
   defp maybe_clear_presentation(socket, %{"clear_slides" => value})
        when value in [true, "true"] do
     socket
-    |> assign(presentation_slide_ids: [])
+    |> assign(presentation_slide_ids: [], presentation_title: "")
     |> push_event("presentation_clear_slides", %{})
+    |> push_presentation_persistence()
   end
 
   defp maybe_clear_presentation(socket, _params), do: socket
@@ -1640,7 +1719,9 @@ defmodule DialecticWeb.GraphLive do
       show_login_modal: false,
       highlights: [],
       presentation_mode: :off,
-      presentation_slide_ids: []
+      presentation_slide_ids: [],
+      presentation_title: "",
+      graph_owner_name: nil
     )
   end
 
@@ -1692,7 +1773,7 @@ defmodule DialecticWeb.GraphLive do
     end)
   end
 
-  defp assign_graph_data(socket, _graph_db, graph_struct, node, graph_id, user) do
+  defp assign_graph_data(socket, graph_db, graph_struct, node, graph_id, user) do
     changeset = GraphActions.create_new_node(user) |> Vertex.changeset()
     can_edit = !graph_struct.is_locked
     {nav_up, nav_down, nav_left, nav_right} = compute_nav_flags(graph_id, node)
@@ -1724,8 +1805,20 @@ defmodule DialecticWeb.GraphLive do
         "isAccessibleForFree" => true
       })
 
+    # Resolve the graph owner's display name for presentation credits
+    owner_name =
+      try do
+        case graph_db.user_id do
+          nil -> nil
+          uid -> uid |> Accounts.get_user!() |> User.display_name()
+        end
+      rescue
+        _ -> nil
+      end
+
     assign(socket,
       page_title: graph_struct.title,
+      graph_owner_name: owner_name,
       og_image: base_url <> ~p"/images/graph_live.webp",
       page_description: description,
       canonical_url: canonical,
@@ -1763,6 +1856,16 @@ defmodule DialecticWeb.GraphLive do
   defp push_presentation_highlights(socket) do
     ids = socket.assigns.presentation_slide_ids
     push_event(socket, "presentation_highlight_slides", %{ids: ids})
+  end
+
+  defp push_presentation_persistence(socket) do
+    graph_id = socket.assigns.graph_id
+
+    push_event(socket, "presentation_persist", %{
+      graph_id: graph_id,
+      slide_ids: socket.assigns.presentation_slide_ids,
+      title: socket.assigns.presentation_title
+    })
   end
 
   defp presentation_slides(%{graph_id: graph_id, presentation_slide_ids: ids}) do

@@ -92,12 +92,22 @@ hooks.GraphLayout = {
 
     this.el.addEventListener("toggle-panel", (e) => {
       const { id } = e.detail;
-      const panels = ["right-panel", "graph-nav-drawer", "highlights-drawer"];
+      const panels = [
+        "right-panel",
+        "graph-nav-drawer",
+        "highlights-drawer",
+        "presentation-drawer",
+      ];
       const targetPanel = document.getElementById(id);
 
       if (!targetPanel) return;
 
       const isClosed = targetPanel.classList.contains("translate-x-full");
+
+      // Track whether the presentation drawer was open before we close everything
+      const presDrawer = document.getElementById("presentation-drawer");
+      const presWasOpen =
+        presDrawer && !presDrawer.classList.contains("translate-x-full");
 
       // Close all panels first
       panels.forEach((pId) => {
@@ -128,6 +138,14 @@ hooks.GraphLayout = {
           );
         }
       });
+
+      // If a *different* panel is opening and the presentation drawer was open,
+      // notify the server so it can leave setup mode.
+      // We skip this when the presentation button itself is toggled — that
+      // button already pushes its own "enter_presentation_setup" server event.
+      if (presWasOpen && id !== "presentation-drawer") {
+        this.pushEvent("close_presentation_setup", {});
+      }
 
       const elementsToShift = document.querySelectorAll(".shift-with-panel");
       const bottomMenu = document.getElementById("bottom-menu");
@@ -298,6 +316,50 @@ hooks.GraphLayout = {
         if (handle) handle.classList.add("hidden");
       }
     });
+
+    // ── Presentation localStorage persistence ──────────────────────
+    this.handleEvent(
+      "presentation_persist",
+      ({ graph_id, slide_ids, title }) => {
+        if (!graph_id) return;
+        const key = `rg:pres:${graph_id}`;
+        try {
+          if (!slide_ids || slide_ids.length === 0) {
+            localStorage.removeItem(key);
+          } else {
+            localStorage.setItem(
+              key,
+              JSON.stringify({ slide_ids, title: title || "", ts: Date.now() }),
+            );
+          }
+        } catch (_e) {
+          // localStorage may be unavailable (private browsing, quota, etc.)
+        }
+      },
+    );
+
+    // On mount, check for a saved presentation for this graph and restore it
+    const graphId = this.el.dataset.graphId;
+    if (graphId) {
+      try {
+        const raw = localStorage.getItem(`rg:pres:${graphId}`);
+        if (raw) {
+          const saved = JSON.parse(raw);
+          if (
+            saved &&
+            Array.isArray(saved.slide_ids) &&
+            saved.slide_ids.length > 0
+          ) {
+            this.pushEvent("restore_presentation", {
+              slide_ids: saved.slide_ids,
+              title: saved.title || "",
+            });
+          }
+        }
+      } catch (_e) {
+        // Ignore parse errors or missing storage
+      }
+    }
   },
   updated() {
     this.restoreState();

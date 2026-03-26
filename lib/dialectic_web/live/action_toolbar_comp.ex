@@ -448,9 +448,16 @@ defmodule DialecticWeb.ActionToolbarComp do
         <span class="contents" data-role="settings-buttons-group">
           <button
             type="button"
-            phx-click="enter_presentation_setup"
+            phx-click={
+              Phoenix.LiveView.JS.dispatch("toggle-panel",
+                to: "#graph-layout",
+                detail: %{id: "presentation-drawer"}
+              )
+              |> Phoenix.LiveView.JS.push("enter_presentation_setup")
+            }
             disabled={is_nil(@graph_id)}
             class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm ring-1 ring-inset ring-black/10 bg-fuchsia-500 text-white rounded-md transition-all hover:bg-fuchsia-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            data-panel-toggle="presentation-drawer"
             aria-label="Start presentation setup"
             title="Present"
           >

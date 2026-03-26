@@ -1,23 +1,38 @@
 <div
   id="graph-layout"
   phx-hook="GraphLayout"
-  class="h-[calc(100vh-2.5rem)] overflow-hidden flex flex-col relative"
+  class={[
+    "overflow-hidden flex flex-col relative",
+    if(@presentation_mode == :presenting, do: "h-screen", else: "h-[calc(100vh-2.5rem)]")
+  ]}
+  data-graph-id={@graph_id}
+  data-presenting={@presentation_mode == :presenting}
 >
-  <%!-- Presentation: floating exit bar when graph is filtered to selected nodes --%>
+  <%!-- Presentation: title bar + exit controls when presenting --%>
   <%= if @presentation_mode == :presenting do %>
     <div
       id="presentation-exit-bar"
       phx-hook="Presentation"
-      class="absolute top-3 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 px-4 py-2 bg-gray-900/90 backdrop-blur-sm rounded-full shadow-lg border border-gray-700/50"
+      class="absolute top-0 left-0 right-0 z-[100] flex items-center justify-between px-4 h-9 bg-gray-900/90 backdrop-blur-sm border-b border-gray-700/50 shadow-lg"
     >
-      <span class="text-xs font-medium text-gray-300">
-        Presenting <span class="text-white font-semibold">{length(@presentation_slide_ids)}</span>
-        nodes
+      <%!-- Left: slide count --%>
+      <span class="text-xs font-medium text-gray-400 shrink-0">
+        <span class="text-white font-semibold">{length(@presentation_slide_ids)}</span>
+        {if length(@presentation_slide_ids) == 1, do: "node", else: "nodes"}
       </span>
+
+      <%!-- Center: presentation title --%>
+      <div class="flex-1 text-center px-4">
+        <h1 class="text-sm sm:text-base font-semibold text-white truncate">
+          {@presentation_title}
+        </h1>
+      </div>
+
+      <%!-- Right: exit button --%>
       <button
         phx-click="exit_presentation"
-        class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-gray-300 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-full border border-gray-600 transition-colors"
-        title="Exit presentation and show all nodes"
+        class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-gray-300 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-full border border-gray-600 transition-colors shrink-0"
+        title="Exit presentation and show all nodes (Esc)"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -31,6 +46,25 @@
         </svg>
         Exit
       </button>
+    </div>
+
+    <%!-- Bottom: credit footer --%>
+    <div class="absolute bottom-0 left-0 right-0 z-[100] flex items-center justify-center px-4 py-2 bg-gray-900/80 backdrop-blur-sm border-t border-gray-700/40">
+      <span class="text-xs text-gray-400">
+        Created by
+        <span class="text-gray-200 font-medium">
+          {@graph_owner_name || "Anonymous"}
+        </span>
+        using
+        <a
+          href="https://rationalgrid.ai"
+          target="_blank"
+          rel="noopener"
+          class="text-indigo-400 hover:text-indigo-300 font-semibold transition-colors"
+        >
+          rationalgrid.ai
+        </a>
+      </span>
     </div>
   <% end %>
 
@@ -101,7 +135,21 @@
   />
 
   <%= if @graph_id do %>
-    <!-- Top section (Right panel becomes slide-in drawer) -->
+    <!-- Presentation Drawer (Right panel style, same as other panels) -->
+    <div
+      id="presentation-drawer"
+      class="fixed top-10 bottom-0 right-0 w-0 overflow-hidden bg-white border-l border-gray-200 z-50 transform translate-x-full opacity-0 transition-all duration-300 ease-in-out"
+    >
+      <.live_component
+        module={DialecticWeb.PresentationComp}
+        id="presentation-setup"
+        mode={if @presentation_mode in [:setup, :presenting], do: :setup, else: :off}
+        slides={presentation_slides(assigns)}
+        presentation_title={@presentation_title}
+      />
+    </div>
+    
+<!-- Top section (Right panel becomes slide-in drawer) -->
     <div
       id="right-panel"
       class="fixed top-10 bottom-0 right-0 w-0 overflow-hidden bg-white border-l border-gray-200 z-50 transform translate-x-full opacity-0 transition-all duration-300 ease-in-out"
@@ -613,21 +661,6 @@
           </div>
         </div>
       <% end %>
-    </div>
-  <% end %>
-
-  <%!-- Presentation setup drawer --%>
-  <%= if @graph_id && @presentation_mode == :setup do %>
-    <div
-      id="presentation-setup-drawer"
-      class="fixed top-10 bottom-0 right-0 w-full sm:w-80 bg-white border-l border-gray-200 z-50 transform translate-x-0 opacity-100 transition-all duration-300 ease-in-out overflow-y-auto shadow-lg"
-    >
-      <.live_component
-        module={DialecticWeb.PresentationComp}
-        id="presentation-setup"
-        mode={:setup}
-        slides={presentation_slides(assigns)}
-      />
     </div>
   <% end %>
 

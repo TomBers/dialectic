@@ -15,12 +15,14 @@ defmodule DialecticWeb.PresentationComp do
   def update(assigns, socket) do
     mode = Map.get(assigns, :mode, :off)
     slides = Map.get(assigns, :slides, [])
+    presentation_title = Map.get(assigns, :presentation_title, "")
 
     {:ok,
      assign(socket,
        id: assigns.id,
        mode: mode,
-       slides: slides
+       slides: slides,
+       presentation_title: presentation_title
      )}
   end
 
@@ -38,13 +40,42 @@ defmodule DialecticWeb.PresentationComp do
         <div class="flex items-center justify-between px-3 py-2 border-b border-gray-200">
           <h3 class="text-sm font-semibold text-gray-900">Presentation</h3>
           <button
-            phx-click="close_presentation_setup"
-            class="text-gray-400 hover:text-gray-600 transition-colors"
+            phx-click={
+              Phoenix.LiveView.JS.dispatch("toggle-panel",
+                to: "#graph-layout",
+                detail: %{id: "presentation-drawer"}
+              )
+              |> Phoenix.LiveView.JS.push("close_presentation_setup")
+            }
+            class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50"
             aria-label="Close setup"
             title="Close"
           >
             <.icon name="hero-x-mark" class="w-4 h-4" />
           </button>
+        </div>
+
+        <%!-- Presentation title --%>
+        <div class="px-3 py-2 border-b border-gray-200">
+          <label
+            for="presentation-title-input"
+            class="block text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-1"
+          >
+            Title
+          </label>
+          <form phx-change="update_presentation_title" phx-submit="update_presentation_title">
+            <input
+              type="text"
+              name="title"
+              id="presentation-title-input"
+              value={@presentation_title}
+              placeholder="e.g. What if people talked to plants?"
+              maxlength="120"
+              phx-debounce="300"
+              autocomplete="off"
+              class="w-full px-2 py-1.5 text-sm font-medium text-gray-900 bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder:text-gray-400 placeholder:font-normal"
+            />
+          </form>
         </div>
 
         <%!-- Instructions --%>
@@ -113,7 +144,13 @@ defmodule DialecticWeb.PresentationComp do
         <%!-- Footer actions --%>
         <div class="px-3 py-3 border-t border-gray-200 space-y-2">
           <button
-            phx-click="start_presenting"
+            phx-click={
+              Phoenix.LiveView.JS.dispatch("toggle-panel",
+                to: "#graph-layout",
+                detail: %{id: "presentation-drawer"}
+              )
+              |> Phoenix.LiveView.JS.push("start_presenting")
+            }
             disabled={length(@slides) == 0}
             class={[
               "w-full inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-colors",

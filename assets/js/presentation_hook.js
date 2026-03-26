@@ -18,10 +18,35 @@ const PresentationHook = {
     };
 
     document.addEventListener("keydown", this.handleKeyDown);
+
+    // Hide the site header immediately when the presentation bar mounts
+    this._setSiteHeaderVisible(false);
+
+    // Listen for toggle events from the server
+    this.handleEvent("toggle_site_header", ({ visible }) => {
+      this._setSiteHeaderVisible(visible);
+    });
   },
 
   destroyed() {
     document.removeEventListener("keydown", this.handleKeyDown);
+    // Always restore the header when the presentation bar is removed
+    this._setSiteHeaderVisible(true);
+  },
+
+  /**
+   * Show or hide the root-layout site header (#userHeader).
+   * Uses a CSS class so the transition is smooth and reversible.
+   */
+  _setSiteHeaderVisible(visible) {
+    const header = document.getElementById("userHeader");
+    if (!header) return;
+
+    if (visible) {
+      header.style.display = "";
+    } else {
+      header.style.display = "none";
+    }
   },
 };
 
