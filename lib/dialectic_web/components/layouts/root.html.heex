@@ -120,17 +120,17 @@
           </.link>
           <%= if @current_user do %>
             <.link
-              href={~p"/my/ideas"}
+              href={~p"/u/#{@current_user.username}"}
               class={[
                 "inline-flex items-center gap-1 rounded-md px-2 py-1 font-medium transition",
-                if(active_path == "/my/ideas",
+                if(active_path == "/u/#{@current_user.username}",
                   do: "bg-white/20 text-white",
                   else: "text-white/70 hover:text-white hover:bg-white/10"
                 )
               ]}
             >
-              <.icon name="hero-light-bulb" class="h-3.5 w-3.5" />
-              <span class="hidden sm:inline">My Ideas</span>
+              <.icon name="hero-user-circle" class="h-3.5 w-3.5" />
+              <span class="hidden sm:inline">My Profile</span>
             </.link>
             <.link
               href={~p"/"}
@@ -139,6 +139,21 @@
               <.icon name="hero-plus" class="h-3.5 w-3.5" />
               <span class="hidden sm:inline">New</span>
             </.link>
+            <%= if @current_user.is_admin do %>
+              <.link
+                href={~p"/admin/curated"}
+                class={[
+                  "inline-flex items-center gap-1 rounded-md px-2 py-1 font-medium transition",
+                  if(active_path == "/admin/curated",
+                    do: "bg-white/20 text-white",
+                    else: "text-white/70 hover:text-white hover:bg-white/10"
+                  )
+                ]}
+              >
+                <.icon name="hero-star" class="h-3.5 w-3.5" />
+                <span class="hidden sm:inline">Curate</span>
+              </.link>
+            <% end %>
             <.link
               href={~p"/users/settings"}
               class={[

@@ -56,6 +56,7 @@ defmodule DialecticWeb.Utils.NodeTitleHelper do
     end
   end
 
+  # Support both atom-key maps (%{content: ...}) and string-key maps (%{"content" => ...})
   defp get_content(%{content: content}), do: content
   defp get_content(%{"content" => content}), do: content
   defp get_content(_), do: nil

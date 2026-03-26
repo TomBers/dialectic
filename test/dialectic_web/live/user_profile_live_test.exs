@@ -38,13 +38,13 @@ defmodule DialecticWeb.UserProfileLiveTest do
       assert html =~ "profiletest"
       assert html =~ "— Profile"
       assert html =~ "Member since"
-      assert html =~ "Graphs Created"
+      assert html =~ "Grids Created"
       assert html =~ "Ideas Explored"
       assert html =~ "Days Active"
       # Should not see edit link when not logged in
       refute html =~ "Edit Profile"
       # Should see "Graphs by" heading for other users
-      assert html =~ "Graphs by profiletest"
+      assert html =~ "Grids by profiletest"
     end
 
     test "renders bio when present", %{conn: conn} do
@@ -61,7 +61,7 @@ defmodule DialecticWeb.UserProfileLiveTest do
 
       {:ok, _lv, html} = live(conn, ~p"/u/emptygraphs")
 
-      assert html =~ "No public graphs yet."
+      assert html =~ "No public grids yet."
     end
 
     test "renders graphs when user has public graphs", %{conn: conn} do
@@ -104,7 +104,7 @@ defmodule DialecticWeb.UserProfileLiveTest do
 
       assert html =~ "Edit Profile"
       assert html =~ "edit-profile-link"
-      assert html =~ "Public Graphs"
+      assert html =~ "My Public Grids"
     end
 
     test "does not show 'Edit Profile' link when viewing another user's profile", %{conn: conn} do
@@ -117,7 +117,7 @@ defmodule DialecticWeb.UserProfileLiveTest do
         |> live(~p"/u/otheruser")
 
       refute html =~ "edit-profile-link"
-      assert html =~ "Graphs by otheruser"
+      assert html =~ "Grids by otheruser"
     end
 
     test "shows 'Create your first graph' only on own empty profile", %{conn: conn} do

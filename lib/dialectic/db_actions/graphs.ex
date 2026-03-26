@@ -305,4 +305,58 @@ defmodule Dialectic.DbActions.Graphs do
   defp generate_share_token do
     :crypto.strong_rand_bytes(16) |> Base.url_encode64(padding: false)
   end
+
+  @doc """
+  Lists curated grids for a given section, with the graph author info.
+  Sections: "curated", "featured"
+  """
+  def list_curated_grids(section, limit \\ 12) do
+    alias Dialectic.Accounts.CuratedGrid
+
+    from(cg in CuratedGrid,
+      where: cg.section == ^section,
+      join: g in Graph,
+      on: g.title == cg.graph_title,
+      left_join: author in Dialectic.Accounts.User,
+      on: author.id == g.user_id,
+      where: g.is_published == true,
+      where: g.is_public == true,
+      order_by: [asc: cg.position, desc: cg.inserted_at],
+      limit: ^limit,
+      select: %{
+        graph: g,
+        author_name: author.username,
+        note: cg.note,
+        section: cg.section
+      }
+    )
+    |> Repo.all()
+  end
+
+  @doc """
+  Adds a graph to a curated section.
+  """
+  def add_curated_grid(attrs) do
+    alias Dialectic.Accounts.CuratedGrid
+
+    %CuratedGrid{}
+    |> CuratedGrid.changeset(attrs)
+    |> Repo.insert(
+      on_conflict: {:replace, [:curator_id, :note, :position, :updated_at]},
+      conflict_target: [:graph_title, :section]
+    )
+  end
+
+  @doc """
+  Removes a graph from a curated section.
+  """
+  def remove_curated_grid(graph_title, section) do
+    alias Dialectic.Accounts.CuratedGrid
+
+    from(cg in CuratedGrid,
+      where: cg.graph_title == ^graph_title,
+      where: cg.section == ^section
+    )
+    |> Repo.delete_all()
+  end
 end

@@ -36,7 +36,9 @@ defmodule DialecticWeb.HomeLive do
        form: to_form(changeset),
        prompt_mode: prompt_mode,
        ask_question: true,
-       graph_id: nil
+       graph_id: nil,
+       curated_grids: [],
+       featured_grids: []
      )}
   end
 
@@ -49,6 +51,8 @@ defmodule DialecticWeb.HomeLive do
 
     graphs = fetch_graphs(search_term, tag, category, limit)
     popular_tags = Graphs.list_popular_tags()
+    curated_grids = Graphs.list_curated_grids("curated", 6)
+    featured_grids = Graphs.list_curated_grids("featured", 6)
 
     {:noreply,
      assign(socket,
@@ -57,6 +61,8 @@ defmodule DialecticWeb.HomeLive do
        active_category: category,
        graphs: graphs,
        popular_tags: popular_tags,
+       curated_grids: curated_grids,
+       featured_grids: featured_grids,
        page_title: page_title(search_term, tag, category)
      )}
   end
@@ -309,8 +315,36 @@ defmodule DialecticWeb.HomeLive do
                 </div>
               </div>
             </section>
+
+            <%!-- Curated & Featured Grids – 2-column on desktop --%>
+            <%= if @curated_grids != [] or @featured_grids != [] do %>
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
+                <%= if @curated_grids != [] do %>
+                  <.curated_grid_section
+                    items={@curated_grids}
+                    icon="hero-star"
+                    icon_class="text-amber-300"
+                    title="Curated Grids"
+                    description="Hand-picked grids showcasing great thinking and exploration."
+                    id_prefix="curated"
+                    author_label="by"
+                  />
+                <% end %>
+                <%= if @featured_grids != [] do %>
+                  <.curated_grid_section
+                    items={@featured_grids}
+                    icon="hero-users"
+                    icon_class="text-indigo-300"
+                    title="Featured by Partners"
+                    description="Grids curated by our invited partners and thought leaders."
+                    id_prefix="featured"
+                    author_label="by"
+                  />
+                <% end %>
+              </div>
+            <% end %>
             
-    <!-- Below: Existing ideas (full-width on desktop, uses available space) -->
+    <!-- Below: All ideas (full-width on desktop, uses available space) -->
             <section class="w-full" id="explore">
               <div class="rounded-2xl border border-white/15 bg-white/10 backdrop-blur-md shadow-xl">
                 <div class="p-4 sm:p-6">
@@ -326,7 +360,7 @@ defmodule DialecticWeb.HomeLive do
                         <% @search_term != "" -> %>
                           Search results for "{@search_term}"
                         <% true -> %>
-                          Existing Ideas
+                          All Ideas
                       <% end %>
                     </h2>
 
@@ -469,7 +503,7 @@ defmodule DialecticWeb.HomeLive do
                             }
                             is_live={true}
                             generating={MapSet.member?(@generating, g.title)}
-                            id={"graph-comp-#{g.slug || Integer.to_string(:erlang.phash2(g.title || ""))}"}
+                            id={"graph-comp-" <> (g.slug || "t-" <> Integer.to_string(:erlang.phash2(g.title || "")))}
                           />
                         </div>
                       <% end %>
@@ -482,6 +516,58 @@ defmodule DialecticWeb.HomeLive do
         </div>
       </div>
     </div>
+    """
+  end
+
+  defp curated_grid_section(assigns) do
+    ~H"""
+    <section class="w-full min-w-0">
+      <div class="rounded-2xl border border-white/15 bg-white/10 backdrop-blur-md shadow-xl h-full">
+        <div class="p-4 sm:p-6">
+          <div class="flex items-center gap-3 mb-4">
+            <.icon name={@icon} class={"w-6 h-6 " <> @icon_class} />
+            <h2 class="text-lg sm:text-2xl font-semibold tracking-tight text-white">
+              {@title}
+            </h2>
+          </div>
+          <p class="text-sm text-white/60 mb-5">
+            {@description}
+          </p>
+          <div class="space-y-4 sm:space-y-6">
+            <%= for item <- @items do %>
+              <div class="relative">
+                <DialecticWeb.PageHtml.GraphComp.render
+                  title={item.graph.title}
+                  is_public={item.graph.is_public}
+                  link={graph_path(item.graph)}
+                  count={0}
+                  tags={item.graph.tags}
+                  node_count={
+                    Enum.count(item.graph.data["nodes"] || [], fn n ->
+                      !Map.get(n, "compound", false)
+                    end)
+                  }
+                  is_live={false}
+                  generating={false}
+                  id={@id_prefix <> "-" <> (item.graph.slug || "t-" <> Integer.to_string(:erlang.phash2(item.graph.title || "")))}
+                />
+                <%= if item.author_name do %>
+                  <div class="mt-1 flex items-center gap-1.5 px-1">
+                    <.icon name="hero-user-circle" class="w-3.5 h-3.5 text-white/40" />
+                    <.link
+                      navigate={~p"/u/#{item.author_name}"}
+                      class="text-xs text-white/50 hover:text-white/80 transition-colors"
+                    >
+                      {if @author_label != "", do: @author_label <> " ", else: ""}{item.author_name}
+                    </.link>
+                  </div>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </section>
     """
   end
 
