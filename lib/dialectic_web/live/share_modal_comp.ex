@@ -4,30 +4,44 @@ defmodule DialecticWeb.ShareModalComp do
 
   @impl true
   def update(assigns, socket) do
-    assigns =
-      if assigns[:graph_struct] do
-        case Sharing.ensure_share_token(assigns.graph_struct) do
-          {:ok, graph} -> Map.put(assigns, :graph_struct, graph)
-          _ -> assigns
-        end
-      else
-        assigns
-      end
-
     socket = assign(socket, assigns)
 
-    shares =
-      if socket.assigns[:graph_struct] do
-        Sharing.list_shares(socket.assigns.graph_struct)
-      else
-        []
-      end
+    # Only run expensive DB queries (ensure_share_token, list_shares) when
+    # the modal is actually visible. Every parent re-render (e.g. node click)
+    # triggers update/2, so skipping the queries when the modal is hidden
+    # avoids unnecessary DB traffic.
+    if socket.assigns[:show] do
+      graph_struct = socket.assigns[:graph_struct]
 
-    {:ok,
-     socket
-     |> assign(:shares, shares)
-     |> assign(:email, "")
-     |> assign_new(:share_node, fn -> false end)}
+      {socket, graph_struct} =
+        if graph_struct do
+          case Sharing.ensure_share_token(graph_struct) do
+            {:ok, graph} -> {assign(socket, :graph_struct, graph), graph}
+            _ -> {socket, graph_struct}
+          end
+        else
+          {socket, graph_struct}
+        end
+
+      shares =
+        if graph_struct do
+          Sharing.list_shares(graph_struct)
+        else
+          []
+        end
+
+      {:ok,
+       socket
+       |> assign(:shares, shares)
+       |> assign(:email, "")
+       |> assign_new(:share_node, fn -> false end)}
+    else
+      {:ok,
+       socket
+       |> assign_new(:shares, fn -> [] end)
+       |> assign_new(:email, fn -> "" end)
+       |> assign_new(:share_node, fn -> false end)}
+    end
   end
 
   @impl true
