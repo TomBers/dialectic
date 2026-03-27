@@ -262,4 +262,267 @@ defmodule DialecticWeb.GraphLiveTest do
   #     refute state.assigns.edit
   #   end
   # end
+
+  describe "presentation mode" do
+    test "enter_presentation_setup transitions to :setup mode", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      render_click(view, "enter_presentation_setup", %{})
+      state = :sys.get_state(view.pid).socket.assigns
+
+      assert state.presentation_mode == :setup
+      assert state.presentation_slide_ids == []
+    end
+
+    test "close_presentation_setup hides drawer but keeps slide deck", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      # Enter setup and add a slide via node_clicked
+      render_click(view, "enter_presentation_setup", %{})
+      render_click(view, "node_clicked", %{"id" => "1"})
+      state = :sys.get_state(view.pid).socket.assigns
+      assert state.presentation_mode == :setup
+      assert "1" in state.presentation_slide_ids
+
+      # Close the setup drawer — slides should be preserved
+      render_click(view, "close_presentation_setup", %{})
+      state = :sys.get_state(view.pid).socket.assigns
+
+      assert state.presentation_mode == :off
+      assert "1" in state.presentation_slide_ids
+    end
+
+    test "exit_presentation without clear_slides keeps deck", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      render_click(view, "enter_presentation_setup", %{})
+      render_click(view, "node_clicked", %{"id" => "1"})
+
+      render_click(view, "exit_presentation", %{})
+      state = :sys.get_state(view.pid).socket.assigns
+
+      assert state.presentation_mode == :off
+      assert "1" in state.presentation_slide_ids
+    end
+
+    test "exit_presentation with clear_slides wipes deck", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      render_click(view, "enter_presentation_setup", %{})
+      render_click(view, "node_clicked", %{"id" => "1"})
+
+      render_click(view, "exit_presentation", %{"clear_slides" => "true"})
+      state = :sys.get_state(view.pid).socket.assigns
+
+      assert state.presentation_mode == :off
+      assert state.presentation_slide_ids == []
+    end
+
+    test "node_clicked in setup mode toggles slide IDs", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      render_click(view, "enter_presentation_setup", %{})
+
+      # Add node "1"
+      render_click(view, "node_clicked", %{"id" => "1"})
+      state = :sys.get_state(view.pid).socket.assigns
+      assert state.presentation_slide_ids == ["1"]
+
+      # Add node "2"
+      render_click(view, "node_clicked", %{"id" => "2"})
+      state = :sys.get_state(view.pid).socket.assigns
+      assert state.presentation_slide_ids == ["1", "2"]
+
+      # Toggle node "1" off
+      render_click(view, "node_clicked", %{"id" => "1"})
+      state = :sys.get_state(view.pid).socket.assigns
+      assert state.presentation_slide_ids == ["2"]
+    end
+
+    test "presentation_remove_slide removes the specified node", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      render_click(view, "enter_presentation_setup", %{})
+      render_click(view, "node_clicked", %{"id" => "1"})
+      render_click(view, "node_clicked", %{"id" => "2"})
+
+      render_click(view, "presentation_remove_slide", %{"node-id" => "1"})
+      state = :sys.get_state(view.pid).socket.assigns
+      assert state.presentation_slide_ids == ["2"]
+    end
+
+    test "presentation_clear_slides empties the deck", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      render_click(view, "enter_presentation_setup", %{})
+      render_click(view, "node_clicked", %{"id" => "1"})
+      render_click(view, "node_clicked", %{"id" => "2"})
+
+      render_click(view, "presentation_clear_slides", %{})
+      state = :sys.get_state(view.pid).socket.assigns
+      assert state.presentation_slide_ids == []
+    end
+
+    test "presentation_reorder sanitizes duplicates and unknown IDs", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      render_click(view, "enter_presentation_setup", %{})
+      render_click(view, "node_clicked", %{"id" => "1"})
+      render_click(view, "node_clicked", %{"id" => "2"})
+
+      # Reorder with duplicates and an unknown ID — should be sanitized
+      render_click(view, "presentation_reorder", %{
+        "order" => ["2", "1", "2", "unknown_id"]
+      })
+
+      state = :sys.get_state(view.pid).socket.assigns
+      assert state.presentation_slide_ids == ["2", "1"]
+    end
+
+    test "start_presenting transitions to :presenting mode", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      render_click(view, "enter_presentation_setup", %{})
+      render_click(view, "node_clicked", %{"id" => "1"})
+
+      render_click(view, "start_presenting", %{})
+      state = :sys.get_state(view.pid).socket.assigns
+
+      assert state.presentation_mode == :presenting
+      assert state.presentation_slide_ids == ["1"]
+    end
+
+    test "start_presenting with empty deck does not transition", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      render_click(view, "enter_presentation_setup", %{})
+      render_click(view, "start_presenting", %{})
+      state = :sys.get_state(view.pid).socket.assigns
+
+      assert state.presentation_mode == :setup
+    end
+
+    test "update_presentation_title sets the title", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      render_click(view, "enter_presentation_setup", %{})
+
+      render_click(view, "update_presentation_title", %{
+        "title" => "What if people talked to plants?"
+      })
+
+      state = :sys.get_state(view.pid).socket.assigns
+
+      assert state.presentation_title == "What if people talked to plants?"
+    end
+
+    test "update_presentation_title truncates at 120 characters", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      long_title = String.duplicate("a", 200)
+      render_click(view, "update_presentation_title", %{"title" => long_title})
+      state = :sys.get_state(view.pid).socket.assigns
+
+      assert String.length(state.presentation_title) == 120
+    end
+
+    test "presentation_clear_slides also resets the title", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      render_click(view, "enter_presentation_setup", %{})
+      render_click(view, "node_clicked", %{"id" => "1"})
+      render_click(view, "update_presentation_title", %{"title" => "My Presentation"})
+
+      render_click(view, "presentation_clear_slides", %{})
+      state = :sys.get_state(view.pid).socket.assigns
+
+      assert state.presentation_slide_ids == []
+      assert state.presentation_title == ""
+    end
+
+    test "title persists through start_presenting", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      render_click(view, "enter_presentation_setup", %{})
+      render_click(view, "node_clicked", %{"id" => "1"})
+      render_click(view, "update_presentation_title", %{"title" => "My Talk"})
+      render_click(view, "start_presenting", %{})
+      state = :sys.get_state(view.pid).socket.assigns
+
+      assert state.presentation_mode == :presenting
+      assert state.presentation_title == "My Talk"
+    end
+
+    test "restore_presentation sets title and filters invalid node IDs", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      # The Satre fixture has no real graph nodes, so all IDs will be
+      # filtered out by the find_node validation — but the title should
+      # still be set.
+      render_click(view, "restore_presentation", %{
+        "slide_ids" => ["1", "nonexistent_xyz"],
+        "title" => "Restored Talk"
+      })
+
+      state = :sys.get_state(view.pid).socket.assigns
+      # All IDs invalid for this graph → filtered to empty
+      assert state.presentation_slide_ids == []
+      # Title is still restored even when no valid slides remain
+      assert state.presentation_title == "Restored Talk"
+    end
+
+    test "restore_presentation does not overwrite existing slides", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      # Add a slide via setup mode (node_clicked adds the ID without
+      # requiring the node to exist in the graph)
+      render_click(view, "enter_presentation_setup", %{})
+      render_click(view, "node_clicked", %{"id" => "1"})
+
+      # Now try to restore — should be ignored because slides already exist
+      render_click(view, "restore_presentation", %{
+        "slide_ids" => ["2"],
+        "title" => "Should be ignored"
+      })
+
+      state = :sys.get_state(view.pid).socket.assigns
+      assert state.presentation_slide_ids == ["1"]
+      # Title is auto-populated with graph title when entering setup
+      assert state.presentation_title == @graph_id
+    end
+
+    test "restore_presentation handles malformed params gracefully", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      # Missing fields — should not crash
+      render_click(view, "restore_presentation", %{})
+      state = :sys.get_state(view.pid).socket.assigns
+
+      assert state.presentation_slide_ids == []
+      assert state.presentation_title == ""
+    end
+
+    test "graph_owner_name is assigned on mount", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+      state = :sys.get_state(view.pid).socket.assigns
+
+      # The graph fixture has a user_id, so owner name should be resolved
+      assert is_binary(state.graph_owner_name) or is_nil(state.graph_owner_name)
+    end
+
+    test "exit_presentation with clear_slides also resets title", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      render_click(view, "enter_presentation_setup", %{})
+      render_click(view, "node_clicked", %{"id" => "1"})
+      render_click(view, "update_presentation_title", %{"title" => "Will be cleared"})
+
+      render_click(view, "exit_presentation", %{"clear_slides" => "true"})
+      state = :sys.get_state(view.pid).socket.assigns
+
+      assert state.presentation_mode == :off
+      assert state.presentation_slide_ids == []
+      assert state.presentation_title == ""
+    end
+  end
 end

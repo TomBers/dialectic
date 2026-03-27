@@ -263,6 +263,18 @@ export function graphStyle(viewMode = "spaced") {
     },
     { selector: ".hidden", style: { display: "none" } },
     { selector: ".depth-hidden", style: { display: "none" } },
+    { selector: ".presentation-hidden", style: { display: "none" } },
+    {
+      selector: ".presentation-hidden-parent",
+      style: {
+        "background-opacity": 0,
+        "border-width": 0,
+        "border-opacity": 0,
+        "text-opacity": 0,
+        "underlay-opacity": 0,
+        padding: "4px",
+      },
+    },
 
     /* Visual indicator for nodes whose children are collapsed */
     {
@@ -457,6 +469,23 @@ export function graphStyle(viewMode = "spaced") {
     style: {
       opacity: 0.7,
       "transition-property": "opacity",
+      "transition-duration": "200ms",
+      "transition-timing-function": "ease-in-out-quad",
+    },
+  });
+
+  /* ── Presentation mode: purple glow on nodes in the slide deck ── */
+  base_style.push({
+    selector: "node.presentation-slide",
+    style: {
+      "underlay-color": "#a855f7", // purple-500
+      "underlay-opacity": 0.18,
+      "underlay-padding": isCompact ? 10 : 14,
+      "underlay-shape": "roundrectangle",
+      "border-width": isCompact ? 3 : 4,
+      "border-color": "#a855f7",
+      "border-style": "solid",
+      "transition-property": "underlay-opacity, border-width, border-color",
       "transition-duration": "200ms",
       "transition-timing-function": "ease-in-out-quad",
     },

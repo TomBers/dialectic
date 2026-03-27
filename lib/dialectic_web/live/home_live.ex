@@ -586,8 +586,7 @@ defmodule DialecticWeb.HomeLive do
         |> Enum.map(&{&1, 0})
 
       true ->
-        Dialectic.DbActions.Graphs.all_graphs_with_notes(search_term)
-        |> Enum.take(limit)
+        Dialectic.DbActions.Graphs.all_graphs_with_notes(search_term, limit: limit)
     end
   end
 

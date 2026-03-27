@@ -1,8 +1,96 @@
 <div
   id="graph-layout"
   phx-hook="GraphLayout"
-  class="h-[calc(100vh-2.5rem)] overflow-hidden flex flex-col relative"
+  class={[
+    "overflow-hidden flex flex-col relative",
+    if(@presentation_mode == :presenting, do: "h-screen", else: "h-[calc(100vh-2.5rem)]")
+  ]}
+  data-graph-id={@graph_id}
+  data-presenting={@presentation_mode == :presenting}
 >
+  <%!-- Presentation: title bar + exit controls when presenting --%>
+  <%= if @presentation_mode == :presenting do %>
+    <div
+      id="presentation-exit-bar"
+      phx-hook="Presentation"
+      class="absolute top-0 left-0 right-0 z-[100] flex items-center justify-between px-4 h-9 bg-gray-900/90 backdrop-blur-sm border-b border-gray-700/50 shadow-lg"
+    >
+      <%!-- Left: slide count --%>
+      <span class="text-xs font-medium text-gray-400 shrink-0">
+        <span class="text-white font-semibold">{length(@presentation_slide_ids)}</span>
+        {if length(@presentation_slide_ids) == 1, do: "node", else: "nodes"}
+      </span>
+
+      <%!-- Center: presentation title --%>
+      <div class="flex-1 text-center px-4">
+        <h1 class="text-sm sm:text-base font-semibold text-white truncate">
+          {@presentation_title}
+        </h1>
+      </div>
+
+      <%!-- Right: share + exit buttons --%>
+      <div class="flex items-center gap-2 shrink-0">
+        <button
+          phx-click="open_share_modal"
+          class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-gray-300 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-full border border-gray-600 transition-colors"
+          title="Share this presentation"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-3.5 h-3.5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+            />
+          </svg>
+          Share
+        </button>
+        <button
+          phx-click="exit_presentation"
+          class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-gray-300 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-full border border-gray-600 transition-colors"
+          title="Exit presentation and show all nodes (Esc)"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-3.5 h-3.5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          Exit
+        </button>
+      </div>
+    </div>
+
+    <%!-- Bottom: credit footer --%>
+    <div class="absolute bottom-0 left-0 right-0 z-[100] flex items-center justify-center px-4 py-2 bg-gray-900/80 backdrop-blur-sm border-t border-gray-700/40">
+      <span class="text-xs text-gray-400">
+        Created by
+        <span class="text-gray-200 font-medium">
+          {@graph_owner_name || "Anonymous"}
+        </span>
+        using
+        <a
+          href="https://rationalgrid.ai"
+          target="_blank"
+          rel="noopener"
+          class="text-indigo-400 hover:text-indigo-300 font-semibold transition-colors"
+        >
+          rationalgrid.ai
+        </a>
+      </span>
+    </div>
+  <% end %>
+
   <%!-- Mobile: Auto-redirect to linear view --%>
   <div
     id="mobile-redirect"
@@ -42,6 +130,9 @@
     graph_struct={@graph_struct}
     current_user={@current_user}
     selected_node={@node}
+    presentation_mode={@presentation_mode}
+    presentation_slide_ids={@presentation_slide_ids}
+    presentation_title={@presentation_title}
   />
 
   <.login_required_modal id="login-modal" show={@show_login_modal} />
@@ -70,7 +161,21 @@
   />
 
   <%= if @graph_id do %>
-    <!-- Top section (Right panel becomes slide-in drawer) -->
+    <!-- Presentation Drawer (Right panel style, same as other panels) -->
+    <div
+      id="presentation-drawer"
+      class="fixed top-10 bottom-0 right-0 w-0 overflow-hidden bg-white border-l border-gray-200 z-50 transform translate-x-full opacity-0 transition-all duration-300 ease-in-out"
+    >
+      <.live_component
+        module={DialecticWeb.PresentationComp}
+        id="presentation-setup"
+        mode={if @presentation_mode in [:setup, :presenting], do: :setup, else: :off}
+        slides={presentation_slides(assigns)}
+        presentation_title={@presentation_title}
+      />
+    </div>
+    
+<!-- Top section (Right panel becomes slide-in drawer) -->
     <div
       id="right-panel"
       class="fixed top-10 bottom-0 right-0 w-0 overflow-hidden bg-white border-l border-gray-200 z-50 transform translate-x-full opacity-0 transition-all duration-300 ease-in-out"
@@ -179,7 +284,7 @@
       class="fixed bottom-0 left-0 md:relative w-full p-4 md:p-0 md:w-2/5 flex flex-col bg-white md:border-r md:border-gray-200 z-90 transform translate-x-0 opacity-100 transition-all duration-300 ease-in-out"
     >
       <div id="side-drawer-scroll" class="flex-1 overflow-y-auto" phx-hook="ScrollReset">
-        <%= if @graph_id do %>
+        <%= if @graph_id && @presentation_mode != :presenting do %>
           <.live_component module={DialecticWeb.WhatsNextComp} id="whats-next-onboarding" />
         <% end %>
         <.live_component
@@ -372,8 +477,9 @@
       </button>
     <% end %>
     
-<!-- Bottom menu toggle -->
+<!-- Bottom menu toggle (hidden during presentation) -->
     <div
+      :if={@presentation_mode != :presenting}
       id="bottom-menu-handle"
       class="hidden fixed bottom-0 z-30 px-1 pb-3 pointer-events-none shift-with-panel transition-[right] duration-300 ease-in-out left-0 right-0 md:left-[40%]"
       style="padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem);"
@@ -409,8 +515,9 @@
       </div>
     </div>
     
-<!-- Chat input bar -->
+<!-- Chat input bar (hidden during presentation) -->
     <div
+      :if={@presentation_mode != :presenting}
       id="bottom-menu"
       class="fixed bottom-0 z-30 transform origin-bottom scale-100 opacity-100 visible transition-all duration-200 ease-out px-1 pb-3 pointer-events-none shift-with-panel transition-[right] duration-300 ease-in-out left-0 right-0 md:left-[40%]"
       style="padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem);"

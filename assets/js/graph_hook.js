@@ -829,11 +829,446 @@ const graphHook = {
       } catch (_e) {}
     });
 
+    // Reposition presentation badges when the viewport changes
+    if (this.cy) {
+      if (!this._onCyPanZoom) {
+        this._onCyPanZoom = () => {
+          if (
+            this._presentationIds &&
+            this._presentationIds.length > 0 &&
+            !this._panZoomPending
+          ) {
+            this._panZoomPending = true;
+            requestAnimationFrame(() => {
+              this._panZoomPending = false;
+              this._renderPresentationBadges();
+            });
+          }
+        };
+      }
+      // Avoid duplicate bindings if this code runs multiple times
+      this.cy.off("pan zoom", this._onCyPanZoom);
+      this.cy.on("pan zoom", this._onCyPanZoom);
+    }
+
     this.handleEvent("clear_search_highlights", () => {
       if (!this.cy) return;
       try {
         this.cy.elements().removeClass("search-match search-dimmed");
       } catch (_e) {}
+    });
+
+    // ── Presentation mode: highlight nodes in the slide deck ──
+    this.handleEvent("presentation_highlight_slides", ({ ids }) => {
+      if (!this.cy) return;
+      try {
+        // Remove previous presentation markers
+        this.cy.nodes().removeClass("presentation-slide");
+        this.cy.nodes().forEach((n) => n.removeData("presIndex"));
+
+        // Remove old badge overlays
+        if (this._badgeElements) {
+          this._badgeElements.forEach((el) => el.remove());
+          this._badgeElements.clear();
+        }
+
+        if (!ids || ids.length === 0) return;
+
+        // Store the ordered list so we can render badges after layout
+        this._presentationIds = ids;
+
+        ids.forEach((id, idx) => {
+          const n = this.cy.getElementById(id);
+          if (n && n.length > 0) {
+            n.addClass("presentation-slide");
+            n.data("presIndex", idx + 1);
+          }
+        });
+
+        // Render numbered badge overlays positioned on each node
+        this._renderPresentationBadges();
+      } catch (_e) {}
+    });
+
+    this.handleEvent("presentation_clear_slides", () => {
+      if (!this.cy) return;
+      try {
+        this.cy.nodes().removeClass("presentation-slide");
+        this.cy.nodes().forEach((n) => n.removeData("presIndex"));
+        this._presentationIds = null;
+        if (this._badgeElements) {
+          this._badgeElements.forEach((el) => el.remove());
+          this._badgeElements.clear();
+        }
+      } catch (_e) {}
+    });
+
+    // ── Presentation filter: hide all nodes NOT in the selected set ──
+    this.handleEvent("presentation_filter_graph", ({ ids }) => {
+      if (!this.cy) return;
+
+      const applyFilter = () => {
+        try {
+          this._presentationIds = ids;
+          this._presentationFiltered = true;
+          this._applyPresentationFilter();
+
+          // Re-layout only the visible nodes so they spread out and fill the screen
+          this._layoutRunning = true;
+          layoutGraph(this.cy, {}, () => {
+            this._layoutRunning = false;
+            try {
+              this.cy.style().update();
+            } catch (_e) {}
+            // After layout, fit viewport to the visible nodes
+            const visibleNodes = this.cy
+              .nodes()
+              .not(".presentation-hidden")
+              .not(".presentation-hidden-parent");
+            if (visibleNodes.length > 0) {
+              this.cy.animate({
+                fit: { eles: visibleNodes, padding: 60 },
+                duration: 400,
+                easing: "ease-in-out-quad",
+                complete: () => {
+                  const { dx, dy } = this._getOverlayOffsets();
+                  if (dx !== 0 || dy !== 0) {
+                    this.cy.animate({
+                      panBy: { x: dx, y: dy },
+                      duration: 200,
+                      easing: "ease-in-out-quad",
+                    });
+                  }
+                },
+              });
+            }
+          });
+        } catch (_e) {}
+      };
+
+      // If the initial layout is still running (e.g. shared presentation link
+      // where handle_params fires right after mount), defer the filter until
+      // layout finishes so nodes are properly positioned first.
+      if (this._layoutRunning) {
+        this.cy.one("layoutstop", () => applyFilter());
+      } else {
+        applyFilter();
+      }
+    });
+
+    // ── Presentation unfilter: restore all hidden nodes and edges ──
+    this.handleEvent("presentation_unfilter_graph", () => {
+      if (!this.cy) return;
+      try {
+        this.cy.startBatch();
+        this.cy.elements().removeClass("presentation-hidden");
+        this.cy.elements().removeClass("presentation-hidden-parent");
+        this.cy.nodes().removeClass("presentation-slide");
+        this.cy.nodes().forEach((n) => n.removeData("presIndex"));
+        this.cy.endBatch();
+
+        this._presentationFiltered = false;
+        this._presentationIds = null;
+
+        // Remove badge overlays
+        if (this._badgeElements) {
+          this._badgeElements.forEach((el) => el.remove());
+          this._badgeElements.clear();
+        }
+
+        // Re-layout to restore original positions, then fit
+        this._layoutRunning = true;
+        layoutGraph(this.cy, {}, () => {
+          this._layoutRunning = false;
+          try {
+            this.cy.style().update();
+          } catch (_e) {}
+          if (this.cy.nodes().length > 0) {
+            this.cy.animate({
+              fit: { eles: this.cy.nodes(), padding: 40 },
+              duration: 400,
+              easing: "ease-in-out-quad",
+              complete: () => {
+                const { dx, dy } = this._getOverlayOffsets();
+                if (dx !== 0 || dy !== 0) {
+                  this.cy.animate({
+                    panBy: { x: dx, y: dy },
+                    duration: 200,
+                    easing: "ease-in-out-quad",
+                  });
+                }
+              },
+            });
+          }
+        });
+      } catch (_e) {}
+    });
+
+    // ── Copy to clipboard: used by "Copy link" in presentation bar ──
+    this.handleEvent("copy_to_clipboard", ({ text }) => {
+      const onSuccess = () => this._showCopiedToast();
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard
+          .writeText(text)
+          .then(onSuccess)
+          .catch(() => {
+            this._fallbackCopy(text);
+            onSuccess();
+          });
+      } else {
+        this._fallbackCopy(text);
+        onSuccess();
+      }
+    });
+  },
+
+  /**
+   * Show a brief "Copied to clipboard!" toast near the top of the screen.
+   */
+  _showCopiedToast() {
+    const toast = document.createElement("div");
+    toast.textContent = "Copied to clipboard!";
+    Object.assign(toast.style, {
+      position: "fixed",
+      top: "56px",
+      left: "50%",
+      transform: "translateX(-50%)",
+      background: "#1f2937",
+      color: "#fff",
+      padding: "8px 16px",
+      borderRadius: "8px",
+      fontSize: "13px",
+      fontWeight: "500",
+      zIndex: "10000",
+      opacity: "0",
+      transition: "opacity 0.2s ease",
+      pointerEvents: "none",
+    });
+    document.body.appendChild(toast);
+    // Trigger fade-in on next frame
+    requestAnimationFrame(() => {
+      toast.style.opacity = "1";
+    });
+    setTimeout(() => {
+      toast.style.opacity = "0";
+      setTimeout(() => toast.remove(), 200);
+    }, 2000);
+  },
+
+  /**
+   * Fallback copy for browsers / contexts where navigator.clipboard is unavailable.
+   */
+  _fallbackCopy(text) {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      document.execCommand("copy");
+    } catch (_e) {
+      /* best-effort */
+    }
+    document.body.removeChild(ta);
+  },
+
+  /**
+   * Compute pan offsets to compensate for right-panel and bottom-menu overlays.
+   * Returns { dx, dy } suitable for passing to cy.animate({ panBy: … }).
+   */
+  _getOverlayOffsets() {
+    const container = this._container || this.el;
+    const cRect = container.getBoundingClientRect();
+    let dx = 0;
+    let dy = 0;
+
+    // Right panel compensation
+    const panelIds = ["right-panel", "graph-nav-drawer", "highlights-drawer"];
+    let rightPanelWidth = 0;
+    panelIds.forEach((id) => {
+      const p = document.getElementById(id);
+      if (p) {
+        const pr = p.getBoundingClientRect();
+        if (pr && pr.width > 10 && pr.left < window.innerWidth) {
+          if (pr.width > rightPanelWidth) rightPanelWidth = pr.width;
+        }
+      }
+    });
+    if (rightPanelWidth > 0) dx = -(rightPanelWidth / 2);
+
+    // Bottom menu compensation
+    const bottomMenu = document.getElementById("bottom-menu");
+    if (bottomMenu) {
+      const bmRect = bottomMenu.getBoundingClientRect();
+      const bmVisible =
+        bmRect.height > 0 &&
+        !bottomMenu.classList.contains("invisible") &&
+        !bottomMenu.classList.contains("opacity-0");
+      if (bmVisible) {
+        const overlap = Math.max(0, cRect.bottom - bmRect.top);
+        if (overlap > 0) dy = -(overlap / 2);
+      }
+    }
+
+    return { dx, dy };
+  },
+
+  /**
+   * Applies the presentation filter: hides nodes not in the selected set,
+   * preserves compound parents of visible nodes, and hides orphaned edges.
+   * Called both from the initial filter event and after cy.json() reloads.
+   */
+  _applyPresentationFilter() {
+    if (!this.cy || !this._presentationIds) return;
+    const ids = this._presentationIds;
+    const idSet = new Set(ids);
+
+    // First, ensure selected nodes are not stuck in depth-hidden or
+    // collapsed-group states — otherwise they'll remain invisible even
+    // after we remove presentation-hidden.
+    let needsReflow = false;
+    ids.forEach((id) => {
+      const n = this.cy.getElementById(id);
+      if (!n || n.length === 0) return;
+
+      if (
+        n.hasClass("depth-hidden") &&
+        typeof this.cy.ensureDepthVisible === "function"
+      ) {
+        this.cy.ensureDepthVisible(id);
+        needsReflow = true;
+      }
+      if (
+        n.hasClass("hidden") &&
+        typeof this.cy.ensureGroupVisible === "function"
+      ) {
+        if (this.cy.ensureGroupVisible(id)) {
+          needsReflow = true;
+        }
+      }
+    });
+
+    // Collect compound parents of every selected node so we
+    // don't accidentally hide a parent that contains visible children.
+    const keepParentIds = new Set();
+    ids.forEach((id) => {
+      const n = this.cy.getElementById(id);
+      if (n && n.length > 0) {
+        let p = n.parent();
+        while (p && p.length > 0) {
+          keepParentIds.add(p.id());
+          p = p.parent();
+        }
+      }
+    });
+
+    this.cy.startBatch();
+
+    this.cy.nodes().forEach((n) => {
+      if (idSet.has(n.id())) {
+        n.removeClass("presentation-hidden");
+        n.removeClass("presentation-hidden-parent");
+        n.addClass("presentation-slide");
+      } else if (n.data("compound") || keepParentIds.has(n.id())) {
+        // Compound group that contains a visible child — keep it
+        // structurally present (so children render) but visually hidden
+        // (no border, no background, no label).
+        n.removeClass("presentation-hidden");
+        n.removeClass("presentation-slide");
+        n.addClass("presentation-hidden-parent");
+      } else {
+        n.addClass("presentation-hidden");
+        n.removeClass("presentation-slide");
+        n.removeClass("presentation-hidden-parent");
+      }
+    });
+
+    this.cy.edges().forEach((e) => {
+      const srcVisible =
+        idSet.has(e.source().id()) || keepParentIds.has(e.source().id());
+      const tgtVisible =
+        idSet.has(e.target().id()) || keepParentIds.has(e.target().id());
+      if (srcVisible && tgtVisible) {
+        e.removeClass("presentation-hidden");
+      } else {
+        e.addClass("presentation-hidden");
+      }
+    });
+
+    this.cy.endBatch();
+
+    this._renderPresentationBadges();
+
+    // If we expanded any collapsed/depth-hidden nodes, run a reflow
+    // so the revealed nodes get proper positions.
+    if (needsReflow) {
+      layoutGraph(this.cy, {}, () => {
+        try {
+          this.cy.style().update();
+        } catch (_e) {}
+      });
+    }
+  },
+
+  _renderPresentationBadges() {
+    if (!this.cy || !this._presentationIds) return;
+    const container = this._container || this.el;
+
+    if (!this._badgeElements) {
+      this._badgeElements = new Map();
+    }
+
+    // Track which ids are currently active so we can remove stale ones
+    const activeIds = new Set(this._presentationIds);
+
+    // Remove stale badges (ids no longer in _presentationIds)
+    for (const [id, el] of this._badgeElements) {
+      if (!activeIds.has(id)) {
+        el.remove();
+        this._badgeElements.delete(id);
+      }
+    }
+
+    this._presentationIds.forEach((id, idx) => {
+      const n = this.cy.getElementById(id);
+      if (!n || n.length === 0) return;
+
+      const bb = n.renderedBoundingBox({ includeLabels: false });
+
+      let badge = this._badgeElements.get(id);
+      if (badge) {
+        // Reuse existing badge – only update position and text
+        badge.style.top = `${bb.y1 - 8}px`;
+        badge.style.left = `${bb.x2 - 8}px`;
+        badge.textContent = String(idx + 1);
+      } else {
+        // Create a new badge element
+        badge = document.createElement("div");
+        badge.className = "pres-badge-overlay";
+        badge.textContent = String(idx + 1);
+        badge.style.cssText = `
+          position: absolute;
+          top: ${bb.y1 - 8}px;
+          left: ${bb.x2 - 8}px;
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background: #a855f7;
+          color: white;
+          font-size: 10px;
+          font-weight: 700;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          pointer-events: none;
+          z-index: 10;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+          line-height: 1;
+        `;
+        container.appendChild(badge);
+        this._badgeElements.set(id, badge);
+      }
     });
   },
 
@@ -876,6 +1311,19 @@ const graphHook = {
     // Re-bind all event handlers and update state
     if (this._updateExploredStatus) this._updateExploredStatus();
     if (this._bindPngButtons) this._bindPngButtons();
+
+    // Re-bind presentation badge tracking on the new cy instance
+    if (this.cy && this._onCyPanZoom) {
+      this.cy.off("pan zoom", this._onCyPanZoom);
+      this.cy.on("pan zoom", this._onCyPanZoom);
+    }
+
+    // Re-apply presentation filter if it was active
+    if (this._presentationFiltered && this._presentationIds) {
+      try {
+        this._applyPresentationFilter();
+      } catch (_e) {}
+    }
 
     // Highlight the selected node
     if (this.cy && currentNode) {
@@ -1016,6 +1464,13 @@ const graphHook = {
           this.cy.restoreDepthCollapseState(savedDepthState);
         } catch (_e) {}
       }
+    }
+
+    // Re-apply presentation filter after element reload so hidden nodes stay hidden
+    if (!sameGraph && this._presentationFiltered && this._presentationIds) {
+      try {
+        this._applyPresentationFilter();
+      } catch (_e) {}
     }
 
     if (this._updateExploredStatus) this._updateExploredStatus();
@@ -1221,6 +1676,22 @@ const graphHook = {
       this._zoomToast.parentNode.removeChild(this._zoomToast);
       this._zoomToast = null;
     }
+    // Clean up presentation badge overlays and pan/zoom listener
+    if (this.cy && this._onCyPanZoom) {
+      try {
+        this.cy.off("pan zoom", this._onCyPanZoom);
+      } catch (_e) {}
+      this._onCyPanZoom = null;
+    }
+    try {
+      if (this._badgeElements) {
+        this._badgeElements.forEach((el) => el.remove());
+        this._badgeElements.clear();
+      }
+    } catch (_e) {}
+    this._presentationIds = null;
+    this._presentationFiltered = false;
+
     // Clean up depth-toggle overlay buttons
     if (this.cy && typeof this.cy.cleanupDepthOverlay === "function") {
       try {

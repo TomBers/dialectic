@@ -10,7 +10,8 @@ defmodule DialecticWeb.Utils.NodeTitleHelper do
   and truncates to a reasonable length.
 
   ## Parameters
-    - node: A map with `:content` key (string) and optionally `:id` key
+    - node: A map with `:content` or `"content"` key (string) and optionally `:id` or `"id"` key.
+            Supports both atom-keyed structs and string-keyed maps (e.g. from JSON).
     - opts: Keyword list of options
       - `:max_length` - Maximum characters before truncation (default: 80)
 

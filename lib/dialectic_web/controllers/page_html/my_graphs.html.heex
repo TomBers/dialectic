@@ -71,7 +71,7 @@
                     count={g.noted_count}
                     tags={g.tags}
                     node_count={g.node_count}
-                    id={"my-graph-comp-#{g.title}"}
+                    id={"my-graph-comp-#{g.slug || Integer.to_string(:erlang.phash2(g.title || ""))}"}
                   />
                 <% end %>
               <% end %>
