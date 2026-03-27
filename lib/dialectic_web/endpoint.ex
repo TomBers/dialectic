@@ -70,6 +70,9 @@ defmodule DialecticWeb.Endpoint do
     |> Plug.Conn.put_resp_header("x-content-type-options", "nosniff")
     |> Plug.Conn.put_resp_header("x-xss-protection", "1; mode=block")
     |> Plug.Conn.put_resp_header("referrer-policy", "strict-origin-when-cross-origin")
-    |> Plug.Conn.put_resp_header("permissions-policy", "geolocation=(), microphone=(), camera=()")
+    |> Plug.Conn.put_resp_header(
+      "permissions-policy",
+      "geolocation=(), microphone=(self), camera=()"
+    )
   end
 end

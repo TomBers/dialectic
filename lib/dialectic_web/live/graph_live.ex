@@ -806,6 +806,35 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, assign(socket, show_login_modal: false)}
   end
 
+  # ── Voice audio transcription ────────────────────────────────────────
+  # Receives base64-encoded audio from the VoiceRecord JS hook,
+  # transcribes it via Gemini's audio understanding API, then either
+  # populates the chat input (for the user to review) or feeds it
+  # directly into the ask-and-answer flow.
+  def handle_event("voice_audio", %{"audio" => audio_b64, "mime_type" => mime_type}, socket) do
+    if not socket.assigns.can_edit do
+      {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    else
+      # Push a processing indicator to the client immediately
+      socket = push_event(socket, "voice_processing", %{})
+
+      # Run transcription asynchronously so we don't block the LiveView process
+      parent = self()
+
+      Task.start(fn ->
+        case Dialectic.LLM.VoiceTranscriber.transcribe(audio_b64, mime_type) do
+          {:ok, text} ->
+            send(parent, {:voice_transcription_result, {:ok, text}})
+
+          {:error, reason} ->
+            send(parent, {:voice_transcription_result, {:error, reason}})
+        end
+      end)
+
+      {:noreply, socket}
+    end
+  end
+
   def handle_event("open_start_stream_modal", _params, socket) do
     {:noreply, assign(socket, show_start_stream_modal: true)}
   end
@@ -1036,6 +1065,26 @@ defmodule DialecticWeb.GraphLive do
   defp maybe_clear_presentation(socket, _params), do: socket
 
   # Handle selection action messages from SelectionActionsComp
+  # ── Voice transcription result (async callback) ──────────────────────
+  def handle_info({:voice_transcription_result, {:ok, text}}, socket) do
+    # Push the transcribed text to the client to fill the chat input
+    {:noreply, push_event(socket, "voice_transcription", %{text: text})}
+  end
+
+  def handle_info({:voice_transcription_result, {:error, reason}}, socket) do
+    message =
+      case reason do
+        :missing_api_key -> "Google API key not configured"
+        :empty_transcription -> "No speech detected — try again"
+        :no_candidates -> "Could not transcribe audio"
+        {:api_error, status, msg} -> "Transcription error (#{status}): #{msg}"
+        {:request_failed, _} -> "Network error during transcription"
+        _ -> "Transcription failed — please try again"
+      end
+
+    {:noreply, push_event(socket, "voice_error", %{message: message})}
+  end
+
   def handle_info({:selection_action, params}, socket) do
     case GraphHelpers.check_selection_action_allowed(socket) do
       {:error, :locked} ->

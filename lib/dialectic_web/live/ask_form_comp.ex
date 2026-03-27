@@ -82,58 +82,98 @@ defmodule DialecticWeb.AskFormComp do
           />
         </button>
       <% end %>
-      <.form
-        for={@form}
-        phx-submit={@submit_event || "reply-and-answer"}
-        id={@id}
-        class="w-full min-w-0"
-      >
-        <div class="flex items-center gap-2 w-full">
-          <%!-- Input Field --%>
-          <div class="relative min-w-0 flex-1 overflow-hidden rounded-3xl shadow-sm transition-all focus-within:shadow-md">
-            <textarea
-              name={@form[:content].name}
-              id={@input_id}
-              rows="1"
-              placeholder={@placeholder}
-              phx-hook="AutoExpandTextarea"
-              class="box-border w-full h-[3rem] min-h-[3rem] overflow-hidden rounded-3xl pl-4 pr-[8.5rem] py-2 text-base border border-gray-300 focus:border-indigo-500 focus:ring-0 focus:outline-none bg-white resize-none"
-            >{Phoenix.HTML.Form.normalize_value("text", @form[:content].value)}</textarea>
+      <div class="flex items-start gap-1.5 w-full">
+        <%!-- Voice Record Button — outside the form so phx-hook pushEvent targets the parent LiveView --%>
+        <button
+          type="button"
+          id={"voice-record-#{@id}"}
+          phx-hook="VoiceRecord"
+          data-voice-state="idle"
+          aria-label="Record voice question"
+          title="Record voice question"
+          class="flex-shrink-0 flex items-center justify-center w-[3rem] h-[3rem] rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-indigo-600 border border-gray-300 transition-all cursor-pointer"
+        >
+          <span data-voice-icon>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="w-5 h-5"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100 0h-3v-2.07z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </span>
+        </button>
+        <.form
+          for={@form}
+          phx-submit={@submit_event || "reply-and-answer"}
+          id={@id}
+          class="min-w-0 flex-1"
+        >
+          <div class="flex items-center w-full">
+            <%!-- Input Field --%>
+            <div class="relative min-w-0 flex-1 overflow-hidden rounded-3xl shadow-sm transition-all focus-within:shadow-md">
+              <textarea
+                name={@form[:content].name}
+                id={@input_id}
+                rows="1"
+                placeholder={@placeholder}
+                phx-hook="AutoExpandTextarea"
+                class="box-border w-full h-[3rem] min-h-[3rem] overflow-hidden rounded-3xl pl-4 pr-[8.5rem] py-2 text-base border border-gray-300 focus:border-indigo-500 focus:ring-0 focus:outline-none bg-white resize-none"
+              >{Phoenix.HTML.Form.normalize_value("text", @form[:content].value)}</textarea>
 
-            <%!-- Two submit buttons inside the input --%>
-            <div class="absolute right-1.5 top-1.5 flex items-center gap-1">
-              <%!-- Post button — adds submit_action=post to form params --%>
-              <button
-                type="submit"
-                name="submit_action"
-                value="post"
-                class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm leading-none px-3 h-9 rounded-full font-medium transition-all hover:shadow-sm"
-                title="Post your comment — no AI response"
-              >
-                Post
-              </button>
-              <%!-- Ask button — default submit (no name, so no submit_action param) --%>
-              <button
-                type="submit"
-                class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm leading-none px-3.5 h-9 rounded-full font-medium shadow-sm transition-all hover:shadow-md"
-                title="Ask and get an AI-generated response"
-              >
-                Ask
-              </button>
+              <%!-- Two submit buttons inside the input --%>
+              <div class="absolute right-1.5 top-1.5 flex items-center gap-1">
+                <%!-- Post button — adds submit_action=post to form params --%>
+                <button
+                  type="submit"
+                  name="submit_action"
+                  value="post"
+                  class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm leading-none px-3 h-9 rounded-full font-medium transition-all hover:shadow-sm"
+                  title="Post your comment — no AI response"
+                >
+                  Post
+                </button>
+                <%!-- Ask button — default submit (no name, so no submit_action param) --%>
+                <button
+                  type="submit"
+                  class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm leading-none px-3.5 h-9 rounded-full font-medium shadow-sm transition-all hover:shadow-md"
+                  title="Ask and get an AI-generated response"
+                >
+                  Ask
+                </button>
+              </div>
             </div>
           </div>
-        </div>
 
-        <%!-- Explanatory text below form --%>
-        <%= if @show_hint do %>
-          <div class="text-[11px] text-gray-500 text-center mt-1.5">
-            <span class="font-medium text-indigo-600">Ask</span>
-            gets an AI <span class="font-medium">{String.capitalize(@prompt_mode)}</span>
-            level response • <span class="font-medium text-gray-600">Post</span>
-            adds your comment directly
-          </div>
-        <% end %>
-      </.form>
+          <%!-- Explanatory text below form --%>
+          <%= if @show_hint do %>
+            <div class="text-[11px] text-gray-500 text-center mt-1.5">
+              <span class="font-medium text-indigo-600">Ask</span>
+              gets an AI <span class="font-medium">{String.capitalize(@prompt_mode)}</span>
+              level response • <span class="font-medium text-gray-600">Post</span>
+              adds your comment directly •
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="inline w-3 h-3 text-gray-400 -mt-0.5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100 0h-3v-2.07z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              voice input
+            </div>
+          <% end %>
+        </.form>
+      </div>
     </div>
     """
   end
