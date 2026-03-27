@@ -68,13 +68,16 @@ defmodule DialecticWeb.ActionToolbarComp do
     }
   end
 
+  @action_btn "inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm ring-1 ring-inset ring-black/10 rounded-md transition-all hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+
   @impl true
   def update(assigns, socket) do
     {:ok,
      socket
      |> assign(assigns)
      |> assign_new(:inline, fn -> false end)
-     |> assign_new(:icons_only, fn -> false end)}
+     |> assign_new(:icons_only, fn -> false end)
+     |> assign(:action_btn, @action_btn)}
   end
 
   @impl true
@@ -118,15 +121,17 @@ defmodule DialecticWeb.ActionToolbarComp do
 
         <% noted? = Enum.any?(Map.get(@node || %{}, :noted_by, []), fn u -> u == @user end) %>
 
+        <%!-- ═══════════════════════════════════════════════════════════════ --%>
+        <%!-- Reading Tools Group                                           --%>
+        <%!-- ═══════════════════════════════════════════════════════════════ --%>
         <span class="contents" data-role="reading-tools-group">
           <button
             type="button"
             class={[
-              "inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm ring-1 ring-inset ring-black/10 rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed",
+              "#{@action_btn}",
               if(noted?,
-                do: "bg-yellow-400 text-gray-900 hover:bg-yellow-500 hover:shadow-md",
-                else:
-                  "bg-gray-100 text-gray-700 hover:bg-yellow-400 hover:text-gray-900 hover:shadow-md"
+                do: "bg-yellow-400 text-gray-900 hover:bg-yellow-500",
+                else: "bg-gray-100 text-gray-700 hover:bg-yellow-400 hover:text-gray-900"
               )
             ]}
             phx-click={if noted?, do: "unnote", else: "note"}
@@ -178,7 +183,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                   if(assigns[:token], do: [token: assigns[:token]], else: [])
                 )
               }
-              class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm ring-1 ring-inset ring-black/10 bg-gray-700 text-white rounded-md transition-all hover:bg-gray-800 hover:shadow-md"
+              class={"#{@action_btn} bg-gray-700 text-white hover:bg-gray-800"}
               title="Open linear view"
               data-role="reader-view"
             >
@@ -205,7 +210,7 @@ defmodule DialecticWeb.ActionToolbarComp do
           <% else %>
             <button
               type="button"
-              class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm ring-1 ring-inset ring-black/10 rounded-md transition-colors opacity-50 cursor-not-allowed bg-gray-300 text-gray-500"
+              class={"#{@action_btn} opacity-50 cursor-not-allowed bg-gray-300 text-gray-500"}
               disabled
               title="Open reader"
             >
@@ -233,7 +238,7 @@ defmodule DialecticWeb.ActionToolbarComp do
 
           <button
             type="button"
-            class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm ring-1 ring-inset ring-black/10 bg-indigo-500 text-white rounded-md transition-all hover:bg-indigo-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            class={"#{@action_btn} bg-indigo-500 text-white hover:bg-indigo-600"}
             phx-click="open_share_modal"
             disabled={is_nil(@graph_id)}
             title="Share graph"
@@ -262,11 +267,14 @@ defmodule DialecticWeb.ActionToolbarComp do
 
         <div class="toolbar-divider h-8 w-0.5 bg-gray-400 rounded-full flex-none"></div>
 
+        <%!-- ═══════════════════════════════════════════════════════════════ --%>
+        <%!-- Original Action Tools                                         --%>
+        <%!-- ═══════════════════════════════════════════════════════════════ --%>
         <% info = delete_info(assigns) %>
         <span class="contents" data-role="action-buttons-group">
           <button
             type="button"
-            class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm ring-1 ring-inset ring-black/10 bg-orange-500 text-white rounded-md transition-all hover:bg-orange-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            class={"#{@action_btn} bg-orange-500 text-white hover:bg-orange-600"}
             phx-click="node_related_ideas"
             phx-value-id={@node && @node.id}
             disabled={is_nil(@graph_id)}
@@ -296,7 +304,7 @@ defmodule DialecticWeb.ActionToolbarComp do
 
           <button
             type="button"
-            class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm ring-1 ring-inset ring-black/10 text-white rounded-md transition-all bg-gradient-to-r from-emerald-500 to-rose-500 hover:from-emerald-600 hover:to-rose-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            class={"#{@action_btn} text-white bg-gradient-to-r from-emerald-500 to-rose-500 hover:from-emerald-600 hover:to-rose-600"}
             phx-click="node_branch"
             phx-value-id={@node && @node.id}
             disabled={is_nil(@graph_id)}
@@ -325,7 +333,7 @@ defmodule DialecticWeb.ActionToolbarComp do
 
           <button
             type="button"
-            class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm ring-1 ring-inset ring-black/10 bg-violet-500 text-white rounded-md transition-all hover:bg-violet-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            class={"#{@action_btn} bg-violet-500 text-white hover:bg-violet-600"}
             phx-click="node_combine"
             phx-value-id={@node && @node.id}
             disabled={is_nil(@graph_id)}
@@ -353,36 +361,8 @@ defmodule DialecticWeb.ActionToolbarComp do
           </button>
 
           <button
-            id="explore-all-points"
             type="button"
-            disabled={is_nil(@graph_id)}
-            class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm ring-1 ring-inset ring-black/10 text-white rounded-md transition-all bg-gradient-to-r from-fuchsia-500 via-rose-500 to-amber-500 hover:from-fuchsia-600 hover:via-rose-600 hover:to-amber-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Explore all points"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-4 w-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z"
-              />
-            </svg>
-            <span :if={!@icons_only} class="toolbar-label text-[10px] leading-tight font-medium">
-              Explore
-            </span>
-          </button>
-
-          <button
-            type="button"
-            class="hidden inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm ring-1 ring-inset ring-black/10 bg-cyan-500 text-white rounded-md transition-all hover:bg-cyan-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            class={"#{@action_btn} hidden bg-cyan-500 text-white hover:bg-cyan-600"}
             phx-click="node_deepdive"
             phx-value-id={@node && @node.id}
             disabled={is_nil(@graph_id)}
@@ -406,7 +386,333 @@ defmodule DialecticWeb.ActionToolbarComp do
               Deep Dive
             </span>
           </button>
+        </span>
 
+        <div class="toolbar-divider h-8 w-0.5 bg-gray-400 rounded-full flex-none"></div>
+
+        <%!-- ═══════════════════════════════════════════════════════════════ --%>
+        <%!-- Cluster 1 — Core Inquiry Moves                               --%>
+        <%!-- Clarify → Assume → Test → So What → Gaps                     --%>
+        <%!-- ═══════════════════════════════════════════════════════════════ --%>
+        <span class="contents" data-role="inquiry-core-group">
+          <%!-- Clarify — "What do you mean by…?" --%>
+          <button
+            type="button"
+            class={"#{@action_btn} bg-teal-500 text-white hover:bg-teal-600"}
+            phx-click="node_clarify"
+            phx-value-id={@node && @node.id}
+            disabled={is_nil(@graph_id)}
+            title="What do you mean by…? — Conceptual clarification"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            <span :if={!@icons_only} class="toolbar-label text-[10px] leading-tight font-medium">
+              Clarify
+            </span>
+          </button>
+
+          <%!-- Assume — "What has to be true?" --%>
+          <button
+            type="button"
+            class={"#{@action_btn} bg-amber-500 text-white hover:bg-amber-600"}
+            phx-click="node_assumptions"
+            phx-value-id={@node && @node.id}
+            disabled={is_nil(@graph_id)}
+            title="What has to be true? — Surface hidden assumptions"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M12 2L2 7l10 5 10-5-10-5z" />
+              <path d="M2 17l10 5 10-5" />
+              <path d="M2 12l10 5 10-5" />
+            </svg>
+            <span :if={!@icons_only} class="toolbar-label text-[10px] leading-tight font-medium">
+              Assume
+            </span>
+          </button>
+
+          <%!-- Test — "Is that always true?" --%>
+          <button
+            type="button"
+            class={"#{@action_btn} bg-red-500 text-white hover:bg-red-600"}
+            phx-click="node_counterexample"
+            phx-value-id={@node && @node.id}
+            disabled={is_nil(@graph_id)}
+            title="Is that always true? — Find counterexamples"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M18 6L6 18" />
+              <path d="M6 6l12 12" />
+            </svg>
+            <span :if={!@icons_only} class="toolbar-label text-[10px] leading-tight font-medium">
+              Test
+            </span>
+          </button>
+
+          <%!-- So What — Trace consequences --%>
+          <button
+            type="button"
+            class={"#{@action_btn} bg-indigo-500 text-white hover:bg-indigo-600"}
+            phx-click="node_implications"
+            phx-value-id={@node && @node.id}
+            disabled={is_nil(@graph_id)}
+            title="So what? — Trace the consequences"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="5" y1="12" x2="19" y2="12" />
+              <polyline points="12 5 19 12 12 19" />
+            </svg>
+            <span :if={!@icons_only} class="toolbar-label text-[10px] leading-tight font-medium">
+              So What
+            </span>
+          </button>
+
+          <%!-- Gaps — "What's missing?" --%>
+          <button
+            type="button"
+            class={"#{@action_btn} bg-purple-500 text-white hover:bg-purple-600"}
+            phx-click="node_blind_spots"
+            phx-value-id={@node && @node.id}
+            disabled={is_nil(@graph_id)}
+            title="What's missing? — Detect blind spots"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+              <line x1="1" y1="1" x2="23" y2="23" />
+            </svg>
+            <span :if={!@icons_only} class="toolbar-label text-[10px] leading-tight font-medium">
+              Gaps
+            </span>
+          </button>
+        </span>
+
+        <div class="toolbar-divider h-8 w-0.5 bg-gray-400 rounded-full flex-none"></div>
+
+        <%!-- ═══════════════════════════════════════════════════════════════ --%>
+        <%!-- Cluster 2 — Context & Dialectical Expansion                   --%>
+        <%!-- Source → Disagree → Analogy → Steel Man → What If             --%>
+        <%!-- ═══════════════════════════════════════════════════════════════ --%>
+        <span class="contents" data-role="inquiry-context-group">
+          <%!-- Source — "Says who?" --%>
+          <button
+            type="button"
+            class={"#{@action_btn} bg-sky-500 text-white hover:bg-sky-600"}
+            phx-click="node_says_who"
+            phx-value-id={@node && @node.id}
+            disabled={is_nil(@graph_id)}
+            title="Says who? — Check sources and authority"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+            </svg>
+            <span :if={!@icons_only} class="toolbar-label text-[10px] leading-tight font-medium">
+              Source
+            </span>
+          </button>
+
+          <%!-- Disagree — "Who would disagree?" --%>
+          <button
+            type="button"
+            class={"#{@action_btn} bg-rose-500 text-white hover:bg-rose-600"}
+            phx-click="node_who_disagrees"
+            phx-value-id={@node && @node.id}
+            disabled={is_nil(@graph_id)}
+            title="Who would disagree? — Challenge from other perspectives"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+            <span :if={!@icons_only} class="toolbar-label text-[10px] leading-tight font-medium">
+              Disagree
+            </span>
+          </button>
+
+          <%!-- Analogy — "What is this like?" --%>
+          <button
+            type="button"
+            class={"#{@action_btn} bg-emerald-500 text-white hover:bg-emerald-600"}
+            phx-click="node_analogy"
+            phx-value-id={@node && @node.id}
+            disabled={is_nil(@graph_id)}
+            title="What is this like? — Find illuminating analogies"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="6" cy="6" r="3" />
+              <circle cx="18" cy="18" r="3" />
+              <path d="M8.12 8.12L15.88 15.88" />
+            </svg>
+            <span :if={!@icons_only} class="toolbar-label text-[10px] leading-tight font-medium">
+              Analogy
+            </span>
+          </button>
+
+          <%!-- Steel Man — charitable reconstruction --%>
+          <button
+            type="button"
+            class={"#{@action_btn} bg-yellow-500 text-white hover:bg-yellow-600"}
+            phx-click="node_steel_man"
+            phx-value-id={@node && @node.id}
+            disabled={is_nil(@graph_id)}
+            title="Steel man this — Strongest opposing argument"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+            <span :if={!@icons_only} class="toolbar-label text-[10px] leading-tight font-medium">
+              Steel Man
+            </span>
+          </button>
+
+          <%!-- What If — thought experiments --%>
+          <button
+            type="button"
+            class={"#{@action_btn} bg-fuchsia-500 text-white hover:bg-fuchsia-600"}
+            phx-click="node_what_if"
+            phx-value-id={@node && @node.id}
+            disabled={is_nil(@graph_id)}
+            title="What if…? — Thought experiments and scenarios"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+            </svg>
+            <span :if={!@icons_only} class="toolbar-label text-[10px] leading-tight font-medium">
+              What If
+            </span>
+          </button>
+        </span>
+
+        <div class="toolbar-divider h-8 w-0.5 bg-gray-400 rounded-full flex-none"></div>
+
+        <%!-- ═══════════════════════════════════════════════════════════════ --%>
+        <%!-- Cluster 3 — Clarity + Delete                                  --%>
+        <%!-- ═══════════════════════════════════════════════════════════════ --%>
+        <span class="contents" data-role="inquiry-clarity-group">
+          <%!-- Simplify — "Rewrite for a 10-year-old" --%>
+          <button
+            type="button"
+            class={"#{@action_btn} bg-orange-400 text-white hover:bg-orange-500"}
+            phx-click="node_simplify"
+            phx-value-id={@node && @node.id}
+            disabled={is_nil(@graph_id)}
+            title="Rewrite for a 10-year-old — Clarity test"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+              <line x1="9" y1="9" x2="9.01" y2="9" />
+              <line x1="15" y1="9" x2="15.01" y2="9" />
+            </svg>
+            <span :if={!@icons_only} class="toolbar-label text-[10px] leading-tight font-medium">
+              Simplify
+            </span>
+          </button>
+
+          <%!-- Delete node --%>
           <button
             id={"delete-node-#{@graph_id}-#{@node && @node.id}"}
             type="button"
@@ -419,8 +725,8 @@ defmodule DialecticWeb.ActionToolbarComp do
             aria-disabled={not info.deletable}
             data-disabled={not info.deletable}
             class={[
-              "inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm ring-1 ring-inset ring-black/10 rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed",
-              info.deletable && "bg-red-500 text-white hover:bg-red-600 hover:shadow-md",
+              @action_btn,
+              info.deletable && "bg-red-500 text-white hover:bg-red-600",
               !info.deletable && "bg-gray-200 text-gray-400 cursor-not-allowed"
             ]}
             title={info.title}
@@ -445,6 +751,9 @@ defmodule DialecticWeb.ActionToolbarComp do
 
         <div class="toolbar-divider h-8 w-0.5 bg-gray-400 rounded-full flex-none"></div>
 
+        <%!-- ═══════════════════════════════════════════════════════════════ --%>
+        <%!-- Settings Group                                                --%>
+        <%!-- ═══════════════════════════════════════════════════════════════ --%>
         <span class="contents" data-role="settings-buttons-group">
           <button
             type="button"
@@ -474,7 +783,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                 detail: %{id: "graph-nav-drawer"}
               )
             }
-            class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm ring-1 ring-inset ring-black/10 bg-sky-500 text-white rounded-md transition-all hover:bg-sky-600 hover:shadow-md"
+            class={"#{@action_btn} bg-sky-500 text-white hover:bg-sky-600"}
             data-panel-toggle="graph-nav-drawer"
             aria-label="Toggle view options"
             title="View Options"
@@ -492,7 +801,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                 detail: %{id: "highlights-drawer"}
               )
             }
-            class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm ring-1 ring-inset ring-black/10 bg-amber-500 text-white rounded-md transition-all hover:bg-amber-600 hover:shadow-md"
+            class={"#{@action_btn} bg-amber-500 text-white hover:bg-amber-600"}
             data-panel-toggle="highlights-drawer"
             aria-label="Toggle highlights"
             title="Highlights"
@@ -510,7 +819,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                 detail: %{id: "right-panel"}
               )
             }
-            class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm ring-1 ring-inset ring-black/10 bg-gray-600 text-white rounded-md transition-all hover:bg-gray-700 hover:shadow-md"
+            class={"#{@action_btn} bg-gray-600 text-white hover:bg-gray-700"}
             data-panel-toggle="right-panel"
             aria-label="Toggle settings"
             title="Settings"
