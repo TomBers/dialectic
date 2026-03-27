@@ -345,7 +345,14 @@ const graphHook = {
     );
 
     // Layout/centering coordination state
-    this._layoutRunning = false;
+    // The initial cy.layout().run() in draw_graph is already in flight by this
+    // point, so start as true. A one-shot layoutstop listener flips it back
+    // once the initial layout finishes. This ensures that deferred operations
+    // (e.g. presentation_filter_graph from a shared link) wait correctly.
+    this._layoutRunning = true;
+    this.cy.one("layoutstop", () => {
+      this._layoutRunning = false;
+    });
     this._pendingCenterId = null;
     this._centerOnNodeVisible = (id) => {
       try {
