@@ -654,6 +654,25 @@ defmodule Dialectic.AccountsTest do
       assert is_binary(username)
       assert String.starts_with?(username, "user-")
     end
+
+    test "skips reserved usernames and appends a suffix" do
+      # "admin" is reserved, so generating from "admin@example.com"
+      # should never return the bare "admin" base name
+      username = Accounts.generate_unique_username("admin@example.com")
+      assert username != "admin"
+      assert String.starts_with?(username, "admin-")
+    end
+
+    test "skips reserved usernames for other reserved words" do
+      for reserved <- ~w(settings support system login) do
+        username = Accounts.generate_unique_username("#{reserved}@example.com")
+
+        assert username != reserved,
+               "expected generate_unique_username to skip reserved name #{inspect(reserved)}"
+
+        assert String.starts_with?(username, "#{reserved}-")
+      end
+    end
   end
 
   describe "auto-assigned username at registration" do
@@ -788,6 +807,35 @@ defmodule Dialectic.AccountsTest do
                Accounts.update_user_profile(user, %{username: "test22", theme: "neon"})
 
       assert "is invalid" in errors_on(changeset).theme
+    end
+
+    test "rejects reserved usernames" do
+      user = user_fixture()
+
+      for name <- ~w(admin settings support system users login) do
+        assert {:error, changeset} = Accounts.update_user_profile(user, %{username: name}),
+               "expected reserved username #{inspect(name)} to be rejected"
+
+        assert "is reserved and cannot be used" in errors_on(changeset).username
+      end
+    end
+
+    test "rejects reserved usernames case-insensitively" do
+      user = user_fixture()
+
+      for name <- ~w(Admin ADMIN Settings SYSTEM) do
+        assert {:error, changeset} = Accounts.update_user_profile(user, %{username: name}),
+               "expected reserved username #{inspect(name)} to be rejected"
+
+        assert "is reserved and cannot be used" in errors_on(changeset).username
+      end
+    end
+
+    test "allows non-reserved usernames" do
+      user = user_fixture()
+
+      assert {:ok, updated} = Accounts.update_user_profile(user, %{username: "tom42"})
+      assert updated.username == "tom42"
     end
   end
 

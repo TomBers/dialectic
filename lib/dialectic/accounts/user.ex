@@ -4,6 +4,27 @@ defmodule Dialectic.Accounts.User do
 
   @valid_themes ~w(default indigo violet emerald amber rose)
 
+  # Usernames that could conflict with existing or future routes,
+  # be used for social engineering, or cause confusion.
+  @reserved_usernames ~w(
+    admin administrator
+    api auth
+    contact
+    dashboard dev
+    graph graphs
+    health help home
+    info inspiration intro
+    login logout
+    mail mailbox moderator mod
+    null
+    official
+    profile
+    root
+    search security settings sitemap support system
+    undefined user users
+    webmaster www
+  )
+
   schema "users" do
     field :email, :string
     field :password, :string, virtual: true, redact: true
@@ -265,6 +286,7 @@ defmodule Dialectic.Accounts.User do
     |> validate_format(:username, ~r/^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$|^[a-zA-Z0-9]{2}$/,
       message: "must be alphanumeric with optional hyphens, cannot start or end with a hyphen"
     )
+    |> validate_reserved_username()
     |> validate_length(:bio, max: 500)
     |> validate_length(:gravatar_id, max: 100)
     |> validate_format(:gravatar_id, ~r/^[a-z0-9]+$/,
@@ -273,6 +295,23 @@ defmodule Dialectic.Accounts.User do
     |> validate_inclusion(:theme, @valid_themes)
     |> unsafe_validate_unique(:username, Dialectic.Repo)
     |> unique_constraint(:username)
+  end
+
+  @doc """
+  Returns the list of reserved usernames that cannot be claimed by users.
+  """
+  def reserved_usernames, do: @reserved_usernames
+
+  defp validate_reserved_username(changeset) do
+    validate_change(changeset, :username, fn :username, username ->
+      cond do
+        is_binary(username) and String.downcase(username) in @reserved_usernames ->
+          [username: "is reserved and cannot be used"]
+
+        true ->
+          []
+      end
+    end)
   end
 
   # Normalizes a blank string change to nil so optional fields don't

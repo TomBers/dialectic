@@ -421,7 +421,8 @@ defmodule Dialectic.Accounts do
   def generate_unique_username(_), do: do_generate_unique_username("user", 0)
 
   defp do_generate_unique_username(base, 0) do
-    if get_user_by_username(base) == nil do
+    if get_user_by_username(base) == nil and
+         String.downcase(base) not in User.reserved_usernames() do
       base
     else
       do_generate_unique_username(base, 1)
@@ -439,7 +440,8 @@ defmodule Dialectic.Accounts do
     truncated = String.slice(base, 0, max_base)
     candidate = "#{truncated}-#{suffix}"
 
-    if get_user_by_username(candidate) == nil do
+    if get_user_by_username(candidate) == nil and
+         String.downcase(candidate) not in User.reserved_usernames() do
       candidate
     else
       do_generate_unique_username(base, attempt + 1)
