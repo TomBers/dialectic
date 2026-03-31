@@ -20,6 +20,16 @@ user
 |> Dialectic.Repo.update()
 '''
 
+# Find the new owner
+new_owner = Dialectic.Repo.get_by(Dialectic.Accounts.User, email: "new_owner@email.com")
+
+# Find the graph by title (title is the primary key)
+graph = Dialectic.Repo.get(Dialectic.Accounts.Graph, "Your Graph Title")
+
+# Update the owner
+graph |> Ecto.Changeset.change(%{user_id: new_owner.id}) |> Dialectic.Repo.update()
+
+
 Set model on Prod
 
 fly secrets set LLM_PROVIDER=gemini
