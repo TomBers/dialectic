@@ -313,6 +313,29 @@ defmodule DialecticWeb.LinearGraphLive do
     {:noreply, assign(socket, show_login_modal: false)}
   end
 
+  # ── Voice audio transcription ────────────────────────────────────────
+  def handle_event("voice_audio", %{"audio" => audio_b64, "mime_type" => mime_type}, socket) do
+    if not socket.assigns.can_edit do
+      {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    else
+      socket = push_event(socket, "voice_processing", %{})
+
+      parent = self()
+
+      Task.start(fn ->
+        case Dialectic.LLM.VoiceTranscriber.transcribe(audio_b64, mime_type) do
+          {:ok, text} ->
+            send(parent, {:voice_transcription_result, {:ok, text}})
+
+          {:error, reason} ->
+            send(parent, {:voice_transcription_result, {:error, reason}})
+        end
+      end)
+
+      {:noreply, socket}
+    end
+  end
+
   # ── Existing Read-Only Events ──────────────────────────────────────────
 
   def handle_event(
@@ -516,6 +539,25 @@ defmodule DialecticWeb.LinearGraphLive do
   end
 
   # Highlight PubSub (:created, :updated, :deleted) injected by GraphStreaming
+
+  # ── Voice transcription result (async callback) ──────────────────────
+  def handle_info({:voice_transcription_result, {:ok, text}}, socket) do
+    {:noreply, push_event(socket, "voice_transcription", %{text: text})}
+  end
+
+  def handle_info({:voice_transcription_result, {:error, reason}}, socket) do
+    message =
+      case reason do
+        :missing_api_key -> "Google API key not configured"
+        :empty_transcription -> "No speech detected — try again"
+        :no_candidates -> "Could not transcribe audio"
+        {:api_error, status, msg} -> "Transcription error (#{status}): #{msg}"
+        {:request_failed, _} -> "Network error during transcription"
+        _ -> "Transcription failed — please try again"
+      end
+
+    {:noreply, push_event(socket, "voice_error", %{message: message})}
+  end
 
   # Catch-all for any unhandled PubSub messages (e.g. Presence)
   def handle_info(_msg, socket) do
