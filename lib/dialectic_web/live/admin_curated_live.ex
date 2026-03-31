@@ -171,7 +171,7 @@ defmodule DialecticWeb.AdminCuratedLive do
 
           <%= if @search_results != [] do %>
             <div class="border border-gray-200 rounded-lg divide-y divide-gray-100 max-h-64 overflow-y-auto">
-              <%= for {g, _count} <- @search_results do %>
+              <%= for {g, _count, _author} <- @search_results do %>
                 <div class="flex items-center justify-between p-3 hover:bg-gray-50">
                   <div>
                     <p class="text-sm font-medium text-gray-900">{g.title}</p>

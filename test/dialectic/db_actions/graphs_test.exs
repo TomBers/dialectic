@@ -174,18 +174,18 @@ defmodule Dialectic.DbActions.GraphsTest do
 
       # 1) No search term: should include only published graphs and counts should be 0
       results = Graphs.all_graphs_with_notes("")
-      result_titles = Enum.map(results, fn {g, _count} -> g.title end)
+      result_titles = Enum.map(results, fn {g, _count, _author} -> g.title end)
 
       assert g1.title in result_titles
       assert g2.title in result_titles
       refute unpub_title in result_titles
 
-      Enum.each(results, fn {_g, count} -> assert count == 0 end)
+      Enum.each(results, fn {_g, count, _author} -> assert count == 0 end)
 
       # 2) Search term matches only one of the published graphs
       only_one =
         Graphs.all_graphs_with_notes("pub-one")
-        |> Enum.map(fn {g, c} -> {g.title, c} end)
+        |> Enum.map(fn {g, c, _author} -> {g.title, c} end)
 
       assert only_one == [{pub_title1, 0}]
     end
@@ -200,7 +200,7 @@ defmodule Dialectic.DbActions.GraphsTest do
       insert_graph_with_nodes!(private_title, is_public: false)
 
       results = Graphs.all_graphs_with_notes("")
-      result_titles = Enum.map(results, fn {g, _count} -> g.title end)
+      result_titles = Enum.map(results, fn {g, _count, _author} -> g.title end)
 
       assert public_title in result_titles
       refute private_title in result_titles

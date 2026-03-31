@@ -136,9 +136,11 @@ defmodule Dialectic.DbActions.Graphs do
             ^@min_node_count
           ),
         left_join: n in assoc(g, :notes),
-        group_by: g.title,
+        left_join: author in Dialectic.Accounts.User,
+        on: author.id == g.user_id,
+        group_by: [g.title, author.username],
         order_by: [desc: g.inserted_at],
-        select: {g, count(n.id)}
+        select: {g, count(n.id), author.username}
 
     query =
       if limit do
@@ -156,8 +158,11 @@ defmodule Dialectic.DbActions.Graphs do
         where: g.is_published == true,
         where: g.is_public == true,
         where: fragment("jsonb_array_length(?->'nodes') < ?", g.data, 5),
+        left_join: author in Dialectic.Accounts.User,
+        on: author.id == g.user_id,
         order_by: [desc: g.inserted_at],
-        limit: ^limit
+        limit: ^limit,
+        select: {g, author.username}
 
     Repo.all(query)
   end
@@ -168,8 +173,11 @@ defmodule Dialectic.DbActions.Graphs do
         where: g.is_published == true,
         where: g.is_public == true,
         where: fragment("jsonb_array_length(?->'nodes') > ?", g.data, 20),
+        left_join: author in Dialectic.Accounts.User,
+        on: author.id == g.user_id,
         order_by: [desc: g.updated_at],
-        limit: ^limit
+        limit: ^limit,
+        select: {g, author.username}
 
     Repo.all(query)
   end
@@ -197,8 +205,11 @@ defmodule Dialectic.DbActions.Graphs do
         where: g.is_published == true,
         where: g.is_public == true,
         where: ^tag in g.tags,
+        left_join: author in Dialectic.Accounts.User,
+        on: author.id == g.user_id,
         order_by: [desc: g.updated_at],
-        limit: ^limit
+        limit: ^limit,
+        select: {g, author.username}
 
     Repo.all(query)
   end

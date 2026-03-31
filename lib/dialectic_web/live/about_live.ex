@@ -599,6 +599,110 @@ defmodule DialecticWeb.AboutLive do
       </div>
     </section>
 
+    <%!-- How It's Built --%>
+    <section class="bg-slate-50 py-20">
+      <div class="mx-auto max-w-5xl px-6">
+        <div class="text-center mb-14">
+          <span class="inline-flex items-center rounded-full bg-indigo-100 px-3 py-1 text-xs font-bold text-indigo-700 mb-4">
+            <.icon name="hero-wrench-screwdriver" class="w-3.5 h-3.5 mr-1" /> Under the Hood
+          </span>
+          <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+            How It's Built
+          </h2>
+          <p class="text-gray-500 max-w-2xl mx-auto">
+            RationalGrid is built with modern, battle-tested technologies chosen for real-time collaboration, performance, and reliability.
+          </p>
+        </div>
+
+        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div class="rounded-2xl bg-white p-6 ring-1 ring-gray-100 shadow-sm hover:shadow-md transition">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">
+                <.icon name="hero-code-bracket" class="w-5 h-5 text-purple-600" />
+              </div>
+              <h3 class="font-bold text-gray-900">Elixir</h3>
+            </div>
+            <p class="text-sm text-gray-600 leading-relaxed">
+              A functional programming language built on the Erlang VM, designed for building scalable, fault-tolerant, concurrent applications.
+            </p>
+          </div>
+
+          <div class="rounded-2xl bg-white p-6 ring-1 ring-gray-100 shadow-sm hover:shadow-md transition">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100">
+                <.icon name="hero-bolt" class="w-5 h-5 text-orange-600" />
+              </div>
+              <h3 class="font-bold text-gray-900">Phoenix LiveView</h3>
+            </div>
+            <p class="text-sm text-gray-600 leading-relaxed">
+              Real-time, server-rendered interactive UIs without writing custom JavaScript. Powers the collaborative graph editing experience over WebSockets.
+            </p>
+          </div>
+
+          <div class="rounded-2xl bg-white p-6 ring-1 ring-gray-100 shadow-sm hover:shadow-md transition">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
+                <.icon name="hero-circle-stack" class="w-5 h-5 text-blue-600" />
+              </div>
+              <h3 class="font-bold text-gray-900">PostgreSQL</h3>
+            </div>
+            <p class="text-sm text-gray-600 leading-relaxed">
+              A robust, open-source relational database. Stores graphs as JSONB documents for flexible, schema-less node and edge data with full SQL querying.
+            </p>
+          </div>
+
+          <div class="rounded-2xl bg-white p-6 ring-1 ring-gray-100 shadow-sm hover:shadow-md transition">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-teal-100">
+                <.icon name="hero-share" class="w-5 h-5 text-teal-600" />
+              </div>
+              <h3 class="font-bold text-gray-900">Cytoscape.js</h3>
+            </div>
+            <p class="text-sm text-gray-600 leading-relaxed">
+              An open-source graph visualisation library that renders the interactive knowledge grid — handling layout, navigation, and node interactions in the browser.
+            </p>
+          </div>
+
+          <div class="rounded-2xl bg-white p-6 ring-1 ring-gray-100 shadow-sm hover:shadow-md transition">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-100">
+                <.icon name="hero-paint-brush" class="w-5 h-5 text-sky-600" />
+              </div>
+              <h3 class="font-bold text-gray-900">Tailwind CSS</h3>
+            </div>
+            <p class="text-sm text-gray-600 leading-relaxed">
+              A utility-first CSS framework for rapidly building custom user interfaces without leaving the markup.
+            </p>
+          </div>
+
+          <div class="rounded-2xl bg-white p-6 ring-1 ring-gray-100 shadow-sm hover:shadow-md transition">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-100">
+                <.icon name="hero-sparkles" class="w-5 h-5 text-violet-600" />
+              </div>
+              <h3 class="font-bold text-gray-900">OpenAI</h3>
+            </div>
+            <p class="text-sm text-gray-600 leading-relaxed">
+              AI models generate branching responses, summaries, pros and cons, and comparative analysis — turning questions into rich knowledge maps.
+            </p>
+          </div>
+        </div>
+
+        <div class="mt-10 text-center">
+          <p class="text-sm text-gray-500">
+            Deployed on <span class="font-semibold text-gray-700">Fly.io</span>
+            for
+            low-latency global distribution. Fully open source on <a
+              href="https://github.com/TomBers/dialectic"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="font-semibold text-[#3a0ca3] hover:underline"
+            >GitHub</a>.
+          </p>
+        </div>
+      </div>
+    </section>
+
     <%!-- 10. Feedback Form --%>
     <section class="bg-slate-50 py-20" id="feedback">
       <div class="mx-auto max-w-2xl px-6">
