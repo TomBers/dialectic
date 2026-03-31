@@ -564,7 +564,7 @@ defmodule DialecticWeb.HomeLive do
                   </svg>
                 </a>
                 <a
-                  href="https://www.linkedin.com/company/rationalgrid-ai//"
+                  href="https://www.linkedin.com/company/rationalgrid-ai/"
                   target="_blank"
                   rel="noopener noreferrer"
                   class="text-white/40 hover:text-white/80 transition-colors"
