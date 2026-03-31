@@ -199,6 +199,7 @@ defmodule DialecticWeb.PresentationComp do
       "ideas" -> "bg-orange-100 text-orange-700"
       "deepdive" -> "bg-cyan-100 text-cyan-700"
       "origin" -> "bg-slate-200 text-slate-700"
+      "user" -> "bg-green-200 text-green-800"
       _ -> "bg-gray-100 text-gray-600"
     end
   end
