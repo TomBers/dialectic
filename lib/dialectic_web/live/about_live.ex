@@ -82,7 +82,7 @@ defmodule DialecticWeb.AboutLive do
       </div>
       <div class="relative mx-auto max-w-5xl px-6 py-24 sm:py-32 text-center">
         <div class="flex items-center justify-center gap-3 mb-6">
-          <img src={~p"/images/favicon.svg"} alt="RationalGrid" class="h-12 w-12" />
+          <img src={~p"/images/favicon.webp"} alt="RationalGrid" class="h-12 w-12" />
         </div>
         <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6">
           About RationalGrid
