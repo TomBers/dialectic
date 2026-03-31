@@ -5,7 +5,12 @@
  * - Clipboard copy with inline toast feedback (no alert() calls)
  * - Native Web Share API integration for mobile devices
  * - Fallback copy for older browsers
+ *
+ * Toast and clipboard logic is delegated to the shared toast utility
+ * (assets/js/toast.js) to avoid styling/behavior drift with graph_hook.
  */
+
+import { showToast, copyToClipboard } from "./toast.js";
 
 const ShareHook = {
   mounted() {
@@ -29,8 +34,9 @@ const ShareHook = {
       btn.addEventListener("click", (e) => {
         e.preventDefault();
         const text = btn.getAttribute("data-share-copy");
-        const label = btn.getAttribute("data-share-toast") || "Copied to clipboard!";
-        this._copyToClipboard(text, label, btn);
+        const label =
+          btn.getAttribute("data-share-toast") || "Copied to clipboard!";
+        this._copyAndNotify(text, label, btn);
       });
     });
   },
@@ -50,11 +56,9 @@ const ShareHook = {
         const text = btn.getAttribute("data-share-text") || "";
         const url = btn.getAttribute("data-share-url") || "";
 
-        navigator
-          .share({ title, text, url })
-          .catch(() => {
-            // User cancelled or error – silently ignore
-          });
+        navigator.share({ title, text, url }).catch(() => {
+          // User cancelled or error – silently ignore
+        });
       });
     } else {
       // Hide the button on desktop browsers without Web Share API
@@ -65,24 +69,11 @@ const ShareHook = {
   /**
    * Copy text to clipboard with visual feedback on the triggering button.
    */
-  _copyToClipboard(text, toastMessage, triggerEl) {
-    const doCopy = (copyText) => {
-      this._showToast(toastMessage);
+  _copyAndNotify(text, toastMessage, triggerEl) {
+    copyToClipboard(text).then(() => {
+      showToast(toastMessage, { id: "share-toast" });
       this._showButtonFeedback(triggerEl);
-    };
-
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard
-        .writeText(text)
-        .then(() => doCopy(text))
-        .catch(() => {
-          this._fallbackCopy(text);
-          doCopy(text);
-        });
-    } else {
-      this._fallbackCopy(text);
-      doCopy(text);
-    }
+    });
   },
 
   /**
@@ -101,69 +92,6 @@ const ShareHook = {
         check.classList.add("hidden");
       }, 2000);
     }
-  },
-
-  /**
-   * Show a brief toast notification near the top of the viewport.
-   */
-  _showToast(message) {
-    // Remove any existing share toasts first
-    const existing = document.getElementById("share-toast");
-    if (existing) existing.remove();
-
-    const toast = document.createElement("div");
-    toast.id = "share-toast";
-    toast.textContent = message;
-    Object.assign(toast.style, {
-      position: "fixed",
-      top: "56px",
-      left: "50%",
-      transform: "translateX(-50%) translateY(-8px)",
-      background: "#1f2937",
-      color: "#fff",
-      padding: "8px 20px",
-      borderRadius: "8px",
-      fontSize: "13px",
-      fontWeight: "500",
-      zIndex: "10001",
-      opacity: "0",
-      transition: "opacity 0.2s ease, transform 0.2s ease",
-      pointerEvents: "none",
-      boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-      whiteSpace: "nowrap",
-    });
-    document.body.appendChild(toast);
-
-    // Trigger entrance animation on next frame
-    requestAnimationFrame(() => {
-      toast.style.opacity = "1";
-      toast.style.transform = "translateX(-50%) translateY(0)";
-    });
-
-    // Fade out and remove
-    setTimeout(() => {
-      toast.style.opacity = "0";
-      toast.style.transform = "translateX(-50%) translateY(-8px)";
-      setTimeout(() => toast.remove(), 200);
-    }, 2200);
-  },
-
-  /**
-   * Fallback copy for browsers without navigator.clipboard support.
-   */
-  _fallbackCopy(text) {
-    const ta = document.createElement("textarea");
-    ta.value = text;
-    ta.style.position = "fixed";
-    ta.style.opacity = "0";
-    document.body.appendChild(ta);
-    ta.select();
-    try {
-      document.execCommand("copy");
-    } catch (_e) {
-      /* best-effort */
-    }
-    document.body.removeChild(ta);
   },
 };
 
