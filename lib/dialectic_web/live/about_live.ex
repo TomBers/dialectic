@@ -693,7 +693,7 @@ defmodule DialecticWeb.AboutLive do
     </section>
 
     <%!-- How It's Built --%>
-    <section class="bg-slate-50 py-20">
+    <section class="bg-white py-20">
       <div class="mx-auto max-w-5xl px-6">
         <div class="text-center mb-14">
           <span class="inline-flex items-center rounded-full bg-indigo-100 px-3 py-1 text-xs font-bold text-indigo-700 mb-4">
@@ -773,7 +773,7 @@ defmodule DialecticWeb.AboutLive do
               <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-100">
                 <.icon name="hero-sparkles" class="w-5 h-5 text-violet-600" />
               </div>
-              <h3 class="font-bold text-gray-900">OpenAI</h3>
+              <h3 class="font-bold text-gray-900">Google Gemini</h3>
             </div>
             <p class="text-sm text-gray-600 leading-relaxed">
               AI models generate branching responses, summaries, pros and cons, and comparative analysis — turning questions into rich knowledge maps.
