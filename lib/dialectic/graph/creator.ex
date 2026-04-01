@@ -60,9 +60,25 @@ defmodule Dialectic.Graph.Creator do
             # Create the empty answer node connected to origin
             answer_node = create_answer_node_struct(title, updated_origin, user_identity)
 
+            Logger.info("Created answer node for graph creation",
+              graph_id: title,
+              answer_node_id: answer_node.id,
+              parent_node_id: updated_origin.id
+            )
+
             # Generate LLM response synchronously
+            Logger.info("Starting synchronous LLM generation for graph creation",
+              graph_id: title,
+              mode: mode
+            )
+
             case generate_response(title, updated_origin, mode) do
               {:ok, content} ->
+                Logger.info("LLM generation succeeded for graph creation",
+                  graph_id: title,
+                  content_length: byte_size(content)
+                )
+
                 GraphManager.set_node_content(title, answer_node.id, content)
                 GraphManager.finalize_node_content(title, answer_node.id)
                 GraphManager.save_graph(title)
@@ -71,9 +87,17 @@ defmodule Dialectic.Graph.Creator do
                 {:ok, title}
 
               {:error, reason} ->
-                Logger.error("Graph creation LLM error: #{inspect(reason)}")
+                Logger.error("Graph creation LLM generation failed",
+                  graph_id: title,
+                  answer_node_id: answer_node.id,
+                  reason: inspect(reason)
+                )
+
                 # If generation fails, we still return the graph, just with empty answer node
-                {:error, reason}
+                # The answer node has been created, it just has no content
+                GraphManager.save_graph(title)
+                callback.("Finalizing...")
+                {:ok, title}
             end
         end
 
@@ -99,6 +123,13 @@ defmodule Dialectic.Graph.Creator do
 
     node = GraphManager.add_node(title, vertex)
     GraphManager.add_edges(title, node, [parent])
+
+    Logger.debug("Created answer node structure",
+      graph_id: title,
+      node_id: node.id,
+      parent_id: parent.id
+    )
+
     node
   end
 
@@ -109,10 +140,31 @@ defmodule Dialectic.Graph.Creator do
     system_prompt = PromptsStructured.system_preamble(mode)
 
     opts = [
-      system_prompt: system_prompt,
-      model: "gemini-3-flash-preview"
+      system_prompt: system_prompt
     ]
 
-    Dialectic.LLM.Generator.generate(instruction, opts)
+    Logger.debug("Calling LLM Generator",
+      graph_id: title,
+      mode: mode,
+      instruction_length: byte_size(instruction)
+    )
+
+    result = Dialectic.LLM.Generator.generate(instruction, opts)
+
+    case result do
+      {:ok, content} ->
+        Logger.debug("Generator returned success",
+          graph_id: title,
+          response_length: byte_size(content)
+        )
+
+      {:error, reason} ->
+        Logger.error("Generator returned error",
+          graph_id: title,
+          reason: inspect(reason)
+        )
+    end
+
+    result
   end
 end

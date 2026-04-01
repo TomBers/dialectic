@@ -170,11 +170,11 @@ defmodule DialecticWeb.HomeLive do
   @impl true
   def handle_info({:tags_updated, title, tags}, socket) do
     graphs =
-      Enum.map(socket.assigns.graphs, fn {g, c} ->
+      Enum.map(socket.assigns.graphs, fn {g, c, username} ->
         if g.title == title do
-          {Map.put(g, :tags, tags), c}
+          {Map.put(g, :tags, tags), c, username}
         else
-          {g, c}
+          {g, c, username}
         end
       end)
 

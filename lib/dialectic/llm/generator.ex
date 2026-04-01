@@ -45,32 +45,33 @@ defmodule Dialectic.LLM.Generator do
     req_http_options =
       Keyword.merge(req_http_options, Application.get_env(:dialectic, :llm_req_options, []))
 
-    req_http_options =
-      case Provider.api_key(provider_mod) do
-        {:ok, key} ->
-          case provider_mod.id() do
-            :google -> req_http_options
-            _ -> Keyword.put(req_http_options, :auth, {:bearer, key})
-          end
+    # Validate API key is configured (ReqLLM will auto-detect from env)
+    case Provider.api_key(provider_mod) do
+      {:error, :missing} ->
+        Logger.error("LLM Generation Error: API key not configured for #{provider_mod.id()}")
+        {:error, :missing_api_key}
 
-        _ ->
-          # If not returned by Provider, assume it's in App config or Env
-          req_http_options
-      end
+      {:error, :empty} ->
+        Logger.error("LLM Generation Error: API key is empty for #{provider_mod.id()}")
+        {:error, :missing_api_key}
 
-    case ReqLLM.generate_text(
-           model_spec,
-           ctx,
-           provider_options: provider_options,
-           req_http_options: req_http_options,
-           receive_timeout: receive_timeout
-         ) do
-      {:ok, resp} ->
-        {:ok, extract_text(resp)}
+      {:ok, _api_key} ->
+        # ReqLLM will auto-detect API key from environment variables
+        # Note: generate_text doesn't accept :api_key or :finch_name options
+        case ReqLLM.generate_text(
+               model_spec,
+               ctx,
+               provider_options: provider_options,
+               req_http_options: req_http_options,
+               receive_timeout: receive_timeout
+             ) do
+          {:ok, resp} ->
+            {:ok, extract_text(resp)}
 
-      {:error, reason} ->
-        Logger.error("LLM Generation Error: #{inspect(reason)}")
-        {:error, reason}
+          {:error, reason} ->
+            Logger.error("LLM Generation Error: #{inspect(reason)}")
+            {:error, reason}
+        end
     end
   end
 

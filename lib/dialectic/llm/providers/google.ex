@@ -3,8 +3,8 @@ defmodule Dialectic.LLM.Providers.Google do
   Google (Gemini) provider for the `Dialectic.LLM.Provider` behaviour.
 
   Simplified configuration:
-  - Required: GEMINI_API_KEY
-  - Hardcoded model: "gemini-2.0-flash-lite"
+  - Required: GEMINI_API_KEY or GOOGLE_API_KEY (checks both)
+  - Hardcoded model: "gemini-3-flash-preview"
   - provider_options: []
 
   Note: We intentionally keep this minimal to reduce surface area. Add environment-driven
@@ -25,7 +25,8 @@ defmodule Dialectic.LLM.Providers.Google do
 
   @impl true
   def api_key do
-    System.get_env("GOOGLE_API_KEY")
+    # Check both GEMINI_API_KEY (ReqLLM standard) and GOOGLE_API_KEY (legacy)
+    System.get_env("GEMINI_API_KEY") || System.get_env("GOOGLE_API_KEY")
   end
 
   @impl true

@@ -12,8 +12,11 @@ defmodule Dialectic.Application do
     # Validate required API keys at startup (non-fatal)
     validate_api_keys()
 
-    # Map GOOGLE_API_KEY to :google_api_key for ReqLLM
+    # Map GOOGLE_API_KEY to GEMINI_API_KEY for ReqLLM auto-detection
     if key = System.get_env("GOOGLE_API_KEY") do
+      # ReqLLM expects GEMINI_API_KEY for Google/Gemini provider
+      System.put_env("GEMINI_API_KEY", key)
+      # Also set in application env for backwards compatibility
       Application.put_env(:req_llm, :google_api_key, key)
     end
 
@@ -89,10 +92,17 @@ defmodule Dialectic.Application do
 
     case System.get_env(env_var) do
       nil ->
+        extra_note =
+          if env_var == "GOOGLE_API_KEY" do
+            "\nNote: GOOGLE_API_KEY will be automatically mapped to GEMINI_API_KEY for ReqLLM."
+          else
+            ""
+          end
+
         Logger.error("""
         Missing required environment variable: #{env_var}
         #{provider_name} API key is required for production.
-        Please set #{env_var} in your environment.
+        Please set #{env_var} in your environment.#{extra_note}
         Application will start but LLM features may not work.
         """)
 
