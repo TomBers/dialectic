@@ -7,7 +7,7 @@ defmodule Dialectic.Graph.Creator do
   require Logger
   alias Dialectic.DbActions.Graphs
   alias GraphManager
-  alias Dialectic.Graph.Vertex
+  alias Dialectic.Graph.{Vertex, Serialise}
   alias Dialectic.Responses.{ModeServer, Prompts, PromptsStructured}
 
   @doc """
@@ -60,10 +60,25 @@ defmodule Dialectic.Graph.Creator do
           {:ok, content} ->
             GraphManager.set_node_content(title, answer_node.id, content)
             GraphManager.finalize_node_content(title, answer_node.id)
-            GraphManager.save_graph(title)
 
+            # Force synchronous save to ensure data is persisted before redirect
             callback.("Finalizing...")
-            {:ok, title}
+            {_graph_struct, graph} = GraphManager.get_graph(title)
+            json = Serialise.graph_to_json(graph)
+
+            case Graphs.save_graph(title, json) do
+              {:ok, _} ->
+                Logger.info("Successfully saved graph #{title} after creation")
+                {:ok, title}
+
+              {:error, save_reason} ->
+                Logger.error(
+                  "Failed to save graph #{title} after creation: #{inspect(save_reason)}"
+                )
+
+                # Still return success since the graph exists in memory
+                {:ok, title}
+            end
 
           {:error, reason} ->
             Logger.error("Graph creation LLM error: #{inspect(reason)}")
