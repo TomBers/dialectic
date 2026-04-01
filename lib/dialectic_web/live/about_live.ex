@@ -505,22 +505,26 @@ defmodule DialecticWeb.AboutLive do
             <p class="text-sm text-gray-500">Partnerships Director</p>
           </div>
 
-          <%!-- Placeholder: Education Advisor --%>
-          <div class="text-center">
-            <div class="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-gray-100 text-gray-300 shadow">
-              <.icon name="hero-user-circle" class="w-12 h-12" />
+          <%!-- Peter Worley - Advisor --%>
+          <div class="text-center group">
+            <div class="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full shadow-lg group-hover:shadow-xl transition">
+              <img src={~p"/images/pete.webp"} alt="Peter Worley" class="h-full w-full object-cover" />
             </div>
-            <h3 class="font-bold text-gray-400">Coming Soon</h3>
-            <p class="text-sm text-gray-300">Education Advisor</p>
+            <h3 class="font-bold text-gray-900">Peter Worley</h3>
+            <p class="text-sm text-gray-500">Advisor</p>
           </div>
 
-          <%!-- Placeholder: Research Partner --%>
-          <div class="text-center">
-            <div class="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-gray-100 text-gray-300 shadow">
-              <.icon name="hero-user-circle" class="w-12 h-12" />
+          <%!-- Alexandra Konoplyanik - Advisor --%>
+          <div class="text-center group">
+            <div class="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full shadow-lg group-hover:shadow-xl transition">
+              <img
+                src={~p"/images/alex.webp"}
+                alt="Alexandra Konoplyanik"
+                class="h-full w-full object-cover"
+              />
             </div>
-            <h3 class="font-bold text-gray-400">Coming Soon</h3>
-            <p class="text-sm text-gray-300">Research Partner</p>
+            <h3 class="font-bold text-gray-900">Alexandra Konoplyanik</h3>
+            <p class="text-sm text-gray-500">Advisor</p>
           </div>
         </div>
 
@@ -593,6 +597,95 @@ defmodule DialecticWeb.AboutLive do
               <p>
                 Martin is now an angel investor, strategic comms advisor and leadership mentor to a number of growing businesses, including in AI.
               </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <%!-- Advisors --%>
+    <section class="bg-slate-50 py-20">
+      <div class="mx-auto max-w-5xl px-6">
+        <div class="text-center mb-14">
+          <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Our Advisors</h2>
+          <p class="text-gray-500 max-w-2xl mx-auto">
+            Expert guidance in philosophy, education, and applied reasoning.
+          </p>
+        </div>
+
+        <div class="max-w-3xl mx-auto space-y-8">
+          <%!-- Peter Worley bio --%>
+          <div class="rounded-2xl bg-gradient-to-br from-purple-50 to-blue-50 p-8 ring-1 ring-purple-100">
+            <div class="flex items-center gap-4 mb-5">
+              <div class="h-14 w-14 shrink-0 overflow-hidden rounded-full shadow-lg">
+                <img
+                  src={~p"/images/pete.webp"}
+                  alt="Peter Worley"
+                  class="h-full w-full object-cover"
+                />
+              </div>
+              <div>
+                <h3 class="text-lg font-bold text-gray-900">Peter Worley</h3>
+                <p class="text-sm text-gray-500">Philosopher, Educator &amp; Author</p>
+              </div>
+            </div>
+            <div class="space-y-4 text-gray-700 leading-relaxed text-sm">
+              <p>
+                Peter Worley is a philosopher, educator, and co-founder and former CEO of The Philosophy Foundation, a charity bringing philosophy to schools and public settings. He has spent over two decades developing practical approaches to thinking, questioning, and dialogue, and is the creator of PhiE (Philosophical Enquiry), a structured method for facilitating rigorous, collaborative reasoning.
+              </p>
+              <p>
+                An award-winning author of books, including <em>The Philosophy Shop</em>, <em>The If Machine</em>, and <em>Corrupting Youth</em>, his work focuses on making high-quality thinking teachable and transferable. His pedagogy has informed projects such as the BAFTA-nominated BBC programme <em>What Makes Me Me?</em>, the documentary <em>Young Plato</em>, and the BBC prison drama <em>Waiting For The Out</em>.
+              </p>
+            </div>
+            <div class="mt-4">
+              <a
+                href="https://peterworley.uk/"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-1.5 text-sm font-medium text-[#3a0ca3] hover:underline"
+              >
+                <.icon name="hero-globe-alt" class="w-4 h-4" /> peterworley.uk
+                <.icon name="hero-arrow-top-right-on-square" class="w-3.5 h-3.5" />
+              </a>
+            </div>
+          </div>
+
+          <%!-- Alexandra Konoplyanik bio --%>
+          <div class="rounded-2xl bg-gradient-to-br from-purple-50 to-blue-50 p-8 ring-1 ring-purple-100">
+            <div class="flex items-center gap-4 mb-5">
+              <div class="h-14 w-14 shrink-0 overflow-hidden rounded-full shadow-lg">
+                <img
+                  src={~p"/images/alex.webp"}
+                  alt="Alexandra Konoplyanik"
+                  class="h-full w-full object-cover"
+                />
+              </div>
+              <div>
+                <h3 class="text-lg font-bold text-gray-900">Alexandra Konoplyanik</h3>
+                <p class="text-sm text-gray-500">Philosophical Counsellor &amp; Facilitator</p>
+              </div>
+            </div>
+            <div class="space-y-4 text-gray-700 leading-relaxed text-sm">
+              <p>
+                Alexandra Konoplyanik is a philosophical counsellor and facilitator specialising in applied philosophical enquiry for clearer thinking, better questioning, and collaborative reasoning. She works across education, public philosophy, and professional contexts.
+              </p>
+              <p>
+                She is Secretary and Co-Organiser of Philosophy For All and Social Media Editor at <em>Philosophy Now</em>. She has also worked as a philosophical consultant on digital products, contributing to the conceptual robustness of Lifeaddwiser (employee wellbeing solutions).
+              </p>
+              <p>
+                Before moving into philosophy, Alexandra worked in investment banking and executive search. Her approach focuses on translating philosophical methods into usable formats that help individuals and groups think more clearly and engage productively with complex questions.
+              </p>
+            </div>
+            <div class="mt-4">
+              <a
+                href="https://alexandrakonoplyanik.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-1.5 text-sm font-medium text-[#3a0ca3] hover:underline"
+              >
+                <.icon name="hero-globe-alt" class="w-4 h-4" /> alexandrakonoplyanik.com
+                <.icon name="hero-arrow-top-right-on-square" class="w-3.5 h-3.5" />
+              </a>
             </div>
           </div>
         </div>
