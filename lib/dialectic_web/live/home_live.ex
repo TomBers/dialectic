@@ -142,16 +142,36 @@ defmodule DialecticWeb.HomeLive do
     end
   end
 
+  def handle_async(:create_graph_flow, {:ok, {:error, reason}}, socket) do
+    Logger.error("Grid creation failed: #{inspect(reason)}")
+
+    error_message =
+      case reason do
+        :save_failed -> "Failed to save grid. Please try again."
+        _ -> "Failed to create grid. Please try again."
+      end
+
+    {:noreply,
+     socket
+     |> put_flash(:error, error_message)
+     |> assign(:loading_graph, nil)}
+  end
+
   def handle_async(:create_graph_flow, {:ok, _}, socket) do
-    {:noreply, put_flash(socket, :error, "Failed to create grid") |> assign(:loading_graph, nil)}
+    Logger.warning("Grid creation returned unexpected result")
+
+    {:noreply,
+     socket
+     |> put_flash(:error, "Failed to create grid")
+     |> assign(:loading_graph, nil)}
   end
 
   def handle_async(:create_graph_flow, {:exit, reason}, socket) do
-    # Log the crash reason if needed
-    Logger.error("Grid creation crashed: #{inspect(reason)}")
+    Logger.error("Grid creation process crashed: #{inspect(reason)}")
 
     {:noreply,
-     put_flash(socket, :error, "Grid creation failed. Please try again.")
+     socket
+     |> put_flash(:error, "Grid creation failed unexpectedly. Please try again.")
      |> assign(:loading_graph, nil)}
   end
 

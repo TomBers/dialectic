@@ -76,8 +76,8 @@ defmodule Dialectic.Graph.Creator do
                   "Failed to save graph #{title} after creation: #{inspect(save_reason)}"
                 )
 
-                # Still return success since the graph exists in memory
-                {:ok, title}
+                # Return error to prevent redirect with stale data
+                {:error, :save_failed}
             end
 
           {:error, reason} ->
