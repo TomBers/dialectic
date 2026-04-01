@@ -48,26 +48,31 @@ defmodule DialecticWeb.Router do
 
   scope "/", DialecticWeb do
     pipe_through :browser
-    live "/", HomeLive
+
+    # Main live_session for core app routes
+    live_session :main, on_mount: [{DialecticWeb.UserAuth, :mount_current_user}] do
+      live "/", HomeLive
+      live "/inspiration", InspirationLive
+      live "/about", AboutLive
+
+      # Slug-based routes
+      live "/g/:graph_name", GraphLive
+      live "/g/:graph_name/linear", LinearGraphLive
+    end
+
+    # User profile (separate session)
+    live_session :user_profile, on_mount: [{DialecticWeb.UserAuth, :mount_current_user}] do
+      live "/u/:username", UserProfileLive
+    end
+
+    # Static routes outside live_session
     get "/my/ideas", PageController, :my_graphs
     get "/view_all/graphs", PageController, :view_all
     post "/graphs/:title/generate_tags", PageController, :generate_tags
     post "/conversation", PageController, :create
     # get "/intro/what", PageController, :what
     get "/intro/how", PageController, :guide
-
-    live "/inspiration", InspirationLive
-    live "/about", AboutLive
-
-    # Slug-based routes
-    live "/g/:graph_name", GraphLive
-    live "/g/:graph_name/linear", LinearGraphLive
     get "/api/graphs/md/:graph_name", PageController, :graph_md
-
-    # User profile
-    live_session :user_profile, on_mount: [{DialecticWeb.UserAuth, :mount_current_user}] do
-      live "/u/:username", UserProfileLive
-    end
   end
 
   # Other scopes may use custom stacks.

@@ -38,11 +38,26 @@ defmodule GraphManager do
     # Tag all logs from this server with the graph_id for better tracing
     Logger.metadata(graph_id: path)
 
-    graph_struct =
-      Dialectic.DbActions.Graphs.get_graph_by_title(path)
+    case Dialectic.DbActions.Graphs.get_graph_by_title(path) do
+      nil ->
+        Logger.error("GraphManager init failed: graph not found", graph_id: path)
+        {:stop, :graph_not_found}
 
-    graph = graph_struct.data |> Serialise.json_to_graph()
-    {:ok, {graph_struct, graph}}
+      graph_struct ->
+        try do
+          graph = graph_struct.data |> Serialise.json_to_graph()
+          {:ok, {graph_struct, graph}}
+        rescue
+          error ->
+            Logger.error(
+              "GraphManager init failed: error deserializing graph data",
+              graph_id: path,
+              error: Exception.format(:error, error, __STACKTRACE__)
+            )
+
+            {:stop, :deserialization_error}
+        end
+    end
   end
 
   def terminate(reason, {graph_struct, graph}) do

@@ -7,6 +7,12 @@ defmodule Dialectic.Responses.RequestQueue do
   if Mix.env() == :test do
     # Test environment uses local model
     def add(instruction, system_prompt, to_node, graph, live_view_topic) do
+      Logger.info("Enqueueing local LLM job",
+        graph_id: graph,
+        node_id: to_node.id,
+        live_view_topic: live_view_topic
+      )
+
       params = %{
         instruction: instruction,
         system_prompt: system_prompt,
@@ -22,6 +28,12 @@ defmodule Dialectic.Responses.RequestQueue do
   else
     # Non-test environments use LLMWorker
     def add(instruction, system_prompt, to_node, graph, live_view_topic) do
+      Logger.info("Enqueueing LLM job",
+        graph_id: graph,
+        node_id: to_node.id,
+        live_view_topic: live_view_topic
+      )
+
       params = %{
         instruction: instruction,
         system_prompt: system_prompt,
@@ -53,21 +65,42 @@ defmodule Dialectic.Responses.RequestQueue do
   end
 
   def run_llm(params) do
-    %{
-      params
-      | module: Dialectic.Workers.LLMWorker
-    }
-    |> LLMWorker.new(
-      priority: 0,
-      max_attempts: 3,
-      tags: ["llm"],
-      unique: [
-        fields: [:args, :worker],
-        keys: [:graph, :to_node],
-        period: 60,
-        states: [:available, :scheduled, :executing, :retryable]
-      ]
-    )
-    |> Oban.insert()
+    result =
+      %{
+        params
+        | module: Dialectic.Workers.LLMWorker
+      }
+      |> LLMWorker.new(
+        priority: 0,
+        max_attempts: 3,
+        tags: ["llm"],
+        unique: [
+          fields: [:args, :worker],
+          keys: [:graph, :to_node],
+          period: 60,
+          states: [:available, :scheduled, :executing, :retryable]
+        ]
+      )
+      |> Oban.insert()
+
+    case result do
+      {:ok, job} ->
+        Logger.info("LLM job enqueued successfully",
+          job_id: job.id,
+          graph_id: params.graph,
+          node_id: params.to_node,
+          live_view_topic: params.live_view_topic
+        )
+
+      {:error, reason} ->
+        Logger.error("Failed to enqueue LLM job",
+          graph_id: params.graph,
+          node_id: params.to_node,
+          live_view_topic: params.live_view_topic,
+          reason: inspect(reason)
+        )
+    end
+
+    result
   end
 end

@@ -1789,6 +1789,13 @@ defmodule DialecticWeb.GraphLive do
       DialecticWeb.Presence.track_user(user, %{id: user, graph_id: graph_id})
       DialecticWeb.Presence.subscribe()
 
+      Logger.info("GraphLive subscribed to PubSub topics",
+        socket_id: socket.id,
+        live_view_topic: live_view_topic,
+        graph_topic: graph_topic,
+        graph_id: graph_id
+      )
+
       presences = DialecticWeb.Presence.list_online_users(graph_id)
 
       # Load highlights asynchronously after connection - doesn't block initial render

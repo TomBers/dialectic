@@ -51,6 +51,15 @@ defmodule Dialectic.Workers.LLMWorker do
       }) do
     Logger.metadata(oban_job_id: job_id, oban_attempt: attempt)
 
+    Logger.info("LLM job started",
+      job_id: job_id,
+      attempt: attempt,
+      max_attempts: max_attempts,
+      graph_id: graph,
+      node_id: to_node,
+      live_view_topic: live_view_topic
+    )
+
     # Ensure the graph is loaded and the node content is cleared (idempotency)
     GraphManager.get_graph(graph)
     GraphManager.set_node_content(graph, to_node, "")
@@ -66,6 +75,13 @@ defmodule Dialectic.Workers.LLMWorker do
       end
 
     if not api_key_ok? do
+      Logger.error("LLM job failed: missing API key",
+        job_id: job_id,
+        graph_id: graph,
+        node_id: to_node,
+        provider: provider_label(provider_mod)
+      )
+
       Phoenix.PubSub.broadcast(
         Dialectic.PubSub,
         live_view_topic,
@@ -110,6 +126,13 @@ defmodule Dialectic.Workers.LLMWorker do
              receive_timeout: receive_timeout
            ) do
         {:ok, stream_resp} ->
+          Logger.info("LLM streaming started successfully",
+            job_id: job_id,
+            graph_id: graph,
+            node_id: to_node,
+            provider: provider_label(provider_mod)
+          )
+
           # Stream tokens to UI (and persisted vertex content) as they arrive.
           # We accumulate the *full* response text in the worker to ensure
           # we can safely overwrite the node content (bullet-proofing against
@@ -145,6 +168,14 @@ defmodule Dialectic.Workers.LLMWorker do
           end
 
           if byte_size(final_full_text) > 0 do
+            Logger.info("LLM job completed successfully",
+              job_id: job_id,
+              graph_id: graph,
+              node_id: to_node,
+              provider: provider_label(provider_mod),
+              response_length: byte_size(final_full_text)
+            )
+
             finalize(graph, to_node, live_view_topic)
             :ok
           else
@@ -193,8 +224,20 @@ defmodule Dialectic.Workers.LLMWorker do
   end
 
   defp finalize(graph, to_node, live_view_topic) do
+    Logger.debug("Finalizing LLM response",
+      graph_id: graph,
+      node_id: to_node,
+      live_view_topic: live_view_topic
+    )
+
     GraphManager.finalize_node_content(graph, to_node)
     GraphManager.save_graph(graph)
+
+    Logger.debug("Broadcasting llm_request_complete",
+      graph_id: graph,
+      node_id: to_node,
+      live_view_topic: live_view_topic
+    )
 
     Phoenix.PubSub.broadcast(
       Dialectic.PubSub,
