@@ -89,6 +89,16 @@ defmodule Dialectic.Workers.LLMWorker do
          to_node}
       )
 
+      # Also broadcast to graph topic for reliability
+      graph_topic = "graph_update:#{graph}"
+
+      Phoenix.PubSub.broadcast(
+        Dialectic.PubSub,
+        graph_topic,
+        {:stream_error, "#{provider_label(provider_mod)} API key not configured", :node_id,
+         to_node}
+      )
+
       {:discard, :missing_api_key}
     else
       model_spec = Dialectic.LLM.Provider.model_spec(provider_mod)
@@ -203,6 +213,15 @@ defmodule Dialectic.Workers.LLMWorker do
               live_view_topic,
               {:stream_error, reason_msg, :node_id, to_node}
             )
+
+            # Also broadcast to graph topic for reliability
+            graph_topic = "graph_update:#{graph}"
+
+            Phoenix.PubSub.broadcast(
+              Dialectic.PubSub,
+              graph_topic,
+              {:stream_error, reason_msg, :node_id, to_node}
+            )
           end
 
           Logger.error("#{provider_label(provider_mod)} request error: #{inspect(err)}")
@@ -242,6 +261,17 @@ defmodule Dialectic.Workers.LLMWorker do
     Phoenix.PubSub.broadcast(
       Dialectic.PubSub,
       live_view_topic,
+      {:llm_request_complete, to_node}
+    )
+
+    # Also broadcast to graph topic (shared by all viewers) for reliability
+    # This ensures the completion message reaches the user even if they
+    # redirected to a new socket during streaming
+    graph_topic = "graph_update:#{graph}"
+
+    Phoenix.PubSub.broadcast(
+      Dialectic.PubSub,
+      graph_topic,
       {:llm_request_complete, to_node}
     )
   end

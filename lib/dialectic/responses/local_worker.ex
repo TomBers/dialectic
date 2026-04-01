@@ -25,9 +25,24 @@ defmodule Dialectic.Workers.LocalWorker do
       {:stream_chunk, updated_vertex, :node_id, node}
     )
 
+    # Also broadcast to graph topic for reliability
+    graph_topic = "graph_update:#{graph}"
+
+    Phoenix.PubSub.broadcast(
+      Dialectic.PubSub,
+      graph_topic,
+      {:stream_chunk_broadcast, updated_vertex, :node_id, node, self()}
+    )
+
     Phoenix.PubSub.broadcast(
       Dialectic.PubSub,
       live_view_topic,
+      {:llm_request_complete, node}
+    )
+
+    Phoenix.PubSub.broadcast(
+      Dialectic.PubSub,
+      graph_topic,
       {:llm_request_complete, node}
     )
   end

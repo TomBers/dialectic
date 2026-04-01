@@ -64,9 +64,11 @@ GraphLive.handle_info({:llm_request_complete, ...}) → Clears loading state
 grep -A 10 "live_session :main" lib/dialectic_web/router.ex
 ```
 
-### 2. Socket ID Mismatch
+### 2. Socket ID Mismatch (FIXED)
 
 **Problem**: LLM job enqueued with old `live_view_topic` from creation flow, but user redirected to new LiveView with different `socket.id`.
+
+**Symptoms**: User creates graph, redirects to GraphLive, but never receives LLM streaming updates because they're broadcast to a dead socket.
 
 **Debug**: Check logs for topic mismatch:
 ```
@@ -77,7 +79,7 @@ grep -A 10 "live_session :main" lib/dialectic_web/router.ex
 [info] GraphLive subscribed to PubSub topics socket_id=SOCKET_ID_2 live_view_topic="graph_update:SOCKET_ID_2"
 ```
 
-**Solution**: The `graph_topic` (not `live_view_topic`) should be used for broadcasting streaming updates to all connected clients.
+**Fix Applied**: Workers now broadcast to **both** `live_view_topic` (socket-specific) AND `graph_topic` (shared) for reliability. This ensures messages reach the user even if they redirect during streaming.
 
 ### 3. GraphManager Crash
 
@@ -242,39 +244,35 @@ grep "GraphLive subscribed.*graph_id=GRAPH_TITLE" production.log | grep -o "live
 
 ## Solutions
 
-### Solution 1: Use graph_topic for Broadcasting
+### Solution: Dual Broadcast Pattern (IMPLEMENTED) ✅
 
-The most robust solution is to broadcast streaming updates to `graph_topic` (not `live_view_topic`) so all connected clients receive updates regardless of socket ID.
+The most robust solution is to broadcast to **both topics**:
+- `live_view_topic` (socket-specific) for immediate response
+- `graph_topic` (shared) for reliability across redirects
 
-**Current behavior**: LLMWorker broadcasts to `live_view_topic`
-**Better behavior**: LLMWorker should broadcast to `graph_topic`
+**Implementation**: All LLM workers now broadcast streaming updates and completion messages to both topics.
 
-**Proposed fix** (not yet applied):
+**Files modified**:
+- `lib/dialectic/responses/utils.ex` - `set_node_content/4` broadcasts to both topics
+- `lib/dialectic/responses/llm_worker.ex` - `finalize/3` broadcasts completion to both topics
+- `lib/dialectic/responses/local_worker.ex` - Test worker also uses dual broadcast
+
+**Benefits**:
+- ✅ Handles race condition when user redirects during streaming
+- ✅ Works even if original socket disconnects
+- ✅ All viewers of the same graph receive updates
+- ✅ No breaking changes to existing code
+
+**Code example**:
 ```elixir
-# In llm_worker.ex, change broadcast topic
-Phoenix.PubSub.broadcast(
-  Dialectic.PubSub,
-  "graph_update:#{graph}",  # Use graph_topic, not live_view_topic
-  {:stream_chunk, updated_vertex, :node_id, node_id}
-)
+# In utils.ex - set_node_content/4
+Phoenix.PubSub.broadcast(Dialectic.PubSub, live_view_topic, {:stream_chunk, ...})
+Phoenix.PubSub.broadcast(Dialectic.PubSub, "graph_update:#{graph}", {:stream_chunk_broadcast, ...})
+
+# In llm_worker.ex - finalize/3
+Phoenix.PubSub.broadcast(Dialectic.PubSub, live_view_topic, {:llm_request_complete, ...})
+Phoenix.PubSub.broadcast(Dialectic.PubSub, "graph_update:#{graph}", {:llm_request_complete, ...})
 ```
-
-### Solution 2: Defer Job Until GraphLive Mounts
-
-Alternative approach: Don't start LLM generation during graph creation. Instead:
-
-1. Create graph with empty answer node
-2. Redirect to GraphLive
-3. Start LLM job from GraphLive's `mount/3` after subscribing
-
-This ensures `live_view_topic` matches.
-
-### Solution 3: Use Graph Topic Exclusively
-
-Simplify by removing per-socket topics entirely. All streaming uses `graph_topic`.
-
-**Pros**: No topic mismatch possible
-**Cons**: All users viewing same graph see all updates
 
 ## Verification
 
@@ -370,11 +368,23 @@ If issue persists after fixes:
 
 ## Summary
 
-The primary issue was **live session mismatch** causing navigation warnings and potential socket disconnections. This has been fixed by wrapping all main routes in a single `live_session`.
+Three critical issues have been fixed to prevent intermittent streaming failures:
 
-Secondary issues addressed:
-- GraphManager crash prevention with better error handling
+### 1. **Dual Broadcast Pattern** (Fixes Race Condition) ✅
+All LLM streaming messages now broadcast to both socket-specific and graph-wide topics. This prevents the race condition where a user redirects during streaming and loses the messages.
+
+### 2. **Live Session Grouping** (Prevents Navigation Errors) ✅
+All main routes (`HomeLive`, `GraphLive`, `LinearGraphLive`) wrapped in a single `live_session` to prevent cross-session navigation warnings.
+
+### 3. **GraphManager Error Handling** (Prevents Crashes) ✅
+Added proper error handling to prevent crashes when graphs don't exist or have invalid data.
+
+### Additional Improvements:
 - Comprehensive logging throughout the streaming pipeline
 - Better error messages for missing API keys
+- Detailed diagnostic guide for troubleshooting
 
-**Next Steps**: Monitor production logs using the diagnostic workflow above to confirm streaming works end-to-end.
+**Why the issue was intermittent**: The race condition only occurred when the user's redirect happened in the brief window between job enqueue and job start. The dual broadcast pattern now ensures messages reach the user regardless of timing.
+
+**Next Steps**: Monitor production logs using the diagnostic workflow above to confirm streaming works end-to-end. The new logging will help identify any remaining edge cases.
+</text>

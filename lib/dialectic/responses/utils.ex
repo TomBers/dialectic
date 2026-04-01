@@ -23,10 +23,21 @@ defmodule Dialectic.Responses.Utils do
       updated_vertex = GraphManager.set_node_content(graph, node, text)
 
       if updated_vertex do
+        # Broadcast to socket-specific topic for immediate response
         Phoenix.PubSub.broadcast(
           Dialectic.PubSub,
           live_view_topic,
           {:stream_chunk, updated_vertex, :node_id, node}
+        )
+
+        # Also broadcast to graph topic (shared by all viewers) for reliability
+        # This ensures the message reaches the user even if they redirect during streaming
+        graph_topic = "graph_update:#{graph}"
+
+        Phoenix.PubSub.broadcast(
+          Dialectic.PubSub,
+          graph_topic,
+          {:stream_chunk_broadcast, updated_vertex, :node_id, node, self()}
         )
       end
 
