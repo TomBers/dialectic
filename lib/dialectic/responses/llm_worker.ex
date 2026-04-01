@@ -61,172 +61,250 @@ defmodule Dialectic.Workers.LLMWorker do
     )
 
     # Ensure the graph is loaded and the node content is cleared (idempotency)
-    GraphManager.get_graph(graph)
-    GraphManager.set_node_content(graph, to_node, "")
+    case GraphManager.get_graph(graph) do
+      {:error, :graph_not_found} ->
+        Logger.error("LLM job failed: graph not found",
+          job_id: job_id,
+          graph_id: graph,
+          node_id: to_node
+        )
 
-    provider_mod = select_provider(args)
+        Phoenix.PubSub.broadcast(
+          Dialectic.PubSub,
+          live_view_topic,
+          {:stream_error, "Graph not found", :node_id, to_node}
+        )
 
-    # Validate configuration early to surface clear messages
-    {api_key_ok?, api_key_val} =
-      case Dialectic.LLM.Provider.api_key(provider_mod) do
-        {:ok, key} -> {true, key}
-        {:error, :missing} -> {false, nil}
-        {:error, :empty} -> {false, ""}
-      end
+        graph_topic = "graph_update:#{graph}"
 
-    if not api_key_ok? do
-      Logger.error("LLM job failed: missing API key",
-        job_id: job_id,
-        graph_id: graph,
-        node_id: to_node,
-        provider: provider_label(provider_mod)
-      )
+        Phoenix.PubSub.broadcast(
+          Dialectic.PubSub,
+          graph_topic,
+          {:stream_error, "Graph not found", :node_id, to_node}
+        )
 
-      Phoenix.PubSub.broadcast(
-        Dialectic.PubSub,
-        live_view_topic,
-        {:stream_error, "#{provider_label(provider_mod)} API key not configured", :node_id,
-         to_node}
-      )
+        {:discard, :graph_not_found}
 
-      # Also broadcast to graph topic for reliability
-      graph_topic = "graph_update:#{graph}"
+      {:error, :deserialization_error} ->
+        Logger.error("LLM job failed: graph deserialization error",
+          job_id: job_id,
+          graph_id: graph,
+          node_id: to_node
+        )
 
-      Phoenix.PubSub.broadcast(
-        Dialectic.PubSub,
-        graph_topic,
-        {:stream_error, "#{provider_label(provider_mod)} API key not configured", :node_id,
-         to_node}
-      )
+        Phoenix.PubSub.broadcast(
+          Dialectic.PubSub,
+          live_view_topic,
+          {:stream_error, "Failed to load graph data", :node_id, to_node}
+        )
 
-      {:discard, :missing_api_key}
-    else
-      model_spec = Dialectic.LLM.Provider.model_spec(provider_mod)
+        graph_topic = "graph_update:#{graph}"
 
-      # Build a provider-agnostic chat context: system + user
-      system_prompt =
-        case Map.get(args, "system_prompt") do
-          s when is_binary(s) and s != "" -> s
-          _ -> get_system_prompt(graph)
-        end
+        Phoenix.PubSub.broadcast(
+          Dialectic.PubSub,
+          graph_topic,
+          {:stream_error, "Failed to load graph data", :node_id, to_node}
+        )
 
-      instruction =
-        case Map.get(args, "instruction") do
-          s when is_binary(s) and s != "" -> s
-          _ -> question
-        end
+        {:discard, :deserialization_error}
 
-      ctx =
-        ReqLLM.Context.new([
-          ReqLLM.Context.system(system_prompt),
-          ReqLLM.Context.user(instruction)
-        ])
+      {:error, reason} ->
+        Logger.error("LLM job failed: graph manager error",
+          job_id: job_id,
+          graph_id: graph,
+          node_id: to_node,
+          reason: inspect(reason)
+        )
 
-      {connect_timeout, receive_timeout} = Dialectic.LLM.Provider.timeouts(provider_mod)
-      finch_name = Dialectic.LLM.Provider.finch_name(provider_mod)
-      provider_options = provider_mod.provider_options()
+        Phoenix.PubSub.broadcast(
+          Dialectic.PubSub,
+          live_view_topic,
+          {:stream_error, "Failed to load graph", :node_id, to_node}
+        )
 
-      case ReqLLM.stream_text(
-             model_spec,
-             ctx,
-             api_key: api_key_val,
-             finch_name: finch_name,
-             provider_options: provider_options,
-             req_http_options: [connect_options: [timeout: connect_timeout]],
-             receive_timeout: receive_timeout
-           ) do
-        {:ok, stream_resp} ->
-          Logger.info("LLM streaming started successfully",
+        graph_topic = "graph_update:#{graph}"
+
+        Phoenix.PubSub.broadcast(
+          Dialectic.PubSub,
+          graph_topic,
+          {:stream_error, "Failed to load graph", :node_id, to_node}
+        )
+
+        {:discard, reason}
+
+      _graph_data ->
+        GraphManager.set_node_content(graph, to_node, "")
+
+        provider_mod = select_provider(args)
+
+        # Validate configuration early to surface clear messages
+        {api_key_ok?, api_key_val} =
+          case Dialectic.LLM.Provider.api_key(provider_mod) do
+            {:ok, key} -> {true, key}
+            {:error, :missing} -> {false, nil}
+            {:error, :empty} -> {false, ""}
+          end
+
+        if not api_key_ok? do
+          Logger.error("LLM job failed: missing API key",
             job_id: job_id,
             graph_id: graph,
             node_id: to_node,
             provider: provider_label(provider_mod)
           )
 
-          # Stream tokens to UI (and persisted vertex content) as they arrive.
-          # We accumulate the *full* response text in the worker to ensure
-          # we can safely overwrite the node content (bullet-proofing against
-          # lost partial updates or GraphManager restarts).
-          {final_full_text, final_buf} =
-            Enum.reduce(ReqLLM.StreamResponse.tokens(stream_resp), {"", ""}, fn token,
-                                                                                {full_text, buf} ->
-              chunk =
-                case token do
-                  t when is_binary(t) -> t
-                  t when is_list(t) -> IO.iodata_to_binary(t)
-                  t -> to_string(t)
-                end
+          Phoenix.PubSub.broadcast(
+            Dialectic.PubSub,
+            live_view_topic,
+            {:stream_error, "#{provider_label(provider_mod)} API key not configured", :node_id,
+             to_node}
+          )
 
-              new_full_text = full_text <> chunk
-              new_buf = buf <> chunk
+          # Also broadcast to graph topic for reliability
+          graph_topic = "graph_update:#{graph}"
 
-              # Buffer to reduce broadcast frequency (fixing markdown glitches and excessive DOM updates).
-              # Flush if > @buffer_size chars or contains newline.
-              # ALSO: Always flush the very first chunk (full_text was empty) to improve TTFT.
-              if full_text == "" or byte_size(new_buf) > @buffer_size or
-                   String.contains?(new_buf, "\n") do
-                Utils.set_node_content(graph, to_node, new_full_text, live_view_topic)
-                {new_full_text, ""}
+          Phoenix.PubSub.broadcast(
+            Dialectic.PubSub,
+            graph_topic,
+            {:stream_error, "#{provider_label(provider_mod)} API key not configured", :node_id,
+             to_node}
+          )
+
+          {:discard, :missing_api_key}
+        else
+          model_spec = Dialectic.LLM.Provider.model_spec(provider_mod)
+
+          # Build a provider-agnostic chat context: system + user
+          system_prompt =
+            case Map.get(args, "system_prompt") do
+              s when is_binary(s) and s != "" -> s
+              _ -> get_system_prompt(graph)
+            end
+
+          instruction =
+            case Map.get(args, "instruction") do
+              s when is_binary(s) and s != "" -> s
+              _ -> question
+            end
+
+          ctx =
+            ReqLLM.Context.new([
+              ReqLLM.Context.system(system_prompt),
+              ReqLLM.Context.user(instruction)
+            ])
+
+          {connect_timeout, receive_timeout} = Dialectic.LLM.Provider.timeouts(provider_mod)
+          finch_name = Dialectic.LLM.Provider.finch_name(provider_mod)
+          provider_options = provider_mod.provider_options()
+
+          case ReqLLM.stream_text(
+                 model_spec,
+                 ctx,
+                 api_key: api_key_val,
+                 finch_name: finch_name,
+                 provider_options: provider_options,
+                 req_http_options: [connect_options: [timeout: connect_timeout]],
+                 receive_timeout: receive_timeout
+               ) do
+            {:ok, stream_resp} ->
+              Logger.info("LLM streaming started successfully",
+                job_id: job_id,
+                graph_id: graph,
+                node_id: to_node,
+                provider: provider_label(provider_mod)
+              )
+
+              # Stream tokens to UI (and persisted vertex content) as they arrive.
+              # We accumulate the *full* response text in the worker to ensure
+              # we can safely overwrite the node content (bullet-proofing against
+              # lost partial updates or GraphManager restarts).
+              {final_full_text, final_buf} =
+                Enum.reduce(ReqLLM.StreamResponse.tokens(stream_resp), {"", ""}, fn token,
+                                                                                    {full_text,
+                                                                                     buf} ->
+                  chunk =
+                    case token do
+                      t when is_binary(t) -> t
+                      t when is_list(t) -> IO.iodata_to_binary(t)
+                      t -> to_string(t)
+                    end
+
+                  new_full_text = full_text <> chunk
+                  new_buf = buf <> chunk
+
+                  # Buffer to reduce broadcast frequency (fixing markdown glitches and excessive DOM updates).
+                  # Flush if > @buffer_size chars or contains newline.
+                  # ALSO: Always flush the very first chunk (full_text was empty) to improve TTFT.
+                  if full_text == "" or byte_size(new_buf) > @buffer_size or
+                       String.contains?(new_buf, "\n") do
+                    Utils.set_node_content(graph, to_node, new_full_text, live_view_topic)
+                    {new_full_text, ""}
+                  else
+                    {new_full_text, new_buf}
+                  end
+                end)
+
+              # Flush remaining buffer (ensure final state matches full accumulation)
+              if final_buf != "" do
+                Utils.set_node_content(graph, to_node, final_full_text, live_view_topic)
+              end
+
+              if byte_size(final_full_text) > 0 do
+                Logger.info("LLM job completed successfully",
+                  job_id: job_id,
+                  graph_id: graph,
+                  node_id: to_node,
+                  provider: provider_label(provider_mod),
+                  response_length: byte_size(final_full_text)
+                )
+
+                finalize(graph, to_node, live_view_topic)
+                :ok
               else
-                {new_full_text, new_buf}
-              end
-            end)
+                Logger.warning(
+                  "#{provider_label(provider_mod)} stream yielded no tokens; will retry (empty_stream)"
+                )
 
-          # Flush remaining buffer (ensure final state matches full accumulation)
-          if final_buf != "" do
-            Utils.set_node_content(graph, to_node, final_full_text, live_view_topic)
-          end
-
-          if byte_size(final_full_text) > 0 do
-            Logger.info("LLM job completed successfully",
-              job_id: job_id,
-              graph_id: graph,
-              node_id: to_node,
-              provider: provider_label(provider_mod),
-              response_length: byte_size(final_full_text)
-            )
-
-            finalize(graph, to_node, live_view_topic)
-            :ok
-          else
-            Logger.warning(
-              "#{provider_label(provider_mod)} stream yielded no tokens; will retry (empty_stream)"
-            )
-
-            {:error, :empty_stream}
-          end
-
-        {:error, err} ->
-          # Only broadcast an error to the UI on the final attempt; let Oban retry transiently.
-          final? = attempt >= max_attempts
-
-          if final? do
-            reason_msg =
-              case err do
-                %Mint.TransportError{reason: r} -> "Network error (transport): #{inspect(r)}"
-                :empty_stream -> "Model returned an empty stream"
-                _ -> "#{provider_label(provider_mod)} request error: #{inspect(err)}"
+                {:error, :empty_stream}
               end
 
-            Phoenix.PubSub.broadcast(
-              Dialectic.PubSub,
-              live_view_topic,
-              {:stream_error, reason_msg, :node_id, to_node}
-            )
+            {:error, err} ->
+              # Only broadcast an error to the UI on the final attempt; let Oban retry transiently.
+              final? = attempt >= max_attempts
 
-            # Also broadcast to graph topic for reliability
-            graph_topic = "graph_update:#{graph}"
+              if final? do
+                reason_msg =
+                  case err do
+                    %Mint.TransportError{reason: r} ->
+                      "Network error (transport): #{inspect(r)}"
 
-            Phoenix.PubSub.broadcast(
-              Dialectic.PubSub,
-              graph_topic,
-              {:stream_error, reason_msg, :node_id, to_node}
-            )
+                    :empty_stream ->
+                      "Model returned an empty stream"
+
+                    _ ->
+                      "#{provider_label(provider_mod)} request error: #{inspect(err)}"
+                  end
+
+                Phoenix.PubSub.broadcast(
+                  Dialectic.PubSub,
+                  live_view_topic,
+                  {:stream_error, reason_msg, :node_id, to_node}
+                )
+
+                # Also broadcast to graph topic for reliability
+                graph_topic = "graph_update:#{graph}"
+
+                Phoenix.PubSub.broadcast(
+                  Dialectic.PubSub,
+                  graph_topic,
+                  {:stream_error, reason_msg, :node_id, to_node}
+                )
+              end
+
+              Logger.error("#{provider_label(provider_mod)} request error: #{inspect(err)}")
+              {:error, err}
           end
-
-          Logger.error("#{provider_label(provider_mod)} request error: #{inspect(err)}")
-          {:error, err}
-      end
+        end
     end
   rescue
     exception ->

@@ -65,7 +65,21 @@ defmodule DialecticWeb.LinearGraphLive do
 
   defp mount_graph(socket, graph_db, params, token_param) do
     # Ensure graph is loaded and available (use title for internal GraphManager)
-    {_graph_struct, graph} = GraphManager.get_graph(graph_db.title)
+    {_graph_struct, graph} =
+      case GraphManager.get_graph(graph_db.title) do
+        {:error, :graph_not_found} ->
+          raise "Graph not found: #{graph_db.title}"
+
+        {:error, :deserialization_error} ->
+          raise "Failed to load graph data: #{graph_db.title}"
+
+        {:error, reason} ->
+          Logger.error("Failed to load graph: #{graph_db.title}, reason: #{inspect(reason)}")
+          raise "Error loading graph: #{graph_db.title}"
+
+        graph_data ->
+          graph_data
+      end
 
     user = UserUtils.current_identity(socket.assigns)
 
@@ -693,7 +707,20 @@ defmodule DialecticWeb.LinearGraphLive do
   end
 
   defp refresh_map_nodes(socket) do
-    {_graph_struct, graph} = GraphManager.get_graph(socket.assigns.graph_id)
+    {_graph_struct, graph} =
+      case GraphManager.get_graph(socket.assigns.graph_id) do
+        {:error, reason} ->
+          Logger.error("Failed to refresh graph",
+            graph_id: socket.assigns.graph_id,
+            reason: inspect(reason)
+          )
+
+          # Return current graph state as fallback
+          {%{}, :digraph.new()}
+
+        graph_data ->
+          graph_data
+      end
 
     map_nodes =
       Dialectic.Linear.ThreadedConv.prepare_conversation(graph)

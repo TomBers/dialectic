@@ -42,33 +42,39 @@ defmodule Dialectic.Graph.Creator do
         ModeServer.set_mode(title, mode)
 
         callback.("Initializing grid...")
-        GraphManager.get_graph(title)
 
-        # Retrieve the origin node (ID "1") created by default during graph init
-        origin_node = GraphManager.find_node_by_id(title, "1")
-
-        callback.("Updating origin...")
-        updated_origin = update_origin_content(title, origin_node, question)
-
-        callback.("Generating response (this may take a moment)...")
-
-        # Create the empty answer node connected to origin
-        answer_node = create_answer_node_struct(title, updated_origin, user_identity)
-
-        # Generate LLM response synchronously
-        case generate_response(title, updated_origin, mode) do
-          {:ok, content} ->
-            GraphManager.set_node_content(title, answer_node.id, content)
-            GraphManager.finalize_node_content(title, answer_node.id)
-            GraphManager.save_graph(title)
-
-            callback.("Finalizing...")
-            {:ok, title}
-
+        case GraphManager.get_graph(title) do
           {:error, reason} ->
-            Logger.error("Graph creation LLM error: #{inspect(reason)}")
-            # If generation fails, we still return the graph, just with empty answer node
+            Logger.error("Failed to initialize GraphManager for new graph: #{inspect(reason)}")
             {:error, reason}
+
+          _graph_data ->
+            # Retrieve the origin node (ID "1") created by default during graph init
+            origin_node = GraphManager.find_node_by_id(title, "1")
+
+            callback.("Updating origin...")
+            updated_origin = update_origin_content(title, origin_node, question)
+
+            callback.("Generating response (this may take a moment)...")
+
+            # Create the empty answer node connected to origin
+            answer_node = create_answer_node_struct(title, updated_origin, user_identity)
+
+            # Generate LLM response synchronously
+            case generate_response(title, updated_origin, mode) do
+              {:ok, content} ->
+                GraphManager.set_node_content(title, answer_node.id, content)
+                GraphManager.finalize_node_content(title, answer_node.id)
+                GraphManager.save_graph(title)
+
+                callback.("Finalizing...")
+                {:ok, title}
+
+              {:error, reason} ->
+                Logger.error("Graph creation LLM error: #{inspect(reason)}")
+                # If generation fails, we still return the graph, just with empty answer node
+                {:error, reason}
+            end
         end
 
       {:error, reason} ->

@@ -8,8 +8,24 @@ defmodule GraphManager do
   def get_graph(path) do
     case exists?(path) do
       false ->
-        DynamicSupervisor.start_child(GraphSupervisor, {GraphManager, path})
-        GenServer.call(via_tuple(path), :get_graph)
+        case DynamicSupervisor.start_child(GraphSupervisor, {GraphManager, path}) do
+          {:ok, _pid} ->
+            GenServer.call(via_tuple(path), :get_graph)
+
+          {:error, {:shutdown, :graph_not_found}} ->
+            {:error, :graph_not_found}
+
+          {:error, {:shutdown, :deserialization_error}} ->
+            {:error, :deserialization_error}
+
+          {:error, {:already_started, _pid}} ->
+            # Race condition: another process started it between exists? check and now
+            GenServer.call(via_tuple(path), :get_graph)
+
+          {:error, reason} ->
+            Logger.error("Failed to start GraphManager", graph_id: path, reason: inspect(reason))
+            {:error, reason}
+        end
 
       true ->
         GenServer.call(via_tuple(path), :get_graph)

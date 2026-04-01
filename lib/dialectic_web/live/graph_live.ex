@@ -362,7 +362,18 @@ defmodule DialecticWeb.GraphLive do
                   GraphActions.delete_node(graph_action_params(socket), node_id)
 
                 GraphManager.save_graph(socket.assigns.graph_id)
-                {_, _graph2} = GraphManager.get_graph(socket.assigns.graph_id)
+
+                # Reload graph to ensure consistency
+                case GraphManager.get_graph(socket.assigns.graph_id) do
+                  {:error, reason} ->
+                    Logger.error("Failed to reload graph after deletion",
+                      graph_id: socket.assigns.graph_id,
+                      reason: inspect(reason)
+                    )
+
+                  _graph_data ->
+                    :ok
+                end
 
                 # Ensure we navigate to a valid, non-deleted node.
                 # If no parent exists or it's invalid/deleted, pick the first non-deleted node in the graph.
@@ -1085,7 +1096,17 @@ defmodule DialecticWeb.GraphLive do
   def handle_info({:other_user_change, sender_pid}, socket) do
     # Skip if it's our own change - we've already updated our view
     if self() != sender_pid do
-      {_graph_struct, _graph} = GraphManager.get_graph(socket.assigns.graph_id)
+      # Reload graph to update structural changes for other users
+      case GraphManager.get_graph(socket.assigns.graph_id) do
+        {:error, reason} ->
+          Logger.error("Failed to reload graph after other user change",
+            graph_id: socket.assigns.graph_id,
+            reason: inspect(reason)
+          )
+
+        _graph_data ->
+          :ok
+      end
 
       # Update f_graph so other users see structural changes (new nodes, etc.)
       {:noreply,
@@ -1711,14 +1732,20 @@ defmodule DialecticWeb.GraphLive do
                Plug.Crypto.secure_compare(token_param, graph_db.share_token))
 
         if has_access do
-          try do
-            # Always use title for GraphManager lookup (internal identifier)
-            {:ok, GraphManager.get_graph(graph_db.title), graph_db}
-          rescue
-            _e ->
-              require Logger
-              Logger.error("Failed to load graph: #{graph_db.title}")
+          # Always use title for GraphManager lookup (internal identifier)
+          case GraphManager.get_graph(graph_db.title) do
+            {:error, :graph_not_found} ->
+              {:error, "Graph not found: #{graph_db.title}"}
+
+            {:error, :deserialization_error} ->
+              {:error, "Failed to load graph data: #{graph_db.title}"}
+
+            {:error, reason} ->
+              Logger.error("Failed to load graph: #{graph_db.title}, reason: #{inspect(reason)}")
               {:error, "Error loading graph: #{graph_db.title}"}
+
+            graph_data ->
+              {:ok, graph_data, graph_db}
           end
         else
           {:error, "You do not have permission to view this graph."}
