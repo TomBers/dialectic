@@ -107,7 +107,7 @@ defmodule DialecticWeb.AskFormComp do
                 type="submit"
                 name="submit_action"
                 value="post"
-                class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm leading-none px-3 h-9 rounded-full font-medium transition-all hover:shadow-sm"
+                class="bg-emerald-500 hover:bg-emerald-600 text-white text-sm leading-none px-3 h-9 rounded-full font-medium transition-all hover:shadow-sm"
                 title="Post your comment — no AI response"
               >
                 Post
@@ -129,7 +129,7 @@ defmodule DialecticWeb.AskFormComp do
           <div class="text-[11px] text-gray-500 text-center mt-1.5">
             <span class="font-medium text-indigo-600">Ask</span>
             gets an AI <span class="font-medium">{String.capitalize(@prompt_mode)}</span>
-            level response • <span class="font-medium text-gray-600">Post</span>
+            level response • <span class="font-medium text-emerald-600">Post</span>
             adds your comment directly
           </div>
         <% end %>

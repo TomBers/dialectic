@@ -1,6 +1,7 @@
 import { draw_graph } from "./draw_graph";
 import { layoutConfig } from "./layout_config.js";
 import { extractListItems } from "./list_detection_hook.js";
+import { showToast, copyToClipboard } from "./toast.js";
 
 const layoutGraph = (cy, opts, onDone) => {
   // Back-compat: (cy, onDone)
@@ -1013,71 +1014,10 @@ const graphHook = {
 
     // ── Copy to clipboard: used by "Copy link" in presentation bar ──
     this.handleEvent("copy_to_clipboard", ({ text }) => {
-      const onSuccess = () => this._showCopiedToast();
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard
-          .writeText(text)
-          .then(onSuccess)
-          .catch(() => {
-            this._fallbackCopy(text);
-            onSuccess();
-          });
-      } else {
-        this._fallbackCopy(text);
-        onSuccess();
-      }
+      copyToClipboard(text).then(() => {
+        showToast("Copied to clipboard!", { id: "graph-copied-toast" });
+      });
     });
-  },
-
-  /**
-   * Show a brief "Copied to clipboard!" toast near the top of the screen.
-   */
-  _showCopiedToast() {
-    const toast = document.createElement("div");
-    toast.textContent = "Copied to clipboard!";
-    Object.assign(toast.style, {
-      position: "fixed",
-      top: "56px",
-      left: "50%",
-      transform: "translateX(-50%)",
-      background: "#1f2937",
-      color: "#fff",
-      padding: "8px 16px",
-      borderRadius: "8px",
-      fontSize: "13px",
-      fontWeight: "500",
-      zIndex: "10000",
-      opacity: "0",
-      transition: "opacity 0.2s ease",
-      pointerEvents: "none",
-    });
-    document.body.appendChild(toast);
-    // Trigger fade-in on next frame
-    requestAnimationFrame(() => {
-      toast.style.opacity = "1";
-    });
-    setTimeout(() => {
-      toast.style.opacity = "0";
-      setTimeout(() => toast.remove(), 200);
-    }, 2000);
-  },
-
-  /**
-   * Fallback copy for browsers / contexts where navigator.clipboard is unavailable.
-   */
-  _fallbackCopy(text) {
-    const ta = document.createElement("textarea");
-    ta.value = text;
-    ta.style.position = "fixed";
-    ta.style.opacity = "0";
-    document.body.appendChild(ta);
-    ta.select();
-    try {
-      document.execCommand("copy");
-    } catch (_e) {
-      /* best-effort */
-    }
-    document.body.removeChild(ta);
   },
 
   /**

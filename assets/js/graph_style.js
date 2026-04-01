@@ -25,14 +25,14 @@ const cols = {
     selectedBorder: "#0369a1", // sky-700
   },
   user: {
-    text: "#0c4a6e",
-    background: "#e0f2fe", // sky-100
-    border: "#0ea5e9",
-    hoverBackground: "#bae6fd",
-    hoverBorder: "#0284c7",
-    selectedText: "#0c4a6e",
-    selectedBackground: "#bae6fd", // sky-200 (7.13:1)
-    selectedBorder: "#0369a1",
+    text: "#14532d", // green-900
+    background: "#bbf7d0", // green-200
+    border: "#16a34a", // green-600
+    hoverBackground: "#86efac", // green-300
+    hoverBorder: "#15803d", // green-700
+    selectedText: "#14532d",
+    selectedBackground: "#86efac", // green-300 (7.23:1)
+    selectedBorder: "#166534", // green-800
   },
 
   antithesis: {
@@ -62,7 +62,7 @@ const cols = {
     hoverBackground: "#a7f3d0", // emerald-200
     hoverBorder: "#059669", // emerald-600
     selectedText: "#064e3b",
-    selectedBackground: "#a7f3d0", // emerald-200 (7.58:1 — was 6.38 with emerald-300)
+    selectedBackground: "#a7f3d0", // emerald-200 (7.58:1)
     selectedBorder: "#047857", // emerald-700
   },
 

@@ -40,6 +40,7 @@ import SearchNav from "./search_nav_hook.js";
 import PresentationHook, {
   PresentationSetupHook,
 } from "./presentation_hook.js";
+import ShareHook from "./share_hook.js";
 
 let hooks = {};
 
@@ -61,6 +62,7 @@ hooks.WhatsNext = WhatsNext;
 hooks.SearchNav = SearchNav;
 hooks.Presentation = PresentationHook;
 hooks.PresentationSetup = PresentationSetupHook;
+hooks.Share = ShareHook;
 
 hooks.PasswordToggle = {
   mounted() {

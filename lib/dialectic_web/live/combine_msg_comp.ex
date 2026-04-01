@@ -52,7 +52,7 @@ defmodule DialecticWeb.CombinetMsgComp do
     case class do
       # "user" -> "border-red-400"
       "answer" -> "border-blue-400"
-      "thesis" -> "border-green-400"
+      "thesis" -> "border-emerald-400"
       "antithesis" -> "border-red-400"
       "synthesis" -> "border-purple-600"
       "deepdive" -> "border-cyan-500"
