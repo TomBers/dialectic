@@ -123,6 +123,21 @@
     </div>
   </div>
 
+  <%!-- Document-level menu (top right) - hidden during presentation --%>
+  <%= if @presentation_mode != :presenting && @graph_id do %>
+    <.live_component
+      module={DialecticWeb.DocumentMenuComp}
+      id="document-menu"
+      node={@node}
+      user={@user}
+      current_user={assigns[:current_user]}
+      graph_id={@graph_id}
+      graph_struct={@graph_struct}
+      can_edit={@can_edit}
+      token={@token}
+    />
+  <% end %>
+
   <.live_component
     module={DialecticWeb.ShareModalComp}
     id="share-modal"
@@ -565,27 +580,33 @@
                 />
               </div>
             </div>
-            <div class="w-full">
-              <.live_component
-                module={DialecticWeb.ActionToolbarComp}
-                id={"action-toolbar-#{@node && @node.id}"}
-                node={@node}
-                user={@user}
-                current_user={assigns[:current_user]}
-                graph_id={@graph_id}
-                graph_struct={@graph_struct}
-                can_edit={@can_edit}
-                inline={true}
-                icons_only={false}
-                token={@token}
-              />
-            </div>
           </div>
         </div>
       </div>
     </div>
     <!-- Right side: Chat (Drawer) -->
   </div>
+
+  <%!-- Floating Node Actions Menu (positioned on selected node) --%>
+  <%= if @graph_id do %>
+    <div
+      id="node-actions-menu"
+      phx-hook="NodeMenu"
+      class="pointer-events-none"
+      style="opacity: 0; visibility: hidden;"
+      data-node-id={@node && @node.id}
+    >
+      <.live_component
+        module={DialecticWeb.NodeActionsComp}
+        id={"node-actions-#{(@node && @node.id) || "default"}"}
+        node={@node}
+        user={@user}
+        current_user={assigns[:current_user]}
+        graph_id={@graph_id}
+        can_edit={@can_edit}
+      />
+    </div>
+  <% end %>
 
   <%!-- ⌘K Quick Search Overlay — outside #graph-layout to avoid overflow-hidden clipping --%>
   <%= if assigns[:graph_id] do %>
