@@ -19,8 +19,8 @@ This separation provides better visual hierarchy and clearer user intent.
 - Could be confusing which actions applied to what scope
 
 ### After
-- **Document menu** (top right): Star, Read, Share, Present, Views, Highlights, Settings
-- **Node actions** (floating on selected node): Related Ideas, Pros/Cons, Blend, Explore, Delete
+- **Document menu** (top right): Read, Share, Present, Views, Highlights, Settings
+- **Node actions** (floating on selected node): Star, Pros/Cons, Related Ideas, Explore, Blend, Delete
 - Clear separation of concerns
 - Better visual organization
 - Context menu appears directly on the selected node
@@ -34,7 +34,6 @@ This separation provides better visual hierarchy and clearer user intent.
 **Purpose**: Provides document-level controls that affect the entire graph or viewing experience.
 
 **Actions included**:
-- **Star/Unstar** - Add/remove current node to/from notes
 - **Read** - Open linear reading view
 - **Share** - Share the graph
 - **Present** - Enter presentation mode
@@ -55,10 +54,11 @@ This separation provides better visual hierarchy and clearer user intent.
 **Purpose**: Provides actions that operate on the currently selected node.
 
 **Actions included**:
-- **Ideas** - Generate related ideas (orange)
+- **Star/Unstar** - Add/remove current node to/from notes (yellow/gray)
 - **Pro/Con** - Generate pros and cons analysis (gradient emerald-rose)
-- **Blend** - Combine with another node (violet)
+- **Related Ideas** - Generate related ideas (orange)
 - **Explore** - Explore all points (gradient fuchsia-rose-amber)
+- **Blend** - Combine with another node (violet)
 - **Delete** - Delete the current node (red, with constraints)
 
 **Location**: Floating menu positioned directly below (or above if space limited) the currently selected node
@@ -155,7 +155,6 @@ The delete button includes sophisticated constraint checking:
 - Shadow and border for elevation (`shadow-lg border border-gray-200`)
 - Grouped buttons with consistent padding
 - Color-coded by function:
-  - Star: Yellow
   - Read: Gray
   - Share: Indigo
   - Present: Fuchsia
@@ -165,8 +164,13 @@ The delete button includes sophisticated constraint checking:
 
 ### Node Actions
 - Compact button layout with icons + text
-- Color-coded by action type (matching existing patterns)
-- Visual divider before delete action
+- Color-coded by action type:
+  - Star: Yellow (changes to gray when starred)
+  - Pro/Con: Gradient emerald-rose
+  - Related Ideas: Orange
+  - Explore: Gradient fuchsia-rose-amber
+  - Blend: Violet
+  - Delete: Red (with divider before it)
 - Smaller text size (`text-xs`) for compact appearance
 
 ---
