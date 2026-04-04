@@ -12,7 +12,7 @@ const NodeMenuHook = {
     this.currentPopper = null;
     this.currentNodeId = null;
     this.menuContainer = null;
-    this.menuClickHandler = null;
+    this.menuButtonClickHandler = null;
 
     // Find the menu container
     this.menuContainer = this.el.querySelector(".node-actions-menu");
@@ -20,7 +20,7 @@ const NodeMenuHook = {
       return;
     }
 
-    // Move menu to body for proper absolute positioning
+    // Move menu to body for proper positioning, but forward events to LiveView
     document.body.appendChild(this.menuContainer);
 
     // Initially hide the menu
@@ -29,11 +29,53 @@ const NodeMenuHook = {
     this.menuContainer.style.visibility = "hidden";
     this.menuContainer.style.pointerEvents = "none";
 
-    // Add click handler to prevent menu clicks from closing it
-    this.menuClickHandler = (e) => {
-      e.stopPropagation();
+    // Note: We don't stop propagation on menu clicks because we need
+    // phx-click events to reach the LiveView server. The background
+    // click handler already checks event.target === cy to avoid closing
+    // the menu when clicking menu items.
+
+    // Forward phx-click events to LiveView and close menu after button clicks
+    this.menuButtonClickHandler = (e) => {
+      const button = e.target.closest("button");
+      if (button) {
+        // Prevent default behavior and stop propagation to avoid double-firing
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Forward phx-click to the LiveView by dispatching the event on the original element
+        const phxClick = button.getAttribute("phx-click");
+        if (phxClick) {
+          // Check for confirmation dialog
+          const confirmMessage = button.getAttribute("data-confirm");
+          if (confirmMessage) {
+            // Show confirmation dialog
+            if (!confirm(confirmMessage)) {
+              // User cancelled, just close the menu
+              this.destroyPopper();
+              return;
+            }
+          }
+
+          // Get the phx-value attributes
+          const phxValues = {};
+          Array.from(button.attributes).forEach((attr) => {
+            if (attr.name.startsWith("phx-value-")) {
+              const key = attr.name.replace("phx-value-", "");
+              phxValues[key] = attr.value;
+            }
+          });
+
+          // Push event to LiveView
+          this.pushEvent(phxClick, phxValues);
+        }
+
+        // Close menu after event is sent
+        setTimeout(() => {
+          this.destroyPopper();
+        }, 50);
+      }
     };
-    this.menuContainer.addEventListener("click", this.menuClickHandler);
+    this.menuContainer.addEventListener("click", this.menuButtonClickHandler);
 
     // Wait for Cytoscape to be ready
     this.waitForCytoscape();
@@ -132,6 +174,7 @@ const NodeMenuHook = {
         return this.menuContainer;
       },
       placement: "bottom",
+      strategy: "fixed",
       modifiers: [
         {
           name: "flip",
@@ -215,9 +258,12 @@ const NodeMenuHook = {
       this.cy.off("tap");
     }
 
-    // Remove menu click handler
-    if (this.menuContainer && this.menuClickHandler) {
-      this.menuContainer.removeEventListener("click", this.menuClickHandler);
+    // Remove menu button click handler
+    if (this.menuContainer && this.menuButtonClickHandler) {
+      this.menuContainer.removeEventListener(
+        "click",
+        this.menuButtonClickHandler,
+      );
     }
 
     // Remove menu from body
@@ -227,7 +273,7 @@ const NodeMenuHook = {
 
     this.cy = null;
     this.menuContainer = null;
-    this.menuClickHandler = null;
+    this.menuButtonClickHandler = null;
   },
 };
 

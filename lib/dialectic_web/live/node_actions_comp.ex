@@ -1,62 +1,44 @@
 defmodule DialecticWeb.NodeActionsComp do
   use DialecticWeb, :live_component
-  alias DialecticWeb.Utils.UserUtils
 
   # Computes deletion constraints and tooltip/title based on assigns
   defp delete_info(assigns) do
     node = assigns[:node]
     can_edit = assigns[:can_edit]
     current_user = assigns[:current_user]
-    user = assigns[:user]
 
-    children_list = (node && (node.children || [])) || []
+    # Simple ownership check: does the current user's email match the node's user field?
+    current_user_email = current_user && Map.get(current_user, :email)
+    node_user = node && Map.get(node, :user)
+    is_owner = current_user_email != nil && current_user_email == node_user
 
-    live_children =
-      Enum.filter(children_list, fn ch -> not Map.get(ch, :deleted, false) end)
+    # Check for non-deleted children
+    children_list = (node && Map.get(node, :children, [])) || []
+    live_children = Enum.reject(children_list, fn ch -> Map.get(ch, :deleted, false) end)
+    has_no_children = length(live_children) == 0
 
-    no_live_children? = length(live_children) == 0
+    # Graph must not be locked
+    is_not_locked = can_edit != false
 
-    owner? = UserUtils.owner?(node, %{current_user: current_user, user: user})
+    # All conditions must be true to delete
+    deletable = is_owner && has_no_children && is_not_locked
 
-    locked? = can_edit == false
-    deletable = owner? && no_live_children? && !locked?
-
-    live_children_count = length(live_children)
-
-    live_child_ids =
-      live_children
-      |> Enum.map(fn ch -> to_string(Map.get(ch, :id, "")) end)
-      |> Enum.reject(&(&1 == ""))
-      |> Enum.join(", ")
-
+    # Build helpful error message
     delete_title =
       cond do
         deletable ->
           "Delete this node"
 
-        locked? ->
+        not is_not_locked ->
           "Cannot delete: graph is locked"
 
-        not owner? ->
-          base =
-            "Cannot delete: you are not the author"
+        not is_owner ->
+          "Cannot delete: you are not the author (node created by: #{node_user || "unknown"})"
 
-          if String.trim(to_string((node && Map.get(node, :user)) || "")) == "" do
-            base <> " [blank owner assumed current user]"
-          else
-            base
-          end
+        not has_no_children ->
+          child_count = length(live_children)
 
-        not no_live_children? ->
-          base =
-            "Cannot delete: this node has #{live_children_count} child" <>
-              if live_children_count == 1, do: "", else: "ren"
-
-          if live_child_ids != "" do
-            base <> " (child IDs: " <> live_child_ids <> ")"
-          else
-            base
-          end
+          "Cannot delete: this node has #{child_count} child#{if child_count == 1, do: "", else: "ren"}"
 
         true ->
           "Cannot delete"
@@ -78,7 +60,7 @@ defmodule DialecticWeb.NodeActionsComp do
     ~H"""
     <div
       class="node-actions-menu"
-      style="z-index: 50; display: none; opacity: 0; visibility: hidden; pointer-events: none;"
+      style="position: fixed; z-index: 50; display: none; opacity: 0; visibility: hidden; pointer-events: none;"
     >
       <% info = delete_info(assigns) %>
 

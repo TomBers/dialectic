@@ -46,8 +46,8 @@ defmodule DialecticWeb.DocumentMenuComp do
                 if(assigns[:token], do: [token: assigns[:token]], else: [])
               )
             }
-            class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md bg-gray-700 text-white transition-all hover:bg-gray-800 text-sm font-medium"
-            title="Open linear view"
+            class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-600 text-white transition-all hover:bg-blue-700 text-sm font-medium shadow-sm"
+            title="View graph as a linear, readable document"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -62,10 +62,10 @@ defmodule DialecticWeb.DocumentMenuComp do
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
-                d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
+                d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
               />
             </svg>
-            <span>Read</span>
+            <span>Document</span>
           </.link>
         <% end %>
 
