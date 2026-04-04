@@ -60,7 +60,7 @@ defmodule DialecticWeb.NodeActionsComp do
     ~H"""
     <div
       class="node-actions-menu"
-      style="position: fixed; z-index: 50; display: none; opacity: 0; visibility: hidden; pointer-events: none;"
+      style="position: fixed; z-index: 10; display: none; opacity: 0; visibility: hidden; pointer-events: none;"
     >
       <% info = delete_info(assigns) %>
 

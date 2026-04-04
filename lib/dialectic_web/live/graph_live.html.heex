@@ -296,7 +296,7 @@
   <div class="flex-1 min-h-0 flex">
     <div
       id="side-drawer"
-      class="fixed bottom-0 left-0 md:relative w-full p-4 md:p-0 md:w-2/5 flex flex-col bg-white md:border-r md:border-gray-200 z-90 transform translate-x-0 opacity-100 transition-all duration-300 ease-in-out"
+      class="fixed bottom-0 left-0 md:relative w-full p-4 md:p-0 md:w-2/5 flex flex-col bg-white md:border-r md:border-gray-200 z-40 transform translate-x-0 opacity-100 transition-all duration-300 ease-in-out"
     >
       <div id="side-drawer-scroll" class="flex-1 overflow-y-auto" phx-hook="ScrollReset">
         <%= if @graph_id && @presentation_mode != :presenting do %>
@@ -588,7 +588,7 @@
   </div>
 
   <%!-- Floating Node Actions Menu (positioned on selected node) --%>
-  <%= if @graph_id do %>
+  <%= if @graph_id && @presentation_mode != :presenting do %>
     <div
       id="node-actions-menu"
       phx-hook="NodeMenu"
@@ -604,6 +604,7 @@
         current_user={assigns[:current_user]}
         graph_id={@graph_id}
         can_edit={@can_edit}
+        presentation_mode={@presentation_mode}
       />
     </div>
   <% end %>
