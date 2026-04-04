@@ -1,11 +1,28 @@
 import cytoscape from "cytoscape";
 import dagre from "cytoscape-dagre";
 import compoundDragAndDrop from "cytoscape-compound-drag-and-drop";
+import cytoscapePopper from "cytoscape-popper";
+import { createPopper } from "@popperjs/core";
 import { graphStyle } from "./graph_style";
 import { layoutConfig } from "./layout_config.js";
 
+// Create popper factory function for cytoscape-popper v4
+function popperFactory(ref, content, opts) {
+  const popperOptions = {
+    placement: opts?.placement || "bottom",
+    strategy: "fixed",
+    modifiers: opts?.modifiers || [],
+    ...opts,
+  };
+
+  const popperInstance = createPopper(ref, content, popperOptions);
+
+  return popperInstance;
+}
+
 cytoscape.use(dagre);
 cytoscape.use(compoundDragAndDrop);
+cytoscape.use(cytoscapePopper(popperFactory));
 
 /* ─── Depth-based collapse configuration ─── */
 export const DEPTH_COLLAPSE_DEFAULTS = {

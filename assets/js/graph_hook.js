@@ -274,6 +274,9 @@ const graphHook = {
       graphId,
     );
 
+    // Store hook reference on element for NodeMenuHook access
+    this.el.__graphHook = this;
+
     // Track view mode and direction for detecting changes
     this._lastViewMode = viewMode;
     this._lastGraphDirection = graphDirection;

@@ -41,6 +41,7 @@ import PresentationHook, {
   PresentationSetupHook,
 } from "./presentation_hook.js";
 import ShareHook from "./share_hook.js";
+import NodeMenuHook from "./node_menu_hook.js";
 
 let hooks = {};
 
@@ -63,6 +64,7 @@ hooks.SearchNav = SearchNav;
 hooks.Presentation = PresentationHook;
 hooks.PresentationSetup = PresentationSetupHook;
 hooks.Share = ShareHook;
+hooks.NodeMenu = NodeMenuHook;
 
 hooks.PasswordToggle = {
   mounted() {

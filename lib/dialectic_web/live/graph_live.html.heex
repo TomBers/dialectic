@@ -123,6 +123,21 @@
     </div>
   </div>
 
+  <%!-- Document-level menu (top right) - hidden during presentation --%>
+  <%= if @presentation_mode != :presenting && @graph_id do %>
+    <.live_component
+      module={DialecticWeb.DocumentMenuComp}
+      id="document-menu"
+      node={@node}
+      user={@user}
+      current_user={assigns[:current_user]}
+      graph_id={@graph_id}
+      graph_struct={@graph_struct}
+      can_edit={@can_edit}
+      token={@token}
+    />
+  <% end %>
+
   <.live_component
     module={DialecticWeb.ShareModalComp}
     id="share-modal"
@@ -281,7 +296,7 @@
   <div class="flex-1 min-h-0 flex">
     <div
       id="side-drawer"
-      class="fixed bottom-0 left-0 md:relative w-full p-4 md:p-0 md:w-2/5 flex flex-col bg-white md:border-r md:border-gray-200 z-90 transform translate-x-0 opacity-100 transition-all duration-300 ease-in-out"
+      class="fixed bottom-0 left-0 md:relative w-full p-4 md:p-0 md:w-2/5 flex flex-col bg-white md:border-r md:border-gray-200 z-40 transform translate-x-0 opacity-100 transition-all duration-300 ease-in-out"
     >
       <div id="side-drawer-scroll" class="flex-1 overflow-y-auto" phx-hook="ScrollReset">
         <%= if @graph_id && @presentation_mode != :presenting do %>
@@ -565,27 +580,34 @@
                 />
               </div>
             </div>
-            <div class="w-full">
-              <.live_component
-                module={DialecticWeb.ActionToolbarComp}
-                id={"action-toolbar-#{@node && @node.id}"}
-                node={@node}
-                user={@user}
-                current_user={assigns[:current_user]}
-                graph_id={@graph_id}
-                graph_struct={@graph_struct}
-                can_edit={@can_edit}
-                inline={true}
-                icons_only={false}
-                token={@token}
-              />
-            </div>
           </div>
         </div>
       </div>
     </div>
     <!-- Right side: Chat (Drawer) -->
   </div>
+
+  <%!-- Floating Node Actions Menu (positioned on selected node) --%>
+  <%= if @graph_id && @presentation_mode != :presenting do %>
+    <div
+      id="node-actions-menu"
+      phx-hook="NodeMenu"
+      class="pointer-events-none"
+      style="opacity: 0; visibility: hidden;"
+      data-node-id={@node && @node.id}
+    >
+      <.live_component
+        module={DialecticWeb.NodeActionsComp}
+        id={"node-actions-#{(@node && @node.id) || "default"}"}
+        node={@node}
+        user={@user}
+        current_user={assigns[:current_user]}
+        graph_id={@graph_id}
+        can_edit={@can_edit}
+        presentation_mode={@presentation_mode}
+      />
+    </div>
+  <% end %>
 
   <%!-- ⌘K Quick Search Overlay — outside #graph-layout to avoid overflow-hidden clipping --%>
   <%= if assigns[:graph_id] do %>
