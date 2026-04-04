@@ -13,6 +13,8 @@ const NodeMenuHook = {
     this.currentNodeId = null;
     this.menuContainer = null;
     this.menuButtonClickHandler = null;
+    this.backgroundTapHandler = null;
+    this.nodeTapHandler = null;
 
     // Find the menu container
     this.menuContainer = this.el.querySelector(".node-actions-menu");
@@ -118,22 +120,24 @@ const NodeMenuHook = {
     if (!this.cy) return;
 
     // Hide menu when clicking background (fires first, before node tap)
-    this.cy.on("tap", (event) => {
+    this.backgroundTapHandler = (event) => {
       // Only hide if we're clicking on the background (not a node or edge)
       if (event.target === this.cy) {
         this.destroyPopper();
       }
-    });
+    };
+    this.cy.on("tap", this.backgroundTapHandler);
 
     // Update popper when a new node is selected (fires after background tap for nodes)
-    this.cy.on("tap", "node", (event) => {
+    this.nodeTapHandler = (event) => {
       const node = event.target;
       // Skip compound/group nodes
       if (node.isParent && node.isParent()) return;
 
       const nodeId = node.id();
       this.showMenuForNode(nodeId);
-    });
+    };
+    this.cy.on("tap", "node", this.nodeTapHandler);
   },
 
   showMenuForNode(nodeId) {
@@ -253,9 +257,14 @@ const NodeMenuHook = {
     // Destroy popper
     this.destroyPopper();
 
-    // Clean up Cytoscape listeners
+    // Clean up Cytoscape listeners - only remove our specific handlers
     if (this.cy) {
-      this.cy.off("tap");
+      if (this.backgroundTapHandler) {
+        this.cy.off("tap", this.backgroundTapHandler);
+      }
+      if (this.nodeTapHandler) {
+        this.cy.off("tap", "node", this.nodeTapHandler);
+      }
     }
 
     // Remove menu button click handler
@@ -274,6 +283,8 @@ const NodeMenuHook = {
     this.cy = null;
     this.menuContainer = null;
     this.menuButtonClickHandler = null;
+    this.backgroundTapHandler = null;
+    this.nodeTapHandler = null;
   },
 };
 
