@@ -144,7 +144,7 @@ defmodule DialecticWeb.ActionToolbarComp do
               />
             </svg>
             <span :if={!@icons_only} class="toolbar-label text-[10px] leading-tight font-medium">
-              Ideas
+              Related
             </span>
           </button>
 
