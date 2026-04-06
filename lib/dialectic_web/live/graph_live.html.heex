@@ -540,7 +540,7 @@
       class="fixed bottom-0 z-30 transform origin-bottom scale-100 opacity-100 visible transition-all duration-200 ease-out px-1 pb-3 pointer-events-none shift-with-panel transition-[right] duration-300 ease-in-out left-0 right-0 md:left-[40%]"
       style="padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem);"
     >
-      <div class="mx-auto w-full max-w-2xl">
+      <div class="mx-auto w-full max-w-4xl">
         <div class="relative">
           <div class="flex justify-center -mt-4 mb-2">
             <button
@@ -570,8 +570,9 @@
             </button>
           </div>
           <div class="bg-white/95 backdrop-blur border border-gray-200 shadow-xl rounded-t-[1.75rem] rounded-2xl px-1.5 pt-2 pb-2 pointer-events-auto transform-gpu transition-all duration-200 ease-out translate-y-0">
-            <div class="flex items-center min-w-0 mb-2 px-1.5">
-              <div class="flex-1 min-w-0">
+            <div class="grid grid-cols-[1fr_auto] gap-4 items-center px-1.5">
+              <%!-- Left column: Ask form --%>
+              <div class="min-w-0">
                 <.live_component
                   module={DialecticWeb.AskFormComp}
                   id="global-chat-form"
@@ -582,19 +583,20 @@
                   node={@node}
                 />
               </div>
-            </div>
-            <div class="w-full">
-              <.live_component
-                module={DialecticWeb.ActionToolbarComp}
-                id={"action-toolbar-#{@node && @node.id}"}
-                node={@node}
-                user={@user}
-                current_user={assigns[:current_user]}
-                graph_id={@graph_id}
-                can_edit={@can_edit}
-                inline={true}
-                icons_only={false}
-              />
+              <%!-- Right column: Action buttons --%>
+              <div class="flex items-center gap-1.5">
+                <.live_component
+                  module={DialecticWeb.ActionToolbarComp}
+                  id={"action-toolbar-#{@node && @node.id}"}
+                  node={@node}
+                  user={@user}
+                  current_user={assigns[:current_user]}
+                  graph_id={@graph_id}
+                  can_edit={@can_edit}
+                  inline={true}
+                  icons_only={false}
+                />
+              </div>
             </div>
           </div>
         </div>
