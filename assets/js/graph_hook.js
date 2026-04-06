@@ -274,6 +274,15 @@ const graphHook = {
       graphId,
     );
 
+    // Expose updated cy instance
+    if (this._container) {
+      this._container.__cy = this.cy;
+    }
+
+    // Reset tracking
+    // Expose cy instance on container for other hooks (e.g., NodeMenuHook)
+    container.__cy = this.cy;
+
     // Track view mode and direction for detecting changes
     this._lastViewMode = viewMode;
     this._lastGraphDirection = graphDirection;
@@ -1650,6 +1659,11 @@ const graphHook = {
         this.cy.destroy();
       } catch (_e) {}
       this.cy = null;
+    }
+
+    // Clean up exposed reference
+    if (this._container && this._container.__cy) {
+      this._container.__cy = null;
     }
   },
 };

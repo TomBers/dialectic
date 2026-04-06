@@ -8,6 +8,7 @@ defmodule DialecticWeb.ComponentsSmokeTest do
 
   @action_toolbar_mod DialecticWeb.ActionToolbarComp
   @node_menu_mod DialecticWeb.NodeMenuComp
+  @document_menu_mod DialecticWeb.DocumentMenuComp
 
   describe "ActionToolbarComp smoke" do
     test "module loads" do
@@ -18,6 +19,12 @@ defmodule DialecticWeb.ComponentsSmokeTest do
   describe "NodeMenuComp smoke" do
     test "module loads" do
       assert Code.ensure_loaded?(@node_menu_mod)
+    end
+  end
+
+  describe "DocumentMenuComp smoke" do
+    test "module loads" do
+      assert Code.ensure_loaded?(@document_menu_mod)
     end
   end
 end
