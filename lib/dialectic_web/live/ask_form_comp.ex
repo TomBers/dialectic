@@ -52,62 +52,52 @@ defmodule DialecticWeb.AskFormComp do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="w-full min-w-0 space-y-1.5" data-role="ask-form-container">
-      <%!-- Current Node Indicator --%>
-      <%= if @node && @node.id do %>
-        <button
-          type="button"
-          phx-click="node_clicked"
-          phx-value-id={@node.id}
-          class={[
-            "flex items-start gap-2.5 w-full text-left px-3 py-2 rounded-lg border-l-[3px] bg-gray-50/80 hover:bg-gray-100/80 transition-colors cursor-pointer group",
-            DialecticWeb.ColUtils.border_class(@node.class || "")
-          ]}
-          title="Click to focus this node on the graph"
-        >
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-1.5 mb-0.5">
-              <span class="text-[10px] text-gray-400 font-medium">Replying to</span>
-              <span class={"inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium " <> DialecticWeb.ColUtils.badge_class(@node.class || "")}>
-                {DialecticWeb.ColUtils.node_type_label(@node.class || "")}
-              </span>
-            </div>
-            <div class="text-sm text-gray-800 group-hover:text-indigo-700 transition-colors leading-snug line-clamp-2">
-              {NodeTitleHelper.extract_node_title(@node)}
-            </div>
-          </div>
-          <.icon
-            name="hero-arrow-top-right-on-square-mini"
-            class="w-3.5 h-3.5 text-gray-300 group-hover:text-indigo-400 transition-colors mt-1 shrink-0"
-          />
-        </button>
-      <% end %>
+    <div class="w-full min-w-0" data-role="ask-form-container">
       <.form
         for={@form}
         phx-submit={@submit_event || "reply-and-answer"}
         id={@id}
         class="w-full min-w-0"
       >
+        <%!-- Compact Replying-to indicator --%>
+        <%= if @node && @node.id do %>
+          <button
+            type="button"
+            phx-click="node_clicked"
+            phx-value-id={@node.id}
+            class="flex items-center gap-1.5 mb-1 text-left group"
+            title="Click to focus this node on the graph"
+          >
+            <span class="text-[10px] text-gray-400">↩</span>
+            <span class={"inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium " <> DialecticWeb.ColUtils.badge_class(@node.class || "")}>
+              {DialecticWeb.ColUtils.node_type_label(@node.class || "")}
+            </span>
+            <span class="text-[11px] text-gray-600 group-hover:text-indigo-600 truncate max-w-[200px]">
+              {NodeTitleHelper.extract_node_title(@node, max_length: 40)}
+            </span>
+          </button>
+        <% end %>
+
         <div class="flex items-center gap-2 w-full">
           <%!-- Input Field --%>
-          <div class="relative min-w-0 flex-1 overflow-hidden rounded-3xl shadow-sm transition-all focus-within:shadow-md">
+          <div class="relative min-w-0 flex-1 rounded-3xl shadow-sm transition-all focus-within:shadow-md">
             <textarea
               name={@form[:content].name}
               id={@input_id}
               rows="1"
               placeholder={@placeholder}
               phx-hook="AutoExpandTextarea"
-              class="box-border w-full h-[3rem] min-h-[3rem] overflow-hidden rounded-3xl pl-4 pr-[8.5rem] py-2 text-base border border-gray-300 focus:border-indigo-500 focus:ring-0 focus:outline-none bg-white resize-none"
+              class="box-border w-full h-10 min-h-[2.5rem] rounded-3xl pl-4 pr-[8.5rem] py-2.5 text-sm border border-gray-300 focus:border-indigo-500 focus:ring-0 focus:outline-none bg-white resize-none"
             >{Phoenix.HTML.Form.normalize_value("text", @form[:content].value)}</textarea>
 
             <%!-- Two submit buttons inside the input --%>
-            <div class="absolute right-1.5 top-1.5 flex items-center gap-1">
+            <div class="absolute right-1.5 top-0 bottom-1 flex items-center gap-1">
               <%!-- Post button — adds submit_action=post to form params --%>
               <button
                 type="submit"
                 name="submit_action"
                 value="post"
-                class="bg-emerald-500 hover:bg-emerald-600 text-white text-sm leading-none px-3 h-9 rounded-full font-medium transition-all hover:shadow-sm"
+                class="bg-emerald-500 hover:bg-emerald-600 text-white text-xs leading-none px-2.5 h-7 rounded-full font-medium transition-all hover:shadow-sm"
                 title="Post your comment — no AI response"
               >
                 Post
@@ -115,7 +105,7 @@ defmodule DialecticWeb.AskFormComp do
               <%!-- Ask button — default submit (no name, so no submit_action param) --%>
               <button
                 type="submit"
-                class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm leading-none px-3.5 h-9 rounded-full font-medium shadow-sm transition-all hover:shadow-md"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs leading-none px-3 h-7 rounded-full font-medium shadow-sm transition-all hover:shadow-md"
                 title="Ask and get an AI-generated response"
               >
                 Ask
@@ -124,13 +114,11 @@ defmodule DialecticWeb.AskFormComp do
           </div>
         </div>
 
-        <%!-- Explanatory text below form --%>
+        <%!-- Compact hint text --%>
         <%= if @show_hint do %>
-          <div class="text-[11px] text-gray-500 text-center mt-1.5">
-            <span class="font-medium text-indigo-600">Ask</span>
-            gets an AI <span class="font-medium">{String.capitalize(@prompt_mode)}</span>
-            level response • <span class="font-medium text-emerald-600">Post</span>
-            adds your comment directly
+          <div class="text-[10px] text-gray-400 mt-1 ml-1">
+            <span class="text-indigo-500">Ask</span> = AI response
+            · <span class="text-emerald-500">Post</span> = your comment
           </div>
         <% end %>
       </.form>

@@ -134,7 +134,7 @@ defmodule DialecticWeb.ActionToolbarComp do
         <%!-- Add Actions Section --%>
         <div data-role="action-buttons-group">
           <div class="text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1 text-center">
-            Add to Graph
+            Grid Tools
           </div>
           <div class="grid grid-cols-2 gap-1">
             <button
