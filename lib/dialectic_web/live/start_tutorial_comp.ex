@@ -41,15 +41,15 @@ defmodule DialecticWeb.StartTutorialComp do
 
         <ul class="list-disc pl-6 space-y-1 mt-1 text-stone-600">
           <li>
-            <span class="font-semibold">Star · Read · Share</span>
+            <span class="font-semibold">Navigate</span>
             — save nodes for later, open the linear reader, or share your graph.
           </li>
           <li>
-            <span class="font-semibold">Ideas · Pro/Con · Blend · Explore · Delete</span>
+            <span class="font-semibold">Related · Pro/Con · Blend · Explore · Delete</span>
             — generate related ideas, weigh pros and cons, blend nodes, explore all points, or remove a node.
           </li>
           <li>
-            <span class="font-semibold">Views · Highlights · Settings</span>
+            <span class="font-semibold">Settings</span>
             — change the graph layout, review highlights, or open settings (including Translate).
           </li>
         </ul>

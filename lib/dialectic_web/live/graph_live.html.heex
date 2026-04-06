@@ -91,6 +91,19 @@
     </div>
   <% end %>
 
+  <%!-- Document-level menu in top-right (hidden during presentation) --%>
+  <%= if @presentation_mode != :presenting do %>
+    <.live_component
+      module={DialecticWeb.DocumentMenuComp}
+      id="document-menu"
+      graph_id={@graph_id}
+      graph_struct={@graph_struct}
+      node={@node}
+      can_edit={@can_edit}
+      token={@token}
+    />
+  <% end %>
+
   <%!-- Mobile: Auto-redirect to linear view --%>
   <div
     id="mobile-redirect"
@@ -573,11 +586,9 @@
                 user={@user}
                 current_user={assigns[:current_user]}
                 graph_id={@graph_id}
-                graph_struct={@graph_struct}
                 can_edit={@can_edit}
                 inline={true}
                 icons_only={false}
-                token={@token}
               />
             </div>
           </div>
