@@ -90,7 +90,7 @@ defmodule DialecticWeb.NodeComp do
                         data-title-only="true"
                       >
                       </span>
-                      <div class="flex items-center gap-2">
+                      <span class="flex items-center gap-2">
                         <% noted? =
                           Enum.any?(Map.get(@node || %{}, :noted_by, []), fn u -> u == @user end) %>
                         <button
@@ -142,7 +142,7 @@ defmodule DialecticWeb.NodeComp do
                             {@exploration_stats["explored"]} / {@exploration_stats["total"]} explored
                           </span>
                         <% end %>
-                      </div>
+                      </span>
                     </h3>
                     <div
                       class="selection-content w-full min-w-full text-base sm:text-lg p-2"

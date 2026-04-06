@@ -2,6 +2,21 @@ defmodule DialecticWeb.ActionToolbarComp do
   use DialecticWeb, :live_component
   alias DialecticWeb.Utils.UserUtils
 
+  @moduledoc """
+  Node-level action toolbar for graph operations.
+
+  ## Required Assigns
+  - `:node` - The current node being operated on
+  - `:user` - The user ID (for ownership checks)
+  - `:current_user` - The current user struct
+  - `:graph_id` - The graph ID
+  - `:can_edit` - Boolean indicating if editing is allowed
+
+  ## Optional Assigns
+  - `:inline` - Boolean for inline layout (default: false)
+  - `:icons_only` - Boolean to show only icons without labels (default: false)
+  """
+
   # Computes deletion constraints and tooltip/title based on assigns
   defp delete_info(assigns) do
     node = assigns[:node]
