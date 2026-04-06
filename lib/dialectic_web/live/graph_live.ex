@@ -1114,18 +1114,26 @@ defmodule DialecticWeb.GraphLive do
       case socket.assigns.combine_selected_nodes do
         [node1, node2] ->
           # Execute the combine action
-          node =
-            GraphActions.combine(
-              graph_action_params(socket, node1),
-              node2.id
-            )
+          case GraphActions.combine(
+                 graph_action_params(socket, node1),
+                 node2.id
+               ) do
+            nil ->
+              {:noreply,
+               socket
+               |> put_flash(
+                 :error,
+                 "Unable to combine the selected nodes because one of them no longer exists"
+               )}
 
-          socket =
-            socket
-            |> assign(combine_mode: :off, combine_selected_nodes: [])
-            |> push_event("combine_clear_highlights", %{})
+            node ->
+              socket =
+                socket
+                |> assign(combine_mode: :off, combine_selected_nodes: [])
+                |> push_event("combine_clear_highlights", %{})
 
-          update_graph(socket, {nil, node}, "combine")
+              update_graph(socket, {nil, node}, "combine")
+          end
 
         _ ->
           {:noreply, socket |> put_flash(:error, "Please select exactly 2 nodes")}
@@ -1658,14 +1666,14 @@ defmodule DialecticWeb.GraphLive do
 
     {nav_up, nav_down, nav_left, nav_right} = compute_nav_flags(socket.assigns.graph_id, node)
 
-    # Skip f_graph regeneration for streaming operations to prevent stuttering
-    # The graph structure won't change during streaming, only the node content
-    streaming_operations = ["combine", "answer", "branch", "ideas", "explain", "deepdive"]
+    # Skip f_graph regeneration for content-only updates to prevent stuttering
+    # Structural operations (new nodes/edges) must regenerate so Cytoscape stays in sync
+    content_only_operations = ["llm_request_complete"]
 
     new_socket =
       assign(socket,
         f_graph:
-          if operation in streaming_operations do
+          if operation in content_only_operations do
             socket.assigns.f_graph
           else
             GraphManager.format_graph_json(socket.assigns.graph_id)
