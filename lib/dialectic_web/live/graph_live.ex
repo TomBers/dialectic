@@ -4,7 +4,7 @@ defmodule DialecticWeb.GraphLive do
 
   alias Dialectic.Graph.{Vertex, GraphActions, Siblings}
   alias Dialectic.Accounts.User
-  alias DialecticWeb.{CombineComp, NodeComp}
+  alias DialecticWeb.NodeComp
   alias DialecticWeb.GraphHelpers
 
   alias DialecticWeb.Utils.UserUtils
@@ -482,12 +482,25 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_event("node_combine", %{"id" => node_id}, socket) do
+  def handle_event("node_combine", _params, socket) do
     if !socket.assigns.can_edit do
       {:noreply, socket |> put_flash(:error, "This graph is locked")}
     else
-      node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-      {:noreply, assign(socket, show_combine: true, node: node)}
+      # Toggle: if already in setup, close the panel; otherwise open it
+      if socket.assigns.combine_mode == :setup do
+        socket =
+          socket
+          |> assign(combine_mode: :off, combine_selected_nodes: [])
+          |> push_event("combine_clear_highlights", %{})
+
+        {:noreply, socket}
+      else
+        socket =
+          socket
+          |> assign(combine_mode: :setup, combine_selected_nodes: [])
+
+        {:noreply, socket}
+      end
     end
   end
 
@@ -534,20 +547,6 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_event("combine_node_select", %{"selected_node" => node_id}, socket) do
-    if !socket.assigns.can_edit do
-      {:noreply, socket |> put_flash(:error, "This graph is locked")}
-    else
-      node =
-        GraphActions.combine(
-          graph_action_params(socket),
-          node_id
-        )
-
-      update_graph(socket, {nil, node}, "combine")
-    end
-  end
-
   def handle_event("navigate_to_node", %{"node_id" => node_id} = _params, socket) do
     # Navigate to a node (e.g., from clicking a highlight link)
     node = GraphActions.find_node(socket.assigns.graph_id, node_id)
@@ -573,93 +572,138 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("node_clicked", %{"id" => id} = params, socket) do
-    # When in presentation setup mode, clicking a node toggles it as a slide
-    if socket.assigns.presentation_mode == :setup do
-      ids = socket.assigns.presentation_slide_ids
-      from_search = params["from-search"] == "true"
+    # When in combine setup mode, clicking a node toggles it in the selection
+    cond do
+      socket.assigns.combine_mode == :setup ->
+        selected = socket.assigns.combine_selected_nodes
+        node = GraphActions.find_node(socket.assigns.graph_id, id)
+        from_search = params["from-search"] == "true"
 
-      updated_ids =
-        if id in ids do
-          List.delete(ids, id)
+        if node == nil do
+          {:noreply, socket}
         else
-          ids ++ [id]
+          updated_selected =
+            if Enum.any?(selected, fn n -> n.id == id end) do
+              Enum.reject(selected, fn n -> n.id == id end)
+            else
+              # Only allow 2 nodes to be selected
+              if length(selected) < 2 do
+                selected ++ [node]
+              else
+                selected
+              end
+            end
+
+          {:noreply, updated_socket} =
+            update_graph(socket, {nil, node}, "node_clicked")
+
+          updated_socket = reapply_right_panel_state(socket, updated_socket)
+
+          updated_socket =
+            updated_socket
+            |> assign(combine_selected_nodes: updated_selected)
+            |> push_event("combine_highlight_nodes", %{ids: Enum.map(updated_selected, & &1.id)})
+            |> push_event("center_node", %{id: id})
+            |> then(fn s ->
+              if from_search do
+                s
+                |> assign(show_search_overlay: false, search_term: "", search_results: [])
+                |> push_event("clear_search_highlights", %{})
+              else
+                s
+              end
+            end)
+
+          {:noreply, updated_socket}
         end
 
-      # Still navigate to the node so the user can see its content
-      node = GraphActions.find_node(socket.assigns.graph_id, id)
+      socket.assigns.presentation_mode == :setup ->
+        ids = socket.assigns.presentation_slide_ids
+        from_search = params["from-search"] == "true"
 
-      if node == nil do
-        socket =
-          socket
-          |> assign(presentation_slide_ids: updated_ids)
-          |> push_presentation_highlights()
-          |> push_presentation_persistence()
-          |> then(fn s ->
-            if from_search do
-              s
-              |> assign(show_search_overlay: false, search_term: "", search_results: [])
-              |> push_event("clear_search_highlights", %{})
-            else
-              s
-            end
-          end)
-
-        {:noreply, socket}
-      else
-        {:noreply, updated_socket} =
-          update_graph(socket, {nil, node}, "node_clicked")
-
-        updated_socket = reapply_right_panel_state(socket, updated_socket)
-
-        updated_socket =
-          updated_socket
-          |> assign(presentation_slide_ids: updated_ids)
-          |> push_presentation_highlights()
-          |> push_presentation_persistence()
-          |> push_event("center_node", %{id: id})
-          |> then(fn s ->
-            if from_search do
-              s
-              |> assign(show_search_overlay: false, search_term: "", search_results: [])
-              |> push_event("clear_search_highlights", %{})
-            else
-              s
-            end
-          end)
-
-        {:noreply, updated_socket}
-      end
-    else
-      # Normal mode — original behaviour
-      # Determine if this was triggered from search results via explicit param
-      from_search = params["from-search"] == "true"
-
-      # Update the graph
-      node = GraphActions.find_node(socket.assigns.graph_id, id)
-
-      if node == nil do
-        {:noreply, socket}
-      else
-        {:noreply, updated_socket} =
-          update_graph(socket, {nil, node}, "node_clicked")
-
-        # Preserve and re-apply panel/menu state across node changes
-        updated_socket = reapply_right_panel_state(socket, updated_socket)
-
-        # Close the quick search overlay and clear highlights when navigating from search
-        updated_socket =
-          if from_search do
-            updated_socket
-            |> assign(show_search_overlay: false, search_term: "", search_results: [])
-            |> push_event("clear_search_highlights", %{})
-            |> push_event("center_node", %{id: id})
+        updated_ids =
+          if id in ids do
+            List.delete(ids, id)
           else
-            # Always center the node on the graph (e.g. when clicked from the ask form indicator)
-            push_event(updated_socket, "center_node", %{id: id})
+            ids ++ [id]
           end
 
-        {:noreply, updated_socket}
-      end
+        # Still navigate to the node so the user can see its content
+        node = GraphActions.find_node(socket.assigns.graph_id, id)
+
+        if node == nil do
+          socket =
+            socket
+            |> assign(presentation_slide_ids: updated_ids)
+            |> push_presentation_highlights()
+            |> push_presentation_persistence()
+            |> then(fn s ->
+              if from_search do
+                s
+                |> assign(show_search_overlay: false, search_term: "", search_results: [])
+                |> push_event("clear_search_highlights", %{})
+              else
+                s
+              end
+            end)
+
+          {:noreply, socket}
+        else
+          {:noreply, updated_socket} =
+            update_graph(socket, {nil, node}, "node_clicked")
+
+          updated_socket = reapply_right_panel_state(socket, updated_socket)
+
+          updated_socket =
+            updated_socket
+            |> assign(presentation_slide_ids: updated_ids)
+            |> push_presentation_highlights()
+            |> push_presentation_persistence()
+            |> push_event("center_node", %{id: id})
+            |> then(fn s ->
+              if from_search do
+                s
+                |> assign(show_search_overlay: false, search_term: "", search_results: [])
+                |> push_event("clear_search_highlights", %{})
+              else
+                s
+              end
+            end)
+
+          {:noreply, updated_socket}
+        end
+
+      true ->
+        # Normal mode — original behaviour
+        # Determine if this was triggered from search results via explicit param
+        from_search = params["from-search"] == "true"
+
+        # Update the graph
+        node = GraphActions.find_node(socket.assigns.graph_id, id)
+
+        if node == nil do
+          {:noreply, socket}
+        else
+          {:noreply, updated_socket} =
+            update_graph(socket, {nil, node}, "node_clicked")
+
+          # Preserve and re-apply panel/menu state across node changes
+          updated_socket = reapply_right_panel_state(socket, updated_socket)
+
+          # Close the quick search overlay and clear highlights when navigating from search
+          updated_socket =
+            if from_search do
+              updated_socket
+              |> assign(show_search_overlay: false, search_term: "", search_results: [])
+              |> push_event("clear_search_highlights", %{})
+              |> push_event("center_node", %{id: id})
+            else
+              # Always center the node on the graph (e.g. when clicked from the ask form indicator)
+              push_event(updated_socket, "center_node", %{id: id})
+            end
+
+          {:noreply, updated_socket}
+        end
     end
   end
 
@@ -768,10 +812,6 @@ defmodule DialecticWeb.GraphLive do
       {:error, :locked} ->
         {:noreply, socket |> put_flash(:error, "This graph is locked")}
     end
-  end
-
-  def handle_event("modal_closed", _, socket) do
-    {:noreply, assign(socket, show_combine: false)}
   end
 
   # Start stream handlers grouped with other handle_event clauses
@@ -1035,6 +1075,64 @@ defmodule DialecticWeb.GraphLive do
 
   defp maybe_clear_presentation(socket, _params), do: socket
 
+  # ── Combine mode events ──────────────────────────────────────────
+
+  def handle_event("close_combine_setup", _params, socket) do
+    socket =
+      socket
+      |> assign(combine_mode: :off, combine_selected_nodes: [])
+      |> push_event("combine_clear_highlights", %{})
+
+    {:noreply, socket}
+  end
+
+  def handle_event("combine_deselect_node", %{"node-id" => node_id}, socket) do
+    updated_selected =
+      Enum.reject(socket.assigns.combine_selected_nodes, fn n -> n.id == node_id end)
+
+    socket =
+      socket
+      |> assign(combine_selected_nodes: updated_selected)
+      |> push_event("combine_highlight_nodes", %{ids: Enum.map(updated_selected, & &1.id)})
+
+    {:noreply, socket}
+  end
+
+  def handle_event("combine_clear_selection", _params, socket) do
+    socket =
+      socket
+      |> assign(combine_selected_nodes: [])
+      |> push_event("combine_clear_highlights", %{})
+
+    {:noreply, socket}
+  end
+
+  def handle_event("execute_combine", _params, socket) do
+    if !socket.assigns.can_edit do
+      {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    else
+      case socket.assigns.combine_selected_nodes do
+        [node1, node2] ->
+          # Execute the combine action
+          node =
+            GraphActions.combine(
+              graph_action_params(socket, node1),
+              node2.id
+            )
+
+          socket =
+            socket
+            |> assign(combine_mode: :off, combine_selected_nodes: [])
+            |> push_event("combine_clear_highlights", %{})
+
+          update_graph(socket, {nil, node}, "combine")
+
+        _ ->
+          {:noreply, socket |> put_flash(:error, "Please select exactly 2 nodes")}
+      end
+    end
+  end
+
   # Handle selection action messages from SelectionActionsComp
   def handle_info({:selection_action, params}, socket) do
     case GraphHelpers.check_selection_action_allowed(socket) do
@@ -1105,10 +1203,12 @@ defmodule DialecticWeb.GraphLive do
       "[GraphLive] llm_request_complete node_id=#{inspect(node_id)} current=#{inspect(socket.assigns.node && Map.get(socket.assigns.node, :id))}"
     end)
 
+    # Regenerate f_graph now that streaming is complete to ensure graph structure is up-to-date
     socket =
       socket
       |> assign(streaming_nodes: MapSet.delete(socket.assigns.streaming_nodes, node_id))
       |> assign(work_streams: list_streams(socket.assigns.graph_id))
+      |> assign(f_graph: GraphManager.format_graph_json(socket.assigns.graph_id))
 
     # Don't broadcast or call update_graph - the streaming already updated the node content
     # and we don't want to cause a flash/rerender for the user watching the stream
@@ -1548,13 +1648,6 @@ defmodule DialecticWeb.GraphLive do
     new_node = GraphActions.create_new_node(socket.assigns.user)
     changeset = Vertex.changeset(new_node)
 
-    show_combine =
-      if operation == "combine" do
-        !socket.assigns.show_combine
-      else
-        socket.assigns.show_combine
-      end
-
     # Clear search when a node is clicked from search results
     socket =
       if operation == "node_clicked" and socket.assigns.search_term != "" do
@@ -1565,9 +1658,18 @@ defmodule DialecticWeb.GraphLive do
 
     {nav_up, nav_down, nav_left, nav_right} = compute_nav_flags(socket.assigns.graph_id, node)
 
+    # Skip f_graph regeneration for streaming operations to prevent stuttering
+    # The graph structure won't change during streaming, only the node content
+    streaming_operations = ["combine", "answer", "branch", "ideas", "explain", "deepdive"]
+
     new_socket =
       assign(socket,
-        f_graph: GraphManager.format_graph_json(socket.assigns.graph_id),
+        f_graph:
+          if operation in streaming_operations do
+            socket.assigns.f_graph
+          else
+            GraphManager.format_graph_json(socket.assigns.graph_id)
+          end,
         form:
           if operation in ["llm_request_complete"] do
             socket.assigns.form
@@ -1575,7 +1677,6 @@ defmodule DialecticWeb.GraphLive do
             to_form(changeset, id: new_node.id)
           end,
         node: node,
-        show_combine: show_combine,
         graph_operation: operation,
         open_read_modal: false,
         nav_can_up: nav_up,
@@ -1750,7 +1851,6 @@ defmodule DialecticWeb.GraphLive do
       current_user: socket.assigns[:current_user],
       streaming_nodes: MapSet.new(),
       titled_nodes: MapSet.new(),
-      show_combine: false,
       graph_operation: "",
       ask_question: true,
       group_states: %{},
@@ -1774,6 +1874,8 @@ defmodule DialecticWeb.GraphLive do
       presentation_mode: :off,
       presentation_slide_ids: [],
       presentation_title: "",
+      combine_mode: :off,
+      combine_selected_nodes: [],
       graph_owner_name: nil
     )
   end

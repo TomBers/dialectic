@@ -1012,6 +1012,31 @@ const graphHook = {
       } catch (_e) {}
     });
 
+    // ── Combine mode: highlight selected nodes ──
+    this.handleEvent("combine_highlight_nodes", ({ ids }) => {
+      if (!this.cy) return;
+      try {
+        // Remove previous combine markers
+        this.cy.nodes().removeClass("combine-selected");
+
+        if (!ids || ids.length === 0) return;
+
+        ids.forEach((id) => {
+          const n = this.cy.getElementById(id);
+          if (n && n.length > 0) {
+            n.addClass("combine-selected");
+          }
+        });
+      } catch (_e) {}
+    });
+
+    this.handleEvent("combine_clear_highlights", () => {
+      if (!this.cy) return;
+      try {
+        this.cy.nodes().removeClass("combine-selected");
+      } catch (_e) {}
+    });
+
     // ── Copy to clipboard: used by "Copy link" in presentation bar ──
     this.handleEvent("copy_to_clipboard", ({ text }) => {
       copyToClipboard(text).then(() => {

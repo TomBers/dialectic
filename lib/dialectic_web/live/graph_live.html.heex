@@ -188,6 +188,19 @@
       />
     </div>
     
+<!-- Combine Drawer (Right panel style, same as other panels) -->
+    <div
+      id="combine-drawer"
+      class="fixed top-10 bottom-0 right-0 w-0 overflow-hidden bg-white border-l border-gray-200 z-50 transform translate-x-full opacity-0 transition-all duration-300 ease-in-out"
+    >
+      <.live_component
+        module={DialecticWeb.CombineSetupComp}
+        id="combine-setup"
+        mode={@combine_mode}
+        selected_nodes={@combine_selected_nodes}
+      />
+    </div>
+    
 <!-- Top section (Right panel becomes slide-in drawer) -->
     <div
       id="right-panel"
@@ -344,15 +357,7 @@
       
 <!-- Streams panel -->
 
-      <.modal
-        :if={@show_combine && @node && @node.id}
-        on_cancel={JS.push("modal_closed")}
-        id="confirm-modal"
-        show
-      >
-        <.live_component module={CombineComp} graph_id={@graph_id} node={@node} id="Modal" />
-      </.modal>
-
+      <%!-- removed deprecated combine modal; now uses combine-drawer panel --%>
       <%!-- removed deprecated grouping modal; grouping now only via streams --%>
 
       <.modal

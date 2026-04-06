@@ -195,9 +195,16 @@ defmodule DialecticWeb.ActionToolbarComp do
           <button
             type="button"
             class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm ring-1 ring-inset ring-black/10 bg-violet-500 text-white rounded-md transition-all hover:bg-violet-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-            phx-click="node_combine"
-            phx-value-id={@node && @node.id}
+            phx-click={
+              Phoenix.LiveView.JS.dispatch("toggle-panel",
+                to: "#graph-layout",
+                detail: %{id: "combine-drawer"}
+              )
+              |> Phoenix.LiveView.JS.push("node_combine")
+            }
             disabled={is_nil(@graph_id)}
+            data-panel-toggle="combine-drawer"
+            aria-label="Combine nodes setup"
             title="Blend with another"
           >
             <svg
