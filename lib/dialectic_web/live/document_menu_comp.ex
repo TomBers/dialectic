@@ -5,6 +5,12 @@ defmodule DialecticWeb.DocumentMenuComp do
     {:ok, assign(socket, assigns)}
   end
 
+  # Ensure we show at least 2 nodes when starting from node 1
+  # so users don't think the document view is broken
+  defp get_document_start_node(nil), do: nil
+  defp get_document_start_node(%{id: "1"}), do: "2"
+  defp get_document_start_node(%{id: id}), do: id
+
   def render(assigns) do
     ~H"""
     <div class="fixed top-16 right-4 z-40 flex items-center gap-2" data-role="document-menu">
@@ -37,12 +43,12 @@ defmodule DialecticWeb.DocumentMenuComp do
             navigate={
               graph_linear_path(
                 @graph_struct,
-                if(assigns[:node], do: assigns[:node].id, else: nil),
+                get_document_start_node(assigns[:node]),
                 if(assigns[:token], do: [token: assigns[:token]], else: [])
               )
             }
-            class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm ring-1 ring-inset ring-black/10 bg-gray-700 text-white rounded-md transition-all hover:bg-gray-800 hover:shadow-md"
-            title="Open linear view"
+            class="inline-flex flex-col items-center justify-center gap-0.5 w-14 py-1 shadow-sm ring-1 ring-inset ring-black/10 bg-blue-600 text-white rounded-md transition-all hover:bg-blue-700 hover:shadow-md"
+            title="Open document view"
             data-role="reader-view"
           >
             <svg
