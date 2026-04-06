@@ -91,13 +91,13 @@ defmodule DialecticWeb.AskFormComp do
             >{Phoenix.HTML.Form.normalize_value("text", @form[:content].value)}</textarea>
 
             <%!-- Two submit buttons inside the input --%>
-            <div class="absolute right-1.5 top-0 bottom-1 flex items-center gap-1">
+            <div class="absolute right-1.5 top-0 bottom-1.5 flex items-center gap-1">
               <%!-- Post button — adds submit_action=post to form params --%>
               <button
                 type="submit"
                 name="submit_action"
                 value="post"
-                class="bg-emerald-500 hover:bg-emerald-600 text-white text-xs leading-none px-2.5 h-7 rounded-full font-medium transition-all hover:shadow-sm"
+                class="bg-emerald-500 hover:bg-emerald-600 text-white text-xs leading-none px-3.5 h-7 rounded-full font-medium transition-all hover:shadow-sm"
                 title="Post your comment — no AI response"
               >
                 Post
@@ -105,7 +105,7 @@ defmodule DialecticWeb.AskFormComp do
               <%!-- Ask button — default submit (no name, so no submit_action param) --%>
               <button
                 type="submit"
-                class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs leading-none px-3 h-7 rounded-full font-medium shadow-sm transition-all hover:shadow-md"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs leading-none px-3.5 h-7 rounded-full font-medium shadow-sm transition-all hover:shadow-md"
                 title="Ask and get an AI-generated response"
               >
                 Ask
