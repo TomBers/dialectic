@@ -41,7 +41,6 @@ import PresentationHook, {
   PresentationSetupHook,
 } from "./presentation_hook.js";
 import ShareHook from "./share_hook.js";
-import NodeMenuHook from "./node_menu_hook.js";
 
 let hooks = {};
 
@@ -49,7 +48,6 @@ let hooks = {};
 hooks.TextSelectionHook = textSelectionHook;
 hooks.SelectionActions = SelectionActionsHook;
 hooks.Graph = graphHook;
-hooks.NodeMenu = NodeMenuHook;
 hooks.HighlightNode = highlightNodeHook;
 hooks.PrintConversation = printConversationHook;
 hooks.StoryReadability = storyReadabilityHook;

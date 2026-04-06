@@ -72,7 +72,7 @@ defmodule DialecticWeb.WhatsNextComp do
                 </svg>
               </span>
               <span>
-                <strong>Read</strong>
+                <strong>Document</strong>
                 — open the linear reader to follow the conversation as a document.
               </span>
             </li>
