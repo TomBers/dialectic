@@ -24,27 +24,11 @@ defmodule DialecticWeb.GraphLiveTest do
 
       assert socket.assigns.graph_id == @graph_id
       assert socket.assigns.user == "tester@example.com"
-      refute socket.assigns.show_combine
     end
   end
 
   describe "handle_event/3" do
-    test "modal_closed sets show_combine to false", %{conn: conn} do
-      {:ok, view, _html} = setup_live(conn)
-
-      # First manually set show_combine to true
-      view.pid
-      |> :sys.replace_state(fn state ->
-        %{state | socket: Phoenix.Component.assign(state.socket, show_combine: true)}
-      end)
-
-      state_mid = :sys.get_state(view.pid).socket.assigns
-      assert state_mid.show_combine
-
-      render_click(view, "modal_closed", %{})
-      state = :sys.get_state(view.pid).socket.assigns
-      refute state.show_combine
-    end
+    # Tests can be added here for new combine mode functionality
 
     test "answer event with empty content does nothing", %{conn: conn} do
       {:ok, view, _html} = setup_live(conn)

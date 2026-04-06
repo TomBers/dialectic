@@ -491,6 +491,23 @@ export function graphStyle(viewMode = "spaced") {
     },
   });
 
+  /* ── Combine mode: violet glow on selected nodes for combining ── */
+  base_style.push({
+    selector: "node.combine-selected",
+    style: {
+      "underlay-color": "#8b5cf6", // violet-500
+      "underlay-opacity": 0.2,
+      "underlay-padding": isCompact ? 10 : 14,
+      "underlay-shape": "roundrectangle",
+      "border-width": isCompact ? 3 : 4,
+      "border-color": "#8b5cf6",
+      "border-style": "solid",
+      "transition-property": "underlay-opacity, border-width, border-color",
+      "transition-duration": "200ms",
+      "transition-timing-function": "ease-in-out-quad",
+    },
+  });
+
   return base_style;
 }
 

@@ -123,6 +123,7 @@ hooks.GraphLayout = {
         "graph-nav-drawer",
         "highlights-drawer",
         "presentation-drawer",
+        "combine-drawer",
       ];
       const targetPanel = document.getElementById(id);
 
@@ -134,6 +135,11 @@ hooks.GraphLayout = {
       const presDrawer = document.getElementById("presentation-drawer");
       const presWasOpen =
         presDrawer && !presDrawer.classList.contains("translate-x-full");
+
+      // Track whether the combine drawer was open before we close everything
+      const combineDrawer = document.getElementById("combine-drawer");
+      const combineWasOpen =
+        combineDrawer && !combineDrawer.classList.contains("translate-x-full");
 
       // Close all panels first
       panels.forEach((pId) => {
@@ -171,6 +177,12 @@ hooks.GraphLayout = {
       // button already pushes its own "enter_presentation_setup" server event.
       if (presWasOpen && id !== "presentation-drawer") {
         this.pushEvent("close_presentation_setup", {});
+      }
+
+      // If a *different* panel is opening and the combine drawer was open,
+      // notify the server so it can leave combine setup mode.
+      if (combineWasOpen && id !== "combine-drawer") {
+        this.pushEvent("close_combine_setup", {});
       }
 
       const elementsToShift = document.querySelectorAll(".shift-with-panel");
