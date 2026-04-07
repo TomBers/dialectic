@@ -142,7 +142,7 @@ hooks.GraphLayout = {
       : "comfortable";
     this.readingFont = validReadingFonts.includes(storedReadingFont)
       ? storedReadingFont
-      : "sans";
+      : "serif";
     this._applyReadingDensity(this.readingDensity);
     this._applyReadingFont(this.readingFont);
 
@@ -573,7 +573,7 @@ hooks.GraphLayout = {
   },
   _applyReadingFont(value) {
     const validReadingFonts = ["sans", "serif"];
-    const nextFont = validReadingFonts.includes(value) ? value : "sans";
+    const nextFont = validReadingFonts.includes(value) ? value : "serif";
 
     this.readingFont = nextFont;
     this.el.setAttribute("data-reading-font", nextFont);
