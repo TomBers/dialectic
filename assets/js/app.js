@@ -177,7 +177,6 @@ hooks.GraphLayout = {
       const { id } = e.detail;
       const panels = [
         "right-panel",
-        "graph-nav-drawer",
         "highlights-drawer",
         "presentation-drawer",
         "combine-drawer",

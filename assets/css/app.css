@@ -1162,6 +1162,15 @@ button[type="submit"]:active {
     margin-inline: auto;
 }
 
+/* Linear view defaults to the serif reading face for long-form scanning */
+#linear-main-content .selection-content {
+    font-family:
+        "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua",
+        Georgia, "Times New Roman", serif;
+    letter-spacing: -0.001em;
+    word-spacing: 0.01em;
+}
+
 /* Bold text — subtle visual lift for key terms */
 .selection-content strong {
     color: #111827; /* gray-900 */

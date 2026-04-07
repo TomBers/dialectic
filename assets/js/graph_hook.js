@@ -159,7 +159,7 @@ const ensureVisible = (cy, container, nodeId) => {
 
     const rect = container.getBoundingClientRect();
 
-    const panels = ["right-panel", "graph-nav-drawer", "highlights-drawer"];
+    const panels = ["right-panel", "highlights-drawer"];
     let overlap = 0;
 
     panels.forEach((id) => {
@@ -414,7 +414,7 @@ const graphHook = {
         if (!debugBoundsEnabled()) return;
 
         const rect = this._container.getBoundingClientRect();
-        const panels = ["right-panel", "graph-nav-drawer", "highlights-drawer"];
+        const panels = ["right-panel", "highlights-drawer"];
         let overlap = 0;
         panels.forEach((id) => {
           const panel = document.getElementById(id);
@@ -472,7 +472,7 @@ const graphHook = {
     };
 
     const getRightPanelWidth = () => {
-      const panels = ["right-panel", "graph-nav-drawer", "highlights-drawer"];
+      const panels = ["right-panel", "highlights-drawer"];
       let maxWidth = 0;
       panels.forEach((id) => {
         const panel = document.getElementById(id);
@@ -1056,7 +1056,7 @@ const graphHook = {
     let dy = 0;
 
     // Right panel compensation
-    const panelIds = ["right-panel", "graph-nav-drawer", "highlights-drawer"];
+    const panelIds = ["right-panel", "highlights-drawer"];
     let rightPanelWidth = 0;
     panelIds.forEach((id) => {
       const p = document.getElementById(id);

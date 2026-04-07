@@ -40,113 +40,126 @@
       id="linear-main-content"
       class={"flex-1 flex-col h-full min-w-0 relative " <> if(@show_minimap, do: "hidden lg:flex", else: "flex")}
     >
-      <!-- Toolbar -->
-      <div class="flex-none flex items-center justify-between px-4 py-2 border-b border-gray-200 bg-white z-20 shadow-sm">
-        <div class="flex items-center gap-3">
-          <.link
-            navigate={
-              graph_path(
-                @graph_struct,
-                @selected_node_id,
-                if(@token, do: [token: @token], else: [])
-              )
-            }
-            class="hidden md:flex h-8 w-8 rounded-full bg-white border border-gray-200 items-center justify-center text-zinc-500 hover:text-zinc-700 hover:bg-gray-50 transition-all shadow-sm"
-            title="Back to graph editor"
-            aria-label="Back to graph editor"
-          >
-            <.icon name="hero-arrow-left" class="h-4 w-4" />
-          </.link>
-
-          <h1 class="text-sm font-semibold text-gray-700 hidden sm:block">
-            {@graph_struct.title}
-          </h1>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <.button
-            phx-click="toggle_minimap"
-            class={"text-xs px-2.5 py-1.5 border shadow-sm transition-colors " <> if(@show_minimap, do: "bg-blue-50 border-blue-200 text-blue-700", else: "bg-white border-gray-300 text-gray-700 hover:bg-gray-50")}
-          >
-            <.icon name="hero-map" class="h-4 w-4 sm:mr-1.5 inline-block" />
-            <span class="hidden sm:inline">
-              {if @show_minimap, do: "Hide Map", else: "Show Map"}
-            </span>
-            <span class="sm:hidden">{if @show_minimap, do: "Hide", else: "Show"}</span>
-          </.button>
-
-          <div class="flex items-center rounded-md shadow-sm isolate">
-            <button
-              type="button"
-              phx-click="toggle_highlights"
-              class={"relative inline-flex items-center px-2.5 py-1.5 text-xs border border-gray-300 rounded-l-md focus:z-10 transition-colors " <> if(@show_highlights, do: "bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100", else: "bg-white text-gray-700 hover:bg-gray-50")}
-              title={if @show_highlights, do: "Hide Highlights", else: "Show Highlights"}
+      <% path_total = length(@linear_path || []) %>
+      <% selected_index = Enum.find_index(@linear_path || [], &(&1.id == @selected_node_id)) %>
+      <% current_step = if is_integer(selected_index), do: selected_index + 1, else: path_total %>
+      
+<!-- Toolbar -->
+      <div class="flex-none px-2 sm:px-4 py-2 border-b border-gray-200 bg-white z-20 shadow-sm">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+            <.link
+              navigate={
+                graph_path(
+                  @graph_struct,
+                  @selected_node_id,
+                  if(@token, do: [token: @token], else: [])
+                )
+              }
+              class="inline-flex h-8 w-8 rounded-full bg-white border border-gray-200 items-center justify-center text-zinc-500 hover:text-zinc-700 hover:bg-gray-50 transition-all shadow-sm shrink-0"
+              title="Back to graph editor"
+              aria-label="Back to graph editor"
             >
-              <.icon name="hero-pencil" class="h-4 w-4 sm:mr-1.5" />
-              <span class="hidden sm:inline">
-                {if @show_highlights, do: "Hide Highlights", else: "Show Highlights"}
-              </span>
-            </button>
+              <.icon name="hero-arrow-left" class="h-4 w-4" />
+            </.link>
 
-            <%= if @highlights != [] do %>
-              <div class="relative">
-                <button
-                  type="button"
-                  id="highlights-list-toggle-btn"
-                  phx-click={JS.toggle(to: "#highlights-dropdown")}
-                  phx-click-away={JS.hide(to: "#highlights-dropdown")}
-                  class="relative -ml-px inline-flex items-center px-2 py-1.5 text-xs border border-gray-300 rounded-r-md focus:z-10 transition-colors bg-white text-gray-700 hover:bg-gray-50"
-                >
-                  <span class="sr-only">Open highlights menu</span>
-                  <span class="font-medium mr-1">{length(@highlights)}</span>
-                  <.icon name="hero-chevron-down" class="h-3 w-3" />
-                </button>
+            <h1 class="flex-1 min-w-0 text-xs sm:text-sm font-semibold text-gray-700 truncate">
+              {@graph_struct.title}
+            </h1>
 
-                <div
-                  id="highlights-dropdown"
-                  class="hidden absolute right-0 z-50 mt-2 w-72 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none max-h-96 overflow-y-auto"
-                >
-                  <div class="py-1">
-                    <%= for highlight <- @highlights do %>
-                      <button
-                        phx-click="jump_to_highlight"
-                        phx-value-id={highlight.id}
-                        phx-value-node_id={highlight.node_id}
-                        class="group w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100 hover:text-gray-900 border-b border-gray-50 last:border-0"
-                      >
-                        <div class="flex items-start gap-2">
-                          <div class="mt-1.5 w-1.5 h-1.5 rounded-full bg-amber-400 flex-none group-hover:bg-amber-500">
-                          </div>
-                          <div class="flex-1 min-w-0">
-                            <p class="truncate font-medium text-gray-900">
-                              "{highlight.selected_text_snapshot}"
-                            </p>
-                            <p class="text-gray-500 text-[10px] mt-0.5 truncate">
-                              Node {highlight.node_id}
-                            </p>
-                          </div>
-                        </div>
-                      </button>
-                    <% end %>
-                  </div>
-                </div>
-              </div>
-            <% else %>
-              <span class="relative -ml-px inline-flex items-center px-2 py-1.5 text-xs border border-gray-300 rounded-r-md bg-gray-50 text-gray-400 cursor-not-allowed">
-                0
+            <%= if path_total > 0 do %>
+              <span class="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[10px] font-medium text-gray-600 shrink-0">
+                Step {current_step}/{path_total}
               </span>
             <% end %>
           </div>
 
-          <button
-            phx-hook="PrintConversation"
-            id="print-btn"
-            data-graph-name={@graph_struct.title}
-            aria-label="Print conversation as PDF"
-            class="text-xs px-2.5 py-1.5 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm hidden sm:inline-flex rounded-md font-medium inline-flex items-center"
-          >
-            <.icon name="hero-printer" class="h-4 w-4 mr-1.5 inline-block" /> PDF
-          </button>
+          <div class="flex items-center justify-between sm:justify-end gap-1.5 sm:gap-2">
+            <.button
+              phx-click="toggle_minimap"
+              class={"text-xs font-medium min-h-10 px-3 sm:px-2.5 py-1.5 border rounded-full sm:rounded-md shadow-sm transition-all active:scale-[0.98] " <> if(@show_minimap, do: "bg-blue-50 border-blue-200 text-blue-700", else: "bg-white border-gray-200 text-gray-700 hover:bg-gray-50")}
+            >
+              <.icon name="hero-map" class="h-4 w-4 mr-1 inline-block" />
+              <span class="hidden sm:inline">
+                {if @show_minimap, do: "Hide Map", else: "Show Map"}
+              </span>
+              <span class="sm:hidden">{if @show_minimap, do: "Hide Map", else: "Map"}</span>
+            </.button>
+
+            <div class="flex items-center gap-1 sm:gap-0 sm:rounded-md sm:shadow-sm sm:isolate">
+              <button
+                type="button"
+                phx-click="toggle_highlights"
+                class={"relative inline-flex items-center min-h-10 px-3 sm:px-2.5 py-1.5 text-xs font-medium border rounded-full sm:rounded-l-md sm:rounded-r-none focus:z-10 transition-all active:scale-[0.98] " <> if(@show_highlights, do: "bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100", else: "bg-white border-gray-200 text-gray-700 hover:bg-gray-50")}
+                title={if @show_highlights, do: "Hide Highlights", else: "Show Highlights"}
+              >
+                <.icon name="hero-pencil" class="h-4 w-4 mr-1" />
+                <span class="hidden sm:inline">
+                  {if @show_highlights, do: "Hide Highlights", else: "Show Highlights"}
+                </span>
+                <span class="sm:hidden">Highlights</span>
+              </button>
+
+              <%= if @highlights != [] do %>
+                <div class="relative">
+                  <button
+                    type="button"
+                    id="highlights-list-toggle-btn"
+                    phx-click={JS.toggle(to: "#highlights-dropdown")}
+                    phx-click-away={JS.hide(to: "#highlights-dropdown")}
+                    class="relative inline-flex items-center justify-center min-h-10 min-w-10 px-2 py-1.5 text-xs font-medium border border-gray-200 rounded-full sm:rounded-r-md sm:rounded-l-none sm:-ml-px focus:z-10 transition-all active:scale-[0.98] bg-white text-gray-700 hover:bg-gray-50"
+                  >
+                    <span class="sr-only">Open highlights menu</span>
+                    <span class="font-medium mr-1">{length(@highlights)}</span>
+                    <.icon name="hero-chevron-down" class="h-3 w-3" />
+                  </button>
+
+                  <div
+                    id="highlights-dropdown"
+                    class="hidden absolute right-0 z-50 mt-2 w-72 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none max-h-96 overflow-y-auto"
+                  >
+                    <div class="py-1">
+                      <%= for highlight <- @highlights do %>
+                        <button
+                          phx-click="jump_to_highlight"
+                          phx-value-id={highlight.id}
+                          phx-value-node_id={highlight.node_id}
+                          class="group w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100 hover:text-gray-900 border-b border-gray-50 last:border-0"
+                        >
+                          <div class="flex items-start gap-2">
+                            <div class="mt-1.5 w-1.5 h-1.5 rounded-full bg-amber-400 flex-none group-hover:bg-amber-500">
+                            </div>
+                            <div class="flex-1 min-w-0">
+                              <p class="truncate font-medium text-gray-900">
+                                "{highlight.selected_text_snapshot}"
+                              </p>
+                              <p class="text-gray-500 text-[10px] mt-0.5 truncate">
+                                Node {highlight.node_id}
+                              </p>
+                            </div>
+                          </div>
+                        </button>
+                      <% end %>
+                    </div>
+                  </div>
+                </div>
+              <% else %>
+                <span class="relative inline-flex items-center justify-center min-h-10 min-w-10 px-2 py-1.5 text-xs font-medium border border-gray-200 rounded-full sm:rounded-r-md sm:rounded-l-none sm:-ml-px bg-gray-50 text-gray-400 cursor-not-allowed">
+                  0
+                </span>
+              <% end %>
+            </div>
+
+            <button
+              phx-hook="PrintConversation"
+              id="print-btn"
+              data-graph-name={@graph_struct.title}
+              aria-label="Print conversation as PDF"
+              class="text-xs px-2.5 py-1.5 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm hidden sm:inline-flex rounded-md font-medium inline-flex items-center"
+            >
+              <.icon name="hero-printer" class="h-4 w-4 mr-1.5 inline-block" /> PDF
+            </button>
+          </div>
         </div>
       </div>
       
@@ -222,7 +235,7 @@
                       phx-value-child-id={nav.prev_id}
                       disabled={is_nil(nav.prev_id)}
                       class={[
-                        "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] sm:text-xs font-medium transition-all",
+                        "inline-flex items-center gap-1 min-h-9 px-2.5 py-1 rounded-full sm:rounded-md text-[11px] sm:text-xs font-medium transition-all",
                         if(nav.prev_id,
                           do: "text-indigo-600 hover:bg-indigo-100 active:bg-indigo-200",
                           else: "text-gray-300 cursor-not-allowed"
@@ -238,7 +251,7 @@
                       type="button"
                       phx-click="open_branch_picker"
                       phx-value-node-id={nav.parent_id}
-                      class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] sm:text-xs font-medium text-indigo-600 hover:bg-indigo-100 transition-all"
+                      class="inline-flex items-center gap-1.5 min-h-9 px-2.5 py-1 rounded-full sm:rounded-md text-[11px] sm:text-xs font-medium text-indigo-600 hover:bg-indigo-100 transition-all"
                       title="Browse all branches"
                     >
                       <.icon
@@ -254,7 +267,7 @@
                       phx-value-child-id={nav.next_id}
                       disabled={is_nil(nav.next_id)}
                       class={[
-                        "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] sm:text-xs font-medium transition-all",
+                        "inline-flex items-center gap-1 min-h-9 px-2.5 py-1 rounded-full sm:rounded-md text-[11px] sm:text-xs font-medium transition-all",
                         if(nav.next_id,
                           do: "text-indigo-600 hover:bg-indigo-100 active:bg-indigo-200",
                           else: "text-gray-300 cursor-not-allowed"
@@ -308,14 +321,14 @@
                 </div>
 
                 <%!-- Per-node action bar --%>
-                <div class="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-4 py-1.5 sm:py-2 border-t border-gray-100 bg-gray-50/50 rounded-b-lg sm:rounded-b-xl flex-wrap">
+                <div class="flex items-center gap-1.5 sm:gap-1.5 px-2 sm:px-4 py-1.5 sm:py-2 border-t border-gray-100 bg-gray-50/50 rounded-b-lg sm:rounded-b-xl flex-wrap">
                   <%!-- Select as active node / reply button --%>
                   <button
                     type="button"
                     phx-click="select_node"
                     phx-value-id={node.id}
                     class={[
-                      "inline-flex items-center gap-1 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-md sm:rounded-lg text-[11px] sm:text-xs font-medium transition-all",
+                      "inline-flex items-center gap-1 min-h-10 px-2.5 py-1.5 sm:px-2.5 sm:py-1.5 rounded-full sm:rounded-lg text-[11px] sm:text-xs font-medium transition-all",
                       if(@selected_node_id == node.id,
                         do: "bg-indigo-600 text-white shadow-sm",
                         else: "bg-gray-100 text-gray-600 hover:bg-indigo-50 hover:text-indigo-700"
@@ -346,7 +359,7 @@
                     phx-value-node={node.id}
                     disabled={is_nil(@graph_id)}
                     class={[
-                      "inline-flex items-center gap-1 px-1.5 py-1 sm:px-2 sm:py-1.5 rounded-md sm:rounded-lg text-[11px] sm:text-xs font-medium transition-all disabled:opacity-40",
+                      "inline-flex items-center gap-1 min-h-10 px-2.5 py-1.5 sm:px-2 sm:py-1.5 rounded-full sm:rounded-lg text-[11px] sm:text-xs font-medium transition-all disabled:opacity-40",
                       if(noted?,
                         do: "bg-yellow-100 text-yellow-700",
                         else: "bg-gray-100 text-gray-600 hover:bg-yellow-50 hover:text-yellow-700"
@@ -359,6 +372,7 @@
                     <% else %>
                       <.icon name="hero-star" class="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                     <% end %>
+                    <span>{if noted?, do: "Saved", else: "Save"}</span>
                   </button>
 
                   <%= if @can_edit do %>
@@ -368,11 +382,11 @@
                       phx-click="node_related_ideas"
                       phx-value-id={node.id}
                       disabled={is_nil(@graph_id)}
-                      class="inline-flex items-center gap-1 px-1.5 py-1 sm:px-2 sm:py-1.5 rounded-md sm:rounded-lg text-[11px] sm:text-xs font-medium bg-gray-100 text-orange-600 hover:bg-orange-50 transition-all disabled:opacity-40"
+                      class="inline-flex items-center gap-1 min-h-10 px-2.5 py-1.5 sm:px-2 sm:py-1.5 rounded-full sm:rounded-lg text-[11px] sm:text-xs font-medium bg-gray-100 text-orange-600 hover:bg-orange-50 transition-all disabled:opacity-40"
                       title="Generate related ideas"
                     >
                       <.icon name="hero-light-bulb" class="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                      <span class="hidden sm:inline">Related</span>
+                      <span>Ideas</span>
                     </button>
 
                     <%!-- Pro/Con (Branch) --%>
@@ -381,11 +395,11 @@
                       phx-click="node_branch"
                       phx-value-id={node.id}
                       disabled={is_nil(@graph_id)}
-                      class="inline-flex items-center gap-1 px-1.5 py-1 sm:px-2 sm:py-1.5 rounded-md sm:rounded-lg text-[11px] sm:text-xs font-medium bg-gray-100 text-emerald-600 hover:bg-emerald-50 transition-all disabled:opacity-40"
+                      class="inline-flex items-center gap-1 min-h-10 px-2.5 py-1.5 sm:px-2 sm:py-1.5 rounded-full sm:rounded-lg text-[11px] sm:text-xs font-medium bg-gray-100 text-emerald-600 hover:bg-emerald-50 transition-all disabled:opacity-40"
                       title="Generate pros and cons"
                     >
                       <.icon name="hero-scale" class="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                      <span class="hidden sm:inline">Pro/Con</span>
+                      <span>Pro/Con</span>
                     </button>
                   <% end %>
 
@@ -396,7 +410,7 @@
                       type="button"
                       phx-click="open_branch_picker"
                       phx-value-node-id={node.id}
-                      class="ml-auto inline-flex items-center gap-1 px-1.5 py-1 sm:px-2 sm:py-1.5 rounded-md sm:rounded-lg text-[11px] sm:text-xs font-medium bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-all border border-indigo-100"
+                      class="ml-auto inline-flex items-center gap-1 min-h-10 px-2.5 py-1.5 sm:px-2 sm:py-1.5 rounded-full sm:rounded-lg text-[11px] sm:text-xs font-medium bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-all border border-indigo-100"
                       title={"This node has #{length(children)} branches — tap to explore"}
                     >
                       <.icon
@@ -445,7 +459,7 @@
                 phx-click="node_clicked"
                 phx-value-id={node.id}
                 class={[
-                  "w-full text-left group flex items-start py-1.5 px-2 rounded-md text-xs transition-colors duration-150 border border-transparent scroll-mt-10",
+                  "w-full text-left group flex items-start min-h-10 py-2 px-2 rounded-md text-xs transition-colors duration-150 border border-transparent scroll-mt-10",
                   cond do
                     @selected_node_id == node.id ->
                       "bg-gray-100 text-gray-900 font-semibold shadow-sm border-gray-200"

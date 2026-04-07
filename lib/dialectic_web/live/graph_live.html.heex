@@ -210,7 +210,7 @@
     >
       <div class="p-2">
         <div class="flex items-center justify-between mb-2 px-1">
-          <h2 class="text-sm font-semibold text-gray-900">Graph Controls</h2>
+          <h2 class="text-sm font-semibold text-gray-900">Controls</h2>
           <button
             type="button"
             phx-click={
@@ -220,57 +220,50 @@
             aria-label="Close right panel"
             title="Close panel"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-        <.live_component
-          module={DialecticWeb.RightPanelComp}
-          id="right-panel-comp"
-          graph_id={@graph_id}
-          node={@node}
-          work_streams={@work_streams}
-          current_user={@current_user}
-          graph_struct={@graph_struct}
-          search_term={@search_term}
-          search_results={@search_results}
-          group_states={@group_states}
-          highlights={@highlights}
-          prompt_mode={@prompt_mode}
-          token={@token}
-        />
-      </div>
-    </div>
-    
-<!-- Graph Nav Drawer (Right panel style) -->
-    <div
-      id="graph-nav-drawer"
-      class="fixed top-10 bottom-0 right-0 w-0 overflow-hidden bg-white border-l border-gray-200 z-50 transform translate-x-full opacity-0 transition-all duration-300 ease-in-out"
-    >
-      <div class="p-2">
-        <div class="flex items-center justify-between mb-2 px-1">
-          <h2 class="text-sm font-semibold text-gray-900">View Options</h2>
-          <button
-            type="button"
-            phx-click={
-              JS.dispatch("toggle-panel", to: "#graph-layout", detail: %{id: "graph-nav-drawer"})
-            }
-            class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50"
-            aria-label="Close navigation panel"
-            title="Close panel"
-          >
             <.icon name="hero-x-mark" class="w-4 h-4" />
           </button>
         </div>
-        <.live_component module={DialecticWeb.GraphNavPanelComp} id="graph-nav-panel" />
+        <div class="space-y-2">
+          <details class="group rounded-md border border-gray-200 bg-white" open>
+            <summary class="flex items-center justify-between px-2 py-1.5 text-xs font-semibold text-gray-700 cursor-pointer">
+              <span>Views</span>
+              <.icon
+                name="hero-chevron-down"
+                class="w-3.5 h-3.5 text-gray-500 transition-transform group-open:rotate-180"
+              />
+            </summary>
+            <div class="border-t border-gray-100 p-1">
+              <.live_component module={DialecticWeb.GraphNavPanelComp} id="graph-nav-panel" />
+            </div>
+          </details>
+
+          <details class="group rounded-md border border-gray-200 bg-white" open>
+            <summary class="flex items-center justify-between px-2 py-1.5 text-xs font-semibold text-gray-700 cursor-pointer">
+              <span>Settings</span>
+              <.icon
+                name="hero-chevron-down"
+                class="w-3.5 h-3.5 text-gray-500 transition-transform group-open:rotate-180"
+              />
+            </summary>
+            <div class="border-t border-gray-100 p-1">
+              <.live_component
+                module={DialecticWeb.RightPanelComp}
+                id="right-panel-comp"
+                graph_id={@graph_id}
+                node={@node}
+                work_streams={@work_streams}
+                current_user={@current_user}
+                graph_struct={@graph_struct}
+                search_term={@search_term}
+                search_results={@search_results}
+                group_states={@group_states}
+                highlights={@highlights}
+                prompt_mode={@prompt_mode}
+                token={@token}
+              />
+            </div>
+          </details>
+        </div>
       </div>
     </div>
     

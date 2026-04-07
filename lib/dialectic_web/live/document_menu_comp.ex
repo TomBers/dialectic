@@ -14,11 +14,27 @@ defmodule DialecticWeb.DocumentMenuComp do
   def render(assigns) do
     ~H"""
     <div
-      class="fixed top-14 right-2 md:right-3 lg:right-4 z-40 w-72 xl:w-80 max-w-[calc(100vw-0.75rem)]"
+      class="fixed top-14 right-2 md:right-3 lg:right-4 z-40 w-72 xl:w-[19rem] max-w-[calc(100vw-0.75rem)]"
       data-role="document-menu"
     >
-      <div class="rounded-xl border border-gray-200 bg-white/95 backdrop-blur-md shadow-lg p-1.5 space-y-1">
-        <div class="grid grid-cols-3 gap-1">
+      <div class="rounded-xl border border-gray-200 bg-white/95 backdrop-blur-md shadow-lg p-2 space-y-2">
+        <button
+          type="button"
+          phx-click="open_search_overlay_click"
+          class="flex items-center gap-2 w-full px-3 py-2 bg-gray-50 border border-gray-200 text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors rounded-lg group"
+          title="Quick search (⌘K)"
+        >
+          <.icon name="hero-magnifying-glass" class="w-4 h-4 shrink-0" />
+          <span class="text-xs">Search topics...</span>
+          <kbd class="ml-auto inline-flex items-center rounded border border-gray-300 bg-white px-1 py-0.5 text-[9px] font-semibold text-gray-500 leading-none">
+            ⌘K
+          </kbd>
+        </button>
+        <p class="px-1 text-[11px] text-gray-500">
+          Search all nodes and jump directly to the relevant part of the discussion.
+        </p>
+
+        <div class="grid grid-cols-2 gap-1">
           <%= if @graph_id do %>
             <.link
               navigate={
@@ -28,26 +44,35 @@ defmodule DialecticWeb.DocumentMenuComp do
                   if(assigns[:token], do: [token: assigns[:token]], else: [])
                 )
               }
-              class="inline-flex h-8 items-center justify-center gap-1 rounded-md bg-blue-600 px-2 text-[11px] font-medium text-white hover:bg-blue-700 transition-colors"
+              class="group flex h-12 flex-col items-start justify-center rounded-md border border-blue-200 bg-blue-50 px-2 text-left transition-colors hover:bg-blue-100"
               title="Open document view"
               data-role="reader-view"
             >
-              <.icon name="hero-document-text" class="w-3.5 h-3.5" /> Doc
+              <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-700">
+                <.icon name="hero-document-text" class="w-3 h-3" /> Doc
+              </span>
+              <span class="text-[9px] leading-tight text-blue-600/90">Reader view</span>
             </.link>
           <% else %>
-            <span class="inline-flex h-8 items-center justify-center rounded-md bg-blue-100 text-blue-500 text-[11px] font-medium">
-              Doc
+            <span class="flex h-12 flex-col items-start justify-center rounded-md border border-blue-100 bg-blue-50/70 px-2 text-left">
+              <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-500">
+                Doc
+              </span>
+              <span class="text-[9px] leading-tight text-blue-400">Reader view</span>
             </span>
           <% end %>
 
           <button
             type="button"
-            class="inline-flex h-8 items-center justify-center gap-1 rounded-md bg-indigo-500 px-2 text-[11px] font-medium text-white hover:bg-indigo-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            class="group flex h-12 flex-col items-start justify-center rounded-md border border-indigo-200 bg-indigo-50 px-2 text-left transition-colors hover:bg-indigo-100 disabled:opacity-50 disabled:cursor-not-allowed"
             phx-click="open_share_modal"
             disabled={is_nil(@graph_id)}
             title="Share graph"
           >
-            <.icon name="hero-share" class="w-3.5 h-3.5" /> Share
+            <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-700">
+              <.icon name="hero-share" class="w-3 h-3" /> Share
+            </span>
+            <span class="text-[9px] leading-tight text-indigo-600/90">Links and access</span>
           </button>
 
           <button
@@ -60,44 +85,15 @@ defmodule DialecticWeb.DocumentMenuComp do
               |> Phoenix.LiveView.JS.push("enter_presentation_setup")
             }
             disabled={is_nil(@graph_id)}
-            class="inline-flex h-8 items-center justify-center gap-1 rounded-md bg-fuchsia-500 px-2 text-[11px] font-medium text-white hover:bg-fuchsia-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            class="group flex h-12 flex-col items-start justify-center rounded-md border border-fuchsia-200 bg-fuchsia-50 px-2 text-left transition-colors hover:bg-fuchsia-100 disabled:opacity-50 disabled:cursor-not-allowed"
             data-panel-toggle="presentation-drawer"
             aria-label="Start presentation setup"
             title="Present"
           >
-            <.icon name="hero-presentation-chart-bar" class="w-3.5 h-3.5" /> Present
-          </button>
-        </div>
-
-        <div class="grid grid-cols-[2fr_1fr_1fr] gap-1">
-          <button
-            type="button"
-            phx-click="open_search_overlay_click"
-            class="inline-flex h-8 items-center gap-1.5 rounded-md border border-gray-200 bg-white px-2 text-[11px] font-medium text-gray-700 hover:bg-gray-100 transition-colors"
-            title="Quick search (⌘K)"
-          >
-            <span class="inline-flex items-center gap-1 leading-none">
-              <.icon name="hero-magnifying-glass" class="w-3.5 h-3.5" /> Search
+            <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-fuchsia-700">
+              <.icon name="hero-presentation-chart-bar" class="w-3 h-3" /> Present
             </span>
-            <kbd class="hidden sm:inline-flex ml-auto items-center rounded border border-gray-300 bg-gray-50 px-0.5 py-0.5 text-[8px] font-semibold text-gray-500 leading-none">
-              ⌘K
-            </kbd>
-          </button>
-
-          <button
-            type="button"
-            phx-click={
-              Phoenix.LiveView.JS.dispatch("toggle-panel",
-                to: "#graph-layout",
-                detail: %{id: "graph-nav-drawer"}
-              )
-            }
-            class="inline-flex h-8 items-center justify-center gap-1 rounded-md bg-sky-500 px-2 text-[11px] font-medium text-white hover:bg-sky-600 transition-colors"
-            data-panel-toggle="graph-nav-drawer"
-            aria-label="Toggle view options"
-            title="View options"
-          >
-            <.icon name="hero-eye" class="w-3.5 h-3.5" /> Views
+            <span class="text-[9px] leading-tight text-fuchsia-600/90">Slide mode</span>
           </button>
 
           <button
@@ -108,41 +104,42 @@ defmodule DialecticWeb.DocumentMenuComp do
                 detail: %{id: "highlights-drawer"}
               )
             }
-            class="inline-flex h-8 items-center justify-center gap-1 rounded-md bg-amber-500 px-2 text-[11px] font-medium text-white hover:bg-amber-600 transition-colors"
+            class="group flex h-12 flex-col items-start justify-center rounded-md border border-amber-200 bg-amber-50 px-2 text-left transition-colors hover:bg-amber-100"
             data-panel-toggle="highlights-drawer"
             aria-label="Toggle highlights"
             title="Highlights"
           >
-            <.icon name="hero-bookmark" class="w-3.5 h-3.5" /> Highlights
-          </button>
-        </div>
-
-        <div class="flex items-center gap-1">
-          <button
-            type="button"
-            phx-click={
-              Phoenix.LiveView.JS.dispatch("toggle-panel",
-                to: "#graph-layout",
-                detail: %{id: "right-panel"}
-              )
-            }
-            class="inline-flex h-8 flex-1 items-center justify-center gap-1 rounded-md bg-gray-600 px-2 text-[11px] font-medium text-white hover:bg-gray-700 transition-colors"
-            data-panel-toggle="right-panel"
-            aria-label="Toggle settings"
-            title="Settings"
-          >
-            <.icon name="hero-adjustments-horizontal" class="w-3.5 h-3.5" /> Settings
-          </button>
-
-          <%= if @can_edit == false do %>
-            <span
-              class="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-amber-200 bg-amber-100 px-2 text-[11px] font-semibold text-amber-800"
-              title="Graph is locked; editing is disabled"
-            >
-              <.icon name="hero-lock-closed" class="w-3.5 h-3.5" /> Locked
+            <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700">
+              <.icon name="hero-bookmark" class="w-3 h-3" /> Highlights
             </span>
-          <% end %>
+            <span class="text-[9px] leading-tight text-amber-600/90">Saved excerpts</span>
+          </button>
         </div>
+
+        <button
+          type="button"
+          phx-click={
+            Phoenix.LiveView.JS.dispatch("toggle-panel",
+              to: "#graph-layout",
+              detail: %{id: "right-panel"}
+            )
+          }
+          class="w-full flex items-center justify-between rounded-md border border-gray-200 bg-white px-2.5 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
+          data-panel-toggle="right-panel"
+          aria-label="Open controls"
+          title="Views and settings"
+        >
+          <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-700">
+            <.icon name="hero-adjustments-horizontal" class="w-3.5 h-3.5" /> Controls
+          </span>
+          <span class="text-[10px] text-gray-500">Views + settings</span>
+        </button>
+
+        <%= if @can_edit == false do %>
+          <div class="inline-flex items-center gap-1 rounded-md border border-amber-200 bg-amber-100 px-2 py-1 text-[11px] font-semibold text-amber-800">
+            <.icon name="hero-lock-closed" class="w-3.5 h-3.5" /> Locked
+          </div>
+        <% end %>
       </div>
     </div>
     """
