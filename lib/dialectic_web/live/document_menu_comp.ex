@@ -14,7 +14,7 @@ defmodule DialecticWeb.DocumentMenuComp do
   def render(assigns) do
     ~H"""
     <div
-      class="fixed top-14 right-2 md:right-3 lg:right-4 z-40 w-72 xl:w-[19rem] max-w-[calc(100vw-0.75rem)]"
+      class="fixed top-14 right-2 md:right-3 lg:right-4 z-40 w-72 xl:w-[14rem] max-w-[calc(100vw-0.75rem)]"
       data-role="document-menu"
     >
       <div class="rounded-xl border border-gray-200 bg-white/95 backdrop-blur-md shadow-lg p-2 space-y-2">
