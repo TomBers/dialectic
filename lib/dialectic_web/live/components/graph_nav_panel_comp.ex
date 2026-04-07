@@ -6,7 +6,68 @@ defmodule DialecticWeb.GraphNavPanelComp do
     ~H"""
     <div phx-hook="ViewMode" id="view-mode-container" class="h-full">
       <div class="space-y-4 p-1">
-        <!-- View Mode Section -->
+        <div>
+          <div class="block text-sm font-semibold text-gray-900 mb-2">Reading</div>
+          <div class="space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs text-gray-600">
+                Density
+              </span>
+              <div
+                class="inline-flex items-center rounded-lg border border-gray-200 bg-gray-50 p-0.5"
+                role="group"
+                aria-label="Reading density"
+              >
+                <%= for {value, label} <- [{"compact", "Compact"}, {"comfortable", "Comfortable"}, {"large", "Large"}] do %>
+                  <button
+                    type="button"
+                    phx-click={
+                      JS.dispatch("set-reading-density",
+                        to: "#graph-layout",
+                        detail: %{value: value}
+                      )
+                    }
+                    data-reading-density-option={value}
+                    class="reading-density-btn inline-flex items-center justify-center rounded-md border border-transparent px-2.5 py-1 text-[11px] font-medium text-gray-600 hover:text-gray-800"
+                    aria-label={"Set reading density to #{label}"}
+                    aria-pressed={if value == "comfortable", do: "true", else: "false"}
+                  >
+                    {label}
+                  </button>
+                <% end %>
+              </div>
+            </div>
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs text-gray-600">
+                Font
+              </span>
+              <div
+                class="inline-flex items-center rounded-lg border border-gray-200 bg-gray-50 p-0.5"
+                role="group"
+                aria-label="Reading font"
+              >
+                <%= for {value, label} <- [{"sans", "Sans"}, {"serif", "Serif"}] do %>
+                  <button
+                    type="button"
+                    phx-click={
+                      JS.dispatch("set-reading-font",
+                        to: "#graph-layout",
+                        detail: %{value: value}
+                      )
+                    }
+                    data-reading-font-option={value}
+                    class="reading-font-btn inline-flex items-center justify-center rounded-md border border-transparent px-2.5 py-1 text-[11px] font-medium text-gray-600 hover:text-gray-800"
+                    aria-label={"Set reading font to #{label}"}
+                    aria-pressed={if value == "sans", do: "true", else: "false"}
+                  >
+                    {label}
+                  </button>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div>
           <div class="block text-sm font-semibold text-gray-900 mb-2">View Mode</div>
           <label class="flex items-center cursor-pointer">
@@ -33,25 +94,39 @@ defmodule DialecticWeb.GraphNavPanelComp do
     <!-- Graph Direction Section -->
         <div>
           <div class="block text-sm font-semibold text-gray-900 mb-2">Graph Direction</div>
-          <label class="flex items-center cursor-pointer">
-            <span class="mr-2 text-xs text-gray-600">
-              Top-Down
-            </span>
-            <div class="relative">
-              <input
-                type="checkbox"
-                class="sr-only"
-                data-graph-direction-toggle="toggle"
-                aria-label="Toggle graph direction"
-              />
-              <div class="w-10 h-6 bg-gray-300 rounded-full transition"></div>
-              <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition transform">
-              </div>
-            </div>
-            <span class="ml-2 text-xs text-gray-600">
-              Bottom-Up
-            </span>
-          </label>
+          <div class="grid grid-cols-2 gap-1.5" role="group" aria-label="Graph direction options">
+            <button
+              type="button"
+              data-graph-direction-option="TB"
+              class="direction-btn inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-2 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              Top ↓ Bottom
+            </button>
+            <button
+              type="button"
+              data-graph-direction-option="BT"
+              class="direction-btn inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-2 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              Bottom ↑ Top
+            </button>
+            <button
+              type="button"
+              data-graph-direction-option="LR"
+              class="direction-btn inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-2 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              Left → Right
+            </button>
+            <button
+              type="button"
+              data-graph-direction-option="RL"
+              class="direction-btn inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-2 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              Right ← Left
+            </button>
+          </div>
+          <p class="mt-1 text-[11px] text-gray-500">
+            Also updates arrow-key navigation semantics.
+          </p>
         </div>
         
     <!-- Zoom Controls Section -->

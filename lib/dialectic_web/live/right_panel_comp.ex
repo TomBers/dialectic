@@ -1,7 +1,6 @@
 defmodule DialecticWeb.RightPanelComp do
   use DialecticWeb, :live_component
   alias Dialectic.Repo
-  alias DialecticWeb.Utils.NodeTitleHelper
 
   @moduledoc """
   Accordion-style right panel with:
@@ -205,77 +204,23 @@ defmodule DialecticWeb.RightPanelComp do
         <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
           Search
         </div>
-        <div class="p-1 space-y-1">
-          <div class="flex items-center gap-2">
-            <div class="flex-1">
-              <form phx-submit="search_nodes" phx-change="search_nodes" class="flex relative">
-                <input
-                  type="text"
-                  name="search_term"
-                  id="search_input"
-                  value={@search_term || ""}
-                  placeholder="Search ..."
-                  class="block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6 border-zinc-300 focus:border-zinc-800"
-                  autocomplete="off"
-                  phx-debounce="300"
-                />
-                <%= if (@search_term || "") != "" do %>
-                  <button
-                    type="button"
-                    phx-click="clear_search"
-                    class="absolute right-0 top-0 bottom-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="h-5 w-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </button>
-                <% end %>
-              </form>
-            </div>
-          </div>
-
-          <%= if (@search_term || "") != "" and length(@search_results || []) > 0 do %>
-            <div class="bg-white p-1 max-h-60 overflow-y-auto border border-gray-200 rounded">
-              <h3 class="text-xs font-semibold mb-1 text-gray-700">
-                Search Results ({length(@search_results || [])})
-              </h3>
-              <ul class="space-y-1">
-                <%= for node <- @search_results || [] do %>
-                  <li
-                    class="p-1 bg-gray-50 hover:bg-gray-100 rounded text-xs cursor-pointer"
-                    phx-click="node_clicked"
-                    phx-value-id={node.id}
-                  >
-                    <div class="font-semibold text-xs text-gray-500">
-                      {node.id} • {node.class}
-                    </div>
-                    <div class="truncate">
-                      {NodeTitleHelper.extract_node_title(node, max_length: 100)}
-                    </div>
-                  </li>
-                <% end %>
-              </ul>
-            </div>
-          <% end %>
-
-          <%= if (@search_term || "") != "" and length(@search_results || []) == 0 do %>
-            <div class="bg-white p-1 border border-gray-200 rounded">
-              <p class="text-xs text-gray-500 text-center">
-                No nodes found matching "{@search_term || ""}"
-              </p>
-            </div>
-          <% end %>
+        <div class="p-1 space-y-1.5">
+          <button
+            type="button"
+            phx-click="open_search_overlay_click"
+            class="w-full inline-flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-2 py-1.5 text-xs text-gray-700 hover:bg-gray-100 transition-colors"
+          >
+            <span class="inline-flex items-center gap-1.5">
+              <.icon name="hero-magnifying-glass" class="w-3.5 h-3.5 text-gray-500" />
+              Open quick search
+            </span>
+            <kbd class="inline-flex items-center gap-0.5 rounded border border-gray-300 bg-white px-1.5 py-0.5 text-[10px] text-gray-500 font-medium">
+              <span class="text-[11px]">⌘</span>K
+            </kbd>
+          </button>
+          <p class="text-[11px] text-gray-500">
+            Uses the global search overlay and highlights matches on the graph.
+          </p>
         </div>
       </div>
 
