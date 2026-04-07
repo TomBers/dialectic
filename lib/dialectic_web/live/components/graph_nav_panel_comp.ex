@@ -90,7 +90,7 @@ defmodule DialecticWeb.GraphNavPanelComp do
                     data-view-mode-toggle="toggle"
                     aria-label="Toggle view mode"
                   />
-                  <div class="w-9 h-5 bg-gray-200 rounded-full transition"></div>
+                  <div class="w-9 h-5 bg-gray-300 rounded-full transition"></div>
                   <div class="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow transition transform">
                   </div>
                 </div>
