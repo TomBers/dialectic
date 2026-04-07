@@ -9,23 +9,29 @@ defmodule DialecticWeb.SettingsMenuComp do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="space-y-2">
-      <details class="group rounded-md border border-gray-200 bg-white">
-        <summary class="list-none cursor-pointer px-2 py-1.5">
-          <div class="flex items-start justify-between gap-2">
-            <div class="space-y-0.5">
-              <div class="text-[11px] font-semibold text-gray-700">Appearance</div>
-              <p class="text-[10px] text-gray-500">
-                Change how the graph is displayed and styled.
-              </p>
+    <div class="space-y-1.5">
+      <%!-- Appearance Section --%>
+      <details class="group rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow transition-shadow">
+        <summary class="list-none cursor-pointer select-none px-3 py-2.5 rounded-lg hover:bg-gray-50/50 transition-colors">
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5">
+              <div class="flex items-center justify-center w-7 h-7 rounded-md bg-violet-50 text-violet-600">
+                <.icon name="hero-eye" class="w-4 h-4" />
+              </div>
+              <div>
+                <div class="text-xs font-semibold text-gray-800">Appearance</div>
+                <p class="text-[10px] text-gray-500 leading-tight">
+                  Graph display and reading settings
+                </p>
+              </div>
             </div>
             <.icon
               name="hero-chevron-down"
-              class="w-3.5 h-3.5 text-gray-500 transition-transform group-open:rotate-180 mt-0.5"
+              class="w-4 h-4 text-gray-400 transition-transform duration-200 group-open:rotate-180"
             />
           </div>
         </summary>
-        <div class="border-t border-gray-100 p-1">
+        <div class="border-t border-gray-100 px-3 py-2.5">
           <.live_component
             module={DialecticWeb.GraphNavPanelComp}
             id="graph-nav-panel"
@@ -34,6 +40,7 @@ defmodule DialecticWeb.SettingsMenuComp do
         </div>
       </details>
 
+      <%!-- RightPanelComp contains Configure, Workspace, Export, Utilities --%>
       <.live_component
         module={DialecticWeb.RightPanelComp}
         id="right-panel-comp"
@@ -50,22 +57,28 @@ defmodule DialecticWeb.SettingsMenuComp do
         token={@token}
       />
 
-      <details class="group rounded-md border border-gray-200 bg-white">
-        <summary class="list-none cursor-pointer px-2 py-1.5">
-          <div class="flex items-start justify-between gap-2">
-            <div class="space-y-0.5">
-              <div class="text-[11px] font-semibold text-gray-700">Node Guide</div>
-              <p class="text-[10px] text-gray-500">
-                Reference for node types and keyboard shortcuts.
-              </p>
+      <%!-- Node Guide Section --%>
+      <details class="group rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow transition-shadow">
+        <summary class="list-none cursor-pointer select-none px-3 py-2.5 rounded-lg hover:bg-gray-50/50 transition-colors">
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5">
+              <div class="flex items-center justify-center w-7 h-7 rounded-md bg-amber-50 text-amber-600">
+                <.icon name="hero-book-open" class="w-4 h-4" />
+              </div>
+              <div>
+                <div class="text-xs font-semibold text-gray-800">Node Guide</div>
+                <p class="text-[10px] text-gray-500 leading-tight">
+                  Node types and keyboard shortcuts
+                </p>
+              </div>
             </div>
             <.icon
               name="hero-chevron-down"
-              class="w-3.5 h-3.5 text-gray-500 transition-transform group-open:rotate-180 mt-0.5"
+              class="w-4 h-4 text-gray-400 transition-transform duration-200 group-open:rotate-180"
             />
           </div>
         </summary>
-        <div class="border-t border-gray-100 p-1">
+        <div class="border-t border-gray-100 px-3 py-2.5">
           <.live_component
             module={DialecticWeb.GraphNavPanelComp}
             id="graph-node-guide-panel"
