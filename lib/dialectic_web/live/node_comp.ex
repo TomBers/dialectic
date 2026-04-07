@@ -32,7 +32,8 @@ defmodule DialecticWeb.NodeComp do
        current_user: Map.get(assigns, :current_user, nil),
        menu_visible: Map.get(assigns, :menu_visible, true),
        streaming: Map.get(assigns, :streaming, false),
-       exploration_stats: Map.get(assigns, :exploration_stats, nil)
+       exploration_stats: Map.get(assigns, :exploration_stats, nil),
+       presentation_mode: Map.get(assigns, :presentation_mode, :off)
      )}
   end
 
@@ -132,6 +133,12 @@ defmodule DialecticWeb.NodeComp do
                         <% end %>
                       </span>
                     </h3>
+                    <%= if @node.id == "1" and @presentation_mode != :presenting do %>
+                      <.live_component
+                        module={DialecticWeb.OriginOnboardingComp}
+                        id="origin-onboarding"
+                      />
+                    <% end %>
                     <div
                       class="selection-content w-full px-1 sm:px-2 pb-4"
                       data-children={length(@node.children)}

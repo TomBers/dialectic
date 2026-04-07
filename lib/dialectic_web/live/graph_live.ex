@@ -1066,15 +1066,6 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  defp maybe_clear_presentation(socket, %{"clear_slides" => value})
-       when value in [true, "true"] do
-    socket
-    |> assign(presentation_slide_ids: [], presentation_title: "")
-    |> push_event("presentation_clear_slides", %{})
-  end
-
-  defp maybe_clear_presentation(socket, _params), do: socket
-
   # ── Combine mode events ──────────────────────────────────────────
 
   def handle_event("close_combine_setup", _params, socket) do
@@ -1140,6 +1131,17 @@ defmodule DialecticWeb.GraphLive do
       end
     end
   end
+
+  # ── Private helpers ──────────────────────────────────────────────
+
+  defp maybe_clear_presentation(socket, %{"clear_slides" => value})
+       when value in [true, "true"] do
+    socket
+    |> assign(presentation_slide_ids: [], presentation_title: "")
+    |> push_event("presentation_clear_slides", %{})
+  end
+
+  defp maybe_clear_presentation(socket, _params), do: socket
 
   # Handle selection action messages from SelectionActionsComp
   def handle_info({:selection_action, params}, socket) do

@@ -35,7 +35,6 @@ import MarkdownHook from "./markdown_hook.js";
 
 import { ViewModeHook } from "./view_mode_hook.js";
 import AutoExpandTextareaHook from "./auto_expand_textarea_hook.js";
-import WhatsNext from "./whats_next_hook.js";
 import SearchNav from "./search_nav_hook.js";
 import PresentationHook, {
   PresentationSetupHook,
@@ -58,7 +57,6 @@ hooks.Markdown = MarkdownHook;
 
 hooks.ViewMode = ViewModeHook;
 hooks.AutoExpandTextarea = AutoExpandTextareaHook;
-hooks.WhatsNext = WhatsNext;
 hooks.SearchNav = SearchNav;
 hooks.Presentation = PresentationHook;
 hooks.PresentationSetup = PresentationSetupHook;
@@ -138,14 +136,13 @@ hooks.GraphLayout = {
     })();
 
     this.sideDrawerOpen = storedDrawer !== null ? storedDrawer : true;
-    this.bottomMenuOpen =
-      storedBottomMenu !== null ? storedBottomMenu : true;
+    this.bottomMenuOpen = storedBottomMenu !== null ? storedBottomMenu : true;
     this.readingDensity = validReadingDensities.includes(storedReadingDensity)
       ? storedReadingDensity
       : "comfortable";
     this.readingFont = validReadingFonts.includes(storedReadingFont)
       ? storedReadingFont
-      : "sans";
+      : "serif";
     this._applyReadingDensity(this.readingDensity);
     this._applyReadingFont(this.readingFont);
 
@@ -305,7 +302,10 @@ hooks.GraphLayout = {
 
       this.sideDrawerOpen = shouldOpen;
       try {
-        localStorage.setItem(this._drawerStorageKey, String(this.sideDrawerOpen));
+        localStorage.setItem(
+          this._drawerStorageKey,
+          String(this.sideDrawerOpen),
+        );
       } catch (_e) {}
 
       if (shouldOpen) {
@@ -573,7 +573,7 @@ hooks.GraphLayout = {
   },
   _applyReadingFont(value) {
     const validReadingFonts = ["sans", "serif"];
-    const nextFont = validReadingFonts.includes(value) ? value : "sans";
+    const nextFont = validReadingFonts.includes(value) ? value : "serif";
 
     this.readingFont = nextFont;
     this.el.setAttribute("data-reading-font", nextFont);
