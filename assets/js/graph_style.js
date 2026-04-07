@@ -98,6 +98,8 @@ const cols = {
   },
   answer: defaultNodeStyle,
   explain: defaultNodeStyle,
+  clarify: defaultNodeStyle,
+  default: defaultNodeStyle,
 };
 
 const cutoff = 140;
@@ -361,6 +363,24 @@ export function graphStyle(viewMode = "spaced") {
       },
     },
   ];
+
+  /* Fallback selected style for nodes without a specific type style.
+     This comes BEFORE type-specific styles so they can override it. */
+  base_style.push({
+    selector: "node.selected",
+    style: {
+      "background-color": defaultNodeStyle.selectedBackground,
+      "border-color": defaultNodeStyle.selectedBorder,
+      "border-width": isCompact ? 3 : 4,
+      "border-style": "solid",
+      color: defaultNodeStyle.selectedText,
+      "underlay-color": defaultNodeStyle.selectedBorder,
+      "underlay-opacity": 0.12,
+      "underlay-padding": isCompact ? 10 : 14,
+      "underlay-shape": "roundrectangle",
+      "ghost-opacity": 0.22,
+    },
+  });
 
   for (const nodeType of Object.keys(cols)) {
     base_style.push({

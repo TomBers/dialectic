@@ -1,7 +1,6 @@
 defmodule DialecticWeb.RightPanelComp do
   use DialecticWeb, :live_component
   alias Dialectic.Repo
-  alias DialecticWeb.Utils.NodeTitleHelper
 
   @moduledoc """
   Accordion-style right panel with:
@@ -176,235 +175,186 @@ defmodule DialecticWeb.RightPanelComp do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="space-y-2">
-      <div class="bg-white border border-gray-200 rounded-md">
-        <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
-          Translate
-        </div>
-        <div class="p-1">
-          <% encoded_text = encoded_node_text(@node) %>
-          <div class="flex flex-wrap gap-1">
-            <%= for {label, code} <- translate_targets() do %>
-              <a
-                href={google_translate_url(encoded_text, code)}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="inline-flex items-center px-2 py-1 rounded-md border border-gray-200 bg-gray-50 text-xs text-gray-700 hover:bg-gray-100 hover:border-gray-300 transition-colors"
-              >
-                {label}
-              </a>
-            <% end %>
-          </div>
-          <p class="mt-1.5 text-[10px] text-gray-400">
-            Opens Google Translate with the current node's content.
-          </p>
-        </div>
-      </div>
-
-      <div class="bg-white border border-gray-200 rounded-md">
-        <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
-          Search
-        </div>
-        <div class="p-1 space-y-1">
-          <div class="flex items-center gap-2">
-            <div class="flex-1">
-              <form phx-submit="search_nodes" phx-change="search_nodes" class="flex relative">
-                <input
-                  type="text"
-                  name="search_term"
-                  id="search_input"
-                  value={@search_term || ""}
-                  placeholder="Search ..."
-                  class="block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6 border-zinc-300 focus:border-zinc-800"
-                  autocomplete="off"
-                  phx-debounce="300"
-                />
-                <%= if (@search_term || "") != "" do %>
-                  <button
-                    type="button"
-                    phx-click="clear_search"
-                    class="absolute right-0 top-0 bottom-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="h-5 w-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </button>
-                <% end %>
-              </form>
+    <div class="space-y-1.5">
+      <%!-- Configure Section --%>
+      <details class="group rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow transition-shadow">
+        <summary class="list-none cursor-pointer select-none px-3 py-2.5 rounded-lg hover:bg-gray-50/50 transition-colors">
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5">
+              <div class="flex items-center justify-center w-7 h-7 rounded-md bg-indigo-50 text-indigo-600">
+                <.icon name="hero-adjustments-horizontal" class="w-4 h-4" />
+              </div>
+              <div>
+                <div class="text-xs font-semibold text-gray-800">Configure</div>
+                <p class="text-[10px] text-gray-500 leading-tight">
+                  AI response complexity level
+                </p>
+              </div>
             </div>
+            <.icon
+              name="hero-chevron-down"
+              class="w-4 h-4 text-gray-400 transition-transform duration-200 group-open:rotate-180"
+            />
           </div>
-
-          <%= if (@search_term || "") != "" and length(@search_results || []) > 0 do %>
-            <div class="bg-white p-1 max-h-60 overflow-y-auto border border-gray-200 rounded">
-              <h3 class="text-xs font-semibold mb-1 text-gray-700">
-                Search Results ({length(@search_results || [])})
-              </h3>
-              <ul class="space-y-1">
-                <%= for node <- @search_results || [] do %>
-                  <li
-                    class="p-1 bg-gray-50 hover:bg-gray-100 rounded text-xs cursor-pointer"
-                    phx-click="node_clicked"
-                    phx-value-id={node.id}
-                  >
-                    <div class="font-semibold text-xs text-gray-500">
-                      {node.id} • {node.class}
-                    </div>
-                    <div class="truncate">
-                      {NodeTitleHelper.extract_node_title(node, max_length: 100)}
-                    </div>
-                  </li>
-                <% end %>
-              </ul>
+        </summary>
+        <div class="border-t border-gray-100 px-3 py-2.5">
+          <div class="space-y-2">
+            <div class="text-[11px] font-medium text-gray-600 uppercase tracking-wide">
+              Explanation Level
             </div>
-          <% end %>
-
-          <%= if (@search_term || "") != "" and length(@search_results || []) == 0 do %>
-            <div class="bg-white p-1 border border-gray-200 rounded">
-              <p class="text-xs text-gray-500 text-center">
-                No nodes found matching "{@search_term || ""}"
-              </p>
+            <div class="flex flex-wrap gap-1.5">
+              <%= for {mode, label} <- [{"simple", "Simple"}, {"high_school", "High School"}, {"university", "University"}, {"expert", "Expert"}] do %>
+                <button
+                  type="button"
+                  phx-click="set_prompt_mode"
+                  phx-value-prompt_mode={mode}
+                  class={[
+                    "px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 border",
+                    if @prompt_mode == mode do
+                      "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                    else
+                      "bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                    end
+                  ]}
+                >
+                  {label}
+                </button>
+              <% end %>
             </div>
-          <% end %>
-        </div>
-      </div>
-
-      <div class="bg-white border border-gray-200 rounded-md">
-        <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
-          Level
-        </div>
-        <div class="p-1">
-          <div class="inline-flex rounded-lg bg-gray-50 p-1 border border-gray-200">
-            <%= for {mode, label} <- [{"simple", "Simple"}, {"high_school", "High School"}, {"university", "University"}, {"expert", "Expert"}] do %>
-              <button
-                type="button"
-                phx-click="set_prompt_mode"
-                phx-value-prompt_mode={mode}
-                class={[
-                  "px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200",
-                  if @prompt_mode == mode do
-                    "bg-white text-indigo-700 shadow-sm scale-105"
-                  else
-                    "text-gray-600 hover:text-gray-900 hover:bg-white"
-                  end
-                ]}
-              >
-                {label}
-              </button>
-            <% end %>
-          </div>
-          <div class="mt-2 text-[11px] text-gray-600 space-y-1">
-            <p>
+            <p class="text-[10px] text-gray-500">
               Adjusts the complexity and tone of AI responses.
             </p>
           </div>
         </div>
-      </div>
+      </details>
 
-      <%= if owner?(@graph_struct, @current_user) do %>
-        <div class="bg-white border border-gray-200 rounded-md">
-          <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
-            Access
+      <%!-- Workspace Section --%>
+      <details class="group rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow transition-shadow">
+        <summary class="list-none cursor-pointer select-none px-3 py-2.5 rounded-lg hover:bg-gray-50/50 transition-colors">
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5">
+              <div class="flex items-center justify-center w-7 h-7 rounded-md bg-emerald-50 text-emerald-600">
+                <.icon name="hero-folder" class="w-4 h-4" />
+              </div>
+              <div>
+                <div class="text-xs font-semibold text-gray-800">Workspace</div>
+                <p class="text-[10px] text-gray-500 leading-tight">
+                  Groups and access settings
+                </p>
+              </div>
+            </div>
+            <.icon
+              name="hero-chevron-down"
+              class="w-4 h-4 text-gray-400 transition-transform duration-200 group-open:rotate-180"
+            />
           </div>
-          <div class="p-1 space-y-2">
-            <DialecticWeb.LockComp.render id="lock-graph" graph_struct={@graph_struct} />
-            <button
-              phx-click="open_share_modal"
-              class="w-full flex items-center justify-center px-2 py-1 border border-indigo-200 rounded bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors text-xs"
-            >
-              <%= if @graph_struct.is_public do %>
-                <.icon name="hero-share" class="w-3 h-3 mr-1" />
-                <span>Share Map</span>
+        </summary>
+        <div class="border-t border-gray-100 px-3 py-2.5 space-y-3">
+          <%!-- Groups subsection --%>
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <div class="text-[11px] font-medium text-gray-600 uppercase tracking-wide">
+                Groups ({length(@work_streams)})
+              </div>
+              <button
+                type="button"
+                phx-click="open_start_stream_modal"
+                class="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
+              >
+                <.icon name="hero-plus" class="w-3 h-3" /> New
+              </button>
+            </div>
+            <div class="max-h-40 overflow-y-auto">
+              <%= if @work_streams && length(@work_streams) > 0 do %>
+                <ul class="space-y-1">
+                  <%= for s <- @work_streams do %>
+                    <li class="flex items-center justify-between gap-2 px-2 py-1.5 rounded-md bg-gray-50 hover:bg-gray-100 transition-colors">
+                      <span class="text-xs text-gray-700 truncate flex-1">{s.id}</span>
+                      <div class="flex items-center gap-1">
+                        <button
+                          type="button"
+                          phx-click="focus_stream"
+                          phx-value-id={s.id}
+                          class="px-2 py-1 rounded-md text-[10px] font-medium text-gray-600 hover:bg-white hover:text-gray-800 transition-colors"
+                        >
+                          Focus
+                        </button>
+                        <button
+                          type="button"
+                          phx-click="toggle_stream"
+                          phx-value-id={s.id}
+                          class="px-2 py-1 rounded-md text-[10px] font-medium text-gray-600 hover:bg-white hover:text-gray-800 transition-colors"
+                        >
+                          Toggle
+                        </button>
+                      </div>
+                    </li>
+                  <% end %>
+                </ul>
               <% else %>
-                <.icon name="hero-user-plus" class="w-3 h-3 mr-1" />
-                <span>Manage Collaborators</span>
+                <p class="text-[11px] text-gray-400 text-center py-2">No groups yet</p>
               <% end %>
-            </button>
+            </div>
           </div>
-        </div>
-      <% end %>
-      <div class="bg-white border border-gray-200 rounded-md">
-        <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
-          Groups ({length(@work_streams)})
-        </div>
-        <div class="p-1 text-[11px] text-gray-700 space-y-1">
-          <div class="flex items-center justify-between">
-            <div class="font-semibold text-gray-700 text-xs">Groups</div>
-            <button
-              type="button"
-              phx-click="open_start_stream_modal"
-              class="text-indigo-600 hover:text-indigo-800 text-xs"
-            >
-              + Start
-            </button>
-          </div>
-          <div class="max-h-56 overflow-y-auto">
-            <ul class="space-y-1">
-              <%= for s <- @work_streams || [] do %>
-                <li class="flex items-center justify-between gap-2">
-                  <span class="truncate">{s.id}</span>
-                  <div class="flex items-center gap-2">
-                    <button
-                      type="button"
-                      phx-click="focus_stream"
-                      phx-value-id={s.id}
-                      class="px-1 py-0.5 rounded border text-gray-700 hover:bg-gray-50 text-xs"
-                    >
-                      Focus
-                    </button>
-                    <button
-                      type="button"
-                      phx-click="toggle_stream"
-                      phx-value-id={s.id}
-                      class="px-1 py-0.5 rounded border text-gray-700 hover:bg-gray-50 text-xs"
-                    >
-                      Toggle
-                    </button>
-                  </div>
-                </li>
-              <% end %>
-            </ul>
-          </div>
-        </div>
-      </div>
 
-      <div class="bg-white border border-gray-200 rounded-md">
-        <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
-          Download
+          <%!-- Access subsection (owner only) --%>
+          <%= if owner?(@graph_struct, @current_user) do %>
+            <div class="pt-2 border-t border-gray-100 space-y-2">
+              <div class="text-[11px] font-medium text-gray-600 uppercase tracking-wide">
+                Access
+              </div>
+              <DialecticWeb.LockComp.render id="lock-graph" graph_struct={@graph_struct} />
+              <button
+                phx-click="open_share_modal"
+                class="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors"
+              >
+                <%= if @graph_struct.is_public do %>
+                  <.icon name="hero-share" class="w-3.5 h-3.5" />
+                  <span>Share Map</span>
+                <% else %>
+                  <.icon name="hero-user-plus" class="w-3.5 h-3.5" />
+                  <span>Manage Collaborators</span>
+                <% end %>
+              </button>
+            </div>
+          <% end %>
         </div>
-        <div class="p-1 space-y-2">
-          <div class="flex flex-col gap-1.5">
+      </details>
+
+      <%!-- Export Section --%>
+      <details class="group rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow transition-shadow">
+        <summary class="list-none cursor-pointer select-none px-3 py-2.5 rounded-lg hover:bg-gray-50/50 transition-colors">
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5">
+              <div class="flex items-center justify-center w-7 h-7 rounded-md bg-sky-50 text-sky-600">
+                <.icon name="hero-arrow-down-tray" class="w-4 h-4" />
+              </div>
+              <div>
+                <div class="text-xs font-semibold text-gray-800">Export</div>
+                <p class="text-[10px] text-gray-500 leading-tight">
+                  Download or print your graph
+                </p>
+              </div>
+            </div>
+            <.icon
+              name="hero-chevron-down"
+              class="w-4 h-4 text-gray-400 transition-transform duration-200 group-open:rotate-180"
+            />
+          </div>
+        </summary>
+        <div class="border-t border-gray-100 px-3 py-2.5">
+          <div class="grid grid-cols-1 gap-2">
             <button
               type="button"
-              class="download-png w-full flex items-center justify-center px-2 py-1 rounded-md border border-green-200 bg-green-50 text-green-700 hover:bg-green-100 transition-colors text-xs"
+              class="download-png flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-gray-300 transition-colors"
               aria-label="Download PNG"
               title="Download PNG (Alt-click to capture full graph)"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-3.5 w-3.5 mr-1"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M3 7h4l2-2h6l2 2h4v12H3zM12 17a5 5 0 100-10 5 5 0 000 10z"
-                />
-              </svg>
-              <span>Download PNG</span>
+              <.icon name="hero-photo" class="w-4 h-4 text-emerald-600" />
+              <div class="flex-1 text-left">
+                <div class="text-xs font-medium text-gray-800">Download PNG</div>
+                <div class="text-[10px] text-gray-500">Image snapshot of graph</div>
+              </div>
             </button>
 
             <.link
@@ -417,24 +367,14 @@ defmodule DialecticWeb.RightPanelComp do
               }
               target="_blank"
               rel="noopener noreferrer"
-              class="w-full flex items-center justify-center px-2 py-1 rounded-md border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition-colors text-xs"
+              class="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-gray-300 transition-colors"
               title="Open printable PDF"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-3.5 w-3.5 mr-1"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-              <span>Print to PDF</span>
+              <.icon name="hero-printer" class="w-4 h-4 text-rose-600" />
+              <div class="flex-1 text-left">
+                <div class="text-xs font-medium text-gray-800">Print to PDF</div>
+                <div class="text-[10px] text-gray-500">Printable document view</div>
+              </div>
             </.link>
 
             <.link
@@ -451,28 +391,59 @@ defmodule DialecticWeb.RightPanelComp do
                   do: "#{@graph_struct.slug}.md",
                   else: "#{@graph_id}.md"
               }
-              class="w-full flex items-center justify-center px-2 py-1 rounded-md border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors text-xs"
+              class="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-gray-300 transition-colors"
               title="Download Markdown"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-3.5 w-3.5 mr-1"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
-                />
-              </svg>
-              <span>Download Markdown</span>
+              <.icon name="hero-document-text" class="w-4 h-4 text-purple-600" />
+              <div class="flex-1 text-left">
+                <div class="text-xs font-medium text-gray-800">Download Markdown</div>
+                <div class="text-[10px] text-gray-500">Plain text with formatting</div>
+              </div>
             </.link>
           </div>
         </div>
-      </div>
+      </details>
+
+      <%!-- Utilities Section --%>
+      <details class="group rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow transition-shadow">
+        <summary class="list-none cursor-pointer select-none px-3 py-2.5 rounded-lg hover:bg-gray-50/50 transition-colors">
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5">
+              <div class="flex items-center justify-center w-7 h-7 rounded-md bg-orange-50 text-orange-600">
+                <.icon name="hero-language" class="w-4 h-4" />
+              </div>
+              <div>
+                <div class="text-xs font-semibold text-gray-800">Translate</div>
+                <p class="text-[10px] text-gray-500 leading-tight">
+                  Read this node in other languages
+                </p>
+              </div>
+            </div>
+            <.icon
+              name="hero-chevron-down"
+              class="w-4 h-4 text-gray-400 transition-transform duration-200 group-open:rotate-180"
+            />
+          </div>
+        </summary>
+        <div class="border-t border-gray-100 px-3 py-2.5">
+          <% encoded_text = encoded_node_text(@node) %>
+          <div class="flex flex-wrap gap-1.5">
+            <%= for {label, code} <- translate_targets() do %>
+              <a
+                href={google_translate_url(encoded_text, code)}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center px-2.5 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-900 transition-colors shadow-sm"
+              >
+                {label}
+              </a>
+            <% end %>
+          </div>
+          <p class="mt-2 text-[10px] text-gray-400">
+            Opens Google Translate with the current node's content.
+          </p>
+        </div>
+      </details>
     </div>
     """
   end

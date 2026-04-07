@@ -1060,17 +1060,115 @@ button[type="submit"]:active {
     color: rgba(255, 255, 255, 0.8);
 }
 
+/* Reading density controls for graph side-panel content */
+#graph-layout {
+    --rg-read-font-family-sans:
+        InterVariable, Inter, ui-sans-serif, system-ui, -apple-system,
+        "Segoe UI", sans-serif;
+    --rg-read-font-family-serif:
+        "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua",
+        Georgia, "Times New Roman", serif;
+    --rg-read-font-family: var(--rg-read-font-family-sans);
+    --rg-read-heading-font-family: var(--rg-read-font-family-sans);
+    --rg-read-font-size: 1.05rem;
+    --rg-read-line-height: 1.76;
+    --rg-read-max-width: 68ch;
+    --rg-read-para-margin: 0.84em;
+    --rg-read-lead-size: 1.07em;
+    --rg-read-lead-line-height: 1.68;
+    --rg-read-letter-spacing: -0.0025em;
+    --rg-read-word-spacing: 0.02em;
+}
+
+#graph-layout[data-reading-density="compact"] {
+    --rg-read-font-size: 0.93rem;
+    --rg-read-line-height: 1.58;
+    --rg-read-max-width: 60ch;
+    --rg-read-para-margin: 0.62em;
+    --rg-read-lead-size: 0.98em;
+    --rg-read-lead-line-height: 1.52;
+}
+
+#graph-layout[data-reading-density="large"] {
+    --rg-read-font-size: 1.2rem;
+    --rg-read-line-height: 1.98;
+    --rg-read-max-width: 74ch;
+    --rg-read-para-margin: 1.08em;
+    --rg-read-lead-size: 1.14em;
+    --rg-read-lead-line-height: 1.84;
+}
+
+#graph-layout[data-reading-font="serif"] {
+    --rg-read-font-family: var(--rg-read-font-family-serif);
+    --rg-read-letter-spacing: -0.001em;
+    --rg-read-word-spacing: 0.01em;
+}
+
+#graph-layout .reading-density-btn {
+    transition:
+        background-color 0.18s ease,
+        border-color 0.18s ease,
+        color 0.18s ease,
+        box-shadow 0.18s ease;
+}
+
+#graph-layout .reading-font-btn {
+    transition:
+        background-color 0.18s ease,
+        border-color 0.18s ease,
+        color 0.18s ease,
+        box-shadow 0.18s ease;
+}
+
+#graph-layout .reading-density-btn:hover {
+    background: #f3f4f6;
+}
+
+#graph-layout .reading-font-btn:hover {
+    background: #f3f4f6;
+}
+
+#graph-layout[data-reading-density="compact"] .reading-density-btn[data-reading-density-option="compact"],
+#graph-layout[data-reading-density="comfortable"] .reading-density-btn[data-reading-density-option="comfortable"],
+#graph-layout[data-reading-density="large"] .reading-density-btn[data-reading-density-option="large"] {
+    background: #eef2ff;
+    border-color: #c7d2fe;
+    color: #3730a3;
+    box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.2);
+}
+
+#graph-layout[data-reading-font="sans"] .reading-font-btn[data-reading-font-option="sans"],
+#graph-layout[data-reading-font="serif"] .reading-font-btn[data-reading-font-option="serif"] {
+    background: #eef2ff;
+    border-color: #c7d2fe;
+    color: #3730a3;
+    box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.2);
+}
+
 /* Node content readability inside selection-content */
 .selection-content {
-    line-height: 1.75;
+    font-family: var(--rg-read-font-family);
+    font-size: var(--rg-read-font-size, 1.05rem);
+    line-height: var(--rg-read-line-height, 1.76);
     font-variant-numeric: lining-nums;
-    letter-spacing: -0.003em;
+    letter-spacing: var(--rg-read-letter-spacing, -0.003em);
     color: #1f2937; /* gray-800 — darker than prose-stone default for sustained reading */
-    word-spacing: 0.02em;
+    word-spacing: var(--rg-read-word-spacing, 0.02em);
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    max-width: 65ch; /* optimal measure: ~60-75 characters per line */
+    max-width: var(--rg-read-max-width, 68ch); /* optimal measure: ~60-75 characters per line */
+    width: min(100%, var(--rg-read-max-width, 68ch));
+    margin-inline: auto;
+}
+
+/* Linear view defaults to the serif reading face for long-form scanning */
+#linear-main-content .selection-content {
+    font-family:
+        "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua",
+        Georgia, "Times New Roman", serif;
+    letter-spacing: -0.001em;
+    word-spacing: 0.01em;
 }
 
 /* Bold text — subtle visual lift for key terms */
@@ -1082,15 +1180,16 @@ button[type="submit"]:active {
 
 /* Lead paragraph — larger and slightly heavier, but NOT italic (Inter italic is harder to read at body size) */
 .selection-content > p:first-child {
-    font-size: 1.1em;
-    line-height: 1.55;
-    font-weight: 450; /* Inter variable weight: slightly heavier than normal */
+    font-size: var(--rg-read-lead-size, 1.04em);
+    line-height: var(--rg-read-lead-line-height, 1.65);
+    font-weight: 500;
     color: #111827; /* gray-900 */
-    margin-top: 0.1em;
-    margin-bottom: 0.85em;
+    margin-top: 0.15em;
+    margin-bottom: 0.9em;
 }
 
 .selection-content h1 {
+    font-family: var(--rg-read-heading-font-family);
     margin-top: 0.25em;
     margin-bottom: 0.5em;
     font-size: 1.8rem;
@@ -1101,6 +1200,7 @@ button[type="submit"]:active {
 
 /* Headings with subtle accents — generous top margin to mark new sections clearly */
 .selection-content h2 {
+    font-family: var(--rg-read-heading-font-family);
     margin-top: 1.4em;
     margin-bottom: 0.5em;
     font-size: 1.25rem;
@@ -1111,6 +1211,7 @@ button[type="submit"]:active {
     color: #111827; /* gray-900 */
 }
 .selection-content h3 {
+    font-family: var(--rg-read-heading-font-family);
     margin-top: 1.2em;
     margin-bottom: 0.4em;
     font-size: 1.1rem;
@@ -1121,7 +1222,7 @@ button[type="submit"]:active {
 
 /* Paragraph rhythm — generous spacing so paragraphs breathe */
 .selection-content p {
-    margin: 0.85em 0;
+    margin: var(--rg-read-para-margin, 0.8em) 0;
 }
 
 /* Tighten paragraphs immediately after headings so they feel connected */
@@ -1187,7 +1288,7 @@ button[type="submit"]:active {
     ); /* indigo-50 → violet-50 */
     color: #1e1b4b; /* indigo-950 */
     border-radius: 0 10px 10px 0;
-    font-style: italic;
+    font-style: normal;
     line-height: 1.55;
     box-shadow: 0 1px 3px rgba(99, 102, 241, 0.08);
     transition:
@@ -1381,6 +1482,15 @@ button[type="submit"]:active {
 .selection-content img {
     border-radius: 8px;
     border: 1px solid #e5e7eb;
+}
+
+@media (max-width: 768px) {
+    .selection-content {
+        width: 100%;
+        max-width: 100%;
+        letter-spacing: var(--rg-read-letter-spacing, -0.001em);
+        word-spacing: var(--rg-read-word-spacing, 0.01em);
+    }
 }
 
 /* Translate popover portal: ensure it's fixed and above other UI */

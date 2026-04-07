@@ -52,36 +52,24 @@ defmodule DialecticWeb.NodeComp do
         <%= if @node.id == "start" do %>
           <.live_component module={DialecticWeb.StartTutorialComp} id="start-tutorial" />
         <% else %>
-          <%!-- Search hint bar --%>
-          <button
-            type="button"
-            phx-click="open_search_overlay_click"
-            id="search-hint-bar"
-            aria-label="Open search overlay"
-            class="flex items-center gap-2 w-full px-3 sm:px-4 py-2 bg-gray-50 border-b border-gray-200 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer group"
-          >
-            <.icon name="hero-magnifying-glass" class="w-4 h-4 shrink-0" />
-            <span class="text-xs">Search topics...</span>
-            <kbd class="ml-auto hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-medium text-gray-400 group-hover:text-gray-500 bg-white rounded border border-gray-200">
-              <span class="text-[11px]">⌘</span>K
-            </kbd>
-          </button>
-
           <%!-- Thread View (Ancestor Chain) — hidden for now, revisit when full breadcrumb is implemented --%>
 
           <div
-            class={"flex-grow overflow-auto scroll-smooth pt-2 pb-10 px-3 sm:px-4 " <> if(String.length(@node.content) == 0, do: "hidden", else: "")}
+            class={"flex-grow overflow-auto scroll-smooth pt-3 pb-12 px-3 sm:px-5 lg:px-6 " <> if(String.length(@node.content) == 0, do: "hidden", else: "")}
             id={"tt-node-" <> @node.id}
           >
-            <div class="summary-content modal-responsive" id={"tt-summary-content-" <> @node.id}>
+            <div
+              class="summary-content modal-responsive mx-auto w-full max-w-3xl"
+              id={"tt-summary-content-" <> @node.id}
+            >
               <div id={"node-content-#{@node.id}"}>
                 <div id={"node-content-inner-#{@node.id}"}>
                   <article
-                    class="prose prose-stone prose-lg md:prose-xl max-w-none w-full prose-headings:mt-0 prose-p:leading-relaxed prose-li:leading-relaxed"
+                    class="prose prose-stone prose-base sm:prose-lg lg:prose-xl max-w-none w-full prose-headings:mt-0 prose-headings:tracking-tight prose-headings:text-gray-900 prose-p:text-gray-800 prose-li:text-gray-800 prose-p:leading-relaxed prose-li:leading-relaxed"
                     data-role="node-content"
                   >
                     <%!-- Client-side Markdown rendering via Markdown hook --%>
-                    <h3 class="mt-0 text-lg sm:text-xl md:text-2xl mb-2 sm:mb-3 pb-2 border-b border-gray-200 flex items-start justify-between gap-4">
+                    <h3 class="mt-0 text-lg sm:text-xl md:text-[1.65rem] mb-3 pb-3 border-b border-gray-200/90 flex items-start justify-between gap-4 leading-tight tracking-tight text-gray-900">
                       <span
                         class="flex-1"
                         phx-hook="Markdown"
@@ -145,7 +133,7 @@ defmodule DialecticWeb.NodeComp do
                       </span>
                     </h3>
                     <div
-                      class="selection-content w-full min-w-full text-base sm:text-lg p-2"
+                      class="selection-content w-full px-1 sm:px-2 pb-4"
                       data-children={length(@node.children)}
                       id={"list-detector-" <> @node.id}
                     >

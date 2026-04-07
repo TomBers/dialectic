@@ -7,6 +7,8 @@
   ]}
   data-graph-id={@graph_id}
   data-presenting={@presentation_mode == :presenting}
+  data-reading-density="comfortable"
+  data-reading-font="sans"
 >
   <%!-- Presentation: title bar + exit controls when presenting --%>
   <%= if @presentation_mode == :presenting do %>
@@ -208,7 +210,7 @@
     >
       <div class="p-2">
         <div class="flex items-center justify-between mb-2 px-1">
-          <h2 class="text-sm font-semibold text-gray-900">Graph Controls</h2>
+          <h2 class="text-sm font-semibold text-gray-900">Controls</h2>
           <button
             type="button"
             phx-click={
@@ -218,21 +220,12 @@
             aria-label="Close right panel"
             title="Close panel"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <.icon name="hero-x-mark" class="w-4 h-4" />
           </button>
         </div>
         <.live_component
-          module={DialecticWeb.RightPanelComp}
-          id="right-panel-comp"
+          module={DialecticWeb.SettingsMenuComp}
+          id="settings-menu"
           graph_id={@graph_id}
           node={@node}
           work_streams={@work_streams}
@@ -245,30 +238,6 @@
           prompt_mode={@prompt_mode}
           token={@token}
         />
-      </div>
-    </div>
-    
-<!-- Graph Nav Drawer (Right panel style) -->
-    <div
-      id="graph-nav-drawer"
-      class="fixed top-10 bottom-0 right-0 w-0 overflow-hidden bg-white border-l border-gray-200 z-50 transform translate-x-full opacity-0 transition-all duration-300 ease-in-out"
-    >
-      <div class="p-2">
-        <div class="flex items-center justify-between mb-2 px-1">
-          <h2 class="text-sm font-semibold text-gray-900">View Options</h2>
-          <button
-            type="button"
-            phx-click={
-              JS.dispatch("toggle-panel", to: "#graph-layout", detail: %{id: "graph-nav-drawer"})
-            }
-            class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50"
-            aria-label="Close navigation panel"
-            title="Close panel"
-          >
-            <.icon name="hero-x-mark" class="w-4 h-4" />
-          </button>
-        </div>
-        <.live_component module={DialecticWeb.GraphNavPanelComp} id="graph-nav-panel" />
       </div>
     </div>
     
@@ -307,7 +276,7 @@
   <div class="flex-1 min-h-0 flex">
     <div
       id="side-drawer"
-      class="fixed bottom-0 left-0 md:relative w-full p-4 md:p-0 md:w-2/5 flex flex-col bg-white md:border-r md:border-gray-200 z-90 transform translate-x-0 opacity-100 transition-all duration-300 ease-in-out"
+      class="fixed bottom-0 left-0 md:relative w-full p-4 md:p-0 md:w-[44%] flex flex-col bg-white md:border-r md:border-gray-200 z-90 transform translate-x-0 opacity-100 transition-all duration-300 ease-in-out"
     >
       <div id="side-drawer-scroll" class="flex-1 overflow-y-auto" phx-hook="ScrollReset">
         <%= if @graph_id && @presentation_mode != :presenting do %>
@@ -333,7 +302,7 @@
 <!-- Action toolbar moved into bottom actions area -->
 
 <!-- Left side: Graph (expands to full width when drawer is closed) -->
-    <div id="graph-main-container" class="w-0 md:w-3/5 relative">
+    <div id="graph-main-container" class="w-0 md:w-[56%] relative">
       <div
         id="cy"
         class="h-full w-full relative"
@@ -475,7 +444,7 @@
         aria-controls="side-drawer"
         aria-expanded="true"
         aria-label="Hide menu"
-        class="fixed top-1/2 -translate-y-1/2 transform right-2 md:left-[40%] md:ml-2 md:right-auto p-1.5 rounded-full bg-white opacity-60 hover:opacity-100 shadow-sm z-20 cursor-pointer transition-all duration-200"
+        class="fixed top-1/2 -translate-y-1/2 transform right-2 md:left-[44%] md:ml-2 md:right-auto p-1.5 rounded-full bg-white opacity-60 hover:opacity-100 shadow-sm z-20 cursor-pointer transition-all duration-200"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -499,7 +468,7 @@
     <div
       :if={@presentation_mode != :presenting}
       id="bottom-menu-handle"
-      class="hidden fixed bottom-0 z-30 px-1 pb-3 pointer-events-none shift-with-panel transition-[right] duration-300 ease-in-out left-0 right-0 md:left-[40%]"
+      class="hidden fixed bottom-0 z-30 px-1 pb-3 pointer-events-none shift-with-panel transition-[right] duration-300 ease-in-out left-0 right-0 md:left-[44%]"
       style="padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem);"
     >
       <div class="mx-auto w-full max-w-xl">
@@ -537,7 +506,7 @@
     <div
       :if={@presentation_mode != :presenting}
       id="bottom-menu"
-      class="fixed bottom-0 z-30 transform origin-bottom scale-100 opacity-100 visible transition-all duration-200 ease-out px-1 pb-3 pointer-events-none shift-with-panel transition-[right] duration-300 ease-in-out left-0 right-0 md:left-[40%]"
+      class="fixed bottom-0 z-30 transform origin-bottom scale-100 opacity-100 visible transition-all duration-200 ease-out px-1 pb-3 pointer-events-none shift-with-panel transition-[right] duration-300 ease-in-out left-0 right-0 md:left-[44%]"
       style="padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem);"
     >
       <div class="mx-auto w-full max-w-4xl">

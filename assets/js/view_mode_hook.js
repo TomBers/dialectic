@@ -9,7 +9,9 @@ export const ViewModeHook = {
 
     // Get initial graph direction from localStorage or default to "TB" (top-bottom)
     const savedDirection = localStorage.getItem("graph_direction") || "TB";
-    this.graphDirection = savedDirection;
+    this.graphDirection = ["TB", "BT", "LR", "RL"].includes(savedDirection)
+      ? savedDirection
+      : "TB";
 
     this._bindEvents();
   },
@@ -22,11 +24,11 @@ export const ViewModeHook = {
     if (this.toggleInput && this._onToggleChange) {
       this.toggleInput.removeEventListener("change", this._onToggleChange);
     }
-    if (this.directionToggleInput && this._onDirectionToggleChange) {
-      this.directionToggleInput.removeEventListener(
-        "change",
-        this._onDirectionToggleChange,
-      );
+    if (this._directionButtonBindings) {
+      this._directionButtonBindings.forEach(({ btn, handler }) => {
+        btn.removeEventListener("click", handler);
+      });
+      this._directionButtonBindings = null;
     }
   },
 
@@ -35,11 +37,11 @@ export const ViewModeHook = {
     if (this.toggleInput && this._onToggleChange) {
       this.toggleInput.removeEventListener("change", this._onToggleChange);
     }
-    if (this.directionToggleInput && this._onDirectionToggleChange) {
-      this.directionToggleInput.removeEventListener(
-        "change",
-        this._onDirectionToggleChange,
-      );
+    if (this._directionButtonBindings) {
+      this._directionButtonBindings.forEach(({ btn, handler }) => {
+        btn.removeEventListener("click", handler);
+      });
+      this._directionButtonBindings = null;
     }
 
     // Get view mode toggle elements
@@ -51,22 +53,14 @@ export const ViewModeHook = {
     this.toggleKnob =
       this.toggleInput?.parentElement.querySelector("div:last-of-type");
 
-    // Get graph direction toggle elements
-    this.directionToggleInput = this.el.querySelector(
-      '[data-graph-direction-toggle="toggle"]',
+    // Get graph direction option buttons
+    this.directionButtons = Array.from(
+      this.el.querySelectorAll("[data-graph-direction-option]"),
     );
-    this.directionToggleBg =
-      this.directionToggleInput?.parentElement.querySelector(
-        "div:first-of-type",
-      );
-    this.directionToggleKnob =
-      this.directionToggleInput?.parentElement.querySelector(
-        "div:last-of-type",
-      );
 
     // Set initial toggle states
     this.updateToggle();
-    this.updateDirectionToggle();
+    this.updateDirectionButtons();
 
     // Listen for view mode toggle click
     if (this.toggleInput) {
@@ -80,44 +74,79 @@ export const ViewModeHook = {
         // Update toggle visual state
         this.updateToggle();
 
-        // Notify the graph hook via custom DOM event (client-side only)
-        const graphEls = document.querySelectorAll('[phx-hook="Graph"]');
-        graphEls.forEach((graphEl) => {
-          const event = new CustomEvent("viewModeChanged", {
-            detail: { view_mode: newMode },
-          });
-          graphEl.dispatchEvent(event);
-        });
+        this._dispatchToGraphs("viewModeChanged", { view_mode: newMode });
       };
       this.toggleInput.addEventListener("change", this._onToggleChange);
     }
 
-    // Listen for graph direction toggle click
-    if (this.directionToggleInput) {
-      this._onDirectionToggleChange = (e) => {
-        // Toggle between TB (top-bottom) and BT (bottom-top)
-        const newDirection = this.graphDirection === "TB" ? "BT" : "TB";
+    // Listen for graph direction selection
+    this._directionButtonBindings = [];
+    this.directionButtons.forEach((btn) => {
+      const handler = (e) => {
+        e.preventDefault();
+        const newDirection = btn.dataset.graphDirectionOption;
+        if (!["TB", "BT", "LR", "RL"].includes(newDirection)) return;
+        if (this.graphDirection === newDirection) return;
 
         this.graphDirection = newDirection;
         localStorage.setItem("graph_direction", newDirection);
-
-        // Update toggle visual state
-        this.updateDirectionToggle();
-
-        // Notify the graph hook via custom DOM event (client-side only)
-        const graphEls = document.querySelectorAll('[phx-hook="Graph"]');
-        graphEls.forEach((graphEl) => {
-          const event = new CustomEvent("graphDirectionChanged", {
-            detail: { direction: newDirection },
-          });
-          graphEl.dispatchEvent(event);
+        this.updateDirectionButtons();
+        this._dispatchToGraphs("graphDirectionChanged", {
+          direction: newDirection,
         });
       };
-      this.directionToggleInput.addEventListener(
-        "change",
-        this._onDirectionToggleChange,
-      );
-    }
+
+      btn.addEventListener("click", handler);
+      this._directionButtonBindings.push({ btn, handler });
+    });
+  },
+
+  _dispatchToGraphs(eventName, detail) {
+    const graphEls = document.querySelectorAll('[phx-hook="Graph"]');
+    graphEls.forEach((graphEl) => {
+      const event = new CustomEvent(eventName, { detail });
+      graphEl.dispatchEvent(event);
+    });
+  },
+
+  updateDirectionButtons() {
+    if (!Array.isArray(this.directionButtons)) return;
+
+    this.directionButtons.forEach((btn) => {
+      const selected = btn.dataset.graphDirectionOption === this.graphDirection;
+
+      if (selected) {
+        btn.classList.add(
+          "bg-indigo-600",
+          "text-white",
+          "border-indigo-600",
+          "shadow-sm",
+        );
+        btn.classList.remove(
+          "bg-white",
+          "text-gray-700",
+          "border-gray-300",
+          "hover:bg-gray-50",
+          "hover:border-gray-300",
+        );
+      } else {
+        btn.classList.remove(
+          "bg-indigo-600",
+          "text-white",
+          "border-indigo-600",
+          "shadow-sm",
+        );
+        btn.classList.add(
+          "bg-white",
+          "text-gray-700",
+          "border-gray-300",
+          "hover:bg-gray-50",
+          "hover:border-gray-300",
+        );
+      }
+
+      btn.setAttribute("aria-pressed", selected ? "true" : "false");
+    });
   },
 
   updateToggle() {
@@ -142,36 +171,6 @@ export const ViewModeHook = {
       this.toggleKnob.classList.add("translate-x-4");
     } else {
       this.toggleKnob.classList.remove("translate-x-4");
-    }
-  },
-
-  updateDirectionToggle() {
-    if (
-      !this.directionToggleInput ||
-      !this.directionToggleBg ||
-      !this.directionToggleKnob
-    )
-      return;
-
-    const isBottomUp = this.graphDirection === "BT";
-
-    // Update checkbox state
-    this.directionToggleInput.checked = isBottomUp;
-
-    // Update background color
-    if (isBottomUp) {
-      this.directionToggleBg.classList.remove("bg-gray-300");
-      this.directionToggleBg.classList.add("bg-indigo-600");
-    } else {
-      this.directionToggleBg.classList.remove("bg-indigo-600");
-      this.directionToggleBg.classList.add("bg-gray-300");
-    }
-
-    // Update knob position
-    if (isBottomUp) {
-      this.directionToggleKnob.classList.add("translate-x-4");
-    } else {
-      this.directionToggleKnob.classList.remove("translate-x-4");
     }
   },
 };

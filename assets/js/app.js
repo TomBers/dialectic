@@ -103,24 +103,80 @@ hooks.MobileRedirect = {
 hooks.GraphLayout = {
   mounted() {
     this.activePanelId = null;
-    this.sideDrawerOpen = true;
-    this.bottomMenuOpen = true;
+    const graphId = this.el.dataset.graphId || "global";
+    const validReadingDensities = ["compact", "comfortable", "large"];
+    const validReadingFonts = ["sans", "serif"];
+    this._drawerStorageKey = `rg:drawer:${graphId}`;
+    this._bottomMenuStorageKey = `rg:bottom-menu:${graphId}`;
+    this._readingDensityStorageKey = `rg:reading-density:${graphId}`;
+    this._readingFontStorageKey = `rg:reading-font:${graphId}`;
 
-    const drawer = document.getElementById("side-drawer");
-    if (drawer && drawer.classList.contains("-translate-x-full")) {
-      this.sideDrawerOpen = false;
-    }
+    const readStoredBool = (key) => {
+      try {
+        const raw = localStorage.getItem(key);
+        if (raw === "true") return true;
+        if (raw === "false") return false;
+      } catch (_e) {}
+      return null;
+    };
 
-    const bottomMenu = document.getElementById("bottom-menu");
-    if (bottomMenu && !bottomMenu.classList.contains("visible")) {
-      this.bottomMenuOpen = false;
-    }
+    const storedDrawer = readStoredBool(this._drawerStorageKey);
+    const storedBottomMenu = readStoredBool(this._bottomMenuStorageKey);
+    const storedReadingDensity = (() => {
+      try {
+        return localStorage.getItem(this._readingDensityStorageKey);
+      } catch (_e) {
+        return null;
+      }
+    })();
+    const storedReadingFont = (() => {
+      try {
+        return localStorage.getItem(this._readingFontStorageKey);
+      } catch (_e) {
+        return null;
+      }
+    })();
+
+    this.sideDrawerOpen = storedDrawer !== null ? storedDrawer : true;
+    this.bottomMenuOpen =
+      storedBottomMenu !== null ? storedBottomMenu : true;
+    this.readingDensity = validReadingDensities.includes(storedReadingDensity)
+      ? storedReadingDensity
+      : "comfortable";
+    this.readingFont = validReadingFonts.includes(storedReadingFont)
+      ? storedReadingFont
+      : "sans";
+    this._applyReadingDensity(this.readingDensity);
+    this._applyReadingFont(this.readingFont);
+
+    this.el.addEventListener("set-reading-density", (e) => {
+      const nextDensity = e?.detail?.value;
+      if (!validReadingDensities.includes(nextDensity)) return;
+
+      this.readingDensity = nextDensity;
+      this._applyReadingDensity(this.readingDensity);
+
+      try {
+        localStorage.setItem(this._readingDensityStorageKey, nextDensity);
+      } catch (_e) {}
+    });
+
+    this.el.addEventListener("set-reading-font", (e) => {
+      const nextFont = e?.detail?.value;
+      if (!validReadingFonts.includes(nextFont)) return;
+
+      this.readingFont = nextFont;
+      this._applyReadingFont(this.readingFont);
+
+      try {
+        localStorage.setItem(this._readingFontStorageKey, nextFont);
+      } catch (_e) {}
+    });
 
     this.el.addEventListener("toggle-panel", (e) => {
       const { id } = e.detail;
       const panels = [
         "right-panel",
-        "graph-nav-drawer",
         "highlights-drawer",
         "presentation-drawer",
         "combine-drawer",
@@ -248,6 +304,9 @@ hooks.GraphLayout = {
       }
 
       this.sideDrawerOpen = shouldOpen;
+      try {
+        localStorage.setItem(this._drawerStorageKey, String(this.sideDrawerOpen));
+      } catch (_e) {}
 
       if (shouldOpen) {
         this.sideDrawerOpen = true;
@@ -263,20 +322,20 @@ hooks.GraphLayout = {
           "translate-x-0",
           "opacity-100",
           "w-full",
-          "md:w-2/5",
+          "md:w-[44%]",
           "p-4",
         );
 
         if (graphContainer) {
           graphContainer.classList.remove("w-full");
-          graphContainer.classList.add("md:w-3/5");
+          graphContainer.classList.add("md:w-[56%]");
         }
 
         if (toggleBtn) {
           toggleBtn.classList.remove("left-2");
           toggleBtn.classList.add(
             "right-2",
-            "md:left-[40%]",
+            "md:left-[44%]",
             "md:ml-2",
             "md:right-auto",
           );
@@ -287,7 +346,7 @@ hooks.GraphLayout = {
         }
 
         bottomElements.forEach((el) => {
-          el.classList.add("md:left-[40%]");
+          el.classList.add("md:left-[44%]");
         });
       } else {
         this.sideDrawerOpen = false;
@@ -296,7 +355,7 @@ hooks.GraphLayout = {
           "translate-x-0",
           "opacity-100",
           "w-full",
-          "md:w-2/5",
+          "md:w-[44%]",
           "p-4",
         );
         drawer.classList.add(
@@ -308,14 +367,14 @@ hooks.GraphLayout = {
         );
 
         if (graphContainer) {
-          graphContainer.classList.remove("md:w-3/5");
+          graphContainer.classList.remove("md:w-[56%]");
           graphContainer.classList.add("w-full");
         }
 
         if (toggleBtn) {
           toggleBtn.classList.remove(
             "right-2",
-            "md:left-[40%]",
+            "md:left-[44%]",
             "md:ml-2",
             "md:right-auto",
           );
@@ -327,7 +386,7 @@ hooks.GraphLayout = {
         }
 
         bottomElements.forEach((el) => {
-          el.classList.remove("md:left-[40%]");
+          el.classList.remove("md:left-[44%]");
         });
       }
 
@@ -353,7 +412,16 @@ hooks.GraphLayout = {
         menu.classList.add("scale-100", "opacity-100", "visible");
         if (handle) handle.classList.add("hidden");
       }
+
+      try {
+        localStorage.setItem(
+          this._bottomMenuStorageKey,
+          String(this.bottomMenuOpen),
+        );
+      } catch (_e) {}
     });
+
+    this.restoreState();
 
     // ── Presentation localStorage persistence ──────────────────────
     this.handleEvent(
@@ -383,7 +451,6 @@ hooks.GraphLayout = {
     );
 
     // On mount, check for a saved presentation for this graph and restore it
-    const graphId = this.el.dataset.graphId;
     if (graphId) {
       try {
         const raw = localStorage.getItem(`rg:pres:${graphId}`);
@@ -415,6 +482,13 @@ hooks.GraphLayout = {
     this.restoreState();
   },
   restoreState() {
+    if (this.readingDensity) {
+      this._applyReadingDensity(this.readingDensity);
+    }
+    if (this.readingFont) {
+      this._applyReadingFont(this.readingFont);
+    }
+
     // Restore side drawer state
     const drawer = document.getElementById("side-drawer");
     if (drawer && this.sideDrawerOpen !== undefined) {
@@ -479,6 +553,38 @@ hooks.GraphLayout = {
         btn.classList.add("ring-2", "ring-offset-1", "ring-white", "scale-110");
       }
     }
+  },
+  _applyReadingDensity(value) {
+    const validReadingDensities = ["compact", "comfortable", "large"];
+    const nextDensity = validReadingDensities.includes(value)
+      ? value
+      : "comfortable";
+
+    this.readingDensity = nextDensity;
+    this.el.setAttribute("data-reading-density", nextDensity);
+    this._syncReadingDensityButtons();
+  },
+  _syncReadingDensityButtons() {
+    const buttons = this.el.querySelectorAll("[data-reading-density-option]");
+    buttons.forEach((btn) => {
+      const selected = btn.dataset.readingDensityOption === this.readingDensity;
+      btn.setAttribute("aria-pressed", selected ? "true" : "false");
+    });
+  },
+  _applyReadingFont(value) {
+    const validReadingFonts = ["sans", "serif"];
+    const nextFont = validReadingFonts.includes(value) ? value : "sans";
+
+    this.readingFont = nextFont;
+    this.el.setAttribute("data-reading-font", nextFont);
+    this._syncReadingFontButtons();
+  },
+  _syncReadingFontButtons() {
+    const buttons = this.el.querySelectorAll("[data-reading-font-option]");
+    buttons.forEach((btn) => {
+      const selected = btn.dataset.readingFontOption === this.readingFont;
+      btn.setAttribute("aria-pressed", selected ? "true" : "false");
+    });
   },
 };
 
