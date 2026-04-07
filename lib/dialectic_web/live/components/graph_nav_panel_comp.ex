@@ -108,28 +108,28 @@ defmodule DialecticWeb.GraphNavPanelComp do
               <button
                 type="button"
                 data-graph-direction-option="TB"
-                class="direction-btn inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-2 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-colors"
+                class="direction-btn inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-2 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 Top ↓ Bottom
               </button>
               <button
                 type="button"
                 data-graph-direction-option="BT"
-                class="direction-btn inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-2 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-colors"
+                class="direction-btn inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-2 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 Bottom ↑ Top
               </button>
               <button
                 type="button"
                 data-graph-direction-option="LR"
-                class="direction-btn inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-2 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-colors"
+                class="direction-btn inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-2 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 Left → Right
               </button>
               <button
                 type="button"
                 data-graph-direction-option="RL"
-                class="direction-btn inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-2 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-colors"
+                class="direction-btn inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-2 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 Right ← Left
               </button>
@@ -137,6 +137,42 @@ defmodule DialecticWeb.GraphNavPanelComp do
             <p class="text-[10px] text-gray-400">
               Also updates arrow-key navigation semantics.
             </p>
+          </div>
+
+          <%!-- Zoom Controls --%>
+          <div class="space-y-3 pt-3 border-t border-gray-100">
+            <div class="text-[11px] font-medium text-gray-600 uppercase tracking-wide">
+              Zoom
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button
+                type="button"
+                id="zoom-out"
+                class="flex-1 inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-2 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                aria-label="Zoom out"
+                title="Zoom out"
+              >
+                <.icon name="hero-minus" class="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                id="zoom-fit"
+                class="flex-1 inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-2 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                aria-label="Fit to screen"
+                title="Fit to screen"
+              >
+                <.icon name="hero-arrows-pointing-out" class="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                id="zoom-in"
+                class="flex-1 inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-2 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                aria-label="Zoom in"
+                title="Zoom in"
+              >
+                <.icon name="hero-plus" class="w-4 h-4" />
+              </button>
+            </div>
           </div>
         <% else %>
           <%!-- Node Colors Reference --%>

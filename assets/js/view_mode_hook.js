@@ -127,6 +127,7 @@ export const ViewModeHook = {
           "text-gray-700",
           "border-gray-300",
           "hover:bg-gray-50",
+          "hover:border-gray-300",
         );
       } else {
         btn.classList.remove(
@@ -140,6 +141,7 @@ export const ViewModeHook = {
           "text-gray-700",
           "border-gray-300",
           "hover:bg-gray-50",
+          "hover:border-gray-300",
         );
       }
 
