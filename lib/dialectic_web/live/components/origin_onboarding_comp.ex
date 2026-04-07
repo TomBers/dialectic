@@ -21,7 +21,7 @@ defmodule DialecticWeb.OriginOnboardingComp do
         You're looking at the <strong>origin node</strong>
         of this grid — the starting point for exploring an idea. Unlike traditional chat, RationalGrid turns every response into a
         <strong>node</strong>
-        in a visual knowledge map that you can branch, connect, and explore in any direction.
+        in a visual knowledge grid that you can branch, connect, and explore in any direction.
       </p>
       <p class="text-sm text-gray-600 mb-4">
         <strong>How it works:</strong>
@@ -54,7 +54,7 @@ defmodule DialecticWeb.OriginOnboardingComp do
             </svg>
           </span>
           <span>
-            <strong class="text-gray-900">Pro/Con</strong>
+            <strong class="text-gray-900">Pro | Con</strong>
             — Generates two child nodes: one arguing <em>for</em>
             the current idea and one arguing <em>against</em>. Great for exploring both sides of any claim.
           </span>
