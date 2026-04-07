@@ -653,6 +653,10 @@ export function draw_graph(
     // Send basic click event
     context.pushEvent("node_clicked", { id: nodeId });
 
+    // Update selection visuals immediately for responsiveness (same as keyboard nav)
+    cy.elements().removeClass("selected");
+    n.addClass("selected");
+
     // Ensure node is within visible bounds using model-space + zoom/pan; pan minimally if off-screen
     const rect = container.getBoundingClientRect();
     const panels = ["right-panel", "highlights-drawer"];
