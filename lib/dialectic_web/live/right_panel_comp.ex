@@ -175,225 +175,265 @@ defmodule DialecticWeb.RightPanelComp do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="space-y-2">
-      <section class="space-y-1.5">
-        <div class="px-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-          Core
-        </div>
-
-        <div class="bg-white border border-gray-200 rounded-md">
-          <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
-            Level
-          </div>
-          <div class="p-1">
-            <div class="inline-flex rounded-lg bg-gray-50 p-1 border border-gray-200">
-              <%= for {mode, label} <- [{"simple", "Simple"}, {"high_school", "High School"}, {"university", "University"}, {"expert", "Expert"}] do %>
-                <button
-                  type="button"
-                  phx-click="set_prompt_mode"
-                  phx-value-prompt_mode={mode}
-                  class={[
-                    "px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200",
-                    if @prompt_mode == mode do
-                      "bg-white text-indigo-700 shadow-sm scale-105"
-                    else
-                      "text-gray-600 hover:text-gray-900 hover:bg-white"
-                    end
-                  ]}
-                >
-                  {label}
-                </button>
-              <% end %>
-            </div>
-            <div class="mt-2 text-[11px] text-gray-600 space-y-1">
-              <p>
-                Adjusts the complexity and tone of AI responses.
+    <div class="space-y-3">
+      <details class="group rounded-md border border-gray-200 bg-white">
+        <summary class="list-none cursor-pointer px-2 py-1.5">
+          <div class="flex items-start justify-between gap-2">
+            <div class="space-y-0.5">
+              <div class="text-[11px] font-semibold text-gray-700">Configure</div>
+              <p class="text-[10px] text-gray-500">
+                Tune how generated responses are explained.
               </p>
             </div>
+            <.icon
+              name="hero-chevron-down"
+              class="w-3.5 h-3.5 text-gray-500 transition-transform group-open:rotate-180 mt-0.5"
+            />
           </div>
-        </div>
-
-        <div class="bg-white border border-gray-200 rounded-md">
-          <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
-            Download
-          </div>
-          <div class="p-1 space-y-2">
-            <div class="flex flex-col gap-1.5">
-              <button
-                type="button"
-                class="download-png w-full flex items-center justify-center px-2 py-1 rounded-md border border-green-200 bg-green-50 text-green-700 hover:bg-green-100 transition-colors text-xs"
-                aria-label="Download PNG"
-                title="Download PNG (Alt-click to capture full graph)"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-3.5 w-3.5 mr-1"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M3 7h4l2-2h6l2 2h4v12H3zM12 17a5 5 0 100-10 5 5 0 000 10z"
-                  />
-                </svg>
-                <span>Download PNG</span>
-              </button>
-
-              <.link
-                navigate={
-                  graph_linear_path(
-                    @graph_struct,
-                    if(@node, do: Map.get(@node, :id), else: nil),
-                    if(assigns[:token], do: [token: assigns[:token]], else: [])
-                  )
-                }
-                target="_blank"
-                rel="noopener noreferrer"
-                class="w-full flex items-center justify-center px-2 py-1 rounded-md border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition-colors text-xs"
-                title="Open printable PDF"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-3.5 w-3.5 mr-1"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-                <span>Print to PDF</span>
-              </.link>
-
-              <.link
-                href={
-                  path =
-                    if @graph_struct && @graph_struct.slug,
-                      do: "/api/graphs/md/#{@graph_struct.slug}",
-                      else: "/api/graphs/md/#{URI.encode(@graph_id)}"
-
-                  if assigns[:token], do: "#{path}?token=#{assigns[:token]}", else: path
-                }
-                download={
-                  if @graph_struct && @graph_struct.slug,
-                    do: "#{@graph_struct.slug}.md",
-                    else: "#{@graph_id}.md"
-                }
-                class="w-full flex items-center justify-center px-2 py-1 rounded-md border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors text-xs"
-                title="Download Markdown"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-3.5 w-3.5 mr-1"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
-                  />
-                </svg>
-                <span>Download Markdown</span>
-              </.link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="space-y-1.5">
-        <div class="px-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-          Collaboration
-        </div>
-
-        <%= if owner?(@graph_struct, @current_user) do %>
+        </summary>
+        <div class="border-t border-gray-100 p-1">
           <div class="bg-white border border-gray-200 rounded-md">
             <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
-              Access
+              Level
             </div>
-            <div class="p-1 space-y-2">
-              <DialecticWeb.LockComp.render id="lock-graph" graph_struct={@graph_struct} />
-              <button
-                phx-click="open_share_modal"
-                class="w-full flex items-center justify-center px-2 py-1 border border-indigo-200 rounded bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors text-xs"
-              >
-                <%= if @graph_struct.is_public do %>
-                  <.icon name="hero-share" class="w-3 h-3 mr-1" />
-                  <span>Share Map</span>
-                <% else %>
-                  <.icon name="hero-user-plus" class="w-3 h-3 mr-1" />
-                  <span>Manage Collaborators</span>
+            <div class="p-1">
+              <div class="inline-flex rounded-lg bg-gray-50 p-1 border border-gray-200">
+                <%= for {mode, label} <- [{"simple", "Simple"}, {"high_school", "High School"}, {"university", "University"}, {"expert", "Expert"}] do %>
+                  <button
+                    type="button"
+                    phx-click="set_prompt_mode"
+                    phx-value-prompt_mode={mode}
+                    class={[
+                      "px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200",
+                      if @prompt_mode == mode do
+                        "bg-white text-indigo-700 shadow-sm scale-105"
+                      else
+                        "text-gray-600 hover:text-gray-900 hover:bg-white"
+                      end
+                    ]}
+                  >
+                    {label}
+                  </button>
                 <% end %>
-              </button>
-            </div>
-          </div>
-        <% end %>
-
-        <div class="bg-white border border-gray-200 rounded-md">
-          <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
-            Groups ({length(@work_streams)})
-          </div>
-          <div class="p-1 text-[11px] text-gray-700 space-y-1">
-            <div class="flex items-center justify-between">
-              <div class="font-semibold text-gray-700 text-xs">Groups</div>
-              <button
-                type="button"
-                phx-click="open_start_stream_modal"
-                class="text-indigo-600 hover:text-indigo-800 text-xs"
-              >
-                + Start
-              </button>
-            </div>
-            <div class="max-h-56 overflow-y-auto">
-              <ul class="space-y-1">
-                <%= for s <- @work_streams || [] do %>
-                  <li class="flex items-center justify-between gap-2">
-                    <span class="truncate">{s.id}</span>
-                    <div class="flex items-center gap-2">
-                      <button
-                        type="button"
-                        phx-click="focus_stream"
-                        phx-value-id={s.id}
-                        class="px-1 py-0.5 rounded border text-gray-700 hover:bg-gray-50 text-xs"
-                      >
-                        Focus
-                      </button>
-                      <button
-                        type="button"
-                        phx-click="toggle_stream"
-                        phx-value-id={s.id}
-                        class="px-1 py-0.5 rounded border text-gray-700 hover:bg-gray-50 text-xs"
-                      >
-                        Toggle
-                      </button>
-                    </div>
-                  </li>
-                <% end %>
-              </ul>
+              </div>
+              <div class="mt-2 text-[11px] text-gray-600 space-y-1">
+                <p>
+                  Adjusts the complexity and tone of AI responses.
+                </p>
+              </div>
             </div>
           </div>
         </div>
-      </section>
+      </details>
+
+      <details class="group rounded-md border border-gray-200 bg-white">
+        <summary class="list-none cursor-pointer px-2 py-1.5">
+          <div class="flex items-start justify-between gap-2">
+            <div class="space-y-0.5">
+              <div class="text-[11px] font-semibold text-gray-700">Workspace</div>
+              <p class="text-[10px] text-gray-500">
+                Manage groups and who can access this map.
+              </p>
+            </div>
+            <.icon
+              name="hero-chevron-down"
+              class="w-3.5 h-3.5 text-gray-500 transition-transform group-open:rotate-180 mt-0.5"
+            />
+          </div>
+        </summary>
+        <div class="border-t border-gray-100 p-1 space-y-1.5">
+          <div class="bg-white border border-gray-200 rounded-md">
+            <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
+              Groups ({length(@work_streams)})
+            </div>
+            <div class="p-1 text-[11px] text-gray-700 space-y-1">
+              <div class="flex items-center justify-between">
+                <div class="font-semibold text-gray-700 text-xs">Groups</div>
+                <button
+                  type="button"
+                  phx-click="open_start_stream_modal"
+                  class="text-indigo-600 hover:text-indigo-800 text-xs"
+                >
+                  + Start
+                </button>
+              </div>
+              <div class="max-h-56 overflow-y-auto">
+                <ul class="space-y-1">
+                  <%= for s <- @work_streams || [] do %>
+                    <li class="flex items-center justify-between gap-2">
+                      <span class="truncate">{s.id}</span>
+                      <div class="flex items-center gap-2">
+                        <button
+                          type="button"
+                          phx-click="focus_stream"
+                          phx-value-id={s.id}
+                          class="px-1 py-0.5 rounded border text-gray-700 hover:bg-gray-50 text-xs"
+                        >
+                          Focus
+                        </button>
+                        <button
+                          type="button"
+                          phx-click="toggle_stream"
+                          phx-value-id={s.id}
+                          class="px-1 py-0.5 rounded border text-gray-700 hover:bg-gray-50 text-xs"
+                        >
+                          Toggle
+                        </button>
+                      </div>
+                    </li>
+                  <% end %>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <%= if owner?(@graph_struct, @current_user) do %>
+            <div class="bg-white border border-gray-200 rounded-md">
+              <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
+                Access
+              </div>
+              <div class="p-1 space-y-2">
+                <DialecticWeb.LockComp.render id="lock-graph" graph_struct={@graph_struct} />
+                <button
+                  phx-click="open_share_modal"
+                  class="w-full flex items-center justify-center px-2 py-1 border border-indigo-200 rounded bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors text-xs"
+                >
+                  <%= if @graph_struct.is_public do %>
+                    <.icon name="hero-share" class="w-3 h-3 mr-1" />
+                    <span>Share Map</span>
+                  <% else %>
+                    <.icon name="hero-user-plus" class="w-3 h-3 mr-1" />
+                    <span>Manage Collaborators</span>
+                  <% end %>
+                </button>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </details>
 
       <section class="space-y-1.5">
-        <div class="px-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-          Help
-        </div>
+        <details class="group rounded-md border border-gray-200 bg-white">
+          <summary class="list-none cursor-pointer px-2 py-1.5">
+            <div class="flex items-start justify-between gap-2">
+              <div class="space-y-0.5">
+                <div class="text-[11px] font-semibold text-gray-700">Export</div>
+                <p class="text-[10px] text-gray-500">
+                  Download and print this graph for use outside the app.
+                </p>
+              </div>
+              <.icon
+                name="hero-chevron-down"
+                class="w-3.5 h-3.5 text-gray-500 transition-transform group-open:rotate-180 mt-0.5"
+              />
+            </div>
+          </summary>
+          <div class="border-t border-gray-100 p-1 space-y-1.5">
+            <button
+              type="button"
+              class="download-png w-full flex items-center justify-center px-2 py-1 rounded-md border border-green-200 bg-green-50 text-green-700 hover:bg-green-100 transition-colors text-xs"
+              aria-label="Download PNG"
+              title="Download PNG (Alt-click to capture full graph)"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-3.5 w-3.5 mr-1"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M3 7h4l2-2h6l2 2h4v12H3zM12 17a5 5 0 100-10 5 5 0 000 10z"
+                />
+              </svg>
+              <span>Download PNG</span>
+            </button>
 
-        <div class="bg-white border border-gray-200 rounded-md">
-          <div class="px-2 py-1 text-[11px] font-semibold text-gray-700">
-            Translate
+            <.link
+              navigate={
+                graph_linear_path(
+                  @graph_struct,
+                  if(@node, do: Map.get(@node, :id), else: nil),
+                  if(assigns[:token], do: [token: assigns[:token]], else: [])
+                )
+              }
+              target="_blank"
+              rel="noopener noreferrer"
+              class="w-full flex items-center justify-center px-2 py-1 rounded-md border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition-colors text-xs"
+              title="Open printable PDF"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-3.5 w-3.5 mr-1"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+              <span>Print to PDF</span>
+            </.link>
+
+            <.link
+              href={
+                path =
+                  if @graph_struct && @graph_struct.slug,
+                    do: "/api/graphs/md/#{@graph_struct.slug}",
+                    else: "/api/graphs/md/#{URI.encode(@graph_id)}"
+
+                if assigns[:token], do: "#{path}?token=#{assigns[:token]}", else: path
+              }
+              download={
+                if @graph_struct && @graph_struct.slug,
+                  do: "#{@graph_struct.slug}.md",
+                  else: "#{@graph_id}.md"
+              }
+              class="w-full flex items-center justify-center px-2 py-1 rounded-md border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors text-xs"
+              title="Download Markdown"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-3.5 w-3.5 mr-1"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
+                />
+              </svg>
+              <span>Download Markdown</span>
+            </.link>
           </div>
-          <div class="p-1">
+        </details>
+
+        <details class="group rounded-md border border-gray-200 bg-white">
+          <summary class="list-none cursor-pointer px-2 py-1.5">
+            <div class="flex items-start justify-between gap-2">
+              <div class="space-y-0.5">
+                <div class="text-[11px] font-semibold text-gray-700">Utilities</div>
+                <p class="text-[10px] text-gray-500">
+                  Language and helper tools for reading this node.
+                </p>
+              </div>
+              <.icon
+                name="hero-chevron-down"
+                class="w-3.5 h-3.5 text-gray-500 transition-transform group-open:rotate-180 mt-0.5"
+              />
+            </div>
+          </summary>
+          <div class="border-t border-gray-100 p-1">
             <% encoded_text = encoded_node_text(@node) %>
             <div class="flex flex-wrap gap-1">
               <%= for {label, code} <- translate_targets() do %>
@@ -411,7 +451,7 @@ defmodule DialecticWeb.RightPanelComp do
               Opens Google Translate with the current node's content.
             </p>
           </div>
-        </div>
+        </details>
       </section>
     </div>
     """
