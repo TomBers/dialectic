@@ -756,7 +756,8 @@ export function draw_graph(
       const group = cy.getElementById(id);
       if (group && group.isParent()) {
         toggle(group);
-        // No viewport changes on toggle; keep current pan/zoom
+        // Relayout after toggle to prevent overlapping nodes
+        _relayoutAfterDepthChange(cy);
       }
     } catch (_e) {}
   });

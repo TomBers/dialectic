@@ -60,8 +60,11 @@ defmodule DialecticWeb.RightPanelComp do
     {:ok, socket}
   end
 
+  @valid_sections ~w(configure workspace export utilities)
+
   @impl true
-  def handle_event("toggle_section", %{"section" => section}, socket) do
+  def handle_event("toggle_section", %{"section" => section}, socket)
+      when section in @valid_sections do
     open_sections = socket.assigns.open_sections
 
     new_open_sections =
@@ -72,6 +75,11 @@ defmodule DialecticWeb.RightPanelComp do
       end
 
     {:noreply, assign(socket, :open_sections, new_open_sections)}
+  end
+
+  def handle_event("toggle_section", _params, socket) do
+    # Ignore unknown section keys to prevent memory growth
+    {:noreply, socket}
   end
 
   @impl true

@@ -910,34 +910,63 @@ defmodule DialecticWeb.GraphLive do
     if !socket.assigns.can_edit do
       {:noreply, socket |> put_flash(:error, "This graph is locked")}
     else
-      # Verify the group is empty before deleting
-      all_vertices = GraphManager.vertices(socket.assigns.graph_id)
+      # Validate group_id is not blank or "Main"
+      cond do
+        String.trim(group_id) == "" ->
+          {:noreply, socket |> put_flash(:error, "Invalid group")}
 
-      has_children =
-        Enum.any?(all_vertices, fn vid ->
-          vid != group_id and
-            case GraphManager.vertex_label(socket.assigns.graph_id, vid) do
-              %{} = lbl ->
-                Map.get(lbl, :parent) == group_id and not Map.get(lbl, :deleted, false)
+        group_id == "Main" ->
+          {:noreply, socket |> put_flash(:error, "Cannot delete the Main group")}
 
-              _ ->
-                false
-            end
-        end)
+        true ->
+          # Verify the vertex exists and is a compound (group) node
+          case GraphManager.vertex_label(socket.assigns.graph_id, group_id) do
+            %{} = group_label ->
+              cond do
+                Map.get(group_label, :deleted, false) ->
+                  {:noreply, socket |> put_flash(:error, "Group not found")}
 
-      if has_children do
-        {:noreply, socket |> put_flash(:error, "Cannot delete a group that has nodes")}
-      else
-        GraphManager.delete_node(socket.assigns.graph_id, group_id)
-        GraphManager.save_graph(socket.assigns.graph_id)
+                not Map.get(group_label, :compound, false) ->
+                  {:noreply,
+                   socket |> put_flash(:error, "Only groups can be deleted from streams")}
 
-        {:noreply,
-         socket
-         |> assign(
-           work_streams: list_streams(socket.assigns.graph_id),
-           f_graph: GraphManager.format_graph_json(socket.assigns.graph_id)
-         )
-         |> put_flash(:info, "Group deleted")}
+                true ->
+                  # Verify the group is empty before deleting
+                  all_vertices = GraphManager.vertices(socket.assigns.graph_id)
+
+                  has_children =
+                    Enum.any?(all_vertices, fn vid ->
+                      vid != group_id and
+                        case GraphManager.vertex_label(socket.assigns.graph_id, vid) do
+                          %{} = lbl ->
+                            Map.get(lbl, :parent) == group_id and
+                              not Map.get(lbl, :deleted, false)
+
+                          _ ->
+                            false
+                        end
+                    end)
+
+                  if has_children do
+                    {:noreply,
+                     socket |> put_flash(:error, "Cannot delete a group that has nodes")}
+                  else
+                    GraphManager.delete_node(socket.assigns.graph_id, group_id)
+                    GraphManager.save_graph(socket.assigns.graph_id)
+
+                    {:noreply,
+                     socket
+                     |> assign(
+                       work_streams: list_streams(socket.assigns.graph_id),
+                       f_graph: GraphManager.format_graph_json(socket.assigns.graph_id)
+                     )
+                     |> put_flash(:info, "Group deleted")}
+                  end
+              end
+
+            _ ->
+              {:noreply, socket |> put_flash(:error, "Group not found")}
+          end
       end
     end
   end
