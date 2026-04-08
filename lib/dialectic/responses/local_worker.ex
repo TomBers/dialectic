@@ -19,10 +19,13 @@ defmodule Dialectic.Workers.LocalWorker do
     _ = Map.get(args, "system_prompt")
     updated_vertex = GraphManager.update_vertex(graph, node, question)
 
+    # Broadcast :stream_chunk_broadcast directly with nil sender_pid to avoid
+    # amplification. When using :stream_chunk, each subscribed LiveView would
+    # re-broadcast to the same topic, causing N^2 messages with N clients.
     Phoenix.PubSub.broadcast(
       Dialectic.PubSub,
       live_view_topic,
-      {:stream_chunk, updated_vertex, :node_id, node}
+      {:stream_chunk_broadcast, updated_vertex, :node_id, node, nil}
     )
 
     Phoenix.PubSub.broadcast(

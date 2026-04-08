@@ -43,7 +43,7 @@ defmodule Dialectic.Workers.LLMWorker do
         max_attempts: max_attempts,
         args:
           %{
-            "question" => question,
+            "question" => _question,
             "to_node" => to_node,
             "graph" => graph,
             "live_view_topic" => live_view_topic
@@ -51,9 +51,55 @@ defmodule Dialectic.Workers.LLMWorker do
       }) do
     Logger.metadata(oban_job_id: job_id, oban_attempt: attempt)
 
-    # Ensure the graph is loaded and the node content is cleared (idempotency)
+    Logger.debug(fn ->
+      "[LLMWorker] Starting job_id=#{job_id} attempt=#{attempt} graph=#{inspect(graph)} node=#{inspect(to_node)}"
+    end)
+
+    # Ensure the graph is loaded
     GraphManager.get_graph(graph)
-    GraphManager.set_node_content(graph, to_node, "")
+
+    # Check if node already has content (another job may have completed)
+    # This prevents duplicate jobs from overwriting each other's work
+    existing_node = GraphManager.find_node_by_id(graph, to_node)
+    existing_content = existing_node && Map.get(existing_node, :content, "")
+
+    if is_binary(existing_content) and byte_size(existing_content) > 50 do
+      Logger.warning(fn ->
+        "[LLMWorker] SKIPPING job_id=#{job_id} - node #{to_node} already has content (#{byte_size(existing_content)} bytes). Another job likely completed first."
+      end)
+
+      # Return :ok to mark job as complete without doing work
+      :ok
+    else
+      # Clear content for fresh start (idempotency for retries)
+      GraphManager.set_node_content(graph, to_node, "")
+      start_time = System.monotonic_time(:millisecond)
+
+      do_llm_request(
+        job_id,
+        start_time,
+        attempt,
+        max_attempts,
+        args,
+        graph,
+        to_node,
+        live_view_topic
+      )
+    end
+  end
+
+  # Extracted LLM request logic to separate function for clarity
+  defp do_llm_request(
+         job_id,
+         start_time,
+         attempt,
+         max_attempts,
+         args,
+         graph,
+         to_node,
+         live_view_topic
+       ) do
+    question = Map.get(args, "question", "")
 
     provider_mod = select_provider(args)
 
@@ -114,14 +160,27 @@ defmodule Dialectic.Workers.LLMWorker do
           # We accumulate the *full* response text in the worker to ensure
           # we can safely overwrite the node content (bullet-proofing against
           # lost partial updates or GraphManager restarts).
-          {final_full_text, final_buf} =
-            Enum.reduce(ReqLLM.StreamResponse.tokens(stream_resp), {"", ""}, fn token,
-                                                                                {full_text, buf} ->
+          # Track timing: {full_text, buffer, first_token_logged?}
+          {final_full_text, final_buf, _} =
+            Enum.reduce(ReqLLM.StreamResponse.tokens(stream_resp), {"", "", false}, fn token,
+                                                                                       {full_text,
+                                                                                        buf,
+                                                                                        ttft_logged?} ->
               chunk =
                 case token do
                   t when is_binary(t) -> t
                   t when is_list(t) -> IO.iodata_to_binary(t)
                   t -> to_string(t)
+                end
+
+              # Log time-to-first-token (TTFT) on first chunk
+              ttft_logged? =
+                if not ttft_logged? and byte_size(chunk) > 0 do
+                  ttft_ms = System.monotonic_time(:millisecond) - start_time
+                  Logger.info("[LLMWorker] job_id=#{job_id} TTFT=#{ttft_ms}ms")
+                  true
+                else
+                  ttft_logged?
                 end
 
               new_full_text = full_text <> chunk
@@ -133,9 +192,9 @@ defmodule Dialectic.Workers.LLMWorker do
               if full_text == "" or byte_size(new_buf) > @buffer_size or
                    String.contains?(new_buf, "\n") do
                 Utils.set_node_content(graph, to_node, new_full_text, live_view_topic)
-                {new_full_text, ""}
+                {new_full_text, "", ttft_logged?}
               else
-                {new_full_text, new_buf}
+                {new_full_text, new_buf, ttft_logged?}
               end
             end)
 
@@ -145,6 +204,12 @@ defmodule Dialectic.Workers.LLMWorker do
           end
 
           if byte_size(final_full_text) > 0 do
+            total_ms = System.monotonic_time(:millisecond) - start_time
+
+            Logger.info(
+              "[LLMWorker] job_id=#{job_id} completed total=#{total_ms}ms bytes=#{byte_size(final_full_text)}"
+            )
+
             finalize(graph, to_node, live_view_topic)
             :ok
           else
@@ -178,12 +243,9 @@ defmodule Dialectic.Workers.LLMWorker do
           {:error, err}
       end
     end
-  rescue
-    exception ->
-      Logger.error("LLM worker exception: #{Exception.format(:error, exception, __STACKTRACE__)}")
-
-      reraise exception, __STACKTRACE__
   end
+
+  # Note: Exceptions in do_llm_request will propagate up to perform/1
 
   # -- Internals ----------------------------------------------------------------
 

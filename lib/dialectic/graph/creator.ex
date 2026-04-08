@@ -2,16 +2,23 @@ defmodule Dialectic.Graph.Creator do
   @moduledoc """
   Handles the end-to-end flow of creating a new graph from a question.
   This orchestrates database creation, graph process initialization,
-  node creation, and synchronous LLM generation.
+  node creation, and queues asynchronous LLM generation for streaming.
+
+  The user is redirected immediately after graph creation, and the LLM
+  response streams on the graph page via PubSub for a faster perceived experience.
   """
   require Logger
   alias Dialectic.DbActions.Graphs
   alias GraphManager
   alias Dialectic.Graph.{Vertex, Serialise}
-  alias Dialectic.Responses.{ModeServer, Prompts, PromptsStructured}
+  alias Dialectic.Responses.{ModeServer, Prompts, PromptsStructured, RequestQueue}
 
   @doc """
-  Creates a graph, adds the initial question, generates an answer, and saves it.
+  Creates a graph, adds the initial question, queues LLM generation, and saves it.
+
+  The LLM response is generated asynchronously via streaming, allowing the user
+  to be redirected immediately to the graph page where they'll see the response
+  stream in real-time.
 
   ## Arguments
   - `question`: String, the user's initial prompt.
@@ -50,40 +57,28 @@ defmodule Dialectic.Graph.Creator do
         callback.("Updating origin...")
         updated_origin = update_origin_content(title, origin_node, question)
 
-        callback.("Generating response (this may take a moment)...")
+        callback.("Preparing response...")
 
         # Create the empty answer node connected to origin
         answer_node = create_answer_node_struct(title, updated_origin, user_identity)
 
-        # Generate LLM response synchronously
-        case generate_response(title, updated_origin, mode) do
-          {:ok, content} ->
-            GraphManager.set_node_content(title, answer_node.id, content)
-            GraphManager.finalize_node_content(title, answer_node.id)
+        # Queue async streaming LLM request (instead of waiting synchronously)
+        queue_streaming_response(title, updated_origin, answer_node, mode)
 
-            # Force synchronous save to ensure data is persisted before redirect
-            callback.("Finalizing...")
-            {_graph_struct, graph} = GraphManager.get_graph(title)
-            json = Serialise.graph_to_json(graph)
+        # Save the graph immediately so user can be redirected
+        callback.("Finalizing...")
+        {_graph_struct, graph} = GraphManager.get_graph(title)
+        json = Serialise.graph_to_json(graph)
 
-            case Graphs.save_graph(title, json) do
-              {:ok, _} ->
-                Logger.info("Successfully saved graph #{title} after creation")
-                {:ok, title}
+        case Graphs.save_graph(title, json) do
+          {:ok, _} ->
+            Logger.info("Successfully saved graph #{title} after creation, LLM streaming queued")
+            {:ok, title}
 
-              {:error, save_reason} ->
-                Logger.error(
-                  "Failed to save graph #{title} after creation: #{inspect(save_reason)}"
-                )
+          {:error, save_reason} ->
+            Logger.error("Failed to save graph #{title} after creation: #{inspect(save_reason)}")
 
-                # Return error to prevent redirect with stale data
-                {:error, :save_failed}
-            end
-
-          {:error, reason} ->
-            Logger.error("Graph creation LLM error: #{inspect(reason)}")
-            # If generation fails, we still return the graph, just with empty answer node
-            {:error, reason}
+            {:error, :save_failed}
         end
 
       {:error, reason} ->
@@ -111,17 +106,50 @@ defmodule Dialectic.Graph.Creator do
     node
   end
 
-  defp generate_response(title, origin_node, mode) do
+  @doc """
+  Queues an asynchronous streaming LLM request for the initial graph response.
+
+  This uses the same streaming infrastructure as follow-up questions,
+  allowing the response to stream in real-time on the graph page.
+  """
+  def queue_streaming_response(title, origin_node, answer_node, mode) do
     context = GraphManager.build_context(title, origin_node)
     instruction = Prompts.initial_explainer(context, origin_node.content)
-
     system_prompt = PromptsStructured.system_preamble(mode)
 
-    opts = [
-      system_prompt: system_prompt,
-      model: "gemini-3-flash-preview"
-    ]
+    # Use the shared graph topic so all viewers (including the user who just created
+    # the graph) will receive stream chunks when they mount the graph page.
+    # This matches the graph_topic pattern in GraphLive: "graph_update:#{graph_id}"
+    live_view_topic = "graph_update:#{title}"
 
-    Dialectic.LLM.Generator.generate(instruction, opts)
+    # Queue the streaming request via the existing worker infrastructure
+    case RequestQueue.add(
+           instruction,
+           system_prompt,
+           answer_node,
+           title,
+           live_view_topic
+         ) do
+      {:ok, job} ->
+        Logger.debug(
+          "[Creator] Queued streaming LLM request for graph=#{title} node=#{answer_node.id}"
+        )
+
+        {:ok, job}
+
+      {:error, reason} = error ->
+        Logger.error(
+          "[Creator] Failed to queue streaming LLM request for graph=#{title} node=#{answer_node.id}: #{inspect(reason)}"
+        )
+
+        error
+
+      other ->
+        Logger.error(
+          "[Creator] Unexpected result queueing streaming LLM request for graph=#{title} node=#{answer_node.id}: #{inspect(other)}"
+        )
+
+        other
+    end
   end
 end
