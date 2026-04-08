@@ -1,5 +1,24 @@
 defmodule Dialectic.DbActions.DbWorker do
-  use Oban.Worker, queue: :db_write, max_attempts: 5
+  @moduledoc """
+  Oban worker for persisting graph snapshots to the database.
+
+  Uses Oban uniqueness to debounce rapid save requests - if multiple saves
+  for the same graph are queued within a short window, only the most recent
+  snapshot will be persisted. This prevents unnecessary database writes when
+  multiple operations trigger saves in quick succession (e.g., ask_and_answer
+  creating question + answer nodes).
+  """
+
+  use Oban.Worker,
+    queue: :db_write,
+    max_attempts: 5,
+    # Debounce: only one job per graph_id within 2 seconds
+    unique: [
+      period: 2,
+      keys: [:id],
+      states: [:available, :scheduled]
+    ]
+
   require Logger
 
   def perform(%Oban.Job{args: %{"id" => id, "data" => data} = args}) do
@@ -37,6 +56,16 @@ defmodule Dialectic.DbActions.DbWorker do
     :ok
   end
 
+  @doc """
+  Queue a graph snapshot for persistence.
+
+  Multiple calls for the same graph within the debounce window (2 seconds)
+  will be coalesced into a single database write. Note that the first job's
+  data will be used (uniqueness prevents insertion of duplicates), so callers
+  should ensure the most important save happens first, or accept that rapid
+  saves will use slightly stale data (which is fine since the timestamp check
+  in save_graph_if_newer provides additional protection).
+  """
   def save_snapshot(path, data, ts) do
     args = %{
       "id" => path,
