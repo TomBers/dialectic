@@ -66,8 +66,11 @@ defmodule Dialectic.Application do
     # Use spawn instead of TaskSupervisor to avoid race condition during startup
     spawn(fn -> warm_up_database() end)
 
-    # Warm up HTTP/2 connections to LLM providers to reduce TTFT on first requests
-    spawn(fn -> warm_up_llm_connections() end)
+    # Warm up HTTP/2 connections to LLM providers only in server/production mode
+    # to avoid outbound network side effects in development and test environments
+    if System.get_env("PHX_SERVER") do
+      spawn(fn -> warm_up_llm_connections() end)
+    end
 
     result
   end
@@ -192,9 +195,14 @@ defmodule Dialectic.Application do
       try do
         # Make a minimal request to establish HTTP/2 connection
         # Using the models list endpoint which is lightweight
-        url = "https://generativelanguage.googleapis.com/v1beta/models?key=#{api_key}"
+        # Pass API key via header instead of query string to avoid leaking in logs/telemetry
+        url = "https://generativelanguage.googleapis.com/v1beta/models"
 
-        case Finch.build(:get, url) |> Finch.request(Dialectic.Finch) do
+        headers = [
+          {"x-goog-api-key", api_key}
+        ]
+
+        case Finch.build(:get, url, headers) |> Finch.request(Dialectic.Finch) do
           {:ok, %{status: status}} when status in 200..299 ->
             Logger.info("✓ Gemini HTTP/2 connection warmed up successfully")
 

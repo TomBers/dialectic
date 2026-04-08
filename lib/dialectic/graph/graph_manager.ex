@@ -582,9 +582,8 @@ defmodule GraphManager do
   end
 
   # Returns a robust "best" node to render:
-  # - auto-select the answer node when the graph is a simple origin + answer + group
-  # - try desired_id
-  # - else try "1"
+  # - try desired_id (from URL query param)
+  # - else try "1" (origin node)
   # - else first non-deleted vertex
   # - else nil
   def best_node(path, desired_id) do

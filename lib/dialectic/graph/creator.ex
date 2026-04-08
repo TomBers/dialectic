@@ -123,16 +123,33 @@ defmodule Dialectic.Graph.Creator do
     live_view_topic = "graph_update:#{title}"
 
     # Queue the streaming request via the existing worker infrastructure
-    RequestQueue.add(
-      instruction,
-      system_prompt,
-      answer_node,
-      title,
-      live_view_topic
-    )
+    case RequestQueue.add(
+           instruction,
+           system_prompt,
+           answer_node,
+           title,
+           live_view_topic
+         ) do
+      {:ok, job} ->
+        Logger.debug(
+          "[Creator] Queued streaming LLM request for graph=#{title} node=#{answer_node.id}"
+        )
 
-    Logger.debug(
-      "[Creator] Queued streaming LLM request for graph=#{title} node=#{answer_node.id}"
-    )
+        {:ok, job}
+
+      {:error, reason} = error ->
+        Logger.error(
+          "[Creator] Failed to queue streaming LLM request for graph=#{title} node=#{answer_node.id}: #{inspect(reason)}"
+        )
+
+        error
+
+      other ->
+        Logger.error(
+          "[Creator] Unexpected result queueing streaming LLM request for graph=#{title} node=#{answer_node.id}: #{inspect(other)}"
+        )
+
+        other
+    end
   end
 end
