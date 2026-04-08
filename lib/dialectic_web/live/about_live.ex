@@ -266,7 +266,7 @@ defmodule DialecticWeb.AboutLive do
                 <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-[#4361ee]/10 text-[#4361ee]">
                   <.icon name="hero-star" class="w-5 h-5" />
                 </div>
-                <h4 class="font-bold text-gray-900">Highlighted Grids</h4>
+                <h4 class="font-bold text-gray-900">Curated Grids</h4>
               </div>
               <p class="text-sm text-gray-600 leading-relaxed">
                 Users like you are creating hundreds of grids on RationalGrid. We try to highlight the best of them on our home page. We will also be running a series of "curated grids" featuring ideas being explored by invited guests.
