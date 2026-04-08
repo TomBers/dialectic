@@ -906,6 +906,42 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, push_event(socket, "toggle_group", %{id: group_id})}
   end
 
+  def handle_event("delete_stream", %{"id" => group_id}, socket) do
+    if !socket.assigns.can_edit do
+      {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    else
+      # Verify the group is empty before deleting
+      all_vertices = GraphManager.vertices(socket.assigns.graph_id)
+
+      has_children =
+        Enum.any?(all_vertices, fn vid ->
+          vid != group_id and
+            case GraphManager.vertex_label(socket.assigns.graph_id, vid) do
+              %{} = lbl ->
+                Map.get(lbl, :parent) == group_id and not Map.get(lbl, :deleted, false)
+
+              _ ->
+                false
+            end
+        end)
+
+      if has_children do
+        {:noreply, socket |> put_flash(:error, "Cannot delete a group that has nodes")}
+      else
+        GraphManager.delete_node(socket.assigns.graph_id, group_id)
+        GraphManager.save_graph(socket.assigns.graph_id)
+
+        {:noreply,
+         socket
+         |> assign(
+           work_streams: list_streams(socket.assigns.graph_id),
+           f_graph: GraphManager.format_graph_json(socket.assigns.graph_id)
+         )
+         |> put_flash(:info, "Group deleted")}
+      end
+    end
+  end
+
   def handle_event("update_exploration_progress", params, socket) do
     {:noreply, assign(socket, :exploration_stats, params)}
   end
@@ -1633,7 +1669,7 @@ defmodule DialecticWeb.GraphLive do
       |> Enum.reduce([], fn vid, acc ->
         case GraphManager.vertex_label(graph_id, vid) do
           %{} = v ->
-            if Map.get(v, :compound) == true do
+            if Map.get(v, :compound) == true and not Map.get(v, :deleted, false) do
               [%{id: v.id} | acc]
             else
               acc
