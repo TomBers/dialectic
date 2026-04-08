@@ -762,6 +762,20 @@ export function draw_graph(
     } catch (_e) {}
   });
 
+  // Force a full relayout (e.g., after creating a new group)
+  // Delay ensures any in-flight layout from updated() completes first
+  context.handleEvent("reflow_layout", () => {
+    setTimeout(() => {
+      try {
+        _relayoutAfterDepthChange(cy);
+        // After layout, spread out any overlapping compound nodes
+        setTimeout(() => {
+          _spreadOverlappingCompoundNodes(cy);
+        }, 300);
+      } catch (_e) {}
+    }, 350);
+  });
+
   // Depth-collapse events from LiveView
   context.handleEvent("expand_node", ({ id }) => {
     try {
@@ -1321,6 +1335,96 @@ function _loadDepthStateFromStorage(graphId) {
     }
   } catch (_e) {}
   return null;
+}
+
+/**
+ * Spread out overlapping compound (group) nodes by shifting them apart.
+ * This is useful after creating new groups that might overlap existing ones.
+ */
+function _spreadOverlappingCompoundNodes(cy) {
+  try {
+    const compoundNodes = cy
+      .nodes()
+      .filter((n) => n.isParent() && !n.hasClass("hidden"));
+    if (compoundNodes.length < 2) return;
+
+    const padding = 50; // Minimum spacing between compound nodes
+    const nodeData = [];
+
+    // Collect bounding boxes for all compound nodes
+    compoundNodes.forEach((node) => {
+      const bb = node.boundingBox({
+        includeLabels: false,
+        includeOverlays: false,
+      });
+      nodeData.push({
+        node,
+        bb,
+        cx: (bb.x1 + bb.x2) / 2,
+        cy: (bb.y1 + bb.y2) / 2,
+        width: bb.x2 - bb.x1,
+        height: bb.y2 - bb.y1,
+      });
+    });
+
+    // Check for overlaps and spread nodes apart
+    let hasOverlap = true;
+    let iterations = 0;
+    const maxIterations = 10;
+
+    while (hasOverlap && iterations < maxIterations) {
+      hasOverlap = false;
+      iterations++;
+
+      for (let i = 0; i < nodeData.length; i++) {
+        for (let j = i + 1; j < nodeData.length; j++) {
+          const a = nodeData[i];
+          const b = nodeData[j];
+
+          // Check if bounding boxes overlap (with padding)
+          const overlapX = Math.max(
+            0,
+            Math.min(a.bb.x2, b.bb.x2) - Math.max(a.bb.x1, b.bb.x1) + padding,
+          );
+          const overlapY = Math.max(
+            0,
+            Math.min(a.bb.y2, b.bb.y2) - Math.max(a.bb.y1, b.bb.y1) + padding,
+          );
+
+          if (overlapX > 0 && overlapY > 0) {
+            hasOverlap = true;
+
+            // Calculate direction to push nodes apart
+            const dx = b.cx - a.cx;
+            const dy = b.cy - a.cy;
+            const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+
+            // Push nodes apart based on overlap
+            const pushX = (dx / dist) * (overlapX / 2 + padding);
+            const pushY = (dy / dist) * (overlapY / 2 + padding);
+
+            // Move node b and its children
+            const bChildren = b.node.descendants().union(b.node);
+            bChildren.forEach((child) => {
+              child.position({
+                x: child.position("x") + pushX,
+                y: child.position("y") + pushY,
+              });
+            });
+
+            // Update bounding box data for b
+            const newBb = b.node.boundingBox({
+              includeLabels: false,
+              includeOverlays: false,
+            });
+            b.bb = newBb;
+            b.cx = (newBb.x1 + newBb.x2) / 2;
+            b.cy = (newBb.y1 + newBb.y2) / 2;
+          }
+        }
+      }
+    }
+  } catch (_e) {}
 }
 
 /**

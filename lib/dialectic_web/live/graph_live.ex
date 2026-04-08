@@ -1766,7 +1766,9 @@ defmodule DialecticWeb.GraphLive do
       |> then(fn s ->
         # Close the start stream modal if applicable
         if operation == "start_stream" do
-          assign(s, show_start_stream_modal: false)
+          s
+          |> assign(show_start_stream_modal: false)
+          |> push_event("reflow_layout", %{})
         else
           s
         end
