@@ -55,8 +55,31 @@ defmodule DialecticWeb.RightPanelComp do
       |> assign_new(:prompt_mode, fn -> "university" end)
       |> assign_new(:highlights, fn -> [] end)
       |> assign_new(:editing_highlight_id, fn -> nil end)
+      |> assign_new(:open_sections, fn -> MapSet.new() end)
 
     {:ok, socket}
+  end
+
+  @valid_sections ~w(configure workspace export utilities)
+
+  @impl true
+  def handle_event("toggle_section", %{"section" => section}, socket)
+      when section in @valid_sections do
+    open_sections = socket.assigns.open_sections
+
+    new_open_sections =
+      if MapSet.member?(open_sections, section) do
+        MapSet.delete(open_sections, section)
+      else
+        MapSet.put(open_sections, section)
+      end
+
+    {:noreply, assign(socket, :open_sections, new_open_sections)}
+  end
+
+  def handle_event("toggle_section", _params, socket) do
+    # Ignore unknown section keys to prevent memory growth
+    {:noreply, socket}
   end
 
   @impl true
@@ -177,8 +200,17 @@ defmodule DialecticWeb.RightPanelComp do
     ~H"""
     <div class="space-y-1.5">
       <%!-- Configure Section --%>
-      <details class="group rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow transition-shadow">
-        <summary class="list-none cursor-pointer select-none px-3 py-2.5 rounded-lg hover:bg-gray-50/50 transition-colors">
+      <details
+        id="details-configure"
+        class="group rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow transition-shadow"
+        open={MapSet.member?(@open_sections, "configure")}
+      >
+        <summary
+          class="list-none cursor-pointer select-none px-3 py-2.5 rounded-lg hover:bg-gray-50/50 transition-colors"
+          phx-click="toggle_section"
+          phx-value-section="configure"
+          phx-target={@myself}
+        >
           <div class="flex items-center justify-between gap-3">
             <div class="flex items-center gap-2.5">
               <div class="flex items-center justify-center w-7 h-7 rounded-md bg-indigo-50 text-indigo-600">
@@ -229,8 +261,17 @@ defmodule DialecticWeb.RightPanelComp do
       </details>
 
       <%!-- Workspace Section --%>
-      <details class="group rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow transition-shadow">
-        <summary class="list-none cursor-pointer select-none px-3 py-2.5 rounded-lg hover:bg-gray-50/50 transition-colors">
+      <details
+        id="details-workspace"
+        class="group rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow transition-shadow"
+        open={MapSet.member?(@open_sections, "workspace")}
+      >
+        <summary
+          class="list-none cursor-pointer select-none px-3 py-2.5 rounded-lg hover:bg-gray-50/50 transition-colors"
+          phx-click="toggle_section"
+          phx-value-section="workspace"
+          phx-target={@myself}
+        >
           <div class="flex items-center justify-between gap-3">
             <div class="flex items-center gap-2.5">
               <div class="flex items-center justify-center w-7 h-7 rounded-md bg-emerald-50 text-emerald-600">
@@ -287,6 +328,17 @@ defmodule DialecticWeb.RightPanelComp do
                         >
                           Toggle
                         </button>
+                        <%= if s.id != "Main" do %>
+                          <button
+                            type="button"
+                            phx-click="delete_stream"
+                            phx-value-id={s.id}
+                            class="px-2 py-1 rounded-md text-[10px] font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors"
+                            title="Delete group (must be empty)"
+                          >
+                            <.icon name="hero-trash" class="w-3 h-3" />
+                          </button>
+                        <% end %>
                       </div>
                     </li>
                   <% end %>
@@ -322,8 +374,17 @@ defmodule DialecticWeb.RightPanelComp do
       </details>
 
       <%!-- Export Section --%>
-      <details class="group rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow transition-shadow">
-        <summary class="list-none cursor-pointer select-none px-3 py-2.5 rounded-lg hover:bg-gray-50/50 transition-colors">
+      <details
+        id="details-export"
+        class="group rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow transition-shadow"
+        open={MapSet.member?(@open_sections, "export")}
+      >
+        <summary
+          class="list-none cursor-pointer select-none px-3 py-2.5 rounded-lg hover:bg-gray-50/50 transition-colors"
+          phx-click="toggle_section"
+          phx-value-section="export"
+          phx-target={@myself}
+        >
           <div class="flex items-center justify-between gap-3">
             <div class="flex items-center gap-2.5">
               <div class="flex items-center justify-center w-7 h-7 rounded-md bg-sky-50 text-sky-600">
@@ -405,8 +466,17 @@ defmodule DialecticWeb.RightPanelComp do
       </details>
 
       <%!-- Utilities Section --%>
-      <details class="group rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow transition-shadow">
-        <summary class="list-none cursor-pointer select-none px-3 py-2.5 rounded-lg hover:bg-gray-50/50 transition-colors">
+      <details
+        id="details-utilities"
+        class="group rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow transition-shadow"
+        open={MapSet.member?(@open_sections, "utilities")}
+      >
+        <summary
+          class="list-none cursor-pointer select-none px-3 py-2.5 rounded-lg hover:bg-gray-50/50 transition-colors"
+          phx-click="toggle_section"
+          phx-value-section="utilities"
+          phx-target={@myself}
+        >
           <div class="flex items-center justify-between gap-3">
             <div class="flex items-center gap-2.5">
               <div class="flex items-center justify-center w-7 h-7 rounded-md bg-orange-50 text-orange-600">

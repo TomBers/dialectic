@@ -509,4 +509,81 @@ defmodule DialecticWeb.GraphLiveTest do
       assert state.presentation_title == ""
     end
   end
+
+  describe "handle_event delete_stream" do
+    test "rejects deletion of Main group", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      html = render_click(view, "delete_stream", %{"id" => "Main"})
+
+      assert html =~ "Cannot delete the Main group"
+    end
+
+    test "rejects deletion with blank group_id", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      html = render_click(view, "delete_stream", %{"id" => "   "})
+
+      assert html =~ "Invalid group"
+    end
+
+    test "rejects deletion of non-existent group", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      html = render_click(view, "delete_stream", %{"id" => "nonexistent_group_12345"})
+
+      assert html =~ "Group not found"
+    end
+
+    test "rejects deletion of non-compound vertex", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      # Node "1" exists but is not a compound/group node
+      # The handler returns "Group not found" for non-group vertices (doesn't leak vertex existence)
+      html = render_click(view, "delete_stream", %{"id" => "1"})
+
+      assert html =~ "Group not found" or html =~ "Only groups can be deleted from streams"
+    end
+
+    test "rejects deletion of group with non-deleted children", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      # Create a new node and assign it to a new group
+      group_name = "test_group_with_children"
+
+      new_node =
+        GraphManager.add_node(@graph_id, %Dialectic.Graph.Vertex{
+          content: "test node in group",
+          class: "test",
+          user: "tester@example.com"
+        })
+
+      GraphManager.create_group(@graph_id, group_name, [new_node.id])
+
+      html = render_click(view, "delete_stream", %{"id" => group_name})
+
+      assert html =~ "Cannot delete a group that has nodes"
+
+      # Clean up - remove node from group and delete node
+      GraphManager.remove_parent(@graph_id, new_node.id)
+      GraphManager.delete_node(@graph_id, new_node.id)
+    end
+
+    test "successfully deletes an empty group", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      # Create an empty group (no children)
+      group_name = "empty_test_group"
+      GraphManager.create_group(@graph_id, group_name, [])
+
+      html = render_click(view, "delete_stream", %{"id" => group_name})
+
+      assert html =~ "Group deleted"
+
+      # Verify the group is no longer in work_streams
+      state = :sys.get_state(view.pid).socket.assigns
+      group_ids = Enum.map(state.work_streams, & &1.id)
+      refute group_name in group_ids
+    end
+  end
 end
