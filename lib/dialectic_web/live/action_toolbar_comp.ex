@@ -89,7 +89,13 @@ defmodule DialecticWeb.ActionToolbarComp do
      socket
      |> assign(assigns)
      |> assign_new(:inline, fn -> false end)
-     |> assign_new(:icons_only, fn -> false end)}
+     |> assign_new(:icons_only, fn -> false end)
+     |> assign_new(:advanced_tools_open, fn -> false end)}
+  end
+
+  @impl true
+  def handle_event("toggle_advanced_tools", _, socket) do
+    {:noreply, assign(socket, :advanced_tools_open, !socket.assigns.advanced_tools_open)}
   end
 
   @impl true
@@ -101,7 +107,7 @@ defmodule DialecticWeb.ActionToolbarComp do
           if @inline,
             do: "relative z-10 flex flex-col gap-2 pointer-events-auto",
             else:
-              "hidden sm:flex fixed left-1/2 -translate-x-1/2 z-10 bg-white shadow border border-gray-200 px-1.5 py-1 rounded-md flex-col gap-2 pointer-events-auto max-w-[90vw]"
+              "hidden sm:flex fixed left-1/2 -translate-x-1/2 z-10 bg-white shadow border border-gray-200 px-1.5 py-1 rounded-md flex-col gap-2 pointer-events-auto max-w-[90vw] max-h-[80vh] overflow-y-auto"
         }
         style={unless @inline, do: "bottom: calc(5.5rem + env(safe-area-inset-bottom));"}
         data-external="true"
@@ -131,7 +137,7 @@ defmodule DialecticWeb.ActionToolbarComp do
         <% end %>
 
         <% info = delete_info(assigns) %>
-        <%!-- Add Actions Section --%>
+        <%!-- Main Grid Tools Section --%>
         <div data-role="action-buttons-group">
           <div class="text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1 text-center">
             Grid Tools
@@ -259,6 +265,354 @@ defmodule DialecticWeb.ActionToolbarComp do
                 Explore
               </span>
             </button>
+          </div>
+        </div>
+
+        <%!-- Advanced Tools Collapsible Section --%>
+        <div class="border-t border-gray-200 pt-2" data-role="advanced-tools-section">
+          <button
+            type="button"
+            class="w-full inline-flex items-center justify-between gap-1 px-2 py-1 text-xs font-semibold text-gray-600 hover:text-gray-900 transition-colors"
+            phx-click="toggle_advanced_tools"
+            phx-target={@myself}
+          >
+            <span class="uppercase tracking-wide">Advanced Tools</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class={["h-4 w-4 transition-transform", @advanced_tools_open && "rotate-180"]}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          <div class={["mt-2 space-y-3", !@advanced_tools_open && "hidden"]}>
+            <%!-- Cluster 1: Core Inquiry Moves --%>
+            <div>
+              <div class="text-[9px] font-medium text-gray-400 uppercase tracking-wider mb-1 px-1">
+                Core Inquiry
+              </div>
+              <div class="grid grid-cols-2 gap-1">
+                <%!-- Clarify --%>
+                <button
+                  type="button"
+                  class="inline-flex flex-row items-center justify-center gap-1 px-2 py-1 shadow-sm ring-1 ring-inset ring-black/10 bg-teal-500 text-white rounded-md transition-all hover:bg-teal-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  phx-click="node_clarify"
+                  phx-value-id={@node && @node.id}
+                  disabled={is_nil(@graph_id)}
+                  title="What do you mean by…? — Conceptual clarification"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                  </svg>
+                  <span :if={!@icons_only} class="toolbar-label text-xs leading-tight font-medium">
+                    Clarify
+                  </span>
+                </button>
+
+                <%!-- Assumptions --%>
+                <button
+                  type="button"
+                  class="inline-flex flex-row items-center justify-center gap-1 px-2 py-1 shadow-sm ring-1 ring-inset ring-black/10 bg-amber-500 text-white rounded-md transition-all hover:bg-amber-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  phx-click="node_assumptions"
+                  phx-value-id={@node && @node.id}
+                  disabled={is_nil(@graph_id)}
+                  title="What has to be true? — Surface hidden assumptions"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                    <path d="M2 17l10 5 10-5" />
+                    <path d="M2 12l10 5 10-5" />
+                  </svg>
+                  <span :if={!@icons_only} class="toolbar-label text-xs leading-tight font-medium">
+                    Assume
+                  </span>
+                </button>
+
+                <%!-- Counterexample --%>
+                <button
+                  type="button"
+                  class="inline-flex flex-row items-center justify-center gap-1 px-2 py-1 shadow-sm ring-1 ring-inset ring-black/10 bg-red-500 text-white rounded-md transition-all hover:bg-red-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  phx-click="node_counterexample"
+                  phx-value-id={@node && @node.id}
+                  disabled={is_nil(@graph_id)}
+                  title="Is that always true? — Find counterexamples"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M18 6L6 18" />
+                    <path d="M6 6l12 12" />
+                  </svg>
+                  <span :if={!@icons_only} class="toolbar-label text-xs leading-tight font-medium">
+                    Test
+                  </span>
+                </button>
+
+                <%!-- Implications --%>
+                <button
+                  type="button"
+                  class="inline-flex flex-row items-center justify-center gap-1 px-2 py-1 shadow-sm ring-1 ring-inset ring-black/10 bg-indigo-500 text-white rounded-md transition-all hover:bg-indigo-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  phx-click="node_implications"
+                  phx-value-id={@node && @node.id}
+                  disabled={is_nil(@graph_id)}
+                  title="So what? — Trace the consequences"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                    <polyline points="12 5 19 12 12 19" />
+                  </svg>
+                  <span :if={!@icons_only} class="toolbar-label text-xs leading-tight font-medium">
+                    So What
+                  </span>
+                </button>
+
+                <%!-- Blind Spots --%>
+                <button
+                  type="button"
+                  class="inline-flex flex-row items-center justify-center gap-1 px-2 py-1 shadow-sm ring-1 ring-inset ring-black/10 bg-purple-500 text-white rounded-md transition-all hover:bg-purple-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed col-span-2"
+                  phx-click="node_blind_spots"
+                  phx-value-id={@node && @node.id}
+                  disabled={is_nil(@graph_id)}
+                  title="What's missing? — Detect blind spots"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <line x1="1" y1="1" x2="23" y2="23" />
+                  </svg>
+                  <span :if={!@icons_only} class="toolbar-label text-xs leading-tight font-medium">
+                    Blind Spots
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <%!-- Cluster 2: Context & Dialectical Expansion --%>
+            <div>
+              <div class="text-[9px] font-medium text-gray-400 uppercase tracking-wider mb-1 px-1">
+                Context & Expansion
+              </div>
+              <div class="grid grid-cols-2 gap-1">
+                <%!-- Says Who --%>
+                <button
+                  type="button"
+                  class="inline-flex flex-row items-center justify-center gap-1 px-2 py-1 shadow-sm ring-1 ring-inset ring-black/10 bg-sky-500 text-white rounded-md transition-all hover:bg-sky-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  phx-click="node_says_who"
+                  phx-value-id={@node && @node.id}
+                  disabled={is_nil(@graph_id)}
+                  title="Says who? — Check sources and authority"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                  <span :if={!@icons_only} class="toolbar-label text-xs leading-tight font-medium">
+                    Source
+                  </span>
+                </button>
+
+                <%!-- Who Disagrees --%>
+                <button
+                  type="button"
+                  class="inline-flex flex-row items-center justify-center gap-1 px-2 py-1 shadow-sm ring-1 ring-inset ring-black/10 bg-rose-500 text-white rounded-md transition-all hover:bg-rose-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  phx-click="node_who_disagrees"
+                  phx-value-id={@node && @node.id}
+                  disabled={is_nil(@graph_id)}
+                  title="Who disagrees? — Map the opposition"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                  </svg>
+                  <span :if={!@icons_only} class="toolbar-label text-xs leading-tight font-medium">
+                    Dissent
+                  </span>
+                </button>
+
+                <%!-- Analogy --%>
+                <button
+                  type="button"
+                  class="inline-flex flex-row items-center justify-center gap-1 px-2 py-1 shadow-sm ring-1 ring-inset ring-black/10 bg-emerald-500 text-white rounded-md transition-all hover:bg-emerald-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  phx-click="node_analogy"
+                  phx-value-id={@node && @node.id}
+                  disabled={is_nil(@graph_id)}
+                  title="What is this like? — Find analogies"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <circle cx="6" cy="6" r="3" />
+                    <circle cx="18" cy="18" r="3" />
+                    <path d="M8.5 8.5l7 7" />
+                  </svg>
+                  <span :if={!@icons_only} class="toolbar-label text-xs leading-tight font-medium">
+                    Analogy
+                  </span>
+                </button>
+
+                <%!-- Steel Man --%>
+                <button
+                  type="button"
+                  class="inline-flex flex-row items-center justify-center gap-1 px-2 py-1 shadow-sm ring-1 ring-inset ring-black/10 bg-yellow-500 text-white rounded-md transition-all hover:bg-yellow-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  phx-click="node_steel_man"
+                  phx-value-id={@node && @node.id}
+                  disabled={is_nil(@graph_id)}
+                  title="Steel man — Strongest version of the argument"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                  </svg>
+                  <span :if={!@icons_only} class="toolbar-label text-xs leading-tight font-medium">
+                    Steel Man
+                  </span>
+                </button>
+
+                <%!-- What If --%>
+                <button
+                  type="button"
+                  class="inline-flex flex-row items-center justify-center gap-1 px-2 py-1 shadow-sm ring-1 ring-inset ring-black/10 bg-fuchsia-500 text-white rounded-md transition-all hover:bg-fuchsia-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed col-span-2"
+                  phx-click="node_what_if"
+                  phx-value-id={@node && @node.id}
+                  disabled={is_nil(@graph_id)}
+                  title="What if we change X? — Explore counterfactuals"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" />
+                  </svg>
+                  <span :if={!@icons_only} class="toolbar-label text-xs leading-tight font-medium">
+                    What If?
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <%!-- Cluster 3: Clarity & Communication --%>
+            <div>
+              <div class="text-[9px] font-medium text-gray-400 uppercase tracking-wider mb-1 px-1">
+                Clarity
+              </div>
+              <div class="grid grid-cols-1 gap-1">
+                <%!-- Simplify --%>
+                <button
+                  type="button"
+                  class="inline-flex flex-row items-center justify-center gap-1 px-2 py-1 shadow-sm ring-1 ring-inset ring-black/10 bg-orange-400 text-white rounded-md transition-all hover:bg-orange-500 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  phx-click="node_simplify"
+                  phx-value-id={@node && @node.id}
+                  disabled={is_nil(@graph_id)}
+                  title="Simplify — Make accessible to all"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                  </svg>
+                  <span :if={!@icons_only} class="toolbar-label text-xs leading-tight font-medium">
+                    Simplify
+                  </span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
