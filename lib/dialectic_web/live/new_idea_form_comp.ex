@@ -47,7 +47,7 @@ defmodule DialecticWeb.NewIdeaFormComp do
         <input type="hidden" name="mode" value={@selected_mode} />
 
         <%!-- Desktop: pill-style input with inline button. Mobile: stacked layout --%>
-        <div class="flex flex-col gap-3">
+        <div class="flex flex-col gap-2">
           <%!-- Input row — on sm+ the button sits inside; on mobile textarea is full-width --%>
           <div class="relative">
             <textarea
@@ -60,12 +60,12 @@ defmodule DialecticWeb.NewIdeaFormComp do
               rows="1"
               class={[
                 "box-border w-full overflow-hidden text-black rounded-2xl sm:rounded-full",
-                "border border-gray-300 shadow-sm",
-                "focus:border-indigo-500 focus:ring-0 focus:outline-none resize-none",
+                "border border-slate-300 shadow-sm",
+                "focus:border-slate-500 focus:ring-2 focus:ring-slate-200 focus:outline-none resize-none",
                 "text-base sm:text-lg",
                 "px-4 sm:pl-6 sm:pr-32",
-                "py-3 sm:py-2.5",
-                "h-[3rem] min-h-[3rem] sm:h-[3.5rem] sm:min-h-[3.5rem]"
+                "py-2.5 sm:py-2.5",
+                "h-[2.7rem] min-h-[2.7rem] sm:h-[3rem] sm:min-h-[3rem]"
               ]}
               autocomplete="off"
               required
@@ -75,7 +75,7 @@ defmodule DialecticWeb.NewIdeaFormComp do
               <button
                 type="submit"
                 phx-disable-with="Starting..."
-                class="inline-flex items-center justify-center px-6 py-2 border border-transparent text-base font-medium rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="inline-flex items-center justify-center px-5 py-1.5 border border-transparent text-sm font-semibold rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {@submit_label}
               </button>
@@ -96,12 +96,12 @@ defmodule DialecticWeb.NewIdeaFormComp do
         </div>
 
         <%!-- Level selector — scrollable on mobile, centered on desktop --%>
-        <div class="mt-4 flex flex-col items-center gap-2 animate-fade-in-up">
-          <span class="text-xs font-semibold text-indigo-200/80 uppercase tracking-wide">
+        <div class="mt-2.5 flex flex-col items-center gap-1.5 animate-fade-in-up">
+          <span class="text-xs font-semibold text-slate-600 uppercase tracking-wide">
             Level
           </span>
           <div class="w-full sm:w-auto">
-            <div class="flex sm:inline-flex rounded-lg bg-white/10 p-1 border border-white/5 backdrop-blur-sm w-full sm:w-auto mx-auto">
+            <div class="mx-auto flex w-full rounded-lg border border-slate-200 bg-slate-100 p-1 shadow-inner sm:inline-flex sm:w-auto">
               <%= for {mode, label} <- [{"simple", "Simple"}, {"high_school", "High School"}, {"university", "University"}, {"expert", "Expert"}] do %>
                 <button
                   type="button"
@@ -109,11 +109,11 @@ defmodule DialecticWeb.NewIdeaFormComp do
                   phx-value-mode={mode}
                   phx-target={@myself}
                   class={[
-                    "flex-1 sm:flex-initial px-3 py-2 sm:px-3 sm:py-1.5 text-xs sm:text-xs font-medium rounded-md transition-all duration-200 text-center",
+                    "flex-1 sm:flex-initial rounded-md px-2.5 py-1.5 text-center text-xs font-medium transition-colors duration-150 sm:px-2.5 sm:py-1 sm:text-xs",
                     if @selected_mode == mode do
-                      "bg-white text-[#3a0ca3] shadow-sm scale-105"
+                      "border border-slate-300 bg-white text-slate-900 shadow-sm"
                     else
-                      "text-white/70 hover:text-white hover:bg-white/5 active:bg-white/10"
+                      "text-slate-600 hover:bg-white hover:text-slate-900 active:bg-white"
                     end
                   ]}
                 >

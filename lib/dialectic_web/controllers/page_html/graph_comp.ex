@@ -3,6 +3,7 @@ defmodule DialecticWeb.PageHtml.GraphComp do
 
   def render(assigns) do
     assigns = assign(assigns, :variant, assigns[:variant] || :glass)
+    assigns = assign(assigns, :compact, assigns[:compact] || false)
 
     ~H"""
     <div class={[
@@ -13,7 +14,11 @@ defmodule DialecticWeb.PageHtml.GraphComp do
         <span class="sr-only">View {@title}</span>
       </.link>
 
-      <div class="px-3 py-3 flex flex-col h-full pointer-events-none relative z-10">
+      <div class={[
+        "flex flex-col h-full pointer-events-none relative z-10",
+        @compact && "px-2.5 py-2.5",
+        !@compact && "px-3 py-3"
+      ]}>
         <h3 class={[
           "font-semibold text-sm leading-snug line-clamp-2",
           title_class(@variant)
@@ -23,7 +28,10 @@ defmodule DialecticWeb.PageHtml.GraphComp do
 
         <%= if author_name = assigns[:author_name] do %>
           <p class={[
-            "mt-2 inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset",
+            @compact &&
+              "mt-1.5 inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ring-inset",
+            !@compact &&
+              "mt-2 inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset",
             author_class(@variant)
           ]}>
             <.icon name="hero-user-circle" class="w-3.5 h-3.5" />
@@ -31,7 +39,10 @@ defmodule DialecticWeb.PageHtml.GraphComp do
           </p>
         <% end %>
 
-        <div class="mt-2 flex flex-wrap gap-1.5">
+        <div class={[
+          @compact && "mt-1.5 flex flex-wrap gap-1",
+          !@compact && "mt-2 flex flex-wrap gap-1.5"
+        ]}>
           <%= if assigns[:node_count] do %>
             <%= if @node_count < 5 do %>
               <span class={[
@@ -78,7 +89,8 @@ defmodule DialecticWeb.PageHtml.GraphComp do
 
         <%= if is_nil(assigns[:tags]) or @tags == [] do %>
           <div class={[
-            "mt-auto pt-2 flex justify-end pointer-events-auto",
+            @compact && "mt-auto pt-1.5 flex justify-end pointer-events-auto",
+            !@compact && "mt-auto pt-2 flex justify-end pointer-events-auto",
             footer_border_class(@variant)
           ]}>
             <%= if assigns[:generating] do %>

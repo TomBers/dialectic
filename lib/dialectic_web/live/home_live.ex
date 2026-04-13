@@ -238,8 +238,8 @@ defmodule DialecticWeb.HomeLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="min-h-[calc(100vh-4rem)] w-screen bg-slate-950 text-white">
-      <div class="relative min-h-[calc(100vh-4rem)] w-screen overflow-hidden">
+    <div class="w-screen bg-slate-100 font-sans text-slate-900 antialiased">
+      <div class="relative w-screen overflow-hidden bg-gradient-to-b from-slate-100 via-white to-slate-100">
         <%= if @loading_graph do %>
           <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm">
             <div class="max-w-md w-full p-8 bg-white/10 border border-white/20 rounded-2xl shadow-2xl backdrop-blur-md">
@@ -268,48 +268,44 @@ defmodule DialecticWeb.HomeLive do
           </div>
         <% end %>
         
-    <!-- Background Video with Overlay (full-bleed) -->
+    <!-- Static decorative background -->
         <div class="absolute inset-0 z-0">
-          <video
-            autoplay
-            muted
-            playsinline
-            preload="none"
-            class="absolute inset-0 h-full w-full object-cover opacity-40"
-            aria-hidden="true"
-          >
-            <source src={~p"/images/FractalBranchingTree.mp4"} type="video/mp4" />
-          </video>
-          <div class="absolute inset-0 bg-gradient-to-r from-[#3a0ca3]/90 to-[#4361ee]/90 mix-blend-multiply">
+          <div class="pointer-events-none absolute -top-32 -right-24 h-80 w-80 rounded-full bg-sky-100/50 blur-3xl">
+          </div>
+          <div class="pointer-events-none absolute -top-20 -left-24 h-72 w-72 rounded-full bg-slate-300/35 blur-3xl">
           </div>
         </div>
         
     <!-- Make the hero content scroll within the viewport naturally -->
-        <div class="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 pt-8 sm:pt-14 pb-6 sm:pb-10 min-h-[calc(100vh-4rem)]">
-          <div class="flex flex-col gap-6 sm:gap-8 items-stretch">
+        <div class="relative z-10 mx-auto max-w-6xl px-4 pb-4 pt-4 sm:px-6 sm:pb-5 sm:pt-5">
+          <div class="flex flex-col items-stretch gap-2.5 sm:gap-3">
             <section class="w-full" id="start-here">
-              <div class="mx-auto w-full max-w-4xl">
-                <div class="flex flex-col items-center text-center gap-5 sm:gap-6">
-                  <div class="space-y-2 sm:space-y-3 max-w-3xl">
-                    <p class="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs sm:text-sm font-medium text-indigo-100">
-                      <.icon name="hero-arrow-trending-up" class="w-4 h-4" />
-                      Explore -> Recall/Revise -> Share
+              <div class="w-full">
+                <div class="flex flex-col items-center gap-2 sm:gap-2.5">
+                  <div class="w-full space-y-1.5 rounded-3xl bg-gradient-to-br from-[#3a0ca3] to-[#4361ee] px-4 py-3.5 text-center text-white shadow-xl sm:px-6 sm:py-4">
+                    <p class="text-xs font-medium uppercase tracking-[0.2em] text-white/75 sm:text-sm">
+                      Explore -> Recall -> Share
                     </p>
-                    <h1 class="text-3xl font-bold tracking-tight text-white sm:text-5xl">
-                      RationalGrid
+                    <h1 class="flex items-center justify-center gap-2.5 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+                      <img
+                        src={~p"/images/favicon.webp"}
+                        alt=""
+                        aria-hidden="true"
+                        class="h-9 w-9 rounded-xl shadow-lg sm:h-11 sm:w-11"
+                      />
+                      <span>RationalGrid</span>
                     </h1>
-                    <div class="space-y-1 sm:space-y-2 px-2 sm:px-0">
-                      <p class="text-base sm:text-xl font-medium text-indigo-100">
-                        Explore ideas, structure arguments, and build understanding with our AI-powered visualisation.
+                    <div class="mx-auto max-w-2xl space-y-1 sm:space-y-1.5">
+                      <p class="text-base font-semibold leading-snug text-white sm:text-xl">
+                        Explore ideas, structure arguments, and build understanding with AI-powered visual maps.
                       </p>
-                      <p class="text-sm sm:text-lg font-medium text-indigo-100/95">
-                        Pose a question or idea below and see where your grid takes you.
-                        <span class="text-indigo-200/90"> Save and share as you wish.</span>
+                      <p class="text-sm leading-relaxed text-white/90">
+                        Start with a question and expand into connected concepts you can revisit, recall, and share.
                       </p>
                     </div>
                   </div>
 
-                  <div class="w-full bg-white/10 backdrop-blur-md rounded-2xl shadow-xl border border-white/15 p-4 sm:p-6">
+                  <div class="w-full rounded-2xl border border-slate-200 bg-white p-2 shadow-lg sm:p-2.5">
                     <.live_component
                       module={DialecticWeb.NewIdeaFormComp}
                       id="new-idea-form"
@@ -317,31 +313,31 @@ defmodule DialecticWeb.HomeLive do
                     />
                   </div>
 
-                  <div class="grid w-full grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 text-sm font-semibold px-1 sm:px-0">
+                  <div class="grid w-full grid-cols-1 gap-1.5 px-1 text-sm font-semibold sm:grid-cols-3 sm:px-0">
                     <.link
                       navigate={~p"/inspiration"}
                       class={[
-                        "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3",
-                        "bg-white text-[#3a0ca3] shadow-lg ring-1 ring-white/30",
-                        "hover:bg-white/95 hover:shadow-xl transition",
-                        "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                        "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2",
+                        "border border-slate-300 bg-white text-slate-800 shadow-sm",
+                        "hover:bg-slate-50 hover:shadow-md transition",
+                        "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
                       ]}
                     >
-                      <.icon name="hero-sparkles" class="w-5 h-5" /> Get a prompt
+                      <.icon name="hero-sparkles" class="w-5 h-5" /> Get inspiration
                     </.link>
                     <a
                       href="#explore"
-                      class="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 bg-white/10 text-white shadow-lg ring-1 ring-white/25 backdrop-blur-md hover:bg-white/15 hover:shadow-xl transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                      class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-slate-800 shadow-sm hover:bg-slate-50 hover:shadow-md transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
                     >
                       <.icon name="hero-magnifying-glass" class="w-5 h-5" /> Browse ideas
                     </a>
                     <.link
                       navigate={~p"/about"}
                       class={[
-                        "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3",
-                        "bg-white/10 text-white shadow-lg ring-1 ring-white/25 backdrop-blur-md",
-                        "hover:bg-white/15 hover:shadow-xl transition",
-                        "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                        "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2",
+                        "border border-slate-300 bg-white text-slate-800 shadow-sm",
+                        "hover:bg-slate-50 hover:shadow-md transition",
+                        "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
                       ]}
                     >
                       <.icon name="hero-information-circle" class="w-5 h-5" /> Why this exists
@@ -350,14 +346,14 @@ defmodule DialecticWeb.HomeLive do
 
                   <%= if @quick_tags != [] do %>
                     <div class="w-full">
-                      <p class="text-xs uppercase tracking-[0.2em] text-indigo-100/80 mb-2">
+                      <p class="mb-2 text-xs uppercase tracking-[0.2em] text-slate-500">
                         Popular topics right now
                       </p>
                       <div class="flex flex-wrap justify-center gap-2">
                         <%= for {tag, _count} <- @quick_tags do %>
                           <a
                             href={~p"/?#{[tag: tag]}" <> "#explore"}
-                            class="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs sm:text-sm text-white hover:bg-white/20 transition"
+                            class="inline-flex items-center rounded-full border border-slate-300 bg-white px-3 py-1 text-xs text-slate-700 shadow-sm transition hover:bg-slate-50 sm:text-sm"
                           >
                             #{tag}
                           </a>
@@ -366,39 +362,54 @@ defmodule DialecticWeb.HomeLive do
                     </div>
                   <% end %>
 
-                  <div class="grid w-full grid-cols-1 lg:grid-cols-3 gap-3 text-left">
+                  <div class="grid w-full grid-cols-1 gap-1 text-left lg:grid-cols-3">
                     <.link
                       navigate={~p"/inspiration"}
-                      class="rounded-xl border border-white/20 bg-white/10 p-4 hover:bg-white/15 transition"
+                      class="rounded-2xl bg-slate-50 p-2.5 ring-1 ring-slate-200 transition hover:bg-white hover:shadow-md"
                     >
-                      <div class="flex items-center gap-2 text-indigo-100 font-semibold">
-                        <.icon name="hero-light-bulb" class="w-5 h-5" /> Stage 1: Explore
+                      <div class="mb-1 flex items-center gap-2">
+                        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700">
+                          <.icon name="hero-light-bulb" class="w-4 h-4" />
+                        </div>
+                        <div class="font-bold text-slate-900">
+                          Stage 1: Explore
+                        </div>
                       </div>
-                      <p class="mt-2 text-sm text-indigo-100/85">
+                      <p class="mt-1 text-xs leading-relaxed text-slate-700 sm:text-sm">
                         Generate a starter prompt, branch into subtopics, and reveal related ideas and arguments.
                       </p>
                     </.link>
 
                     <a
                       href="/intro/how#interface-highlight"
-                      class="rounded-xl border border-white/20 bg-white/10 p-4 hover:bg-white/15 transition"
+                      class="rounded-2xl bg-slate-50 p-2.5 ring-1 ring-slate-200 transition hover:bg-white hover:shadow-md"
                     >
-                      <div class="flex items-center gap-2 text-indigo-100 font-semibold">
-                        <.icon name="hero-star" class="w-5 h-5" /> Stage 2: Recall &amp; Revise
+                      <div class="mb-1 flex items-center gap-2">
+                        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-100 text-sky-700">
+                          <.icon name="hero-star" class="w-4 h-4" />
+                        </div>
+                        <div class="font-bold text-slate-900">
+                          Stage 2: Recall
+                        </div>
                       </div>
-                      <p class="mt-2 text-sm text-indigo-100/85">
-                        Star key nodes and save highlights so important concepts are easy to review later.
+                      <p class="mt-1 text-xs leading-relaxed text-slate-700 sm:text-sm">
+                        Star key nodes and save highlights so important concepts are easy to revisit and recall later.
                       </p>
                     </a>
 
                     <.link
                       navigate={~p"/about"}
-                      class="rounded-xl border border-white/20 bg-white/10 p-4 hover:bg-white/15 transition"
+                      class="rounded-2xl bg-slate-50 p-2.5 ring-1 ring-slate-200 transition hover:bg-white hover:shadow-md"
                     >
-                      <div class="flex items-center gap-2 text-indigo-100 font-semibold">
-                        <.icon name="hero-users" class="w-5 h-5" /> Learn with others
+                      <div class="mb-1 flex items-center gap-2">
+                        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
+                          <.icon name="hero-users" class="w-4 h-4" />
+                        </div>
+                        <div class="font-bold text-slate-900">
+                          Learn with others
+                        </div>
                       </div>
-                      <p class="mt-2 text-sm text-indigo-100/85">
+                      <p class="mt-1 text-xs leading-relaxed text-slate-700 sm:text-sm">
                         Share one grid link so people can explore, annotate, and build understanding together.
                       </p>
                     </.link>
@@ -409,13 +420,16 @@ defmodule DialecticWeb.HomeLive do
 
             <%!-- Curated & Featured Grids – 2-column on desktop --%>
             <%= if @curated_grids != [] or @featured_grids != [] do %>
-              <section class="w-full" id="curated">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
+              <section
+                class="w-full rounded-3xl bg-slate-50/90 p-2.5 ring-1 ring-slate-200 sm:p-3"
+                id="curated"
+              >
+                <div class="grid w-full grid-cols-1 gap-2.5 lg:grid-cols-2">
                   <%= if @curated_grids != [] do %>
                     <.curated_grid_section
                       items={@curated_grids}
                       icon="hero-star"
-                      icon_class="text-amber-300"
+                      icon_class="text-amber-500"
                       title="Curated Grids"
                       description="Hand-picked grids showcasing great thinking and exploration."
                       id_prefix="curated"
@@ -425,7 +439,7 @@ defmodule DialecticWeb.HomeLive do
                     <.curated_grid_section
                       items={@featured_grids}
                       icon="hero-users"
-                      icon_class="text-indigo-300"
+                      icon_class="text-indigo-500"
                       title="Featured by Partners"
                       description="Grids curated by our invited partners and thought leaders."
                       id_prefix="featured"
@@ -436,11 +450,14 @@ defmodule DialecticWeb.HomeLive do
             <% end %>
             
     <!-- Below: All ideas (full-width on desktop, uses available space) -->
-            <section class="w-full" id="explore">
-              <div class="rounded-2xl border border-white/15 bg-white/10 backdrop-blur-md shadow-xl">
-                <div class="p-4 sm:p-6">
-                  <div class="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <h2 class="text-lg sm:text-2xl font-semibold tracking-tight text-white">
+            <section
+              class="w-full rounded-3xl bg-white/90 p-2.5 ring-1 ring-slate-200 sm:p-3"
+              id="explore"
+            >
+              <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+                <div class="p-2 sm:p-2.5">
+                  <div class="flex flex-col gap-2 sm:gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <h2 class="text-lg sm:text-2xl font-semibold tracking-tight text-slate-900">
                       <%= cond do %>
                         <% @active_tag -> %>
                           Ideas tagged with "{@active_tag}"
@@ -455,7 +472,7 @@ defmodule DialecticWeb.HomeLive do
                       <% end %>
                     </h2>
 
-                    <div class="w-full sm:w-80">
+                    <div class="w-full sm:w-72">
                       <form
                         phx-change="search"
                         phx-submit="search"
@@ -468,7 +485,7 @@ defmodule DialecticWeb.HomeLive do
                           value={@search_term}
                           phx-debounce="300"
                           placeholder="Search ideas..."
-                          class="w-full px-4 py-2.5 sm:py-2 rounded-l-md border border-white/15 bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-white/30 text-base"
+                          class="w-full rounded-l-md border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 sm:py-2"
                           autocomplete="off"
                         />
                         <%= if @search_term && @search_term != "" do %>
@@ -476,14 +493,14 @@ defmodule DialecticWeb.HomeLive do
                             type="button"
                             phx-click="search"
                             phx-value-search=""
-                            class="absolute right-12 top-0 bottom-0 flex items-center pr-3 text-white/70 hover:text-white transition-colors"
+                            class="absolute right-12 top-0 bottom-0 flex items-center pr-3 text-slate-500 transition-colors hover:text-slate-700"
                           >
                             <.icon name="hero-x-mark" class="h-5 w-5" />
                           </button>
                         <% end %>
                         <button
                           type="button"
-                          class="bg-white/20 text-white px-4 py-2 rounded-r-md hover:bg-white/25 transition border border-white/15 border-l-0"
+                          class="rounded-r-md border border-l-0 border-slate-300 bg-slate-100 px-4 py-2 text-slate-700 transition hover:bg-slate-200"
                         >
                           <.icon name="hero-magnifying-glass" class="h-5 w-5" />
                         </button>
@@ -491,15 +508,15 @@ defmodule DialecticWeb.HomeLive do
                     </div>
                   </div>
 
-                  <div class="mt-4 sm:mt-5 space-y-3 sm:space-y-4">
+                  <div class="mt-1.5 space-y-1.5 sm:mt-2 sm:space-y-2">
                     <div class="flex flex-wrap gap-1.5 sm:gap-2">
                       <.link
                         patch={~p"/"}
                         class={[
                           "px-4 py-2 sm:px-3 sm:py-1.5 rounded-full text-sm font-medium transition-colors",
                           (!@active_category && !@active_tag && @search_term == "" &&
-                             "bg-white text-[#3a0ca3]") ||
-                            "bg-white/10 text-white hover:bg-white/15 border border-white/10"
+                             "bg-slate-900 text-white") ||
+                            "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
                         ]}
                       >
                         All
@@ -508,8 +525,8 @@ defmodule DialecticWeb.HomeLive do
                         patch={~p"/?category=deep_dives"}
                         class={[
                           "px-4 py-2 sm:px-3 sm:py-1.5 rounded-full text-sm font-medium transition-colors",
-                          (@active_category == "deep_dives" && "bg-white text-[#3a0ca3]") ||
-                            "bg-white/10 text-white hover:bg-white/15 border border-white/10"
+                          (@active_category == "deep_dives" && "bg-slate-900 text-white") ||
+                            "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
                         ]}
                       >
                         Deep Dives
@@ -518,8 +535,8 @@ defmodule DialecticWeb.HomeLive do
                         patch={~p"/?category=seedlings"}
                         class={[
                           "px-4 py-2 sm:px-3 sm:py-1.5 rounded-full text-sm font-medium transition-colors",
-                          (@active_category == "seedlings" && "bg-white text-[#3a0ca3]") ||
-                            "bg-white/10 text-white hover:bg-white/15 border border-white/10"
+                          (@active_category == "seedlings" && "bg-slate-900 text-white") ||
+                            "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
                         ]}
                       >
                         Seedlings
@@ -528,7 +545,7 @@ defmodule DialecticWeb.HomeLive do
 
                     <%= if @popular_tags != [] do %>
                       <div class="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-2">
-                        <span class="text-sm text-white/70 sm:mr-2 flex-shrink-0">
+                        <span class="text-sm text-slate-600 sm:mr-2 flex-shrink-0">
                           Popular topics:
                         </span>
                         <div class="flex overflow-x-auto scrollbar-hide sm:flex-wrap gap-2 w-full sm:w-auto pb-1 sm:pb-0 -mb-1 sm:mb-0">
@@ -537,11 +554,11 @@ defmodule DialecticWeb.HomeLive do
                               patch={~p"/?tag=#{tag}"}
                               class={[
                                 "text-xs font-medium px-3 py-1.5 sm:px-2.5 sm:py-0.5 rounded border transition-colors whitespace-nowrap flex-shrink-0",
-                                (@active_tag == tag && "bg-white text-[#3a0ca3] border-white") ||
-                                  "bg-white/10 text-white border-white/15 hover:border-white/30 hover:bg-white/15"
+                                (@active_tag == tag && "bg-slate-900 text-white border-slate-900") ||
+                                  "bg-slate-100 text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-200"
                               ]}
                             >
-                              #{tag} <span class="text-white/60 ml-0.5">({count})</span>
+                              #{tag} <span class="ml-0.5 text-slate-500">({count})</span>
                             </.link>
                           <% end %>
                         </div>
@@ -550,87 +567,137 @@ defmodule DialecticWeb.HomeLive do
                   </div>
                 </div>
 
-                <div class="border-t border-white/10">
-                  <div class="p-4 sm:p-6">
-                    <div class="columns-1 sm:columns-2 lg:columns-3 gap-4 sm:gap-6 space-y-4 sm:space-y-6">
-                      <%= for {g, count, author_username} <- @graphs do %>
-                        <div class="break-inside-avoid">
-                          <DialecticWeb.PageHtml.GraphComp.render
-                            title={g.title}
-                            is_public={g.is_public}
-                            link={graph_path(g)}
-                            count={count}
-                            tags={g.tags}
-                            author_name={author_username}
-                            author_label="by"
-                            variant={:home}
-                            node_count={
-                              Enum.count(g.data["nodes"] || [], fn n ->
-                                !Map.get(n, "compound", false)
-                              end)
-                            }
-                            is_live={true}
-                            generating={MapSet.member?(@generating, g.title)}
-                            id={"graph-comp-" <> (g.slug || "t-" <> Integer.to_string(:erlang.phash2(g.title || "")))}
-                          />
-                        </div>
-                      <% end %>
-                    </div>
+                <div class="border-t border-slate-200">
+                  <div class="overflow-x-auto p-2 sm:p-2.5">
+                    <table class="min-w-full border-separate border-spacing-0 text-left text-sm">
+                      <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-600">
+                        <tr>
+                          <th class="px-3 py-2 font-semibold shadow-[inset_0_-1px_0_0_rgb(226_232_240)]">
+                            Idea
+                          </th>
+                          <th class="px-3 py-2 font-semibold shadow-[inset_0_-1px_0_0_rgb(226_232_240)]">
+                            Tags
+                          </th>
+                          <th class="px-3 py-2 text-right font-semibold shadow-[inset_0_-1px_0_0_rgb(226_232_240)]">
+                            Open
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-slate-200">
+                        <%= for {g, _count, author_username} <- @graphs do %>
+                          <tr class="align-top transition-colors hover:bg-slate-50/70">
+                            <td class="px-3 py-2.5">
+                              <.link
+                                navigate={graph_path(g)}
+                                class="line-clamp-2 font-semibold text-slate-900 hover:text-indigo-700"
+                              >
+                                {g.title}
+                              </.link>
+                              <%= if is_binary(author_username) and author_username != "" do %>
+                                <.link
+                                  navigate={~p"/u/#{author_username}"}
+                                  class="mt-1 inline-flex text-xs text-slate-600 hover:text-indigo-700"
+                                >
+                                  by @{author_username}
+                                </.link>
+                              <% else %>
+                                <p class="mt-1 text-xs text-slate-500">by -</p>
+                              <% end %>
+                            </td>
+                            <td class="px-3 py-2.5">
+                              <div class="flex flex-wrap gap-1">
+                                <%= for tag <- Enum.take(g.tags || [], 4) do %>
+                                  <span class="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">
+                                    #{tag}
+                                  </span>
+                                <% end %>
+                              </div>
+                            </td>
+                            <td class="px-3 py-2.5 text-right">
+                              <.link
+                                navigate={graph_path(g)}
+                                class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-sky-500 text-white shadow-sm ring-1 ring-indigo-500/30 transition-transform hover:scale-105 hover:shadow-md"
+                                aria-label={"Open " <> (g.title || "idea")}
+                              >
+                                <.icon name="hero-magnifying-glass" class="h-4 w-4" />
+                                <span class="sr-only">Open</span>
+                              </.link>
+                            </td>
+                          </tr>
+                        <% end %>
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
             </section>
             <%!-- Social Media Links --%>
-            <section class="w-full pb-8">
-              <div class="flex items-center justify-center gap-6">
-                <a
-                  href="https://github.com/TomBers/dialectic"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="text-white/40 hover:text-white/80 transition-colors"
-                  aria-label="GitHub"
-                >
-                  <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path
-                      fill-rule="evenodd"
-                      d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
-                      clip-rule="evenodd"
-                    />
-                  </svg>
-                </a>
-                <a
-                  href="https://x.com/rationalgridai"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="text-white/40 hover:text-white/80 transition-colors"
-                  aria-label="X (Twitter)"
-                >
-                  <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                  </svg>
-                </a>
-                <a
-                  href="https://www.instagram.com/rationalgrid/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="text-white/40 hover:text-white/80 transition-colors"
-                  aria-label="Instagram"
-                >
-                  <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
-                  </svg>
-                </a>
-                <a
-                  href="https://www.linkedin.com/company/rationalgrid-ai/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="text-white/40 hover:text-white/80 transition-colors"
-                  aria-label="LinkedIn"
-                >
-                  <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-                  </svg>
-                </a>
+            <section class="w-full pb-3">
+              <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#3a0ca3] to-[#4361ee] px-5 py-4 text-white shadow-xl sm:px-6 sm:py-5">
+                <div class="pointer-events-none absolute inset-0">
+                  <div class="absolute -top-8 left-10 h-28 w-28 rounded-full bg-white/10 blur-2xl">
+                  </div>
+                  <div class="absolute -bottom-10 right-8 h-32 w-32 rounded-full bg-indigo-300/25 blur-2xl">
+                  </div>
+                </div>
+                <div class="relative flex flex-col items-center gap-2.5">
+                  <img
+                    src={~p"/images/favicon.webp"}
+                    alt="RationalGrid"
+                    class="h-10 w-10 rounded-lg shadow-lg"
+                  />
+                  <p class="text-sm text-white/85">Follow RationalGrid</p>
+                  <div class="flex items-center justify-center gap-6">
+                    <a
+                      href="https://github.com/TomBers/dialectic"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="text-white/70 hover:text-white transition-colors"
+                      aria-label="GitHub"
+                    >
+                      <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                          fill-rule="evenodd"
+                          d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
+                          clip-rule="evenodd"
+                        />
+                      </svg>
+                    </a>
+                    <a
+                      href="https://x.com/rationalgridai"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="text-white/70 hover:text-white transition-colors"
+                      aria-label="X (Twitter)"
+                    >
+                      <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                      </svg>
+                    </a>
+                    <a
+                      href="https://www.instagram.com/rationalgrid/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="text-white/70 hover:text-white transition-colors"
+                      aria-label="Instagram"
+                    >
+                      <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
+                      </svg>
+                    </a>
+                    <a
+                      href="https://www.linkedin.com/company/rationalgrid-ai/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="text-white/70 hover:text-white transition-colors"
+                      aria-label="LinkedIn"
+                    >
+                      <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+                      </svg>
+                    </a>
+                  </div>
+                </div>
               </div>
             </section>
           </div>
@@ -643,18 +710,18 @@ defmodule DialecticWeb.HomeLive do
   defp curated_grid_section(assigns) do
     ~H"""
     <section class="w-full min-w-0">
-      <div class="rounded-2xl border border-white/15 bg-white/10 backdrop-blur-md shadow-xl h-full">
-        <div class="p-4 sm:p-6">
-          <div class="flex items-center gap-3 mb-4">
+      <div class="h-full rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+        <div class="p-2.5 sm:p-3">
+          <div class="mb-2 flex items-center gap-2.5">
             <.icon name={@icon} class={"w-6 h-6 " <> @icon_class} />
-            <h2 class="text-lg sm:text-2xl font-semibold tracking-tight text-white">
+            <h2 class="text-lg font-bold tracking-tight text-slate-900 sm:text-2xl">
               {@title}
             </h2>
           </div>
-          <p class="text-sm text-white/60 mb-5">
+          <p class="mb-2 text-sm text-slate-600">
             {@description}
           </p>
-          <div class="space-y-4 sm:space-y-6">
+          <div class="space-y-2 sm:space-y-3">
             <%= for item <- @items do %>
               <div class="relative">
                 <DialecticWeb.PageHtml.GraphComp.render
@@ -665,7 +732,8 @@ defmodule DialecticWeb.HomeLive do
                   tags={item.graph.tags}
                   author_name={item.author_name}
                   author_label="by"
-                  variant={:home}
+                  variant={:light}
+                  compact={true}
                   node_count={
                     Enum.count(item.graph.data["nodes"] || [], fn n ->
                       !Map.get(n, "compound", false)

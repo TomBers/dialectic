@@ -88,7 +88,7 @@ defmodule DialecticWeb.AboutLive do
           About RationalGrid
         </h1>
         <p class="mx-auto max-w-2xl text-lg sm:text-xl text-white/80 leading-relaxed">
-          RationalGrid is built for two stages of learning: exploration first, then recall and revision with highlights and starred nodes, alone or with others.
+          RationalGrid is built for two stages of learning: exploration first, then recall with highlights and starred nodes, alone or with others.
         </p>
         <div class="mt-10 flex items-center justify-center gap-2 text-white/50 text-sm">
           <.icon name="hero-arrow-down" class="w-5 h-5 animate-bounce" />
@@ -169,7 +169,7 @@ defmodule DialecticWeb.AboutLive do
               <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#4361ee] text-white">
                 <.icon name="hero-academic-cap" class="w-5 h-5" />
               </div>
-              <h3 class="text-xl font-bold text-gray-900">Stage 2: Recall &amp; Revise</h3>
+              <h3 class="text-xl font-bold text-gray-900">Stage 2: Recall</h3>
             </div>
             <p class="text-gray-700 leading-relaxed">
               Convert exploration into durable learning by returning to the same grid over time.
