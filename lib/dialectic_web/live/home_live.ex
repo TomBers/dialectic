@@ -38,7 +38,8 @@ defmodule DialecticWeb.HomeLive do
        ask_question: true,
        graph_id: nil,
        curated_grids: [],
-       featured_grids: []
+       featured_grids: [],
+       quick_tags: []
      )}
   end
 
@@ -53,6 +54,7 @@ defmodule DialecticWeb.HomeLive do
     popular_tags = Graphs.list_popular_tags()
     curated_grids = Graphs.list_curated_grids("curated", 6)
     featured_grids = Graphs.list_curated_grids("featured", 6)
+    quick_tags = Enum.take(popular_tags, 6)
 
     {:noreply,
      assign(socket,
@@ -63,6 +65,7 @@ defmodule DialecticWeb.HomeLive do
        popular_tags: popular_tags,
        curated_grids: curated_grids,
        featured_grids: featured_grids,
+       quick_tags: quick_tags,
        page_title: page_title(search_term, tag, category)
      )}
   end
@@ -283,17 +286,20 @@ defmodule DialecticWeb.HomeLive do
         
     <!-- Make the hero content scroll within the viewport naturally -->
         <div class="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 pt-8 sm:pt-14 pb-6 sm:pb-10 min-h-[calc(100vh-4rem)]">
-          <div class="flex flex-col gap-6 sm:gap-10 items-stretch">
-            <!-- Top: Create new idea (primary action, centered stack with breathing room) -->
-            <section class="w-full">
-              <div class="mx-auto w-full max-w-3xl">
-                <div class="flex flex-col items-center text-center gap-5 sm:gap-7">
-                  <div class="space-y-2 sm:space-y-4">
+          <div class="flex flex-col gap-6 sm:gap-8 items-stretch">
+            <section class="w-full" id="start-here">
+              <div class="mx-auto w-full max-w-4xl">
+                <div class="flex flex-col items-center text-center gap-5 sm:gap-6">
+                  <div class="space-y-2 sm:space-y-3 max-w-3xl">
+                    <p class="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs sm:text-sm font-medium text-indigo-100">
+                      <.icon name="hero-arrow-trending-up" class="w-4 h-4" />
+                      Explore -> Recall/Revise -> Share
+                    </p>
                     <h1 class="text-3xl font-bold tracking-tight text-white sm:text-5xl">
                       RationalGrid
                     </h1>
                     <p class="text-base sm:text-xl font-medium text-indigo-100 px-2 sm:px-0">
-                      A shared AI-powered grid; explore ideas deeply, structure thinking, and sharpen arguments.
+                      Learn in two stages: expand unfamiliar topics by branching the grid, then revisit key ideas with starred nodes and saved highlights.
                     </p>
                   </div>
 
@@ -305,7 +311,7 @@ defmodule DialecticWeb.HomeLive do
                     />
                   </div>
 
-                  <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-2 sm:gap-3 text-sm font-semibold w-full px-1 sm:px-0">
+                  <div class="grid w-full grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 text-sm font-semibold px-1 sm:px-0">
                     <.link
                       navigate={~p"/inspiration"}
                       class={[
@@ -315,11 +321,16 @@ defmodule DialecticWeb.HomeLive do
                         "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                       ]}
                     >
-                      <.icon name="hero-sparkles" class="w-5 h-5" /> Inspire me
+                      <.icon name="hero-sparkles" class="w-5 h-5" /> Get a prompt
                     </.link>
-
+                    <a
+                      href="#explore"
+                      class="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 bg-white/10 text-white shadow-lg ring-1 ring-white/25 backdrop-blur-md hover:bg-white/15 hover:shadow-xl transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                    >
+                      <.icon name="hero-magnifying-glass" class="w-5 h-5" /> Browse ideas
+                    </a>
                     <.link
-                      navigate={~p"/intro/how"}
+                      navigate={~p"/about"}
                       class={[
                         "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3",
                         "bg-white/10 text-white shadow-lg ring-1 ring-white/25 backdrop-blur-md",
@@ -327,41 +338,95 @@ defmodule DialecticWeb.HomeLive do
                         "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                       ]}
                     >
-                      <.icon name="hero-book-open" class="w-5 h-5" /> Read the guide
+                      <.icon name="hero-information-circle" class="w-5 h-5" /> Why this exists
                     </.link>
                   </div>
 
-                  <div class="h-3 sm:h-10" />
+                  <%= if @quick_tags != [] do %>
+                    <div class="w-full">
+                      <p class="text-xs uppercase tracking-[0.2em] text-indigo-100/80 mb-2">
+                        Popular topics right now
+                      </p>
+                      <div class="flex flex-wrap justify-center gap-2">
+                        <%= for {tag, _count} <- @quick_tags do %>
+                          <a
+                            href={~p"/?#{[tag: tag]}" <> "#explore"}
+                            class="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs sm:text-sm text-white hover:bg-white/20 transition"
+                          >
+                            #{tag}
+                          </a>
+                        <% end %>
+                      </div>
+                    </div>
+                  <% end %>
+
+                  <div class="grid w-full grid-cols-1 lg:grid-cols-3 gap-3 text-left">
+                    <.link
+                      navigate={~p"/inspiration"}
+                      class="rounded-xl border border-white/20 bg-white/10 p-4 hover:bg-white/15 transition"
+                    >
+                      <div class="flex items-center gap-2 text-indigo-100 font-semibold">
+                        <.icon name="hero-light-bulb" class="w-5 h-5" /> Stage 1: Explore
+                      </div>
+                      <p class="mt-2 text-sm text-indigo-100/85">
+                        Generate a starter prompt, branch into subtopics, and reveal related ideas and arguments.
+                      </p>
+                    </.link>
+
+                    <a
+                      href="/intro/how#interface-highlight"
+                      class="rounded-xl border border-white/20 bg-white/10 p-4 hover:bg-white/15 transition"
+                    >
+                      <div class="flex items-center gap-2 text-indigo-100 font-semibold">
+                        <.icon name="hero-star" class="w-5 h-5" /> Stage 2: Recall &amp; Revise
+                      </div>
+                      <p class="mt-2 text-sm text-indigo-100/85">
+                        Star key nodes and save highlights so important concepts are easy to review later.
+                      </p>
+                    </a>
+
+                    <.link
+                      navigate={~p"/about"}
+                      class="rounded-xl border border-white/20 bg-white/10 p-4 hover:bg-white/15 transition"
+                    >
+                      <div class="flex items-center gap-2 text-indigo-100 font-semibold">
+                        <.icon name="hero-users" class="w-5 h-5" /> Learn with others
+                      </div>
+                      <p class="mt-2 text-sm text-indigo-100/85">
+                        Share one grid link so people can explore, annotate, and build understanding together.
+                      </p>
+                    </.link>
+                  </div>
                 </div>
               </div>
             </section>
 
             <%!-- Curated & Featured Grids – 2-column on desktop --%>
             <%= if @curated_grids != [] or @featured_grids != [] do %>
-              <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
-                <%= if @curated_grids != [] do %>
-                  <.curated_grid_section
-                    items={@curated_grids}
-                    icon="hero-star"
-                    icon_class="text-amber-300"
-                    title="Curated Grids"
-                    description="Hand-picked grids showcasing great thinking and exploration."
-                    id_prefix="curated"
-                    author_label="by"
-                  />
-                <% end %>
-                <%= if @featured_grids != [] do %>
-                  <.curated_grid_section
-                    items={@featured_grids}
-                    icon="hero-users"
-                    icon_class="text-indigo-300"
-                    title="Featured by Partners"
-                    description="Grids curated by our invited partners and thought leaders."
-                    id_prefix="featured"
-                    author_label="by"
-                  />
-                <% end %>
-              </div>
+              <section class="w-full" id="curated">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
+                  <%= if @curated_grids != [] do %>
+                    <.curated_grid_section
+                      items={@curated_grids}
+                      icon="hero-star"
+                      icon_class="text-amber-300"
+                      title="Curated Grids"
+                      description="Hand-picked grids showcasing great thinking and exploration."
+                      id_prefix="curated"
+                    />
+                  <% end %>
+                  <%= if @featured_grids != [] do %>
+                    <.curated_grid_section
+                      items={@featured_grids}
+                      icon="hero-users"
+                      icon_class="text-indigo-300"
+                      title="Featured by Partners"
+                      description="Grids curated by our invited partners and thought leaders."
+                      id_prefix="featured"
+                    />
+                  <% end %>
+                </div>
+              </section>
             <% end %>
             
     <!-- Below: All ideas (full-width on desktop, uses available space) -->
@@ -407,40 +472,14 @@ defmodule DialecticWeb.HomeLive do
                             phx-value-search=""
                             class="absolute right-12 top-0 bottom-0 flex items-center pr-3 text-white/70 hover:text-white transition-colors"
                           >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              class="h-5 w-5"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12"
-                              />
-                            </svg>
+                            <.icon name="hero-x-mark" class="h-5 w-5" />
                           </button>
                         <% end %>
                         <button
                           type="button"
                           class="bg-white/20 text-white px-4 py-2 rounded-r-md hover:bg-white/25 transition border border-white/15 border-l-0"
                         >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="h-5 w-5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                            />
-                          </svg>
+                          <.icon name="hero-magnifying-glass" class="h-5 w-5" />
                         </button>
                       </form>
                     </div>
@@ -516,6 +555,9 @@ defmodule DialecticWeb.HomeLive do
                             link={graph_path(g)}
                             count={count}
                             tags={g.tags}
+                            author_name={author_username}
+                            author_label="by"
+                            variant={:home}
                             node_count={
                               Enum.count(g.data["nodes"] || [], fn n ->
                                 !Map.get(n, "compound", false)
@@ -525,17 +567,6 @@ defmodule DialecticWeb.HomeLive do
                             generating={MapSet.member?(@generating, g.title)}
                             id={"graph-comp-" <> (g.slug || "t-" <> Integer.to_string(:erlang.phash2(g.title || "")))}
                           />
-                          <%= if author_username do %>
-                            <div class="mt-1 flex items-center gap-1.5 px-1">
-                              <.icon name="hero-user-circle" class="w-3.5 h-3.5 text-white/40" />
-                              <.link
-                                navigate={~p"/u/#{author_username}"}
-                                class="text-xs text-white/50 hover:text-white/80 transition-colors"
-                              >
-                                by {author_username}
-                              </.link>
-                            </div>
-                          <% end %>
                         </div>
                       <% end %>
                     </div>
@@ -626,6 +657,9 @@ defmodule DialecticWeb.HomeLive do
                   link={graph_path(item.graph)}
                   count={0}
                   tags={item.graph.tags}
+                  author_name={item.author_name}
+                  author_label="by"
+                  variant={:home}
                   node_count={
                     Enum.count(item.graph.data["nodes"] || [], fn n ->
                       !Map.get(n, "compound", false)
@@ -635,17 +669,6 @@ defmodule DialecticWeb.HomeLive do
                   generating={false}
                   id={@id_prefix <> "-" <> (item.graph.slug || "t-" <> Integer.to_string(:erlang.phash2(item.graph.title || "")))}
                 />
-                <%= if item.author_name do %>
-                  <div class="mt-1 flex items-center gap-1.5 px-1">
-                    <.icon name="hero-user-circle" class="w-3.5 h-3.5 text-white/40" />
-                    <.link
-                      navigate={~p"/u/#{item.author_name}"}
-                      class="text-xs text-white/50 hover:text-white/80 transition-colors"
-                    >
-                      {if @author_label != "", do: @author_label <> " ", else: ""}{item.author_name}
-                    </.link>
-                  </div>
-                <% end %>
               </div>
             <% end %>
           </div>

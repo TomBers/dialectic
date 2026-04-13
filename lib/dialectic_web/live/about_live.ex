@@ -88,7 +88,7 @@ defmodule DialecticWeb.AboutLive do
           About RationalGrid
         </h1>
         <p class="mx-auto max-w-2xl text-lg sm:text-xl text-white/80 leading-relaxed">
-          Transforming how people explore ideas, engage with arguments, and build shared understanding — one node at a time. Start your own grid now and share it if you want.
+          RationalGrid is built for two stages of learning: exploration first, then recall and revision with highlights and starred nodes, alone or with others.
         </p>
         <div class="mt-10 flex items-center justify-center gap-2 text-white/50 text-sm">
           <.icon name="hero-arrow-down" class="w-5 h-5 animate-bounce" />
@@ -133,7 +133,7 @@ defmodule DialecticWeb.AboutLive do
             What is RationalGrid?
           </h2>
           <p class="text-gray-500 max-w-2xl mx-auto">
-            A new kind of tool for a clearer new kind of thinking.
+            A shared learning workspace for exploration, recall, and revision.
           </p>
         </div>
 
@@ -143,11 +143,25 @@ defmodule DialecticWeb.AboutLive do
               <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#3a0ca3] text-white">
                 <.icon name="hero-globe-alt" class="w-5 h-5" />
               </div>
-              <h3 class="text-xl font-bold text-gray-900">Helping Critical Thinking</h3>
+              <h3 class="text-xl font-bold text-gray-900">Stage 1: Explore</h3>
             </div>
             <p class="text-gray-700 leading-relaxed">
-              We live in an era of unprecedented information access, yet the quality of discourse often feels lacking. Echo chambers and motivated reasoning lead to people talking past each other rather than engaging meaningfully. We built RationalGrid because we believe meaningful exchanges happen when you can explore assumptions at a fundamental level and see how reasonable people can hold conflicting values and opinions.
+              Use the grid when you are new to a topic and need to build understanding quickly.
             </p>
+            <ul class="mt-4 space-y-2 text-sm text-gray-700">
+              <li class="flex items-start gap-2">
+                <.icon name="hero-check-circle" class="w-4 h-4 text-[#3a0ca3] mt-0.5 shrink-0" />
+                Start from one question and branch into connected subtopics.
+              </li>
+              <li class="flex items-start gap-2">
+                <.icon name="hero-check-circle" class="w-4 h-4 text-[#3a0ca3] mt-0.5 shrink-0" />
+                Reveal arguments, counterarguments, and related concepts in context.
+              </li>
+              <li class="flex items-start gap-2">
+                <.icon name="hero-check-circle" class="w-4 h-4 text-[#3a0ca3] mt-0.5 shrink-0" />
+                See the full structure, not a flat chat history.
+              </li>
+            </ul>
           </div>
 
           <div class="rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 p-8 ring-1 ring-blue-100">
@@ -155,13 +169,25 @@ defmodule DialecticWeb.AboutLive do
               <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#4361ee] text-white">
                 <.icon name="hero-academic-cap" class="w-5 h-5" />
               </div>
-              <h3 class="text-xl font-bold text-gray-900">
-                Active Learning, Not Passive Consumption
-              </h3>
+              <h3 class="text-xl font-bold text-gray-900">Stage 2: Recall &amp; Revise</h3>
             </div>
             <p class="text-gray-700 leading-relaxed">
-              Large Language Models provide unprecedented access to knowledge, but traditional AI chat interfaces limit their potential for deep learning. RationalGrid transforms AI interaction into an active, exploratory process where learners branch out in multiple directions, creating a personalized knowledge map that evolves with their curiosity.
+              Convert exploration into durable learning by returning to the same grid over time.
             </p>
+            <ul class="mt-4 space-y-2 text-sm text-gray-700">
+              <li class="flex items-start gap-2">
+                <.icon name="hero-check-circle" class="w-4 h-4 text-[#4361ee] mt-0.5 shrink-0" />
+                Star important nodes you want to remember or revisit.
+              </li>
+              <li class="flex items-start gap-2">
+                <.icon name="hero-check-circle" class="w-4 h-4 text-[#4361ee] mt-0.5 shrink-0" />
+                Save highlights so key passages and context are easy to review.
+              </li>
+              <li class="flex items-start gap-2">
+                <.icon name="hero-check-circle" class="w-4 h-4 text-[#4361ee] mt-0.5 shrink-0" />
+                Share one link and revise collaboratively with classmates, colleagues, or friends.
+              </li>
+            </ul>
           </div>
         </div>
       </div>
@@ -220,7 +246,7 @@ defmodule DialecticWeb.AboutLive do
             </div>
             <h3 class="font-bold text-gray-900 mb-2">Persistent &amp; Searchable</h3>
             <p class="text-sm text-gray-600 leading-relaxed">
-              Every grid you create is saved (unless you delete it) and fully searchable. Build a personal library of explored ideas.
+              Every grid is saved and searchable, so your exploration becomes revision material. Return to starred nodes and highlights whenever you need to reinforce recall.
             </p>
           </div>
 
@@ -296,7 +322,7 @@ defmodule DialecticWeb.AboutLive do
               <h2 class="text-3xl font-bold text-gray-900">For Educators</h2>
             </div>
             <p class="text-gray-700 leading-relaxed mb-6">
-              RationalGrid is a powerful classroom tool. Students can explore complex topics collaboratively, map out arguments visually, and develop critical thinking skills through structured inquiry.
+              RationalGrid is a practical classroom tool. Students can explore complex topics collaboratively, then revisit key branches through highlights and starred nodes to strengthen recall.
             </p>
             <ul class="space-y-3">
               <li class="flex items-start gap-3">
