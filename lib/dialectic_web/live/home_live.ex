@@ -357,7 +357,7 @@ defmodule DialecticWeb.HomeLive do
                   class="w-full rounded-3xl bg-slate-50/90 p-2.5 ring-1 ring-slate-200 sm:p-3"
                   id="curated"
                 >
-                  <div class="grid w-full grid-cols-1 gap-2.5 lg:grid-cols-2">
+                  <div class="grid w-full grid-cols-1 gap-2.5 sm:grid-cols-2">
                     <%= if @curated_grids != [] do %>
                       <.curated_grid_section
                         items={@curated_grids}
@@ -525,25 +525,25 @@ defmodule DialecticWeb.HomeLive do
                   </div>
 
                   <div class="border-t border-slate-200">
-                    <div class="overflow-x-auto p-2 sm:p-2.5">
+                    <div class="overflow-x-auto p-3 sm:p-3.5">
                       <table class="min-w-full border-separate border-spacing-0 text-left text-sm">
                         <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-600">
                           <tr>
-                            <th class="px-3 py-2 font-semibold shadow-[inset_0_-1px_0_0_rgb(226_232_240)]">
+                            <th class="px-4 py-2.5 font-semibold shadow-[inset_0_-1px_0_0_rgb(226_232_240)]">
                               Idea
                             </th>
-                            <th class="px-3 py-2 font-semibold shadow-[inset_0_-1px_0_0_rgb(226_232_240)]">
+                            <th class="px-4 py-2.5 font-semibold shadow-[inset_0_-1px_0_0_rgb(226_232_240)]">
                               Tags
                             </th>
-                            <th class="px-3 py-2 text-right font-semibold shadow-[inset_0_-1px_0_0_rgb(226_232_240)]">
+                            <th class="px-4 py-2.5 text-right font-semibold shadow-[inset_0_-1px_0_0_rgb(226_232_240)]">
                               Open
                             </th>
                           </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-200">
                           <%= for {g, _count, author_username} <- @graphs do %>
-                            <tr class="align-top transition-colors hover:bg-slate-50/70">
-                              <td class="px-3 py-2.5">
+                            <tr class="align-top transition-colors odd:bg-slate-100 even:bg-white hover:bg-indigo-50/80">
+                              <td class="px-4 py-3">
                                 <.link
                                   navigate={graph_path(g)}
                                   class="line-clamp-2 font-semibold text-slate-900 hover:text-indigo-700"
@@ -561,16 +561,19 @@ defmodule DialecticWeb.HomeLive do
                                   <p class="mt-1 text-xs text-slate-500">by -</p>
                                 <% end %>
                               </td>
-                              <td class="px-3 py-2.5">
+                              <td class="px-4 py-3">
                                 <div class="flex flex-wrap gap-1">
                                   <%= for tag <- Enum.take(g.tags || [], 4) do %>
-                                    <span class="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">
+                                    <span class={[
+                                      "inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset",
+                                      table_tag_color_class(tag)
+                                    ]}>
                                       #{tag}
                                     </span>
                                   <% end %>
                                 </div>
                               </td>
-                              <td class="px-3 py-2.5 text-right">
+                              <td class="px-4 py-3 text-right">
                                 <.link
                                   navigate={graph_path(g)}
                                   class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-sky-500 text-white shadow-sm ring-1 ring-indigo-500/30 transition-transform hover:scale-105 hover:shadow-md"
@@ -727,6 +730,29 @@ defmodule DialecticWeb.HomeLive do
       true ->
         Dialectic.DbActions.Graphs.all_graphs_with_notes(search_term, limit: limit)
     end
+  end
+
+  defp table_tag_color_class(tag) do
+    colors = [
+      "bg-rose-50 text-rose-700 ring-rose-600/20",
+      "bg-orange-50 text-orange-700 ring-orange-600/20",
+      "bg-amber-50 text-amber-700 ring-amber-600/20",
+      "bg-lime-50 text-lime-700 ring-lime-600/20",
+      "bg-green-50 text-green-700 ring-green-600/20",
+      "bg-emerald-50 text-emerald-700 ring-emerald-600/20",
+      "bg-teal-50 text-teal-700 ring-teal-600/20",
+      "bg-cyan-50 text-cyan-700 ring-cyan-600/20",
+      "bg-sky-50 text-sky-700 ring-sky-600/20",
+      "bg-blue-50 text-blue-700 ring-blue-600/20",
+      "bg-indigo-50 text-indigo-700 ring-indigo-600/20",
+      "bg-violet-50 text-violet-700 ring-violet-600/20",
+      "bg-purple-50 text-purple-700 ring-purple-600/20",
+      "bg-fuchsia-50 text-fuchsia-700 ring-fuchsia-600/20",
+      "bg-pink-50 text-pink-700 ring-pink-600/20"
+    ]
+
+    idx = :erlang.phash2(tag, length(colors))
+    Enum.at(colors, idx)
   end
 
   defp page_title(search, tag, category) do
