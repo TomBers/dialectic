@@ -298,9 +298,15 @@ defmodule DialecticWeb.HomeLive do
                     <h1 class="text-3xl font-bold tracking-tight text-white sm:text-5xl">
                       RationalGrid
                     </h1>
-                    <p class="text-base sm:text-xl font-medium text-indigo-100 px-2 sm:px-0">
-                      Learn in two stages: expand unfamiliar topics by branching the grid, then revisit key ideas with starred nodes and saved highlights.
-                    </p>
+                    <div class="space-y-1 sm:space-y-2 px-2 sm:px-0">
+                      <p class="text-base sm:text-xl font-medium text-indigo-100">
+                        Explore ideas, structure arguments, and build understanding with our AI-powered visualisation.
+                      </p>
+                      <p class="text-sm sm:text-lg font-medium text-indigo-100/95">
+                        Pose a question or idea below and see where your grid takes you.
+                        <span class="text-indigo-200/90"> Save and share as you wish.</span>
+                      </p>
+                    </div>
                   </div>
 
                   <div class="w-full bg-white/10 backdrop-blur-md rounded-2xl shadow-xl border border-white/15 p-4 sm:p-6">
