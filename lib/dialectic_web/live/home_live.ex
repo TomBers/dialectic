@@ -382,22 +382,22 @@ defmodule DialecticWeb.HomeLive do
                 </section>
               <% end %>
 
-              <section class="w-full rounded-3xl bg-slate-50/90 p-2.5 ring-1 ring-slate-200 sm:p-3">
-                <div class="rounded-2xl bg-white px-3 py-2.5 shadow-sm ring-1 ring-slate-200 sm:px-4">
+              <section class="w-full rounded-3xl bg-gradient-to-r from-indigo-50/90 via-sky-50/80 to-white p-2.5 shadow-md ring-1 ring-indigo-200 sm:p-3">
+                <div class="rounded-2xl bg-white/95 px-3 py-2.5 shadow-sm ring-1 ring-indigo-200/80 sm:px-4">
                   <div class="flex flex-col gap-2 text-sm text-slate-700 sm:flex-row sm:items-center sm:justify-between">
-                    <p>
-                      Explore a topic by expanding connections, then star and revisit key nodes to support recall.
+                    <p class="font-medium text-slate-800">
+                      Start broad: explore and connect ideas. Then star key nodes to revisit for recall and revision.
                     </p>
-                    <div class="flex items-center gap-3">
+                    <div class="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:gap-3">
                       <a
                         href="/intro/how#interface-highlight"
-                        class="inline-flex items-center gap-1 font-semibold text-indigo-700 hover:text-indigo-800"
+                        class="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-indigo-100 px-3 py-1 font-semibold text-indigo-800 ring-1 ring-indigo-200 transition hover:bg-indigo-200"
                       >
                         <.icon name="hero-book-open" class="h-4 w-4" /> Guide
                       </a>
                       <.link
                         navigate={~p"/about"}
-                        class="inline-flex items-center gap-1 font-semibold text-slate-700 hover:text-slate-900"
+                        class="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-800 ring-1 ring-slate-200 transition hover:bg-slate-200"
                       >
                         <.icon name="hero-information-circle" class="h-4 w-4" /> Why this exists
                       </.link>
