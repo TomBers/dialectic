@@ -495,62 +495,83 @@ defmodule DialecticWeb.AboutLive do
           </p>
         </div>
 
-        <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          <%!-- Tom Berman --%>
-          <div class="text-center group">
-            <div class="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full shadow-lg group-hover:shadow-xl transition">
-              <img src={~p"/images/tom.webp"} alt="Tom Berman" class="h-full w-full object-cover" />
+        <div class="space-y-8">
+          <div class="grid gap-8 sm:grid-cols-3">
+            <%!-- Tom Berman --%>
+            <div class="text-center group">
+              <div class="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full shadow-lg group-hover:shadow-xl transition">
+                <img src={~p"/images/tom.webp"} alt="Tom Berman" class="h-full w-full object-cover" />
+              </div>
+              <h3 class="font-bold text-gray-900">Tom Berman</h3>
+              <p class="text-sm text-gray-500 mb-3">Founder &amp; Developer</p>
+              <div class="flex items-center justify-center gap-3">
+                <.link
+                  href="https://github.com/TomBers"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Tom Berman GitHub profile (opens in a new tab)"
+                  class="text-gray-400 hover:text-gray-700 transition"
+                >
+                  <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path
+                      fill-rule="evenodd"
+                      d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                </.link>
+              </div>
             </div>
-            <h3 class="font-bold text-gray-900">Tom Berman</h3>
-            <p class="text-sm text-gray-500 mb-3">Founder &amp; Developer</p>
-            <div class="flex items-center justify-center gap-3">
-              <.link
-                href="https://github.com/TomBers"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Tom Berman GitHub profile (opens in a new tab)"
-                class="text-gray-400 hover:text-gray-700 transition"
-              >
-                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path
-                    fill-rule="evenodd"
-                    d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
-              </.link>
+
+            <%!-- Martin Loat --%>
+            <div class="text-center group">
+              <div class="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full shadow-lg group-hover:shadow-xl transition">
+                <img
+                  src={~p"/images/martin.webp"}
+                  alt="Martin Loat"
+                  class="h-full w-full object-cover"
+                />
+              </div>
+              <h3 class="font-bold text-gray-900">Martin Loat</h3>
+              <p class="text-sm text-gray-500">Partnerships Director</p>
+            </div>
+
+            <%!-- Maya Darmon --%>
+            <div class="text-center group">
+              <div class="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full shadow-lg group-hover:shadow-xl transition">
+                <img src={~p"/images/maya.webp"} alt="Maya Darmon" class="h-full w-full object-cover" />
+              </div>
+              <h3 class="font-bold text-gray-900">Maya Darmon</h3>
+              <p class="text-sm text-gray-500">Idea Curator</p>
             </div>
           </div>
 
-          <%!-- Martin Loat --%>
-          <div class="text-center group">
-            <div class="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full shadow-lg group-hover:shadow-xl transition">
-              <img src={~p"/images/martin.webp"} alt="Martin Loat" class="h-full w-full object-cover" />
+          <div class="grid gap-8 sm:grid-cols-2 sm:max-w-xl sm:mx-auto">
+            <%!-- Peter Worley - Advisor --%>
+            <div class="text-center group">
+              <div class="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full shadow-lg group-hover:shadow-xl transition">
+                <img
+                  src={~p"/images/pete.webp"}
+                  alt="Peter Worley"
+                  class="h-full w-full object-cover"
+                />
+              </div>
+              <h3 class="font-bold text-gray-900">Peter Worley</h3>
+              <p class="text-sm text-gray-500">Advisor</p>
             </div>
-            <h3 class="font-bold text-gray-900">Martin Loat</h3>
-            <p class="text-sm text-gray-500">Partnerships Director</p>
-          </div>
 
-          <%!-- Peter Worley - Advisor --%>
-          <div class="text-center group">
-            <div class="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full shadow-lg group-hover:shadow-xl transition">
-              <img src={~p"/images/pete.webp"} alt="Peter Worley" class="h-full w-full object-cover" />
+            <%!-- Alexandra Konoplyanik - Advisor --%>
+            <div class="text-center group">
+              <div class="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full shadow-lg group-hover:shadow-xl transition">
+                <img
+                  src={~p"/images/alex.webp"}
+                  alt="Alexandra Konoplyanik"
+                  class="h-full w-full object-cover"
+                />
+              </div>
+              <h3 class="font-bold text-gray-900">Alexandra Konoplyanik</h3>
+              <p class="text-sm text-gray-500">Advisor</p>
             </div>
-            <h3 class="font-bold text-gray-900">Peter Worley</h3>
-            <p class="text-sm text-gray-500">Advisor</p>
-          </div>
-
-          <%!-- Alexandra Konoplyanik - Advisor --%>
-          <div class="text-center group">
-            <div class="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full shadow-lg group-hover:shadow-xl transition">
-              <img
-                src={~p"/images/alex.webp"}
-                alt="Alexandra Konoplyanik"
-                class="h-full w-full object-cover"
-              />
-            </div>
-            <h3 class="font-bold text-gray-900">Alexandra Konoplyanik</h3>
-            <p class="text-sm text-gray-500">Advisor</p>
           </div>
         </div>
 
@@ -622,6 +643,29 @@ defmodule DialecticWeb.AboutLive do
               </p>
               <p>
                 Martin is now an angel investor, strategic comms advisor and leadership mentor to a number of growing businesses, including in AI.
+              </p>
+            </div>
+          </div>
+
+          <div class="rounded-2xl bg-gradient-to-br from-purple-50 to-blue-50 p-8 ring-1 ring-purple-100">
+            <div class="flex items-center gap-4 mb-5">
+              <div class="h-14 w-14 shrink-0 overflow-hidden rounded-full shadow-lg">
+                <img src={~p"/images/maya.webp"} alt="Maya Darmon" class="h-full w-full object-cover" />
+              </div>
+              <div>
+                <h3 class="text-lg font-bold text-gray-900">Maya Darmon</h3>
+                <p class="text-sm text-gray-500">Idea Curator</p>
+              </div>
+            </div>
+            <div class="space-y-4 text-gray-700 leading-relaxed text-sm">
+              <p>
+                Maya Darmon is a philosophy graduate from Girton College, University of Cambridge, where she developed a strong foundation in critical thinking, logic, and the analysis of complex ideas.
+              </p>
+              <p>
+                Maya is particularly interested in how structured reasoning and collaborative dialogue can be enhanced through technology. She has been involved in exploring tools that augment human thinking, bringing together philosophy and AI to improve how ideas are debated, refined, and understood.
+              </p>
+              <p>
+                At RationalGrid.ai, Maya contributes a philosophical perspective to the design of AI systems, helping ensure that technology supports deeper reasoning, clarity of thought, and meaningful collaboration.
               </p>
             </div>
           </div>

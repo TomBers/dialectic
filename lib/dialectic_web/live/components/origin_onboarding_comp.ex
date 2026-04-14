@@ -27,7 +27,7 @@ defmodule DialecticWeb.OriginOnboardingComp do
       </p>
 
       <h5 class="font-bold text-gray-900 text-xs uppercase tracking-wider mb-3 flex items-center gap-2 pt-3 border-t border-gray-200">
-        <span class="text-base">🛠️</span> Grid Actions
+        <span class="text-base">🛠️</span> Grid Tools
       </h5>
       <p class="text-xs text-gray-500 mb-3">
         These tools help you grow your grid in different ways:
