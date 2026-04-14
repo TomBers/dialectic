@@ -295,10 +295,10 @@ defmodule DialecticWeb.HomeLive do
                 </h1>
                 <div class="mx-auto max-w-2xl space-y-1 sm:space-y-1.5">
                   <p class="text-base font-semibold leading-snug text-white sm:text-xl">
-                    Explore ideas, structure arguments, and build understanding with AI-powered visual maps.
+                    Explore ideas, structure arguments and build understanding with AI-powered visual maps.
                   </p>
                   <p class="text-sm leading-relaxed text-white/90">
-                    Start with a question and expand into connected concepts you can revisit, recall, and share.
+                    Start with a question and expand into connected concepts you can revisit, recall and share.
                   </p>
                 </div>
               </div>
@@ -310,7 +310,7 @@ defmodule DialecticWeb.HomeLive do
               <section class="w-full">
                 <div class="w-full">
                   <div class="flex flex-col items-center gap-2 sm:gap-2.5">
-                    <div class="w-full rounded-2xl border border-slate-200 bg-white p-2 shadow-lg sm:p-2.5">
+                    <div class="relative mb-2.5 w-full rounded-2xl border-2 border-indigo-300 bg-gradient-to-br from-white via-indigo-50/80 to-sky-50/70 p-2 shadow-[0_16px_38px_rgba(79,70,229,0.30)] ring-2 ring-indigo-200/70 sm:mb-3 sm:p-2.5">
                       <.live_component
                         module={DialecticWeb.NewIdeaFormComp}
                         id="new-idea-form"
