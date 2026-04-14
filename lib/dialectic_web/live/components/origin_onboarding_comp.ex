@@ -1,9 +1,6 @@
 defmodule DialecticWeb.OriginOnboardingComp do
   @moduledoc """
-  A LiveComponent that renders onboarding instructions for the origin node.
-
-  This component is displayed when users view the first node (id "1") of a grid,
-  providing guidance on how to use RationalGrid's features.
+  A LiveComponent that renders onboarding instructions for using a grid page.
 
   ## Required Assigns
   - `:id` - Component ID (required by LiveComponent)
@@ -13,24 +10,24 @@ defmodule DialecticWeb.OriginOnboardingComp do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="mb-6 rounded-xl bg-gradient-to-br from-indigo-50 via-white to-amber-50 border border-indigo-100 p-5 shadow-sm">
+    <div class="space-y-4">
       <h4 class="font-bold text-gray-900 text-sm uppercase tracking-wider mb-3 flex items-center gap-2">
         <span class="text-lg">👋</span> Welcome to RationalGrid
       </h4>
       <p class="text-sm text-gray-700 mb-3">
-        You're looking at the <strong>origin node</strong>
-        of this grid — the starting point for exploring an idea. Unlike traditional chat, RationalGrid turns every response into a
-        <strong>node</strong>
-        in a visual knowledge grid that you can branch, connect, and explore in any direction.
+        You're exploring a <strong>box</strong>
+        in this grid. Unlike a linear chat, RationalGrid turns each response into a
+        <strong>box</strong>
+        in a visual map you can branch, connect, and revisit from different angles.
       </p>
       <p class="text-sm text-gray-600 mb-4">
         <strong>How it works:</strong>
-        Read this node, then use the <strong>Grid Tools</strong>
-        below to expand the conversation. You can also type a follow-up question in the input box, or click any node on the graph (right side) to focus it.
+        Read the current box, then use <strong>Grid Actions</strong>
+        to grow the discussion. You can also type in the bottom input to ask a question or post your own comment.
       </p>
 
       <h5 class="font-bold text-gray-900 text-xs uppercase tracking-wider mb-3 flex items-center gap-2 pt-3 border-t border-gray-200">
-        <span class="text-base">🛠️</span> Grid Tools
+        <span class="text-base">🛠️</span> Grid Actions
       </h5>
       <p class="text-xs text-gray-500 mb-3">
         These tools help you grow your grid in different ways:
@@ -54,8 +51,8 @@ defmodule DialecticWeb.OriginOnboardingComp do
             </svg>
           </span>
           <span>
-            <strong class="text-gray-900">Pro | Con</strong>
-            — Generates two child nodes: one arguing <em>for</em>
+            <strong class="text-gray-900">Add Pro/Con</strong>
+            — Generates two child boxes: one arguing <em>for</em>
             the current idea and one arguing <em>against</em>. Great for exploring both sides of any claim.
           </span>
         </li>
@@ -77,8 +74,8 @@ defmodule DialecticWeb.OriginOnboardingComp do
             </svg>
           </span>
           <span>
-            <strong class="text-gray-900">Blend</strong>
-            — Select two nodes to synthesize into one. The AI finds common ground, contrasts, or creates a unified perspective from both ideas.
+            <strong class="text-gray-900">Combine boxes</strong>
+            — Select two boxes to synthesize into one. The AI finds common ground, contrasts, or creates a unified perspective from both ideas.
           </span>
         </li>
         <li class="flex gap-3 items-start">
@@ -99,8 +96,8 @@ defmodule DialecticWeb.OriginOnboardingComp do
             </svg>
           </span>
           <span>
-            <strong class="text-gray-900">Related</strong>
-            — Spawns new nodes with related concepts, questions, or angles you might not have considered. Expands your thinking in unexpected directions.
+            <strong class="text-gray-900">Find related</strong>
+            — Spawns new boxes with related concepts, questions, or angles you might not have considered. Expands your thinking in unexpected directions.
           </span>
         </li>
         <li class="flex gap-3 items-start">
@@ -121,8 +118,8 @@ defmodule DialecticWeb.OriginOnboardingComp do
             </svg>
           </span>
           <span>
-            <strong class="text-gray-900">Explore</strong>
-            — Takes every bullet point or key idea in the current node and creates a child node for each, letting you dive deep on multiple fronts at once.
+            <strong class="text-gray-900">Expand box</strong>
+            — Takes every bullet point or key idea in the current box and creates a child box for each, letting you dive deep on multiple fronts at once.
           </span>
         </li>
         <li class="flex gap-3 items-start">
@@ -139,8 +136,8 @@ defmodule DialecticWeb.OriginOnboardingComp do
             </svg>
           </span>
           <span>
-            <strong class="text-gray-900">Delete</strong>
-            — Removes a node you created (only works on leaf nodes with no children).
+            <strong class="text-gray-900">Delete box</strong>
+            — Removes a box you created (only works on leaf boxes with no children).
           </span>
         </li>
       </ul>
@@ -151,7 +148,7 @@ defmodule DialecticWeb.OriginOnboardingComp do
         <p class="text-xs text-gray-600 mb-3">
           Want to dive deeper into a specific phrase or concept? Simply
           <strong>select any text</strong>
-          in a node and a menu appears with options to explore just that selection:
+          in a box and a menu appears with options to explore just that selection:
         </p>
         <%!-- Visual demonstration of text selection --%>
         <div class="rounded-lg bg-white border border-gray-200 p-3 mb-3 shadow-inner">
@@ -200,7 +197,7 @@ defmodule DialecticWeb.OriginOnboardingComp do
                   d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z"
                 />
               </svg>
-              Pro/Con
+              Add Pro/Con
             </span>
             <span class="text-gray-500">|</span>
             <span class="flex items-center gap-1 px-2 py-0.5 rounded">
@@ -218,13 +215,13 @@ defmodule DialecticWeb.OriginOnboardingComp do
                   d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.517 0c.85.493 1.509 1.333 1.509 2.316V18"
                 />
               </svg>
-              Related
+              Find related
             </span>
           </div>
         </div>
         <p class="text-xs text-gray-500">
           This lets you get <strong>precise, focused answers</strong>
-          about specific terms, claims, or ideas without losing context from the original node.
+          about specific terms, claims, or ideas without losing context from the original box.
         </p>
       </div>
 
@@ -235,10 +232,10 @@ defmodule DialecticWeb.OriginOnboardingComp do
         <ul class="text-xs text-gray-500 space-y-1 pl-4 list-disc">
           <li>
             <strong>Navigate:</strong>
-            Drag to pan, scroll to zoom. Click any node on the graph to focus it.
+            Drag to pan, scroll to zoom. Click any box on the grid to focus it.
           </li>
           <li>
-            <strong>Star nodes</strong> you want to revisit — find them later in your profile.
+            <strong>Star boxes</strong> you want to revisit — find them later in your profile.
           </li>
           <li>
             <strong>Share your grid</strong>

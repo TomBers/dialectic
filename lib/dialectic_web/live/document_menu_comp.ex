@@ -1,8 +1,22 @@
 defmodule DialecticWeb.DocumentMenuComp do
   use DialecticWeb, :live_component
 
+  @impl true
   def update(assigns, socket) do
-    {:ok, assign(socket, assigns)}
+    {:ok,
+     socket
+     |> assign(assigns)
+     |> assign_new(:show_help_modal, fn -> false end)}
+  end
+
+  @impl true
+  def handle_event("open_help_modal", _params, socket) do
+    {:noreply, assign(socket, :show_help_modal, true)}
+  end
+
+  @impl true
+  def handle_event("close_help_modal", _params, socket) do
+    {:noreply, assign(socket, :show_help_modal, false)}
   end
 
   # Ensure we show at least 2 nodes when starting from node 1
@@ -11,6 +25,7 @@ defmodule DialecticWeb.DocumentMenuComp do
   defp get_document_start_node(%{id: "1"}), do: "2"
   defp get_document_start_node(%{id: id}), do: id
 
+  @impl true
   def render(assigns) do
     ~H"""
     <div
@@ -18,6 +33,12 @@ defmodule DialecticWeb.DocumentMenuComp do
       data-role="document-menu"
     >
       <div class="rounded-xl border border-gray-200 bg-white/95 backdrop-blur-md shadow-lg p-2 space-y-2">
+        <h3 class="px-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
+          Grid Actions
+        </h3>
+        <p class="px-1 text-[11px] text-gray-500">
+          Search, share, present, and manage this grid from one place.
+        </p>
         <button
           type="button"
           phx-click="open_search_overlay_click"
@@ -30,9 +51,18 @@ defmodule DialecticWeb.DocumentMenuComp do
             ⌘K
           </kbd>
         </button>
-        <p class="px-1 text-[11px] text-gray-500">
-          Search all nodes and jump directly to the relevant part of the discussion.
-        </p>
+        <button
+          type="button"
+          phx-click="open_help_modal"
+          phx-target={@myself}
+          class="group flex w-full items-center justify-between rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-2 text-left transition-colors hover:bg-emerald-100"
+          title="Open how-to guide for this page"
+        >
+          <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800">
+            <.icon name="hero-academic-cap" class="w-3.5 h-3.5" /> How to use this page
+          </span>
+          <span class="text-[10px] text-emerald-700">Open guide</span>
+        </button>
 
         <div class="grid grid-cols-2 gap-1">
           <%= if @graph_id do %>
@@ -141,6 +171,39 @@ defmodule DialecticWeb.DocumentMenuComp do
           </div>
         <% end %>
       </div>
+
+      <%= if @show_help_modal do %>
+        <div class="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-5">
+          <button
+            type="button"
+            phx-click="close_help_modal"
+            phx-target={@myself}
+            class="absolute inset-0 bg-gray-900/55 backdrop-blur-[1px]"
+            aria-label="Close how-to guide"
+          >
+          </button>
+          <div class="relative z-10 w-full max-w-4xl rounded-2xl bg-white shadow-2xl ring-1 ring-gray-200">
+            <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3">
+              <h2 class="text-sm font-semibold text-gray-900 sm:text-base">How to use this page</h2>
+              <button
+                type="button"
+                phx-click="close_help_modal"
+                phx-target={@myself}
+                class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 text-gray-600 transition hover:bg-gray-50"
+                aria-label="Close how-to guide"
+              >
+                <.icon name="hero-x-mark" class="h-4 w-4" />
+              </button>
+            </div>
+            <div class="max-h-[78vh] overflow-y-auto p-3 sm:p-4">
+              <.live_component
+                module={DialecticWeb.OriginOnboardingComp}
+                id="origin-onboarding-modal"
+              />
+            </div>
+          </div>
+        </div>
+      <% end %>
     </div>
     """
   end

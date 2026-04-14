@@ -143,7 +143,7 @@ defmodule DialecticWeb.AboutLive do
               <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#3a0ca3] text-white">
                 <.icon name="hero-globe-alt" class="w-5 h-5" />
               </div>
-              <h3 class="text-xl font-bold text-gray-900">Stage 1: Explore</h3>
+              <h3 class="text-xl font-bold text-gray-900">Stage 1: Expand</h3>
             </div>
             <p class="text-gray-700 leading-relaxed">
               Use the grid when you are new to a topic and need to build understanding quickly.
@@ -205,7 +205,7 @@ defmodule DialecticWeb.AboutLive do
         </div>
         <div class="text-center mb-14">
           <p class="text-gray-500 max-w-2xl mx-auto text-sm">
-            Powerful tools designed for deep exploration and collaboration.
+            Powerful tools designed for deep thinking and collaboration.
           </p>
         </div>
 
@@ -226,7 +226,7 @@ defmodule DialecticWeb.AboutLive do
             </div>
             <h3 class="font-bold text-gray-900 mb-2">Deep Dive If You Wish</h3>
             <p class="text-sm text-gray-600 leading-relaxed">
-              Highlight any term — or node — to instantly explore its meaning, implications, and connections within your knowledge map.
+              Highlight any term — or box — to instantly expand on its meaning, implications, and connections within your knowledge map.
             </p>
           </div>
 
@@ -236,7 +236,7 @@ defmodule DialecticWeb.AboutLive do
             </div>
             <h3 class="font-bold text-gray-900 mb-2">You're Not Alone</h3>
             <p class="text-sm text-gray-600 leading-relaxed">
-              Collaborate with other users in real-time on shared knowledge maps. Think together, explore together, learn together. Other AI tools don't offer this.
+              Collaborate with other users in real-time on shared knowledge maps. Think together, expand together, learn together. Other AI tools don't offer this.
             </p>
           </div>
 
@@ -246,7 +246,7 @@ defmodule DialecticWeb.AboutLive do
             </div>
             <h3 class="font-bold text-gray-900 mb-2">Persistent &amp; Searchable</h3>
             <p class="text-sm text-gray-600 leading-relaxed">
-              Every grid is saved and searchable, so your exploration becomes revision material. Return to starred nodes and highlights whenever you need to reinforce recall.
+              Every grid is saved and searchable, so your work becomes revision material. Return to starred boxes and highlights whenever you need to reinforce recall.
             </p>
           </div>
 
@@ -266,7 +266,7 @@ defmodule DialecticWeb.AboutLive do
             </div>
             <h3 class="font-bold text-gray-900 mb-2">AI-Powered Branching</h3>
             <p class="text-sm text-gray-600 leading-relaxed">
-              Explore the pros and cons, comparisons and differentiators of your ideas and arguments from any node. Let curiosity guide the path.
+              Expand with pros and cons, comparisons and differentiators of your ideas and arguments from any box. Let curiosity guide the path.
             </p>
           </div>
         </div>
@@ -295,7 +295,7 @@ defmodule DialecticWeb.AboutLive do
                 <h4 class="font-bold text-gray-900">Curated Grids</h4>
               </div>
               <p class="text-sm text-gray-600 leading-relaxed">
-                Users like you are creating hundreds of grids on RationalGrid. We try to highlight the best of them on our home page. We will also be running a series of "curated grids" featuring ideas being explored by invited guests.
+                Users like you are creating hundreds of grids on RationalGrid. We try to highlight the best of them on our home page. We will also be running a series of "curated grids" featuring ideas being expanded by invited guests.
                 <.link
                   href="mailto:hello@rationalgrid.ai"
                   class="font-medium text-[#3a0ca3] hover:underline"
@@ -322,12 +322,12 @@ defmodule DialecticWeb.AboutLive do
               <h2 class="text-3xl font-bold text-gray-900">For Educators</h2>
             </div>
             <p class="text-gray-700 leading-relaxed mb-6">
-              RationalGrid is a practical classroom tool. Students can explore complex topics collaboratively, then revisit key branches through highlights and starred nodes to strengthen recall.
+              RationalGrid is a practical classroom tool. Students can expand complex topics collaboratively, then revisit key branches through highlights and starred boxes to strengthen recall.
             </p>
             <ul class="space-y-3">
               <li class="flex items-start gap-3">
                 <.icon name="hero-check-circle" class="w-5 h-5 text-emerald-600 mt-0.5 shrink-0" />
-                <span class="text-gray-700">Students explore topics at their own pace and depth</span>
+                <span class="text-gray-700">Students expand topics at their own pace and depth</span>
               </li>
               <li class="flex items-start gap-3">
                 <.icon name="hero-check-circle" class="w-5 h-5 text-emerald-600 mt-0.5 shrink-0" />
@@ -358,7 +358,7 @@ defmodule DialecticWeb.AboutLive do
                 </div>
                 <div>
                   <div class="text-sm font-semibold text-gray-900">Classroom Session</div>
-                  <div class="text-xs text-gray-500">5 students exploring</div>
+                  <div class="text-xs text-gray-500">5 students expanding</div>
                 </div>
               </div>
               <div class="space-y-2">
@@ -366,7 +366,7 @@ defmodule DialecticWeb.AboutLive do
                   "What makes an argument valid?"
                 </div>
                 <div class="ml-4 rounded-lg bg-blue-50 px-3 py-2 text-xs text-gray-700">
-                  ↳ Exploring: logical structure vs. truth
+                  ↳ Expanding: logical structure vs. truth
                 </div>
                 <div class="ml-8 rounded-lg bg-indigo-50 px-3 py-2 text-xs text-gray-700">
                   ↳ Comparing: deductive vs. inductive reasoning
@@ -568,7 +568,7 @@ defmodule DialecticWeb.AboutLive do
             </div>
             <div class="space-y-4 text-gray-700 leading-relaxed text-sm">
               <p>
-                Tom created RationalGrid out of a conviction that AI could do much more than answer questions in a linear chat — it could help people actually think. The idea was to build a tool where every response becomes a node in a living knowledge map, letting users branch, compare, and explore ideas visually rather than scrolling through walls of text.
+                Tom created RationalGrid out of a conviction that AI could do much more than answer questions in a linear chat — it could help people actually think. The idea was to build a tool where every response becomes a box in a living knowledge map, letting users branch, compare, and expand ideas visually rather than scrolling through walls of text.
               </p>
               <p>
                 As the sole developer, Tom designed and built the entire platform from the ground up — the real-time collaborative graph engine, the AI integration layer, the presentation mode, export system, and everything in between. The stack is Elixir and Phoenix LiveView, chosen for their strengths in real-time, concurrent applications.
@@ -975,7 +975,7 @@ defmodule DialecticWeb.AboutLive do
     <%!-- 11. CTA / Footer --%>
     <section class="bg-gradient-to-br from-[#3a0ca3] to-[#4361ee] py-20 text-white">
       <div class="mx-auto max-w-3xl px-6 text-center">
-        <h2 class="text-3xl sm:text-4xl font-bold mb-4">Ready to explore?</h2>
+        <h2 class="text-3xl sm:text-4xl font-bold mb-4">Ready to expand?</h2>
         <p class="text-white/70 text-lg mb-10 max-w-xl mx-auto">
           Start mapping your ideas, challenging assumptions, and building understanding — it's free to use and always will be.
         </p>
@@ -987,7 +987,7 @@ defmodule DialecticWeb.AboutLive do
               "bg-white text-[#3a0ca3] shadow-lg hover:bg-white/95 hover:shadow-xl transition"
             ]}
           >
-            <.icon name="hero-sparkles" class="w-5 h-5" /> Start Exploring
+            <.icon name="hero-sparkles" class="w-5 h-5" /> Start Expanding
           </.link>
           <.link
             navigate={~p"/intro/how"}
@@ -1006,7 +1006,7 @@ defmodule DialecticWeb.AboutLive do
             <span class="text-white/60 text-sm">Open Source</span>
           </div>
           <p class="text-white/50 text-sm mb-4">
-            RationalGrid is open source. Explore the code, report issues, or contribute.
+            RationalGrid is open source. View the code, report issues, or contribute.
           </p>
           <div class="flex items-center justify-center gap-6 mb-6">
             <a

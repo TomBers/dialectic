@@ -237,7 +237,7 @@ defmodule DialecticWeb.ActionToolbarComp do
               type="button"
               disabled={is_nil(@graph_id)}
               class="inline-flex flex-row items-center justify-center gap-1 px-2 py-1 shadow-sm ring-1 ring-inset ring-black/10 text-white rounded-md transition-all bg-gradient-to-r from-fuchsia-500 via-rose-500 to-amber-500 hover:from-fuchsia-600 hover:via-rose-600 hover:to-amber-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Explore all points"
+              title="Expand all points"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -256,7 +256,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                 />
               </svg>
               <span :if={!@icons_only} class="toolbar-label text-xs leading-tight font-medium">
-                Explore
+                Expand
               </span>
             </button>
           </div>

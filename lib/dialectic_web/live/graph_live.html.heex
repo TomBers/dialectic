@@ -20,7 +20,7 @@
       <%!-- Left: slide count --%>
       <span class="text-xs font-medium text-gray-400 shrink-0">
         <span class="text-white font-semibold">{length(@presentation_slide_ids)}</span>
-        {if length(@presentation_slide_ids) == 1, do: "node", else: "nodes"}
+        {if length(@presentation_slide_ids) == 1, do: "box", else: "boxes"}
       </span>
 
       <%!-- Center: presentation title --%>
@@ -56,7 +56,7 @@
         <button
           phx-click="exit_presentation"
           class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-gray-300 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-full border border-gray-600 transition-colors"
-          title="Exit presentation and show all nodes (Esc)"
+          title="Exit presentation and show all boxes (Esc)"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -389,15 +389,15 @@
         on_cancel={JS.push("close_explore_modal")}
         show
       >
-        <h2 class="text-xl font-semibold mb-2">Review points to explore</h2>
+        <h2 class="text-xl font-semibold mb-2">Review points to expand</h2>
         <p class="text-sm text-gray-600 mb-3">
-          Select the points you want to explore. You can uncheck any you want to skip.
+          Select the points you want to expand. You can uncheck any you want to skip.
         </p>
 
         <div>
           <%= if @explore_items == [] do %>
             <div class="mb-3 text-sm text-gray-500 italic">
-              No points detected yet for this node.
+              No points detected yet for this box.
             </div>
           <% end %>
           <form phx-submit="submit_explore_modal">
@@ -432,7 +432,7 @@
                   @explore_items != [] && "bg-indigo-600 hover:bg-indigo-700"
                 ]}
               >
-                Explore selected
+                Expand selected
               </button>
             </div>
           </form>
