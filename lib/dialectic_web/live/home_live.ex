@@ -281,9 +281,6 @@ defmodule DialecticWeb.HomeLive do
           <section class="w-full" id="start-here">
             <div class="w-full bg-gradient-to-br from-[#3a0ca3] to-[#4361ee] px-4 py-3.5 text-white shadow-xl sm:px-6 sm:py-4">
               <div class="mx-auto flex w-full max-w-6xl flex-col items-center gap-1.5 text-center sm:gap-2">
-                <p class="text-xs font-medium uppercase tracking-[0.2em] text-white/75 sm:text-sm">
-                  Explore -> Recall -> Share
-                </p>
                 <h1 class="flex items-center justify-center gap-2.5 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
                   <img
                     src={~p"/images/favicon.webp"}
@@ -318,7 +315,7 @@ defmodule DialecticWeb.HomeLive do
                       />
                     </div>
 
-                    <div class="grid w-full grid-cols-1 gap-1.5 px-1 text-sm font-semibold sm:grid-cols-2 sm:px-0">
+                    <div class="grid w-full grid-cols-1 gap-1.5 px-1 text-sm font-semibold sm:grid-cols-3 sm:px-0">
                       <.link
                         navigate={~p"/inspiration"}
                         class={[
@@ -336,12 +333,9 @@ defmodule DialecticWeb.HomeLive do
                       >
                         <.icon name="hero-magnifying-glass" class="w-5 h-5" /> Browse ideas
                       </a>
-                    </div>
-
-                    <div class="w-full px-1 text-center">
                       <a
                         href="/intro/how#interface-highlight"
-                        class="inline-flex items-center gap-1 text-sm font-medium text-slate-600 transition hover:text-indigo-700"
+                        class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
                       >
                         <.icon name="hero-academic-cap" class="h-4 w-4" />
                         How it works: explore, then recall
@@ -381,30 +375,6 @@ defmodule DialecticWeb.HomeLive do
                   </div>
                 </section>
               <% end %>
-
-              <section class="w-full rounded-3xl bg-gradient-to-r from-indigo-50/90 via-sky-50/80 to-white p-2.5 shadow-md ring-1 ring-indigo-200 sm:p-3">
-                <div class="rounded-2xl bg-white/95 px-3 py-2.5 shadow-sm ring-1 ring-indigo-200/80 sm:px-4">
-                  <div class="flex flex-col gap-2 text-sm text-slate-700 sm:flex-row sm:items-center sm:justify-between">
-                    <p class="font-medium text-slate-800">
-                      Start broad: explore and connect ideas. Then star key nodes to revisit for recall and revision.
-                    </p>
-                    <div class="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:gap-3">
-                      <a
-                        href="/intro/how#interface-highlight"
-                        class="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-indigo-100 px-3 py-1 font-semibold text-indigo-800 ring-1 ring-indigo-200 transition hover:bg-indigo-200"
-                      >
-                        <.icon name="hero-book-open" class="h-4 w-4" /> Guide
-                      </a>
-                      <.link
-                        navigate={~p"/about"}
-                        class="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-800 ring-1 ring-slate-200 transition hover:bg-slate-200"
-                      >
-                        <.icon name="hero-information-circle" class="h-4 w-4" /> Why this exists
-                      </.link>
-                    </div>
-                  </div>
-                </div>
-              </section>
               
     <!-- Below: All ideas (full-width on desktop, uses available space) -->
               <section
@@ -413,21 +383,26 @@ defmodule DialecticWeb.HomeLive do
               >
                 <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
                   <div class="p-2 sm:p-2.5">
-                    <div class="flex flex-col gap-2 sm:gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <h2 class="text-lg sm:text-2xl font-semibold tracking-tight text-slate-900">
-                        <%= cond do %>
-                          <% @active_tag -> %>
-                            Ideas tagged with "{@active_tag}"
-                          <% @active_category == "deep_dives" -> %>
-                            Deep Dives
-                          <% @active_category == "seedlings" -> %>
-                            Seedlings
-                          <% @search_term != "" -> %>
-                            Search results for "{@search_term}"
-                          <% true -> %>
-                            All Ideas
-                        <% end %>
-                      </h2>
+                    <div class="flex flex-col gap-2 sm:gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <h2 class="text-lg sm:text-2xl font-semibold tracking-tight text-slate-900">
+                          <%= cond do %>
+                            <% @active_tag -> %>
+                              Ideas tagged with "{@active_tag}"
+                            <% @active_category == "deep_dives" -> %>
+                              Deep Dives
+                            <% @active_category == "seedlings" -> %>
+                              Seedlings
+                            <% @search_term != "" -> %>
+                              Search results for "{@search_term}"
+                            <% true -> %>
+                              Popular Grids
+                          <% end %>
+                        </h2>
+                        <p class="mt-0.5 text-sm text-slate-600">
+                          A collection of popular grids and ideas, created by the community.
+                        </p>
+                      </div>
 
                       <div class="w-full sm:w-72">
                         <form
