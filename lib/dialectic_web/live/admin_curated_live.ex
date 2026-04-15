@@ -104,6 +104,8 @@ defmodule DialecticWeb.AdminCuratedLive do
          |> put_flash(:info, "Hidden \"#{title}\" from homepage.")
          |> assign(
            deleted_grids: Graphs.list_deleted_graphs(50),
+           curated: load_section("curated"),
+           featured: load_section("featured"),
            search_results: [],
            search_term: ""
          )}
@@ -120,7 +122,11 @@ defmodule DialecticWeb.AdminCuratedLive do
         {:noreply,
          socket
          |> put_flash(:info, "Restored \"#{title}\" to homepage.")
-         |> assign(deleted_grids: Graphs.list_deleted_graphs(50))}
+         |> assign(
+           deleted_grids: Graphs.list_deleted_graphs(50),
+           curated: load_section("curated"),
+           featured: load_section("featured")
+         )}
 
       {:error, _} ->
         {:noreply, put_flash(socket, :error, "Failed to restore grid.")}
@@ -329,7 +335,7 @@ defmodule DialecticWeb.AdminCuratedLive do
         </h2>
 
         <p class="text-sm text-gray-500 mb-4">
-          These grids will never appear on the homepage, in search results, or in category listings.
+          These grids are hidden from normal discovery and can be restored from this page.
         </p>
 
         <%= if @deleted_grids == [] do %>

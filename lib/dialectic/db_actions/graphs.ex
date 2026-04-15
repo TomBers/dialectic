@@ -238,7 +238,7 @@ defmodule Dialectic.DbActions.Graphs do
 
   @doc """
   Soft deletes a graph by setting is_deleted to true.
-  The graph will no longer appear on the homepage.
+  Homepage visibility depends on homepage queries excluding soft-deleted graphs.
   """
   def soft_delete_graph(title) do
     case get_graph_by_title(title) do
@@ -373,6 +373,7 @@ defmodule Dialectic.DbActions.Graphs do
   @doc """
   Lists curated grids for a given section, with the graph author info.
   Sections: "curated", "featured"
+  Excludes soft-deleted graphs.
   """
   def list_curated_grids(section, limit \\ 12) do
     alias Dialectic.Accounts.CuratedGrid
@@ -385,6 +386,7 @@ defmodule Dialectic.DbActions.Graphs do
       on: author.id == g.user_id,
       where: g.is_published == true,
       where: g.is_public == true,
+      where: g.is_deleted == false or is_nil(g.is_deleted),
       order_by: [asc: cg.position, desc: cg.inserted_at],
       limit: ^limit,
       select: %{

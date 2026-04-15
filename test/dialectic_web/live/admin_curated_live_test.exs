@@ -250,5 +250,31 @@ defmodule DialecticWeb.AdminCuratedLiveTest do
       results_after = Dialectic.DbActions.Graphs.all_graphs_with_notes(graph.title, limit: 10)
       refute Enum.any?(results_after, fn {g, _, _} -> g.title == graph.title end)
     end
+
+    test "hidden graphs do not appear in curated/featured sections", %{
+      conn: _conn,
+      graph: graph,
+      admin: admin
+    } do
+      # Add the graph to curated section
+      {:ok, _} =
+        Dialectic.DbActions.Graphs.add_curated_grid(%{
+          graph_title: graph.title,
+          curator_id: admin.id,
+          section: "curated",
+          note: ""
+        })
+
+      # Verify graph appears in curated section before hiding
+      curated_before = Dialectic.DbActions.Graphs.list_curated_grids("curated", 20)
+      assert Enum.any?(curated_before, fn item -> item.graph.title == graph.title end)
+
+      # Soft delete the graph
+      {:ok, _} = Dialectic.DbActions.Graphs.soft_delete_graph(graph.title)
+
+      # Verify graph no longer appears in curated section
+      curated_after = Dialectic.DbActions.Graphs.list_curated_grids("curated", 20)
+      refute Enum.any?(curated_after, fn item -> item.graph.title == graph.title end)
+    end
   end
 end
