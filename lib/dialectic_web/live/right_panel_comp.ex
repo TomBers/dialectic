@@ -217,7 +217,7 @@ defmodule DialecticWeb.RightPanelComp do
                 <.icon name="hero-adjustments-horizontal" class="w-4 h-4" />
               </div>
               <div>
-                <div class="text-xs font-semibold text-gray-800">Configure</div>
+                <div class="text-xs font-semibold text-gray-800">Language Level</div>
                 <p class="text-[10px] text-gray-500 leading-tight">
                   AI response complexity level
                 </p>
@@ -278,7 +278,7 @@ defmodule DialecticWeb.RightPanelComp do
                 <.icon name="hero-folder" class="w-4 h-4" />
               </div>
               <div>
-                <div class="text-xs font-semibold text-gray-800">Workspace</div>
+                <div class="text-xs font-semibold text-gray-800">Public/Private</div>
                 <p class="text-[10px] text-gray-500 leading-tight">
                   Groups and access settings
                 </p>

@@ -542,7 +542,7 @@ defmodule DialecticWeb.AboutLive do
                 <img src={~p"/images/maya.webp"} alt="Maya Darmon" class="h-full w-full object-cover" />
               </div>
               <h3 class="font-bold text-gray-900">Maya Darmon</h3>
-              <p class="text-sm text-gray-500">Idea Curator</p>
+              <p class="text-sm text-gray-500">Grid Curator</p>
             </div>
           </div>
 
@@ -654,7 +654,7 @@ defmodule DialecticWeb.AboutLive do
               </div>
               <div>
                 <h3 class="text-lg font-bold text-gray-900">Maya Darmon</h3>
-                <p class="text-sm text-gray-500">Idea Curator</p>
+                <p class="text-sm text-gray-500">Grid Curator</p>
               </div>
             </div>
             <div class="space-y-4 text-gray-700 leading-relaxed text-sm">

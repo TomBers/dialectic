@@ -61,6 +61,32 @@ hooks.SearchNav = SearchNav;
 hooks.Presentation = PresentationHook;
 hooks.PresentationSetup = PresentationSetupHook;
 hooks.Share = ShareHook;
+hooks.PersistCollapse = {
+  mounted() {
+    this.restore();
+  },
+  updated() {
+    this.restore();
+  },
+  restore() {
+    const storageKey = this.el.dataset.collapseKey;
+    if (!storageKey) return;
+
+    let collapsed = false;
+    try {
+      collapsed = localStorage.getItem(storageKey) === "collapsed";
+    } catch (_e) {
+      collapsed = false;
+    }
+
+    const body = this.el.querySelector("[data-collapse-body]");
+    const icon = this.el.querySelector("[data-collapse-icon]");
+    if (!body || !icon) return;
+
+    body.classList.toggle("hidden", collapsed);
+    icon.classList.toggle("rotate-180", collapsed);
+  },
+};
 
 hooks.PasswordToggle = {
   mounted() {

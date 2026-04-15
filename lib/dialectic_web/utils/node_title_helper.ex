@@ -47,8 +47,12 @@ defmodule DialecticWeb.Utils.NodeTitleHelper do
             node_id || "Untitled"
 
           title ->
-            String.slice(title, 0, max_length) <>
-              if String.length(title) > max_length, do: "...", else: ""
+            if max_length in [nil, :infinity] do
+              title
+            else
+              String.slice(title, 0, max_length) <>
+                if String.length(title) > max_length, do: "...", else: ""
+            end
         end
 
       _ ->

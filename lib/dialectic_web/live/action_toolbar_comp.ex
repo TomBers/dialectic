@@ -131,12 +131,46 @@ defmodule DialecticWeb.ActionToolbarComp do
         <% end %>
 
         <% info = delete_info(assigns) %>
+        <% bottom_actions_body_id = "bottom-grid-actions-body-#{@id}" %>
+        <% bottom_actions_toggle_id = "bottom-grid-actions-toggle-#{@id}" %>
         <%!-- Add Actions Section --%>
-        <div data-role="action-buttons-group">
-          <div class="text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1 text-center">
-            Grid Tools
+        <div
+          id={"bottom-grid-actions-root-#{@id}"}
+          data-role="action-buttons-group"
+          data-collapse-root
+          phx-hook="PersistCollapse"
+          data-collapse-key={"rg:grid-actions:bottom:#{@graph_id || "global"}"}
+        >
+          <div class="mb-1 flex items-center justify-between gap-2">
+            <div class="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">
+              Grid Tools
+            </div>
+            <button
+              type="button"
+              class="inline-flex items-center justify-center rounded-md border border-gray-200 bg-white p-1 text-gray-500 transition hover:bg-gray-50 hover:text-gray-700"
+              data-collapse-key={"rg:grid-actions:bottom:#{@graph_id || "global"}"}
+              onclick={
+                "const root=this.closest('[data-collapse-root]');" <>
+                  "const body=root?.querySelector('[data-collapse-body]');" <>
+                  "const icon=root?.querySelector('[data-collapse-icon]');" <>
+                  "if(!body||!icon)return;" <>
+                  "body.classList.toggle('hidden');" <>
+                  "icon.classList.toggle('rotate-180');" <>
+                  "try{localStorage.setItem(this.dataset.collapseKey,body.classList.contains('hidden')?'collapsed':'expanded')}catch(_e){}"
+              }
+              aria-label="Show or hide bottom grid actions"
+              title="Show or hide bottom grid actions"
+            >
+              <span
+                id={bottom_actions_toggle_id}
+                data-collapse-icon
+                class="inline-flex transition-transform duration-150"
+              >
+                <.icon name="hero-chevron-down" class="h-3.5 w-3.5" />
+              </span>
+            </button>
           </div>
-          <div class="grid grid-cols-2 gap-1">
+          <div id={bottom_actions_body_id} data-collapse-body class="grid grid-cols-2 gap-1">
             <button
               type="button"
               class="inline-flex flex-row items-center justify-center gap-1 px-2 py-1 shadow-sm ring-1 ring-inset ring-black/10 text-white rounded-md transition-all bg-gradient-to-r from-emerald-500 to-rose-500 hover:from-emerald-600 hover:to-rose-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"

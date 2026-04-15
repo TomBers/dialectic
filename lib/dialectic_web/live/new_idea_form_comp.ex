@@ -21,7 +21,7 @@ defmodule DialecticWeb.NewIdeaFormComp do
         "What are you curious about?"
       end)
       |> assign_new(:submit_label, fn -> "Ask" end)
-      |> assign_new(:selected_mode, fn -> "university" end)
+      |> assign_new(:selected_mode, fn -> "high_school" end)
       |> assign_new(:content, fn %{form: form} ->
         Phoenix.HTML.Form.normalize_value("text", form[:content].value)
       end)
@@ -98,7 +98,7 @@ defmodule DialecticWeb.NewIdeaFormComp do
         <%!-- Level selector — scrollable on mobile, centered on desktop --%>
         <div class="mt-2.5 flex flex-col items-center gap-1.5 animate-fade-in-up">
           <span class="text-xs font-semibold text-slate-600 uppercase tracking-wide">
-            Level
+            Choose your level:
           </span>
           <div class="w-full sm:w-auto">
             <div class="mx-auto flex w-full rounded-lg border border-slate-200 bg-slate-100 p-1 shadow-inner sm:inline-flex sm:w-auto">

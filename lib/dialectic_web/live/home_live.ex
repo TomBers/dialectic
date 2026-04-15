@@ -292,7 +292,7 @@ defmodule DialecticWeb.HomeLive do
                 </h1>
                 <div class="mx-auto max-w-2xl space-y-1 sm:space-y-1.5">
                   <p class="text-base font-semibold leading-snug text-white sm:text-xl">
-                    Explore ideas, structure arguments and build understanding with AI-powered visual maps.
+                    Explore ideas, structure arguments and build understanding with AI-assisted visual grids.
                   </p>
                   <p class="text-sm leading-relaxed text-white/90">
                     Start with a question and expand into connected concepts you can revisit, recall and share.
@@ -337,8 +337,7 @@ defmodule DialecticWeb.HomeLive do
                         href="/intro/how#interface-highlight"
                         class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
                       >
-                        <.icon name="hero-academic-cap" class="h-4 w-4" />
-                        How it works: explore, then recall
+                        <.icon name="hero-academic-cap" class="h-4 w-4" /> Guide
                       </a>
                     </div>
                   </div>

@@ -72,8 +72,8 @@ defmodule DialecticWeb.AskFormComp do
             <span class={"inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium " <> DialecticWeb.ColUtils.badge_class(@node.class || "")}>
               {DialecticWeb.ColUtils.node_type_label(@node.class || "")}
             </span>
-            <span class="text-[11px] text-gray-600 group-hover:text-indigo-600 truncate max-w-[200px]">
-              {NodeTitleHelper.extract_node_title(@node, max_length: 40)}
+            <span class="text-[11px] text-gray-600 group-hover:text-indigo-600 whitespace-normal break-words">
+              {NodeTitleHelper.extract_node_title(@node, max_length: :infinity)}
             </span>
           </button>
         <% end %>
@@ -117,8 +117,9 @@ defmodule DialecticWeb.AskFormComp do
         <%!-- Compact hint text --%>
         <%= if @show_hint do %>
           <div class="text-[10px] text-gray-400 mt-1 ml-1">
-            <span class="text-indigo-500">Ask</span> = AI response
-            · <span class="text-emerald-500">Post</span> = your comment
+            <span class="text-emerald-500">Post</span>
+            = your comment · <span class="text-indigo-500">Ask</span>
+            = AI response
           </div>
         <% end %>
       </.form>

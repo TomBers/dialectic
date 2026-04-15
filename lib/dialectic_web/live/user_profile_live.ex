@@ -348,7 +348,7 @@ defmodule DialecticWeb.UserProfileLive do
                       theme_button_class(@theme)
                     ]}
                   >
-                    <.icon name="hero-plus" class="w-4 h-4" /> Create your first graph
+                    <.icon name="hero-plus" class="w-4 h-4" /> Create your first grid
                   </.link>
                 <% end %>
               </div>

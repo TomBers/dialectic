@@ -22,7 +22,7 @@ defmodule DialecticWeb.OriginOnboardingComp do
       </p>
       <p class="text-sm text-gray-600 mb-4">
         <strong>How it works:</strong>
-        Read the current box, then use <strong>Grid Actions</strong>
+        Read the current box, then use <strong>Grid Tools</strong>
         to grow the discussion. You can also type in the bottom input to ask a question or post your own comment.
       </p>
 
