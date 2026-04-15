@@ -288,8 +288,8 @@ defmodule DialecticWeb.HomeLive do
                   />
                   <span>RationalGrid</span>
                 </h1>
-                <div class="mx-auto max-w-2xl space-y-1 sm:space-y-1.5">
-                  <p class="text-base font-semibold leading-snug text-white sm:text-xl">
+                <div class="mx-auto max-w-3xl space-y-1 sm:space-y-1.5">
+                  <p class="text-base font-semibold leading-snug text-white sm:text-lg">
                     Explore ideas, structure arguments and build understanding with AI-assisted visual grids.
                   </p>
                   <p class="text-sm leading-relaxed text-white/90">
@@ -372,12 +372,9 @@ defmodule DialecticWeb.HomeLive do
                   </div>
                 </section>
               <% end %>
-              
-    <!-- Below: All ideas (full-width on desktop, uses available space) -->
-              <section
-                class="w-full rounded-3xl bg-white/90 p-2.5 ring-1 ring-slate-200 sm:p-3"
-                id="explore"
-              >
+              <div id="explore" class="h-5"></div>
+              <!-- Below: All ideas (full-width on desktop, uses available space) -->
+              <section class="w-full rounded-3xl bg-white/90 p-2.5 ring-1 ring-slate-200 sm:p-3">
                 <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
                   <div class="p-2 sm:p-2.5">
                     <div class="flex flex-col gap-2 sm:gap-3 sm:flex-row sm:items-start sm:justify-between">
