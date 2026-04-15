@@ -17,12 +17,14 @@ defmodule DialecticWeb.AdminCuratedLive do
     else
       curated = load_section("curated")
       featured = load_section("featured")
+      deleted_grids = Graphs.list_deleted_graphs(50)
 
       {:ok,
        assign(socket,
          page_title: "Manage Curated Grids",
          curated: curated,
          featured: featured,
+         deleted_grids: deleted_grids,
          search_term: "",
          search_results: [],
          add_section: "curated",
@@ -91,6 +93,38 @@ defmodule DialecticWeb.AdminCuratedLive do
   @impl true
   def handle_event("update_note", %{"note" => note}, socket) do
     {:noreply, assign(socket, add_note: note)}
+  end
+
+  @impl true
+  def handle_event("soft_delete", %{"title" => title}, socket) do
+    case Graphs.soft_delete_graph(title) do
+      {:ok, _} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Hidden \"#{title}\" from homepage.")
+         |> assign(
+           deleted_grids: Graphs.list_deleted_graphs(50),
+           search_results: [],
+           search_term: ""
+         )}
+
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Failed to hide grid.")}
+    end
+  end
+
+  @impl true
+  def handle_event("restore_graph", %{"title" => title}, socket) do
+    case Graphs.restore_graph(title) do
+      {:ok, _} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Restored \"#{title}\" to homepage.")
+         |> assign(deleted_grids: Graphs.list_deleted_graphs(50))}
+
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Failed to restore grid.")}
+    end
   end
 
   defp load_section(section) do
@@ -183,15 +217,25 @@ defmodule DialecticWeb.AdminCuratedLive do
                       <% end %>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    phx-click="add_curated"
-                    phx-value-title={g.title}
-                    phx-value-section={@add_section}
-                    class="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500 transition"
-                  >
-                    <.icon name="hero-plus" class="w-3.5 h-3.5" /> Add to {@add_section}
-                  </button>
+                  <div class="flex gap-2">
+                    <button
+                      type="button"
+                      phx-click="add_curated"
+                      phx-value-title={g.title}
+                      phx-value-section={@add_section}
+                      class="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500 transition"
+                    >
+                      <.icon name="hero-plus" class="w-3.5 h-3.5" /> Add to {@add_section}
+                    </button>
+                    <button
+                      type="button"
+                      phx-click="soft_delete"
+                      phx-value-title={g.title}
+                      class="inline-flex items-center gap-1 rounded-lg bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100 transition"
+                    >
+                      <.icon name="hero-eye-slash" class="w-3.5 h-3.5" /> Hide
+                    </button>
+                  </div>
                 </div>
               <% end %>
             </div>
@@ -270,6 +314,45 @@ defmodule DialecticWeb.AdminCuratedLive do
                   class="inline-flex items-center gap-1 rounded-lg bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100 transition"
                 >
                   <.icon name="hero-trash" class="w-3.5 h-3.5" /> Remove
+                </button>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+
+      <%!-- Hidden Grids Section --%>
+      <div class="mb-8">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <.icon name="hero-eye-slash" class="w-5 h-5 text-red-500" /> Hidden from Homepage
+          <span class="text-sm font-normal text-gray-500">({length(@deleted_grids)})</span>
+        </h2>
+
+        <p class="text-sm text-gray-500 mb-4">
+          These grids will never appear on the homepage, in search results, or in category listings.
+        </p>
+
+        <%= if @deleted_grids == [] do %>
+          <p class="text-sm text-gray-500 italic">No hidden grids.</p>
+        <% else %>
+          <div class="space-y-2">
+            <%= for {graph, author_name} <- @deleted_grids do %>
+              <div class="flex items-center justify-between rounded-lg border border-red-200 bg-red-50 p-3 shadow-sm">
+                <div>
+                  <p class="text-sm font-medium text-gray-900">{graph.title}</p>
+                  <p class="text-xs text-gray-500">
+                    <%= if author_name do %>
+                      by {author_name}
+                    <% end %>
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  phx-click="restore_graph"
+                  phx-value-title={graph.title}
+                  class="inline-flex items-center gap-1 rounded-lg bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700 hover:bg-green-100 transition"
+                >
+                  <.icon name="hero-eye" class="w-3.5 h-3.5" /> Restore
                 </button>
               </div>
             <% end %>

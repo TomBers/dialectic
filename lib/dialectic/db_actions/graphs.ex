@@ -127,6 +127,7 @@ defmodule Dialectic.DbActions.Graphs do
       from g in Dialectic.Accounts.Graph,
         where: g.is_published == true,
         where: g.is_public == true,
+        where: g.is_deleted == false or is_nil(g.is_deleted),
         where: ilike(g.title, ^search_pattern),
         where:
           fragment(
@@ -157,6 +158,7 @@ defmodule Dialectic.DbActions.Graphs do
       from g in Graph,
         where: g.is_published == true,
         where: g.is_public == true,
+        where: g.is_deleted == false or is_nil(g.is_deleted),
         where: fragment("jsonb_array_length(?->'nodes') < ?", g.data, 5),
         left_join: author in Dialectic.Accounts.User,
         on: author.id == g.user_id,
@@ -172,6 +174,7 @@ defmodule Dialectic.DbActions.Graphs do
       from g in Graph,
         where: g.is_published == true,
         where: g.is_public == true,
+        where: g.is_deleted == false or is_nil(g.is_deleted),
         where: fragment("jsonb_array_length(?->'nodes') > ?", g.data, 20),
         left_join: author in Dialectic.Accounts.User,
         on: author.id == g.user_id,
@@ -187,6 +190,7 @@ defmodule Dialectic.DbActions.Graphs do
       from g in Graph,
         where: g.is_published == true,
         where: g.is_public == true,
+        where: g.is_deleted == false or is_nil(g.is_deleted),
         select: %{tag: fragment("unnest(?)", g.tags)}
 
     query =
@@ -204,6 +208,7 @@ defmodule Dialectic.DbActions.Graphs do
       from g in Graph,
         where: g.is_published == true,
         where: g.is_public == true,
+        where: g.is_deleted == false or is_nil(g.is_deleted),
         where: ^tag in g.tags,
         left_join: author in Dialectic.Accounts.User,
         on: author.id == g.user_id,
@@ -212,6 +217,54 @@ defmodule Dialectic.DbActions.Graphs do
         select: {g, author.username}
 
     Repo.all(query)
+  end
+
+  @doc """
+  Lists graphs that have been soft-deleted (hidden from homepage).
+  Used by admin interface.
+  """
+  def list_deleted_graphs(limit \\ 50) do
+    query =
+      from g in Graph,
+        where: g.is_deleted == true,
+        left_join: author in Dialectic.Accounts.User,
+        on: author.id == g.user_id,
+        order_by: [desc: g.updated_at],
+        limit: ^limit,
+        select: {g, author.username}
+
+    Repo.all(query)
+  end
+
+  @doc """
+  Soft deletes a graph by setting is_deleted to true.
+  The graph will no longer appear on the homepage.
+  """
+  def soft_delete_graph(title) do
+    case get_graph_by_title(title) do
+      nil ->
+        {:error, :not_found}
+
+      graph ->
+        graph
+        |> Graph.changeset(%{is_deleted: true})
+        |> Repo.update()
+    end
+  end
+
+  @doc """
+  Restores a soft-deleted graph by setting is_deleted to false.
+  """
+  def restore_graph(title) do
+    case get_graph_by_title(title) do
+      nil ->
+        {:error, :not_found}
+
+      graph ->
+        graph
+        |> Graph.changeset(%{is_deleted: false})
+        |> Repo.update()
+    end
   end
 
   @doc """
