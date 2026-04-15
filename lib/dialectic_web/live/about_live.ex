@@ -88,7 +88,7 @@ defmodule DialecticWeb.AboutLive do
           About RationalGrid
         </h1>
         <p class="mx-auto max-w-2xl text-lg sm:text-xl text-white/80 leading-relaxed">
-          Transforming how people explore ideas, engage with arguments, and build shared understanding — one node at a time. Start your own grid now and share it if you want.
+          RationalGrid is built for two stages of learning: exploration first, then recall with highlights and starred nodes, alone or with others.
         </p>
         <div class="mt-10 flex items-center justify-center gap-2 text-white/50 text-sm">
           <.icon name="hero-arrow-down" class="w-5 h-5 animate-bounce" />
@@ -133,7 +133,7 @@ defmodule DialecticWeb.AboutLive do
             What is RationalGrid?
           </h2>
           <p class="text-gray-500 max-w-2xl mx-auto">
-            A new kind of tool for a clearer new kind of thinking.
+            A shared learning workspace for exploration, recall, and revision.
           </p>
         </div>
 
@@ -143,11 +143,25 @@ defmodule DialecticWeb.AboutLive do
               <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#3a0ca3] text-white">
                 <.icon name="hero-globe-alt" class="w-5 h-5" />
               </div>
-              <h3 class="text-xl font-bold text-gray-900">Helping Critical Thinking</h3>
+              <h3 class="text-xl font-bold text-gray-900">Stage 1: Expand</h3>
             </div>
             <p class="text-gray-700 leading-relaxed">
-              We live in an era of unprecedented information access, yet the quality of discourse often feels lacking. Echo chambers and motivated reasoning lead to people talking past each other rather than engaging meaningfully. We built RationalGrid because we believe meaningful exchanges happen when you can explore assumptions at a fundamental level and see how reasonable people can hold conflicting values and opinions.
+              Use the grid when you are new to a topic and need to build understanding quickly.
             </p>
+            <ul class="mt-4 space-y-2 text-sm text-gray-700">
+              <li class="flex items-start gap-2">
+                <.icon name="hero-check-circle" class="w-4 h-4 text-[#3a0ca3] mt-0.5 shrink-0" />
+                Start from one question and branch into connected subtopics.
+              </li>
+              <li class="flex items-start gap-2">
+                <.icon name="hero-check-circle" class="w-4 h-4 text-[#3a0ca3] mt-0.5 shrink-0" />
+                Reveal arguments, counterarguments, and related concepts in context.
+              </li>
+              <li class="flex items-start gap-2">
+                <.icon name="hero-check-circle" class="w-4 h-4 text-[#3a0ca3] mt-0.5 shrink-0" />
+                See the full structure, not a flat chat history.
+              </li>
+            </ul>
           </div>
 
           <div class="rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 p-8 ring-1 ring-blue-100">
@@ -155,13 +169,25 @@ defmodule DialecticWeb.AboutLive do
               <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#4361ee] text-white">
                 <.icon name="hero-academic-cap" class="w-5 h-5" />
               </div>
-              <h3 class="text-xl font-bold text-gray-900">
-                Active Learning, Not Passive Consumption
-              </h3>
+              <h3 class="text-xl font-bold text-gray-900">Stage 2: Recall</h3>
             </div>
             <p class="text-gray-700 leading-relaxed">
-              Large Language Models provide unprecedented access to knowledge, but traditional AI chat interfaces limit their potential for deep learning. RationalGrid transforms AI interaction into an active, exploratory process where learners branch out in multiple directions, creating a personalized knowledge map that evolves with their curiosity.
+              Convert exploration into durable learning by returning to the same grid over time.
             </p>
+            <ul class="mt-4 space-y-2 text-sm text-gray-700">
+              <li class="flex items-start gap-2">
+                <.icon name="hero-check-circle" class="w-4 h-4 text-[#4361ee] mt-0.5 shrink-0" />
+                Star important nodes you want to remember or revisit.
+              </li>
+              <li class="flex items-start gap-2">
+                <.icon name="hero-check-circle" class="w-4 h-4 text-[#4361ee] mt-0.5 shrink-0" />
+                Save highlights so key passages and context are easy to review.
+              </li>
+              <li class="flex items-start gap-2">
+                <.icon name="hero-check-circle" class="w-4 h-4 text-[#4361ee] mt-0.5 shrink-0" />
+                Share one link and revise collaboratively with classmates, colleagues, or friends.
+              </li>
+            </ul>
           </div>
         </div>
       </div>
@@ -179,7 +205,7 @@ defmodule DialecticWeb.AboutLive do
         </div>
         <div class="text-center mb-14">
           <p class="text-gray-500 max-w-2xl mx-auto text-sm">
-            Powerful tools designed for deep exploration and collaboration.
+            Powerful tools designed for deep thinking and collaboration.
           </p>
         </div>
 
@@ -200,7 +226,7 @@ defmodule DialecticWeb.AboutLive do
             </div>
             <h3 class="font-bold text-gray-900 mb-2">Deep Dive If You Wish</h3>
             <p class="text-sm text-gray-600 leading-relaxed">
-              Highlight any term — or node — to instantly explore its meaning, implications, and connections within your knowledge map.
+              Highlight any term — or box — to instantly expand on its meaning, implications, and connections within your knowledge map.
             </p>
           </div>
 
@@ -210,7 +236,7 @@ defmodule DialecticWeb.AboutLive do
             </div>
             <h3 class="font-bold text-gray-900 mb-2">You're Not Alone</h3>
             <p class="text-sm text-gray-600 leading-relaxed">
-              Collaborate with other users in real-time on shared knowledge maps. Think together, explore together, learn together. Other AI tools don't offer this.
+              Collaborate with other users in real-time on shared knowledge maps. Think together, expand together, learn together. Other AI tools don't offer this.
             </p>
           </div>
 
@@ -220,7 +246,7 @@ defmodule DialecticWeb.AboutLive do
             </div>
             <h3 class="font-bold text-gray-900 mb-2">Persistent &amp; Searchable</h3>
             <p class="text-sm text-gray-600 leading-relaxed">
-              Every grid you create is saved (unless you delete it) and fully searchable. Build a personal library of explored ideas.
+              Every grid is saved and searchable, so your work becomes revision material. Return to starred boxes and highlights whenever you need to reinforce recall.
             </p>
           </div>
 
@@ -240,7 +266,7 @@ defmodule DialecticWeb.AboutLive do
             </div>
             <h3 class="font-bold text-gray-900 mb-2">AI-Powered Branching</h3>
             <p class="text-sm text-gray-600 leading-relaxed">
-              Explore the pros and cons, comparisons and differentiators of your ideas and arguments from any node. Let curiosity guide the path.
+              Expand with pros and cons, comparisons and differentiators of your ideas and arguments from any box. Let curiosity guide the path.
             </p>
           </div>
         </div>
@@ -269,7 +295,7 @@ defmodule DialecticWeb.AboutLive do
                 <h4 class="font-bold text-gray-900">Curated Grids</h4>
               </div>
               <p class="text-sm text-gray-600 leading-relaxed">
-                Users like you are creating hundreds of grids on RationalGrid. We try to highlight the best of them on our home page. We will also be running a series of "curated grids" featuring ideas being explored by invited guests.
+                Users like you are creating hundreds of grids on RationalGrid. We try to highlight the best of them on our home page. We will also be running a series of "curated grids" featuring ideas being expanded by invited guests.
                 <.link
                   href="mailto:hello@rationalgrid.ai"
                   class="font-medium text-[#3a0ca3] hover:underline"
@@ -296,12 +322,12 @@ defmodule DialecticWeb.AboutLive do
               <h2 class="text-3xl font-bold text-gray-900">For Educators</h2>
             </div>
             <p class="text-gray-700 leading-relaxed mb-6">
-              RationalGrid is a powerful classroom tool. Students can explore complex topics collaboratively, map out arguments visually, and develop critical thinking skills through structured inquiry.
+              RationalGrid is a practical classroom tool. Students can expand complex topics collaboratively, then revisit key branches through highlights and starred boxes to strengthen recall.
             </p>
             <ul class="space-y-3">
               <li class="flex items-start gap-3">
                 <.icon name="hero-check-circle" class="w-5 h-5 text-emerald-600 mt-0.5 shrink-0" />
-                <span class="text-gray-700">Students explore topics at their own pace and depth</span>
+                <span class="text-gray-700">Students expand topics at their own pace and depth</span>
               </li>
               <li class="flex items-start gap-3">
                 <.icon name="hero-check-circle" class="w-5 h-5 text-emerald-600 mt-0.5 shrink-0" />
@@ -332,7 +358,7 @@ defmodule DialecticWeb.AboutLive do
                 </div>
                 <div>
                   <div class="text-sm font-semibold text-gray-900">Classroom Session</div>
-                  <div class="text-xs text-gray-500">5 students exploring</div>
+                  <div class="text-xs text-gray-500">5 students expanding</div>
                 </div>
               </div>
               <div class="space-y-2">
@@ -340,7 +366,7 @@ defmodule DialecticWeb.AboutLive do
                   "What makes an argument valid?"
                 </div>
                 <div class="ml-4 rounded-lg bg-blue-50 px-3 py-2 text-xs text-gray-700">
-                  ↳ Exploring: logical structure vs. truth
+                  ↳ Expanding: logical structure vs. truth
                 </div>
                 <div class="ml-8 rounded-lg bg-indigo-50 px-3 py-2 text-xs text-gray-700">
                   ↳ Comparing: deductive vs. inductive reasoning
@@ -469,62 +495,83 @@ defmodule DialecticWeb.AboutLive do
           </p>
         </div>
 
-        <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          <%!-- Tom Berman --%>
-          <div class="text-center group">
-            <div class="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full shadow-lg group-hover:shadow-xl transition">
-              <img src={~p"/images/tom.webp"} alt="Tom Berman" class="h-full w-full object-cover" />
+        <div class="space-y-8">
+          <div class="grid gap-8 sm:grid-cols-3">
+            <%!-- Tom Berman --%>
+            <div class="text-center group">
+              <div class="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full shadow-lg group-hover:shadow-xl transition">
+                <img src={~p"/images/tom.webp"} alt="Tom Berman" class="h-full w-full object-cover" />
+              </div>
+              <h3 class="font-bold text-gray-900">Tom Berman</h3>
+              <p class="text-sm text-gray-500 mb-3">Founder &amp; Developer</p>
+              <div class="flex items-center justify-center gap-3">
+                <.link
+                  href="https://github.com/TomBers"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Tom Berman GitHub profile (opens in a new tab)"
+                  class="text-gray-400 hover:text-gray-700 transition"
+                >
+                  <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path
+                      fill-rule="evenodd"
+                      d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                </.link>
+              </div>
             </div>
-            <h3 class="font-bold text-gray-900">Tom Berman</h3>
-            <p class="text-sm text-gray-500 mb-3">Founder &amp; Developer</p>
-            <div class="flex items-center justify-center gap-3">
-              <.link
-                href="https://github.com/TomBers"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Tom Berman GitHub profile (opens in a new tab)"
-                class="text-gray-400 hover:text-gray-700 transition"
-              >
-                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path
-                    fill-rule="evenodd"
-                    d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
-              </.link>
+
+            <%!-- Martin Loat --%>
+            <div class="text-center group">
+              <div class="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full shadow-lg group-hover:shadow-xl transition">
+                <img
+                  src={~p"/images/martin.webp"}
+                  alt="Martin Loat"
+                  class="h-full w-full object-cover"
+                />
+              </div>
+              <h3 class="font-bold text-gray-900">Martin Loat</h3>
+              <p class="text-sm text-gray-500">Partnerships Director</p>
+            </div>
+
+            <%!-- Maya Darmon --%>
+            <div class="text-center group">
+              <div class="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full shadow-lg group-hover:shadow-xl transition">
+                <img src={~p"/images/maya.webp"} alt="Maya Darmon" class="h-full w-full object-cover" />
+              </div>
+              <h3 class="font-bold text-gray-900">Maya Darmon</h3>
+              <p class="text-sm text-gray-500">Grid Curator</p>
             </div>
           </div>
 
-          <%!-- Martin Loat --%>
-          <div class="text-center group">
-            <div class="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full shadow-lg group-hover:shadow-xl transition">
-              <img src={~p"/images/martin.webp"} alt="Martin Loat" class="h-full w-full object-cover" />
+          <div class="grid gap-8 sm:grid-cols-2 sm:max-w-xl sm:mx-auto">
+            <%!-- Peter Worley - Advisor --%>
+            <div class="text-center group">
+              <div class="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full shadow-lg group-hover:shadow-xl transition">
+                <img
+                  src={~p"/images/pete.webp"}
+                  alt="Peter Worley"
+                  class="h-full w-full object-cover"
+                />
+              </div>
+              <h3 class="font-bold text-gray-900">Peter Worley</h3>
+              <p class="text-sm text-gray-500">Advisor</p>
             </div>
-            <h3 class="font-bold text-gray-900">Martin Loat</h3>
-            <p class="text-sm text-gray-500">Partnerships Director</p>
-          </div>
 
-          <%!-- Peter Worley - Advisor --%>
-          <div class="text-center group">
-            <div class="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full shadow-lg group-hover:shadow-xl transition">
-              <img src={~p"/images/pete.webp"} alt="Peter Worley" class="h-full w-full object-cover" />
+            <%!-- Alexandra Konoplyanik - Advisor --%>
+            <div class="text-center group">
+              <div class="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full shadow-lg group-hover:shadow-xl transition">
+                <img
+                  src={~p"/images/alex.webp"}
+                  alt="Alexandra Konoplyanik"
+                  class="h-full w-full object-cover"
+                />
+              </div>
+              <h3 class="font-bold text-gray-900">Alexandra Konoplyanik</h3>
+              <p class="text-sm text-gray-500">Advisor</p>
             </div>
-            <h3 class="font-bold text-gray-900">Peter Worley</h3>
-            <p class="text-sm text-gray-500">Advisor</p>
-          </div>
-
-          <%!-- Alexandra Konoplyanik - Advisor --%>
-          <div class="text-center group">
-            <div class="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full shadow-lg group-hover:shadow-xl transition">
-              <img
-                src={~p"/images/alex.webp"}
-                alt="Alexandra Konoplyanik"
-                class="h-full w-full object-cover"
-              />
-            </div>
-            <h3 class="font-bold text-gray-900">Alexandra Konoplyanik</h3>
-            <p class="text-sm text-gray-500">Advisor</p>
           </div>
         </div>
 
@@ -542,7 +589,7 @@ defmodule DialecticWeb.AboutLive do
             </div>
             <div class="space-y-4 text-gray-700 leading-relaxed text-sm">
               <p>
-                Tom created RationalGrid out of a conviction that AI could do much more than answer questions in a linear chat — it could help people actually think. The idea was to build a tool where every response becomes a node in a living knowledge map, letting users branch, compare, and explore ideas visually rather than scrolling through walls of text.
+                Tom created RationalGrid out of a conviction that AI could do much more than answer questions in a linear chat — it could help people actually think. The idea was to build a tool where every response becomes a box in a living knowledge map, letting users branch, compare, and expand ideas visually rather than scrolling through walls of text.
               </p>
               <p>
                 As the sole developer, Tom designed and built the entire platform from the ground up — the real-time collaborative graph engine, the AI integration layer, the presentation mode, export system, and everything in between. The stack is Elixir and Phoenix LiveView, chosen for their strengths in real-time, concurrent applications.
@@ -596,6 +643,29 @@ defmodule DialecticWeb.AboutLive do
               </p>
               <p>
                 Martin is now an angel investor, strategic comms advisor and leadership mentor to a number of growing businesses, including in AI.
+              </p>
+            </div>
+          </div>
+
+          <div class="rounded-2xl bg-gradient-to-br from-purple-50 to-blue-50 p-8 ring-1 ring-purple-100">
+            <div class="flex items-center gap-4 mb-5">
+              <div class="h-14 w-14 shrink-0 overflow-hidden rounded-full shadow-lg">
+                <img src={~p"/images/maya.webp"} alt="Maya Darmon" class="h-full w-full object-cover" />
+              </div>
+              <div>
+                <h3 class="text-lg font-bold text-gray-900">Maya Darmon</h3>
+                <p class="text-sm text-gray-500">Grid Curator</p>
+              </div>
+            </div>
+            <div class="space-y-4 text-gray-700 leading-relaxed text-sm">
+              <p>
+                Maya Darmon is a philosophy graduate from Girton College, University of Cambridge, where she developed a strong foundation in critical thinking, logic, and the analysis of complex ideas.
+              </p>
+              <p>
+                Maya is particularly interested in how structured reasoning and collaborative dialogue can be enhanced through technology. She has been involved in exploring tools that augment human thinking, bringing together philosophy and AI to improve how ideas are debated, refined, and understood.
+              </p>
+              <p>
+                At RationalGrid.ai, Maya contributes a philosophical perspective to the design of AI systems, helping ensure that technology supports deeper reasoning, clarity of thought, and meaningful collaboration.
               </p>
             </div>
           </div>
@@ -949,7 +1019,7 @@ defmodule DialecticWeb.AboutLive do
     <%!-- 11. CTA / Footer --%>
     <section class="bg-gradient-to-br from-[#3a0ca3] to-[#4361ee] py-20 text-white">
       <div class="mx-auto max-w-3xl px-6 text-center">
-        <h2 class="text-3xl sm:text-4xl font-bold mb-4">Ready to explore?</h2>
+        <h2 class="text-3xl sm:text-4xl font-bold mb-4">Ready to expand?</h2>
         <p class="text-white/70 text-lg mb-10 max-w-xl mx-auto">
           Start mapping your ideas, challenging assumptions, and building understanding — it's free to use and always will be.
         </p>
@@ -961,7 +1031,7 @@ defmodule DialecticWeb.AboutLive do
               "bg-white text-[#3a0ca3] shadow-lg hover:bg-white/95 hover:shadow-xl transition"
             ]}
           >
-            <.icon name="hero-sparkles" class="w-5 h-5" /> Start Exploring
+            <.icon name="hero-sparkles" class="w-5 h-5" /> Start Expanding
           </.link>
           <.link
             navigate={~p"/intro/how"}
@@ -980,7 +1050,7 @@ defmodule DialecticWeb.AboutLive do
             <span class="text-white/60 text-sm">Open Source</span>
           </div>
           <p class="text-white/50 text-sm mb-4">
-            RationalGrid is open source. Explore the code, report issues, or contribute.
+            RationalGrid is open source. View the code, report issues, or contribute.
           </p>
           <div class="flex items-center justify-center gap-6 mb-6">
             <a

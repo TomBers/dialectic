@@ -133,12 +133,6 @@ defmodule DialecticWeb.NodeComp do
                         <% end %>
                       </span>
                     </h3>
-                    <%= if @node.id == "1" and @presentation_mode != :presenting do %>
-                      <.live_component
-                        module={DialecticWeb.OriginOnboardingComp}
-                        id="origin-onboarding"
-                      />
-                    <% end %>
                     <div
                       class="selection-content w-full px-1 sm:px-2 pb-4"
                       data-children={length(@node.children)}

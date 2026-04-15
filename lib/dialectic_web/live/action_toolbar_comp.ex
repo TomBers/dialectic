@@ -131,12 +131,46 @@ defmodule DialecticWeb.ActionToolbarComp do
         <% end %>
 
         <% info = delete_info(assigns) %>
+        <% bottom_actions_body_id = "bottom-grid-actions-body-#{@id}" %>
+        <% bottom_actions_toggle_id = "bottom-grid-actions-toggle-#{@id}" %>
         <%!-- Add Actions Section --%>
-        <div data-role="action-buttons-group">
-          <div class="text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1 text-center">
-            Grid Tools
+        <div
+          id={"bottom-grid-actions-root-#{@id}"}
+          data-role="action-buttons-group"
+          data-collapse-root
+          phx-hook="PersistCollapse"
+          data-collapse-key={"rg:grid-actions:bottom:#{@graph_id || "global"}"}
+        >
+          <div class="mb-1 flex items-center justify-between gap-2">
+            <div class="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">
+              Grid Tools
+            </div>
+            <button
+              type="button"
+              class="inline-flex items-center justify-center rounded-md border border-gray-200 bg-white p-1 text-gray-500 transition hover:bg-gray-50 hover:text-gray-700"
+              data-collapse-key={"rg:grid-actions:bottom:#{@graph_id || "global"}"}
+              onclick={
+                "const root=this.closest('[data-collapse-root]');" <>
+                  "const body=root?.querySelector('[data-collapse-body]');" <>
+                  "const icon=root?.querySelector('[data-collapse-icon]');" <>
+                  "if(!body||!icon)return;" <>
+                  "body.classList.toggle('hidden');" <>
+                  "icon.classList.toggle('rotate-180');" <>
+                  "try{localStorage.setItem(this.dataset.collapseKey,body.classList.contains('hidden')?'collapsed':'expanded')}catch(_e){}"
+              }
+              aria-label="Show or hide bottom grid actions"
+              title="Show or hide bottom grid actions"
+            >
+              <span
+                id={bottom_actions_toggle_id}
+                data-collapse-icon
+                class="inline-flex transition-transform duration-150"
+              >
+                <.icon name="hero-chevron-down" class="h-3.5 w-3.5" />
+              </span>
+            </button>
           </div>
-          <div class="grid grid-cols-2 gap-1">
+          <div id={bottom_actions_body_id} data-collapse-body class="grid grid-cols-2 gap-1">
             <button
               type="button"
               class="inline-flex flex-row items-center justify-center gap-1 px-2 py-1 shadow-sm ring-1 ring-inset ring-black/10 text-white rounded-md transition-all bg-gradient-to-r from-emerald-500 to-rose-500 hover:from-emerald-600 hover:to-rose-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
@@ -145,22 +179,7 @@ defmodule DialecticWeb.ActionToolbarComp do
               disabled={is_nil(@graph_id)}
               title="Pros and Cons"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-4 w-4"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z"
-                />
-              </svg>
+              <.icon name="hero-scale" class="h-4 w-4" />
               <span :if={!@icons_only} class="toolbar-label text-xs leading-tight font-medium">
                 Pro | Con
               </span>
@@ -181,22 +200,7 @@ defmodule DialecticWeb.ActionToolbarComp do
               aria-label="Combine nodes setup"
               title="Blend with another"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-4 w-4"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0 0 12 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 0 1-2.031.352 5.988 5.988 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.971Zm-16.5.52c.99-.203 1.99-.377 3-.52m0 0 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.989 5.989 0 0 1-2.031.352 5.989 5.989 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L5.25 4.971Z"
-                />
-              </svg>
+              <.icon name="hero-arrows-pointing-in" class="h-4 w-4" />
               <span :if={!@icons_only} class="toolbar-label text-xs leading-tight font-medium">
                 Blend
               </span>
@@ -237,7 +241,7 @@ defmodule DialecticWeb.ActionToolbarComp do
               type="button"
               disabled={is_nil(@graph_id)}
               class="inline-flex flex-row items-center justify-center gap-1 px-2 py-1 shadow-sm ring-1 ring-inset ring-black/10 text-white rounded-md transition-all bg-gradient-to-r from-fuchsia-500 via-rose-500 to-amber-500 hover:from-fuchsia-600 hover:via-rose-600 hover:to-amber-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Explore all points"
+              title="Expand all points"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -256,7 +260,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                 />
               </svg>
               <span :if={!@icons_only} class="toolbar-label text-xs leading-tight font-medium">
-                Explore
+                Expand
               </span>
             </button>
           </div>

@@ -3,6 +3,7 @@ defmodule DialecticWeb.PageHtml.GraphComp do
 
   def render(assigns) do
     assigns = assign(assigns, :variant, assigns[:variant] || :glass)
+    assigns = assign(assigns, :compact, assigns[:compact] || false)
 
     ~H"""
     <div class={[
@@ -13,7 +14,11 @@ defmodule DialecticWeb.PageHtml.GraphComp do
         <span class="sr-only">View {@title}</span>
       </.link>
 
-      <div class="px-3 py-3 flex flex-col h-full pointer-events-none relative z-10">
+      <div class={[
+        "flex flex-col h-full pointer-events-none relative z-10",
+        @compact && "px-2.5 py-2.5",
+        !@compact && "px-3 py-3"
+      ]}>
         <h3 class={[
           "font-semibold text-sm leading-snug line-clamp-2",
           title_class(@variant)
@@ -21,7 +26,23 @@ defmodule DialecticWeb.PageHtml.GraphComp do
           {@title}
         </h3>
 
-        <div class="mt-2 flex flex-wrap gap-1.5">
+        <%= if is_binary(author_name = assigns[:author_name]) and author_name != "" do %>
+          <p class={[
+            @compact &&
+              "mt-1.5 inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ring-inset",
+            !@compact &&
+              "mt-2 inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset",
+            author_class(@variant)
+          ]}>
+            <.icon name="hero-user-circle" class="w-3.5 h-3.5" />
+            {author_text(author_name, assigns[:author_label])}
+          </p>
+        <% end %>
+
+        <div class={[
+          @compact && "mt-1.5 flex flex-wrap gap-1",
+          !@compact && "mt-2 flex flex-wrap gap-1.5"
+        ]}>
           <%= if assigns[:node_count] do %>
             <%= if @node_count < 5 do %>
               <span class={[
@@ -68,7 +89,8 @@ defmodule DialecticWeb.PageHtml.GraphComp do
 
         <%= if is_nil(assigns[:tags]) or @tags == [] do %>
           <div class={[
-            "mt-auto pt-2 flex justify-end pointer-events-auto",
+            @compact && "mt-auto pt-1.5 flex justify-end pointer-events-auto",
+            !@compact && "mt-auto pt-2 flex justify-end pointer-events-auto",
             footer_border_class(@variant)
           ]}>
             <%= if assigns[:generating] do %>
@@ -162,15 +184,28 @@ defmodule DialecticWeb.PageHtml.GraphComp do
     "bg-white text-gray-900 ring-gray-200 hover:bg-gray-50 hover:ring-gray-300 shadow-sm hover:shadow-md"
   end
 
+  defp container_class(:home) do
+    "bg-gradient-to-br from-slate-900/85 via-indigo-950/70 to-slate-900/85 text-white ring-white/20 hover:ring-cyan-300/40 hover:from-slate-900/95 hover:via-indigo-900/80 hover:to-slate-900/95 shadow-[0_8px_24px_rgba(15,23,42,0.45)] hover:shadow-[0_14px_34px_rgba(15,23,42,0.6)]"
+  end
+
   defp container_class(_glass) do
     "bg-white/10 text-white ring-white/15 hover:bg-white/15 hover:ring-white/25 shadow-md"
   end
 
   defp title_class(:light), do: "text-gray-800"
+  defp title_class(:home), do: "text-white group-hover:text-cyan-100 transition-colors"
   defp title_class(_glass), do: "text-white"
+
+  defp author_class(:light), do: "bg-gray-100 text-gray-700 ring-gray-200"
+  defp author_class(:home), do: "bg-cyan-400/20 text-cyan-100 ring-cyan-200/40"
+  defp author_class(_glass), do: "bg-white/15 text-white ring-white/20"
 
   defp stats_class(:light) do
     "bg-gray-100 text-gray-600 ring-gray-500/10"
+  end
+
+  defp stats_class(:home) do
+    "bg-black/25 text-white/85 ring-white/20"
   end
 
   defp stats_class(_glass) do
@@ -185,6 +220,14 @@ defmodule DialecticWeb.PageHtml.GraphComp do
     "bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 ring-blue-700/10"
   end
 
+  defp badge_class(:home, :seedling) do
+    "bg-emerald-300/20 text-emerald-100 ring-emerald-200/40"
+  end
+
+  defp badge_class(:home, :deep_dive) do
+    "bg-cyan-300/20 text-cyan-100 ring-cyan-200/40"
+  end
+
   defp badge_class(_glass, :seedling) do
     "bg-emerald-500/15 text-emerald-100 ring-emerald-300/30"
   end
@@ -194,10 +237,15 @@ defmodule DialecticWeb.PageHtml.GraphComp do
   end
 
   defp footer_border_class(:light), do: "border-t border-gray-50"
+  defp footer_border_class(:home), do: "border-t border-white/15"
   defp footer_border_class(_glass), do: "border-t border-white/10"
 
   defp generating_class(:light) do
     "bg-gray-100 text-gray-500 ring-gray-500/10"
+  end
+
+  defp generating_class(:home) do
+    "bg-black/25 text-white/80 ring-white/20"
   end
 
   defp generating_class(_glass) do
@@ -208,7 +256,16 @@ defmodule DialecticWeb.PageHtml.GraphComp do
     "bg-gradient-to-r from-violet-100 to-fuchsia-100 text-violet-700 ring-violet-700/10 hover:from-violet-200 hover:to-fuchsia-200"
   end
 
+  defp generate_button_class(:home) do
+    "bg-cyan-400/20 text-cyan-100 ring-cyan-200/40 hover:bg-cyan-400/30"
+  end
+
   defp generate_button_class(_glass) do
     "bg-white/10 text-white ring-white/15 hover:bg-white/15"
+  end
+
+  defp author_text(author_name, author_label) do
+    prefix = if is_binary(author_label) and author_label != "", do: author_label <> " ", else: ""
+    prefix <> author_name
   end
 end

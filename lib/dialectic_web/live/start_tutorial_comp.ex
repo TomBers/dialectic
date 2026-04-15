@@ -27,8 +27,8 @@ defmodule DialecticWeb.StartTutorialComp do
         </h2>
 
         <p class="text-stone-600">
-          Start with a single question or thought. We’ll turn it into a node you can expand,
-          connect, and explore.
+          Start with a single question or thought. First, expand and explore unfamiliar ideas.
+          Then, save key nodes and highlights so you can return for recall and revision.
         </p>
 
         <ol class="list-decimal pl-6 space-y-2">
@@ -42,7 +42,7 @@ defmodule DialecticWeb.StartTutorialComp do
         <ul class="list-disc pl-6 space-y-1 mt-1 text-stone-600">
           <li>
             <span class="font-semibold">Navigate</span>
-            — save nodes for later, open the linear reader, or share your graph.
+            — save nodes for later revision, open the linear reader, or share your graph.
           </li>
           <li>
             <span class="font-semibold">Related · Pro/Con · Blend · Explore · Delete</span>
@@ -50,7 +50,7 @@ defmodule DialecticWeb.StartTutorialComp do
           </li>
           <li>
             <span class="font-semibold">Settings</span>
-            — change the graph layout, review highlights, or open settings (including Translate).
+            — change the graph layout, review highlights, and use tools like Translate.
           </li>
         </ul>
 
@@ -78,6 +78,7 @@ defmodule DialecticWeb.StartTutorialComp do
             <li>Click any node to center it.</li>
             <li>Use keyboard controls to move between nodes.</li>
             <li>The toolbar groups are separated by a vertical divider for quick scanning.</li>
+            <li>Star and highlight key ideas to build your revision trail.</li>
             <li>Find Translate options inside the Settings panel.</li>
           </ul>
         </div>
