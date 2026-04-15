@@ -42,7 +42,7 @@ defmodule DialecticWeb.DocumentMenuComp do
         <div class="flex items-start justify-between gap-2 px-1">
           <div>
             <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500">
-              Grid Actions
+              Shortcuts
             </h3>
             <p class="text-[11px] text-gray-500">
               Search, share, present, and manage this grid from one place.

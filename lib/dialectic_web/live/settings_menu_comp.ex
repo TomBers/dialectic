@@ -3,7 +3,7 @@ defmodule DialecticWeb.SettingsMenuComp do
 
   @moduledoc """
   Settings menu component that consolidates the right panel controls.
-  Contains Appearance, Configure, Workspace, Export, Utilities, and Node Guide sections.
+  Contains Appearance, Configure, Workspace, Export, and Utilities sections.
   """
 
   @impl true
@@ -56,36 +56,6 @@ defmodule DialecticWeb.SettingsMenuComp do
         prompt_mode={@prompt_mode}
         token={@token}
       />
-
-      <%!-- Node Guide Section --%>
-      <details class="group rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow transition-shadow">
-        <summary class="list-none cursor-pointer select-none px-3 py-2.5 rounded-lg hover:bg-gray-50/50 transition-colors">
-          <div class="flex items-center justify-between gap-3">
-            <div class="flex items-center gap-2.5">
-              <div class="flex items-center justify-center w-7 h-7 rounded-md bg-amber-50 text-amber-600">
-                <.icon name="hero-book-open" class="w-4 h-4" />
-              </div>
-              <div>
-                <div class="text-xs font-semibold text-gray-800">Node Guide</div>
-                <p class="text-[10px] text-gray-500 leading-tight">
-                  Node types and keyboard shortcuts
-                </p>
-              </div>
-            </div>
-            <.icon
-              name="hero-chevron-down"
-              class="w-4 h-4 text-gray-400 transition-transform duration-200 group-open:rotate-180"
-            />
-          </div>
-        </summary>
-        <div class="border-t border-gray-100 px-3 py-2.5">
-          <.live_component
-            module={DialecticWeb.GraphNavPanelComp}
-            id="graph-node-guide-panel"
-            section={:reference}
-          />
-        </div>
-      </details>
     </div>
     """
   end

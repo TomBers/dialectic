@@ -35,20 +35,7 @@ defmodule DialecticWeb.OriginOnboardingComp do
       <ul class="space-y-3 text-sm text-gray-700">
         <li class="flex gap-3 items-start">
           <span class="flex-none w-6 h-6 flex items-center justify-center rounded-md bg-gradient-to-r from-emerald-500 to-rose-500 text-white">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-3.5 w-3.5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z"
-              />
-            </svg>
+            <.icon name="hero-scale" class="h-3.5 w-3.5" />
           </span>
           <span>
             <strong class="text-gray-900">Add Pro/Con</strong>
@@ -58,23 +45,10 @@ defmodule DialecticWeb.OriginOnboardingComp do
         </li>
         <li class="flex gap-3 items-start">
           <span class="flex-none w-6 h-6 flex items-center justify-center rounded-md bg-violet-500 text-white">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-3.5 w-3.5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0 0 12 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 0 1-2.031.352 5.988 5.988 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.971Zm-16.5.52c.99-.203 1.99-.377 3-.52m0 0 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.989 5.989 0 0 1-2.031.352 5.989 5.989 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L5.25 4.971Z"
-              />
-            </svg>
+            <.icon name="hero-arrows-pointing-in" class="h-3.5 w-3.5" />
           </span>
           <span>
-            <strong class="text-gray-900">Combine boxes</strong>
+            <strong class="text-gray-900">Blend</strong>
             — Select two boxes to synthesize into one. The AI finds common ground, contrasts, or creates a unified perspective from both ideas.
           </span>
         </li>
@@ -183,21 +157,7 @@ defmodule DialecticWeb.OriginOnboardingComp do
             </span>
             <span class="text-gray-500">|</span>
             <span class="flex items-center gap-1 px-2 py-0.5 rounded">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-3 w-3"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z"
-                />
-              </svg>
-              Add Pro/Con
+              <.icon name="hero-scale" class="h-3 w-3" /> Add Pro/Con
             </span>
             <span class="text-gray-500">|</span>
             <span class="flex items-center gap-1 px-2 py-0.5 rounded">
@@ -242,6 +202,139 @@ defmodule DialecticWeb.OriginOnboardingComp do
             with others — they can explore and add their own thoughts.
           </li>
         </ul>
+      </div>
+
+      <h5 class="font-bold text-gray-900 text-xs uppercase tracking-wider mb-3 flex items-center gap-2 pt-3 border-t border-gray-200">
+        <span class="text-base">🎨</span> Node Colors
+      </h5>
+      <p class="text-xs text-gray-500 mb-3">
+        Each box type has a distinct color to help you navigate the grid:
+      </p>
+      <div class="grid grid-cols-2 gap-2.5">
+        <div class="flex items-start gap-2">
+          <div class={"w-3 h-3 rounded-full flex-shrink-0 mt-0.5 ring-2 ring-offset-1 ring-opacity-30 " <> DialecticWeb.ColUtils.dot_class("question") <> " ring-sky-400"}>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="text-xs font-medium text-gray-800">
+              {DialecticWeb.ColUtils.node_type_label("question")}
+            </div>
+            <div class="text-[10px] text-gray-500 leading-tight">Your questions</div>
+          </div>
+        </div>
+        <div class="flex items-start gap-2">
+          <div class={"w-3 h-3 rounded-full flex-shrink-0 mt-0.5 ring-2 ring-offset-1 ring-opacity-30 " <> DialecticWeb.ColUtils.dot_class("user") <> " ring-green-400"}>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="text-xs font-medium text-gray-800">
+              {DialecticWeb.ColUtils.node_type_label("user")}
+            </div>
+            <div class="text-[10px] text-gray-500 leading-tight">Your comments</div>
+          </div>
+        </div>
+        <div class="flex items-start gap-2">
+          <div class={"w-3 h-3 rounded-full flex-shrink-0 mt-0.5 ring-2 ring-offset-1 ring-opacity-30 " <> DialecticWeb.ColUtils.dot_class("answer") <> " ring-gray-400"}>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="text-xs font-medium text-gray-800">
+              {DialecticWeb.ColUtils.node_type_label("answer")}
+            </div>
+            <div class="text-[10px] text-gray-500 leading-tight">AI responses</div>
+          </div>
+        </div>
+        <div class="flex items-start gap-2">
+          <div class={"w-3 h-3 rounded-full flex-shrink-0 mt-0.5 ring-2 ring-offset-1 ring-opacity-30 " <> DialecticWeb.ColUtils.dot_class("thesis") <> " ring-green-400"}>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="text-xs font-medium text-gray-800">
+              {DialecticWeb.ColUtils.node_type_label("thesis")}
+            </div>
+            <div class="text-[10px] text-gray-500 leading-tight">Supporting points</div>
+          </div>
+        </div>
+        <div class="flex items-start gap-2">
+          <div class={"w-3 h-3 rounded-full flex-shrink-0 mt-0.5 ring-2 ring-offset-1 ring-opacity-30 " <> DialecticWeb.ColUtils.dot_class("antithesis") <> " ring-red-400"}>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="text-xs font-medium text-gray-800">
+              {DialecticWeb.ColUtils.node_type_label("antithesis")}
+            </div>
+            <div class="text-[10px] text-gray-500 leading-tight">Counterpoints</div>
+          </div>
+        </div>
+        <div class="flex items-start gap-2">
+          <div class={"w-3 h-3 rounded-full flex-shrink-0 mt-0.5 ring-2 ring-offset-1 ring-opacity-30 " <> DialecticWeb.ColUtils.dot_class("synthesis") <> " ring-purple-400"}>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="text-xs font-medium text-gray-800">
+              {DialecticWeb.ColUtils.node_type_label("synthesis")}
+            </div>
+            <div class="text-[10px] text-gray-500 leading-tight">Balanced views</div>
+          </div>
+        </div>
+        <div class="flex items-start gap-2">
+          <div class={"w-3 h-3 rounded-full flex-shrink-0 mt-0.5 ring-2 ring-offset-1 ring-opacity-30 " <> DialecticWeb.ColUtils.dot_class("ideas") <> " ring-amber-400"}>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="text-xs font-medium text-gray-800">
+              {DialecticWeb.ColUtils.node_type_label("ideas")}
+            </div>
+            <div class="text-[10px] text-gray-500 leading-tight">Related concepts</div>
+          </div>
+        </div>
+      </div>
+
+      <h5 class="font-bold text-gray-900 text-xs uppercase tracking-wider mb-3 flex items-center gap-2 pt-3 mt-4 border-t border-gray-200">
+        <span class="text-base">⌨️</span> Keyboard Shortcuts
+      </h5>
+      <div class="space-y-1.5">
+        <div class="flex items-center justify-between py-1">
+          <span class="text-xs text-gray-600">Pan graph</span>
+          <kbd class="px-2 py-1 bg-gray-100 border border-gray-200 rounded-md text-[10px] font-mono text-gray-600">
+            Space + Drag
+          </kbd>
+        </div>
+        <div class="flex items-center justify-between py-1">
+          <span class="text-xs text-gray-600">Zoom</span>
+          <kbd class="px-2 py-1 bg-gray-100 border border-gray-200 rounded-md text-[10px] font-mono text-gray-600">
+            ⌘/Ctrl + Scroll
+          </kbd>
+        </div>
+        <div class="flex items-center justify-between py-1">
+          <span class="text-xs text-gray-600">Scroll pan</span>
+          <kbd class="px-2 py-1 bg-gray-100 border border-gray-200 rounded-md text-[10px] font-mono text-gray-600">
+            Scroll
+          </kbd>
+        </div>
+        <div class="flex items-center justify-between py-1">
+          <span class="text-xs text-gray-600">Parent/child</span>
+          <kbd class="px-2 py-1 bg-gray-100 border border-gray-200 rounded-md text-[10px] font-mono text-gray-600">
+            ↑ / ↓
+          </kbd>
+        </div>
+        <div class="flex items-center justify-between py-1">
+          <span class="text-xs text-gray-600">Prev/next</span>
+          <kbd class="px-2 py-1 bg-gray-100 border border-gray-200 rounded-md text-[10px] font-mono text-gray-600">
+            ← / →
+          </kbd>
+        </div>
+        <div class="flex items-center justify-between py-1">
+          <span class="text-xs text-gray-600">Expand children</span>
+          <kbd class="px-2 py-1 bg-gray-100 border border-gray-200 rounded-md text-[10px] font-mono text-gray-600">
+            E
+          </kbd>
+        </div>
+        <div class="flex items-center justify-between py-1">
+          <span class="text-xs text-gray-600">Collapse children</span>
+          <kbd class="px-2 py-1 bg-gray-100 border border-gray-200 rounded-md text-[10px] font-mono text-gray-600">
+            C
+          </kbd>
+        </div>
+        <div class="flex items-center justify-between py-1">
+          <span class="text-xs text-gray-600">Open node</span>
+          <kbd class="px-2 py-1 bg-gray-100 border border-gray-200 rounded-md text-[10px] font-mono text-gray-600">
+            Enter
+          </kbd>
+        </div>
       </div>
     </div>
     """
