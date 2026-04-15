@@ -54,7 +54,6 @@ defmodule DialecticWeb.HomeLive do
     popular_tags = Graphs.list_popular_tags()
     curated_grids = Graphs.list_curated_grids("curated", 6)
     featured_grids = Graphs.list_curated_grids("featured", 6)
-    quick_tags = Enum.take(popular_tags, 6)
 
     {:noreply,
      assign(socket,
@@ -65,7 +64,6 @@ defmodule DialecticWeb.HomeLive do
        popular_tags: popular_tags,
        curated_grids: curated_grids,
        featured_grids: featured_grids,
-       quick_tags: quick_tags,
        page_title: page_title(search_term, tag, category)
      )}
   end
@@ -429,12 +427,12 @@ defmodule DialecticWeb.HomeLive do
                               <.icon name="hero-x-mark" class="h-5 w-5" />
                             </button>
                           <% end %>
-                          <button
-                            type="button"
-                            class="rounded-r-md border border-l-0 border-slate-300 bg-slate-100 px-4 py-2 text-slate-700 transition hover:bg-slate-200"
+                          <span
+                            aria-hidden="true"
+                            class="rounded-r-md border border-l-0 border-slate-300 bg-slate-100 px-4 py-2 text-slate-700"
                           >
                             <.icon name="hero-magnifying-glass" class="h-5 w-5" />
-                          </button>
+                          </span>
                         </form>
                       </div>
                     </div>

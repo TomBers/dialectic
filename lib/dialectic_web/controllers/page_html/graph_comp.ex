@@ -26,7 +26,7 @@ defmodule DialecticWeb.PageHtml.GraphComp do
           {@title}
         </h3>
 
-        <%= if author_name = assigns[:author_name] do %>
+        <%= if is_binary(author_name = assigns[:author_name]) and author_name != "" do %>
           <p class={[
             @compact &&
               "mt-1.5 inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ring-inset",

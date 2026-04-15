@@ -19,7 +19,7 @@ defmodule DialecticWeb.DocumentMenuComp do
     {:noreply, assign(socket, :show_help_modal, false)}
   end
 
-  # Ensure we show at least 2 nodes when starting from node 1
+  # Ensure we show at least 2 boxes when starting from box 1
   # so users don't think the document view is broken
   defp get_document_start_node(nil), do: nil
   defp get_document_start_node(%{id: "1"}), do: "2"
