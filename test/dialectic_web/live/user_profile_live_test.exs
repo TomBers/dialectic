@@ -120,7 +120,7 @@ defmodule DialecticWeb.UserProfileLiveTest do
       assert html =~ "Grids by otheruser"
     end
 
-    test "shows 'Create your first graph' only on own empty profile", %{conn: conn} do
+    test "shows 'Create your first grid' only on own empty profile", %{conn: conn} do
       user = create_user_with_username("emptyown")
 
       {:ok, _lv, html} =
@@ -128,10 +128,10 @@ defmodule DialecticWeb.UserProfileLiveTest do
         |> log_in_user(user)
         |> live(~p"/u/emptyown")
 
-      assert html =~ "Create your first graph"
+      assert html =~ "Create your first grid"
     end
 
-    test "does not show 'Create your first graph' on other user's empty profile", %{conn: conn} do
+    test "does not show 'Create your first grid' on other user's empty profile", %{conn: conn} do
       _other_user = create_user_with_username("emptyother")
       viewer = user_fixture()
 
@@ -140,7 +140,7 @@ defmodule DialecticWeb.UserProfileLiveTest do
         |> log_in_user(viewer)
         |> live(~p"/u/emptyother")
 
-      refute html =~ "Create your first graph"
+      refute html =~ "Create your first grid"
     end
   end
 
