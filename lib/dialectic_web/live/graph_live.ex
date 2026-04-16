@@ -733,6 +733,9 @@ defmodule DialecticWeb.GraphLive do
               push_event(updated_socket, "center_node", %{id: id})
             end
 
+          # Focus the ask input to encourage the user to ask a question
+          updated_socket = push_event(updated_socket, "focus_input", %{id: "global-chat-input"})
+
           {:noreply, updated_socket}
         end
     end

@@ -752,6 +752,20 @@ topbar.config({ barColors: { 0: "#29d" }, shadowColor: "rgba(0, 0, 0, .3)" });
 window.addEventListener("phx:page-loading-start", (_info) => topbar.show(300));
 window.addEventListener("phx:page-loading-stop", (_info) => topbar.hide());
 
+// Focus input element when requested by the server
+window.addEventListener("phx:focus_input", (e) => {
+  const id = e.detail?.id;
+  if (id) {
+    const el = document.getElementById(id);
+    if (el) {
+      // Small delay to ensure DOM is ready after LiveView updates
+      requestAnimationFrame(() => {
+        el.focus();
+      });
+    }
+  }
+});
+
 // connect if there are any LiveViews on the page
 liveSocket.connect();
 
