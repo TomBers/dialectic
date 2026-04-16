@@ -360,6 +360,7 @@ defmodule DialecticWeb.UserProfileLive do
                       title={graph.title}
                       is_public={graph.is_public}
                       link={graph_path(graph)}
+                      linear_link={graph_linear_path(graph)}
                       count={0}
                       tags={graph.tags}
                       node_count={
@@ -446,6 +447,7 @@ defmodule DialecticWeb.UserProfileLive do
                         title={g.title}
                         is_public={g.is_public}
                         link={graph_path(g)}
+                        linear_link={graph_linear_path(g)}
                         count={g.noted_count}
                         tags={g.tags}
                         node_count={g.node_count}
@@ -508,10 +510,31 @@ defmodule DialecticWeb.UserProfileLive do
               <% else %>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <%= for note <- @noted_notes do %>
+                    <%!-- Desktop link (graph view) --%>
                     <.link
                       navigate={graph_path(note.graph, note.node_id)}
                       class={[
-                        "block rounded-xl p-4 transition-all",
+                        "hidden lg:block rounded-xl p-4 transition-all",
+                        theme_card_class(@theme),
+                        theme_link_class(@theme)
+                      ]}
+                    >
+                      <div class={[
+                        "text-sm font-medium mb-1.5 line-clamp-2",
+                        theme_heading_class(@theme)
+                      ]}>
+                        {note.node_title}
+                      </div>
+                      <div class={["flex items-center gap-1.5 text-xs", theme_subtext_class(@theme)]}>
+                        <.icon name="hero-arrow-top-right-on-square" class="h-3 w-3" />
+                        {note.graph_title}
+                      </div>
+                    </.link>
+                    <%!-- Mobile link (linear view) --%>
+                    <.link
+                      navigate={graph_linear_path(note.graph, note.node_id)}
+                      class={[
+                        "lg:hidden block rounded-xl p-4 transition-all",
                         theme_card_class(@theme),
                         theme_link_class(@theme)
                       ]}
