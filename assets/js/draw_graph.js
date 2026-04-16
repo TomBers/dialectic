@@ -4,9 +4,8 @@ import compoundDragAndDrop from "cytoscape-compound-drag-and-drop";
 import { graphStyle } from "./graph_style";
 import { layoutConfig } from "./layout_config.js";
 import {
-  rebuildTypeBadgeOverlays,
-  updateTypeBadgePositions,
-  destroyTypeBadgeOverlays,
+  applyBadgeStyles,
+  removeBadgeStyles,
   areBadgesEnabled,
   toggleTypeBadges,
 } from "./node_type_badges.js";
@@ -848,10 +847,6 @@ export function draw_graph(
   // Rebuild overlay buttons after every layout completes (covers init + expand/collapse relayouts)
   cy.on("layoutstop", () => {
     _rebuildDepthToggleOverlays(cy, container);
-    // Also rebuild type badges after layout
-    if (areBadgesEnabled()) {
-      rebuildTypeBadgeOverlays(cy, container);
-    }
   });
 
   // Keep button positions in sync with pan / zoom / animation (throttled to 1 rAF)
@@ -862,8 +857,6 @@ export function draw_graph(
       requestAnimationFrame(() => {
         _depthToggleRafPending = false;
         _updateDepthTogglePositions(cy);
-        // Also update type badge positions
-        updateTypeBadgePositions(cy);
       });
     }
   });
@@ -872,11 +865,12 @@ export function draw_graph(
   // above is registered (if dagre finishes synchronously), so schedule a fallback.
   requestAnimationFrame(() => {
     _rebuildDepthToggleOverlays(cy, container);
-    // Also build initial type badges
-    if (areBadgesEnabled()) {
-      rebuildTypeBadgeOverlays(cy, container);
-    }
   });
+
+  // Apply type badge styles using native Cytoscape background-image
+  if (areBadgesEnabled()) {
+    applyBadgeStyles(cy);
+  }
 
   // Expose cleanup so graph_hook.js can remove the overlay on destroy
   cy.cleanupDepthOverlay = () => {
@@ -889,22 +883,22 @@ export function draw_graph(
     } catch (_e) {}
   };
 
-  // ── Type badge overlay controls ──
+  // ── Type badge style controls ──
   cy.cleanupTypeBadges = () => {
     try {
-      destroyTypeBadgeOverlays(cy);
+      removeBadgeStyles(cy);
     } catch (_e) {}
   };
 
   cy.toggleTypeBadges = (enabled) => {
-    toggleTypeBadges(cy, container, enabled);
+    toggleTypeBadges(cy, enabled);
   };
 
   cy.areBadgesEnabled = areBadgesEnabled;
 
   cy.rebuildTypeBadges = () => {
     if (areBadgesEnabled()) {
-      rebuildTypeBadgeOverlays(cy, container);
+      applyBadgeStyles(cy);
     }
   };
 

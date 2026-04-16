@@ -1,6 +1,7 @@
 /**
- * Node Type Badges - Displays small badge overlays on Cytoscape nodes
- * to indicate their type (thesis, antithesis, synthesis, etc.)
+ * Node Type Badges - Uses Cytoscape's native background-image styling
+ * to display type badges on nodes. Badges render as part of the canvas,
+ * avoiding z-index issues with HTML overlays.
  */
 
 // Type abbreviations and display config
@@ -8,343 +9,209 @@ const TYPE_CONFIG = {
   thesis: {
     abbrev: "Pro",
     label: "Thesis",
-    bg: "#d1fae5",
-    border: "#34d399",
+    bg: "#6ee7b7",
+    border: "#059669",
     text: "#064e3b",
   },
   antithesis: {
     abbrev: "Con",
     label: "Antithesis",
-    bg: "#fee2e2",
-    border: "#f87171",
+    bg: "#fca5a5",
+    border: "#dc2626",
     text: "#7f1d1d",
   },
   synthesis: {
     abbrev: "Blend",
     label: "Synthesis",
-    bg: "#f3e8ff",
-    border: "#a78bfa",
+    bg: "#c4b5fd",
+    border: "#7c3aed",
     text: "#581c87",
   },
   question: {
     abbrev: "Qn",
     label: "Question",
-    bg: "#e0f2fe",
-    border: "#0ea5e9",
+    bg: "#7dd3fc",
+    border: "#0284c7",
     text: "#0c4a6e",
   },
   user: {
     abbrev: "U",
     label: "User",
-    bg: "#bbf7d0",
+    bg: "#86efac",
     border: "#16a34a",
     text: "#14532d",
   },
   deepdive: {
     abbrev: "DD",
     label: "Deep Dive",
-    bg: "#cffafe",
-    border: "#22d3ee",
+    bg: "#67e8f9",
+    border: "#0891b2",
     text: "#164e63",
   },
   origin: {
     abbrev: "O",
     label: "Origin",
-    bg: "#e2e8f0",
-    border: "#64748b",
+    bg: "#94a3b8",
+    border: "#475569",
     text: "#1e293b",
   },
   ideas: {
     abbrev: "ID",
     label: "Ideas",
-    bg: "#ffedd5",
-    border: "#fb923c",
+    bg: "#fdba74",
+    border: "#ea580c",
     text: "#7c2d12",
   },
   answer: {
     abbrev: "Ans",
     label: "Answer",
-    bg: "#f3f4f6",
-    border: "#9ca3af",
-    text: "#374151",
+    bg: "#d1d5db",
+    border: "#6b7280",
+    text: "#1f2937",
   },
   explain: {
     abbrev: "EX",
     label: "Explain",
-    bg: "#f3f4f6",
-    border: "#9ca3af",
-    text: "#374151",
+    bg: "#d1d5db",
+    border: "#6b7280",
+    text: "#1f2937",
   },
   clarify: {
     abbrev: "CL",
     label: "Clarify",
-    bg: "#f3f4f6",
-    border: "#9ca3af",
-    text: "#374151",
+    bg: "#d1d5db",
+    border: "#6b7280",
+    text: "#1f2937",
   },
   assumption: {
     abbrev: "AS",
     label: "Assumption",
-    bg: "#fef9c3",
-    border: "#facc15",
+    bg: "#fde047",
+    border: "#ca8a04",
     text: "#713f12",
   },
   premise: {
     abbrev: "PR",
     label: "Premise",
-    bg: "#dbeafe",
-    border: "#3b82f6",
+    bg: "#93c5fd",
+    border: "#2563eb",
     text: "#1e3a8a",
   },
   conclusion: {
     abbrev: "CO",
     label: "Conclusion",
-    bg: "#fce7f3",
-    border: "#ec4899",
+    bg: "#f9a8d4",
+    border: "#db2777",
     text: "#831843",
   },
 };
 
-let stylesInjected = false;
+// Cache for generated SVG data URLs
+const svgCache = new Map();
 
 /**
- * Inject CSS styles for type badges
+ * Generate an SVG badge as a data URL
  */
-function _injectTypeBadgeStyles() {
-  if (stylesInjected) return;
-  stylesInjected = true;
+function generateBadgeSvg(type) {
+  const config = TYPE_CONFIG[type];
+  if (!config) return null;
 
-  const s = document.createElement("style");
-  s.id = "node-type-badge-styles";
-  s.textContent = `
-/* Container for all type badges */
-.type-badge-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1;
-  overflow: visible;
-}
-
-/* Individual type badge */
-.type-badge {
-  position: absolute;
-  pointer-events: auto;
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 9px;
-  font-weight: 600;
-  line-height: 1;
-  padding: 2px 4px;
-  border-radius: 4px;
-  border: 1px solid;
-  white-space: nowrap;
-  cursor: default;
-  user-select: none;
-  opacity: 0.9;
-  transition: opacity 0.15s ease, transform 0.15s ease;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  transform-origin: center center;
-}
-
-.type-badge:hover {
-  opacity: 1;
-  z-index: 2;
-}
-
-/* Badge positioning - badges float outside node bounds */
-.type-badge.badge-dir-tb,
-.type-badge.badge-dir-lr {
-  transform: translate(0, -100%);
-}
-
-.type-badge.badge-dir-bt {
-  transform: translate(0, 0);
-}
-
-.type-badge.badge-dir-rl {
-  transform: translate(-100%, -100%);
-}
-
-/* Hide badges when zoomed out too far for readability */
-.type-badge.badge-hidden {
-  display: none;
-}
-`;
-  document.head.appendChild(s);
-}
-
-/**
- * Get the node type from its classes
- */
-function getNodeType(node) {
-  const classes = node.classes();
-  for (const cls of classes) {
-    if (TYPE_CONFIG[cls]) {
-      return cls;
-    }
-  }
-  return null;
-}
-
-/**
- * Get badge configuration for a type
- */
-function getBadgeConfig(type) {
-  return TYPE_CONFIG[type] || null;
-}
-
-/**
- * Build all type badge overlays for visible nodes
- */
-export function rebuildTypeBadgeOverlays(cy, container) {
-  if (!container) return;
-
-  _injectTypeBadgeStyles();
-
-  // Create or reuse the overlay container
-  let overlay = container.querySelector(".type-badge-overlay");
-  if (!overlay) {
-    overlay = document.createElement("div");
-    overlay.className = "type-badge-overlay";
-    // Ensure the graph container is a positioning context
-    const pos = getComputedStyle(container).position;
-    if (pos === "static") container.style.position = "relative";
-    container.appendChild(overlay);
+  const cacheKey = type;
+  if (svgCache.has(cacheKey)) {
+    return svgCache.get(cacheKey);
   }
 
-  // Clear old badges
-  overlay.innerHTML = "";
+  const text = config.abbrev;
+  // Estimate width based on text length
+  const charWidth = 7;
+  const padding = 8;
+  const width = text.length * charWidth + padding * 2;
+  const height = 18;
+  const radius = 4;
 
-  // Store refs on the cy instance for position updates
-  cy._typeBadgeOverlay = overlay;
-  cy._typeBadges = new Map();
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+    <rect x="0.5" y="0.5" width="${width - 1}" height="${height - 1}" rx="${radius}" ry="${radius}"
+          fill="${config.bg}" stroke="${config.border}" stroke-width="1"/>
+    <text x="${width / 2}" y="${height / 2 + 1}"
+          font-family="ui-sans-serif, system-ui, -apple-system, sans-serif"
+          font-size="10" font-weight="600"
+          fill="${config.text}"
+          text-anchor="middle" dominant-baseline="middle">${text}</text>
+  </svg>`;
 
-  // Find visible, non-compound nodes
-  const visible = cy
-    .nodes()
-    .filter(
-      (n) =>
-        !n.isParent() && !n.hasClass("depth-hidden") && !n.hasClass("hidden"),
-    );
+  const dataUrl = "data:image/svg+xml," + encodeURIComponent(svg);
+  svgCache.set(cacheKey, dataUrl);
+  return dataUrl;
+}
 
-  visible.forEach((n) => {
-    const type = getNodeType(n);
-    if (!type) return; // No recognized type
+/**
+ * Generate Cytoscape style rules for type badges
+ * These styles use background-image to render badges as part of the node
+ */
+export function generateBadgeStyles() {
+  const styles = [];
 
-    const config = getBadgeConfig(type);
-    if (!config) return;
+  for (const [type, config] of Object.entries(TYPE_CONFIG)) {
+    const svgUrl = generateBadgeSvg(type);
+    if (!svgUrl) continue;
 
-    const badge = document.createElement("div");
-    badge.className = "type-badge";
-    badge.textContent = config.abbrev;
-    badge.title = config.label;
-    badge.dataset.nodeId = n.id();
-    badge.dataset.nodeType = type;
+    // Estimate badge dimensions for positioning
+    const charWidth = 7;
+    const padding = 8;
+    const badgeWidth = config.abbrev.length * charWidth + padding * 2;
+    const badgeHeight = 18;
 
-    // Apply type-specific colors
-    badge.style.backgroundColor = config.bg;
-    badge.style.borderColor = config.border;
-    badge.style.color = config.text;
+    styles.push({
+      selector: `node.${type}`,
+      style: {
+        "background-image": svgUrl,
+        "background-width": badgeWidth,
+        "background-height": badgeHeight,
+        "background-position-x": "100%",
+        "background-position-y": "0%",
+        "background-offset-x": -2,
+        "background-offset-y": 2,
+        "background-clip": "none",
+        "background-image-containment": "over",
+        "bounds-expansion": badgeHeight,
+      },
+    });
+  }
 
-    overlay.appendChild(badge);
-    cy._typeBadges.set(n.id(), badge);
+  return styles;
+}
+
+/**
+ * Apply badge styles to an existing Cytoscape instance
+ */
+export function applyBadgeStyles(cy) {
+  if (!cy) return;
+
+  const badgeStyles = generateBadgeStyles();
+
+  // Add badge styles to the existing stylesheet
+  badgeStyles.forEach((styleObj) => {
+    cy.style().selector(styleObj.selector).style(styleObj.style);
   });
 
-  updateTypeBadgePositions(cy);
+  cy.style().update();
 }
 
 /**
- * Update positions of all type badges based on node positions
- * Called on pan/zoom/render
+ * Remove badge styles from a Cytoscape instance
  */
-export function updateTypeBadgePositions(cy) {
-  if (!cy._typeBadges) return;
+export function removeBadgeStyles(cy) {
+  if (!cy) return;
 
-  const zoom = cy.zoom();
-  const dir = localStorage.getItem("graph_direction") || "TB";
-
-  // Hide badges when zoomed out too far (below 0.4 zoom)
-  const showBadges = zoom >= 0.3;
-
-  cy._typeBadges.forEach((badge, nodeId) => {
-    const node = cy.getElementById(nodeId);
-    if (
-      !node ||
-      node.length === 0 ||
-      node.hasClass("depth-hidden") ||
-      node.hasClass("hidden")
-    ) {
-      badge.style.display = "none";
-      return;
-    }
-
-    if (!showBadges) {
-      badge.classList.add("badge-hidden");
-      return;
-    }
-
-    badge.classList.remove("badge-hidden");
-    badge.style.display = "";
-
-    // Get node bounding box in rendered coordinates
-    const bb = node.renderedBoundingBox({ includeLabels: false });
-
-    // Update direction class
-    badge.classList.remove(
-      "badge-dir-tb",
-      "badge-dir-bt",
-      "badge-dir-lr",
-      "badge-dir-rl",
-    );
-    badge.classList.add(`badge-dir-${dir.toLowerCase()}`);
-
-    // Position badge completely outside the node bounds
-    // Use larger offset to ensure badges don't overlap node content
-    const offset = 8; // pixels outside the node
-    let left, top;
-
-    switch (dir) {
-      case "TB": // Top to bottom - badge above top-right corner
-        left = bb.x2;
-        top = bb.y1 - offset;
-        break;
-      case "BT": // Bottom to top - badge below bottom-right corner
-        left = bb.x2;
-        top = bb.y2 + offset;
-        break;
-      case "LR": // Left to right - badge above top-right corner
-        left = bb.x2;
-        top = bb.y1 - offset;
-        break;
-      case "RL": // Right to left - badge above top-left corner
-        left = bb.x1;
-        top = bb.y1 - offset;
-        break;
-      default:
-        left = bb.x2;
-        top = bb.y1 - offset;
-    }
-
-    badge.style.left = `${left}px`;
-    badge.style.top = `${top}px`;
-  });
-}
-
-/**
- * Clean up badge overlays when graph is destroyed
- */
-export function destroyTypeBadgeOverlays(cy) {
-  if (cy._typeBadgeOverlay) {
-    cy._typeBadgeOverlay.remove();
-    cy._typeBadgeOverlay = null;
+  // Reset background-image for all typed nodes
+  for (const type of Object.keys(TYPE_CONFIG)) {
+    cy.style().selector(`node.${type}`).style({
+      "background-image": "none",
+      "bounds-expansion": 0,
+    });
   }
-  if (cy._typeBadges) {
-    cy._typeBadges.clear();
-    cy._typeBadges = null;
-  }
+
+  cy.style().update();
 }
 
 /**
@@ -359,13 +226,13 @@ export function areBadgesEnabled() {
 /**
  * Toggle type badges on/off
  */
-export function toggleTypeBadges(cy, container, enabled) {
+export function toggleTypeBadges(cy, enabled) {
   localStorage.setItem("show_type_badges", enabled ? "true" : "false");
 
   if (enabled) {
-    rebuildTypeBadgeOverlays(cy, container);
+    applyBadgeStyles(cy);
   } else {
-    destroyTypeBadgeOverlays(cy);
+    removeBadgeStyles(cy);
   }
 }
 
