@@ -1686,7 +1686,7 @@ const graphHook = {
         this.cy.cleanupDepthOverlay();
       } catch (_e) {}
     }
-    // Clean up type badge overlays
+    // Clean up type badge styles
     if (this.cy && typeof this.cy.cleanupTypeBadges === "function") {
       try {
         this.cy.cleanupTypeBadges();
