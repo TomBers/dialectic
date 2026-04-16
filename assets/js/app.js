@@ -9,7 +9,13 @@ import "./user_socket.js";
     const path = window.location.pathname;
     const graphMatch = path.match(/^\/g\/([^/]+)$/);
     if (graphMatch) {
-      const linearUrl = `/g/${graphMatch[1]}/linear${window.location.search}`;
+      const params = new URLSearchParams(window.location.search);
+      if (params.has("node") && !params.has("node_id")) {
+        params.set("node_id", params.get("node"));
+        params.delete("node");
+      }
+      const queryString = params.toString();
+      const linearUrl = `/g/${graphMatch[1]}/linear${queryString ? `?${queryString}` : ""}${window.location.hash}`;
       window.location.replace(linearUrl);
     }
   }
