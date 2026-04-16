@@ -13,11 +13,8 @@ export const ViewModeHook = {
       ? savedDirection
       : "TB";
 
-    // Get initial type badges state from localStorage (default to true/enabled)
-    const savedBadges = localStorage.getItem("show_type_badges");
-    this.showTypeBadges = savedBadges !== "false"; // default to true if not set
-
     // Get initial uniform style state from localStorage (default to false/disabled)
+    // Uniform style also controls badges (uniform ON = badges ON, uniform OFF = badges OFF)
     const savedUniform = localStorage.getItem("uniform_node_style");
     this.uniformStyle = savedUniform === "true";
 
@@ -38,12 +35,6 @@ export const ViewModeHook = {
       });
       this._directionButtonBindings = null;
     }
-    if (this.badgesToggleInput && this._onBadgesToggleChange) {
-      this.badgesToggleInput.removeEventListener(
-        "change",
-        this._onBadgesToggleChange,
-      );
-    }
     if (this.uniformToggleInput && this._onUniformToggleChange) {
       this.uniformToggleInput.removeEventListener(
         "change",
@@ -63,12 +54,6 @@ export const ViewModeHook = {
       });
       this._directionButtonBindings = null;
     }
-    if (this.badgesToggleInput && this._onBadgesToggleChange) {
-      this.badgesToggleInput.removeEventListener(
-        "change",
-        this._onBadgesToggleChange,
-      );
-    }
     if (this.uniformToggleInput && this._onUniformToggleChange) {
       this.uniformToggleInput.removeEventListener(
         "change",
@@ -84,15 +69,6 @@ export const ViewModeHook = {
       this.toggleInput?.parentElement.querySelector("div:first-of-type");
     this.toggleKnob =
       this.toggleInput?.parentElement.querySelector("div:last-of-type");
-
-    // Get type badges toggle elements
-    this.badgesToggleInput = this.el.querySelector(
-      '[data-type-badges-toggle="toggle"]',
-    );
-    this.badgesToggleBg =
-      this.badgesToggleInput?.parentElement.querySelector(".type-badges-track");
-    this.badgesToggleKnob =
-      this.badgesToggleInput?.parentElement.querySelector(".type-badges-thumb");
 
     // Get uniform style toggle elements
     this.uniformToggleInput = this.el.querySelector(
@@ -113,7 +89,6 @@ export const ViewModeHook = {
 
     // Set initial toggle states
     this.updateToggle();
-    this.updateBadgesToggle();
     this.updateUniformToggle();
     this.updateDirectionButtons();
 
@@ -134,27 +109,8 @@ export const ViewModeHook = {
       this.toggleInput.addEventListener("change", this._onToggleChange);
     }
 
-    // Listen for type badges toggle click
-    if (this.badgesToggleInput) {
-      this._onBadgesToggleChange = (e) => {
-        // Toggle badges on/off
-        const newState = !this.showTypeBadges;
-
-        this.showTypeBadges = newState;
-        localStorage.setItem("show_type_badges", newState ? "true" : "false");
-
-        // Update toggle visual state
-        this.updateBadgesToggle();
-
-        this._dispatchToGraphs("typeBadgesChanged", { enabled: newState });
-      };
-      this.badgesToggleInput.addEventListener(
-        "change",
-        this._onBadgesToggleChange,
-      );
-    }
-
     // Listen for uniform style toggle click
+    // This also controls badges (uniform ON = badges ON, uniform OFF = badges OFF)
     if (this.uniformToggleInput) {
       this._onUniformToggleChange = (e) => {
         // Toggle uniform style on/off
@@ -162,11 +118,13 @@ export const ViewModeHook = {
 
         this.uniformStyle = newState;
         localStorage.setItem("uniform_node_style", newState ? "true" : "false");
+        // Sync badges with uniform style
+        localStorage.setItem("show_type_badges", newState ? "true" : "false");
 
         // Update toggle visual state
         this.updateUniformToggle();
 
-        // Dispatch event - requires full graph redraw
+        // Dispatch event - full graph redraw picks up badge setting from localStorage
         this._dispatchToGraphs("uniformStyleChanged", { enabled: newState });
       };
       this.uniformToggleInput.addEventListener(
@@ -267,36 +225,6 @@ export const ViewModeHook = {
       this.toggleKnob.classList.add("translate-x-4");
     } else {
       this.toggleKnob.classList.remove("translate-x-4");
-    }
-  },
-
-  updateBadgesToggle() {
-    if (
-      !this.badgesToggleInput ||
-      !this.badgesToggleBg ||
-      !this.badgesToggleKnob
-    )
-      return;
-
-    const isEnabled = this.showTypeBadges;
-
-    // Update checkbox state
-    this.badgesToggleInput.checked = isEnabled;
-
-    // Update background color
-    if (isEnabled) {
-      this.badgesToggleBg.classList.remove("bg-gray-300");
-      this.badgesToggleBg.classList.add("bg-indigo-600");
-    } else {
-      this.badgesToggleBg.classList.remove("bg-indigo-600");
-      this.badgesToggleBg.classList.add("bg-gray-300");
-    }
-
-    // Update knob position
-    if (isEnabled) {
-      this.badgesToggleKnob.classList.add("translate-x-4");
-    } else {
-      this.badgesToggleKnob.classList.remove("translate-x-4");
     }
   },
 

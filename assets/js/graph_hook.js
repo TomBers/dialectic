@@ -345,17 +345,8 @@ const graphHook = {
       this._onGraphDirectionChange,
     );
 
-    // Handle type badges toggle via custom event
-    this._onTypeBadgesChange = (e) => {
-      const enabled = e.detail.enabled;
-      if (this.cy && typeof this.cy.toggleTypeBadges === "function") {
-        this.cy.toggleTypeBadges(enabled);
-      }
-    };
-
-    this.el.addEventListener("typeBadgesChanged", this._onTypeBadgesChange);
-
     // Handle uniform style toggle via custom event (requires full redraw)
+    // This also controls badges (uniform ON = badges ON, uniform OFF = badges OFF)
     this._onUniformStyleChange = (e) => {
       const currentNode = this.el.dataset.node;
       const graph = this.el.dataset.graph;
@@ -1602,12 +1593,6 @@ const graphHook = {
       this.el.removeEventListener(
         "graphDirectionChanged",
         this._onGraphDirectionChange,
-      );
-    }
-    if (this._onTypeBadgesChange) {
-      this.el.removeEventListener(
-        "typeBadgesChanged",
-        this._onTypeBadgesChange,
       );
     }
     if (this._onUniformStyleChange) {

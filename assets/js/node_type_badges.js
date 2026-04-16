@@ -215,12 +215,12 @@ export function removeBadgeStyles(cy) {
 }
 
 /**
- * Check if type badges are enabled (can be toggled via localStorage)
+ * Check if type badges are enabled (synced with uniform style setting)
  */
 export function areBadgesEnabled() {
   const setting = localStorage.getItem("show_type_badges");
-  // Default to true if not set
-  return setting !== "false";
+  // Default to false (badges only shown with uniform style)
+  return setting === "true";
 }
 
 /**
