@@ -17,6 +17,10 @@ export const ViewModeHook = {
     const savedBadges = localStorage.getItem("show_type_badges");
     this.showTypeBadges = savedBadges !== "false"; // default to true if not set
 
+    // Get initial uniform style state from localStorage (default to false/disabled)
+    const savedUniform = localStorage.getItem("uniform_node_style");
+    this.uniformStyle = savedUniform === "true";
+
     this._bindEvents();
   },
 
@@ -40,6 +44,12 @@ export const ViewModeHook = {
         this._onBadgesToggleChange,
       );
     }
+    if (this.uniformToggleInput && this._onUniformToggleChange) {
+      this.uniformToggleInput.removeEventListener(
+        "change",
+        this._onUniformToggleChange,
+      );
+    }
   },
 
   _bindEvents() {
@@ -57,6 +67,12 @@ export const ViewModeHook = {
       this.badgesToggleInput.removeEventListener(
         "change",
         this._onBadgesToggleChange,
+      );
+    }
+    if (this.uniformToggleInput && this._onUniformToggleChange) {
+      this.uniformToggleInput.removeEventListener(
+        "change",
+        this._onUniformToggleChange,
       );
     }
 
@@ -78,6 +94,18 @@ export const ViewModeHook = {
     this.badgesToggleKnob =
       this.badgesToggleInput?.parentElement.querySelector(".type-badges-thumb");
 
+    // Get uniform style toggle elements
+    this.uniformToggleInput = this.el.querySelector(
+      '[data-uniform-style-toggle="toggle"]',
+    );
+    this.uniformToggleBg = this.uniformToggleInput?.parentElement.querySelector(
+      ".uniform-style-track",
+    );
+    this.uniformToggleKnob =
+      this.uniformToggleInput?.parentElement.querySelector(
+        ".uniform-style-thumb",
+      );
+
     // Get graph direction option buttons
     this.directionButtons = Array.from(
       this.el.querySelectorAll("[data-graph-direction-option]"),
@@ -86,6 +114,7 @@ export const ViewModeHook = {
     // Set initial toggle states
     this.updateToggle();
     this.updateBadgesToggle();
+    this.updateUniformToggle();
     this.updateDirectionButtons();
 
     // Listen for view mode toggle click
@@ -122,6 +151,27 @@ export const ViewModeHook = {
       this.badgesToggleInput.addEventListener(
         "change",
         this._onBadgesToggleChange,
+      );
+    }
+
+    // Listen for uniform style toggle click
+    if (this.uniformToggleInput) {
+      this._onUniformToggleChange = (e) => {
+        // Toggle uniform style on/off
+        const newState = !this.uniformStyle;
+
+        this.uniformStyle = newState;
+        localStorage.setItem("uniform_node_style", newState ? "true" : "false");
+
+        // Update toggle visual state
+        this.updateUniformToggle();
+
+        // Dispatch event - requires full graph redraw
+        this._dispatchToGraphs("uniformStyleChanged", { enabled: newState });
+      };
+      this.uniformToggleInput.addEventListener(
+        "change",
+        this._onUniformToggleChange,
       );
     }
 
@@ -247,6 +297,36 @@ export const ViewModeHook = {
       this.badgesToggleKnob.classList.add("translate-x-4");
     } else {
       this.badgesToggleKnob.classList.remove("translate-x-4");
+    }
+  },
+
+  updateUniformToggle() {
+    if (
+      !this.uniformToggleInput ||
+      !this.uniformToggleBg ||
+      !this.uniformToggleKnob
+    )
+      return;
+
+    const isEnabled = this.uniformStyle;
+
+    // Update checkbox state
+    this.uniformToggleInput.checked = isEnabled;
+
+    // Update background color
+    if (isEnabled) {
+      this.uniformToggleBg.classList.remove("bg-gray-300");
+      this.uniformToggleBg.classList.add("bg-indigo-600");
+    } else {
+      this.uniformToggleBg.classList.remove("bg-indigo-600");
+      this.uniformToggleBg.classList.add("bg-gray-300");
+    }
+
+    // Update knob position
+    if (isEnabled) {
+      this.uniformToggleKnob.classList.add("translate-x-4");
+    } else {
+      this.uniformToggleKnob.classList.remove("translate-x-4");
     }
   },
 };
