@@ -766,6 +766,17 @@ window.addEventListener("phx:focus_input", (e) => {
   }
 });
 
+// Allow Escape key to blur focused inputs and restore keyboard shortcuts
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    const target = e.target;
+    const tag = target?.tagName || "";
+    if (tag === "INPUT" || tag === "TEXTAREA") {
+      target.blur();
+    }
+  }
+});
+
 // connect if there are any LiveViews on the page
 liveSocket.connect();
 
