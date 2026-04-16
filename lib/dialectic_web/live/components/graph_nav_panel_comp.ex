@@ -97,6 +97,23 @@ defmodule DialecticWeb.GraphNavPanelComp do
                 <span class="text-[11px] text-gray-500">Compact</span>
               </div>
             </label>
+            <label class="flex items-center justify-between cursor-pointer">
+              <div>
+                <span class="text-xs text-gray-700">Type Badges</span>
+                <p class="text-[10px] text-gray-400">Show node type labels</p>
+              </div>
+              <div class="relative">
+                <input
+                  type="checkbox"
+                  class="sr-only"
+                  data-type-badges-toggle="toggle"
+                  aria-label="Toggle type badges"
+                />
+                <div class="type-badges-track w-9 h-5 bg-gray-300 rounded-full transition"></div>
+                <div class="type-badges-thumb absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow transition transform">
+                </div>
+              </div>
+            </label>
           </div>
 
           <%!-- Graph Direction --%>

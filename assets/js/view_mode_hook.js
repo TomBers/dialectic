@@ -13,6 +13,10 @@ export const ViewModeHook = {
       ? savedDirection
       : "TB";
 
+    // Get initial type badges state from localStorage (default to true/enabled)
+    const savedBadges = localStorage.getItem("show_type_badges");
+    this.showTypeBadges = savedBadges !== "false"; // default to true if not set
+
     this._bindEvents();
   },
 
@@ -30,6 +34,12 @@ export const ViewModeHook = {
       });
       this._directionButtonBindings = null;
     }
+    if (this.badgesToggleInput && this._onBadgesToggleChange) {
+      this.badgesToggleInput.removeEventListener(
+        "change",
+        this._onBadgesToggleChange,
+      );
+    }
   },
 
   _bindEvents() {
@@ -43,6 +53,12 @@ export const ViewModeHook = {
       });
       this._directionButtonBindings = null;
     }
+    if (this.badgesToggleInput && this._onBadgesToggleChange) {
+      this.badgesToggleInput.removeEventListener(
+        "change",
+        this._onBadgesToggleChange,
+      );
+    }
 
     // Get view mode toggle elements
     this.toggleInput = this.el.querySelector(
@@ -53,6 +69,15 @@ export const ViewModeHook = {
     this.toggleKnob =
       this.toggleInput?.parentElement.querySelector("div:last-of-type");
 
+    // Get type badges toggle elements
+    this.badgesToggleInput = this.el.querySelector(
+      '[data-type-badges-toggle="toggle"]',
+    );
+    this.badgesToggleBg =
+      this.badgesToggleInput?.parentElement.querySelector(".type-badges-track");
+    this.badgesToggleKnob =
+      this.badgesToggleInput?.parentElement.querySelector(".type-badges-thumb");
+
     // Get graph direction option buttons
     this.directionButtons = Array.from(
       this.el.querySelectorAll("[data-graph-direction-option]"),
@@ -60,6 +85,7 @@ export const ViewModeHook = {
 
     // Set initial toggle states
     this.updateToggle();
+    this.updateBadgesToggle();
     this.updateDirectionButtons();
 
     // Listen for view mode toggle click
@@ -77,6 +103,26 @@ export const ViewModeHook = {
         this._dispatchToGraphs("viewModeChanged", { view_mode: newMode });
       };
       this.toggleInput.addEventListener("change", this._onToggleChange);
+    }
+
+    // Listen for type badges toggle click
+    if (this.badgesToggleInput) {
+      this._onBadgesToggleChange = (e) => {
+        // Toggle badges on/off
+        const newState = !this.showTypeBadges;
+
+        this.showTypeBadges = newState;
+        localStorage.setItem("show_type_badges", newState ? "true" : "false");
+
+        // Update toggle visual state
+        this.updateBadgesToggle();
+
+        this._dispatchToGraphs("typeBadgesChanged", { enabled: newState });
+      };
+      this.badgesToggleInput.addEventListener(
+        "change",
+        this._onBadgesToggleChange,
+      );
     }
 
     // Listen for graph direction selection
@@ -171,6 +217,36 @@ export const ViewModeHook = {
       this.toggleKnob.classList.add("translate-x-4");
     } else {
       this.toggleKnob.classList.remove("translate-x-4");
+    }
+  },
+
+  updateBadgesToggle() {
+    if (
+      !this.badgesToggleInput ||
+      !this.badgesToggleBg ||
+      !this.badgesToggleKnob
+    )
+      return;
+
+    const isEnabled = this.showTypeBadges;
+
+    // Update checkbox state
+    this.badgesToggleInput.checked = isEnabled;
+
+    // Update background color
+    if (isEnabled) {
+      this.badgesToggleBg.classList.remove("bg-gray-300");
+      this.badgesToggleBg.classList.add("bg-indigo-600");
+    } else {
+      this.badgesToggleBg.classList.remove("bg-indigo-600");
+      this.badgesToggleBg.classList.add("bg-gray-300");
+    }
+
+    // Update knob position
+    if (isEnabled) {
+      this.badgesToggleKnob.classList.add("translate-x-4");
+    } else {
+      this.badgesToggleKnob.classList.remove("translate-x-4");
     }
   },
 };

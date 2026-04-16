@@ -345,6 +345,16 @@ const graphHook = {
       this._onGraphDirectionChange,
     );
 
+    // Handle type badges toggle via custom event
+    this._onTypeBadgesChange = (e) => {
+      const enabled = e.detail.enabled;
+      if (this.cy && typeof this.cy.toggleTypeBadges === "function") {
+        this.cy.toggleTypeBadges(enabled);
+      }
+    };
+
+    this.el.addEventListener("typeBadgesChanged", this._onTypeBadgesChange);
+
     // Layout/centering coordination state
     // The initial cy.layout().run() in draw_graph is already in flight by this
     // point, so start as true. A one-shot layoutstop listener flips it back
@@ -1581,6 +1591,12 @@ const graphHook = {
         this._onGraphDirectionChange,
       );
     }
+    if (this._onTypeBadgesChange) {
+      this.el.removeEventListener(
+        "typeBadgesChanged",
+        this._onTypeBadgesChange,
+      );
+    }
     // Debug overlay cleanup and listener removal
     if (
       this._debugRedraw &&
@@ -1668,6 +1684,12 @@ const graphHook = {
     if (this.cy && typeof this.cy.cleanupDepthOverlay === "function") {
       try {
         this.cy.cleanupDepthOverlay();
+      } catch (_e) {}
+    }
+    // Clean up type badge overlays
+    if (this.cy && typeof this.cy.cleanupTypeBadges === "function") {
+      try {
+        this.cy.cleanupTypeBadges();
       } catch (_e) {}
     }
     if (this.cy && typeof this.cy.destroy === "function") {
