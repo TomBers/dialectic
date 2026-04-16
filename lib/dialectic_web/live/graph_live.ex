@@ -232,10 +232,41 @@ defmodule DialecticWeb.GraphLive do
           |> Enum.reduce([], fn vid, acc ->
             case GraphManager.vertex_label(socket.assigns.graph_id, vid) do
               %{} = vertex ->
-                if valid_search_node(vertex) and
-                     String.contains?(String.downcase(vertex.content), term) do
-                  exact_match = if String.downcase(vertex.content) == term, do: 0, else: 1
-                  [{exact_match, vertex.id, vertex} | acc]
+                if valid_search_node(vertex) do
+                  content_lower = String.downcase(vertex.content || "")
+                  source_text = Map.get(vertex, :source_text) || ""
+                  source_lower = String.downcase(source_text)
+
+                  content_match = String.contains?(content_lower, term)
+                  source_match = source_text != "" and String.contains?(source_lower, term)
+
+                  if content_match or source_match do
+                    exact_match = if content_lower == term, do: 0, else: 1
+
+                    # Generate preview from the field that matched
+                    match_preview =
+                      cond do
+                        content_match ->
+                          NodeTitleHelper.extract_match_preview(vertex, search_term,
+                            context_chars: 50
+                          )
+
+                        source_match ->
+                          NodeTitleHelper.extract_match_preview(
+                            %{content: source_text},
+                            search_term,
+                            context_chars: 50
+                          )
+
+                        true ->
+                          nil
+                      end
+
+                    vertex_with_preview = Map.put(vertex, :match_preview, match_preview)
+                    [{exact_match, vertex.id, vertex_with_preview} | acc]
+                  else
+                    acc
+                  end
                 else
                   acc
                 end
