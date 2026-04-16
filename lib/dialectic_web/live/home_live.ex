@@ -513,9 +513,17 @@ defmodule DialecticWeb.HomeLive do
                           <%= for {g, _count, author_username} <- @graphs do %>
                             <tr class="align-top transition-colors odd:bg-slate-100 even:bg-white hover:bg-indigo-50/80">
                               <td class="px-4 py-3">
+                                <%!-- Desktop link (graph view) --%>
                                 <.link
                                   navigate={graph_path(g)}
-                                  class="line-clamp-2 font-semibold text-slate-900 hover:text-indigo-700"
+                                  class="hidden lg:block line-clamp-2 font-semibold text-slate-900 hover:text-indigo-700"
+                                >
+                                  {g.title}
+                                </.link>
+                                <%!-- Mobile link (linear view) --%>
+                                <.link
+                                  navigate={graph_linear_path(g)}
+                                  class="lg:hidden line-clamp-2 font-semibold text-slate-900 hover:text-indigo-700"
                                 >
                                   {g.title}
                                 </.link>
@@ -543,9 +551,19 @@ defmodule DialecticWeb.HomeLive do
                                 </div>
                               </td>
                               <td class="px-4 py-3 text-right">
+                                <%!-- Desktop link (graph view) --%>
                                 <.link
                                   navigate={graph_path(g)}
-                                  class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-sky-500 text-white shadow-sm ring-1 ring-indigo-500/30 transition-transform hover:scale-105 hover:shadow-md"
+                                  class="hidden lg:inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-sky-500 text-white shadow-sm ring-1 ring-indigo-500/30 transition-transform hover:scale-105 hover:shadow-md"
+                                  aria-label={"Open " <> (g.title || "idea")}
+                                >
+                                  <.icon name="hero-magnifying-glass" class="h-4 w-4" />
+                                  <span class="sr-only">Open</span>
+                                </.link>
+                                <%!-- Mobile link (linear view) --%>
+                                <.link
+                                  navigate={graph_linear_path(g)}
+                                  class="lg:hidden inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-sky-500 text-white shadow-sm ring-1 ring-indigo-500/30 transition-transform hover:scale-105 hover:shadow-md"
                                   aria-label={"Open " <> (g.title || "idea")}
                                 >
                                   <.icon name="hero-magnifying-glass" class="h-4 w-4" />
@@ -658,6 +676,7 @@ defmodule DialecticWeb.HomeLive do
                   title={item.graph.title}
                   is_public={item.graph.is_public}
                   link={graph_path(item.graph)}
+                  linear_link={graph_linear_path(item.graph)}
                   count={0}
                   tags={item.graph.tags}
                   author_name={item.author_name}

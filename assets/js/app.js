@@ -2,6 +2,19 @@
 // to get started and then uncomment the line below.
 import "./user_socket.js";
 
+// Early mobile redirect: runs immediately before LiveView mounts for faster UX
+// Redirects /g/<slug> to /g/<slug>/linear on mobile devices
+(function () {
+  if (window.innerWidth < 1024) {
+    const path = window.location.pathname;
+    const graphMatch = path.match(/^\/g\/([^/]+)$/);
+    if (graphMatch) {
+      const linearUrl = `/g/${graphMatch[1]}/linear${window.location.search}`;
+      window.location.replace(linearUrl);
+    }
+  }
+})();
+
 // You can include dependencies in two ways.
 //
 // The simplest option is to put them in assets/vendor and
@@ -118,7 +131,8 @@ hooks.MobileRedirect = {
     if (window.innerWidth < 1024) {
       const url = this.el.dataset.linearUrl;
       if (url) {
-        window.location.href = url;
+        // Use replace to avoid polluting browser history (back button loop)
+        window.location.replace(url);
       }
     }
   },
