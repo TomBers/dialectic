@@ -618,6 +618,7 @@
                   autocomplete="off"
                   autofocus
                   phx-debounce="200"
+                  phx-mounted={JS.focus()}
                 />
               </form>
               <kbd class="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium text-gray-400 bg-gray-100 rounded border border-gray-200">
@@ -656,11 +657,17 @@
                               {node.class}
                             </span>
                           </div>
-                          <div class="text-sm text-gray-900 truncate mt-0.5">
+                          <div class="text-sm text-gray-900 truncate mt-0.5 font-medium">
                             {DialecticWeb.Utils.NodeTitleHelper.extract_node_title(node,
                               max_length: 80
                             )}
                           </div>
+                          <%= if Map.get(node, :match_preview) do %>
+                            <% {before_text, matched_text, after_text} = node.match_preview %>
+                            <div class="text-xs text-gray-500 mt-1 line-clamp-2">
+                              <span>{before_text}</span><mark class="bg-yellow-200 text-gray-900 rounded px-0.5">{matched_text}</mark><span>{after_text}</span>
+                            </div>
+                          <% end %>
                         </button>
                       </li>
                     <% end %>

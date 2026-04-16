@@ -255,7 +255,18 @@ export function draw_graph(
       (target &&
         (target.isContentEditable ||
           target.closest('[contenteditable="true"], [contenteditable=""]')));
-    if (isEditable) return;
+
+    // Allow arrow keys to work for graph navigation when ask input is focused AND empty
+    const isArrowKey = [
+      "ArrowUp",
+      "ArrowDown",
+      "ArrowLeft",
+      "ArrowRight",
+    ].includes(e.key);
+    const isAskInput = target && target.id === "global-chat-input";
+    const isAskInputEmpty = isAskInput && target.value.trim() === "";
+
+    if (isEditable && !(isArrowKey && isAskInputEmpty)) return;
 
     if (e.code === "Space" && !isSpaceDown) {
       isSpaceDown = true;

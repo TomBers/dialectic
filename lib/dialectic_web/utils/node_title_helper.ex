@@ -61,6 +61,74 @@ defmodule DialecticWeb.Utils.NodeTitleHelper do
     end
   end
 
+  @doc """
+  Extracts a preview snippet around a matching search term in the node content.
+
+  Returns a tuple of `{before_match, matched_text, after_match}` that can be used
+  to render the preview with the match highlighted. Returns `nil` if no match found.
+
+  ## Parameters
+    - node: A map with `:content` or `"content"` key
+    - search_term: The search term to find (case-insensitive)
+    - opts: Keyword list of options
+      - `:context_chars` - Number of characters to show before/after match (default: 40)
+
+  ## Examples
+      iex> extract_match_preview(%{content: "Hello world, this is a test"}, "world")
+      {"Hello ", "world", ", this is a test"}
+
+      iex> extract_match_preview(%{content: "Some long text here"}, "missing")
+      nil
+  """
+  def extract_match_preview(node, search_term, opts \\ []) do
+    context_chars = Keyword.get(opts, :context_chars, 40)
+    content = get_content(node) || ""
+
+    # Normalize content: collapse multiple whitespace/newlines to single space
+    normalized_content =
+      content
+      |> String.replace(~r/\s+/, " ")
+      |> String.trim()
+
+    term_lower = String.downcase(search_term)
+    content_lower = String.downcase(normalized_content)
+
+    case :binary.match(content_lower, term_lower) do
+      :nomatch ->
+        nil
+
+      {start_pos, match_length} ->
+        # Extract the actual matched text (preserving original case)
+        matched_text = String.slice(normalized_content, start_pos, match_length)
+
+        # Calculate context boundaries
+        before_start = max(0, start_pos - context_chars)
+
+        after_end =
+          min(String.length(normalized_content), start_pos + match_length + context_chars)
+
+        # Extract before and after text
+        before_text = String.slice(normalized_content, before_start, start_pos - before_start)
+
+        after_text =
+          String.slice(
+            normalized_content,
+            start_pos + match_length,
+            after_end - start_pos - match_length
+          )
+
+        # Add ellipsis if we're not at the boundaries
+        before_text = if before_start > 0, do: "…" <> before_text, else: before_text
+
+        after_text =
+          if after_end < String.length(normalized_content),
+            do: after_text <> "…",
+            else: after_text
+
+        {before_text, matched_text, after_text}
+    end
+  end
+
   # Support both atom-key maps (%{content: ...}) and string-key maps (%{"content" => ...})
   defp get_content(%{content: content}), do: content
   defp get_content(%{"content" => content}), do: content
