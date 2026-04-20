@@ -73,6 +73,7 @@ defmodule DialecticWeb.UserProfileLive do
           |> assign(:is_own_profile?, is_own_profile?)
           |> assign(:my_stats, my_stats)
           |> assign(:noted_notes, noted_notes)
+          |> assign(:graph_to_delete, nil)
 
         # Load Gravatar data — served from ETS cache when available,
         # fetched async on cache miss to avoid blocking initial render
@@ -134,8 +135,90 @@ defmodule DialecticWeb.UserProfileLive do
   end
 
   @impl true
+  def handle_event("show_delete_modal", %{"title" => title}, socket) do
+    {:noreply, assign(socket, :graph_to_delete, title)}
+  end
+
+  @impl true
+  def handle_event("lv:clear-flash", _params, socket) do
+    {:noreply, clear_flash(socket)}
+  end
+
+  @impl true
+  def handle_event("cancel_delete", _params, socket) do
+    {:noreply, assign(socket, :graph_to_delete, nil)}
+  end
+
+  @impl true
+  def handle_event("confirm_delete_graph", _params, socket) do
+    title = socket.assigns.graph_to_delete
+    user = socket.assigns.current_user
+    profile_user = socket.assigns.profile_user
+
+    case Dialectic.DbActions.Graphs.soft_delete_user_graph(title, user) do
+      {:ok, _graph} ->
+        # Reload both my_stats and public graphs to reflect the deleted graph
+        my_stats = Dialectic.DbActions.Notes.get_my_stats(user)
+        graphs = Accounts.list_user_public_graphs(profile_user)
+
+        {:noreply,
+         socket
+         |> assign(:graph_to_delete, nil)
+         |> assign(:my_stats, my_stats)
+         |> assign(:graphs, graphs)
+         |> put_flash(:info, "Grid \"#{title}\" has been deleted.")}
+
+      {:error, :not_found} ->
+        {:noreply,
+         socket
+         |> assign(:graph_to_delete, nil)
+         |> put_flash(:error, "Grid not found.")}
+
+      {:error, :unauthorized} ->
+        {:noreply,
+         socket
+         |> assign(:graph_to_delete, nil)
+         |> put_flash(:error, "You don't have permission to delete this grid.")}
+    end
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
+    <%!-- Delete Confirmation Modal --%>
+    <.modal id="delete-graph-modal" on_cancel={JS.push("cancel_delete")}>
+      <div class="text-center">
+        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 mb-4">
+          <.icon name="hero-exclamation-triangle" class="h-6 w-6 text-red-600" />
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">Delete Grid</h3>
+        <p class="text-sm text-gray-500 mb-6">
+          Are you sure you want to delete <strong class="text-gray-700">"{@graph_to_delete}"</strong>?
+          This action cannot be undone.
+        </p>
+        <div class="flex justify-center gap-3">
+          <button
+            type="button"
+            phx-click={hide_modal("delete-graph-modal") |> JS.push("cancel_delete")}
+            class="rounded-lg px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            id="confirm-delete-graph-btn"
+            phx-click={hide_modal("delete-graph-modal") |> JS.push("confirm_delete_graph")}
+            class="rounded-lg px-4 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition"
+          >
+            Delete Grid
+          </button>
+        </div>
+      </div>
+    </.modal>
+
+    <.flash kind={:info} title="Success!" flash={@flash} id="profile-flash-info" />
+    <.flash kind={:error} title="Error!" flash={@flash} id="profile-flash-error" />
+
     <div class={["min-h-screen w-full", theme_bg_class(@theme)]}>
       <div class="mx-auto max-w-5xl px-4 sm:px-6 py-10 sm:py-14">
         <%!-- Profile Header --%>
@@ -246,7 +329,10 @@ defmodule DialecticWeb.UserProfileLive do
               <% end %>
 
               <%= if @location do %>
-                <span class={["inline-flex items-center gap-1.5 text-sm", theme_subtext_class(@theme)]}>
+                <span class={[
+                  "inline-flex items-center gap-1.5 text-sm",
+                  theme_subtext_class(@theme)
+                ]}>
                   <.icon name="hero-map-pin" class="w-4 h-4" />
                   {@location}
                 </span>
@@ -421,7 +507,10 @@ defmodule DialecticWeb.UserProfileLive do
 
             <div id="all-grids-content">
               <%= if @my_stats.graphs == [] do %>
-                <div class={["rounded-xl border p-8 text-center shadow-sm", theme_card_class(@theme)]}>
+                <div class={[
+                  "rounded-xl border p-8 text-center shadow-sm",
+                  theme_card_class(@theme)
+                ]}>
                   <.icon
                     name="hero-document-text"
                     class={"w-10 h-10 mx-auto mb-3 " <> theme_subtext_class(@theme)}
@@ -442,7 +531,7 @@ defmodule DialecticWeb.UserProfileLive do
               <% else %>
                 <div class="columns-1 sm:columns-2 lg:columns-3 gap-5 space-y-5">
                   <%= for g <- @my_stats.graphs do %>
-                    <div class="break-inside-avoid">
+                    <div class="break-inside-avoid relative group/card">
                       <DialecticWeb.PageHtml.GraphComp.render
                         title={g.title}
                         is_public={g.is_public}
@@ -456,6 +545,21 @@ defmodule DialecticWeb.UserProfileLive do
                         variant={theme_graph_variant(@theme)}
                         id={"my-grid-" <> (g.slug || "title-" <> Integer.to_string(:erlang.phash2(g.title || "")))}
                       />
+                      <button
+                        type="button"
+                        phx-click={
+                          JS.push("show_delete_modal", value: %{title: g.title})
+                          |> show_modal("delete-graph-modal")
+                        }
+                        id={"delete-grid-btn-" <> (g.slug || Integer.to_string(:erlang.phash2(g.title || "")))}
+                        class={[
+                          "absolute top-2 right-2 z-20 p-1.5 rounded-lg opacity-0 group-hover/card:opacity-100 transition-opacity",
+                          "bg-red-500/80 hover:bg-red-600 text-white shadow-sm"
+                        ]}
+                        title="Delete grid"
+                      >
+                        <.icon name="hero-trash" class="w-4 h-4" />
+                      </button>
                     </div>
                   <% end %>
                 </div>
@@ -498,7 +602,10 @@ defmodule DialecticWeb.UserProfileLive do
 
             <div id="notes-content">
               <%= if @noted_notes == [] do %>
-                <div class={["rounded-xl border p-8 text-center shadow-sm", theme_card_class(@theme)]}>
+                <div class={[
+                  "rounded-xl border p-8 text-center shadow-sm",
+                  theme_card_class(@theme)
+                ]}>
                   <.icon
                     name="hero-bookmark"
                     class={"w-10 h-10 mx-auto mb-3 " <> theme_subtext_class(@theme)}

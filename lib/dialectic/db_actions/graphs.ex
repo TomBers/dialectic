@@ -253,6 +253,26 @@ defmodule Dialectic.DbActions.Graphs do
   end
 
   @doc """
+  Soft deletes a graph only if the user owns it.
+  Returns {:ok, graph} on success, {:error, :not_found} if graph doesn't exist,
+  or {:error, :unauthorized} if the user doesn't own the graph.
+  """
+  def soft_delete_user_graph(title, user) do
+    case get_graph_by_title(title) do
+      nil ->
+        {:error, :not_found}
+
+      %Graph{user_id: user_id} = graph when user_id == user.id ->
+        graph
+        |> Graph.changeset(%{is_deleted: true})
+        |> Repo.update()
+
+      _graph ->
+        {:error, :unauthorized}
+    end
+  end
+
+  @doc """
   Restores a soft-deleted graph by setting is_deleted to false.
   """
   def restore_graph(title) do

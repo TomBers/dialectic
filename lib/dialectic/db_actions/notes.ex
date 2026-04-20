@@ -12,6 +12,7 @@ defmodule Dialectic.DbActions.Notes do
     graphs =
       from(g in Graph,
         where: g.user_id == ^user.id,
+        where: g.is_deleted == false or is_nil(g.is_deleted),
         left_join: n in Note,
         on: n.graph_title == g.title and n.is_noted == true,
         group_by: [g.title, g.inserted_at],
