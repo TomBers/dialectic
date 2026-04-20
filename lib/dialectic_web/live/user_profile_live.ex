@@ -439,33 +439,97 @@ defmodule DialecticWeb.UserProfileLive do
                 <% end %>
               </div>
             <% else %>
-              <div class="columns-1 sm:columns-2 lg:columns-3 gap-5 space-y-5">
-                <%= for graph <- @graphs do %>
-                  <div class="break-inside-avoid">
-                    <DialecticWeb.PageHtml.GraphComp.render
-                      title={graph.title}
-                      is_public={graph.is_public}
-                      link={graph_path(graph)}
-                      linear_link={graph_linear_path(graph)}
-                      count={0}
-                      tags={graph.tags}
-                      node_count={
-                        Enum.count(graph.data["nodes"] || [], fn n ->
-                          !Map.get(n, "compound", false)
-                        end)
-                      }
-                      is_live={false}
-                      generating={false}
-                      variant={theme_graph_variant(@theme)}
-                      id={
-                        "profile-graph-" <>
-                          (graph.slug ||
-                             "title-" <>
-                               Integer.to_string(:erlang.phash2(graph.title || "")))
-                      }
-                    />
-                  </div>
-                <% end %>
+              <div class={["rounded-xl border shadow-sm overflow-hidden", theme_card_class(@theme)]}>
+                <div class="overflow-x-auto">
+                  <table class="min-w-full border-separate border-spacing-0 text-left text-sm">
+                    <thead class={table_header_class(@theme)}>
+                      <tr>
+                        <th class="px-4 py-2.5 font-semibold">Grid</th>
+                        <th class="px-4 py-2.5 font-semibold">Tags</th>
+                        <th class="px-4 py-2.5 text-center font-semibold">Nodes</th>
+                        <th class="px-4 py-2.5 text-right font-semibold">Open</th>
+                        <%= if @is_own_profile? do %>
+                          <th class="px-4 py-2.5 text-right font-semibold">Delete</th>
+                        <% end %>
+                      </tr>
+                    </thead>
+                    <tbody class={table_body_class(@theme)}>
+                      <%= for graph <- @graphs do %>
+                        <tr class={table_row_class(@theme)}>
+                          <td class="px-4 py-3">
+                            <.link
+                              navigate={graph_path(graph)}
+                              class={[
+                                "hidden lg:block font-semibold hover:underline",
+                                table_link_class(@theme)
+                              ]}
+                            >
+                              {graph.title}
+                            </.link>
+                            <.link
+                              navigate={graph_linear_path(graph)}
+                              class={[
+                                "lg:hidden font-semibold hover:underline",
+                                table_link_class(@theme)
+                              ]}
+                            >
+                              {graph.title}
+                            </.link>
+                          </td>
+                          <td class="px-4 py-3">
+                            <div class="flex flex-wrap gap-1">
+                              <%= for tag <- Enum.take(graph.tags || [], 3) do %>
+                                <span class={[
+                                  "inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset",
+                                  table_tag_color_class(tag, @theme)
+                                ]}>
+                                  #{tag}
+                                </span>
+                              <% end %>
+                            </div>
+                          </td>
+                          <td class={["px-4 py-3 text-center", theme_subtext_class(@theme)]}>
+                            {Enum.count(graph.data["nodes"] || [], fn n ->
+                              !Map.get(n, "compound", false)
+                            end)}
+                          </td>
+                          <td class="px-4 py-3 text-right">
+                            <.link
+                              navigate={graph_path(graph)}
+                              class="hidden lg:inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-sky-500 text-white shadow-sm ring-1 ring-indigo-500/30 transition-transform hover:scale-105"
+                              aria-label={"Open " <> (graph.title || "grid")}
+                            >
+                              <.icon name="hero-arrow-top-right-on-square" class="h-4 w-4" />
+                            </.link>
+                            <.link
+                              navigate={graph_linear_path(graph)}
+                              class="lg:hidden inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-sky-500 text-white shadow-sm ring-1 ring-indigo-500/30 transition-transform hover:scale-105"
+                              aria-label={"Open " <> (graph.title || "grid")}
+                            >
+                              <.icon name="hero-arrow-top-right-on-square" class="h-4 w-4" />
+                            </.link>
+                          </td>
+                          <%= if @is_own_profile? do %>
+                            <td class="px-4 py-3 text-right">
+                              <button
+                                type="button"
+                                phx-click={
+                                  JS.push("show_delete_modal", value: %{title: graph.title})
+                                  |> show_modal("delete-graph-modal")
+                                }
+                                id={"delete-public-grid-btn-" <> (graph.slug || Integer.to_string(:erlang.phash2(graph.title || "")))}
+                                class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-red-500/80 hover:bg-red-600 text-white shadow-sm transition-transform hover:scale-105"
+                                title="Delete grid"
+                              >
+                                <.icon name="hero-trash" class="h-4 w-4" />
+                              </button>
+                            </td>
+                          <% end %>
+                        </tr>
+                      <% end %>
+                    </tbody>
+                  </table>
+                </div>
               </div>
             <% end %>
           </div>
@@ -529,39 +593,103 @@ defmodule DialecticWeb.UserProfileLive do
                   </.link>
                 </div>
               <% else %>
-                <div class="columns-1 sm:columns-2 lg:columns-3 gap-5 space-y-5">
-                  <%= for g <- @my_stats.graphs do %>
-                    <div class="break-inside-avoid relative group/card">
-                      <DialecticWeb.PageHtml.GraphComp.render
-                        title={g.title}
-                        is_public={g.is_public}
-                        link={graph_path(g)}
-                        linear_link={graph_linear_path(g)}
-                        count={g.noted_count}
-                        tags={g.tags}
-                        node_count={g.node_count}
-                        is_live={false}
-                        generating={false}
-                        variant={theme_graph_variant(@theme)}
-                        id={"my-grid-" <> (g.slug || "title-" <> Integer.to_string(:erlang.phash2(g.title || "")))}
-                      />
-                      <button
-                        type="button"
-                        phx-click={
-                          JS.push("show_delete_modal", value: %{title: g.title})
-                          |> show_modal("delete-graph-modal")
-                        }
-                        id={"delete-grid-btn-" <> (g.slug || Integer.to_string(:erlang.phash2(g.title || "")))}
-                        class={[
-                          "absolute top-2 right-2 z-20 p-1.5 rounded-lg opacity-0 group-hover/card:opacity-100 transition-opacity",
-                          "bg-red-500/80 hover:bg-red-600 text-white shadow-sm"
-                        ]}
-                        title="Delete grid"
-                      >
-                        <.icon name="hero-trash" class="w-4 h-4" />
-                      </button>
-                    </div>
-                  <% end %>
+                <div class={["rounded-xl border shadow-sm overflow-hidden", theme_card_class(@theme)]}>
+                  <div class="overflow-x-auto">
+                    <table class="min-w-full border-separate border-spacing-0 text-left text-sm">
+                      <thead class={table_header_class(@theme)}>
+                        <tr>
+                          <th class="px-4 py-2.5 font-semibold">Grid</th>
+                          <th class="px-4 py-2.5 font-semibold">Tags</th>
+                          <th class="px-4 py-2.5 text-center font-semibold">Visibility</th>
+                          <th class="px-4 py-2.5 text-center font-semibold">Nodes</th>
+                          <th class="px-4 py-2.5 text-right font-semibold">Open</th>
+                          <th class="px-4 py-2.5 text-right font-semibold">Delete</th>
+                        </tr>
+                      </thead>
+                      <tbody class={table_body_class(@theme)}>
+                        <%= for g <- @my_stats.graphs do %>
+                          <tr class={table_row_class(@theme)}>
+                            <td class="px-4 py-3">
+                              <.link
+                                navigate={graph_path(g)}
+                                class={[
+                                  "hidden lg:block font-semibold hover:underline",
+                                  table_link_class(@theme)
+                                ]}
+                              >
+                                {g.title}
+                              </.link>
+                              <.link
+                                navigate={graph_linear_path(g)}
+                                class={[
+                                  "lg:hidden font-semibold hover:underline",
+                                  table_link_class(@theme)
+                                ]}
+                              >
+                                {g.title}
+                              </.link>
+                            </td>
+                            <td class="px-4 py-3">
+                              <div class="flex flex-wrap gap-1">
+                                <%= for tag <- Enum.take(g.tags || [], 3) do %>
+                                  <span class={[
+                                    "inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset",
+                                    table_tag_color_class(tag, @theme)
+                                  ]}>
+                                    #{tag}
+                                  </span>
+                                <% end %>
+                              </div>
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                              <%= if g.is_public do %>
+                                <span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                                  <.icon name="hero-globe-alt" class="h-3 w-3" /> Public
+                                </span>
+                              <% else %>
+                                <span class="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+                                  <.icon name="hero-lock-closed" class="h-3 w-3" /> Private
+                                </span>
+                              <% end %>
+                            </td>
+                            <td class={["px-4 py-3 text-center", theme_subtext_class(@theme)]}>
+                              {g.node_count}
+                            </td>
+                            <td class="px-4 py-3 text-right">
+                              <.link
+                                navigate={graph_path(g)}
+                                class="hidden lg:inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-sky-500 text-white shadow-sm ring-1 ring-indigo-500/30 transition-transform hover:scale-105"
+                                aria-label={"Open " <> (g.title || "grid")}
+                              >
+                                <.icon name="hero-arrow-top-right-on-square" class="h-4 w-4" />
+                              </.link>
+                              <.link
+                                navigate={graph_linear_path(g)}
+                                class="lg:hidden inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-sky-500 text-white shadow-sm ring-1 ring-indigo-500/30 transition-transform hover:scale-105"
+                                aria-label={"Open " <> (g.title || "grid")}
+                              >
+                                <.icon name="hero-arrow-top-right-on-square" class="h-4 w-4" />
+                              </.link>
+                            </td>
+                            <td class="px-4 py-3 text-right">
+                              <button
+                                type="button"
+                                phx-click={
+                                  JS.push("show_delete_modal", value: %{title: g.title})
+                                  |> show_modal("delete-graph-modal")
+                                }
+                                id={"delete-grid-btn-" <> (g.slug || Integer.to_string(:erlang.phash2(g.title || "")))}
+                                class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-red-500/80 hover:bg-red-600 text-white shadow-sm transition-transform hover:scale-105"
+                                title="Delete grid"
+                              >
+                                <.icon name="hero-trash" class="h-4 w-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        <% end %>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               <% end %>
             </div>
@@ -692,9 +820,6 @@ defmodule DialecticWeb.UserProfileLive do
     end
   end
 
-  defp theme_graph_variant(theme) when theme in ~w(indigo violet emerald amber rose), do: :glass
-  defp theme_graph_variant(_), do: :light
-
   # --- Theme class helpers ---
 
   defp theme_bg_class("indigo"), do: "bg-gradient-to-b from-indigo-950 to-slate-950"
@@ -766,4 +891,73 @@ defmodule DialecticWeb.UserProfileLive do
   defp theme_tag_class("amber"), do: "bg-amber-500/20 text-amber-200 ring-1 ring-amber-400/30"
   defp theme_tag_class("rose"), do: "bg-rose-500/20 text-rose-200 ring-1 ring-rose-400/30"
   defp theme_tag_class(_), do: "bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200"
+
+  # --- Table helper classes ---
+
+  defp table_header_class(theme) when theme in ~w(indigo violet emerald amber rose),
+    do: "bg-white/10 text-xs uppercase tracking-wide text-white/80"
+
+  defp table_header_class(_), do: "bg-slate-50 text-xs uppercase tracking-wide text-slate-600"
+
+  defp table_body_class(theme) when theme in ~w(indigo violet emerald amber rose),
+    do: "divide-y divide-white/10"
+
+  defp table_body_class(_), do: "divide-y divide-slate-200"
+
+  defp table_row_class(theme) when theme in ~w(indigo violet emerald amber rose),
+    do: "align-top transition-colors hover:bg-white/5"
+
+  defp table_row_class(_),
+    do: "align-top transition-colors odd:bg-slate-50 even:bg-white hover:bg-indigo-50/50"
+
+  defp table_link_class(theme) when theme in ~w(indigo violet emerald amber rose),
+    do: "text-white hover:text-white/80"
+
+  defp table_link_class(_), do: "text-slate-900 hover:text-indigo-700"
+
+  defp table_tag_color_class(tag, theme) when theme in ~w(indigo violet emerald amber rose) do
+    colors = [
+      "bg-rose-500/15 text-rose-100 ring-rose-300/30",
+      "bg-orange-500/15 text-orange-100 ring-orange-300/30",
+      "bg-amber-500/15 text-amber-100 ring-amber-300/30",
+      "bg-lime-500/15 text-lime-100 ring-lime-300/30",
+      "bg-green-500/15 text-green-100 ring-green-300/30",
+      "bg-emerald-500/15 text-emerald-100 ring-emerald-300/30",
+      "bg-teal-500/15 text-teal-100 ring-teal-300/30",
+      "bg-cyan-500/15 text-cyan-100 ring-cyan-300/30",
+      "bg-sky-500/15 text-sky-100 ring-sky-300/30",
+      "bg-blue-500/15 text-blue-100 ring-blue-300/30",
+      "bg-indigo-500/15 text-indigo-100 ring-indigo-300/30",
+      "bg-violet-500/15 text-violet-100 ring-violet-300/30",
+      "bg-purple-500/15 text-purple-100 ring-purple-300/30",
+      "bg-fuchsia-500/15 text-fuchsia-100 ring-fuchsia-300/30",
+      "bg-pink-500/15 text-pink-100 ring-pink-300/30"
+    ]
+
+    idx = :erlang.phash2(tag, length(colors))
+    Enum.at(colors, idx)
+  end
+
+  defp table_tag_color_class(tag, _theme) do
+    colors = [
+      "bg-rose-50 text-rose-700 ring-rose-600/20",
+      "bg-orange-50 text-orange-700 ring-orange-600/20",
+      "bg-amber-50 text-amber-700 ring-amber-600/20",
+      "bg-lime-50 text-lime-700 ring-lime-600/20",
+      "bg-green-50 text-green-700 ring-green-600/20",
+      "bg-emerald-50 text-emerald-700 ring-emerald-600/20",
+      "bg-teal-50 text-teal-700 ring-teal-600/20",
+      "bg-cyan-50 text-cyan-700 ring-cyan-600/20",
+      "bg-sky-50 text-sky-700 ring-sky-600/20",
+      "bg-blue-50 text-blue-700 ring-blue-600/20",
+      "bg-indigo-50 text-indigo-700 ring-indigo-600/20",
+      "bg-violet-50 text-violet-700 ring-violet-600/20",
+      "bg-purple-50 text-purple-700 ring-purple-600/20",
+      "bg-fuchsia-50 text-fuchsia-700 ring-fuchsia-600/20",
+      "bg-pink-50 text-pink-700 ring-pink-600/20"
+    ]
+
+    idx = :erlang.phash2(tag, length(colors))
+    Enum.at(colors, idx)
+  end
 end

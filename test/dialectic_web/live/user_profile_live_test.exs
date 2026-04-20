@@ -205,6 +205,20 @@ defmodule DialecticWeb.UserProfileLiveTest do
 
       # Delete button should not be visible
       refute html =~ "delete-grid-btn-"
+      refute html =~ "delete-public-grid-btn-"
+    end
+
+    test "shows delete button in My Public Grids section on own profile", %{conn: conn} do
+      user = create_user_with_username("publicdeluser")
+      _graph = create_public_graph(user, "Public Graph", slug: "public-delete-test", tags: [])
+
+      {:ok, _lv, html} =
+        conn
+        |> log_in_user(user)
+        |> live(~p"/u/publicdeluser")
+
+      # Delete button should be visible in the public grids section
+      assert html =~ "delete-public-grid-btn-public-delete-test"
     end
 
     test "can delete own graph via confirmation modal", %{conn: conn} do
