@@ -140,6 +140,11 @@ defmodule DialecticWeb.UserProfileLive do
   end
 
   @impl true
+  def handle_event("lv:clear-flash", %{"key" => key}, socket) do
+    {:noreply, clear_flash(socket, flash_key(key))}
+  end
+
+  @impl true
   def handle_event("lv:clear-flash", _params, socket) do
     {:noreply, clear_flash(socket)}
   end
@@ -160,12 +165,16 @@ defmodule DialecticWeb.UserProfileLive do
         # Reload both my_stats and public graphs to reflect the deleted graph
         my_stats = Dialectic.DbActions.Notes.get_my_stats(user)
         graphs = Accounts.list_user_public_graphs(profile_user)
+        stats = Accounts.get_profile_stats(profile_user, graphs)
+        common_tags = Accounts.get_common_tags(profile_user, graphs: graphs)
 
         {:noreply,
          socket
          |> assign(:graph_to_delete, nil)
          |> assign(:my_stats, my_stats)
          |> assign(:graphs, graphs)
+         |> assign(:stats, stats)
+         |> assign(:common_tags, common_tags)
          |> put_flash(:info, "Grid \"#{title}\" has been deleted.")}
 
       {:error, :not_found} ->
@@ -179,8 +188,17 @@ defmodule DialecticWeb.UserProfileLive do
          socket
          |> assign(:graph_to_delete, nil)
          |> put_flash(:error, "You don't have permission to delete this grid.")}
+
+      {:error, _reason} ->
+        {:noreply,
+         socket
+         |> assign(:graph_to_delete, nil)
+         |> put_flash(:error, "Unable to delete this grid. Please try again.")}
     end
   end
+
+  defp flash_key("info"), do: :info
+  defp flash_key("error"), do: :error
 
   @impl true
   def render(assigns) do
@@ -194,7 +212,7 @@ defmodule DialecticWeb.UserProfileLive do
         <h3 class="text-lg font-semibold text-gray-900 mb-2">Delete Grid</h3>
         <p class="text-sm text-gray-500 mb-6">
           Are you sure you want to delete <strong class="text-gray-700">"{@graph_to_delete}"</strong>?
-          This action cannot be undone.
+          This will hide the grid from your profile.
         </p>
         <div class="flex justify-center gap-3">
           <button
@@ -520,6 +538,7 @@ defmodule DialecticWeb.UserProfileLive do
                                 id={"delete-public-grid-btn-" <> (graph.slug || Integer.to_string(:erlang.phash2(graph.title || "")))}
                                 class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-red-500/80 hover:bg-red-600 text-white shadow-sm transition-transform hover:scale-105"
                                 title="Delete grid"
+                                aria-label={"Delete " <> (graph.title || "grid")}
                               >
                                 <.icon name="hero-trash" class="h-4 w-4" />
                               </button>
@@ -681,6 +700,7 @@ defmodule DialecticWeb.UserProfileLive do
                                 id={"delete-grid-btn-" <> (g.slug || Integer.to_string(:erlang.phash2(g.title || "")))}
                                 class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-red-500/80 hover:bg-red-600 text-white shadow-sm transition-transform hover:scale-105"
                                 title="Delete grid"
+                                aria-label={"Delete " <> (g.title || "grid")}
                               >
                                 <.icon name="hero-trash" class="h-4 w-4" />
                               </button>
