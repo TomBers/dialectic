@@ -1,5 +1,28 @@
 import { INDIGO_500 } from "./colors.js";
 
+// Check if uniform (badge-only) styling is enabled
+export function isUniformStyleEnabled() {
+  const setting = localStorage.getItem("uniform_node_style");
+  return setting === "true";
+}
+
+// Toggle uniform style on/off
+export function setUniformStyle(enabled) {
+  localStorage.setItem("uniform_node_style", enabled ? "true" : "false");
+}
+
+// Clean, maximally readable uniform style - optimized for content legibility
+const uniformNodeStyle = {
+  text: "#1a1a1a", // near-black for maximum readability
+  background: "#ffffff", // pure white - cleanest background
+  border: "#e5e5e5", // subtle neutral border
+  hoverBackground: "#fafafa", // barely perceptible hover
+  hoverBorder: "#d4d4d4", // slightly stronger border on hover
+  selectedText: "#1a1a1a",
+  selectedBackground: "#f5f5f5",
+  selectedBorder: "#3b82f6", // blue selection indicator
+};
+
 const defaultNodeStyle = {
   text: "#1f2937", // gray-800
   background: "#ffffff",
@@ -138,9 +161,9 @@ export function graphStyle(viewMode = "spaced") {
               lines += Math.max(1, Math.ceil(len / approxCharsPerLine));
             }
             const bulletCount = (measureText.match(/•/g) || []).length;
-            const bulletExtra = bulletCount * 6;
-            const lineHeight = 20;
-            const basePadding = 20;
+            const bulletExtra = bulletCount * 7;
+            const lineHeight = 23;
+            const basePadding = 22;
             const computed = basePadding + lines * lineHeight + bulletExtra;
             return Math.max(35, computed);
           }
@@ -168,9 +191,9 @@ export function graphStyle(viewMode = "spaced") {
           const bulletCount = (measureText.match(/•/g) || []).length;
           const bulletExtra = bulletCount * 2;
 
-          // Compute height: 10px font * 1.2 line-height = 12px per line
-          const lineHeight = 12;
-          const basePadding = 8; // 4px top + 4px bottom
+          // Compute height: 11px font * 1.35 line-height = ~15px per line
+          const lineHeight = 15;
+          const basePadding = 10; // 5px top + 5px bottom
           const computed = basePadding + lines * lineHeight + bulletExtra;
 
           return Math.max(22, computed);
@@ -192,12 +215,12 @@ export function graphStyle(viewMode = "spaced") {
 
         /* font & layout --------------------------------------------------- */
         "font-family":
-          'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif',
-        "font-size": isCompact ? 10 : 14,
-        "font-weight": isCompact ? 400 : 500,
+          'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif',
+        "font-size": isCompact ? 11 : 15,
+        "font-weight": 400,
         "text-halign": "center",
         "text-valign": "center",
-        "line-height": isCompact ? 1.2 : 1.4,
+        "line-height": isCompact ? 1.35 : 1.55,
 
         /* aesthetics ------------------------------------------------------ */
         shape: "rectangle",
@@ -382,57 +405,103 @@ export function graphStyle(viewMode = "spaced") {
     },
   });
 
-  for (const nodeType of Object.keys(cols)) {
+  // Check if uniform styling is enabled (badges-only, no type colors)
+  const useUniformStyle = isUniformStyleEnabled();
+
+  if (useUniformStyle) {
+    // Uniform mode: all nodes look the same, badges indicate type
     base_style.push({
-      selector: `node.${nodeType}`, // ← has the class
+      selector: "node",
       style: {
-        "border-color": cols[nodeType].border,
-        "background-color": cols[nodeType].background,
-        "border-width": isCompact ? 1.5 : 2,
+        "border-color": uniformNodeStyle.border,
+        "background-color": uniformNodeStyle.background,
+        "border-width": isCompact ? 1 : 1.5,
         "border-opacity": 1,
-        color: cols[nodeType].text,
+        color: uniformNodeStyle.text,
       },
     });
 
-    /* hover — gentle lift: slightly deeper tint + border boost */
     base_style.push({
-      selector: `node.${nodeType}.node-hover`,
+      selector: "node.node-hover",
       style: {
-        "background-color":
-          cols[nodeType].hoverBackground || cols[nodeType].background,
-        "border-color": cols[nodeType].hoverBorder || cols[nodeType].border,
-        "border-width": isCompact ? 2 : 2.5,
+        "background-color": uniformNodeStyle.hoverBackground,
+        "border-color": uniformNodeStyle.hoverBorder,
+        "border-width": isCompact ? 1.5 : 2,
         "border-style": "solid",
-        color: cols[nodeType].text, // keep dark text on hover
-        "ghost-opacity": 0.14, // deepen shadow slightly on hover
+        color: uniformNodeStyle.text,
+        "ghost-opacity": 0.12,
       },
     });
 
-    /* selected — prominent border + wide underlay halo */
     base_style.push({
-      selector: `node.${nodeType}.selected`,
+      selector: "node.selected",
       style: {
-        "background-color": cols[nodeType].selectedBackground,
-        "border-color": cols[nodeType].selectedBorder,
-        "border-width": isCompact ? 3 : 4,
+        "background-color": uniformNodeStyle.selectedBackground,
+        "border-color": uniformNodeStyle.selectedBorder,
+        "border-width": isCompact ? 2.5 : 3,
         "border-style": "solid",
-        color: cols[nodeType].selectedText,
-        /* wide halo well outside the border so it reads as a glow, not a second border */
-        "underlay-color": cols[nodeType].selectedBorder,
-        "underlay-opacity": 0.12,
+        color: uniformNodeStyle.selectedText,
+        "underlay-color": uniformNodeStyle.selectedBorder,
+        "underlay-opacity": 0.15,
         "underlay-padding": isCompact ? 10 : 14,
         "underlay-shape": "roundrectangle",
-        "ghost-opacity": 0.22,
+        "ghost-opacity": 0.18,
       },
     });
+  } else {
+    // Type-colored mode: each node type has distinct colors
+    for (const nodeType of Object.keys(cols)) {
+      base_style.push({
+        selector: `node.${nodeType}`, // ← has the class
+        style: {
+          "border-color": cols[nodeType].border,
+          "background-color": cols[nodeType].background,
+          "border-width": isCompact ? 1.5 : 2,
+          "border-opacity": 1,
+          color: cols[nodeType].text,
+        },
+      });
 
-    /* per-type accent border for collapsed compound "cards" */
-    base_style.push({
-      selector: `node[compound][collapsed = "true"].${nodeType}`,
-      style: {
-        "border-color": cols[nodeType].border,
-      },
-    });
+      /* hover — gentle lift: slightly deeper tint + border boost */
+      base_style.push({
+        selector: `node.${nodeType}.node-hover`,
+        style: {
+          "background-color":
+            cols[nodeType].hoverBackground || cols[nodeType].background,
+          "border-color": cols[nodeType].hoverBorder || cols[nodeType].border,
+          "border-width": isCompact ? 2 : 2.5,
+          "border-style": "solid",
+          color: cols[nodeType].text, // keep dark text on hover
+          "ghost-opacity": 0.14, // deepen shadow slightly on hover
+        },
+      });
+
+      /* selected — prominent border + wide underlay halo */
+      base_style.push({
+        selector: `node.${nodeType}.selected`,
+        style: {
+          "background-color": cols[nodeType].selectedBackground,
+          "border-color": cols[nodeType].selectedBorder,
+          "border-width": isCompact ? 3 : 4,
+          "border-style": "solid",
+          color: cols[nodeType].selectedText,
+          /* wide halo well outside the border so it reads as a glow, not a second border */
+          "underlay-color": cols[nodeType].selectedBorder,
+          "underlay-opacity": 0.12,
+          "underlay-padding": isCompact ? 10 : 14,
+          "underlay-shape": "roundrectangle",
+          "ghost-opacity": 0.22,
+        },
+      });
+
+      /* per-type accent border for collapsed compound "cards" */
+      base_style.push({
+        selector: `node[compound][collapsed = "true"].${nodeType}`,
+        style: {
+          "border-color": cols[nodeType].border,
+        },
+      });
+    }
   }
 
   base_style.push({

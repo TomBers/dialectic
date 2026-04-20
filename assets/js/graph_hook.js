@@ -345,6 +345,20 @@ const graphHook = {
       this._onGraphDirectionChange,
     );
 
+    // Handle uniform style toggle via custom event (requires full redraw)
+    // This also controls badges (uniform ON = badges ON, uniform OFF = badges OFF)
+    this._onUniformStyleChange = (e) => {
+      const currentNode = this.el.dataset.node;
+      const graph = this.el.dataset.graph;
+      const currentViewMode =
+        localStorage.getItem("graph_view_mode") || "spaced";
+
+      // Redraw graph with new style setting
+      this._handleViewModeChange(currentViewMode, graph, currentNode);
+    };
+
+    this.el.addEventListener("uniformStyleChanged", this._onUniformStyleChange);
+
     // Layout/centering coordination state
     // The initial cy.layout().run() in draw_graph is already in flight by this
     // point, so start as true. A one-shot layoutstop listener flips it back
@@ -1581,6 +1595,12 @@ const graphHook = {
         this._onGraphDirectionChange,
       );
     }
+    if (this._onUniformStyleChange) {
+      this.el.removeEventListener(
+        "uniformStyleChanged",
+        this._onUniformStyleChange,
+      );
+    }
     // Debug overlay cleanup and listener removal
     if (
       this._debugRedraw &&
@@ -1668,6 +1688,12 @@ const graphHook = {
     if (this.cy && typeof this.cy.cleanupDepthOverlay === "function") {
       try {
         this.cy.cleanupDepthOverlay();
+      } catch (_e) {}
+    }
+    // Clean up type badge styles
+    if (this.cy && typeof this.cy.cleanupTypeBadges === "function") {
+      try {
+        this.cy.cleanupTypeBadges();
       } catch (_e) {}
     }
     if (this.cy && typeof this.cy.destroy === "function") {

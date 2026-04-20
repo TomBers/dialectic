@@ -3,6 +3,12 @@ import dagre from "cytoscape-dagre";
 import compoundDragAndDrop from "cytoscape-compound-drag-and-drop";
 import { graphStyle } from "./graph_style";
 import { layoutConfig } from "./layout_config.js";
+import {
+  applyBadgeStyles,
+  removeBadgeStyles,
+  areBadgesEnabled,
+  toggleTypeBadges,
+} from "./node_type_badges.js";
 
 cytoscape.use(dagre);
 cytoscape.use(compoundDragAndDrop);
@@ -861,6 +867,11 @@ export function draw_graph(
     _rebuildDepthToggleOverlays(cy, container);
   });
 
+  // Apply type badge styles using native Cytoscape background-image
+  if (areBadgesEnabled()) {
+    applyBadgeStyles(cy);
+  }
+
   // Expose cleanup so graph_hook.js can remove the overlay on destroy
   cy.cleanupDepthOverlay = () => {
     try {
@@ -870,6 +881,25 @@ export function draw_graph(
       cy._depthToggleOverlay = null;
       cy._depthToggleButtons = null;
     } catch (_e) {}
+  };
+
+  // ── Type badge style controls ──
+  cy.cleanupTypeBadges = () => {
+    try {
+      removeBadgeStyles(cy);
+    } catch (_e) {}
+  };
+
+  cy.toggleTypeBadges = (enabled) => {
+    toggleTypeBadges(cy, enabled);
+  };
+
+  cy.areBadgesEnabled = areBadgesEnabled;
+
+  cy.rebuildTypeBadges = () => {
+    if (areBadgesEnabled()) {
+      applyBadgeStyles(cy);
+    }
   };
 
   return cy;

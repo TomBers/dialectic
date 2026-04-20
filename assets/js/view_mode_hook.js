@@ -13,6 +13,11 @@ export const ViewModeHook = {
       ? savedDirection
       : "TB";
 
+    // Get initial uniform style state from localStorage (default to false/disabled)
+    // Uniform style also controls badges (uniform ON = badges ON, uniform OFF = badges OFF)
+    const savedUniform = localStorage.getItem("uniform_node_style");
+    this.uniformStyle = savedUniform === "true";
+
     this._bindEvents();
   },
 
@@ -30,6 +35,12 @@ export const ViewModeHook = {
       });
       this._directionButtonBindings = null;
     }
+    if (this.uniformToggleInput && this._onUniformToggleChange) {
+      this.uniformToggleInput.removeEventListener(
+        "change",
+        this._onUniformToggleChange,
+      );
+    }
   },
 
   _bindEvents() {
@@ -43,6 +54,12 @@ export const ViewModeHook = {
       });
       this._directionButtonBindings = null;
     }
+    if (this.uniformToggleInput && this._onUniformToggleChange) {
+      this.uniformToggleInput.removeEventListener(
+        "change",
+        this._onUniformToggleChange,
+      );
+    }
 
     // Get view mode toggle elements
     this.toggleInput = this.el.querySelector(
@@ -53,6 +70,18 @@ export const ViewModeHook = {
     this.toggleKnob =
       this.toggleInput?.parentElement.querySelector("div:last-of-type");
 
+    // Get uniform style toggle elements
+    this.uniformToggleInput = this.el.querySelector(
+      '[data-uniform-style-toggle="toggle"]',
+    );
+    this.uniformToggleBg = this.uniformToggleInput?.parentElement.querySelector(
+      ".uniform-style-track",
+    );
+    this.uniformToggleKnob =
+      this.uniformToggleInput?.parentElement.querySelector(
+        ".uniform-style-thumb",
+      );
+
     // Get graph direction option buttons
     this.directionButtons = Array.from(
       this.el.querySelectorAll("[data-graph-direction-option]"),
@@ -60,6 +89,7 @@ export const ViewModeHook = {
 
     // Set initial toggle states
     this.updateToggle();
+    this.updateUniformToggle();
     this.updateDirectionButtons();
 
     // Listen for view mode toggle click
@@ -77,6 +107,30 @@ export const ViewModeHook = {
         this._dispatchToGraphs("viewModeChanged", { view_mode: newMode });
       };
       this.toggleInput.addEventListener("change", this._onToggleChange);
+    }
+
+    // Listen for uniform style toggle click
+    // This also controls badges (uniform ON = badges ON, uniform OFF = badges OFF)
+    if (this.uniformToggleInput) {
+      this._onUniformToggleChange = (e) => {
+        // Toggle uniform style on/off
+        const newState = !this.uniformStyle;
+
+        this.uniformStyle = newState;
+        localStorage.setItem("uniform_node_style", newState ? "true" : "false");
+        // Sync badges with uniform style
+        localStorage.setItem("show_type_badges", newState ? "true" : "false");
+
+        // Update toggle visual state
+        this.updateUniformToggle();
+
+        // Dispatch event - full graph redraw picks up badge setting from localStorage
+        this._dispatchToGraphs("uniformStyleChanged", { enabled: newState });
+      };
+      this.uniformToggleInput.addEventListener(
+        "change",
+        this._onUniformToggleChange,
+      );
     }
 
     // Listen for graph direction selection
@@ -171,6 +225,36 @@ export const ViewModeHook = {
       this.toggleKnob.classList.add("translate-x-4");
     } else {
       this.toggleKnob.classList.remove("translate-x-4");
+    }
+  },
+
+  updateUniformToggle() {
+    if (
+      !this.uniformToggleInput ||
+      !this.uniformToggleBg ||
+      !this.uniformToggleKnob
+    )
+      return;
+
+    const isEnabled = this.uniformStyle;
+
+    // Update checkbox state
+    this.uniformToggleInput.checked = isEnabled;
+
+    // Update background color
+    if (isEnabled) {
+      this.uniformToggleBg.classList.remove("bg-gray-300");
+      this.uniformToggleBg.classList.add("bg-indigo-600");
+    } else {
+      this.uniformToggleBg.classList.remove("bg-indigo-600");
+      this.uniformToggleBg.classList.add("bg-gray-300");
+    }
+
+    // Update knob position
+    if (isEnabled) {
+      this.uniformToggleKnob.classList.add("translate-x-4");
+    } else {
+      this.uniformToggleKnob.classList.remove("translate-x-4");
     }
   },
 };

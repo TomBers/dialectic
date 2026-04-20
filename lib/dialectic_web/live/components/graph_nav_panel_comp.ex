@@ -97,6 +97,23 @@ defmodule DialecticWeb.GraphNavPanelComp do
                 <span class="text-[11px] text-gray-500">Compact</span>
               </div>
             </label>
+            <label class="flex items-center justify-between cursor-pointer">
+              <div>
+                <span class="text-xs text-gray-700">Uniform Nodes</span>
+                <p class="text-[10px] text-gray-400">Clean style with badges</p>
+              </div>
+              <div class="relative">
+                <input
+                  type="checkbox"
+                  class="sr-only"
+                  data-uniform-style-toggle="toggle"
+                  aria-label="Toggle uniform node style"
+                />
+                <div class="uniform-style-track w-9 h-5 bg-gray-300 rounded-full transition"></div>
+                <div class="uniform-style-thumb absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow transition transform">
+                </div>
+              </div>
+            </label>
           </div>
 
           <%!-- Graph Direction --%>
