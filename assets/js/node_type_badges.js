@@ -106,74 +106,70 @@ const TYPE_CONFIG = {
   },
 };
 
+// Badge dimension constants
+const BADGE_CHAR_WIDTH = 10;
+const BADGE_PADDING = 20;
+const BADGE_HEIGHT = 18;
+
 // Cache for generated SVG data URLs
 const svgCache = new Map();
 
 /**
- * Generate an SVG badge as a data URL
+ * Generate an SVG badge as a base64 data URL
  */
 function generateBadgeSvg(type) {
   const config = TYPE_CONFIG[type];
   if (!config) return null;
 
-  const cacheKey = type;
-  if (svgCache.has(cacheKey)) {
-    return svgCache.get(cacheKey);
+  if (svgCache.has(type)) {
+    return svgCache.get(type);
   }
 
   const text = config.abbrev;
-  // Estimate width based on text length
-  const charWidth = 7;
-  const padding = 8;
-  const width = text.length * charWidth + padding * 2;
-  const height = 18;
-  const radius = 4;
+  const width = text.length * BADGE_CHAR_WIDTH + BADGE_PADDING;
+  const height = BADGE_HEIGHT;
 
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
-    <rect x="0.5" y="0.5" width="${width - 1}" height="${height - 1}" rx="${radius}" ry="${radius}"
-          fill="${config.bg}" stroke="${config.border}" stroke-width="1"/>
-    <text x="${width / 2}" y="${height / 2 + 1}"
-          font-family="ui-sans-serif, system-ui, -apple-system, sans-serif"
-          font-size="10" font-weight="600"
-          fill="${config.text}"
-          text-anchor="middle" dominant-baseline="middle">${text}</text>
-  </svg>`;
+  // Simple SVG with text centered
+  const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+  <rect x="1" y="1" width="${width - 2}" height="${height - 2}" rx="4" ry="4" fill="${config.bg}" stroke="${config.border}" stroke-width="1"/>
+  <text x="${width / 2}" y="${height / 2 + 4}" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="${config.text}" text-anchor="middle">${text}</text>
+</svg>`;
 
-  const dataUrl = "data:image/svg+xml," + encodeURIComponent(svg);
-  svgCache.set(cacheKey, dataUrl);
-  return dataUrl;
+  // Use base64 encoding for reliability
+  const dataUrl = "data:image/svg+xml;base64," + btoa(svg);
+  const result = { url: dataUrl, width, height };
+  svgCache.set(type, result);
+  return result;
 }
 
 /**
  * Generate Cytoscape style rules for type badges
- * These styles use background-image to render badges as part of the node
+ * Badges are positioned OUTSIDE the node at the top-right corner
  */
 export function generateBadgeStyles() {
   const styles = [];
 
-  for (const [type, config] of Object.entries(TYPE_CONFIG)) {
-    const svgUrl = generateBadgeSvg(type);
-    if (!svgUrl) continue;
+  for (const type of Object.keys(TYPE_CONFIG)) {
+    const badge = generateBadgeSvg(type);
+    if (!badge) continue;
 
-    // Estimate badge dimensions for positioning
-    const charWidth = 7;
-    const padding = 8;
-    const badgeWidth = config.abbrev.length * charWidth + padding * 2;
-    const badgeHeight = 18;
+    const { url, width, height } = badge;
 
     styles.push({
       selector: `node.${type}`,
       style: {
-        "background-image": svgUrl,
-        "background-width": badgeWidth,
-        "background-height": badgeHeight,
-        "background-position-x": "100%",
-        "background-position-y": "0%",
-        "background-offset-x": -2,
-        "background-offset-y": 2,
+        "background-image": url,
+        "background-width": `${width}px`,
+        "background-height": `${height}px`,
+        "background-fit": "none",
         "background-clip": "none",
         "background-image-containment": "over",
-        "bounds-expansion": badgeHeight,
+        "background-position-x": "100%",
+        "background-position-y": "0%",
+        "background-offset-x": width / 2,
+        "background-offset-y": -height / 2,
+        "bounds-expansion": height,
       },
     });
   }
@@ -189,7 +185,6 @@ export function applyBadgeStyles(cy) {
 
   const badgeStyles = generateBadgeStyles();
 
-  // Add badge styles to the existing stylesheet
   badgeStyles.forEach((styleObj) => {
     cy.style().selector(styleObj.selector).style(styleObj.style);
   });
@@ -203,7 +198,6 @@ export function applyBadgeStyles(cy) {
 export function removeBadgeStyles(cy) {
   if (!cy) return;
 
-  // Reset background-image for all typed nodes
   for (const type of Object.keys(TYPE_CONFIG)) {
     cy.style().selector(`node.${type}`).style({
       "background-image": "none",
@@ -219,7 +213,6 @@ export function removeBadgeStyles(cy) {
  */
 export function areBadgesEnabled() {
   const setting = localStorage.getItem("show_type_badges");
-  // Default to false (badges only shown with uniform style)
   return setting === "true";
 }
 
@@ -236,5 +229,4 @@ export function toggleTypeBadges(cy, enabled) {
   }
 }
 
-// Export config for external use if needed
 export { TYPE_CONFIG };
