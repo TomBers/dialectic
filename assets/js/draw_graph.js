@@ -1483,6 +1483,36 @@ function _relayoutAfterDepthChange(cy) {
    Depth-toggle overlay buttons (DOM elements over the canvas)
    ═══════════════════════════════════════════════════════════ */
 
+function _snapOverlayPixel(value) {
+  const dpr = window.devicePixelRatio || 1;
+  return Math.round(value * dpr) / dpr;
+}
+
+function _depthToggleMetrics(zoom) {
+  const scale = Math.max(0.55, Math.min(1, Math.pow(zoom || 1, 0.22)));
+  const height = _snapOverlayPixel(20 * scale);
+  const fadeStartZoom = 0.22;
+  const hideBelowZoom = 0.12;
+  const opacity =
+    zoom <= hideBelowZoom
+      ? 0
+      : zoom >= fadeStartZoom
+        ? 1
+        : (zoom - hideBelowZoom) / (fadeStartZoom - hideBelowZoom);
+
+  return {
+    height,
+    minWidth: height,
+    paddingX: _snapOverlayPixel(Math.max(3, 5 * scale)),
+    borderRadius: _snapOverlayPixel(height / 2),
+    borderWidth: _snapOverlayPixel(Math.max(1, 1.5 * scale)),
+    fontSize: _snapOverlayPixel(Math.max(8, 10 * scale)),
+    gap: _snapOverlayPixel(Math.max(1, 2 * scale)),
+    visible: zoom > hideBelowZoom,
+    opacity: _snapOverlayPixel(opacity),
+  };
+}
+
 /** Inject the CSS for toggle buttons once into <head> */
 function _injectDepthToggleStyles() {
   if (document.getElementById("depth-toggle-styles")) return;
@@ -1668,6 +1698,7 @@ function _updateDepthTogglePositions(cy) {
   if (!cy._depthToggleButtons) return;
 
   const dir = localStorage.getItem("graph_direction") || "TB";
+  const metrics = _depthToggleMetrics(cy.zoom());
 
   cy._depthToggleButtons.forEach((btn, nodeId) => {
     const node = cy.getElementById(nodeId);
@@ -1691,19 +1722,19 @@ function _updateDepthTogglePositions(cy) {
     switch (dir) {
       case "BT": // children above → button above the node
         x = (bb.x1 + bb.x2) / 2;
-        y = bb.y1 - 2;
+        y = bb.y1 - metrics.gap;
         break;
       case "LR": // children to the right → button to the right
-        x = bb.x2 + 2;
+        x = bb.x2 + metrics.gap;
         y = (bb.y1 + bb.y2) / 2;
         break;
       case "RL": // children to the left → button to the left
-        x = bb.x1 - 2;
+        x = bb.x1 - metrics.gap;
         y = (bb.y1 + bb.y2) / 2;
         break;
       default: // TB — children below → button below (original behaviour)
         x = (bb.x1 + bb.x2) / 2;
-        y = bb.y2 + 2;
+        y = bb.y2 + metrics.gap;
         break;
     }
 
@@ -1716,8 +1747,18 @@ function _updateDepthTogglePositions(cy) {
     );
     btn.classList.add(`depth-dir-${dir.toLowerCase()}`);
 
-    btn.style.display = "";
-    btn.style.left = `${x}px`;
-    btn.style.top = `${y}px`;
+    btn.style.display = metrics.visible ? "" : "none";
+    btn.style.opacity = `${metrics.opacity}`;
+    btn.style.pointerEvents = metrics.visible ? "auto" : "none";
+    if (!metrics.visible) return;
+
+    btn.style.minWidth = `${metrics.minWidth}px`;
+    btn.style.height = `${metrics.height}px`;
+    btn.style.padding = `0 ${metrics.paddingX}px`;
+    btn.style.borderRadius = `${metrics.borderRadius}px`;
+    btn.style.borderWidth = `${metrics.borderWidth}px`;
+    btn.style.fontSize = `${metrics.fontSize}px`;
+    btn.style.left = `${_snapOverlayPixel(x)}px`;
+    btn.style.top = `${_snapOverlayPixel(y)}px`;
   });
 }
