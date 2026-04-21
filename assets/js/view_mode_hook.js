@@ -13,17 +13,9 @@ export const ViewModeHook = {
       ? savedDirection
       : "TB";
 
-    // Get initial uniform style state from localStorage (default to false/disabled)
-    // Uniform style also controls badges (uniform ON = badges ON, uniform OFF = badges OFF)
+    // Restore only the uniform mode here; badge visibility is managed independently.
     const savedUniform = localStorage.getItem("uniform_node_style");
     this.uniformStyle = savedUniform === "true";
-
-    // Keep badge state consistent with the restored uniform style on initial load.
-    // This prevents startup mismatches when uniform mode is already persisted.
-    localStorage.setItem(
-      "show_type_badges",
-      this.uniformStyle ? "true" : "false",
-    );
 
     this._bindEvents();
   },
@@ -117,7 +109,6 @@ export const ViewModeHook = {
     }
 
     // Listen for uniform style toggle click
-    // This also controls badges (uniform ON = badges ON, uniform OFF = badges OFF)
     if (this.uniformToggleInput) {
       this._onUniformToggleChange = (e) => {
         // Toggle uniform style on/off
@@ -125,8 +116,6 @@ export const ViewModeHook = {
 
         this.uniformStyle = newState;
         localStorage.setItem("uniform_node_style", newState ? "true" : "false");
-        // Sync badges with uniform style
-        localStorage.setItem("show_type_badges", newState ? "true" : "false");
 
         // Update toggle visual state
         this.updateUniformToggle();

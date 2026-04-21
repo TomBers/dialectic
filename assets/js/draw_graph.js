@@ -844,6 +844,9 @@ export function draw_graph(
   // ── Node action badges (expand/collapse and future corner actions) ──
   _injectNodeActionBadgeStyles();
 
+  // Initialize cache for bottom-menu overlap to avoid forced layout on every render
+  cy._bottomMenuOverlapCache = { bottomOverlap: 0, containerHeight: 0 };
+
   // Rebuild action badges after every layout completes (covers init + expand/collapse relayouts)
   cy.on("layoutstop", () => {
     _rebuildNodeActionBadges(cy, container);
@@ -861,6 +864,23 @@ export function draw_graph(
     }
   });
 
+  // Set up ResizeObserver to update bottom-menu overlap cache when layout changes
+  if (typeof ResizeObserver !== "undefined") {
+    const bottomMenu = document.getElementById("bottom-menu");
+    const resizeObserver = new ResizeObserver(() => {
+      _computeBottomMenuOverlap(cy);
+    });
+    if (container) resizeObserver.observe(container);
+    if (bottomMenu) resizeObserver.observe(bottomMenu);
+    cy._bottomMenuResizeObserver = resizeObserver;
+  } else {
+    // Fallback for browsers without ResizeObserver
+    window.addEventListener("resize", () => _computeBottomMenuOverlap(cy));
+  }
+
+  // Compute initial bottom-menu overlap
+  _computeBottomMenuOverlap(cy);
+
   // Build initial overlays — the first layoutstop may fire before the listener
   // above is registered (if dagre finishes synchronously), so schedule a fallback.
   requestAnimationFrame(() => {
@@ -876,10 +896,16 @@ export function draw_graph(
   cy.cleanupNodeActionBadges = () => {
     try {
       if (cy._nodeActionBadgeOverlay && cy._nodeActionBadgeOverlay.parentNode) {
-        cy._nodeActionBadgeOverlay.parentNode.removeChild(cy._nodeActionBadgeOverlay);
+        cy._nodeActionBadgeOverlay.parentNode.removeChild(
+          cy._nodeActionBadgeOverlay,
+        );
       }
       cy._nodeActionBadgeOverlay = null;
       cy._nodeActionBadges = null;
+      if (cy._bottomMenuResizeObserver) {
+        cy._bottomMenuResizeObserver.disconnect();
+        cy._bottomMenuResizeObserver = null;
+      }
     } catch (_e) {}
   };
 
@@ -1597,11 +1623,56 @@ const NODE_ACTION_SLOTS = new Set([
   "bottom-right",
 ]);
 
+/**
+ * Compute and cache bottom-menu overlap to avoid forced layout on every render.
+ */
+function _computeBottomMenuOverlap(cy) {
+  const container = cy.container();
+  const containerHeight = container ? container.clientHeight : 0;
+  let bottomOverlap = 0;
+  const bottomMenu = document.getElementById("bottom-menu");
+  if (container && bottomMenu) {
+    const cRect = container.getBoundingClientRect();
+    const bmRect = bottomMenu.getBoundingClientRect();
+    const isVisible =
+      bmRect.height > 0 &&
+      !bottomMenu.classList.contains("invisible") &&
+      !bottomMenu.classList.contains("opacity-0");
+    if (isVisible) {
+      bottomOverlap = Math.max(0, cRect.bottom - bmRect.top);
+    }
+  }
+  cy._bottomMenuOverlapCache = {
+    bottomOverlap,
+    containerHeight,
+  };
+}
+
+function _getBadgeSizeCacheKey(btn, metrics) {
+  return [
+    btn.textContent || "",
+    btn.className || "",
+    metrics.minWidth,
+    metrics.height,
+  ].join("|");
+}
+
 function _measureBadgeSize(btn, metrics) {
+  const cacheKey = _getBadgeSizeCacheKey(btn, metrics);
+  const cachedSize = btn._badgeSizeCache;
+  if (cachedSize && cachedSize.key === cacheKey) {
+    return cachedSize.size;
+  }
   const rect = btn.getBoundingClientRect();
-  const width = Math.max(metrics.minWidth, rect.width || 0);
-  const height = Math.max(metrics.height, rect.height || 0);
-  return { width, height };
+  const size = {
+    width: Math.max(metrics.minWidth, rect.width || 0),
+    height: Math.max(metrics.height, rect.height || 0),
+  };
+  btn._badgeSizeCache = {
+    key: cacheKey,
+    size,
+  };
+  return size;
 }
 
 function _outsideCornerPosition(slot, bb, size, gap) {
@@ -1768,22 +1839,15 @@ function _rebuildNodeActionBadges(cy, container) {
 function _updateNodeActionBadgePositions(cy) {
   if (!cy._nodeActionBadges) return;
 
-  const container = cy.container();
-  const containerHeight = container ? container.clientHeight : 0;
-  let bottomOverlap = 0;
-  const bottomMenu = document.getElementById("bottom-menu");
-  if (container && bottomMenu) {
-    const cRect = container.getBoundingClientRect();
-    const bmRect = bottomMenu.getBoundingClientRect();
-    const isVisible =
-      bmRect.height > 0 &&
-      !bottomMenu.classList.contains("invisible") &&
-      !bottomMenu.classList.contains("opacity-0");
-    if (isVisible) {
-      bottomOverlap = Math.max(0, cRect.bottom - bmRect.top);
-    }
-  }
-  const visibleBottom = Math.max(0, containerHeight - bottomOverlap);
+  // Use cached bottom-menu overlap to avoid forced layout on every render
+  const cache = cy._bottomMenuOverlapCache || {
+    bottomOverlap: 0,
+    containerHeight: 0,
+  };
+  const visibleBottom = Math.max(
+    0,
+    cache.containerHeight - cache.bottomOverlap,
+  );
 
   const metrics = _nodeActionBadgeMetrics(cy.zoom());
 
