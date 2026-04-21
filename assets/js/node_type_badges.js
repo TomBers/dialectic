@@ -77,7 +77,7 @@ const TYPE_CONFIG = {
     text: "#1f2937",
   },
   clarify: {
-    abbrev: "CL",
+    abbrev: "Clarify",
     label: "Clarify",
     bg: "#d1d5db",
     border: "#6b7280",
@@ -107,12 +107,55 @@ const TYPE_CONFIG = {
 };
 
 // Badge dimension constants
-const BADGE_CHAR_WIDTH = 10;
-const BADGE_PADDING = 20;
+const BADGE_FONT_SIZE = 10;
+const BADGE_FONT_WEIGHT = 700;
+const BADGE_FONT_FAMILY = "Arial, sans-serif";
+const BADGE_HORIZONTAL_PADDING = 10;
+const BADGE_MIN_WIDTH = 28;
 const BADGE_HEIGHT = 18;
 
 // Cache for generated SVG data URLs
 const svgCache = new Map();
+let badgeMeasureContext = null;
+
+function getBadgeMeasureContext() {
+  if (badgeMeasureContext) {
+    return badgeMeasureContext;
+  }
+
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  const canvas = document.createElement("canvas");
+  badgeMeasureContext = canvas.getContext("2d");
+  return badgeMeasureContext;
+}
+
+function getBadgeDimensions(text) {
+  const context = getBadgeMeasureContext();
+
+  if (!context) {
+    return {
+      width: Math.max(
+        BADGE_MIN_WIDTH,
+        text.length * BADGE_FONT_SIZE + BADGE_HORIZONTAL_PADDING * 2,
+      ),
+      height: BADGE_HEIGHT,
+    };
+  }
+
+  context.font = `${BADGE_FONT_WEIGHT} ${BADGE_FONT_SIZE}px ${BADGE_FONT_FAMILY}`;
+  const textWidth = Math.ceil(context.measureText(text).width);
+
+  return {
+    width: Math.max(
+      BADGE_MIN_WIDTH,
+      textWidth + BADGE_HORIZONTAL_PADDING * 2,
+    ),
+    height: BADGE_HEIGHT,
+  };
+}
 
 /**
  * Generate an SVG badge as a base64 data URL
@@ -126,14 +169,13 @@ function generateBadgeSvg(type) {
   }
 
   const text = config.abbrev;
-  const width = text.length * BADGE_CHAR_WIDTH + BADGE_PADDING;
-  const height = BADGE_HEIGHT;
+  const { width, height } = getBadgeDimensions(text);
 
   // Simple SVG with text centered
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
   <rect x="1" y="1" width="${width - 2}" height="${height - 2}" rx="4" ry="4" fill="${config.bg}" stroke="${config.border}" stroke-width="1"/>
-  <text x="${width / 2}" y="${height / 2 + 4}" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="${config.text}" text-anchor="middle">${text}</text>
+  <text x="${width / 2}" y="${height / 2 + 4}" font-family="${BADGE_FONT_FAMILY}" font-size="${BADGE_FONT_SIZE}" font-weight="${BADGE_FONT_WEIGHT}" fill="${config.text}" text-anchor="middle">${text}</text>
 </svg>`;
 
   // Use base64 encoding for reliability
@@ -169,7 +211,7 @@ export function generateBadgeStyles() {
         "background-position-y": "0%",
         "background-offset-x": width / 2,
         "background-offset-y": -height / 2,
-        "bounds-expansion": height,
+        "bounds-expansion": Math.max(width, height),
       },
     });
   }
