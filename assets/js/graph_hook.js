@@ -1684,10 +1684,10 @@ const graphHook = {
     this._presentationIds = null;
     this._presentationFiltered = false;
 
-    // Clean up depth-toggle overlay buttons
-    if (this.cy && typeof this.cy.cleanupDepthOverlay === "function") {
+    // Clean up node action badge overlays
+    if (this.cy && typeof this.cy.cleanupNodeActionBadges === "function") {
       try {
-        this.cy.cleanupDepthOverlay();
+        this.cy.cleanupNodeActionBadges();
       } catch (_e) {}
     }
 

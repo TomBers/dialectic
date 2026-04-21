@@ -841,22 +841,22 @@ export function draw_graph(
   cy.collapseNodeChildren = (n) =>
     collapseNodeChildren(cy, typeof n === "string" ? cy.getElementById(n) : n);
 
-  // ── Depth-toggle overlay buttons (expand/collapse via mouse click) ──
-  _injectDepthToggleStyles();
+  // ── Node action badges (expand/collapse and future corner actions) ──
+  _injectNodeActionBadgeStyles();
 
-  // Rebuild overlay buttons after every layout completes (covers init + expand/collapse relayouts)
+  // Rebuild action badges after every layout completes (covers init + expand/collapse relayouts)
   cy.on("layoutstop", () => {
-    _rebuildDepthToggleOverlays(cy, container);
+    _rebuildNodeActionBadges(cy, container);
   });
 
-  // Keep button positions in sync with pan / zoom / animation (throttled to 1 rAF)
-  let _depthToggleRafPending = false;
+  // Keep badge positions in sync with pan / zoom / animation (throttled to 1 rAF)
+  let _nodeActionBadgeRafPending = false;
   cy.on("render", () => {
-    if (!_depthToggleRafPending) {
-      _depthToggleRafPending = true;
+    if (!_nodeActionBadgeRafPending) {
+      _nodeActionBadgeRafPending = true;
       requestAnimationFrame(() => {
-        _depthToggleRafPending = false;
-        _updateDepthTogglePositions(cy);
+        _nodeActionBadgeRafPending = false;
+        _updateNodeActionBadgePositions(cy);
       });
     }
   });
@@ -864,7 +864,7 @@ export function draw_graph(
   // Build initial overlays — the first layoutstop may fire before the listener
   // above is registered (if dagre finishes synchronously), so schedule a fallback.
   requestAnimationFrame(() => {
-    _rebuildDepthToggleOverlays(cy, container);
+    _rebuildNodeActionBadges(cy, container);
   });
 
   // Apply type badge styles using native Cytoscape background-image
@@ -872,14 +872,14 @@ export function draw_graph(
     applyBadgeStyles(cy);
   }
 
-  // Expose cleanup so graph_hook.js can remove the overlay on destroy
-  cy.cleanupDepthOverlay = () => {
+  // Expose cleanup so graph_hook.js can remove the node action badge overlay on destroy
+  cy.cleanupNodeActionBadges = () => {
     try {
-      if (cy._depthToggleOverlay && cy._depthToggleOverlay.parentNode) {
-        cy._depthToggleOverlay.parentNode.removeChild(cy._depthToggleOverlay);
+      if (cy._nodeActionBadgeOverlay && cy._nodeActionBadgeOverlay.parentNode) {
+        cy._nodeActionBadgeOverlay.parentNode.removeChild(cy._nodeActionBadgeOverlay);
       }
-      cy._depthToggleOverlay = null;
-      cy._depthToggleButtons = null;
+      cy._nodeActionBadgeOverlay = null;
+      cy._nodeActionBadges = null;
     } catch (_e) {}
   };
 
@@ -1480,7 +1480,7 @@ function _relayoutAfterDepthChange(cy) {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   Depth-toggle overlay buttons (DOM elements over the canvas)
+   Node action badges (DOM overlays anchored to node corners)
    ═══════════════════════════════════════════════════════════ */
 
 function _snapOverlayPixel(value) {
@@ -1488,7 +1488,7 @@ function _snapOverlayPixel(value) {
   return Math.round(value * dpr) / dpr;
 }
 
-function _depthToggleMetrics(zoom) {
+function _nodeActionBadgeMetrics(zoom) {
   const scale = Math.max(0.55, Math.min(1, Math.pow(zoom || 1, 0.22)));
   const height = _snapOverlayPixel(20 * scale);
   const fadeStartZoom = 0.22;
@@ -1499,6 +1499,7 @@ function _depthToggleMetrics(zoom) {
       : zoom >= fadeStartZoom
         ? 1
         : (zoom - hideBelowZoom) / (fadeStartZoom - hideBelowZoom);
+  const clampedOpacity = Math.max(0, Math.min(1, opacity));
 
   return {
     height,
@@ -1507,19 +1508,19 @@ function _depthToggleMetrics(zoom) {
     borderRadius: _snapOverlayPixel(height / 2),
     borderWidth: _snapOverlayPixel(Math.max(1, 1.5 * scale)),
     fontSize: _snapOverlayPixel(Math.max(8, 10 * scale)),
-    gap: _snapOverlayPixel(Math.max(1, 2 * scale)),
+    outsideGap: _snapOverlayPixel(Math.max(0.5, 1.25 * scale)),
     visible: zoom > hideBelowZoom,
-    opacity: _snapOverlayPixel(opacity),
+    opacity: clampedOpacity,
   };
 }
 
-/** Inject the CSS for toggle buttons once into <head> */
-function _injectDepthToggleStyles() {
-  if (document.getElementById("depth-toggle-styles")) return;
+/** Inject the CSS for node action badges once into <head> */
+function _injectNodeActionBadgeStyles() {
+  if (document.getElementById("node-action-badge-styles")) return;
   const s = document.createElement("style");
-  s.id = "depth-toggle-styles";
+  s.id = "node-action-badge-styles";
   s.textContent = `
-.depth-toggle-overlay {
+.node-action-badge-overlay {
   position: absolute;
   top: 0; left: 0;
   width: 100%; height: 100%;
@@ -1527,7 +1528,7 @@ function _injectDepthToggleStyles() {
   z-index: 10;
   overflow: hidden;
 }
-.depth-toggle-btn {
+.node-action-badge {
   pointer-events: auto;
   position: absolute;
   display: inline-flex;
@@ -1551,51 +1552,34 @@ function _injectDepthToggleStyles() {
   line-height: 1;
   white-space: nowrap;
 }
-/* direction-aware centering */
-.depth-toggle-btn.depth-dir-tb { transform: translate(-50%, 0); }
-.depth-toggle-btn.depth-dir-bt { transform: translate(-50%, -100%); }
-.depth-toggle-btn.depth-dir-lr { transform: translate(0, -50%); }
-.depth-toggle-btn.depth-dir-rl { transform: translate(-100%, -50%); }
-.depth-toggle-btn:hover {
+.node-action-badge:hover {
   background: #f1f5f9;
   border-color: #94a3b8;
   box-shadow: 0 2px 4px rgba(0,0,0,0.12);
 }
-.depth-toggle-btn.depth-dir-tb:active {
+.node-action-badge:active {
   background: #e2e8f0;
-  transform: translate(-50%, 0) scale(0.95);
-}
-.depth-toggle-btn.depth-dir-bt:active {
-  background: #e2e8f0;
-  transform: translate(-50%, -100%) scale(0.95);
-}
-.depth-toggle-btn.depth-dir-lr:active {
-  background: #e2e8f0;
-  transform: translate(0, -50%) scale(0.95);
-}
-.depth-toggle-btn.depth-dir-rl:active {
-  background: #e2e8f0;
-  transform: translate(-100%, -50%) scale(0.95);
+  filter: brightness(0.98);
 }
 /* collapsed → warm amber "+N" pill — stands out from all node types */
-.depth-toggle-btn.depth-collapsed-btn {
+.node-action-badge.depth-collapsed-btn {
   background: #fef3c7;
   border-color: #f59e0b;
   color: #92400e;
   box-shadow: 0 0 6px rgba(245, 158, 11, 0.45), 0 1px 2px rgba(0,0,0,0.08);
 }
-.depth-toggle-btn.depth-collapsed-btn:hover {
+.node-action-badge.depth-collapsed-btn:hover {
   background: #fde68a;
   border-color: #d97706;
   box-shadow: 0 0 10px rgba(245, 158, 11, 0.6), 0 2px 4px rgba(0,0,0,0.12);
 }
 /* expanded → subtle grey "−" circle */
-.depth-toggle-btn.depth-expanded-btn {
+.node-action-badge.depth-expanded-btn {
   background: #ffffff;
   border-color: #d1d5db;
   color: #6b7280;
 }
-.depth-toggle-btn.depth-expanded-btn:hover {
+.node-action-badge.depth-expanded-btn:hover {
   background: #f9fafb;
   border-color: #9ca3af;
 }`;
@@ -1603,33 +1587,159 @@ function _injectDepthToggleStyles() {
 }
 
 /**
- * (Re)build all toggle buttons for the current set of visible, expandable
- * nodes.  Called after every layout-stop and after the initial render.
+ * Node-action slots are explicit so adding future corner badges does not
+ * require changing positioning logic.
  */
-function _rebuildDepthToggleOverlays(cy, container) {
+const NODE_ACTION_SLOTS = new Set([
+  "top-left",
+  "top-right",
+  "bottom-left",
+  "bottom-right",
+]);
+
+function _measureBadgeSize(btn, metrics) {
+  const rect = btn.getBoundingClientRect();
+  const width = Math.max(metrics.minWidth, rect.width || 0);
+  const height = Math.max(metrics.height, rect.height || 0);
+  return { width, height };
+}
+
+function _outsideCornerPosition(slot, bb, size, gap) {
+  switch (slot) {
+    case "top-left":
+      return {
+        x: bb.x1 - gap - size.width / 2,
+        y: bb.y1 - gap - size.height / 2,
+      };
+    case "top-right":
+      return {
+        x: bb.x2 + gap - size.width / 2,
+        y: bb.y1 - gap - size.height / 2,
+      };
+    case "bottom-left":
+      return {
+        x: bb.x1 - gap - size.width / 2,
+        y: bb.y2 + gap - size.height / 2,
+      };
+    default:
+      return {
+        x: bb.x2 + gap - size.width / 2,
+        y: bb.y2 + gap - size.height / 2,
+      };
+  }
+}
+
+function _nodeRenderedRect(node) {
+  const rp = node.renderedPosition();
+  const rw = node.renderedOuterWidth();
+  const rh = node.renderedOuterHeight();
+  if (
+    rp &&
+    Number.isFinite(rp.x) &&
+    Number.isFinite(rp.y) &&
+    Number.isFinite(rw) &&
+    Number.isFinite(rh) &&
+    rw > 0 &&
+    rh > 0
+  ) {
+    return {
+      x1: rp.x - rw / 2,
+      y1: rp.y - rh / 2,
+      x2: rp.x + rw / 2,
+      y2: rp.y + rh / 2,
+      w: rw,
+      h: rh,
+    };
+  }
+
+  return node.renderedBoundingBox({
+    includeLabels: false,
+    includeOverlays: false,
+  });
+}
+
+function _getDepthToggleActionSpec(cy, node) {
+  const children = node.outgoers("node").filter((m) => !m.isParent());
+  if (children.length === 0) return null;
+
+  const collapsed = isDepthCollapsed(node);
+  const hiddenCount = node.data("_hiddenChildCount") || children.length;
+
+  if (collapsed) {
+    return {
+      key: "depth-toggle",
+      slot: "bottom-right",
+      text: `+${hiddenCount}`,
+      className: "depth-collapsed-btn",
+      title: `Expand ${hiddenCount} hidden child${hiddenCount === 1 ? "" : "ren"} (E)`,
+      ariaLabel: `Expand ${hiddenCount} hidden child${hiddenCount === 1 ? "" : "ren"} of node ${node.id()}`,
+      onClick: () => expandNodeChildren(cy, node),
+    };
+  }
+
+  return {
+    key: "depth-toggle",
+    slot: "bottom-right",
+    text: "\u2212",
+    className: "depth-expanded-btn",
+    title: `Collapse ${children.length} child${children.length === 1 ? "" : "ren"} (C)`,
+    ariaLabel: `Collapse ${children.length} child${children.length === 1 ? "" : "ren"} of node ${node.id()}`,
+    onClick: () => collapseNodeChildren(cy, node),
+  };
+}
+
+function _getNodeActionSpecs(cy, node) {
+  const specs = [];
+  const depthSpec = _getDepthToggleActionSpec(cy, node);
+  if (depthSpec) specs.push(depthSpec);
+  return specs;
+}
+
+function _createNodeActionBadge(spec, nodeId) {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "node-action-badge";
+  btn.tabIndex = -1;
+  btn.dataset.nodeId = nodeId;
+  btn.dataset.actionKey = spec.key;
+  btn.dataset.slot = spec.slot;
+  btn.textContent = spec.text;
+  btn.title = spec.title;
+  btn.setAttribute("aria-label", spec.ariaLabel);
+  if (spec.className) {
+    btn.classList.add(spec.className);
+  }
+
+  btn.addEventListener("mousedown", (e) => e.stopPropagation());
+  btn.addEventListener("pointerdown", (e) => e.stopPropagation());
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    spec.onClick();
+  });
+
+  return btn;
+}
+
+function _rebuildNodeActionBadges(cy, container) {
   if (!container) return;
 
-  _injectDepthToggleStyles();
+  _injectNodeActionBadgeStyles();
 
-  // Create or reuse the overlay container
-  let overlay = container.querySelector(".depth-toggle-overlay");
+  let overlay = container.querySelector(".node-action-badge-overlay");
   if (!overlay) {
     overlay = document.createElement("div");
-    overlay.className = "depth-toggle-overlay";
-    // Ensure the graph container is a positioning context
+    overlay.className = "node-action-badge-overlay";
     const pos = getComputedStyle(container).position;
     if (pos === "static") container.style.position = "relative";
     container.appendChild(overlay);
   }
 
-  // Clear old buttons
   overlay.innerHTML = "";
 
-  // Store refs on the cy instance for position updates
-  cy._depthToggleOverlay = overlay;
-  cy._depthToggleButtons = new Map();
+  cy._nodeActionBadgeOverlay = overlay;
+  cy._nodeActionBadges = new Map();
 
-  // Find visible, non-compound nodes that have DAG children
   const visible = cy
     .nodes()
     .filter(
@@ -1637,70 +1747,49 @@ function _rebuildDepthToggleOverlays(cy, container) {
         !n.isParent() && !n.hasClass("depth-hidden") && !n.hasClass("hidden"),
     );
 
-  visible.forEach((n) => {
-    const children = n.outgoers("node").filter((m) => !m.isParent());
-    if (children.length === 0) return; // leaf — no button
-
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "depth-toggle-btn";
-    btn.tabIndex = -1; // keep out of tab order — canvas controls aren't keyboard-navigable
-    btn.dataset.nodeId = n.id();
-
-    const collapsed = isDepthCollapsed(n);
-    const hiddenCount = n.data("_hiddenChildCount") || children.length;
-
-    if (collapsed) {
-      btn.textContent = `+${hiddenCount}`;
-      btn.classList.add("depth-collapsed-btn");
-      btn.title = `Expand ${hiddenCount} hidden child${hiddenCount === 1 ? "" : "ren"} (E)`;
-      btn.setAttribute(
-        "aria-label",
-        `Expand ${hiddenCount} hidden child${hiddenCount === 1 ? "" : "ren"} of node ${n.id()}`,
-      );
-    } else {
-      btn.textContent = "\u2212"; // minus sign
-      btn.classList.add("depth-expanded-btn");
-      btn.title = `Collapse ${children.length} child${children.length === 1 ? "" : "ren"} (C)`;
-      btn.setAttribute(
-        "aria-label",
-        `Collapse ${children.length} child${children.length === 1 ? "" : "ren"} of node ${n.id()}`,
-      );
-    }
-
-    // Stop events from reaching the Cytoscape canvas beneath
-    btn.addEventListener("mousedown", (e) => e.stopPropagation());
-    btn.addEventListener("pointerdown", (e) => e.stopPropagation());
-
-    btn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (isDepthCollapsed(n)) {
-        expandNodeChildren(cy, n);
-      } else {
-        collapseNodeChildren(cy, n);
-      }
-      // layoutstop from _relayoutAfterDepthChange will rebuild overlays
+  visible.forEach((node) => {
+    _getNodeActionSpecs(cy, node).forEach((spec) => {
+      const btn = _createNodeActionBadge(spec, node.id());
+      overlay.appendChild(btn);
+      cy._nodeActionBadges.set(`${node.id()}:${spec.key}`, {
+        el: btn,
+        nodeId: node.id(),
+        slot: spec.slot,
+      });
     });
-
-    overlay.appendChild(btn);
-    cy._depthToggleButtons.set(n.id(), btn);
   });
 
-  _updateDepthTogglePositions(cy);
+  _updateNodeActionBadgePositions(cy);
 }
 
 /**
- * Reposition every toggle button to sit at the bottom-centre of its node.
- * Called on every Cytoscape render frame so buttons track pan/zoom smoothly.
+ * Reposition every action badge to its configured node corner.
  */
-function _updateDepthTogglePositions(cy) {
-  if (!cy._depthToggleButtons) return;
+function _updateNodeActionBadgePositions(cy) {
+  if (!cy._nodeActionBadges) return;
 
-  const dir = localStorage.getItem("graph_direction") || "TB";
-  const metrics = _depthToggleMetrics(cy.zoom());
+  const container = cy.container();
+  const containerHeight = container ? container.clientHeight : 0;
+  let bottomOverlap = 0;
+  const bottomMenu = document.getElementById("bottom-menu");
+  if (container && bottomMenu) {
+    const cRect = container.getBoundingClientRect();
+    const bmRect = bottomMenu.getBoundingClientRect();
+    const isVisible =
+      bmRect.height > 0 &&
+      !bottomMenu.classList.contains("invisible") &&
+      !bottomMenu.classList.contains("opacity-0");
+    if (isVisible) {
+      bottomOverlap = Math.max(0, cRect.bottom - bmRect.top);
+    }
+  }
+  const visibleBottom = Math.max(0, containerHeight - bottomOverlap);
 
-  cy._depthToggleButtons.forEach((btn, nodeId) => {
+  const metrics = _nodeActionBadgeMetrics(cy.zoom());
+
+  cy._nodeActionBadges.forEach((badge) => {
+    const btn = badge.el;
+    const nodeId = badge.nodeId;
     const node = cy.getElementById(nodeId);
     if (
       !node ||
@@ -1712,42 +1801,16 @@ function _updateDepthTogglePositions(cy) {
       return;
     }
 
-    const bb = node.renderedBoundingBox({ includeLabels: false });
+    const bb = _nodeRenderedRect(node);
     if (!bb || bb.w === 0) {
       btn.style.display = "none";
       return;
     }
+    const slot = NODE_ACTION_SLOTS.has(badge.slot)
+      ? badge.slot
+      : "bottom-right";
 
-    let x, y;
-    switch (dir) {
-      case "BT": // children above → button above the node
-        x = (bb.x1 + bb.x2) / 2;
-        y = bb.y1 - metrics.gap;
-        break;
-      case "LR": // children to the right → button to the right
-        x = bb.x2 + metrics.gap;
-        y = (bb.y1 + bb.y2) / 2;
-        break;
-      case "RL": // children to the left → button to the left
-        x = bb.x1 - metrics.gap;
-        y = (bb.y1 + bb.y2) / 2;
-        break;
-      default: // TB — children below → button below (original behaviour)
-        x = (bb.x1 + bb.x2) / 2;
-        y = bb.y2 + metrics.gap;
-        break;
-    }
-
-    // Swap direction class so the CSS transform centres correctly
-    btn.classList.remove(
-      "depth-dir-tb",
-      "depth-dir-bt",
-      "depth-dir-lr",
-      "depth-dir-rl",
-    );
-    btn.classList.add(`depth-dir-${dir.toLowerCase()}`);
-
-    btn.style.display = metrics.visible ? "" : "none";
+    btn.style.display = metrics.visible ? "inline-flex" : "none";
     btn.style.opacity = `${metrics.opacity}`;
     btn.style.pointerEvents = metrics.visible ? "auto" : "none";
     if (!metrics.visible) return;
@@ -1758,7 +1821,14 @@ function _updateDepthTogglePositions(cy) {
     btn.style.borderRadius = `${metrics.borderRadius}px`;
     btn.style.borderWidth = `${metrics.borderWidth}px`;
     btn.style.fontSize = `${metrics.fontSize}px`;
-    btn.style.left = `${_snapOverlayPixel(x)}px`;
-    btn.style.top = `${_snapOverlayPixel(y)}px`;
+
+    const size = _measureBadgeSize(btn, metrics);
+    const pos = _outsideCornerPosition(slot, bb, size, metrics.outsideGap);
+    if (pos.y + size.height > visibleBottom) {
+      btn.style.display = "none";
+      return;
+    }
+    btn.style.left = `${_snapOverlayPixel(pos.x)}px`;
+    btn.style.top = `${_snapOverlayPixel(pos.y)}px`;
   });
 }
