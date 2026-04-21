@@ -1690,12 +1690,7 @@ const graphHook = {
         this.cy.cleanupDepthOverlay();
       } catch (_e) {}
     }
-    // Clean up type badge styles
-    if (this.cy && typeof this.cy.cleanupTypeBadges === "function") {
-      try {
-        this.cy.cleanupTypeBadges();
-      } catch (_e) {}
-    }
+
     if (this.cy && typeof this.cy.destroy === "function") {
       try {
         this.cy.destroy();

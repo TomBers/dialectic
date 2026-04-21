@@ -411,7 +411,7 @@ export function graphStyle(viewMode = "spaced") {
   if (useUniformStyle) {
     // Uniform mode: all nodes look the same, badges indicate type
     base_style.push({
-      selector: "node",
+      selector: "node[^compound]",
       style: {
         "border-color": uniformNodeStyle.border,
         "background-color": uniformNodeStyle.background,
@@ -422,7 +422,7 @@ export function graphStyle(viewMode = "spaced") {
     });
 
     base_style.push({
-      selector: "node.node-hover",
+      selector: "node[^compound].node-hover",
       style: {
         "background-color": uniformNodeStyle.hoverBackground,
         "border-color": uniformNodeStyle.hoverBorder,
@@ -434,7 +434,7 @@ export function graphStyle(viewMode = "spaced") {
     });
 
     base_style.push({
-      selector: "node.selected",
+      selector: "node[^compound].selected",
       style: {
         "background-color": uniformNodeStyle.selectedBackground,
         "border-color": uniformNodeStyle.selectedBorder,

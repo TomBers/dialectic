@@ -18,6 +18,13 @@ export const ViewModeHook = {
     const savedUniform = localStorage.getItem("uniform_node_style");
     this.uniformStyle = savedUniform === "true";
 
+    // Keep badge state consistent with the restored uniform style on initial load.
+    // This prevents startup mismatches when uniform mode is already persisted.
+    localStorage.setItem(
+      "show_type_badges",
+      this.uniformStyle ? "true" : "false",
+    );
+
     this._bindEvents();
   },
 

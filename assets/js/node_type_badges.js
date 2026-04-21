@@ -1,110 +1,136 @@
-/**
- * Node Type Badges - Uses Cytoscape's native background-image styling
+/* Node Type Badges - Uses Cytoscape's native background-image styling
  * to display type badges on nodes. Badges render as part of the canvas,
  * avoiding z-index issues with HTML overlays.
  */
 
-// Type abbreviations and display config
-const TYPE_CONFIG = {
+// Type-specific badge copy. Colors are resolved from a shared palette when available
+// so badge styling stays aligned with graph type coloring.
+const TYPE_META = {
   thesis: {
     abbrev: "Pro",
     label: "Thesis",
-    bg: "#6ee7b7",
-    border: "#059669",
-    text: "#064e3b",
   },
   antithesis: {
     abbrev: "Con",
     label: "Antithesis",
-    bg: "#fca5a5",
-    border: "#dc2626",
-    text: "#7f1d1d",
   },
   synthesis: {
     abbrev: "Blend",
     label: "Synthesis",
-    bg: "#c4b5fd",
-    border: "#7c3aed",
-    text: "#581c87",
   },
   question: {
     abbrev: "Qn",
     label: "Question",
-    bg: "#7dd3fc",
-    border: "#0284c7",
-    text: "#0c4a6e",
   },
   user: {
     abbrev: "U",
     label: "User",
-    bg: "#86efac",
-    border: "#16a34a",
-    text: "#14532d",
   },
   deepdive: {
     abbrev: "DD",
     label: "Deep Dive",
-    bg: "#67e8f9",
-    border: "#0891b2",
-    text: "#164e63",
   },
   origin: {
     abbrev: "O",
     label: "Origin",
-    bg: "#94a3b8",
-    border: "#475569",
-    text: "#1e293b",
   },
   ideas: {
     abbrev: "ID",
     label: "Ideas",
-    bg: "#fdba74",
-    border: "#ea580c",
-    text: "#7c2d12",
   },
   answer: {
     abbrev: "Ans",
     label: "Answer",
-    bg: "#d1d5db",
-    border: "#6b7280",
-    text: "#1f2937",
   },
   explain: {
     abbrev: "EX",
     label: "Explain",
-    bg: "#d1d5db",
-    border: "#6b7280",
-    text: "#1f2937",
   },
   clarify: {
-    abbrev: "Clarify",
+    abbrev: "CL",
     label: "Clarify",
-    bg: "#d1d5db",
-    border: "#6b7280",
-    text: "#1f2937",
   },
   assumption: {
     abbrev: "AS",
     label: "Assumption",
-    bg: "#fde047",
-    border: "#ca8a04",
-    text: "#713f12",
   },
   premise: {
     abbrev: "PR",
     label: "Premise",
-    bg: "#93c5fd",
-    border: "#2563eb",
-    text: "#1e3a8a",
   },
   conclusion: {
     abbrev: "CO",
     label: "Conclusion",
-    bg: "#f9a8d4",
-    border: "#db2777",
-    text: "#831843",
   },
 };
+
+// Backward-compatible fallback badge palette used when no shared palette is exposed.
+const DEFAULT_TYPE_PALETTE = {
+  thesis: { bg: "#6ee7b7", border: "#059669", text: "#064e3b" },
+  antithesis: { bg: "#fca5a5", border: "#dc2626", text: "#7f1d1d" },
+  synthesis: { bg: "#c4b5fd", border: "#7c3aed", text: "#581c87" },
+  question: { bg: "#7dd3fc", border: "#0284c7", text: "#0c4a6e" },
+  user: { bg: "#86efac", border: "#16a34a", text: "#14532d" },
+  deepdive: { bg: "#67e8f9", border: "#0891b2", text: "#164e63" },
+  origin: { bg: "#94a3b8", border: "#475569", text: "#1e293b" },
+  ideas: { bg: "#fdba74", border: "#ea580c", text: "#7c2d12" },
+  answer: { bg: "#d1d5db", border: "#6b7280", text: "#1f2937" },
+  explain: { bg: "#d1d5db", border: "#6b7280", text: "#1f2937" },
+  clarify: { bg: "#d1d5db", border: "#6b7280", text: "#1f2937" },
+  assumption: { bg: "#fde047", border: "#ca8a04", text: "#713f12" },
+  premise: { bg: "#93c5fd", border: "#2563eb", text: "#1e3a8a" },
+  conclusion: { bg: "#f9a8d4", border: "#db2777", text: "#831843" },
+};
+
+function getSharedTypePalette() {
+  if (typeof globalThis === "undefined") {
+    return null;
+  }
+  return (
+    globalThis.NODE_TYPE_PALETTE ||
+    globalThis.TYPE_PALETTE ||
+    globalThis.GRAPH_TYPE_PALETTE ||
+    null
+  );
+}
+
+function normalizePaletteEntry(entry, fallback) {
+  if (typeof entry === "string") {
+    return {
+      bg: entry,
+      border: fallback.border,
+      text: fallback.text,
+    };
+  }
+  if (!entry || typeof entry !== "object") {
+    return fallback;
+  }
+  return {
+    bg: entry.bg || entry.fill || entry.color || fallback.bg,
+    border: entry.border || entry.stroke || fallback.border,
+    text: entry.text || fallback.text,
+  };
+}
+
+function buildTypeConfig() {
+  const sharedPalette = getSharedTypePalette();
+  const config = {};
+  Object.keys(TYPE_META).forEach((type) => {
+    const fallbackPalette = DEFAULT_TYPE_PALETTE[type];
+    const palette = normalizePaletteEntry(
+      sharedPalette && sharedPalette[type],
+      fallbackPalette,
+    );
+    config[type] = {
+      ...TYPE_META[type],
+      ...palette,
+    };
+  });
+  return config;
+}
+
+// Type abbreviations and display config
+const TYPE_CONFIG = buildTypeConfig();
 
 // Badge dimension constants
 const BADGE_FONT_SIZE = 10;
@@ -149,10 +175,7 @@ function getBadgeDimensions(text) {
   const textWidth = Math.ceil(context.measureText(text).width);
 
   return {
-    width: Math.max(
-      BADGE_MIN_WIDTH,
-      textWidth + BADGE_HORIZONTAL_PADDING * 2,
-    ),
+    width: Math.max(BADGE_MIN_WIDTH, textWidth + BADGE_HORIZONTAL_PADDING * 2),
     height: BADGE_HEIGHT,
   };
 }
@@ -202,8 +225,8 @@ export function generateBadgeStyles() {
       selector: `node.${type}`,
       style: {
         "background-image": url,
-        "background-width": `${width}px`,
-        "background-height": `${height}px`,
+        "background-width": width,
+        "background-height": height,
         "background-fit": "none",
         "background-clip": "none",
         "background-image-containment": "over",
@@ -226,12 +249,13 @@ export function applyBadgeStyles(cy) {
   if (!cy) return;
 
   const badgeStyles = generateBadgeStyles();
+  const stylesheet = cy.style();
 
   badgeStyles.forEach((styleObj) => {
-    cy.style().selector(styleObj.selector).style(styleObj.style);
+    stylesheet.selector(styleObj.selector).style(styleObj.style);
   });
 
-  cy.style().update();
+  stylesheet.update();
 }
 
 /**
@@ -240,21 +264,34 @@ export function applyBadgeStyles(cy) {
 export function removeBadgeStyles(cy) {
   if (!cy) return;
 
+  const stylesheet = cy.style();
+
   for (const type of Object.keys(TYPE_CONFIG)) {
-    cy.style().selector(`node.${type}`).style({
+    stylesheet.selector(`node.${type}`).style({
       "background-image": "none",
       "bounds-expansion": 0,
     });
   }
 
-  cy.style().update();
+  stylesheet.update();
 }
 
 /**
  * Check if type badges are enabled (synced with uniform style setting)
  */
 export function areBadgesEnabled() {
+  const uniformStyleEnabled =
+    localStorage.getItem("uniform_node_style") === "true";
+  // Badges are only available when uniform node style is enabled.
+  if (!uniformStyleEnabled) {
+    return false;
+  }
   const setting = localStorage.getItem("show_type_badges");
+  // Backward compatibility: if the badge-specific setting is absent,
+  // treat it as enabled when uniform style is enabled.
+  if (setting === null) {
+    return true;
+  }
   return setting === "true";
 }
 
