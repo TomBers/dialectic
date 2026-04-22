@@ -26,6 +26,7 @@ defmodule DialecticWeb.ExportMenuComp do
       |> Map.put_new(:class, "")
       |> Map.put_new(:align, "right")
       |> Map.put_new(:node, nil)
+      |> Map.put_new(:token, nil)
 
     {:ok, assign(socket, assigns)}
   end
@@ -116,9 +117,14 @@ defmodule DialecticWeb.ExportMenuComp do
           <!-- Markdown -->
           <.link
       href={
-        if @graph_struct && @graph_struct.slug,
-          do: "/api/graphs/md/#{@graph_struct.slug}",
-          else: "/api/graphs/md/#{URI.encode(@graph_id)}"
+        path =
+          if @graph_struct && @graph_struct.slug,
+            do: "/api/graphs/md/#{@graph_struct.slug}",
+            else: "/api/graphs/md/#{URI.encode(@graph_id)}"
+
+        if assigns[:token],
+          do: "#{path}?#{URI.encode_query(%{token: assigns[:token]})}",
+          else: path
       }
       download={
         if @graph_struct && @graph_struct.slug,
@@ -148,9 +154,14 @@ defmodule DialecticWeb.ExportMenuComp do
           <!-- JSON Extract -->
           <.link
       href={
-        if @graph_struct && @graph_struct.slug,
-          do: "/api/graphs/json/#{@graph_struct.slug}",
-          else: "/api/graphs/json/#{URI.encode(@graph_id)}"
+        path =
+          if @graph_struct && @graph_struct.slug,
+            do: "/api/graphs/json/#{@graph_struct.slug}",
+            else: "/api/graphs/json/#{URI.encode(@graph_id)}"
+
+        if assigns[:token],
+          do: "#{path}?#{URI.encode_query(%{token: assigns[:token]})}",
+          else: path
       }
       download={
         if @graph_struct && @graph_struct.slug,

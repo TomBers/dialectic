@@ -59,9 +59,14 @@ defmodule DialecticWeb.NoteMenuComp do
 
           <.link
             href={
-              if @graph_struct && @graph_struct.slug,
-                do: "/api/graphs/md/#{@graph_struct.slug}",
-                else: "/api/graphs/md/#{URI.encode(@graph_id)}"
+              path =
+                if @graph_struct && @graph_struct.slug,
+                  do: "/api/graphs/md/#{@graph_struct.slug}",
+                  else: "/api/graphs/md/#{URI.encode(@graph_id)}"
+
+              if assigns[:token],
+                do: "#{path}?#{URI.encode_query(%{token: assigns[:token]})}",
+                else: path
             }
             download={
               if @graph_struct && @graph_struct.slug,
@@ -89,9 +94,14 @@ defmodule DialecticWeb.NoteMenuComp do
 
           <.link
             href={
-              if @graph_struct && @graph_struct.slug,
-                do: "/api/graphs/json/#{@graph_struct.slug}",
-                else: "/api/graphs/json/#{URI.encode(@graph_id)}"
+              path =
+                if @graph_struct && @graph_struct.slug,
+                  do: "/api/graphs/json/#{@graph_struct.slug}",
+                  else: "/api/graphs/json/#{URI.encode(@graph_id)}"
+
+              if assigns[:token],
+                do: "#{path}?#{URI.encode_query(%{token: assigns[:token]})}",
+                else: path
             }
             download={
               if @graph_struct && @graph_struct.slug,

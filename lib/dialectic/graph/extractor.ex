@@ -15,7 +15,10 @@ defmodule Dialectic.Graph.Extractor do
 
       # With a Graph struct
       graph = Dialectic.DbActions.Graphs.get_graph_by_title("My Graph")
-      data = Extractor.extract_for_image_generation(graph)
+      {:ok, data} = Extractor.extract_for_image_generation(graph)
+
+      # Or use bang variants to unwrap directly (raises on error)
+      data = Extractor.extract_for_image_generation!(graph)
 
   ### Extract to JSON format
 
@@ -62,7 +65,7 @@ defmodule Dialectic.Graph.Extractor do
   @doc """
   Extracts a graph from the database into a minimal format for image generation.
 
-  Returns a map with:
+  Returns `{:ok, map}` with:
   - nodes: list of %{id, content, class, parent (optional)}
   - edges: list of %{from, to}
 
@@ -76,7 +79,7 @@ defmodule Dialectic.Graph.Extractor do
 
       iex> graph = Dialectic.DbActions.Graphs.get_graph_by_title("My Graph")
       iex> Extractor.extract_for_image_generation(graph)
-      %{
+      {:ok, %{
         nodes: [
           %{id: "1", content: "Root question", class: "origin"},
           %{id: "2", content: "First answer", class: "answer", parent: "group-1"}
@@ -84,32 +87,63 @@ defmodule Dialectic.Graph.Extractor do
         edges: [
           %{from: "1", to: "2"}
         ]
-      }
+      }}
   """
   def extract_for_image_generation(%Graph{data: data}) do
     nodes = extract_nodes(data)
     edges = extract_edges(data, nodes)
 
-    %{
-      nodes: nodes,
-      edges: edges
-    }
+    {:ok,
+     %{
+       nodes: nodes,
+       edges: edges
+     }}
   end
 
   def extract_for_image_generation(identifier) when is_binary(identifier) do
     case Dialectic.DbActions.Graphs.get_graph_by_slug_or_title(identifier) do
       nil -> {:error, :not_found}
-      graph -> {:ok, extract_for_image_generation(graph)}
+      graph -> extract_for_image_generation(graph)
+    end
+  end
+
+  @doc """
+  Same as `extract_for_image_generation/1` but returns the data directly or raises on error.
+
+  ## Examples
+
+      iex> graph = Dialectic.DbActions.Graphs.get_graph_by_title("My Graph")
+      iex> Extractor.extract_for_image_generation!(graph)
+      %{nodes: [...], edges: [...]}
+
+      iex> Extractor.extract_for_image_generation!("non-existent")
+      ** (RuntimeError) Graph not found
+  """
+  def extract_for_image_generation!(%Graph{} = graph) do
+    case extract_for_image_generation(graph) do
+      {:ok, data} -> data
+      {:error, reason} -> raise "Extraction failed: #{inspect(reason)}"
+    end
+  end
+
+  def extract_for_image_generation!(identifier) when is_binary(identifier) do
+    case extract_for_image_generation(identifier) do
+      {:ok, data} -> data
+      {:error, :not_found} -> raise "Graph not found"
+      {:error, reason} -> raise "Extraction failed: #{inspect(reason)}"
     end
   end
 
   @doc """
   Extracts to JSON string format, ready for passing to external tools.
+
+  Returns `{:ok, json_string}` or `{:error, reason}`.
   """
   def extract_to_json(%Graph{} = graph) do
-    graph
-    |> extract_for_image_generation()
-    |> Jason.encode!(pretty: true)
+    case extract_for_image_generation(graph) do
+      {:ok, data} -> {:ok, Jason.encode!(data, pretty: true)}
+      error -> error
+    end
   end
 
   def extract_to_json(identifier) when is_binary(identifier) do
@@ -120,18 +154,57 @@ defmodule Dialectic.Graph.Extractor do
   end
 
   @doc """
+  Same as `extract_to_json/1` but returns the JSON string directly or raises on error.
+  """
+  def extract_to_json!(%Graph{} = graph) do
+    case extract_to_json(graph) do
+      {:ok, json} -> json
+      {:error, reason} -> raise "JSON extraction failed: #{inspect(reason)}"
+    end
+  end
+
+  def extract_to_json!(identifier) when is_binary(identifier) do
+    case extract_to_json(identifier) do
+      {:ok, json} -> json
+      {:error, :not_found} -> raise "Graph not found"
+      {:error, reason} -> raise "JSON extraction failed: #{inspect(reason)}"
+    end
+  end
+
+  @doc """
   Extracts to a compact single-line JSON format.
+
+  Returns `{:ok, json_string}` or `{:error, reason}`.
   """
   def extract_to_compact_json(%Graph{} = graph) do
-    graph
-    |> extract_for_image_generation()
-    |> Jason.encode!()
+    case extract_for_image_generation(graph) do
+      {:ok, data} -> {:ok, Jason.encode!(data)}
+      error -> error
+    end
   end
 
   def extract_to_compact_json(identifier) when is_binary(identifier) do
     case extract_for_image_generation(identifier) do
       {:ok, data} -> {:ok, Jason.encode!(data)}
       error -> error
+    end
+  end
+
+  @doc """
+  Same as `extract_to_compact_json/1` but returns the JSON string directly or raises on error.
+  """
+  def extract_to_compact_json!(%Graph{} = graph) do
+    case extract_to_compact_json(graph) do
+      {:ok, json} -> json
+      {:error, reason} -> raise "Compact JSON extraction failed: #{inspect(reason)}"
+    end
+  end
+
+  def extract_to_compact_json!(identifier) when is_binary(identifier) do
+    case extract_to_compact_json(identifier) do
+      {:ok, json} -> json
+      {:error, :not_found} -> raise "Graph not found"
+      {:error, reason} -> raise "Compact JSON extraction failed: #{inspect(reason)}"
     end
   end
 

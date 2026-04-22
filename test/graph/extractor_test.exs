@@ -34,7 +34,7 @@ defmodule Dialectic.Graph.ExtractorTest do
         }
       }
 
-      result = Extractor.extract_for_image_generation(graph)
+      {:ok, result} = Extractor.extract_for_image_generation(graph)
 
       assert %{nodes: nodes, edges: edges} = result
       assert length(nodes) == 2
@@ -86,7 +86,7 @@ defmodule Dialectic.Graph.ExtractorTest do
         }
       }
 
-      result = Extractor.extract_for_image_generation(graph)
+      {:ok, result} = Extractor.extract_for_image_generation(graph)
 
       assert %{nodes: nodes, edges: edges} = result
       assert length(nodes) == 2
@@ -126,7 +126,7 @@ defmodule Dialectic.Graph.ExtractorTest do
         }
       }
 
-      result = Extractor.extract_for_image_generation(graph)
+      {:ok, result} = Extractor.extract_for_image_generation(graph)
 
       assert %{nodes: nodes} = result
       child_node = Enum.find(nodes, fn n -> n.id == "2" end)
@@ -160,7 +160,7 @@ defmodule Dialectic.Graph.ExtractorTest do
         }
       }
 
-      result = Extractor.extract_for_image_generation(graph)
+      {:ok, result} = Extractor.extract_for_image_generation(graph)
 
       assert %{nodes: nodes} = result
 
@@ -178,7 +178,7 @@ defmodule Dialectic.Graph.ExtractorTest do
         }
       }
 
-      result = Extractor.extract_for_image_generation(graph)
+      {:ok, result} = Extractor.extract_for_image_generation(graph)
 
       assert %{nodes: [], edges: []} = result
     end
@@ -198,7 +198,7 @@ defmodule Dialectic.Graph.ExtractorTest do
         }
       }
 
-      result = Extractor.extract_for_image_generation(graph)
+      {:ok, result} = Extractor.extract_for_image_generation(graph)
 
       assert %{nodes: [%{id: "1"}], edges: []} = result
     end
@@ -244,7 +244,7 @@ defmodule Dialectic.Graph.ExtractorTest do
         }
       }
 
-      result = Extractor.extract_for_image_generation(graph)
+      {:ok, result} = Extractor.extract_for_image_generation(graph)
 
       assert %{edges: edges} = result
       assert length(edges) == 1
@@ -314,7 +314,7 @@ defmodule Dialectic.Graph.ExtractorTest do
         }
       }
 
-      json_string = Extractor.extract_to_json(graph)
+      {:ok, json_string} = Extractor.extract_to_json(graph)
 
       assert is_binary(json_string)
       assert String.contains?(json_string, "\n")
@@ -347,7 +347,7 @@ defmodule Dialectic.Graph.ExtractorTest do
         }
       }
 
-      json_string = Extractor.extract_to_compact_json(graph)
+      {:ok, json_string} = Extractor.extract_to_compact_json(graph)
 
       assert is_binary(json_string)
       refute String.contains?(json_string, "\n  ")
@@ -419,7 +419,7 @@ defmodule Dialectic.Graph.ExtractorTest do
         }
       }
 
-      result = Extractor.extract_for_image_generation(graph)
+      {:ok, result} = Extractor.extract_for_image_generation(graph)
 
       assert %{nodes: nodes, edges: edges} = result
 
