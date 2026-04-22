@@ -461,6 +461,30 @@ defmodule DialecticWeb.RightPanelComp do
                 <div class="text-[10px] text-gray-500">Plain text with formatting</div>
               </div>
             </.link>
+
+            <.link
+              href={
+                path =
+                  if @graph_struct && @graph_struct.slug,
+                    do: "/api/graphs/json/#{@graph_struct.slug}",
+                    else: "/api/graphs/json/#{URI.encode(@graph_id)}"
+
+                if assigns[:token], do: "#{path}?token=#{assigns[:token]}", else: path
+              }
+              download={
+                if @graph_struct && @graph_struct.slug,
+                  do: "#{@graph_struct.slug}.json",
+                  else: "#{@graph_id}.json"
+              }
+              class="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-gray-300 transition-colors"
+              title="Download JSON (for image generation)"
+            >
+              <.icon name="hero-code-bracket" class="w-4 h-4 text-blue-600" />
+              <div class="flex-1 text-left">
+                <div class="text-xs font-medium text-gray-800">Download JSON</div>
+                <div class="text-[10px] text-gray-500">Minimal data for visualization</div>
+              </div>
+            </.link>
           </div>
         </div>
       </details>

@@ -63,6 +63,7 @@ defmodule DialecticWeb.Router do
     live "/g/:graph_name", GraphLive
     live "/g/:graph_name/linear", LinearGraphLive
     get "/api/graphs/md/:graph_name", PageController, :graph_md
+    get "/api/graphs/json/:graph_name", PageController, :graph_json_extract
 
     # User profile
     live_session :user_profile, on_mount: [{DialecticWeb.UserAuth, :mount_current_user}] do
