@@ -5,6 +5,7 @@ defmodule DialecticWeb.PageHtml.GraphComp do
     assigns = assign(assigns, :variant, assigns[:variant] || :glass)
     assigns = assign(assigns, :compact, assigns[:compact] || false)
     assigns = assign(assigns, :linear_link, assigns[:linear_link])
+    assigns = assign(assigns, :show_exploration_stats, Map.get(assigns, :show_exploration_stats, true))
 
     ~H"""
     <div class={[
@@ -41,16 +42,33 @@ defmodule DialecticWeb.PageHtml.GraphComp do
         </h3>
 
         <%= if is_binary(author_name = assigns[:author_name]) and author_name != "" do %>
-          <p class={[
-            @compact &&
-              "mt-1.5 inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ring-inset",
-            !@compact &&
-              "mt-2 inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset",
-            author_class(@variant)
-          ]}>
-            <.icon name="hero-user-circle" class="w-3.5 h-3.5" />
-            {author_text(author_name, assigns[:author_label])}
-          </p>
+          <%= if is_binary(assigns[:author_link]) and assigns[:author_link] != "" do %>
+            <.link
+              navigate={@author_link}
+              class={[
+                "relative z-20 pointer-events-auto transition-colors hover:opacity-90",
+                @compact &&
+                  "mt-1.5 inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ring-inset",
+                !@compact &&
+                  "mt-2 inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset",
+                author_class(@variant)
+              ]}
+            >
+              <.icon name="hero-user-circle" class="w-3.5 h-3.5" />
+              {author_text(author_name, assigns[:author_label])}
+            </.link>
+          <% else %>
+            <p class={[
+              @compact &&
+                "mt-1.5 inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ring-inset",
+              !@compact &&
+                "mt-2 inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset",
+              author_class(@variant)
+            ]}>
+              <.icon name="hero-user-circle" class="w-3.5 h-3.5" />
+              {author_text(author_name, assigns[:author_label])}
+            </p>
+          <% end %>
         <% end %>
 
         <div class={[
@@ -76,17 +94,19 @@ defmodule DialecticWeb.PageHtml.GraphComp do
               </span>
             <% end %>
 
-            <span
-              phx-hook="ExplorationStats"
-              id={"stats-" <> @id}
-              data-graph-id={@title}
-              data-total={@node_count}
-              class={[
-                "inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold ring-1 ring-inset",
-                stats_class(@variant)
-              ]}
-            >
-            </span>
+            <%= if @show_exploration_stats do %>
+              <span
+                phx-hook="ExplorationStats"
+                id={"stats-" <> @id}
+                data-graph-id={@title}
+                data-total={@node_count}
+                class={[
+                  "inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold ring-1 ring-inset",
+                  stats_class(@variant)
+                ]}
+              >
+              </span>
+            <% end %>
           <% end %>
 
           <%= if assigns[:tags] do %>

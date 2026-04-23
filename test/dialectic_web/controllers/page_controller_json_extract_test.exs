@@ -50,10 +50,7 @@ defmodule DialecticWeb.PageControllerJsonExtractTest do
       |> Dialectic.Repo.update!()
 
     {:ok,
-     user: user,
-     other_user: other_user,
-     public_graph: public_graph,
-     private_graph: private_graph}
+     user: user, other_user: other_user, public_graph: public_graph, private_graph: private_graph}
   end
 
   describe "GET /api/graphs/json/:graph_name" do

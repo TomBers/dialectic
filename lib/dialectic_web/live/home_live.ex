@@ -277,25 +277,26 @@ defmodule DialecticWeb.HomeLive do
     <!-- Make the hero content scroll within the viewport naturally -->
         <div class="relative z-10 pb-4 sm:pb-5">
           <section class="w-full" id="start-here">
-            <div class="w-full bg-gradient-to-br from-[#3a0ca3] to-[#4361ee] px-4 py-3.5 text-white shadow-xl sm:px-6 sm:py-4">
-              <div class="mx-auto flex w-full max-w-6xl flex-col items-center gap-1.5 text-center sm:gap-2">
-                <h1 class="flex items-center justify-center gap-2.5 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+            <div class="w-full bg-gradient-to-br from-[#3a0ca3] to-[#4361ee] px-4 py-5 text-white shadow-xl sm:px-6 sm:py-6">
+              <div class="mx-auto flex w-full max-w-6xl flex-col items-center gap-2.5 text-center sm:gap-3">
+                <h1 class="flex items-center justify-center gap-3 text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
                   <img
                     src={~p"/images/favicon.webp"}
                     alt=""
                     aria-hidden="true"
-                    class="h-9 w-9 rounded-xl shadow-lg sm:h-11 sm:w-11"
+                    class="h-10 w-10 rounded-xl shadow-lg sm:h-12 sm:w-12"
                   />
                   <span>RationalGrid</span>
                 </h1>
-                <div class="mx-auto max-w-3xl space-y-1 sm:space-y-1.5">
-                  <p class="text-base font-semibold leading-snug text-white sm:text-lg">
-                    Explore ideas, structure arguments and build understanding with AI-assisted visual grids.
-                  </p>
-                  <p class="text-sm leading-relaxed text-white/90">
-                    Start with a question and expand into connected concepts you can revisit, recall and share.
-                  </p>
-                </div>
+                <p class="mx-auto max-w-5xl text-base font-semibold leading-snug text-white sm:text-lg">
+                  Explore ideas, structure arguments and collaborate on understanding with AI-assisted visual grids.
+                  <.link
+                    navigate={~p"/about"}
+                    class="underline decoration-white/60 underline-offset-4 hover:decoration-white"
+                  >
+                    Learn more.
+                  </.link>
+                </p>
               </div>
             </div>
           </section>
@@ -312,32 +313,6 @@ defmodule DialecticWeb.HomeLive do
                         form={@form}
                       />
                     </div>
-
-                    <div class="grid w-full grid-cols-1 gap-1.5 px-1 text-sm font-semibold sm:grid-cols-3 sm:px-0">
-                      <.link
-                        navigate={~p"/inspiration"}
-                        class={[
-                          "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2",
-                          "border border-slate-300 bg-white text-slate-800 shadow-sm",
-                          "hover:bg-slate-50 hover:shadow-md transition",
-                          "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
-                        ]}
-                      >
-                        <.icon name="hero-sparkles" class="w-5 h-5" /> Get inspiration
-                      </.link>
-                      <a
-                        href="#explore"
-                        class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-slate-800 shadow-sm hover:bg-slate-50 hover:shadow-md transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
-                      >
-                        <.icon name="hero-magnifying-glass" class="w-5 h-5" /> Browse ideas
-                      </a>
-                      <a
-                        href="/intro/how#interface-highlight"
-                        class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
-                      >
-                        <.icon name="hero-academic-cap" class="h-4 w-4" /> Guide
-                      </a>
-                    </div>
                   </div>
                 </div>
               </section>
@@ -345,17 +320,16 @@ defmodule DialecticWeb.HomeLive do
               <%!-- Curated & Featured Grids – 2-column on desktop --%>
               <%= if @curated_grids != [] or @featured_grids != [] do %>
                 <section
-                  class="w-full rounded-3xl bg-slate-50/90 p-2.5 ring-1 ring-slate-200 sm:p-3"
+                  class="w-full rounded-2xl border border-slate-200/80 bg-white/80 p-2 shadow-sm sm:p-2.5"
                   id="curated"
                 >
-                  <div class="grid w-full grid-cols-1 gap-2.5 sm:grid-cols-2">
+                  <div class="grid w-full grid-cols-1 gap-2 sm:grid-cols-2">
                     <%= if @curated_grids != [] do %>
                       <.curated_grid_section
                         items={@curated_grids}
                         icon="hero-star"
                         icon_class="text-amber-500"
                         title="Curated Grids"
-                        description="Hand-picked grids showcasing great thinking and exploration."
                         id_prefix="curated"
                       />
                     <% end %>
@@ -365,7 +339,6 @@ defmodule DialecticWeb.HomeLive do
                         icon="hero-users"
                         icon_class="text-indigo-500"
                         title="Featured by Partners"
-                        description="Grids curated by our invited partners and thought leaders."
                         id_prefix="featured"
                       />
                     <% end %>
@@ -658,18 +631,15 @@ defmodule DialecticWeb.HomeLive do
   defp curated_grid_section(assigns) do
     ~H"""
     <section class="w-full min-w-0">
-      <div class="h-full rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
-        <div class="p-2.5 sm:p-3">
-          <div class="mb-2 flex items-center gap-2.5">
-            <.icon name={@icon} class={"w-6 h-6 " <> @icon_class} />
-            <h2 class="text-lg font-bold tracking-tight text-slate-900 sm:text-2xl">
+      <div class="h-full rounded-xl border border-slate-200 bg-slate-50/70">
+        <div class="p-2.5">
+          <div class="mb-2 flex items-center gap-2">
+            <.icon name={@icon} class={"h-4 w-4 " <> @icon_class} />
+            <h2 class="text-sm font-semibold tracking-tight text-slate-900 sm:text-base">
               {@title}
             </h2>
           </div>
-          <p class="mb-2 text-sm text-slate-600">
-            {@description}
-          </p>
-          <div class="space-y-2 sm:space-y-3">
+          <div class="space-y-2">
             <%= for item <- @items do %>
               <div class="relative">
                 <DialecticWeb.PageHtml.GraphComp.render
@@ -680,9 +650,11 @@ defmodule DialecticWeb.HomeLive do
                   count={0}
                   tags={item.graph.tags}
                   author_name={item.author_name}
+                  author_link={if is_binary(item.author_name) and item.author_name != "", do: ~p"/u/#{item.author_name}", else: nil}
                   author_label="by"
                   variant={:light}
                   compact={true}
+                  show_exploration_stats={false}
                   node_count={
                     Enum.count(item.graph.data["nodes"] || [], fn n ->
                       !Map.get(n, "compound", false)

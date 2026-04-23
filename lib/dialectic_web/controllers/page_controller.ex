@@ -125,7 +125,8 @@ defmodule DialecticWeb.PageController do
 
       true ->
         # Extract graph using the Extractor module
-        {:ok, extracted_data} = Dialectic.Graph.Extractor.extract_for_image_generation(graph_struct)
+        {:ok, extracted_data} =
+          Dialectic.Graph.Extractor.extract_for_image_generation(graph_struct)
 
         # Use slug for filename if available, otherwise title
         # Sanitize filename to remove any CR/LF or unsafe characters
