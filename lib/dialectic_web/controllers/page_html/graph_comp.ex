@@ -5,7 +5,9 @@ defmodule DialecticWeb.PageHtml.GraphComp do
     assigns = assign(assigns, :variant, assigns[:variant] || :glass)
     assigns = assign(assigns, :compact, assigns[:compact] || false)
     assigns = assign(assigns, :linear_link, assigns[:linear_link])
-    assigns = assign(assigns, :show_exploration_stats, Map.get(assigns, :show_exploration_stats, true))
+
+    assigns =
+      assign(assigns, :show_exploration_stats, Map.get(assigns, :show_exploration_stats, true))
 
     ~H"""
     <div class={[

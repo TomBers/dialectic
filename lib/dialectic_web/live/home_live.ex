@@ -650,7 +650,11 @@ defmodule DialecticWeb.HomeLive do
                   count={0}
                   tags={item.graph.tags}
                   author_name={item.author_name}
-                  author_link={if is_binary(item.author_name) and item.author_name != "", do: ~p"/u/#{item.author_name}", else: nil}
+                  author_link={
+                    if is_binary(item.author_name) and item.author_name != "",
+                      do: ~p"/u/#{item.author_name}",
+                      else: nil
+                  }
                   author_label="by"
                   variant={:light}
                   compact={true}
