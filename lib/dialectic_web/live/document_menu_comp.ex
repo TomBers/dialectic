@@ -218,9 +218,9 @@ defmodule DialecticWeb.DocumentMenuComp do
             aria-label="Close how-to guide"
           >
           </button>
-          <div class="relative z-10 w-full max-w-4xl rounded-2xl bg-white shadow-2xl ring-1 ring-gray-200">
+          <div class="relative z-10 w-full max-w-3xl rounded-2xl bg-white shadow-2xl ring-1 ring-gray-200">
             <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3">
-              <h2 class="text-sm font-semibold text-gray-900 sm:text-base">How to use this page</h2>
+              <h2 class="text-sm font-semibold text-gray-900 sm:text-base">How to use this grid</h2>
               <button
                 type="button"
                 phx-click="close_help_modal"

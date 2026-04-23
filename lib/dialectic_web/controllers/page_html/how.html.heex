@@ -1,22 +1,43 @@
 <div class="bg-white text-gray-900">
   <%!-- Hero: headline + starter questions for immediate action --%>
   <section class="relative isolate overflow-hidden bg-gradient-to-br from-sky-50 via-white to-indigo-50">
-    <div class="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-16 sm:py-20">
-      <div class="max-w-3xl space-y-4">
+    <div class="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-14 sm:py-16">
+      <div class="max-w-3xl space-y-3">
         <p class="inline-flex w-fit items-center gap-2 rounded-full bg-white/70 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-sky-700 ring-1 ring-sky-200">
           <.icon name="hero-book-open" class="h-3.5 w-3.5" /> Quick-start Guide
         </p>
         <h1 class="text-4xl font-bold leading-tight text-gray-900 sm:text-5xl">
           Turn any question into a visual knowledge grid
         </h1>
-        <p class="text-lg text-gray-600">
-          RationalGrid supports two linked learning stages: explore unknown topics by branching ideas, then recall and revise using saved nodes and highlights.
+        <p class="max-w-2xl text-base text-gray-600 sm:text-lg">
+          Start with a prompt that can branch. RationalGrid works best when you want to
+          compare options, test a claim, or unpack a system one node at a time.
         </p>
       </div>
 
-      <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-lg sm:p-8">
+      <div class="max-w-3xl rounded-2xl border border-indigo-200 bg-white/80 p-4 shadow-sm backdrop-blur sm:p-5">
+        <p class="text-xs font-semibold uppercase tracking-wide text-indigo-700">
+          Best first prompt
+        </p>
+        <p class="mt-2 text-sm font-semibold text-gray-900 sm:text-base">
+          “Should cities expand digital surveillance in public spaces, and what are the trade-offs?”
+        </p>
+        <p class="mt-1 text-sm text-gray-600">
+          It branches cleanly into privacy, safety, bias, cost, and alternatives.
+        </p>
+        <div class="mt-3">
+          <a
+            href={"/?#{URI.encode_query(%{"initial_prompt" => "Should cities expand digital surveillance in public spaces, and what are the trade-offs?"})}"}
+            class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
+          >
+            <.icon name="hero-play" class="h-4 w-4" /> Start with this prompt
+          </a>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-lg sm:p-6">
         <p class="text-sm font-semibold uppercase tracking-wide text-indigo-600 mb-4">
-          Try it now &mdash; pick a question to start your first grid
+          Pick a starter question that can branch
         </p>
         <div class="grid gap-3 sm:grid-cols-2">
           <a
@@ -28,60 +49,60 @@
             </span>
             <div>
               <p class="font-medium text-gray-900 group-hover:text-indigo-900">
-                Arguments for and against universal basic income?
+                What trade-offs come with universal basic income?
               </p>
-              <p class="mt-0.5 text-xs text-gray-500">Economics &middot; Policy</p>
+              <p class="mt-0.5 text-xs text-gray-500">Policy &middot; Trade-offs</p>
             </div>
           </a>
 
           <a
-            href={"/?#{URI.encode_query(%{"initial_prompt" => "How does CRISPR gene editing work and what are its ethical implications?"})}"}
+            href={"/?#{URI.encode_query(%{"initial_prompt" => "Should schools ban smartphones in class, and what trade-offs follow?"})}"}
             class="group flex items-start gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4 transition hover:border-indigo-300 hover:bg-indigo-50 hover:shadow-md"
           >
             <span class="mt-0.5 shrink-0 rounded-lg bg-emerald-100 p-2 text-emerald-600 group-hover:bg-emerald-200">
-              <.icon name="hero-beaker" class="h-5 w-5" />
+              <.icon name="hero-device-phone-mobile" class="h-5 w-5" />
             </span>
             <div>
               <p class="font-medium text-gray-900 group-hover:text-indigo-900">
-                How does CRISPR gene editing work and what are its ethical implications?
+                Should schools ban smartphones in class?
               </p>
-              <p class="mt-0.5 text-xs text-gray-500">Science &middot; Ethics</p>
+              <p class="mt-0.5 text-xs text-gray-500">Education &middot; Trade-offs</p>
             </div>
           </a>
 
           <a
-            href={"/?#{URI.encode_query(%{"initial_prompt" => "Compare the philosophies of Stoicism and Existentialism on finding meaning in life"})}"}
+            href={"/?#{URI.encode_query(%{"initial_prompt" => "What are the strongest objections to AI adoption, and which concerns matter most?"})}"}
             class="group flex items-start gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4 transition hover:border-indigo-300 hover:bg-indigo-50 hover:shadow-md"
           >
             <span class="mt-0.5 shrink-0 rounded-lg bg-violet-100 p-2 text-violet-600 group-hover:bg-violet-200">
-              <.icon name="hero-light-bulb" class="h-5 w-5" />
+              <.icon name="hero-bolt" class="h-5 w-5" />
             </span>
             <div>
               <p class="font-medium text-gray-900 group-hover:text-indigo-900">
-                Compare Stoicism and Existentialism on finding meaning in life
+                What are the strongest objections to AI adoption?
               </p>
-              <p class="mt-0.5 text-xs text-gray-500">Philosophy &middot; Comparison</p>
+              <p class="mt-0.5 text-xs text-gray-500">Technology &middot; Debate</p>
             </div>
           </a>
 
           <a
-            href={"/?#{URI.encode_query(%{"initial_prompt" => "What caused the fall of the Roman Empire and what parallels exist today?"})}"}
+            href={"/?#{URI.encode_query(%{"initial_prompt" => "Is eating meat ethically defensible, and what are the strongest arguments on each side?"})}"}
             class="group flex items-start gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4 transition hover:border-indigo-300 hover:bg-indigo-50 hover:shadow-md"
           >
-            <span class="mt-0.5 shrink-0 rounded-lg bg-amber-100 p-2 text-amber-600 group-hover:bg-amber-200">
-              <.icon name="hero-globe-alt" class="h-5 w-5" />
+            <span class="mt-0.5 shrink-0 rounded-lg bg-rose-100 p-2 text-rose-600 group-hover:bg-rose-200">
+              <.icon name="hero-heart" class="h-5 w-5" />
             </span>
             <div>
               <p class="font-medium text-gray-900 group-hover:text-indigo-900">
-                What caused the fall of the Roman Empire and what parallels exist today?
+                Is eating meat ethically defensible?
               </p>
-              <p class="mt-0.5 text-xs text-gray-500">History &middot; Analysis</p>
+              <p class="mt-0.5 text-xs text-gray-500">Ethics &middot; Argument</p>
             </div>
           </a>
         </div>
 
         <div class="mt-5 flex flex-col items-center gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:justify-between">
-          <p class="text-sm text-gray-500">Or write your own question&hellip;</p>
+          <p class="text-sm text-gray-500">Or start with your own question&hellip;</p>
           <div class="flex flex-wrap gap-3">
             <a
               href="/"
@@ -101,563 +122,567 @@
     </div>
   </section>
 
-  <%!-- How it works: 3 clear steps --%>
-  <section id="steps" class="mx-auto max-w-5xl px-4 py-12 sm:py-16">
-    <div class="text-center mb-10">
-      <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-        How it works
-      </h2>
-      <p class="mt-2 text-gray-600">Explore first, then recall and revise</p>
-    </div>
-
-    <div class="grid gap-8 sm:grid-cols-3">
-      <div class="relative rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <div class="mb-4 inline-flex items-center justify-center rounded-full bg-sky-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-sky-700">
-          1
-        </div>
-        <h3 class="text-lg font-semibold text-gray-900">Ask a question</h3>
-        <p class="mt-2 text-sm text-gray-600">
-          Type any topic or question. The AI generates a structured response that becomes the first node on your grid.
-        </p>
-        <div class="mt-4 rounded-lg bg-gray-50 border border-gray-100 p-3">
-          <p class="text-xs text-gray-400 mb-1">Example</p>
-          <p class="text-sm text-gray-700 italic">
-            &ldquo;What are the main theories of consciousness?&rdquo;
-          </p>
-        </div>
-      </div>
-
-      <div class="relative rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <div class="mb-4 inline-flex items-center justify-center rounded-full bg-amber-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-amber-700">
-          2
-        </div>
-        <h3 class="text-lg font-semibold text-gray-900">Branch deeper</h3>
-        <p class="mt-2 text-sm text-gray-600">
-          Highlight any word or phrase in a response and ask a follow-up. Each new answer links to the exact concept it came from.
-        </p>
-        <div class="mt-4 rounded-lg bg-gray-50 border border-gray-100 p-3">
-          <div class="flex flex-wrap gap-1.5 text-xs">
-            <span class="rounded bg-indigo-100 px-2 py-0.5 text-indigo-700">Related ideas</span>
-            <span class="rounded bg-emerald-100 px-2 py-0.5 text-emerald-700">
-              Pros &amp; Cons
-            </span>
-            <span class="rounded bg-violet-100 px-2 py-0.5 text-violet-700">Blend</span>
-            <span class="rounded bg-rose-100 px-2 py-0.5 text-rose-700">Expand</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="relative rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <div class="mb-4 inline-flex items-center justify-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-emerald-700">
-          3
-        </div>
-        <h3 class="text-lg font-semibold text-gray-900">Recall, revise &amp; share</h3>
-        <p class="mt-2 text-sm text-gray-600">
-          Star important nodes, save highlights, and return for deliberate revision. Share one link so others can continue the same learning map.
-        </p>
-        <div class="mt-4 rounded-lg bg-gray-50 border border-gray-100 p-3 text-xs text-gray-500 flex items-center gap-2">
-          <.icon name="hero-link" class="h-4 w-4 text-gray-400" />
-          <span>Share a direct link to the full grid or any single node</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="mt-8 text-center">
-      <a
-        href="/"
-        class="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 transition"
-      >
-        Create your grid now <.icon name="hero-arrow-right" class="h-4 w-4" />
-      </a>
-    </div>
-  </section>
-
-  <%!-- Interface walkthrough --%>
+  <%!-- Better prompts + first session --%>
   <section class="mx-auto max-w-5xl px-4 py-10 sm:py-14">
-    <div
-      class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8 space-y-8"
-      id="interface-highlight"
-    >
-      <div class="space-y-3">
-        <div class="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-indigo-700 ring-1 ring-indigo-200">
-          Your workspace
-        </div>
-        <h3 class="text-2xl font-semibold text-gray-900">
-          Everything in one view
+    <div class="grid gap-6 lg:grid-cols-[1.2fr,0.8fr]">
+      <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+        <p class="inline-flex items-center rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-sky-700 ring-1 ring-sky-200">
+          Start well
+        </p>
+        <h3 class="mt-4 text-2xl font-semibold text-gray-900">
+          Choose a question that can branch
         </h3>
-        <p class="text-gray-600 text-sm">
-          The workspace is split into three areas that stay visible at once: a reading panel on the left, an interactive graph on the right, and a toolbar at the bottom.
+        <p class="mt-3 max-w-2xl text-sm text-gray-600">
+          Good grids start with a prompt you can compare, unpack, or test.
+        </p>
+
+        <div class="mt-6 grid gap-4 sm:grid-cols-2">
+          <div class="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4">
+            <p class="text-sm font-semibold text-indigo-900">Compare positions</p>
+            <p class="mt-2 text-sm text-gray-700">
+              “Should cities expand digital surveillance in public spaces, and what are the trade-offs?”
+            </p>
+          </div>
+          <div class="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
+            <p class="text-sm font-semibold text-emerald-900">Explain a system</p>
+            <p class="mt-2 text-sm text-gray-700">
+              “How do recommendation algorithms shape what people see online?”
+            </p>
+          </div>
+          <div class="rounded-xl border border-violet-100 bg-violet-50/50 p-4">
+            <p class="text-sm font-semibold text-violet-900">Test an ethical question</p>
+            <p class="mt-2 text-sm text-gray-700">
+              “Is eating meat ethically defensible, and what are the strongest arguments on each side?”
+            </p>
+          </div>
+          <div class="rounded-xl border border-amber-100 bg-amber-50/60 p-4">
+            <p class="text-sm font-semibold text-amber-900">Trace causes and effects</p>
+            <p class="mt-2 text-sm text-gray-700">
+              “Why are so many people skeptical of AI, and which concerns hold up?”
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-rose-200 bg-rose-50/60 p-6 shadow-sm sm:p-8">
+        <p class="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wide text-rose-700 ring-1 ring-rose-200">
+          Avoid dead ends
+        </p>
+        <h3 class="mt-4 text-2xl font-semibold text-gray-900">
+          Prompts that usually stall out
+        </h3>
+        <div class="mt-5 space-y-4">
+          <div class="rounded-xl border border-rose-200 bg-white/80 p-4">
+            <p class="text-sm font-semibold text-gray-900">“Tell me everything about X.”</p>
+            <p class="mt-1 text-xs text-gray-600">
+              Too broad. Pick one angle, question, or comparison.
+            </p>
+          </div>
+          <div class="rounded-xl border border-rose-200 bg-white/80 p-4">
+            <p class="text-sm font-semibold text-gray-900">“Just give me the answer.”</p>
+            <p class="mt-1 text-xs text-gray-600">
+              This works best when you want a map, not a verdict.
+            </p>
+          </div>
+          <div class="rounded-xl border border-rose-200 bg-white/80 p-4">
+            <p class="text-sm font-semibold text-gray-900">“Write the perfect essay for me.”</p>
+            <p class="mt-1 text-xs text-gray-600">
+              Better: break it into claims, evidence, and objections first.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+      <div class="max-w-3xl">
+        <p class="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-indigo-700 ring-1 ring-indigo-200">
+          First session
+        </p>
+        <h3 class="mt-4 text-2xl font-semibold text-gray-900">
+          A simple first 10-minute workflow
+        </h3>
+        <p class="mt-3 text-sm text-gray-600">
+          Do less than you think. Follow one promising branch at a time.
         </p>
       </div>
 
-      <%!-- 1. Reading Panel --%>
-      <div class="rounded-xl border border-indigo-100 bg-gradient-to-br from-indigo-50/40 to-white p-5 space-y-4">
-        <div class="flex items-center gap-2">
-          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-100">
-            <.icon name="hero-document-text" class="h-5 w-5 text-indigo-600" />
-          </span>
-          <h4 class="text-lg font-semibold text-gray-900">Reading Panel</h4>
-        </div>
-        <p class="text-sm text-gray-600">
-          The left side shows the full AI response for the currently selected node. Read the content, then interact with it directly:
-        </p>
-
-        <div class="rounded-lg border border-indigo-100 bg-white p-4">
-          <p class="text-xs font-semibold uppercase tracking-wide text-indigo-600 mb-3">
-            Select any text to&hellip;
+      <div class="mt-6 grid gap-4 md:grid-cols-4">
+        <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
+          <p class="text-xs font-bold uppercase tracking-wide text-gray-500">1</p>
+          <p class="mt-2 text-sm font-semibold text-gray-900">Ask one focused question</p>
+          <p class="mt-1 text-xs text-gray-600">
+            Start with a comparison, explanation, or tension.
           </p>
-          <div class="grid gap-2 sm:grid-cols-2">
-            <div class="flex items-start gap-2.5">
-              <span class="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-indigo-100">
-                <.icon name="hero-chat-bubble-left-ellipsis" class="h-4 w-4 text-indigo-600" />
-              </span>
-              <div>
-                <p class="text-sm font-medium text-gray-900">Explain</p>
-                <p class="text-xs text-gray-500">
-                  Get a deeper explanation linked to the exact phrase
-                </p>
-              </div>
-            </div>
-            <div class="flex items-start gap-2.5">
-              <span class="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-sky-100">
-                <.icon name="hero-question-mark-circle" class="h-4 w-4 text-sky-600" />
-              </span>
-              <div>
-                <p class="text-sm font-medium text-gray-900">Ask a question</p>
-                <p class="text-xs text-gray-500">
-                  Type your own follow-up about the highlighted passage
-                </p>
-              </div>
-            </div>
-            <div class="flex items-start gap-2.5">
-              <span class="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-amber-100">
-                <.icon name="hero-paint-brush" class="h-4 w-4 text-amber-600" />
-              </span>
-              <div>
-                <p class="text-sm font-medium text-gray-900">Highlight</p>
-                <p class="text-xs text-gray-500">Save an important passage for later reference</p>
-              </div>
-            </div>
-            <div class="flex items-start gap-2.5">
-              <span class="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-emerald-100">
-                <.icon
-                  name="hero-chat-bubble-bottom-center-text"
-                  class="h-4 w-4 text-emerald-600"
-                />
-              </span>
-              <div>
-                <p class="text-sm font-medium text-gray-900">Comment</p>
-                <p class="text-xs text-gray-500">
-                  Add your own annotation or note to any passage
-                </p>
-              </div>
-            </div>
-          </div>
         </div>
-      </div>
-
-      <%!-- 2. Graph Canvas --%>
-      <div class="rounded-xl border border-sky-100 bg-gradient-to-br from-sky-50/40 to-white p-5 space-y-4">
-        <div class="flex items-center gap-2">
-          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-sky-100">
-            <.icon name="hero-map" class="h-5 w-5 text-sky-600" />
-          </span>
-          <h4 class="text-lg font-semibold text-gray-900">Graph Canvas</h4>
+        <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
+          <p class="text-xs font-bold uppercase tracking-wide text-gray-500">2</p>
+          <p class="mt-2 text-sm font-semibold text-gray-900">Read the strongest node</p>
+          <p class="mt-1 text-xs text-gray-600">
+            Read first, then select the useful phrase if you want precision.
+          </p>
         </div>
-        <p class="text-sm text-gray-600">
-          The right side is an interactive node-and-edge visualization of your entire grid. Click any node to read it, drag to rearrange, and scroll to zoom. You always see how the current idea fits into the bigger picture.
-        </p>
-      </div>
-
-      <%!-- 3. Action Toolbar --%>
-      <div class="rounded-xl border border-amber-100 bg-gradient-to-br from-amber-50/40 to-white p-5 space-y-4">
-        <div class="flex items-center gap-2">
-          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100">
-            <.icon name="hero-wrench-screwdriver" class="h-5 w-5 text-amber-600" />
-          </span>
-          <h4 class="text-lg font-semibold text-gray-900">Action Toolbar</h4>
+        <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
+          <p class="text-xs font-bold uppercase tracking-wide text-gray-500">3</p>
+          <p class="mt-2 text-sm font-semibold text-gray-900">Mix Ask and Post</p>
+          <p class="mt-1 text-xs text-gray-600">
+            Ask creates an AI branch. Post adds your own point or challenge.
+          </p>
         </div>
-        <p class="text-sm text-gray-600">
-          The bottom bar gives you one-click tools that operate on whichever node is selected. Each generates new connected nodes on your grid:
-        </p>
-
-        <div class="grid gap-3 sm:grid-cols-2">
-          <%!-- Related Ideas --%>
-          <div class="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3">
-            <span class="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-orange-500 text-white">
-              <.icon name="hero-light-bulb" class="h-5 w-5" />
-            </span>
-            <div>
-              <p class="text-sm font-semibold text-gray-900">Related Ideas</p>
-              <p class="text-xs text-gray-500">
-                Generate connected concepts, counterpoints, or tangential topics branching from the current node.
-              </p>
-            </div>
-          </div>
-
-          <%!-- Pros & Cons --%>
-          <div class="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3">
-            <span class="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-gradient-to-r from-emerald-500 to-rose-500 text-white">
-              <.icon name="hero-scale" class="h-5 w-5" />
-            </span>
-            <div>
-              <p class="text-sm font-semibold text-gray-900">Pros &amp; Cons</p>
-              <p class="text-xs text-gray-500">
-                Create a balanced argument grid with supporting and opposing points linked to the claim.
-              </p>
-            </div>
-          </div>
-
-          <%!-- Combine --%>
-          <div class="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3">
-            <span class="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-violet-500 text-white">
-              <.icon name="hero-arrows-pointing-in" class="h-5 w-5" />
-            </span>
-            <div>
-              <p class="text-sm font-semibold text-gray-900">Blend</p>
-              <p class="text-xs text-gray-500">
-                Merge two nodes into a synthesized response that draws on both perspectives.
-              </p>
-            </div>
-          </div>
-
-          <%!-- Explore All --%>
-          <div class="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3">
-            <span class="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-gradient-to-r from-fuchsia-500 via-rose-500 to-amber-500 text-white">
-              <.icon name="hero-sparkles" class="h-5 w-5" />
-            </span>
-            <div>
-              <p class="text-sm font-semibold text-gray-900">Expand</p>
-              <p class="text-xs text-gray-500">
-                Auto-detect every key point in a response and branch into each one at once.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <%!-- 4. Reading & Controls --%>
-      <div class="rounded-xl border border-emerald-100 bg-gradient-to-br from-emerald-50/40 to-white p-5 space-y-4">
-        <div class="flex items-center gap-2">
-          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100">
-            <.icon name="hero-cog-6-tooth" class="h-5 w-5 text-emerald-600" />
-          </span>
-          <h4 class="text-lg font-semibold text-gray-900">Reading Tools &amp; Controls</h4>
-        </div>
-        <p class="text-sm text-gray-600">
-          Additional tools sit alongside the action buttons for navigating, saving, and sharing your work:
-        </p>
-
-        <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          <div class="flex items-center gap-2.5 rounded-lg border border-gray-200 bg-white px-3 py-2.5">
-            <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-yellow-100">
-              <.icon name="hero-star" class="h-4 w-4 text-yellow-600" />
-            </span>
-            <div>
-              <p class="text-sm font-medium text-gray-900">Notes</p>
-              <p class="text-xs text-gray-500">Star key nodes for recall and revision</p>
-            </div>
-          </div>
-
-          <div class="flex items-center gap-2.5 rounded-lg border border-gray-200 bg-white px-3 py-2.5">
-            <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gray-700">
-              <.icon name="hero-document-text" class="h-4 w-4 text-white" />
-            </span>
-            <div>
-              <p class="text-sm font-medium text-gray-900">Reader</p>
-              <p class="text-xs text-gray-500">Read the full thread as a page</p>
-            </div>
-          </div>
-
-          <div class="flex items-center gap-2.5 rounded-lg border border-gray-200 bg-white px-3 py-2.5">
-            <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gray-100">
-              <.icon name="hero-globe-alt" class="h-4 w-4 text-gray-600" />
-            </span>
-            <div>
-              <p class="text-sm font-medium text-gray-900">Translate</p>
-              <p class="text-xs text-gray-500">Open any node in Google Translate</p>
-            </div>
-          </div>
-
-          <div class="flex items-center gap-2.5 rounded-lg border border-gray-200 bg-white px-3 py-2.5">
-            <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gray-100">
-              <.icon name="hero-eye" class="h-4 w-4 text-gray-600" />
-            </span>
-            <div>
-              <p class="text-sm font-medium text-gray-900">View Options</p>
-              <p class="text-xs text-gray-500">Change graph layout and display</p>
-            </div>
-          </div>
-
-          <div class="flex items-center gap-2.5 rounded-lg border border-gray-200 bg-white px-3 py-2.5">
-            <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gray-100">
-              <.icon name="hero-bookmark" class="h-4 w-4 text-gray-600" />
-            </span>
-            <div>
-              <p class="text-sm font-medium text-gray-900">Highlights</p>
-              <p class="text-xs text-gray-500">Review saved passages and their linked context</p>
-            </div>
-          </div>
-
-          <div class="flex items-center gap-2.5 rounded-lg border border-gray-200 bg-white px-3 py-2.5">
-            <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-indigo-500">
-              <.icon name="hero-arrow-up-tray" class="h-4 w-4 text-white" />
-            </span>
-            <div>
-              <p class="text-sm font-medium text-gray-900">Share</p>
-              <p class="text-xs text-gray-500">Share the grid or control who can edit</p>
-            </div>
-          </div>
+        <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
+          <p class="text-xs font-bold uppercase tracking-wide text-gray-500">4</p>
+          <p class="mt-2 text-sm font-semibold text-gray-900">Save what matters</p>
+          <p class="mt-1 text-xs text-gray-600">
+            Highlight passages, star key nodes, then share or revisit later.
+          </p>
         </div>
       </div>
     </div>
   </section>
 
-  <%!-- Why this is better than chat (compact) --%>
-  <section id="why" class="mx-auto max-w-5xl px-4 py-10 sm:py-14">
-    <div class="rounded-2xl border border-gray-200 bg-gradient-to-br from-gray-50 to-white p-6 shadow-sm sm:p-8">
-      <h2 class="text-2xl font-bold tracking-tight text-gray-900 text-center mb-8">
-        Why a grid instead of a chat?
-      </h2>
-
-      <div class="grid gap-6 sm:grid-cols-3">
-        <div class="flex items-start gap-3">
-          <span class="mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-50">
-            <.icon name="hero-sparkles" class="h-5 w-5 text-indigo-600" />
-          </span>
-          <div>
-            <p class="font-semibold text-gray-900">Structure is visible</p>
-            <p class="mt-1 text-sm text-gray-600">
-              See how claims, evidence, and counterpoints connect instead of scrolling through a flat thread.
-            </p>
-          </div>
-        </div>
-
-        <div class="flex items-start gap-3">
-          <span class="mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sky-50">
-            <.icon name="hero-user-group" class="h-5 w-5 text-sky-600" />
-          </span>
-          <div>
-            <p class="font-semibold text-gray-900">Collaborative by default</p>
-            <p class="mt-1 text-sm text-gray-600">
-              Share one link. Multiple people explore the same grid and add their own branches.
-            </p>
-          </div>
-        </div>
-
-        <div class="flex items-start gap-3">
-          <span class="mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-50">
-            <.icon name="hero-circle-stack" class="h-5 w-5 text-violet-600" />
-          </span>
-          <div>
-            <p class="font-semibold text-gray-900">Learning compounds</p>
-            <p class="mt-1 text-sm text-gray-600">
-              Build a revision trail with starred nodes and highlights, then return to strengthen recall over time.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div class="mt-8 flex justify-center">
-        <a
-          href="/"
-          class="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 transition"
-        >
-          Start building yours <.icon name="hero-arrow-right" class="h-4 w-4" />
-        </a>
-      </div>
-    </div>
-  </section>
-
-  <%!-- Feature grid (compressed) --%>
-  <section class="mx-auto max-w-5xl px-4 py-10 sm:py-14">
+  <%!-- Screenshot-based workspace walkthrough --%>
+  <section id="interface-highlight" class="mx-auto max-w-5xl px-4 py-10 sm:py-14">
     <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
-      <h3 class="text-xl font-semibold text-gray-900 mb-6">Key capabilities</h3>
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div class="flex items-start gap-3">
-          <.icon name="hero-share" class="h-5 w-5 shrink-0 text-indigo-500 mt-0.5" />
-          <div>
-            <p class="text-sm font-semibold text-gray-900">Graph-native answers</p>
-            <p class="text-xs text-gray-600">
-              Every AI response is a node in a connected structure.
-            </p>
+      <div class="max-w-3xl space-y-3">
+        <div class="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-indigo-700 ring-1 ring-indigo-200">
+          In the grid
+        </div>
+        <h3 class="text-2xl font-semibold text-gray-900">
+          Read the workspace once, then start branching
+        </h3>
+        <p class="text-sm text-gray-600">
+          You do not need every control upfront. Learn the main actions, then make the smallest useful next move.
+        </p>
+      </div>
+
+      <div class="mt-8 grid gap-6 lg:grid-cols-[1.1fr,0.9fr] lg:items-start">
+        <figure class="space-y-3">
+          <div class="relative overflow-hidden rounded-2xl border border-gray-200 bg-slate-950 shadow-sm">
+            <img
+              src="/images/guide/grid-workspace.png"
+              alt="RationalGrid workspace showing shortcuts, composer, and grid tools"
+              class="w-full"
+              loading="lazy"
+            />
+            <div
+              class="absolute hidden h-8 w-8 items-center justify-center rounded-full border-4 border-white bg-emerald-600 text-sm font-semibold text-white shadow-lg md:flex"
+              style="left: 75%; top: 18%;"
+            >
+              1
+            </div>
+            <div
+              class="absolute hidden h-8 w-8 items-center justify-center rounded-full border-4 border-white bg-indigo-600 text-sm font-semibold text-white shadow-lg md:flex"
+              style="left: 12%; top: 18%;"
+            >
+              2
+            </div>
+            <div
+              class="absolute hidden h-8 w-8 items-center justify-center rounded-full border-4 border-white bg-sky-600 text-sm font-semibold text-white shadow-lg md:flex"
+              style="left: 58%; top: 82%;"
+            >
+              3
+            </div>
+            <div
+              class="absolute hidden h-8 w-8 items-center justify-center rounded-full border-4 border-white bg-amber-500 text-sm font-semibold text-white shadow-lg md:flex"
+              style="left: 84%; top: 82%;"
+            >
+              4
+            </div>
+          </div>
+          <figcaption class="text-xs text-gray-500">
+            Real workspace from a live RationalGrid session.
+          </figcaption>
+        </figure>
+
+        <div class="space-y-3">
+          <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
+            <div class="flex items-start gap-3">
+              <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-sm font-semibold text-white">
+                1
+              </span>
+              <div>
+                <p class="text-sm font-semibold text-gray-900">Shortcuts panel</p>
+                <p class="mt-1 text-xs text-gray-600">
+                  Search, open help, switch to reader view, share, present, or open controls.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
+            <div class="flex items-start gap-3">
+              <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-sm font-semibold text-white">
+                2
+              </span>
+              <div>
+                <p class="text-sm font-semibold text-gray-900">Reading panel</p>
+                <p class="mt-1 text-xs text-gray-600">
+                  The selected node opens here. Read it first, then select a phrase for a narrower follow-up.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
+            <div class="flex items-start gap-3">
+              <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sky-600 text-sm font-semibold text-white">
+                3
+              </span>
+              <div>
+                <p class="text-sm font-semibold text-gray-900">Ask vs Post</p>
+                <p class="mt-1 text-xs text-gray-600">
+                  <span class="font-semibold text-gray-900">Ask</span>
+                  creates a new AI branch. <span class="font-semibold text-gray-900">Post</span>
+                  adds your own claim, objection, example, or note to the map.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
+            <div class="flex items-start gap-3">
+              <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-500 text-sm font-semibold text-white">
+                4
+              </span>
+              <div>
+                <p class="text-sm font-semibold text-gray-900">Grid tools</p>
+                <p class="mt-1 text-xs text-gray-600">
+                  These act on the selected node. Use them to test a claim, branch outward, split an answer, or blend nodes.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="flex items-start gap-3">
-          <.icon name="hero-cursor-arrow-rays" class="h-5 w-5 shrink-0 text-sky-500 mt-0.5" />
-          <div>
-            <p class="text-sm font-semibold text-gray-900">Term-level deep dives</p>
-            <p class="text-xs text-gray-600">
-              Highlight a phrase to generate focused sub-branches.
-            </p>
+      </div>
+
+      <div class="mt-8 grid gap-6 lg:grid-cols-[0.95fr,1.05fr] lg:items-start">
+        <figure class="space-y-3">
+          <div class="relative overflow-hidden rounded-2xl border border-gray-200 bg-slate-950 shadow-sm">
+            <img
+              src="/images/guide/grid-workspace.png"
+              alt="RationalGrid bottom composer and grid tools"
+              class="h-72 w-full object-cover md:h-80"
+              loading="lazy"
+              style="object-position: 50% 92%;"
+            />
+            <div
+              class="absolute hidden h-8 w-8 items-center justify-center rounded-full border-4 border-white bg-sky-600 text-sm font-semibold text-white shadow-lg md:flex"
+              style="left: 34%; top: 55%;"
+            >
+              1
+            </div>
+            <div
+              class="absolute hidden h-8 w-8 items-center justify-center rounded-full border-4 border-white bg-amber-500 text-sm font-semibold text-white shadow-lg md:flex"
+              style="left: 79%; top: 60%;"
+            >
+              2
+            </div>
           </div>
-        </div>
-        <div class="flex items-start gap-3">
-          <.icon name="hero-users" class="h-5 w-5 shrink-0 text-emerald-500 mt-0.5" />
-          <div>
-            <p class="text-sm font-semibold text-gray-900">Shared grids</p>
-            <p class="text-xs text-gray-600">
-              Multiple people build understanding on the same grid.
-            </p>
-          </div>
-        </div>
-        <div class="flex items-start gap-3">
-          <.icon name="hero-clock" class="h-5 w-5 shrink-0 text-violet-500 mt-0.5" />
-          <div>
-            <p class="text-sm font-semibold text-gray-900">Persistent &amp; searchable</p>
-            <p class="text-xs text-gray-600">
-              Maps remain available, searchable, and linkable over time.
-            </p>
-          </div>
-        </div>
-        <div class="flex items-start gap-3">
-          <.icon name="hero-link" class="h-5 w-5 shrink-0 text-amber-500 mt-0.5" />
-          <div>
-            <p class="text-sm font-semibold text-gray-900">Linkable context</p>
-            <p class="text-xs text-gray-600">
-              Share the full grid or direct links to specific nodes.
-            </p>
-          </div>
-        </div>
-        <div class="flex items-start gap-3">
-          <.icon name="hero-arrow-down-tray" class="h-5 w-5 shrink-0 text-rose-500 mt-0.5" />
-          <div>
-            <p class="text-sm font-semibold text-gray-900">Portable output</p>
-            <p class="text-xs text-gray-600">
-              Export your work for review, teaching, or documentation.
-            </p>
+          <figcaption class="text-xs text-gray-500">
+            The bottom bar is where most first-session moves happen.
+          </figcaption>
+        </figure>
+
+        <div class="rounded-2xl border border-sky-100 bg-sky-50/40 p-5 sm:p-6">
+          <p class="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wide text-sky-700 ring-1 ring-sky-200">
+            Bottom bar
+          </p>
+          <h4 class="mt-4 text-xl font-semibold text-gray-900">
+            Most first-session moves happen here
+          </h4>
+          <p class="mt-2 text-sm text-gray-600">
+            Ignore the rest at first. This is the part you will use most.
+          </p>
+          <div class="mt-5 grid gap-3">
+            <div class="rounded-xl border border-white/80 bg-white/80 p-4">
+              <p class="text-sm font-semibold text-gray-900">Ask</p>
+              <p class="mt-1 text-xs text-gray-600">
+                Extend the selected node with a new AI answer or follow-up branch.
+              </p>
+            </div>
+            <div class="rounded-xl border border-white/80 bg-white/80 p-4">
+              <p class="text-sm font-semibold text-gray-900">Post</p>
+              <p class="mt-1 text-xs text-gray-600">
+                Add your own claim, objection, example, or note into the map.
+              </p>
+            </div>
+            <div class="rounded-xl border border-white/80 bg-white/80 p-4">
+              <p class="text-sm font-semibold text-gray-900">Tools</p>
+              <p class="mt-1 text-xs text-gray-600">
+                Use Pro | Con, Related, Expand, or Blend after you know what branch is worth growing.
+              </p>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <%!-- Teacher's guide (compact) --%>
+  <%!-- Tool chooser --%>
+  <section class="mx-auto max-w-5xl px-4 py-10 sm:py-14">
+    <div class="grid gap-6 lg:grid-cols-[1.1fr,0.9fr]">
+      <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+        <div class="max-w-3xl">
+          <p class="inline-flex items-center rounded-full bg-violet-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-violet-700 ring-1 ring-violet-200">
+            Choose the next move
+          </p>
+          <h3 class="mt-4 text-xl font-semibold text-gray-900">Which tool should you use?</h3>
+          <p class="mt-2 text-sm text-gray-600">
+            Start with the smallest control that matches your next thinking move.
+          </p>
+        </div>
+
+        <div class="mt-6 grid gap-3 sm:grid-cols-2">
+          <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
+            <div class="flex items-start gap-3">
+              <.icon
+                name="hero-question-mark-circle"
+                class="mt-0.5 h-5 w-5 shrink-0 text-sky-500"
+              />
+              <div>
+                <p class="text-sm font-semibold text-gray-900">Ask</p>
+                <p class="mt-1 text-xs text-gray-600">
+                  Use when you want the AI to continue from the selected node with a new answer.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
+            <div class="flex items-start gap-3">
+              <.icon
+                name="hero-chat-bubble-bottom-center-text"
+                class="mt-0.5 h-5 w-5 shrink-0 text-emerald-500"
+              />
+              <div>
+                <p class="text-sm font-semibold text-gray-900">Post</p>
+                <p class="mt-1 text-xs text-gray-600">
+                  Use when you want your own claim, objection, example, or note inside the map.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
+            <div class="flex items-start gap-3">
+              <.icon name="hero-scale" class="mt-0.5 h-5 w-5 shrink-0 text-emerald-500" />
+              <div>
+                <p class="text-sm font-semibold text-gray-900">Pro | Con</p>
+                <p class="mt-1 text-xs text-gray-600">
+                  Use when the current node is a claim that needs testing from both sides.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
+            <div class="flex items-start gap-3">
+              <.icon name="hero-light-bulb" class="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
+              <div>
+                <p class="text-sm font-semibold text-gray-900">Related</p>
+                <p class="mt-1 text-xs text-gray-600">
+                  Use when you want nearby concepts, counterpoints, or adjacent directions.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
+            <div class="flex items-start gap-3">
+              <.icon name="hero-sparkles" class="mt-0.5 h-5 w-5 shrink-0 text-rose-500" />
+              <div>
+                <p class="text-sm font-semibold text-gray-900">Expand</p>
+                <p class="mt-1 text-xs text-gray-600">
+                  Use when one node already contains several promising subtopics to split apart.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
+            <div class="flex items-start gap-3">
+              <.icon
+                name="hero-arrows-pointing-in"
+                class="mt-0.5 h-5 w-5 shrink-0 text-violet-500"
+              />
+              <div>
+                <p class="text-sm font-semibold text-gray-900">Blend</p>
+                <p class="mt-1 text-xs text-gray-600">
+                  Use when two nodes should be synthesized into a shared view or a productive contrast.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-4">
+        <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <p class="inline-flex items-center rounded-full bg-gray-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-gray-700 ring-1 ring-gray-200">
+            Whole-grid controls
+          </p>
+          <h4 class="mt-4 text-lg font-semibold text-gray-900">
+            Controls outside the current node
+          </h4>
+          <div class="mt-4 space-y-3">
+            <div class="flex items-start gap-3">
+              <.icon name="hero-magnifying-glass" class="mt-0.5 h-4 w-4 shrink-0 text-gray-500" />
+              <div>
+                <p class="text-sm font-semibold text-gray-900">Search and Doc</p>
+                <p class="text-xs text-gray-600">
+                  Search the graph or switch to reader view for a more linear pass.
+                </p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <.icon name="hero-bookmark" class="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+              <div>
+                <p class="text-sm font-semibold text-gray-900">Highlights</p>
+                <p class="text-xs text-gray-600">
+                  Review saved excerpts and jump back into the node they came from.
+                </p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <.icon
+                name="hero-presentation-chart-bar"
+                class="mt-0.5 h-4 w-4 shrink-0 text-fuchsia-500"
+              />
+              <div>
+                <p class="text-sm font-semibold text-gray-900">Present and Share</p>
+                <p class="text-xs text-gray-600">
+                  Turn a large grid into a guided path, or share one link for the same map.
+                </p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <.icon
+                name="hero-adjustments-horizontal"
+                class="mt-0.5 h-4 w-4 shrink-0 text-gray-500"
+              />
+              <div>
+                <p class="text-sm font-semibold text-gray-900">Controls</p>
+                <p class="text-xs text-gray-600">
+                  Change display settings, privacy, export options, and other graph-level tools.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-amber-100 bg-amber-50/60 p-6 shadow-sm">
+          <p class="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-700 ring-1 ring-amber-200">
+            Good habits
+          </p>
+          <h4 class="mt-4 text-lg font-semibold text-gray-900">Keep the grid useful</h4>
+          <div class="mt-4 space-y-3">
+            <div class="rounded-xl border border-white/80 bg-white/80 p-4">
+              <p class="text-sm font-semibold text-gray-900">Ask narrowly when you can</p>
+              <p class="mt-1 text-xs text-gray-600">
+                Selecting a phrase usually produces a better branch than asking another broad top-level question.
+              </p>
+            </div>
+            <div class="rounded-xl border border-white/80 bg-white/80 p-4">
+              <p class="text-sm font-semibold text-gray-900">Expand late, not early</p>
+              <p class="mt-1 text-xs text-gray-600">
+                Read the current answer first. Expanding everything at once creates noise faster than understanding.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <%!-- Compact closing section --%>
   <section id="teaching" class="mx-auto max-w-5xl px-4 py-10 sm:py-14">
-    <div class="grid gap-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:grid-cols-3 sm:p-8">
-      <div class="sm:col-span-2 space-y-3">
+    <div class="grid gap-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm lg:grid-cols-[1.1fr,0.9fr] sm:p-8">
+      <figure class="space-y-3">
+        <div class="overflow-hidden rounded-2xl border border-gray-200 bg-slate-950 shadow-sm">
+          <img
+            src="/images/guide/grid-dense-example.png"
+            alt="A larger RationalGrid example about digital surveillance with several connected branches"
+            class="w-full"
+            loading="lazy"
+          />
+        </div>
+        <figcaption class="text-xs text-gray-500">
+          Example of a larger public grid on digital surveillance: structure stays readable even as the map grows.
+        </figcaption>
+      </figure>
+
+      <div class="space-y-4">
         <p class="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-700 ring-1 ring-emerald-200">
-          <.icon name="hero-academic-cap" class="h-3.5 w-3.5 mr-1" /> For educators
+          <.icon name="hero-academic-cap" class="mr-1 h-3.5 w-3.5" /> For classes and teams
         </p>
         <h3 class="text-2xl font-semibold text-gray-900">
-          Set up a classroom grid
+          One shared map is easier to discuss than scattered chats
         </h3>
-        <p class="text-gray-600 text-sm">
-          Create a structured idea grid for a lesson, then share one URL so students explore, highlight, and revise the same concept together.
+        <p class="text-sm text-gray-600">
+          Seed a few starting nodes, point people to a specific branch, and let everyone add
+          questions, objections, and highlights in the same place.
         </p>
-        <ol class="list-decimal space-y-1.5 pl-5 text-sm text-gray-700">
-          <li>
-            <span class="font-semibold text-gray-900">Seed the grid</span>
-            with key questions, claims, or sources.
-          </li>
-          <li>
-            <span class="font-semibold text-gray-900">Guide exploration</span>
-            &mdash; direct students to specific nodes.
-          </li>
-          <li>
-            <span class="font-semibold text-gray-900">Share one link</span>
-            &mdash; everyone works on the same grid.
-          </li>
-        </ol>
-        <div class="pt-2">
+
+        <div class="space-y-3">
+          <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
+            <p class="text-sm font-semibold text-gray-900">Seed the starting structure</p>
+            <p class="mt-1 text-xs text-gray-600">
+              Add the key question, source, or topic split before you share the grid.
+            </p>
+          </div>
+
+          <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
+            <p class="text-sm font-semibold text-gray-900">Direct people to one branch</p>
+            <p class="mt-1 text-xs text-gray-600">
+              Give students or teammates a clear part of the map to extend rather than asking them to cover everything.
+            </p>
+          </div>
+
+          <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
+            <p class="text-sm font-semibold text-gray-900">
+              Review with highlights and reader view
+            </p>
+            <p class="mt-1 text-xs text-gray-600">
+              Use saved passages and the Doc view when you want to discuss or revise the grid together.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-3 pt-2">
           <a
             href="/"
-            class="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 transition"
+            class="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
           >
-            <.icon name="hero-plus" class="h-4 w-4" /> Create a class grid
+            <.icon name="hero-plus" class="h-4 w-4" /> Start a shared grid
+          </a>
+          <a
+            href="/about"
+            class="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 ring-1 ring-gray-200 transition hover:bg-gray-50"
+          >
+            <.icon name="hero-information-circle" class="h-4 w-4" /> About RationalGrid
           </a>
         </div>
       </div>
-
-      <div class="rounded-xl bg-gradient-to-br from-emerald-50 to-white p-5 ring-1 ring-emerald-100 flex flex-col justify-between">
-        <div>
-          <p class="text-sm font-semibold text-emerald-800">Share this guide</p>
-          <p class="mt-2 text-sm text-gray-600">
-            Copy this page URL into your LMS or class chat.
-          </p>
-        </div>
-        <button
-          type="button"
-          class="mt-4 inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
-          onclick="
-            (async () => {
-              const btn = this;
-              const original = btn.dataset.originalText || btn.textContent.trim();
-              btn.dataset.originalText = original;
-              const url = window.location.href;
-              try {
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                  await navigator.clipboard.writeText(url);
-                } else {
-                  const ta = document.createElement('textarea');
-                  ta.value = url;
-                  ta.setAttribute('readonly', 'true');
-                  ta.style.position = 'fixed';
-                  ta.style.top = '-9999px';
-                  document.body.appendChild(ta);
-                  ta.select();
-                  document.execCommand('copy');
-                  document.body.removeChild(ta);
-                }
-                btn.textContent = 'Copied!';
-              } catch (_e) {
-                btn.textContent = 'Copy failed';
-              }
-              window.clearTimeout(btn._copyResetTimer);
-              btn._copyResetTimer = window.setTimeout(() => {
-                btn.textContent = original;
-              }, 1600);
-            })();
-          "
-        >
-          <.icon name="hero-clipboard-document" class="h-4 w-4" /> Copy lesson link
-        </button>
-      </div>
     </div>
   </section>
 
-  <%!-- About (minimal) --%>
-  <section class="mx-auto max-w-5xl px-4 py-10 sm:py-14 text-center">
-    <a
-      href="/about"
-      class="inline-flex items-center gap-2 rounded-full bg-gray-50 border border-gray-200 px-6 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-100 hover:text-[#3a0ca3] transition"
-    >
-      <.icon name="hero-information-circle" class="h-4 w-4" />
-      Learn more about RationalGrid, the team and our mission
-      <.icon name="hero-arrow-right" class="h-4 w-4" />
-    </a>
-  </section>
-
-  <%!-- Final CTA banner --%>
-  <footer class="mt-10 relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen bg-gradient-to-r from-[#3a0ca3] to-[#4361ee]">
-    <section class="mx-auto max-w-5xl px-6 py-10 text-center text-white space-y-6">
-      <h2 class="text-2xl font-bold tracking-tight">
-        Ready to build your first knowledge grid?
-      </h2>
-      <p class="text-indigo-200 max-w-xl mx-auto">
-        Pick a starter question or ask your own. Your grid is one click away.
-      </p>
-      <div class="flex flex-wrap justify-center gap-3">
+  <footer class="mx-auto max-w-5xl px-4 pb-12 pt-2 text-center">
+    <div class="inline-flex flex-wrap items-center justify-center gap-3 rounded-full border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+      <span>Ready to try it?</span>
+      <div class="flex flex-wrap items-center gap-3">
         <a
           href="/"
-          class="inline-flex items-center gap-2 rounded-full bg-white text-[#3a0ca3] px-6 py-2.5 text-sm font-semibold shadow-sm ring-1 ring-white/20 hover:bg-white/90 transition"
+          class="inline-flex items-center gap-2 rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
         >
           <.icon name="hero-plus" class="h-4 w-4" /> Create a grid
         </a>
         <a
           href="/view_all/graphs"
-          class="inline-flex items-center gap-2 rounded-full bg-white/10 text-white px-6 py-2.5 text-sm font-semibold ring-1 ring-white/20 hover:bg-white/15 transition"
+          class="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-gray-200 transition hover:bg-gray-100"
         >
           <.icon name="hero-eye" class="h-4 w-4" /> Browse existing grids
         </a>
-        <a
-          href="https://x.com/TJCBerman"
-          target="_blank"
-          class="inline-flex items-center gap-2 rounded-full bg-white/10 text-white px-6 py-2.5 text-sm font-semibold ring-1 ring-white/20 hover:bg-white/15 transition"
-        >
-          <.icon name="hero-arrow-right" class="h-4 w-4" /> Follow
-        </a>
       </div>
-    </section>
+    </div>
   </footer>
 </div>
