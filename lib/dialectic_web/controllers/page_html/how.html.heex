@@ -17,27 +17,27 @@
 
       <div class="max-w-3xl rounded-2xl border border-indigo-200 bg-white/80 p-4 shadow-sm backdrop-blur sm:p-5">
         <p class="text-xs font-semibold uppercase tracking-wide text-indigo-700">
-          Best first prompt
+          Example prompt
         </p>
         <p class="mt-2 text-sm font-semibold text-gray-900 sm:text-base">
           “Should cities expand digital surveillance in public spaces, and what are the trade-offs?”
         </p>
         <p class="mt-1 text-sm text-gray-600">
-          It branches cleanly into privacy, safety, bias, cost, and alternatives.
+          A strong opener creates obvious branches: privacy, safety, bias, cost, and alternatives.
         </p>
         <div class="mt-3">
           <a
             href={"/?#{URI.encode_query(%{"initial_prompt" => "Should cities expand digital surveillance in public spaces, and what are the trade-offs?"})}"}
             class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
           >
-            <.icon name="hero-play" class="h-4 w-4" /> Start with this prompt
+            <.icon name="hero-play" class="h-4 w-4" /> Open this example
           </a>
         </div>
       </div>
 
       <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-lg sm:p-6">
         <p class="text-sm font-semibold uppercase tracking-wide text-indigo-600 mb-4">
-          Pick a starter question that can branch
+          Practice prompts
         </p>
         <div class="grid gap-3 sm:grid-cols-2">
           <a
@@ -127,13 +127,13 @@
     <div class="grid gap-6 lg:grid-cols-[1.2fr,0.8fr]">
       <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
         <p class="inline-flex items-center rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-sky-700 ring-1 ring-sky-200">
-          Start well
+          Prompt patterns
         </p>
         <h3 class="mt-4 text-2xl font-semibold text-gray-900">
-          Choose a question that can branch
+          Learn what makes a prompt branch
         </h3>
         <p class="mt-3 max-w-2xl text-sm text-gray-600">
-          Good grids start with a prompt you can compare, unpack, or test.
+          If your first prompt stalls, reframe it as one of these patterns.
         </p>
 
         <div class="mt-6 grid gap-4 sm:grid-cols-2">
@@ -169,7 +169,7 @@
           Avoid dead ends
         </p>
         <h3 class="mt-4 text-2xl font-semibold text-gray-900">
-          Prompts that usually stall out
+          Learn which prompts usually stall out
         </h3>
         <div class="mt-5 space-y-4">
           <div class="rounded-xl border border-rose-200 bg-white/80 p-4">
@@ -200,7 +200,7 @@
           First session
         </p>
         <h3 class="mt-4 text-2xl font-semibold text-gray-900">
-          A simple first 10-minute workflow
+          Learn a repeatable first 10-minute workflow
         </h3>
         <p class="mt-3 text-sm text-gray-600">
           Do less than you think. Follow one promising branch at a time.
@@ -245,10 +245,10 @@
     <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
       <div class="max-w-3xl space-y-3">
         <div class="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-indigo-700 ring-1 ring-indigo-200">
-          In the grid
+          Workspace walkthrough
         </div>
         <h3 class="text-2xl font-semibold text-gray-900">
-          Read the workspace once, then start branching
+          Learn the workspace once, then start branching
         </h3>
         <p class="text-sm text-gray-600">
           You do not need every control upfront. Learn the main actions, then make the smallest useful next move.
@@ -356,6 +356,18 @@
       </div>
 
       <div class="mt-8 space-y-4">
+        <div class="rounded-2xl border border-sky-100 bg-sky-50/40 p-5 sm:p-6">
+          <p class="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wide text-sky-700 ring-1 ring-sky-200">
+            Bottom bar
+          </p>
+          <h4 class="mt-4 text-xl font-semibold text-gray-900">
+            Learn the composer and node actions
+          </h4>
+          <p class="mt-2 text-sm text-gray-600">
+            This is the control strip you will use most. Understand this row first, then branch outward.
+          </p>
+        </div>
+
         <figure class="space-y-3">
           <div class="relative overflow-hidden rounded-2xl border border-gray-200 bg-slate-50 shadow-sm p-4 md:p-5">
             <div class="rounded-2xl border border-gray-300 bg-white p-3 shadow-sm md:p-4">
@@ -428,30 +440,24 @@
         </figure>
 
         <div class="rounded-2xl border border-sky-100 bg-sky-50/40 p-5 sm:p-6">
-          <p class="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wide text-sky-700 ring-1 ring-sky-200">
-            Bottom bar
-          </p>
-          <h4 class="mt-4 text-xl font-semibold text-gray-900">
-            Most first-session moves happen here
-          </h4>
-          <p class="mt-2 text-sm text-gray-600">
-            Ignore the rest at first. This is the part you will use most.
+          <p class="text-sm font-semibold uppercase tracking-wide text-sky-700">
+            What You Learn Here
           </p>
           <div class="mt-5 grid gap-3 md:grid-cols-3">
             <div class="rounded-xl border border-white/80 bg-white/80 p-4">
-              <p class="text-sm font-semibold text-gray-900">Ask</p>
+              <p class="text-sm font-semibold text-gray-900">AI continuation</p>
               <p class="mt-1 text-xs text-gray-600">
                 Extend the selected node with a new AI answer or follow-up branch.
               </p>
             </div>
             <div class="rounded-xl border border-white/80 bg-white/80 p-4">
-              <p class="text-sm font-semibold text-gray-900">Post</p>
+              <p class="text-sm font-semibold text-gray-900">Your contribution</p>
               <p class="mt-1 text-xs text-gray-600">
                 Add your own claim, objection, example, or note into the map.
               </p>
             </div>
             <div class="rounded-xl border border-white/80 bg-white/80 p-4">
-              <p class="text-sm font-semibold text-gray-900">Tools</p>
+              <p class="text-sm font-semibold text-gray-900">Node actions</p>
               <p class="mt-1 text-xs text-gray-600">
                 Use Pro | Con, Related, Expand, or Blend after you know what branch is worth growing.
               </p>
@@ -470,9 +476,9 @@
           <p class="inline-flex items-center rounded-full bg-violet-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-violet-700 ring-1 ring-violet-200">
             Choose the next move
           </p>
-          <h3 class="mt-4 text-xl font-semibold text-gray-900">Which tool should you use?</h3>
+          <h3 class="mt-4 text-xl font-semibold text-gray-900">Learn which tool to use next</h3>
           <p class="mt-2 text-sm text-gray-600">
-            Start with the smallest control that matches your next thinking move.
+            Once the bottom bar is familiar, use this as a quick reference for the next thinking move.
           </p>
         </div>
 
@@ -656,6 +662,9 @@
       </figure>
 
       <div class="space-y-4">
+        <p class="text-sm text-gray-600">
+          After solo exploration, this same workflow scales well to classes and teams.
+        </p>
         <p class="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-700 ring-1 ring-emerald-200">
           <.icon name="hero-academic-cap" class="mr-1 h-3.5 w-3.5" /> For classes and teams
         </p>
