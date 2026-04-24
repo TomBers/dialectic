@@ -103,8 +103,7 @@ defmodule DialecticWeb.InfographicGalleryLive do
                       class="hover:text-blue-300"
                       tabindex="-1"
                     >
-                      Explore Grid
-                      <.icon name="hero-arrow-right" class="w-4 h-4 ml-1 inline" />
+                      Explore Grid <.icon name="hero-arrow-right" class="w-4 h-4 ml-1 inline" />
                     </.link>
                   </span>
                   <span class="inline-flex items-center text-white/80 font-medium text-sm">
@@ -141,7 +140,7 @@ defmodule DialecticWeb.InfographicGalleryLive do
     <%= if @selected_infographic do %>
       <div
         id="infographic-modal"
-        class="fixed inset-0 z-50 overflow-y-auto"
+        class="fixed inset-0 z-[10001] overflow-y-auto"
         phx-mounted={JS.focus_first(to: "#infographic-modal-content")}
         phx-remove={JS.pop_focus()}
         phx-window-keydown="close_modal"
@@ -156,11 +155,8 @@ defmodule DialecticWeb.InfographicGalleryLive do
         </div>
 
         <%!-- Modal Content --%>
-        <div class="flex min-h-screen items-center justify-center p-4">
-          <.focus_wrap
-            id="infographic-modal-focus-wrap"
-            class="w-full max-w-7xl"
-          >
+        <div class="flex min-h-screen items-start justify-center p-4 pt-12 sm:pt-14">
+          <.focus_wrap id="infographic-modal-focus-wrap" class="w-full max-w-7xl">
             <div
               id="infographic-modal-content"
               class="relative w-full bg-white dark:bg-gray-800 rounded-lg shadow-2xl"
@@ -191,7 +187,10 @@ defmodule DialecticWeb.InfographicGalleryLive do
 
               <%!-- Info --%>
               <div class="p-6 border-t border-gray-200 dark:border-gray-700">
-                <h2 id="infographic-modal-title" class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                <h2
+                  id="infographic-modal-title"
+                  class="text-2xl font-bold text-gray-900 dark:text-white mb-2"
+                >
                   {@selected_infographic.title}
                 </h2>
                 <p id="infographic-modal-description" class="text-gray-600 dark:text-gray-300 mb-4">
