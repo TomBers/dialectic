@@ -306,7 +306,7 @@ defmodule DialecticWeb.HomeLive do
               <section class="w-full">
                 <div class="w-full">
                   <div class="flex flex-col items-center gap-2 sm:gap-2.5">
-                    <div class="relative mb-2.5 w-full rounded-2xl border-2 border-indigo-300 bg-gradient-to-br from-white via-indigo-50/80 to-sky-50/70 p-2 shadow-[0_16px_38px_rgba(79,70,229,0.30)] ring-2 ring-indigo-200/70 sm:mb-3 sm:p-2.5">
+                    <div class="relative mb-2 w-full rounded-2xl border-2 border-indigo-300 bg-gradient-to-br from-white via-indigo-50/80 to-sky-50/70 p-1.5 shadow-[0_14px_30px_rgba(79,70,229,0.26)] ring-2 ring-indigo-200/70 sm:mb-2.5 sm:p-2">
                       <.live_component
                         module={DialecticWeb.NewIdeaFormComp}
                         id="new-idea-form"
@@ -320,17 +320,24 @@ defmodule DialecticWeb.HomeLive do
               <%!-- Curated & Featured Grids – 2-column on desktop --%>
               <%= if @curated_grids != [] or @featured_grids != [] do %>
                 <section
-                  class="w-full rounded-2xl border border-slate-200/80 bg-white/80 p-2 shadow-sm sm:p-2.5"
+                  class="w-full rounded-3xl border border-slate-200/80 bg-white/90 p-2 ring-1 ring-slate-200 shadow-sm sm:p-2.5"
                   id="curated"
                 >
-                  <div class="grid w-full grid-cols-1 gap-2 sm:grid-cols-2">
+                  <div class="mb-2 rounded-2xl border border-slate-200 bg-gradient-to-r from-amber-50 via-white to-indigo-50 px-3 py-2 shadow-sm">
+                    <h2 class="text-sm font-semibold tracking-tight text-slate-900 sm:text-base">
+                      Highlights
+                    </h2>
+                  </div>
+                  <div class="grid w-full grid-cols-1 gap-2 sm:gap-2.5 lg:grid-cols-2">
                     <%= if @curated_grids != [] do %>
                       <.curated_grid_section
                         items={@curated_grids}
                         icon="hero-star"
                         icon_class="text-amber-500"
-                        title="Curated Grids"
+                        title="Editor picks"
                         id_prefix="curated"
+                        section_class="from-amber-50 via-white to-orange-50/70"
+                        icon_wrap_class="bg-amber-100 text-amber-700 ring-amber-200"
                       />
                     <% end %>
                     <%= if @featured_grids != [] do %>
@@ -338,8 +345,10 @@ defmodule DialecticWeb.HomeLive do
                         items={@featured_grids}
                         icon="hero-users"
                         icon_class="text-indigo-500"
-                        title="Featured by Partners"
+                        title="Partners"
                         id_prefix="featured"
+                        section_class="from-indigo-50 via-white to-sky-50/70"
+                        icon_wrap_class="bg-indigo-100 text-indigo-700 ring-indigo-200"
                       />
                     <% end %>
                   </div>
@@ -350,119 +359,132 @@ defmodule DialecticWeb.HomeLive do
               <section class="w-full rounded-3xl bg-white/90 p-2.5 ring-1 ring-slate-200 sm:p-3">
                 <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
                   <div class="p-2 sm:p-2.5">
-                    <div class="flex flex-col gap-2 sm:gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div>
-                        <h2 class="text-lg sm:text-2xl font-semibold tracking-tight text-slate-900">
-                          <%= cond do %>
-                            <% @active_tag -> %>
-                              Ideas tagged with "{@active_tag}"
-                            <% @active_category == "deep_dives" -> %>
-                              Deep Dives
-                            <% @active_category == "seedlings" -> %>
-                              Seedlings
-                            <% @search_term != "" -> %>
-                              Search results for "{@search_term}"
-                            <% true -> %>
-                              Popular Grids
-                          <% end %>
-                        </h2>
-                        <p class="mt-0.5 text-sm text-slate-600">
-                          A collection of popular grids and ideas, created by the community.
-                        </p>
-                      </div>
-
-                      <div class="w-full sm:w-72">
-                        <form
-                          phx-change="search"
-                          phx-submit="search"
-                          class="flex relative"
-                          onsubmit="return false;"
-                        >
-                          <input
-                            type="text"
-                            name="search"
-                            value={@search_term}
-                            phx-debounce="300"
-                            placeholder="Search ideas..."
-                            class="w-full rounded-l-md border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 sm:py-2"
-                            autocomplete="off"
-                          />
-                          <%= if @search_term && @search_term != "" do %>
-                            <button
-                              type="button"
-                              phx-click="search"
-                              phx-value-search=""
-                              class="absolute right-12 top-0 bottom-0 flex items-center pr-3 text-slate-500 transition-colors hover:text-slate-700"
-                            >
-                              <.icon name="hero-x-mark" class="h-5 w-5" />
-                            </button>
-                          <% end %>
-                          <span
-                            aria-hidden="true"
-                            class="rounded-r-md border border-l-0 border-slate-300 bg-slate-100 px-4 py-2 text-slate-700"
-                          >
-                            <.icon name="hero-magnifying-glass" class="h-5 w-5" />
-                          </span>
-                        </form>
-                      </div>
-                    </div>
-
-                    <div class="mt-1.5 space-y-1.5 sm:mt-2 sm:space-y-2">
-                      <div class="flex flex-wrap gap-1.5 sm:gap-2">
-                        <.link
-                          patch={~p"/"}
-                          class={[
-                            "px-4 py-2 sm:px-3 sm:py-1.5 rounded-full text-sm font-medium transition-colors",
-                            (!@active_category && !@active_tag && @search_term == "" &&
-                               "bg-slate-900 text-white") ||
-                              "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
-                          ]}
-                        >
-                          All
-                        </.link>
-                        <.link
-                          patch={~p"/?category=deep_dives"}
-                          class={[
-                            "px-4 py-2 sm:px-3 sm:py-1.5 rounded-full text-sm font-medium transition-colors",
-                            (@active_category == "deep_dives" && "bg-slate-900 text-white") ||
-                              "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
-                          ]}
-                        >
-                          Deep Dives
-                        </.link>
-                        <.link
-                          patch={~p"/?category=seedlings"}
-                          class={[
-                            "px-4 py-2 sm:px-3 sm:py-1.5 rounded-full text-sm font-medium transition-colors",
-                            (@active_category == "seedlings" && "bg-slate-900 text-white") ||
-                              "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
-                          ]}
-                        >
-                          Seedlings
-                        </.link>
-                      </div>
-
-                      <%= if @popular_tags != [] do %>
-                        <div class="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-2">
-                          <span class="text-sm text-slate-600 sm:mr-2 flex-shrink-0">
-                            Popular topics:
-                          </span>
-                          <div class="flex overflow-x-auto scrollbar-hide sm:flex-wrap gap-2 w-full sm:w-auto pb-1 sm:pb-0 -mb-1 sm:mb-0">
-                            <%= for {tag, count} <- @popular_tags do %>
-                              <.link
-                                patch={~p"/?tag=#{tag}"}
-                                class={[
-                                  "text-xs font-medium px-3 py-1.5 sm:px-2.5 sm:py-0.5 rounded border transition-colors whitespace-nowrap flex-shrink-0",
-                                  (@active_tag == tag && "bg-slate-900 text-white border-slate-900") ||
-                                    "bg-slate-100 text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-200"
-                                ]}
-                              >
-                                #{tag} <span class="ml-0.5 text-slate-500">({count})</span>
-                              </.link>
-                            <% end %>
+                    <div class="rounded-2xl border border-slate-200 bg-gradient-to-r from-slate-50 via-white to-indigo-50/70 p-3 shadow-sm">
+                      <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                        <div class="min-w-0">
+                          <div class="inline-flex items-center gap-1 rounded-full bg-slate-900 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white">
+                            <.icon name="hero-sparkles" class="h-3.5 w-3.5" /> Explore
+                          </div>
+                          <div class="mt-2 flex flex-wrap items-center gap-2">
+                            <h2 class="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">
+                              <%= cond do %>
+                                <% @active_tag -> %>
+                                  Ideas tagged with "{@active_tag}"
+                                <% @active_category == "deep_dives" -> %>
+                                  Deep Dives
+                                <% @active_category == "seedlings" -> %>
+                                  Seedlings
+                                <% @search_term != "" -> %>
+                                  Search results for "{@search_term}"
+                                <% true -> %>
+                                  Popular Grids
+                              <% end %>
+                            </h2>
+                            <span class="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700">
+                              Community-built
+                            </span>
                           </div>
                         </div>
-                      <% end %>
+
+                        <div class="w-full lg:w-72">
+                          <form
+                            phx-change="search"
+                            phx-submit="search"
+                            class="relative"
+                            onsubmit="return false;"
+                          >
+                            <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                              <.icon name="hero-magnifying-glass" class="h-4 w-4" />
+                            </span>
+                            <input
+                              type="text"
+                              name="search"
+                              value={@search_term}
+                              phx-debounce="300"
+                              placeholder="Search ideas..."
+                              class="h-10 w-full rounded-full border border-slate-300 bg-white px-10 pr-10 text-sm text-slate-900 placeholder:text-slate-500 shadow-sm transition focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                              autocomplete="off"
+                            />
+                            <%= if @search_term && @search_term != "" do %>
+                              <button
+                                type="button"
+                                phx-click="search"
+                                phx-value-search=""
+                                class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 transition-colors hover:text-slate-700"
+                              >
+                                <.icon name="hero-x-mark" class="h-4 w-4" />
+                              </button>
+                            <% end %>
+                          </form>
+                        </div>
+                      </div>
+
+                      <div class="mt-3 flex flex-col gap-2 xl:flex-row xl:flex-wrap xl:items-start xl:justify-between">
+                        <%= if @popular_tags != [] do %>
+                          <div class="flex min-w-0 items-center gap-2">
+                            <span class="flex-shrink-0 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                              Trending
+                            </span>
+                            <div class="flex w-full gap-1.5 overflow-x-auto pb-1 -mb-1 xl:w-auto xl:max-w-none xl:flex-wrap xl:overflow-visible">
+                              <%= for {tag, count} <- Enum.take(@popular_tags, 6) do %>
+                                <.link
+                                  patch={~p"/?tag=#{tag}"}
+                                  class={[
+                                    "inline-flex flex-shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors whitespace-nowrap",
+                                    (@active_tag == tag && "border-slate-900 bg-slate-900 text-white") ||
+                                      "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-100"
+                                  ]}
+                                >
+                                  <span>#{tag}</span>
+                                  <span class={[
+                                    "rounded-full px-1.5 py-0.5 text-[10px]",
+                                    (@active_tag == tag && "bg-white/15 text-white") ||
+                                      "bg-slate-100 text-slate-500"
+                                  ]}>
+                                    {count}
+                                  </span>
+                                </.link>
+                              <% end %>
+                            </div>
+                          </div>
+                        <% end %>
+
+                        <div class="flex flex-wrap gap-1.5 xl:justify-end">
+                          <.link
+                            patch={~p"/"}
+                            class={[
+                              "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+                              (!@active_category && !@active_tag && @search_term == "" &&
+                                 "border-slate-900 bg-slate-900 text-white") ||
+                                "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-100"
+                            ]}
+                          >
+                            All
+                          </.link>
+                          <.link
+                            patch={~p"/?category=deep_dives"}
+                            class={[
+                              "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+                              (@active_category == "deep_dives" &&
+                                 "border-slate-900 bg-slate-900 text-white") ||
+                                "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-100"
+                            ]}
+                          >
+                            Deep Dives
+                          </.link>
+                          <.link
+                            patch={~p"/?category=seedlings"}
+                            class={[
+                              "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+                              (@active_category == "seedlings" &&
+                                 "border-slate-900 bg-slate-900 text-white") ||
+                                "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-100"
+                            ]}
+                          >
+                            Seedlings
+                          </.link>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -631,15 +653,23 @@ defmodule DialecticWeb.HomeLive do
   defp curated_grid_section(assigns) do
     ~H"""
     <section class="w-full min-w-0">
-      <div class="h-full rounded-xl border border-slate-200 bg-slate-50/70">
-        <div class="p-2.5">
-          <div class="mb-2 flex items-center gap-2">
-            <.icon name={@icon} class={"h-4 w-4 " <> @icon_class} />
-            <h2 class="text-sm font-semibold tracking-tight text-slate-900 sm:text-base">
+      <div class={[
+        "h-full rounded-2xl border border-slate-200 bg-gradient-to-br shadow-sm",
+        @section_class
+      ]}>
+        <div class="p-2">
+          <div class="mb-1.5 flex items-center gap-2">
+            <span class={[
+              "inline-flex h-7 w-7 items-center justify-center rounded-xl ring-1",
+              @icon_wrap_class
+            ]}>
+              <.icon name={@icon} class={"h-4 w-4 " <> @icon_class} />
+            </span>
+            <h2 class="text-sm font-semibold tracking-tight text-slate-900">
               {@title}
             </h2>
           </div>
-          <div class="space-y-2">
+          <div class="space-y-1.5">
             <%= for item <- @items do %>
               <div class="relative">
                 <DialecticWeb.PageHtml.GraphComp.render
@@ -648,7 +678,7 @@ defmodule DialecticWeb.HomeLive do
                   link={graph_path(item.graph)}
                   linear_link={graph_linear_path(item.graph)}
                   count={0}
-                  tags={item.graph.tags}
+                  tags={Enum.take(item.graph.tags || [], 3)}
                   author_name={item.author_name}
                   author_link={
                     if is_binary(item.author_name) and item.author_name != "",

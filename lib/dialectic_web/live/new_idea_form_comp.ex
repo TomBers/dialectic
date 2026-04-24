@@ -46,9 +46,7 @@ defmodule DialecticWeb.NewIdeaFormComp do
       <.form for={@form} phx-submit="reply-and-answer" id={@id} class="w-full relative">
         <input type="hidden" name="mode" value={@selected_mode} />
 
-        <%!-- Desktop: pill-style input with inline button. Mobile: stacked layout --%>
-        <div class="flex flex-col gap-2">
-          <%!-- Input row — on sm+ the button sits inside; on mobile textarea is full-width --%>
+        <div class="flex flex-col gap-1.5">
           <div class="relative">
             <textarea
               name={@form[:content].name}
@@ -62,46 +60,43 @@ defmodule DialecticWeb.NewIdeaFormComp do
                 "box-border w-full overflow-hidden text-black rounded-2xl sm:rounded-full",
                 "border border-slate-300 shadow-sm",
                 "focus:border-slate-500 focus:ring-2 focus:ring-slate-200 focus:outline-none resize-none",
-                "text-base sm:text-lg",
-                "px-4 sm:pl-6 sm:pr-32",
-                "py-2.5 sm:py-2.5",
-                "h-[2.7rem] min-h-[2.7rem] sm:h-[3rem] sm:min-h-[3rem]"
+                "text-base sm:text-[1.05rem]",
+                "px-4 sm:pl-5 sm:pr-28",
+                "py-2 sm:py-2",
+                "h-[2.9rem] min-h-[2.9rem]"
               ]}
               autocomplete="off"
               required
             >{@content}</textarea>
-            <%!-- Desktop inline submit button (hidden on mobile) --%>
-            <div class="hidden sm:block absolute top-1/2 right-2 -translate-y-1/2 -mt-0.5">
+            <div class="hidden sm:block absolute top-1/2 right-1.5 -translate-y-1/2">
               <button
                 type="submit"
                 phx-disable-with="Starting..."
-                class="inline-flex items-center justify-center px-5 py-1.5 border border-transparent text-sm font-semibold rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="inline-flex items-center justify-center rounded-full border border-transparent bg-indigo-600 px-4 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {@submit_label}
               </button>
             </div>
           </div>
 
-          <%!-- Mobile submit button (visible only on small screens) --%>
           <div class="sm:hidden">
             <button
               type="submit"
               phx-disable-with="Starting..."
-              class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 border border-transparent text-base font-semibold rounded-xl shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] transition-transform"
+              class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-transparent bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-transform active:scale-[0.98] hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <.icon name="hero-sparkles" class="w-5 h-5" />
+              <.icon name="hero-sparkles" class="h-4 w-4" />
               {@submit_label}
             </button>
           </div>
         </div>
 
-        <%!-- Level selector — scrollable on mobile, centered on desktop --%>
-        <div class="mt-2.5 flex flex-col items-center gap-1.5 animate-fade-in-up">
-          <span class="text-xs font-semibold text-slate-600 uppercase tracking-wide">
+        <div class="mt-1.5 flex flex-col items-center gap-1 sm:flex-row sm:justify-center sm:gap-2 animate-fade-in-up">
+          <span class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
             Choose your level:
           </span>
           <div class="w-full sm:w-auto">
-            <div class="mx-auto flex w-full rounded-lg border border-slate-200 bg-slate-100 p-1 shadow-inner sm:inline-flex sm:w-auto">
+            <div class="mx-auto flex w-full rounded-xl border border-slate-200 bg-slate-100 p-0.5 shadow-inner sm:inline-flex sm:w-auto">
               <%= for {mode, label} <- [{"simple", "Simple"}, {"high_school", "High School"}, {"university", "University"}, {"expert", "Expert"}] do %>
                 <button
                   type="button"
@@ -109,7 +104,7 @@ defmodule DialecticWeb.NewIdeaFormComp do
                   phx-value-mode={mode}
                   phx-target={@myself}
                   class={[
-                    "flex-1 sm:flex-initial rounded-md px-2.5 py-1.5 text-center text-xs font-medium transition-colors duration-150 sm:px-2.5 sm:py-1 sm:text-xs",
+                    "flex-1 rounded-lg px-2.5 py-1.5 text-center text-xs font-medium transition-colors duration-150 sm:flex-initial sm:px-3 sm:py-1.5",
                     if @selected_mode == mode do
                       "border border-slate-300 bg-white text-slate-900 shadow-sm"
                     else

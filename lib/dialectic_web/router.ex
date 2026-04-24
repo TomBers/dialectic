@@ -58,6 +58,7 @@ defmodule DialecticWeb.Router do
 
     live "/inspiration", InspirationLive
     live "/about", AboutLive
+    live "/gallery", InfographicGalleryLive
 
     # Slug-based routes
     live "/g/:graph_name", GraphLive
