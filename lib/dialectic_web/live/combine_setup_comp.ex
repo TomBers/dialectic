@@ -48,7 +48,7 @@ defmodule DialecticWeb.CombineSetupComp do
         <%!-- Instructions --%>
         <div class="px-3 py-2 bg-violet-50 border-b border-violet-100">
           <p class="text-xs text-violet-700">
-            Click two nodes on the graph to create a synthesis between them.
+            Click two boxes on the grid to create a synthesis between them.
           </p>
         </div>
 
@@ -72,8 +72,8 @@ defmodule DialecticWeb.CombineSetupComp do
                   <line x1="12" x2="12" y1="19" y2="22"></line>
                 </svg>
               </div>
-              <p class="text-sm text-gray-500 font-medium">No nodes selected</p>
-              <p class="text-xs text-gray-400 mt-1">Click on graph nodes to select them</p>
+              <p class="text-sm text-gray-500 font-medium">No boxes selected</p>
+              <p class="text-xs text-gray-400 mt-1">Click boxes on the grid to select them</p>
             </div>
           <% else %>
             <div class="space-y-3">
