@@ -81,7 +81,7 @@ defmodule DialecticWeb.PresentationComp do
         <%!-- Instructions --%>
         <div class="px-3 py-2 bg-indigo-50 border-b border-indigo-100">
           <p class="text-xs text-indigo-700">
-            Click nodes on the graph to add them as slides. Drag to reorder.
+            Click boxes on the grid to add them as slides. Drag to reorder.
           </p>
         </div>
 

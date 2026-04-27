@@ -48,7 +48,7 @@ defmodule DialecticWeb.CombineSetupComp do
         <%!-- Instructions --%>
         <div class="px-3 py-2 bg-violet-50 border-b border-violet-100">
           <p class="text-xs text-violet-700">
-            Click two nodes on the graph to create a synthesis between them.
+            Click two boxes on the grid to create a synthesis between them.
           </p>
         </div>
 
