@@ -13,6 +13,126 @@ export const DEPTH_COLLAPSE_DEFAULTS = {
   initialMaxDepth: 1, // Show root (depth 0) + depth 1; collapse children of depth ≥ 1
 };
 
+const VISIBLE_GRAPH_NODE_FILTER = (n) =>
+  !n.hasClass("hidden") &&
+  !n.hasClass("depth-hidden") &&
+  !n.hasClass("presentation-hidden") &&
+  !n.hasClass("presentation-hidden-parent");
+
+const clampValue = (value, min, max) => Math.max(min, Math.min(max, value));
+
+const getVisibleViewport = (container) => {
+  const rect = container.getBoundingClientRect();
+  const interactionSettings = layoutConfig.interactionSettings || {};
+  const margin = interactionSettings.viewportMargin || 24;
+  const panelIds = ["right-panel", "highlights-drawer"];
+
+  let rightInset = 0;
+  panelIds.forEach((id) => {
+    const panel = document.getElementById(id);
+    const panelRect = panel ? panel.getBoundingClientRect() : null;
+    if (!panelRect) return;
+
+    const overlap = Math.min(rect.width, Math.max(0, rect.right - panelRect.left));
+    if (overlap > rightInset) rightInset = overlap;
+  });
+
+  let bottomInset = 0;
+  const bottomMenu = document.getElementById("bottom-menu");
+  if (bottomMenu) {
+    const menuRect = bottomMenu.getBoundingClientRect();
+    const menuVisible =
+      menuRect.height > 0 &&
+      !bottomMenu.classList.contains("invisible") &&
+      !bottomMenu.classList.contains("opacity-0");
+
+    if (menuVisible) {
+      bottomInset = Math.max(0, rect.bottom - menuRect.top);
+    }
+  }
+
+  const left = margin;
+  const top = margin;
+  const right = Math.max(left, rect.width - rightInset - margin);
+  const bottom = Math.max(top, rect.height - bottomInset - margin);
+
+  return {
+    left,
+    top,
+    right,
+    bottom,
+    width: Math.max(0, right - left),
+    height: Math.max(0, bottom - top),
+  };
+};
+
+const constrainViewport = (cy, container) => {
+  if (!cy || !container) return false;
+
+  const visibleNodes = cy.nodes().filter(VISIBLE_GRAPH_NODE_FILTER);
+  if (!visibleNodes || visibleNodes.length === 0) return false;
+
+  const viewport = getVisibleViewport(container);
+  const interactionSettings = layoutConfig.interactionSettings || {};
+  const tolerance = interactionSettings.viewportTolerance || 0.5;
+  const minVisibleRatio = interactionSettings.minVisibleRatio || 0.18;
+  const minVisiblePixels = interactionSettings.minVisiblePixels || 120;
+  const maxVisiblePixels = interactionSettings.maxVisiblePixels || 220;
+
+  const zoom = cy.zoom();
+  const pan = cy.pan();
+  const bb = visibleNodes.boundingBox();
+
+  const renderedLeft = bb.x1 * zoom + pan.x;
+  const renderedRight = bb.x2 * zoom + pan.x;
+  const renderedTop = bb.y1 * zoom + pan.y;
+  const renderedBottom = bb.y2 * zoom + pan.y;
+  const renderedWidth = Math.max(1, renderedRight - renderedLeft);
+  const renderedHeight = Math.max(1, renderedBottom - renderedTop);
+
+  const targetVisibleX = clampValue(
+    viewport.width * minVisibleRatio,
+    minVisiblePixels,
+    maxVisiblePixels,
+  );
+  const targetVisibleY = clampValue(
+    viewport.height * minVisibleRatio,
+    minVisiblePixels,
+    maxVisiblePixels,
+  );
+
+  const minOverlapX = Math.max(
+    Math.min(24, renderedWidth),
+    Math.min(renderedWidth * 0.8, targetVisibleX),
+  );
+  const minOverlapY = Math.max(
+    Math.min(24, renderedHeight),
+    Math.min(renderedHeight * 0.8, targetVisibleY),
+  );
+
+  let dx = 0;
+  let dy = 0;
+
+  if (renderedRight < viewport.left + minOverlapX) {
+    dx = viewport.left + minOverlapX - renderedRight;
+  } else if (renderedLeft > viewport.right - minOverlapX) {
+    dx = viewport.right - minOverlapX - renderedLeft;
+  }
+
+  if (renderedBottom < viewport.top + minOverlapY) {
+    dy = viewport.top + minOverlapY - renderedBottom;
+  } else if (renderedTop > viewport.bottom - minOverlapY) {
+    dy = viewport.bottom - minOverlapY - renderedTop;
+  }
+
+  if (Math.abs(dx) <= tolerance && Math.abs(dy) <= tolerance) {
+    return false;
+  }
+
+  cy.pan({ x: pan.x + dx, y: pan.y + dy });
+  return true;
+};
+
 export function draw_graph(
   graph,
   context,
@@ -101,6 +221,61 @@ export function draw_graph(
   // - Cmd/Ctrl+Scroll or trackpad pinch to zoom at cursor
   // - Hold Space and drag to pan; otherwise keep box selection
   const container = graph;
+  const interactionSettings = layoutConfig.interactionSettings || {};
+  const normalizeWheelDelta = (delta, deltaMode) => {
+    if (deltaMode === 1) {
+      return delta * (interactionSettings.wheelLineStep || 18);
+    }
+
+    if (deltaMode === 2) {
+      return delta * container.clientHeight * (interactionSettings.wheelPageFactor || 0.85);
+    }
+
+    return delta;
+  };
+  const shapePanDelta = (delta) => {
+    const speed = interactionSettings.wheelPanSpeed || 0.7;
+    const maxStep = interactionSettings.wheelPanMaxStep || 140;
+    return clampValue(delta * speed, -maxStep, maxStep);
+  };
+  let clampPending = false;
+  let clampInProgress = false;
+  const scheduleViewportClamp = ({ immediate = false } = {}) => {
+    if (
+      clampInProgress ||
+      !cy ||
+      (typeof cy.destroyed === "function" && cy.destroyed())
+    ) {
+      return;
+    }
+
+    const runClamp = () => {
+      clampPending = false;
+      if (
+        clampInProgress ||
+        !cy ||
+        (typeof cy.destroyed === "function" && cy.destroyed())
+      ) {
+        return;
+      }
+
+      clampInProgress = true;
+      try {
+        constrainViewport(cy, container);
+      } finally {
+        clampInProgress = false;
+      }
+    };
+
+    if (immediate) {
+      runClamp();
+      return;
+    }
+
+    if (clampPending) return;
+    clampPending = true;
+    requestAnimationFrame(runClamp);
+  };
 
   // Track layout running to avoid pre-layout panning/centering flicker
   let layoutRunning = false;
@@ -109,6 +284,7 @@ export function draw_graph(
   });
   cy.on("layoutstop", () => {
     layoutRunning = false;
+    scheduleViewportClamp();
   });
 
   // Now run the initial layout (only visible nodes are positioned)
@@ -132,7 +308,6 @@ export function draw_graph(
   });
 
   // Smooth, cursor-centered zoom
-  const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
   const wheelHandler = (e) => {
     // Zoom with Cmd/Ctrl (or trackpad pinch where ctrlKey is true)
     if (e.ctrlKey || e.metaKey) {
@@ -146,29 +321,32 @@ export function draw_graph(
       const current = cy.zoom();
       // Exponential scale for smooth zooming
       const sensitivity = layoutConfig.zoomSettings.sensitivity || 0.0025;
-      const zoomFactor = Math.pow(1 + sensitivity, -e.deltaY);
-      const next = clamp(
+      const zoomDelta = normalizeWheelDelta(e.deltaY, e.deltaMode);
+      const zoomFactor = Math.pow(1 + sensitivity, -zoomDelta);
+      const next = clampValue(
         current * zoomFactor,
         layoutConfig.zoomSettings.min || 0.05,
         layoutConfig.zoomSettings.max || 4.0,
       );
 
       cy.zoom({ level: next, renderedPosition });
+      scheduleViewportClamp();
     } else {
       // Two-finger scroll / mouse wheel pans the canvas
       e.preventDefault();
 
       // If Shift is pressed and the gesture is mostly vertical,
       // bias the movement to horizontal (Figma-like)
-      let dx = e.deltaX;
-      let dy = e.deltaY;
+      let dx = shapePanDelta(normalizeWheelDelta(e.deltaX, e.deltaMode));
+      let dy = shapePanDelta(normalizeWheelDelta(e.deltaY, e.deltaMode));
       if (e.shiftKey && Math.abs(e.deltaX) < Math.abs(e.deltaY)) {
-        dx = e.deltaY;
+        dx = shapePanDelta(normalizeWheelDelta(e.deltaY, e.deltaMode));
         dy = 0;
       }
 
       // Natural pan (scroll right -> content moves right)
       cy.panBy({ x: -dx, y: -dy });
+      scheduleViewportClamp();
     }
   };
 
@@ -213,7 +391,7 @@ export function draw_graph(
       const sensitivity = layoutConfig.zoomSettings.pinchSensitivity || 1.0;
       const zoomFactor = Math.pow(rawScale, sensitivity);
 
-      const next = clamp(
+      const next = clampValue(
         touchStartZoom * zoomFactor,
         layoutConfig.zoomSettings.min || 0.05,
         layoutConfig.zoomSettings.max || 4.0,
@@ -223,6 +401,7 @@ export function draw_graph(
         level: next,
         renderedPosition: touchCenter,
       });
+      scheduleViewportClamp();
     }
   };
 
@@ -441,6 +620,7 @@ export function draw_graph(
       const dy = e.clientY - lastPos.y;
       cy.panBy({ x: dx, y: dy });
       lastPos = { x: e.clientX, y: e.clientY };
+      scheduleViewportClamp();
       e.preventDefault();
     }
   };
@@ -735,6 +915,7 @@ export function draw_graph(
     if (initial) {
       initial.addClass("selected");
     }
+    scheduleViewportClamp();
   });
 
   // Streams: focus and toggle group handlers
@@ -821,6 +1002,8 @@ export function draw_graph(
 
   // Expose collapsed-state enforcement for external callers
   cy.enforceCollapsedState = () => enforceCollapsedState(cy);
+  cy.constrainViewport = () => constrainViewport(cy, container);
+  cy.scheduleViewportClamp = (opts) => scheduleViewportClamp(opts);
 
   // Expose depth-collapse helpers on the cy instance for graph_hook.js
   cy.saveDepthCollapseState = () => saveDepthCollapseState(cy);
@@ -834,6 +1017,10 @@ export function draw_graph(
     expandNodeChildren(cy, typeof n === "string" ? cy.getElementById(n) : n);
   cy.collapseNodeChildren = (n) =>
     collapseNodeChildren(cy, typeof n === "string" ? cy.getElementById(n) : n);
+
+  cy.on("pan zoom", () => {
+    scheduleViewportClamp();
+  });
 
   // ── Depth-toggle overlay buttons (expand/collapse via mouse click) ──
   _injectDepthToggleStyles();
