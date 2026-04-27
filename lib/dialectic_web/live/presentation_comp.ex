@@ -93,7 +93,7 @@ defmodule DialecticWeb.PresentationComp do
                 <.icon name="hero-presentation-chart-bar" class="w-5 h-5 text-gray-400" />
               </div>
               <p class="text-sm text-gray-500 font-medium">No slides yet</p>
-              <p class="text-xs text-gray-400 mt-1">Click on graph nodes to add them</p>
+              <p class="text-xs text-gray-400 mt-1">Click boxes on the grid to add them</p>
             </div>
           <% else %>
             <ul id="presentation-slide-list" phx-hook="PresentationSetup" class="space-y-1">

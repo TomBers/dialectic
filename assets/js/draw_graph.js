@@ -20,22 +20,34 @@ const VISIBLE_GRAPH_NODE_FILTER = (n) =>
   !n.hasClass("presentation-hidden-parent");
 
 const clampValue = (value, min, max) => Math.max(min, Math.min(max, value));
+const RIGHT_DRAWER_SELECTOR = "[data-right-drawer]";
+
+const getRightDrawers = () =>
+  Array.from(document.querySelectorAll(RIGHT_DRAWER_SELECTOR));
+
+const getRightDrawerOverlap = (containerRect) => {
+  let overlap = 0;
+
+  getRightDrawers().forEach((panel) => {
+    const panelRect = panel.getBoundingClientRect();
+    if (!panelRect) return;
+
+    const currentOverlap = Math.min(
+      containerRect.width,
+      Math.max(0, containerRect.right - panelRect.left),
+    );
+
+    if (currentOverlap > overlap) overlap = currentOverlap;
+  });
+
+  return overlap;
+};
 
 const getVisibleViewport = (container) => {
   const rect = container.getBoundingClientRect();
   const interactionSettings = layoutConfig.interactionSettings || {};
   const margin = interactionSettings.viewportMargin || 24;
-  const panelIds = ["right-panel", "highlights-drawer"];
-
-  let rightInset = 0;
-  panelIds.forEach((id) => {
-    const panel = document.getElementById(id);
-    const panelRect = panel ? panel.getBoundingClientRect() : null;
-    if (!panelRect) return;
-
-    const overlap = Math.min(rect.width, Math.max(0, rect.right - panelRect.left));
-    if (overlap > rightInset) rightInset = overlap;
-  });
+  const rightInset = getRightDrawerOverlap(rect);
 
   let bottomInset = 0;
   const bottomMenu = document.getElementById("bottom-menu");
@@ -839,20 +851,7 @@ export function draw_graph(
 
     // Ensure node is within visible bounds using model-space + zoom/pan; pan minimally if off-screen
     const rect = container.getBoundingClientRect();
-    const panels = ["right-panel", "highlights-drawer"];
-    let overlap = 0;
-
-    panels.forEach((id) => {
-      const panel = document.getElementById(id);
-      const pr = panel ? panel.getBoundingClientRect() : null;
-      if (pr) {
-        const currentOverlap = Math.min(
-          rect.width,
-          Math.max(0, rect.right - pr.left),
-        );
-        if (currentOverlap > overlap) overlap = currentOverlap;
-      }
-    });
+    const overlap = getRightDrawerOverlap(rect);
 
     // Visible region inside the container
     const margin = 16; // outer margin from container edges
@@ -1018,9 +1017,28 @@ export function draw_graph(
   cy.collapseNodeChildren = (n) =>
     collapseNodeChildren(cy, typeof n === "string" ? cy.getElementById(n) : n);
 
-  cy.on("pan zoom", () => {
+  let viewportClampTimeout = null;
+  const queueViewportClamp = () => {
+    if (viewportClampTimeout !== null) {
+      clearTimeout(viewportClampTimeout);
+    }
+
+    viewportClampTimeout = setTimeout(() => {
+      viewportClampTimeout = null;
+      scheduleViewportClamp();
+    }, 80);
+  };
+  const flushViewportClamp = () => {
+    if (viewportClampTimeout !== null) {
+      clearTimeout(viewportClampTimeout);
+      viewportClampTimeout = null;
+    }
+
     scheduleViewportClamp();
-  });
+  };
+
+  cy.on("pan zoom", queueViewportClamp);
+  cy.on("mouseup touchend", flushViewportClamp);
 
   // ── Depth-toggle overlay buttons (expand/collapse via mouse click) ──
   _injectDepthToggleStyles();
