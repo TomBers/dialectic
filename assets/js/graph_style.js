@@ -105,6 +105,9 @@ const cols = {
 const cutoff = 140;
 const SPACED_NODE_WIDTH = 300;
 const SPACED_NODE_TEXT_PADDING = 28;
+const GRAPH_LABEL_FONT_FAMILY =
+  'InterVariable, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+const GRAPH_GROUP_LABEL_FONT_FAMILY = GRAPH_LABEL_FONT_FAMILY;
 
 export function graphStyle(viewMode = "spaced") {
   const isCompact = viewMode === "compact";
@@ -197,8 +200,7 @@ export function graphStyle(viewMode = "spaced") {
         },
 
         /* font & layout --------------------------------------------------- */
-        "font-family":
-          'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif',
+        "font-family": GRAPH_LABEL_FONT_FAMILY,
         "font-size": isCompact ? 10 : 15,
         "font-weight": isCompact ? 400 : 500,
         "text-halign": "center",
@@ -249,23 +251,31 @@ export function graphStyle(viewMode = "spaced") {
         },
         "text-margin-y": () => {
           const dir = localStorage.getItem("graph_direction") || "TB";
-          return dir === "BT" ? -8 : 8;
+          return dir === "BT" ? -10 : 10;
         },
-        "font-family":
-          'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif',
-        "font-size": 12,
-        "font-weight": 700,
+        "font-family": GRAPH_GROUP_LABEL_FONT_FAMILY,
+        "font-size": isCompact ? 10 : 11,
+        "font-weight": 600,
         "text-transform": "uppercase",
-        "text-outline-width": 3,
-        "text-outline-color": "#ffffff",
+        color: "#64748b",
+        "text-outline-width": 0,
+        "text-outline-opacity": 0,
         "text-opacity": 1,
+        "text-background-color": "#f8fafc",
+        "text-background-opacity": 0.9,
+        "text-background-padding": isCompact ? 2 : 4,
+        "text-background-shape": "roundrectangle",
+        "text-border-color": "#e2e8f0",
+        "text-border-opacity": 0.95,
+        "text-border-width": 0.75,
+        "text-border-style": "solid",
         padding: isCompact ? "12px" : "32px",
 
-        "background-opacity": 0.5,
+        "background-opacity": 0.25,
         "background-color": "#ffffff", // white
         "border-width": isCompact ? 1 : 2,
         "border-style": "dashed",
-        "border-color": "#cbd5e1", // slate-300
+        "border-color": "#d8e1ea",
         shape: "roundrectangle",
         "corner-radius": isCompact ? 12 : 24,
       },
@@ -327,16 +337,16 @@ export function graphStyle(viewMode = "spaced") {
         "text-valign": "center",
         "text-halign": "center",
         "text-margin-x": 0,
-        "font-family":
-          'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif',
-        "font-size": isCompact ? 10 : 14,
-        "font-weight": isCompact ? 500 : 600,
+        "font-family": GRAPH_GROUP_LABEL_FONT_FAMILY,
+        "font-size": isCompact ? 10 : 12,
+        "font-weight": 600,
+        "text-transform": "uppercase",
         "text-wrap": "ellipsis",
         "text-max-width": (n) => {
           if (!isCompact) return 180;
           return getCompactCollapsedWidth(n) - 25;
         },
-        color: "#1e293b",
+        color: "#64748b",
       },
     },
     // Edge styling — darkened for better visibility (4.76:1 contrast)
