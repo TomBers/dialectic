@@ -7,12 +7,6 @@ import { layoutConfig } from "./layout_config.js";
 cytoscape.use(dagre);
 cytoscape.use(compoundDragAndDrop);
 
-/* ─── Depth-based collapse configuration ─── */
-export const DEPTH_COLLAPSE_DEFAULTS = {
-  nodeThreshold: 10, // Auto-collapse when graph has more non-compound nodes than this
-  initialMaxDepth: 1, // Show root (depth 0) + depth 1; collapse children of depth ≥ 1
-};
-
 const VISIBLE_GRAPH_NODE_FILTER = (n) =>
   !n.hasClass("hidden") &&
   !n.hasClass("depth-hidden") &&
@@ -193,16 +187,10 @@ export function draw_graph(
   // Store graphId on the cy instance so persistence helpers can find it
   cy._graphId = graphId || null;
 
-  // ── Restore or auto-collapse large graphs before first layout ──
-  // savedState is:
-  //   null           → never saved (first visit) → auto-collapse if large
-  //   {}  (empty)    → user explicitly expanded everything → honour that
-  //   {id: true, …}  → specific collapse state → restore it
-  let didCollapse = false;
+  // ── Restore only explicit user depth-collapse state before first layout ──
   const savedState = _loadDepthStateFromStorage(graphId);
 
-  if (savedState !== null && Object.keys(savedState).length > 0) {
-    // Persisted collapse state exists — restore it
+  if (savedState && Object.keys(savedState).length > 0) {
     computeNodeDepths(cy);
     Object.keys(savedState).forEach((id) => {
       const n = cy.getElementById(id);
@@ -212,18 +200,10 @@ export function draw_graph(
       }
     });
     recomputeDepthVisibility(cy);
-    didCollapse = true;
-  } else if (savedState === null) {
-    // No saved state at all (first visit) — auto-collapse if the graph is large
-    didCollapse = autoCollapseGraph(cy);
-    if (didCollapse) {
-      _persistDepthState(cy);
-    }
   }
-  // else: savedState is {} → user previously expanded all, leave graph fully open
 
   // If the target node ended up hidden, expand its ancestors so it's visible
-  if (didCollapse && node) {
+  if (savedState && node) {
     ensureDepthVisible(cy, node);
     _persistDepthState(cy);
   }
@@ -989,10 +969,11 @@ export function draw_graph(
 
   context.handleEvent("collapse_all_depth", (payload) => {
     try {
+      const defaultCollapseDepth = 1;
       const maxDepth =
         payload && payload.max_depth != null
           ? payload.max_depth
-          : DEPTH_COLLAPSE_DEFAULTS.initialMaxDepth;
+          : defaultCollapseDepth;
       collapseAllDepth(cy, maxDepth);
     } catch (_e) {}
   });
@@ -1015,7 +996,6 @@ export function draw_graph(
   cy.restoreDepthCollapseState = (state) =>
     restoreDepthCollapseState(cy, state);
   cy.recomputeDepthVisibility = () => recomputeDepthVisibility(cy);
-  cy.autoCollapseGraph = (cfg) => autoCollapseGraph(cy, cfg);
   cy.ensureDepthVisible = (id) => ensureDepthVisible(cy, id);
   cy.ensureGroupVisible = (id) => ensureGroupVisible(cy, id);
   cy.expandNodeChildren = (n) =>
@@ -1388,32 +1368,6 @@ function collapseAllDepth(cy, maxDepth) {
 }
 
 /**
- * Auto-collapse a graph if it exceeds the node threshold.
- * Returns `true` if collapse was applied.
- */
-function autoCollapseGraph(cy, config) {
-  const cfg = { ...DEPTH_COLLAPSE_DEFAULTS, ...(config || {}) };
-  const nodes = cy.nodes().filter((n) => !n.isParent());
-
-  if (nodes.length <= cfg.nodeThreshold) return false;
-
-  computeNodeDepths(cy);
-
-  // Collapse every node at depth ≥ initialMaxDepth that has children
-  nodes.forEach((n) => {
-    const depth = n.data("_depth");
-    const children = n.outgoers("node").filter((m) => !m.isParent());
-    if (depth >= cfg.initialMaxDepth && children.length > 0) {
-      n.data("_depthCollapsed", "true");
-      n.addClass("node-collapsed");
-    }
-  });
-
-  recomputeDepthVisibility(cy);
-  return true;
-}
-
-/**
  * Ensure a specific node is visible by expanding any collapsed ancestors
  * along the path from a root to it.
  */
@@ -1519,21 +1473,25 @@ function _depthStorageKey(graphId) {
   return graphId ? `dialectic_depth_collapse_${graphId}` : null;
 }
 
-/** Persist the current collapse flags to localStorage.
- *  An empty object ({}) is stored intentionally — it means
- *  "user explicitly expanded everything" and must be distinguished
- *  from a missing key (null) which means "first visit".
- */
+/** Persist the current collapse flags to localStorage. */
 function _persistDepthState(cy) {
   const key = _depthStorageKey(cy._graphId);
   if (!key) return;
   try {
     const state = saveDepthCollapseState(cy);
-    localStorage.setItem(key, JSON.stringify(state));
+    localStorage.setItem(
+      key,
+      JSON.stringify({
+        version: 2,
+        state,
+      }),
+    );
   } catch (_e) {}
 }
 
-/** Load saved collapse flags from localStorage (returns object or null) */
+/** Load saved collapse flags from localStorage (returns object or null).
+ *  Only explicit user-persisted v2 state is restored.
+ */
 function _loadDepthStateFromStorage(graphId) {
   const key = _depthStorageKey(graphId);
   if (!key) return null;
@@ -1541,8 +1499,14 @@ function _loadDepthStateFromStorage(graphId) {
     const raw = localStorage.getItem(key);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-      return parsed;
+    if (
+      parsed &&
+      parsed.version === 2 &&
+      parsed.state &&
+      typeof parsed.state === "object" &&
+      !Array.isArray(parsed.state)
+    ) {
+      return parsed.state;
     }
   } catch (_e) {}
   return null;
