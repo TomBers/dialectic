@@ -85,37 +85,8 @@ defmodule DialecticWeb.HomeLive do
 
   @impl true
   def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}} = params, socket) do
-    title = Graphs.sanitize_title(answer)
     mode_param = Map.get(params, "mode")
-    socket = if mode_param, do: assign(socket, prompt_mode: mode_param), else: socket
-
-    cond do
-      socket.assigns.loading_graph != nil ->
-        {:noreply, socket}
-
-      title == "untitled-idea" ->
-        {:noreply, put_flash(socket, :error, "Please enter a question or topic.")}
-
-      true ->
-        existing_graph = Graphs.get_graph_by_title(title)
-
-        if existing_graph do
-          {:noreply, redirect(socket, to: graph_path(existing_graph))}
-        else
-          parent_pid = self()
-          prompt_mode = socket.assigns[:prompt_mode]
-          current_user = socket.assigns[:current_user]
-
-          socket =
-            socket
-            |> assign(:loading_graph, %{title: title, status: "Initializing...", steps: []})
-            |> start_async(:create_graph_flow, fn ->
-              create_graph_task(title, answer, prompt_mode, current_user, parent_pid)
-            end)
-
-          {:noreply, socket}
-        end
-    end
+    {:noreply, submit_new_grid(socket, answer, mode_param)}
   end
 
   @impl true
@@ -177,6 +148,11 @@ defmodule DialecticWeb.HomeLive do
   end
 
   @impl true
+  def handle_info({:submit_new_grid, answer, mode_param}, socket) do
+    {:noreply, submit_new_grid(socket, answer, mode_param)}
+  end
+
+  @impl true
   def handle_info({:graph_creation_update, status}, socket) do
     loading = socket.assigns.loading_graph
 
@@ -231,6 +207,36 @@ defmodule DialecticWeb.HomeLive do
       title: title,
       progress_callback: fn status -> send(parent_pid, {:graph_creation_update, status}) end
     )
+  end
+
+  defp submit_new_grid(socket, answer, mode_param) do
+    title = Graphs.sanitize_title(answer)
+    socket = if mode_param, do: assign(socket, prompt_mode: mode_param), else: socket
+
+    cond do
+      socket.assigns.loading_graph != nil ->
+        socket
+
+      title == "untitled-idea" ->
+        put_flash(socket, :error, "Please enter a question or topic.")
+
+      true ->
+        case Graphs.get_graph_by_title(title) do
+          nil ->
+            parent_pid = self()
+            prompt_mode = socket.assigns[:prompt_mode]
+            current_user = socket.assigns[:current_user]
+
+            socket
+            |> assign(:loading_graph, %{title: title, status: "Initializing...", steps: []})
+            |> start_async(:create_graph_flow, fn ->
+              create_graph_task(title, answer, prompt_mode, current_user, parent_pid)
+            end)
+
+          existing_graph ->
+            redirect(socket, to: graph_path(existing_graph))
+        end
+    end
   end
 
   @impl true
@@ -304,9 +310,47 @@ defmodule DialecticWeb.HomeLive do
           <div class="mx-auto max-w-6xl px-4 pt-2 sm:px-6 sm:pt-3">
             <div class="flex flex-col items-stretch gap-2.5 sm:gap-3">
               <section class="w-full">
-                <div class="w-full">
-                  <div class="flex flex-col items-center gap-2 sm:gap-2.5">
-                    <div class="relative mb-2 w-full rounded-2xl border-2 border-indigo-300 bg-gradient-to-br from-white via-indigo-50/80 to-sky-50/70 p-1.5 shadow-[0_14px_30px_rgba(79,70,229,0.26)] ring-2 ring-indigo-200/70 sm:mb-2.5 sm:p-2">
+                <div class="relative overflow-hidden rounded-[2rem] border border-indigo-200/80 bg-gradient-to-br from-indigo-50 via-white to-sky-50/90 px-4 py-4 shadow-[0_18px_40px_rgba(15,23,42,0.10)] ring-1 ring-indigo-200/70 sm:px-6 sm:py-5">
+                  <div class="pointer-events-none absolute inset-0">
+                    <div class="absolute -top-16 right-8 h-40 w-40 rounded-full bg-indigo-200/35 blur-3xl">
+                    </div>
+                    <div class="absolute bottom-0 left-0 h-32 w-44 rounded-full bg-sky-200/25 blur-3xl">
+                    </div>
+                  </div>
+                  <div class="relative flex flex-col gap-5">
+                    <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                      <div class="max-w-2xl">
+                        <div class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-200 shadow-sm">
+                          <.icon name="hero-plus" class="h-3.5 w-3.5" /> Start a new grid
+                        </div>
+                        <h2 class="mt-3 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
+                          Turn one question into a structured map.
+                        </h2>
+                        <p class="mt-2 max-w-xl text-sm leading-6 text-slate-700 sm:text-[0.95rem]">
+                          Start with a topic, claim, or tension. After the first step, we’ll ask
+                          one quick question about depth before building the opening grid.
+                        </p>
+                      </div>
+
+                      <div class="flex flex-wrap gap-2">
+                        <.link
+                          href="#explore"
+                          class="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white/90 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-400 hover:bg-white hover:text-slate-950"
+                        >
+                          <.icon name="hero-magnifying-glass" class="h-4 w-4" /> Browse existing grids
+                        </.link>
+                        <%= if @curated_grids != [] or @featured_grids != [] do %>
+                          <.link
+                            href="#curated"
+                            class="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50/90 px-4 py-2 text-sm font-medium text-indigo-800 transition hover:border-indigo-300 hover:bg-indigo-100"
+                          >
+                            <.icon name="hero-star" class="h-4 w-4" /> See featured examples
+                          </.link>
+                        <% end %>
+                      </div>
+                    </div>
+
+                    <div class="rounded-[1.6rem] border border-indigo-100/90 bg-white/80 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_26px_rgba(15,23,42,0.08)] ring-1 ring-white/80 sm:p-3">
                       <.live_component
                         module={DialecticWeb.NewIdeaFormComp}
                         id="new-idea-form"
