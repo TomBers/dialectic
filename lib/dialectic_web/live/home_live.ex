@@ -339,14 +339,12 @@ defmodule DialecticWeb.HomeLive do
                         >
                           <.icon name="hero-magnifying-glass" class="h-4 w-4" /> Browse existing grids
                         </.link>
-                        <%= if @curated_grids != [] or @featured_grids != [] do %>
-                          <.link
-                            href="#curated"
-                            class="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50/90 px-4 py-2 text-sm font-medium text-indigo-800 transition hover:border-indigo-300 hover:bg-indigo-100"
-                          >
-                            <.icon name="hero-star" class="h-4 w-4" /> See featured examples
-                          </.link>
-                        <% end %>
+                        <.link
+                          navigate={~p"/intro/how"}
+                          class="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50/90 px-4 py-2 text-sm font-medium text-indigo-800 transition hover:border-indigo-300 hover:bg-indigo-100"
+                        >
+                          <.icon name="hero-book-open" class="h-4 w-4" /> Read the guide
+                        </.link>
                       </div>
                     </div>
 
