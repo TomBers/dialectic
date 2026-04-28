@@ -115,29 +115,6 @@ defmodule DialecticWeb.AskFormComp do
             </div>
           </div>
         </div>
-
-        <%!-- Explicit action distinction --%>
-        <%= if @show_hint do %>
-          <div class="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2">
-              <div class="flex items-center gap-1.5 whitespace-nowrap text-xs leading-5 text-emerald-800/80">
-                <.icon name="hero-chat-bubble-left-ellipsis" class="h-3.5 w-3.5" />
-                <span class="font-semibold uppercase tracking-wide text-emerald-700">Comment</span>
-                <span class="text-emerald-300">·</span>
-                <span>Adds your note without an AI reply.</span>
-              </div>
-            </div>
-
-            <div class="rounded-2xl border border-indigo-200 bg-indigo-50 px-3 py-2">
-              <div class="flex items-center gap-1.5 whitespace-nowrap text-xs leading-5 text-indigo-800/80">
-                <.icon name="hero-sparkles" class="h-3.5 w-3.5" />
-                <span class="font-semibold uppercase tracking-wide text-indigo-700">Ask AI</span>
-                <span class="text-indigo-300">·</span>
-                <span>Sends your prompt and generates a reply.</span>
-              </div>
-            </div>
-          </div>
-        <% end %>
       </.form>
     </div>
     """
