@@ -328,6 +328,8 @@ hooks.GraphLayout = {
 
         if (bottomMenu) bottomMenu.classList.remove("panel-open");
       }
+
+      window.dispatchEvent(new Event("resize"));
     });
 
     this.el.addEventListener("toggle-side-drawer", (e) => {
@@ -465,6 +467,8 @@ hooks.GraphLayout = {
           String(this.bottomMenuOpen),
         );
       } catch (_e) {}
+
+      window.dispatchEvent(new Event("resize"));
     });
 
     this.restoreState();

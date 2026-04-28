@@ -3,6 +3,42 @@ import { layoutConfig } from "./layout_config.js";
 import { extractListItems } from "./list_detection_hook.js";
 import { showToast, copyToClipboard } from "./toast.js";
 
+const RIGHT_DRAWER_SELECTOR = "[data-right-drawer]";
+
+const getRightDrawers = () =>
+  Array.from(document.querySelectorAll(RIGHT_DRAWER_SELECTOR));
+
+const getRightDrawerOverlap = (containerRect) => {
+  let overlap = 0;
+
+  getRightDrawers().forEach((panel) => {
+    const panelRect = panel.getBoundingClientRect();
+    if (!panelRect) return;
+
+    const currentOverlap = Math.min(
+      containerRect.width,
+      Math.max(0, containerRect.right - panelRect.left),
+    );
+
+    if (currentOverlap > overlap) overlap = currentOverlap;
+  });
+
+  return overlap;
+};
+
+const getRightDrawerWidth = () => {
+  let maxWidth = 0;
+
+  getRightDrawers().forEach((panel) => {
+    const rect = panel.getBoundingClientRect();
+    if (rect && rect.width > 10 && rect.left < window.innerWidth) {
+      if (rect.width > maxWidth) maxWidth = rect.width;
+    }
+  });
+
+  return maxWidth;
+};
+
 const layoutGraph = (cy, opts, onDone) => {
   // Back-compat: (cy, onDone)
   if (typeof opts === "function" && onDone === undefined) {
@@ -159,20 +195,7 @@ const ensureVisible = (cy, container, nodeId) => {
 
     const rect = container.getBoundingClientRect();
 
-    const panels = ["right-panel", "highlights-drawer"];
-    let overlap = 0;
-
-    panels.forEach((id) => {
-      const panel = document.getElementById(id);
-      const pr = panel ? panel.getBoundingClientRect() : null;
-      if (pr) {
-        const currentOverlap = Math.min(
-          rect.width,
-          Math.max(0, rect.right - pr.left),
-        );
-        if (currentOverlap > overlap) overlap = currentOverlap;
-      }
-    });
+    const overlap = getRightDrawerOverlap(rect);
 
     // Visible region inside the container
     const getNum = (k, d) => {
@@ -414,19 +437,7 @@ const graphHook = {
         if (!debugBoundsEnabled()) return;
 
         const rect = this._container.getBoundingClientRect();
-        const panels = ["right-panel", "highlights-drawer"];
-        let overlap = 0;
-        panels.forEach((id) => {
-          const panel = document.getElementById(id);
-          const pr = panel ? panel.getBoundingClientRect() : null;
-          if (pr) {
-            const currentOverlap = Math.min(
-              rect.width,
-              Math.max(0, rect.right - pr.left),
-            );
-            if (currentOverlap > overlap) overlap = currentOverlap;
-          }
-        });
+        const overlap = getRightDrawerOverlap(rect);
 
         const n = this.cy.getElementById(currentId);
         if (!n || n.length === 0) return;
@@ -471,20 +482,7 @@ const graphHook = {
       );
     };
 
-    const getRightPanelWidth = () => {
-      const panels = ["right-panel", "highlights-drawer"];
-      let maxWidth = 0;
-      panels.forEach((id) => {
-        const panel = document.getElementById(id);
-        if (panel) {
-          const rect = panel.getBoundingClientRect();
-          if (rect && rect.width > 10 && rect.left < window.innerWidth) {
-            if (rect.width > maxWidth) maxWidth = rect.width;
-          }
-        }
-      });
-      return maxWidth;
-    };
+    const getRightPanelWidth = () => getRightDrawerWidth();
 
     const centerPoint = () => {
       const rect = container.getBoundingClientRect();
@@ -608,6 +606,31 @@ const graphHook = {
       };
     }
     this._bindPngButtons();
+
+    this._viewportResizePending = false;
+    this._onViewportResize = () => {
+      if (this._viewportResizePending) return;
+
+      this._viewportResizePending = true;
+      requestAnimationFrame(() => {
+        this._viewportResizePending = false;
+        if (!this.cy) return;
+
+        try {
+          this.cy.resize();
+        } catch (_e) {}
+
+        if (typeof this.cy.scheduleViewportClamp === "function") {
+          this.cy.scheduleViewportClamp({ immediate: true });
+        }
+
+        if (this._presentationIds && this._presentationIds.length > 0) {
+          this._renderPresentationBadges();
+        }
+      });
+    };
+    window.addEventListener("resize", this._onViewportResize);
+    this._onViewportResize();
 
     // Handle incremental label updates for streaming titles without full graph reloads
     this.handleEvent("update_node_label", ({ id, label }) => {
@@ -1056,17 +1079,7 @@ const graphHook = {
     let dy = 0;
 
     // Right panel compensation
-    const panelIds = ["right-panel", "highlights-drawer"];
-    let rightPanelWidth = 0;
-    panelIds.forEach((id) => {
-      const p = document.getElementById(id);
-      if (p) {
-        const pr = p.getBoundingClientRect();
-        if (pr && pr.width > 10 && pr.left < window.innerWidth) {
-          if (pr.width > rightPanelWidth) rightPanelWidth = pr.width;
-        }
-      }
-    });
+    const rightPanelWidth = getRightDrawerWidth();
     if (rightPanelWidth > 0) dx = -(rightPanelWidth / 2);
 
     // Bottom menu compensation
@@ -1273,6 +1286,9 @@ const graphHook = {
         this.cy.zoom(zoom);
         this.cy.pan(pan);
         this.cy._ownerHook = this;
+        if (typeof this.cy.scheduleViewportClamp === "function") {
+          this.cy.scheduleViewportClamp({ immediate: true });
+        }
       } catch (_e) {}
     }
 
@@ -1321,6 +1337,9 @@ const graphHook = {
         try {
           this.cy.zoom(zoom);
           this.cy.pan(pan);
+          if (typeof this.cy.scheduleViewportClamp === "function") {
+            this.cy.scheduleViewportClamp({ immediate: true });
+          }
         } catch (_e) {}
 
         // Update tracked direction AFTER layout completes successfully
@@ -1609,6 +1628,11 @@ const graphHook = {
     if (this._windowKeydown) {
       window.removeEventListener("keydown", this._windowKeydown, true);
       this._windowKeydown = null;
+    }
+    if (this._onViewportResize) {
+      window.removeEventListener("resize", this._onViewportResize);
+      this._onViewportResize = null;
+      this._viewportResizePending = false;
     }
     if (this._btnInEl && this._btnInHandler) {
       this._btnInEl.removeEventListener("click", this._btnInHandler);
