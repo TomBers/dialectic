@@ -366,8 +366,8 @@ defmodule DialecticWeb.HomeLive do
 
                           <div class="overflow-hidden rounded-[1.2rem] border border-white/10 bg-slate-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
                             <img
-                              src={~p"/images/home-happiness-grid.png"}
-                              alt="Preview of the Happiness grid by TomBers44"
+                              src={~p"/images/guide/grid-workspace.png"}
+                              alt="Preview of the Happiness grid workspace by TomBers44"
                               class="aspect-[16/9] w-full object-cover object-top transition duration-300 group-hover:scale-[1.015]"
                               loading="lazy"
                             />
@@ -501,8 +501,8 @@ defmodule DialecticWeb.HomeLive do
 
                   <div class="overflow-hidden rounded-[1.6rem] border border-slate-200 bg-slate-950 shadow-[0_18px_40px_rgba(15,23,42,0.12)]">
                     <img
-                      src={~p"/images/home-happiness-grid.png"}
-                      alt="Expanded preview of the Happiness grid by TomBers44"
+                      src={~p"/images/guide/grid-workspace.png"}
+                      alt="Expanded preview of the Happiness grid workspace by TomBers44"
                       class="w-full object-contain"
                     />
                   </div>
