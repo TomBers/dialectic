@@ -271,7 +271,7 @@ defmodule DialecticWeb.HomeLive do
             </div>
           </div>
         <% end %>
-        
+
     <!-- Static decorative background -->
         <div class="absolute inset-0 z-0">
           <div class="pointer-events-none absolute -top-32 -right-24 h-80 w-80 rounded-full bg-sky-100/50 blur-3xl">
@@ -279,7 +279,7 @@ defmodule DialecticWeb.HomeLive do
           <div class="pointer-events-none absolute -top-20 -left-24 h-72 w-72 rounded-full bg-slate-300/35 blur-3xl">
           </div>
         </div>
-        
+
     <!-- Make the hero content scroll within the viewport naturally -->
         <div class="relative z-10 pb-4 sm:pb-5">
           <section class="w-full" id="start-here">
@@ -379,7 +379,7 @@ defmodule DialecticWeb.HomeLive do
                             See what a finished grid looks like before you start your own.
                           </p>
                           <.link
-                            navigate={~p"/g/happiness-0d5d55"}
+                            navigate={~p"/g/happiness-da4f7e"}
                             class="inline-flex items-center gap-2 rounded-full border border-sky-300/35 bg-sky-400/10 px-4 py-2 text-sm font-medium text-sky-100 transition hover:border-sky-200/60 hover:bg-sky-400/15"
                           >
                             <.icon name="hero-arrow-top-right-on-square" class="h-4 w-4" />
@@ -512,7 +512,7 @@ defmodule DialecticWeb.HomeLive do
                       Use this as a reference for what your first grid can become.
                     </p>
                     <.link
-                      navigate={~p"/g/happiness-0d5d55"}
+                      navigate={~p"/g/happiness-da4f7e"}
                       class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
                     >
                       <.icon name="hero-arrow-right" class="h-4 w-4" /> Open the live grid
