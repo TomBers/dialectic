@@ -79,7 +79,7 @@ defmodule DialecticWeb.NewIdeaFormComp do
         class="w-full relative"
       >
         <div class="flex flex-col gap-1.5">
-          <div class="relative h-[3.2rem]">
+          <div class="relative min-h-[3.2rem]">
             <textarea
               name={@form[:content].name}
               id="new-idea-input"
@@ -89,7 +89,7 @@ defmodule DialecticWeb.NewIdeaFormComp do
               phx-target={@myself}
               rows="1"
               class={[
-                "box-border h-full w-full overflow-hidden rounded-2xl bg-white text-slate-950 shadow-[inset_0_1px_2px_rgba(15,23,42,0.05)] sm:rounded-full",
+                "box-border block w-full overflow-hidden rounded-2xl bg-white text-slate-950 shadow-[inset_0_1px_2px_rgba(15,23,42,0.05)] sm:rounded-[1.6rem]",
                 "border border-slate-300/90",
                 "focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 focus:outline-none resize-none",
                 "text-base sm:text-[1.05rem]",
@@ -101,12 +101,12 @@ defmodule DialecticWeb.NewIdeaFormComp do
               autocomplete="off"
               required
             >{@content}</textarea>
-            <div class="absolute right-2 top-1/2 hidden h-[calc(100%-0.5rem)] w-24 -translate-y-1/2 items-center justify-center sm:flex">
+            <div class="absolute right-2 top-2 bottom-2 hidden w-24 items-start justify-center sm:flex">
               <button
                 type="submit"
                 id="new-idea-submit"
                 phx-disable-with={if @show_level_prompt, do: "Starting...", else: "Next..."}
-                class="inline-flex h-full w-full items-center justify-center rounded-full border border-transparent bg-slate-900 px-0 py-1.5 text-sm font-semibold leading-none text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                class="inline-flex min-h-[2.35rem] w-full items-center justify-center rounded-full border border-transparent bg-slate-900 px-0 py-1.5 text-sm font-semibold leading-none text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {if @show_level_prompt, do: "Create", else: @submit_label}
               </button>
