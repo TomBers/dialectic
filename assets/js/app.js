@@ -91,19 +91,32 @@ hooks.PersistCollapse = {
     const storageKey = this.el.dataset.collapseKey;
     if (!storageKey) return;
 
-    let collapsed = false;
+    const defaultState = this.el.dataset.collapseDefault;
+    let collapsed = defaultState === "collapsed";
     try {
-      collapsed = localStorage.getItem(storageKey) === "collapsed";
+      const stored = localStorage.getItem(storageKey);
+      if (stored === "collapsed") {
+        collapsed = true;
+      } else if (stored === "expanded") {
+        collapsed = false;
+      }
     } catch (_e) {
-      collapsed = false;
+      collapsed = defaultState === "collapsed";
     }
 
     const body = this.el.querySelector("[data-collapse-body]");
+    if (!body) return;
+
     const icon = this.el.querySelector("[data-collapse-icon]");
-    if (!body || !icon) return;
+    const openState = this.el.querySelector("[data-collapse-open-state]");
+    const closeState = this.el.querySelector("[data-collapse-close-state]");
 
     body.classList.toggle("hidden", collapsed);
-    icon.classList.toggle("rotate-180", collapsed);
+    if (icon) icon.classList.toggle("rotate-180", collapsed);
+    if (openState && closeState) {
+      openState.classList.toggle("hidden", !collapsed);
+      closeState.classList.toggle("hidden", collapsed);
+    }
   },
 };
 
