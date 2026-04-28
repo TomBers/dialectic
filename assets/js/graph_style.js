@@ -4,8 +4,8 @@ const defaultNodeStyle = {
   text: "#1f2937", // gray-800
   background: "#ffffff",
   border: "#d1d5db", // gray-300 (strengthened from gray-200 for better node definition)
-  hoverBackground: "#f3f4f6", // gray-100 — gentle lift on hover
-  hoverBorder: "#9ca3af", // gray-400
+  hoverBackground: "#eef2ff", // indigo-50 — clearer interactive hover cue
+  hoverBorder: "#6366f1", // indigo-500
   selectedText: "#1f2937", // keep dark text for readability
   selectedBackground: "#e5e7eb", // gray-200 — visible tint, high contrast (11.86:1)
   selectedBorder: "#4b5563", // gray-600 — stronger selection indicator
@@ -399,6 +399,21 @@ export function graphStyle(viewMode = "spaced") {
     },
   });
 
+  base_style.push({
+    selector: "node.node-hover",
+    style: {
+      "background-color": defaultNodeStyle.hoverBackground,
+      "border-color": defaultNodeStyle.hoverBorder,
+      "border-width": isCompact ? 2.25 : 3,
+      "border-style": "solid",
+      "underlay-color": defaultNodeStyle.hoverBorder,
+      "underlay-opacity": 0.08,
+      "underlay-padding": isCompact ? 6 : 10,
+      "underlay-shape": "roundrectangle",
+      "ghost-opacity": 0.16,
+    },
+  });
+
   for (const nodeType of Object.keys(cols)) {
     base_style.push({
       selector: `node.${nodeType}`, // ← has the class
@@ -418,10 +433,15 @@ export function graphStyle(viewMode = "spaced") {
         "background-color":
           cols[nodeType].hoverBackground || cols[nodeType].background,
         "border-color": cols[nodeType].hoverBorder || cols[nodeType].border,
-        "border-width": isCompact ? 2 : 2.5,
+        "border-width": isCompact ? 2.25 : 3,
         "border-style": "solid",
         color: cols[nodeType].text, // keep dark text on hover
-        "ghost-opacity": 0.14, // deepen shadow slightly on hover
+        "underlay-color":
+          cols[nodeType].hoverBorder || cols[nodeType].border,
+        "underlay-opacity": 0.1,
+        "underlay-padding": isCompact ? 6 : 10,
+        "underlay-shape": "roundrectangle",
+        "ghost-opacity": 0.18, // deepen shadow slightly on hover
       },
     });
 

@@ -313,10 +313,16 @@ export function draw_graph(
     const n = evt.target;
     if (n.isParent && n.isParent()) return;
     n.addClass("node-hover");
+    if (!isSpaceDown && !isMouseDown) {
+      container.style.cursor = "pointer";
+    }
   });
   cy.on("mouseout", "node", (evt) => {
     const n = evt.target;
     n.removeClass("node-hover");
+    if (!isMouseDown) {
+      container.style.cursor = isSpaceDown ? "grab" : "";
+    }
   });
 
   // Smooth, cursor-centered zoom

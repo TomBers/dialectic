@@ -303,14 +303,12 @@
           current_user={@current_user}
           ask_question={@ask_question}
           exploration_stats={@exploration_stats}
+          can_edit={@can_edit}
           presentation_mode={@presentation_mode}
         />
       </div>
     </div>
-    
-<!-- Action toolbar moved into bottom actions area -->
-
-<!-- Left side: Graph (expands to full width when drawer is closed) -->
+    <!-- Left side: Graph (expands to full width when drawer is closed) -->
     <div id="graph-main-container" class="w-0 md:w-[56%] relative">
       <div
         id="cy"
@@ -325,6 +323,12 @@
         phx-hook="Graph"
         tabindex="0"
       >
+        <%= if @presentation_mode != :presenting do %>
+          <div class="pointer-events-none absolute left-4 top-4 z-10 hidden items-center gap-2 rounded-full border border-indigo-200/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm ring-1 ring-white/80 lg:inline-flex">
+            <.icon name="hero-cursor-arrow-rays" class="h-4 w-4 text-indigo-500" />
+            <span>Click any box to open it in the reader</span>
+          </div>
+        <% end %>
         <div id="cy-inner" class="h-full w-full relative" phx-update="ignore"></div>
       </div>
 
@@ -548,33 +552,16 @@
             </button>
           </div>
           <div class="bg-white/95 backdrop-blur border border-gray-200 shadow-xl rounded-t-[1.75rem] rounded-2xl px-1.5 pt-2 pb-2 pointer-events-auto transform-gpu transition-all duration-200 ease-out translate-y-0">
-            <div class="grid grid-cols-[1fr_auto] gap-4 items-center px-1.5">
-              <%!-- Left column: Ask form --%>
-              <div class="min-w-0">
-                <.live_component
-                  module={DialecticWeb.AskFormComp}
-                  id="global-chat-form"
-                  form={@form}
-                  ask_question={@ask_question}
-                  prompt_mode={@prompt_mode}
-                  graph_id={@graph_id}
-                  node={@node}
-                />
-              </div>
-              <%!-- Right column: Action buttons --%>
-              <div class="flex items-center gap-1.5">
-                <.live_component
-                  module={DialecticWeb.ActionToolbarComp}
-                  id={"action-toolbar-#{@node && @node.id}"}
-                  node={@node}
-                  user={@user}
-                  current_user={assigns[:current_user]}
-                  graph_id={@graph_id}
-                  can_edit={@can_edit}
-                  inline={true}
-                  icons_only={false}
-                />
-              </div>
+            <div class="px-1.5">
+              <.live_component
+                module={DialecticWeb.AskFormComp}
+                id="global-chat-form"
+                form={@form}
+                ask_question={@ask_question}
+                prompt_mode={@prompt_mode}
+                graph_id={@graph_id}
+                node={@node}
+              />
             </div>
           </div>
         </div>

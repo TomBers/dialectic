@@ -1,5 +1,6 @@
 defmodule DialecticWeb.ActionToolbarComp do
   use DialecticWeb, :live_component
+
   alias DialecticWeb.Utils.UserUtils
 
   @moduledoc """
@@ -11,13 +12,8 @@ defmodule DialecticWeb.ActionToolbarComp do
   - `:current_user` - The current user struct
   - `:graph_id` - The graph ID
   - `:can_edit` - Boolean indicating if editing is allowed
-
-  ## Optional Assigns
-  - `:inline` - Boolean for inline layout (default: false)
-  - `:icons_only` - Boolean to show only icons without labels (default: false)
   """
 
-  # Computes deletion constraints and tooltip/title based on assigns
   defp delete_info(assigns) do
     node = assigns[:node]
     can_edit = assigns[:can_edit]
@@ -83,191 +79,133 @@ defmodule DialecticWeb.ActionToolbarComp do
     }
   end
 
+  defp delete_button_class(deletable) do
+    [
+      "inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition",
+      if(deletable,
+        do: "border-rose-200 bg-rose-50 text-rose-700 hover:border-rose-300 hover:bg-rose-100",
+        else: "border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed"
+      )
+    ]
+  end
+
   @impl true
   def update(assigns, socket) do
-    {:ok,
-     socket
-     |> assign(assigns)
-     |> assign_new(:inline, fn -> false end)
-     |> assign_new(:icons_only, fn -> false end)}
+    {:ok, assign(socket, assigns)}
   end
 
   @impl true
   def render(assigns) do
     ~H"""
-    <div>
-      <div
-        class={
-          if @inline,
-            do: "relative z-10 flex flex-col gap-2 pointer-events-auto",
-            else:
-              "hidden sm:flex fixed left-1/2 -translate-x-1/2 z-10 bg-white shadow border border-gray-200 px-1.5 py-1 rounded-md flex-col gap-2 pointer-events-auto max-w-[90vw]"
-        }
-        style={unless @inline, do: "bottom: calc(5.5rem + env(safe-area-inset-bottom));"}
-        data-external="true"
-        data-role="action-toolbar"
-      >
-        <%= if @can_edit == false do %>
-          <span
-            class="inline-flex justify-center items-center gap-1.5 text-xs font-semibold px-2 py-0.5 rounded-full border border-amber-200 bg-amber-50 text-amber-700"
-            title="Graph is locked; editing is disabled"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-3 w-3"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M16 10V8a4 4 0 10-8 0v2m-1 0h10a2 2 0 012 2v6a2 2 0 01-2 2H7a2 2 0 01-2-2v-6a2 2 0 012-2z"
-              />
-            </svg>
-            <span :if={!@icons_only} class="hidden sm:inline">Locked</span>
-          </span>
-        <% end %>
+    <div
+      class="mt-6 rounded-[1.75rem] border border-slate-200/80 bg-gradient-to-br from-slate-50 via-white to-indigo-50/70 p-4 shadow-sm sm:mt-8 sm:p-5"
+      data-external="true"
+      data-role="action-toolbar"
+    >
+      <% info = delete_info(assigns) %>
 
-        <% info = delete_info(assigns) %>
-        <% bottom_actions_body_id = "bottom-grid-actions-body-#{@id}" %>
-        <% bottom_actions_toggle_id = "bottom-grid-actions-toggle-#{@id}" %>
-        <%!-- Add Actions Section --%>
-        <div
-          id={"bottom-grid-actions-root-#{@id}"}
-          data-role="action-buttons-group"
-          data-collapse-root
-          phx-hook="PersistCollapse"
-          data-collapse-key={"rg:grid-actions:bottom:#{@graph_id || "global"}"}
-        >
-          <div class="mb-1 flex items-center justify-between gap-2">
-            <div class="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">
-              Grid Tools
+      <div class="flex flex-col gap-5">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div class="space-y-1">
+            <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600">
+              Next Step
+            </p>
+            <div>
+              <h4 class="text-base font-semibold tracking-tight text-slate-900 sm:text-lg">
+                Keep building from this point
+              </h4>
+              <p class="mt-1 text-sm leading-6 text-slate-600">
+                Pick one action to test the claim, connect it to another idea, or widen the map.
+              </p>
             </div>
-            <button
-              type="button"
-              class="inline-flex items-center justify-center rounded-md border border-gray-200 bg-white p-1 text-gray-500 transition hover:bg-gray-50 hover:text-gray-700"
-              data-collapse-key={"rg:grid-actions:bottom:#{@graph_id || "global"}"}
-              onclick={
-                "const root=this.closest('[data-collapse-root]');" <>
-                  "const body=root?.querySelector('[data-collapse-body]');" <>
-                  "const icon=root?.querySelector('[data-collapse-icon]');" <>
-                  "if(!body||!icon)return;" <>
-                  "body.classList.toggle('hidden');" <>
-                  "icon.classList.toggle('rotate-180');" <>
-                  "try{localStorage.setItem(this.dataset.collapseKey,body.classList.contains('hidden')?'collapsed':'expanded')}catch(_e){}"
-              }
-              aria-label="Show or hide bottom grid actions"
-              title="Show or hide bottom grid actions"
-            >
-              <span
-                id={bottom_actions_toggle_id}
-                data-collapse-icon
-                class="inline-flex transition-transform duration-150"
-              >
-                <.icon name="hero-chevron-down" class="h-3.5 w-3.5" />
-              </span>
-            </button>
           </div>
-          <div id={bottom_actions_body_id} data-collapse-body class="grid grid-cols-2 gap-1">
-            <button
-              type="button"
-              class="inline-flex flex-row items-center justify-center gap-1 px-2 py-1 shadow-sm ring-1 ring-inset ring-black/10 text-white rounded-md transition-all bg-gradient-to-r from-emerald-500 to-rose-500 hover:from-emerald-600 hover:to-rose-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-              phx-click="node_branch"
-              phx-value-id={@node && @node.id}
-              disabled={is_nil(@graph_id)}
-              title="Pros and Cons"
-            >
-              <.icon name="hero-scale" class="h-4 w-4" />
-              <span :if={!@icons_only} class="toolbar-label text-xs leading-tight font-medium">
-                Pro | Con
-              </span>
-            </button>
 
-            <button
-              type="button"
-              class="inline-flex flex-row items-center justify-center gap-1 px-2 py-1 shadow-sm ring-1 ring-inset ring-black/10 bg-violet-500 text-white rounded-md transition-all hover:bg-violet-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-              phx-click={
-                Phoenix.LiveView.JS.dispatch("toggle-panel",
-                  to: "#graph-layout",
-                  detail: %{id: "combine-drawer"}
-                )
-                |> Phoenix.LiveView.JS.push("node_combine")
-              }
-              disabled={is_nil(@graph_id)}
-              data-panel-toggle="combine-drawer"
-              aria-label="Combine nodes setup"
-              title="Blend with another"
+          <div :if={@can_edit == false} class="sm:pt-1">
+            <span
+              class="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700"
+              title="Graph is locked; editing is disabled"
             >
-              <.icon name="hero-arrows-pointing-in" class="h-4 w-4" />
-              <span :if={!@icons_only} class="toolbar-label text-xs leading-tight font-medium">
-                Blend
-              </span>
-            </button>
-
-            <button
-              type="button"
-              class="inline-flex flex-row items-center justify-center gap-1 px-2 py-1 shadow-sm ring-1 ring-inset ring-black/10 bg-orange-500 text-white rounded-md transition-all hover:bg-orange-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-              phx-click="node_related_ideas"
-              phx-value-id={@node && @node.id}
-              disabled={is_nil(@graph_id)}
-              title="Related ideas"
-              data-action="related-ideas"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-4 w-4"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.517 0c.85.493 1.509 1.333 1.509 2.316V18"
-                />
-              </svg>
-              <span :if={!@icons_only} class="toolbar-label text-xs leading-tight font-medium">
-                Related
-              </span>
-            </button>
-
-            <button
-              id="explore-all-points"
-              type="button"
-              disabled={is_nil(@graph_id)}
-              class="inline-flex flex-row items-center justify-center gap-1 px-2 py-1 shadow-sm ring-1 ring-inset ring-black/10 text-white rounded-md transition-all bg-gradient-to-r from-fuchsia-500 via-rose-500 to-amber-500 hover:from-fuchsia-600 hover:via-rose-600 hover:to-amber-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Expand all points"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-4 w-4"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z"
-                />
-              </svg>
-              <span :if={!@icons_only} class="toolbar-label text-xs leading-tight font-medium">
-                Expand
-              </span>
-            </button>
+              <.icon name="hero-lock-closed" class="h-3.5 w-3.5" />
+              <span>Graph locked</span>
+            </span>
           </div>
         </div>
 
-        <%!-- Delete Action (separate) --%>
-        <div class="border-t border-gray-200 pt-2">
+        <div class="grid gap-3 sm:grid-cols-3">
+          <button
+            type="button"
+            class="group flex h-full flex-col items-start gap-3 rounded-2xl border border-emerald-200 bg-white px-4 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+            phx-click="node_branch"
+            phx-value-id={@node && @node.id}
+            disabled={is_nil(@graph_id)}
+            title="Create supporting and opposing branches from this node"
+          >
+            <span class="inline-flex items-center justify-center rounded-xl bg-emerald-100 p-2 text-emerald-700">
+              <.icon name="hero-scale" class="h-5 w-5" />
+            </span>
+            <span class="space-y-1">
+              <span class="block text-sm font-semibold text-slate-900">Pro | Con</span>
+              <span class="block text-sm leading-5 text-slate-600">
+                Generate supporting and opposing branches from this point.
+              </span>
+            </span>
+          </button>
+
+          <button
+            type="button"
+            class="group flex h-full flex-col items-start gap-3 rounded-2xl border border-violet-200 bg-white px-4 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+            phx-click={
+              Phoenix.LiveView.JS.dispatch("toggle-panel",
+                to: "#graph-layout",
+                detail: %{id: "combine-drawer"}
+              )
+              |> Phoenix.LiveView.JS.push("node_combine")
+            }
+            disabled={is_nil(@graph_id)}
+            data-panel-toggle="combine-drawer"
+            aria-label="Blend this node with another"
+            title="Blend this node with another"
+          >
+            <span class="inline-flex items-center justify-center rounded-xl bg-violet-100 p-2 text-violet-700">
+              <.icon name="hero-arrows-pointing-in" class="h-5 w-5" />
+            </span>
+            <span class="space-y-1">
+              <span class="block text-sm font-semibold text-slate-900">Blend</span>
+              <span class="block text-sm leading-5 text-slate-600">
+                Combine this point with another node to create a new angle.
+              </span>
+            </span>
+          </button>
+
+          <button
+            type="button"
+            class="group flex h-full flex-col items-start gap-3 rounded-2xl border border-orange-200 bg-white px-4 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-orange-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+            phx-click="node_related_ideas"
+            phx-value-id={@node && @node.id}
+            disabled={is_nil(@graph_id)}
+            title="Find related ideas"
+            data-action="related-ideas"
+          >
+            <span class="inline-flex items-center justify-center rounded-xl bg-orange-100 p-2 text-orange-700">
+              <.icon name="hero-light-bulb" class="h-5 w-5" />
+            </span>
+            <span class="space-y-1">
+              <span class="block text-sm font-semibold text-slate-900">Related</span>
+              <span class="block text-sm leading-5 text-slate-600">
+                Add nearby ideas, comparisons, and useful connections.
+              </span>
+            </span>
+          </button>
+        </div>
+
+        <div class="flex flex-col gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p class="text-sm font-medium text-slate-900">Manage this node</p>
+            <p class="mt-1 text-sm text-slate-500">
+              Delete is only available to the author when no child nodes depend on it.
+            </p>
+          </div>
+
           <button
             id={"delete-node-#{@graph_id}-#{@node && @node.id}"}
             type="button"
@@ -279,28 +217,11 @@ defmodule DialecticWeb.ActionToolbarComp do
             }
             aria-disabled={not info.deletable}
             data-disabled={not info.deletable}
-            class={[
-              "w-full inline-flex flex-row items-center justify-center gap-1 px-2 py-1 shadow-sm ring-1 ring-inset ring-black/10 rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed",
-              info.deletable && "bg-red-500/80 text-white hover:bg-red-600 hover:shadow-md",
-              !info.deletable && "bg-gray-100 text-gray-400 cursor-not-allowed"
-            ]}
+            class={delete_button_class(info.deletable)}
             title={info.title}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-4 w-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0a1 1 0 01-1-1V5a1 1 0 011-1h2a2 2 0 012-2h0a2 2 0 012 2h2a1 1 0 011 1v1" />
-            </svg>
-            <span :if={!@icons_only} class="toolbar-label text-xs leading-tight font-medium">
-              Delete
-            </span>
+            <.icon name="hero-trash" class="h-4 w-4" />
+            <span>Delete node</span>
           </button>
         </div>
       </div>
