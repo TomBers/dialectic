@@ -271,7 +271,7 @@ defmodule DialecticWeb.HomeLive do
             </div>
           </div>
         <% end %>
-        
+
     <!-- Static decorative background -->
         <div class="absolute inset-0 z-0">
           <div class="pointer-events-none absolute -top-32 -right-24 h-80 w-80 rounded-full bg-sky-100/50 blur-3xl">
@@ -279,7 +279,7 @@ defmodule DialecticWeb.HomeLive do
           <div class="pointer-events-none absolute -top-20 -left-24 h-72 w-72 rounded-full bg-slate-300/35 blur-3xl">
           </div>
         </div>
-        
+
     <!-- Make the hero content scroll within the viewport naturally -->
         <div class="relative z-10 pb-4 sm:pb-5">
           <section class="w-full" id="start-here">
@@ -355,7 +355,7 @@ defmodule DialecticWeb.HomeLive do
                                 Example grid
                               </p>
                               <p class="mt-1 text-base font-semibold text-white sm:text-lg">
-                                Happiness by TomBers44
+                                Happiness
                               </p>
                             </div>
                             <span class="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-medium text-white/85 transition group-hover:border-sky-300/40 group-hover:bg-white/15 group-hover:text-white">
@@ -489,7 +489,7 @@ defmodule DialecticWeb.HomeLive do
                       id="home-example-grid-modal-title"
                       class="text-2xl font-semibold text-slate-950"
                     >
-                      Happiness by TomBers44
+                      Happiness
                     </h3>
                     <p
                       id="home-example-grid-modal-description"
