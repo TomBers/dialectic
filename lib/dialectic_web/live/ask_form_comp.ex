@@ -42,7 +42,7 @@ defmodule DialecticWeb.AskFormComp do
         if Map.has_key?(assigns, :placeholder) and not is_nil(assigns[:placeholder]) do
           assign(s, :placeholder, assigns[:placeholder])
         else
-          assign(s, :placeholder, "Ask or comment...")
+          assign(s, :placeholder, "Write a comment or ask AI to continue...")
         end
       end)
 
@@ -87,7 +87,7 @@ defmodule DialecticWeb.AskFormComp do
               rows="1"
               placeholder={@placeholder}
               phx-hook="AutoExpandTextarea"
-              class="box-border w-full h-10 min-h-[2.5rem] rounded-3xl pl-4 pr-[8.5rem] py-2.5 text-sm border border-gray-300 focus:border-indigo-500 focus:ring-0 focus:outline-none bg-white resize-none"
+              class="box-border w-full h-10 min-h-[2.5rem] rounded-3xl border border-gray-300 bg-white py-2.5 pl-4 pr-[11.25rem] text-sm focus:border-indigo-500 focus:outline-none focus:ring-0 resize-none"
             >{Phoenix.HTML.Form.normalize_value("text", @form[:content].value)}</textarea>
 
             <%!-- Two submit buttons inside the input --%>
@@ -97,31 +97,24 @@ defmodule DialecticWeb.AskFormComp do
                 type="submit"
                 name="submit_action"
                 value="post"
-                class="bg-emerald-500 hover:bg-emerald-600 text-white text-xs leading-none px-3.5 h-7 rounded-full font-medium transition-all hover:shadow-sm"
-                title="Post your comment — no AI response"
+                class="inline-flex h-7 items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-3 text-xs font-semibold leading-none text-emerald-700 transition-all hover:border-emerald-300 hover:bg-emerald-100"
+                title="Add your comment without an AI reply"
               >
-                Post
+                <.icon name="hero-chat-bubble-left-ellipsis" class="h-3.5 w-3.5" />
+                <span>Comment</span>
               </button>
               <%!-- Ask button — default submit (no name, so no submit_action param) --%>
               <button
                 type="submit"
-                class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs leading-none px-3.5 h-7 rounded-full font-medium shadow-sm transition-all hover:shadow-md"
-                title="Ask and get an AI-generated response"
+                class="inline-flex h-7 items-center gap-1 rounded-full bg-indigo-600 px-3 text-xs font-semibold leading-none text-white shadow-sm transition-all hover:bg-indigo-700 hover:shadow-md"
+                title="Ask and get an AI response"
               >
-                Ask
+                <.icon name="hero-sparkles" class="h-3.5 w-3.5" />
+                <span>Ask AI</span>
               </button>
             </div>
           </div>
         </div>
-
-        <%!-- Compact hint text --%>
-        <%= if @show_hint do %>
-          <div class="text-[10px] text-gray-400 mt-1 ml-1">
-            <span class="text-emerald-500">Post</span>
-            = your comment · <span class="text-indigo-500">Ask</span>
-            = AI response
-          </div>
-        <% end %>
       </.form>
     </div>
     """

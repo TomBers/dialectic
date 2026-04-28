@@ -38,11 +38,12 @@ defmodule DialecticWeb.DocumentMenuComp do
         data-collapse-root
         phx-hook="PersistCollapse"
         data-collapse-key={"rg:grid-actions:top:#{@graph_id || "global"}"}
+        data-collapse-default="collapsed"
       >
         <div class="flex items-start justify-between gap-2 px-1">
           <div>
             <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500">
-              Shortcuts
+              Menu
             </h3>
             <p class="text-[11px] text-gray-500">
               Search, share, present, and manage this grid from one place.
@@ -50,26 +51,31 @@ defmodule DialecticWeb.DocumentMenuComp do
           </div>
           <button
             type="button"
-            class="inline-flex items-center justify-center rounded-md border border-gray-200 bg-white p-1 text-gray-500 transition hover:bg-gray-50 hover:text-gray-700"
+            class="inline-flex h-8 items-center justify-center rounded-full border border-gray-200 bg-white px-2 text-gray-600 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800"
             data-collapse-key={"rg:grid-actions:top:#{@graph_id || "global"}"}
             onclick={
               "const root=this.closest('[data-collapse-root]');" <>
                 "const body=root?.querySelector('[data-collapse-body]');" <>
-                "const icon=root?.querySelector('[data-collapse-icon]');" <>
-                "if(!body||!icon)return;" <>
+                "const openState=root?.querySelector('[data-collapse-open-state]');" <>
+                "const closeState=root?.querySelector('[data-collapse-close-state]');" <>
+                "if(!body)return;" <>
                 "body.classList.toggle('hidden');" <>
-                "icon.classList.toggle('rotate-180');" <>
-                "try{localStorage.setItem(this.dataset.collapseKey,body.classList.contains('hidden')?'collapsed':'expanded')}catch(_e){}"
+                "const collapsed=body.classList.contains('hidden');" <>
+                "if(openState&&closeState){" <>
+                "openState.classList.toggle('hidden',!collapsed);" <>
+                "closeState.classList.toggle('hidden',collapsed);" <>
+                "}" <>
+                "try{localStorage.setItem(this.dataset.collapseKey,collapsed?'collapsed':'expanded')}catch(_e){}"
             }
-            aria-label="Show or hide grid actions"
-            title="Show or hide grid actions"
+            aria-label="Open or close menu"
+            title="Open or close menu"
           >
-            <span
-              id={"grid-actions-toggle-#{@id}"}
-              data-collapse-icon
-              class="inline-flex transition-transform duration-150"
-            >
-              <.icon name="hero-chevron-up" class="h-3.5 w-3.5" />
+            <span data-collapse-open-state class="inline-flex items-center gap-1.5">
+              <.icon name="hero-bars-3" class="h-4 w-4" />
+              <span class="text-[10px] font-semibold uppercase tracking-wide">Open</span>
+            </span>
+            <span data-collapse-close-state class="hidden items-center">
+              <.icon name="hero-x-mark" class="h-4 w-4" />
             </span>
           </button>
         </div>

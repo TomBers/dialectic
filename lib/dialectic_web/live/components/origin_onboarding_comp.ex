@@ -20,7 +20,7 @@ defmodule DialecticWeb.OriginOnboardingComp do
         </h4>
         <p class="mt-2 text-sm text-gray-700">
           This page turns each answer into a connected node. Read the selected node, then
-          choose the smallest useful next move instead of expanding everything at once.
+          use the actions underneath to decide what should grow next.
         </p>
 
         <div class="mt-5 grid gap-3 sm:grid-cols-3">
@@ -84,9 +84,14 @@ defmodule DialecticWeb.OriginOnboardingComp do
 
         <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
           <p class="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-700 ring-1 ring-amber-200">
-            Grid tools
+            Under the reader
           </p>
-          <h5 class="mt-4 text-lg font-semibold text-gray-900">Use tools when the branch is clear</h5>
+          <h5 class="mt-4 text-lg font-semibold text-gray-900">
+            Use node actions after you read
+          </h5>
+          <p class="mt-2 text-xs text-gray-600">
+            These actions now sit directly under the selected node instead of in the bottom bar.
+          </p>
 
           <div class="mt-4 space-y-3">
             <div class="flex items-start gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4">
@@ -104,14 +109,6 @@ defmodule DialecticWeb.OriginOnboardingComp do
                 <p class="mt-1 text-xs text-gray-600">
                   Find nearby ideas, counterpoints, or adjacent angles.
                 </p>
-              </div>
-            </div>
-
-            <div class="flex items-start gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4">
-              <.icon name="hero-sparkles" class="mt-0.5 h-5 w-5 shrink-0 text-rose-500" />
-              <div>
-                <p class="text-sm font-semibold text-gray-900">Expand</p>
-                <p class="mt-1 text-xs text-gray-600">Split one dense node into several branches.</p>
               </div>
             </div>
 

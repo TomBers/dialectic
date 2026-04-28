@@ -43,7 +43,7 @@ defmodule DialecticWeb.PageHtml.GraphComp do
           {@title}
         </h3>
 
-        <%= if is_binary(author_name = assigns[:author_name]) and author_name != "" do %>
+        <%= if author_visible?(author_name = assigns[:author_name]) do %>
           <%= if is_binary(assigns[:author_link]) and assigns[:author_link] != "" do %>
             <.link
               navigate={@author_link}
@@ -304,4 +304,11 @@ defmodule DialecticWeb.PageHtml.GraphComp do
     prefix = if is_binary(author_label) and author_label != "", do: author_label <> " ", else: ""
     prefix <> author_name
   end
+
+  defp author_visible?(author_name) when is_binary(author_name) do
+    normalized = author_name |> String.trim() |> String.downcase()
+    normalized != "" and normalized not in ["anonymous", "anon", "-"]
+  end
+
+  defp author_visible?(_), do: false
 end

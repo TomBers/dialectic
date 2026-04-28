@@ -224,9 +224,9 @@
         </div>
         <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
           <p class="text-xs font-bold uppercase tracking-wide text-gray-500">3</p>
-          <p class="mt-2 text-sm font-semibold text-gray-900">Mix Ask and Post</p>
+          <p class="mt-2 text-sm font-semibold text-gray-900">Mix Comment and Ask AI</p>
           <p class="mt-1 text-xs text-gray-600">
-            Ask creates an AI branch. Post adds your own point or challenge.
+            Ask AI creates a new branch. Comment adds your own point or challenge.
           </p>
         </div>
         <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
@@ -251,7 +251,7 @@
           Learn the workspace once, then start branching
         </h3>
         <p class="text-sm text-gray-600">
-          You do not need every control upfront. Learn the main actions, then make the smallest useful next move.
+          You do not need every control upfront. Learn the main actions, then build from there.
         </p>
       </div>
 
@@ -260,13 +260,13 @@
           <div class="relative overflow-hidden rounded-2xl border border-gray-200 bg-slate-950 shadow-sm">
             <img
               src="/images/guide/grid-workspace.png"
-              alt="RationalGrid workspace showing shortcuts, composer, and grid tools"
+              alt="RationalGrid workspace showing the menu, reader, composer, and node actions"
               class="w-full"
               loading="lazy"
             />
             <div
               class="absolute hidden h-8 w-8 items-center justify-center rounded-full border-4 border-white bg-emerald-600 text-sm font-semibold text-white shadow-lg md:flex"
-              style="left: 75%; top: 18%;"
+              style="left: 92%; top: 18%;"
             >
               1
             </div>
@@ -278,13 +278,13 @@
             </div>
             <div
               class="absolute hidden h-8 w-8 items-center justify-center rounded-full border-4 border-white bg-sky-600 text-sm font-semibold text-white shadow-lg md:flex"
-              style="left: 58%; top: 82%;"
+              style="left: 92%; top: 91%;"
             >
               3
             </div>
             <div
               class="absolute hidden h-8 w-8 items-center justify-center rounded-full border-4 border-white bg-amber-500 text-sm font-semibold text-white shadow-lg md:flex"
-              style="left: 84%; top: 82%;"
+              style="left: 18%; top: 34%;"
             >
               4
             </div>
@@ -301,9 +301,9 @@
                 1
               </span>
               <div>
-                <p class="text-sm font-semibold text-gray-900">Shortcuts panel</p>
+                <p class="text-sm font-semibold text-gray-900">Menu panel</p>
                 <p class="mt-1 text-xs text-gray-600">
-                  Search, open help, switch to reader view, share, present, or open controls.
+                  Search, open the guide, switch to Doc view, share, present, open highlights, or change controls.
                 </p>
               </div>
             </div>
@@ -317,7 +317,7 @@
               <div>
                 <p class="text-sm font-semibold text-gray-900">Reading panel</p>
                 <p class="mt-1 text-xs text-gray-600">
-                  The selected node opens here. Read it first, then select a phrase for a narrower follow-up.
+                  The selected node opens here. Read it first, then use the actions underneath to test, connect, or widen the map.
                 </p>
               </div>
             </div>
@@ -329,11 +329,12 @@
                 3
               </span>
               <div>
-                <p class="text-sm font-semibold text-gray-900">Ask vs Post</p>
+                <p class="text-sm font-semibold text-gray-900">Comment vs Ask AI</p>
                 <p class="mt-1 text-xs text-gray-600">
-                  <span class="font-semibold text-gray-900">Ask</span>
-                  creates a new AI branch. <span class="font-semibold text-gray-900">Post</span>
-                  adds your own claim, objection, example, or note to the map.
+                  <span class="font-semibold text-gray-900">Comment</span>
+                  adds your own claim, objection, example, or note.
+                  <span class="font-semibold text-gray-900">Ask AI</span>
+                  generates a new AI reply from the selected node.
                 </p>
               </div>
             </div>
@@ -345,9 +346,9 @@
                 4
               </span>
               <div>
-                <p class="text-sm font-semibold text-gray-900">Grid tools</p>
+                <p class="text-sm font-semibold text-gray-900">Node actions</p>
                 <p class="mt-1 text-xs text-gray-600">
-                  These act on the selected node. Use them to test a claim, branch outward, split an answer, or blend nodes.
+                  These now sit under the reader content. Use them to branch both sides, pull in related ideas, or blend nodes.
                 </p>
               </div>
             </div>
@@ -358,13 +359,13 @@
       <div class="mt-8 space-y-4">
         <div class="rounded-2xl border border-sky-100 bg-sky-50/40 p-5 sm:p-6">
           <p class="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wide text-sky-700 ring-1 ring-sky-200">
-            Bottom bar
+            Reader and composer
           </p>
           <h4 class="mt-4 text-xl font-semibold text-gray-900">
-            Learn the composer and node actions
+            Learn the composer and the actions under each node
           </h4>
           <p class="mt-2 text-sm text-gray-600">
-            This is the control strip you will use most. Understand this row first, then branch outward.
+            The composer stays in the bottom bar. The node actions appear directly under the selected node after you read it.
           </p>
         </div>
 
@@ -373,50 +374,59 @@
             <div class="rounded-2xl border border-gray-300 bg-white p-3 shadow-sm md:p-4">
               <div class="flex items-center gap-2 text-xs text-gray-500">
                 <span class="rounded-md bg-slate-100 px-2 py-1 font-semibold text-gray-600">
-                  Answer
+                  Reader
                 </span>
                 <span class="truncate">
                   The Architecture of the Ancestral Mind: The Collective Unconscious
                 </span>
               </div>
 
-              <div class="mt-3 grid gap-2 md:grid-cols-[1fr,220px] md:items-start">
-                <div class="rounded-xl border border-gray-200 bg-white p-2.5">
-                  <div class="flex items-center gap-2">
-                    <span class="flex-1 text-sm text-gray-500">Ask or comment...</span>
-                    <button
-                      type="button"
-                      class="rounded-full bg-emerald-500 px-3 py-1 text-xs font-semibold text-white md:px-4"
-                    >
-                      Post
-                    </button>
-                    <button
-                      type="button"
-                      class="rounded-full bg-indigo-600 px-3 py-1 text-xs font-semibold text-white md:px-4"
-                    >
-                      Ask
-                    </button>
-                  </div>
-                  <p class="mt-2 text-[11px] text-gray-500">
-                    <span class="font-semibold text-emerald-600">Post</span>
-                    = your comment · <span class="font-semibold text-indigo-600">Ask</span>
-                    = AI response
-                  </p>
-                </div>
+              <div class="mt-3 rounded-xl border border-gray-200 bg-white p-3">
+                <p class="text-sm font-semibold text-gray-900">
+                  The selected node opens here for reading.
+                </p>
+                <p class="mt-1 text-xs leading-5 text-gray-600">
+                  Read the answer, decide what is missing, then use the node actions underneath.
+                </p>
+              </div>
 
-                <div class="rounded-xl border border-gray-200 bg-white p-2.5">
-                  <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    Grid tools
-                  </p>
-                  <div class="mt-2 grid grid-cols-2 gap-1.5 text-xs font-semibold text-white">
-                    <div class="rounded-md bg-emerald-600 px-2 py-1 text-center">Pro | Con</div>
-                    <div class="rounded-md bg-violet-600 px-2 py-1 text-center">Blend</div>
-                    <div class="rounded-md bg-amber-500 px-2 py-1 text-center">Related</div>
-                    <div class="rounded-md bg-pink-500 px-2 py-1 text-center">Expand</div>
+              <div class="mt-3 rounded-xl border border-indigo-100 bg-indigo-50/50 p-3">
+                <p class="text-xs font-semibold uppercase tracking-wide text-indigo-700">
+                  Next step
+                </p>
+                <div class="mt-2 grid gap-2 sm:grid-cols-3">
+                  <div class="rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm font-semibold text-emerald-700">
+                    Pro | Con
                   </div>
-                  <div class="mt-2 rounded-md bg-gray-100 px-2 py-1 text-center text-xs font-semibold text-gray-500">
-                    Delete
+                  <div class="rounded-lg border border-violet-200 bg-white px-3 py-2 text-sm font-semibold text-violet-700">
+                    Blend
                   </div>
+                  <div class="rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm font-semibold text-amber-700">
+                    Related
+                  </div>
+                </div>
+                <p class="mt-2 text-[11px] text-gray-500">
+                  These act on the selected node after you have read it.
+                </p>
+              </div>
+
+              <div class="mt-3 rounded-xl border border-gray-200 bg-white p-2.5">
+                <div class="flex items-center gap-2">
+                  <span class="flex-1 text-sm text-gray-500">
+                    Write a comment or ask AI to continue...
+                  </span>
+                  <button
+                    type="button"
+                    class="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 md:px-4"
+                  >
+                    Comment
+                  </button>
+                  <button
+                    type="button"
+                    class="rounded-full bg-indigo-600 px-3 py-1 text-xs font-semibold text-white md:px-4"
+                  >
+                    Ask AI
+                  </button>
                 </div>
               </div>
             </div>
@@ -435,7 +445,7 @@
             </div>
           </div>
           <figcaption class="text-xs text-gray-500">
-            Static guide mockup of the bottom bar: composer and node tools.
+            Static guide mockup of the reader actions and bottom composer.
           </figcaption>
         </figure>
 
@@ -459,7 +469,7 @@
             <div class="rounded-xl border border-white/80 bg-white/80 p-4">
               <p class="text-sm font-semibold text-gray-900">Node actions</p>
               <p class="mt-1 text-xs text-gray-600">
-                Use Pro | Con, Related, Expand, or Blend after you know what branch is worth growing.
+                Use Pro | Con, Related, or Blend after you know what branch is worth growing.
               </p>
             </div>
           </div>
@@ -478,7 +488,7 @@
           </p>
           <h3 class="mt-4 text-xl font-semibold text-gray-900">Learn which tool to use next</h3>
           <p class="mt-2 text-sm text-gray-600">
-            Once the bottom bar is familiar, use this as a quick reference for the next thinking move.
+            Once the composer and reader actions are familiar, use this as a quick reference for the next thinking move.
           </p>
         </div>
 
@@ -505,7 +515,7 @@
                 class="mt-0.5 h-5 w-5 shrink-0 text-emerald-500"
               />
               <div>
-                <p class="text-sm font-semibold text-gray-900">Post</p>
+                <p class="text-sm font-semibold text-gray-900">Comment</p>
                 <p class="mt-1 text-xs text-gray-600">
                   Use when you want your own claim, objection, example, or note inside the map.
                 </p>
@@ -532,18 +542,6 @@
                 <p class="text-sm font-semibold text-gray-900">Related</p>
                 <p class="mt-1 text-xs text-gray-600">
                   Use when you want nearby concepts, counterpoints, or adjacent directions.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
-            <div class="flex items-start gap-3">
-              <.icon name="hero-sparkles" class="mt-0.5 h-5 w-5 shrink-0 text-rose-500" />
-              <div>
-                <p class="text-sm font-semibold text-gray-900">Expand</p>
-                <p class="mt-1 text-xs text-gray-600">
-                  Use when one node already contains several promising subtopics to split apart.
                 </p>
               </div>
             </div>
@@ -633,9 +631,9 @@
               </p>
             </div>
             <div class="rounded-xl border border-white/80 bg-white/80 p-4">
-              <p class="text-sm font-semibold text-gray-900">Expand late, not early</p>
+              <p class="text-sm font-semibold text-gray-900">Branch late, not early</p>
               <p class="mt-1 text-xs text-gray-600">
-                Read the current answer first. Expanding everything at once creates noise faster than understanding.
+                Read the current answer first. Growing every branch at once creates noise faster than understanding.
               </p>
             </div>
           </div>
@@ -651,13 +649,13 @@
         <div class="overflow-hidden rounded-2xl border border-gray-200 bg-slate-950 shadow-sm">
           <img
             src="/images/guide/grid-dense-example.png"
-            alt="A large RationalGrid example from History of Philosophy with many connected branches"
+            alt="A large RationalGrid example with many connected branches in the spaced view"
             class="w-full"
             loading="lazy"
           />
         </div>
         <figcaption class="text-xs text-gray-500">
-          Example of a large public grid (History of Philosophy): structure stays readable as the map expands.
+          Example of a large public grid in the spaced view: the structure stays readable as the map expands.
         </figcaption>
       </figure>
 

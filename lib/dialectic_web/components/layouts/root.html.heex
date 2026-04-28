@@ -132,6 +132,12 @@
             <.icon name="hero-photo" class="h-3.5 w-3.5" />
             <span class="hidden sm:inline">Gallery</span>
           </.link>
+          <.link
+            href={~p"/"}
+            class="inline-flex items-center gap-1 rounded-md bg-white/15 px-2 py-1 font-semibold text-white ring-1 ring-white/20 hover:bg-white/25 transition"
+          >
+            <span>+ New Grid</span>
+          </.link>
           <%= if @current_user do %>
             <.link
               href={~p"/u/#{@current_user.username}"}
@@ -145,13 +151,6 @@
             >
               <.icon name="hero-user-circle" class="h-3.5 w-3.5" />
               <span class="hidden sm:inline">My Profile</span>
-            </.link>
-            <.link
-              href={~p"/"}
-              class="inline-flex items-center gap-1 rounded-md bg-white/15 px-2 py-1 font-semibold text-white ring-1 ring-white/20 hover:bg-white/25 transition"
-            >
-              <.icon name="hero-plus" class="h-3.5 w-3.5" />
-              <span class="hidden sm:inline">New</span>
             </.link>
             <%= if @current_user.is_admin do %>
               <.link

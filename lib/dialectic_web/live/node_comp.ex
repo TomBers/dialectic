@@ -30,6 +30,7 @@ defmodule DialecticWeb.NodeComp do
        graph_id: Map.get(assigns, :graph_id, ""),
        graph_owner_id: Map.get(assigns, :graph_owner_id, nil),
        current_user: Map.get(assigns, :current_user, nil),
+       can_edit: Map.get(assigns, :can_edit, true),
        menu_visible: Map.get(assigns, :menu_visible, true),
        streaming: Map.get(assigns, :streaming, false),
        exploration_stats: Map.get(assigns, :exploration_stats, nil),
@@ -147,6 +148,16 @@ defmodule DialecticWeb.NodeComp do
                       </div>
                     </div>
                   </article>
+
+                  <.live_component
+                    module={DialecticWeb.ActionToolbarComp}
+                    id={"action-toolbar-#{@node.id}"}
+                    node={@node}
+                    user={@user}
+                    current_user={@current_user}
+                    graph_id={@graph_id}
+                    can_edit={@can_edit}
+                  />
                 </div>
               </div>
             </div>
