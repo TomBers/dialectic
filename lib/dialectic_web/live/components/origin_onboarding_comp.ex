@@ -20,7 +20,7 @@ defmodule DialecticWeb.OriginOnboardingComp do
         </h4>
         <p class="mt-2 text-sm text-gray-700">
           This page turns each answer into a connected node. Read the selected node, then
-          choose the smallest useful next move instead of expanding everything at once.
+          choose one clear next step instead of expanding everything at once.
         </p>
 
         <div class="mt-5 grid gap-3 sm:grid-cols-3">
