@@ -13,10 +13,6 @@ defmodule DialecticWeb.Router do
     plug :fetch_current_user
   end
 
-  pipeline :home_preview_seed do
-    plug DialecticWeb.Plugs.HomePreviewSeed
-  end
-
   pipeline :auth do
     plug DialecticWeb.Plugs.RateLimiter, type: :auth
   end
@@ -51,12 +47,8 @@ defmodule DialecticWeb.Router do
   end
 
   scope "/", DialecticWeb do
-    pipe_through [:browser, :home_preview_seed]
-    live "/", HomeLive
-  end
-
-  scope "/", DialecticWeb do
     pipe_through :browser
+    live "/", HomeLive
     get "/my/ideas", PageController, :my_graphs
     get "/view_all/graphs", PageController, :view_all
     post "/graphs/:title/generate_tags", PageController, :generate_tags
