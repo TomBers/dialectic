@@ -1643,6 +1643,9 @@ function _injectDepthToggleStyles() {
   overflow: hidden;
 }
 .depth-toggle-btn {
+  --depth-toggle-translate-x: -50%;
+  --depth-toggle-translate-y: 0;
+  --depth-toggle-scale: 1;
   pointer-events: auto;
   position: absolute;
   display: inline-flex;
@@ -1665,12 +1668,14 @@ function _injectDepthToggleStyles() {
   user-select: none;
   line-height: 1;
   white-space: nowrap;
+  transform: translate(var(--depth-toggle-translate-x), var(--depth-toggle-translate-y)) scale(var(--depth-toggle-scale));
+  transform-origin: center center;
 }
 /* direction-aware centering */
-.depth-toggle-btn.depth-dir-tb { transform: translate(-50%, 0); }
-.depth-toggle-btn.depth-dir-bt { transform: translate(-50%, -100%); }
-.depth-toggle-btn.depth-dir-lr { transform: translate(0, -50%); }
-.depth-toggle-btn.depth-dir-rl { transform: translate(-100%, -50%); }
+.depth-toggle-btn.depth-dir-tb { --depth-toggle-translate-x: -50%; --depth-toggle-translate-y: 0; }
+.depth-toggle-btn.depth-dir-bt { --depth-toggle-translate-x: -50%; --depth-toggle-translate-y: -100%; }
+.depth-toggle-btn.depth-dir-lr { --depth-toggle-translate-x: 0; --depth-toggle-translate-y: -50%; }
+.depth-toggle-btn.depth-dir-rl { --depth-toggle-translate-x: -100%; --depth-toggle-translate-y: -50%; }
 .depth-toggle-btn:hover {
   background: #f1f5f9;
   border-color: #94a3b8;
@@ -1678,19 +1683,19 @@ function _injectDepthToggleStyles() {
 }
 .depth-toggle-btn.depth-dir-tb:active {
   background: #e2e8f0;
-  transform: translate(-50%, 0) scale(0.95);
+  transform: translate(var(--depth-toggle-translate-x), var(--depth-toggle-translate-y)) scale(calc(var(--depth-toggle-scale) * 0.95));
 }
 .depth-toggle-btn.depth-dir-bt:active {
   background: #e2e8f0;
-  transform: translate(-50%, -100%) scale(0.95);
+  transform: translate(var(--depth-toggle-translate-x), var(--depth-toggle-translate-y)) scale(calc(var(--depth-toggle-scale) * 0.95));
 }
 .depth-toggle-btn.depth-dir-lr:active {
   background: #e2e8f0;
-  transform: translate(0, -50%) scale(0.95);
+  transform: translate(var(--depth-toggle-translate-x), var(--depth-toggle-translate-y)) scale(calc(var(--depth-toggle-scale) * 0.95));
 }
 .depth-toggle-btn.depth-dir-rl:active {
   background: #e2e8f0;
-  transform: translate(-100%, -50%) scale(0.95);
+  transform: translate(var(--depth-toggle-translate-x), var(--depth-toggle-translate-y)) scale(calc(var(--depth-toggle-scale) * 0.95));
 }
 /* collapsed → warm amber "+N" pill — stands out from all node types */
 .depth-toggle-btn.depth-collapsed-btn {
@@ -1813,6 +1818,9 @@ function _updateDepthTogglePositions(cy) {
   if (!cy._depthToggleButtons) return;
 
   const dir = localStorage.getItem("graph_direction") || "TB";
+  const zoom = typeof cy.zoom === "function" ? cy.zoom() : 1;
+  const hideBelowZoom = 0.3;
+  const scale = Math.max(0.68, Math.min(1, 0.45 + zoom * 0.55));
 
   cy._depthToggleButtons.forEach((btn, nodeId) => {
     const node = cy.getElementById(nodeId);
@@ -1828,6 +1836,13 @@ function _updateDepthTogglePositions(cy) {
 
     const bb = node.renderedBoundingBox({ includeLabels: false });
     if (!bb || bb.w === 0) {
+      btn.style.display = "none";
+      return;
+    }
+
+    // When zoomed far out, the controls become visual noise rather than
+    // useful affordances. Hide them entirely below that threshold.
+    if (zoom < hideBelowZoom || Math.max(bb.w, bb.h) < 24) {
       btn.style.display = "none";
       return;
     }
@@ -1862,6 +1877,7 @@ function _updateDepthTogglePositions(cy) {
     btn.classList.add(`depth-dir-${dir.toLowerCase()}`);
 
     btn.style.display = "";
+    btn.style.setProperty("--depth-toggle-scale", scale.toFixed(3));
     btn.style.left = `${x}px`;
     btn.style.top = `${y}px`;
   });
