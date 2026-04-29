@@ -111,15 +111,12 @@ defmodule DialecticWeb.GraphLiveE2ETest do
       thesis = find_vertex_by_class(nil, "thesis")
       assert thesis
 
-      # 6) Open combine UI and combine with thesis -> creates synthesis
-      render_click(view, "node_combine", %{})
+      # 6) Open combine UI from the node toolbar and preselect that node
+      render_click(view, "node_combine", %{"id" => branch_parent.id})
       assigns = get_socket_assigns(view)
       assert assigns.combine_mode == :setup
-
-      # Select first node
-      render_click(view, "node_clicked", %{"id" => branch_parent.id})
-      assigns = get_socket_assigns(view)
       assert length(assigns.combine_selected_nodes) == 1
+      assert Enum.map(assigns.combine_selected_nodes, & &1.id) == [branch_parent.id]
 
       # Select second node
       render_click(view, "node_clicked", %{"id" => thesis.id})

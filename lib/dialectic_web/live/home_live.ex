@@ -271,7 +271,7 @@ defmodule DialecticWeb.HomeLive do
             </div>
           </div>
         <% end %>
-
+        
     <!-- Static decorative background -->
         <div class="absolute inset-0 z-0">
           <div class="pointer-events-none absolute -top-32 -right-24 h-80 w-80 rounded-full bg-sky-100/50 blur-3xl">
@@ -279,7 +279,7 @@ defmodule DialecticWeb.HomeLive do
           <div class="pointer-events-none absolute -top-20 -left-24 h-72 w-72 rounded-full bg-slate-300/35 blur-3xl">
           </div>
         </div>
-
+        
     <!-- Make the hero content scroll within the viewport naturally -->
         <div class="relative z-10 pb-4 sm:pb-5">
           <section class="w-full" id="start-here">
@@ -295,12 +295,12 @@ defmodule DialecticWeb.HomeLive do
                   <span>RationalGrid</span>
                 </h1>
                 <p class="mx-auto max-w-5xl text-base font-semibold leading-snug text-white sm:text-lg">
-                  Explore ideas, structure arguments and collaborate on understanding with AI-assisted visual grids.
+                  Expore big ideas that do not fit in a chat box.
                   <.link
                     navigate={~p"/about"}
                     class="underline decoration-white/60 underline-offset-4 hover:decoration-white"
                   >
-                    Learn more.
+                    more
                   </.link>
                 </p>
               </div>

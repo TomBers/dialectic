@@ -41,9 +41,16 @@ const AutoExpandTextareaHook = {
 
     // Bind the handler
     this.handleInput = this.handleInput.bind(this);
+    this.handleResize = this.handleResize.bind(this);
 
     // Add event listeners
     this.textarea.addEventListener("input", this.handleInput);
+    window.addEventListener("resize", this.handleResize);
+
+    if (typeof ResizeObserver !== "undefined") {
+      this.resizeObserver = new ResizeObserver(() => this.adjustHeight());
+      this.resizeObserver.observe(this.textarea.parentElement || this.textarea);
+    }
 
     // Initial adjustment in case there's pre-filled content
     this.adjustHeight();
@@ -55,9 +62,18 @@ const AutoExpandTextareaHook = {
 
   destroyed() {
     this.textarea.removeEventListener("input", this.handleInput);
+    window.removeEventListener("resize", this.handleResize);
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+      this.resizeObserver = null;
+    }
   },
 
   handleInput() {
+    this.adjustHeight();
+  },
+
+  handleResize() {
     this.adjustHeight();
   },
 

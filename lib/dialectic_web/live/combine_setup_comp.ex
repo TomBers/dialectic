@@ -28,7 +28,7 @@ defmodule DialecticWeb.CombineSetupComp do
       <div class="flex flex-col h-full">
         <%!-- Header --%>
         <div class="flex items-center justify-between px-3 py-2 border-b border-gray-200">
-          <h3 class="text-sm font-semibold text-gray-900">Combine Nodes</h3>
+          <h3 class="text-sm font-semibold text-gray-900">Combine ideas</h3>
           <button
             phx-click={
               Phoenix.LiveView.JS.dispatch("toggle-panel",
@@ -56,29 +56,16 @@ defmodule DialecticWeb.CombineSetupComp do
         <div class="flex-1 overflow-y-auto px-3 py-3">
           <%= if length(@selected_nodes) == 0 do %>
             <div class="flex flex-col items-center justify-center py-8 text-center">
-              <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mb-3">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-5 w-5 text-gray-400"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
-                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                  <line x1="12" x2="12" y1="19" y2="22"></line>
-                </svg>
+              <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-violet-100">
+                <.icon name="hero-arrows-pointing-in" class="h-5 w-5 text-violet-600" />
               </div>
-              <p class="text-sm text-gray-500 font-medium">No boxes selected</p>
-              <p class="text-xs text-gray-400 mt-1">Click boxes on the grid to select them</p>
+              <p class="text-sm text-gray-500 font-medium">No ideas selected</p>
+              <p class="text-xs text-gray-400 mt-1">Click ideas on the grid to select them</p>
             </div>
           <% else %>
             <div class="space-y-3">
               <div class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
-                Selected Nodes ({length(@selected_nodes)}/2)
+                Selected Ideas ({length(@selected_nodes)}/2)
               </div>
 
               <%= for {node, idx} <- Enum.with_index(@selected_nodes) do %>
@@ -134,24 +121,11 @@ defmodule DialecticWeb.CombineSetupComp do
               )
             ]}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-4 w-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-              <line x1="12" x2="12" y1="19" y2="22"></line>
-            </svg>
+            <.icon name="hero-arrows-pointing-in" class="h-4 w-4" />
             <%= if length(@selected_nodes) == 2 do %>
               Create Synthesis
             <% else %>
-              Select 2 nodes to combine
+              Select 2 ideas to combine
             <% end %>
           </button>
 

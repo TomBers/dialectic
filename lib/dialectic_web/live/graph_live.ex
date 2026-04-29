@@ -482,24 +482,51 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_event("node_combine", _params, socket) do
+  def handle_event("node_combine", params, socket) do
     if !socket.assigns.can_edit do
       {:noreply, socket |> put_flash(:error, "This graph is locked")}
     else
-      # Toggle: if already in setup, close the panel; otherwise open it
-      if socket.assigns.combine_mode == :setup do
-        socket =
-          socket
-          |> assign(combine_mode: :off, combine_selected_nodes: [])
-          |> push_event("combine_clear_highlights", %{})
+      case Map.get(params, "id") do
+        nil ->
+          if socket.assigns.combine_mode == :setup do
+            socket =
+              socket
+              |> assign(combine_mode: :off, combine_selected_nodes: [])
+              |> push_event("combine_clear_highlights", %{})
 
-        {:noreply, socket}
-      else
-        socket =
-          socket
-          |> assign(combine_mode: :setup, combine_selected_nodes: [])
+            {:noreply, socket}
+          else
+            socket =
+              socket
+              |> assign(combine_mode: :setup, combine_selected_nodes: [])
 
-        {:noreply, socket}
+            {:noreply, socket}
+          end
+
+        node_id ->
+          case GraphActions.find_node(socket.assigns.graph_id, node_id) do
+            nil ->
+              {:noreply, socket}
+
+            node ->
+              selected =
+                if socket.assigns.combine_mode == :setup do
+                  socket.assigns.combine_selected_nodes
+                else
+                  []
+                end
+
+              updated_selected = add_combine_node(selected, node)
+
+              socket =
+                socket
+                |> assign(combine_mode: :setup, combine_selected_nodes: updated_selected)
+                |> push_event("combine_highlight_nodes", %{
+                  ids: Enum.map(updated_selected, & &1.id)
+                })
+
+              {:noreply, socket}
+          end
       end
     end
   end
@@ -586,12 +613,7 @@ defmodule DialecticWeb.GraphLive do
             if Enum.any?(selected, fn n -> n.id == id end) do
               Enum.reject(selected, fn n -> n.id == id end)
             else
-              # Only allow 2 nodes to be selected
-              if length(selected) < 2 do
-                selected ++ [node]
-              else
-                selected
-              end
+              add_combine_node(selected, node)
             end
 
           {:noreply, updated_socket} =
@@ -1202,6 +1224,19 @@ defmodule DialecticWeb.GraphLive do
   end
 
   # ── Private helpers ──────────────────────────────────────────────
+
+  defp add_combine_node(selected_nodes, node) do
+    cond do
+      Enum.any?(selected_nodes, fn selected -> selected.id == node.id end) ->
+        selected_nodes
+
+      length(selected_nodes) < 2 ->
+        selected_nodes ++ [node]
+
+      true ->
+        selected_nodes
+    end
+  end
 
   defp maybe_clear_presentation(socket, %{"clear_slides" => value})
        when value in [true, "true"] do
