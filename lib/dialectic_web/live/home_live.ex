@@ -38,8 +38,10 @@ defmodule DialecticWeb.HomeLive do
        ask_question: true,
        graph_id: nil,
        curated_grids: [],
+       all_curated_grids: [],
        featured_grids: [],
-       quick_tags: []
+       quick_tags: [],
+       editor_picks_expanded: false
      )}
   end
 
@@ -52,8 +54,13 @@ defmodule DialecticWeb.HomeLive do
 
     graphs = fetch_graphs(search_term, tag, category, limit)
     popular_tags = Graphs.list_popular_tags()
-    curated_grids = Graphs.list_curated_grids("curated", 6)
-    featured_grids = Graphs.list_curated_grids("featured", 6)
+    # Fetch more items than needed to have a pool for randomization
+    all_curated_grids = Graphs.list_curated_grids("curated", 20)
+    all_featured_grids = Graphs.list_curated_grids("featured", 20)
+
+    # Randomly select 3 items from each pool for initial display
+    curated_grids = Enum.take_random(all_curated_grids, min(3, length(all_curated_grids)))
+    featured_grids = Enum.take_random(all_featured_grids, min(3, length(all_featured_grids)))
 
     {:noreply,
      assign(socket,
@@ -63,6 +70,7 @@ defmodule DialecticWeb.HomeLive do
        graphs: graphs,
        popular_tags: popular_tags,
        curated_grids: curated_grids,
+       all_curated_grids: all_curated_grids,
        featured_grids: featured_grids,
        page_title: page_title(search_term, tag, category)
      )}
@@ -99,6 +107,11 @@ defmodule DialecticWeb.HomeLive do
         Dialectic.Categorisation.AutoTagger.tag_graph(graph)
         {:noreply, assign(socket, generating: MapSet.put(socket.assigns.generating, title))}
     end
+  end
+
+  @impl true
+  def handle_event("toggle_editor_picks", _params, socket) do
+    {:noreply, assign(socket, :editor_picks_expanded, !socket.assigns.editor_picks_expanded)}
   end
 
   @impl true
@@ -310,7 +323,11 @@ defmodule DialecticWeb.HomeLive do
           <div class="mx-auto max-w-6xl px-4 pt-2 sm:px-6 sm:pt-3">
             <div class="flex flex-col items-stretch gap-2.5 sm:gap-3">
               <section class="w-full">
-                <% preview_items = editor_pick_preview_items(@curated_grids, @graphs) %>
+                <% preview_items =
+                  editor_pick_preview_items(
+                    if(@editor_picks_expanded, do: @all_curated_grids, else: @curated_grids),
+                    @graphs
+                  ) %>
                 <div class="grid gap-3 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-stretch">
                   <div class="relative overflow-hidden rounded-[2rem] border border-indigo-200/80 bg-gradient-to-br from-indigo-50 via-white to-sky-50/90 px-4 py-4 shadow-[0_18px_40px_rgba(15,23,42,0.10)] ring-1 ring-indigo-200/70 sm:px-6 sm:py-5">
                     <div class="pointer-events-none absolute inset-0">
@@ -430,18 +447,19 @@ defmodule DialecticWeb.HomeLive do
                           <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                             Editor picks
                           </p>
-                          <%= if @curated_grids != [] do %>
-                            <.link
-                              href="#curated"
+                          <%= if length(@all_curated_grids) > 3 do %>
+                            <button
+                              type="button"
+                              phx-click="toggle_editor_picks"
                               class="text-xs font-medium text-indigo-700 transition hover:text-indigo-900"
                             >
-                              See all picks
-                            </.link>
+                              {if @editor_picks_expanded, do: "Show less", else: "See all picks"}
+                            </button>
                           <% end %>
                         </div>
 
                         <div class="space-y-2">
-                          <%= for {item, index} <- Enum.with_index(Enum.take(preview_items, 3)) do %>
+                          <%= for {item, index} <- Enum.with_index(preview_items) do %>
                             <div>
                               <div class="mb-1 flex justify-end">
                                 <span class="inline-flex rounded-full bg-white/95 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 ring-1 ring-slate-200">
@@ -902,19 +920,10 @@ defmodule DialecticWeb.HomeLive do
     """
   end
 
-  defp editor_pick_preview_items(curated_grids, graphs) do
-    curated =
-      Enum.map(curated_grids || [], fn item ->
-        %{graph: item.graph, author_name: item.author_name}
-      end)
-
-    community =
-      Enum.map(graphs || [], fn {graph, _count, author_name} ->
-        %{graph: graph, author_name: author_name}
-      end)
-
-    (curated ++ community)
-    |> Enum.uniq_by(fn item -> item.graph.slug || item.graph.title || item.graph.id end)
+  defp editor_pick_preview_items(curated_grids, _graphs) do
+    Enum.map(curated_grids || [], fn item ->
+      %{graph: item.graph, author_name: item.author_name}
+    end)
   end
 
   defp partner_pills(items) do
