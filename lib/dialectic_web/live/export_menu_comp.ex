@@ -7,8 +7,8 @@ defmodule DialecticWeb.ExportMenuComp do
   Provides:
   - PNG screenshot (integrates with the existing `.download-png` hook)
   - PDF (navigates to the linear print view)
-
   - Markdown download
+  - JSON extract download (minimal graph data for image generation)
 
   Assigns:
   - `graph_id` (required): The current graph identifier.
@@ -26,6 +26,7 @@ defmodule DialecticWeb.ExportMenuComp do
       |> Map.put_new(:class, "")
       |> Map.put_new(:align, "right")
       |> Map.put_new(:node, nil)
+      |> Map.put_new(:token, nil)
 
     {:ok, assign(socket, assigns)}
   end
@@ -116,9 +117,14 @@ defmodule DialecticWeb.ExportMenuComp do
     <!-- Markdown -->
           <.link
             href={
-              if @graph_struct && @graph_struct.slug,
-                do: "/api/graphs/md/#{@graph_struct.slug}",
-                else: "/api/graphs/md/#{URI.encode(@graph_id)}"
+              path =
+                if @graph_struct && @graph_struct.slug,
+                  do: "/api/graphs/md/#{@graph_struct.slug}",
+                  else: "/api/graphs/md/#{URI.encode(@graph_id)}"
+
+              if assigns[:token],
+                do: "#{path}?#{URI.encode_query(%{token: assigns[:token]})}",
+                else: path
             }
             download={
               if @graph_struct && @graph_struct.slug,
@@ -143,6 +149,43 @@ defmodule DialecticWeb.ExportMenuComp do
               />
             </svg>
             <span>Markdown</span>
+          </.link>
+          
+    <!-- JSON Extract -->
+          <.link
+            href={
+              path =
+                if @graph_struct && @graph_struct.slug,
+                  do: "/api/graphs/json/#{@graph_struct.slug}",
+                  else: "/api/graphs/json/#{URI.encode(@graph_id)}"
+
+              if assigns[:token],
+                do: "#{path}?#{URI.encode_query(%{token: assigns[:token]})}",
+                else: path
+            }
+            download={
+              if @graph_struct && @graph_struct.slug,
+                do: "#{@graph_struct.slug}.json",
+                else: "#{@graph_id}.json"
+            }
+            class="w-full inline-flex items-center gap-2 text-xs font-medium px-2.5 py-2 rounded-md hover:bg-gray-50 transition-colors"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4 text-blue-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+              aria-hidden="true"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
+              />
+            </svg>
+            <span>JSON</span>
           </.link>
         </div>
       </details>

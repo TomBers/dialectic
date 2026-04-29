@@ -127,6 +127,7 @@ defmodule Dialectic.DbActions.Graphs do
       from g in Dialectic.Accounts.Graph,
         where: g.is_published == true,
         where: g.is_public == true,
+        where: g.is_deleted == false or is_nil(g.is_deleted),
         where: ilike(g.title, ^search_pattern),
         where:
           fragment(
@@ -157,6 +158,7 @@ defmodule Dialectic.DbActions.Graphs do
       from g in Graph,
         where: g.is_published == true,
         where: g.is_public == true,
+        where: g.is_deleted == false or is_nil(g.is_deleted),
         where: fragment("jsonb_array_length(?->'nodes') < ?", g.data, 5),
         left_join: author in Dialectic.Accounts.User,
         on: author.id == g.user_id,
@@ -172,6 +174,7 @@ defmodule Dialectic.DbActions.Graphs do
       from g in Graph,
         where: g.is_published == true,
         where: g.is_public == true,
+        where: g.is_deleted == false or is_nil(g.is_deleted),
         where: fragment("jsonb_array_length(?->'nodes') > ?", g.data, 20),
         left_join: author in Dialectic.Accounts.User,
         on: author.id == g.user_id,
@@ -187,6 +190,7 @@ defmodule Dialectic.DbActions.Graphs do
       from g in Graph,
         where: g.is_published == true,
         where: g.is_public == true,
+        where: g.is_deleted == false or is_nil(g.is_deleted),
         select: %{tag: fragment("unnest(?)", g.tags)}
 
     query =
@@ -204,6 +208,7 @@ defmodule Dialectic.DbActions.Graphs do
       from g in Graph,
         where: g.is_published == true,
         where: g.is_public == true,
+        where: g.is_deleted == false or is_nil(g.is_deleted),
         where: ^tag in g.tags,
         left_join: author in Dialectic.Accounts.User,
         on: author.id == g.user_id,
@@ -212,6 +217,74 @@ defmodule Dialectic.DbActions.Graphs do
         select: {g, author.username}
 
     Repo.all(query)
+  end
+
+  @doc """
+  Lists graphs that have been soft-deleted (hidden from homepage).
+  Used by admin interface.
+  """
+  def list_deleted_graphs(limit \\ 50) do
+    query =
+      from g in Graph,
+        where: g.is_deleted == true,
+        left_join: author in Dialectic.Accounts.User,
+        on: author.id == g.user_id,
+        order_by: [desc: g.updated_at],
+        limit: ^limit,
+        select: {g, author.username}
+
+    Repo.all(query)
+  end
+
+  @doc """
+  Soft deletes a graph by setting is_deleted to true.
+  Homepage visibility depends on homepage queries excluding soft-deleted graphs.
+  """
+  def soft_delete_graph(title) do
+    case get_graph_by_title(title) do
+      nil ->
+        {:error, :not_found}
+
+      graph ->
+        graph
+        |> Graph.changeset(%{is_deleted: true})
+        |> Repo.update()
+    end
+  end
+
+  @doc """
+  Soft deletes a graph only if the user owns it.
+  Returns {:ok, graph} on success, {:error, :not_found} if graph doesn't exist,
+  or {:error, :unauthorized} if the user doesn't own the graph.
+  """
+  def soft_delete_user_graph(title, user) do
+    case get_graph_by_title(title) do
+      nil ->
+        {:error, :not_found}
+
+      %Graph{user_id: user_id} = graph when user_id == user.id ->
+        graph
+        |> Graph.changeset(%{is_deleted: true})
+        |> Repo.update()
+
+      _graph ->
+        {:error, :unauthorized}
+    end
+  end
+
+  @doc """
+  Restores a soft-deleted graph by setting is_deleted to false.
+  """
+  def restore_graph(title) do
+    case get_graph_by_title(title) do
+      nil ->
+        {:error, :not_found}
+
+      graph ->
+        graph
+        |> Graph.changeset(%{is_deleted: false})
+        |> Repo.update()
+    end
   end
 
   @doc """
@@ -320,6 +393,7 @@ defmodule Dialectic.DbActions.Graphs do
   @doc """
   Lists curated grids for a given section, with the graph author info.
   Sections: "curated", "featured"
+  Excludes soft-deleted graphs.
   """
   def list_curated_grids(section, limit \\ 12) do
     alias Dialectic.Accounts.CuratedGrid
@@ -332,6 +406,7 @@ defmodule Dialectic.DbActions.Graphs do
       on: author.id == g.user_id,
       where: g.is_published == true,
       where: g.is_public == true,
+      where: g.is_deleted == false or is_nil(g.is_deleted),
       order_by: [asc: cg.position, desc: cg.inserted_at],
       limit: ^limit,
       select: %{

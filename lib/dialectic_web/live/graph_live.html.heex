@@ -20,7 +20,7 @@
       <%!-- Left: slide count --%>
       <span class="text-xs font-medium text-gray-400 shrink-0">
         <span class="text-white font-semibold">{length(@presentation_slide_ids)}</span>
-        {if length(@presentation_slide_ids) == 1, do: "node", else: "nodes"}
+        {if length(@presentation_slide_ids) == 1, do: "box", else: "boxes"}
       </span>
 
       <%!-- Center: presentation title --%>
@@ -56,7 +56,7 @@
         <button
           phx-click="exit_presentation"
           class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-gray-300 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-full border border-gray-600 transition-colors"
-          title="Exit presentation and show all nodes (Esc)"
+          title="Exit presentation and show all boxes (Esc)"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -179,6 +179,7 @@
     <!-- Presentation Drawer (Right panel style, same as other panels) -->
     <div
       id="presentation-drawer"
+      data-right-drawer
       class="fixed top-10 bottom-0 right-0 w-0 overflow-hidden bg-white border-l border-gray-200 z-50 transform translate-x-full opacity-0 transition-all duration-300 ease-in-out"
     >
       <.live_component
@@ -193,6 +194,7 @@
 <!-- Combine Drawer (Right panel style, same as other panels) -->
     <div
       id="combine-drawer"
+      data-right-drawer
       class="fixed top-10 bottom-0 right-0 w-0 overflow-hidden bg-white border-l border-gray-200 z-50 transform translate-x-full opacity-0 transition-all duration-300 ease-in-out"
     >
       <.live_component
@@ -206,6 +208,7 @@
 <!-- Top section (Right panel becomes slide-in drawer) -->
     <div
       id="right-panel"
+      data-right-drawer
       class="fixed top-10 bottom-0 right-0 w-0 overflow-hidden bg-white border-l border-gray-200 z-50 transform translate-x-full opacity-0 transition-all duration-300 ease-in-out"
     >
       <div class="p-2">
@@ -244,6 +247,7 @@
 <!-- Highlights Drawer (Right panel style) -->
     <div
       id="highlights-drawer"
+      data-right-drawer
       class="fixed top-10 bottom-0 right-0 w-0 overflow-hidden bg-white border-l border-gray-200 z-50 transform translate-x-full opacity-0 transition-all duration-300 ease-in-out"
     >
       <div class="p-2">
@@ -299,14 +303,12 @@
           current_user={@current_user}
           ask_question={@ask_question}
           exploration_stats={@exploration_stats}
+          can_edit={@can_edit}
           presentation_mode={@presentation_mode}
         />
       </div>
     </div>
-    
-<!-- Action toolbar moved into bottom actions area -->
-
-<!-- Left side: Graph (expands to full width when drawer is closed) -->
+    <!-- Left side: Graph (expands to full width when drawer is closed) -->
     <div id="graph-main-container" class="w-0 md:w-[56%] relative">
       <div
         id="cy"
@@ -321,6 +323,12 @@
         phx-hook="Graph"
         tabindex="0"
       >
+        <%= if @presentation_mode != :presenting do %>
+          <div class="pointer-events-none absolute left-4 top-4 z-10 hidden items-center gap-2 rounded-full border border-indigo-200/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm ring-1 ring-white/80 lg:inline-flex">
+            <.icon name="hero-cursor-arrow-rays" class="h-4 w-4 text-indigo-500" />
+            <span>Click any box to open it in the reader</span>
+          </div>
+        <% end %>
         <div id="cy-inner" class="h-full w-full relative" phx-update="ignore"></div>
       </div>
 
@@ -389,15 +397,15 @@
         on_cancel={JS.push("close_explore_modal")}
         show
       >
-        <h2 class="text-xl font-semibold mb-2">Review points to explore</h2>
+        <h2 class="text-xl font-semibold mb-2">Review points to expand</h2>
         <p class="text-sm text-gray-600 mb-3">
-          Select the points you want to explore. You can uncheck any you want to skip.
+          Select the points you want to expand. You can uncheck any you want to skip.
         </p>
 
         <div>
           <%= if @explore_items == [] do %>
             <div class="mb-3 text-sm text-gray-500 italic">
-              No points detected yet for this node.
+              No points detected yet for this box.
             </div>
           <% end %>
           <form phx-submit="submit_explore_modal">
@@ -432,7 +440,7 @@
                   @explore_items != [] && "bg-indigo-600 hover:bg-indigo-700"
                 ]}
               >
-                Explore selected
+                Expand selected
               </button>
             </div>
           </form>
@@ -544,33 +552,16 @@
             </button>
           </div>
           <div class="bg-white/95 backdrop-blur border border-gray-200 shadow-xl rounded-t-[1.75rem] rounded-2xl px-1.5 pt-2 pb-2 pointer-events-auto transform-gpu transition-all duration-200 ease-out translate-y-0">
-            <div class="grid grid-cols-[1fr_auto] gap-4 items-center px-1.5">
-              <%!-- Left column: Ask form --%>
-              <div class="min-w-0">
-                <.live_component
-                  module={DialecticWeb.AskFormComp}
-                  id="global-chat-form"
-                  form={@form}
-                  ask_question={@ask_question}
-                  prompt_mode={@prompt_mode}
-                  graph_id={@graph_id}
-                  node={@node}
-                />
-              </div>
-              <%!-- Right column: Action buttons --%>
-              <div class="flex items-center gap-1.5">
-                <.live_component
-                  module={DialecticWeb.ActionToolbarComp}
-                  id={"action-toolbar-#{@node && @node.id}"}
-                  node={@node}
-                  user={@user}
-                  current_user={assigns[:current_user]}
-                  graph_id={@graph_id}
-                  can_edit={@can_edit}
-                  inline={true}
-                  icons_only={false}
-                />
-              </div>
+            <div class="px-1.5">
+              <.live_component
+                module={DialecticWeb.AskFormComp}
+                id="global-chat-form"
+                form={@form}
+                ask_question={@ask_question}
+                prompt_mode={@prompt_mode}
+                graph_id={@graph_id}
+                node={@node}
+              />
             </div>
           </div>
         </div>

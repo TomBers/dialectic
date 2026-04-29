@@ -7,10 +7,136 @@ import { layoutConfig } from "./layout_config.js";
 cytoscape.use(dagre);
 cytoscape.use(compoundDragAndDrop);
 
-/* ─── Depth-based collapse configuration ─── */
-export const DEPTH_COLLAPSE_DEFAULTS = {
-  nodeThreshold: 10, // Auto-collapse when graph has more non-compound nodes than this
-  initialMaxDepth: 1, // Show root (depth 0) + depth 1; collapse children of depth ≥ 1
+const VISIBLE_GRAPH_NODE_FILTER = (n) =>
+  !n.hasClass("hidden") &&
+  !n.hasClass("depth-hidden") &&
+  !n.hasClass("presentation-hidden") &&
+  !n.hasClass("presentation-hidden-parent");
+
+const clampValue = (value, min, max) => Math.max(min, Math.min(max, value));
+const RIGHT_DRAWER_SELECTOR = "[data-right-drawer]";
+
+const getRightDrawers = () =>
+  Array.from(document.querySelectorAll(RIGHT_DRAWER_SELECTOR));
+
+const getRightDrawerOverlap = (containerRect) => {
+  let overlap = 0;
+
+  getRightDrawers().forEach((panel) => {
+    const panelRect = panel.getBoundingClientRect();
+    if (!panelRect) return;
+
+    const currentOverlap = Math.min(
+      containerRect.width,
+      Math.max(0, containerRect.right - panelRect.left),
+    );
+
+    if (currentOverlap > overlap) overlap = currentOverlap;
+  });
+
+  return overlap;
+};
+
+const getVisibleViewport = (container) => {
+  const rect = container.getBoundingClientRect();
+  const interactionSettings = layoutConfig.interactionSettings || {};
+  const margin = interactionSettings.viewportMargin || 24;
+  const rightInset = getRightDrawerOverlap(rect);
+
+  let bottomInset = 0;
+  const bottomMenu = document.getElementById("bottom-menu");
+  if (bottomMenu) {
+    const menuRect = bottomMenu.getBoundingClientRect();
+    const menuVisible =
+      menuRect.height > 0 &&
+      !bottomMenu.classList.contains("invisible") &&
+      !bottomMenu.classList.contains("opacity-0");
+
+    if (menuVisible) {
+      bottomInset = Math.max(0, rect.bottom - menuRect.top);
+    }
+  }
+
+  const left = margin;
+  const top = margin;
+  const right = Math.max(left, rect.width - rightInset - margin);
+  const bottom = Math.max(top, rect.height - bottomInset - margin);
+
+  return {
+    left,
+    top,
+    right,
+    bottom,
+    width: Math.max(0, right - left),
+    height: Math.max(0, bottom - top),
+  };
+};
+
+const constrainViewport = (cy, container) => {
+  if (!cy || !container) return false;
+
+  const visibleNodes = cy.nodes().filter(VISIBLE_GRAPH_NODE_FILTER);
+  if (!visibleNodes || visibleNodes.length === 0) return false;
+
+  const viewport = getVisibleViewport(container);
+  const interactionSettings = layoutConfig.interactionSettings || {};
+  const tolerance = interactionSettings.viewportTolerance || 0.5;
+  const minVisibleRatio = interactionSettings.minVisibleRatio || 0.18;
+  const minVisiblePixels = interactionSettings.minVisiblePixels || 120;
+  const maxVisiblePixels = interactionSettings.maxVisiblePixels || 220;
+
+  const zoom = cy.zoom();
+  const pan = cy.pan();
+  const bb = visibleNodes.boundingBox();
+
+  const renderedLeft = bb.x1 * zoom + pan.x;
+  const renderedRight = bb.x2 * zoom + pan.x;
+  const renderedTop = bb.y1 * zoom + pan.y;
+  const renderedBottom = bb.y2 * zoom + pan.y;
+  const renderedWidth = Math.max(1, renderedRight - renderedLeft);
+  const renderedHeight = Math.max(1, renderedBottom - renderedTop);
+
+  const targetVisibleX = clampValue(
+    viewport.width * minVisibleRatio,
+    minVisiblePixels,
+    maxVisiblePixels,
+  );
+  const targetVisibleY = clampValue(
+    viewport.height * minVisibleRatio,
+    minVisiblePixels,
+    maxVisiblePixels,
+  );
+
+  const minOverlapX = Math.max(
+    Math.min(24, renderedWidth),
+    Math.min(renderedWidth * 0.8, targetVisibleX),
+  );
+  const minOverlapY = Math.max(
+    Math.min(24, renderedHeight),
+    Math.min(renderedHeight * 0.8, targetVisibleY),
+  );
+
+  let dx = 0;
+  let dy = 0;
+
+  if (renderedRight < viewport.left + minOverlapX) {
+    dx = viewport.left + minOverlapX - renderedRight;
+  } else if (renderedLeft > viewport.right - minOverlapX) {
+    dx = viewport.right - minOverlapX - renderedLeft;
+  }
+
+  if (renderedBottom < viewport.top + minOverlapY) {
+    dy = viewport.top + minOverlapY - renderedBottom;
+  } else if (renderedTop > viewport.bottom - minOverlapY) {
+    dy = viewport.bottom - minOverlapY - renderedTop;
+  }
+
+  if (Math.abs(dx) <= tolerance && Math.abs(dy) <= tolerance) {
+    return false;
+  }
+
+  cy.pan({ x: pan.x + dx, y: pan.y + dy });
+  return true;
 };
 
 export function draw_graph(
@@ -61,16 +187,10 @@ export function draw_graph(
   // Store graphId on the cy instance so persistence helpers can find it
   cy._graphId = graphId || null;
 
-  // ── Restore or auto-collapse large graphs before first layout ──
-  // savedState is:
-  //   null           → never saved (first visit) → auto-collapse if large
-  //   {}  (empty)    → user explicitly expanded everything → honour that
-  //   {id: true, …}  → specific collapse state → restore it
-  let didCollapse = false;
+  // ── Restore only explicit user depth-collapse state before first layout ──
   const savedState = _loadDepthStateFromStorage(graphId);
 
-  if (savedState !== null && Object.keys(savedState).length > 0) {
-    // Persisted collapse state exists — restore it
+  if (savedState && Object.keys(savedState).length > 0) {
     computeNodeDepths(cy);
     Object.keys(savedState).forEach((id) => {
       const n = cy.getElementById(id);
@@ -80,18 +200,10 @@ export function draw_graph(
       }
     });
     recomputeDepthVisibility(cy);
-    didCollapse = true;
-  } else if (savedState === null) {
-    // No saved state at all (first visit) — auto-collapse if the graph is large
-    didCollapse = autoCollapseGraph(cy);
-    if (didCollapse) {
-      _persistDepthState(cy);
-    }
   }
-  // else: savedState is {} → user previously expanded all, leave graph fully open
 
   // If the target node ended up hidden, expand its ancestors so it's visible
-  if (didCollapse && node) {
+  if (savedState && node) {
     ensureDepthVisible(cy, node);
     _persistDepthState(cy);
   }
@@ -101,6 +213,61 @@ export function draw_graph(
   // - Cmd/Ctrl+Scroll or trackpad pinch to zoom at cursor
   // - Hold Space and drag to pan; otherwise keep box selection
   const container = graph;
+  const interactionSettings = layoutConfig.interactionSettings || {};
+  const normalizeWheelDelta = (delta, deltaMode) => {
+    if (deltaMode === 1) {
+      return delta * (interactionSettings.wheelLineStep || 18);
+    }
+
+    if (deltaMode === 2) {
+      return delta * container.clientHeight * (interactionSettings.wheelPageFactor || 0.85);
+    }
+
+    return delta;
+  };
+  const shapePanDelta = (delta) => {
+    const speed = interactionSettings.wheelPanSpeed || 0.7;
+    const maxStep = interactionSettings.wheelPanMaxStep || 140;
+    return clampValue(delta * speed, -maxStep, maxStep);
+  };
+  let clampPending = false;
+  let clampInProgress = false;
+  const scheduleViewportClamp = ({ immediate = false } = {}) => {
+    if (
+      clampInProgress ||
+      !cy ||
+      (typeof cy.destroyed === "function" && cy.destroyed())
+    ) {
+      return;
+    }
+
+    const runClamp = () => {
+      clampPending = false;
+      if (
+        clampInProgress ||
+        !cy ||
+        (typeof cy.destroyed === "function" && cy.destroyed())
+      ) {
+        return;
+      }
+
+      clampInProgress = true;
+      try {
+        constrainViewport(cy, container);
+      } finally {
+        clampInProgress = false;
+      }
+    };
+
+    if (immediate) {
+      runClamp();
+      return;
+    }
+
+    if (clampPending) return;
+    clampPending = true;
+    requestAnimationFrame(runClamp);
+  };
 
   // Track layout running to avoid pre-layout panning/centering flicker
   let layoutRunning = false;
@@ -109,6 +276,7 @@ export function draw_graph(
   });
   cy.on("layoutstop", () => {
     layoutRunning = false;
+    scheduleViewportClamp();
   });
 
   // Now run the initial layout (only visible nodes are positioned)
@@ -125,14 +293,19 @@ export function draw_graph(
     const n = evt.target;
     if (n.isParent && n.isParent()) return;
     n.addClass("node-hover");
+    if (!isSpaceDown && !isMouseDown) {
+      container.style.cursor = "pointer";
+    }
   });
   cy.on("mouseout", "node", (evt) => {
     const n = evt.target;
     n.removeClass("node-hover");
+    if (!isMouseDown) {
+      container.style.cursor = isSpaceDown ? "grab" : "";
+    }
   });
 
   // Smooth, cursor-centered zoom
-  const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
   const wheelHandler = (e) => {
     // Zoom with Cmd/Ctrl (or trackpad pinch where ctrlKey is true)
     if (e.ctrlKey || e.metaKey) {
@@ -146,29 +319,32 @@ export function draw_graph(
       const current = cy.zoom();
       // Exponential scale for smooth zooming
       const sensitivity = layoutConfig.zoomSettings.sensitivity || 0.0025;
-      const zoomFactor = Math.pow(1 + sensitivity, -e.deltaY);
-      const next = clamp(
+      const zoomDelta = normalizeWheelDelta(e.deltaY, e.deltaMode);
+      const zoomFactor = Math.pow(1 + sensitivity, -zoomDelta);
+      const next = clampValue(
         current * zoomFactor,
         layoutConfig.zoomSettings.min || 0.05,
         layoutConfig.zoomSettings.max || 4.0,
       );
 
       cy.zoom({ level: next, renderedPosition });
+      scheduleViewportClamp();
     } else {
       // Two-finger scroll / mouse wheel pans the canvas
       e.preventDefault();
 
       // If Shift is pressed and the gesture is mostly vertical,
       // bias the movement to horizontal (Figma-like)
-      let dx = e.deltaX;
-      let dy = e.deltaY;
+      let dx = shapePanDelta(normalizeWheelDelta(e.deltaX, e.deltaMode));
+      let dy = shapePanDelta(normalizeWheelDelta(e.deltaY, e.deltaMode));
       if (e.shiftKey && Math.abs(e.deltaX) < Math.abs(e.deltaY)) {
-        dx = e.deltaY;
+        dx = shapePanDelta(normalizeWheelDelta(e.deltaY, e.deltaMode));
         dy = 0;
       }
 
       // Natural pan (scroll right -> content moves right)
       cy.panBy({ x: -dx, y: -dy });
+      scheduleViewportClamp();
     }
   };
 
@@ -213,7 +389,7 @@ export function draw_graph(
       const sensitivity = layoutConfig.zoomSettings.pinchSensitivity || 1.0;
       const zoomFactor = Math.pow(rawScale, sensitivity);
 
-      const next = clamp(
+      const next = clampValue(
         touchStartZoom * zoomFactor,
         layoutConfig.zoomSettings.min || 0.05,
         layoutConfig.zoomSettings.max || 4.0,
@@ -223,6 +399,7 @@ export function draw_graph(
         level: next,
         renderedPosition: touchCenter,
       });
+      scheduleViewportClamp();
     }
   };
 
@@ -441,6 +618,7 @@ export function draw_graph(
       const dy = e.clientY - lastPos.y;
       cy.panBy({ x: dx, y: dy });
       lastPos = { x: e.clientX, y: e.clientY };
+      scheduleViewportClamp();
       e.preventDefault();
     }
   };
@@ -659,20 +837,7 @@ export function draw_graph(
 
     // Ensure node is within visible bounds using model-space + zoom/pan; pan minimally if off-screen
     const rect = container.getBoundingClientRect();
-    const panels = ["right-panel", "highlights-drawer"];
-    let overlap = 0;
-
-    panels.forEach((id) => {
-      const panel = document.getElementById(id);
-      const pr = panel ? panel.getBoundingClientRect() : null;
-      if (pr) {
-        const currentOverlap = Math.min(
-          rect.width,
-          Math.max(0, rect.right - pr.left),
-        );
-        if (currentOverlap > overlap) overlap = currentOverlap;
-      }
-    });
+    const overlap = getRightDrawerOverlap(rect);
 
     // Visible region inside the container
     const margin = 16; // outer margin from container edges
@@ -735,6 +900,7 @@ export function draw_graph(
     if (initial) {
       initial.addClass("selected");
     }
+    scheduleViewportClamp();
   });
 
   // Streams: focus and toggle group handlers
@@ -803,10 +969,11 @@ export function draw_graph(
 
   context.handleEvent("collapse_all_depth", (payload) => {
     try {
+      const defaultCollapseDepth = 1;
       const maxDepth =
         payload && payload.max_depth != null
           ? payload.max_depth
-          : DEPTH_COLLAPSE_DEFAULTS.initialMaxDepth;
+          : defaultCollapseDepth;
       collapseAllDepth(cy, maxDepth);
     } catch (_e) {}
   });
@@ -821,19 +988,43 @@ export function draw_graph(
 
   // Expose collapsed-state enforcement for external callers
   cy.enforceCollapsedState = () => enforceCollapsedState(cy);
+  cy.constrainViewport = () => constrainViewport(cy, container);
+  cy.scheduleViewportClamp = (opts) => scheduleViewportClamp(opts);
 
   // Expose depth-collapse helpers on the cy instance for graph_hook.js
   cy.saveDepthCollapseState = () => saveDepthCollapseState(cy);
   cy.restoreDepthCollapseState = (state) =>
     restoreDepthCollapseState(cy, state);
   cy.recomputeDepthVisibility = () => recomputeDepthVisibility(cy);
-  cy.autoCollapseGraph = (cfg) => autoCollapseGraph(cy, cfg);
   cy.ensureDepthVisible = (id) => ensureDepthVisible(cy, id);
   cy.ensureGroupVisible = (id) => ensureGroupVisible(cy, id);
   cy.expandNodeChildren = (n) =>
     expandNodeChildren(cy, typeof n === "string" ? cy.getElementById(n) : n);
   cy.collapseNodeChildren = (n) =>
     collapseNodeChildren(cy, typeof n === "string" ? cy.getElementById(n) : n);
+
+  let viewportClampTimeout = null;
+  const queueViewportClamp = () => {
+    if (viewportClampTimeout !== null) {
+      clearTimeout(viewportClampTimeout);
+    }
+
+    viewportClampTimeout = setTimeout(() => {
+      viewportClampTimeout = null;
+      scheduleViewportClamp();
+    }, 80);
+  };
+  const flushViewportClamp = () => {
+    if (viewportClampTimeout !== null) {
+      clearTimeout(viewportClampTimeout);
+      viewportClampTimeout = null;
+    }
+
+    scheduleViewportClamp();
+  };
+
+  cy.on("pan zoom", queueViewportClamp);
+  cy.on("mouseup touchend", flushViewportClamp);
 
   // ── Depth-toggle overlay buttons (expand/collapse via mouse click) ──
   _injectDepthToggleStyles();
@@ -1177,32 +1368,6 @@ function collapseAllDepth(cy, maxDepth) {
 }
 
 /**
- * Auto-collapse a graph if it exceeds the node threshold.
- * Returns `true` if collapse was applied.
- */
-function autoCollapseGraph(cy, config) {
-  const cfg = { ...DEPTH_COLLAPSE_DEFAULTS, ...(config || {}) };
-  const nodes = cy.nodes().filter((n) => !n.isParent());
-
-  if (nodes.length <= cfg.nodeThreshold) return false;
-
-  computeNodeDepths(cy);
-
-  // Collapse every node at depth ≥ initialMaxDepth that has children
-  nodes.forEach((n) => {
-    const depth = n.data("_depth");
-    const children = n.outgoers("node").filter((m) => !m.isParent());
-    if (depth >= cfg.initialMaxDepth && children.length > 0) {
-      n.data("_depthCollapsed", "true");
-      n.addClass("node-collapsed");
-    }
-  });
-
-  recomputeDepthVisibility(cy);
-  return true;
-}
-
-/**
  * Ensure a specific node is visible by expanding any collapsed ancestors
  * along the path from a root to it.
  */
@@ -1308,21 +1473,25 @@ function _depthStorageKey(graphId) {
   return graphId ? `dialectic_depth_collapse_${graphId}` : null;
 }
 
-/** Persist the current collapse flags to localStorage.
- *  An empty object ({}) is stored intentionally — it means
- *  "user explicitly expanded everything" and must be distinguished
- *  from a missing key (null) which means "first visit".
- */
+/** Persist the current collapse flags to localStorage. */
 function _persistDepthState(cy) {
   const key = _depthStorageKey(cy._graphId);
   if (!key) return;
   try {
     const state = saveDepthCollapseState(cy);
-    localStorage.setItem(key, JSON.stringify(state));
+    localStorage.setItem(
+      key,
+      JSON.stringify({
+        version: 2,
+        state,
+      }),
+    );
   } catch (_e) {}
 }
 
-/** Load saved collapse flags from localStorage (returns object or null) */
+/** Load saved collapse flags from localStorage (returns object or null).
+ *  Only explicit user-persisted v2 state is restored.
+ */
 function _loadDepthStateFromStorage(graphId) {
   const key = _depthStorageKey(graphId);
   if (!key) return null;
@@ -1330,8 +1499,14 @@ function _loadDepthStateFromStorage(graphId) {
     const raw = localStorage.getItem(key);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-      return parsed;
+    if (
+      parsed &&
+      parsed.version === 2 &&
+      parsed.state &&
+      typeof parsed.state === "object" &&
+      !Array.isArray(parsed.state)
+    ) {
+      return parsed.state;
     }
   } catch (_e) {}
   return null;
@@ -1468,6 +1643,9 @@ function _injectDepthToggleStyles() {
   overflow: hidden;
 }
 .depth-toggle-btn {
+  --depth-toggle-translate-x: -50%;
+  --depth-toggle-translate-y: 0;
+  --depth-toggle-scale: 1;
   pointer-events: auto;
   position: absolute;
   display: inline-flex;
@@ -1490,12 +1668,14 @@ function _injectDepthToggleStyles() {
   user-select: none;
   line-height: 1;
   white-space: nowrap;
+  transform: translate(var(--depth-toggle-translate-x), var(--depth-toggle-translate-y)) scale(var(--depth-toggle-scale));
+  transform-origin: center center;
 }
 /* direction-aware centering */
-.depth-toggle-btn.depth-dir-tb { transform: translate(-50%, 0); }
-.depth-toggle-btn.depth-dir-bt { transform: translate(-50%, -100%); }
-.depth-toggle-btn.depth-dir-lr { transform: translate(0, -50%); }
-.depth-toggle-btn.depth-dir-rl { transform: translate(-100%, -50%); }
+.depth-toggle-btn.depth-dir-tb { --depth-toggle-translate-x: -50%; --depth-toggle-translate-y: 0; }
+.depth-toggle-btn.depth-dir-bt { --depth-toggle-translate-x: -50%; --depth-toggle-translate-y: -100%; }
+.depth-toggle-btn.depth-dir-lr { --depth-toggle-translate-x: 0; --depth-toggle-translate-y: -50%; }
+.depth-toggle-btn.depth-dir-rl { --depth-toggle-translate-x: -100%; --depth-toggle-translate-y: -50%; }
 .depth-toggle-btn:hover {
   background: #f1f5f9;
   border-color: #94a3b8;
@@ -1503,19 +1683,19 @@ function _injectDepthToggleStyles() {
 }
 .depth-toggle-btn.depth-dir-tb:active {
   background: #e2e8f0;
-  transform: translate(-50%, 0) scale(0.95);
+  transform: translate(var(--depth-toggle-translate-x), var(--depth-toggle-translate-y)) scale(calc(var(--depth-toggle-scale) * 0.95));
 }
 .depth-toggle-btn.depth-dir-bt:active {
   background: #e2e8f0;
-  transform: translate(-50%, -100%) scale(0.95);
+  transform: translate(var(--depth-toggle-translate-x), var(--depth-toggle-translate-y)) scale(calc(var(--depth-toggle-scale) * 0.95));
 }
 .depth-toggle-btn.depth-dir-lr:active {
   background: #e2e8f0;
-  transform: translate(0, -50%) scale(0.95);
+  transform: translate(var(--depth-toggle-translate-x), var(--depth-toggle-translate-y)) scale(calc(var(--depth-toggle-scale) * 0.95));
 }
 .depth-toggle-btn.depth-dir-rl:active {
   background: #e2e8f0;
-  transform: translate(-100%, -50%) scale(0.95);
+  transform: translate(var(--depth-toggle-translate-x), var(--depth-toggle-translate-y)) scale(calc(var(--depth-toggle-scale) * 0.95));
 }
 /* collapsed → warm amber "+N" pill — stands out from all node types */
 .depth-toggle-btn.depth-collapsed-btn {
@@ -1638,6 +1818,9 @@ function _updateDepthTogglePositions(cy) {
   if (!cy._depthToggleButtons) return;
 
   const dir = localStorage.getItem("graph_direction") || "TB";
+  const zoom = typeof cy.zoom === "function" ? cy.zoom() : 1;
+  const hideBelowZoom = 0.3;
+  const scale = Math.max(0.68, Math.min(1, 0.45 + zoom * 0.55));
 
   cy._depthToggleButtons.forEach((btn, nodeId) => {
     const node = cy.getElementById(nodeId);
@@ -1653,6 +1836,13 @@ function _updateDepthTogglePositions(cy) {
 
     const bb = node.renderedBoundingBox({ includeLabels: false });
     if (!bb || bb.w === 0) {
+      btn.style.display = "none";
+      return;
+    }
+
+    // When zoomed far out, the controls become visual noise rather than
+    // useful affordances. Hide them entirely below that threshold.
+    if (zoom < hideBelowZoom || Math.max(bb.w, bb.h) < 24) {
       btn.style.display = "none";
       return;
     }
@@ -1687,6 +1877,7 @@ function _updateDepthTogglePositions(cy) {
     btn.classList.add(`depth-dir-${dir.toLowerCase()}`);
 
     btn.style.display = "";
+    btn.style.setProperty("--depth-toggle-scale", scale.toFixed(3));
     btn.style.left = `${x}px`;
     btn.style.top = `${y}px`;
   });

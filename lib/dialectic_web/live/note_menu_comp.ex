@@ -59,9 +59,14 @@ defmodule DialecticWeb.NoteMenuComp do
 
           <.link
             href={
-              if @graph_struct && @graph_struct.slug,
-                do: "/api/graphs/md/#{@graph_struct.slug}",
-                else: "/api/graphs/md/#{URI.encode(@graph_id)}"
+              path =
+                if @graph_struct && @graph_struct.slug,
+                  do: "/api/graphs/md/#{@graph_struct.slug}",
+                  else: "/api/graphs/md/#{URI.encode(@graph_id)}"
+
+              if assigns[:token],
+                do: "#{path}?#{URI.encode_query(%{token: assigns[:token]})}",
+                else: path
             }
             download={
               if @graph_struct && @graph_struct.slug,
@@ -83,6 +88,41 @@ defmodule DialecticWeb.NoteMenuComp do
                 stroke-linecap="round"
                 stroke-linejoin="round"
                 d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
+              />
+            </svg>
+          </.link>
+
+          <.link
+            href={
+              path =
+                if @graph_struct && @graph_struct.slug,
+                  do: "/api/graphs/json/#{@graph_struct.slug}",
+                  else: "/api/graphs/json/#{URI.encode(@graph_id)}"
+
+              if assigns[:token],
+                do: "#{path}?#{URI.encode_query(%{token: assigns[:token]})}",
+                else: path
+            }
+            download={
+              if @graph_struct && @graph_struct.slug,
+                do: "#{@graph_struct.slug}.json",
+                else: "#{@graph_id}.json"
+            }
+            class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-blue-200 text-blue-600 hover:bg-blue-50"
+            title="Download JSON (for image generation)"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
               />
             </svg>
           </.link>

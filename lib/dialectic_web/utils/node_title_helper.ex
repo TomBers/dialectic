@@ -13,7 +13,8 @@ defmodule DialecticWeb.Utils.NodeTitleHelper do
     - node: A map with `:content` or `"content"` key (string) and optionally `:id` or `"id"` key.
             Supports both atom-keyed structs and string-keyed maps (e.g. from JSON).
     - opts: Keyword list of options
-      - `:max_length` - Maximum characters before truncation (default: 80)
+      - `:max_length` - Maximum characters before truncation (default: 80).
+        Can also be `nil` or `:infinity` to disable truncation entirely.
 
   ## Examples
       iex> extract_node_title(%{content: "# Hello World\\nMore text"})
@@ -47,8 +48,12 @@ defmodule DialecticWeb.Utils.NodeTitleHelper do
             node_id || "Untitled"
 
           title ->
-            String.slice(title, 0, max_length) <>
-              if String.length(title) > max_length, do: "...", else: ""
+            if max_length in [nil, :infinity] do
+              title
+            else
+              String.slice(title, 0, max_length) <>
+                if String.length(title) > max_length, do: "...", else: ""
+            end
         end
 
       _ ->

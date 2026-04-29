@@ -109,7 +109,19 @@ export const layoutConfig = {
   zoomSettings: {
     min: 0.05,
     max: 4.0,
-    sensitivity: 0.0025,
-    pinchSensitivity: 2.0,
+    sensitivity: 0.0015,
+    pinchSensitivity: 1.2,
+  },
+
+  interactionSettings: {
+    viewportMargin: 32,
+    viewportTolerance: 0.25,
+    minVisibleRatio: 0.24,
+    minVisiblePixels: 160,
+    maxVisiblePixels: 280,
+    wheelLineStep: 16,
+    wheelPageFactor: 0.75,
+    wheelPanSpeed: 0.5,
+    wheelPanMaxStep: 96,
   },
 };

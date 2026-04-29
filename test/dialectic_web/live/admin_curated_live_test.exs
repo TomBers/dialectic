@@ -185,4 +185,96 @@ defmodule DialecticWeb.AdminCuratedLiveTest do
       refute html =~ "phx-click=\"add_curated\""
     end
   end
+
+  describe "soft delete (hide) functionality" do
+    setup %{conn: conn} do
+      admin = user_fixture() |> make_admin()
+      conn = log_in_user(conn, admin)
+      graph = create_published_graph("Hideable Graph #{System.unique_integer([:positive])}")
+      %{conn: conn, admin: admin, graph: graph}
+    end
+
+    test "hiding a graph from search results", %{conn: conn, graph: graph} do
+      {:ok, view, _html} = live(conn, ~p"/admin/curated")
+
+      # Search for the graph first
+      view
+      |> form("#curated-search-form", %{"search" => graph.title})
+      |> render_change()
+
+      # Hide the graph
+      html =
+        view
+        |> element("button[phx-click=soft_delete][phx-value-title='#{graph.title}']")
+        |> render_click()
+
+      assert html =~ "Hidden"
+      assert html =~ graph.title
+    end
+
+    test "hidden graphs appear in the hidden section", %{conn: conn, graph: graph} do
+      # Soft delete the graph first
+      {:ok, _} = Dialectic.DbActions.Graphs.soft_delete_graph(graph.title)
+
+      {:ok, _view, html} = live(conn, ~p"/admin/curated")
+
+      assert html =~ "Hidden from Homepage"
+      assert html =~ graph.title
+    end
+
+    test "restoring a hidden graph", %{conn: conn, graph: graph} do
+      # Soft delete the graph first
+      {:ok, _} = Dialectic.DbActions.Graphs.soft_delete_graph(graph.title)
+
+      {:ok, view, html} = live(conn, ~p"/admin/curated")
+      assert html =~ graph.title
+
+      # Restore the graph
+      html =
+        view
+        |> element("button[phx-click=restore_graph][phx-value-title='#{graph.title}']")
+        |> render_click()
+
+      assert html =~ "Restored"
+    end
+
+    test "hidden graphs do not appear in homepage search", %{conn: _conn, graph: graph} do
+      # Verify graph appears before hiding
+      results_before = Dialectic.DbActions.Graphs.all_graphs_with_notes(graph.title, limit: 10)
+      assert Enum.any?(results_before, fn {g, _, _} -> g.title == graph.title end)
+
+      # Soft delete the graph
+      {:ok, _} = Dialectic.DbActions.Graphs.soft_delete_graph(graph.title)
+
+      # Verify graph no longer appears
+      results_after = Dialectic.DbActions.Graphs.all_graphs_with_notes(graph.title, limit: 10)
+      refute Enum.any?(results_after, fn {g, _, _} -> g.title == graph.title end)
+    end
+
+    test "hidden graphs do not appear in curated/featured sections", %{
+      conn: _conn,
+      graph: graph,
+      admin: admin
+    } do
+      # Add the graph to curated section
+      {:ok, _} =
+        Dialectic.DbActions.Graphs.add_curated_grid(%{
+          graph_title: graph.title,
+          curator_id: admin.id,
+          section: "curated",
+          note: ""
+        })
+
+      # Verify graph appears in curated section before hiding
+      curated_before = Dialectic.DbActions.Graphs.list_curated_grids("curated", 20)
+      assert Enum.any?(curated_before, fn item -> item.graph.title == graph.title end)
+
+      # Soft delete the graph
+      {:ok, _} = Dialectic.DbActions.Graphs.soft_delete_graph(graph.title)
+
+      # Verify graph no longer appears in curated section
+      curated_after = Dialectic.DbActions.Graphs.list_curated_grids("curated", 20)
+      refute Enum.any?(curated_after, fn item -> item.graph.title == graph.title end)
+    end
+  end
 end

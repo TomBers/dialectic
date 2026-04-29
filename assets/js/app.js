@@ -2,6 +2,25 @@
 // to get started and then uncomment the line below.
 import "./user_socket.js";
 
+// Early mobile redirect: runs immediately before LiveView mounts for faster UX
+// Redirects /g/<slug> to /g/<slug>/linear on mobile devices
+(function () {
+  if (window.innerWidth < 1024) {
+    const path = window.location.pathname;
+    const graphMatch = path.match(/^\/g\/([^/]+)$/);
+    if (graphMatch) {
+      const params = new URLSearchParams(window.location.search);
+      if (params.has("node") && !params.has("node_id")) {
+        params.set("node_id", params.get("node"));
+        params.delete("node");
+      }
+      const queryString = params.toString();
+      const linearUrl = `/g/${graphMatch[1]}/linear${queryString ? `?${queryString}` : ""}${window.location.hash}`;
+      window.location.replace(linearUrl);
+    }
+  }
+})();
+
 // You can include dependencies in two ways.
 //
 // The simplest option is to put them in assets/vendor and
@@ -61,6 +80,45 @@ hooks.SearchNav = SearchNav;
 hooks.Presentation = PresentationHook;
 hooks.PresentationSetup = PresentationSetupHook;
 hooks.Share = ShareHook;
+hooks.PersistCollapse = {
+  mounted() {
+    this.restore();
+  },
+  updated() {
+    this.restore();
+  },
+  restore() {
+    const storageKey = this.el.dataset.collapseKey;
+    if (!storageKey) return;
+
+    const defaultState = this.el.dataset.collapseDefault;
+    let collapsed = defaultState === "collapsed";
+    try {
+      const stored = localStorage.getItem(storageKey);
+      if (stored === "collapsed") {
+        collapsed = true;
+      } else if (stored === "expanded") {
+        collapsed = false;
+      }
+    } catch (_e) {
+      collapsed = defaultState === "collapsed";
+    }
+
+    const body = this.el.querySelector("[data-collapse-body]");
+    if (!body) return;
+
+    const icon = this.el.querySelector("[data-collapse-icon]");
+    const openState = this.el.querySelector("[data-collapse-open-state]");
+    const closeState = this.el.querySelector("[data-collapse-close-state]");
+
+    body.classList.toggle("hidden", collapsed);
+    if (icon) icon.classList.toggle("rotate-180", collapsed);
+    if (openState && closeState) {
+      openState.classList.toggle("hidden", !collapsed);
+      closeState.classList.toggle("hidden", collapsed);
+    }
+  },
+};
 
 hooks.PasswordToggle = {
   mounted() {
@@ -92,7 +150,8 @@ hooks.MobileRedirect = {
     if (window.innerWidth < 1024) {
       const url = this.el.dataset.linearUrl;
       if (url) {
-        window.location.href = url;
+        // Use replace to avoid polluting browser history (back button loop)
+        window.location.replace(url);
       }
     }
   },
@@ -101,6 +160,7 @@ hooks.MobileRedirect = {
 hooks.GraphLayout = {
   mounted() {
     this.activePanelId = null;
+    this._reopenSideDrawerAfterCombine = false;
     const graphId = this.el.dataset.graphId || "global";
     const validReadingDensities = ["compact", "comfortable", "large"];
     const validReadingFonts = ["sans", "serif"];
@@ -183,6 +243,9 @@ hooks.GraphLayout = {
       if (!targetPanel) return;
 
       const isClosed = targetPanel.classList.contains("translate-x-full");
+      const sideDrawer = document.getElementById("side-drawer");
+      const sideDrawerIsOpen =
+        sideDrawer && !sideDrawer.classList.contains("-translate-x-full");
 
       // Track whether the presentation drawer was open before we close everything
       const presDrawer = document.getElementById("presentation-drawer");
@@ -193,6 +256,16 @@ hooks.GraphLayout = {
       const combineDrawer = document.getElementById("combine-drawer");
       const combineWasOpen =
         combineDrawer && !combineDrawer.classList.contains("translate-x-full");
+
+      if (id === "combine-drawer" && isClosed) {
+        this._reopenSideDrawerAfterCombine = !!sideDrawerIsOpen;
+        if (sideDrawerIsOpen) {
+          this._applySideDrawerState(false, {
+            persist: false,
+            dispatchResize: false,
+          });
+        }
+      }
 
       // Close all panels first
       panels.forEach((pId) => {
@@ -282,115 +355,37 @@ hooks.GraphLayout = {
 
         if (bottomMenu) bottomMenu.classList.remove("panel-open");
       }
+
+      const shouldRestoreSideDrawer =
+        this._reopenSideDrawerAfterCombine &&
+        ((combineWasOpen && id !== "combine-drawer") ||
+          (id === "combine-drawer" && !isClosed));
+
+      if (shouldRestoreSideDrawer) {
+        this._applySideDrawerState(true, {
+          persist: false,
+          dispatchResize: false,
+        });
+        this._reopenSideDrawerAfterCombine = false;
+      }
+
+      window.dispatchEvent(new Event("resize"));
     });
 
     this.el.addEventListener("toggle-side-drawer", (e) => {
       const drawer = document.getElementById("side-drawer");
-      const graphContainer = document.getElementById("graph-main-container");
-      const toggleBtn = document.getElementById("drawer-toggle");
-      const bottomElements = document.querySelectorAll(".shift-with-panel");
-
       if (!drawer) return;
 
       const isClosed = drawer.classList.contains("-translate-x-full");
       let shouldOpen = isClosed;
+      const persist = e?.detail?.persist !== false;
 
       if (e.detail && e.detail.force) {
         if (e.detail.force === "open") shouldOpen = true;
         if (e.detail.force === "close") shouldOpen = false;
       }
 
-      this.sideDrawerOpen = shouldOpen;
-      try {
-        localStorage.setItem(
-          this._drawerStorageKey,
-          String(this.sideDrawerOpen),
-        );
-      } catch (_e) {}
-
-      if (shouldOpen) {
-        this.sideDrawerOpen = true;
-        // OPENING
-        drawer.classList.remove(
-          "-translate-x-full",
-          "opacity-0",
-          "w-0",
-          "md:w-0",
-          "overflow-hidden",
-        );
-        drawer.classList.add(
-          "translate-x-0",
-          "opacity-100",
-          "w-full",
-          "md:w-[44%]",
-          "p-4",
-        );
-
-        if (graphContainer) {
-          graphContainer.classList.remove("w-full");
-          graphContainer.classList.add("md:w-[56%]");
-        }
-
-        if (toggleBtn) {
-          toggleBtn.classList.remove("left-2");
-          toggleBtn.classList.add(
-            "right-2",
-            "md:left-[44%]",
-            "md:ml-2",
-            "md:right-auto",
-          );
-          const path = toggleBtn.querySelector("path");
-          if (path) path.setAttribute("d", "M11 19l-7-7 7-7");
-          toggleBtn.setAttribute("aria-expanded", "true");
-          toggleBtn.setAttribute("aria-label", "Hide menu");
-        }
-
-        bottomElements.forEach((el) => {
-          el.classList.add("md:left-[44%]");
-        });
-      } else {
-        this.sideDrawerOpen = false;
-        // CLOSING
-        drawer.classList.remove(
-          "translate-x-0",
-          "opacity-100",
-          "w-full",
-          "md:w-[44%]",
-          "p-4",
-        );
-        drawer.classList.add(
-          "-translate-x-full",
-          "opacity-0",
-          "w-0",
-          "md:w-0",
-          "overflow-hidden",
-        );
-
-        if (graphContainer) {
-          graphContainer.classList.remove("md:w-[56%]");
-          graphContainer.classList.add("w-full");
-        }
-
-        if (toggleBtn) {
-          toggleBtn.classList.remove(
-            "right-2",
-            "md:left-[44%]",
-            "md:ml-2",
-            "md:right-auto",
-          );
-          toggleBtn.classList.add("left-2");
-          const path = toggleBtn.querySelector("path");
-          if (path) path.setAttribute("d", "M13 5l7 7-7 7");
-          toggleBtn.setAttribute("aria-expanded", "false");
-          toggleBtn.setAttribute("aria-label", "Show menu");
-        }
-
-        bottomElements.forEach((el) => {
-          el.classList.remove("md:left-[44%]");
-        });
-      }
-
-      window.dispatchEvent(new Event("resize"));
+      this._applySideDrawerState(shouldOpen, { persist });
     });
 
     this.el.addEventListener("toggle-bottom-menu", () => {
@@ -419,6 +414,8 @@ hooks.GraphLayout = {
           String(this.bottomMenuOpen),
         );
       } catch (_e) {}
+
+      window.dispatchEvent(new Event("resize"));
     });
 
     this.restoreState();
@@ -473,6 +470,110 @@ hooks.GraphLayout = {
       } catch (_e) {
         // Ignore parse errors or missing storage
       }
+    }
+  },
+  _applySideDrawerState(
+    shouldOpen,
+    { persist = true, dispatchResize = true } = {},
+  ) {
+    const drawer = document.getElementById("side-drawer");
+    const graphContainer = document.getElementById("graph-main-container");
+    const toggleBtn = document.getElementById("drawer-toggle");
+    const bottomElements = document.querySelectorAll(".shift-with-panel");
+
+    if (!drawer) return;
+
+    this.sideDrawerOpen = shouldOpen;
+
+    if (persist) {
+      try {
+        localStorage.setItem(
+          this._drawerStorageKey,
+          String(this.sideDrawerOpen),
+        );
+      } catch (_e) {}
+    }
+
+    if (shouldOpen) {
+      drawer.classList.remove(
+        "-translate-x-full",
+        "opacity-0",
+        "w-0",
+        "md:w-0",
+        "overflow-hidden",
+      );
+      drawer.classList.add(
+        "translate-x-0",
+        "opacity-100",
+        "w-full",
+        "md:w-[44%]",
+        "p-4",
+      );
+
+      if (graphContainer) {
+        graphContainer.classList.remove("w-full");
+        graphContainer.classList.add("md:w-[56%]");
+      }
+
+      if (toggleBtn) {
+        toggleBtn.classList.remove("left-2");
+        toggleBtn.classList.add(
+          "right-2",
+          "md:left-[44%]",
+          "md:ml-2",
+          "md:right-auto",
+        );
+        const path = toggleBtn.querySelector("path");
+        if (path) path.setAttribute("d", "M11 19l-7-7 7-7");
+        toggleBtn.setAttribute("aria-expanded", "true");
+        toggleBtn.setAttribute("aria-label", "Hide menu");
+      }
+
+      bottomElements.forEach((el) => {
+        el.classList.add("md:left-[44%]");
+      });
+    } else {
+      drawer.classList.remove(
+        "translate-x-0",
+        "opacity-100",
+        "w-full",
+        "md:w-[44%]",
+        "p-4",
+      );
+      drawer.classList.add(
+        "-translate-x-full",
+        "opacity-0",
+        "w-0",
+        "md:w-0",
+        "overflow-hidden",
+      );
+
+      if (graphContainer) {
+        graphContainer.classList.remove("md:w-[56%]");
+        graphContainer.classList.add("w-full");
+      }
+
+      if (toggleBtn) {
+        toggleBtn.classList.remove(
+          "right-2",
+          "md:left-[44%]",
+          "md:ml-2",
+          "md:right-auto",
+        );
+        toggleBtn.classList.add("left-2");
+        const path = toggleBtn.querySelector("path");
+        if (path) path.setAttribute("d", "M13 5l7 7-7 7");
+        toggleBtn.setAttribute("aria-expanded", "false");
+        toggleBtn.setAttribute("aria-label", "Show menu");
+      }
+
+      bottomElements.forEach((el) => {
+        el.classList.remove("md:left-[44%]");
+      });
+    }
+
+    if (dispatchResize) {
+      window.dispatchEvent(new Event("resize"));
     }
   },
   updated() {

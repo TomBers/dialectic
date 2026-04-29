@@ -120,7 +120,7 @@ defmodule DialecticWeb.UserProfileLiveTest do
       assert html =~ "Grids by otheruser"
     end
 
-    test "shows 'Create your first graph' only on own empty profile", %{conn: conn} do
+    test "shows 'Create your first grid' only on own empty profile", %{conn: conn} do
       user = create_user_with_username("emptyown")
 
       {:ok, _lv, html} =
@@ -128,10 +128,10 @@ defmodule DialecticWeb.UserProfileLiveTest do
         |> log_in_user(user)
         |> live(~p"/u/emptyown")
 
-      assert html =~ "Create your first graph"
+      assert html =~ "Create your first grid"
     end
 
-    test "does not show 'Create your first graph' on other user's empty profile", %{conn: conn} do
+    test "does not show 'Create your first grid' on other user's empty profile", %{conn: conn} do
       _other_user = create_user_with_username("emptyother")
       viewer = user_fixture()
 
@@ -140,7 +140,7 @@ defmodule DialecticWeb.UserProfileLiveTest do
         |> log_in_user(viewer)
         |> live(~p"/u/emptyother")
 
-      refute html =~ "Create your first graph"
+      refute html =~ "Create your first grid"
     end
   end
 
@@ -175,6 +175,110 @@ defmodule DialecticWeb.UserProfileLiveTest do
 
       # The graph card links to the slug-based route
       assert html =~ "/g/#{unique_slug}"
+    end
+  end
+
+  describe "graph deletion" do
+    test "shows delete button on own profile for All My Grids section", %{conn: conn} do
+      user = create_user_with_username("deleteuser")
+      graph = create_public_graph(user, "Graph To Delete", slug: "delete-test", tags: [])
+
+      {:ok, _lv, html} =
+        conn
+        |> log_in_user(user)
+        |> live(~p"/u/deleteuser")
+
+      # Delete button should be visible in All My Grids section
+      assert html =~ "delete-grid-btn-"
+      assert html =~ graph.title
+    end
+
+    test "does not show delete button when viewing another user's profile", %{conn: conn} do
+      other_user = create_user_with_username("otherdeleteuser")
+      _graph = create_public_graph(other_user, "Other Graph", slug: "other-graph", tags: [])
+      viewer = user_fixture()
+
+      {:ok, _lv, html} =
+        conn
+        |> log_in_user(viewer)
+        |> live(~p"/u/otherdeleteuser")
+
+      # Delete button should not be visible
+      refute html =~ "delete-grid-btn-"
+      refute html =~ "delete-public-grid-btn-"
+    end
+
+    test "shows delete button in My Public Grids section on own profile", %{conn: conn} do
+      user = create_user_with_username("publicdeluser")
+      _graph = create_public_graph(user, "Public Graph", slug: "public-delete-test", tags: [])
+
+      {:ok, _lv, html} =
+        conn
+        |> log_in_user(user)
+        |> live(~p"/u/publicdeluser")
+
+      # Delete button should be visible in the public grids section
+      assert html =~ "delete-public-grid-btn-public-delete-test"
+    end
+
+    test "can delete own graph via confirmation modal", %{conn: conn} do
+      user = create_user_with_username("confirmdel")
+      graph = create_public_graph(user, "Deletable Graph", slug: "deletable", tags: [])
+
+      {:ok, lv, _html} =
+        conn
+        |> log_in_user(user)
+        |> live(~p"/u/confirmdel")
+
+      # Trigger the delete modal
+      lv
+      |> element("#delete-grid-btn-deletable")
+      |> render_click()
+
+      # Confirm the deletion
+      html =
+        lv
+        |> element("#confirm-delete-graph-btn")
+        |> render_click()
+
+      # Flash message should appear
+      assert html =~ "has been deleted"
+
+      # Verify in database that the graph is soft-deleted
+      updated_graph = Dialectic.Repo.get_by(Dialectic.Accounts.Graph, title: graph.title)
+      assert updated_graph.is_deleted == true
+
+      # Graph should no longer be visible in the All My Grids section
+      # Note: The title might still be in the flash message, so we check specifically
+      # that the graph card is gone by checking for the delete button
+      refute html =~ "delete-grid-btn-deletable"
+    end
+
+    test "can cancel graph deletion", %{conn: conn} do
+      user = create_user_with_username("canceluser")
+      graph = create_public_graph(user, "Keep This Graph", slug: "keep-graph", tags: [])
+
+      {:ok, lv, _html} =
+        conn
+        |> log_in_user(user)
+        |> live(~p"/u/canceluser")
+
+      # Trigger the delete modal
+      lv
+      |> element("#delete-grid-btn-keep-graph")
+      |> render_click()
+
+      # Cancel the deletion
+      html =
+        lv
+        |> render_click("cancel_delete")
+
+      # Graph should still be visible
+      assert html =~ graph.title
+
+      # Verify in database that the graph is NOT deleted
+      unchanged_graph = Dialectic.Repo.get_by(Dialectic.Accounts.Graph, title: graph.title)
+      refute unchanged_graph.is_deleted
     end
   end
 end

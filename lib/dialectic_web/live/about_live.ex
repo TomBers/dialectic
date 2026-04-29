@@ -11,7 +11,7 @@ defmodule DialecticWeb.AboutLive do
      |> assign(:contact_mailto, "mailto:hello@rationalgrid.ai")
      |> assign(
        :page_description,
-       "Learn about RationalGrid's mission to improve public understanding and discourse using AI-powered collaborative knowledge mapping."
+       "Learn how RationalGrid helps people map arguments, concepts, and complex subjects in a persistent shared grid."
      )
      |> assign(
        :feedback_form,
@@ -80,311 +80,190 @@ defmodule DialecticWeb.AboutLive do
         <div class="absolute top-10 left-10 w-72 h-72 bg-white rounded-full blur-3xl"></div>
         <div class="absolute bottom-10 right-10 w-96 h-96 bg-purple-300 rounded-full blur-3xl"></div>
       </div>
-      <div class="relative mx-auto max-w-5xl px-6 py-24 sm:py-32 text-center">
-        <div class="flex items-center justify-center gap-3 mb-6">
+      <div class="relative mx-auto max-w-5xl px-6 py-24 sm:py-32">
+        <div class="mx-auto max-w-3xl text-center">
+          <p class="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/80 ring-1 ring-white/20">
+            <.icon name="hero-heart" class="w-3.5 h-3.5" />
+            Open access · Not-for-profit · Built for serious topics
+          </p>
+        </div>
+
+        <div class="mt-6 flex items-center justify-center gap-3">
           <img src={~p"/images/favicon.webp"} alt="RationalGrid" class="h-12 w-12" />
         </div>
-        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6">
-          About RationalGrid
-        </h1>
-        <p class="mx-auto max-w-2xl text-lg sm:text-xl text-white/80 leading-relaxed">
-          Transforming how people explore ideas, engage with arguments, and build shared understanding — one node at a time. Start your own grid now and share it if you want.
-        </p>
-        <div class="mt-10 flex items-center justify-center gap-2 text-white/50 text-sm">
-          <.icon name="hero-arrow-down" class="w-5 h-5 animate-bounce" />
-          <span>Scroll to learn more</span>
-        </div>
-      </div>
-    </section>
 
-    <%!-- 2. Mission & Vision --%>
-    <section class="bg-slate-50 py-20">
-      <div class="mx-auto max-w-4xl px-6">
-        <div class="text-center mb-8">
-          <div class="inline-flex items-center gap-2">
-            <h2 class="text-3xl font-bold text-gray-900">Mission &amp; Vision</h2>
-            <span class="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800 ring-1 ring-inset ring-amber-300">
-              <.icon name="hero-wrench-screwdriver" class="w-3.5 h-3.5 mr-1" /> Work in Progress
+        <div class="mx-auto mt-6 max-w-3xl text-center">
+          <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight">
+            RationalGrid helps you think through ideas that do not fit in a chat box.
+          </h1>
+          <p class="mx-auto mt-6 max-w-2xl text-lg sm:text-xl text-white/85 leading-relaxed">
+            Use it to map arguments, concepts, evidence, and counterarguments in a shared
+            visual grid. Instead of losing the thread in a long conversation, you build a
+            structure you can inspect, improve, and revisit.
+          </p>
+          <p class="mx-auto mt-4 max-w-2xl text-base text-white/70 leading-relaxed">
+            It is designed for learning, teaching, research, and public reasoning around
+            topics where the relationships between ideas matter.
+          </p>
+
+          <div class="mt-8 flex flex-wrap items-center justify-center gap-3 text-sm text-white/75">
+            <span class="rounded-full bg-white/10 px-4 py-2 ring-1 ring-white/15">
+              Arguments &amp; counterarguments
+            </span>
+            <span class="rounded-full bg-white/10 px-4 py-2 ring-1 ring-white/15">
+              Source texts &amp; concepts
+            </span>
+            <span class="rounded-full bg-white/10 px-4 py-2 ring-1 ring-white/15">
+              Revision &amp; teaching
+            </span>
+            <span class="rounded-full bg-white/10 px-4 py-2 ring-1 ring-white/15">
+              Shared inquiry
             </span>
           </div>
-        </div>
-        <div class="relative rounded-2xl bg-white p-8 sm:p-12 shadow-lg ring-1 ring-gray-200">
-          <div class="absolute -top-4 left-8">
-            <div class="flex h-8 w-8 items-center justify-center rounded-full bg-[#3a0ca3] text-white">
-              <.icon name="hero-chat-bubble-bottom-center-text" class="w-4 h-4" />
-            </div>
-          </div>
-          <blockquote class="text-xl sm:text-2xl font-medium text-gray-800 leading-relaxed italic">
-            "To improve public understanding and learning around serious concepts, arguments and discourse using AI tools in a not-for-profit, open access environment."
-          </blockquote>
-          <div class="mt-6 flex items-center gap-2 text-sm text-gray-500">
-            <.icon name="hero-heart" class="w-4 h-4 text-[#3a0ca3]" />
-            <span>Open access · Not-for-profit · Community-driven</span>
+
+          <div class="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <.link
+              navigate={~p"/"}
+              class={[
+                "inline-flex items-center gap-2 rounded-xl px-6 py-3 text-base font-semibold",
+                "bg-white text-[#3a0ca3] shadow-lg hover:bg-white/95 hover:shadow-xl transition"
+              ]}
+            >
+              <.icon name="hero-sparkles" class="w-5 h-5" /> Start a grid
+            </.link>
+            <.link
+              navigate={~p"/intro/how"}
+              class={[
+                "inline-flex items-center gap-2 rounded-xl px-6 py-3 text-base font-semibold",
+                "bg-white/10 text-white ring-1 ring-white/25 hover:bg-white/20 transition"
+              ]}
+            >
+              <.icon name="hero-book-open" class="w-5 h-5" /> Read the guide
+            </.link>
           </div>
         </div>
       </div>
     </section>
 
-    <%!-- 3. What is RationalGrid? --%>
+    <%!-- 2. What it is for --%>
     <section class="bg-white py-20">
       <div class="mx-auto max-w-5xl px-6">
-        <div class="text-center mb-14">
-          <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-            What is RationalGrid?
-          </h2>
-          <p class="text-gray-500 max-w-2xl mx-auto">
-            A new kind of tool for a clearer new kind of thinking.
+        <div class="text-center mb-12">
+          <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Why RationalGrid exists</h2>
+          <p class="mx-auto max-w-3xl text-gray-600">
+            The point is simple: help people build understanding around complex subjects
+            without flattening them into a disposable stream of replies.
           </p>
         </div>
 
-        <div class="grid gap-10 md:grid-cols-2">
-          <div class="rounded-2xl bg-gradient-to-br from-purple-50 to-blue-50 p-8 ring-1 ring-purple-100">
-            <div class="flex items-center gap-3 mb-4">
-              <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#3a0ca3] text-white">
-                <.icon name="hero-globe-alt" class="w-5 h-5" />
-              </div>
-              <h3 class="text-xl font-bold text-gray-900">Helping Critical Thinking</h3>
-            </div>
-            <p class="text-gray-700 leading-relaxed">
-              We live in an era of unprecedented information access, yet the quality of discourse often feels lacking. Echo chambers and motivated reasoning lead to people talking past each other rather than engaging meaningfully. We built RationalGrid because we believe meaningful exchanges happen when you can explore assumptions at a fundamental level and see how reasonable people can hold conflicting values and opinions.
+        <div class="grid gap-6 md:grid-cols-3">
+          <div class="rounded-2xl bg-slate-50 p-8 ring-1 ring-slate-200">
+            <p class="text-sm font-semibold uppercase tracking-wide text-[#3a0ca3]">Used for</p>
+            <h3 class="mt-3 text-xl font-bold text-gray-900">Questions that branch</h3>
+            <p class="mt-4 text-gray-700 leading-relaxed">
+              Use RationalGrid when you need to compare positions, unpack a text, follow
+              evidence, or teach a difficult concept without reducing it to one answer.
             </p>
           </div>
 
-          <div class="rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 p-8 ring-1 ring-blue-100">
-            <div class="flex items-center gap-3 mb-4">
-              <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#4361ee] text-white">
-                <.icon name="hero-academic-cap" class="w-5 h-5" />
-              </div>
-              <h3 class="text-xl font-bold text-gray-900">
-                Active Learning, Not Passive Consumption
-              </h3>
-            </div>
-            <p class="text-gray-700 leading-relaxed">
-              Large Language Models provide unprecedented access to knowledge, but traditional AI chat interfaces limit their potential for deep learning. RationalGrid transforms AI interaction into an active, exploratory process where learners branch out in multiple directions, creating a personalized knowledge map that evolves with their curiosity.
+          <div class="rounded-2xl bg-slate-50 p-8 ring-1 ring-slate-200">
+            <p class="text-sm font-semibold uppercase tracking-wide text-[#3a0ca3]">
+              Why it exists
+            </p>
+            <h3 class="mt-3 text-xl font-bold text-gray-900">Understanding needs structure</h3>
+            <p class="mt-4 text-gray-700 leading-relaxed">
+              Serious topics are rarely linear. RationalGrid makes the shape of a
+              discussion visible so people can see how claims connect, where disagreements
+              sit, and what still needs explaining.
+            </p>
+          </div>
+
+          <div class="rounded-2xl bg-slate-50 p-8 ring-1 ring-slate-200">
+            <p class="text-sm font-semibold uppercase tracking-wide text-[#3a0ca3]">
+              Different from chat
+            </p>
+            <h3 class="mt-3 text-xl font-bold text-gray-900">
+              Built for understanding, not just output
+            </h3>
+            <p class="mt-4 text-gray-700 leading-relaxed">
+              ChatGPT and Claude are excellent at producing responses. RationalGrid turns
+              responses into a persistent map you can inspect, share, and keep improving.
             </p>
           </div>
         </div>
       </div>
     </section>
 
-    <%!-- 5. Key Capabilities --%>
+    <%!-- 3. Comparison --%>
     <section class="bg-slate-50 py-20">
       <div class="mx-auto max-w-5xl px-6">
-        <div class="text-center mb-6">
-          <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">What It Does</h2>
-          <p class="text-gray-500 max-w-2xl mx-auto">
-            Start building your grid by typing a thought, question or provocation.
-            Sign up, fill in your profile and keep your grids and ideas in easy view.
-          </p>
-        </div>
-        <div class="text-center mb-14">
-          <p class="text-gray-500 max-w-2xl mx-auto text-sm">
-            Powerful tools designed for deep exploration and collaboration.
+        <div class="text-center mb-12">
+          <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+            Why people use this instead of starting another chat
+          </h2>
+          <p class="mx-auto max-w-3xl text-gray-600">
+            RationalGrid complements tools like ChatGPT and Claude by preserving the
+            structure, collaboration, and memory that chat interfaces tend to lose.
           </p>
         </div>
 
-        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          <div class="rounded-xl bg-gray-50 p-6 ring-1 ring-gray-200 hover:shadow-md transition">
-            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-[#3a0ca3]/10 text-[#3a0ca3] mb-4">
-              <.icon name="hero-share" class="w-5 h-5" />
+        <div class="grid gap-6 md:grid-cols-3">
+          <div class="rounded-2xl bg-white p-8 ring-1 ring-gray-200 shadow-sm">
+            <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+              <.icon name="hero-map" class="w-6 h-6" />
             </div>
-            <h3 class="font-bold text-gray-900 mb-2">Grow Your Grid</h3>
-            <p class="text-sm text-gray-600 leading-relaxed">
-              Every response becomes a node (seen as a box) in your knowledge grid, revealing connections, suggesting ideas and enabling non-linear exploration.
+            <h3 class="mt-5 text-xl font-bold text-gray-900">See the whole argument</h3>
+            <p class="mt-3 text-gray-700 leading-relaxed">
+              A chat gives you the latest reply. RationalGrid keeps the surrounding
+              branches, tradeoffs, and related ideas visible at the same time.
             </p>
           </div>
 
-          <div class="rounded-xl bg-gray-50 p-6 ring-1 ring-gray-200 hover:shadow-md transition">
-            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-[#3a0ca3]/10 text-[#3a0ca3] mb-4">
-              <.icon name="hero-magnifying-glass" class="w-5 h-5" />
+          <div class="rounded-2xl bg-white p-8 ring-1 ring-gray-200 shadow-sm">
+            <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
+              <.icon name="hero-user-group" class="w-6 h-6" />
             </div>
-            <h3 class="font-bold text-gray-900 mb-2">Deep Dive If You Wish</h3>
-            <p class="text-sm text-gray-600 leading-relaxed">
-              Highlight any term — or node — to instantly explore its meaning, implications, and connections within your knowledge map.
+            <h3 class="mt-5 text-xl font-bold text-gray-900">Work on the same map</h3>
+            <p class="mt-3 text-gray-700 leading-relaxed">
+              Share one grid with classmates, colleagues, or collaborators instead of
+              copying fragments between separate chat sessions.
             </p>
           </div>
 
-          <div class="rounded-xl bg-gray-50 p-6 ring-1 ring-gray-200 hover:shadow-md transition">
-            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-[#3a0ca3]/10 text-[#3a0ca3] mb-4">
-              <.icon name="hero-users" class="w-5 h-5" />
+          <div class="rounded-2xl bg-white p-8 ring-1 ring-gray-200 shadow-sm">
+            <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+              <.icon name="hero-circle-stack" class="w-6 h-6" />
             </div>
-            <h3 class="font-bold text-gray-900 mb-2">You're Not Alone</h3>
-            <p class="text-sm text-gray-600 leading-relaxed">
-              Collaborate with other users in real-time on shared knowledge maps. Think together, explore together, learn together. Other AI tools don't offer this.
-            </p>
-          </div>
-
-          <div class="rounded-xl bg-gray-50 p-6 ring-1 ring-gray-200 hover:shadow-md transition">
-            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-[#3a0ca3]/10 text-[#3a0ca3] mb-4">
-              <.icon name="hero-document-text" class="w-5 h-5" />
-            </div>
-            <h3 class="font-bold text-gray-900 mb-2">Persistent &amp; Searchable</h3>
-            <p class="text-sm text-gray-600 leading-relaxed">
-              Every grid you create is saved (unless you delete it) and fully searchable. Build a personal library of explored ideas.
-            </p>
-          </div>
-
-          <div class="rounded-xl bg-gray-50 p-6 ring-1 ring-gray-200 hover:shadow-md transition">
-            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-[#3a0ca3]/10 text-[#3a0ca3] mb-4">
-              <.icon name="hero-arrow-down-tray" class="w-5 h-5" />
-            </div>
-            <h3 class="font-bold text-gray-900 mb-2">Portable Output</h3>
-            <p class="text-sm text-gray-600 leading-relaxed">
-              Export your knowledge graphs as PDF, JSON, or Markdown. Your work goes where you need it. You can share your grid to your networks or social media if you want.
-            </p>
-          </div>
-
-          <div class="rounded-xl bg-gray-50 p-6 ring-1 ring-gray-200 hover:shadow-md transition">
-            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-[#3a0ca3]/10 text-[#3a0ca3] mb-4">
-              <.icon name="hero-cursor-arrow-rays" class="w-5 h-5" />
-            </div>
-            <h3 class="font-bold text-gray-900 mb-2">AI-Powered Branching</h3>
-            <p class="text-sm text-gray-600 leading-relaxed">
-              Explore the pros and cons, comparisons and differentiators of your ideas and arguments from any node. Let curiosity guide the path.
+            <h3 class="mt-5 text-xl font-bold text-gray-900">Keep what you learn</h3>
+            <p class="mt-3 text-gray-700 leading-relaxed">
+              Your work stays useful as reference and revision material instead of sinking
+              into old chat history.
             </p>
           </div>
         </div>
 
-        <%!-- Additional capabilities --%>
-        <div class="mt-14">
-          <h3 class="text-xl font-bold text-gray-900 mb-6 text-center">Additional Capabilities</h3>
-          <div class="grid gap-6 sm:grid-cols-2">
-            <div class="rounded-xl bg-gradient-to-br from-purple-50 to-blue-50 p-6 ring-1 ring-purple-100 hover:shadow-md transition">
-              <div class="flex items-center gap-3 mb-3">
-                <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-[#3a0ca3]/10 text-[#3a0ca3]">
-                  <.icon name="hero-presentation-chart-bar" class="w-5 h-5" />
-                </div>
-                <h4 class="font-bold text-gray-900">Presentation Mode</h4>
-              </div>
-              <p class="text-sm text-gray-600 leading-relaxed">
-                Edit and highlight the key points from your grid that you most want to share — for meetings, lectures, conferences, social media or big screens. Get your audience engaged swiftly, while enabling them to drill down into your detailed grid separately, on demand.
+        <div class="mt-10 rounded-2xl bg-white p-6 sm:p-8 ring-1 ring-gray-200 shadow-sm">
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div class="text-left">
+              <p class="text-sm font-semibold uppercase tracking-wide text-[#3a0ca3]">
+                Want the feature walkthrough?
+              </p>
+              <p class="mt-1 text-gray-600">
+                The guide covers the workflow, interface, and product capabilities in detail.
               </p>
             </div>
-
-            <div class="rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 p-6 ring-1 ring-blue-100 hover:shadow-md transition">
-              <div class="flex items-center gap-3 mb-3">
-                <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-[#4361ee]/10 text-[#4361ee]">
-                  <.icon name="hero-star" class="w-5 h-5" />
-                </div>
-                <h4 class="font-bold text-gray-900">Curated Grids</h4>
-              </div>
-              <p class="text-sm text-gray-600 leading-relaxed">
-                Users like you are creating hundreds of grids on RationalGrid. We try to highlight the best of them on our home page. We will also be running a series of "curated grids" featuring ideas being explored by invited guests.
-                <.link
-                  href="mailto:hello@rationalgrid.ai"
-                  class="font-medium text-[#3a0ca3] hover:underline"
-                >
-                  Get in touch
-                </.link>
-                if you'd like to be considered.
-              </p>
-            </div>
+            <.link
+              navigate={~p"/intro/how"}
+              class="inline-flex items-center justify-center gap-2 rounded-xl bg-[#3a0ca3] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#4361ee]"
+            >
+              <.icon name="hero-book-open" class="w-4 h-4" /> Go to the guide
+            </.link>
           </div>
         </div>
       </div>
     </section>
 
-    <%!-- 6. For Educators --%>
-    <section class="bg-gradient-to-br from-indigo-50 to-purple-50 py-20">
-      <div class="mx-auto max-w-5xl px-6">
-        <div class="grid gap-10 md:grid-cols-2 items-center">
-          <div>
-            <div class="flex items-center gap-3 mb-4">
-              <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#3a0ca3] text-white">
-                <.icon name="hero-academic-cap" class="w-5 h-5" />
-              </div>
-              <h2 class="text-3xl font-bold text-gray-900">For Educators</h2>
-            </div>
-            <p class="text-gray-700 leading-relaxed mb-6">
-              RationalGrid is a powerful classroom tool. Students can explore complex topics collaboratively, map out arguments visually, and develop critical thinking skills through structured inquiry.
-            </p>
-            <ul class="space-y-3">
-              <li class="flex items-start gap-3">
-                <.icon name="hero-check-circle" class="w-5 h-5 text-emerald-600 mt-0.5 shrink-0" />
-                <span class="text-gray-700">Students explore topics at their own pace and depth</span>
-              </li>
-              <li class="flex items-start gap-3">
-                <.icon name="hero-check-circle" class="w-5 h-5 text-emerald-600 mt-0.5 shrink-0" />
-                <span class="text-gray-700">
-                  Shared whiteboards enable real-time group discussion
-                </span>
-              </li>
-              <li class="flex items-start gap-3">
-                <.icon name="hero-check-circle" class="w-5 h-5 text-emerald-600 mt-0.5 shrink-0" />
-                <span class="text-gray-700">
-                  Visual argument maps develop critical thinking skills
-                </span>
-              </li>
-              <li class="flex items-start gap-3">
-                <.icon name="hero-check-circle" class="w-5 h-5 text-emerald-600 mt-0.5 shrink-0" />
-                <span class="text-gray-700">Free and open access — no paywall, no gatekeeping</span>
-              </li>
-            </ul>
-          </div>
-          <div class="flex items-center justify-center">
-            <div class="relative rounded-2xl bg-white p-8 shadow-lg ring-1 ring-gray-200 max-w-sm">
-              <div class="absolute -top-3 -right-3 flex h-8 w-8 items-center justify-center rounded-full bg-amber-400 text-white text-xs font-bold shadow">
-                <.icon name="hero-light-bulb" class="w-4 h-4" />
-              </div>
-              <div class="flex items-center gap-3 mb-4">
-                <div class="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
-                  <.icon name="hero-user-group" class="w-5 h-5 text-[#3a0ca3]" />
-                </div>
-                <div>
-                  <div class="text-sm font-semibold text-gray-900">Classroom Session</div>
-                  <div class="text-xs text-gray-500">5 students exploring</div>
-                </div>
-              </div>
-              <div class="space-y-2">
-                <div class="rounded-lg bg-purple-50 px-3 py-2 text-xs text-gray-700">
-                  "What makes an argument valid?"
-                </div>
-                <div class="ml-4 rounded-lg bg-blue-50 px-3 py-2 text-xs text-gray-700">
-                  ↳ Exploring: logical structure vs. truth
-                </div>
-                <div class="ml-8 rounded-lg bg-indigo-50 px-3 py-2 text-xs text-gray-700">
-                  ↳ Comparing: deductive vs. inductive reasoning
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <%!-- 7. Testimonial --%>
-    <section class="bg-white py-20">
-      <div class="mx-auto max-w-3xl px-6 text-center">
-        <div class="flex justify-center mb-6">
-          <div class="flex h-14 w-14 items-center justify-center rounded-full bg-purple-100">
-            <.icon name="hero-chat-bubble-left-right" class="w-7 h-7 text-[#3a0ca3]" />
-          </div>
-        </div>
-        <blockquote class="text-xl sm:text-2xl font-medium text-gray-800 leading-relaxed italic mb-6">
-          "An amazing free specialised AI tool to explore philosophical ideas around pretty much anything — from academic questions to films to… hamsters! All at one's fingertips, in a matter of seconds, with in-built tools for a sophisticated, yet accessible dialectic. Bravo!"
-        </blockquote>
-        <div class="flex items-center justify-center gap-3">
-          <div class="h-10 w-10 rounded-full bg-gradient-to-br from-[#3a0ca3] to-[#4361ee] flex items-center justify-center text-white font-bold text-sm">
-            AK
-          </div>
-          <div class="text-left">
-            <div class="font-semibold text-gray-900">Alexandra Konoplyanik</div>
-            <div class="text-sm text-gray-500">
-              <.link
-                href="https://pfalondon.org/"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="text-[#3a0ca3] hover:underline"
-              >
-                Philosophy for All
-              </.link>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <%!-- 8. Partners Section --%>
+    <%!-- 4. Partners Section --%>
     <section class="bg-slate-50 py-20">
       <div class="mx-auto max-w-5xl px-6">
         <div class="text-center mb-14">
@@ -469,62 +348,83 @@ defmodule DialecticWeb.AboutLive do
           </p>
         </div>
 
-        <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          <%!-- Tom Berman --%>
-          <div class="text-center group">
-            <div class="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full shadow-lg group-hover:shadow-xl transition">
-              <img src={~p"/images/tom.webp"} alt="Tom Berman" class="h-full w-full object-cover" />
+        <div class="space-y-8">
+          <div class="grid gap-8 sm:grid-cols-3">
+            <%!-- Tom Berman --%>
+            <div class="text-center group">
+              <div class="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full shadow-lg group-hover:shadow-xl transition">
+                <img src={~p"/images/tom.webp"} alt="Tom Berman" class="h-full w-full object-cover" />
+              </div>
+              <h3 class="font-bold text-gray-900">Tom Berman</h3>
+              <p class="text-sm text-gray-500 mb-3">Founder &amp; Developer</p>
+              <div class="flex items-center justify-center gap-3">
+                <.link
+                  href="https://github.com/TomBers"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Tom Berman GitHub profile (opens in a new tab)"
+                  class="text-gray-400 hover:text-gray-700 transition"
+                >
+                  <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path
+                      fill-rule="evenodd"
+                      d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                </.link>
+              </div>
             </div>
-            <h3 class="font-bold text-gray-900">Tom Berman</h3>
-            <p class="text-sm text-gray-500 mb-3">Founder &amp; Developer</p>
-            <div class="flex items-center justify-center gap-3">
-              <.link
-                href="https://github.com/TomBers"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Tom Berman GitHub profile (opens in a new tab)"
-                class="text-gray-400 hover:text-gray-700 transition"
-              >
-                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path
-                    fill-rule="evenodd"
-                    d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
-              </.link>
+
+            <%!-- Martin Loat --%>
+            <div class="text-center group">
+              <div class="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full shadow-lg group-hover:shadow-xl transition">
+                <img
+                  src={~p"/images/martin.webp"}
+                  alt="Martin Loat"
+                  class="h-full w-full object-cover"
+                />
+              </div>
+              <h3 class="font-bold text-gray-900">Martin Loat</h3>
+              <p class="text-sm text-gray-500">Partnerships Director</p>
+            </div>
+
+            <%!-- Maya Darmon --%>
+            <div class="text-center group">
+              <div class="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full shadow-lg group-hover:shadow-xl transition">
+                <img src={~p"/images/maya.webp"} alt="Maya Darmon" class="h-full w-full object-cover" />
+              </div>
+              <h3 class="font-bold text-gray-900">Maya Darmon</h3>
+              <p class="text-sm text-gray-500">Grid Curator</p>
             </div>
           </div>
 
-          <%!-- Martin Loat --%>
-          <div class="text-center group">
-            <div class="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full shadow-lg group-hover:shadow-xl transition">
-              <img src={~p"/images/martin.webp"} alt="Martin Loat" class="h-full w-full object-cover" />
+          <div class="grid gap-8 sm:grid-cols-2 sm:max-w-xl sm:mx-auto">
+            <%!-- Peter Worley - Advisor --%>
+            <div class="text-center group">
+              <div class="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full shadow-lg group-hover:shadow-xl transition">
+                <img
+                  src={~p"/images/pete.webp"}
+                  alt="Peter Worley"
+                  class="h-full w-full object-cover"
+                />
+              </div>
+              <h3 class="font-bold text-gray-900">Peter Worley</h3>
+              <p class="text-sm text-gray-500">Advisor</p>
             </div>
-            <h3 class="font-bold text-gray-900">Martin Loat</h3>
-            <p class="text-sm text-gray-500">Partnerships Director</p>
-          </div>
 
-          <%!-- Peter Worley - Advisor --%>
-          <div class="text-center group">
-            <div class="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full shadow-lg group-hover:shadow-xl transition">
-              <img src={~p"/images/pete.webp"} alt="Peter Worley" class="h-full w-full object-cover" />
+            <%!-- Alexandra Konoplyanik - Advisor --%>
+            <div class="text-center group">
+              <div class="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full shadow-lg group-hover:shadow-xl transition">
+                <img
+                  src={~p"/images/alex.webp"}
+                  alt="Alexandra Konoplyanik"
+                  class="h-full w-full object-cover"
+                />
+              </div>
+              <h3 class="font-bold text-gray-900">Alexandra Konoplyanik</h3>
+              <p class="text-sm text-gray-500">Advisor</p>
             </div>
-            <h3 class="font-bold text-gray-900">Peter Worley</h3>
-            <p class="text-sm text-gray-500">Advisor</p>
-          </div>
-
-          <%!-- Alexandra Konoplyanik - Advisor --%>
-          <div class="text-center group">
-            <div class="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full shadow-lg group-hover:shadow-xl transition">
-              <img
-                src={~p"/images/alex.webp"}
-                alt="Alexandra Konoplyanik"
-                class="h-full w-full object-cover"
-              />
-            </div>
-            <h3 class="font-bold text-gray-900">Alexandra Konoplyanik</h3>
-            <p class="text-sm text-gray-500">Advisor</p>
           </div>
         </div>
 
@@ -542,7 +442,7 @@ defmodule DialecticWeb.AboutLive do
             </div>
             <div class="space-y-4 text-gray-700 leading-relaxed text-sm">
               <p>
-                Tom created RationalGrid out of a conviction that AI could do much more than answer questions in a linear chat — it could help people actually think. The idea was to build a tool where every response becomes a node in a living knowledge map, letting users branch, compare, and explore ideas visually rather than scrolling through walls of text.
+                Tom created RationalGrid out of a conviction that AI could do much more than answer questions in a linear chat — it could help people actually think. The idea was to build a tool where every response becomes a box in a living knowledge map, letting users branch, compare, and expand ideas visually rather than scrolling through walls of text.
               </p>
               <p>
                 As the sole developer, Tom designed and built the entire platform from the ground up — the real-time collaborative graph engine, the AI integration layer, the presentation mode, export system, and everything in between. The stack is Elixir and Phoenix LiveView, chosen for their strengths in real-time, concurrent applications.
@@ -596,6 +496,29 @@ defmodule DialecticWeb.AboutLive do
               </p>
               <p>
                 Martin is now an angel investor, strategic comms advisor and leadership mentor to a number of growing businesses, including in AI.
+              </p>
+            </div>
+          </div>
+
+          <div class="rounded-2xl bg-gradient-to-br from-purple-50 to-blue-50 p-8 ring-1 ring-purple-100">
+            <div class="flex items-center gap-4 mb-5">
+              <div class="h-14 w-14 shrink-0 overflow-hidden rounded-full shadow-lg">
+                <img src={~p"/images/maya.webp"} alt="Maya Darmon" class="h-full w-full object-cover" />
+              </div>
+              <div>
+                <h3 class="text-lg font-bold text-gray-900">Maya Darmon</h3>
+                <p class="text-sm text-gray-500">Grid Curator</p>
+              </div>
+            </div>
+            <div class="space-y-4 text-gray-700 leading-relaxed text-sm">
+              <p>
+                Maya Darmon is a philosophy graduate from Girton College, University of Cambridge, where she developed a strong foundation in critical thinking, logic, and the analysis of complex ideas.
+              </p>
+              <p>
+                Maya is particularly interested in how structured reasoning and collaborative dialogue can be enhanced through technology. She has been involved in exploring tools that augment human thinking, bringing together philosophy and AI to improve how ideas are debated, refined, and understood.
+              </p>
+              <p>
+                At RationalGrid.ai, Maya contributes a philosophical perspective to the design of AI systems, helping ensure that technology supports deeper reasoning, clarity of thought, and meaningful collaboration.
               </p>
             </div>
           </div>
@@ -949,7 +872,7 @@ defmodule DialecticWeb.AboutLive do
     <%!-- 11. CTA / Footer --%>
     <section class="bg-gradient-to-br from-[#3a0ca3] to-[#4361ee] py-20 text-white">
       <div class="mx-auto max-w-3xl px-6 text-center">
-        <h2 class="text-3xl sm:text-4xl font-bold mb-4">Ready to explore?</h2>
+        <h2 class="text-3xl sm:text-4xl font-bold mb-4">Ready to expand?</h2>
         <p class="text-white/70 text-lg mb-10 max-w-xl mx-auto">
           Start mapping your ideas, challenging assumptions, and building understanding — it's free to use and always will be.
         </p>
@@ -961,7 +884,7 @@ defmodule DialecticWeb.AboutLive do
               "bg-white text-[#3a0ca3] shadow-lg hover:bg-white/95 hover:shadow-xl transition"
             ]}
           >
-            <.icon name="hero-sparkles" class="w-5 h-5" /> Start Exploring
+            <.icon name="hero-sparkles" class="w-5 h-5" /> Start Expanding
           </.link>
           <.link
             navigate={~p"/intro/how"}
@@ -980,7 +903,7 @@ defmodule DialecticWeb.AboutLive do
             <span class="text-white/60 text-sm">Open Source</span>
           </div>
           <p class="text-white/50 text-sm mb-4">
-            RationalGrid is open source. Explore the code, report issues, or contribute.
+            RationalGrid is open source. View the code, report issues, or contribute.
           </p>
           <div class="flex items-center justify-center gap-6 mb-6">
             <a

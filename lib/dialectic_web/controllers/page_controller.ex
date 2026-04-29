@@ -106,6 +106,47 @@ defmodule DialecticWeb.PageController do
     end
   end
 
+  def graph_json_extract(conn, %{"graph_name" => graph_id_uri} = params) do
+    graph_name = URI.decode(graph_id_uri)
+    graph_struct = Dialectic.DbActions.Graphs.get_graph_by_slug_or_title(graph_name)
+    current_user = conn.assigns[:current_user]
+
+    cond do
+      is_nil(graph_struct) ->
+        conn
+        |> put_status(:not_found)
+        |> json(%{error: "Grid not found"})
+
+      # Check access control: public, owner, shared, or valid token
+      not has_access?(current_user, graph_struct, params) ->
+        conn
+        |> put_status(:forbidden)
+        |> json(%{error: "You do not have permission to access this graph"})
+
+      true ->
+        # Extract graph using the Extractor module
+        {:ok, extracted_data} =
+          Dialectic.Graph.Extractor.extract_for_image_generation(graph_struct)
+
+        # Use slug for filename if available, otherwise title
+        # Sanitize filename to remove any CR/LF or unsafe characters
+        base_filename =
+          if graph_struct.slug, do: graph_struct.slug, else: graph_struct.title
+
+        safe_filename =
+          base_filename
+          |> String.replace(~r/[^A-Za-z0-9_.-]/, "_")
+          |> String.slice(0, 200)
+
+        safe_filename = "#{safe_filename}.json"
+
+        conn
+        |> put_resp_content_type("application/json")
+        |> put_resp_header("content-disposition", "attachment; filename=#{safe_filename}")
+        |> json(extracted_data)
+    end
+  end
+
   # Check if user has access to the graph (same logic as LiveViews)
   defp has_access?(user, graph_struct, params) do
     token_param = Map.get(params, "token")
