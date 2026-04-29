@@ -37,6 +37,7 @@ defmodule DialecticWeb.HomeLive do
        prompt_mode: prompt_mode,
        ask_question: true,
        graph_id: nil,
+       preview_seed: home_preview_seed(),
        curated_grids: [],
        all_curated_grids: [],
        featured_grids: [],
@@ -58,9 +59,10 @@ defmodule DialecticWeb.HomeLive do
     all_curated_grids = Graphs.list_curated_grids("curated", 20)
     all_featured_grids = Graphs.list_curated_grids("featured", 20)
 
-    # Randomly select 3 items from each pool for initial display
-    curated_grids = Enum.take_random(all_curated_grids, min(3, length(all_curated_grids)))
-    featured_grids = Enum.take_random(all_featured_grids, min(3, length(all_featured_grids)))
+    curated_grids = preview_curated_grids(all_curated_grids, 3, socket.assigns.preview_seed)
+
+    featured_grids =
+      preview_curated_grids(all_featured_grids, 3, socket.assigns.preview_seed)
 
     {:noreply,
      assign(socket,
@@ -925,6 +927,29 @@ defmodule DialecticWeb.HomeLive do
       %{graph: item.graph, author_name: item.author_name}
     end)
   end
+
+  defp home_preview_seed do
+    DateTime.utc_now() |> DateTime.to_unix(:second) |> div(60)
+  end
+
+  defp preview_curated_grids(items, count, seed) do
+    case items || [] do
+      [] ->
+        []
+
+      grids when length(grids) <= count ->
+        grids
+
+      grids ->
+        grids
+        |> Enum.sort_by(fn item ->
+          :erlang.phash2({seed || "home-preview", preview_key(item)})
+        end)
+        |> Enum.take(count)
+    end
+  end
+
+  defp preview_key(item), do: item.graph.slug || item.graph.title || ""
 
   defp partner_pills(items) do
     items
