@@ -92,11 +92,11 @@ defmodule DialecticWeb.NewIdeaFormComp do
                 "box-border block w-full overflow-hidden rounded-2xl bg-white text-slate-950 shadow-[inset_0_1px_2px_rgba(15,23,42,0.05)] sm:rounded-[1.6rem]",
                 "border border-slate-300/90",
                 "focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 focus:outline-none resize-none",
-                "text-base sm:text-[1.05rem]",
+                "text-[0.95rem] leading-[1.45] sm:text-[1.05rem] sm:leading-[1.5]",
                 "placeholder:text-slate-500",
-                "px-4 sm:pl-5 sm:pr-28",
-                "py-3 sm:py-2.5",
-                "min-h-[3.2rem]"
+                "px-3.5 sm:pl-5 sm:pr-28",
+                "py-2.5 sm:py-2.5",
+                "min-h-[3rem] sm:min-h-[3.2rem]"
               ]}
               autocomplete="off"
               required
