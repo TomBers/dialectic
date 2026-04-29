@@ -552,6 +552,172 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
+  # =========================================================================
+  # Advanced Tools — Cluster 1: Core Inquiry Moves
+  # =========================================================================
+
+  def handle_event("node_clarify", %{"id" => node_id}, socket) do
+    if !socket.assigns.can_edit do
+      {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    else
+      node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+      update_graph(
+        socket,
+        {nil, GraphActions.clarify(graph_action_params(socket, node))},
+        "clarify"
+      )
+    end
+  end
+
+  def handle_event("node_assumptions", %{"id" => node_id}, socket) do
+    if !socket.assigns.can_edit do
+      {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    else
+      node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+      update_graph(
+        socket,
+        {nil, GraphActions.assumptions(graph_action_params(socket, node))},
+        "assumptions"
+      )
+    end
+  end
+
+  def handle_event("node_counterexample", %{"id" => node_id}, socket) do
+    if !socket.assigns.can_edit do
+      {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    else
+      node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+      update_graph(
+        socket,
+        {nil, GraphActions.counterexample(graph_action_params(socket, node))},
+        "counterexample"
+      )
+    end
+  end
+
+  def handle_event("node_implications", %{"id" => node_id}, socket) do
+    if !socket.assigns.can_edit do
+      {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    else
+      node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+      update_graph(
+        socket,
+        {nil, GraphActions.implications(graph_action_params(socket, node))},
+        "implications"
+      )
+    end
+  end
+
+  def handle_event("node_blind_spots", %{"id" => node_id}, socket) do
+    if !socket.assigns.can_edit do
+      {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    else
+      node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+      update_graph(
+        socket,
+        {nil, GraphActions.blind_spots(graph_action_params(socket, node))},
+        "blind_spots"
+      )
+    end
+  end
+
+  # =========================================================================
+  # Advanced Tools — Cluster 2: Context & Dialectical Expansion
+  # =========================================================================
+
+  def handle_event("node_says_who", %{"id" => node_id}, socket) do
+    if !socket.assigns.can_edit do
+      {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    else
+      node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+      update_graph(
+        socket,
+        {nil, GraphActions.says_who(graph_action_params(socket, node))},
+        "says_who"
+      )
+    end
+  end
+
+  def handle_event("node_who_disagrees", %{"id" => node_id}, socket) do
+    if !socket.assigns.can_edit do
+      {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    else
+      node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+      update_graph(
+        socket,
+        {nil, GraphActions.who_disagrees(graph_action_params(socket, node))},
+        "who_disagrees"
+      )
+    end
+  end
+
+  def handle_event("node_analogy", %{"id" => node_id}, socket) do
+    if !socket.assigns.can_edit do
+      {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    else
+      node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+      update_graph(
+        socket,
+        {nil, GraphActions.analogy(graph_action_params(socket, node))},
+        "analogy"
+      )
+    end
+  end
+
+  def handle_event("node_steel_man", %{"id" => node_id}, socket) do
+    if !socket.assigns.can_edit do
+      {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    else
+      node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+      update_graph(
+        socket,
+        {nil, GraphActions.steel_man(graph_action_params(socket, node))},
+        "steel_man"
+      )
+    end
+  end
+
+  def handle_event("node_what_if", %{"id" => node_id}, socket) do
+    if !socket.assigns.can_edit do
+      {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    else
+      node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+      update_graph(
+        socket,
+        {nil, GraphActions.what_if(graph_action_params(socket, node))},
+        "what_if"
+      )
+    end
+  end
+
+  # =========================================================================
+  # Advanced Tools — Cluster 3: Clarity & Communication
+  # =========================================================================
+
+  def handle_event("node_simplify", %{"id" => node_id}, socket) do
+    if !socket.assigns.can_edit do
+      {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    else
+      node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+      update_graph(
+        socket,
+        {nil, GraphActions.simplify(graph_action_params(socket, node))},
+        "simplify"
+      )
+    end
+  end
+
   def handle_event("node_regenerate", %{"id" => node_id}, socket) do
     if !socket.assigns.can_edit do
       {:noreply, socket |> put_flash(:error, "This graph is locked")}

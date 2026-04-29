@@ -91,7 +91,15 @@ defmodule DialecticWeb.ActionToolbarComp do
 
   @impl true
   def update(assigns, socket) do
-    {:ok, assign(socket, assigns)}
+    {:ok,
+     socket
+     |> assign(assigns)
+     |> assign_new(:advanced_tools_open, fn -> false end)}
+  end
+
+  @impl true
+  def handle_event("toggle_advanced_tools", _, socket) do
+    {:noreply, assign(socket, :advanced_tools_open, !socket.assigns.advanced_tools_open)}
   end
 
   @impl true
@@ -197,6 +205,258 @@ defmodule DialecticWeb.ActionToolbarComp do
               </span>
             </span>
           </button>
+        </div>
+
+        <%!-- Advanced Critical Thinking Tools Section --%>
+        <div class="border-t border-slate-200/80 pt-4">
+          <button
+            type="button"
+            class="w-full flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-left transition hover:bg-slate-50"
+            phx-click="toggle_advanced_tools"
+            phx-target={@myself}
+          >
+            <div>
+              <p class="text-sm font-semibold text-slate-900">Advanced Critical Thinking Tools</p>
+              <p class="mt-0.5 text-xs text-slate-500">Explore deeper inquiry moves</p>
+            </div>
+            <.icon
+              name="hero-chevron-down"
+              class={
+                if @advanced_tools_open,
+                  do: "h-5 w-5 text-slate-400 transition-transform rotate-180",
+                  else: "h-5 w-5 text-slate-400 transition-transform"
+              }
+            />
+          </button>
+
+          <div class={["mt-3 space-y-4", !@advanced_tools_open && "hidden"]}>
+            <%!-- Core Inquiry --%>
+            <div>
+              <p class="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                Core Inquiry
+              </p>
+              <div class="grid gap-2 sm:grid-cols-2">
+                <button
+                  type="button"
+                  class="group flex flex-col items-start gap-2 rounded-lg border border-teal-200/80 bg-gradient-to-br from-white to-teal-50/50 px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-teal-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                  phx-click="node_clarify"
+                  phx-value-id={@node && @node.id}
+                  disabled={is_nil(@graph_id)}
+                  title="What do you mean by…? — Conceptual clarification"
+                >
+                  <span class="inline-flex items-center justify-center rounded-lg bg-teal-100 p-1.5 text-teal-700">
+                    <.icon name="hero-question-mark-circle" class="h-4 w-4" />
+                  </span>
+                  <span class="space-y-0.5">
+                    <span class="block text-xs font-semibold text-slate-900">Clarify</span>
+                    <span class="block text-xs leading-tight text-slate-600">
+                      What do you mean by…?
+                    </span>
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  class="group flex flex-col items-start gap-2 rounded-lg border border-amber-200/80 bg-gradient-to-br from-white to-amber-50/50 px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                  phx-click="node_assumptions"
+                  phx-value-id={@node && @node.id}
+                  disabled={is_nil(@graph_id)}
+                  title="What has to be true? — Surface hidden assumptions"
+                >
+                  <span class="inline-flex items-center justify-center rounded-lg bg-amber-100 p-1.5 text-amber-700">
+                    <.icon name="hero-cube-transparent" class="h-4 w-4" />
+                  </span>
+                  <span class="space-y-0.5">
+                    <span class="block text-xs font-semibold text-slate-900">Assumptions</span>
+                    <span class="block text-xs leading-tight text-slate-600">
+                      What has to be true?
+                    </span>
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  class="group flex flex-col items-start gap-2 rounded-lg border border-red-200/80 bg-gradient-to-br from-white to-red-50/50 px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-red-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                  phx-click="node_counterexample"
+                  phx-value-id={@node && @node.id}
+                  disabled={is_nil(@graph_id)}
+                  title="Is that always true? — Find counterexamples"
+                >
+                  <span class="inline-flex items-center justify-center rounded-lg bg-red-100 p-1.5 text-red-700">
+                    <.icon name="hero-x-mark" class="h-4 w-4" />
+                  </span>
+                  <span class="space-y-0.5">
+                    <span class="block text-xs font-semibold text-slate-900">Test</span>
+                    <span class="block text-xs leading-tight text-slate-600">
+                      Is that always true?
+                    </span>
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  class="group flex flex-col items-start gap-2 rounded-lg border border-indigo-200/80 bg-gradient-to-br from-white to-indigo-50/50 px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                  phx-click="node_implications"
+                  phx-value-id={@node && @node.id}
+                  disabled={is_nil(@graph_id)}
+                  title="So what? — Trace the consequences"
+                >
+                  <span class="inline-flex items-center justify-center rounded-lg bg-indigo-100 p-1.5 text-indigo-700">
+                    <.icon name="hero-arrow-right" class="h-4 w-4" />
+                  </span>
+                  <span class="space-y-0.5">
+                    <span class="block text-xs font-semibold text-slate-900">Implications</span>
+                    <span class="block text-xs leading-tight text-slate-600">So what?</span>
+                  </span>
+                </button>
+              </div>
+
+              <button
+                type="button"
+                class="mt-2 w-full group flex flex-col items-start gap-2 rounded-lg border border-purple-200/80 bg-gradient-to-br from-white to-purple-50/50 px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-purple-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                phx-click="node_blind_spots"
+                phx-value-id={@node && @node.id}
+                disabled={is_nil(@graph_id)}
+                title="What's missing? — Detect blind spots"
+              >
+                <span class="inline-flex items-center justify-center rounded-lg bg-purple-100 p-1.5 text-purple-700">
+                  <.icon name="hero-eye-slash" class="h-4 w-4" />
+                </span>
+                <span class="space-y-0.5">
+                  <span class="block text-xs font-semibold text-slate-900">Blind Spots</span>
+                  <span class="block text-xs leading-tight text-slate-600">
+                    What's missing from this view?
+                  </span>
+                </span>
+              </button>
+            </div>
+
+            <%!-- Context & Expansion --%>
+            <div>
+              <p class="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                Context & Expansion
+              </p>
+              <div class="grid gap-2 sm:grid-cols-2">
+                <button
+                  type="button"
+                  class="group flex flex-col items-start gap-2 rounded-lg border border-sky-200/80 bg-gradient-to-br from-white to-sky-50/50 px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                  phx-click="node_says_who"
+                  phx-value-id={@node && @node.id}
+                  disabled={is_nil(@graph_id)}
+                  title="Says who? — Check sources and authority"
+                >
+                  <span class="inline-flex items-center justify-center rounded-lg bg-sky-100 p-1.5 text-sky-700">
+                    <.icon name="hero-user" class="h-4 w-4" />
+                  </span>
+                  <span class="space-y-0.5">
+                    <span class="block text-xs font-semibold text-slate-900">Source</span>
+                    <span class="block text-xs leading-tight text-slate-600">Says who?</span>
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  class="group flex flex-col items-start gap-2 rounded-lg border border-rose-200/80 bg-gradient-to-br from-white to-rose-50/50 px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-rose-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                  phx-click="node_who_disagrees"
+                  phx-value-id={@node && @node.id}
+                  disabled={is_nil(@graph_id)}
+                  title="Who disagrees? — Map the opposition"
+                >
+                  <span class="inline-flex items-center justify-center rounded-lg bg-rose-100 p-1.5 text-rose-700">
+                    <.icon name="hero-users" class="h-4 w-4" />
+                  </span>
+                  <span class="space-y-0.5">
+                    <span class="block text-xs font-semibold text-slate-900">Dissent</span>
+                    <span class="block text-xs leading-tight text-slate-600">
+                      Who disagrees?
+                    </span>
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  class="group flex flex-col items-start gap-2 rounded-lg border border-emerald-200/80 bg-gradient-to-br from-white to-emerald-50/50 px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                  phx-click="node_analogy"
+                  phx-value-id={@node && @node.id}
+                  disabled={is_nil(@graph_id)}
+                  title="What is this like? — Find analogies"
+                >
+                  <span class="inline-flex items-center justify-center rounded-lg bg-emerald-100 p-1.5 text-emerald-700">
+                    <.icon name="hero-link" class="h-4 w-4" />
+                  </span>
+                  <span class="space-y-0.5">
+                    <span class="block text-xs font-semibold text-slate-900">Analogy</span>
+                    <span class="block text-xs leading-tight text-slate-600">
+                      What is this like?
+                    </span>
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  class="group flex flex-col items-start gap-2 rounded-lg border border-yellow-200/80 bg-gradient-to-br from-white to-yellow-50/50 px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-yellow-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                  phx-click="node_steel_man"
+                  phx-value-id={@node && @node.id}
+                  disabled={is_nil(@graph_id)}
+                  title="Steel man — Strongest version of the argument"
+                >
+                  <span class="inline-flex items-center justify-center rounded-lg bg-yellow-100 p-1.5 text-yellow-700">
+                    <.icon name="hero-star" class="h-4 w-4" />
+                  </span>
+                  <span class="space-y-0.5">
+                    <span class="block text-xs font-semibold text-slate-900">Steel Man</span>
+                    <span class="block text-xs leading-tight text-slate-600">
+                      Strongest argument
+                    </span>
+                  </span>
+                </button>
+              </div>
+
+              <button
+                type="button"
+                class="mt-2 w-full group flex flex-col items-start gap-2 rounded-lg border border-fuchsia-200/80 bg-gradient-to-br from-white to-fuchsia-50/50 px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-fuchsia-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                phx-click="node_what_if"
+                phx-value-id={@node && @node.id}
+                disabled={is_nil(@graph_id)}
+                title="What if we change X? — Explore counterfactuals"
+              >
+                <span class="inline-flex items-center justify-center rounded-lg bg-fuchsia-100 p-1.5 text-fuchsia-700">
+                  <.icon name="hero-beaker" class="h-4 w-4" />
+                </span>
+                <span class="space-y-0.5">
+                  <span class="block text-xs font-semibold text-slate-900">What If?</span>
+                  <span class="block text-xs leading-tight text-slate-600">
+                    Explore counterfactuals
+                  </span>
+                </span>
+              </button>
+            </div>
+
+            <%!-- Clarity --%>
+            <div>
+              <p class="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                Clarity
+              </p>
+              <button
+                type="button"
+                class="w-full group flex flex-col items-start gap-2 rounded-lg border border-orange-200/80 bg-gradient-to-br from-white to-orange-50/50 px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-orange-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                phx-click="node_simplify"
+                phx-value-id={@node && @node.id}
+                disabled={is_nil(@graph_id)}
+                title="Simplify — Make accessible to all"
+              >
+                <span class="inline-flex items-center justify-center rounded-lg bg-orange-100 p-1.5 text-orange-700">
+                  <.icon name="hero-book-open" class="h-4 w-4" />
+                </span>
+                <span class="space-y-0.5">
+                  <span class="block text-xs font-semibold text-slate-900">Simplify</span>
+                  <span class="block text-xs leading-tight text-slate-600">
+                    Make it accessible to all
+                  </span>
+                </span>
+              </button>
+            </div>
+          </div>
         </div>
 
         <div class="flex flex-col gap-3 border-t border-slate-200/80 pt-4 sm:flex-row sm:items-center sm:justify-between">
