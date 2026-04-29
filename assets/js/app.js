@@ -260,7 +260,10 @@ hooks.GraphLayout = {
       if (id === "combine-drawer" && isClosed) {
         this._reopenSideDrawerAfterCombine = !!sideDrawerIsOpen;
         if (sideDrawerIsOpen) {
-          this._applySideDrawerState(false, { persist: false });
+          this._applySideDrawerState(false, {
+            persist: false,
+            dispatchResize: false,
+          });
         }
       }
 
@@ -359,7 +362,10 @@ hooks.GraphLayout = {
           (id === "combine-drawer" && !isClosed));
 
       if (shouldRestoreSideDrawer) {
-        this._applySideDrawerState(true, { persist: false });
+        this._applySideDrawerState(true, {
+          persist: false,
+          dispatchResize: false,
+        });
         this._reopenSideDrawerAfterCombine = false;
       }
 
@@ -466,7 +472,10 @@ hooks.GraphLayout = {
       }
     }
   },
-  _applySideDrawerState(shouldOpen, { persist = true } = {}) {
+  _applySideDrawerState(
+    shouldOpen,
+    { persist = true, dispatchResize = true } = {},
+  ) {
     const drawer = document.getElementById("side-drawer");
     const graphContainer = document.getElementById("graph-main-container");
     const toggleBtn = document.getElementById("drawer-toggle");
@@ -563,7 +572,9 @@ hooks.GraphLayout = {
       });
     }
 
-    window.dispatchEvent(new Event("resize"));
+    if (dispatchResize) {
+      window.dispatchEvent(new Event("resize"));
+    }
   },
   updated() {
     this.restoreState();

@@ -613,12 +613,7 @@ defmodule DialecticWeb.GraphLive do
             if Enum.any?(selected, fn n -> n.id == id end) do
               Enum.reject(selected, fn n -> n.id == id end)
             else
-              # Only allow 2 nodes to be selected
-              if length(selected) < 2 do
-                selected ++ [node]
-              else
-                selected
-              end
+              add_combine_node(selected, node)
             end
 
           {:noreply, updated_socket} =

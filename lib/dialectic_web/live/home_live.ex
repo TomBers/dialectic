@@ -295,12 +295,12 @@ defmodule DialecticWeb.HomeLive do
                   <span>RationalGrid</span>
                 </h1>
                 <p class="mx-auto max-w-5xl text-base font-semibold leading-snug text-white sm:text-lg">
-                  Explore ideas, structure arguments and collaborate on understanding with AI-assisted visual grids.
+                  Expore big ideas that do not fit in a chat box.
                   <.link
                     navigate={~p"/about"}
                     class="underline decoration-white/60 underline-offset-4 hover:decoration-white"
                   >
-                    Learn more.
+                    more
                   </.link>
                 </p>
               </div>

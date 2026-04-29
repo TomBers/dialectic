@@ -60,7 +60,7 @@ defmodule DialecticWeb.CombineSetupComp do
                 <.icon name="hero-arrows-pointing-in" class="h-5 w-5 text-violet-600" />
               </div>
               <p class="text-sm text-gray-500 font-medium">No ideas selected</p>
-              <p class="text-xs text-gray-400 mt-1">Click boxes on the grid to select them</p>
+              <p class="text-xs text-gray-400 mt-1">Click ideas on the grid to select them</p>
             </div>
           <% else %>
             <div class="space-y-3">

@@ -95,7 +95,7 @@ defmodule DialecticWeb.NewIdeaFormComp do
                 "text-[0.95rem] leading-[1.45] sm:text-[1.05rem] sm:leading-[1.5]",
                 "placeholder:text-slate-500",
                 "px-3.5 sm:pl-5 sm:pr-28",
-                "py-2.5 sm:py-2.5",
+                "py-2.5",
                 "min-h-[3rem] sm:min-h-[3.2rem]"
               ]}
               autocomplete="off"
