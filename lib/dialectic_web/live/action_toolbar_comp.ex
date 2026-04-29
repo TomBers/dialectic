@@ -146,7 +146,7 @@ defmodule DialecticWeb.ActionToolbarComp do
             <span class="space-y-1">
               <span class="block text-sm font-semibold text-slate-900">Pro | Con</span>
               <span class="block text-sm leading-5 text-slate-600">
-                See the strongest case for it and the strongest case against it.
+                See the strongest case for it and against it.
               </span>
             </span>
           </button>
@@ -173,7 +173,7 @@ defmodule DialecticWeb.ActionToolbarComp do
             <span class="space-y-1">
               <span class="block text-sm font-semibold text-slate-900">Blend</span>
               <span class="block text-sm leading-5 text-slate-600">
-                Bring this point together with another node and see what emerges.
+                Bring this point together with another and see what emerges.
               </span>
             </span>
           </button>
