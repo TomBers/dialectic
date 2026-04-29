@@ -161,6 +161,7 @@ defmodule DialecticWeb.ActionToolbarComp do
               )
               |> Phoenix.LiveView.JS.push("node_combine")
             }
+            phx-value-id={@node && @node.id}
             disabled={is_nil(@graph_id)}
             data-panel-toggle="combine-drawer"
             aria-label="Blend this node with another"

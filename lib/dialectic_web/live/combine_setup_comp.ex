@@ -28,7 +28,7 @@ defmodule DialecticWeb.CombineSetupComp do
       <div class="flex flex-col h-full">
         <%!-- Header --%>
         <div class="flex items-center justify-between px-3 py-2 border-b border-gray-200">
-          <h3 class="text-sm font-semibold text-gray-900">Combine Nodes</h3>
+          <h3 class="text-sm font-semibold text-gray-900">Combine ideas</h3>
           <button
             phx-click={
               Phoenix.LiveView.JS.dispatch("toggle-panel",
@@ -72,13 +72,13 @@ defmodule DialecticWeb.CombineSetupComp do
                   <line x1="12" x2="12" y1="19" y2="22"></line>
                 </svg>
               </div>
-              <p class="text-sm text-gray-500 font-medium">No boxes selected</p>
+              <p class="text-sm text-gray-500 font-medium">No ideas selected</p>
               <p class="text-xs text-gray-400 mt-1">Click boxes on the grid to select them</p>
             </div>
           <% else %>
             <div class="space-y-3">
               <div class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
-                Selected Nodes ({length(@selected_nodes)}/2)
+                Selected Ideas ({length(@selected_nodes)}/2)
               </div>
 
               <%= for {node, idx} <- Enum.with_index(@selected_nodes) do %>
@@ -151,7 +151,7 @@ defmodule DialecticWeb.CombineSetupComp do
             <%= if length(@selected_nodes) == 2 do %>
               Create Synthesis
             <% else %>
-              Select 2 nodes to combine
+              Select 2 ideas to combine
             <% end %>
           </button>
 
