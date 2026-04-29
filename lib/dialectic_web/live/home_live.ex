@@ -37,6 +37,7 @@ defmodule DialecticWeb.HomeLive do
        prompt_mode: prompt_mode,
        ask_question: true,
        graph_id: nil,
+       preview_seed: home_preview_seed(),
        curated_grids: [],
        all_curated_grids: [],
        featured_grids: [],
@@ -58,9 +59,10 @@ defmodule DialecticWeb.HomeLive do
     all_curated_grids = Graphs.list_curated_grids("curated", 20)
     all_featured_grids = Graphs.list_curated_grids("featured", 20)
 
-    preview_seed = home_preview_seed()
-    curated_grids = preview_curated_grids(all_curated_grids, 3, preview_seed)
-    featured_grids = preview_curated_grids(all_featured_grids, 3, preview_seed)
+    curated_grids = preview_curated_grids(all_curated_grids, 3, socket.assigns.preview_seed)
+
+    featured_grids =
+      preview_curated_grids(all_featured_grids, 3, socket.assigns.preview_seed)
 
     {:noreply,
      assign(socket,
