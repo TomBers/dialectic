@@ -103,6 +103,71 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     }
   end
 
+  defp highlight_graph_data do
+    %{
+      "nodes" => [
+        %{
+          "id" => "1",
+          "content" => "# Collective unconscious",
+          "class" => "origin",
+          "user" => nil,
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false
+        },
+        %{
+          "id" => "2",
+          "content" => "Could archetypes be explained biologically?",
+          "class" => "question",
+          "user" => nil,
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false
+        },
+        %{
+          "id" => "3",
+          "content" =>
+            "It describes inherited symbolic patterns rather than individual recollection.",
+          "class" => "answer",
+          "user" => nil,
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false
+        },
+        %{
+          "id" => "4",
+          "content" => "Could archetypes be explained biologically?",
+          "class" => "question",
+          "user" => nil,
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false
+        },
+        %{
+          "id" => "5",
+          "content" =>
+            "# Biological and cultural\nMaybe partially, but the concept also depends on culture and interpretation.",
+          "class" => "synthesis",
+          "user" => nil,
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false
+        }
+      ],
+      "edges" => [
+        %{"data" => %{"id" => "1_2", "source" => "1", "target" => "2"}},
+        %{"data" => %{"id" => "2_3", "source" => "2", "target" => "3"}},
+        %{"data" => %{"id" => "2_4", "source" => "2", "target" => "4"}},
+        %{"data" => %{"id" => "4_5", "source" => "4", "target" => "5"}}
+      ]
+    }
+  end
+
   defp create_graph(data \\ sample_graph_data()) do
     unique = System.unique_integer([:positive])
 
@@ -128,8 +193,11 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert is_nil(assigns.compare_context)
     assert has_element?(view, "#outline-layout")
     assert has_element?(view, "#outline-tree")
+    assert has_element?(view, "#outline-mobile-nav")
     assert has_element?(view, "#outline-detail")
     assert has_element?(view, "#outline-node-1")
+    assert has_element?(view, "#outline-mobile-node-1")
+    assert has_element?(view, "#reader-editor-link.hidden")
     assert has_element?(view, "#reading-node-1")
     assert has_element?(view, "#reading-node-2")
     assert has_element?(view, "#outline-next-choices")
@@ -223,21 +291,21 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
   end
 
   test "reader loads highlight data for rendered nodes", %{conn: conn} do
-    graph = create_graph()
+    graph = create_graph(highlight_graph_data())
     user = user_fixture()
 
     {:ok, highlight} =
       Highlights.create_highlight(%{
         mudg_id: graph.title,
-        node_id: "4",
+        node_id: "5",
         text_source_type: "node",
         selection_start: 0,
         selection_end: 5,
-        selected_text_snapshot: "Could",
+        selected_text_snapshot: "Maybe",
         created_by_user_id: user.id
       })
 
-    {:ok, _link} = Highlights.add_link(highlight, "5", "explain")
+    {:ok, _link} = Highlights.add_link(highlight, "3", "explain")
 
     {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=4")
     assigns = :sys.get_state(view.pid).socket.assigns
@@ -246,11 +314,11 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
 
     assert has_element?(
              view,
-             "#reading-highlight-4[phx-hook='TextSelectionHook'][data-highlights-only='true']"
+             "#reading-highlight-5[phx-hook='TextSelectionHook'][data-highlights-only='true']"
            )
 
     assert_push_event(view, "highlights_loaded", %{
-      highlights: [%{node_id: "4", links: [%{node_id: "5", link_type: "explain"}]}]
+      highlights: [%{node_id: "5", links: [%{node_id: "3", link_type: "explain"}]}]
     })
   end
 

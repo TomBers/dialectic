@@ -1,6 +1,6 @@
 <div
   id="outline-layout"
-  class="flex flex-col w-full overflow-hidden bg-slate-50"
+  class="flex w-full flex-col overflow-hidden bg-slate-50"
   style="height: calc(100vh - 2.5rem); height: calc(100dvh - 2.5rem);"
 >
   <div class="flex-none border-b border-slate-200 bg-white/90 backdrop-blur-sm">
@@ -33,8 +33,9 @@
           <div class="flex flex-wrap items-center gap-2 lg:justify-self-end">
             <%= if @can_edit do %>
               <.link
+                id="reader-editor-link"
                 navigate={graph_editor_path(@graph_struct, @selected_node_id, @nav_params)}
-                class="group inline-flex h-11 w-full items-center gap-2.5 rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-800 shadow-sm transition duration-150 hover:-translate-y-0.5 hover:border-slate-400 hover:bg-slate-50 sm:w-auto"
+                class="group hidden h-11 items-center gap-2.5 rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-800 shadow-sm transition duration-150 hover:-translate-y-0.5 hover:border-slate-400 hover:bg-slate-50 lg:inline-flex"
                 title="Open graph editor"
               >
                 <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-white shadow-sm">
@@ -59,10 +60,10 @@
     </div>
   </div>
 
-  <div class="grid flex-1 min-h-0 grid-cols-1 overflow-hidden lg:grid-cols-[20rem_minmax(0,1fr)] xl:grid-cols-[22rem_minmax(0,1fr)]">
+  <div class="flex flex-1 min-h-0 flex-col overflow-y-auto lg:grid lg:grid-cols-[20rem_minmax(0,1fr)] lg:overflow-hidden xl:grid-cols-[22rem_minmax(0,1fr)]">
     <aside
       id="outline-tree"
-      class="min-h-0 overflow-y-auto border-b border-slate-200 bg-white lg:border-b-0 lg:border-r"
+      class="hidden min-h-0 overflow-y-auto border-b border-slate-200 bg-white lg:block lg:border-b-0 lg:border-r"
     >
       <div class="sticky top-0 z-10 border-b border-slate-200 bg-white px-4 py-4">
         <h2 class="text-sm font-semibold text-slate-900">Conversation Outline</h2>
@@ -124,9 +125,89 @@
       <% end %>
     </aside>
 
-    <main id="outline-detail" class="min-h-0 overflow-y-auto" phx-hook="ScrollReset">
+    <main
+      id="outline-detail"
+      class="order-1 min-h-0 overflow-visible lg:order-none lg:overflow-y-auto"
+      phx-hook="ScrollReset"
+    >
       <%= if @node do %>
         <div class="mx-auto max-w-4xl space-y-8 px-5 py-8 sm:px-8 lg:px-10">
+          <section id="outline-mobile-nav" class="lg:hidden">
+            <details class="group overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-sm">
+              <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 [&::-webkit-details-marker]:hidden">
+                <div class="min-w-0">
+                  <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                    Browse
+                  </p>
+                  <h2 class="mt-1 text-sm font-semibold text-slate-900">Conversation Outline</h2>
+                  <p class="mt-1 text-xs text-slate-500">
+                    Jump to another point in the conversation.
+                  </p>
+                </div>
+
+                <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-slate-100 text-slate-600 shadow-sm transition group-open:rotate-180">
+                  <.icon name="hero-chevron-down" class="h-4 w-4" />
+                </span>
+              </summary>
+
+              <div class="border-t border-slate-200 bg-slate-50/70 px-2 py-3">
+                <%= if @outline_nodes == [] do %>
+                  <div id="outline-mobile-empty-state" class="px-4 py-8 text-sm text-slate-500">
+                    This graph does not have any visible nodes yet.
+                  </div>
+                <% else %>
+                  <nav class="space-y-1">
+                    <%= for row <- @outline_nodes do %>
+                      <% selected? = @selected_node_id == row.id %>
+                      <% displayed? = MapSet.member?(@displayed_node_ids, row.id) %>
+                      <.link
+                        id={"outline-mobile-node-#{row.id}"}
+                        patch={graph_path(@graph_struct, row.id, @nav_params)}
+                        class={[
+                          "group block rounded-xl border px-3 py-2.5 transition-all",
+                          if(selected?,
+                            do: "border-blue-200 bg-blue-50 text-slate-950 shadow-sm",
+                            else:
+                              "border-transparent text-slate-800 hover:border-slate-200 hover:bg-slate-50"
+                          ),
+                          displayed? && !selected? && "border-slate-200 bg-slate-50/80"
+                        ]}
+                        style={outline_indent_style(row.indent)}
+                      >
+                        <div class="flex items-center gap-3">
+                          <span class={[
+                            "h-2.5 w-2.5 rounded-full ring-2 shadow-sm",
+                            if(selected?, do: "ring-slate-700", else: "ring-white"),
+                            DialecticWeb.ColUtils.dot_class(row.class)
+                          ]}>
+                          </span>
+
+                          <div class="min-w-0 flex-1">
+                            <p class="truncate text-sm font-medium">{row.title}</p>
+                          </div>
+
+                          <div class="flex items-center gap-2 text-[11px]">
+                            <%= if row.branch? do %>
+                              <span class={[
+                                "rounded-full px-2 py-0.5 font-medium",
+                                if(selected?,
+                                  do: "bg-white text-blue-700",
+                                  else: "bg-emerald-50 text-emerald-700"
+                                )
+                              ]}>
+                                Split
+                              </span>
+                            <% end %>
+                          </div>
+                        </div>
+                      </.link>
+                    <% end %>
+                  </nav>
+                <% end %>
+              </div>
+            </details>
+          </section>
+
           <section class="text-sm leading-7 text-slate-600">
             <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
               <span class="font-semibold text-slate-900">You are here:</span>
