@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en" class="[scrollbar-gutter:stable]">
   <head>
+    <% canonical_url =
+      assigns[:canonical_url] || DialecticWeb.Endpoint.url() <> (@conn.request_path || "") %>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content={get_csrf_token()} />
@@ -14,11 +16,8 @@
     <%= if assigns[:noindex] do %>
       <meta name="robots" content="noindex, nofollow" />
     <% end %>
-    <link
-      rel="canonical"
-      href={assigns[:canonical_url] || DialecticWeb.Endpoint.url() <> (@conn.request_path || "")}
-    />
-    <meta property="og:url" content={DialecticWeb.Endpoint.url() <> (@conn.request_path || "")} />
+    <link rel="canonical" href={canonical_url} />
+    <meta property="og:url" content={canonical_url} />
     <meta property="og:site_name" content="RationalGrid" />
     <meta property="og:type" content={assigns[:og_type] || "website"} />
     <meta
@@ -37,6 +36,7 @@
       <meta name="twitter:image" content={@og_image} />
     <% end %>
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content={canonical_url} />
     <meta
       name="twitter:title"
       content={assigns[:page_title] || "RationalGrid - Collaborative AI-Augmented Learning"}

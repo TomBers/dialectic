@@ -2097,7 +2097,7 @@ defmodule DialecticWeb.GraphLive do
       canonical_url: canonical,
       og_type: "article",
       json_ld: json_ld,
-      noindex: !graph_struct.is_public,
+      noindex: true,
       live_view_topic: "graph_update:#{socket.id}",
       graph_topic: "graph_update:#{graph_id}",
       graph_struct: graph_struct,

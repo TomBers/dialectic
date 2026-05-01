@@ -19,6 +19,7 @@ defmodule DialecticWeb.SitemapController do
       from(g in Graph,
         where: g.is_published == true,
         where: g.is_public == true,
+        where: g.is_deleted == false or is_nil(g.is_deleted),
         where: not is_nil(g.slug),
         where: g.slug != "",
         select: %{slug: g.slug, updated_at: g.updated_at},

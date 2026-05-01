@@ -140,6 +140,29 @@ defmodule DialecticWeb.OutlineGraphLive do
 
     graph_topic = "graph_update:#{graph_db.title}"
     highlights = Highlights.list_highlights_with_links(mudg_id: graph_db.title)
+    base_url = DialecticWeb.Endpoint.url()
+    canonical = canonical_graph_url(graph_db)
+    description = reader_description(graph_db)
+
+    json_ld =
+      Jason.encode!(%{
+        "@context" => "https://schema.org",
+        "@type" => "Article",
+        "name" => graph_db.title,
+        "headline" => graph_db.title,
+        "description" => description,
+        "url" => canonical,
+        "image" => base_url <> ~p"/images/graph_live.webp",
+        "dateModified" => DateTime.to_iso8601(graph_db.updated_at),
+        "datePublished" => DateTime.to_iso8601(graph_db.inserted_at),
+        "publisher" => %{
+          "@type" => "Organization",
+          "name" => "RationalGrid",
+          "url" => base_url
+        },
+        "keywords" => graph_db.tags || [],
+        "isAccessibleForFree" => true
+      })
 
     if connected?(socket) do
       PubSub.subscribe(Dialectic.PubSub, graph_topic)
@@ -166,12 +189,30 @@ defmodule DialecticWeb.OutlineGraphLive do
       compare_context: nil,
       compare_branches: [],
       highlights: highlights,
-      page_title: "#{graph_db.title} — Reader",
-      page_description:
-        "Read through \"#{graph_db.title}\" in the reader. Follow the main thread, inspect nearby branches, and move through the conversation without the graph editor.",
-      canonical_url: DialecticWeb.Endpoint.url() <> "/g/#{graph_db.slug}",
-      noindex: true
+      page_title: graph_db.title,
+      page_description: description,
+      canonical_url: canonical,
+      og_type: "article",
+      og_image: base_url <> ~p"/images/graph_live.webp",
+      json_ld: json_ld,
+      noindex: !indexable_graph?(graph_db)
     )
+  end
+
+  defp canonical_graph_url(%{slug: slug}) when is_binary(slug) and slug != "" do
+    DialecticWeb.Endpoint.url() <> "/g/#{slug}"
+  end
+
+  defp canonical_graph_url(graph) do
+    DialecticWeb.Endpoint.url() <> "/g/#{URI.encode(graph.title)}"
+  end
+
+  defp reader_description(graph_db) do
+    "Explore \"#{graph_db.title}\" on RationalGrid. Read the main thread in order and follow nearby branches when the argument splits."
+  end
+
+  defp indexable_graph?(graph_db) do
+    graph_db.is_public == true and graph_db.is_published == true and graph_db.is_deleted != true
   end
 
   defp refresh_outline(socket) do

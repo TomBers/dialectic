@@ -1,11 +1,6 @@
 # https://www.robotstxt.org/robotstxt.html
 
 User-agent: *
-Allow: /
-Allow: /g/
-Allow: /u/
-Allow: /intro/
-Allow: /inspiration
 
 # Private / auth pages — not useful for indexing
 Disallow: /users/
@@ -18,11 +13,18 @@ Disallow: /socket/
 Disallow: /phoenix/
 Disallow: /live/
 
-# Block query-parameterized home page variants (search, filters)
-# These create duplicate content and waste crawl budget
+# Reader/editor duplicates — the reader is the canonical public URL
+Disallow: /g/*/graph
+Disallow: /g/*/linear
+Disallow: /g/*/outline
+
+# Query-parameterized variants create duplicate content and waste crawl budget
 Disallow: /*?search=
 Disallow: /*?tag=
 Disallow: /*?category=
+Disallow: /*?node=
+Disallow: /*?present=
+Disallow: /*?slides=
 Disallow: /*?token=
 
 # Sitemap
