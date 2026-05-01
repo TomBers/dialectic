@@ -91,7 +91,7 @@ defmodule DialecticWeb.ExportMenuComp do
           
     <!-- PDF -->
           <.link
-            navigate={graph_linear_path(@graph_struct, if(@node, do: Map.get(@node, :id), else: nil))}
+            navigate={graph_path(@graph_struct, if(@node, do: Map.get(@node, :id), else: nil))}
             target="_blank"
             rel="noopener noreferrer"
             class="w-full inline-flex items-center gap-2 text-xs font-medium px-2.5 py-2 rounded-md hover:bg-gray-50 transition-colors"

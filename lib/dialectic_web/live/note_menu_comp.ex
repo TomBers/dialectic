@@ -35,7 +35,7 @@ defmodule DialecticWeb.NoteMenuComp do
           </button>
 
           <.link
-            navigate={graph_linear_path(@graph_struct, if(@node, do: Map.get(@node, :id), else: nil))}
+            navigate={graph_path(@graph_struct, if(@node, do: Map.get(@node, :id), else: nil))}
             target="_blank"
             rel="noopener noreferrer"
             class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-red-200 text-red-600 hover:bg-red-50"

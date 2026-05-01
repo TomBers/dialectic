@@ -13,7 +13,7 @@ defmodule DialecticWeb.GraphStreaming do
 
   ## Options
   - `:preload_highlight_links` - whether to preload highlight `:links` association
-    (default: false). GraphLive uses true; LinearGraphLive uses false.
+    (default: false). GraphLive uses true; other callers can leave it false.
   """
 
   defmacro __using__(opts) do

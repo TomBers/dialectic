@@ -109,73 +109,105 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     })
   end
 
-  test "mounts outline view and renders the tree and detail panes", %{conn: conn} do
+  test "mounts the reader at the start of the graph and renders through the next split", %{
+    conn: conn
+  } do
     graph = create_graph()
 
-    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}/outline")
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}")
     assigns = :sys.get_state(view.pid).socket.assigns
 
     assert assigns.graph_id == graph.title
-    assert assigns.node.id == "5"
-    assert assigns.compare_context.root.id == "2"
-    assert Enum.map(assigns.compare_branches, & &1.id) == ["3", "4"]
-    assert Enum.find(assigns.compare_branches, &(&1.id == "4")).active?
+    assert assigns.node.id == "1"
+    assert Enum.map(assigns.reading_chain, & &1.id) == ["1", "2"]
+    assert assigns.reading_terminal.id == "2"
+    assert Enum.map(assigns.next_choices, & &1.id) == ["3", "4"]
+    assert is_nil(assigns.compare_context)
     assert has_element?(view, "#outline-layout")
     assert has_element?(view, "#outline-tree")
     assert has_element?(view, "#outline-detail")
-    assert has_element?(view, "#outline-node-5")
-    assert has_element?(view, "#outline-branch-compare")
-    assert has_element?(view, "#branch-compare-card-3")
-    refute has_element?(view, "#branch-compare-card-4")
+    assert has_element?(view, "#outline-node-1")
+    assert has_element?(view, "#reading-node-1")
+    assert has_element?(view, "#reading-node-2")
+    assert has_element?(view, "#outline-next-choices")
+    assert has_element?(view, "#next-choice-3")
+    assert has_element?(view, "#next-choice-4")
+    refute has_element?(view, "#outline-branch-compare")
   end
 
   test "node_id param selects the requested node and keeps its outline entry", %{conn: conn} do
     graph = create_graph()
 
-    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}/outline?node_id=3")
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=3")
     assigns = :sys.get_state(view.pid).socket.assigns
 
     assert assigns.selected_node_id == "3"
     assert assigns.node.id == "3"
     assert Enum.map(assigns.selected_path, & &1.id) == ["1", "2", "3"]
+    assert Enum.map(assigns.reading_chain, & &1.id) == ["3"]
     assert assigns.compare_context.root.id == "2"
     assert Enum.find(assigns.compare_branches, &(&1.id == "3")).active?
     assert has_element?(view, "#outline-node-3")
+    assert has_element?(view, "#reading-node-3")
+    assert has_element?(view, "#outline-end-state")
     assert has_element?(view, "#branch-compare-card-4")
     refute has_element?(view, "#branch-compare-card-3")
+    refute has_element?(view, "#outline-next-choices")
   end
 
-  test "branch root merges continue and compare into one section", %{conn: conn} do
+  test "branch root renders a single choice section", %{conn: conn} do
     graph = create_graph()
 
-    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}/outline?node_id=2")
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=2")
     assigns = :sys.get_state(view.pid).socket.assigns
 
     assert assigns.selected_node_id == "2"
+    assert Enum.map(assigns.reading_chain, & &1.id) == ["2"]
     assert assigns.compare_context.root.id == "2"
-    assert has_element?(view, "#outline-continue")
-    assert has_element?(view, "#continue-node-3")
-    assert has_element?(view, "#continue-node-4")
+    assert Enum.map(assigns.next_choices, & &1.id) == ["3", "4"]
+    assert has_element?(view, "#outline-next-choices")
+    assert has_element?(view, "#next-choice-3")
+    assert has_element?(view, "#next-choice-4")
     refute has_element?(view, "#outline-branch-compare")
+    refute has_element?(view, "#outline-end-state")
+  end
+
+  test "reader expands a single-child path until the leaf", %{conn: conn} do
+    graph = create_graph()
+
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=4")
+    assigns = :sys.get_state(view.pid).socket.assigns
+
+    assert assigns.selected_node_id == "4"
+    assert Enum.map(assigns.reading_chain, & &1.id) == ["4", "5"]
+    assert assigns.reading_terminal.id == "5"
+    assert assigns.next_choices == []
+    assert assigns.compare_context.root.id == "2"
+    assert has_element?(view, "#reading-node-4")
+    assert has_element?(view, "#reading-node-5")
+    assert has_element?(view, "#outline-end-state")
+    assert has_element?(view, "#outline-branch-compare")
+    assert has_element?(view, "#branch-compare-card-3")
+    refute has_element?(view, "#outline-next-choices")
   end
 
   test "patching to a different node pushes a scroll reset event", %{conn: conn} do
     graph = create_graph()
 
-    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}/outline?node_id=2")
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=2")
 
     view
-    |> element("#continue-node-3")
+    |> element("#next-choice-3")
     |> render_click()
 
-    assert_patch(view, ~p"/g/#{graph.slug}/outline?node_id=3")
+    assert_patch(view, ~p"/g/#{graph.slug}?node=3")
     assert_push_event(view, "scroll_to_top", %{})
   end
 
   test "selected article title shows the full node text", %{conn: conn} do
     graph = create_graph(long_title_graph_data())
 
-    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}/outline?node_id=2")
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=2")
     assigns = :sys.get_state(view.pid).socket.assigns
 
     full_title =

@@ -125,7 +125,7 @@ defmodule DialecticWeb.HomeLive do
         {:noreply, put_flash(socket, :error, "Grid not found after creation")}
 
       graph ->
-        {:noreply, redirect(socket, to: graph_path(graph))}
+        {:noreply, redirect(socket, to: graph_editor_path(graph))}
     end
   end
 
@@ -249,7 +249,7 @@ defmodule DialecticWeb.HomeLive do
             end)
 
           existing_graph ->
-            redirect(socket, to: graph_path(existing_graph))
+            redirect(socket, to: graph_editor_path(existing_graph))
         end
     end
   end
@@ -472,7 +472,6 @@ defmodule DialecticWeb.HomeLive do
                                 title={item.graph.title}
                                 is_public={item.graph.is_public}
                                 link={graph_path(item.graph)}
-                                linear_link={graph_linear_path(item.graph)}
                                 count={0}
                                 tags={Enum.take(item.graph.tags || [], 3)}
                                 author_name={item.author_name}
@@ -718,14 +717,7 @@ defmodule DialecticWeb.HomeLive do
                                 <%!-- Desktop link (graph view) --%>
                                 <.link
                                   navigate={graph_path(g)}
-                                  class="hidden lg:block line-clamp-2 font-semibold text-slate-900 hover:text-indigo-700"
-                                >
-                                  {g.title}
-                                </.link>
-                                <%!-- Mobile link (linear view) --%>
-                                <.link
-                                  navigate={graph_linear_path(g)}
-                                  class="lg:hidden line-clamp-2 font-semibold text-slate-900 hover:text-indigo-700"
+                                  class="line-clamp-2 font-semibold text-slate-900 hover:text-indigo-700"
                                 >
                                   {g.title}
                                 </.link>
@@ -754,16 +746,7 @@ defmodule DialecticWeb.HomeLive do
                                 <%!-- Desktop link (graph view) --%>
                                 <.link
                                   navigate={graph_path(g)}
-                                  class="hidden lg:inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-sky-500 text-white shadow-sm ring-1 ring-indigo-500/30 transition-transform hover:scale-105 hover:shadow-md"
-                                  aria-label={"Open " <> (g.title || "idea")}
-                                >
-                                  <.icon name="hero-magnifying-glass" class="h-4 w-4" />
-                                  <span class="sr-only">Open</span>
-                                </.link>
-                                <%!-- Mobile link (linear view) --%>
-                                <.link
-                                  navigate={graph_linear_path(g)}
-                                  class="lg:hidden inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-sky-500 text-white shadow-sm ring-1 ring-indigo-500/30 transition-transform hover:scale-105 hover:shadow-md"
+                                  class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-sky-500 text-white shadow-sm ring-1 ring-indigo-500/30 transition-transform hover:scale-105 hover:shadow-md"
                                   aria-label={"Open " <> (g.title || "idea")}
                                 >
                                   <.icon name="hero-magnifying-glass" class="h-4 w-4" />
@@ -895,7 +878,6 @@ defmodule DialecticWeb.HomeLive do
                   title={item.graph.title}
                   is_public={item.graph.is_public}
                   link={graph_path(item.graph)}
-                  linear_link={graph_linear_path(item.graph)}
                   count={0}
                   tags={Enum.take(item.graph.tags || [], 3)}
                   author_name={item.author_name}

@@ -8,7 +8,7 @@
       <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div class="min-w-0">
           <div class="flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-            <span>Outline View</span>
+            <span>Reader</span>
             <span class="h-1 w-1 rounded-full bg-slate-300"></span>
             <span>Reading Mode</span>
           </div>
@@ -21,25 +21,20 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
+          <%= if @can_edit do %>
+            <.link
+              navigate={graph_editor_path(@graph_struct, @selected_node_id, @nav_params)}
+              class="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition hover:border-slate-400 hover:bg-slate-50 sm:text-sm"
+            >
+              <.icon name="hero-squares-2x2" class="h-4 w-4" /> Editor
+            </.link>
+          <% end %>
+
           <%= if !@can_edit do %>
             <span class="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700">
               <.icon name="hero-lock-closed" class="h-3.5 w-3.5" /> Read only
             </span>
           <% end %>
-
-          <.link
-            navigate={graph_path(@graph_struct, @selected_node_id, @nav_params)}
-            class="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition hover:border-slate-400 hover:bg-slate-50 sm:text-sm"
-          >
-            <.icon name="hero-squares-2x2" class="h-4 w-4" /> Graph
-          </.link>
-
-          <.link
-            navigate={graph_linear_path(@graph_struct, @selected_node_id, @nav_params)}
-            class="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-xs font-medium text-blue-700 shadow-sm transition hover:bg-blue-100 sm:text-sm"
-          >
-            <.icon name="hero-document-text" class="h-4 w-4" /> Reader
-          </.link>
         </div>
       </div>
     </div>
@@ -63,10 +58,10 @@
         <nav class="space-y-1 px-2 py-3">
           <%= for row <- @outline_nodes do %>
             <% selected? = @selected_node_id == row.id %>
-            <% on_path? = MapSet.member?(@selected_path_ids, row.id) %>
+            <% displayed? = MapSet.member?(@displayed_node_ids, row.id) %>
             <.link
               id={"outline-node-#{row.id}"}
-              patch={graph_outline_path(@graph_struct, row.id, @nav_params)}
+              patch={graph_path(@graph_struct, row.id, @nav_params)}
               class={[
                 "group block rounded-xl border px-3 py-2.5 transition-all",
                 if(selected?,
@@ -74,7 +69,7 @@
                   else:
                     "border-transparent text-slate-800 hover:border-slate-200 hover:bg-slate-50"
                 ),
-                on_path? && !selected? && "border-slate-200 bg-slate-50/80"
+                displayed? && !selected? && "border-slate-200 bg-slate-50/80"
               ]}
               style={outline_indent_style(row.indent)}
             >
@@ -121,99 +116,110 @@
                   <span class="text-slate-300">/</span>
                 <% end %>
                 <.link
-                  patch={graph_outline_path(@graph_struct, path_node.id, @nav_params)}
+                  patch={graph_path(@graph_struct, path_node.id, @nav_params)}
                   class="truncate font-medium text-slate-700 underline-offset-4 transition hover:text-slate-950 hover:underline"
                 >
                   {path_node.title}
                 </.link>
               <% end %>
             </div>
+            <p class="mt-2 text-sm leading-6 text-slate-500">
+              {reading_flow_message(@reading_chain, @next_choices)}
+            </p>
           </section>
 
-          <article class={[
-            "rounded-[2rem] border border-slate-200 bg-white px-6 shadow-sm sm:px-12",
-            if(String.trim(@node_body_content || "") == "",
-              do: "py-6 sm:py-8",
-              else: "py-8 sm:py-12"
-            )
-          ]}>
-            <div class="max-w-3xl">
-              <p class="text-sm font-medium uppercase tracking-[0.12em] text-slate-500">
-                Currently Reading
-              </p>
-              <p class="mt-3 text-sm font-medium text-slate-500">
-                {DialecticWeb.ColUtils.node_type_label(@node.class)}
-              </p>
-              <h2 class="mt-2 font-serif text-xl font-semibold leading-tight text-slate-950 sm:text-[1.95rem]">
-                {@node.full_title || @node.title}
-              </h2>
-            </div>
+          <% last_reading_index = length(@reading_chain) - 1 %>
+          <section id="outline-reading-flow" class="space-y-5">
+            <%= for {reading_node, index} <- Enum.with_index(@reading_chain) do %>
+              <article
+                id={"reading-node-#{reading_node.id}"}
+                class={[
+                  "rounded-[2rem] border border-slate-200 bg-white px-6 shadow-sm sm:px-12",
+                  if(String.trim(reading_node.body_content || "") == "",
+                    do: "py-6 sm:py-8",
+                    else: "py-8 sm:py-12"
+                  )
+                ]}
+              >
+                <div class="max-w-3xl">
+                  <div class="flex flex-wrap items-center gap-2 text-sm font-medium text-slate-500">
+                    <span>{if index == 0, do: "Current node", else: "Then"}</span>
+                    <span class="h-1 w-1 rounded-full bg-slate-300"></span>
+                    <span>{DialecticWeb.ColUtils.node_type_label(reading_node.class)}</span>
+                  </div>
+                  <h2 class={[
+                    "mt-3 font-serif font-semibold leading-tight text-slate-950",
+                    if(index == 0,
+                      do: "text-xl sm:text-[1.95rem]",
+                      else: "text-lg sm:text-[1.6rem]"
+                    )
+                  ]}>
+                    {reading_node.full_title || reading_node.title}
+                  </h2>
+                </div>
 
-            <%= if String.trim(@node.content || "") == "" do %>
-              <div class="mt-8 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-10 text-center text-sm text-slate-500">
-                This node does not have content yet.
-              </div>
-            <% else %>
-              <%= if String.trim(@node_body_content || "") != "" do %>
-                <div class="mt-8 max-w-3xl">
-                  <article class="prose prose-slate prose-lg max-w-none font-serif prose-headings:font-serif prose-headings:tracking-tight prose-p:leading-8 prose-li:leading-8 prose-p:text-slate-700 prose-li:text-slate-700">
-                    <div
-                      phx-hook="Markdown"
-                      id={"outline-markdown-body-#{@node.id}"}
-                      data-md={@node.content || ""}
-                      data-body-only="true"
-                    >
+                <%= if String.trim(reading_node.content || "") == "" do %>
+                  <div class="mt-8 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-10 text-center text-sm text-slate-500">
+                    This node does not have content yet.
+                  </div>
+                <% else %>
+                  <%= if String.trim(reading_node.body_content || "") != "" do %>
+                    <div class="mt-8 max-w-3xl">
+                      <article class="prose prose-slate prose-lg max-w-none font-serif prose-headings:font-serif prose-headings:tracking-tight prose-p:leading-8 prose-li:leading-8 prose-p:text-slate-700 prose-li:text-slate-700">
+                        <div
+                          phx-hook="Markdown"
+                          id={"outline-markdown-body-#{reading_node.id}"}
+                          data-md={reading_node.content || ""}
+                          data-body-only="true"
+                        >
+                        </div>
+                      </article>
                     </div>
-                  </article>
+                  <% end %>
+                <% end %>
+              </article>
+
+              <%= if index < last_reading_index do %>
+                <div class="flex items-center gap-3 px-2 text-xs font-medium uppercase tracking-[0.18em] text-slate-400">
+                  <div class="h-px flex-1 bg-slate-200"></div>
+                  <span>Then</span>
+                  <div class="h-px flex-1 bg-slate-200"></div>
                 </div>
               <% end %>
             <% end %>
-          </article>
+          </section>
 
-          <% branch_root_selected? =
-            @compare_context && @compare_context.root.id == @selected_node_id %>
-          <%= if @child_summaries != [] do %>
+          <%= if @next_choices != [] do %>
             <section
-              id="outline-continue"
+              id="outline-next-choices"
               class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
             >
               <h3 class="text-xl font-semibold tracking-tight text-slate-950">
-                {if branch_root_selected?,
-                  do: "Choose a path from here",
-                  else: "Continue from here"}
+                Choose a path from here
               </h3>
               <p class="mt-2 text-sm leading-6 text-slate-500">
-                {if branch_root_selected?,
-                  do:
-                    "This point splits the conversation. Each option shows where that branch eventually leads.",
-                  else: "If you want to stay on this path, these are the next nodes to read."}
+                {next_choices_message(@reading_terminal, @node)}
               </p>
 
               <div class="mt-5 divide-y divide-slate-100">
-                <%= for child <- @child_summaries do %>
-                  <% branch =
-                    if branch_root_selected? do
-                      Enum.find(@compare_branches, &(&1.id == child.id))
-                    end %>
+                <%= for choice <- @next_choices do %>
                   <.link
-                    id={"continue-node-#{child.id}"}
-                    patch={graph_outline_path(@graph_struct, child.id, @nav_params)}
+                    id={"next-choice-#{choice.id}"}
+                    patch={graph_path(@graph_struct, choice.id, @nav_params)}
                     class="block py-4 first:pt-0 last:pb-0 transition hover:text-slate-950"
                   >
                     <div class="min-w-0">
                       <p class="text-xs font-medium uppercase tracking-wide text-slate-500">
-                        {DialecticWeb.ColUtils.node_type_label(child.class)}
+                        {DialecticWeb.ColUtils.node_type_label(choice.class)}
                       </p>
-                      <p class="mt-2 text-base font-semibold text-slate-900">{child.title}</p>
-                      <%= if branch_root_selected? do %>
-                        <%= if branch && branch.leaf && branch.leaf.id != child.id do %>
-                          <p class="mt-2 text-sm leading-6 text-slate-600">
-                            This path eventually reaches {branch.leaf.title}.
-                          </p>
-                        <% end %>
+                      <p class="mt-2 text-base font-semibold text-slate-900">{choice.title}</p>
+                      <%= if choice.leaf_title do %>
+                        <p class="mt-2 text-sm leading-6 text-slate-600">
+                          This path eventually reaches {choice.leaf_title}.
+                        </p>
                       <% else %>
                         <p class="mt-2 text-sm leading-6 text-slate-600">
-                          {child.content_preview}
+                          {choice.content_preview}
                         </p>
                       <% end %>
                     </div>
@@ -221,10 +227,20 @@
                 <% end %>
               </div>
             </section>
+          <% else %>
+            <section
+              id="outline-end-state"
+              class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-5 text-sm leading-6 text-slate-500"
+            >
+              This thread currently ends here.
+            </section>
           <% end %>
 
           <% inactive_branches = Enum.reject(@compare_branches, & &1.active?) %>
-          <%= if @compare_context && inactive_branches != [] && !branch_root_selected? do %>
+          <% compare_section_hidden? =
+            @compare_context && @reading_terminal &&
+              @compare_context.root.id == @reading_terminal.id %>
+          <%= if @compare_context && inactive_branches != [] && !compare_section_hidden? do %>
             <section
               id="outline-branch-compare"
               class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
@@ -245,7 +261,7 @@
                 <%= for branch <- inactive_branches do %>
                   <.link
                     id={"branch-compare-card-#{branch.id}"}
-                    patch={graph_outline_path(@graph_struct, branch.id, @nav_params)}
+                    patch={graph_path(@graph_struct, branch.id, @nav_params)}
                     class="block py-4 first:pt-0 last:pb-0 transition hover:text-slate-950"
                   >
                     <p class="text-base font-semibold text-slate-900">{branch.lead.title}</p>

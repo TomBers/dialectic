@@ -420,7 +420,7 @@ defmodule DialecticWeb.RightPanelComp do
 
             <.link
               navigate={
-                graph_linear_path(
+                graph_path(
                   @graph_struct,
                   if(@node, do: Map.get(@node, :id), else: nil),
                   if(assigns[:token], do: [token: assigns[:token]], else: [])
@@ -434,7 +434,7 @@ defmodule DialecticWeb.RightPanelComp do
               <.icon name="hero-printer" class="w-4 h-4 text-rose-600" />
               <div class="flex-1 text-left">
                 <div class="text-xs font-medium text-gray-800">Print to PDF</div>
-                <div class="text-[10px] text-gray-500">Printable document view</div>
+                <div class="text-[10px] text-gray-500">Printable reader view</div>
               </div>
             </.link>
 

@@ -2,25 +2,6 @@
 // to get started and then uncomment the line below.
 import "./user_socket.js";
 
-// Early mobile redirect: runs immediately before LiveView mounts for faster UX
-// Redirects /g/<slug> to /g/<slug>/linear on mobile devices
-(function () {
-  if (window.innerWidth < 1024) {
-    const path = window.location.pathname;
-    const graphMatch = path.match(/^\/g\/([^/]+)$/);
-    if (graphMatch) {
-      const params = new URLSearchParams(window.location.search);
-      if (params.has("node") && !params.has("node_id")) {
-        params.set("node_id", params.get("node"));
-        params.delete("node");
-      }
-      const queryString = params.toString();
-      const linearUrl = `/g/${graphMatch[1]}/linear${queryString ? `?${queryString}` : ""}${window.location.hash}`;
-      window.location.replace(linearUrl);
-    }
-  }
-})();
-
 // You can include dependencies in two ways.
 //
 // The simplest option is to put them in assets/vendor and
@@ -141,19 +122,6 @@ hooks.PasswordToggle = {
         isPassword ? "Hide password" : "Show password",
       );
     });
-  },
-};
-
-hooks.MobileRedirect = {
-  mounted() {
-    // Only redirect on small screens (matches lg:hidden breakpoint)
-    if (window.innerWidth < 1024) {
-      const url = this.el.dataset.linearUrl;
-      if (url) {
-        // Use replace to avoid polluting browser history (back button loop)
-        window.location.replace(url);
-      }
-    }
   },
 };
 

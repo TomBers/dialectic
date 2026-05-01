@@ -38,7 +38,7 @@ defmodule DialecticWeb.OutlineGraphLive do
           rescue
             e ->
               Logger.error(
-                "Error loading outline view for #{graph_id}: #{Exception.format(:error, e, __STACKTRACE__)}"
+                "Error loading reader view for #{graph_id}: #{Exception.format(:error, e, __STACKTRACE__)}"
               )
 
               socket =
@@ -105,15 +105,16 @@ defmodule DialecticWeb.OutlineGraphLive do
       outline_nodes: outline_nodes,
       selected_node_id: nil,
       node: nil,
-      node_body_content: "",
       selected_path: [],
-      selected_path_ids: MapSet.new(),
-      child_summaries: [],
+      displayed_node_ids: MapSet.new(),
+      reading_chain: [],
+      reading_terminal: nil,
+      next_choices: [],
       compare_context: nil,
       compare_branches: [],
-      page_title: "#{graph_db.title} — Outline View",
+      page_title: "#{graph_db.title} — Reader",
       page_description:
-        "Browse \"#{graph_db.title}\" as an outline. Follow the main thread, inspect sibling branches, and move through the conversation without the canvas.",
+        "Read through \"#{graph_db.title}\" in the reader. Follow the main thread, inspect nearby branches, and move through the conversation without the graph editor.",
       canonical_url: DialecticWeb.Endpoint.url() <> "/g/#{graph_db.slug}",
       noindex: true
     )
@@ -136,10 +137,11 @@ defmodule DialecticWeb.OutlineGraphLive do
     assign(socket,
       selected_node_id: nil,
       node: nil,
-      node_body_content: "",
       selected_path: [],
-      selected_path_ids: MapSet.new(),
-      child_summaries: [],
+      displayed_node_ids: MapSet.new(),
+      reading_chain: [],
+      reading_terminal: nil,
+      next_choices: [],
       compare_context: nil,
       compare_branches: []
     )
@@ -155,16 +157,27 @@ defmodule DialecticWeb.OutlineGraphLive do
       |> Enum.filter(&visible_node?/1)
       |> Enum.map(&enrich_node/1)
 
+    reading_chain = build_reading_chain(socket.assigns.graph_id, selected_node)
+    reading_terminal = List.last(reading_chain)
+    next_choices = build_next_choices(socket.assigns.graph_id, reading_terminal)
+
     {compare_context, compare_branches} =
       build_compare_state(socket.assigns.graph_id, selected_node, selected_path)
+
+    displayed_node_ids =
+      selected_path
+      |> Enum.map(& &1.id)
+      |> Kernel.++(Enum.map(reading_chain, & &1.id))
+      |> MapSet.new()
 
     assign(socket,
       selected_node_id: selected_node.id,
       node: selected_node,
-      node_body_content: node_body_content(selected_node),
       selected_path: selected_path,
-      selected_path_ids: MapSet.new(Enum.map(selected_path, & &1.id)),
-      child_summaries: get_child_summaries(socket.assigns.graph_id, selected_node.id),
+      displayed_node_ids: displayed_node_ids,
+      reading_chain: reading_chain,
+      reading_terminal: reading_terminal,
+      next_choices: next_choices,
       compare_context: compare_context,
       compare_branches: compare_branches
     )
@@ -186,6 +199,11 @@ defmodule DialecticWeb.OutlineGraphLive do
     current_selected_node(graph_id, node_id) || default_target_node(graph_id)
   end
 
+  defp resolve_target_node(graph_id, %{"node" => node_id})
+       when is_binary(node_id) and node_id != "" do
+    current_selected_node(graph_id, node_id) || default_target_node(graph_id)
+  end
+
   defp resolve_target_node(graph_id, _params), do: default_target_node(graph_id)
 
   defp current_selected_node(_graph_id, nil), do: nil
@@ -197,20 +215,21 @@ defmodule DialecticWeb.OutlineGraphLive do
   end
 
   defp default_target_node(graph_id) do
-    graph_id
-    |> GraphManager.find_leaf_nodes()
-    |> Enum.filter(&visible_node?/1)
-    |> Enum.sort_by(&sort_key(&1.id), :desc)
-    |> List.first()
-    |> case do
-      nil ->
-        node = GraphManager.best_node(graph_id, nil)
+    node = GraphManager.best_node(graph_id, nil)
 
-        if visible_node?(node), do: node, else: nil
-
-      node ->
-        node
+    if visible_node?(node) do
+      node
+    else
+      first_visible_node(graph_id)
     end
+  end
+
+  defp first_visible_node(graph_id) do
+    {_graph_struct, graph} = GraphManager.get_graph(graph_id)
+
+    graph
+    |> ThreadedConv.prepare_conversation()
+    |> Enum.find(&visible_node?/1)
   end
 
   defp build_outline_nodes(graph_id, graph) do
@@ -230,17 +249,55 @@ defmodule DialecticWeb.OutlineGraphLive do
     end)
   end
 
-  defp get_child_summaries(graph_id, node_id) do
+  defp build_reading_chain(_graph_id, nil), do: []
+
+  defp build_reading_chain(graph_id, selected_node) do
     graph_id
-    |> list_non_deleted_children(node_id)
-    |> Enum.map(fn node ->
-      %{
-        id: node.id,
-        title: display_title(node),
-        class: Map.get(node, :class, "default"),
-        content_preview: preview_node_content(node, 140)
-      }
-    end)
+    |> do_build_reading_chain(selected_node, MapSet.new())
+    |> Enum.map(&enrich_node/1)
+  end
+
+  defp do_build_reading_chain(_graph_id, nil, _visited), do: []
+
+  defp do_build_reading_chain(graph_id, node, visited) do
+    if MapSet.member?(visited, node.id) do
+      [node]
+    else
+      visited = MapSet.put(visited, node.id)
+
+      case list_non_deleted_children(graph_id, node.id) do
+        [child] ->
+          [node | do_build_reading_chain(graph_id, child, visited)]
+
+        _ ->
+          [node]
+      end
+    end
+  end
+
+  defp build_next_choices(_graph_id, nil), do: []
+
+  defp build_next_choices(graph_id, node) do
+    children = list_non_deleted_children(graph_id, node.id)
+
+    if length(children) > 1 do
+      Enum.map(children, fn child ->
+        leaf = deepest_visible_descendant(graph_id, child)
+
+        %{
+          id: child.id,
+          title: display_title(child),
+          class: Map.get(child, :class, "default"),
+          content_preview: preview_node_content(child, 140),
+          leaf_title:
+            if leaf.id != child.id do
+              display_title(leaf)
+            end
+        }
+      end)
+    else
+      []
+    end
   end
 
   defp build_compare_state(graph_id, selected_node, selected_path) do
@@ -269,8 +326,7 @@ defmodule DialecticWeb.OutlineGraphLive do
 
         if length(compare_branches) > 1 do
           compare_context = %{
-            root: enrich_node(branch_root),
-            branch_count: length(compare_branches)
+            root: enrich_node(branch_root)
           }
 
           {compare_context, compare_branches}
@@ -334,6 +390,7 @@ defmodule DialecticWeb.OutlineGraphLive do
     node
     |> Map.put(:title, display_title(node))
     |> Map.put(:full_title, display_title(node, max_length: :infinity))
+    |> Map.put(:body_content, node_body_content(node))
     |> Map.put(:class, Map.get(node, :class, "default"))
   end
 
@@ -374,7 +431,12 @@ defmodule DialecticWeb.OutlineGraphLive do
 
   defp preview_node_content(node, limit) do
     cleaned_content = sanitize_preview_text(Map.get(node, :content, ""))
-    cleaned_body_content = node |> node_body_content() |> sanitize_preview_text()
+
+    cleaned_body_content =
+      node
+      |> Map.get(:body_content, node_body_content(node))
+      |> sanitize_preview_text()
+
     title = node |> display_title(max_length: :infinity) |> sanitize_preview_text()
 
     cleaned_body_content
@@ -440,6 +502,30 @@ defmodule DialecticWeb.OutlineGraphLive do
 
   defp pluralize(1, singular, _plural), do: singular
   defp pluralize(_count, _singular, plural), do: plural
+
+  defp reading_flow_message(reading_chain, next_choices) do
+    cond do
+      length(reading_chain) > 1 and next_choices != [] ->
+        "Showing this thread until the next split."
+
+      length(reading_chain) > 1 ->
+        "Showing the rest of this thread all the way to its current endpoint."
+
+      next_choices != [] ->
+        "This point splits into multiple paths."
+
+      true ->
+        "This path ends here."
+    end
+  end
+
+  defp next_choices_message(reading_terminal, selected_node) do
+    if reading_terminal.id == selected_node.id do
+      "This point splits the conversation. Pick the direction you want to read next."
+    else
+      "The thread above leads to another split here. Pick the direction you want to read next."
+    end
+  end
 
   defp outline_indent_style(indent) do
     "padding-left: #{0.75 + indent * 1.1}rem;"
