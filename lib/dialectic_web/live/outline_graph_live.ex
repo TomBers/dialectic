@@ -97,16 +97,14 @@ defmodule DialecticWeb.OutlineGraphLive do
       nav_params: token_params(token_param),
       can_edit: !graph_db.is_locked,
       outline_nodes: outline_nodes,
-      outline_stats: summarize_outline(outline_nodes),
       selected_node_id: nil,
       node: nil,
+      node_body_content: "",
       selected_path: [],
       selected_path_ids: MapSet.new(),
       child_summaries: [],
-      sibling_summaries: [],
       compare_context: nil,
       compare_branches: [],
-      current_depth: 0,
       page_title: "#{graph_db.title} — Outline View",
       page_description:
         "Browse \"#{graph_db.title}\" as an outline. Follow the main thread, inspect sibling branches, and move through the conversation without the canvas.",
@@ -124,10 +122,7 @@ defmodule DialecticWeb.OutlineGraphLive do
         default_target_node(socket.assigns.graph_id)
 
     socket
-    |> assign(
-      outline_nodes: outline_nodes,
-      outline_stats: summarize_outline(outline_nodes)
-    )
+    |> assign(outline_nodes: outline_nodes)
     |> assign_selected_node(selected_node)
   end
 
@@ -135,13 +130,12 @@ defmodule DialecticWeb.OutlineGraphLive do
     assign(socket,
       selected_node_id: nil,
       node: nil,
+      node_body_content: "",
       selected_path: [],
       selected_path_ids: MapSet.new(),
       child_summaries: [],
-      sibling_summaries: [],
       compare_context: nil,
-      compare_branches: [],
-      current_depth: 0
+      compare_branches: []
     )
   end
 
@@ -161,13 +155,12 @@ defmodule DialecticWeb.OutlineGraphLive do
     assign(socket,
       selected_node_id: selected_node.id,
       node: selected_node,
+      node_body_content: node_body_content(selected_node),
       selected_path: selected_path,
       selected_path_ids: MapSet.new(Enum.map(selected_path, & &1.id)),
       child_summaries: get_child_summaries(socket.assigns.graph_id, selected_node.id),
-      sibling_summaries: get_sibling_summaries(socket.assigns.graph_id, selected_node.id),
       compare_context: compare_context,
-      compare_branches: compare_branches,
-      current_depth: max(length(selected_path) - 1, 0)
+      compare_branches: compare_branches
     )
   end
 
@@ -215,20 +208,9 @@ defmodule DialecticWeb.OutlineGraphLive do
         indent: Map.get(node, :indent, 0),
         title: display_title(node),
         class: Map.get(node, :class, "default"),
-        preview: preview_content(Map.get(node, :content, ""), 96),
-        child_count: length(children),
         branch?: length(children) > 1
       }
     end)
-  end
-
-  defp summarize_outline(outline_nodes) do
-    %{
-      total: length(outline_nodes),
-      branch_points: Enum.count(outline_nodes, & &1.branch?),
-      leaves: Enum.count(outline_nodes, &(&1.child_count == 0)),
-      max_depth: Enum.max(Enum.map(outline_nodes, & &1.indent), fn -> 0 end)
-    }
   end
 
   defp get_child_summaries(graph_id, node_id) do
@@ -239,29 +221,9 @@ defmodule DialecticWeb.OutlineGraphLive do
         id: node.id,
         title: display_title(node),
         class: Map.get(node, :class, "default"),
-        content_preview: preview_content(Map.get(node, :content, ""), 140),
-        child_count: length(list_non_deleted_children(graph_id, node.id))
+        content_preview: preview_node_content(node, 140)
       }
     end)
-  end
-
-  defp get_sibling_summaries(graph_id, node_id) do
-    case GraphManager.in_neighbours(graph_id, node_id) |> List.first() do
-      nil ->
-        []
-
-      parent_id ->
-        graph_id
-        |> list_non_deleted_children(parent_id)
-        |> Enum.map(fn node ->
-          %{
-            id: node.id,
-            title: display_title(node),
-            class: Map.get(node, :class, "default"),
-            content_preview: preview_content(Map.get(node, :content, ""), 120)
-          }
-        end)
-    end
   end
 
   defp build_compare_state(graph_id, selected_node, selected_path) do
@@ -273,8 +235,7 @@ defmodule DialecticWeb.OutlineGraphLive do
         compare_branches =
           graph_id
           |> list_non_deleted_children(branch_root.id)
-          |> Enum.with_index()
-          |> Enum.map(fn {child, index} ->
+          |> Enum.map(fn child ->
             representative_leaf = deepest_visible_descendant(graph_id, child)
             segment = branch_segment(graph_id, branch_root.id, representative_leaf)
             enriched_segment = Enum.map(segment, &enrich_node/1)
@@ -283,23 +244,16 @@ defmodule DialecticWeb.OutlineGraphLive do
 
             %{
               id: child.id,
-              label: branch_option_label(index),
               lead: lead,
               leaf: leaf,
-              step_count: max(length(enriched_segment), 1),
-              active?: branch_active?(selected_node, branch_root, enriched_segment),
-              leaf_preview: preview_content(Map.get(leaf || %{}, :content, ""), 180)
+              active?: branch_active?(selected_node, branch_root, enriched_segment)
             }
           end)
 
         if length(compare_branches) > 1 do
           compare_context = %{
             root: enrich_node(branch_root),
-            branch_count: length(compare_branches),
-            active_branch_id:
-              Enum.find_value(compare_branches, fn branch ->
-                if branch.active?, do: branch.id, else: nil
-              end)
+            branch_count: length(compare_branches)
           }
 
           {compare_context, compare_branches}
@@ -393,36 +347,78 @@ defmodule DialecticWeb.OutlineGraphLive do
 
   defp preview_content(content, limit) do
     content
-    |> to_string()
-    |> String.replace(~r/[#*_`~\[\]\(\)>!\-]/, "")
-    |> String.replace(~r/\s+/, " ")
-    |> String.trim()
+    |> sanitize_preview_text()
     |> case do
       "" -> "No content yet."
       cleaned -> String.slice(cleaned, 0, limit)
     end
   end
 
-  defp compact_type_label("origin"), do: "Origin"
-  defp compact_type_label("question"), do: "Question"
-  defp compact_type_label("user"), do: "Comment"
-  defp compact_type_label("answer"), do: "Answer"
-  defp compact_type_label("thesis"), do: "Pro"
-  defp compact_type_label("antithesis"), do: "Con"
-  defp compact_type_label("synthesis"), do: "Synthesis"
-  defp compact_type_label("ideas"), do: "Ideas"
-  defp compact_type_label("deepdive"), do: "Deep Dive"
-  defp compact_type_label(other), do: other |> to_string() |> String.capitalize()
+  defp preview_node_content(node, limit) do
+    cleaned_content = sanitize_preview_text(Map.get(node, :content, ""))
+    cleaned_body_content = node |> node_body_content() |> sanitize_preview_text()
+    title = node |> display_title() |> sanitize_preview_text()
 
-  defp branch_option_label(index) when index >= 0 and index < 26 do
-    "Option " <> <<?A + index>>
+    cleaned_body_content
+    |> case do
+      "" ->
+        cleaned_content
+        |> String.replace_prefix(title, "")
+        |> String.trim()
+        |> String.trim_leading(":.- ")
+
+      body_content ->
+        body_content
+    end
+    |> case do
+      "" -> preview_content(cleaned_content, limit)
+      deduped -> String.slice(deduped, 0, limit)
+    end
   end
 
-  defp branch_option_label(index), do: "Option #{index + 1}"
+  defp node_body_content(node) do
+    node
+    |> then(fn current_node ->
+      Map.get(current_node, :content) || Map.get(current_node, "content") || ""
+    end)
+    |> extract_body_content()
+  end
 
-  defp compare_grid_class(count) when count <= 1, do: "grid-cols-1"
-  defp compare_grid_class(2), do: "grid-cols-1 xl:grid-cols-2"
-  defp compare_grid_class(_count), do: "grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3"
+  defp extract_body_content(content) do
+    normalized_content =
+      content
+      |> to_string()
+      |> String.replace(~r/\r\n|\r/, "\n")
+
+    rest =
+      normalized_content
+      |> String.split("\n")
+      |> Enum.drop(1)
+      |> Enum.join("\n")
+      |> String.trim_leading()
+
+    case String.split(rest, "\n") do
+      [first_line | remaining_lines] ->
+        if String.match?(first_line, ~r/^\s*\#{1,6}\s+\S/) or
+             String.match?(first_line, ~r/^\s*(title|Title)\s*:?\s*/) do
+          Enum.join(remaining_lines, "\n")
+        else
+          rest
+        end
+
+      [] ->
+        rest
+    end
+    |> String.trim()
+  end
+
+  defp sanitize_preview_text(content) do
+    content
+    |> to_string()
+    |> String.replace(~r/[#*_`~\[\]\(\)>!\-]/, "")
+    |> String.replace(~r/\s+/, " ")
+    |> String.trim()
+  end
 
   defp pluralize(1, singular, _plural), do: singular
   defp pluralize(_count, _singular, plural), do: plural

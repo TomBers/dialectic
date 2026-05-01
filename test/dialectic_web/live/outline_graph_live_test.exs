@@ -95,7 +95,7 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(view, "#outline-node-5")
     assert has_element?(view, "#outline-branch-compare")
     assert has_element?(view, "#branch-compare-card-3")
-    assert has_element?(view, "#branch-compare-card-4")
+    refute has_element?(view, "#branch-compare-card-4")
   end
 
   test "node_id param selects the requested node and keeps its outline entry", %{conn: conn} do
@@ -110,6 +110,7 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert assigns.compare_context.root.id == "2"
     assert Enum.find(assigns.compare_branches, &(&1.id == "3")).active?
     assert has_element?(view, "#outline-node-3")
-    assert has_element?(view, "#branch-compare-card-3")
+    assert has_element?(view, "#branch-compare-card-4")
+    refute has_element?(view, "#branch-compare-card-3")
   end
 end

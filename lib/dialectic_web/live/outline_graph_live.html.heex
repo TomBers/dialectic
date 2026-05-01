@@ -1,22 +1,22 @@
 <div
   id="outline-layout"
-  class="flex flex-col w-full overflow-hidden bg-[radial-gradient(circle_at_top,_#f8fafc,_#e2e8f0_55%,_#cbd5e1)]"
+  class="flex flex-col w-full overflow-hidden bg-slate-50"
   style="height: calc(100vh - 2.5rem); height: calc(100dvh - 2.5rem);"
 >
-  <div class="flex-none border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
-    <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+  <div class="flex-none border-b border-slate-200 bg-white/90 backdrop-blur-sm">
+    <div class="mx-auto max-w-6xl px-4 py-4 sm:px-6 lg:px-8">
       <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div class="min-w-0">
           <div class="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
             <span>Outline View</span>
             <span class="h-1 w-1 rounded-full bg-slate-300"></span>
-            <span>Simplified branch reading</span>
+            <span>Reading Mode</span>
           </div>
           <h1 class="mt-2 text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl">
             {@graph_struct.title}
           </h1>
           <p class="mt-1 max-w-3xl text-sm leading-6 text-slate-600">
-            Follow one thread at a time, then compare the nearby alternatives when the conversation splits.
+            Read the conversation like a document. Use the outline to jump around, then choose another path only when you need it.
           </p>
         </div>
 
@@ -42,39 +42,17 @@
           </.link>
         </div>
       </div>
-
-      <div class="mt-4 flex flex-wrap items-center gap-2 text-sm text-slate-600">
-        <span class="inline-flex items-center rounded-full border border-slate-200 bg-white/85 px-3 py-1.5 shadow-sm">
-          {@outline_stats.total} nodes
-        </span>
-        <span class="inline-flex items-center rounded-full border border-slate-200 bg-white/85 px-3 py-1.5 shadow-sm">
-          {@outline_stats.branch_points} branch points
-        </span>
-        <span class="inline-flex items-center rounded-full border border-slate-200 bg-white/85 px-3 py-1.5 shadow-sm">
-          {@outline_stats.leaves} leaves
-        </span>
-        <span class="inline-flex items-center rounded-full border border-slate-200 bg-white/85 px-3 py-1.5 shadow-sm">
-          Max depth {@outline_stats.max_depth}
-        </span>
-      </div>
     </div>
   </div>
 
-  <div class="grid flex-1 min-h-0 grid-cols-1 overflow-hidden lg:grid-cols-[24rem_minmax(0,1fr)] xl:grid-cols-[28rem_minmax(0,1fr)]">
+  <div class="grid flex-1 min-h-0 grid-cols-1 overflow-hidden lg:grid-cols-[20rem_minmax(0,1fr)] xl:grid-cols-[22rem_minmax(0,1fr)]">
     <aside
       id="outline-tree"
-      class="min-h-0 overflow-y-auto border-b border-slate-200/80 bg-white/70 backdrop-blur-sm lg:border-b-0 lg:border-r"
+      class="min-h-0 overflow-y-auto border-b border-slate-200 bg-white lg:border-b-0 lg:border-r"
     >
-      <div class="sticky top-0 z-10 border-b border-slate-200/80 bg-white/85 px-4 py-3 backdrop-blur">
-        <div class="flex items-center justify-between gap-3">
-          <div>
-            <h2 class="text-sm font-semibold text-slate-900">Conversation Outline</h2>
-            <p class="text-xs text-slate-500">Select any node to inspect its thread.</p>
-          </div>
-          <span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-medium text-slate-600">
-            {@outline_stats.total} total
-          </span>
-        </div>
+      <div class="sticky top-0 z-10 border-b border-slate-200 bg-white px-4 py-4">
+        <h2 class="text-sm font-semibold text-slate-900">Conversation Outline</h2>
+        <p class="mt-1 text-xs text-slate-500">Choose a point in the conversation.</p>
       </div>
 
       <%= if @outline_nodes == [] do %>
@@ -90,58 +68,39 @@
               id={"outline-node-#{row.id}"}
               patch={graph_outline_path(@graph_struct, row.id, @nav_params)}
               class={[
-                "group block rounded-2xl border px-3 py-3 transition-all",
+                "group block rounded-xl border px-3 py-2.5 transition-all",
                 if(selected?,
-                  do: "border-slate-900 bg-slate-900 text-white shadow-lg shadow-slate-900/10",
-                  else: "border-transparent text-slate-800 hover:border-slate-200 hover:bg-white"
+                  do: "border-blue-200 bg-blue-50 text-slate-950 shadow-sm",
+                  else:
+                    "border-transparent text-slate-800 hover:border-slate-200 hover:bg-slate-50"
                 ),
                 on_path? && !selected? && "border-slate-200 bg-slate-50/80"
               ]}
               style={outline_indent_style(row.indent)}
             >
-              <div class="flex items-start gap-3">
+              <div class="flex items-center gap-3">
                 <span class={[
-                  "mt-1.5 h-2.5 w-2.5 rounded-full ring-2 shadow-sm",
+                  "h-2.5 w-2.5 rounded-full ring-2 shadow-sm",
                   if(selected?, do: "ring-slate-700", else: "ring-white"),
                   DialecticWeb.ColUtils.dot_class(row.class)
                 ]}>
                 </span>
 
                 <div class="min-w-0 flex-1">
-                  <div class="flex items-start justify-between gap-3">
-                    <div class="min-w-0">
-                      <p class="truncate text-sm font-semibold">{row.title}</p>
-                      <p class={[
-                        "mt-1 truncate text-xs leading-5",
-                        if(selected?, do: "text-slate-300", else: "text-slate-500")
-                      ]}>
-                        {row.preview}
-                      </p>
-                    </div>
+                  <p class="truncate text-sm font-medium">{row.title}</p>
+                </div>
 
-                    <div class="flex flex-col items-end gap-1">
-                      <span class={[
-                        "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1",
-                        DialecticWeb.ColUtils.badge_class(row.class)
-                      ]}>
-                        {compact_type_label(row.class)}
-                      </span>
-
-                      <%= if row.child_count > 0 do %>
-                        <span class={[
-                          "text-[10px] font-medium",
-                          if(selected?, do: "text-slate-300", else: "text-slate-400")
-                        ]}>
-                          {row.child_count} {pluralize(row.child_count, "child", "children")}
-                        </span>
-                      <% end %>
-                    </div>
-                  </div>
-
+                <div class="flex items-center gap-2 text-[11px]">
                   <%= if row.branch? do %>
-                    <div class="mt-2 inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
-                      <.icon name="hero-arrow-path-rounded-square" class="h-3 w-3" /> Branch point
-                    </div>
+                    <span class={[
+                      "rounded-full px-2 py-0.5 font-medium",
+                      if(selected?,
+                        do: "bg-white text-blue-700",
+                        else: "bg-emerald-50 text-emerald-700"
+                      )
+                    ]}>
+                      Split
+                    </span>
                   <% end %>
                 </div>
               </div>
@@ -153,9 +112,9 @@
 
     <main id="outline-detail" class="min-h-0 overflow-y-auto">
       <%= if @node do %>
-        <div class="mx-auto max-w-6xl space-y-6 px-4 py-5 sm:px-6 lg:px-8">
-          <section class="rounded-3xl border border-slate-200/80 bg-white/75 p-4 shadow-sm backdrop-blur-sm">
-            <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-600">
+        <div class="mx-auto max-w-4xl space-y-8 px-5 py-8 sm:px-8 lg:px-10">
+          <section class="text-sm leading-7 text-slate-600">
+            <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
               <span class="font-semibold text-slate-900">You are here:</span>
               <%= for {path_node, index} <- Enum.with_index(@selected_path) do %>
                 <%= if index > 0 do %>
@@ -171,369 +130,114 @@
             </div>
           </section>
 
-          <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_19rem]">
-            <section class="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
-              <div class="flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-start sm:justify-between">
-                <div class="min-w-0">
-                  <div class="flex flex-wrap items-center gap-2">
-                    <span class={[
-                      "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1",
-                      DialecticWeb.ColUtils.badge_class(@node.class)
-                    ]}>
-                      {DialecticWeb.ColUtils.node_type_label(@node.class)}
-                    </span>
-                    <span class="text-xs font-medium text-slate-500">Node {@node.id}</span>
-                    <span class="text-xs font-medium text-slate-500">Depth {@current_depth}</span>
-                  </div>
+          <article class={[
+            "rounded-[2rem] border border-slate-200 bg-white px-6 shadow-sm sm:px-12",
+            if(String.trim(@node_body_content || "") == "",
+              do: "py-6 sm:py-8",
+              else: "py-8 sm:py-12"
+            )
+          ]}>
+            <div class="max-w-3xl">
+              <p class="text-sm font-medium uppercase tracking-[0.12em] text-slate-500">
+                Currently Reading
+              </p>
+              <p class="mt-3 text-sm font-medium text-slate-500">
+                {DialecticWeb.ColUtils.node_type_label(@node.class)}
+              </p>
+              <h2 class="mt-2 font-serif text-2xl font-semibold tracking-tight text-slate-950 sm:text-[2.35rem]">
+                {@node.title}
+              </h2>
+            </div>
 
-                  <h2 class="mt-3 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
-                    {@node.title}
-                  </h2>
-                </div>
-
-                <%= if length(@child_summaries) > 1 do %>
-                  <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-right">
-                    <p class="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">
-                      Branching
-                    </p>
-                    <p class="mt-1 text-sm font-medium text-emerald-900">
-                      {length(@child_summaries)} direct responses
-                    </p>
-                  </div>
-                <% end %>
+            <%= if String.trim(@node.content || "") == "" do %>
+              <div class="mt-8 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-10 text-center text-sm text-slate-500">
+                This node does not have content yet.
               </div>
-
-              <%= if String.trim(@node.content || "") == "" do %>
-                <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-10 text-center text-sm text-slate-500">
-                  This node does not have content yet.
-                </div>
-              <% else %>
-                <article class="prose prose-slate mt-6 max-w-none prose-headings:tracking-tight prose-p:leading-7 prose-li:leading-7">
-                  <div
-                    phx-hook="Markdown"
-                    id={"outline-markdown-body-#{@node.id}"}
-                    data-md={@node.content || ""}
-                    data-body-only="true"
-                  >
-                  </div>
-                </article>
-              <% end %>
-            </section>
-
-            <aside class="space-y-4">
-              <div class="rounded-3xl border border-slate-200 bg-white/90 p-4 shadow-sm">
-                <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                  At a Glance
-                </p>
-                <div class="mt-3 flex flex-wrap gap-2 text-sm text-slate-600">
-                  <span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5">
-                    Depth {@current_depth}
-                  </span>
-                  <span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5">
-                    {length(@child_summaries)}
-                    {pluralize(length(@child_summaries), "response", "responses")}
-                  </span>
-                  <span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5">
-                    {max(length(@sibling_summaries) - 1, 0)}
-                    {pluralize(
-                      max(length(@sibling_summaries) - 1, 0),
-                      "alternative",
-                      "alternatives"
-                    )}
-                  </span>
-                </div>
-              </div>
-
-              <div class="rounded-3xl border border-slate-200 bg-white/90 p-4 shadow-sm">
-                <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                  Quick Moves
-                </p>
-                <div class="mt-3 space-y-2">
-                  <.link
-                    navigate={graph_path(@graph_struct, @node.id, @nav_params)}
-                    class="flex items-center justify-between rounded-2xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-                  >
-                    <span>Open this node in graph view</span>
-                    <.icon name="hero-squares-2x2" class="h-4 w-4" />
-                  </.link>
-                  <.link
-                    navigate={graph_linear_path(@graph_struct, @node.id, @nav_params)}
-                    class="flex items-center justify-between rounded-2xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-100"
-                  >
-                    <span>Read this thread in doc view</span>
-                    <.icon name="hero-document-text" class="h-4 w-4" />
-                  </.link>
-                </div>
-              </div>
-            </aside>
-          </div>
-
-          <%= if @compare_context do %>
-            <section
-              id="outline-branch-compare"
-              class="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-7"
-            >
-              <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                <div class="min-w-0">
-                  <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                    Branch Compare
-                  </p>
-                  <h3 class="mt-2 text-xl font-semibold tracking-tight text-slate-950">
-                    Two directions from {@compare_context.root.title}
-                  </h3>
-                  <p class="mt-1 max-w-3xl text-sm leading-6 text-slate-500">
-                    The current branch is highlighted. Open any option to keep reading from there.
-                  </p>
-                </div>
-
-                <div class="flex flex-wrap items-center gap-2">
-                  <span class="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
-                    {@compare_context.branch_count}
-                    {pluralize(@compare_context.branch_count, "branch", "branches")}
-                  </span>
-                  <%= if @compare_context.active_branch_id do %>
-                    <span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600">
-                      Active branch: Node {@compare_context.active_branch_id}
-                    </span>
-                  <% end %>
-                </div>
-              </div>
-
-              <div class={["mt-6 grid gap-4", compare_grid_class(length(@compare_branches))]}>
-                <%= for branch <- @compare_branches do %>
-                  <article
-                    id={"branch-compare-card-#{branch.id}"}
-                    class={[
-                      "flex flex-col overflow-hidden rounded-[1.5rem] border transition",
-                      if(branch.active?,
-                        do: "border-blue-400 bg-blue-50 shadow-sm",
-                        else: "border-slate-200 bg-slate-50/60"
-                      )
-                    ]}
-                  >
-                    <div class="px-4 py-4 sm:px-5">
-                      <div class="flex items-center justify-between gap-3">
-                        <div class="min-w-0">
-                          <div class="flex flex-wrap items-center gap-2">
-                            <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700">
-                              {branch.label}
-                            </span>
-                            <span class={[
-                              "text-[11px] font-medium",
-                              if(branch.active?, do: "text-blue-700", else: "text-slate-500")
-                            ]}>
-                              {branch.step_count} {pluralize(branch.step_count, "step", "steps")}
-                            </span>
-                            <%= if branch.active? do %>
-                              <span class="rounded-full border border-blue-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-blue-700">
-                                Current
-                              </span>
-                            <% end %>
-                          </div>
-                        </div>
-
-                        <.link
-                          patch={graph_outline_path(@graph_struct, branch.id, @nav_params)}
-                          class={[
-                            "inline-flex shrink-0 items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold transition",
-                            if(branch.active?,
-                              do: "border-blue-200 bg-white text-blue-700 hover:bg-blue-100",
-                              else: "border-slate-200 bg-white text-slate-700 hover:bg-slate-100"
-                            )
-                          ]}
-                        >
-                          Read <.icon name="hero-arrow-right" class="h-3.5 w-3.5" />
-                        </.link>
-                      </div>
-                    </div>
-
-                    <div class="space-y-3 px-4 pb-4 sm:px-5 sm:pb-5">
-                      <div class={[
-                        "rounded-2xl border px-4 py-3",
-                        if(branch.active?,
-                          do: "border-blue-200 bg-white",
-                          else: "border-slate-200 bg-white"
-                        )
-                      ]}>
-                        <p class={[
-                          "text-[11px] font-semibold uppercase tracking-wide",
-                          if(branch.active?, do: "text-blue-700", else: "text-slate-500")
-                        ]}>
-                          Starts with
-                        </p>
-                        <p class="mt-2 text-sm font-medium leading-6 text-slate-900">
-                          {branch.lead.title}
-                        </p>
-                      </div>
-
-                      <div class={[
-                        "rounded-2xl border px-4 py-3",
-                        if(branch.active?,
-                          do: "border-blue-200 bg-white",
-                          else: "border-slate-200 bg-white"
-                        )
-                      ]}>
-                        <p class={[
-                          "text-[11px] font-semibold uppercase tracking-wide",
-                          if(branch.active?, do: "text-blue-700", else: "text-slate-500")
-                        ]}>
-                          Ends at
-                        </p>
-                        <h5 class="mt-2 text-base font-semibold tracking-tight text-slate-950">
-                          {branch.leaf.title}
-                        </h5>
-                      </div>
-
-                      <div class={[
-                        "rounded-2xl border px-4 py-3",
-                        if(branch.active?,
-                          do: "border-blue-200 bg-white",
-                          else: "border-slate-200 bg-white"
-                        )
-                      ]}>
-                        <p class={[
-                          "text-[11px] font-semibold uppercase tracking-wide",
-                          if(branch.active?, do: "text-blue-700", else: "text-slate-500")
-                        ]}>
-                          In short
-                        </p>
-                        <p class="mt-2 text-sm leading-6 text-slate-600">
-                          {branch.leaf_preview}
-                        </p>
-                      </div>
+            <% else %>
+              <%= if String.trim(@node_body_content || "") != "" do %>
+                <div class="mt-8 max-w-3xl">
+                  <article class="prose prose-slate prose-lg max-w-none font-serif prose-headings:font-serif prose-headings:tracking-tight prose-p:leading-8 prose-li:leading-8 prose-p:text-slate-700 prose-li:text-slate-700">
+                    <div
+                      phx-hook="Markdown"
+                      id={"outline-markdown-body-#{@node.id}"}
+                      data-md={@node.content || ""}
+                      data-body-only="true"
+                    >
                     </div>
                   </article>
+                </div>
+              <% end %>
+            <% end %>
+          </article>
+
+          <%= if @child_summaries != [] do %>
+            <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h3 class="text-xl font-semibold tracking-tight text-slate-950">
+                Continue from here
+              </h3>
+              <p class="mt-2 text-sm leading-6 text-slate-500">
+                If you want to stay on this path, these are the next nodes to read.
+              </p>
+
+              <div class="mt-5 divide-y divide-slate-100">
+                <%= for child <- @child_summaries do %>
+                  <.link
+                    patch={graph_outline_path(@graph_struct, child.id, @nav_params)}
+                    class="block py-4 first:pt-0 last:pb-0 transition hover:text-slate-950"
+                  >
+                    <div class="min-w-0">
+                      <p class="text-xs font-medium uppercase tracking-wide text-slate-500">
+                        {DialecticWeb.ColUtils.node_type_label(child.class)}
+                      </p>
+                      <p class="mt-2 text-base font-semibold text-slate-900">{child.title}</p>
+                      <p class="mt-2 text-sm leading-6 text-slate-600">{child.content_preview}</p>
+                    </div>
+                  </.link>
                 <% end %>
               </div>
             </section>
           <% end %>
 
-          <div class="grid gap-6 lg:grid-cols-2">
-            <section class="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
-              <div class="flex items-center justify-between gap-3">
-                <div>
-                  <h3 class="text-lg font-semibold text-slate-950">Direct Responses</h3>
-                  <p class="text-sm text-slate-500">
-                    Immediate children of the selected node.
-                  </p>
-                </div>
-                <span class="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600">
-                  {length(@child_summaries)}
-                </span>
-              </div>
+          <% inactive_branches = Enum.reject(@compare_branches, & &1.active?) %>
+          <%= if @compare_context && inactive_branches != [] do %>
+            <section
+              id="outline-branch-compare"
+              class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+            >
+              <h3 class="text-xl font-semibold tracking-tight text-slate-950">
+                Other paths you could read
+              </h3>
+              <p class="mt-2 text-sm leading-6 text-slate-500">
+                Earlier, at <span class="font-medium text-slate-700">{@compare_context.root.title}</span>,
+                the conversation split. If this is not the thread you want, you can switch to {pluralize(
+                  length(inactive_branches),
+                  " the other path",
+                  " one of the other paths"
+                )} below.
+              </p>
 
-              <div class="mt-4 space-y-3">
-                <%= if @child_summaries == [] do %>
-                  <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-sm text-slate-500">
-                    No direct responses yet.
-                  </div>
-                <% else %>
-                  <%= for child <- @child_summaries do %>
-                    <.link
-                      patch={graph_outline_path(@graph_struct, child.id, @nav_params)}
-                      class="block rounded-2xl border border-slate-200 px-4 py-4 transition hover:border-slate-300 hover:bg-slate-50"
-                    >
-                      <div class="flex items-start justify-between gap-3">
-                        <div class="min-w-0">
-                          <div class="flex flex-wrap items-center gap-2">
-                            <span class={[
-                              "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1",
-                              DialecticWeb.ColUtils.badge_class(child.class)
-                            ]}>
-                              {compact_type_label(child.class)}
-                            </span>
-                            <span class="text-[11px] text-slate-500">Node {child.id}</span>
-                          </div>
-                          <p class="mt-2 truncate text-sm font-semibold text-slate-900">
-                            {child.title}
-                          </p>
-                          <p class="mt-1 text-sm leading-6 text-slate-500">
-                            {child.content_preview}
-                          </p>
-                        </div>
-                        <span class="rounded-full border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-500">
-                          {child.child_count} {pluralize(child.child_count, "child", "children")}
-                        </span>
-                      </div>
-                    </.link>
-                  <% end %>
+              <div class="mt-5 divide-y divide-slate-100">
+                <%= for branch <- inactive_branches do %>
+                  <.link
+                    id={"branch-compare-card-#{branch.id}"}
+                    patch={graph_outline_path(@graph_struct, branch.id, @nav_params)}
+                    class="block py-4 first:pt-0 last:pb-0 transition hover:text-slate-950"
+                  >
+                    <p class="text-base font-semibold text-slate-900">{branch.lead.title}</p>
+                    <%= if branch.leaf && branch.leaf.id != branch.lead.id do %>
+                      <p class="mt-1 text-sm leading-6 text-slate-500">
+                        This path eventually reaches {branch.leaf.title}.
+                      </p>
+                    <% end %>
+                  </.link>
                 <% end %>
               </div>
             </section>
-
-            <section class="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
-              <div class="flex items-center justify-between gap-3">
-                <div>
-                  <h3 class="text-lg font-semibold text-slate-950">Sibling Branches</h3>
-                  <p class="text-sm text-slate-500">
-                    Quick navigation across immediate alternatives.
-                  </p>
-                </div>
-                <span class="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600">
-                  {max(length(@sibling_summaries) - 1, 0)} alternatives
-                </span>
-              </div>
-
-              <div class="mt-4 space-y-3">
-                <%= if length(@sibling_summaries) <= 1 do %>
-                  <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-sm text-slate-500">
-                    This node does not currently have sibling alternatives.
-                  </div>
-                <% else %>
-                  <%= for sibling <- @sibling_summaries do %>
-                    <% active? = sibling.id == @selected_node_id %>
-                    <.link
-                      patch={graph_outline_path(@graph_struct, sibling.id, @nav_params)}
-                      class={[
-                        "block rounded-2xl border px-4 py-4 transition",
-                        if(active?,
-                          do: "border-slate-900 bg-slate-900 text-white",
-                          else: "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
-                        )
-                      ]}
-                    >
-                      <div class="flex items-start justify-between gap-3">
-                        <div class="min-w-0">
-                          <div class="flex flex-wrap items-center gap-2">
-                            <span class={[
-                              "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1",
-                              DialecticWeb.ColUtils.badge_class(sibling.class)
-                            ]}>
-                              {compact_type_label(sibling.class)}
-                            </span>
-                            <span class={[
-                              "text-[11px]",
-                              if(active?, do: "text-slate-300", else: "text-slate-500")
-                            ]}>
-                              Node {sibling.id}
-                            </span>
-                          </div>
-                          <p class="mt-2 truncate text-sm font-semibold">
-                            {sibling.title}
-                          </p>
-                          <p class={[
-                            "mt-1 text-sm leading-6",
-                            if(active?, do: "text-slate-300", else: "text-slate-500")
-                          ]}>
-                            {sibling.content_preview}
-                          </p>
-                        </div>
-                        <%= if active? do %>
-                          <span class="rounded-full border border-slate-700 bg-slate-800 px-2 py-1 text-[11px] font-medium text-slate-200">
-                            Active
-                          </span>
-                        <% end %>
-                      </div>
-                    </.link>
-                  <% end %>
-                <% end %>
-              </div>
-            </section>
-          </div>
+          <% end %>
         </div>
       <% else %>
         <div class="flex h-full items-center justify-center px-6 py-12 text-center">
-          <div class="max-w-md rounded-3xl border border-slate-200 bg-white/85 p-8 shadow-sm">
+          <div class="max-w-md rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
             <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-100">
               <.icon name="hero-bars-3-bottom-left" class="h-7 w-7 text-slate-500" />
             </div>
