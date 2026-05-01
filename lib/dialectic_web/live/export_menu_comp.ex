@@ -6,13 +6,11 @@ defmodule DialecticWeb.ExportMenuComp do
 
   Provides:
   - PNG screenshot (integrates with the existing `.download-png` hook)
-  - PDF (navigates to the linear print view)
   - Markdown download
   - JSON extract download (minimal graph data for image generation)
 
   Assigns:
   - `graph_id` (required): The current graph identifier.
-  - `node` (optional): The currently selected node. When present, the reader view opens focused on this node.
   - `label` (optional): Custom label for the dropdown trigger (default: "Export").
   - `class` (optional): Extra classes added to the wrapper container.
   - `align` (optional): "left" or "right" alignment of the dropdown (default: "right").
@@ -25,7 +23,6 @@ defmodule DialecticWeb.ExportMenuComp do
       |> Map.put_new(:label, "Export")
       |> Map.put_new(:class, "")
       |> Map.put_new(:align, "right")
-      |> Map.put_new(:node, nil)
       |> Map.put_new(:token, nil)
 
     {:ok, assign(socket, assigns)}
@@ -88,33 +85,7 @@ defmodule DialecticWeb.ExportMenuComp do
             </svg>
             <span>PNG</span>
           </button>
-          
-    <!-- PDF -->
-          <.link
-            navigate={graph_path(@graph_struct, if(@node, do: Map.get(@node, :id), else: nil))}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="w-full inline-flex items-center gap-2 text-xs font-medium px-2.5 py-2 rounded-md hover:bg-gray-50 transition-colors"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-4 w-4 text-red-600"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2"
-              aria-hidden="true"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
-            <span>PDF</span>
-          </.link>
-          
-    <!-- Markdown -->
+          <!-- Markdown -->
           <.link
             href={
               path =

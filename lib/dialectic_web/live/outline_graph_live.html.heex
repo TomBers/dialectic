@@ -4,37 +4,60 @@
   style="height: calc(100vh - 2.5rem); height: calc(100dvh - 2.5rem);"
 >
   <div class="flex-none border-b border-slate-200 bg-white/90 backdrop-blur-sm">
-    <div class="mx-auto max-w-6xl px-4 py-2.5 sm:px-6 lg:px-8">
-      <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div class="min-w-0">
-          <div class="flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-            <span>Reader</span>
-            <span class="h-1 w-1 rounded-full bg-slate-300"></span>
-            <span>Reading Mode</span>
-          </div>
-          <h1 class="mt-1 text-lg font-semibold tracking-tight text-slate-950 sm:text-xl">
-            {@graph_struct.title}
-          </h1>
-          <p class="mt-0.5 max-w-3xl text-xs leading-5 text-slate-600 sm:text-sm">
-            Read the conversation like a document and switch branches only when needed.
-          </p>
+    <div class="grid grid-cols-1 lg:grid-cols-[20rem_minmax(0,1fr)] xl:grid-cols-[22rem_minmax(0,1fr)]">
+      <div class="hidden border-r border-slate-200 bg-slate-50/70 lg:flex lg:items-center lg:px-4 xl:px-5">
+        <div class="flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+          <span>Reader</span>
+          <span class="h-1 w-1 rounded-full bg-slate-300"></span>
+          <span>Reading Mode</span>
         </div>
+      </div>
 
-        <div class="flex flex-wrap items-center gap-2">
-          <%= if @can_edit do %>
-            <.link
-              navigate={graph_editor_path(@graph_struct, @selected_node_id, @nav_params)}
-              class="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition hover:border-slate-400 hover:bg-slate-50 sm:text-sm"
-            >
-              <.icon name="hero-squares-2x2" class="h-4 w-4" /> Editor
-            </.link>
-          <% end %>
+      <div class="px-4 py-2.5 sm:px-6 lg:px-10">
+        <div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 lg:hidden">
+              <span>Reader</span>
+              <span class="h-1 w-1 rounded-full bg-slate-300"></span>
+              <span>Reading Mode</span>
+            </div>
 
-          <%= if !@can_edit do %>
-            <span class="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700">
-              <.icon name="hero-lock-closed" class="h-3.5 w-3.5" /> Read only
-            </span>
-          <% end %>
+            <h1 class="mt-1 text-lg font-semibold tracking-tight text-slate-950 sm:text-xl">
+              {@graph_struct.title}
+            </h1>
+            <p class="mt-0.5 max-w-2xl text-xs leading-5 text-slate-600 sm:text-sm">
+              Read the conversation like a document and switch branches only when needed.
+            </p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2 lg:justify-self-end">
+            <%= if @can_edit do %>
+              <.link
+                navigate={graph_editor_path(@graph_struct, @selected_node_id, @nav_params)}
+                class="group inline-flex w-full items-center justify-between gap-3 rounded-2xl border border-slate-900 bg-slate-900 px-4 py-3 text-left text-white shadow-lg shadow-slate-900/10 transition duration-150 hover:-translate-y-0.5 hover:border-slate-700 hover:bg-slate-800 sm:min-w-[11rem] sm:w-auto"
+              >
+                <span class="flex items-center gap-3">
+                  <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/15">
+                    <.icon name="hero-squares-2x2" class="h-5 w-5" />
+                  </span>
+                  <span class="min-w-0">
+                    <span class="block text-sm font-semibold tracking-tight">Open Editor</span>
+                    <span class="block text-xs text-slate-300">Graph editing tools</span>
+                  </span>
+                </span>
+                <.icon
+                  name="hero-arrow-right"
+                  class="h-4 w-4 shrink-0 transition group-hover:translate-x-0.5"
+                />
+              </.link>
+            <% end %>
+
+            <%= if !@can_edit do %>
+              <span class="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700">
+                <.icon name="hero-lock-closed" class="h-3.5 w-3.5" /> Read only
+              </span>
+            <% end %>
+          </div>
         </div>
       </div>
     </div>
@@ -201,27 +224,56 @@
                 {next_choices_message(@reading_terminal, @node)}
               </p>
 
-              <div class="mt-5 divide-y divide-slate-100">
+              <div class="mt-5 grid gap-3 sm:grid-cols-2">
                 <%= for choice <- @next_choices do %>
                   <.link
                     id={"next-choice-#{choice.id}"}
                     patch={graph_path(@graph_struct, choice.id, @nav_params)}
-                    class="block py-4 first:pt-0 last:pb-0 transition hover:text-slate-950"
+                    class={[
+                      "group block rounded-2xl border-2 bg-white p-4 shadow-sm transition duration-150 hover:-translate-y-0.5 hover:shadow-md hover:text-slate-950",
+                      DialecticWeb.ColUtils.border_class(choice.class)
+                    ]}
                   >
-                    <div class="min-w-0">
-                      <p class="text-xs font-medium uppercase tracking-wide text-slate-500">
-                        {DialecticWeb.ColUtils.node_type_label(choice.class)}
-                      </p>
-                      <p class="mt-2 text-base font-semibold text-slate-900">{choice.title}</p>
-                      <%= if choice.leaf_title do %>
-                        <p class="mt-2 text-sm leading-6 text-slate-600">
-                          This path eventually reaches {choice.leaf_title}.
+                    <div class="flex items-start gap-3">
+                      <span class={[
+                        "mt-1 h-3 w-3 shrink-0 rounded-full ring-4 ring-white shadow-sm",
+                        DialecticWeb.ColUtils.dot_class(choice.class)
+                      ]}>
+                      </span>
+
+                      <div class="min-w-0 flex-1">
+                        <div class="flex flex-wrap items-center gap-2">
+                          <span class={[
+                            "inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold",
+                            DialecticWeb.ColUtils.badge_class(choice.class)
+                          ]}>
+                            {DialecticWeb.ColUtils.node_type_label(choice.class)}
+                          </span>
+                          <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                            Read next
+                          </span>
+                        </div>
+
+                        <p class="mt-3 text-base font-semibold leading-6 text-slate-900">
+                          {choice.title}
                         </p>
-                      <% else %>
-                        <p class="mt-2 text-sm leading-6 text-slate-600">
-                          {choice.content_preview}
-                        </p>
-                      <% end %>
+                        <%= if choice.leaf_title do %>
+                          <p class="mt-2 text-sm leading-6 text-slate-600">
+                            This path eventually reaches {choice.leaf_title}.
+                          </p>
+                        <% else %>
+                          <p class="mt-2 text-sm leading-6 text-slate-600">
+                            {choice.content_preview}
+                          </p>
+                        <% end %>
+                      </div>
+
+                      <span class={[
+                        "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border shadow-sm transition group-hover:translate-x-0.5",
+                        DialecticWeb.ColUtils.badge_class(choice.class)
+                      ]}>
+                        <.icon name="hero-arrow-right" class="h-4 w-4" />
+                      </span>
                     </div>
                   </.link>
                 <% end %>
@@ -257,19 +309,57 @@
                 )} below.
               </p>
 
-              <div class="mt-5 divide-y divide-slate-100">
+              <div class="mt-5 grid gap-3 sm:grid-cols-2">
                 <%= for branch <- inactive_branches do %>
                   <.link
                     id={"branch-compare-card-#{branch.id}"}
                     patch={graph_path(@graph_struct, branch.id, @nav_params)}
-                    class="block py-4 first:pt-0 last:pb-0 transition hover:text-slate-950"
+                    class={[
+                      "group block rounded-2xl border-2 bg-white p-4 shadow-sm transition duration-150 hover:-translate-y-0.5 hover:shadow-md hover:text-slate-950",
+                      DialecticWeb.ColUtils.border_class(branch.lead.class)
+                    ]}
                   >
-                    <p class="text-base font-semibold text-slate-900">{branch.lead.title}</p>
-                    <%= if branch.leaf && branch.leaf.id != branch.lead.id do %>
-                      <p class="mt-1 text-sm leading-6 text-slate-500">
-                        This path eventually reaches {branch.leaf.title}.
-                      </p>
-                    <% end %>
+                    <div class="flex items-start gap-3">
+                      <span class={[
+                        "mt-1 h-3 w-3 shrink-0 rounded-full ring-4 ring-white shadow-sm",
+                        DialecticWeb.ColUtils.dot_class(branch.lead.class)
+                      ]}>
+                      </span>
+
+                      <div class="min-w-0 flex-1">
+                        <div class="flex flex-wrap items-center gap-2">
+                          <span class={[
+                            "inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold",
+                            DialecticWeb.ColUtils.badge_class(branch.lead.class)
+                          ]}>
+                            {DialecticWeb.ColUtils.node_type_label(branch.lead.class)}
+                          </span>
+                          <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                            Read instead
+                          </span>
+                        </div>
+
+                        <p class="mt-3 text-base font-semibold leading-6 text-slate-900">
+                          {branch.lead.title}
+                        </p>
+                        <%= if branch.leaf && branch.leaf.id != branch.lead.id do %>
+                          <p class="mt-2 text-sm leading-6 text-slate-600">
+                            This path eventually reaches {branch.leaf.title}.
+                          </p>
+                        <% else %>
+                          <p class="mt-2 text-sm leading-6 text-slate-600">
+                            Start reading from this branch instead.
+                          </p>
+                        <% end %>
+                      </div>
+
+                      <span class={[
+                        "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border shadow-sm transition group-hover:translate-x-0.5",
+                        DialecticWeb.ColUtils.badge_class(branch.lead.class)
+                      ]}>
+                        <.icon name="hero-arrow-right" class="h-4 w-4" />
+                      </span>
+                    </div>
                   </.link>
                 <% end %>
               </div>

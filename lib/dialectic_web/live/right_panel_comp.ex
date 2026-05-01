@@ -393,7 +393,7 @@ defmodule DialecticWeb.RightPanelComp do
               <div>
                 <div class="text-xs font-semibold text-gray-800">Export</div>
                 <p class="text-[10px] text-gray-500 leading-tight">
-                  Download or print your graph
+                  Download your graph
                 </p>
               </div>
             </div>
@@ -417,27 +417,6 @@ defmodule DialecticWeb.RightPanelComp do
                 <div class="text-[10px] text-gray-500">Image snapshot of graph</div>
               </div>
             </button>
-
-            <.link
-              navigate={
-                graph_path(
-                  @graph_struct,
-                  if(@node, do: Map.get(@node, :id), else: nil),
-                  if(assigns[:token], do: [token: assigns[:token]], else: [])
-                )
-              }
-              target="_blank"
-              rel="noopener noreferrer"
-              class="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-gray-300 transition-colors"
-              title="Open printable PDF"
-            >
-              <.icon name="hero-printer" class="w-4 h-4 text-rose-600" />
-              <div class="flex-1 text-left">
-                <div class="text-xs font-medium text-gray-800">Print to PDF</div>
-                <div class="text-[10px] text-gray-500">Printable reader view</div>
-              </div>
-            </.link>
-
             <.link
               href={
                 path =
