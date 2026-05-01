@@ -168,6 +168,81 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     }
   end
 
+  defp shared_leaf_graph_data do
+    %{
+      "nodes" => [
+        %{
+          "id" => "1",
+          "content" => "# Shared leaf root",
+          "class" => "origin",
+          "user" => nil,
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false
+        },
+        %{
+          "id" => "2",
+          "content" => "Where should this argument split?",
+          "class" => "question",
+          "user" => nil,
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false
+        },
+        %{
+          "id" => "3",
+          "content" => "First branch",
+          "class" => "answer",
+          "user" => nil,
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false
+        },
+        %{
+          "id" => "4",
+          "content" => "Second branch",
+          "class" => "question",
+          "user" => nil,
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false
+        },
+        %{
+          "id" => "5",
+          "content" => "# Shared endpoint\nBoth branches eventually arrive here.",
+          "class" => "synthesis",
+          "user" => nil,
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false
+        },
+        %{
+          "id" => "6",
+          "content" => "Second branch detail",
+          "class" => "answer",
+          "user" => nil,
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false
+        }
+      ],
+      "edges" => [
+        %{"data" => %{"id" => "1_2", "source" => "1", "target" => "2"}},
+        %{"data" => %{"id" => "2_3", "source" => "2", "target" => "3"}},
+        %{"data" => %{"id" => "2_4", "source" => "2", "target" => "4"}},
+        %{"data" => %{"id" => "3_5", "source" => "3", "target" => "5"}},
+        %{"data" => %{"id" => "4_6", "source" => "4", "target" => "6"}},
+        %{"data" => %{"id" => "6_5", "source" => "6", "target" => "5"}}
+      ]
+    }
+  end
+
   defp create_graph(data \\ sample_graph_data()) do
     unique = System.unique_integer([:positive])
 
@@ -257,9 +332,31 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(view, "#reading-node-4")
     assert has_element?(view, "#reading-node-5")
     assert has_element?(view, "#outline-end-state")
+    assert has_element?(view, "#outline-end-editor-link")
+
+    assert has_element?(
+             view,
+             ~s(#outline-end-editor-link[href="/g/#{graph.slug}/graph?node=5"])
+           )
+
     assert has_element?(view, "#outline-branch-compare")
     assert has_element?(view, "#branch-compare-card-3")
     refute has_element?(view, "#outline-next-choices")
+  end
+
+  test "compare branches keep their own lead nodes when branches reconverge", %{conn: conn} do
+    graph = create_graph(shared_leaf_graph_data())
+
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=5")
+    assigns = :sys.get_state(view.pid).socket.assigns
+
+    branch_leads =
+      assigns.compare_branches
+      |> Map.new(fn branch -> {branch.id, branch.lead.id} end)
+
+    assert assigns.compare_context.root.id == "2"
+    assert branch_leads["3"] == "3"
+    assert branch_leads["4"] == "4"
   end
 
   test "patching to a different node pushes a scroll reset event", %{conn: conn} do

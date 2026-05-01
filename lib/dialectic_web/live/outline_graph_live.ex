@@ -342,7 +342,8 @@ defmodule DialecticWeb.OutlineGraphLive do
 
     if length(children) > 1 do
       Enum.map(children, fn child ->
-        leaf = deepest_visible_descendant(graph_id, child)
+        segment = deepest_branch_segment(graph_id, child)
+        leaf = List.last(segment) || child
 
         %{
           id: child.id,
@@ -370,8 +371,7 @@ defmodule DialecticWeb.OutlineGraphLive do
           graph_id
           |> list_non_deleted_children(branch_root.id)
           |> Enum.map(fn child ->
-            representative_leaf = deepest_visible_descendant(graph_id, child)
-            segment = branch_segment(graph_id, branch_root.id, representative_leaf)
+            segment = deepest_branch_segment(graph_id, child)
             enriched_segment = Enum.map(segment, &enrich_node/1)
             lead = List.first(enriched_segment)
             leaf = List.last(enriched_segment)
@@ -383,6 +383,7 @@ defmodule DialecticWeb.OutlineGraphLive do
               active?: branch_active?(selected_node, branch_root, enriched_segment)
             }
           end)
+          |> Enum.reject(&is_nil(&1.lead))
 
         if length(compare_branches) > 1 do
           compare_context = %{
@@ -404,33 +405,41 @@ defmodule DialecticWeb.OutlineGraphLive do
     end)
   end
 
-  defp deepest_visible_descendant(graph_id, node) do
-    {_depth, leaf} = deepest_visible_descendant_with_depth(graph_id, node)
-    leaf
+  defp deepest_branch_segment(graph_id, node) do
+    deepest_branch_segment(graph_id, node, MapSet.new())
   end
 
-  defp deepest_visible_descendant_with_depth(graph_id, node) do
-    case list_non_deleted_children(graph_id, node.id) do
-      [] ->
-        {0, node}
+  defp deepest_branch_segment(_graph_id, nil, _visited), do: []
 
-      children ->
-        children
-        |> Enum.map(fn child ->
-          {depth, leaf} = deepest_visible_descendant_with_depth(graph_id, child)
-          {depth + 1, leaf}
-        end)
-        |> Enum.max_by(fn {depth, leaf} -> {depth, sort_key(leaf.id)} end)
+  defp deepest_branch_segment(graph_id, node, visited) do
+    if MapSet.member?(visited, node.id) do
+      [node]
+    else
+      visited = MapSet.put(visited, node.id)
+
+      children =
+        graph_id
+        |> list_non_deleted_children(node.id)
+        |> Enum.reject(&MapSet.member?(visited, &1.id))
+
+      case children do
+        [] ->
+          [node]
+
+        _ ->
+          best_segment =
+            children
+            |> Enum.map(fn child ->
+              segment = deepest_branch_segment(graph_id, child, visited)
+              leaf = List.last(segment) || child
+              {length(segment), sort_key(leaf.id), segment}
+            end)
+            |> Enum.max_by(fn {depth, leaf_key, _segment} -> {depth, leaf_key} end)
+            |> elem(2)
+
+          [node | best_segment]
+      end
     end
-  end
-
-  defp branch_segment(graph_id, branch_root_id, leaf_node) do
-    graph_id
-    |> GraphManager.path_to_node(leaf_node)
-    |> Enum.reverse()
-    |> Enum.filter(&visible_node?/1)
-    |> Enum.drop_while(&(&1.id != branch_root_id))
-    |> Enum.drop(1)
   end
 
   defp branch_active?(selected_node, branch_root, enriched_segment) do

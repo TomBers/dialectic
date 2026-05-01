@@ -366,9 +366,46 @@
           <% else %>
             <section
               id="outline-end-state"
-              class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-5 text-sm leading-6 text-slate-500"
+              class="overflow-hidden rounded-[1.75rem] border border-slate-200 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950 p-6 text-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]"
             >
-              This thread currently ends here.
+              <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div class="max-w-2xl">
+                  <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-200/80">
+                    Continue this thread
+                  </p>
+                  <h3 class="mt-2 text-xl font-semibold tracking-tight text-white">
+                    This path ends here for now.
+                  </h3>
+                  <p class="mt-2 text-sm leading-6 text-slate-300">
+                    If you want to keep exploring this line of thought, open the editor and add
+                    the next question or answer from this endpoint.
+                  </p>
+                  <%= if @can_edit do %>
+                    <p class="mt-3 text-xs font-medium text-slate-400 lg:hidden">
+                      Continue this thread in the editor on desktop.
+                    </p>
+                  <% else %>
+                    <p class="mt-3 text-xs font-medium text-amber-200/90">
+                      This grid is read only, so only the owner can continue it in the editor.
+                    </p>
+                  <% end %>
+                </div>
+
+                <%= if @can_edit && @reading_terminal do %>
+                  <.link
+                    id="outline-end-editor-link"
+                    navigate={graph_editor_path(@graph_struct, @reading_terminal.id, @nav_params)}
+                    class="group hidden h-11 shrink-0 items-center gap-2.5 rounded-full border border-sky-300/35 bg-sky-400/10 px-4 text-sm font-medium text-sky-100 shadow-sm transition hover:border-sky-200/60 hover:bg-sky-400/15 lg:inline-flex"
+                  >
+                    <.icon name="hero-squares-2x2" class="h-4 w-4" />
+                    <span>Open editor to continue</span>
+                    <.icon
+                      name="hero-arrow-right"
+                      class="h-4 w-4 transition group-hover:translate-x-0.5"
+                    />
+                  </.link>
+                <% end %>
+              </div>
             </section>
           <% end %>
 
