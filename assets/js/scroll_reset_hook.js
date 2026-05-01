@@ -4,8 +4,21 @@
 const ScrollResetHook = {
   mounted() {
     this.handleEvent("scroll_to_top", () => {
-      this.el.scrollTop = 0;
+      this.resetScrollPosition();
     });
+  },
+
+  resetScrollPosition() {
+    const reset = () => {
+      if (typeof this.el.scrollTo === "function") {
+        this.el.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      } else {
+        this.el.scrollTop = 0;
+      }
+    };
+
+    reset();
+    requestAnimationFrame(reset);
   },
 };
 

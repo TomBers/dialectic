@@ -267,6 +267,7 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert Enum.map(assigns.next_choices, & &1.id) == ["3", "4"]
     assert is_nil(assigns.compare_context)
     assert has_element?(view, "#outline-layout")
+    assert has_element?(view, "#outline-scroll-shell[phx-hook='ScrollReset']")
     assert has_element?(view, "#outline-tree")
     assert has_element?(view, "#outline-mobile-nav")
     assert has_element?(view, "#outline-detail")
@@ -275,6 +276,8 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(view, "#reader-editor-link.hidden")
     assert has_element?(view, "#reading-node-1")
     assert has_element?(view, "#reading-node-2")
+    assert has_element?(view, "#reading-node-1 span.bg-gray-900.text-gray-100", "Origin")
+    assert has_element?(view, "#reading-node-2 span.bg-sky-50.text-sky-700", "Question")
     assert has_element?(view, "#outline-next-choices")
     assert has_element?(view, "#next-choice-3")
     assert has_element?(view, "#next-choice-4")
