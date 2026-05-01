@@ -1,0 +1,514 @@
+<div
+  id="outline-layout"
+  class="flex w-full flex-col overflow-hidden bg-slate-50"
+  style="height: calc(100vh - 2.5rem); height: calc(100dvh - 2.5rem);"
+>
+  <div class="flex-none border-b border-slate-200 bg-white/90 backdrop-blur-sm">
+    <div class="grid grid-cols-1 lg:grid-cols-[20rem_minmax(0,1fr)] xl:grid-cols-[22rem_minmax(0,1fr)]">
+      <div class="hidden border-r border-slate-200 bg-slate-50/70 lg:flex lg:items-center lg:px-4 xl:px-5">
+        <div class="flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+          <span>Reader</span>
+          <span class="h-1 w-1 rounded-full bg-slate-300"></span>
+          <span>Reading Mode</span>
+        </div>
+      </div>
+
+      <div class="px-4 py-2 sm:px-6 lg:px-10">
+        <div class="grid gap-2 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 lg:hidden">
+              <span>Reader</span>
+              <span class="h-1 w-1 rounded-full bg-slate-300"></span>
+              <span>Reading Mode</span>
+            </div>
+
+            <h1 class="mt-0.5 text-lg font-semibold tracking-tight text-slate-950 sm:text-xl">
+              {@graph_struct.title}
+            </h1>
+            <p class="mt-0.5 max-w-2xl text-xs leading-5 text-slate-600 sm:text-sm">
+              Read the conversation like a document and switch branches only when needed.
+            </p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2 lg:justify-self-end">
+            <%= if @can_edit do %>
+              <.link
+                id="reader-editor-link"
+                navigate={graph_editor_path(@graph_struct, @selected_node_id, @nav_params)}
+                class="group hidden h-11 items-center gap-2.5 rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-800 shadow-sm transition duration-150 hover:-translate-y-0.5 hover:border-slate-400 hover:bg-slate-50 lg:inline-flex"
+                title="Open grid editor"
+              >
+                <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-white shadow-sm">
+                  <.icon name="hero-squares-2x2" class="h-4 w-4" />
+                </span>
+                <span class="min-w-0 flex-1 truncate">Grid Editor</span>
+                <.icon
+                  name="hero-arrow-right"
+                  class="h-4 w-4 shrink-0 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-slate-700"
+                />
+              </.link>
+            <% end %>
+
+            <%= if !@can_edit do %>
+              <span class="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700">
+                <.icon name="hero-lock-closed" class="h-3.5 w-3.5" /> Read only
+              </span>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div
+    id="outline-scroll-shell"
+    class="flex flex-1 min-h-0 flex-col overflow-y-auto lg:grid lg:grid-cols-[20rem_minmax(0,1fr)] lg:overflow-hidden xl:grid-cols-[22rem_minmax(0,1fr)]"
+    phx-hook="ScrollReset"
+  >
+    <aside
+      id="outline-tree"
+      class="hidden min-h-0 overflow-y-auto border-b border-slate-200 bg-white lg:block lg:border-b-0 lg:border-r"
+    >
+      <div class="sticky top-0 z-10 border-b border-slate-200 bg-white px-4 py-4">
+        <h2 class="text-sm font-semibold text-slate-900">Conversation Outline</h2>
+        <p class="mt-1 text-xs text-slate-500">Choose a point in the conversation.</p>
+      </div>
+
+      <%= if @outline_nodes == [] do %>
+        <div id="outline-empty-state" class="px-4 py-12 text-center text-sm text-slate-500">
+          This graph does not have any visible nodes yet.
+        </div>
+      <% else %>
+        <nav class="space-y-1 px-2 py-3">
+          <%= for row <- @outline_nodes do %>
+            <% selected? = @selected_node_id == row.id %>
+            <% displayed? = MapSet.member?(@displayed_node_ids, row.id) %>
+            <.link
+              id={"outline-node-#{row.id}"}
+              patch={graph_path(@graph_struct, row.id, @nav_params)}
+              class={[
+                "group block rounded-xl border px-3 py-2.5 transition-all",
+                if(selected?,
+                  do: "border-blue-200 bg-blue-50 text-slate-950 shadow-sm",
+                  else:
+                    "border-transparent text-slate-800 hover:border-slate-200 hover:bg-slate-50"
+                ),
+                displayed? && !selected? && "border-slate-200 bg-slate-50/80"
+              ]}
+              style={outline_indent_style(row.indent)}
+            >
+              <div class="flex items-center gap-3">
+                <span class={[
+                  "h-2.5 w-2.5 rounded-full ring-2 shadow-sm",
+                  if(selected?, do: "ring-slate-700", else: "ring-white"),
+                  DialecticWeb.ColUtils.dot_class(row.class)
+                ]}>
+                </span>
+
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm font-medium">{row.title}</p>
+                </div>
+
+                <div class="flex items-center gap-2 text-[11px]">
+                  <%= if row.branch? do %>
+                    <span class={[
+                      "rounded-full px-2 py-0.5 font-medium",
+                      if(selected?,
+                        do: "bg-white text-blue-700",
+                        else: "bg-emerald-50 text-emerald-700"
+                      )
+                    ]}>
+                      Split
+                    </span>
+                  <% end %>
+                </div>
+              </div>
+            </.link>
+          <% end %>
+        </nav>
+      <% end %>
+    </aside>
+
+    <main
+      id="outline-detail"
+      class="order-1 min-h-0 overflow-visible lg:order-none lg:overflow-y-auto"
+      phx-hook="ScrollReset"
+    >
+      <%= if @node do %>
+        <div class="mx-auto max-w-4xl space-y-8 px-5 py-8 sm:px-8 lg:px-10">
+          <section id="outline-mobile-nav" class="lg:hidden">
+            <details class="group overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-sm">
+              <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 [&::-webkit-details-marker]:hidden">
+                <div class="min-w-0">
+                  <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                    Browse
+                  </p>
+                  <h2 class="mt-1 text-sm font-semibold text-slate-900">Conversation Outline</h2>
+                  <p class="mt-1 text-xs text-slate-500">
+                    Jump to another point in the conversation.
+                  </p>
+                </div>
+
+                <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-slate-100 text-slate-600 shadow-sm transition group-open:rotate-180">
+                  <.icon name="hero-chevron-down" class="h-4 w-4" />
+                </span>
+              </summary>
+
+              <div class="border-t border-slate-200 bg-slate-50/70 px-2 py-3">
+                <%= if @outline_nodes == [] do %>
+                  <div id="outline-mobile-empty-state" class="px-4 py-8 text-sm text-slate-500">
+                    This graph does not have any visible nodes yet.
+                  </div>
+                <% else %>
+                  <nav class="space-y-1">
+                    <%= for row <- @outline_nodes do %>
+                      <% selected? = @selected_node_id == row.id %>
+                      <% displayed? = MapSet.member?(@displayed_node_ids, row.id) %>
+                      <.link
+                        id={"outline-mobile-node-#{row.id}"}
+                        patch={graph_path(@graph_struct, row.id, @nav_params)}
+                        class={[
+                          "group block rounded-xl border px-3 py-2.5 transition-all",
+                          if(selected?,
+                            do: "border-blue-200 bg-blue-50 text-slate-950 shadow-sm",
+                            else:
+                              "border-transparent text-slate-800 hover:border-slate-200 hover:bg-slate-50"
+                          ),
+                          displayed? && !selected? && "border-slate-200 bg-slate-50/80"
+                        ]}
+                        style={outline_indent_style(row.indent)}
+                      >
+                        <div class="flex items-center gap-3">
+                          <span class={[
+                            "h-2.5 w-2.5 rounded-full ring-2 shadow-sm",
+                            if(selected?, do: "ring-slate-700", else: "ring-white"),
+                            DialecticWeb.ColUtils.dot_class(row.class)
+                          ]}>
+                          </span>
+
+                          <div class="min-w-0 flex-1">
+                            <p class="truncate text-sm font-medium">{row.title}</p>
+                          </div>
+
+                          <div class="flex items-center gap-2 text-[11px]">
+                            <%= if row.branch? do %>
+                              <span class={[
+                                "rounded-full px-2 py-0.5 font-medium",
+                                if(selected?,
+                                  do: "bg-white text-blue-700",
+                                  else: "bg-emerald-50 text-emerald-700"
+                                )
+                              ]}>
+                                Split
+                              </span>
+                            <% end %>
+                          </div>
+                        </div>
+                      </.link>
+                    <% end %>
+                  </nav>
+                <% end %>
+              </div>
+            </details>
+          </section>
+
+          <section class="text-sm leading-7 text-slate-600">
+            <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span class="font-semibold text-slate-900">You are here:</span>
+              <%= for {path_node, index} <- Enum.with_index(@selected_path) do %>
+                <%= if index > 0 do %>
+                  <span class="text-slate-300">/</span>
+                <% end %>
+                <.link
+                  patch={graph_path(@graph_struct, path_node.id, @nav_params)}
+                  class="truncate font-medium text-slate-700 underline-offset-4 transition hover:text-slate-950 hover:underline"
+                >
+                  {path_node.title}
+                </.link>
+              <% end %>
+            </div>
+            <p class="mt-2 text-sm leading-6 text-slate-500">
+              {reading_flow_message(@reading_chain, @next_choices)}
+            </p>
+          </section>
+
+          <% last_reading_index = length(@reading_chain) - 1 %>
+          <section id="outline-reading-flow" class="space-y-5">
+            <%= for {reading_node, index} <- Enum.with_index(@reading_chain) do %>
+              <article
+                id={"reading-node-#{reading_node.id}"}
+                class={[
+                  "rounded-[2rem] border border-slate-200 bg-white px-6 shadow-sm sm:px-12",
+                  if(String.trim(reading_node.body_content || "") == "",
+                    do: "py-6 sm:py-8",
+                    else: "py-8 sm:py-12"
+                  )
+                ]}
+              >
+                <div class="max-w-3xl">
+                  <div class="flex flex-wrap items-center gap-2 text-sm font-medium text-slate-500">
+                    <span>{if index == 0, do: "Current node", else: "Then"}</span>
+                    <span class="h-1 w-1 rounded-full bg-slate-300"></span>
+                    <span class={[
+                      "inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold",
+                      DialecticWeb.ColUtils.badge_class(reading_node.class)
+                    ]}>
+                      {DialecticWeb.ColUtils.node_type_label(reading_node.class)}
+                    </span>
+                  </div>
+                  <h2 class={[
+                    "mt-3 font-serif font-semibold leading-tight text-slate-950",
+                    if(index == 0,
+                      do: "text-xl sm:text-[1.95rem]",
+                      else: "text-lg sm:text-[1.6rem]"
+                    )
+                  ]}>
+                    {reading_node.full_title || reading_node.title}
+                  </h2>
+                </div>
+
+                <%= if String.trim(reading_node.content || "") == "" do %>
+                  <div class="mt-8 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-10 text-center text-sm text-slate-500">
+                    This node does not have content yet.
+                  </div>
+                <% else %>
+                  <%= if String.trim(reading_node.body_content || "") != "" do %>
+                    <div
+                      id={"reading-highlight-#{reading_node.id}"}
+                      class="mt-8 max-w-3xl"
+                      phx-hook="TextSelectionHook"
+                      data-node-id={reading_node.id}
+                      data-mudg-id={@graph_id}
+                      data-highlights-only="true"
+                    >
+                      <article class="prose prose-slate prose-lg max-w-none font-serif prose-headings:font-serif prose-headings:tracking-tight prose-p:leading-8 prose-li:leading-8 prose-p:text-slate-700 prose-li:text-slate-700">
+                        <div
+                          phx-hook="Markdown"
+                          id={"outline-markdown-body-#{reading_node.id}"}
+                          data-md={reading_node.content || ""}
+                          data-body-only="true"
+                        >
+                        </div>
+                      </article>
+                    </div>
+                  <% end %>
+                <% end %>
+              </article>
+
+              <%= if index < last_reading_index do %>
+                <div class="flex items-center gap-3 px-2 text-xs font-medium uppercase tracking-[0.18em] text-slate-400">
+                  <div class="h-px flex-1 bg-slate-200"></div>
+                  <span>Then</span>
+                  <div class="h-px flex-1 bg-slate-200"></div>
+                </div>
+              <% end %>
+            <% end %>
+          </section>
+
+          <%= if @next_choices != [] do %>
+            <section
+              id="outline-next-choices"
+              class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+            >
+              <h3 class="text-xl font-semibold tracking-tight text-slate-950">
+                Choose a path from here
+              </h3>
+              <p class="mt-2 text-sm leading-6 text-slate-500">
+                {next_choices_message(@reading_terminal, @node)}
+              </p>
+
+              <div class="mt-5 grid gap-3 sm:grid-cols-2">
+                <%= for choice <- @next_choices do %>
+                  <.link
+                    id={"next-choice-#{choice.id}"}
+                    patch={graph_path(@graph_struct, choice.id, @nav_params)}
+                    class={[
+                      "group block rounded-2xl border-2 bg-white p-4 shadow-sm transition duration-150 hover:-translate-y-0.5 hover:shadow-md hover:text-slate-950",
+                      DialecticWeb.ColUtils.border_class(choice.class)
+                    ]}
+                  >
+                    <div class="flex items-start gap-3">
+                      <span class={[
+                        "mt-1 h-3 w-3 shrink-0 rounded-full ring-4 ring-white shadow-sm",
+                        DialecticWeb.ColUtils.dot_class(choice.class)
+                      ]}>
+                      </span>
+
+                      <div class="min-w-0 flex-1">
+                        <div class="flex flex-wrap items-center gap-2">
+                          <span class={[
+                            "inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold",
+                            DialecticWeb.ColUtils.badge_class(choice.class)
+                          ]}>
+                            {DialecticWeb.ColUtils.node_type_label(choice.class)}
+                          </span>
+                          <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                            Read next
+                          </span>
+                        </div>
+
+                        <p class="mt-3 text-base font-semibold leading-6 text-slate-900">
+                          {choice.title}
+                        </p>
+                        <%= if choice.leaf_title do %>
+                          <p class="mt-2 text-sm leading-6 text-slate-600">
+                            This path eventually reaches {choice.leaf_title}.
+                          </p>
+                        <% else %>
+                          <p class="mt-2 text-sm leading-6 text-slate-600">
+                            {choice.content_preview}
+                          </p>
+                        <% end %>
+                      </div>
+
+                      <span class={[
+                        "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border shadow-sm transition group-hover:translate-x-0.5",
+                        DialecticWeb.ColUtils.badge_class(choice.class)
+                      ]}>
+                        <.icon name="hero-arrow-right" class="h-4 w-4" />
+                      </span>
+                    </div>
+                  </.link>
+                <% end %>
+              </div>
+            </section>
+          <% else %>
+            <section
+              id="outline-end-state"
+              class="overflow-hidden rounded-[1.75rem] border border-slate-200 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950 p-6 text-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]"
+            >
+              <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div class="max-w-2xl">
+                  <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-200/80">
+                    Continue this thread
+                  </p>
+                  <h3 class="mt-2 text-xl font-semibold tracking-tight text-white">
+                    This path ends here for now.
+                  </h3>
+                  <p class="mt-2 text-sm leading-6 text-slate-300">
+                    If you want to keep exploring this line of thought, open the editor and add
+                    the next question or answer from this endpoint.
+                  </p>
+                  <%= if @can_edit do %>
+                    <p class="mt-3 text-xs font-medium text-slate-400 lg:hidden">
+                      Continue this thread in the editor on desktop.
+                    </p>
+                  <% else %>
+                    <p class="mt-3 text-xs font-medium text-amber-200/90">
+                      This grid is read only, so only the owner can continue it in the editor.
+                    </p>
+                  <% end %>
+                </div>
+
+                <%= if @can_edit && @reading_terminal do %>
+                  <.link
+                    id="outline-end-editor-link"
+                    navigate={graph_editor_path(@graph_struct, @reading_terminal.id, @nav_params)}
+                    class="group hidden h-11 shrink-0 items-center gap-2.5 rounded-full border border-sky-300/35 bg-sky-400/10 px-4 text-sm font-medium text-sky-100 shadow-sm transition hover:border-sky-200/60 hover:bg-sky-400/15 lg:inline-flex"
+                  >
+                    <.icon name="hero-squares-2x2" class="h-4 w-4" />
+                    <span>Open editor to continue</span>
+                    <.icon
+                      name="hero-arrow-right"
+                      class="h-4 w-4 transition group-hover:translate-x-0.5"
+                    />
+                  </.link>
+                <% end %>
+              </div>
+            </section>
+          <% end %>
+
+          <% inactive_branches = Enum.reject(@compare_branches, & &1.active?) %>
+          <% compare_section_hidden? =
+            @compare_context && @reading_terminal &&
+              @compare_context.root.id == @reading_terminal.id %>
+          <%= if @compare_context && inactive_branches != [] && !compare_section_hidden? do %>
+            <section
+              id="outline-branch-compare"
+              class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+            >
+              <h3 class="text-xl font-semibold tracking-tight text-slate-950">
+                Other paths you could read
+              </h3>
+              <p class="mt-2 text-sm leading-6 text-slate-500">
+                Earlier, at <span class="font-medium text-slate-700">{@compare_context.root.title}</span>,
+                the conversation split. If this is not the thread you want, you can switch to {pluralize(
+                  length(inactive_branches),
+                  " the other path",
+                  " one of the other paths"
+                )} below.
+              </p>
+
+              <div class="mt-5 grid gap-3 sm:grid-cols-2">
+                <%= for branch <- inactive_branches do %>
+                  <.link
+                    id={"branch-compare-card-#{branch.id}"}
+                    patch={graph_path(@graph_struct, branch.id, @nav_params)}
+                    class={[
+                      "group block rounded-2xl border-2 bg-white p-4 shadow-sm transition duration-150 hover:-translate-y-0.5 hover:shadow-md hover:text-slate-950",
+                      DialecticWeb.ColUtils.border_class(branch.lead.class)
+                    ]}
+                  >
+                    <div class="flex items-start gap-3">
+                      <span class={[
+                        "mt-1 h-3 w-3 shrink-0 rounded-full ring-4 ring-white shadow-sm",
+                        DialecticWeb.ColUtils.dot_class(branch.lead.class)
+                      ]}>
+                      </span>
+
+                      <div class="min-w-0 flex-1">
+                        <div class="flex flex-wrap items-center gap-2">
+                          <span class={[
+                            "inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold",
+                            DialecticWeb.ColUtils.badge_class(branch.lead.class)
+                          ]}>
+                            {DialecticWeb.ColUtils.node_type_label(branch.lead.class)}
+                          </span>
+                          <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                            Read instead
+                          </span>
+                        </div>
+
+                        <p class="mt-3 text-base font-semibold leading-6 text-slate-900">
+                          {branch.lead.title}
+                        </p>
+                        <%= if branch.leaf && branch.leaf.id != branch.lead.id do %>
+                          <p class="mt-2 text-sm leading-6 text-slate-600">
+                            This path eventually reaches {branch.leaf.title}.
+                          </p>
+                        <% else %>
+                          <p class="mt-2 text-sm leading-6 text-slate-600">
+                            Start reading from this branch instead.
+                          </p>
+                        <% end %>
+                      </div>
+
+                      <span class={[
+                        "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border shadow-sm transition group-hover:translate-x-0.5",
+                        DialecticWeb.ColUtils.badge_class(branch.lead.class)
+                      ]}>
+                        <.icon name="hero-arrow-right" class="h-4 w-4" />
+                      </span>
+                    </div>
+                  </.link>
+                <% end %>
+              </div>
+            </section>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="flex h-full items-center justify-center px-6 py-12 text-center">
+          <div class="max-w-md rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-100">
+              <.icon name="hero-bars-3-bottom-left" class="h-7 w-7 text-slate-500" />
+            </div>
+            <h2 class="mt-4 text-lg font-semibold text-slate-900">No node selected</h2>
+            <p class="mt-2 text-sm leading-6 text-slate-500">
+              Pick a node from the outline to inspect its content and nearby branches.
+            </p>
+          </div>
+        </div>
+      <% end %>
+    </main>
+  </div>
+</div>

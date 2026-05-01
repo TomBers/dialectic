@@ -15,7 +15,7 @@ defmodule DialecticWeb.GraphLiveE2ETest do
 
     {:ok, graph} = Dialectic.DbActions.Graphs.create_new_graph(@graph_id)
 
-    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=1")
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}/graph?node=1")
 
     %{view: view, user: user}
   end

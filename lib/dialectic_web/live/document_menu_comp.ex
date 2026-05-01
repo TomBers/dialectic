@@ -19,12 +19,6 @@ defmodule DialecticWeb.DocumentMenuComp do
     {:noreply, assign(socket, :show_help_modal, false)}
   end
 
-  # Ensure we show at least 2 boxes when starting from box 1
-  # so users don't think the document view is broken
-  defp get_document_start_node(nil), do: nil
-  defp get_document_start_node(%{id: "1"}), do: "2"
-  defp get_document_start_node(%{id: id}), do: id
-
   @impl true
   def render(assigns) do
     ~H"""
@@ -109,27 +103,27 @@ defmodule DialecticWeb.DocumentMenuComp do
             <%= if @graph_id do %>
               <.link
                 navigate={
-                  graph_linear_path(
+                  graph_path(
                     @graph_struct,
-                    get_document_start_node(assigns[:node]),
+                    Map.get(assigns[:node] || %{}, :id),
                     if(assigns[:token], do: [token: assigns[:token]], else: [])
                   )
                 }
                 class="group flex h-12 flex-col items-start justify-center rounded-md border border-blue-200 bg-blue-50 px-2 text-left transition-colors hover:bg-blue-100"
-                title="Open document view"
+                title="Open reader"
                 data-role="reader-view"
               >
                 <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-700">
-                  <.icon name="hero-document-text" class="w-3 h-3" /> Doc
+                  <.icon name="hero-document-text" class="w-3 h-3" /> Reader
                 </span>
-                <span class="text-[9px] leading-tight text-blue-600/90">Reader view</span>
+                <span class="text-[9px] leading-tight text-blue-600/90">Best reading view</span>
               </.link>
             <% else %>
               <span class="flex h-12 flex-col items-start justify-center rounded-md border border-blue-100 bg-blue-50/70 px-2 text-left">
                 <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-500">
-                  Doc
+                  Reader
                 </span>
-                <span class="text-[9px] leading-tight text-blue-400">Reader view</span>
+                <span class="text-[9px] leading-tight text-blue-400">Best reading view</span>
               </span>
             <% end %>
 

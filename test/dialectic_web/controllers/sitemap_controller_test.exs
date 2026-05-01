@@ -69,6 +69,21 @@ defmodule DialecticWeb.SitemapControllerTest do
       refute body =~ "/g/#{graph.slug}"
     end
 
+    test "excludes soft-deleted graphs", %{conn: conn} do
+      graph =
+        insert_graph(%{
+          title: "Deleted Graph Test",
+          is_public: true,
+          is_published: true,
+          is_deleted: true
+        })
+
+      conn = get(conn, "/sitemap.xml")
+
+      body = conn.resp_body
+      refute body =~ "/g/#{graph.slug}"
+    end
+
     test "excludes graphs with empty slugs", %{conn: conn} do
       # Insert directly to bypass slug validation
       Repo.insert!(%Graph{

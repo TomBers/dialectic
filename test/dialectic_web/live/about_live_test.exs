@@ -37,7 +37,7 @@ defmodule DialecticWeb.AboutLiveTest do
       |> render_submit()
 
       # The submission is async, so we need to wait for the async task to complete
-      html = render_async(view)
+      html = render_async(view, 1_000)
 
       assert html =~ "Thank you!"
       assert html =~ "Your feedback has been submitted"

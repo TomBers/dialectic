@@ -13,7 +13,7 @@ defmodule DialecticWeb.GraphLiveTest do
     # Also create test database
     {:ok, graph} = Dialectic.GraphFixtures.insert_graph_fixture(@graph_id)
 
-    live(conn, ~p"/g/#{graph.slug}?node=1")
+    live(conn, ~p"/g/#{graph.slug}/graph?node=1")
   end
 
   describe "mount/3" do
