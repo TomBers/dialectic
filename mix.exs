@@ -14,6 +14,15 @@ defmodule Dialectic.MixProject do
     ]
   end
 
+  def cli do
+    [
+      preferred_envs: [
+        test: :test,
+        precommit: :test
+      ]
+    ]
+  end
+
   # Configuration for the OTP application.
   #
   # Type `mix help compile.app` for more information.

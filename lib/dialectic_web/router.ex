@@ -63,6 +63,7 @@ defmodule DialecticWeb.Router do
     # Slug-based routes
     live "/g/:graph_name", GraphLive
     live "/g/:graph_name/linear", LinearGraphLive
+    live "/g/:graph_name/outline", OutlineGraphLive
     get "/api/graphs/md/:graph_name", PageController, :graph_md
     get "/api/graphs/json/:graph_name", PageController, :graph_json_extract
 

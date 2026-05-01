@@ -57,6 +57,30 @@ defmodule DialecticWeb.GraphPathHelper do
     build_path_with_params(base_path, node_id && {:node_id, node_id}, params)
   end
 
+  @doc """
+  Generates a path to the outline view of a graph.
+
+  For private graphs with a share_token, the token is automatically
+  appended as a query parameter so the link grants access.
+
+  ## Examples
+
+      graph_outline_path(%{slug: "my-graph-abc123", is_public: true})
+      # => "/g/my-graph-abc123/outline"
+
+      # Private graph with share token
+      graph_outline_path(%{slug: "my-graph-abc123", is_public: false, share_token: "abc"})
+      # => "/g/my-graph-abc123/outline?token=abc"
+  """
+  def graph_outline_path(graph, node_id \\ nil, params \\ [])
+
+  def graph_outline_path(%{slug: slug} = graph, node_id, params)
+      when not is_nil(slug) and slug != "" do
+    base_path = "/g/#{slug}/outline"
+    params = maybe_add_token(graph, params)
+    build_path_with_params(base_path, node_id && {:node_id, node_id}, params)
+  end
+
   # Appends the share_token as a "token" query param for private graphs
   defp maybe_add_token(%{is_public: false, share_token: token}, params)
        when is_binary(token) and token != "" do

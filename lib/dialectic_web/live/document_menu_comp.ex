@@ -133,6 +133,33 @@ defmodule DialecticWeb.DocumentMenuComp do
               </span>
             <% end %>
 
+            <%= if @graph_id do %>
+              <.link
+                navigate={
+                  graph_outline_path(
+                    @graph_struct,
+                    Map.get(assigns[:node] || %{}, :id),
+                    if(assigns[:token], do: [token: assigns[:token]], else: [])
+                  )
+                }
+                class="group flex h-12 flex-col items-start justify-center rounded-md border border-slate-200 bg-slate-50 px-2 text-left transition-colors hover:bg-slate-100"
+                title="Open outline view"
+                data-role="outline-view"
+              >
+                <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-700">
+                  <.icon name="hero-bars-3-bottom-left" class="w-3 h-3" /> Outline
+                </span>
+                <span class="text-[9px] leading-tight text-slate-600/90">Thread map</span>
+              </.link>
+            <% else %>
+              <span class="flex h-12 flex-col items-start justify-center rounded-md border border-slate-100 bg-slate-50/70 px-2 text-left">
+                <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500">
+                  Outline
+                </span>
+                <span class="text-[9px] leading-tight text-slate-400">Thread map</span>
+              </span>
+            <% end %>
+
             <button
               type="button"
               class="group flex h-12 flex-col items-start justify-center rounded-md border border-indigo-200 bg-indigo-50 px-2 text-left transition-colors hover:bg-indigo-100 disabled:opacity-50 disabled:cursor-not-allowed"
