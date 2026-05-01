@@ -13,8 +13,8 @@
         </div>
       </div>
 
-      <div class="px-4 py-2.5 sm:px-6 lg:px-10">
-        <div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+      <div class="px-4 py-2 sm:px-6 lg:px-10">
+        <div class="grid gap-2 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
           <div class="min-w-0">
             <div class="flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 lg:hidden">
               <span>Reader</span>
@@ -22,7 +22,7 @@
               <span>Reading Mode</span>
             </div>
 
-            <h1 class="mt-1 text-lg font-semibold tracking-tight text-slate-950 sm:text-xl">
+            <h1 class="mt-0.5 text-lg font-semibold tracking-tight text-slate-950 sm:text-xl">
               {@graph_struct.title}
             </h1>
             <p class="mt-0.5 max-w-2xl text-xs leading-5 text-slate-600 sm:text-sm">
@@ -34,20 +34,16 @@
             <%= if @can_edit do %>
               <.link
                 navigate={graph_editor_path(@graph_struct, @selected_node_id, @nav_params)}
-                class="group inline-flex w-full items-center justify-between gap-3 rounded-2xl border border-slate-900 bg-slate-900 px-4 py-3 text-left text-white shadow-lg shadow-slate-900/10 transition duration-150 hover:-translate-y-0.5 hover:border-slate-700 hover:bg-slate-800 sm:min-w-[11rem] sm:w-auto"
+                class="group inline-flex h-11 w-full items-center gap-2.5 rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-800 shadow-sm transition duration-150 hover:-translate-y-0.5 hover:border-slate-400 hover:bg-slate-50 sm:w-auto"
+                title="Open graph editor"
               >
-                <span class="flex items-center gap-3">
-                  <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/15">
-                    <.icon name="hero-squares-2x2" class="h-5 w-5" />
-                  </span>
-                  <span class="min-w-0">
-                    <span class="block text-sm font-semibold tracking-tight">Open Editor</span>
-                    <span class="block text-xs text-slate-300">Graph editing tools</span>
-                  </span>
+                <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-white shadow-sm">
+                  <.icon name="hero-squares-2x2" class="h-4 w-4" />
                 </span>
+                <span class="min-w-0 flex-1 truncate">Editor</span>
                 <.icon
                   name="hero-arrow-right"
-                  class="h-4 w-4 shrink-0 transition group-hover:translate-x-0.5"
+                  class="h-4 w-4 shrink-0 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-slate-700"
                 />
               </.link>
             <% end %>
@@ -187,7 +183,14 @@
                   </div>
                 <% else %>
                   <%= if String.trim(reading_node.body_content || "") != "" do %>
-                    <div class="mt-8 max-w-3xl">
+                    <div
+                      id={"reading-highlight-#{reading_node.id}"}
+                      class="mt-8 max-w-3xl"
+                      phx-hook="TextSelectionHook"
+                      data-node-id={reading_node.id}
+                      data-mudg-id={@graph_id}
+                      data-highlights-only="true"
+                    >
                       <article class="prose prose-slate prose-lg max-w-none font-serif prose-headings:font-serif prose-headings:tracking-tight prose-p:leading-8 prose-li:leading-8 prose-p:text-slate-700 prose-li:text-slate-700">
                         <div
                           phx-hook="Markdown"

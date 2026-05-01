@@ -2,6 +2,7 @@ defmodule DialecticWeb.OutlineGraphLive do
   use DialecticWeb, :live_view
 
   alias Dialectic.Graph.GraphActions
+  alias Dialectic.Highlights
   alias Dialectic.Linear.ThreadedConv
   alias DialecticWeb.ColUtils
   alias DialecticWeb.Utils.NodeTitleHelper
@@ -68,6 +69,7 @@ defmodule DialecticWeb.OutlineGraphLive do
       socket
       |> assign_selected_node(selected_node)
       |> maybe_scroll_to_top(previous_node_id, selected_node)
+      |> push_highlights()
 
     {:noreply, socket}
   end
@@ -82,15 +84,66 @@ defmodule DialecticWeb.OutlineGraphLive do
   end
 
   @impl true
+  def handle_info({:created, highlight}, socket) do
+    highlight = Dialectic.Repo.preload(highlight, :links)
+    highlights = [highlight | socket.assigns.highlights]
+
+    {:noreply,
+     socket
+     |> assign(highlights: highlights)
+     |> push_highlights()}
+  end
+
+  @impl true
+  def handle_info({:updated, highlight}, socket) do
+    highlight = Dialectic.Repo.preload(highlight, :links)
+
+    highlights =
+      Enum.map(socket.assigns.highlights, fn current_highlight ->
+        if current_highlight.id == highlight.id, do: highlight, else: current_highlight
+      end)
+
+    {:noreply,
+     socket
+     |> assign(highlights: highlights)
+     |> push_highlights()}
+  end
+
+  @impl true
+  def handle_info({:deleted, highlight}, socket) do
+    highlights =
+      Enum.reject(socket.assigns.highlights, fn current_highlight ->
+        current_highlight.id == highlight.id
+      end)
+
+    {:noreply,
+     socket
+     |> assign(highlights: highlights)
+     |> push_highlights()}
+  end
+
+  @impl true
   def handle_info(_msg, socket), do: {:noreply, socket}
+
+  @impl true
+  def handle_event("navigate_to_node", %{"node_id" => node_id}, socket) do
+    {:noreply, navigate_to_node(socket, node_id)}
+  end
+
+  @impl true
+  def handle_event("node_clicked", %{"id" => node_id}, socket) do
+    {:noreply, navigate_to_node(socket, node_id)}
+  end
 
   defp mount_graph(socket, graph_db, token_param) do
     {_graph_struct, graph} = GraphManager.get_graph(graph_db.title)
 
     graph_topic = "graph_update:#{graph_db.title}"
+    highlights = Highlights.list_highlights_with_links(mudg_id: graph_db.title)
 
     if connected?(socket) do
       PubSub.subscribe(Dialectic.PubSub, graph_topic)
+      Highlights.subscribe(graph_db.title)
     end
 
     outline_nodes = build_outline_nodes(graph_db.title, graph)
@@ -112,6 +165,7 @@ defmodule DialecticWeb.OutlineGraphLive do
       next_choices: [],
       compare_context: nil,
       compare_branches: [],
+      highlights: highlights,
       page_title: "#{graph_db.title} — Reader",
       page_description:
         "Read through \"#{graph_db.title}\" in the reader. Follow the main thread, inspect nearby branches, and move through the conversation without the graph editor.",
@@ -192,6 +246,12 @@ defmodule DialecticWeb.OutlineGraphLive do
     else
       socket
     end
+  end
+
+  defp push_highlights(socket) do
+    push_event(socket, "highlights_loaded", %{
+      highlights: serialize_highlights(socket.assigns.highlights || [])
+    })
   end
 
   defp resolve_target_node(graph_id, %{"node_id" => node_id})
@@ -503,6 +563,22 @@ defmodule DialecticWeb.OutlineGraphLive do
   defp pluralize(1, singular, _plural), do: singular
   defp pluralize(_count, _singular, plural), do: plural
 
+  defp serialize_highlights(highlights) do
+    Enum.map(highlights, fn highlight ->
+      %{
+        id: highlight.id,
+        node_id: highlight.node_id,
+        selection_start: highlight.selection_start,
+        selection_end: highlight.selection_end,
+        selected_text_snapshot: highlight.selected_text_snapshot,
+        links:
+          Enum.map(highlight.links || [], fn link ->
+            %{node_id: link.node_id, link_type: link.link_type}
+          end)
+      }
+    end)
+  end
+
   defp reading_flow_message(reading_chain, next_choices) do
     cond do
       length(reading_chain) > 1 and next_choices != [] ->
@@ -524,6 +600,19 @@ defmodule DialecticWeb.OutlineGraphLive do
       "This point splits the conversation. Pick the direction you want to read next."
     else
       "The thread above leads to another split here. Pick the direction you want to read next."
+    end
+  end
+
+  defp navigate_to_node(socket, node_id) do
+    case current_selected_node(socket.assigns.graph_id, node_id) do
+      nil ->
+        put_flash(socket, :error, "Node not found")
+
+      node ->
+        push_patch(
+          socket,
+          to: graph_path(socket.assigns.graph_struct, node.id, socket.assigns.nav_params)
+        )
     end
   end
 

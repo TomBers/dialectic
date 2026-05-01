@@ -1,6 +1,9 @@
 defmodule DialecticWeb.OutlineGraphLiveTest do
   use DialecticWeb.ConnCase, async: false
 
+  alias Dialectic.Highlights
+
+  import Dialectic.AccountsFixtures
   import Dialectic.GraphFixtures
   import Phoenix.LiveViewTest
 
@@ -217,5 +220,47 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert assigns.node.title != full_title
     assert has_element?(view, "#outline-detail h2", full_title)
     refute has_element?(view, "#outline-node-2", full_title)
+  end
+
+  test "reader loads highlight data for rendered nodes", %{conn: conn} do
+    graph = create_graph()
+    user = user_fixture()
+
+    {:ok, highlight} =
+      Highlights.create_highlight(%{
+        mudg_id: graph.title,
+        node_id: "4",
+        text_source_type: "node",
+        selection_start: 0,
+        selection_end: 5,
+        selected_text_snapshot: "Could",
+        created_by_user_id: user.id
+      })
+
+    {:ok, _link} = Highlights.add_link(highlight, "5", "explain")
+
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=4")
+    assigns = :sys.get_state(view.pid).socket.assigns
+
+    assert length(assigns.highlights) == 1
+
+    assert has_element?(
+             view,
+             "#reading-highlight-4[phx-hook='TextSelectionHook'][data-highlights-only='true']"
+           )
+
+    assert_push_event(view, "highlights_loaded", %{
+      highlights: [%{node_id: "4", links: [%{node_id: "5", link_type: "explain"}]}]
+    })
+  end
+
+  test "highlight link navigation patches the reader to the target node", %{conn: conn} do
+    graph = create_graph()
+
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=4")
+
+    render_hook(view, "navigate_to_node", %{"node_id" => "5"})
+
+    assert_patch(view, ~p"/g/#{graph.slug}?node=5")
   end
 end
