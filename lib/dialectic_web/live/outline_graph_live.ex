@@ -62,8 +62,14 @@ defmodule DialecticWeb.OutlineGraphLive do
   @impl true
   def handle_params(params, _uri, socket) do
     selected_node = resolve_target_node(socket.assigns.graph_id, params)
+    previous_node_id = socket.assigns.selected_node_id
 
-    {:noreply, assign_selected_node(socket, selected_node)}
+    socket =
+      socket
+      |> assign_selected_node(selected_node)
+      |> maybe_scroll_to_top(previous_node_id, selected_node)
+
+    {:noreply, socket}
   end
 
   @impl true
@@ -162,6 +168,17 @@ defmodule DialecticWeb.OutlineGraphLive do
       compare_context: compare_context,
       compare_branches: compare_branches
     )
+  end
+
+  defp maybe_scroll_to_top(socket, nil, _selected_node), do: socket
+  defp maybe_scroll_to_top(socket, _previous_node_id, nil), do: socket
+
+  defp maybe_scroll_to_top(socket, previous_node_id, selected_node) do
+    if previous_node_id != selected_node.id do
+      push_event(socket, "scroll_to_top", %{})
+    else
+      socket
+    end
   end
 
   defp resolve_target_node(graph_id, %{"node_id" => node_id})
@@ -316,6 +333,7 @@ defmodule DialecticWeb.OutlineGraphLive do
   defp enrich_node(node) do
     node
     |> Map.put(:title, display_title(node))
+    |> Map.put(:full_title, display_title(node, max_length: :infinity))
     |> Map.put(:class, Map.get(node, :class, "default"))
   end
 
@@ -325,9 +343,9 @@ defmodule DialecticWeb.OutlineGraphLive do
   defp visible_node?(%{}), do: true
   defp visible_node?(_), do: false
 
-  defp display_title(node) do
+  defp display_title(node, opts \\ []) do
     node
-    |> NodeTitleHelper.extract_node_title()
+    |> NodeTitleHelper.extract_node_title(opts)
     |> case do
       nil ->
         fallback_title(node)
@@ -357,7 +375,7 @@ defmodule DialecticWeb.OutlineGraphLive do
   defp preview_node_content(node, limit) do
     cleaned_content = sanitize_preview_text(Map.get(node, :content, ""))
     cleaned_body_content = node |> node_body_content() |> sanitize_preview_text()
-    title = node |> display_title() |> sanitize_preview_text()
+    title = node |> display_title(max_length: :infinity) |> sanitize_preview_text()
 
     cleaned_body_content
     |> case do
