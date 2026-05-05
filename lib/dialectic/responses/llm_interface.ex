@@ -305,6 +305,21 @@ defmodule Dialectic.Responses.LlmInterface do
     ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
   end
 
+  def gen_second_order(node, child, graph_id, live_view_topic, content_override \\ nil) do
+    {context, content} = resolve_context_and_content(graph_id, node, content_override)
+
+    instruction =
+      if content_override do
+        Prompts.second_order_selection(context, content)
+      else
+        Prompts.second_order(context, content)
+      end
+
+    system_prompt = get_system_prompt(graph_id)
+    log_prompt("second_order", graph_id, system_prompt, instruction)
+    ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
+  end
+
   defp resolve_context_and_content(graph_id, node, content_override) do
     base_context = GraphManager.build_context(graph_id, node)
 

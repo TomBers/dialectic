@@ -1064,4 +1064,59 @@ defmodule Dialectic.Responses.Prompts do
       """
     ])
   end
+
+  @doc """
+  Explore second-order effects and indirect consequences of a claim.
+  """
+  @spec second_order(String.t(), String.t()) :: String.t()
+  def second_order(context, claim) do
+    join_blocks([
+      frame_context(context),
+      """
+      **Claim:** #{sanitize_title(claim)}
+
+      **Your task:** Explore the second-order effects - the indirect, downstream, and cascading consequences that follow from this claim.
+
+      Go beyond the obvious first-order effects to reveal:
+
+      - **Indirect consequences:** What happens next? And then what happens after that?
+      - **Feedback loops:** How might the consequences reinforce or counteract the original change?
+      - **System-level impacts:** How does this ripple across different domains (social, economic, technological, cultural)?
+      - **Unintended outcomes:** What surprising or counterintuitive effects might emerge?
+      - **Time horizons:** What happens in the short term vs. long term?
+      - **Competing forces:** What countervailing pressures might arise in response?
+      - **Second-order incentives:** How will people's behavior adapt once they realize the first-order effects?
+
+      **Example:** If we banned cars -> First order: cleaner air, quieter streets. Second order: property values shift toward transit corridors, suburbs decline, delivery logistics transform, new forms of inequality emerge based on mobility access, political coalitions realign.
+
+      Think like a systems analyst. Trace the causal chains at least 2-3 steps deep. Consider both intended and unintended pathways.
+      """
+    ])
+  end
+
+  @doc """
+  Explore second-order effects of a specific text selection.
+  """
+  @spec second_order_selection(String.t(), String.t()) :: String.t()
+  def second_order_selection(context, selection_text) do
+    join_blocks([
+      frame_minimal_context(context),
+      """
+      A specific statement was highlighted from the text above: **#{sanitize_title(selection_text)}**
+
+      **Your task:** Explore the second-order effects - the indirect, downstream, and cascading consequences of this specific statement.
+
+      Go beyond the obvious first-order effects to reveal:
+
+      - **Indirect consequences:** What happens next? And then what happens after that?
+      - **Feedback loops:** How might the consequences reinforce or counteract the original change?
+      - **System-level impacts:** How does this ripple across different domains?
+      - **Unintended outcomes:** What surprising effects might emerge?
+      - **Time horizons:** Short term vs. long term effects
+      - **Behavioral adaptations:** How will people's behavior change in response?
+
+      Think like a systems analyst. Trace the causal chains at least 2-3 steps deep.
+      """
+    ])
+  end
 end

@@ -718,6 +718,20 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
+  def handle_event("node_second_order", %{"id" => node_id}, socket) do
+    if !socket.assigns.can_edit do
+      {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    else
+      node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+      update_graph(
+        socket,
+        {nil, GraphActions.second_order(graph_action_params(socket, node))},
+        "second_order"
+      )
+    end
+  end
+
   def handle_event("node_regenerate", %{"id" => node_id}, socket) do
     if !socket.assigns.can_edit do
       {:noreply, socket |> put_flash(:error, "This graph is locked")}
@@ -1717,6 +1731,452 @@ defmodule DialecticWeb.GraphLive do
     end
 
     update_graph(socket, {nil, comment_node}, "user")
+  end
+
+  # Advanced Critical Thinking Tools for Text Selection
+
+  defp handle_selection_action(
+         :clarify,
+         selected_text,
+         node_id,
+         offsets,
+         existing_highlight,
+         _extra,
+         socket
+       ) do
+    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
+    parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+    clarification_prompt = "What do you mean by: \"#{selected_text}\"?"
+
+    clarify_node =
+      GraphActions.clarify_text(
+        graph_action_params(socket, parent_node),
+        clarification_prompt,
+        selected_text
+      )
+
+    if clarify_node do
+      GraphManager.update_vertex_fields(socket.assigns.graph_id, clarify_node.id, %{
+        source_text: selected_text
+      })
+
+      if highlight do
+        Highlights.add_link(highlight.id, clarify_node.id, "clarify")
+      end
+    end
+
+    update_graph(socket, {nil, clarify_node}, "clarify")
+  end
+
+  defp handle_selection_action(
+         :assumptions,
+         selected_text,
+         node_id,
+         offsets,
+         existing_highlight,
+         _extra,
+         socket
+       ) do
+    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
+    parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+    assumptions_prompt = "What assumptions underlie: \"#{selected_text}\"?"
+
+    assumptions_node =
+      GraphActions.assumptions_text(
+        graph_action_params(socket, parent_node),
+        assumptions_prompt,
+        selected_text
+      )
+
+    if assumptions_node do
+      GraphManager.update_vertex_fields(socket.assigns.graph_id, assumptions_node.id, %{
+        source_text: selected_text
+      })
+
+      if highlight do
+        Highlights.add_link(highlight.id, assumptions_node.id, "assumptions")
+      end
+    end
+
+    update_graph(socket, {nil, assumptions_node}, "assumptions")
+  end
+
+  defp handle_selection_action(
+         :counterexample,
+         selected_text,
+         node_id,
+         offsets,
+         existing_highlight,
+         _extra,
+         socket
+       ) do
+    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
+    parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+    counterexample_prompt = "Find counterexamples to: \"#{selected_text}\""
+
+    counterexample_node =
+      GraphActions.counterexample_text(
+        graph_action_params(socket, parent_node),
+        counterexample_prompt,
+        selected_text
+      )
+
+    if counterexample_node do
+      GraphManager.update_vertex_fields(socket.assigns.graph_id, counterexample_node.id, %{
+        source_text: selected_text
+      })
+
+      if highlight do
+        Highlights.add_link(highlight.id, counterexample_node.id, "counterexample")
+      end
+    end
+
+    update_graph(socket, {nil, counterexample_node}, "counterexample")
+  end
+
+  defp handle_selection_action(
+         :implications,
+         selected_text,
+         node_id,
+         offsets,
+         existing_highlight,
+         _extra,
+         socket
+       ) do
+    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
+    parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+    implications_prompt = "What are the implications of: \"#{selected_text}\"?"
+
+    implications_node =
+      GraphActions.implications_text(
+        graph_action_params(socket, parent_node),
+        implications_prompt,
+        selected_text
+      )
+
+    if implications_node do
+      GraphManager.update_vertex_fields(socket.assigns.graph_id, implications_node.id, %{
+        source_text: selected_text
+      })
+
+      if highlight do
+        Highlights.add_link(highlight.id, implications_node.id, "implications")
+      end
+    end
+
+    update_graph(socket, {nil, implications_node}, "implications")
+  end
+
+  defp handle_selection_action(
+         :steel_man,
+         selected_text,
+         node_id,
+         offsets,
+         existing_highlight,
+         _extra,
+         socket
+       ) do
+    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
+    parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+    steel_man_prompt = "Build the strongest, most charitable version of: \"#{selected_text}\""
+
+    steel_man_node =
+      GraphActions.steel_man_text(
+        graph_action_params(socket, parent_node),
+        steel_man_prompt,
+        selected_text
+      )
+
+    if steel_man_node do
+      GraphManager.update_vertex_fields(socket.assigns.graph_id, steel_man_node.id, %{
+        source_text: selected_text
+      })
+
+      if highlight do
+        Highlights.add_link(highlight.id, steel_man_node.id, "steel_man")
+      end
+    end
+
+    update_graph(socket, {nil, steel_man_node}, "steel_man")
+  end
+
+  defp handle_selection_action(
+         :says_who,
+         selected_text,
+         node_id,
+         offsets,
+         existing_highlight,
+         _extra,
+         socket
+       ) do
+    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
+    parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+    says_who_prompt = "Who says this and what's the evidence? \"#{selected_text}\""
+
+    says_who_node =
+      GraphActions.says_who_text(
+        graph_action_params(socket, parent_node),
+        says_who_prompt,
+        selected_text
+      )
+
+    if says_who_node do
+      GraphManager.update_vertex_fields(socket.assigns.graph_id, says_who_node.id, %{
+        source_text: selected_text
+      })
+
+      if highlight do
+        Highlights.add_link(highlight.id, says_who_node.id, "says_who")
+      end
+    end
+
+    update_graph(socket, {nil, says_who_node}, "says_who")
+  end
+
+  defp handle_selection_action(
+         :second_order,
+         selected_text,
+         node_id,
+         offsets,
+         existing_highlight,
+         _extra,
+         socket
+       ) do
+    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
+    parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+    second_order_prompt =
+      "What are the second-order effects and indirect consequences of: \"#{selected_text}\"?"
+
+    second_order_node =
+      GraphActions.second_order_text(
+        graph_action_params(socket, parent_node),
+        second_order_prompt,
+        selected_text
+      )
+
+    if second_order_node do
+      GraphManager.update_vertex_fields(socket.assigns.graph_id, second_order_node.id, %{
+        source_text: selected_text
+      })
+
+      if highlight do
+        Highlights.add_link(highlight.id, second_order_node.id, "second_order")
+      end
+    end
+
+    update_graph(socket, {nil, second_order_node}, "second_order")
+  end
+
+  defp handle_selection_action(
+         :simplify,
+         selected_text,
+         node_id,
+         offsets,
+         existing_highlight,
+         _extra,
+         socket
+       ) do
+    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
+    parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+    simplify_prompt = "Simplify this into plain language: \"#{selected_text}\"?"
+
+    simplify_node =
+      GraphActions.simplify_text(
+        graph_action_params(socket, parent_node),
+        simplify_prompt,
+        selected_text
+      )
+
+    if simplify_node do
+      GraphManager.update_vertex_fields(socket.assigns.graph_id, simplify_node.id, %{
+        source_text: selected_text
+      })
+
+      if highlight do
+        Highlights.add_link(highlight.id, simplify_node.id, "simplify")
+      end
+    end
+
+    update_graph(socket, {nil, simplify_node}, "simplify")
+  end
+
+  defp handle_selection_action(
+         :blind_spots,
+         selected_text,
+         node_id,
+         offsets,
+         existing_highlight,
+         _extra,
+         socket
+       ) do
+    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
+    parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+    blind_spots_prompt =
+      "What blind spots or overlooked perspectives exist in: \"#{selected_text}\"?"
+
+    blind_spots_node =
+      GraphActions.blind_spots_text(
+        graph_action_params(socket, parent_node),
+        blind_spots_prompt,
+        selected_text
+      )
+
+    if blind_spots_node do
+      GraphManager.update_vertex_fields(socket.assigns.graph_id, blind_spots_node.id, %{
+        source_text: selected_text
+      })
+
+      if highlight do
+        Highlights.add_link(highlight.id, blind_spots_node.id, "blind_spots")
+      end
+    end
+
+    update_graph(socket, {nil, blind_spots_node}, "blind_spots")
+  end
+
+  defp handle_selection_action(
+         :who_disagrees,
+         selected_text,
+         node_id,
+         offsets,
+         existing_highlight,
+         _extra,
+         socket
+       ) do
+    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
+    parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+    who_disagrees_prompt = "Who would disagree with: \"#{selected_text}\" and why?"
+
+    who_disagrees_node =
+      GraphActions.who_disagrees_text(
+        graph_action_params(socket, parent_node),
+        who_disagrees_prompt,
+        selected_text
+      )
+
+    if who_disagrees_node do
+      GraphManager.update_vertex_fields(socket.assigns.graph_id, who_disagrees_node.id, %{
+        source_text: selected_text
+      })
+
+      if highlight do
+        Highlights.add_link(highlight.id, who_disagrees_node.id, "who_disagrees")
+      end
+    end
+
+    update_graph(socket, {nil, who_disagrees_node}, "who_disagrees")
+  end
+
+  defp handle_selection_action(
+         :analogy,
+         selected_text,
+         node_id,
+         offsets,
+         existing_highlight,
+         _extra,
+         socket
+       ) do
+    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
+    parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+    analogy_prompt = "Find analogies or comparisons to help understand: \"#{selected_text}\""
+
+    analogy_node =
+      GraphActions.analogy_text(
+        graph_action_params(socket, parent_node),
+        analogy_prompt,
+        selected_text
+      )
+
+    if analogy_node do
+      GraphManager.update_vertex_fields(socket.assigns.graph_id, analogy_node.id, %{
+        source_text: selected_text
+      })
+
+      if highlight do
+        Highlights.add_link(highlight.id, analogy_node.id, "analogy")
+      end
+    end
+
+    update_graph(socket, {nil, analogy_node}, "analogy")
+  end
+
+  defp handle_selection_action(
+         :what_if,
+         selected_text,
+         node_id,
+         offsets,
+         existing_highlight,
+         _extra,
+         socket
+       ) do
+    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
+    parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+    what_if_prompt = "Explore hypothetical scenarios related to: \"#{selected_text}\""
+
+    what_if_node =
+      GraphActions.what_if_text(
+        graph_action_params(socket, parent_node),
+        what_if_prompt,
+        selected_text
+      )
+
+    if what_if_node do
+      GraphManager.update_vertex_fields(socket.assigns.graph_id, what_if_node.id, %{
+        source_text: selected_text
+      })
+
+      if highlight do
+        Highlights.add_link(highlight.id, what_if_node.id, "what_if")
+      end
+    end
+
+    update_graph(socket, {nil, what_if_node}, "what_if")
+  end
+
+  defp handle_selection_action(
+         :deepdive,
+         selected_text,
+         node_id,
+         offsets,
+         existing_highlight,
+         _extra,
+         socket
+       ) do
+    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
+    parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+    deepdive_prompt = "Provide a deep dive analysis of: \"#{selected_text}\""
+
+    deepdive_node =
+      GraphActions.deepdive_text(
+        graph_action_params(socket, parent_node),
+        deepdive_prompt,
+        selected_text
+      )
+
+    if deepdive_node do
+      GraphManager.update_vertex_fields(socket.assigns.graph_id, deepdive_node.id, %{
+        source_text: selected_text
+      })
+
+      if highlight do
+        Highlights.add_link(highlight.id, deepdive_node.id, "deepdive")
+      end
+    end
+
+    update_graph(socket, {nil, deepdive_node}, "deepdive")
   end
 
   defp create_pending_highlight_links(socket) do

@@ -217,7 +217,9 @@ defmodule DialecticWeb.ActionToolbarComp do
           >
             <div>
               <p class="text-sm font-semibold text-slate-900">Advanced Critical Thinking Tools</p>
-              <p class="mt-0.5 text-xs text-slate-500">Explore deeper inquiry moves</p>
+              <p class="mt-0.5 text-xs text-slate-500">
+                🎯 Try these to deepen your analysis — click to explore
+              </p>
             </div>
             <.icon
               name="hero-chevron-down"
@@ -229,229 +231,251 @@ defmodule DialecticWeb.ActionToolbarComp do
             />
           </button>
 
-          <div class={["mt-3 space-y-4", !@advanced_tools_open && "hidden"]}>
-            <%!-- Core Inquiry --%>
-            <div>
-              <p class="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                Core Inquiry
-              </p>
-              <div class="grid gap-2 sm:grid-cols-2">
-                <button
-                  type="button"
-                  class="group flex flex-col items-start gap-2 rounded-lg border border-teal-200/80 bg-gradient-to-br from-white to-teal-50/50 px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-teal-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-                  phx-click="node_clarify"
-                  phx-value-id={@node && @node.id}
-                  disabled={is_nil(@graph_id)}
-                  title="What do you mean by…? — Conceptual clarification"
-                >
-                  <span class="inline-flex items-center justify-center rounded-lg bg-teal-100 p-1.5 text-teal-700">
-                    <.icon name="hero-question-mark-circle" class="h-4 w-4" />
+          <div class={["mt-3", !@advanced_tools_open && "hidden"]}>
+            <%!-- Grid of critical thinking tools --%>
+            <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              <%!-- Steel Man - First in list --%>
+              <button
+                type="button"
+                class="group flex flex-col items-start gap-2 rounded-lg border border-yellow-200/80 bg-gradient-to-br from-white to-yellow-50/50 px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-yellow-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                phx-click="node_steel_man"
+                phx-value-id={@node && @node.id}
+                disabled={is_nil(@graph_id)}
+                title="Steel Man: Build the strongest, most charitable version of this argument — the opposite of a straw man. Example: If someone says 'We should ban cars', the steel man would be 'In dense urban areas, reducing car dependency through better public transit and walkable design could improve health, reduce emissions, and create more livable communities.'"
+              >
+                <span class="inline-flex items-center justify-center rounded-lg bg-yellow-100 p-1.5 text-yellow-700">
+                  <.icon name="hero-star" class="h-4 w-4" />
+                </span>
+                <span class="space-y-0.5">
+                  <span class="block text-xs font-semibold text-slate-900">Steel Man</span>
+                  <span class="block text-xs leading-tight text-slate-600">
+                    Strongest argument
                   </span>
-                  <span class="space-y-0.5">
-                    <span class="block text-xs font-semibold text-slate-900">Clarify</span>
-                    <span class="block text-xs leading-tight text-slate-600">
-                      What do you mean by…?
-                    </span>
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  class="group flex flex-col items-start gap-2 rounded-lg border border-amber-200/80 bg-gradient-to-br from-white to-amber-50/50 px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-                  phx-click="node_assumptions"
-                  phx-value-id={@node && @node.id}
-                  disabled={is_nil(@graph_id)}
-                  title="What has to be true? — Surface hidden assumptions"
-                >
-                  <span class="inline-flex items-center justify-center rounded-lg bg-amber-100 p-1.5 text-amber-700">
-                    <.icon name="hero-cube-transparent" class="h-4 w-4" />
-                  </span>
-                  <span class="space-y-0.5">
-                    <span class="block text-xs font-semibold text-slate-900">Assumptions</span>
-                    <span class="block text-xs leading-tight text-slate-600">
-                      What has to be true?
-                    </span>
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  class="group flex flex-col items-start gap-2 rounded-lg border border-red-200/80 bg-gradient-to-br from-white to-red-50/50 px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-red-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-                  phx-click="node_counterexample"
-                  phx-value-id={@node && @node.id}
-                  disabled={is_nil(@graph_id)}
-                  title="Is that always true? — Find counterexamples"
-                >
-                  <span class="inline-flex items-center justify-center rounded-lg bg-red-100 p-1.5 text-red-700">
-                    <.icon name="hero-x-mark" class="h-4 w-4" />
-                  </span>
-                  <span class="space-y-0.5">
-                    <span class="block text-xs font-semibold text-slate-900">Test</span>
-                    <span class="block text-xs leading-tight text-slate-600">
-                      Is that always true?
-                    </span>
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  class="group flex flex-col items-start gap-2 rounded-lg border border-indigo-200/80 bg-gradient-to-br from-white to-indigo-50/50 px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-                  phx-click="node_implications"
-                  phx-value-id={@node && @node.id}
-                  disabled={is_nil(@graph_id)}
-                  title="So what? — Trace the consequences"
-                >
-                  <span class="inline-flex items-center justify-center rounded-lg bg-indigo-100 p-1.5 text-indigo-700">
-                    <.icon name="hero-arrow-right" class="h-4 w-4" />
-                  </span>
-                  <span class="space-y-0.5">
-                    <span class="block text-xs font-semibold text-slate-900">Implications</span>
-                    <span class="block text-xs leading-tight text-slate-600">So what?</span>
-                  </span>
-                </button>
-              </div>
+                </span>
+              </button>
 
               <button
                 type="button"
-                class="mt-2 w-full group flex flex-col items-start gap-2 rounded-lg border border-purple-200/80 bg-gradient-to-br from-white to-purple-50/50 px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-purple-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                class="group flex flex-col items-start gap-2 rounded-lg border border-amber-200/80 bg-gradient-to-br from-white to-amber-50/50 px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                phx-click="node_assumptions"
+                phx-value-id={@node && @node.id}
+                disabled={is_nil(@graph_id)}
+                title="Assumptions: Reveal what must be true for this claim to work. Example: 'Remote work is better' assumes people have suitable home spaces, reliable internet, and self-discipline."
+              >
+                <span class="inline-flex items-center justify-center rounded-lg bg-amber-100 p-1.5 text-amber-700">
+                  <.icon name="hero-cube-transparent" class="h-4 w-4" />
+                </span>
+                <span class="space-y-0.5">
+                  <span class="block text-xs font-semibold text-slate-900">Assumptions</span>
+                  <span class="block text-xs leading-tight text-slate-600">
+                    What has to be true?
+                  </span>
+                </span>
+              </button>
+
+              <button
+                type="button"
+                class="group flex flex-col items-start gap-2 rounded-lg border border-red-200/80 bg-gradient-to-br from-white to-red-50/50 px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-red-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                phx-click="node_counterexample"
+                phx-value-id={@node && @node.id}
+                disabled={is_nil(@graph_id)}
+                title="Test: Find counterexamples that challenge this claim. Example: If someone claims 'All successful people wake up early', counterexamples include successful artists, programmers, and entrepreneurs who are night owls."
+              >
+                <span class="inline-flex items-center justify-center rounded-lg bg-red-100 p-1.5 text-red-700">
+                  <.icon name="hero-x-mark" class="h-4 w-4" />
+                </span>
+                <span class="space-y-0.5">
+                  <span class="block text-xs font-semibold text-slate-900">Test</span>
+                  <span class="block text-xs leading-tight text-slate-600">
+                    Is that always true?
+                  </span>
+                </span>
+              </button>
+
+              <button
+                type="button"
+                class="group flex flex-col items-start gap-2 rounded-lg border border-sky-200/80 bg-gradient-to-br from-white to-sky-50/50 px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                phx-click="node_says_who"
+                phx-value-id={@node && @node.id}
+                disabled={is_nil(@graph_id)}
+                title="Source: Question the authority and evidence behind claims. Example: 'Studies show X' — which studies? Who funded them? What was the sample size? Are there conflicting studies?"
+              >
+                <span class="inline-flex items-center justify-center rounded-lg bg-sky-100 p-1.5 text-sky-700">
+                  <.icon name="hero-user" class="h-4 w-4" />
+                </span>
+                <span class="space-y-0.5">
+                  <span class="block text-xs font-semibold text-slate-900">Source</span>
+                  <span class="block text-xs leading-tight text-slate-600">Says who?</span>
+                </span>
+              </button>
+
+              <button
+                type="button"
+                class="group flex flex-col items-start gap-2 rounded-lg border border-purple-200/80 bg-gradient-to-br from-white to-purple-50/50 px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-purple-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                phx-click="node_second_order"
+                phx-value-id={@node && @node.id}
+                disabled={is_nil(@graph_id)}
+                title="Second Order: Explore indirect consequences and ripple effects. Example: 'Free college tuition' leads to more graduates, which leads to credential inflation, changing job requirements, and shifts in what skills are valued."
+              >
+                <span class="inline-flex items-center justify-center rounded-lg bg-purple-100 p-1.5 text-purple-700">
+                  <.icon name="hero-arrow-path" class="h-4 w-4" />
+                </span>
+                <span class="space-y-0.5">
+                  <span class="block text-xs font-semibold text-slate-900">Second Order</span>
+                  <span class="block text-xs leading-tight text-slate-600">
+                    Ripple effects?
+                  </span>
+                </span>
+              </button>
+
+              <button
+                type="button"
+                class="group flex flex-col items-start gap-2 rounded-lg border border-blue-200/80 bg-gradient-to-br from-white to-blue-50/50 px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                phx-click="node_clarify"
+                phx-value-id={@node && @node.id}
+                disabled={is_nil(@graph_id)}
+                title="Clarify: Make complex ideas clearer with simpler language and concrete examples. Example: 'Quantum entanglement' becomes 'When two particles are linked so that measuring one instantly affects the other, no matter the distance.'"
+              >
+                <span class="inline-flex items-center justify-center rounded-lg bg-blue-100 p-1.5 text-blue-700">
+                  <.icon name="hero-light-bulb" class="h-4 w-4" />
+                </span>
+                <span class="space-y-0.5">
+                  <span class="block text-xs font-semibold text-slate-900">Clarify</span>
+                  <span class="block text-xs leading-tight text-slate-600">
+                    Explain it simply
+                  </span>
+                </span>
+              </button>
+
+              <button
+                type="button"
+                class="group flex flex-col items-start gap-2 rounded-lg border border-green-200/80 bg-gradient-to-br from-white to-green-50/50 px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-green-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                phx-click="node_implications"
+                phx-value-id={@node && @node.id}
+                disabled={is_nil(@graph_id)}
+                title="Implications: What would happen if this were true? Example: 'Universal basic income' implies changes to work incentives, tax systems, inflation, and social safety nets."
+              >
+                <span class="inline-flex items-center justify-center rounded-lg bg-green-100 p-1.5 text-green-700">
+                  <.icon name="hero-arrow-trending-up" class="h-4 w-4" />
+                </span>
+                <span class="space-y-0.5">
+                  <span class="block text-xs font-semibold text-slate-900">Implications</span>
+                  <span class="block text-xs leading-tight text-slate-600">
+                    If true, then what?
+                  </span>
+                </span>
+              </button>
+
+              <button
+                type="button"
+                class="group flex flex-col items-start gap-2 rounded-lg border border-orange-200/80 bg-gradient-to-br from-white to-orange-50/50 px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-orange-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
                 phx-click="node_blind_spots"
                 phx-value-id={@node && @node.id}
                 disabled={is_nil(@graph_id)}
-                title="What's missing? — Detect blind spots"
+                title="Blind Spots: Identify perspectives, factors, or constraints being overlooked. Example: A tech solution might ignore users without internet access or digital literacy."
               >
-                <span class="inline-flex items-center justify-center rounded-lg bg-purple-100 p-1.5 text-purple-700">
+                <span class="inline-flex items-center justify-center rounded-lg bg-orange-100 p-1.5 text-orange-700">
                   <.icon name="hero-eye-slash" class="h-4 w-4" />
                 </span>
                 <span class="space-y-0.5">
                   <span class="block text-xs font-semibold text-slate-900">Blind Spots</span>
                   <span class="block text-xs leading-tight text-slate-600">
-                    What's missing from this view?
+                    What are we missing?
                   </span>
                 </span>
               </button>
-            </div>
-
-            <%!-- Context & Expansion --%>
-            <div>
-              <p class="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                Context & Expansion
-              </p>
-              <div class="grid gap-2 sm:grid-cols-2">
-                <button
-                  type="button"
-                  class="group flex flex-col items-start gap-2 rounded-lg border border-sky-200/80 bg-gradient-to-br from-white to-sky-50/50 px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-                  phx-click="node_says_who"
-                  phx-value-id={@node && @node.id}
-                  disabled={is_nil(@graph_id)}
-                  title="Says who? — Check sources and authority"
-                >
-                  <span class="inline-flex items-center justify-center rounded-lg bg-sky-100 p-1.5 text-sky-700">
-                    <.icon name="hero-user" class="h-4 w-4" />
-                  </span>
-                  <span class="space-y-0.5">
-                    <span class="block text-xs font-semibold text-slate-900">Source</span>
-                    <span class="block text-xs leading-tight text-slate-600">Says who?</span>
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  class="group flex flex-col items-start gap-2 rounded-lg border border-rose-200/80 bg-gradient-to-br from-white to-rose-50/50 px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-rose-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-                  phx-click="node_who_disagrees"
-                  phx-value-id={@node && @node.id}
-                  disabled={is_nil(@graph_id)}
-                  title="Who disagrees? — Map the opposition"
-                >
-                  <span class="inline-flex items-center justify-center rounded-lg bg-rose-100 p-1.5 text-rose-700">
-                    <.icon name="hero-users" class="h-4 w-4" />
-                  </span>
-                  <span class="space-y-0.5">
-                    <span class="block text-xs font-semibold text-slate-900">Dissent</span>
-                    <span class="block text-xs leading-tight text-slate-600">
-                      Who disagrees?
-                    </span>
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  class="group flex flex-col items-start gap-2 rounded-lg border border-emerald-200/80 bg-gradient-to-br from-white to-emerald-50/50 px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-                  phx-click="node_analogy"
-                  phx-value-id={@node && @node.id}
-                  disabled={is_nil(@graph_id)}
-                  title="What is this like? — Find analogies"
-                >
-                  <span class="inline-flex items-center justify-center rounded-lg bg-emerald-100 p-1.5 text-emerald-700">
-                    <.icon name="hero-link" class="h-4 w-4" />
-                  </span>
-                  <span class="space-y-0.5">
-                    <span class="block text-xs font-semibold text-slate-900">Analogy</span>
-                    <span class="block text-xs leading-tight text-slate-600">
-                      What is this like?
-                    </span>
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  class="group flex flex-col items-start gap-2 rounded-lg border border-yellow-200/80 bg-gradient-to-br from-white to-yellow-50/50 px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-yellow-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-                  phx-click="node_steel_man"
-                  phx-value-id={@node && @node.id}
-                  disabled={is_nil(@graph_id)}
-                  title="Steel man — Strongest version of the argument"
-                >
-                  <span class="inline-flex items-center justify-center rounded-lg bg-yellow-100 p-1.5 text-yellow-700">
-                    <.icon name="hero-star" class="h-4 w-4" />
-                  </span>
-                  <span class="space-y-0.5">
-                    <span class="block text-xs font-semibold text-slate-900">Steel Man</span>
-                    <span class="block text-xs leading-tight text-slate-600">
-                      Strongest argument
-                    </span>
-                  </span>
-                </button>
-              </div>
 
               <button
                 type="button"
-                class="mt-2 w-full group flex flex-col items-start gap-2 rounded-lg border border-fuchsia-200/80 bg-gradient-to-br from-white to-fuchsia-50/50 px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-fuchsia-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                class="group flex flex-col items-start gap-2 rounded-lg border border-pink-200/80 bg-gradient-to-br from-white to-pink-50/50 px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-pink-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                phx-click="node_who_disagrees"
+                phx-value-id={@node && @node.id}
+                disabled={is_nil(@graph_id)}
+                title="Who Disagrees: Explore different perspectives and opposing viewpoints. Example: For 'Everyone should go to college', consider vocational experts, entrepreneurs, and trades professionals."
+              >
+                <span class="inline-flex items-center justify-center rounded-lg bg-pink-100 p-1.5 text-pink-700">
+                  <.icon name="hero-users" class="h-4 w-4" />
+                </span>
+                <span class="space-y-0.5">
+                  <span class="block text-xs font-semibold text-slate-900">Who Disagrees</span>
+                  <span class="block text-xs leading-tight text-slate-600">
+                    Other perspectives?
+                  </span>
+                </span>
+              </button>
+
+              <button
+                type="button"
+                class="group flex flex-col items-start gap-2 rounded-lg border border-indigo-200/80 bg-gradient-to-br from-white to-indigo-50/50 px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                phx-click="node_analogy"
+                phx-value-id={@node && @node.id}
+                disabled={is_nil(@graph_id)}
+                title="Analogy: Understand ideas through comparison to familiar concepts. Example: 'Blockchain is like a public ledger where everyone has a copy and can verify entries.'"
+              >
+                <span class="inline-flex items-center justify-center rounded-lg bg-indigo-100 p-1.5 text-indigo-700">
+                  <.icon name="hero-arrows-right-left" class="h-4 w-4" />
+                </span>
+                <span class="space-y-0.5">
+                  <span class="block text-xs font-semibold text-slate-900">Analogy</span>
+                  <span class="block text-xs leading-tight text-slate-600">
+                    Like what?
+                  </span>
+                </span>
+              </button>
+
+              <button
+                type="button"
+                class="group flex flex-col items-start gap-2 rounded-lg border border-teal-200/80 bg-gradient-to-br from-white to-teal-50/50 px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-teal-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
                 phx-click="node_what_if"
                 phx-value-id={@node && @node.id}
                 disabled={is_nil(@graph_id)}
-                title="What if we change X? — Explore counterfactuals"
+                title="What If: Explore hypothetical scenarios and alternative possibilities. Example: 'What if we had universal healthcare?' or 'What if fossil fuels ran out tomorrow?'"
               >
-                <span class="inline-flex items-center justify-center rounded-lg bg-fuchsia-100 p-1.5 text-fuchsia-700">
-                  <.icon name="hero-beaker" class="h-4 w-4" />
+                <span class="inline-flex items-center justify-center rounded-lg bg-teal-100 p-1.5 text-teal-700">
+                  <.icon name="hero-question-mark-circle" class="h-4 w-4" />
                 </span>
                 <span class="space-y-0.5">
-                  <span class="block text-xs font-semibold text-slate-900">What If?</span>
+                  <span class="block text-xs font-semibold text-slate-900">What If</span>
                   <span class="block text-xs leading-tight text-slate-600">
-                    Explore counterfactuals
+                    Hypothetical scenarios
                   </span>
                 </span>
               </button>
-            </div>
 
-            <%!-- Clarity --%>
-            <div>
-              <p class="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                Clarity
-              </p>
               <button
                 type="button"
-                class="w-full group flex flex-col items-start gap-2 rounded-lg border border-orange-200/80 bg-gradient-to-br from-white to-orange-50/50 px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-orange-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                class="group flex flex-col items-start gap-2 rounded-lg border border-cyan-200/80 bg-gradient-to-br from-white to-cyan-50/50 px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-cyan-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
                 phx-click="node_simplify"
                 phx-value-id={@node && @node.id}
                 disabled={is_nil(@graph_id)}
-                title="Simplify — Make accessible to all"
+                title="Simplify: Break down complex ideas into plain language anyone can understand. Example: Turn technical jargon into everyday terms with concrete examples."
               >
-                <span class="inline-flex items-center justify-center rounded-lg bg-orange-100 p-1.5 text-orange-700">
-                  <.icon name="hero-book-open" class="h-4 w-4" />
+                <span class="inline-flex items-center justify-center rounded-lg bg-cyan-100 p-1.5 text-cyan-700">
+                  <.icon name="hero-sparkles" class="h-4 w-4" />
                 </span>
                 <span class="space-y-0.5">
                   <span class="block text-xs font-semibold text-slate-900">Simplify</span>
                   <span class="block text-xs leading-tight text-slate-600">
-                    Make it accessible to all
+                    Plain language
+                  </span>
+                </span>
+              </button>
+
+              <button
+                type="button"
+                class="group flex flex-col items-start gap-2 rounded-lg border border-slate-200/80 bg-gradient-to-br from-white to-slate-50/50 px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                phx-click="node_deepdive"
+                phx-value-id={@node && @node.id}
+                disabled={is_nil(@graph_id)}
+                title="Deep Dive: Explore the topic in greater depth with nuance, context, and detailed analysis."
+              >
+                <span class="inline-flex items-center justify-center rounded-lg bg-slate-100 p-1.5 text-slate-700">
+                  <.icon name="hero-magnifying-glass-plus" class="h-4 w-4" />
+                </span>
+                <span class="space-y-0.5">
+                  <span class="block text-xs font-semibold text-slate-900">Deep Dive</span>
+                  <span class="block text-xs leading-tight text-slate-600">
+                    Go deeper
                   </span>
                 </span>
               </button>

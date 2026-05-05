@@ -269,6 +269,20 @@ defmodule Dialectic.Graph.GraphActions do
     )
   end
 
+  def second_order({graph_id, node, user, live_view_topic}, opts \\ []) do
+    content_override = Keyword.get(opts, :content_override)
+
+    GraphManager.add_child(
+      graph_id,
+      [node],
+      fn n ->
+        LlmInterface.gen_second_order(node, n, graph_id, live_view_topic, content_override)
+      end,
+      "second_order",
+      user
+    )
+  end
+
   def new_stream({graph_id, _node, user, _live_view_topic}, content, opts) do
     parent_group_id = Keyword.get(opts, :group_id)
     vertex = %Vertex{content: content || "", class: "origin", user: user, parent: parent_group_id}
@@ -381,7 +395,8 @@ defmodule Dialectic.Graph.GraphActions do
                    "analogy",
                    "steel_man",
                    "what_if",
-                   "simplify"
+                   "simplify",
+                   "second_order"
                  ] ->
               if List.first(parents) != nil,
                 do: {true, nil},
@@ -484,6 +499,10 @@ defmodule Dialectic.Graph.GraphActions do
                 parent = List.first(parents)
                 simplify({graph_id, parent, user, live_view_topic})
 
+              "second_order" ->
+                parent = List.first(parents)
+                second_order({graph_id, parent, user, live_view_topic})
+
               _ ->
                 nil
             end
@@ -504,6 +523,237 @@ defmodule Dialectic.Graph.GraphActions do
         else
           {:error, error_msg}
         end
+    end
+  end
+
+  # Text-specific wrapper functions for critical thinking tools
+  # These are used when applying tools to selected text within a node
+
+  @doc """
+  Clarify selected text within a node.
+  Creates a clarification node with context about the specific text being clarified.
+  """
+  def clarify_text({graph_id, node, user, live_view_topic}, prompt, selected_text) do
+    clarify_node = clarify({graph_id, node, user, live_view_topic}, content_override: prompt)
+
+    if clarify_node do
+      GraphManager.update_vertex_fields(graph_id, clarify_node.id, %{
+        source_text: selected_text
+      })
+
+      GraphManager.find_node_by_id(graph_id, clarify_node.id)
+    else
+      nil
+    end
+  end
+
+  @doc """
+  Analyze assumptions in selected text.
+  """
+  def assumptions_text({graph_id, node, user, live_view_topic}, prompt, selected_text) do
+    assumptions_node =
+      assumptions({graph_id, node, user, live_view_topic}, content_override: prompt)
+
+    if assumptions_node do
+      GraphManager.update_vertex_fields(graph_id, assumptions_node.id, %{
+        source_text: selected_text
+      })
+
+      GraphManager.find_node_by_id(graph_id, assumptions_node.id)
+    else
+      nil
+    end
+  end
+
+  @doc """
+  Find counterexamples to selected text.
+  """
+  def counterexample_text({graph_id, node, user, live_view_topic}, prompt, selected_text) do
+    counterexample_node =
+      counterexample({graph_id, node, user, live_view_topic}, content_override: prompt)
+
+    if counterexample_node do
+      GraphManager.update_vertex_fields(graph_id, counterexample_node.id, %{
+        source_text: selected_text
+      })
+
+      GraphManager.find_node_by_id(graph_id, counterexample_node.id)
+    else
+      nil
+    end
+  end
+
+  @doc """
+  Explore implications of selected text.
+  """
+  def implications_text({graph_id, node, user, live_view_topic}, prompt, selected_text) do
+    implications_node =
+      implications({graph_id, node, user, live_view_topic}, content_override: prompt)
+
+    if implications_node do
+      GraphManager.update_vertex_fields(graph_id, implications_node.id, %{
+        source_text: selected_text
+      })
+
+      GraphManager.find_node_by_id(graph_id, implications_node.id)
+    else
+      nil
+    end
+  end
+
+  @doc """
+  Build a steel man argument from selected text.
+  """
+  def steel_man_text({graph_id, node, user, live_view_topic}, prompt, selected_text) do
+    steel_man_node = steel_man({graph_id, node, user, live_view_topic}, content_override: prompt)
+
+    if steel_man_node do
+      GraphManager.update_vertex_fields(graph_id, steel_man_node.id, %{
+        source_text: selected_text
+      })
+
+      GraphManager.find_node_by_id(graph_id, steel_man_node.id)
+    else
+      nil
+    end
+  end
+
+  @doc """
+  Simplify selected text into plain language.
+  """
+  def simplify_text({graph_id, node, user, live_view_topic}, prompt, selected_text) do
+    simplify_node = simplify({graph_id, node, user, live_view_topic}, content_override: prompt)
+
+    if simplify_node do
+      GraphManager.update_vertex_fields(graph_id, simplify_node.id, %{
+        source_text: selected_text
+      })
+
+      GraphManager.find_node_by_id(graph_id, simplify_node.id)
+    else
+      nil
+    end
+  end
+
+  @doc """
+  Question the source and evidence behind selected text.
+  """
+  def says_who_text({graph_id, node, user, live_view_topic}, prompt, selected_text) do
+    says_who_node = says_who({graph_id, node, user, live_view_topic}, content_override: prompt)
+
+    if says_who_node do
+      GraphManager.update_vertex_fields(graph_id, says_who_node.id, %{
+        source_text: selected_text
+      })
+
+      GraphManager.find_node_by_id(graph_id, says_who_node.id)
+    else
+      nil
+    end
+  end
+
+  @doc """
+  Explore second-order effects and indirect consequences of selected text.
+  """
+  def second_order_text({graph_id, node, user, live_view_topic}, prompt, selected_text) do
+    second_order_node =
+      second_order({graph_id, node, user, live_view_topic}, content_override: prompt)
+
+    if second_order_node do
+      GraphManager.update_vertex_fields(graph_id, second_order_node.id, %{
+        source_text: selected_text
+      })
+
+      GraphManager.find_node_by_id(graph_id, second_order_node.id)
+    else
+      nil
+    end
+  end
+
+  @doc """
+  Identify blind spots in selected text.
+  """
+  def blind_spots_text({graph_id, node, user, live_view_topic}, prompt, selected_text) do
+    blind_spots_node =
+      blind_spots({graph_id, node, user, live_view_topic}, content_override: prompt)
+
+    if blind_spots_node do
+      GraphManager.update_vertex_fields(graph_id, blind_spots_node.id, %{
+        source_text: selected_text
+      })
+
+      GraphManager.find_node_by_id(graph_id, blind_spots_node.id)
+    else
+      nil
+    end
+  end
+
+  @doc """
+  Explore who disagrees with selected text.
+  """
+  def who_disagrees_text({graph_id, node, user, live_view_topic}, prompt, selected_text) do
+    who_disagrees_node =
+      who_disagrees({graph_id, node, user, live_view_topic}, content_override: prompt)
+
+    if who_disagrees_node do
+      GraphManager.update_vertex_fields(graph_id, who_disagrees_node.id, %{
+        source_text: selected_text
+      })
+
+      GraphManager.find_node_by_id(graph_id, who_disagrees_node.id)
+    else
+      nil
+    end
+  end
+
+  @doc """
+  Generate analogies for selected text.
+  """
+  def analogy_text({graph_id, node, user, live_view_topic}, prompt, selected_text) do
+    analogy_node = analogy({graph_id, node, user, live_view_topic}, content_override: prompt)
+
+    if analogy_node do
+      GraphManager.update_vertex_fields(graph_id, analogy_node.id, %{
+        source_text: selected_text
+      })
+
+      GraphManager.find_node_by_id(graph_id, analogy_node.id)
+    else
+      nil
+    end
+  end
+
+  @doc """
+  Explore what-if scenarios for selected text.
+  """
+  def what_if_text({graph_id, node, user, live_view_topic}, prompt, selected_text) do
+    what_if_node = what_if({graph_id, node, user, live_view_topic}, content_override: prompt)
+
+    if what_if_node do
+      GraphManager.update_vertex_fields(graph_id, what_if_node.id, %{
+        source_text: selected_text
+      })
+
+      GraphManager.find_node_by_id(graph_id, what_if_node.id)
+    else
+      nil
+    end
+  end
+
+  @doc """
+  Deep dive into selected text with detailed analysis.
+  """
+  def deepdive_text({graph_id, node, user, live_view_topic}, prompt, selected_text) do
+    deepdive_node = deepdive({graph_id, node, user, live_view_topic}, content_override: prompt)
+
+    if deepdive_node do
+      GraphManager.update_vertex_fields(graph_id, deepdive_node.id, %{
+        source_text: selected_text
+      })
+
+      GraphManager.find_node_by_id(graph_id, deepdive_node.id)
+    else
+      nil
     end
   end
 end
