@@ -1747,20 +1747,13 @@ defmodule DialecticWeb.GraphLive do
     highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
     parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
 
-    clarification_prompt = "What do you mean by: \"#{selected_text}\"?"
-
     clarify_node =
       GraphActions.clarify_text(
         graph_action_params(socket, parent_node),
-        clarification_prompt,
         selected_text
       )
 
     if clarify_node do
-      GraphManager.update_vertex_fields(socket.assigns.graph_id, clarify_node.id, %{
-        source_text: selected_text
-      })
-
       if highlight do
         Highlights.add_link(highlight.id, clarify_node.id, "clarify")
       end
@@ -1781,20 +1774,13 @@ defmodule DialecticWeb.GraphLive do
     highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
     parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
 
-    assumptions_prompt = "What assumptions underlie: \"#{selected_text}\"?"
-
     assumptions_node =
       GraphActions.assumptions_text(
         graph_action_params(socket, parent_node),
-        assumptions_prompt,
         selected_text
       )
 
     if assumptions_node do
-      GraphManager.update_vertex_fields(socket.assigns.graph_id, assumptions_node.id, %{
-        source_text: selected_text
-      })
-
       if highlight do
         Highlights.add_link(highlight.id, assumptions_node.id, "assumptions")
       end
@@ -1815,20 +1801,13 @@ defmodule DialecticWeb.GraphLive do
     highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
     parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
 
-    counterexample_prompt = "Find counterexamples to: \"#{selected_text}\""
-
     counterexample_node =
       GraphActions.counterexample_text(
         graph_action_params(socket, parent_node),
-        counterexample_prompt,
         selected_text
       )
 
     if counterexample_node do
-      GraphManager.update_vertex_fields(socket.assigns.graph_id, counterexample_node.id, %{
-        source_text: selected_text
-      })
-
       if highlight do
         Highlights.add_link(highlight.id, counterexample_node.id, "counterexample")
       end
@@ -1849,20 +1828,13 @@ defmodule DialecticWeb.GraphLive do
     highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
     parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
 
-    implications_prompt = "What are the implications of: \"#{selected_text}\"?"
-
     implications_node =
       GraphActions.implications_text(
         graph_action_params(socket, parent_node),
-        implications_prompt,
         selected_text
       )
 
     if implications_node do
-      GraphManager.update_vertex_fields(socket.assigns.graph_id, implications_node.id, %{
-        source_text: selected_text
-      })
-
       if highlight do
         Highlights.add_link(highlight.id, implications_node.id, "implications")
       end
@@ -1883,20 +1855,13 @@ defmodule DialecticWeb.GraphLive do
     highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
     parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
 
-    steel_man_prompt = "Build the strongest, most charitable version of: \"#{selected_text}\""
-
     steel_man_node =
       GraphActions.steel_man_text(
         graph_action_params(socket, parent_node),
-        steel_man_prompt,
         selected_text
       )
 
     if steel_man_node do
-      GraphManager.update_vertex_fields(socket.assigns.graph_id, steel_man_node.id, %{
-        source_text: selected_text
-      })
-
       if highlight do
         Highlights.add_link(highlight.id, steel_man_node.id, "steel_man")
       end
@@ -1917,20 +1882,13 @@ defmodule DialecticWeb.GraphLive do
     highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
     parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
 
-    says_who_prompt = "Who says this and what's the evidence? \"#{selected_text}\""
-
     says_who_node =
       GraphActions.says_who_text(
         graph_action_params(socket, parent_node),
-        says_who_prompt,
         selected_text
       )
 
     if says_who_node do
-      GraphManager.update_vertex_fields(socket.assigns.graph_id, says_who_node.id, %{
-        source_text: selected_text
-      })
-
       if highlight do
         Highlights.add_link(highlight.id, says_who_node.id, "says_who")
       end
@@ -1951,21 +1909,13 @@ defmodule DialecticWeb.GraphLive do
     highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
     parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
 
-    second_order_prompt =
-      "What are the second-order effects and indirect consequences of: \"#{selected_text}\"?"
-
     second_order_node =
       GraphActions.second_order_text(
         graph_action_params(socket, parent_node),
-        second_order_prompt,
         selected_text
       )
 
     if second_order_node do
-      GraphManager.update_vertex_fields(socket.assigns.graph_id, second_order_node.id, %{
-        source_text: selected_text
-      })
-
       if highlight do
         Highlights.add_link(highlight.id, second_order_node.id, "second_order")
       end
@@ -1986,20 +1936,13 @@ defmodule DialecticWeb.GraphLive do
     highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
     parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
 
-    simplify_prompt = "Simplify this into plain language: \"#{selected_text}\"?"
-
     simplify_node =
       GraphActions.simplify_text(
         graph_action_params(socket, parent_node),
-        simplify_prompt,
         selected_text
       )
 
     if simplify_node do
-      GraphManager.update_vertex_fields(socket.assigns.graph_id, simplify_node.id, %{
-        source_text: selected_text
-      })
-
       if highlight do
         Highlights.add_link(highlight.id, simplify_node.id, "simplify")
       end
@@ -2020,21 +1963,13 @@ defmodule DialecticWeb.GraphLive do
     highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
     parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
 
-    blind_spots_prompt =
-      "What blind spots or overlooked perspectives exist in: \"#{selected_text}\"?"
-
     blind_spots_node =
       GraphActions.blind_spots_text(
         graph_action_params(socket, parent_node),
-        blind_spots_prompt,
         selected_text
       )
 
     if blind_spots_node do
-      GraphManager.update_vertex_fields(socket.assigns.graph_id, blind_spots_node.id, %{
-        source_text: selected_text
-      })
-
       if highlight do
         Highlights.add_link(highlight.id, blind_spots_node.id, "blind_spots")
       end
@@ -2055,20 +1990,13 @@ defmodule DialecticWeb.GraphLive do
     highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
     parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
 
-    who_disagrees_prompt = "Who would disagree with: \"#{selected_text}\" and why?"
-
     who_disagrees_node =
       GraphActions.who_disagrees_text(
         graph_action_params(socket, parent_node),
-        who_disagrees_prompt,
         selected_text
       )
 
     if who_disagrees_node do
-      GraphManager.update_vertex_fields(socket.assigns.graph_id, who_disagrees_node.id, %{
-        source_text: selected_text
-      })
-
       if highlight do
         Highlights.add_link(highlight.id, who_disagrees_node.id, "who_disagrees")
       end
@@ -2089,20 +2017,13 @@ defmodule DialecticWeb.GraphLive do
     highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
     parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
 
-    analogy_prompt = "Find analogies or comparisons to help understand: \"#{selected_text}\""
-
     analogy_node =
       GraphActions.analogy_text(
         graph_action_params(socket, parent_node),
-        analogy_prompt,
         selected_text
       )
 
     if analogy_node do
-      GraphManager.update_vertex_fields(socket.assigns.graph_id, analogy_node.id, %{
-        source_text: selected_text
-      })
-
       if highlight do
         Highlights.add_link(highlight.id, analogy_node.id, "analogy")
       end
@@ -2123,20 +2044,13 @@ defmodule DialecticWeb.GraphLive do
     highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
     parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
 
-    what_if_prompt = "Explore hypothetical scenarios related to: \"#{selected_text}\""
-
     what_if_node =
       GraphActions.what_if_text(
         graph_action_params(socket, parent_node),
-        what_if_prompt,
         selected_text
       )
 
     if what_if_node do
-      GraphManager.update_vertex_fields(socket.assigns.graph_id, what_if_node.id, %{
-        source_text: selected_text
-      })
-
       if highlight do
         Highlights.add_link(highlight.id, what_if_node.id, "what_if")
       end
@@ -2157,20 +2071,13 @@ defmodule DialecticWeb.GraphLive do
     highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
     parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
 
-    deepdive_prompt = "Provide a deep dive analysis of: \"#{selected_text}\""
-
     deepdive_node =
       GraphActions.deepdive_text(
         graph_action_params(socket, parent_node),
-        deepdive_prompt,
         selected_text
       )
 
     if deepdive_node do
-      GraphManager.update_vertex_fields(socket.assigns.graph_id, deepdive_node.id, %{
-        source_text: selected_text
-      })
-
       if highlight do
         Highlights.add_link(highlight.id, deepdive_node.id, "deepdive")
       end

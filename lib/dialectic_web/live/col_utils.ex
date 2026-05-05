@@ -31,6 +31,7 @@ defmodule DialecticWeb.ColUtils do
   def border_class("analogy"), do: "border-emerald-500"
   def border_class("steel_man"), do: "border-yellow-500"
   def border_class("what_if"), do: "border-fuchsia-500"
+  def border_class("second_order"), do: "border-slate-500"
   # Cluster 3 — Clarity & Communication
   def border_class("simplify"), do: "border-orange-400"
   def border_class(_), do: "border-gray-200"
@@ -60,6 +61,7 @@ defmodule DialecticWeb.ColUtils do
   def badge_class("analogy"), do: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/10"
   def badge_class("steel_man"), do: "bg-yellow-50 text-yellow-700 ring-1 ring-yellow-600/10"
   def badge_class("what_if"), do: "bg-fuchsia-50 text-fuchsia-700 ring-1 ring-fuchsia-600/10"
+  def badge_class("second_order"), do: "bg-slate-50 text-slate-700 ring-1 ring-slate-600/10"
   # Cluster 3 — Clarity & Communication
   def badge_class("simplify"), do: "bg-orange-50 text-orange-700 ring-1 ring-orange-600/10"
   def badge_class(_), do: "bg-gray-100 text-gray-600 ring-1 ring-gray-500/10"
@@ -88,6 +90,7 @@ defmodule DialecticWeb.ColUtils do
   def dot_class("analogy"), do: "bg-emerald-500"
   def dot_class("steel_man"), do: "bg-yellow-500"
   def dot_class("what_if"), do: "bg-fuchsia-500"
+  def dot_class("second_order"), do: "bg-slate-500"
   # Cluster 3 — Clarity & Communication
   def dot_class("simplify"), do: "bg-orange-400"
   def dot_class(_), do: "bg-gray-300"
@@ -116,6 +119,7 @@ defmodule DialecticWeb.ColUtils do
   def node_type_label("analogy"), do: "Analogy"
   def node_type_label("steel_man"), do: "Steel Man"
   def node_type_label("what_if"), do: "What If?"
+  def node_type_label("second_order"), do: "Second Order"
   # Cluster 3 — Clarity & Communication
   def node_type_label("simplify"), do: "Simplify"
   def node_type_label(_), do: "Node"
@@ -159,6 +163,9 @@ defmodule DialecticWeb.ColUtils do
 
   def node_type_description("what_if"),
     do: "Counterfactual exploration — 'What if we change X?' (Fuchsia)"
+
+  def node_type_description("second_order"),
+    do: "Second-order effects — 'What happens next?' (Slate)"
 
   # Cluster 3 — Clarity & Communication
   def node_type_description("simplify"), do: "Making content accessible to all (Orange)"

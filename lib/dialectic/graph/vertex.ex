@@ -27,6 +27,7 @@ defmodule Dialectic.Graph.Vertex do
     "analogy",
     "steel_man",
     "what_if",
+    "second_order",
     # Cluster 3 — Clarity & Communication
     "simplify"
   ]

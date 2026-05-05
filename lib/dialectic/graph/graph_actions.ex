@@ -533,8 +533,9 @@ defmodule Dialectic.Graph.GraphActions do
   Clarify selected text within a node.
   Creates a clarification node with context about the specific text being clarified.
   """
-  def clarify_text({graph_id, node, user, live_view_topic}, prompt, selected_text) do
-    clarify_node = clarify({graph_id, node, user, live_view_topic}, content_override: prompt)
+  def clarify_text({graph_id, node, user, live_view_topic}, selected_text) do
+    clarify_node =
+      clarify({graph_id, node, user, live_view_topic}, content_override: selected_text)
 
     if clarify_node do
       GraphManager.update_vertex_fields(graph_id, clarify_node.id, %{
@@ -550,9 +551,9 @@ defmodule Dialectic.Graph.GraphActions do
   @doc """
   Analyze assumptions in selected text.
   """
-  def assumptions_text({graph_id, node, user, live_view_topic}, prompt, selected_text) do
+  def assumptions_text({graph_id, node, user, live_view_topic}, selected_text) do
     assumptions_node =
-      assumptions({graph_id, node, user, live_view_topic}, content_override: prompt)
+      assumptions({graph_id, node, user, live_view_topic}, content_override: selected_text)
 
     if assumptions_node do
       GraphManager.update_vertex_fields(graph_id, assumptions_node.id, %{
@@ -568,9 +569,9 @@ defmodule Dialectic.Graph.GraphActions do
   @doc """
   Find counterexamples to selected text.
   """
-  def counterexample_text({graph_id, node, user, live_view_topic}, prompt, selected_text) do
+  def counterexample_text({graph_id, node, user, live_view_topic}, selected_text) do
     counterexample_node =
-      counterexample({graph_id, node, user, live_view_topic}, content_override: prompt)
+      counterexample({graph_id, node, user, live_view_topic}, content_override: selected_text)
 
     if counterexample_node do
       GraphManager.update_vertex_fields(graph_id, counterexample_node.id, %{
@@ -586,9 +587,9 @@ defmodule Dialectic.Graph.GraphActions do
   @doc """
   Explore implications of selected text.
   """
-  def implications_text({graph_id, node, user, live_view_topic}, prompt, selected_text) do
+  def implications_text({graph_id, node, user, live_view_topic}, selected_text) do
     implications_node =
-      implications({graph_id, node, user, live_view_topic}, content_override: prompt)
+      implications({graph_id, node, user, live_view_topic}, content_override: selected_text)
 
     if implications_node do
       GraphManager.update_vertex_fields(graph_id, implications_node.id, %{
@@ -604,8 +605,9 @@ defmodule Dialectic.Graph.GraphActions do
   @doc """
   Build a steel man argument from selected text.
   """
-  def steel_man_text({graph_id, node, user, live_view_topic}, prompt, selected_text) do
-    steel_man_node = steel_man({graph_id, node, user, live_view_topic}, content_override: prompt)
+  def steel_man_text({graph_id, node, user, live_view_topic}, selected_text) do
+    steel_man_node =
+      steel_man({graph_id, node, user, live_view_topic}, content_override: selected_text)
 
     if steel_man_node do
       GraphManager.update_vertex_fields(graph_id, steel_man_node.id, %{
@@ -621,8 +623,9 @@ defmodule Dialectic.Graph.GraphActions do
   @doc """
   Simplify selected text into plain language.
   """
-  def simplify_text({graph_id, node, user, live_view_topic}, prompt, selected_text) do
-    simplify_node = simplify({graph_id, node, user, live_view_topic}, content_override: prompt)
+  def simplify_text({graph_id, node, user, live_view_topic}, selected_text) do
+    simplify_node =
+      simplify({graph_id, node, user, live_view_topic}, content_override: selected_text)
 
     if simplify_node do
       GraphManager.update_vertex_fields(graph_id, simplify_node.id, %{
@@ -638,8 +641,9 @@ defmodule Dialectic.Graph.GraphActions do
   @doc """
   Question the source and evidence behind selected text.
   """
-  def says_who_text({graph_id, node, user, live_view_topic}, prompt, selected_text) do
-    says_who_node = says_who({graph_id, node, user, live_view_topic}, content_override: prompt)
+  def says_who_text({graph_id, node, user, live_view_topic}, selected_text) do
+    says_who_node =
+      says_who({graph_id, node, user, live_view_topic}, content_override: selected_text)
 
     if says_who_node do
       GraphManager.update_vertex_fields(graph_id, says_who_node.id, %{
@@ -655,9 +659,9 @@ defmodule Dialectic.Graph.GraphActions do
   @doc """
   Explore second-order effects and indirect consequences of selected text.
   """
-  def second_order_text({graph_id, node, user, live_view_topic}, prompt, selected_text) do
+  def second_order_text({graph_id, node, user, live_view_topic}, selected_text) do
     second_order_node =
-      second_order({graph_id, node, user, live_view_topic}, content_override: prompt)
+      second_order({graph_id, node, user, live_view_topic}, content_override: selected_text)
 
     if second_order_node do
       GraphManager.update_vertex_fields(graph_id, second_order_node.id, %{
@@ -673,9 +677,9 @@ defmodule Dialectic.Graph.GraphActions do
   @doc """
   Identify blind spots in selected text.
   """
-  def blind_spots_text({graph_id, node, user, live_view_topic}, prompt, selected_text) do
+  def blind_spots_text({graph_id, node, user, live_view_topic}, selected_text) do
     blind_spots_node =
-      blind_spots({graph_id, node, user, live_view_topic}, content_override: prompt)
+      blind_spots({graph_id, node, user, live_view_topic}, content_override: selected_text)
 
     if blind_spots_node do
       GraphManager.update_vertex_fields(graph_id, blind_spots_node.id, %{
@@ -691,9 +695,9 @@ defmodule Dialectic.Graph.GraphActions do
   @doc """
   Explore who disagrees with selected text.
   """
-  def who_disagrees_text({graph_id, node, user, live_view_topic}, prompt, selected_text) do
+  def who_disagrees_text({graph_id, node, user, live_view_topic}, selected_text) do
     who_disagrees_node =
-      who_disagrees({graph_id, node, user, live_view_topic}, content_override: prompt)
+      who_disagrees({graph_id, node, user, live_view_topic}, content_override: selected_text)
 
     if who_disagrees_node do
       GraphManager.update_vertex_fields(graph_id, who_disagrees_node.id, %{
@@ -709,8 +713,9 @@ defmodule Dialectic.Graph.GraphActions do
   @doc """
   Generate analogies for selected text.
   """
-  def analogy_text({graph_id, node, user, live_view_topic}, prompt, selected_text) do
-    analogy_node = analogy({graph_id, node, user, live_view_topic}, content_override: prompt)
+  def analogy_text({graph_id, node, user, live_view_topic}, selected_text) do
+    analogy_node =
+      analogy({graph_id, node, user, live_view_topic}, content_override: selected_text)
 
     if analogy_node do
       GraphManager.update_vertex_fields(graph_id, analogy_node.id, %{
@@ -726,8 +731,9 @@ defmodule Dialectic.Graph.GraphActions do
   @doc """
   Explore what-if scenarios for selected text.
   """
-  def what_if_text({graph_id, node, user, live_view_topic}, prompt, selected_text) do
-    what_if_node = what_if({graph_id, node, user, live_view_topic}, content_override: prompt)
+  def what_if_text({graph_id, node, user, live_view_topic}, selected_text) do
+    what_if_node =
+      what_if({graph_id, node, user, live_view_topic}, content_override: selected_text)
 
     if what_if_node do
       GraphManager.update_vertex_fields(graph_id, what_if_node.id, %{
@@ -743,8 +749,9 @@ defmodule Dialectic.Graph.GraphActions do
   @doc """
   Deep dive into selected text with detailed analysis.
   """
-  def deepdive_text({graph_id, node, user, live_view_topic}, prompt, selected_text) do
-    deepdive_node = deepdive({graph_id, node, user, live_view_topic}, content_override: prompt)
+  def deepdive_text({graph_id, node, user, live_view_topic}, selected_text) do
+    deepdive_node =
+      deepdive({graph_id, node, user, live_view_topic}, content_override: selected_text)
 
     if deepdive_node do
       GraphManager.update_vertex_fields(graph_id, deepdive_node.id, %{
