@@ -485,7 +485,7 @@ defmodule DialecticWeb.UserProfileLive do
                               {graph.title}
                             </.link>
                             <.link
-                              navigate={graph_linear_path(graph)}
+                              navigate={graph_path(graph)}
                               class={[
                                 "lg:hidden font-semibold hover:underline",
                                 table_link_class(@theme)
@@ -520,7 +520,7 @@ defmodule DialecticWeb.UserProfileLive do
                               <.icon name="hero-arrow-top-right-on-square" class="h-4 w-4" />
                             </.link>
                             <.link
-                              navigate={graph_linear_path(graph)}
+                              navigate={graph_path(graph)}
                               class="lg:hidden inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-sky-500 text-white shadow-sm ring-1 ring-indigo-500/30 transition-transform hover:scale-105"
                               aria-label={"Open " <> (graph.title || "grid")}
                             >
@@ -639,7 +639,7 @@ defmodule DialecticWeb.UserProfileLive do
                                 {g.title}
                               </.link>
                               <.link
-                                navigate={graph_linear_path(g)}
+                                navigate={graph_path(g)}
                                 class={[
                                   "lg:hidden font-semibold hover:underline",
                                   table_link_class(@theme)
@@ -683,7 +683,7 @@ defmodule DialecticWeb.UserProfileLive do
                                 <.icon name="hero-arrow-top-right-on-square" class="h-4 w-4" />
                               </.link>
                               <.link
-                                navigate={graph_linear_path(g)}
+                                navigate={graph_path(g)}
                                 class="lg:hidden inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-sky-500 text-white shadow-sm ring-1 ring-indigo-500/30 transition-transform hover:scale-105"
                                 aria-label={"Open " <> (g.title || "grid")}
                               >
@@ -787,7 +787,7 @@ defmodule DialecticWeb.UserProfileLive do
                     </.link>
                     <%!-- Mobile link (linear view) --%>
                     <.link
-                      navigate={graph_linear_path(note.graph, note.node_id)}
+                      navigate={graph_path(note.graph, note.node_id)}
                       class={[
                         "lg:hidden block rounded-xl p-4 transition-all",
                         theme_card_class(@theme),

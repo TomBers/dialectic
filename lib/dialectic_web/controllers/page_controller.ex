@@ -32,6 +32,15 @@ defmodule DialecticWeb.PageController do
     redirect(conn, to: ~p"/?#{params}")
   end
 
+  def legacy_graph_view(conn, %{"graph_name" => graph_name} = params) do
+    redirect_params =
+      params
+      |> Map.drop(["graph_name"])
+      |> normalize_legacy_graph_params()
+
+    redirect(conn, to: ~p"/g/#{graph_name}?#{redirect_params}")
+  end
+
   def generate_tags(conn, %{"title" => title}) do
     case Dialectic.DbActions.Graphs.get_graph_by_title(title) do
       nil ->
@@ -154,6 +163,21 @@ defmodule DialecticWeb.PageController do
     Dialectic.DbActions.Sharing.can_access?(user, graph_struct) or
       (is_binary(token_param) and is_binary(graph_struct.share_token) and
          Plug.Crypto.secure_compare(token_param, graph_struct.share_token))
+  end
+
+  defp normalize_legacy_graph_params(params) do
+    node_id = Map.get(params, "node") || Map.get(params, "node_id")
+
+    params
+    |> Map.drop(["node", "node_id"])
+    |> Enum.sort_by(&elem(&1, 0))
+    |> then(fn remaining_params ->
+      if node_id do
+        [{"node", node_id} | remaining_params]
+      else
+        remaining_params
+      end
+    end)
   end
 
   def guide(conn, _params) do

@@ -14,6 +14,15 @@ defmodule Dialectic.MixProject do
     ]
   end
 
+  def cli do
+    [
+      preferred_envs: [
+        test: :test,
+        precommit: :test
+      ]
+    ]
+  end
+
   # Configuration for the OTP application.
   #
   # Type `mix help compile.app` for more information.
@@ -85,10 +94,11 @@ defmodule Dialectic.MixProject do
       "ecto.reset": ["ecto.drop", "ecto.setup"],
       test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],
       "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
-      "assets.build": ["tailwind dialectic", "esbuild dialectic"],
+      "assets.build": ["tailwind dialectic", "esbuild dialectic", "assets.copy_katex_fonts"],
       "assets.deploy": [
         "tailwind dialectic --minify",
         "esbuild dialectic --minify",
+        "assets.copy_katex_fonts",
         "phx.digest"
       ],
       precommit: ["format", "test"]

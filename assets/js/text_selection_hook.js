@@ -6,6 +6,7 @@ const textSelectionHook = {
     this.handleHighlightClick = this.handleHighlightClick.bind(this);
     this.handleLinkIconClick = this.handleLinkIconClick.bind(this);
     this.renderHighlightsForNode = this.renderHighlightsForNode.bind(this);
+    this.highlightsOnly = this.el.dataset.highlightsOnly === "true";
 
     // Get node ID from data attribute
     this.nodeId = this.el.dataset.nodeId;
@@ -21,13 +22,16 @@ const textSelectionHook = {
     }
 
     // Add event listeners for this specific container
-    this.el.addEventListener("mouseup", this.handleSelection);
-    this.el.addEventListener("touchend", this.handleSelection);
     this.el.addEventListener("click", this.handleHighlightClick);
     this.el.addEventListener(
       "highlight-link-clicked",
       this.handleLinkIconClick,
     );
+
+    if (!this.highlightsOnly) {
+      this.el.addEventListener("mouseup", this.handleSelection);
+      this.el.addEventListener("touchend", this.handleSelection);
+    }
 
     // When the Markdown hook finishes rendering, re-apply highlights from cache
     this.el.addEventListener("markdown:rendered", this.renderHighlightsForNode);
@@ -41,7 +45,10 @@ const textSelectionHook = {
     );
 
     this.handleEvent("scroll_to_highlight", this.scrollToHighlight.bind(this));
-    this.handleEvent("create_highlight", this.handleCreateHighlight.bind(this));
+
+    if (!this.highlightsOnly) {
+      this.handleEvent("create_highlight", this.handleCreateHighlight.bind(this));
+    }
 
     // Render any highlights already in the cache (e.g. if this hook mounts
     // after the initial highlights_loaded event already fired).
@@ -53,17 +60,20 @@ const textSelectionHook = {
   },
 
   destroyed() {
-    this.el.removeEventListener("mouseup", this.handleSelection);
     this.el.removeEventListener(
       "highlight-link-clicked",
       this.handleLinkIconClick,
     );
-    this.el.removeEventListener("touchend", this.handleSelection);
     this.el.removeEventListener("click", this.handleHighlightClick);
     this.el.removeEventListener(
       "markdown:rendered",
       this.renderHighlightsForNode,
     );
+
+    if (!this.highlightsOnly) {
+      this.el.removeEventListener("mouseup", this.handleSelection);
+      this.el.removeEventListener("touchend", this.handleSelection);
+    }
   },
 
   // ── Highlights from server ──────────────────────────────────────────

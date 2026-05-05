@@ -125,7 +125,7 @@ defmodule DialecticWeb.HomeLive do
         {:noreply, put_flash(socket, :error, "Grid not found after creation")}
 
       graph ->
-        {:noreply, redirect(socket, to: graph_path(graph))}
+        {:noreply, redirect(socket, to: graph_editor_path(graph))}
     end
   end
 
@@ -249,7 +249,7 @@ defmodule DialecticWeb.HomeLive do
             end)
 
           existing_graph ->
-            redirect(socket, to: graph_path(existing_graph))
+            redirect(socket, to: graph_editor_path(existing_graph))
         end
     end
   end
@@ -472,7 +472,6 @@ defmodule DialecticWeb.HomeLive do
                                 title={item.graph.title}
                                 is_public={item.graph.is_public}
                                 link={graph_path(item.graph)}
-                                linear_link={graph_linear_path(item.graph)}
                                 count={0}
                                 tags={Enum.take(item.graph.tags || [], 3)}
                                 author_name={item.author_name}
@@ -696,8 +695,62 @@ defmodule DialecticWeb.HomeLive do
                   </div>
 
                   <div class="border-t border-slate-200">
-                    <div class="overflow-x-auto p-3 sm:p-3.5">
-                      <table class="min-w-full border-separate border-spacing-0 text-left text-sm">
+                    <div id="home-graph-mobile-list" class="space-y-3 p-3 md:hidden">
+                      <%= for {g, _count, author_username} <- @graphs do %>
+                        <article
+                          id={graph_dom_id(g, "home-mobile-graph")}
+                          class="rounded-2xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-indigo-50/60 p-4 shadow-sm ring-1 ring-slate-200/70"
+                        >
+                          <div class="flex items-start gap-3">
+                            <div class="min-w-0 flex-1">
+                              <.link
+                                navigate={graph_path(g)}
+                                class="block text-base font-semibold leading-6 text-slate-900 transition hover:text-indigo-700"
+                              >
+                                {g.title}
+                              </.link>
+
+                              <%= if author_visible?(author_username) do %>
+                                <.link
+                                  navigate={~p"/u/#{author_username}"}
+                                  class="mt-1 inline-flex text-xs font-medium text-slate-600 transition hover:text-indigo-700"
+                                >
+                                  by @{author_username}
+                                </.link>
+                              <% end %>
+                            </div>
+
+                            <.link
+                              navigate={graph_path(g)}
+                              class="inline-flex h-10 shrink-0 items-center gap-2 rounded-full bg-gradient-to-br from-indigo-500 to-sky-500 px-3 text-sm font-medium text-white shadow-sm ring-1 ring-indigo-500/30 transition-transform hover:scale-[1.02] hover:shadow-md"
+                              aria-label={"Open " <> (g.title || "idea")}
+                            >
+                              <.icon name="hero-magnifying-glass" class="h-4 w-4" />
+                              <span>Open</span>
+                            </.link>
+                          </div>
+
+                          <%= if (g.tags || []) != [] do %>
+                            <div class="mt-3 flex flex-wrap gap-1.5">
+                              <%= for tag <- Enum.take(g.tags || [], 4) do %>
+                                <span class={[
+                                  "inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-inset",
+                                  table_tag_color_class(tag)
+                                ]}>
+                                  #{tag}
+                                </span>
+                              <% end %>
+                            </div>
+                          <% end %>
+                        </article>
+                      <% end %>
+                    </div>
+
+                    <div class="hidden overflow-x-auto p-3 sm:p-3.5 md:block">
+                      <table
+                        id="home-graph-desktop-table"
+                        class="min-w-full border-separate border-spacing-0 text-left text-sm"
+                      >
                         <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-600">
                           <tr>
                             <th class="px-4 py-2.5 font-semibold shadow-[inset_0_-1px_0_0_rgb(226_232_240)]">
@@ -718,14 +771,7 @@ defmodule DialecticWeb.HomeLive do
                                 <%!-- Desktop link (graph view) --%>
                                 <.link
                                   navigate={graph_path(g)}
-                                  class="hidden lg:block line-clamp-2 font-semibold text-slate-900 hover:text-indigo-700"
-                                >
-                                  {g.title}
-                                </.link>
-                                <%!-- Mobile link (linear view) --%>
-                                <.link
-                                  navigate={graph_linear_path(g)}
-                                  class="lg:hidden line-clamp-2 font-semibold text-slate-900 hover:text-indigo-700"
+                                  class="line-clamp-2 font-semibold text-slate-900 hover:text-indigo-700"
                                 >
                                   {g.title}
                                 </.link>
@@ -754,16 +800,7 @@ defmodule DialecticWeb.HomeLive do
                                 <%!-- Desktop link (graph view) --%>
                                 <.link
                                   navigate={graph_path(g)}
-                                  class="hidden lg:inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-sky-500 text-white shadow-sm ring-1 ring-indigo-500/30 transition-transform hover:scale-105 hover:shadow-md"
-                                  aria-label={"Open " <> (g.title || "idea")}
-                                >
-                                  <.icon name="hero-magnifying-glass" class="h-4 w-4" />
-                                  <span class="sr-only">Open</span>
-                                </.link>
-                                <%!-- Mobile link (linear view) --%>
-                                <.link
-                                  navigate={graph_linear_path(g)}
-                                  class="lg:hidden inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-sky-500 text-white shadow-sm ring-1 ring-indigo-500/30 transition-transform hover:scale-105 hover:shadow-md"
+                                  class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-sky-500 text-white shadow-sm ring-1 ring-indigo-500/30 transition-transform hover:scale-105 hover:shadow-md"
                                   aria-label={"Open " <> (g.title || "idea")}
                                 >
                                   <.icon name="hero-magnifying-glass" class="h-4 w-4" />
@@ -895,7 +932,6 @@ defmodule DialecticWeb.HomeLive do
                   title={item.graph.title}
                   is_public={item.graph.is_public}
                   link={graph_path(item.graph)}
-                  linear_link={graph_linear_path(item.graph)}
                   count={0}
                   tags={Enum.take(item.graph.tags || [], 3)}
                   author_name={item.author_name}
@@ -1009,6 +1045,11 @@ defmodule DialecticWeb.HomeLive do
 
     idx = :erlang.phash2(tag, length(colors))
     Enum.at(colors, idx)
+  end
+
+  defp graph_dom_id(graph, prefix) do
+    suffix = graph.slug || Integer.to_string(:erlang.phash2(graph.title || "graph"))
+    prefix <> "-" <> suffix
   end
 
   defp page_title(search, tag, category) do

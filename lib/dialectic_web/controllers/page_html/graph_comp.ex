@@ -4,7 +4,6 @@ defmodule DialecticWeb.PageHtml.GraphComp do
   def render(assigns) do
     assigns = assign(assigns, :variant, assigns[:variant] || :glass)
     assigns = assign(assigns, :compact, assigns[:compact] || false)
-    assigns = assign(assigns, :linear_link, assigns[:linear_link])
 
     assigns =
       assign(assigns, :show_exploration_stats, Map.get(assigns, :show_exploration_stats, true))
@@ -14,22 +13,9 @@ defmodule DialecticWeb.PageHtml.GraphComp do
       "relative block group h-full rounded-lg ring-1 transition-colors flex flex-col",
       container_class(@variant)
     ]}>
-      <%!-- Desktop link (graph view) - hidden on mobile when linear_link provided --%>
-      <.link
-        navigate={@link}
-        class={[
-          "absolute inset-0 z-0 rounded-lg",
-          @linear_link && "hidden lg:block"
-        ]}
-      >
+      <.link navigate={@link} class="absolute inset-0 z-0 rounded-lg">
         <span class="sr-only">View {@title}</span>
       </.link>
-      <%!-- Mobile link (linear view) - only shown on mobile when linear_link provided --%>
-      <%= if @linear_link do %>
-        <.link navigate={@linear_link} class="absolute inset-0 z-0 rounded-lg lg:hidden">
-          <span class="sr-only">View {@title} (mobile)</span>
-        </.link>
-      <% end %>
 
       <div class={[
         "flex flex-col h-full pointer-events-none relative z-10",

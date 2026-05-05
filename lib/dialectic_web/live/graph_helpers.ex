@@ -1,6 +1,6 @@
 defmodule DialecticWeb.GraphHelpers do
   @moduledoc """
-  Shared helper functions extracted from GraphLive and LinearGraphLive.
+  Shared helper functions extracted from graph-facing LiveViews.
 
   These helpers return data that the calling LiveView can use with its own
   `update_graph` / `handle_graph_update` function. For graph mutations they

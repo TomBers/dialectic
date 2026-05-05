@@ -106,38 +106,6 @@
     />
   <% end %>
 
-  <%!-- Mobile: Auto-redirect to linear view --%>
-  <div
-    id="mobile-redirect"
-    class="lg:hidden absolute inset-0 z-50 bg-white flex flex-col items-center justify-center p-6 text-center"
-    phx-hook="MobileRedirect"
-    data-linear-url={
-      graph_linear_path(@graph_struct, nil, if(@token, do: [token: @token], else: []))
-    }
-  >
-    <div class="max-w-sm space-y-5">
-      <div class="mx-auto w-14 h-14 bg-indigo-50 rounded-full flex items-center justify-center">
-        <.icon name="hero-device-phone-mobile" class="w-7 h-7 text-indigo-600" />
-      </div>
-      <h2 class="text-xl font-bold text-gray-900">
-        Redirecting to mobile view...
-      </h2>
-      <p class="text-sm text-gray-500">
-        For the full graph editing experience, visit on a laptop or desktop.
-      </p>
-      <div class="pt-1">
-        <.link
-          navigate={
-            graph_linear_path(@graph_struct, nil, if(@token, do: [token: @token], else: []))
-          }
-          class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 w-full"
-        >
-          <.icon name="hero-arrow-right" class="w-4 h-4 mr-2" /> Open Mobile View
-        </.link>
-      </div>
-    </div>
-  </div>
-
   <.live_component
     module={DialecticWeb.ShareModalComp}
     id="share-modal"
