@@ -285,6 +285,8 @@
         data-graph={@f_graph}
         data-node={if @node, do: @node.id, else: nil}
         data-operation={@graph_operation}
+        data-presentation-mode={@presentation_mode}
+        data-presentation-slide-ids={Jason.encode!(@presentation_slide_ids)}
         data-div="cy-inner"
         data-enter-shortcut="reader"
         data-ignore-inputs="true"

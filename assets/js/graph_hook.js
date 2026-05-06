@@ -631,6 +631,7 @@ const graphHook = {
     };
     window.addEventListener("resize", this._onViewportResize);
     this._onViewportResize();
+    this._syncPresentationState({ force: true });
 
     // Handle incremental label updates for streaming titles without full graph reloads
     this.handleEvent("update_node_label", ({ id, label }) => {
@@ -891,47 +892,27 @@ const graphHook = {
 
     // ── Presentation mode: highlight nodes in the slide deck ──
     this.handleEvent("presentation_highlight_slides", ({ ids }) => {
-      if (!this.cy) return;
-      try {
-        // Remove previous presentation markers
-        this.cy.nodes().removeClass("presentation-slide");
-        this.cy.nodes().forEach((n) => n.removeData("presIndex"));
+      const { mode } = this._readPresentationState();
 
-        // Remove old badge overlays
-        if (this._badgeElements) {
-          this._badgeElements.forEach((el) => el.remove());
-          this._badgeElements.clear();
-        }
+      if (mode === "presenting") {
+        this._startPresenting(ids || []);
+        return;
+      }
 
-        if (!ids || ids.length === 0) return;
-
-        // Store the ordered list so we can render badges after layout
-        this._presentationIds = ids;
-
-        ids.forEach((id, idx) => {
-          const n = this.cy.getElementById(id);
-          if (n && n.length > 0) {
-            n.addClass("presentation-slide");
-            n.data("presIndex", idx + 1);
-          }
-        });
-
-        // Render numbered badge overlays positioned on each node
-        this._renderPresentationBadges();
-      } catch (_e) {}
+      this._presentationFiltered = false;
+      this._setPresentationHighlights(ids);
     });
 
     this.handleEvent("presentation_clear_slides", () => {
-      if (!this.cy) return;
-      try {
-        this.cy.nodes().removeClass("presentation-slide");
-        this.cy.nodes().forEach((n) => n.removeData("presIndex"));
-        this._presentationIds = null;
-        if (this._badgeElements) {
-          this._badgeElements.forEach((el) => el.remove());
-          this._badgeElements.clear();
-        }
-      } catch (_e) {}
+      const { mode } = this._readPresentationState();
+
+      if (mode === "presenting") {
+        return;
+      }
+
+      this._presentationFiltered = false;
+      this._presentationIds = null;
+      this._clearPresentationHighlights();
     });
 
     // ── Presentation filter: hide all nodes NOT in the selected set ──
@@ -939,42 +920,7 @@ const graphHook = {
       if (!this.cy) return;
 
       const applyFilter = () => {
-        try {
-          this._presentationIds = ids;
-          this._presentationFiltered = true;
-          this._applyPresentationFilter();
-
-          // Re-layout only the visible nodes so they spread out and fill the screen
-          this._layoutRunning = true;
-          layoutGraph(this.cy, {}, () => {
-            this._layoutRunning = false;
-            try {
-              this.cy.style().update();
-            } catch (_e) {}
-            // After layout, fit viewport to the visible nodes
-            const visibleNodes = this.cy
-              .nodes()
-              .not(".presentation-hidden")
-              .not(".presentation-hidden-parent");
-            if (visibleNodes.length > 0) {
-              this.cy.animate({
-                fit: { eles: visibleNodes, padding: 60 },
-                duration: 400,
-                easing: "ease-in-out-quad",
-                complete: () => {
-                  const { dx, dy } = this._getOverlayOffsets();
-                  if (dx !== 0 || dy !== 0) {
-                    this.cy.animate({
-                      panBy: { x: dx, y: dy },
-                      duration: 200,
-                      easing: "ease-in-out-quad",
-                    });
-                  }
-                },
-              });
-            }
-          });
-        } catch (_e) {}
+        this._startPresenting(ids);
       };
 
       // If the initial layout is still running (e.g. shared presentation link
@@ -989,50 +935,7 @@ const graphHook = {
 
     // ── Presentation unfilter: restore all hidden nodes and edges ──
     this.handleEvent("presentation_unfilter_graph", () => {
-      if (!this.cy) return;
-      try {
-        this.cy.startBatch();
-        this.cy.elements().removeClass("presentation-hidden");
-        this.cy.elements().removeClass("presentation-hidden-parent");
-        this.cy.nodes().removeClass("presentation-slide");
-        this.cy.nodes().forEach((n) => n.removeData("presIndex"));
-        this.cy.endBatch();
-
-        this._presentationFiltered = false;
-        this._presentationIds = null;
-
-        // Remove badge overlays
-        if (this._badgeElements) {
-          this._badgeElements.forEach((el) => el.remove());
-          this._badgeElements.clear();
-        }
-
-        // Re-layout to restore original positions, then fit
-        this._layoutRunning = true;
-        layoutGraph(this.cy, {}, () => {
-          this._layoutRunning = false;
-          try {
-            this.cy.style().update();
-          } catch (_e) {}
-          if (this.cy.nodes().length > 0) {
-            this.cy.animate({
-              fit: { eles: this.cy.nodes(), padding: 40 },
-              duration: 400,
-              easing: "ease-in-out-quad",
-              complete: () => {
-                const { dx, dy } = this._getOverlayOffsets();
-                if (dx !== 0 || dy !== 0) {
-                  this.cy.animate({
-                    panBy: { x: dx, y: dy },
-                    duration: 200,
-                    easing: "ease-in-out-quad",
-                  });
-                }
-              },
-            });
-          }
-        });
-      } catch (_e) {}
+      this._stopPresenting();
     });
 
     // ── Combine mode: highlight selected nodes ──
@@ -1155,6 +1058,7 @@ const graphHook = {
         n.removeClass("presentation-hidden");
         n.removeClass("presentation-hidden-parent");
         n.addClass("presentation-slide");
+        n.removeStyle("display");
       } else if (n.data("compound") || keepParentIds.has(n.id())) {
         // Compound group that contains a visible child — keep it
         // structurally present (so children render) but visually hidden
@@ -1162,10 +1066,12 @@ const graphHook = {
         n.removeClass("presentation-hidden");
         n.removeClass("presentation-slide");
         n.addClass("presentation-hidden-parent");
+        n.style("display", "element");
       } else {
         n.addClass("presentation-hidden");
         n.removeClass("presentation-slide");
         n.removeClass("presentation-hidden-parent");
+        n.style("display", "none");
       }
     });
 
@@ -1176,12 +1082,15 @@ const graphHook = {
         idSet.has(e.target().id()) || keepParentIds.has(e.target().id());
       if (srcVisible && tgtVisible) {
         e.removeClass("presentation-hidden");
+        e.removeStyle("display");
       } else {
         e.addClass("presentation-hidden");
+        e.style("display", "none");
       }
     });
 
     this.cy.endBatch();
+    this._forceGraphRedraw();
 
     this._renderPresentationBadges();
 
@@ -1255,6 +1164,331 @@ const graphHook = {
         this._badgeElements.set(id, badge);
       }
     });
+  },
+
+  _readPresentationState() {
+    const mode = this.el.dataset.presentationMode || "off";
+    let ids = [];
+
+    try {
+      const raw = this.el.dataset.presentationSlideIds;
+      const parsed = raw ? JSON.parse(raw) : [];
+
+      if (Array.isArray(parsed)) {
+        ids = parsed
+          .map((id) => String(id || "").trim())
+          .filter((id) => id.length > 0);
+      }
+    } catch (_e) {}
+
+    return { mode, ids };
+  },
+
+  _clearPresentationHighlights() {
+    if (!this.cy) return;
+
+    try {
+      this.cy.nodes().removeClass("presentation-slide");
+      this.cy.nodes().forEach((n) => n.removeData("presIndex"));
+
+      if (this._badgeElements) {
+        this._badgeElements.forEach((el) => el.remove());
+        this._badgeElements.clear();
+      }
+    } catch (_e) {}
+  },
+
+  _parseGraphElements(graphStr = this.el.dataset.graph) {
+    try {
+      const parsed = graphStr ? JSON.parse(graphStr) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (_e) {
+      return [];
+    }
+  },
+
+  _buildPresentationElements(ids, graphStr = this.el.dataset.graph) {
+    const keepIds = new Set((ids || []).map((id) => String(id)));
+
+    return this._parseGraphElements(graphStr).reduce((acc, el) => {
+      if (!el || !el.data) return acc;
+
+      if (
+        Object.prototype.hasOwnProperty.call(el.data, "source") &&
+        Object.prototype.hasOwnProperty.call(el.data, "target")
+      ) {
+        if (
+          keepIds.has(String(el.data.source)) &&
+          keepIds.has(String(el.data.target))
+        ) {
+          acc.push({
+            ...el,
+            data: { ...el.data },
+          });
+        }
+
+        return acc;
+      }
+
+      if (!keepIds.has(String(el.data.id))) {
+        return acc;
+      }
+
+      const next = {
+        ...el,
+        data: { ...el.data },
+      };
+
+      if (next.data.parent && !keepIds.has(String(next.data.parent))) {
+        delete next.data.parent;
+      }
+
+      acc.push(next);
+      return acc;
+    }, []);
+  },
+
+  _setPresentationHighlights(ids) {
+    if (!this.cy) return;
+
+    try {
+      this._clearPresentationHighlights();
+      this._presentationIds = ids;
+
+      if (!ids || ids.length === 0) return;
+
+      ids.forEach((id, idx) => {
+        const n = this.cy.getElementById(id);
+        if (n && n.length > 0) {
+          n.addClass("presentation-slide");
+          n.data("presIndex", idx + 1);
+        }
+      });
+
+      this._renderPresentationBadges();
+    } catch (_e) {}
+  },
+
+  _fitPresentationViewport() {
+    if (!this.cy) return;
+
+    const visibleNodes = this.cy
+      .nodes()
+      .not(".presentation-hidden")
+      .not(".presentation-hidden-parent");
+
+    if (visibleNodes.length === 0) return;
+
+    this.cy.animate({
+      fit: { eles: visibleNodes, padding: 60 },
+      duration: 400,
+      easing: "ease-in-out-quad",
+      complete: () => {
+        const { dx, dy } = this._getOverlayOffsets();
+        if (dx !== 0 || dy !== 0) {
+          this.cy.animate({
+            panBy: { x: dx, y: dy },
+            duration: 200,
+            easing: "ease-in-out-quad",
+            complete: () => {
+              this._forceGraphRedraw();
+              this._renderPresentationBadges();
+            },
+          });
+        } else {
+          this._forceGraphRedraw();
+          this._renderPresentationBadges();
+        }
+      },
+    });
+  },
+
+  _forceGraphRedraw() {
+    if (!this.cy) return;
+
+    try {
+      this.cy.resize();
+    } catch (_e) {}
+
+    try {
+      this.cy.style().update();
+    } catch (_e) {}
+
+    if (typeof this.cy.forceRender === "function") {
+      try {
+        this.cy.forceRender();
+      } catch (_e) {}
+    }
+  },
+
+  _setDepthToggleOverlayVisible(visible) {
+    const overlay = this.cy && this.cy._depthToggleOverlay;
+    if (!overlay) return;
+    overlay.style.display = visible ? "" : "none";
+  },
+
+  _recreateCy(elements) {
+    const currentNode = this.el.dataset.node;
+    const graphId = this.el.dataset.graphId;
+    const viewMode = localStorage.getItem("graph_view_mode") || "spaced";
+
+    if (this.cy) {
+      try {
+        this.cy.destroy();
+      } catch (_e) {}
+    }
+
+    if (this._container) {
+      this._container.innerHTML = "";
+    }
+
+    this.cy = draw_graph(
+      this._container,
+      this,
+      elements,
+      currentNode,
+      viewMode,
+      graphId,
+    );
+
+    try {
+      this.cy._ownerHook = this;
+    } catch (_e) {}
+
+    if (this.cy && this._onCyPanZoom) {
+      try {
+        this.cy.off("pan zoom", this._onCyPanZoom);
+      } catch (_e) {}
+      this.cy.on("pan zoom", this._onCyPanZoom);
+    }
+
+    if (this.cy && this._debugRedraw) {
+      this.cy.on("pan zoom render", this._debugRedraw);
+    }
+  },
+
+  _startPresenting(ids) {
+    if (!this.cy) return;
+
+    try {
+      this._presentationIds = ids;
+      this._presentationFiltered = true;
+      this._recreateCy(this._buildPresentationElements(ids));
+      this._setDepthToggleOverlayVisible(false);
+      this._setPresentationHighlights(ids);
+
+      this._layoutRunning = true;
+      layoutGraph(this.cy, {}, () => {
+        this._layoutRunning = false;
+        this._forceGraphRedraw();
+        this._renderPresentationBadges();
+        this._fitPresentationViewport();
+      });
+    } catch (_e) {}
+  },
+
+  _stopPresenting() {
+    if (!this.cy) return;
+
+    try {
+      this._recreateCy(this._parseGraphElements());
+      this.cy.startBatch();
+      this.cy.elements().removeClass("presentation-hidden");
+      this.cy.elements().removeClass("presentation-hidden-parent");
+      this.cy.nodes().removeClass("presentation-slide");
+      this.cy.nodes().forEach((n) => n.removeData("presIndex"));
+      this.cy.nodes().removeStyle("display");
+      this.cy.edges().removeStyle("display");
+      this.cy.endBatch();
+
+      this._presentationFiltered = false;
+      this._presentationIds = null;
+      this._setDepthToggleOverlayVisible(true);
+
+      if (this._badgeElements) {
+        this._badgeElements.forEach((el) => el.remove());
+        this._badgeElements.clear();
+      }
+
+      this._layoutRunning = true;
+      layoutGraph(this.cy, {}, () => {
+        this._layoutRunning = false;
+        this._forceGraphRedraw();
+        if (this.cy.nodes().length > 0) {
+          this.cy.animate({
+            fit: { eles: this.cy.nodes(), padding: 40 },
+            duration: 400,
+            easing: "ease-in-out-quad",
+            complete: () => {
+              const { dx, dy } = this._getOverlayOffsets();
+              if (dx !== 0 || dy !== 0) {
+                this.cy.animate({
+                  panBy: { x: dx, y: dy },
+                  duration: 200,
+                  easing: "ease-in-out-quad",
+                });
+              }
+            },
+          });
+        }
+      });
+    } catch (_e) {}
+  },
+
+  _syncPresentationState({ force = false } = {}) {
+    if (!this.cy) return;
+
+    const { mode, ids } = this._readPresentationState();
+    const idsKey = ids.join(",");
+    const currentIdsKey = Array.isArray(this._presentationIds)
+      ? this._presentationIds.join(",")
+      : "";
+
+    if (!force) {
+      if (mode === "presenting" && this._presentationFiltered && currentIdsKey === idsKey) {
+        return;
+      }
+
+      const highlightCount = this._badgeElements ? this._badgeElements.size : 0;
+
+      if (
+        mode === "setup" &&
+        !this._presentationFiltered &&
+        currentIdsKey === idsKey &&
+        highlightCount === ids.length
+      ) {
+        return;
+      }
+
+      if (
+        mode === "off" &&
+        !this._presentationFiltered &&
+        currentIdsKey === "" &&
+        highlightCount === 0
+      ) {
+        return;
+      }
+    }
+
+    if (mode === "presenting" && ids.length > 0) {
+      this._startPresenting(ids);
+      return;
+    }
+
+    if (this._presentationFiltered) {
+      this._stopPresenting();
+      return;
+    }
+
+    if (mode === "setup" && ids.length > 0) {
+      this._presentationFiltered = false;
+      this._setPresentationHighlights(ids);
+      return;
+    }
+
+    this._presentationFiltered = false;
+    this._presentationIds = null;
+    this._clearPresentationHighlights();
   },
 
   _handleViewModeChange(currentViewMode, graphStr, currentNode) {
@@ -1402,6 +1636,8 @@ const graphHook = {
 
   updated() {
     const { graph, node, operation } = this.el.dataset;
+    const { mode: presentationMode, ids: presentationIds } =
+      this._readPresentationState();
 
     // Check if view mode has changed (read from localStorage)
     const currentViewMode = localStorage.getItem("graph_view_mode") || "spaced";
@@ -1435,7 +1671,12 @@ const graphHook = {
           this.cy.scratch("_bulkReload", true);
         } catch (_e) {}
       }
-      this.cy.json({ elements: JSON.parse(graphStr) });
+      const nextElements =
+        presentationMode === "presenting" && presentationIds.length > 0
+          ? this._buildPresentationElements(presentationIds, graphStr)
+          : this._parseGraphElements(graphStr);
+
+      this.cy.json({ elements: nextElements });
       if (this.cy && typeof this.cy.scratch === "function") {
         try {
           this.cy.scratch("_bulkReload", null);
@@ -1457,11 +1698,11 @@ const graphHook = {
       }
     }
 
-    // Re-apply presentation filter after element reload so hidden nodes stay hidden
-    if (!sameGraph && this._presentationFiltered && this._presentationIds) {
-      try {
-        this._applyPresentationFilter();
-      } catch (_e) {}
+    if (!sameGraph && presentationMode === "presenting") {
+      this._presentationFiltered = true;
+      this._presentationIds = presentationIds;
+      this._setDepthToggleOverlayVisible(false);
+      this._setPresentationHighlights(presentationIds);
     }
 
     if (this._updateExploredStatus) this._updateExploredStatus();
@@ -1544,6 +1785,7 @@ const graphHook = {
       this.cy.endBatch();
     this.cy.elements().removeClass("selected");
     this.cy.getElementById(node).addClass("selected");
+    this._syncPresentationState();
 
     // Bind Explore button to always open modal; gather items on demand
     const ensureExploreBound = () => {
