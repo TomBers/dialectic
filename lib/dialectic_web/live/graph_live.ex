@@ -2355,7 +2355,20 @@ defmodule DialecticWeb.GraphLive do
              "combine",
              "ideas",
              "explain",
-             "deepdive"
+             "deepdive",
+             # Critical thinking tools
+             "clarify",
+             "assumptions",
+             "counterexample",
+             "implications",
+             "blind_spots",
+             "says_who",
+             "who_disagrees",
+             "analogy",
+             "steel_man",
+             "what_if",
+             "simplify",
+             "second_order"
            ] &&
              node && Map.get(node, :id) do
           push_event(s, "center_node", %{id: node.id})
@@ -2384,7 +2397,20 @@ defmodule DialecticWeb.GraphLive do
          "combine",
          "ideas",
          "explain",
-         "deepdive"
+         "deepdive",
+         # Critical thinking tools
+         "clarify",
+         "assumptions",
+         "counterexample",
+         "implications",
+         "blind_spots",
+         "says_who",
+         "who_disagrees",
+         "analogy",
+         "steel_man",
+         "what_if",
+         "simplify",
+         "second_order"
        ] do
       PubSub.broadcast(
         Dialectic.PubSub,

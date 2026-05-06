@@ -214,6 +214,16 @@ const cols = {
     selectedBackground: "#ffedd5", // orange-100
     selectedBorder: "#ea580c", // orange-600
   },
+  second_order: {
+    text: "#1e293b", // slate-800
+    background: "#f1f5f9", // slate-100
+    border: "#64748b", // slate-500
+    hoverBackground: "#e2e8f0", // slate-200
+    hoverBorder: "#475569", // slate-600
+    selectedText: "#1e293b",
+    selectedBackground: "#e2e8f0", // slate-200
+    selectedBorder: "#334155", // slate-700
+  },
 
   default: defaultNodeStyle,
 };
@@ -552,8 +562,7 @@ export function graphStyle(viewMode = "spaced") {
         "border-width": isCompact ? 2.25 : 3,
         "border-style": "solid",
         color: cols[nodeType].text, // keep dark text on hover
-        "underlay-color":
-          cols[nodeType].hoverBorder || cols[nodeType].border,
+        "underlay-color": cols[nodeType].hoverBorder || cols[nodeType].border,
         "underlay-opacity": 0.1,
         "underlay-padding": isCompact ? 6 : 10,
         "underlay-shape": "roundrectangle",

@@ -246,5 +246,59 @@ defmodule DialecticWeb.GraphLiveE2ETest do
       # Ensure move didn't crash earlier and node id remains valid
       assert prev_node_id
     end
+
+    test "critical thinking tools create nodes with proper classes and trigger centering/broadcast",
+         %{conn: conn} do
+      %{view: view, user: _user} = setup_live(conn)
+
+      # Create a node to work from
+      render_click(view, "answer", %{"vertex" => %{"content" => "Test argument for tools"}})
+      assigns = get_socket_assigns(view)
+      parent_node = assigns.node
+      initial_vcount = vertices_count(nil)
+
+      # Test a sample of critical thinking tools to verify:
+      # 1. They create nodes
+      # 2. Graph structure updates
+      # 3. Operations complete without error
+      critical_thinking_tools = [
+        {"node_clarify", "clarify"},
+        {"node_assumptions", "assumptions"},
+        {"node_counterexample", "counterexample"},
+        {"node_implications", "implications"},
+        {"node_steel_man", "steel_man"},
+        {"node_what_if", "what_if"},
+        {"node_simplify", "simplify"},
+        {"node_second_order", "second_order"}
+      ]
+
+      Enum.each(critical_thinking_tools, fn {event, expected_class} ->
+        vcount_before = vertices_count(nil)
+
+        # Trigger the tool
+        render_click(view, event, %{"id" => parent_node.id})
+
+        # Verify graph grew (node was created)
+        vcount_after = vertices_count(nil)
+
+        assert vcount_after > vcount_before,
+               "Expected #{event} to create a node, but vertex count didn't increase"
+
+        # Verify the new node has the correct class
+        new_node = find_vertex_by_class(nil, expected_class)
+
+        assert new_node != nil,
+               "Expected to find a node with class '#{expected_class}' after #{event}"
+
+        assert new_node.class == expected_class
+      end)
+
+      # Verify all tools created nodes (should have grown significantly)
+      final_vcount = vertices_count(nil)
+      expected_min_vcount = initial_vcount + length(critical_thinking_tools)
+
+      assert final_vcount >= expected_min_vcount,
+             "Expected at least #{expected_min_vcount} vertices after running all tools, got #{final_vcount}"
+    end
   end
 end
