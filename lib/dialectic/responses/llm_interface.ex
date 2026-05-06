@@ -125,21 +125,6 @@ defmodule Dialectic.Responses.LlmInterface do
     ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
   end
 
-  def gen_deepdive(node, child, graph_id, live_view_topic, content_override \\ nil) do
-    context = to_string(node.content || "")
-
-    instruction =
-      if content_override do
-        Prompts.deep_dive_selection(context, content_override)
-      else
-        Prompts.deep_dive(context, node.content)
-      end
-
-    system_prompt = get_system_prompt(graph_id)
-    log_prompt("deep_dive", graph_id, system_prompt, instruction)
-    ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
-  end
-
   def gen_clarify(node, child, graph_id, live_view_topic, content_override \\ nil) do
     {context, content} = resolve_context_and_content(graph_id, node, content_override)
 

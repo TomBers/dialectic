@@ -85,9 +85,6 @@ defmodule Dialectic.Responses.PrintPromptsTest do
     related =
       Prompts.related_ideas(context_a, "Temporal difference learning")
 
-    deep =
-      Prompts.deep_dive(context_a, "Policy gradient theorem")
-
     say("\nLLM Prompt Catalog")
 
     print_prompt("Structured — Explain", explain)
@@ -136,15 +133,8 @@ defmodule Dialectic.Responses.PrintPromptsTest do
     print_prompt("Structured — Related ideas", related)
 
     print_prompt(
-      "Creative — Related ideas",
+      "Structured — Related Ideas",
       Prompts.related_ideas(context_a, "Temporal difference learning")
-    )
-
-    print_prompt("Structured — Deep dive", deep)
-
-    print_prompt(
-      "Creative — Deep dive",
-      Prompts.deep_dive(context_a, "Policy gradient theorem")
     )
 
     :ok

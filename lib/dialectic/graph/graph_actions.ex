@@ -113,18 +113,6 @@ defmodule Dialectic.Graph.GraphActions do
     )
   end
 
-  def deepdive({graph_id, node, user, live_view_topic}, opts \\ []) do
-    content_override = Keyword.get(opts, :content_override)
-
-    GraphManager.add_child(
-      graph_id,
-      [node],
-      fn n -> LlmInterface.gen_deepdive(node, n, graph_id, live_view_topic, content_override) end,
-      "deepdive",
-      user
-    )
-  end
-
   def clarify({graph_id, node, user, live_view_topic}, opts \\ []) do
     content_override = Keyword.get(opts, :content_override)
 
@@ -382,7 +370,6 @@ defmodule Dialectic.Graph.GraphActions do
             when c in [
                    "thesis",
                    "antithesis",
-                   "deepdive",
                    "ideas",
                    "answer",
                    "clarify",
@@ -438,10 +425,6 @@ defmodule Dialectic.Graph.GraphActions do
                   "antithesis",
                   user
                 )
-
-              "deepdive" ->
-                parent = List.first(parents)
-                deepdive({graph_id, parent, user, live_view_topic})
 
               "ideas" ->
                 parent = List.first(parents)
@@ -741,24 +724,6 @@ defmodule Dialectic.Graph.GraphActions do
       })
 
       GraphManager.find_node_by_id(graph_id, what_if_node.id)
-    else
-      nil
-    end
-  end
-
-  @doc """
-  Deep dive into selected text with detailed analysis.
-  """
-  def deepdive_text({graph_id, node, user, live_view_topic}, selected_text) do
-    deepdive_node =
-      deepdive({graph_id, node, user, live_view_topic}, content_override: selected_text)
-
-    if deepdive_node do
-      GraphManager.update_vertex_fields(graph_id, deepdive_node.id, %{
-        source_text: selected_text
-      })
-
-      GraphManager.find_node_by_id(graph_id, deepdive_node.id)
     else
       nil
     end

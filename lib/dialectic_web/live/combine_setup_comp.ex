@@ -170,7 +170,6 @@ defmodule DialecticWeb.CombineSetupComp do
       "antithesis" -> "Counterargument"
       "synthesis" -> "Synthesis"
       "ideas" -> "Related Ideas"
-      "deepdive" -> "Deep Dive"
       "origin" -> "Stream"
       "user" -> "Comment"
       "answer" -> "Response"

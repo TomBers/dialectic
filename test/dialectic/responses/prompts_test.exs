@@ -232,18 +232,4 @@ defmodule Dialectic.Responses.PromptsTest do
       assert result =~ "thinkers, or concepts"
     end
   end
-
-  describe "deep_dive/2" do
-    test "generates prompt for in-depth exploration" do
-      context = "Overview of the topic"
-      topic = "Machine Learning"
-
-      result = Prompts.deep_dive(context, topic)
-
-      assert result =~ topic
-      assert result =~ "deep dive"
-      assert result =~ "BEYOND the overview"
-      assert result =~ "beyond normal 500-word limit"
-    end
-  end
 end

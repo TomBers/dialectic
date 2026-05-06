@@ -538,20 +538,6 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_event("node_deepdive", %{"id" => node_id}, socket) do
-    if !socket.assigns.can_edit do
-      {:noreply, socket |> put_flash(:error, "This graph is locked")}
-    else
-      node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-
-      update_graph(
-        socket,
-        {nil, GraphActions.deepdive(graph_action_params(socket, node))},
-        "deepdive"
-      )
-    end
-  end
-
   # =========================================================================
   # Advanced Tools — Cluster 1: Core Inquiry Moves
   # =========================================================================
@@ -2059,33 +2045,6 @@ defmodule DialecticWeb.GraphLive do
     update_graph(socket, {nil, what_if_node}, "what_if")
   end
 
-  defp handle_selection_action(
-         :deepdive,
-         selected_text,
-         node_id,
-         offsets,
-         existing_highlight,
-         _extra,
-         socket
-       ) do
-    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
-    parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-
-    deepdive_node =
-      GraphActions.deepdive_text(
-        graph_action_params(socket, parent_node),
-        selected_text
-      )
-
-    if deepdive_node do
-      if highlight do
-        Highlights.add_link(highlight.id, deepdive_node.id, "deepdive")
-      end
-    end
-
-    update_graph(socket, {nil, deepdive_node}, "deepdive")
-  end
-
   defp create_pending_highlight_links(socket) do
     highlight_id = socket.assigns[:pending_link_highlight_id]
     parent_id = socket.assigns[:pending_link_parent_id]
@@ -2355,7 +2314,6 @@ defmodule DialecticWeb.GraphLive do
              "combine",
              "ideas",
              "explain",
-             "deepdive",
              # Critical thinking tools
              "clarify",
              "assumptions",
@@ -2397,7 +2355,6 @@ defmodule DialecticWeb.GraphLive do
          "combine",
          "ideas",
          "explain",
-         "deepdive",
          # Critical thinking tools
          "clarify",
          "assumptions",

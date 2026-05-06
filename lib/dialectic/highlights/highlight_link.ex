@@ -32,7 +32,6 @@ defmodule Dialectic.Highlights.HighlightLink do
     pro
     con
     related_idea
-    deep_dive
     comment
     clarify
     assumptions
@@ -55,7 +54,6 @@ defmodule Dialectic.Highlights.HighlightLink do
   - `pro`: A supporting argument (thesis) node
   - `con`: A counter argument (antithesis) node
   - `related_idea`: A related ideas node
-  - `deep_dive`: A deep dive exploration node
   - `comment`: A user comment on the selection
   - `clarify`: A conceptual clarification of the selection
   - `assumptions`: Assumptions surfaced from the selection

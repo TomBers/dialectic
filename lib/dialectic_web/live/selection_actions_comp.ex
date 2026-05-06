@@ -167,12 +167,6 @@ defmodule DialecticWeb.SelectionActionsComp do
   end
 
   @impl true
-  def handle_event("deepdive", _params, socket) do
-    send_action_to_parent(socket, :deepdive)
-    {:noreply, assign(socket, visible: false)}
-  end
-
-  @impl true
   def handle_event("toggle_ask_question", _params, socket) do
     {:noreply, update(socket, :ask_question, &(!&1))}
   end

@@ -92,12 +92,6 @@ defmodule Dialectic.Responses.Prompts do
     """
   end
 
-  defp citation_encouragement_for_deep_dive do
-    """
-    **Source references:** A deep dive benefits greatly from engagement with primary texts. Quote directly from foundational works, seminal papers, or authoritative sources using blockquotes (> ). Reference specific authors, titles, chapters, or studies. Where scholars or thinkers disagree, cite the specific works representing each position. Link to key references using inline links ([text](url)) — prefer stable, authoritative URLs such as DOI links, arXiv, Wikipedia, Stanford Encyclopedia of Philosophy, or official publisher pages.
-    """
-  end
-
   # ---- Templates -------------------------------------------------------------
 
   @doc """
@@ -349,59 +343,10 @@ defmodule Dialectic.Responses.Prompts do
     ])
   end
 
-  @doc """
-  Provide a deeper exploration of a specific text selection.
-  """
-  @spec deep_dive_selection(String.t(), String.t()) :: String.t()
-  def deep_dive_selection(context, selection_text) do
-    join_blocks([
-      frame_minimal_context(context),
-      """
-      A specific topic was highlighted from the text above: **#{sanitize_title(selection_text)}**
-
-      **Your task:** Write a deep dive specifically on **#{sanitize_title(selection_text)}** that goes significantly deeper than the context provided.
-
-      Focus on:
-      - Surprising or counterintuitive aspects that challenge common understanding of this concept
-      - Adding technical depth, nuance, or complexity specific to this concept
-      - Vivid real-world examples, case studies, or historical episodes that bring the concept to life
-      - Active debates, unresolved tensions, or open questions among experts
-      - Exploring implications, edge cases, or subtleties that most treatments overlook
-
-      You may write at length (beyond normal 500-word limit). Focus on adding substantial new understanding.
-      """,
-      citation_encouragement_for_deep_dive()
-    ])
-  end
-
-  @doc """
-  Provide a deeper exploration of a topic for advanced learners.
-  """
-  @spec deep_dive(String.t(), String.t()) :: String.t()
-  def deep_dive(context, topic) do
-    join_blocks([
-      frame_context(context),
-      """
-      The Foundation provides an overview of **#{sanitize_title(topic)}**.
-
-      **Your task:** Write a deep dive that goes BEYOND the overview by:
-      - Leading with the most surprising, counterintuitive, or commonly misunderstood aspect of this topic
-      - Adding technical depth, nuance, or complexity
-      - Using vivid real-world examples, case studies, or historical episodes that make abstract ideas tangible
-      - Surfacing active debates, unresolved tensions, or open questions among experts
-      - Exploring implications, edge cases, or subtleties that most treatments overlook
-
-      You may write at length (beyond normal 500-word limit). Focus on adding substantial new understanding.
-      """,
-      citation_encouragement_for_deep_dive(),
-      anti_repetition_footer()
-    ])
-  end
-
   # ---- Cluster 1: Core Inquiry Moves -----------------------------------------
 
   @doc """
-  Conceptual clarification — "What do you mean by…?"
+  Conceptual clarification — “What do you mean by…?”
   Identifies how key terms are being used and surfaces ambiguity.
   """
   @spec clarify(String.t(), String.t()) :: String.t()

@@ -76,16 +76,6 @@ const cols = {
     selectedBackground: "#fed7aa", // orange-200 (6.92:1)
     selectedBorder: "#c2410c", // orange-700
   },
-  deepdive: {
-    text: "#164e63", // cyan-900
-    background: "#cffafe", // cyan-100
-    border: "#22d3ee", // cyan-400
-    hoverBackground: "#a5f3fc", // cyan-200
-    hoverBorder: "#0891b2", // cyan-600
-    selectedText: "#164e63",
-    selectedBackground: "#a5f3fc", // cyan-200 (7.30:1 — was 6.29 with cyan-300)
-    selectedBorder: "#0e7490", // cyan-700
-  },
   origin: {
     text: "#1e293b", // slate-800
     background: "#e2e8f0", // slate-200

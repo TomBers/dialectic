@@ -19,7 +19,6 @@ defmodule Dialectic.Responses.LlmInterfaceTest do
       assert function_exported?(Dialectic.Responses.LlmInterface, :gen_synthesis, 5)
       assert function_exported?(Dialectic.Responses.LlmInterface, :gen_thesis, 4)
       assert function_exported?(Dialectic.Responses.LlmInterface, :gen_antithesis, 4)
-      assert function_exported?(Dialectic.Responses.LlmInterface, :gen_deepdive, 4)
       assert function_exported?(Dialectic.Responses.LlmInterface, :ask_model, 5)
     end
   end

@@ -14,7 +14,6 @@ defmodule Dialectic.Graph.Vertex do
     "question",
     "origin",
     "ideas",
-    "deepdive",
     # Cluster 1 — Core Inquiry Moves
     "clarify",
     "assumptions",
