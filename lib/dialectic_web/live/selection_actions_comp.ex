@@ -7,6 +7,7 @@ defmodule DialecticWeb.SelectionActionsComp do
   """
   use DialecticWeb, :live_component
   alias Dialectic.Highlights
+  alias DialecticWeb.ColUtils
 
   @impl true
   def mount(socket) do
@@ -469,11 +470,17 @@ defmodule DialecticWeb.SelectionActionsComp do
                       phx-target={@myself}
                       disabled={!@can_edit}
                       title="Steel Man: Build the strongest version of this argument. Example: If text says 'We should ban cars', the steel man is 'Reduce car dependency in dense urban areas through better transit.'"
-                      class="w-full bg-gradient-to-r from-yellow-400 to-orange-400 hover:from-yellow-500 hover:to-orange-500 text-gray-900 text-sm py-2.5 px-4 rounded-lg flex items-center justify-center transition-all hover:shadow-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                      class={[
+                        "flex w-full items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-semibold text-slate-800 transition-all hover:-translate-y-0.5 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed",
+                        ColUtils.advanced_tool_surface_class("steel_man")
+                      ]}
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        class="h-5 w-5 mr-1.5"
+                        class={[
+                          "mr-1.5 h-5 w-5",
+                          ColUtils.advanced_tool_text_class("steel_man")
+                        ]}
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
@@ -496,11 +503,17 @@ defmodule DialecticWeb.SelectionActionsComp do
                     phx-target={@myself}
                     disabled={!@can_edit}
                     title="Assumptions: Reveal what must be true for this claim to work."
-                    class="bg-amber-500 hover:bg-amber-600 text-white text-xs py-2 px-3 rounded-lg flex items-center justify-center transition-all hover:shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    class={[
+                      "flex items-center justify-center rounded-lg border px-3 py-2 text-xs font-medium text-slate-800 transition-all hover:-translate-y-0.5 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed",
+                      ColUtils.advanced_tool_button_class("assumptions")
+                    ]}
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      class="h-4 w-4 mr-1"
+                      class={[
+                        "mr-1 h-4 w-4",
+                        ColUtils.advanced_tool_text_class("assumptions")
+                      ]}
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -522,11 +535,17 @@ defmodule DialecticWeb.SelectionActionsComp do
                     phx-target={@myself}
                     disabled={!@can_edit}
                     title="Test: Find counterexamples that challenge this claim."
-                    class="bg-red-500 hover:bg-red-600 text-white text-xs py-2 px-3 rounded-lg flex items-center justify-center transition-all hover:shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    class={[
+                      "flex items-center justify-center rounded-lg border px-3 py-2 text-xs font-medium text-slate-800 transition-all hover:-translate-y-0.5 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed",
+                      ColUtils.advanced_tool_button_class("counterexample")
+                    ]}
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      class="h-4 w-4 mr-1"
+                      class={[
+                        "mr-1 h-4 w-4",
+                        ColUtils.advanced_tool_text_class("counterexample")
+                      ]}
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -552,11 +571,17 @@ defmodule DialecticWeb.SelectionActionsComp do
                     phx-target={@myself}
                     disabled={!@can_edit}
                     title="Source: Question the authority and evidence behind claims."
-                    class="bg-sky-500 hover:bg-sky-600 text-white text-xs py-2 px-3 rounded-lg flex items-center justify-center transition-all hover:shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    class={[
+                      "flex items-center justify-center rounded-lg border px-3 py-2 text-xs font-medium text-slate-800 transition-all hover:-translate-y-0.5 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed",
+                      ColUtils.advanced_tool_button_class("says_who")
+                    ]}
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      class="h-4 w-4 mr-1"
+                      class={[
+                        "mr-1 h-4 w-4",
+                        ColUtils.advanced_tool_text_class("says_who")
+                      ]}
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -578,11 +603,17 @@ defmodule DialecticWeb.SelectionActionsComp do
                     phx-target={@myself}
                     disabled={!@can_edit}
                     title="Blind Spots: What perspectives or factors are being overlooked?"
-                    class="bg-orange-500 hover:bg-orange-600 text-white text-xs py-2 px-3 rounded-lg flex items-center justify-center transition-all hover:shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    class={[
+                      "flex items-center justify-center rounded-lg border px-3 py-2 text-xs font-medium text-slate-800 transition-all hover:-translate-y-0.5 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed",
+                      ColUtils.advanced_tool_button_class("blind_spots")
+                    ]}
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      class="h-4 w-4 mr-1"
+                      class={[
+                        "mr-1 h-4 w-4",
+                        ColUtils.advanced_tool_text_class("blind_spots")
+                      ]}
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -604,11 +635,17 @@ defmodule DialecticWeb.SelectionActionsComp do
                     phx-target={@myself}
                     disabled={!@can_edit}
                     title="Who Disagrees: Explore different perspectives and opposing viewpoints."
-                    class="bg-pink-500 hover:bg-pink-600 text-white text-xs py-2 px-3 rounded-lg flex items-center justify-center transition-all hover:shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    class={[
+                      "flex items-center justify-center rounded-lg border px-3 py-2 text-xs font-medium text-slate-800 transition-all hover:-translate-y-0.5 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed",
+                      ColUtils.advanced_tool_button_class("who_disagrees")
+                    ]}
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      class="h-4 w-4 mr-1"
+                      class={[
+                        "mr-1 h-4 w-4",
+                        ColUtils.advanced_tool_text_class("who_disagrees")
+                      ]}
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -638,11 +675,17 @@ defmodule DialecticWeb.SelectionActionsComp do
                     phx-target={@myself}
                     disabled={!@can_edit}
                     title="Implications: What would happen if this were true?"
-                    class="bg-green-500 hover:bg-green-600 text-white text-xs py-2 px-3 rounded-lg flex items-center justify-center transition-all hover:shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    class={[
+                      "flex items-center justify-center rounded-lg border px-3 py-2 text-xs font-medium text-slate-800 transition-all hover:-translate-y-0.5 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed",
+                      ColUtils.advanced_tool_button_class("implications")
+                    ]}
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      class="h-4 w-4 mr-1"
+                      class={[
+                        "mr-1 h-4 w-4",
+                        ColUtils.advanced_tool_text_class("implications")
+                      ]}
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -664,11 +707,17 @@ defmodule DialecticWeb.SelectionActionsComp do
                     phx-target={@myself}
                     disabled={!@can_edit}
                     title="Second Order: Explore indirect consequences and ripple effects."
-                    class="bg-purple-500 hover:bg-purple-600 text-white text-xs py-2 px-3 rounded-lg flex items-center justify-center transition-all hover:shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    class={[
+                      "flex items-center justify-center rounded-lg border px-3 py-2 text-xs font-medium text-slate-800 transition-all hover:-translate-y-0.5 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed",
+                      ColUtils.advanced_tool_button_class("second_order")
+                    ]}
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      class="h-4 w-4 mr-1"
+                      class={[
+                        "mr-1 h-4 w-4",
+                        ColUtils.advanced_tool_text_class("second_order")
+                      ]}
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -690,11 +739,17 @@ defmodule DialecticWeb.SelectionActionsComp do
                     phx-target={@myself}
                     disabled={!@can_edit}
                     title="What If: Explore hypothetical scenarios and alternative possibilities."
-                    class="bg-teal-500 hover:bg-teal-600 text-white text-xs py-2 px-3 rounded-lg flex items-center justify-center transition-all hover:shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    class={[
+                      "flex items-center justify-center rounded-lg border px-3 py-2 text-xs font-medium text-slate-800 transition-all hover:-translate-y-0.5 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed",
+                      ColUtils.advanced_tool_button_class("what_if")
+                    ]}
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      class="h-4 w-4 mr-1"
+                      class={[
+                        "mr-1 h-4 w-4",
+                        ColUtils.advanced_tool_text_class("what_if")
+                      ]}
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -724,11 +779,17 @@ defmodule DialecticWeb.SelectionActionsComp do
                     phx-target={@myself}
                     disabled={!@can_edit}
                     title="Clarify: Make complex ideas clearer."
-                    class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-2 px-3 rounded-lg flex items-center justify-center transition-all hover:shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    class={[
+                      "flex items-center justify-center rounded-lg border px-3 py-2 text-xs font-medium text-slate-800 transition-all hover:-translate-y-0.5 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed",
+                      ColUtils.advanced_tool_button_class("clarify")
+                    ]}
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      class="h-4 w-4 mr-1"
+                      class={[
+                        "mr-1 h-4 w-4",
+                        ColUtils.advanced_tool_text_class("clarify")
+                      ]}
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -750,11 +811,17 @@ defmodule DialecticWeb.SelectionActionsComp do
                     phx-target={@myself}
                     disabled={!@can_edit}
                     title="Simplify: Break down into plain language anyone can understand."
-                    class="bg-cyan-500 hover:bg-cyan-600 text-white text-xs py-2 px-3 rounded-lg flex items-center justify-center transition-all hover:shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    class={[
+                      "flex items-center justify-center rounded-lg border px-3 py-2 text-xs font-medium text-slate-800 transition-all hover:-translate-y-0.5 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed",
+                      ColUtils.advanced_tool_button_class("simplify")
+                    ]}
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      class="h-4 w-4 mr-1"
+                      class={[
+                        "mr-1 h-4 w-4",
+                        ColUtils.advanced_tool_text_class("simplify")
+                      ]}
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -776,11 +843,17 @@ defmodule DialecticWeb.SelectionActionsComp do
                     phx-target={@myself}
                     disabled={!@can_edit}
                     title="Analogy: Understand through comparison to familiar concepts."
-                    class="bg-indigo-500 hover:bg-indigo-600 text-white text-xs py-2 px-3 rounded-lg flex items-center justify-center transition-all hover:shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    class={[
+                      "flex items-center justify-center rounded-lg border px-3 py-2 text-xs font-medium text-slate-800 transition-all hover:-translate-y-0.5 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed",
+                      ColUtils.advanced_tool_button_class("analogy")
+                    ]}
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      class="h-4 w-4 mr-1"
+                      class={[
+                        "mr-1 h-4 w-4",
+                        ColUtils.advanced_tool_text_class("analogy")
+                      ]}
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"

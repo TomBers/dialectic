@@ -96,6 +96,93 @@ defmodule DialecticWeb.ColUtils do
   def dot_class(_), do: "bg-gray-300"
 
   @doc """
+  Returns the accent classes for advanced-tool cards in node and selection toolbars.
+  """
+  def advanced_tool_surface_class("clarify"),
+    do: "border-teal-200/80 bg-gradient-to-br from-white to-teal-50/50 hover:border-teal-300"
+
+  def advanced_tool_surface_class("assumptions"),
+    do: "border-amber-200/80 bg-gradient-to-br from-white to-amber-50/50 hover:border-amber-300"
+
+  def advanced_tool_surface_class("counterexample"),
+    do: "border-red-200/80 bg-gradient-to-br from-white to-red-50/50 hover:border-red-300"
+
+  def advanced_tool_surface_class("implications"),
+    do:
+      "border-indigo-200/80 bg-gradient-to-br from-white to-indigo-50/50 hover:border-indigo-300"
+
+  def advanced_tool_surface_class("blind_spots"),
+    do:
+      "border-purple-200/80 bg-gradient-to-br from-white to-purple-50/50 hover:border-purple-300"
+
+  def advanced_tool_surface_class("says_who"),
+    do: "border-sky-200/80 bg-gradient-to-br from-white to-sky-50/50 hover:border-sky-300"
+
+  def advanced_tool_surface_class("who_disagrees"),
+    do: "border-rose-200/80 bg-gradient-to-br from-white to-rose-50/50 hover:border-rose-300"
+
+  def advanced_tool_surface_class("analogy"),
+    do:
+      "border-emerald-200/80 bg-gradient-to-br from-white to-emerald-50/50 hover:border-emerald-300"
+
+  def advanced_tool_surface_class("steel_man"),
+    do:
+      "border-yellow-200/80 bg-gradient-to-br from-white to-yellow-50/50 hover:border-yellow-300"
+
+  def advanced_tool_surface_class("what_if"),
+    do:
+      "border-fuchsia-200/80 bg-gradient-to-br from-white to-fuchsia-50/50 hover:border-fuchsia-300"
+
+  def advanced_tool_surface_class("second_order"),
+    do: "border-slate-200/80 bg-gradient-to-br from-white to-slate-50/70 hover:border-slate-300"
+
+  def advanced_tool_surface_class("simplify"),
+    do:
+      "border-orange-200/80 bg-gradient-to-br from-white to-orange-50/50 hover:border-orange-300"
+
+  def advanced_tool_surface_class(_),
+    do: "border-slate-200/80 bg-gradient-to-br from-white to-slate-50/50 hover:border-slate-300"
+
+  @doc """
+  Returns the icon chip classes for advanced-tool buttons.
+  """
+  def advanced_tool_icon_class("clarify"), do: "bg-teal-100 text-teal-700"
+  def advanced_tool_icon_class("assumptions"), do: "bg-amber-100 text-amber-700"
+  def advanced_tool_icon_class("counterexample"), do: "bg-red-100 text-red-700"
+  def advanced_tool_icon_class("implications"), do: "bg-indigo-100 text-indigo-700"
+  def advanced_tool_icon_class("blind_spots"), do: "bg-purple-100 text-purple-700"
+  def advanced_tool_icon_class("says_who"), do: "bg-sky-100 text-sky-700"
+  def advanced_tool_icon_class("who_disagrees"), do: "bg-rose-100 text-rose-700"
+  def advanced_tool_icon_class("analogy"), do: "bg-emerald-100 text-emerald-700"
+  def advanced_tool_icon_class("steel_man"), do: "bg-yellow-100 text-yellow-700"
+  def advanced_tool_icon_class("what_if"), do: "bg-fuchsia-100 text-fuchsia-700"
+  def advanced_tool_icon_class("second_order"), do: "bg-slate-100 text-slate-700"
+  def advanced_tool_icon_class("simplify"), do: "bg-orange-100 text-orange-700"
+  def advanced_tool_icon_class(_), do: "bg-slate-100 text-slate-700"
+
+  @doc """
+  Returns the accent text color for advanced-tool icons.
+  """
+  def advanced_tool_text_class("clarify"), do: "text-teal-700"
+  def advanced_tool_text_class("assumptions"), do: "text-amber-700"
+  def advanced_tool_text_class("counterexample"), do: "text-red-700"
+  def advanced_tool_text_class("implications"), do: "text-indigo-700"
+  def advanced_tool_text_class("blind_spots"), do: "text-purple-700"
+  def advanced_tool_text_class("says_who"), do: "text-sky-700"
+  def advanced_tool_text_class("who_disagrees"), do: "text-rose-700"
+  def advanced_tool_text_class("analogy"), do: "text-emerald-700"
+  def advanced_tool_text_class("steel_man"), do: "text-yellow-700"
+  def advanced_tool_text_class("what_if"), do: "text-fuchsia-700"
+  def advanced_tool_text_class("second_order"), do: "text-slate-700"
+  def advanced_tool_text_class("simplify"), do: "text-orange-700"
+  def advanced_tool_text_class(_), do: "text-slate-700"
+
+  @doc """
+  Returns shared selection-toolbar classes for advanced-tool buttons.
+  """
+  def advanced_tool_button_class(type), do: advanced_tool_surface_class(type)
+
+  @doc """
   Returns a human-readable label for a node type.
   """
   def node_type_label("origin"), do: "Origin"
