@@ -1,4 +1,11 @@
 defmodule Dialectic.Responses.LlmInterface do
+  @moduledoc """
+  Interface for generating LLM responses across various thinking tools and modes.
+
+  This module provides a unified interface for generating AI-powered responses
+  for critical thinking tools, dialectical methods, and general explanations.
+  """
+
   # Force recompile
   alias Dialectic.Responses.{
     RequestQueue,
@@ -9,11 +16,123 @@ defmodule Dialectic.Responses.LlmInterface do
 
   require Logger
 
+  # Define all thinking tools with their metadata
+  # This map drives the generic generation for all critical thinking tools
+  @thinking_tools %{
+    clarify: %{
+      prompt_fn: :clarify,
+      selection_prompt_fn: :clarify_selection,
+      description: "Clarify ambiguous or unclear statements"
+    },
+    assumptions: %{
+      prompt_fn: :assumptions,
+      selection_prompt_fn: :assumptions_selection,
+      description: "Identify underlying assumptions"
+    },
+    counterexample: %{
+      prompt_fn: :counterexample,
+      selection_prompt_fn: :counterexample_selection,
+      description: "Generate counterexamples to claims"
+    },
+    implications: %{
+      prompt_fn: :implications,
+      selection_prompt_fn: :implications_selection,
+      description: "Explore logical implications"
+    },
+    blind_spots: %{
+      prompt_fn: :blind_spots,
+      selection_prompt_fn: :blind_spots_selection,
+      description: "Identify potential blind spots"
+    },
+    says_who: %{
+      prompt_fn: :says_who,
+      selection_prompt_fn: :says_who_selection,
+      description: "Question authority and sources"
+    },
+    who_disagrees: %{
+      prompt_fn: :who_disagrees,
+      selection_prompt_fn: :who_disagrees_selection,
+      description: "Identify opposing viewpoints"
+    },
+    analogy: %{
+      prompt_fn: :analogy,
+      selection_prompt_fn: :analogy_selection,
+      description: "Generate analogies for understanding"
+    },
+    steel_man: %{
+      prompt_fn: :steel_man,
+      selection_prompt_fn: :steel_man_selection,
+      description: "Construct the strongest version of an argument"
+    },
+    what_if: %{
+      prompt_fn: :what_if,
+      selection_prompt_fn: :what_if_selection,
+      description: "Explore hypothetical scenarios"
+    },
+    simplify: %{
+      prompt_fn: :simplify,
+      selection_prompt_fn: :simplify_selection,
+      description: "Simplify complex concepts"
+    },
+    second_order: %{
+      prompt_fn: :second_order,
+      selection_prompt_fn: :second_order_selection,
+      description: "Analyze second-order effects"
+    }
+  }
+
+  # Generate public functions for each thinking tool at compile time
+  for {tool_name, _metadata} <- @thinking_tools do
+    @doc """
+    Generate a #{tool_name} response for the given node.
+
+    ## Parameters
+      - `node` - The source node to analyze
+      - `child` - The target node for the response
+      - `graph_id` - The graph identifier
+      - `live_view_topic` - The LiveView topic for broadcasting updates
+      - `content_override` - Optional text selection to analyze instead of full node content
+
+    ## Returns
+      Queues the request and returns the result from `ask_model/5`.
+    """
+    @spec unquote(:"gen_#{tool_name}")(map(), map(), String.t(), String.t(), String.t() | nil) ::
+            :ok
+    def unquote(:"gen_#{tool_name}")(
+          node,
+          child,
+          graph_id,
+          live_view_topic,
+          content_override \\ nil
+        ) do
+      generate_thinking_tool_response(
+        unquote(tool_name),
+        node,
+        child,
+        graph_id,
+        live_view_topic,
+        content_override
+      )
+    end
+  end
+
+  @doc """
+  Generate a standard explanation response for a node.
+
+  ## Parameters
+    - `node` - The node to explain
+    - `child` - The target node for the response
+    - `graph_id` - The graph identifier
+    - `live_view_topic` - The LiveView topic for broadcasting updates
+
+  ## Returns
+    Queues the request and returns the result from `ask_model/5`.
+  """
+  @spec gen_response(map(), map(), String.t(), String.t()) :: :ok
   def gen_response(node, child, graph_id, live_view_topic) do
     context = GraphManager.build_context(graph_id, node)
 
-    instruction =
-      Prompts.explain(context, node.content)
+    instruction = Prompts.explain(context, node.content)
 
     system_prompt = get_system_prompt(graph_id)
     log_prompt("explain", graph_id, system_prompt, instruction)
@@ -22,8 +141,19 @@ defmodule Dialectic.Responses.LlmInterface do
 
   @doc """
   Generate a response with minimal context for selected text explanations.
+
   Uses only the immediate parent node as context to allow free exploration.
+
+  ## Parameters
+    - `node` - The node containing the question about selected text
+    - `child` - The target node for the response
+    - `graph_id` - The graph identifier
+    - `live_view_topic` - The LiveView topic for broadcasting updates
+
+  ## Returns
+    Queues the request and returns the result from `ask_model/5`.
   """
+  @spec gen_response_minimal_context(map(), map(), String.t(), String.t()) :: :ok
   def gen_response_minimal_context(node, child, graph_id, live_view_topic) do
     # Build minimal context - only the immediate parent node
     context =
@@ -51,17 +181,44 @@ defmodule Dialectic.Responses.LlmInterface do
     ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
   end
 
+  @doc """
+  Generate a response for a text selection within a node.
+
+  ## Parameters
+    - `node` - The source node containing the selection
+    - `child` - The target node for the response
+    - `graph_id` - The graph identifier
+    - `selection` - The selected text to explain
+    - `live_view_topic` - The LiveView topic for broadcasting updates
+
+  ## Returns
+    Queues the request and returns the result from `ask_model/5`.
+  """
+  @spec gen_selection_response(map(), map(), String.t(), String.t(), String.t()) :: :ok
   def gen_selection_response(node, child, graph_id, selection, live_view_topic) do
     context = GraphManager.build_context(graph_id, node)
 
-    instruction =
-      Prompts.selection(context, selection)
+    instruction = Prompts.selection(context, selection)
 
     system_prompt = get_system_prompt(graph_id)
     log_prompt("selection", graph_id, system_prompt, instruction)
     ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
   end
 
+  @doc """
+  Generate a synthesis response combining two nodes.
+
+  ## Parameters
+    - `n1` - The first node to synthesize
+    - `n2` - The second node to synthesize
+    - `child` - The target node for the response
+    - `graph_id` - The graph identifier
+    - `live_view_topic` - The LiveView topic for broadcasting updates
+
+  ## Returns
+    Queues the request and returns the result from `ask_model/5`.
+  """
+  @spec gen_synthesis(map(), map(), map(), String.t(), String.t()) :: :ok
   def gen_synthesis(n1, n2, child, graph_id, live_view_topic) do
     # TODO - Add n2 context ?? need to enforce limit??
     context1 = GraphManager.build_context(graph_id, n1)
@@ -75,6 +232,20 @@ defmodule Dialectic.Responses.LlmInterface do
     ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
   end
 
+  @doc """
+  Generate a thesis (supporting argument) for a node.
+
+  ## Parameters
+    - `node` - The node to generate a thesis for
+    - `child` - The target node for the response
+    - `graph_id` - The graph identifier
+    - `live_view_topic` - The LiveView topic for broadcasting updates
+    - `content_override` - Optional text selection to analyze instead of full node content
+
+  ## Returns
+    Queues the request and returns the result from `ask_model/5`.
+  """
+  @spec gen_thesis(map(), map(), String.t(), String.t(), String.t() | nil) :: :ok
   def gen_thesis(node, child, graph_id, live_view_topic, content_override \\ nil) do
     {context, content} = resolve_context_and_content(graph_id, node, content_override)
 
@@ -90,6 +261,20 @@ defmodule Dialectic.Responses.LlmInterface do
     ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
   end
 
+  @doc """
+  Generate an antithesis (opposing argument) for a node.
+
+  ## Parameters
+    - `node` - The node to generate an antithesis for
+    - `child` - The target node for the response
+    - `graph_id` - The graph identifier
+    - `live_view_topic` - The LiveView topic for broadcasting updates
+    - `content_override` - Optional text selection to analyze instead of full node content
+
+  ## Returns
+    Queues the request and returns the result from `ask_model/5`.
+  """
+  @spec gen_antithesis(map(), map(), String.t(), String.t(), String.t() | nil) :: :ok
   def gen_antithesis(node, child, graph_id, live_view_topic, content_override \\ nil) do
     {context, content} = resolve_context_and_content(graph_id, node, content_override)
 
@@ -105,6 +290,20 @@ defmodule Dialectic.Responses.LlmInterface do
     ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
   end
 
+  @doc """
+  Generate related ideas for a node.
+
+  ## Parameters
+    - `node` - The node to find related ideas for
+    - `child` - The target node for the response
+    - `graph_id` - The graph identifier
+    - `live_view_topic` - The LiveView topic for broadcasting updates
+    - `content_override` - Optional text selection to analyze instead of full node content
+
+  ## Returns
+    Queues the request and returns the result from `ask_model/5`.
+  """
+  @spec gen_related_ideas(map(), map(), String.t(), String.t(), String.t() | nil) :: :ok
   def gen_related_ideas(node, child, graph_id, live_view_topic, content_override \\ nil) do
     base = GraphManager.build_context(graph_id, node)
 
@@ -125,186 +324,52 @@ defmodule Dialectic.Responses.LlmInterface do
     ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
   end
 
-  def gen_clarify(node, child, graph_id, live_view_topic, content_override \\ nil) do
+  # Private Functions
+
+  # Core generic function that handles all thinking tool generation
+  @spec generate_thinking_tool_response(
+          atom(),
+          map(),
+          map(),
+          String.t(),
+          String.t(),
+          String.t() | nil
+        ) :: :ok
+  defp generate_thinking_tool_response(
+         tool_name,
+         node,
+         child,
+         graph_id,
+         live_view_topic,
+         content_override
+       ) do
+    tool_metadata = Map.fetch!(@thinking_tools, tool_name)
+
     {context, content} = resolve_context_and_content(graph_id, node, content_override)
 
-    instruction =
-      if content_override do
-        Prompts.clarify_selection(context, content)
-      else
-        Prompts.clarify(context, content)
-      end
+    instruction = build_instruction(tool_metadata, context, content, content_override)
 
     system_prompt = get_system_prompt(graph_id)
-    log_prompt("clarify", graph_id, system_prompt, instruction)
+    log_prompt(to_string(tool_name), graph_id, system_prompt, instruction)
     ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
   end
 
-  def gen_assumptions(node, child, graph_id, live_view_topic, content_override \\ nil) do
-    {context, content} = resolve_context_and_content(graph_id, node, content_override)
-
-    instruction =
+  # Build the instruction for a thinking tool based on whether we have a content override
+  @spec build_instruction(map(), String.t(), String.t(), String.t() | nil) :: String.t()
+  defp build_instruction(tool_metadata, context, content, content_override) do
+    prompt_fn =
       if content_override do
-        Prompts.assumptions_selection(context, content)
+        tool_metadata.selection_prompt_fn
       else
-        Prompts.assumptions(context, content)
+        tool_metadata.prompt_fn
       end
 
-    system_prompt = get_system_prompt(graph_id)
-    log_prompt("assumptions", graph_id, system_prompt, instruction)
-    ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
+    apply(Prompts, prompt_fn, [context, content])
   end
 
-  def gen_counterexample(node, child, graph_id, live_view_topic, content_override \\ nil) do
-    {context, content} = resolve_context_and_content(graph_id, node, content_override)
-
-    instruction =
-      if content_override do
-        Prompts.counterexample_selection(context, content)
-      else
-        Prompts.counterexample(context, content)
-      end
-
-    system_prompt = get_system_prompt(graph_id)
-    log_prompt("counterexample", graph_id, system_prompt, instruction)
-    ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
-  end
-
-  def gen_implications(node, child, graph_id, live_view_topic, content_override \\ nil) do
-    {context, content} = resolve_context_and_content(graph_id, node, content_override)
-
-    instruction =
-      if content_override do
-        Prompts.implications_selection(context, content)
-      else
-        Prompts.implications(context, content)
-      end
-
-    system_prompt = get_system_prompt(graph_id)
-    log_prompt("implications", graph_id, system_prompt, instruction)
-    ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
-  end
-
-  def gen_blind_spots(node, child, graph_id, live_view_topic, content_override \\ nil) do
-    {context, content} = resolve_context_and_content(graph_id, node, content_override)
-
-    instruction =
-      if content_override do
-        Prompts.blind_spots_selection(context, content)
-      else
-        Prompts.blind_spots(context, content)
-      end
-
-    system_prompt = get_system_prompt(graph_id)
-    log_prompt("blind_spots", graph_id, system_prompt, instruction)
-    ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
-  end
-
-  def gen_says_who(node, child, graph_id, live_view_topic, content_override \\ nil) do
-    {context, content} = resolve_context_and_content(graph_id, node, content_override)
-
-    instruction =
-      if content_override do
-        Prompts.says_who_selection(context, content)
-      else
-        Prompts.says_who(context, content)
-      end
-
-    system_prompt = get_system_prompt(graph_id)
-    log_prompt("says_who", graph_id, system_prompt, instruction)
-    ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
-  end
-
-  def gen_who_disagrees(node, child, graph_id, live_view_topic, content_override \\ nil) do
-    {context, content} = resolve_context_and_content(graph_id, node, content_override)
-
-    instruction =
-      if content_override do
-        Prompts.who_disagrees_selection(context, content)
-      else
-        Prompts.who_disagrees(context, content)
-      end
-
-    system_prompt = get_system_prompt(graph_id)
-    log_prompt("who_disagrees", graph_id, system_prompt, instruction)
-    ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
-  end
-
-  def gen_analogy(node, child, graph_id, live_view_topic, content_override \\ nil) do
-    {context, content} = resolve_context_and_content(graph_id, node, content_override)
-
-    instruction =
-      if content_override do
-        Prompts.analogy_selection(context, content)
-      else
-        Prompts.analogy(context, content)
-      end
-
-    system_prompt = get_system_prompt(graph_id)
-    log_prompt("analogy", graph_id, system_prompt, instruction)
-    ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
-  end
-
-  def gen_steel_man(node, child, graph_id, live_view_topic, content_override \\ nil) do
-    {context, content} = resolve_context_and_content(graph_id, node, content_override)
-
-    instruction =
-      if content_override do
-        Prompts.steel_man_selection(context, content)
-      else
-        Prompts.steel_man(context, content)
-      end
-
-    system_prompt = get_system_prompt(graph_id)
-    log_prompt("steel_man", graph_id, system_prompt, instruction)
-    ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
-  end
-
-  def gen_what_if(node, child, graph_id, live_view_topic, content_override \\ nil) do
-    {context, content} = resolve_context_and_content(graph_id, node, content_override)
-
-    instruction =
-      if content_override do
-        Prompts.what_if_selection(context, content)
-      else
-        Prompts.what_if(context, content)
-      end
-
-    system_prompt = get_system_prompt(graph_id)
-    log_prompt("what_if", graph_id, system_prompt, instruction)
-    ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
-  end
-
-  def gen_simplify(node, child, graph_id, live_view_topic, content_override \\ nil) do
-    {context, content} = resolve_context_and_content(graph_id, node, content_override)
-
-    instruction =
-      if content_override do
-        Prompts.simplify_selection(context, content)
-      else
-        Prompts.simplify(context, content)
-      end
-
-    system_prompt = get_system_prompt(graph_id)
-    log_prompt("simplify", graph_id, system_prompt, instruction)
-    ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
-  end
-
-  def gen_second_order(node, child, graph_id, live_view_topic, content_override \\ nil) do
-    {context, content} = resolve_context_and_content(graph_id, node, content_override)
-
-    instruction =
-      if content_override do
-        Prompts.second_order_selection(context, content)
-      else
-        Prompts.second_order(context, content)
-      end
-
-    system_prompt = get_system_prompt(graph_id)
-    log_prompt("second_order", graph_id, system_prompt, instruction)
-    ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
-  end
-
+  @doc false
+  @spec resolve_context_and_content(String.t(), map(), String.t() | nil) ::
+          {String.t(), String.t()}
   defp resolve_context_and_content(graph_id, node, content_override) do
     base_context = GraphManager.build_context(graph_id, node)
 
@@ -313,15 +378,17 @@ defmodule Dialectic.Responses.LlmInterface do
       # re-reading the full node content.
       {to_string(content_override), content_override}
     else
-      {base_context, node.content}
+      {base_context, node.content || ""}
     end
   end
 
+  @spec get_system_prompt(String.t()) :: String.t()
   defp get_system_prompt(graph_id) do
     mode = ModeServer.get_mode(graph_id)
     PromptsStructured.system_preamble(mode)
   end
 
+  @spec log_prompt(String.t(), String.t(), String.t(), String.t()) :: :ok
   defp log_prompt(action, graph_id, system_prompt, instruction) do
     mode = ModeServer.get_mode(graph_id)
 
@@ -330,6 +397,20 @@ defmodule Dialectic.Responses.LlmInterface do
     end)
   end
 
+  @doc """
+  Queue a model request for processing.
+
+  ## Parameters
+    - `instruction` - The instruction/prompt for the model
+    - `system_prompt` - The system-level prompt for the model
+    - `to_node` - The target node for the response
+    - `graph_id` - The graph identifier
+    - `live_view_topic` - The LiveView topic for broadcasting updates
+
+  ## Returns
+    The result of `RequestQueue.add/5`.
+  """
+  @spec ask_model(String.t(), String.t(), map(), String.t(), String.t()) :: :ok
   def ask_model(instruction, system_prompt, to_node, graph_id, live_view_topic) do
     RequestQueue.add(
       instruction,

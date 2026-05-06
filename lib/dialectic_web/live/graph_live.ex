@@ -1,5 +1,40 @@
 defmodule DialecticWeb.GraphLive do
   use DialecticWeb, :live_view
+
+  # =========================================================================
+  # Critical Thinking Tools Configuration
+  # =========================================================================
+  # Maps tool names to their GraphActions function names and whether they support text selection
+  @critical_thinking_tools %{
+    clarify: %{function: :clarify, text_function: :clarify_text, supports_text: true},
+    assumptions: %{function: :assumptions, text_function: :assumptions_text, supports_text: true},
+    counterexample: %{
+      function: :counterexample,
+      text_function: :counterexample_text,
+      supports_text: true
+    },
+    implications: %{
+      function: :implications,
+      text_function: :implications_text,
+      supports_text: true
+    },
+    blind_spots: %{function: :blind_spots, text_function: :blind_spots_text, supports_text: true},
+    says_who: %{function: :says_who, text_function: :says_who_text, supports_text: true},
+    who_disagrees: %{
+      function: :who_disagrees,
+      text_function: :who_disagrees_text,
+      supports_text: true
+    },
+    analogy: %{function: :analogy, text_function: :analogy_text, supports_text: true},
+    steel_man: %{function: :steel_man, text_function: :steel_man_text, supports_text: true},
+    what_if: %{function: :what_if, text_function: :what_if_text, supports_text: true},
+    simplify: %{function: :simplify, text_function: :simplify_text, supports_text: true},
+    second_order: %{
+      function: :second_order,
+      text_function: :second_order_text,
+      supports_text: true
+    }
+  }
   use DialecticWeb.GraphStreaming, preload_highlight_links: true
 
   alias Dialectic.Graph.{Vertex, GraphActions, Siblings}
@@ -542,179 +577,32 @@ defmodule DialecticWeb.GraphLive do
   # Advanced Tools — Cluster 1: Core Inquiry Moves
   # =========================================================================
 
-  def handle_event("node_clarify", %{"id" => node_id}, socket) do
-    if !socket.assigns.can_edit do
-      {:noreply, socket |> put_flash(:error, "This graph is locked")}
-    else
-      node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-
-      update_graph(
-        socket,
-        {nil, GraphActions.clarify(graph_action_params(socket, node))},
-        "clarify"
-      )
-    end
-  end
-
-  def handle_event("node_assumptions", %{"id" => node_id}, socket) do
-    if !socket.assigns.can_edit do
-      {:noreply, socket |> put_flash(:error, "This graph is locked")}
-    else
-      node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-
-      update_graph(
-        socket,
-        {nil, GraphActions.assumptions(graph_action_params(socket, node))},
-        "assumptions"
-      )
-    end
-  end
-
-  def handle_event("node_counterexample", %{"id" => node_id}, socket) do
-    if !socket.assigns.can_edit do
-      {:noreply, socket |> put_flash(:error, "This graph is locked")}
-    else
-      node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-
-      update_graph(
-        socket,
-        {nil, GraphActions.counterexample(graph_action_params(socket, node))},
-        "counterexample"
-      )
-    end
-  end
-
-  def handle_event("node_implications", %{"id" => node_id}, socket) do
-    if !socket.assigns.can_edit do
-      {:noreply, socket |> put_flash(:error, "This graph is locked")}
-    else
-      node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-
-      update_graph(
-        socket,
-        {nil, GraphActions.implications(graph_action_params(socket, node))},
-        "implications"
-      )
-    end
-  end
-
-  def handle_event("node_blind_spots", %{"id" => node_id}, socket) do
-    if !socket.assigns.can_edit do
-      {:noreply, socket |> put_flash(:error, "This graph is locked")}
-    else
-      node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-
-      update_graph(
-        socket,
-        {nil, GraphActions.blind_spots(graph_action_params(socket, node))},
-        "blind_spots"
-      )
-    end
-  end
-
   # =========================================================================
-  # Advanced Tools — Cluster 2: Context & Dialectical Expansion
+  # Critical Thinking Tools - Generic Handler
   # =========================================================================
 
-  def handle_event("node_says_who", %{"id" => node_id}, socket) do
-    if !socket.assigns.can_edit do
-      {:noreply, socket |> put_flash(:error, "This graph is locked")}
-    else
-      node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+  @doc """
+  Generic handler for all critical thinking tool actions on nodes.
 
-      update_graph(
-        socket,
-        {nil, GraphActions.says_who(graph_action_params(socket, node))},
-        "says_who"
-      )
-    end
-  end
+  Handles events like "node_clarify", "node_assumptions", etc. by:
+  1. Checking if the graph is editable
+  2. Finding the target node
+  3. Calling the appropriate GraphActions function
+  4. Updating the graph with the result
 
-  def handle_event("node_who_disagrees", %{"id" => node_id}, socket) do
-    if !socket.assigns.can_edit do
-      {:noreply, socket |> put_flash(:error, "This graph is locked")}
-    else
-      node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+  ## Parameters
+  - event_name: String like "node_clarify", "node_assumptions", etc.
+  - params: Map containing "id" (node_id)
+  - socket: LiveView socket
 
-      update_graph(
-        socket,
-        {nil, GraphActions.who_disagrees(graph_action_params(socket, node))},
-        "who_disagrees"
-      )
-    end
-  end
+  ## Returns
+  - `{:noreply, socket}` with updated graph or error flash
+  """
+  for {tool_name, _config} <- @critical_thinking_tools do
+    tool_string = Atom.to_string(tool_name)
 
-  def handle_event("node_analogy", %{"id" => node_id}, socket) do
-    if !socket.assigns.can_edit do
-      {:noreply, socket |> put_flash(:error, "This graph is locked")}
-    else
-      node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-
-      update_graph(
-        socket,
-        {nil, GraphActions.analogy(graph_action_params(socket, node))},
-        "analogy"
-      )
-    end
-  end
-
-  def handle_event("node_steel_man", %{"id" => node_id}, socket) do
-    if !socket.assigns.can_edit do
-      {:noreply, socket |> put_flash(:error, "This graph is locked")}
-    else
-      node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-
-      update_graph(
-        socket,
-        {nil, GraphActions.steel_man(graph_action_params(socket, node))},
-        "steel_man"
-      )
-    end
-  end
-
-  def handle_event("node_what_if", %{"id" => node_id}, socket) do
-    if !socket.assigns.can_edit do
-      {:noreply, socket |> put_flash(:error, "This graph is locked")}
-    else
-      node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-
-      update_graph(
-        socket,
-        {nil, GraphActions.what_if(graph_action_params(socket, node))},
-        "what_if"
-      )
-    end
-  end
-
-  # =========================================================================
-  # Advanced Tools — Cluster 3: Clarity & Communication
-  # =========================================================================
-
-  def handle_event("node_simplify", %{"id" => node_id}, socket) do
-    if !socket.assigns.can_edit do
-      {:noreply, socket |> put_flash(:error, "This graph is locked")}
-    else
-      node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-
-      update_graph(
-        socket,
-        {nil, GraphActions.simplify(graph_action_params(socket, node))},
-        "simplify"
-      )
-    end
-  end
-
-  def handle_event("node_second_order", %{"id" => node_id}, socket) do
-    if !socket.assigns.can_edit do
-      {:noreply, socket |> put_flash(:error, "This graph is locked")}
-    else
-      node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-
-      update_graph(
-        socket,
-        {nil, GraphActions.second_order(graph_action_params(socket, node))},
-        "second_order"
-      )
+    def handle_event("node_" <> unquote(tool_string), %{"id" => node_id}, socket) do
+      apply_critical_thinking_tool(unquote(tool_name), node_id, socket)
     end
   end
 
@@ -1721,328 +1609,29 @@ defmodule DialecticWeb.GraphLive do
 
   # Advanced Critical Thinking Tools for Text Selection
 
-  defp handle_selection_action(
-         :clarify,
-         selected_text,
-         node_id,
-         offsets,
-         existing_highlight,
-         _extra,
-         socket
-       ) do
-    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
-    parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+  # =========================================================================
+  # Critical Thinking Tools - Text Selection Actions (Generic)
+  # =========================================================================
 
-    clarify_node =
-      GraphActions.clarify_text(
-        graph_action_params(socket, parent_node),
-        selected_text
+  for {tool_name, _config} <- @critical_thinking_tools do
+    defp handle_selection_action(
+           unquote(tool_name),
+           selected_text,
+           node_id,
+           offsets,
+           existing_highlight,
+           _extra,
+           socket
+         ) do
+      apply_critical_thinking_tool_to_text(
+        unquote(tool_name),
+        selected_text,
+        node_id,
+        offsets,
+        existing_highlight,
+        socket
       )
-
-    if clarify_node do
-      if highlight do
-        Highlights.add_link(highlight.id, clarify_node.id, "clarify")
-      end
     end
-
-    update_graph(socket, {nil, clarify_node}, "clarify")
-  end
-
-  defp handle_selection_action(
-         :assumptions,
-         selected_text,
-         node_id,
-         offsets,
-         existing_highlight,
-         _extra,
-         socket
-       ) do
-    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
-    parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-
-    assumptions_node =
-      GraphActions.assumptions_text(
-        graph_action_params(socket, parent_node),
-        selected_text
-      )
-
-    if assumptions_node do
-      if highlight do
-        Highlights.add_link(highlight.id, assumptions_node.id, "assumptions")
-      end
-    end
-
-    update_graph(socket, {nil, assumptions_node}, "assumptions")
-  end
-
-  defp handle_selection_action(
-         :counterexample,
-         selected_text,
-         node_id,
-         offsets,
-         existing_highlight,
-         _extra,
-         socket
-       ) do
-    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
-    parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-
-    counterexample_node =
-      GraphActions.counterexample_text(
-        graph_action_params(socket, parent_node),
-        selected_text
-      )
-
-    if counterexample_node do
-      if highlight do
-        Highlights.add_link(highlight.id, counterexample_node.id, "counterexample")
-      end
-    end
-
-    update_graph(socket, {nil, counterexample_node}, "counterexample")
-  end
-
-  defp handle_selection_action(
-         :implications,
-         selected_text,
-         node_id,
-         offsets,
-         existing_highlight,
-         _extra,
-         socket
-       ) do
-    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
-    parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-
-    implications_node =
-      GraphActions.implications_text(
-        graph_action_params(socket, parent_node),
-        selected_text
-      )
-
-    if implications_node do
-      if highlight do
-        Highlights.add_link(highlight.id, implications_node.id, "implications")
-      end
-    end
-
-    update_graph(socket, {nil, implications_node}, "implications")
-  end
-
-  defp handle_selection_action(
-         :steel_man,
-         selected_text,
-         node_id,
-         offsets,
-         existing_highlight,
-         _extra,
-         socket
-       ) do
-    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
-    parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-
-    steel_man_node =
-      GraphActions.steel_man_text(
-        graph_action_params(socket, parent_node),
-        selected_text
-      )
-
-    if steel_man_node do
-      if highlight do
-        Highlights.add_link(highlight.id, steel_man_node.id, "steel_man")
-      end
-    end
-
-    update_graph(socket, {nil, steel_man_node}, "steel_man")
-  end
-
-  defp handle_selection_action(
-         :says_who,
-         selected_text,
-         node_id,
-         offsets,
-         existing_highlight,
-         _extra,
-         socket
-       ) do
-    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
-    parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-
-    says_who_node =
-      GraphActions.says_who_text(
-        graph_action_params(socket, parent_node),
-        selected_text
-      )
-
-    if says_who_node do
-      if highlight do
-        Highlights.add_link(highlight.id, says_who_node.id, "says_who")
-      end
-    end
-
-    update_graph(socket, {nil, says_who_node}, "says_who")
-  end
-
-  defp handle_selection_action(
-         :second_order,
-         selected_text,
-         node_id,
-         offsets,
-         existing_highlight,
-         _extra,
-         socket
-       ) do
-    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
-    parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-
-    second_order_node =
-      GraphActions.second_order_text(
-        graph_action_params(socket, parent_node),
-        selected_text
-      )
-
-    if second_order_node do
-      if highlight do
-        Highlights.add_link(highlight.id, second_order_node.id, "second_order")
-      end
-    end
-
-    update_graph(socket, {nil, second_order_node}, "second_order")
-  end
-
-  defp handle_selection_action(
-         :simplify,
-         selected_text,
-         node_id,
-         offsets,
-         existing_highlight,
-         _extra,
-         socket
-       ) do
-    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
-    parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-
-    simplify_node =
-      GraphActions.simplify_text(
-        graph_action_params(socket, parent_node),
-        selected_text
-      )
-
-    if simplify_node do
-      if highlight do
-        Highlights.add_link(highlight.id, simplify_node.id, "simplify")
-      end
-    end
-
-    update_graph(socket, {nil, simplify_node}, "simplify")
-  end
-
-  defp handle_selection_action(
-         :blind_spots,
-         selected_text,
-         node_id,
-         offsets,
-         existing_highlight,
-         _extra,
-         socket
-       ) do
-    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
-    parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-
-    blind_spots_node =
-      GraphActions.blind_spots_text(
-        graph_action_params(socket, parent_node),
-        selected_text
-      )
-
-    if blind_spots_node do
-      if highlight do
-        Highlights.add_link(highlight.id, blind_spots_node.id, "blind_spots")
-      end
-    end
-
-    update_graph(socket, {nil, blind_spots_node}, "blind_spots")
-  end
-
-  defp handle_selection_action(
-         :who_disagrees,
-         selected_text,
-         node_id,
-         offsets,
-         existing_highlight,
-         _extra,
-         socket
-       ) do
-    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
-    parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-
-    who_disagrees_node =
-      GraphActions.who_disagrees_text(
-        graph_action_params(socket, parent_node),
-        selected_text
-      )
-
-    if who_disagrees_node do
-      if highlight do
-        Highlights.add_link(highlight.id, who_disagrees_node.id, "who_disagrees")
-      end
-    end
-
-    update_graph(socket, {nil, who_disagrees_node}, "who_disagrees")
-  end
-
-  defp handle_selection_action(
-         :analogy,
-         selected_text,
-         node_id,
-         offsets,
-         existing_highlight,
-         _extra,
-         socket
-       ) do
-    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
-    parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-
-    analogy_node =
-      GraphActions.analogy_text(
-        graph_action_params(socket, parent_node),
-        selected_text
-      )
-
-    if analogy_node do
-      if highlight do
-        Highlights.add_link(highlight.id, analogy_node.id, "analogy")
-      end
-    end
-
-    update_graph(socket, {nil, analogy_node}, "analogy")
-  end
-
-  defp handle_selection_action(
-         :what_if,
-         selected_text,
-         node_id,
-         offsets,
-         existing_highlight,
-         _extra,
-         socket
-       ) do
-    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
-    parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-
-    what_if_node =
-      GraphActions.what_if_text(
-        graph_action_params(socket, parent_node),
-        selected_text
-      )
-
-    if what_if_node do
-      if highlight do
-        Highlights.add_link(highlight.id, what_if_node.id, "what_if")
-      end
-    end
-
-    update_graph(socket, {nil, what_if_node}, "what_if")
   end
 
   defp create_pending_highlight_links(socket) do
@@ -2189,6 +1778,144 @@ defmodule DialecticWeb.GraphLive do
 
       true ->
         []
+    end
+  end
+
+  # =========================================================================
+  # Critical Thinking Tools - Helper Functions
+  # =========================================================================
+
+  # Applies a critical thinking tool to a node with proper error handling.
+  #
+  # ## Parameters
+  # - tool: Atom representing the tool (e.g., :clarify, :assumptions)
+  # - node_id: String ID of the target node
+  # - socket: LiveView socket
+  #
+  # ## Returns
+  # - `{:noreply, socket}` with updated graph or error flash
+  #
+  # ## Error Handling
+  # - Returns error flash if graph is locked (can_edit is false)
+  # - Returns error flash if node is not found
+  # - Handles nil results from GraphActions gracefully
+  defp apply_critical_thinking_tool(tool, node_id, socket) do
+    with :ok <- validate_can_edit(socket),
+         {:ok, node} <- find_node_safe(socket.assigns.graph_id, node_id),
+         {:ok, tool_config} <- get_tool_config(tool),
+         {:ok, result_node} <- apply_graph_action(tool_config, socket, node) do
+      update_graph(socket, {nil, result_node}, Atom.to_string(tool))
+    else
+      {:error, :locked} ->
+        {:noreply, put_flash(socket, :error, "This graph is locked")}
+
+      {:error, :node_not_found} ->
+        {:noreply, put_flash(socket, :error, "Node not found")}
+
+      {:error, :tool_not_found} ->
+        {:noreply, put_flash(socket, :error, "Unknown tool")}
+
+      {:error, :action_failed} ->
+        {:noreply, put_flash(socket, :error, "Failed to apply tool")}
+    end
+  end
+
+  # Applies a critical thinking tool to selected text with proper error handling.
+  #
+  # ## Parameters
+  # - tool: Atom representing the tool (e.g., :clarify, :assumptions)
+  # - selected_text: String of text to analyze
+  # - node_id: String ID of the parent node
+  # - offsets: Map with text selection offsets
+  # - existing_highlight: Existing highlight struct or nil
+  # - socket: LiveView socket
+  #
+  # ## Returns
+  # - Updated socket with new node and highlight links
+  #
+  # ## Validation
+  # - Validates selected_text is non-empty
+  # - Checks if tool supports text selection
+  # - Creates highlight and links to new node
+  defp apply_critical_thinking_tool_to_text(
+         tool,
+         selected_text,
+         node_id,
+         offsets,
+         existing_highlight,
+         socket
+       ) do
+    with :ok <- validate_selected_text(selected_text),
+         {:ok, node} <- find_node_safe(socket.assigns.graph_id, node_id),
+         {:ok, tool_config} <- get_tool_config(tool),
+         :ok <- validate_tool_supports_text(tool_config),
+         {:ok, result_node} <-
+           apply_text_graph_action(tool_config, socket, node, selected_text) do
+      highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
+
+      if result_node && highlight do
+        Highlights.add_link(highlight.id, result_node.id, Atom.to_string(tool))
+      end
+
+      update_graph(socket, {nil, result_node}, Atom.to_string(tool))
+    else
+      {:error, :empty_text} ->
+        {:noreply, put_flash(socket, :error, "Please select some text")}
+
+      {:error, :node_not_found} ->
+        {:noreply, put_flash(socket, :error, "Node not found")}
+
+      {:error, :tool_not_found} ->
+        {:noreply, put_flash(socket, :error, "Unknown tool")}
+
+      {:error, :text_not_supported} ->
+        {:noreply, put_flash(socket, :error, "This tool does not support text selection")}
+
+      {:error, :action_failed} ->
+        {:noreply, put_flash(socket, :error, "Failed to apply tool to text")}
+    end
+  end
+
+  # Validation helpers
+
+  defp validate_can_edit(%{assigns: %{can_edit: true}}), do: :ok
+  defp validate_can_edit(_socket), do: {:error, :locked}
+
+  defp validate_selected_text(text) when is_binary(text) and byte_size(text) > 0, do: :ok
+  defp validate_selected_text(_), do: {:error, :empty_text}
+
+  defp validate_tool_supports_text(%{supports_text: true}), do: :ok
+  defp validate_tool_supports_text(_), do: {:error, :text_not_supported}
+
+  defp find_node_safe(graph_id, node_id) do
+    case GraphActions.find_node(graph_id, node_id) do
+      nil -> {:error, :node_not_found}
+      node -> {:ok, node}
+    end
+  end
+
+  defp get_tool_config(tool) do
+    case Map.fetch(@critical_thinking_tools, tool) do
+      {:ok, config} -> {:ok, config}
+      :error -> {:error, :tool_not_found}
+    end
+  end
+
+  defp apply_graph_action(%{function: func}, socket, node) do
+    result = apply(GraphActions, func, [graph_action_params(socket, node)])
+
+    case result do
+      nil -> {:error, :action_failed}
+      node -> {:ok, node}
+    end
+  end
+
+  defp apply_text_graph_action(%{text_function: text_func}, socket, node, selected_text) do
+    result = apply(GraphActions, text_func, [graph_action_params(socket, node), selected_text])
+
+    case result do
+      nil -> {:error, :action_failed}
+      node -> {:ok, node}
     end
   end
 

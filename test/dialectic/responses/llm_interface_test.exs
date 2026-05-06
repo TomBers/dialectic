@@ -1,8 +1,6 @@
 defmodule Dialectic.Responses.LlmInterfaceTest do
   use ExUnit.Case, async: false
 
-  alias Dialectic.Responses.LlmInterface
-
   describe "LlmInterface API" do
     test "exports all the expected functions" do
       # Verify all expected methods exist with the correct arity
@@ -20,6 +18,32 @@ defmodule Dialectic.Responses.LlmInterfaceTest do
       assert function_exported?(Dialectic.Responses.LlmInterface, :gen_thesis, 4)
       assert function_exported?(Dialectic.Responses.LlmInterface, :gen_antithesis, 4)
       assert function_exported?(Dialectic.Responses.LlmInterface, :ask_model, 5)
+    end
+
+    test "exports all 12 critical thinking tool functions" do
+      # Verify all thinking tools have corresponding gen_* functions
+      thinking_tools = [
+        :gen_clarify,
+        :gen_assumptions,
+        :gen_counterexample,
+        :gen_implications,
+        :gen_blind_spots,
+        :gen_says_who,
+        :gen_who_disagrees,
+        :gen_analogy,
+        :gen_steel_man,
+        :gen_what_if,
+        :gen_simplify,
+        :gen_second_order
+      ]
+
+      for tool <- thinking_tools do
+        assert function_exported?(Dialectic.Responses.LlmInterface, tool, 4),
+               "Function #{tool}/4 not exported"
+
+        assert function_exported?(Dialectic.Responses.LlmInterface, tool, 5),
+               "Function #{tool}/5 not exported (with content_override)"
+      end
     end
   end
 
