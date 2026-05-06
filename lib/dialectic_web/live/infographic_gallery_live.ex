@@ -73,7 +73,7 @@ defmodule DialecticWeb.InfographicGalleryLive do
           <button
             :for={infographic <- @infographics}
             type="button"
-            class="group relative rounded-lg shadow-lg overflow-hidden transition-shadow duration-300 hover:shadow-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 cursor-pointer aspect-[4/3]"
+            class="infographic-item group relative rounded-lg shadow-lg overflow-hidden transition-shadow duration-300 hover:shadow-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 cursor-pointer aspect-[4/3]"
             phx-click="open_infographic"
             phx-value-id={infographic.id}
             role="button"

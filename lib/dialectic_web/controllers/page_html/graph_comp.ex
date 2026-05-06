@@ -10,7 +10,7 @@ defmodule DialecticWeb.PageHtml.GraphComp do
 
     ~H"""
     <div class={[
-      "relative block group h-full rounded-lg ring-1 transition-colors flex flex-col",
+      "graph-card relative block group h-full rounded-lg ring-1 transition-colors flex flex-col",
       container_class(@variant)
     ]}>
       <.link navigate={@link} class="absolute inset-0 z-0 rounded-lg">
