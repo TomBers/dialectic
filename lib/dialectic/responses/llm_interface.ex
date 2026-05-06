@@ -324,13 +324,9 @@ defmodule Dialectic.Responses.LlmInterface do
     base_context = GraphManager.build_context(graph_id, node)
 
     if content_override do
-      # Include node content in context if we are focusing on a sub-selection
-      ctx =
-        [base_context, to_string(node.content || "")]
-        |> Enum.reject(&(&1 == ""))
-        |> Enum.join("\n\n")
-
-      {ctx, content_override}
+      # Selection-targeted tools should focus on the selection itself rather than
+      # re-reading the full node content.
+      {to_string(content_override), content_override}
     else
       {base_context, node.content}
     end
