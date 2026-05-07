@@ -96,11 +96,15 @@ defmodule DialecticWeb.DocumentMenuComp do
           </.link>
         <% end %>
 
-        <div id={"grid-actions-body-#{@id}"} data-collapse-body class="mt-2 space-y-2">
+        <div
+          id={"grid-actions-body-#{@id}"}
+          data-collapse-body
+          class="mt-2 space-y-1.5 border-t border-gray-100 pt-2"
+        >
           <button
             type="button"
             phx-click="open_search_overlay_click"
-            class="flex items-center gap-2 w-full px-3 py-2 bg-gray-50 border border-gray-200 text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors rounded-lg group"
+            class="flex w-full items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 group"
             title="Quick search (⌘K)"
           >
             <.icon name="hero-magnifying-glass" class="w-4 h-4 shrink-0" />
@@ -113,7 +117,7 @@ defmodule DialecticWeb.DocumentMenuComp do
             type="button"
             phx-click="open_help_modal"
             phx-target={@myself}
-            class="group flex w-full items-center justify-between rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-2 text-left transition-colors hover:bg-emerald-100"
+            class="group flex w-full items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-left transition-colors hover:bg-emerald-100"
             title="Open how-to guide for this page"
           >
             <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800">
@@ -122,18 +126,21 @@ defmodule DialecticWeb.DocumentMenuComp do
             <span class="text-[10px] text-emerald-700">Open guide</span>
           </button>
 
-          <div class="grid grid-cols-2 gap-1">
+          <div class="space-y-1.5">
             <button
               type="button"
-              class="group flex h-12 flex-col items-start justify-center rounded-md border border-indigo-200 bg-indigo-50 px-2 text-left transition-colors hover:bg-indigo-100 disabled:opacity-50 disabled:cursor-not-allowed"
-              phx-click="open_share_modal"
+              class="group flex w-full items-center justify-between rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-left transition-colors hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-50"
+              phx-click={
+                Phoenix.LiveView.JS.dispatch("collapse-document-menu", to: "#graph-layout")
+                |> Phoenix.LiveView.JS.push("open_share_modal")
+              }
               disabled={is_nil(@graph_id)}
               title="Share graph"
             >
-              <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-700">
-                <.icon name="hero-share" class="w-3 h-3" /> Share
+              <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-800">
+                <.icon name="hero-share" class="w-3.5 h-3.5" /> Share
               </span>
-              <span class="text-[9px] leading-tight text-indigo-600/90">Links and access</span>
+              <span class="text-[10px] text-indigo-700">Links and access</span>
             </button>
 
             <button
@@ -150,15 +157,15 @@ defmodule DialecticWeb.DocumentMenuComp do
                 |> Phoenix.LiveView.JS.push("enter_presentation_setup")
               }
               disabled={is_nil(@graph_id)}
-              class="group flex h-12 flex-col items-start justify-center rounded-md border border-fuchsia-200 bg-fuchsia-50 px-2 text-left transition-colors hover:bg-fuchsia-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="group flex w-full items-center justify-between rounded-lg border border-fuchsia-200 bg-fuchsia-50 px-3 py-2 text-left transition-colors hover:bg-fuchsia-100 disabled:cursor-not-allowed disabled:opacity-50"
               data-panel-toggle="presentation-drawer"
               aria-label="Start presentation setup"
               title="Present"
             >
-              <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-fuchsia-700">
-                <.icon name="hero-presentation-chart-bar" class="w-3 h-3" /> Present
+              <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-fuchsia-800">
+                <.icon name="hero-presentation-chart-bar" class="w-3.5 h-3.5" /> Present
               </span>
-              <span class="text-[9px] leading-tight text-fuchsia-600/90">Slide mode</span>
+              <span class="text-[10px] text-fuchsia-700">Slide mode</span>
             </button>
 
             <button
@@ -169,15 +176,15 @@ defmodule DialecticWeb.DocumentMenuComp do
                   detail: %{id: "highlights-drawer"}
                 )
               }
-              class="group flex h-12 flex-col items-start justify-center rounded-md border border-amber-200 bg-amber-50 px-2 text-left transition-colors hover:bg-amber-100"
+              class="group flex w-full items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-left transition-colors hover:bg-amber-100"
               data-panel-toggle="highlights-drawer"
               aria-label="Toggle highlights"
               title="Highlights"
             >
-              <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700">
-                <.icon name="hero-bookmark" class="w-3 h-3" /> Highlights
+              <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-800">
+                <.icon name="hero-bookmark" class="w-3.5 h-3.5" /> Highlights
               </span>
-              <span class="text-[9px] leading-tight text-amber-600/90">Saved excerpts</span>
+              <span class="text-[10px] text-amber-700">Saved excerpts</span>
             </button>
           </div>
 
@@ -189,7 +196,7 @@ defmodule DialecticWeb.DocumentMenuComp do
                 detail: %{id: "right-panel"}
               )
             }
-            class="w-full flex items-center justify-between rounded-md border border-gray-200 bg-white px-2.5 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
+            class="flex w-full items-center justify-between rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-700 transition-colors hover:bg-gray-50"
             data-panel-toggle="right-panel"
             aria-label="Open controls"
             title="Views and settings"

@@ -239,6 +239,31 @@ hooks.GraphLayout = {
       } catch (_e) {}
     });
 
+    this.el.addEventListener("collapse-document-menu", () => {
+      const root = document.querySelector(
+        '[data-role="document-menu"] [data-collapse-root]',
+      );
+      if (!root) return;
+
+      const body = root.querySelector("[data-collapse-body]");
+      const openState = root.querySelector("[data-collapse-open-state]");
+      const closeState = root.querySelector("[data-collapse-close-state]");
+      if (!body) return;
+
+      body.classList.add("hidden");
+      if (openState && closeState) {
+        openState.classList.remove("hidden");
+        closeState.classList.add("hidden");
+      }
+
+      const storageKey = root.dataset.collapseKey;
+      if (!storageKey) return;
+
+      try {
+        localStorage.setItem(storageKey, "collapsed");
+      } catch (_e) {}
+    });
+
     this.el.addEventListener("toggle-panel", (e) => {
       const { id } = e.detail;
       const panels = [
