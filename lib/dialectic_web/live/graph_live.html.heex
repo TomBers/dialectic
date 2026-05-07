@@ -33,7 +33,10 @@
       <%!-- Right: share + exit buttons --%>
       <div class="flex items-center gap-2 shrink-0">
         <button
-          phx-click="open_share_modal"
+          phx-click={
+            JS.dispatch("collapse-document-menu", to: "#graph-layout")
+            |> JS.push("open_share_modal")
+          }
           class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-gray-300 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-full border border-gray-600 transition-colors"
           title="Share this presentation"
         >

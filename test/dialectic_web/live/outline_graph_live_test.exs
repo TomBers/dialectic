@@ -274,6 +274,7 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(view, "#outline-node-1")
     assert has_element?(view, "#outline-mobile-node-1")
     assert has_element?(view, "#reader-editor-link.hidden")
+    assert has_element?(view, "#reader-editor-link[data-view-transition='mode-switch']")
     assert has_element?(view, "#reading-node-1")
     assert has_element?(view, "#reading-node-2")
     assert has_element?(view, "#reading-node-1 span.bg-gray-900.text-gray-100", "Origin")
@@ -375,7 +376,7 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert_push_event(view, "scroll_to_top", %{})
   end
 
-  test "selected article title shows the full node text", %{conn: conn} do
+  test "selected article title shows the full node text in the reader and outline", %{conn: conn} do
     graph = create_graph(long_title_graph_data())
 
     {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=2")
@@ -387,7 +388,26 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert assigns.node.full_title == full_title
     assert assigns.node.title != full_title
     assert has_element?(view, "#outline-detail h2", full_title)
-    refute has_element?(view, "#outline-node-2", full_title)
+    assert has_element?(view, "#outline-node-2", full_title)
+    refute render(view) =~ "You are here:"
+  end
+
+  test "share button opens the share modal with a reader url for the current node", %{conn: conn} do
+    graph = create_graph()
+
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=2")
+
+    assert has_element?(view, "#reader-share-button")
+
+    view
+    |> element("#reader-share-button")
+    |> render_click()
+
+    share_url = "#{DialecticWeb.Endpoint.url()}/g/#{graph.slug}?node=2"
+
+    assert has_element?(view, "#share-modal-hook")
+    assert has_element?(view, ~s(#share-url-input[value="#{share_url}"]))
+    refute render(view) =~ "Generating preview..."
   end
 
   test "reader loads highlight data for rendered nodes", %{conn: conn} do
