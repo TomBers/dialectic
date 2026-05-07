@@ -50,8 +50,8 @@ defmodule DialecticWeb.UserRegistrationLiveTest do
       # Now do a logged in request and assert on the menu
       conn = get(conn, "/")
       response = html_response(conn, 200)
-      assert response =~ email
-      assert response =~ "settings"
+      assert response =~ "My Profile"
+      refute response =~ ~s(href="/users/settings")
     end
 
     test "renders errors for duplicated email", %{conn: conn} do
