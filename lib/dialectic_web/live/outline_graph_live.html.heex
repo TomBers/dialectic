@@ -31,6 +31,18 @@
           </div>
 
           <div class="flex flex-wrap items-center gap-2 lg:justify-self-end">
+            <button
+              id="reader-share-button"
+              type="button"
+              phx-click="open_share_modal"
+              class="inline-flex h-11 items-center gap-2 rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-800 shadow-sm transition duration-150 hover:-translate-y-0.5 hover:border-slate-400 hover:bg-slate-50"
+            >
+              <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
+                <.icon name="hero-share" class="h-4 w-4" />
+              </span>
+              <span>Share</span>
+            </button>
+
             <%= if @can_edit do %>
               <.link
                 id="reader-editor-link"
@@ -97,16 +109,18 @@
               ]}
               style={outline_indent_style(row.indent)}
             >
-              <div class="flex items-center gap-3">
+              <div class="flex items-start gap-3">
                 <span class={[
-                  "h-2.5 w-2.5 rounded-full ring-2 shadow-sm",
+                  "mt-1.5 h-2.5 w-2.5 rounded-full ring-2 shadow-sm",
                   if(selected?, do: "ring-slate-700", else: "ring-white"),
                   DialecticWeb.ColUtils.dot_class(row.class)
                 ]}>
                 </span>
 
                 <div class="min-w-0 flex-1">
-                  <p class="truncate text-sm font-medium">{row.title}</p>
+                  <p class="text-sm font-medium leading-5 whitespace-normal break-words">
+                    {row.full_title}
+                  </p>
                 </div>
 
                 <div class="flex items-center gap-2 text-[11px]">
@@ -135,7 +149,7 @@
       phx-hook="ScrollReset"
     >
       <%= if @node do %>
-        <div class="mx-auto max-w-4xl space-y-8 px-5 py-8 sm:px-8 lg:px-10">
+        <div class="mx-auto max-w-4xl space-y-8 px-5 pb-8 pt-3 sm:px-8 lg:px-10">
           <section id="outline-mobile-nav" class="lg:hidden">
             <details class="group overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-sm">
               <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 [&::-webkit-details-marker]:hidden">
@@ -178,16 +192,18 @@
                         ]}
                         style={outline_indent_style(row.indent)}
                       >
-                        <div class="flex items-center gap-3">
+                        <div class="flex items-start gap-3">
                           <span class={[
-                            "h-2.5 w-2.5 rounded-full ring-2 shadow-sm",
+                            "mt-1.5 h-2.5 w-2.5 rounded-full ring-2 shadow-sm",
                             if(selected?, do: "ring-slate-700", else: "ring-white"),
                             DialecticWeb.ColUtils.dot_class(row.class)
                           ]}>
                           </span>
 
                           <div class="min-w-0 flex-1">
-                            <p class="truncate text-sm font-medium">{row.title}</p>
+                            <p class="text-sm font-medium leading-5 whitespace-normal break-words">
+                              {row.full_title}
+                            </p>
                           </div>
 
                           <div class="flex items-center gap-2 text-[11px]">
@@ -210,26 +226,6 @@
                 <% end %>
               </div>
             </details>
-          </section>
-
-          <section class="text-sm leading-7 text-slate-600">
-            <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <span class="font-semibold text-slate-900">You are here:</span>
-              <%= for {path_node, index} <- Enum.with_index(@selected_path) do %>
-                <%= if index > 0 do %>
-                  <span class="text-slate-300">/</span>
-                <% end %>
-                <.link
-                  patch={graph_path(@graph_struct, path_node.id, @nav_params)}
-                  class="truncate font-medium text-slate-700 underline-offset-4 transition hover:text-slate-950 hover:underline"
-                >
-                  {path_node.title}
-                </.link>
-              <% end %>
-            </div>
-            <p class="mt-2 text-sm leading-6 text-slate-500">
-              {reading_flow_message(@reading_chain, @next_choices)}
-            </p>
           </section>
 
           <% last_reading_index = length(@reading_chain) - 1 %>
@@ -512,3 +508,15 @@
     </main>
   </div>
 </div>
+
+<.live_component
+  module={DialecticWeb.ShareModalComp}
+  id="outline-share-modal"
+  show={@show_share_modal}
+  graph_struct={@graph_struct}
+  current_user={@current_user}
+  selected_node={@node}
+  share_node={true}
+  share_target={:reader}
+  show_preview={false}
+/>

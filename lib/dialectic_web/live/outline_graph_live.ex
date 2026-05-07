@@ -123,6 +123,11 @@ defmodule DialecticWeb.OutlineGraphLive do
   end
 
   @impl true
+  def handle_info(:close_share_modal, socket) do
+    {:noreply, assign(socket, show_share_modal: false)}
+  end
+
+  @impl true
   def handle_info(_msg, socket), do: {:noreply, socket}
 
   @impl true
@@ -133,6 +138,11 @@ defmodule DialecticWeb.OutlineGraphLive do
   @impl true
   def handle_event("node_clicked", %{"id" => node_id}, socket) do
     {:noreply, navigate_to_node(socket, node_id)}
+  end
+
+  @impl true
+  def handle_event("open_share_modal", _params, socket) do
+    {:noreply, assign(socket, show_share_modal: true)}
   end
 
   defp mount_graph(socket, graph_db, token_param) do
@@ -188,6 +198,7 @@ defmodule DialecticWeb.OutlineGraphLive do
       next_choices: [],
       compare_context: nil,
       compare_branches: [],
+      show_share_modal: false,
       highlights: highlights,
       page_title: graph_db.title,
       page_description: description,
@@ -344,6 +355,7 @@ defmodule DialecticWeb.OutlineGraphLive do
         id: node.id,
         indent: Map.get(node, :indent, 0),
         title: display_title(node),
+        full_title: display_title(node, max_length: :infinity),
         class: Map.get(node, :class, "default"),
         branch?: length(children) > 1
       }
@@ -627,22 +639,6 @@ defmodule DialecticWeb.OutlineGraphLive do
           end)
       }
     end)
-  end
-
-  defp reading_flow_message(reading_chain, next_choices) do
-    cond do
-      length(reading_chain) > 1 and next_choices != [] ->
-        "Showing this thread until the next split."
-
-      length(reading_chain) > 1 ->
-        "Showing the rest of this thread all the way to its current endpoint."
-
-      next_choices != [] ->
-        "This point splits into multiple paths."
-
-      true ->
-        "This path ends here."
-    end
   end
 
   defp next_choices_message(reading_terminal, selected_node) do
