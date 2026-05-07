@@ -143,7 +143,11 @@ defmodule DialecticWeb.DocumentMenuComp do
             <button
               type="button"
               phx-click={
-                Phoenix.LiveView.JS.dispatch("toggle-panel",
+                Phoenix.LiveView.JS.dispatch("toggle-side-drawer",
+                  to: "#graph-layout",
+                  detail: %{force: "close", persist: false}
+                )
+                |> Phoenix.LiveView.JS.dispatch("toggle-panel",
                   to: "#graph-layout",
                   detail: %{id: "presentation-drawer"}
                 )
