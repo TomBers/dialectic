@@ -59,6 +59,49 @@ hooks.SearchNav = SearchNav;
 hooks.Presentation = PresentationHook;
 hooks.PresentationSetup = PresentationSetupHook;
 hooks.Share = ShareHook;
+
+const MODE_SWITCH_TRANSITION_KEY = "mode-switch";
+let modeSwitchCleanupTimer = null;
+
+const clearModeSwitchClasses = () => {
+  document.documentElement.classList.remove(
+    "mode-switch-leave",
+    "mode-switch-enter",
+  );
+};
+
+const scheduleModeSwitchCleanup = (delay = 320) => {
+  window.clearTimeout(modeSwitchCleanupTimer);
+  modeSwitchCleanupTimer = window.setTimeout(() => {
+    clearModeSwitchClasses();
+    delete document.documentElement.dataset.viewTransition;
+  }, delay);
+};
+
+document.addEventListener(
+  "click",
+  (event) => {
+    const link = event.target.closest('a[data-view-transition="mode-switch"]');
+    if (!link) return;
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) {
+      return;
+    }
+
+    document.documentElement.dataset.viewTransition = MODE_SWITCH_TRANSITION_KEY;
+    document.documentElement.classList.remove("mode-switch-enter");
+    document.documentElement.classList.add("mode-switch-leave");
+    scheduleModeSwitchCleanup(900);
+  },
+  true,
+);
+
 hooks.PersistCollapse = {
   mounted() {
     this.restore();
@@ -791,7 +834,19 @@ let liveSocket = new LiveSocket("/live", Socket, {
 // Show progress bar on live navigation and form submits
 topbar.config({ barColors: { 0: "#29d" }, shadowColor: "rgba(0, 0, 0, .3)" });
 window.addEventListener("phx:page-loading-start", (_info) => topbar.show(300));
-window.addEventListener("phx:page-loading-stop", (_info) => topbar.hide());
+window.addEventListener("phx:page-loading-stop", (_info) => {
+  topbar.hide();
+
+  if (document.documentElement.dataset.viewTransition !== MODE_SWITCH_TRANSITION_KEY) {
+    return;
+  }
+
+  document.documentElement.classList.remove("mode-switch-leave");
+  requestAnimationFrame(() => {
+    document.documentElement.classList.add("mode-switch-enter");
+    scheduleModeSwitchCleanup();
+  });
+});
 
 // connect if there are any LiveViews on the page
 liveSocket.connect();

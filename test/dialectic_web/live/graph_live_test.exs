@@ -25,6 +25,22 @@ defmodule DialecticWeb.GraphLiveTest do
       assert socket.assigns.graph_id == @graph_id
       assert socket.assigns.user == "tester@example.com"
     end
+
+    test "shows a persistent reader switch for the current node", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+      state = :sys.get_state(view.pid).socket
+      graph = state.assigns.graph_struct
+      node_id = Map.get(state.assigns.node, :id)
+
+      assert has_element?(view, "#document-menu-reader-switch-document-menu")
+
+      assert has_element?(
+               view,
+               ~s(#document-menu-reader-switch-document-menu[href="/g/#{graph.slug}?node=#{node_id}"])
+             )
+
+      refute has_element?(view, "#grid-actions-body-document-menu [data-role='reader-view']")
+    end
   end
 
   describe "handle_event/3" do

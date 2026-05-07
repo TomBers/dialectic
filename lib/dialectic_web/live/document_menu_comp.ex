@@ -73,6 +73,29 @@ defmodule DialecticWeb.DocumentMenuComp do
             </span>
           </button>
         </div>
+
+        <%= if @graph_id do %>
+          <.link
+            id={"document-menu-reader-switch-#{@id}"}
+            navigate={
+              graph_path(
+                @graph_struct,
+                Map.get(assigns[:node] || %{}, :id),
+                if(assigns[:token], do: [token: assigns[:token]], else: [])
+              )
+            }
+            class="mt-2 flex h-10 items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-3 text-blue-800 shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-100"
+            title="Open reader"
+            data-role="reader-view-primary"
+            data-view-transition="mode-switch"
+          >
+            <span class="inline-flex items-center gap-2 text-sm font-semibold">
+              <.icon name="hero-document-text" class="h-4 w-4" /> Reader
+            </span>
+            <span class="text-[11px] font-medium text-blue-700">Open reading view</span>
+          </.link>
+        <% end %>
+
         <div id={"grid-actions-body-#{@id}"} data-collapse-body class="mt-2 space-y-2">
           <button
             type="button"
@@ -100,33 +123,6 @@ defmodule DialecticWeb.DocumentMenuComp do
           </button>
 
           <div class="grid grid-cols-2 gap-1">
-            <%= if @graph_id do %>
-              <.link
-                navigate={
-                  graph_path(
-                    @graph_struct,
-                    Map.get(assigns[:node] || %{}, :id),
-                    if(assigns[:token], do: [token: assigns[:token]], else: [])
-                  )
-                }
-                class="group flex h-12 flex-col items-start justify-center rounded-md border border-blue-200 bg-blue-50 px-2 text-left transition-colors hover:bg-blue-100"
-                title="Open reader"
-                data-role="reader-view"
-              >
-                <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-700">
-                  <.icon name="hero-document-text" class="w-3 h-3" /> Reader
-                </span>
-                <span class="text-[9px] leading-tight text-blue-600/90">Best reading view</span>
-              </.link>
-            <% else %>
-              <span class="flex h-12 flex-col items-start justify-center rounded-md border border-blue-100 bg-blue-50/70 px-2 text-left">
-                <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-500">
-                  Reader
-                </span>
-                <span class="text-[9px] leading-tight text-blue-400">Best reading view</span>
-              </span>
-            <% end %>
-
             <button
               type="button"
               class="group flex h-12 flex-col items-start justify-center rounded-md border border-indigo-200 bg-indigo-50 px-2 text-left transition-colors hover:bg-indigo-100 disabled:opacity-50 disabled:cursor-not-allowed"

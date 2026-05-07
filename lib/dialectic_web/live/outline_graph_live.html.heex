@@ -49,6 +49,7 @@
                 navigate={graph_editor_path(@graph_struct, @selected_node_id, @nav_params)}
                 class="group hidden h-11 items-center gap-2.5 rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-800 shadow-sm transition duration-150 hover:-translate-y-0.5 hover:border-slate-400 hover:bg-slate-50 lg:inline-flex"
                 title="Open grid editor"
+                data-view-transition="mode-switch"
               >
                 <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-white shadow-sm">
                   <.icon name="hero-squares-2x2" class="h-4 w-4" />
@@ -401,6 +402,7 @@
                     id="outline-end-editor-link"
                     navigate={graph_editor_path(@graph_struct, @reading_terminal.id, @nav_params)}
                     class="group hidden h-11 shrink-0 items-center gap-2.5 rounded-full border border-sky-300/35 bg-sky-400/10 px-4 text-sm font-medium text-sky-100 shadow-sm transition hover:border-sky-200/60 hover:bg-sky-400/15 lg:inline-flex"
+                    data-view-transition="mode-switch"
                   >
                     <.icon name="hero-squares-2x2" class="h-4 w-4" />
                     <span>Open editor to continue</span>
