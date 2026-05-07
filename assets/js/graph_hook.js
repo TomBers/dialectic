@@ -280,6 +280,8 @@ const ensureVisible = (cy, container, nodeId) => {
 const graphHook = {
   mounted() {
     const { graph, node, div, graphId } = this.el.dataset;
+    const { mode: initialPresentationMode, ids: initialPresentationIds } =
+      this._readPresentationState();
 
     const container =
       this.el.querySelector(`#${div}`) || document.getElementById(div);
@@ -288,10 +290,15 @@ const graphHook = {
     const viewMode = localStorage.getItem("graph_view_mode") || "spaced";
     const graphDirection = localStorage.getItem("graph_direction") || "TB";
 
+    const initialElements =
+      initialPresentationMode === "presenting" && initialPresentationIds.length > 0
+        ? this._buildPresentationElements(initialPresentationIds, graph)
+        : this._parseGraphElements(graph);
+
     this.cy = draw_graph(
       container,
       this,
-      JSON.parse(graph),
+      initialElements,
       node,
       viewMode,
       graphId,
@@ -308,6 +315,11 @@ const graphHook = {
     try {
       this.cy._ownerHook = this;
     } catch (_e) {}
+
+    this._initializePresentationState(
+      initialPresentationMode,
+      initialPresentationIds,
+    );
 
     // Initial update
     this._updateExploredStatus();
@@ -631,7 +643,6 @@ const graphHook = {
     };
     window.addEventListener("resize", this._onViewportResize);
     this._onViewportResize();
-    this._syncPresentationState({ force: true });
 
     // Handle incremental label updates for streaming titles without full graph reloads
     this.handleEvent("update_node_label", ({ id, label }) => {
@@ -1207,7 +1218,11 @@ const graphHook = {
     }
   },
 
-  _buildPresentationElements(ids, graphStr = this.el.dataset.graph) {
+  _buildPresentationElements(
+    ids,
+    graphStr = this.el.dataset.graph,
+    positionSource = null,
+  ) {
     const keepIds = new Set((ids || []).map((id) => String(id)));
 
     return this._parseGraphElements(graphStr).reduce((acc, el) => {
@@ -1243,12 +1258,69 @@ const graphHook = {
         delete next.data.parent;
       }
 
+      if (
+        positionSource &&
+        typeof positionSource.getElementById === "function" &&
+        next.data.id
+      ) {
+        const existing = positionSource.getElementById(String(next.data.id));
+
+        if (existing && existing.length > 0) {
+          const pos = existing.position();
+          if (pos && Number.isFinite(pos.x) && Number.isFinite(pos.y)) {
+            next.position = { x: pos.x, y: pos.y };
+          }
+        }
+      }
+
       acc.push(next);
       return acc;
     }, []);
   },
 
-  _setPresentationHighlights(ids) {
+  _initializePresentationState(mode, ids) {
+    if (!this.cy) return;
+
+    if (mode === "presenting" && ids.length > 0) {
+      this._presentationIds = ids;
+      this._presentationFiltered = true;
+      this._setDepthToggleOverlayVisible(false);
+      this._setPresentationHighlights(ids, { renderBadges: false });
+      this._schedulePresentationViewportFit();
+      return;
+    }
+
+    if (mode === "setup" && ids.length > 0) {
+      this._presentationFiltered = false;
+      this._setPresentationHighlights(ids);
+      return;
+    }
+
+    this._presentationFiltered = false;
+    this._presentationIds = null;
+    this._clearPresentationHighlights();
+  },
+
+  _schedulePresentationViewportFit() {
+    if (!this.cy) return;
+
+    let finalized = false;
+    const finalizePresentationViewport = () => {
+      if (finalized || !this.cy) return;
+      finalized = true;
+      this._fitPresentationViewport();
+    };
+
+    try {
+      this.cy.one("layoutstop", () => {
+        requestAnimationFrame(finalizePresentationViewport);
+      });
+    } catch (_e) {}
+
+    setTimeout(finalizePresentationViewport, 250);
+  },
+
+  _setPresentationHighlights(ids, { renderBadges = true } = {}) {
     if (!this.cy) return;
 
     try {
@@ -1265,7 +1337,9 @@ const graphHook = {
         }
       });
 
-      this._renderPresentationBadges();
+      if (renderBadges) {
+        this._renderPresentationBadges();
+      }
     } catch (_e) {}
   },
 
@@ -1279,26 +1353,37 @@ const graphHook = {
 
     if (visibleNodes.length === 0) return;
 
+    const fitViewport =
+      typeof this.cy.getFitViewport === "function"
+        ? this.cy.getFitViewport(visibleNodes, 60)
+        : null;
+
+    if (!fitViewport || !fitViewport.pan || !Number.isFinite(fitViewport.zoom)) {
+      this.cy.animate({
+        fit: { eles: visibleNodes, padding: 60 },
+        duration: 400,
+        easing: "ease-in-out-quad",
+        complete: () => {
+          this._forceGraphRedraw();
+          this._renderPresentationBadges();
+        },
+      });
+      return;
+    }
+
+    const { dx, dy } = this._getOverlayOffsets();
+
     this.cy.animate({
-      fit: { eles: visibleNodes, padding: 60 },
+      zoom: fitViewport.zoom,
+      pan: {
+        x: fitViewport.pan.x + dx,
+        y: fitViewport.pan.y + dy,
+      },
       duration: 400,
       easing: "ease-in-out-quad",
       complete: () => {
-        const { dx, dy } = this._getOverlayOffsets();
-        if (dx !== 0 || dy !== 0) {
-          this.cy.animate({
-            panBy: { x: dx, y: dy },
-            duration: 200,
-            easing: "ease-in-out-quad",
-            complete: () => {
-              this._forceGraphRedraw();
-              this._renderPresentationBadges();
-            },
-          });
-        } else {
-          this._forceGraphRedraw();
-          this._renderPresentationBadges();
-        }
+        this._forceGraphRedraw();
+        this._renderPresentationBadges();
       },
     });
   },
@@ -1327,12 +1412,21 @@ const graphHook = {
     overlay.style.display = visible ? "" : "none";
   },
 
-  _recreateCy(elements) {
+  _recreateCy(elements, options = {}) {
     const currentNode = this.el.dataset.node;
     const graphId = this.el.dataset.graphId;
     const viewMode = localStorage.getItem("graph_view_mode") || "spaced";
+    const previousZoom =
+      options.preserveViewport && this.cy ? this.cy.zoom() : null;
+    const previousPan =
+      options.preserveViewport && this.cy ? this.cy.pan() : null;
 
     if (this.cy) {
+      if (typeof this.cy.cleanupDepthOverlay === "function") {
+        try {
+          this.cy.cleanupDepthOverlay();
+        } catch (_e) {}
+      }
       try {
         this.cy.destroy();
       } catch (_e) {}
@@ -1349,11 +1443,24 @@ const graphHook = {
       currentNode,
       viewMode,
       graphId,
+      options,
     );
 
     try {
       this.cy._ownerHook = this;
     } catch (_e) {}
+
+    if (
+      options.preserveViewport &&
+      this.cy &&
+      previousZoom != null &&
+      previousPan != null
+    ) {
+      try {
+        this.cy.zoom(previousZoom);
+        this.cy.pan(previousPan);
+      } catch (_e) {}
+    }
 
     if (this.cy && this._onCyPanZoom) {
       try {
@@ -1373,17 +1480,14 @@ const graphHook = {
     try {
       this._presentationIds = ids;
       this._presentationFiltered = true;
-      this._recreateCy(this._buildPresentationElements(ids));
-      this._setDepthToggleOverlayVisible(false);
-      this._setPresentationHighlights(ids);
-
-      this._layoutRunning = true;
-      layoutGraph(this.cy, {}, () => {
-        this._layoutRunning = false;
-        this._forceGraphRedraw();
-        this._renderPresentationBadges();
-        this._fitPresentationViewport();
+      const currentCy = this.cy;
+      this._recreateCy(this._buildPresentationElements(ids, undefined, currentCy), {
+        layoutName: "preset",
+        preserveViewport: true,
       });
+      this._setDepthToggleOverlayVisible(false);
+      this._setPresentationHighlights(ids, { renderBadges: false });
+      this._schedulePresentationViewportFit();
     } catch (_e) {}
   },
 
