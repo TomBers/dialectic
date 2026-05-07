@@ -164,7 +164,7 @@ defmodule DialecticWeb.SelectionActionsComp do
                 class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-700"
                 aria-label="Close selection actions"
               >
-                <.icon name="hero-x-mark" class="h-4.5 w-4.5" />
+                <.icon name="hero-x-mark" class="h-[18px] w-[18px]" />
               </button>
             </div>
 
