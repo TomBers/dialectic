@@ -299,7 +299,7 @@
         <%= if @presentation_mode != :presenting do %>
           <div class="pointer-events-none absolute left-4 top-4 z-10 hidden items-center gap-2 rounded-full border border-indigo-200/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm ring-1 ring-white/80 lg:inline-flex">
             <.icon name="hero-cursor-arrow-rays" class="h-4 w-4 text-indigo-500" />
-            <span>Click any box to open it in the reader</span>
+            <span>Click a box to open it in the reader</span>
           </div>
         <% end %>
         <div id="cy-inner" class="h-full w-full relative" phx-update="ignore"></div>

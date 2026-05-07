@@ -130,7 +130,7 @@ defmodule DialecticWeb.OriginOnboardingComp do
             <div>
               <p class="text-sm font-semibold text-gray-900">Select text for precision</p>
               <p class="mt-1 text-xs text-gray-600">
-                Highlight a phrase when you want a narrower follow-up or a saved highlight.
+                Select any word or phrase in a node to create a highlight, save it, or ask a narrower follow-up.
               </p>
             </div>
           </div>

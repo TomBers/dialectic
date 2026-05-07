@@ -123,7 +123,7 @@ defmodule DialecticWeb.DocumentMenuComp do
             <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800">
               <.icon name="hero-academic-cap" class="w-3.5 h-3.5" /> How to use
             </span>
-            <span class="text-[10px] text-emerald-700">Open guide</span>
+            <span class="text-[10px] text-emerald-700">Tips + highlights</span>
           </button>
 
           <div class="space-y-1.5">
@@ -184,7 +184,7 @@ defmodule DialecticWeb.DocumentMenuComp do
               <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-800">
                 <.icon name="hero-bookmark" class="w-3.5 h-3.5" /> Highlights
               </span>
-              <span class="text-[10px] text-amber-700">Saved excerpts</span>
+              <span class="text-[10px] text-amber-700">Words + phrases</span>
             </button>
           </div>
 
