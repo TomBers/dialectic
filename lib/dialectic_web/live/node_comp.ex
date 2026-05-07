@@ -135,7 +135,7 @@ defmodule DialecticWeb.NodeComp do
                       </span>
                     </h3>
                     <div
-                      class="selection-content w-full px-1 sm:px-2 pb-4"
+                      class="selection-content w-full px-1 sm:px-2 pb-2"
                       data-children={length(@node.children)}
                       id={"list-detector-" <> @node.id}
                     >
@@ -146,6 +146,16 @@ defmodule DialecticWeb.NodeComp do
                         data-body-only="true"
                       >
                       </div>
+                    </div>
+
+                    <div class="mt-2 flex items-start gap-2 rounded-xl border border-amber-200/80 bg-amber-50/80 px-3 py-2 text-sm text-amber-900">
+                      <.icon
+                        name="hero-cursor-arrow-rays"
+                        class="mt-0.5 h-4 w-4 shrink-0 text-amber-600"
+                      />
+                      <p class="leading-5">
+                        Highlight any word or phrase above to ask AI for a more specific answer.
+                      </p>
                     </div>
                   </article>
 

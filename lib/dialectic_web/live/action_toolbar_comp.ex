@@ -98,7 +98,7 @@ defmodule DialecticWeb.ActionToolbarComp do
   def render(assigns) do
     ~H"""
     <div
-      class="mt-6 rounded-[1.9rem] border border-slate-200/80 bg-gradient-to-br from-white via-sky-50/70 to-indigo-50/70 p-4 shadow-[0_18px_40px_rgba(15,23,42,0.06)] sm:mt-8 sm:p-5"
+      class="mt-3 rounded-[1.9rem] border border-slate-200/80 bg-gradient-to-br from-white via-sky-50/70 to-indigo-50/70 p-4 shadow-[0_18px_40px_rgba(15,23,42,0.06)] sm:mt-4 sm:p-5"
       data-external="true"
       data-role="action-toolbar"
     >
