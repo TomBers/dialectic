@@ -465,12 +465,9 @@ defmodule DialecticWeb.ShareModalComp do
     graph = assigns.graph_struct
     node = assigns[:share_node] && assigns[:selected_node]
     base = DialecticWeb.Endpoint.url()
-    path = "/g/#{graph.slug}"
 
     params =
       []
-      |> then(fn p -> if !graph.is_public, do: [{"token", graph.share_token} | p], else: p end)
-      |> then(fn p -> if node, do: [{"node", Map.get(node, :id, "")} | p], else: p end)
       |> then(fn p ->
         if assigns[:presentation_mode] == :presenting and
              is_list(assigns[:presentation_slide_ids]) and
@@ -490,9 +487,8 @@ defmodule DialecticWeb.ShareModalComp do
         end
       end)
 
-    case params do
-      [] -> "#{base}#{path}"
-      _ -> "#{base}#{path}?#{URI.encode_query(params)}"
-    end
+    path = graph_editor_path(graph, if(node, do: Map.get(node, :id, "")), params)
+
+    "#{base}#{path}"
   end
 end
