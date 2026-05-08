@@ -201,7 +201,7 @@ defmodule DialecticWeb.InspirationLive do
             <div :if={!@loading and @questions != []} class="grid gap-4 max-w-3xl mx-auto">
               <div
                 :for={question <- @questions}
-                class="group relative bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:border-blue-300 hover:shadow-md transition-all cursor-pointer transform hover:-translate-y-1"
+                class="question-card group relative bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:border-blue-300 hover:shadow-md transition-all cursor-pointer transform hover:-translate-y-1"
                 phx-click={JS.push("select_question", value: %{question: question})}
               >
                 <div class="flex justify-between items-start gap-4">

@@ -26,7 +26,26 @@ defmodule Dialectic.Highlights.HighlightLink do
     timestamps(type: :utc_datetime, updated_at: false)
   end
 
-  @valid_link_types ~w(explain question pro con related_idea deep_dive comment)
+  @valid_link_types ~w(
+    explain
+    question
+    pro
+    con
+    related_idea
+    comment
+    clarify
+    assumptions
+    counterexample
+    implications
+    blind_spots
+    says_who
+    who_disagrees
+    analogy
+    steel_man
+    what_if
+    simplify
+    second_order
+  )
 
   @doc """
   Valid link types for highlights:
@@ -35,8 +54,19 @@ defmodule Dialectic.Highlights.HighlightLink do
   - `pro`: A supporting argument (thesis) node
   - `con`: A counter argument (antithesis) node
   - `related_idea`: A related ideas node
-  - `deep_dive`: A deep dive exploration node
   - `comment`: A user comment on the selection
+  - `clarify`: A conceptual clarification of the selection
+  - `assumptions`: Assumptions surfaced from the selection
+  - `counterexample`: A test/counterexample for the selection
+  - `implications`: Implications traced from the selection
+  - `blind_spots`: Missing perspectives related to the selection
+  - `says_who`: Source/evidence examination of the selection
+  - `who_disagrees`: Dissenting perspectives on the selection
+  - `analogy`: An analogy built from the selection
+  - `steel_man`: The strongest reading of the selection
+  - `what_if`: A counterfactual applied to the selection
+  - `simplify`: A plain-language rewrite of the selection
+  - `second_order`: Second-order effects derived from the selection
   """
   def valid_link_types, do: @valid_link_types
 

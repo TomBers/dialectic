@@ -927,7 +927,7 @@ defmodule DialecticWeb.HomeLive do
           </div>
           <div class="space-y-1.5">
             <%= for item <- @items do %>
-              <div class="relative">
+              <div class="curated-grid-item relative">
                 <DialecticWeb.PageHtml.GraphComp.render
                   title={item.graph.title}
                   is_public={item.graph.is_public}

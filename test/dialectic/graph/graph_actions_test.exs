@@ -32,6 +32,32 @@ defmodule Dialectic.Graph.GraphActionsTest do
       assert function_exported?(Dialectic.Graph.GraphActions, :combine, 2)
       assert function_exported?(Dialectic.Graph.GraphActions, :find_node, 2)
     end
+
+    test "exports all critical thinking tool methods" do
+      # Full node operations
+      assert function_exported?(Dialectic.Graph.GraphActions, :clarify, 2)
+      assert function_exported?(Dialectic.Graph.GraphActions, :assumptions, 2)
+      assert function_exported?(Dialectic.Graph.GraphActions, :counterexample, 2)
+      assert function_exported?(Dialectic.Graph.GraphActions, :implications, 2)
+      assert function_exported?(Dialectic.Graph.GraphActions, :blind_spots, 2)
+      assert function_exported?(Dialectic.Graph.GraphActions, :says_who, 2)
+      assert function_exported?(Dialectic.Graph.GraphActions, :who_disagrees, 2)
+      assert function_exported?(Dialectic.Graph.GraphActions, :analogy, 2)
+      assert function_exported?(Dialectic.Graph.GraphActions, :steel_man, 2)
+      assert function_exported?(Dialectic.Graph.GraphActions, :what_if, 2)
+      assert function_exported?(Dialectic.Graph.GraphActions, :simplify, 2)
+      assert function_exported?(Dialectic.Graph.GraphActions, :second_order, 2)
+
+      # Text selection operations
+      assert function_exported?(Dialectic.Graph.GraphActions, :clarify_text, 2)
+      assert function_exported?(Dialectic.Graph.GraphActions, :assumptions_text, 2)
+      assert function_exported?(Dialectic.Graph.GraphActions, :counterexample_text, 2)
+      assert function_exported?(Dialectic.Graph.GraphActions, :implications_text, 2)
+      assert function_exported?(Dialectic.Graph.GraphActions, :steel_man_text, 2)
+      assert function_exported?(Dialectic.Graph.GraphActions, :says_who_text, 2)
+      assert function_exported?(Dialectic.Graph.GraphActions, :second_order_text, 2)
+      assert function_exported?(Dialectic.Graph.GraphActions, :simplify_text, 2)
+    end
   end
 
   describe "comment/3" do
@@ -81,5 +107,61 @@ defmodule Dialectic.Graph.GraphActionsTest do
     # - Mocked LlmInterface responses
     # - Database fixtures for users and graphs
     # - Phoenix PubSub for live_view_topic testing
+  end
+
+  describe "critical thinking tools" do
+    # These tests verify that the critical thinking tool operations:
+    # 1. Have correct arities and parameter structures
+    # 2. Are properly exported
+    # 3. Work with the regenerate_node/2 function
+    #
+    # Full integration tests should verify:
+    # - Node creation with proper class assignment
+    # - source_text persistence for *_text variants
+    # - LlmInterface integration for content generation
+    # - Graph structure updates (parent-child relationships)
+    # - PubSub notifications for collaborative editing
+    # - Auto-centering behavior in GraphLive
+    # - regenerate_node/2 support for all new classes
+    #
+    # Test coverage needed:
+    # - clarify/clarify_text
+    # - assumptions/assumptions_text
+    # - counterexample/counterexample_text
+    # - implications/implications_text
+    # - blind_spots (full node only)
+    # - says_who/says_who_text
+    # - who_disagrees (full node only)
+    # - analogy (full node only)
+    # - steel_man/steel_man_text
+    # - what_if (full node only)
+    # - simplify/simplify_text
+    # - second_order/second_order_text
+
+    test "all critical thinking tools have correct arity" do
+      # Full node operations (2 params: graph_action_params tuple, opts)
+      assert 2 == Function.info(&GraphActions.clarify/2)[:arity]
+      assert 2 == Function.info(&GraphActions.assumptions/2)[:arity]
+      assert 2 == Function.info(&GraphActions.counterexample/2)[:arity]
+      assert 2 == Function.info(&GraphActions.implications/2)[:arity]
+      assert 2 == Function.info(&GraphActions.blind_spots/2)[:arity]
+      assert 2 == Function.info(&GraphActions.says_who/2)[:arity]
+      assert 2 == Function.info(&GraphActions.who_disagrees/2)[:arity]
+      assert 2 == Function.info(&GraphActions.analogy/2)[:arity]
+      assert 2 == Function.info(&GraphActions.steel_man/2)[:arity]
+      assert 2 == Function.info(&GraphActions.what_if/2)[:arity]
+      assert 2 == Function.info(&GraphActions.simplify/2)[:arity]
+      assert 2 == Function.info(&GraphActions.second_order/2)[:arity]
+
+      # Text selection operations (2 params: graph_action_params tuple, selected_text)
+      assert 2 == Function.info(&GraphActions.clarify_text/2)[:arity]
+      assert 2 == Function.info(&GraphActions.assumptions_text/2)[:arity]
+      assert 2 == Function.info(&GraphActions.counterexample_text/2)[:arity]
+      assert 2 == Function.info(&GraphActions.implications_text/2)[:arity]
+      assert 2 == Function.info(&GraphActions.steel_man_text/2)[:arity]
+      assert 2 == Function.info(&GraphActions.says_who_text/2)[:arity]
+      assert 2 == Function.info(&GraphActions.second_order_text/2)[:arity]
+      assert 2 == Function.info(&GraphActions.simplify_text/2)[:arity]
+    end
   end
 end

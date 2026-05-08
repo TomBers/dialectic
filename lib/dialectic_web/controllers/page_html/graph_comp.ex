@@ -10,7 +10,7 @@ defmodule DialecticWeb.PageHtml.GraphComp do
 
     ~H"""
     <div class={[
-      "relative block group h-full rounded-lg ring-1 transition-colors flex flex-col",
+      "graph-card relative block group h-full rounded-lg ring-1 transition-colors flex flex-col",
       container_class(@variant)
     ]}>
       <.link navigate={@link} class="absolute inset-0 z-0 rounded-lg">
@@ -70,15 +70,6 @@ defmodule DialecticWeb.PageHtml.GraphComp do
                 badge_class(@variant, :seedling)
               ]}>
                 <.icon name="hero-sparkles" class="w-3 h-3 mr-1" /> Seedling
-              </span>
-            <% end %>
-
-            <%= if @node_count > 20 do %>
-              <span class={[
-                "inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold ring-1 ring-inset",
-                badge_class(@variant, :deep_dive)
-              ]}>
-                <.icon name="hero-book-open" class="w-3 h-3 mr-1" /> Deep Dive
               </span>
             <% end %>
 
@@ -238,24 +229,12 @@ defmodule DialecticWeb.PageHtml.GraphComp do
     "bg-gradient-to-r from-emerald-50 to-teal-50 text-emerald-700 ring-emerald-600/20"
   end
 
-  defp badge_class(:light, :deep_dive) do
-    "bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 ring-blue-700/10"
-  end
-
   defp badge_class(:home, :seedling) do
     "bg-emerald-300/20 text-emerald-100 ring-emerald-200/40"
   end
 
-  defp badge_class(:home, :deep_dive) do
-    "bg-cyan-300/20 text-cyan-100 ring-cyan-200/40"
-  end
-
   defp badge_class(_glass, :seedling) do
     "bg-emerald-500/15 text-emerald-100 ring-emerald-300/30"
-  end
-
-  defp badge_class(_glass, :deep_dive) do
-    "bg-blue-500/15 text-blue-100 ring-blue-300/30"
   end
 
   defp footer_border_class(:light), do: "border-t border-gray-50"

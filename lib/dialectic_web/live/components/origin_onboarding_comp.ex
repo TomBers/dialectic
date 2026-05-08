@@ -10,36 +10,34 @@ defmodule DialecticWeb.OriginOnboardingComp do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="space-y-5">
+    <div class="space-y-4">
       <section class="rounded-2xl border border-indigo-100 bg-indigo-50/60 p-5 sm:p-6">
         <p class="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wide text-indigo-700 ring-1 ring-indigo-200">
           Quick start
         </p>
-        <h4 class="mt-4 text-xl font-semibold text-gray-900">
-          Branch from one good node at a time
-        </h4>
+        <h4 class="mt-4 text-xl font-semibold text-gray-900">This is a map of ideas</h4>
         <p class="mt-2 text-sm text-gray-700">
-          This page turns each answer into a connected node. Read the selected node, then
-          use the actions underneath to decide what should grow next.
+          Each box is one idea. Click a box to read it. Then either continue it, challenge it,
+          or save part of it.
         </p>
 
         <div class="mt-5 grid gap-3 sm:grid-cols-3">
           <div class="rounded-xl border border-white/80 bg-white/80 p-4">
-            <p class="text-sm font-semibold text-gray-900">1. Read the current node</p>
+            <p class="text-sm font-semibold text-gray-900">1. Click one box</p>
             <p class="mt-1 text-xs text-gray-600">
-              Click a node, read it, and only then decide what needs a follow-up.
+              Read one idea first.
             </p>
           </div>
           <div class="rounded-xl border border-white/80 bg-white/80 p-4">
-            <p class="text-sm font-semibold text-gray-900">2. Ask or Post</p>
+            <p class="text-sm font-semibold text-gray-900">2. Pick one action</p>
             <p class="mt-1 text-xs text-gray-600">
-              Ask for a new AI branch, or Post your own interpretation into the map.
+              Ask, Post, Pro | Con, Related, or Blend.
             </p>
           </div>
           <div class="rounded-xl border border-white/80 bg-white/80 p-4">
-            <p class="text-sm font-semibold text-gray-900">3. Save what matters</p>
+            <p class="text-sm font-semibold text-gray-900">3. Select text when needed</p>
             <p class="mt-1 text-xs text-gray-600">
-              Highlight useful passages, star important nodes, then share when the grid is ready.
+              Highlight a short phrase for more precise tools.
             </p>
           </div>
         </div>
@@ -47,10 +45,7 @@ defmodule DialecticWeb.OriginOnboardingComp do
 
       <section class="grid gap-4 lg:grid-cols-2">
         <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-          <p class="inline-flex items-center rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-sky-700 ring-1 ring-sky-200">
-            Bottom composer
-          </p>
-          <h5 class="mt-4 text-lg font-semibold text-gray-900">Ask and Post are different</h5>
+          <h5 class="text-lg font-semibold text-gray-900">Two main ways to add something</h5>
 
           <div class="mt-4 space-y-3">
             <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
@@ -59,7 +54,7 @@ defmodule DialecticWeb.OriginOnboardingComp do
                 <div>
                   <p class="text-sm font-semibold text-gray-900">Ask</p>
                   <p class="mt-1 text-xs text-gray-600">
-                    Use when you want the AI to continue from the selected node with a new answer.
+                    Let the AI continue the idea.
                   </p>
                 </div>
               </div>
@@ -74,7 +69,7 @@ defmodule DialecticWeb.OriginOnboardingComp do
                 <div>
                   <p class="text-sm font-semibold text-gray-900">Post</p>
                   <p class="mt-1 text-xs text-gray-600">
-                    Use when you want your own claim, objection, example, or note inside the map.
+                    Add your own thought to the map.
                   </p>
                 </div>
               </div>
@@ -83,22 +78,14 @@ defmodule DialecticWeb.OriginOnboardingComp do
         </div>
 
         <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-          <p class="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-700 ring-1 ring-amber-200">
-            Under the reader
-          </p>
-          <h5 class="mt-4 text-lg font-semibold text-gray-900">
-            Use node actions after you read
-          </h5>
-          <p class="mt-2 text-xs text-gray-600">
-            These actions now sit directly under the selected node instead of in the bottom bar.
-          </p>
+          <h5 class="text-lg font-semibold text-gray-900">What the buttons do</h5>
 
-          <div class="mt-4 space-y-3">
+          <div class="mt-4 grid gap-3">
             <div class="flex items-start gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4">
               <.icon name="hero-scale" class="mt-0.5 h-5 w-5 shrink-0 text-emerald-500" />
               <div>
                 <p class="text-sm font-semibold text-gray-900">Pro | Con</p>
-                <p class="mt-1 text-xs text-gray-600">Test a claim from both sides.</p>
+                <p class="mt-1 text-xs text-gray-600">See both sides.</p>
               </div>
             </div>
 
@@ -106,9 +93,7 @@ defmodule DialecticWeb.OriginOnboardingComp do
               <.icon name="hero-light-bulb" class="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
               <div>
                 <p class="text-sm font-semibold text-gray-900">Related</p>
-                <p class="mt-1 text-xs text-gray-600">
-                  Find nearby ideas, counterpoints, or adjacent angles.
-                </p>
+                <p class="mt-1 text-xs text-gray-600">Find nearby ideas.</p>
               </div>
             </div>
 
@@ -116,57 +101,31 @@ defmodule DialecticWeb.OriginOnboardingComp do
               <.icon name="hero-arrows-pointing-in" class="mt-0.5 h-5 w-5 shrink-0 text-violet-500" />
               <div>
                 <p class="text-sm font-semibold text-gray-900">Blend</p>
-                <p class="mt-1 text-xs text-gray-600">Synthesize two nodes into one shared view.</p>
+                <p class="mt-1 text-xs text-gray-600">Combine two ideas.</p>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4">
+              <.icon name="hero-chevron-down" class="mt-0.5 h-5 w-5 shrink-0 text-slate-500" />
+              <div>
+                <p class="text-sm font-semibold text-gray-900">Advanced tools</p>
+                <p class="mt-1 text-xs text-gray-600">Go deeper when you need to.</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4">
+              <.icon name="hero-magnifying-glass" class="mt-0.5 h-5 w-5 shrink-0 text-gray-500" />
+              <div>
+                <p class="text-sm font-semibold text-gray-900">Select text</p>
+                <p class="mt-1 text-xs text-gray-600">Work on one exact phrase.</p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section class="grid gap-4 sm:grid-cols-3">
-        <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
-          <div class="flex items-start gap-3">
-            <.icon name="hero-magnifying-glass" class="mt-0.5 h-5 w-5 shrink-0 text-gray-500" />
-            <div>
-              <p class="text-sm font-semibold text-gray-900">Select text for precision</p>
-              <p class="mt-1 text-xs text-gray-600">
-                Select any word or phrase in a node to create a highlight, save it, or ask a narrower follow-up.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
-          <div class="flex items-start gap-3">
-            <.icon name="hero-bookmark" class="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
-            <div>
-              <p class="text-sm font-semibold text-gray-900">Keep your place</p>
-              <p class="mt-1 text-xs text-gray-600">
-                Use highlights and notes to keep the grid useful when you come back later.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <a
-          href="/intro/how"
-          class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 transition hover:bg-emerald-100"
-        >
-          <div class="flex items-start gap-3">
-            <.icon name="hero-book-open" class="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
-            <div>
-              <p class="text-sm font-semibold text-gray-900">Open the full guide</p>
-              <p class="mt-1 text-xs text-gray-600">
-                See screenshots, example prompts, and a fuller breakdown of every control.
-              </p>
-            </div>
-          </div>
-        </a>
-      </section>
-
       <div class="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
         <p class="text-xs text-gray-600">
-          Navigation: drag to pan, scroll to zoom, click any node to focus it.
+          Drag to move around. Scroll to zoom. Click any box to focus it.
         </p>
       </div>
     </div>

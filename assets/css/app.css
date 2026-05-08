@@ -12,6 +12,59 @@
     display: none; /* Chrome, Safari, Opera */
 }
 
+/* Performance: Skip rendering off-screen content */
+.content-visibility-auto {
+    content-visibility: auto;
+}
+
+/* Infographic gallery items - large images with overlays */
+.infographic-item {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 400px; /* Approximate height of gallery items */
+}
+
+/* Question cards in inspiration page */
+.question-card {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 120px; /* Approximate height of question cards */
+}
+
+/* Graph card components (used throughout) */
+.graph-card {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 140px; /* Approximate height of graph cards */
+}
+
+/* Note items in my graphs page */
+.note-item {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 100px; /* Approximate height of note cards */
+}
+
+/* Curated grid items on home page */
+.curated-grid-item {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 140px; /* Approximate height of curated items */
+}
+
+/* Outline navigation items - sidebar and mobile */
+.outline-nav-item {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 60px; /* Approximate height of outline nav items */
+}
+
+/* Next choice cards in outline reading */
+.next-choice-card {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 180px; /* Approximate height of next choice cards */
+}
+
+/* Branch comparison cards in outline reading */
+.branch-compare-card {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 180px; /* Approximate height of branch cards */
+}
+
 :root {
     font-family: Inter, sans-serif;
     font-feature-settings:
@@ -1176,17 +1229,22 @@ button[type="submit"]:active {
     background: #f3f4f6;
 }
 
-#graph-layout[data-reading-density="compact"] .reading-density-btn[data-reading-density-option="compact"],
-#graph-layout[data-reading-density="comfortable"] .reading-density-btn[data-reading-density-option="comfortable"],
-#graph-layout[data-reading-density="large"] .reading-density-btn[data-reading-density-option="large"] {
+#graph-layout[data-reading-density="compact"]
+    .reading-density-btn[data-reading-density-option="compact"],
+#graph-layout[data-reading-density="comfortable"]
+    .reading-density-btn[data-reading-density-option="comfortable"],
+#graph-layout[data-reading-density="large"]
+    .reading-density-btn[data-reading-density-option="large"] {
     background: #eef2ff;
     border-color: #c7d2fe;
     color: #3730a3;
     box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.2);
 }
 
-#graph-layout[data-reading-font="sans"] .reading-font-btn[data-reading-font-option="sans"],
-#graph-layout[data-reading-font="serif"] .reading-font-btn[data-reading-font-option="serif"] {
+#graph-layout[data-reading-font="sans"]
+    .reading-font-btn[data-reading-font-option="sans"],
+#graph-layout[data-reading-font="serif"]
+    .reading-font-btn[data-reading-font-option="serif"] {
     background: #eef2ff;
     border-color: #c7d2fe;
     color: #3730a3;
@@ -1205,7 +1263,10 @@ button[type="submit"]:active {
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    max-width: var(--rg-read-max-width, 68ch); /* optimal measure: ~60-75 characters per line */
+    max-width: var(
+        --rg-read-max-width,
+        68ch
+    ); /* optimal measure: ~60-75 characters per line */
     width: min(100%, var(--rg-read-max-width, 68ch));
     margin-inline: auto;
 }
