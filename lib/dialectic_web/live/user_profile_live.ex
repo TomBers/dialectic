@@ -293,13 +293,13 @@ defmodule DialecticWeb.UserProfileLive do
                 <%= if @is_own_profile? do %>
                   <.link
                     navigate={~p"/users/settings"}
-                    id="edit-profile-link"
+                    id="profile-settings-link"
                     class={[
                       "inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold shadow-sm transition",
                       theme_button_class(@theme)
                     ]}
                   >
-                    <.icon name="hero-pencil-square" class="w-4 h-4" /> Edit Profile
+                    <.icon name="hero-cog-6-tooth" class="w-4 h-4" /> Account Settings
                   </.link>
                 <% end %>
               </div>

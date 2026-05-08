@@ -107,7 +107,7 @@ defmodule DialecticWeb.ActionToolbarComp do
   def render(assigns) do
     ~H"""
     <div
-      class="mt-6 rounded-[1.9rem] border border-slate-200/80 bg-gradient-to-br from-white via-sky-50/70 to-indigo-50/70 p-4 shadow-[0_18px_40px_rgba(15,23,42,0.06)] sm:mt-8 sm:p-5"
+      class="mt-3 rounded-[1.9rem] border border-slate-200/80 bg-gradient-to-br from-white via-sky-50/70 to-indigo-50/70 p-4 shadow-[0_18px_40px_rgba(15,23,42,0.06)] sm:mt-4 sm:p-5"
       data-external="true"
       data-role="action-toolbar"
     >
@@ -143,7 +143,7 @@ defmodule DialecticWeb.ActionToolbarComp do
         <div class="grid gap-3 sm:grid-cols-3">
           <button
             type="button"
-            class="group flex h-full flex-col items-start gap-3 rounded-[1.35rem] border border-emerald-200/80 bg-gradient-to-br from-white to-emerald-50/70 px-4 py-3.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+            class="group flex h-full flex-col items-start gap-3 rounded-[1.35rem] border-2 border-emerald-200/80 bg-gradient-to-br from-white to-emerald-50/70 px-4 py-3.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-md active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
             phx-click="node_branch"
             phx-value-id={@node && @node.id}
             disabled={is_nil(@graph_id)}
@@ -158,11 +158,18 @@ defmodule DialecticWeb.ActionToolbarComp do
                 See the strongest case for it and against it.
               </span>
             </span>
+            <span class="mt-auto flex w-full items-center justify-between border-t border-emerald-200/80 pt-2 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">
+              <span>Choose</span>
+              <.icon
+                name="hero-arrow-right"
+                class="h-4 w-4 transition-transform group-hover:translate-x-0.5"
+              />
+            </span>
           </button>
 
           <button
             type="button"
-            class="group flex h-full flex-col items-start gap-3 rounded-[1.35rem] border border-violet-200/80 bg-gradient-to-br from-white to-violet-50/70 px-4 py-3.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+            class="group flex h-full flex-col items-start gap-3 rounded-[1.35rem] border-2 border-violet-200/80 bg-gradient-to-br from-white to-violet-50/70 px-4 py-3.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-md active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-violet-100 disabled:cursor-not-allowed disabled:opacity-50"
             phx-click={
               Phoenix.LiveView.JS.dispatch("toggle-panel",
                 to: "#graph-layout",
@@ -185,18 +192,25 @@ defmodule DialecticWeb.ActionToolbarComp do
                 Bring this point together with another and see what emerges.
               </span>
             </span>
+            <span class="mt-auto flex w-full items-center justify-between border-t border-violet-200/80 pt-2 text-xs font-semibold uppercase tracking-[0.14em] text-violet-700">
+              <span>Choose</span>
+              <.icon
+                name="hero-arrow-right"
+                class="h-4 w-4 transition-transform group-hover:translate-x-0.5"
+              />
+            </span>
           </button>
 
           <button
             type="button"
-            class="group flex h-full flex-col items-start gap-3 rounded-[1.35rem] border border-amber-200/80 bg-gradient-to-br from-white to-amber-50/70 px-4 py-3.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+            class="group flex h-full flex-col items-start gap-3 rounded-[1.35rem] border-2 border-orange-200/80 bg-gradient-to-br from-white to-orange-50/70 px-4 py-3.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-orange-300 hover:shadow-md active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:opacity-50"
             phx-click="node_related_ideas"
             phx-value-id={@node && @node.id}
             disabled={is_nil(@graph_id)}
             title="Find related ideas"
             data-action="related-ideas"
           >
-            <span class="inline-flex items-center justify-center rounded-xl bg-amber-100 p-2.5 text-amber-700 shadow-sm">
+            <span class="inline-flex items-center justify-center rounded-xl bg-orange-100 p-2.5 text-orange-700 shadow-sm">
               <.icon name="hero-light-bulb" class="h-5 w-5" />
             </span>
             <span class="space-y-1">
@@ -204,6 +218,13 @@ defmodule DialecticWeb.ActionToolbarComp do
               <span class="block text-sm leading-5 text-slate-600">
                 Pull in nearby ideas, comparisons, and useful directions to explore.
               </span>
+            </span>
+            <span class="mt-auto flex w-full items-center justify-between border-t border-orange-200/80 pt-2 text-xs font-semibold uppercase tracking-[0.14em] text-orange-700">
+              <span>Choose</span>
+              <.icon
+                name="hero-arrow-right"
+                class="h-4 w-4 transition-transform group-hover:translate-x-0.5"
+              />
             </span>
           </button>
         </div>

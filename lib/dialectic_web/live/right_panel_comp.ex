@@ -357,7 +357,14 @@ defmodule DialecticWeb.RightPanelComp do
               </div>
               <DialecticWeb.LockComp.render id="lock-graph" graph_struct={@graph_struct} />
               <button
-                phx-click="open_share_modal"
+                phx-click={
+                  Phoenix.LiveView.JS.dispatch("toggle-panel",
+                    to: "#graph-layout",
+                    detail: %{id: "right-panel"}
+                  )
+                  |> Phoenix.LiveView.JS.dispatch("collapse-document-menu", to: "#graph-layout")
+                  |> Phoenix.LiveView.JS.push("open_share_modal")
+                }
                 class="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors"
               >
                 <%= if @graph_struct.is_public do %>

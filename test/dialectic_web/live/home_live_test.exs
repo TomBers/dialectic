@@ -1,7 +1,9 @@
 defmodule DialecticWeb.HomeLiveTest do
   use DialecticWeb.ConnCase, async: true
 
+  alias Dialectic.Accounts
   import Dialectic.GraphFixtures
+  import Dialectic.AccountsFixtures
   import Phoenix.LiveViewTest
 
   test "renders mobile graph cards alongside the desktop table", %{conn: conn} do
@@ -55,5 +57,20 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(view, "#home-mobile-graph-#{graph.slug}")
     assert has_element?(view, "#home-mobile-graph-#{graph.slug} a", graph.title)
     assert has_element?(view, "#home-mobile-graph-#{graph.slug} a[aria-label]")
+  end
+
+  test "logged in users see profile entry in the header without a settings link", %{conn: conn} do
+    user = user_fixture()
+    {:ok, user} = Accounts.update_user_profile(user, %{username: "headerprofile"})
+
+    html =
+      conn
+      |> log_in_user(user)
+      |> get(~p"/")
+      |> html_response(200)
+
+    assert html =~ ~s(href="/u/headerprofile")
+    assert html =~ "My Profile"
+    refute html =~ ~s(href="/users/settings")
   end
 end

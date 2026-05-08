@@ -94,7 +94,7 @@ defmodule DialecticWeb.UserProfileLiveTest do
   end
 
   describe "own profile vs other profile" do
-    test "shows 'Edit Profile' link when viewing own profile", %{conn: conn} do
+    test "shows 'Account Settings' link when viewing own profile", %{conn: conn} do
       user = create_user_with_username("ownprofile")
 
       {:ok, _lv, html} =
@@ -102,12 +102,14 @@ defmodule DialecticWeb.UserProfileLiveTest do
         |> log_in_user(user)
         |> live(~p"/u/ownprofile")
 
-      assert html =~ "Edit Profile"
-      assert html =~ "edit-profile-link"
+      assert html =~ "Account Settings"
+      assert html =~ "profile-settings-link"
       assert html =~ "My Public Grids"
     end
 
-    test "does not show 'Edit Profile' link when viewing another user's profile", %{conn: conn} do
+    test "does not show 'Account Settings' link when viewing another user's profile", %{
+      conn: conn
+    } do
       _other_user = create_user_with_username("otheruser")
       viewer = user_fixture()
 
@@ -116,7 +118,7 @@ defmodule DialecticWeb.UserProfileLiveTest do
         |> log_in_user(viewer)
         |> live(~p"/u/otheruser")
 
-      refute html =~ "edit-profile-link"
+      refute html =~ "profile-settings-link"
       assert html =~ "Grids by otheruser"
     end
 

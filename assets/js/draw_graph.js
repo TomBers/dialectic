@@ -146,6 +146,7 @@ export function draw_graph(
   node,
   viewMode = "spaced",
   graphId = null,
+  options = {},
 ) {
   // Check if we have a small graph (2 nodes)
 
@@ -165,12 +166,19 @@ export function draw_graph(
       : layoutConfig.baseLayout;
 
   // Create a modified layout config for small graphs
-  const layoutOptions = {
-    ...baseLayoutConfig,
-    rankDir: graphDirection,
-    // For small graphs, use a larger padding to prevent excessive zoom
-    padding: isSmallGraph ? 200 : baseLayoutConfig.padding,
-  };
+  const layoutOptions =
+    options.layoutName === "preset"
+      ? {
+          name: "preset",
+          fit: false,
+          padding: isSmallGraph ? 200 : baseLayoutConfig.padding,
+        }
+      : {
+          ...baseLayoutConfig,
+          rankDir: graphDirection,
+          // For small graphs, use a larger padding to prevent excessive zoom
+          padding: isSmallGraph ? 200 : baseLayoutConfig.padding,
+        };
 
   const cy = cytoscape({
     container: graph, // container to render in
@@ -1041,6 +1049,7 @@ export function draw_graph(
       _depthToggleRafPending = true;
       requestAnimationFrame(() => {
         _depthToggleRafPending = false;
+        if (!cy || (typeof cy.destroyed === "function" && cy.destroyed())) return;
         _updateDepthTogglePositions(cy);
       });
     }
@@ -1060,6 +1069,7 @@ export function draw_graph(
       }
       cy._depthToggleOverlay = null;
       cy._depthToggleButtons = null;
+      _depthToggleRafPending = false;
     } catch (_e) {}
   };
 
@@ -1815,7 +1825,13 @@ function _rebuildDepthToggleOverlays(cy, container) {
  * Called on every Cytoscape render frame so buttons track pan/zoom smoothly.
  */
 function _updateDepthTogglePositions(cy) {
-  if (!cy._depthToggleButtons) return;
+  if (
+    !cy ||
+    (typeof cy.destroyed === "function" && cy.destroyed()) ||
+    !cy._depthToggleButtons
+  ) {
+    return;
+  }
 
   const dir = localStorage.getItem("graph_direction") || "TB";
   const zoom = typeof cy.zoom === "function" ? cy.zoom() : 1;

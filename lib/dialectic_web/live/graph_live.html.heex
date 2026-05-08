@@ -33,7 +33,10 @@
       <%!-- Right: share + exit buttons --%>
       <div class="flex items-center gap-2 shrink-0">
         <button
-          phx-click="open_share_modal"
+          phx-click={
+            JS.dispatch("collapse-document-menu", to: "#graph-layout")
+            |> JS.push("open_share_modal")
+          }
           class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-gray-300 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-full border border-gray-600 transition-colors"
           title="Share this presentation"
         >
@@ -285,6 +288,8 @@
         data-graph={@f_graph}
         data-node={if @node, do: @node.id, else: nil}
         data-operation={@graph_operation}
+        data-presentation-mode={@presentation_mode}
+        data-presentation-slide-ids={Jason.encode!(@presentation_slide_ids)}
         data-div="cy-inner"
         data-enter-shortcut="reader"
         data-ignore-inputs="true"
@@ -294,7 +299,7 @@
         <%= if @presentation_mode != :presenting do %>
           <div class="pointer-events-none absolute left-4 top-4 z-10 hidden items-center gap-2 rounded-full border border-indigo-200/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm ring-1 ring-white/80 lg:inline-flex">
             <.icon name="hero-cursor-arrow-rays" class="h-4 w-4 text-indigo-500" />
-            <span>Click any box to open it in the reader</span>
+            <span>Click a box to open it in the reader</span>
           </div>
         <% end %>
         <div id="cy-inner" class="h-full w-full relative" phx-update="ignore"></div>

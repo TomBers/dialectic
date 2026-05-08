@@ -4,7 +4,11 @@ defmodule DialecticWeb.ShareModalComp do
 
   @impl true
   def update(assigns, socket) do
-    socket = assign(socket, assigns)
+    socket =
+      socket
+      |> assign(assigns)
+      |> assign_new(:share_target, fn -> :editor end)
+      |> assign_new(:show_preview, fn -> true end)
 
     # Only run expensive DB queries (ensure_share_token, list_shares) when
     # the modal is actually visible. Every parent re-render (e.g. node click)
@@ -168,17 +172,20 @@ defmodule DialecticWeb.ShareModalComp do
                     <% end %>
                   </div>
 
-                  <%= if Map.get(@graph_struct.data || %{}, "preview_image") do %>
+                  <%= if Map.get(@graph_struct.data || %{}, "preview_image") || @show_preview do %>
+                    <% preview_image = Map.get(@graph_struct.data || %{}, "preview_image") %>
                     <div class="mt-4 border rounded-lg overflow-hidden shadow-sm bg-gray-50">
-                      <img
-                        src={@graph_struct.data["preview_image"]}
-                        alt="Graph Preview"
-                        class="w-full max-h-48 object-contain"
-                      />
-                    </div>
-                  <% else %>
-                    <div class="mt-4 flex items-center justify-center h-32 bg-gray-50 border border-dashed border-gray-300 rounded-lg text-gray-400 text-sm">
-                      <span class="animate-pulse">Generating preview...</span>
+                      <%= if preview_image do %>
+                        <img
+                          src={preview_image}
+                          alt="Graph Preview"
+                          class="w-full max-h-48 object-contain"
+                        />
+                      <% else %>
+                        <div class="mt-4 flex items-center justify-center h-32 bg-gray-50 border border-dashed border-gray-300 rounded-lg text-gray-400 text-sm">
+                          <span class="animate-pulse">Generating preview...</span>
+                        </div>
+                      <% end %>
                     </div>
                   <% end %>
                   
@@ -465,12 +472,9 @@ defmodule DialecticWeb.ShareModalComp do
     graph = assigns.graph_struct
     node = assigns[:share_node] && assigns[:selected_node]
     base = DialecticWeb.Endpoint.url()
-    path = "/g/#{graph.slug}"
 
     params =
       []
-      |> then(fn p -> if !graph.is_public, do: [{"token", graph.share_token} | p], else: p end)
-      |> then(fn p -> if node, do: [{"node", Map.get(node, :id, "")} | p], else: p end)
       |> then(fn p ->
         if assigns[:presentation_mode] == :presenting and
              is_list(assigns[:presentation_slide_ids]) and
@@ -490,9 +494,12 @@ defmodule DialecticWeb.ShareModalComp do
         end
       end)
 
-    case params do
-      [] -> "#{base}#{path}"
-      _ -> "#{base}#{path}?#{URI.encode_query(params)}"
-    end
+    path =
+      case assigns[:share_target] do
+        :reader -> graph_path(graph, if(node, do: Map.get(node, :id, "")), params)
+        _ -> graph_editor_path(graph, if(node, do: Map.get(node, :id, "")), params)
+      end
+
+    "#{base}#{path}"
   end
 end

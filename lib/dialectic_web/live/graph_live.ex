@@ -94,7 +94,6 @@ defmodule DialecticWeb.GraphLive do
           presentation_title: title
         )
         |> push_event("presentation_clear_slides", %{})
-        |> push_event("presentation_filter_graph", %{ids: valid_slide_ids})
         |> push_event("toggle_site_header", %{visible: false})
 
       {:noreply, socket}
@@ -1089,7 +1088,6 @@ defmodule DialecticWeb.GraphLive do
     socket =
       socket
       |> assign(presentation_mode: :off)
-      |> push_event("presentation_unfilter_graph", %{})
       |> push_event("toggle_site_header", %{visible: true})
       |> maybe_clear_presentation(params)
       |> push_presentation_persistence()
@@ -1201,7 +1199,6 @@ defmodule DialecticWeb.GraphLive do
         socket
         |> assign(presentation_mode: :presenting, presentation_title: title)
         |> push_event("presentation_clear_slides", %{})
-        |> push_event("presentation_filter_graph", %{ids: ids})
         |> push_event("toggle_site_header", %{visible: false})
         |> push_presentation_persistence()
 

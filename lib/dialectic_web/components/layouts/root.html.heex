@@ -79,27 +79,28 @@
   <body class="bg-white">
     <% active_path = @conn.request_path %>
     <header
-      class="sticky top-0 flex items-center h-9 bg-gradient-to-r from-[#3a0ca3]/90 to-[#4361ee]/90 backdrop-blur-md shadow-sm z-[9999]"
+      class="sticky top-0 z-[9999] h-9 border-b border-[#2d0a84]/70 bg-gradient-to-r from-[#2d0a84] via-[#4736cf] to-[#4c6fff] shadow-[0_4px_18px_rgba(58,12,163,0.28)]"
       id="userHeader"
     >
-      <nav class="flex items-center justify-between px-3 w-full text-xs">
+      <nav class="mx-auto flex h-full w-full max-w-7xl items-center justify-between gap-3 px-3 text-xs">
         <div class="flex items-center gap-4">
           <.link
             href={~p"/"}
-            class="flex items-center gap-2 text-white hover:text-white/90 transition"
+            class="inline-flex items-center gap-2 rounded-full bg-black/10 px-2 py-1 text-white transition hover:bg-white/24 hover:text-white hover:ring-2 hover:ring-white/45 hover:shadow-[0_8px_18px_rgba(24,16,88,0.26)]"
           >
             <img src={~p"/images/favicon.webp"} alt="RationalGrid" class="h-5 w-5" />
-            <span class="font-bold tracking-tight hidden sm:inline">RationalGrid</span>
+            <span class="hidden font-bold tracking-tight sm:inline">RationalGrid</span>
           </.link>
         </div>
-        <div class="flex items-center gap-1 sm:gap-2">
+        <div class="flex items-center gap-1 rounded-full bg-white/12 px-1 py-0.5 text-white ring-1 ring-white/20 shadow-inner shadow-white/5 sm:gap-1.5">
           <.link
             href={~p"/intro/how"}
             class={[
-              "inline-flex items-center gap-1 rounded-md px-2 py-1 font-medium transition",
+              "inline-flex items-center gap-1 rounded-full px-2 py-1 font-semibold text-white transition",
               if(active_path == "/intro/how",
-                do: "bg-white/20 text-white",
-                else: "text-white/70 hover:text-white hover:bg-white/10"
+                do: "bg-white/24 text-white shadow-sm",
+                else:
+                  "hover:bg-white/22 hover:text-white hover:ring-1 hover:ring-white/35 hover:shadow-[0_6px_14px_rgba(24,16,88,0.24)]"
               )
             ]}
           >
@@ -109,10 +110,11 @@
           <.link
             href={~p"/about"}
             class={[
-              "inline-flex items-center gap-1 rounded-md px-2 py-1 font-medium transition",
+              "inline-flex items-center gap-1 rounded-full px-2 py-1 font-semibold text-white transition",
               if(active_path == "/about",
-                do: "bg-white/20 text-white",
-                else: "text-white/70 hover:text-white hover:bg-white/10"
+                do: "bg-white/24 text-white shadow-sm",
+                else:
+                  "hover:bg-white/22 hover:text-white hover:ring-1 hover:ring-white/35 hover:shadow-[0_6px_14px_rgba(24,16,88,0.24)]"
               )
             ]}
           >
@@ -122,10 +124,11 @@
           <.link
             href={~p"/gallery"}
             class={[
-              "inline-flex items-center gap-1 rounded-md px-2 py-1 font-medium transition",
+              "inline-flex items-center gap-1 rounded-full px-2 py-1 font-semibold text-white transition",
               if(active_path == "/gallery",
-                do: "bg-white/20 text-white",
-                else: "text-white/70 hover:text-white hover:bg-white/10"
+                do: "bg-white/24 text-white shadow-sm",
+                else:
+                  "hover:bg-white/22 hover:text-white hover:ring-1 hover:ring-white/35 hover:shadow-[0_6px_14px_rgba(24,16,88,0.24)]"
               )
             ]}
           >
@@ -134,7 +137,7 @@
           </.link>
           <.link
             href={~p"/"}
-            class="inline-flex items-center gap-1 rounded-md bg-white/15 px-2 py-1 font-semibold text-white ring-1 ring-white/20 hover:bg-white/25 transition"
+            class="inline-flex items-center gap-1 rounded-full bg-white/18 px-2.5 py-1 font-semibold text-white ring-1 ring-white/24 transition hover:bg-white/32 hover:ring-white/40 hover:shadow-[0_6px_14px_rgba(24,16,88,0.24)]"
           >
             <span>+ New Grid</span>
           </.link>
@@ -142,10 +145,11 @@
             <.link
               href={~p"/u/#{@current_user.username}"}
               class={[
-                "inline-flex items-center gap-1 rounded-md px-2 py-1 font-medium transition",
+                "inline-flex items-center gap-1 rounded-full px-2 py-1 font-semibold text-white transition",
                 if(active_path == "/u/#{@current_user.username}",
-                  do: "bg-white/20 text-white",
-                  else: "text-white/70 hover:text-white hover:bg-white/10"
+                  do: "bg-white/24 text-white shadow-sm",
+                  else:
+                    "hover:bg-white/22 hover:text-white hover:ring-1 hover:ring-white/35 hover:shadow-[0_6px_14px_rgba(24,16,88,0.24)]"
                 )
               ]}
             >
@@ -156,10 +160,11 @@
               <.link
                 href={~p"/admin/curated"}
                 class={[
-                  "inline-flex items-center gap-1 rounded-md px-2 py-1 font-medium transition",
+                  "inline-flex items-center gap-1 rounded-full px-2 py-1 font-semibold text-white transition",
                   if(active_path == "/admin/curated",
-                    do: "bg-white/20 text-white",
-                    else: "text-white/70 hover:text-white hover:bg-white/10"
+                    do: "bg-white/24 text-white shadow-sm",
+                    else:
+                      "hover:bg-white/22 hover:text-white hover:ring-1 hover:ring-white/35 hover:shadow-[0_6px_14px_rgba(24,16,88,0.24)]"
                   )
                 ]}
               >
@@ -167,29 +172,16 @@
                 <span class="hidden sm:inline">Curate</span>
               </.link>
             <% end %>
-            <.link
-              href={~p"/users/settings"}
-              class={[
-                "inline-flex items-center gap-1 rounded-md px-2 py-1 font-medium transition",
-                if(active_path == "/users/settings",
-                  do: "bg-white/20 text-white",
-                  else: "text-white/70 hover:text-white hover:bg-white/10"
-                )
-              ]}
-            >
-              <.icon name="hero-cog-6-tooth" class="h-3.5 w-3.5" />
-              <span class="hidden sm:inline">{@current_user.email}</span>
-            </.link>
           <% else %>
             <.link
               href={~p"/users/register"}
-              class="inline-flex items-center gap-1 rounded-md bg-white/15 px-2 py-1 font-semibold text-white ring-1 ring-white/20 hover:bg-white/25 transition"
+              class="inline-flex items-center gap-1 rounded-full bg-white/18 px-2.5 py-1 font-semibold text-white ring-1 ring-white/24 transition hover:bg-white/32 hover:ring-white/40 hover:shadow-[0_6px_14px_rgba(24,16,88,0.24)]"
             >
               Register
             </.link>
             <.link
               href={~p"/users/log_in"}
-              class="inline-flex items-center gap-1 rounded-md px-2 py-1 font-medium text-white/70 hover:text-white hover:bg-white/10 transition"
+              class="inline-flex items-center gap-1 rounded-full px-2 py-1 font-semibold text-white transition hover:bg-white/22 hover:text-white hover:ring-1 hover:ring-white/35 hover:shadow-[0_6px_14px_rgba(24,16,88,0.24)]"
             >
               Log in
             </.link>

@@ -257,7 +257,7 @@ defmodule DialecticWeb.HighlightsPanelComp do
           </div>
           <h3 class="text-sm font-semibold text-gray-900 mb-1">No highlights yet</h3>
           <p class="text-xs text-gray-500">
-            Select any text in a node to create a highlight, add notes, or link ideas.
+            Select any word or phrase in a node to create a highlight, add notes, or link ideas.
           </p>
         </div>
       <% end %>

@@ -77,6 +77,54 @@
     }
 }
 
+#graph-layout,
+#outline-layout {
+    transition:
+        opacity 220ms ease,
+        transform 220ms ease,
+        filter 220ms ease;
+    transform-origin: center top;
+    will-change: opacity, transform, filter;
+}
+
+html.mode-switch-leave #graph-layout,
+html.mode-switch-leave #outline-layout {
+    opacity: 0.38;
+    transform: translateY(10px) scale(0.992);
+    filter: saturate(0.92);
+}
+
+html.mode-switch-enter #graph-layout,
+html.mode-switch-enter #outline-layout {
+    animation: mode-switch-in 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes mode-switch-in {
+    0% {
+        opacity: 0;
+        transform: translateY(14px) scale(0.992);
+        filter: saturate(0.94);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: saturate(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #graph-layout,
+    #outline-layout {
+        transition: none;
+    }
+
+    html.mode-switch-enter #graph-layout,
+    html.mode-switch-enter #outline-layout {
+        animation: none;
+    }
+}
+
 /* This file is for your main application CSS */
 /* Make graph nodes feel clickable */
 #cy-inner,
