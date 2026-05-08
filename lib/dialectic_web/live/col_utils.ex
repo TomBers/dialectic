@@ -96,49 +96,56 @@ defmodule DialecticWeb.ColUtils do
   Returns the accent classes for advanced-tool cards in node and selection toolbars.
   """
   def advanced_tool_surface_class("clarify"),
-    do: "border-teal-200/80 bg-gradient-to-br from-white to-teal-50/50 hover:border-teal-300"
+    do:
+      "border-2 border-teal-200/80 bg-gradient-to-br from-white to-teal-50/70 hover:border-teal-300"
 
   def advanced_tool_surface_class("assumptions"),
-    do: "border-amber-200/80 bg-gradient-to-br from-white to-amber-50/50 hover:border-amber-300"
+    do:
+      "border-2 border-amber-200/80 bg-gradient-to-br from-white to-amber-50/70 hover:border-amber-300"
 
   def advanced_tool_surface_class("counterexample"),
-    do: "border-red-200/80 bg-gradient-to-br from-white to-red-50/50 hover:border-red-300"
+    do:
+      "border-2 border-red-200/80 bg-gradient-to-br from-white to-red-50/70 hover:border-red-300"
 
   def advanced_tool_surface_class("implications"),
     do:
-      "border-indigo-200/80 bg-gradient-to-br from-white to-indigo-50/50 hover:border-indigo-300"
+      "border-2 border-indigo-200/80 bg-gradient-to-br from-white to-indigo-50/70 hover:border-indigo-300"
 
   def advanced_tool_surface_class("blind_spots"),
     do:
-      "border-purple-200/80 bg-gradient-to-br from-white to-purple-50/50 hover:border-purple-300"
+      "border-2 border-purple-200/80 bg-gradient-to-br from-white to-purple-50/70 hover:border-purple-300"
 
   def advanced_tool_surface_class("says_who"),
-    do: "border-sky-200/80 bg-gradient-to-br from-white to-sky-50/50 hover:border-sky-300"
+    do:
+      "border-2 border-sky-200/80 bg-gradient-to-br from-white to-sky-50/70 hover:border-sky-300"
 
   def advanced_tool_surface_class("who_disagrees"),
-    do: "border-rose-200/80 bg-gradient-to-br from-white to-rose-50/50 hover:border-rose-300"
+    do:
+      "border-2 border-rose-200/80 bg-gradient-to-br from-white to-rose-50/70 hover:border-rose-300"
 
   def advanced_tool_surface_class("analogy"),
     do:
-      "border-emerald-200/80 bg-gradient-to-br from-white to-emerald-50/50 hover:border-emerald-300"
+      "border-2 border-emerald-200/80 bg-gradient-to-br from-white to-emerald-50/70 hover:border-emerald-300"
 
   def advanced_tool_surface_class("steel_man"),
     do:
-      "border-yellow-200/80 bg-gradient-to-br from-white to-yellow-50/50 hover:border-yellow-300"
+      "border-2 border-yellow-200/80 bg-gradient-to-br from-white to-yellow-50/70 hover:border-yellow-300"
 
   def advanced_tool_surface_class("what_if"),
     do:
-      "border-fuchsia-200/80 bg-gradient-to-br from-white to-fuchsia-50/50 hover:border-fuchsia-300"
+      "border-2 border-fuchsia-200/80 bg-gradient-to-br from-white to-fuchsia-50/70 hover:border-fuchsia-300"
 
   def advanced_tool_surface_class("second_order"),
-    do: "border-slate-200/80 bg-gradient-to-br from-white to-slate-50/70 hover:border-slate-300"
+    do:
+      "border-2 border-slate-200/80 bg-gradient-to-br from-white to-slate-50/80 hover:border-slate-300"
 
   def advanced_tool_surface_class("simplify"),
     do:
-      "border-orange-200/80 bg-gradient-to-br from-white to-orange-50/50 hover:border-orange-300"
+      "border-2 border-orange-200/80 bg-gradient-to-br from-white to-orange-50/70 hover:border-orange-300"
 
   def advanced_tool_surface_class(_),
-    do: "border-slate-200/80 bg-gradient-to-br from-white to-slate-50/50 hover:border-slate-300"
+    do:
+      "border-2 border-slate-200/80 bg-gradient-to-br from-white to-slate-50/70 hover:border-slate-300"
 
   @doc """
   Returns the icon chip classes for advanced-tool buttons.

@@ -264,7 +264,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                 <button
                   type="button"
                   class={[
-                    "group flex flex-col items-start gap-2 rounded-lg border px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50",
+                    "group flex flex-col items-start gap-2.5 rounded-[1.1rem] px-3.5 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
                     ColUtils.advanced_tool_surface_class("steel_man")
                   ]}
                   phx-click="node_steel_man"
@@ -273,7 +273,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                   title="Steel Man: Build the strongest, most charitable version of this argument — the opposite of a straw man. Example: If someone says 'We should ban cars', the steel man would be 'In dense urban areas, reducing car dependency through better public transit and walkable design could improve health, reduce emissions, and create more livable communities.'"
                 >
                   <span class={[
-                    "inline-flex items-center justify-center rounded-lg p-1.5",
+                    "inline-flex items-center justify-center rounded-xl p-2 shadow-sm",
                     ColUtils.advanced_tool_icon_class("steel_man")
                   ]}>
                     <.icon name="hero-star" class="h-4 w-4" />
@@ -289,7 +289,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                 <button
                   type="button"
                   class={[
-                    "group flex flex-col items-start gap-2 rounded-lg border px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50",
+                    "group flex flex-col items-start gap-2.5 rounded-[1.1rem] px-3.5 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
                     ColUtils.advanced_tool_surface_class("assumptions")
                   ]}
                   phx-click="node_assumptions"
@@ -298,7 +298,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                   title="Assumptions: Reveal what must be true for this claim to work. Example: 'Remote work is better' assumes people have suitable home spaces, reliable internet, and self-discipline."
                 >
                   <span class={[
-                    "inline-flex items-center justify-center rounded-lg p-1.5",
+                    "inline-flex items-center justify-center rounded-xl p-2 shadow-sm",
                     ColUtils.advanced_tool_icon_class("assumptions")
                   ]}>
                     <.icon name="hero-cube-transparent" class="h-4 w-4" />
@@ -314,7 +314,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                 <button
                   type="button"
                   class={[
-                    "group flex flex-col items-start gap-2 rounded-lg border px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50",
+                    "group flex flex-col items-start gap-2.5 rounded-[1.1rem] px-3.5 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
                     ColUtils.advanced_tool_surface_class("counterexample")
                   ]}
                   phx-click="node_counterexample"
@@ -323,7 +323,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                   title="Test: Find counterexamples that challenge this claim. Example: If someone claims 'All successful people wake up early', counterexamples include successful artists, programmers, and entrepreneurs who are night owls."
                 >
                   <span class={[
-                    "inline-flex items-center justify-center rounded-lg p-1.5",
+                    "inline-flex items-center justify-center rounded-xl p-2 shadow-sm",
                     ColUtils.advanced_tool_icon_class("counterexample")
                   ]}>
                     <.icon name="hero-x-mark" class="h-4 w-4" />
@@ -347,7 +347,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                 <button
                   type="button"
                   class={[
-                    "group flex flex-col items-start gap-2 rounded-lg border px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50",
+                    "group flex flex-col items-start gap-2.5 rounded-[1.1rem] px-3.5 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
                     ColUtils.advanced_tool_surface_class("says_who")
                   ]}
                   phx-click="node_says_who"
@@ -356,7 +356,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                   title="Source: Question the authority and evidence behind claims. Example: 'Studies show X' — which studies? Who funded them? What was the sample size? Are there conflicting studies?"
                 >
                   <span class={[
-                    "inline-flex items-center justify-center rounded-lg p-1.5",
+                    "inline-flex items-center justify-center rounded-xl p-2 shadow-sm",
                     ColUtils.advanced_tool_icon_class("says_who")
                   ]}>
                     <.icon name="hero-user" class="h-4 w-4" />
@@ -370,7 +370,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                 <button
                   type="button"
                   class={[
-                    "group flex flex-col items-start gap-2 rounded-lg border px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50",
+                    "group flex flex-col items-start gap-2.5 rounded-[1.1rem] px-3.5 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
                     ColUtils.advanced_tool_surface_class("blind_spots")
                   ]}
                   phx-click="node_blind_spots"
@@ -379,7 +379,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                   title="Blind Spots: Identify perspectives, factors, or constraints being overlooked. Example: A tech solution might ignore users without internet access or digital literacy."
                 >
                   <span class={[
-                    "inline-flex items-center justify-center rounded-lg p-1.5",
+                    "inline-flex items-center justify-center rounded-xl p-2 shadow-sm",
                     ColUtils.advanced_tool_icon_class("blind_spots")
                   ]}>
                     <.icon name="hero-eye-slash" class="h-4 w-4" />
@@ -395,7 +395,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                 <button
                   type="button"
                   class={[
-                    "group flex flex-col items-start gap-2 rounded-lg border px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50",
+                    "group flex flex-col items-start gap-2.5 rounded-[1.1rem] px-3.5 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
                     ColUtils.advanced_tool_surface_class("who_disagrees")
                   ]}
                   phx-click="node_who_disagrees"
@@ -404,7 +404,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                   title="Who Disagrees: Explore different perspectives and opposing viewpoints. Example: For 'Everyone should go to college', consider vocational experts, entrepreneurs, and trades professionals."
                 >
                   <span class={[
-                    "inline-flex items-center justify-center rounded-lg p-1.5",
+                    "inline-flex items-center justify-center rounded-xl p-2 shadow-sm",
                     ColUtils.advanced_tool_icon_class("who_disagrees")
                   ]}>
                     <.icon name="hero-users" class="h-4 w-4" />
@@ -428,7 +428,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                 <button
                   type="button"
                   class={[
-                    "group flex flex-col items-start gap-2 rounded-lg border px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50",
+                    "group flex flex-col items-start gap-2.5 rounded-[1.1rem] px-3.5 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
                     ColUtils.advanced_tool_surface_class("implications")
                   ]}
                   phx-click="node_implications"
@@ -437,7 +437,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                   title="Implications: What would happen if this were true? Example: 'Universal basic income' implies changes to work incentives, tax systems, inflation, and social safety nets."
                 >
                   <span class={[
-                    "inline-flex items-center justify-center rounded-lg p-1.5",
+                    "inline-flex items-center justify-center rounded-xl p-2 shadow-sm",
                     ColUtils.advanced_tool_icon_class("implications")
                   ]}>
                     <.icon name="hero-arrow-trending-up" class="h-4 w-4" />
@@ -453,7 +453,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                 <button
                   type="button"
                   class={[
-                    "group flex flex-col items-start gap-2 rounded-lg border px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50",
+                    "group flex flex-col items-start gap-2.5 rounded-[1.1rem] px-3.5 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
                     ColUtils.advanced_tool_surface_class("second_order")
                   ]}
                   phx-click="node_second_order"
@@ -462,7 +462,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                   title="Second Order: Explore indirect consequences and ripple effects. Example: 'Free college tuition' leads to more graduates, which leads to credential inflation, changing job requirements, and shifts in what skills are valued."
                 >
                   <span class={[
-                    "inline-flex items-center justify-center rounded-lg p-1.5",
+                    "inline-flex items-center justify-center rounded-xl p-2 shadow-sm",
                     ColUtils.advanced_tool_icon_class("second_order")
                   ]}>
                     <.icon name="hero-arrow-path" class="h-4 w-4" />
@@ -478,7 +478,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                 <button
                   type="button"
                   class={[
-                    "group flex flex-col items-start gap-2 rounded-lg border px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50",
+                    "group flex flex-col items-start gap-2.5 rounded-[1.1rem] px-3.5 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
                     ColUtils.advanced_tool_surface_class("what_if")
                   ]}
                   phx-click="node_what_if"
@@ -487,7 +487,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                   title="What If: Explore hypothetical scenarios and alternative possibilities. Example: 'What if we had universal healthcare?' or 'What if fossil fuels ran out tomorrow?'"
                 >
                   <span class={[
-                    "inline-flex items-center justify-center rounded-lg p-1.5",
+                    "inline-flex items-center justify-center rounded-xl p-2 shadow-sm",
                     ColUtils.advanced_tool_icon_class("what_if")
                   ]}>
                     <.icon name="hero-question-mark-circle" class="h-4 w-4" />
@@ -511,7 +511,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                 <button
                   type="button"
                   class={[
-                    "group flex flex-col items-start gap-2 rounded-lg border px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50",
+                    "group flex flex-col items-start gap-2.5 rounded-[1.1rem] px-3.5 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
                     ColUtils.advanced_tool_surface_class("clarify")
                   ]}
                   phx-click="node_clarify"
@@ -520,7 +520,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                   title="Clarify: Make complex ideas clearer with simpler language and concrete examples. Example: 'Quantum entanglement' becomes 'When two particles are linked so that measuring one instantly affects the other, no matter the distance.'"
                 >
                   <span class={[
-                    "inline-flex items-center justify-center rounded-lg p-1.5",
+                    "inline-flex items-center justify-center rounded-xl p-2 shadow-sm",
                     ColUtils.advanced_tool_icon_class("clarify")
                   ]}>
                     <.icon name="hero-light-bulb" class="h-4 w-4" />
@@ -536,7 +536,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                 <button
                   type="button"
                   class={[
-                    "group flex flex-col items-start gap-2 rounded-lg border px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50",
+                    "group flex flex-col items-start gap-2.5 rounded-[1.1rem] px-3.5 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
                     ColUtils.advanced_tool_surface_class("simplify")
                   ]}
                   phx-click="node_simplify"
@@ -545,7 +545,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                   title="Simplify: Break down complex ideas into plain language anyone can understand. Example: Turn technical jargon into everyday terms with concrete examples."
                 >
                   <span class={[
-                    "inline-flex items-center justify-center rounded-lg p-1.5",
+                    "inline-flex items-center justify-center rounded-xl p-2 shadow-sm",
                     ColUtils.advanced_tool_icon_class("simplify")
                   ]}>
                     <.icon name="hero-sparkles" class="h-4 w-4" />
@@ -561,7 +561,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                 <button
                   type="button"
                   class={[
-                    "group flex flex-col items-start gap-2 rounded-lg border px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50",
+                    "group flex flex-col items-start gap-2.5 rounded-[1.1rem] px-3.5 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
                     ColUtils.advanced_tool_surface_class("analogy")
                   ]}
                   phx-click="node_analogy"
@@ -570,7 +570,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                   title="Analogy: Understand ideas through comparison to familiar concepts. Example: 'Blockchain is like a public ledger where everyone has a copy and can verify entries.'"
                 >
                   <span class={[
-                    "inline-flex items-center justify-center rounded-lg p-1.5",
+                    "inline-flex items-center justify-center rounded-xl p-2 shadow-sm",
                     ColUtils.advanced_tool_icon_class("analogy")
                   ]}>
                     <.icon name="hero-arrows-right-left" class="h-4 w-4" />
