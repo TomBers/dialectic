@@ -45,7 +45,7 @@ defmodule Dialectic.Categorisation.AutoTagger do
       # Use a faster model
       opts = [
         system_prompt: system_prompt,
-        model: "gemini-2.5-flash-lite"
+        model: "gemini-3.1-flash-lite"
       ]
 
       case Dialectic.LLM.Generator.generate(user_prompt, opts) do
