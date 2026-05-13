@@ -1,0 +1,428 @@
+{
+  "nodes": [
+    {
+      "id": "1",
+      "content": "Essay thesis\n\nOrwell argues that bad language and bad politics reinforce each other. Bad prose is not just ugly; it helps conceal and produce bad thought.\n\n> It becomes ugly and inaccurate because our thoughts are foolish, but the slovenliness of our language makes it easier for us to have foolish thoughts.\n\n> Political language... is designed to make lies sound truthful and murder respectable, and to give an appearance of solidity to pure wind.",
+      "class": "origin",
+      "user": "George Orwell",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Political language... is designed to make lies sound truthful and murder respectable."
+    },
+    {
+      "id": "group-problem",
+      "content": "Problem and reversibility",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "group-vices",
+      "content": "Vices of modern prose",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "group-mechanism",
+      "content": "How bad writing works",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "group-politics",
+      "content": "Politics and evasion",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "group-remedy",
+      "content": "Remedy and rules",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "2",
+      "content": "Fatalism about decline\n\nOrwell rejects the idea that bad English is inevitable. Fatalism treats language like a natural growth rather than an instrument people shape.\n\n> It is generally assumed that we cannot by conscious action do anything about it.\n\n> Underneath this lies the half-conscious belief that language is a natural growth and not an instrument which we shape for our own purposes.",
+      "class": "premise",
+      "user": "George Orwell",
+      "parent": "group-problem",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "It is generally assumed that we cannot by conscious action do anything about it."
+    },
+    {
+      "id": "3",
+      "content": "The vicious circle\n\nThought and language form a feedback loop. Foolish thought makes language ugly; ugly language makes foolish thought easier.\n\n> A man may take to drink because he feels himself to be a failure, and then fail all the more completely because he drinks.\n\n> But if thought corrupts language, language can also corrupt thought.",
+      "class": "thesis",
+      "user": "George Orwell",
+      "parent": "group-problem",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "But if thought corrupts language, language can also corrupt thought."
+    },
+    {
+      "id": "4",
+      "content": "Reversibility\n\nBad habits spread by imitation, but they can be avoided. Clear prose is therefore a political act, not just a literary preference.\n\n> The process is reversible.\n\n> To think clearly is a necessary first step toward political regeneration.",
+      "class": "thesis",
+      "user": "George Orwell",
+      "parent": "group-problem",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "The process is reversible."
+    },
+    {
+      "id": "5",
+      "content": "Two common faults\n\nThe five specimens share stale imagery and lack of precision. Concrete thought melts into abstract prefabrication.\n\n> The first is staleness of imagery; the other is lack of precision.\n\n> Prose consists less and less of words chosen for the sake of their meaning.",
+      "class": "premise",
+      "user": "George Orwell",
+      "parent": "group-vices",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "The first is staleness of imagery; the other is lack of precision."
+    },
+    {
+      "id": "6",
+      "content": "Dying metaphors\n\nWorn-out metaphors save writers from making fresh images. Mixed metaphors prove the writer is not seeing what the words claim to show.\n\n> A newly invented metaphor assists thought by evoking a visual image.\n\n> The sole aim of a metaphor is to call up a visual image.",
+      "class": "premise",
+      "user": "George Orwell",
+      "parent": "group-vices",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "The sole aim of a metaphor is to call up a visual image."
+    },
+    {
+      "id": "7",
+      "content": "Verbal false limbs\n\nOperators and inflated verb phrases replace simple verbs. They pad sentences, hide agency, and make weak statements sound orderly.\n\n> The keynote is the elimination of simple verbs.\n\n> Instead of being a single word, such as break, stop, spoil, mend, kill, a verb becomes a phrase.",
+      "class": "premise",
+      "user": "George Orwell",
+      "parent": "group-vices",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "The keynote is the elimination of simple verbs."
+    },
+    {
+      "id": "8",
+      "content": "Pretentious diction\n\nGrand, foreign, scientific, or Latinate words dress up simple claims and biased judgments.\n\n> Bad writers... are nearly always haunted by the notion that Latin or Greek words are grander than Saxon ones.\n\n> The result, in general, is an increase in slovenliness and vagueness.",
+      "class": "premise",
+      "user": "George Orwell",
+      "parent": "group-vices",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Latin or Greek words are grander than Saxon ones."
+    },
+    {
+      "id": "9",
+      "content": "Meaningless words\n\nCritical and political words become empty when no one expects them to point to anything definite.\n\n> The word Fascism has now no meaning except in so far as it signifies something not desirable.\n\n> The defenders of every kind of regime claim that it is a democracy.",
+      "class": "premise",
+      "user": "George Orwell",
+      "parent": "group-vices",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "The word Fascism has now no meaning except... something not desirable."
+    },
+    {
+      "id": "10",
+      "content": "Ecclesiastes parody\n\nOrwell translates a vivid biblical sentence into abstract modern prose to show what is lost: images disappear, syllables multiply, and meaning shrinks.\n\n> The concrete illustrations - race, battle, bread - dissolve into the vague phrase success or failure in competitive activities.\n\n> The whole tendency of modern prose is away from concreteness.",
+      "class": "synthesis",
+      "user": "George Orwell",
+      "parent": "group-mechanism",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "The whole tendency of modern prose is away from concreteness."
+    },
+    {
+      "id": "11",
+      "content": "Ready-made phrases\n\nBad prose is easy because ready-made phrases remove the need to choose words or images.\n\n> It consists in gumming together long strips of words which have already been set in order by someone else.\n\n> They will construct your sentences for you - even think your thoughts for you, to a certain extent.",
+      "class": "thesis",
+      "user": "George Orwell",
+      "parent": "group-mechanism",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "They will construct your sentences for you - even think your thoughts for you."
+    },
+    {
+      "id": "12",
+      "content": "The machine speaker\n\nPolitical cliche turns speakers into mechanisms. Familiar phrases allow speech without fresh perception or thought.\n\n> One almost never finds in them a fresh, vivid, home-made turn of speech.\n\n> A speaker who uses that kind of phraseology has gone some distance toward turning himself into a machine.",
+      "class": "premise",
+      "user": "George Orwell",
+      "parent": "group-politics",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Turning himself into a machine."
+    },
+    {
+      "id": "13",
+      "content": "Defending the indefensible\n\nPolitical language becomes euphemism because brutal policies cannot be defended plainly without moral shock.\n\n> Political speech and writing are largely the defence of the indefensible.\n\n> Such phraseology is needed if one wants to name things without calling up mental pictures of them.",
+      "class": "thesis",
+      "user": "George Orwell",
+      "parent": "group-politics",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Political speech and writing are largely the defence of the indefensible."
+    },
+    {
+      "id": "14",
+      "content": "Euphemism as concealment\n\nViolence is renamed: bombing becomes pacification, forced migration becomes transfer of population, and imprisonment or murder becomes elimination of unreliable elements.\n\n> A mass of Latin words falls upon the facts like soft snow, blurring the outlines and covering up all the details.",
+      "class": "premise",
+      "user": "George Orwell",
+      "parent": "group-politics",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "A mass of Latin words falls upon the facts like soft snow."
+    },
+    {
+      "id": "15",
+      "content": "Insincerity is the enemy\n\nThe deepest cause of cloudy language is the gap between real and declared aims.\n\n> The great enemy of clear language is insincerity.\n\n> When there is a gap between one's real and one's declared aims, one turns as it were instinctively to long words and exhausted idioms.",
+      "class": "thesis",
+      "user": "George Orwell",
+      "parent": "group-politics",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "The great enemy of clear language is insincerity."
+    },
+    {
+      "id": "16",
+      "content": "Cure by vigilance\n\nBecause bad phrases invade the mind automatically, reform starts with being constantly on guard.\n\n> This invasion of one's mind by ready-made phrases... can only be prevented if one is constantly on guard against them.\n\n> Every such phrase anaesthetizes a portion of one's brain.",
+      "class": "synthesis",
+      "user": "George Orwell",
+      "parent": "group-remedy",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Every such phrase anaesthetizes a portion of one's brain."
+    },
+    {
+      "id": "17",
+      "content": "What reform is not\n\nDefending English is not archaism, standard-English policing, fake simplicity, or automatic preference for Saxon words.\n\n> It has nothing to do with archaism.\n\n> What is above all needed is to let the meaning choose the word, and not the other way about.",
+      "class": "premise",
+      "user": "George Orwell",
+      "parent": "group-remedy",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Let the meaning choose the word."
+    },
+    {
+      "id": "18",
+      "content": "Six rules\n\nOrwell offers practical rules: avoid familiar figures, prefer short words, cut what can be cut, use active voice, avoid needless jargon, and break any rule rather than write barbarously.\n\n> Never use a metaphor, simile or other figure of speech which you are used to seeing in print.\n\n> If it is possible to cut a word out, always cut it out.\n\n> Never use the passive where you can use the active.",
+      "class": "conclusion",
+      "user": "George Orwell",
+      "parent": "group-remedy",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "If it is possible to cut a word out, always cut it out."
+    },
+    {
+      "id": "19",
+      "content": "Rules need attitude\n\nThe rules are elementary, but they demand a deeper change: stop surrendering to fashionable verbal habits and choose words by meaning.\n\n> These rules sound elementary, and so they are, but they demand a deep change of attitude.\n\n> One could keep all of them and still write bad English, but one could not write the kind of stuff that I quoted.",
+      "class": "synthesis",
+      "user": "George Orwell",
+      "parent": "group-remedy",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "They demand a deep change of attitude."
+    },
+    {
+      "id": "20",
+      "content": "Final political payoff\n\nSimplifying English does not solve politics by itself, but it prevents the worst follies of orthodoxy from speaking through you.\n\n> You cannot speak any of the necessary dialects, and when you make a stupid remark its stupidity will be obvious, even to yourself.\n\n> One can at least change one's own habits.",
+      "class": "conclusion",
+      "user": "George Orwell",
+      "parent": "group-remedy",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "One can at least change one's own habits."
+    }
+  ],
+  "edges": [
+    {
+      "data": {
+        "id": "e1",
+        "source": "1",
+        "target": "2"
+      }
+    },
+    {
+      "data": {
+        "id": "e2",
+        "source": "2",
+        "target": "3"
+      }
+    },
+    {
+      "data": {
+        "id": "e3",
+        "source": "3",
+        "target": "4"
+      }
+    },
+    {
+      "data": {
+        "id": "e4",
+        "source": "4",
+        "target": "5"
+      }
+    },
+    {
+      "data": {
+        "id": "e5",
+        "source": "5",
+        "target": "6"
+      }
+    },
+    {
+      "data": {
+        "id": "e6",
+        "source": "5",
+        "target": "7"
+      }
+    },
+    {
+      "data": {
+        "id": "e7",
+        "source": "5",
+        "target": "8"
+      }
+    },
+    {
+      "data": {
+        "id": "e8",
+        "source": "5",
+        "target": "9"
+      }
+    },
+    {
+      "data": {
+        "id": "e9",
+        "source": "5",
+        "target": "10"
+      }
+    },
+    {
+      "data": {
+        "id": "e10",
+        "source": "10",
+        "target": "11"
+      }
+    },
+    {
+      "data": {
+        "id": "e11",
+        "source": "11",
+        "target": "12"
+      }
+    },
+    {
+      "data": {
+        "id": "e12",
+        "source": "12",
+        "target": "13"
+      }
+    },
+    {
+      "data": {
+        "id": "e13",
+        "source": "13",
+        "target": "14"
+      }
+    },
+    {
+      "data": {
+        "id": "e14",
+        "source": "14",
+        "target": "15"
+      }
+    },
+    {
+      "data": {
+        "id": "e15",
+        "source": "15",
+        "target": "16"
+      }
+    },
+    {
+      "data": {
+        "id": "e16",
+        "source": "16",
+        "target": "17"
+      }
+    },
+    {
+      "data": {
+        "id": "e17",
+        "source": "17",
+        "target": "18"
+      }
+    },
+    {
+      "data": {
+        "id": "e18",
+        "source": "18",
+        "target": "19"
+      }
+    },
+    {
+      "data": {
+        "id": "e19",
+        "source": "19",
+        "target": "20"
+      }
+    },
+    {
+      "data": {
+        "id": "e20",
+        "source": "4",
+        "target": "20"
+      }
+    },
+    {
+      "data": {
+        "id": "e21",
+        "source": "15",
+        "target": "20"
+      }
+    }
+  ]
+}
