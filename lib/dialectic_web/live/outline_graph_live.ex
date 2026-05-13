@@ -10,6 +10,8 @@ defmodule DialecticWeb.OutlineGraphLive do
 
   require Logger
 
+  @max_outline_indent 4
+
   on_mount {DialecticWeb.UserAuth, :mount_current_user}
 
   @impl true
@@ -353,6 +355,7 @@ defmodule DialecticWeb.OutlineGraphLive do
 
       %{
         id: node.id,
+        indent: Map.get(node, :indent, 0),
         title: display_title(node),
         full_title: display_title(node, max_length: :infinity),
         class: Map.get(node, :class, "default"),
@@ -659,6 +662,16 @@ defmodule DialecticWeb.OutlineGraphLive do
           to: graph_path(socket.assigns.graph_struct, node.id, socket.assigns.nav_params)
         )
     end
+  end
+
+  defp outline_indent_style(indent, step \\ 0.45) do
+    visible_indent = min(max(indent, 0), @max_outline_indent)
+    "padding-left: #{visible_indent * step}rem;"
+  end
+
+  defp outline_indent_guides(indent) do
+    visible_indent = min(max(indent, 0), @max_outline_indent)
+    List.duplicate(:guide, visible_indent)
   end
 
   defp sort_key(id) do
