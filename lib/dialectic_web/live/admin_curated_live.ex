@@ -142,9 +142,16 @@ defmodule DialecticWeb.AdminCuratedLive do
     ~H"""
     <div class="mx-auto max-w-5xl px-6 py-10">
       <h1 class="text-2xl font-bold text-gray-900 mb-2">Manage Curated Grids</h1>
-      <p class="text-sm text-gray-500 mb-8">
+      <p class="text-sm text-gray-500 mb-4">
         Add or remove grids from the curated and featured sections on the home page.
       </p>
+
+      <.link
+        navigate={~p"/admin/graphs/import"}
+        class="mb-8 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 transition"
+      >
+        <.icon name="hero-arrow-up-tray" class="h-4 w-4" /> Import graph JSON
+      </.link>
 
       <%!-- Search and Add --%>
       <div class="rounded-xl border border-gray-200 bg-white shadow-sm p-6 mb-8">
