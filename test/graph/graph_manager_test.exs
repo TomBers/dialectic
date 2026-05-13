@@ -111,6 +111,29 @@ defmodule GraphManagerTest do
       assert result == nil
     end
 
+    test "path_to_node terminates when graph contains a cycle", %{graph: _} do
+      first =
+        GraphManager.add_node(@graph_id, %Vertex{
+          content: "first",
+          class: "test",
+          user: @test_user
+        })
+
+      second =
+        GraphManager.add_node(@graph_id, %Vertex{
+          content: "second",
+          class: "test",
+          user: @test_user
+        })
+
+      GraphManager.add_edges(@graph_id, second, [first])
+      GraphManager.add_edges(@graph_id, first, [second])
+
+      path = GraphManager.path_to_node(@graph_id, second)
+
+      assert Enum.map(path, & &1.id) == [second.id, first.id]
+    end
+
     test "add_child creates connected nodes properly", %{graph: _} do
       # Create parent
       parent =
