@@ -8,6 +8,12 @@ defmodule Dialectic.Graph.Importer do
   alias Dialectic.Repo
 
   @required_node_keys ~w(id content class user parent noted_by deleted compound)
+  @valid_prompt_modes ~w(expert university high_school simple)
+  @prompt_mode_aliases %{
+    "structured" => "university",
+    "creative" => "university",
+    "essay" => "university"
+  }
   @max_file_size 10_000_000
 
   @type import_attrs :: %{
@@ -135,11 +141,12 @@ defmodule Dialectic.Graph.Importer do
     |> normalize_title()
     |> normalize_slug()
     |> normalize_tags()
+    |> normalize_prompt_mode()
     |> Map.put_new(:is_public, false)
     |> Map.put_new(:is_published, false)
     |> Map.put_new(:is_deleted, false)
     |> Map.put_new(:is_locked, false)
-    |> Map.put_new(:prompt_mode, "essay")
+    |> Map.put_new(:prompt_mode, "university")
     |> Map.put_new(:user_id, nil)
   end
 
@@ -189,6 +196,36 @@ defmodule Dialectic.Graph.Importer do
 
   defp normalize_tags(attrs), do: Map.put_new(attrs, :tags, [])
 
+  defp normalize_prompt_mode(%{prompt_mode: mode} = attrs) do
+    Map.put(attrs, :prompt_mode, normalize_prompt_mode_value(mode))
+  end
+
+  defp normalize_prompt_mode(%{"prompt_mode" => mode} = attrs) do
+    attrs
+    |> Map.delete("prompt_mode")
+    |> Map.put(:prompt_mode, normalize_prompt_mode_value(mode))
+  end
+
+  defp normalize_prompt_mode(attrs), do: attrs
+
+  defp normalize_prompt_mode_value(mode) when is_binary(mode) do
+    mode = mode |> String.trim() |> String.downcase()
+
+    cond do
+      mode in @valid_prompt_modes -> mode
+      Map.has_key?(@prompt_mode_aliases, mode) -> Map.fetch!(@prompt_mode_aliases, mode)
+      true -> "university"
+    end
+  end
+
+  defp normalize_prompt_mode_value(mode) when is_atom(mode) do
+    mode
+    |> Atom.to_string()
+    |> normalize_prompt_mode_value()
+  end
+
+  defp normalize_prompt_mode_value(_mode), do: "university"
+
   defp split_tags(tags) do
     tags
     |> String.split(",")
@@ -214,8 +251,6 @@ defmodule Dialectic.Graph.Importer do
   defp validate_nodes([]), do: {:error, "Graph must contain at least one node."}
 
   defp validate_nodes(nodes) do
-    ids = Enum.map(nodes, & &1["id"])
-
     cond do
       Enum.any?(nodes, &(not is_map(&1))) ->
         {:error, "Every node must be an object."}
@@ -223,14 +258,19 @@ defmodule Dialectic.Graph.Importer do
       Enum.any?(nodes, &(missing_keys(&1, @required_node_keys) != [])) ->
         {:error, "Every node must include #{Enum.join(@required_node_keys, ", ")}."}
 
-      Enum.any?(ids, &(not is_binary(&1) or String.trim(&1) == "")) ->
-        {:error, "Every node must have a non-empty string id."}
-
-      length(ids) != length(Enum.uniq(ids)) ->
-        {:error, "Node ids must be unique."}
-
       true ->
-        :ok
+        ids = Enum.map(nodes, & &1["id"])
+
+        cond do
+          Enum.any?(ids, &(not is_binary(&1) or String.trim(&1) == "")) ->
+            {:error, "Every node must have a non-empty string id."}
+
+          length(ids) != length(Enum.uniq(ids)) ->
+            {:error, "Node ids must be unique."}
+
+          true ->
+            :ok
+        end
     end
   end
 

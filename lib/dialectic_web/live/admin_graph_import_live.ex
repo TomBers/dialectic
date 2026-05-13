@@ -43,11 +43,11 @@ defmodule DialecticWeb.AdminGraphImportLive do
     params = socket.assigns.form.params || default_form_params()
 
     case uploaded_graph_data(socket) do
-      {:ok, data} ->
+      {:ok, %{data: data} = cached_upload} ->
         {:noreply,
          assign(socket,
            preview: build_preview(data, params),
-           uploaded_graph_data: data,
+           uploaded_graph_data: cached_upload,
            imported_graph: nil
          )}
 
@@ -61,7 +61,7 @@ defmodule DialecticWeb.AdminGraphImportLive do
 
   @impl true
   def handle_event("import", %{"graph_import" => params}, socket) do
-    with {:ok, data} <- uploaded_graph_data(socket),
+    with {:ok, %{data: data} = cached_upload} <- uploaded_graph_data(socket),
          {:ok, attrs} <- import_attrs(params, socket.assigns.current_user),
          {:ok, graph} <- Importer.import_data(data, attrs) do
       {:noreply,
@@ -70,7 +70,7 @@ defmodule DialecticWeb.AdminGraphImportLive do
        |> assign(
          form: to_form(params, as: :graph_import),
          preview: build_preview(data, params),
-         uploaded_graph_data: data,
+         uploaded_graph_data: cached_upload,
          imported_graph: graph
        )}
     else
@@ -89,32 +89,35 @@ defmodule DialecticWeb.AdminGraphImportLive do
       "tags" => "",
       "is_public" => "true",
       "is_published" => "true",
-      "prompt_mode" => "essay"
+      "prompt_mode" => "university"
     }
-  end
-
-  defp uploaded_graph_data(%{assigns: %{uploaded_graph_data: data}}) when is_map(data) do
-    {:ok, data}
   end
 
   defp uploaded_graph_data(socket) do
     entries = socket.assigns.uploads.graph_json.entries
+    cached_upload = socket.assigns.uploaded_graph_data
 
     cond do
+      entries == [] and is_cached_upload?(cached_upload) ->
+        {:ok, cached_upload}
+
       entries == [] ->
         {:error, "Choose a graph JSON file first."}
+
+      is_cached_upload?(cached_upload) and cached_upload.ref == hd(entries).ref ->
+        {:ok, cached_upload}
 
       Enum.any?(entries, &(&1.done? == false)) ->
         {:error, "Wait for the upload to finish before previewing or importing."}
 
       true ->
-        consume_uploaded_entries(socket, :graph_json, fn %{path: path}, _entry ->
+        consume_uploaded_entries(socket, :graph_json, fn %{path: path}, entry ->
           result =
             with {:ok, content} <- File.read(path),
                  {:ok, data} <- Jason.decode(content),
                  {:ok, graph_data} <- extract_graph_data(data),
                  :ok <- Importer.validate_data(graph_data) do
-              {:ok, graph_data}
+              {:ok, %{ref: entry.ref, data: graph_data}}
             else
               {:error, %Jason.DecodeError{} = error} ->
                 {:error, "Invalid JSON: #{Exception.message(error)}"}
@@ -129,12 +132,15 @@ defmodule DialecticWeb.AdminGraphImportLive do
           {:ok, result}
         end)
         |> case do
-          [{:ok, data}] -> {:ok, data}
+          [{:ok, cached_upload}] -> {:ok, cached_upload}
           [{:error, message}] -> {:error, message}
           [] -> {:error, "Upload is no longer available. Choose the file again."}
         end
     end
   end
+
+  defp is_cached_upload?(%{ref: ref, data: data}) when is_binary(ref) and is_map(data), do: true
+  defp is_cached_upload?(_cached_upload), do: false
 
   defp extract_graph_data(%{"metadata" => _metadata, "graph" => graph}) when is_map(graph) do
     {:ok, graph}
@@ -162,7 +168,10 @@ defmodule DialecticWeb.AdminGraphImportLive do
          is_deleted: false,
          is_locked: false,
          prompt_mode:
-           params |> Map.get("prompt_mode", "essay") |> String.trim() |> blank_to_default("essay"),
+           params
+           |> Map.get("prompt_mode", "university")
+           |> String.trim()
+           |> blank_to_default("university"),
          user_id: current_user.id
        }
        |> Enum.reject(fn {_key, value} -> is_nil(value) end)
@@ -266,7 +275,18 @@ defmodule DialecticWeb.AdminGraphImportLive do
             />
 
             <div class="grid gap-4 md:grid-cols-3">
-              <.input field={@form[:prompt_mode]} id="graph-import-prompt-mode" label="Prompt mode" />
+              <.input
+                field={@form[:prompt_mode]}
+                id="graph-import-prompt-mode"
+                type="select"
+                label="Prompt mode"
+                options={[
+                  {"Expert", "expert"},
+                  {"University", "university"},
+                  {"High school", "high_school"},
+                  {"Simple", "simple"}
+                ]}
+              />
               <.input
                 field={@form[:is_public]}
                 id="graph-import-public"
