@@ -1,0 +1,155 @@
+# Popper Knowledge Graph - Visual Structure
+
+```
+                                    ORIGIN NODE
+                                         │
+                          ┌──────────────┼──────────────┐
+                          │              │              │
+                          ▼              ▼              ▼
+                    CLOUD-CLOCK    LANGUAGE       PROBLEMS
+                     SPECTRUM     EVOLUTION        GROUP
+                          │              │              │
+                          │              │              │
+    ┌─────────────────────┼──────┐       │       ┌──────┴──────┐
+    │                     │      │       │       │             │
+    ▼                     ▼      ▼       ▼       ▼             ▼
+ CLOUDS              CLOCKS   LAPLACIAN  │   COMPTON'S    DESCARTES'S
+ (disorder)         (order)  DETERMINISM │   PROBLEM       PROBLEM
+                                  │      │
+                                  │      │
+                                  ▼      │
+                           DETERMINISM   │
+                            REFUTED      │
+                                  │      │
+                                  ▼      │
+                            RANDOMNESS   │
+                               ≠         │
+                            FREEDOM      │
+                                  │      │
+                                  │      │
+                                  ▼      ▼
+                            PLASTIC  ←───┴─── LANGUAGE FUNCTIONS
+                            CONTROLS         (4-stage chain)
+                                  │               │
+                                  │               ├─ 1. EXPRESSIVE
+                                  │               ├─ 2. SIGNALING
+                                  │               ├─ 3. DESCRIPTIVE ──┐
+                                  │               └─ 4. ARGUMENTATIVE │
+                                  │                          │        │
+                                  ▼                          │        ▼
+                          HIERARCHICAL                       │    WORLD 3
+                            SYSTEMS                          │    THEORY
+                                  │                          │        │
+                                  │                          │        ▼
+                                  ▼                          │   AUTONOMY
+                             EMERGENCE ◄────────────────────┘        │
+                                  │                                  │
+                                  ▼                                  ▼
+                            DOWNWARD                          OBJECTIVE
+                            CAUSATION                         STANDARDS
+                                  │                                  │
+                                  │                                  │
+                    ┌─────────────┼──────────────┐                 │
+                    │             │              │                 │
+                    ▼             │              ▼                 ▼
+            ANTI-REDUCTIONISM     │      TRIAL & ERROR     RATIONALITY AS
+                                  │      ELIMINATION       ACHIEVEMENT
+                                  │            │
+                                  │            ▼
+                                  │      THEORIES DIE
+                                  │      IN OUR STEAD
+                                  │            │
+                                  │            │
+                    ┌─────────────┼────────────┼────────────┐
+                    │             │            │            │
+                    │             ▼            ▼            │
+                    │        SOLUTION TO               CONSCIOUSNESS
+                    │     COMPTON'S PROBLEM                ROLE
+                    │             │                         │
+                    └─────────────┴─────────────┬───────────┘
+                                                │
+                                                ▼
+                                          FREEDOM AS
+                                      RATIONAL SELF-CONTROL
+                                        (Final Synthesis)
+
+
+═══════════════════════════════════════════════════════════════════
+
+LEGEND:
+
+Node Types:
+  ■ ORIGIN      - The starting question
+  ■ QUESTION    - Problems to be solved
+  ■ THESIS      - Positive claims
+  ■ ANTITHESIS  - Counter-positions
+  ■ PREMISE     - Supporting concepts
+  ■ ASSUMPTION  - Underlying presuppositions
+  ■ ANSWER      - Direct solutions
+  ■ CONCLUSION  - Derived insights
+  ■ SYNTHESIS   - Dialectical resolutions
+
+Groups (shown in CAPS):
+  • PROBLEMS (2 nodes)
+  • CLOUD-CLOCK SPECTRUM (3 nodes)
+  • DETERMINISM DEBATE (2 nodes)
+  • CONTROL MECHANISMS (2 nodes)
+  • LANGUAGE EVOLUTION (4 nodes)
+  • WORLD 3 KNOWLEDGE (3 nodes)
+  • LEARNING METHOD (2 nodes)
+  • EMERGENCE-CAUSATION (3 nodes)
+  • FREEDOM SYNTHESIS (3 nodes)
+
+═══════════════════════════════════════════════════════════════════
+
+KEY PATHS:
+
+Path 1: Determinism → Freedom
+  Origin → Spectrum → Laplacian Determinism → Refuted →
+  Randomness ≠ Freedom → Plastic Controls → Hierarchical Systems →
+  Emergence → Downward Causation → Freedom Synthesis
+
+Path 2: Language → Rationality
+  Origin → Language Evolution → Expressive → Signaling →
+  Descriptive → Argumentative → Trial & Error → Theories Die →
+  Freedom Synthesis
+
+Path 3: World 3 → Freedom
+  Descriptive → World 3 → Autonomy → Objective Standards →
+  Rationality Achievement → Freedom Synthesis
+
+Path 4: Solution Convergence
+  Compton's Problem ← (Plastic Controls + Hierarchical Systems +
+  Argumentative + World 3) → Solution → Freedom Synthesis
+
+═══════════════════════════════════════════════════════════════════
+
+CENTRAL INSIGHT:
+
+Freedom emerges from the intersection of:
+
+  PHYSICAL                ORGANIZATIONAL
+  PLASTICITY        +     HIERARCHY
+         │                     │
+         └─────────┬───────────┘
+                   │
+                   ▼
+             PLASTIC CONTROLS
+                   │
+         ┌─────────┴─────────┐
+         │                   │
+         ▼                   ▼
+    WORLD 3              CRITICAL
+    ACCESS           +   RATIONALITY
+         │                   │
+         └─────────┬───────────┘
+                   │
+                   ▼
+              FREEDOM AS
+         RATIONAL SELF-CONTROL
+
+═══════════════════════════════════════════════════════════════════
+
+Total: 28 content nodes + 9 group nodes = 37 total nodes
+       36 directed edges showing logical dependencies
+```
