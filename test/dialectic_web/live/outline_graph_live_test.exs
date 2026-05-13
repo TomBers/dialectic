@@ -243,6 +243,91 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     }
   end
 
+  defp deeply_nested_graph_data do
+    %{
+      "nodes" => [
+        %{
+          "id" => "1",
+          "content" => "# Root",
+          "class" => "origin",
+          "user" => nil,
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false
+        },
+        %{
+          "id" => "2",
+          "content" => "Where should the argument split?",
+          "class" => "question",
+          "user" => nil,
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false
+        },
+        %{
+          "id" => "3",
+          "content" => "Short branch",
+          "class" => "answer",
+          "user" => nil,
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false
+        },
+        %{
+          "id" => "4",
+          "content" => "Deep branch start",
+          "class" => "question",
+          "user" => nil,
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false
+        },
+        %{
+          "id" => "5",
+          "content" => "Deep branch level two",
+          "class" => "answer",
+          "user" => nil,
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false
+        },
+        %{
+          "id" => "6",
+          "content" => "Deep branch level three",
+          "class" => "question",
+          "user" => nil,
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false
+        },
+        %{
+          "id" => "7",
+          "content" => "Deep branch leaf",
+          "class" => "synthesis",
+          "user" => nil,
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false
+        }
+      ],
+      "edges" => [
+        %{"data" => %{"id" => "1_2", "source" => "1", "target" => "2"}},
+        %{"data" => %{"id" => "2_3", "source" => "2", "target" => "3"}},
+        %{"data" => %{"id" => "2_4", "source" => "2", "target" => "4"}},
+        %{"data" => %{"id" => "4_5", "source" => "4", "target" => "5"}},
+        %{"data" => %{"id" => "5_6", "source" => "5", "target" => "6"}},
+        %{"data" => %{"id" => "6_7", "source" => "6", "target" => "7"}}
+      ]
+    }
+  end
+
   defp create_graph(data \\ sample_graph_data()) do
     unique = System.unique_integer([:positive])
 
@@ -268,10 +353,11 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert is_nil(assigns.compare_context)
     assert has_element?(view, "#outline-layout")
     assert has_element?(view, "#outline-scroll-shell[phx-hook='ScrollReset']")
-    assert has_element?(view, "#outline-tree")
+    assert has_element?(view, "#outline-tree[phx-hook='OutlineNav']")
     assert has_element?(view, "#outline-mobile-nav")
     assert has_element?(view, "#outline-detail")
     assert has_element?(view, "#outline-node-1")
+    assert has_element?(view, "#outline-node-1[data-outline-selected='true']")
     assert has_element?(view, "#outline-mobile-node-1")
     assert has_element?(view, "#reader-editor-link.hidden")
     assert has_element?(view, "#reader-editor-link[data-view-transition='mode-switch']")
@@ -374,6 +460,19 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
 
     assert_patch(view, ~p"/g/#{graph.slug}?node=3")
     assert_push_event(view, "scroll_to_top", %{})
+  end
+
+  test "deep outlines stay flat and navigable without nesting controls", %{conn: conn} do
+    graph = create_graph(deeply_nested_graph_data())
+
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}")
+    assert has_element?(view, "#outline-node-4")
+    assert has_element?(view, "#outline-node-5")
+    assert has_element?(view, "#outline-node-6")
+    assert has_element?(view, "#outline-node-7")
+    refute has_element?(view, "#outline-toggle-4")
+    refute has_element?(view, "#outline-expand-all")
+    refute has_element?(view, "#outline-reset-folds")
   end
 
   test "selected article title shows the full node text in the reader and outline", %{conn: conn} do
