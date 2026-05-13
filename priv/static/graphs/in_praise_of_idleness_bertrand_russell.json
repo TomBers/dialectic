@@ -1,0 +1,500 @@
+{
+  "nodes": [
+    {
+      "id": "1",
+      "content": "Essay thesis\n\nRussell argues that modern societies have inherited a harmful worship of work. His main claim is that the path to prosperity is not more moralized labor, but an organized reduction of labor.\n\n> A great deal of harm is being done in the modern world by belief in the virtuousness of work, and... the road to happiness and prosperity lies in an organized diminution of work.",
+      "class": "origin",
+      "user": "Bertrand Russell",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "A great deal of harm is being done in the modern world by belief in the virtuousness of work."
+    },
+    {
+      "id": "group-claim",
+      "content": "Central claim",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "group-economics",
+      "content": "Economic clarification",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "group-history",
+      "content": "Historical source of work morality",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "group-modern",
+      "content": "Modern production and the four-hour day",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "group-objections",
+      "content": "Objections and replies",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "group-culture",
+      "content": "Leisure, culture, and happiness",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "2",
+      "content": "Inherited work ethic\n\nRussell begins inside the old moral training: 'Like most of my generation, I was brought up on the saying: Satan finds some mischief for idle hands to do.' He says he 'acquired a conscience' that kept him working hard, but his opinions underwent 'a revolution.'",
+      "class": "premise",
+      "user": "Bertrand Russell",
+      "parent": "group-claim",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Like most of my generation, I was brought up on the saying: 'Satan finds some mischief for idle hands to do.'"
+    },
+    {
+      "id": "3",
+      "content": "The reversal\n\nThe central reversal is that the modern world suffers from too much work, not too little. Russell gives it comic force through the Naples beggars: when a traveler offered a lira to the laziest, eleven jumped up and the twelfth got the coin.\n\n> I think that there is far too much work done in the world, that immense harm is caused by the belief that work is virtuous.\n\nHe then jokes that YMCA leaders should 'start a campaign to induce good young men to do nothing.'",
+      "class": "thesis",
+      "user": "Bertrand Russell",
+      "parent": "group-claim",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "There is far too much work done in the world... what needs to be preached in modern industrial countries is quite different from what always has been preached."
+    },
+    {
+      "id": "4",
+      "content": "Jobs and bread\n\nRussell rejects the objection that taking an ordinary job 'takes the bread out of other people's mouths.' His reply is that earning and spending are two sides of one economic circulation.\n\n> What a man earns he usually spends, and in spending he gives employment. As long as a man spends his income, he puts just as much bread into people's mouths in spending as he takes out of other people's mouths in earning.",
+      "class": "synthesis",
+      "user": "Bertrand Russell",
+      "parent": "group-economics",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "As long as a man spends his income, he puts just as much bread into people's mouths in spending as he takes out of other people's mouths in earning."
+    },
+    {
+      "id": "5",
+      "content": "The saver as villain\n\nThe true economic suspect is the saver, not the spender. Money in a stocking employs nobody; government lending often feeds militarism; failed investment may waste labor on useless production.\n\n> The real villain, from this point of view, is the man who saves.\n\n> A large amount of human labor... was expended on producing machines which, when produced, lay idle and did no good to anyone.\n\nBy contrast, parties at least help 'the butcher, the baker, and the bootlegger.'",
+      "class": "thesis",
+      "user": "Bertrand Russell",
+      "parent": "group-economics",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "The real villain, from this point of view, is the man who saves."
+    },
+    {
+      "id": "6",
+      "content": "Kinds of work\n\nRussell defines work as either 'altering the position of matter' or 'telling other people to do so.' The first is 'unpleasant and ill paid'; the second is 'pleasant and highly paid.' Landowners are not the idleness he praises, because 'their idleness is only rendered possible by the industry of others.'",
+      "class": "premise",
+      "user": "Bertrand Russell",
+      "parent": "group-history",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Work is of two kinds: first, altering the position of matter...; second, telling other people to do so."
+    },
+    {
+      "id": "7",
+      "content": "Duty as control\n\nThe gospel of work comes from old systems where the small surplus was taken by warriors and priests. Force came first, but moral teaching was cheaper: persuade workers to serve others in the name of duty.\n\n> The conception of duty, speaking historically, has been a means used by the holders of power to induce others to live for the interests of their masters rather than for their own.",
+      "class": "premise",
+      "user": "Bertrand Russell",
+      "parent": "group-history",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "The conception of duty... has been a means used by the holders of power to induce others to live for the interests of their masters."
+    },
+    {
+      "id": "8",
+      "content": "Leisure and civilization\n\nRussell does not deny that leisure produced civilization. The injustice is that leisure for a few was bought by labor for the many. His key reversal is that the value lies in leisure, not in toil.\n\n> Leisure is essential to civilization, and in former times leisure for the few was only rendered possible by the labors of the many.\n\n> Their labors were valuable, not because work is good, but because leisure is good.",
+      "class": "synthesis",
+      "user": "Bertrand Russell",
+      "parent": "group-history",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Their labors were valuable, not because work is good, but because leisure is good."
+    },
+    {
+      "id": "9",
+      "content": "Technique changes the bargain\n\nModern technique makes the old slave morality obsolete. Russell says leisure can now be 'not the prerogative of small privileged classes, but a right evenly distributed throughout the community,' and that it could be distributed 'justly without injury to civilization.'",
+      "class": "thesis",
+      "user": "Bertrand Russell",
+      "parent": "group-modern",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "With modern technique it would be possible to distribute leisure justly without injury to civilization."
+    },
+    {
+      "id": "10",
+      "content": "War as proof\n\nThe war accidentally proved that modern societies can maintain comfort with less ordinary labor. Many people were withdrawn into fighting, munitions, spying, propaganda, and government offices, yet wellbeing did not collapse. Finance hid the fact, but Russell insists future goods cannot nourish the present.\n\n> Borrowing made it appear as if the future was nourishing the present. But that, of course, would have been impossible; a man cannot eat a loaf of bread that does not yet exist.",
+      "class": "premise",
+      "user": "Bertrand Russell",
+      "parent": "group-modern",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "A man cannot eat a loaf of bread that does not yet exist."
+    },
+    {
+      "id": "11",
+      "content": "Productivity perverted\n\nRussell's pin-factory example shows how abundance becomes misery. In a sensible world, an invention that doubles output would mean everyone works four hours rather than eight. In the actual world, unemployment and overwork coexist.\n\n> There is, in the end, just as much leisure as on the other plan, but half the men are totally idle while half are still overworked.\n\n> In this way, it is insured that the unavoidable leisure shall cause misery all round instead of being a universal source of happiness.",
+      "class": "antithesis",
+      "user": "Bertrand Russell",
+      "parent": "group-modern",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Half the men are totally idle while half are still overworked."
+    },
+    {
+      "id": "12",
+      "content": "Four-hour proposal\n\nThe practical conclusion is a four-hour day under sensible organization. The remaining time should not be dictated by moralists; it belongs to the person living it.\n\n> If the ordinary wage-earner worked four hours a day, there would be enough for everybody and no unemployment.\n\n> Four hours' work a day should entitle a man to the necessities and elementary comforts of life, and... the rest of his time should be his to use as he might see fit.",
+      "class": "conclusion",
+      "user": "Bertrand Russell",
+      "parent": "group-modern",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "If the ordinary wage-earner worked four hours a day, there would be enough for everybody and no unemployment."
+    },
+    {
+      "id": "13",
+      "content": "A limited duty\n\nRussell concedes only a minimal duty to work: because each person consumes the product of human labor, each should provide something in return. But he immediately limits the claim.\n\n> Every human being, of necessity, consumes, in the course of his life, a certain amount of the produce of human labor.\n\n> To this extent, the duty of work must be admitted, but to this extent only.",
+      "class": "synthesis",
+      "user": "Bertrand Russell",
+      "parent": "group-objections",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "To this extent, the duty of work must be admitted, but to this extent only."
+    },
+    {
+      "id": "14",
+      "content": "Fear of idle poor\n\nA recurring objection is that ordinary people would misuse leisure. Russell frames this as class prejudice and captures it in the Duchess anecdote.\n\n> The idea that the poor should have leisure has always been shocking to the rich.\n\n> What do the poor want with holidays? They ought to work.",
+      "class": "antithesis",
+      "user": "Bertrand Russell",
+      "parent": "group-objections",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "What do the poor want with holidays? They ought to work."
+    },
+    {
+      "id": "15",
+      "content": "Learning leisure\n\nIf people cannot use leisure, Russell says, that is not an argument against leisure but against a civilization that trains people only for work. Education should cultivate tastes that let people use leisure intelligently.\n\n> The wise use of leisure, it must be conceded, is a product of civilization and education.\n\n> Without a considerable amount of leisure a man is cut off from many of the best things.",
+      "class": "synthesis",
+      "user": "Bertrand Russell",
+      "parent": "group-objections",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "The wise use of leisure... is a product of civilization and education."
+    },
+    {
+      "id": "16",
+      "content": "Labor worship persists\n\nRussell sees old labor worship surviving under new names. In Russia, authority receives a new sacred vocabulary; in the West, inequality, waste, overwork, unemployment, and war keep severe labor seeming necessary.\n\n> Authority still represents the will of the Ruler of the Universe, Who, however, is now called by a new name, Dialectical Materialism.\n\n> By a combination of all these devices we manage, though with difficulty, to keep alive the notion that a great deal of severe manual work must be the lot of the average man.",
+      "class": "premise",
+      "user": "Bertrand Russell",
+      "parent": "group-objections",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Authority still represents the will of the Ruler of the Universe, Who, however, is now called by a new name, Dialectical Materialism."
+    },
+    {
+      "id": "17",
+      "content": "Work as means\n\nMoving matter is necessary, but it is not an end of human life. Russell appeals both to philosophical common sense and to workers' own experience.\n\n> Moving matter about, while a certain amount of it is necessary to our existence, is emphatically not one of the ends of human life. If it were, we should have to consider every navvy superior to Shakespeare.\n\n> They consider work, as it should be considered, a necessary means to a livelihood, and it is from their leisure that they derive whatever happiness they may enjoy.",
+      "class": "thesis",
+      "user": "Bertrand Russell",
+      "parent": "group-culture",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Moving matter about... is emphatically not one of the ends of human life."
+    },
+    {
+      "id": "18",
+      "content": "Production vs enjoyment\n\nProfit-centered thinking makes everything 'topsy-turvy.' Russell mocks the logic: cinema production is respectable because it earns money, while cinema-going is condemned as frivolous.\n\n> Seeing that they are two sides of one transaction, this is absurd; one might as well maintain that keys are good, but keyholes are bad.\n\n> We think too much of production, and too little of consumption.",
+      "class": "premise",
+      "user": "Bertrand Russell",
+      "parent": "group-culture",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "One might as well maintain that keys are good, but keyholes are bad."
+    },
+    {
+      "id": "19",
+      "content": "Education for free time\n\nEducation should cultivate intelligent leisure, not just job fitness. Russell is not thinking only of 'highbrow' pursuits; he wants active energies to have room again.\n\n> Education... should aim, in part, at providing tastes which would enable a man to use leisure intelligently.\n\n> The pleasures of urban populations have become mainly passive: seeing cinemas, watching football matches, listening to the radio, and so on. This results from the fact that their active energies are fully taken up with work.",
+      "class": "thesis",
+      "user": "Bertrand Russell",
+      "parent": "group-culture",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Education... should aim, in part, at providing tastes which would enable a man to use leisure intelligently."
+    },
+    {
+      "id": "20",
+      "content": "Who guards civilization?\n\nThe old leisure class was unjust but produced much of what we call civilization. Universities are an improvement, yet too detached and organized to carry all unutilitarian inquiry. Russell's contrast is pointed.\n\n> The class might produce one Darwin, but against him had to be set tens of thousands of country gentlemen who never thought of anything more intelligent than fox-hunting and punishing poachers.\n\n> Academic institutions... are not adequate guardians of the interests of civilization in a world where everyone outside their walls is too busy for unutilitarian pursuits.",
+      "class": "synthesis",
+      "user": "Bertrand Russell",
+      "parent": "group-culture",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "The class might produce one Darwin, but against him had to be set tens of thousands of country gentlemen who never thought of anything more intelligent than fox-hunting and punishing poachers."
+    },
+    {
+      "id": "21",
+      "content": "Freed creativity\n\nWith broadly shared leisure, creativity could escape starvation and institutional conformity. Writers would not need sensational pot-boilers before doing their real work.\n\n> Every person possessed of scientific curiosity will be able to indulge it, and every painter will be able to paint without starving, however excellent his pictures may be.\n\n> Young writers will not be obliged to draw attention to themselves by sensational pot-boilers... for which, when the time at last comes, they will have lost the taste and capacity.",
+      "class": "conclusion",
+      "user": "Bertrand Russell",
+      "parent": "group-culture",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Every person possessed of scientific curiosity will be able to indulge it, and every painter will be able to paint without starving."
+    },
+    {
+      "id": "22",
+      "content": "Ease makes good nature\n\nThe social promise is moral as well as cultural. With less exhaustion, people would not demand only passive amusements, and their relations with others would soften.\n\n> The work exacted will be enough to make leisure delightful, but not enough to produce exhaustion.\n\n> Ordinary men and women... will become more kindly and less persecuting and less inclined to view others with suspicion.\n\n> Good nature is the result of ease and security, not of a life of arduous struggle.",
+      "class": "conclusion",
+      "user": "Bertrand Russell",
+      "parent": "group-culture",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Good nature is the result of ease and security, not of a life of arduous struggle."
+    },
+    {
+      "id": "23",
+      "content": "Final choice\n\nRussell closes with a stark choice: modern production has made general ease possible, but inherited morality has kept society attached to needless struggle.\n\n> Modern methods of production have given us the possibility of ease and security for all; we have chosen, instead, to have overwork for some and starvation for others.\n\n> Hitherto we have continued to be as energetic as we were before there were machines; in this we have been foolish, but there is no reason to go on being foolish forever.",
+      "class": "conclusion",
+      "user": "Bertrand Russell",
+      "parent": "group-culture",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "There is no reason to go on being foolish forever."
+    }
+  ],
+  "edges": [
+    {
+      "data": {
+        "id": "e1-2",
+        "source": "1",
+        "target": "2"
+      }
+    },
+    {
+      "data": {
+        "id": "e2-3",
+        "source": "2",
+        "target": "3"
+      }
+    },
+    {
+      "data": {
+        "id": "e3-4",
+        "source": "3",
+        "target": "4"
+      }
+    },
+    {
+      "data": {
+        "id": "e4-5",
+        "source": "4",
+        "target": "5"
+      }
+    },
+    {
+      "data": {
+        "id": "e3-6",
+        "source": "3",
+        "target": "6"
+      }
+    },
+    {
+      "data": {
+        "id": "e6-7",
+        "source": "6",
+        "target": "7"
+      }
+    },
+    {
+      "data": {
+        "id": "e7-8",
+        "source": "7",
+        "target": "8"
+      }
+    },
+    {
+      "data": {
+        "id": "e8-9",
+        "source": "8",
+        "target": "9"
+      }
+    },
+    {
+      "data": {
+        "id": "e9-10",
+        "source": "9",
+        "target": "10"
+      }
+    },
+    {
+      "data": {
+        "id": "e10-11",
+        "source": "10",
+        "target": "11"
+      }
+    },
+    {
+      "data": {
+        "id": "e11-12",
+        "source": "11",
+        "target": "12"
+      }
+    },
+    {
+      "data": {
+        "id": "e12-13",
+        "source": "12",
+        "target": "13"
+      }
+    },
+    {
+      "data": {
+        "id": "e12-14",
+        "source": "12",
+        "target": "14"
+      }
+    },
+    {
+      "data": {
+        "id": "e14-15",
+        "source": "14",
+        "target": "15"
+      }
+    },
+    {
+      "data": {
+        "id": "e12-16",
+        "source": "12",
+        "target": "16"
+      }
+    },
+    {
+      "data": {
+        "id": "e16-17",
+        "source": "16",
+        "target": "17"
+      }
+    },
+    {
+      "data": {
+        "id": "e17-18",
+        "source": "17",
+        "target": "18"
+      }
+    },
+    {
+      "data": {
+        "id": "e18-19",
+        "source": "18",
+        "target": "19"
+      }
+    },
+    {
+      "data": {
+        "id": "e19-20",
+        "source": "19",
+        "target": "20"
+      }
+    },
+    {
+      "data": {
+        "id": "e20-21",
+        "source": "20",
+        "target": "21"
+      }
+    },
+    {
+      "data": {
+        "id": "e21-22",
+        "source": "21",
+        "target": "22"
+      }
+    },
+    {
+      "data": {
+        "id": "e22-23",
+        "source": "22",
+        "target": "23"
+      }
+    },
+    {
+      "data": {
+        "id": "e9-12",
+        "source": "9",
+        "target": "12"
+      }
+    },
+    {
+      "data": {
+        "id": "e15-19",
+        "source": "15",
+        "target": "19"
+      }
+    },
+    {
+      "data": {
+        "id": "e3-23",
+        "source": "3",
+        "target": "23"
+      }
+    }
+  ]
+}
