@@ -96,7 +96,7 @@
         <nav class="space-y-1 px-2 py-3">
           <%= for row <- @outline_nodes do %>
             <% selected? = @selected_node_id == row.id %>
-            <% in_path? = Enum.any?(@selected_path, &(&1.id == row.id)) %>
+            <% in_path? = MapSet.member?(@selected_path_ids, row.id) %>
             <.link
               id={"outline-node-#{row.id}"}
               patch={graph_path(@graph_struct, row.id, @nav_params)}
@@ -196,7 +196,7 @@
                   <nav class="space-y-1">
                     <%= for row <- @outline_nodes do %>
                       <% selected? = @selected_node_id == row.id %>
-                      <% in_path? = Enum.any?(@selected_path, &(&1.id == row.id)) %>
+                      <% in_path? = MapSet.member?(@selected_path_ids, row.id) %>
                       <.link
                         id={"outline-mobile-node-#{row.id}"}
                         patch={graph_path(@graph_struct, row.id, @nav_params)}

@@ -1,15 +1,21 @@
 const OutlineNavHook = {
   mounted() {
-    this.scrollSelectedIntoView();
+    this.lastSelectedId = null;
+    this.syncSelectedIntoView();
   },
 
   updated() {
-    this.scrollSelectedIntoView();
+    this.syncSelectedIntoView();
   },
 
-  scrollSelectedIntoView() {
+  syncSelectedIntoView() {
     const selected = this.el.querySelector("[data-outline-selected='true']");
     if (!selected) return;
+
+    const selectedId = selected.id || null;
+    if (selectedId === this.lastSelectedId) return;
+
+    this.lastSelectedId = selectedId;
 
     const scrollToSelection = () => {
       selected.scrollIntoView({
