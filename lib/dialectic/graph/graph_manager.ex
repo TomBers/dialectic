@@ -6,15 +6,70 @@ defmodule GraphManager do
   use GenServer
 
   def get_graph(path) do
-    case exists?(path) do
-      false ->
-        DynamicSupervisor.start_child(GraphSupervisor, {GraphManager, path})
-        GenServer.call(via_tuple(path), :get_graph)
+    ensure_started(path)
 
-      true ->
-        GenServer.call(via_tuple(path), :get_graph)
+    try do
+      GenServer.call(via_tuple(path), :get_graph)
+    catch
+      :exit, reason ->
+        if recoverable_call_exit?(reason) do
+          Logger.warning(
+            "GraphManager call failed for #{path}; restarting graph process: #{inspect(reason)}"
+          )
+
+          restart_graph_process(path)
+          GenServer.call(via_tuple(path), :get_graph)
+        else
+          exit(reason)
+        end
     end
   end
+
+  defp ensure_started(path) do
+    unless exists?(path) do
+      start_graph_process(path)
+    end
+  end
+
+  defp start_graph_process(path) do
+    case DynamicSupervisor.start_child(GraphSupervisor, {GraphManager, path}) do
+      {:ok, _pid} -> :ok
+      {:error, {:already_started, _pid}} -> :ok
+      :ignore -> :ok
+      {:error, reason} -> exit(reason)
+    end
+  end
+
+  defp restart_graph_process(path) do
+    case :global.whereis_name({:graph, path}) do
+      pid when is_pid(pid) ->
+        Process.exit(pid, :kill)
+        wait_until_unregistered(path, 10)
+
+      :undefined ->
+        :ok
+    end
+
+    start_graph_process(path)
+  end
+
+  defp wait_until_unregistered(_path, 0), do: :ok
+
+  defp wait_until_unregistered(path, attempts) do
+    case :global.whereis_name({:graph, path}) do
+      :undefined ->
+        :ok
+
+      _pid ->
+        Process.sleep(10)
+        wait_until_unregistered(path, attempts - 1)
+    end
+  end
+
+  defp recoverable_call_exit?(:timeout), do: true
+  defp recoverable_call_exit?({:timeout, _details}), do: true
+  defp recoverable_call_exit?({:noproc, _details}), do: true
+  defp recoverable_call_exit?(_reason), do: false
 
   # Client API
   def start_link(path) do
@@ -295,26 +350,31 @@ defmodule GraphManager do
 
   def handle_call({:path_to_node, node}, _, {graph_struct, graph}) do
     # Build a linear chain from the current node up to the root by
-    # repeatedly following the first immediate parent. This avoids
-    # arbitrary ordering from sets and produces a deterministic path.
+    # repeatedly following the first immediate parent. Guard against
+    # corrupt/cyclic graph data so a bad edge cannot wedge the GraphManager.
     build_chain =
-      fn build_chain, current, acc ->
-        case :digraph.in_neighbours(graph, current.id) do
-          [parent_id | _] ->
+      fn build_chain, current, acc, visited ->
+        visited = MapSet.put(visited, current.id)
+
+        graph
+        |> :digraph.in_neighbours(current.id)
+        |> Enum.find(fn parent_id -> not MapSet.member?(visited, parent_id) end)
+        |> case do
+          nil ->
+            acc
+
+          parent_id ->
             case :digraph.vertex(graph, parent_id) do
               {^parent_id, parent_vertex} ->
-                build_chain.(build_chain, parent_vertex, acc ++ [parent_vertex])
+                build_chain.(build_chain, parent_vertex, acc ++ [parent_vertex], visited)
 
               _ ->
                 acc
             end
-
-          [] ->
-            acc
         end
       end
 
-    chain = build_chain.(build_chain, node, [node])
+    chain = build_chain.(build_chain, node, [node], MapSet.new())
 
     {:reply, chain, {graph_struct, graph}}
   end
