@@ -81,6 +81,7 @@
     <aside
       id="outline-tree"
       class="hidden min-h-0 overflow-y-auto border-b border-slate-200 bg-white lg:block lg:border-b-0 lg:border-r"
+      phx-hook="OutlineNav"
     >
       <div class="sticky top-0 z-10 border-b border-slate-200 bg-white px-4 py-4">
         <h2 class="text-sm font-semibold text-slate-900">Conversation Outline</h2>
@@ -95,10 +96,12 @@
         <nav class="space-y-1 px-2 py-3">
           <%= for row <- @outline_nodes do %>
             <% selected? = @selected_node_id == row.id %>
-            <% displayed? = MapSet.member?(@displayed_node_ids, row.id) %>
+            <% in_path? = MapSet.member?(@selected_path_ids, row.id) %>
             <.link
               id={"outline-node-#{row.id}"}
               patch={graph_path(@graph_struct, row.id, @nav_params)}
+              data-outline-selected={to_string(selected?)}
+              style={outline_indent_style(row.indent)}
               class={[
                 "group block rounded-xl border px-3 py-2.5 transition-all",
                 if(selected?,
@@ -106,33 +109,48 @@
                   else:
                     "border-transparent text-slate-800 hover:border-slate-200 hover:bg-slate-50"
                 ),
-                displayed? && !selected? && "border-slate-200 bg-slate-50/80"
+                in_path? && !selected? && "border-slate-200 bg-slate-50/80"
               ]}
-              style={outline_indent_style(row.indent)}
             >
               <div class="flex items-start gap-3">
+                <div class="mt-1 flex shrink-0 items-center gap-1">
+                  <%= for _ <- outline_indent_guides(row.indent) do %>
+                    <span class="h-4 w-px rounded-full bg-slate-200"></span>
+                  <% end %>
+                </div>
+
                 <span class={[
-                  "mt-1.5 h-2.5 w-2.5 rounded-full ring-2 shadow-sm",
+                  "mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ring-2 shadow-sm",
                   if(selected?, do: "ring-slate-700", else: "ring-white"),
-                  DialecticWeb.ColUtils.dot_class(row.class)
+                  DialecticWeb.ColUtils.dot_class(row.class),
+                  !selected? && !in_path? && "opacity-35 saturate-50"
                 ]}>
                 </span>
 
                 <div class="min-w-0 flex-1">
-                  <p class="text-sm font-medium leading-5 whitespace-normal break-words">
+                  <p class={[
+                    "text-sm leading-5 break-words transition-colors",
+                    cond do
+                      selected? -> "font-semibold text-slate-950"
+                      in_path? -> "font-semibold text-slate-900"
+                      true -> "font-medium text-slate-500 group-hover:text-slate-700"
+                    end
+                  ]}>
                     {row.full_title}
                   </p>
                 </div>
 
                 <div class="flex items-center gap-2 text-[11px]">
+                  <%= cond do %>
+                    <% selected? -> %>
+                      <span class="rounded-full bg-blue-100 px-2 py-0.5 font-semibold text-blue-700">
+                        Here
+                      </span>
+                    <% true -> %>
+                  <% end %>
+
                   <%= if row.branch? do %>
-                    <span class={[
-                      "rounded-full px-2 py-0.5 font-medium",
-                      if(selected?,
-                        do: "bg-white text-blue-700",
-                        else: "bg-emerald-50 text-emerald-700"
-                      )
-                    ]}>
+                    <span class="rounded-full bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-700">
                       Split
                     </span>
                   <% end %>
@@ -178,10 +196,12 @@
                   <nav class="space-y-1">
                     <%= for row <- @outline_nodes do %>
                       <% selected? = @selected_node_id == row.id %>
-                      <% displayed? = MapSet.member?(@displayed_node_ids, row.id) %>
+                      <% in_path? = MapSet.member?(@selected_path_ids, row.id) %>
                       <.link
                         id={"outline-mobile-node-#{row.id}"}
                         patch={graph_path(@graph_struct, row.id, @nav_params)}
+                        data-outline-selected={to_string(selected?)}
+                        style={outline_indent_style(row.indent, 0.35)}
                         class={[
                           "group block rounded-xl border px-3 py-2.5 transition-all",
                           if(selected?,
@@ -189,33 +209,48 @@
                             else:
                               "border-transparent text-slate-800 hover:border-slate-200 hover:bg-slate-50"
                           ),
-                          displayed? && !selected? && "border-slate-200 bg-slate-50/80"
+                          in_path? && !selected? && "border-slate-200 bg-slate-50/80"
                         ]}
-                        style={outline_indent_style(row.indent)}
                       >
                         <div class="flex items-start gap-3">
+                          <div class="mt-1 flex shrink-0 items-center gap-1">
+                            <%= for _ <- outline_indent_guides(row.indent) do %>
+                              <span class="h-4 w-px rounded-full bg-slate-200"></span>
+                            <% end %>
+                          </div>
+
                           <span class={[
-                            "mt-1.5 h-2.5 w-2.5 rounded-full ring-2 shadow-sm",
+                            "mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ring-2 shadow-sm",
                             if(selected?, do: "ring-slate-700", else: "ring-white"),
-                            DialecticWeb.ColUtils.dot_class(row.class)
+                            DialecticWeb.ColUtils.dot_class(row.class),
+                            !selected? && !in_path? && "opacity-35 saturate-50"
                           ]}>
                           </span>
 
                           <div class="min-w-0 flex-1">
-                            <p class="text-sm font-medium leading-5 whitespace-normal break-words">
+                            <p class={[
+                              "text-sm leading-5 break-words transition-colors",
+                              cond do
+                                selected? -> "font-semibold text-slate-950"
+                                in_path? -> "font-semibold text-slate-900"
+                                true -> "font-medium text-slate-500 group-hover:text-slate-700"
+                              end
+                            ]}>
                               {row.full_title}
                             </p>
                           </div>
 
                           <div class="flex items-center gap-2 text-[11px]">
+                            <%= cond do %>
+                              <% selected? -> %>
+                                <span class="rounded-full bg-blue-100 px-2 py-0.5 font-semibold text-blue-700">
+                                  Here
+                                </span>
+                              <% true -> %>
+                            <% end %>
+
                             <%= if row.branch? do %>
-                              <span class={[
-                                "rounded-full px-2 py-0.5 font-medium",
-                                if(selected?,
-                                  do: "bg-white text-blue-700",
-                                  else: "bg-emerald-50 text-emerald-700"
-                                )
-                              ]}>
+                              <span class="rounded-full bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-700">
                                 Split
                               </span>
                             <% end %>
