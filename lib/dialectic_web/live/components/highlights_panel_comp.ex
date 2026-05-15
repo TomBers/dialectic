@@ -147,25 +147,25 @@ defmodule DialecticWeb.HighlightsPanelComp do
     ~H"""
     <div class="flex flex-col gap-3 pb-4">
       <%= if length(@highlights) > 0 do %>
-        <div class="rounded-2xl border border-slate-200 bg-slate-50 shadow-sm">
+        <div class="rounded-xl border border-slate-200 bg-slate-50 shadow-sm">
           <div class="grid grid-cols-3 divide-x divide-slate-200">
-            <div class="px-3 py-3">
+            <div class="px-2.5 py-2">
               <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                 Highlights
               </p>
-              <p class="mt-1 text-lg font-semibold text-slate-900">{length(@highlights)}</p>
+              <p class="mt-0.5 text-sm font-semibold text-slate-900">{length(@highlights)}</p>
             </div>
-            <div class="px-3 py-3">
+            <div class="px-2.5 py-2">
               <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                 Notes
               </p>
-              <p class="mt-1 text-lg font-semibold text-slate-900">{note_count(@highlights)}</p>
+              <p class="mt-0.5 text-sm font-semibold text-slate-900">{note_count(@highlights)}</p>
             </div>
-            <div class="px-3 py-3">
+            <div class="px-2.5 py-2">
               <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                 Links
               </p>
-              <p class="mt-1 text-lg font-semibold text-slate-900">{total_link_count(@highlights)}</p>
+              <p class="mt-0.5 text-sm font-semibold text-slate-900">{total_link_count(@highlights)}</p>
             </div>
           </div>
         </div>
@@ -229,24 +229,22 @@ defmodule DialecticWeb.HighlightsPanelComp do
                   phx-value-node-id={highlight.node_id}
                   title="Go to highlight"
                 >
-                  <div class="mb-3 flex items-start justify-between gap-3">
-                    <div class="min-w-0 flex items-center gap-2">
-                      <p class="truncate text-sm font-semibold text-slate-900">
-                        {node_title(@node_titles, highlight.node_id)}
-                      </p>
-                      <%= if visible_in_view?(highlight, @visible_node_ids) do %>
-                        <span
-                          class="mt-0.5 inline-flex h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-500 ring-2 ring-emerald-100"
-                          title="Visible in the current view"
-                          aria-label="In view"
-                        >
-                        </span>
-                      <% end %>
-                    </div>
-                  </div>
-                  <blockquote class="border-l-2 border-slate-300 pl-4 font-serif text-[15px] leading-7 text-slate-900 break-words sm:text-base">
+                  <blockquote class="border-l-2 border-slate-300 pl-4 font-serif italic text-[15px] leading-7 text-slate-900 break-words sm:text-base">
                     “{highlight.selected_text_snapshot}”
                   </blockquote>
+                  <div class="mt-3 flex items-center gap-2 pl-4">
+                    <p class="min-w-0 truncate text-sm font-semibold text-slate-700">
+                      {node_title(@node_titles, highlight.node_id)}
+                    </p>
+                    <%= if visible_in_view?(highlight, @visible_node_ids) do %>
+                      <span
+                        class="mt-0.5 inline-flex h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-500 ring-2 ring-emerald-100"
+                        title="Visible in the current view"
+                        aria-label="In view"
+                      >
+                      </span>
+                    <% end %>
+                  </div>
                 </button>
 
                 <%= if note_present?(highlight) do %>

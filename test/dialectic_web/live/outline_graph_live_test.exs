@@ -527,6 +527,7 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=4")
 
     assert has_element?(view, "#reader-highlights-button")
+    assert has_element?(view, "#reader-highlights-button", "1")
     assert render(view) =~ "Reading key"
     assert render(view) =~ "Highlights"
   end
