@@ -325,6 +325,7 @@ const graphHook = {
       initialPresentationMode,
       initialPresentationIds,
     );
+    this._scheduleFontAwareRedraw();
 
     // Initial update
     this._updateExploredStatus();
@@ -1278,29 +1279,105 @@ const graphHook = {
     const containerHeight =
       this._container?.clientHeight || window.innerHeight || 800;
 
+    if (count <= 4) {
+      const estimatedCardWidth = 300;
+      const estimatedCardHeight = 150;
+      const availableWidth = Math.max(containerWidth - 48, estimatedCardWidth);
+      const availableHeight = Math.max(
+        containerHeight - 48,
+        estimatedCardHeight,
+      );
+
+      let columns = 1;
+      let rows = count;
+
+      if (count === 2) {
+        columns = containerWidth >= 760 ? 2 : 1;
+        rows = Math.ceil(count / columns);
+      } else if (count >= 3) {
+        columns = 2;
+        rows = Math.ceil(count / columns);
+      }
+
+      const targetWidthUsage =
+        columns === 1 ? 0 : count === 2 ? 0.44 : 0.46;
+      const targetHeightUsage =
+        rows === 1 ? 0 : count === 4 ? 0.38 : count === 3 ? 0.34 : 0.3;
+      const xStep =
+        columns > 1
+          ? Math.max(
+              estimatedCardWidth + 72,
+              Math.min(
+                estimatedCardWidth + 148,
+                (availableWidth * targetWidthUsage) / (columns - 1),
+              ),
+            )
+          : 0;
+      const yStep =
+        rows > 1
+          ? Math.max(
+              estimatedCardHeight + 52,
+              Math.min(
+                estimatedCardHeight + (count === 4 ? 110 : 88),
+                (availableHeight * targetHeightUsage) / (rows - 1),
+              ),
+            )
+          : 0;
+      const startX = -((columns - 1) * xStep) / 2;
+      const startY = -((rows - 1) * yStep) / 2;
+
+      return orderedIds.reduce((positions, id, idx) => {
+        const row = Math.floor(idx / columns);
+        const col = idx % columns;
+
+        positions.set(id, {
+          x: startX + col * xStep,
+          y: startY + row * yStep,
+        });
+
+        return positions;
+      }, new Map());
+    }
+
     const estimatedCardWidth = containerWidth >= 1200 ? 360 : 320;
     const estimatedCardHeight = 120;
     const gapX = 92;
     const gapY = 96;
-    const maxColumns = Math.min(count, 4);
-    const availableWidth = Math.max(containerWidth - 120, estimatedCardWidth);
-    const availableHeight = Math.max(containerHeight - 120, estimatedCardHeight);
+    const availableWidth = Math.max(containerWidth - 88, estimatedCardWidth);
+    const availableHeight = Math.max(containerHeight - 88, estimatedCardHeight);
+    const viewportAspect = availableWidth / Math.max(availableHeight, 1);
+    const minColumns =
+      count >= 4 && containerWidth >= 900
+        ? 2
+        : 1;
+    const maxColumns = Math.min(
+      count,
+      containerWidth >= 1500 ? 4 : 3,
+    );
+    const targetColumns = Math.sqrt(count * Math.max(viewportAspect, 0.8));
 
     let bestColumns = 1;
     let bestScore = Number.NEGATIVE_INFINITY;
 
-    for (let columns = 1; columns <= maxColumns; columns += 1) {
+    for (let columns = minColumns; columns <= maxColumns; columns += 1) {
       const rows = Math.ceil(count / columns);
       const gridWidth = columns * estimatedCardWidth + (columns - 1) * gapX;
       const gridHeight = rows * estimatedCardHeight + (rows - 1) * gapY;
-      const fitScale = Math.min(
-        availableWidth / gridWidth,
-        availableHeight / gridHeight,
-      );
+      const widthFill = Math.min(gridWidth / availableWidth, 1);
+      const heightFill = Math.min(gridHeight / availableHeight, 1);
       const emptySlots = rows * columns - count;
       const raggedPenalty = emptySlots * 0.08;
-      const columnPenalty = columns > 2 ? (columns - 2) * 0.12 : 0;
-      const score = fitScale - raggedPenalty - columnPenalty;
+      const columnPenalty = columns > 3 ? (columns - 3) * 0.1 : 0;
+      const targetPenalty = Math.abs(columns - targetColumns) * 0.22;
+      const singleColumnPenalty =
+        columns == 1 && count >= 4 && containerWidth >= 900 ? 0.5 : 0;
+      const score =
+        widthFill * 0.58 +
+        heightFill * 0.32 -
+        raggedPenalty -
+        columnPenalty -
+        targetPenalty -
+        singleColumnPenalty;
 
       if (score > bestScore) {
         bestScore = score;
@@ -1310,8 +1387,24 @@ const graphHook = {
 
     const columns = bestColumns;
     const rows = Math.ceil(count / columns);
-    const xStep = estimatedCardWidth + gapX;
-    const yStep = estimatedCardHeight + gapY;
+    const targetWidthUsage =
+      columns == 1 ? 0.6 : columns == 2 ? 0.76 : 0.88;
+    const targetHeightUsage =
+      rows == 1 ? 0.22 : rows == 2 ? 0.64 : Math.min(0.9, 0.62 + rows * 0.07);
+    const xStep =
+      columns > 1
+        ? Math.max(
+            estimatedCardWidth + 36,
+            (availableWidth * targetWidthUsage) / (columns - 1),
+          )
+        : 0;
+    const yStep =
+      rows > 1
+        ? Math.max(
+            estimatedCardHeight + 54,
+            (availableHeight * targetHeightUsage) / (rows - 1),
+          )
+        : 0;
     const startX = -((columns - 1) * xStep) / 2;
     const startY = -((rows - 1) * yStep) / 2;
 
@@ -1395,6 +1488,23 @@ const graphHook = {
     }, []);
   },
 
+  _applyPresentationGridPositions(ids = this._presentationIds) {
+    if (!this.cy || !Array.isArray(ids) || ids.length === 0) return;
+
+    const orderedPositions = this._buildOrderedPresentationPositions(ids);
+
+    try {
+      this.cy.startBatch();
+      this.cy.nodes().forEach((node) => {
+        const position = orderedPositions.get(node.id());
+        if (position) {
+          node.position(position);
+        }
+      });
+      this.cy.endBatch();
+    } catch (_e) {}
+  },
+
   _initializePresentationState(mode, ids) {
     if (!this.cy) return;
 
@@ -1402,6 +1512,7 @@ const graphHook = {
       this._presentationIds = ids;
       this._presentationFiltered = true;
       this._setDepthToggleOverlayVisible(false);
+      this._applyPresentationGridPositions(ids);
       this._setPresentationHighlights(ids, { renderBadges: false });
       this._schedulePresentationViewportFit();
       return;
@@ -1465,6 +1576,15 @@ const graphHook = {
   _fitPresentationViewport() {
     if (!this.cy) return;
 
+    this._applyPresentationGridPositions();
+
+    const visibleCount = this.cy
+      .nodes()
+      .not(".presentation-hidden")
+      .not(".presentation-hidden-parent").length;
+    const fitPadding =
+      visibleCount <= 2 ? 16 : visibleCount <= 4 ? 22 : visibleCount <= 8 ? 36 : 44;
+
     const visibleNodes = this.cy
       .nodes()
       .not(".presentation-hidden")
@@ -1474,12 +1594,12 @@ const graphHook = {
 
     const fitViewport =
       typeof this.cy.getFitViewport === "function"
-        ? this.cy.getFitViewport(visibleNodes, 60)
+        ? this.cy.getFitViewport(visibleNodes, fitPadding)
         : null;
 
     if (!fitViewport || !fitViewport.pan || !Number.isFinite(fitViewport.zoom)) {
       this.cy.animate({
-        fit: { eles: visibleNodes, padding: 60 },
+        fit: { eles: visibleNodes, padding: fitPadding },
         duration: 400,
         easing: "ease-in-out-quad",
         complete: () => {
@@ -1522,6 +1642,28 @@ const graphHook = {
       try {
         this.cy.forceRender();
       } catch (_e) {}
+    }
+  },
+
+  _scheduleFontAwareRedraw() {
+    const redraw = () => {
+      if (!this.cy) return;
+
+      this._forceGraphRedraw();
+
+      if (this._presentationIds && this._presentationIds.length > 0) {
+        this._renderPresentationBadges();
+      }
+    };
+
+    requestAnimationFrame(redraw);
+
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready
+        .then(() => {
+          requestAnimationFrame(redraw);
+        })
+        .catch(() => {});
     }
   },
 
@@ -1591,6 +1733,8 @@ const graphHook = {
     if (this.cy && this._debugRedraw) {
       this.cy.on("pan zoom render", this._debugRedraw);
     }
+
+    this._scheduleFontAwareRedraw();
   },
 
   _startPresenting(ids) {
@@ -1903,6 +2047,11 @@ const graphHook = {
           : this._parseGraphElements(graphStr);
 
       this.cy.json({ elements: nextElements });
+
+      if (presentationMode === "presenting" && presentationIds.length > 0) {
+        this._applyPresentationGridPositions(presentationIds);
+      }
+
       if (this.cy && typeof this.cy.scratch === "function") {
         try {
           this.cy.scratch("_bulkReload", null);
@@ -1910,6 +2059,11 @@ const graphHook = {
       }
       if (typeof this.cy.enforceCollapsedState === "function") {
         this.cy.enforceCollapsedState();
+      }
+
+      if (presentationMode === "presenting" && presentationIds.length > 0) {
+        this._setPresentationHighlights(presentationIds, { renderBadges: false });
+        this._schedulePresentationViewportFit();
       }
 
       // Restore depth-collapse state after element reload
@@ -1947,7 +2101,10 @@ const graphHook = {
     ]);
     let layoutScheduled = false;
 
-    if (!sameGraph && operation === "start_stream") {
+    const presentationActive =
+      presentationMode === "presenting" && presentationIds.length > 0;
+
+    if (!sameGraph && operation === "start_stream" && !presentationActive) {
       // Reflow the graph and then ensure the newly created node is visible (deferred until layout completes)
       // Compute a safe pending center id (must be a non-empty string)
       const nextPendingId =
@@ -1980,7 +2137,7 @@ const graphHook = {
           );
         }
       });
-    } else if (!sameGraph) {
+    } else if (!sameGraph && !presentationActive) {
       // Some operations reorder elements; defer ensureVisible until layout finishes
       this._pendingCenterId = this.el.dataset.node || this._pendingCenterId;
       this._layoutRunning = true;
