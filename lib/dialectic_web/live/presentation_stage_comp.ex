@@ -7,7 +7,6 @@ defmodule DialecticWeb.PresentationStageComp do
   attr :slides, :list, required: true
   attr :current_node, :map, default: nil
   attr :presentation_title, :string, default: ""
-  attr :graph_owner_name, :string, default: nil
 
   def presentation_stage(assigns) do
     active_slide = active_slide(assigns.slides, assigns.current_node)
@@ -35,11 +34,6 @@ defmodule DialecticWeb.PresentationStageComp do
               do: NodeTitleHelper.extract_node_title(@active_slide, max_length: :infinity),
               else: @presentation_title}
           </h2>
-
-          <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
-            Presented by {@graph_owner_name || "Anonymous"} using the deck on the left and the live graph on the right.
-            Keep the structure visible while moving through the argument slide by slide.
-          </p>
 
           <div class="mt-5 flex items-center gap-2">
             <button

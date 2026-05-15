@@ -20,7 +20,7 @@
     <div
       id="presentation-exit-bar"
       phx-hook="Presentation"
-      class="absolute top-0 left-0 right-0 z-[100] flex items-center justify-between gap-4 px-4 sm:px-5 h-12 bg-white/92 backdrop-blur-md border-b border-slate-200 shadow-sm"
+      class="absolute top-0 left-0 right-0 z-[100] flex items-center justify-between gap-4 px-4 sm:px-5 h-14 bg-white/92 backdrop-blur-md border-b border-slate-200 shadow-sm"
     >
       <div class="flex items-center gap-2 shrink-0 min-w-0">
         <span class="inline-flex items-center rounded-full border border-slate-700 bg-slate-900/80 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-300">
@@ -33,10 +33,15 @@
         <% end %>
       </div>
 
-      <div class="flex-1 text-center px-4">
+      <div class="flex-1 px-4 text-center leading-tight">
         <h1 class="text-sm sm:text-base font-semibold text-slate-900 truncate">
           {@presentation_title}
         </h1>
+        <%= if @graph_owner_name do %>
+          <p class="mt-0.5 text-[11px] font-medium text-slate-500 truncate">
+            By {@graph_owner_name}
+          </p>
+        <% end %>
       </div>
 
       <div class="flex items-center gap-2 shrink-0">
@@ -224,7 +229,7 @@
     "flex-1 min-h-0 flex",
     if(@presentation_mode == :presenting,
       do:
-        "flex-col lg:flex-row gap-0 bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.12),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(14,165,233,0.10),_transparent_38%),linear-gradient(180deg,_#f8fafc_0%,_#eef2ff_100%)] pt-12"
+        "flex-col lg:flex-row gap-0 bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.12),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(14,165,233,0.10),_transparent_38%),linear-gradient(180deg,_#f8fafc_0%,_#eef2ff_100%)] pt-14"
     )
   ]}>
     <%= if @presentation_mode == :presenting do %>
@@ -232,7 +237,6 @@
         slides={slides}
         current_node={@node}
         presentation_title={@presentation_title}
-        graph_owner_name={@graph_owner_name}
       />
     <% else %>
       <div
