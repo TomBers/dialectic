@@ -143,7 +143,7 @@ const textSelectionHook = {
         `.highlight-span[data-highlight-id="${id}"]`,
       );
       if (span) {
-        span.scrollIntoView({ behavior: "smooth", block: "center" });
+        span.scrollIntoView({ behavior: "auto", block: "center" });
 
         // Pulse effect
         const originalTransition = span.style.transition;
