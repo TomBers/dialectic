@@ -10,89 +10,65 @@
   data-reading-density="comfortable"
   data-reading-font="serif"
 >
+  <% slides = presentation_slides(assigns) %>
+  <% active_slide = presentation_active_slide(slides, @node) %>
+  <% active_slide_id = if active_slide, do: active_slide.id, else: nil %>
+  <% active_index = presentation_slide_position(slides, active_slide_id) %>
+  <% previous_slide = presentation_adjacent_slide(slides, active_slide_id, "previous") %>
+  <% next_slide = presentation_adjacent_slide(slides, active_slide_id, "next") %>
+  <% slide_id_set = MapSet.new(Enum.map(slides, & &1.id)) %>
+  <% parent_slides =
+    if active_slide,
+      do: Enum.filter(active_slide.parents, &MapSet.member?(slide_id_set, &1.id)),
+      else: [] %>
+  <% child_slides =
+    if active_slide,
+      do: Enum.filter(active_slide.children, &MapSet.member?(slide_id_set, &1.id)),
+      else: [] %>
+
   <%!-- Presentation: title bar + exit controls when presenting --%>
   <%= if @presentation_mode == :presenting do %>
     <div
       id="presentation-exit-bar"
       phx-hook="Presentation"
-      class="absolute top-0 left-0 right-0 z-[100] flex items-center justify-between px-4 h-9 bg-gray-900/90 backdrop-blur-sm border-b border-gray-700/50 shadow-lg"
+      class="absolute top-0 left-0 right-0 z-[100] flex items-center justify-between gap-4 px-4 sm:px-5 h-12 bg-slate-950/92 backdrop-blur-md border-b border-slate-800 shadow-lg"
     >
-      <%!-- Left: slide count --%>
-      <span class="text-xs font-medium text-gray-400 shrink-0">
-        <span class="text-white font-semibold">{length(@presentation_slide_ids)}</span>
-        {if length(@presentation_slide_ids) == 1, do: "box", else: "boxes"}
-      </span>
+      <div class="flex items-center gap-2 shrink-0 min-w-0">
+        <span class="inline-flex items-center rounded-full border border-slate-700 bg-slate-900/80 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-300">
+          Slide {active_index || 1}/{max(length(slides), 1)}
+        </span>
+        <%= if active_slide do %>
+          <span class="hidden sm:inline text-xs text-slate-400 truncate">
+            {presentation_type_label(active_slide.class)}
+          </span>
+        <% end %>
+      </div>
 
-      <%!-- Center: presentation title --%>
       <div class="flex-1 text-center px-4">
         <h1 class="text-sm sm:text-base font-semibold text-white truncate">
           {@presentation_title}
         </h1>
       </div>
 
-      <%!-- Right: share + exit buttons --%>
       <div class="flex items-center gap-2 shrink-0">
         <button
           phx-click={
             JS.dispatch("collapse-document-menu", to: "#graph-layout")
             |> JS.push("open_share_modal")
           }
-          class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-gray-300 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-full border border-gray-600 transition-colors"
+          class="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900/80 px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:border-slate-500 hover:text-white"
           title="Share this presentation"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="w-3.5 h-3.5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-            />
-          </svg>
-          Share
+          <.icon name="hero-link" class="h-3.5 w-3.5" /> Share
         </button>
         <button
           phx-click="exit_presentation"
-          class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-gray-300 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-full border border-gray-600 transition-colors"
+          class="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900/80 px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:border-slate-500 hover:text-white"
           title="Exit presentation and show all boxes (Esc)"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="w-3.5 h-3.5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-          Exit
+          <.icon name="hero-x-mark" class="h-3.5 w-3.5" /> Exit
         </button>
       </div>
-    </div>
-
-    <%!-- Bottom: credit footer --%>
-    <div class="absolute bottom-0 left-0 right-0 z-[100] flex items-center justify-center px-4 py-2 bg-gray-900/80 backdrop-blur-sm border-t border-gray-700/40">
-      <span class="text-xs text-gray-400">
-        Created by
-        <span class="text-gray-200 font-medium">
-          {@graph_owner_name || "Anonymous"}
-        </span>
-        using
-        <a
-          href="https://rationalgrid.ai"
-          target="_blank"
-          rel="noopener"
-          class="text-indigo-400 hover:text-indigo-300 font-semibold transition-colors"
-        >
-          rationalgrid.ai
-        </a>
-      </span>
     </div>
   <% end %>
 
@@ -255,42 +231,256 @@
   <% end %>
   
 <!-- Main content with drawer menu -->
-  <div class="flex-1 min-h-0 flex">
+  <div class={[
+    "flex-1 min-h-0 flex",
+    if(@presentation_mode == :presenting,
+      do:
+        "flex-col lg:flex-row gap-0 bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.12),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(14,165,233,0.10),_transparent_38%),linear-gradient(180deg,_#f8fafc_0%,_#eef2ff_100%)] pt-12"
+    )
+  ]}>
+    <%= if @presentation_mode == :presenting do %>
+      <section
+        id="presentation-stage"
+        class="w-full shrink-0 border-b border-slate-200/80 bg-slate-950 text-slate-100 lg:h-full lg:w-[34rem] lg:border-b-0 lg:border-r lg:border-slate-800"
+      >
+        <div class="flex h-full flex-col">
+          <div class="border-b border-slate-800 px-5 py-5 sm:px-6">
+            <h2 class="text-2xl font-semibold tracking-tight text-white sm:text-[2rem]">
+              {if active_slide,
+                do: NodeTitleHelper.extract_node_title(active_slide, max_length: :infinity),
+                else: @presentation_title}
+            </h2>
+
+            <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
+              Presented by {@graph_owner_name || "Anonymous"} using the deck on the left and the live graph on the right.
+              Keep the structure visible while moving through the argument slide by slide.
+            </p>
+
+            <div class="mt-5 flex items-center gap-2">
+              <button
+                id="presentation-prev-slide"
+                phx-click="presentation_step"
+                phx-value-direction="previous"
+                disabled={is_nil(previous_slide)}
+                class={[
+                  "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition",
+                  if(is_nil(previous_slide),
+                    do: "cursor-not-allowed border border-slate-800 bg-slate-900 text-slate-600",
+                    else:
+                      "border border-slate-700 bg-slate-900 text-slate-100 hover:border-slate-500"
+                  )
+                ]}
+              >
+                <.icon name="hero-arrow-left" class="h-4 w-4" /> Previous
+              </button>
+              <button
+                id="presentation-next-slide"
+                phx-click="presentation_step"
+                phx-value-direction="next"
+                disabled={is_nil(next_slide)}
+                class={[
+                  "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition",
+                  if(is_nil(next_slide),
+                    do: "cursor-not-allowed border border-slate-800 bg-slate-900 text-slate-600",
+                    else:
+                      "border border-indigo-400/40 bg-indigo-500/10 text-indigo-100 hover:border-indigo-300 hover:bg-indigo-500/20"
+                  )
+                ]}
+              >
+                Next <.icon name="hero-arrow-right" class="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
+          <div class="flex-1 space-y-5 overflow-y-auto px-5 py-5 sm:px-6">
+            <section class="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-[0_20px_60px_-40px_rgba(15,23,42,0.95)]">
+              <div class="flex items-center justify-between gap-3">
+                <div>
+                  <h3 class="text-sm font-semibold text-white">Agenda</h3>
+                  <p class="mt-1 text-xs text-slate-400">Jump between selected talking points.</p>
+                </div>
+                <span class="text-xs text-slate-500">
+                  {active_index || 1} of {max(length(slides), 1)}
+                </span>
+              </div>
+
+              <div id="presentation-agenda" class="mt-4 space-y-2">
+                <%= for {slide, idx} <- Enum.with_index(slides, 1) do %>
+                  <button
+                    id={"presentation-agenda-slide-#{slide.id}"}
+                    phx-click="presentation_go_to_slide"
+                    phx-value-node-id={slide.id}
+                    class={[
+                      "flex w-full items-start gap-3 rounded-2xl border px-3 py-3 text-left transition",
+                      if(slide.id == active_slide_id,
+                        do:
+                          "border-indigo-300/60 bg-indigo-400/15 shadow-[0_20px_45px_-30px_rgba(99,102,241,0.8)]",
+                        else:
+                          "border-white/10 bg-slate-900/60 hover:border-slate-600 hover:bg-slate-900"
+                      )
+                    ]}
+                  >
+                    <span class={[
+                      "mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold",
+                      if(slide.id == active_slide_id,
+                        do: "bg-white text-slate-950",
+                        else: "bg-slate-800 text-slate-200"
+                      )
+                    ]}>
+                      {idx}
+                    </span>
+                    <span class="min-w-0 flex-1">
+                      <span class="block truncate text-sm font-semibold text-white">
+                        {NodeTitleHelper.extract_node_title(slide, max_length: :infinity)}
+                      </span>
+                      <span class="mt-1 block text-xs text-slate-400">
+                        {presentation_type_label(slide.class)}
+                      </span>
+                    </span>
+                  </button>
+                <% end %>
+              </div>
+            </section>
+
+            <section
+              id="presentation-current-slide"
+              class="overflow-hidden rounded-[1.75rem] border border-slate-200/70 bg-white text-slate-900 shadow-[0_35px_90px_-55px_rgba(15,23,42,0.55)]"
+            >
+              <div class="border-b border-slate-200 bg-slate-50/90 px-5 py-4">
+                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+                  Current slide
+                </p>
+                <p class="mt-2 text-lg font-semibold tracking-tight text-slate-950">
+                  {if active_slide,
+                    do: NodeTitleHelper.extract_node_title(active_slide, max_length: :infinity),
+                    else: "Select a slide"}
+                </p>
+              </div>
+
+              <div class="px-5 py-5">
+                <%= if active_slide && presentation_body_markdown(active_slide) != "" do %>
+                  <article class="prose prose-slate max-w-none prose-headings:tracking-tight prose-p:leading-7 prose-li:leading-7">
+                    <div
+                      phx-hook="Markdown"
+                      id={"presentation-markdown-body-#{active_slide.id}"}
+                      data-md={presentation_body_markdown(active_slide)}
+                    >
+                    </div>
+                  </article>
+                <% else %>
+                  <p class="text-sm leading-6 text-slate-600">
+                    This talking point works best as a title slide. Use the agenda and graph structure to elaborate live.
+                  </p>
+                <% end %>
+              </div>
+            </section>
+
+            <section class="grid gap-4 lg:grid-cols-2">
+              <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <h3 class="text-sm font-semibold text-white">Builds On</h3>
+                <p class="mt-1 text-xs text-slate-400">
+                  Earlier points in the deck that set this up.
+                </p>
+                <div class="mt-4 space-y-2">
+                  <%= if parent_slides == [] do %>
+                    <p class="text-sm leading-6 text-slate-400">
+                      No earlier deck node links into this point yet.
+                    </p>
+                  <% else %>
+                    <%= for slide <- Enum.take(parent_slides, 4) do %>
+                      <button
+                        phx-click="presentation_go_to_slide"
+                        phx-value-node-id={slide.id}
+                        class="flex w-full items-start gap-2 rounded-xl border border-white/10 bg-slate-900/60 px-3 py-2 text-left transition hover:border-slate-500 hover:bg-slate-900"
+                      >
+                        <.icon
+                          name="hero-arrow-turn-up-left"
+                          class="mt-0.5 h-4 w-4 shrink-0 text-slate-400"
+                        />
+                        <span class="text-sm leading-5 text-slate-200">
+                          {NodeTitleHelper.extract_node_title(slide, max_length: :infinity)}
+                        </span>
+                      </button>
+                    <% end %>
+                  <% end %>
+                </div>
+              </div>
+
+              <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <h3 class="text-sm font-semibold text-white">Leads To</h3>
+                <p class="mt-1 text-xs text-slate-400">
+                  Where this idea can take the audience next.
+                </p>
+                <div class="mt-4 space-y-2">
+                  <%= if child_slides == [] do %>
+                    <p class="text-sm leading-6 text-slate-400">
+                      No later deck node branches from this point yet.
+                    </p>
+                  <% else %>
+                    <%= for slide <- Enum.take(child_slides, 4) do %>
+                      <button
+                        phx-click="presentation_go_to_slide"
+                        phx-value-node-id={slide.id}
+                        class="flex w-full items-start gap-2 rounded-xl border border-white/10 bg-slate-900/60 px-3 py-2 text-left transition hover:border-slate-500 hover:bg-slate-900"
+                      >
+                        <.icon
+                          name="hero-arrow-turn-down-right"
+                          class="mt-0.5 h-4 w-4 shrink-0 text-slate-400"
+                        />
+                        <span class="text-sm leading-5 text-slate-200">
+                          {NodeTitleHelper.extract_node_title(slide, max_length: :infinity)}
+                        </span>
+                      </button>
+                    <% end %>
+                  <% end %>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+    <% else %>
+      <div
+        id="side-drawer"
+        class="fixed bottom-0 left-0 md:relative w-full p-4 md:p-0 md:w-[44%] flex flex-col bg-white md:border-r md:border-gray-200 z-90 transform translate-x-0 opacity-100 transition-all duration-300 ease-in-out"
+      >
+        <div id="side-drawer-scroll" class="flex-1 overflow-y-auto" phx-hook="ScrollReset">
+          <.live_component
+            module={NodeComp}
+            id="node-comp"
+            node={@node}
+            user={@user}
+            form={@form}
+            streaming={@node && MapSet.member?(@streaming_nodes, @node.id)}
+            live_view_topic={@live_view_topic}
+            graph_id={@graph_id}
+            graph_owner_id={@graph_struct && @graph_struct.user_id}
+            current_user={@current_user}
+            ask_question={@ask_question}
+            exploration_stats={@exploration_stats}
+            can_edit={@can_edit}
+            presentation_mode={@presentation_mode}
+          />
+        </div>
+      </div>
+    <% end %>
+
     <div
-      id="side-drawer"
-      class="fixed bottom-0 left-0 md:relative w-full p-4 md:p-0 md:w-[44%] flex flex-col bg-white md:border-r md:border-gray-200 z-90 transform translate-x-0 opacity-100 transition-all duration-300 ease-in-out"
+      id="graph-main-container"
+      class={[
+        "relative",
+        if(@presentation_mode == :presenting,
+          do: "flex-1 min-h-[42vh] lg:min-h-0",
+          else: "w-0 md:w-[56%]"
+        )
+      ]}
     >
       <div
-        id="side-drawer-scroll"
-        class={[
-          "flex-1 overflow-y-auto",
-          if(@presentation_mode == :presenting, do: "pt-12 pb-10", else: "")
-        ]}
-        phx-hook="ScrollReset"
-      >
-        <.live_component
-          module={NodeComp}
-          id="node-comp"
-          node={@node}
-          user={@user}
-          form={@form}
-          streaming={@node && MapSet.member?(@streaming_nodes, @node.id)}
-          live_view_topic={@live_view_topic}
-          graph_id={@graph_id}
-          graph_owner_id={@graph_struct && @graph_struct.user_id}
-          current_user={@current_user}
-          ask_question={@ask_question}
-          exploration_stats={@exploration_stats}
-          can_edit={@can_edit}
-          presentation_mode={@presentation_mode}
-        />
-      </div>
-    </div>
-    <!-- Left side: Graph (expands to full width when drawer is closed) -->
-    <div id="graph-main-container" class="w-0 md:w-[56%] relative">
-      <div
         id="cy"
-        class="h-full w-full relative"
+        class={[
+          "h-full w-full relative",
+          if(@presentation_mode == :presenting, do: "border-l-0")
+        ]}
         data-graph-id={@graph_id}
         data-graph={@f_graph}
         data-node={if @node, do: @node.id, else: nil}
@@ -430,7 +620,7 @@
     
 <!-- Toggle button for drawer -->
 
-    <%= if @graph_id do %>
+    <%= if @graph_id && @presentation_mode != :presenting do %>
       <button
         id="drawer-toggle"
         phx-click={JS.dispatch("toggle-side-drawer", to: "#graph-layout")}

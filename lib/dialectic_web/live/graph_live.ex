@@ -1132,6 +1132,7 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event("start_presenting", _params, socket) do
     ids = socket.assigns.presentation_slide_ids
+    slides = presentation_slides(socket.assigns)
 
     if length(ids) > 0 do
       # Ensure the title defaults to the graph's starting question
@@ -1143,6 +1144,7 @@ defmodule DialecticWeb.GraphLive do
       # Filter the graph to show only the selected nodes (no full-screen overlay)
       socket =
         socket
+        |> maybe_focus_presentation_slide(slides)
         |> assign(presentation_mode: :presenting, presentation_title: title)
         |> push_event("presentation_clear_slides", %{})
         |> push_event("toggle_site_header", %{visible: false})
@@ -1151,6 +1153,35 @@ defmodule DialecticWeb.GraphLive do
       {:noreply, socket}
     else
       {:noreply, socket}
+    end
+  end
+
+  def handle_event("presentation_go_to_slide", %{"node-id" => node_id}, socket) do
+    if node_id in socket.assigns.presentation_slide_ids do
+      {:noreply, focus_presentation_slide(socket, node_id)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_event("presentation_step", %{"direction" => direction}, socket)
+      when direction in ["next", "previous"] do
+    slides = presentation_slides(socket.assigns)
+
+    target_slide =
+      slides
+      |> presentation_active_slide(socket.assigns.node)
+      |> then(fn
+        nil ->
+          nil
+
+        active_slide ->
+          presentation_adjacent_slide(slides, active_slide.id, direction)
+      end)
+
+    case target_slide do
+      nil -> {:noreply, socket}
+      slide -> {:noreply, focus_presentation_slide(socket, slide.id)}
     end
   end
 
@@ -2138,6 +2169,30 @@ defmodule DialecticWeb.GraphLive do
     })
   end
 
+  defp focus_presentation_slide(socket, nil), do: socket
+
+  defp focus_presentation_slide(socket, node_id) do
+    case GraphActions.find_node(socket.assigns.graph_id, node_id) do
+      nil ->
+        socket
+
+      node ->
+        {:noreply, updated_socket} =
+          update_graph(socket, {nil, node}, "presentation_go_to_slide")
+
+        updated_socket =
+          reapply_right_panel_state(socket, updated_socket)
+
+        push_event(updated_socket, "center_node", %{id: node.id})
+    end
+  end
+
+  defp maybe_focus_presentation_slide(socket, []), do: socket
+
+  defp maybe_focus_presentation_slide(socket, slides) do
+    focus_presentation_slide(socket, List.first(slides).id)
+  end
+
   defp presentation_slides(%{graph_id: graph_id, presentation_slide_ids: ids}) do
     ids
     |> Enum.reduce([], fn id, acc ->
@@ -2147,5 +2202,64 @@ defmodule DialecticWeb.GraphLive do
       end
     end)
     |> Enum.reverse()
+  end
+
+  defp presentation_active_slide([], _node), do: nil
+
+  defp presentation_active_slide(slides, %{id: current_id}) do
+    Enum.find(slides, &(&1.id == current_id)) || List.first(slides)
+  end
+
+  defp presentation_active_slide(slides, _node), do: List.first(slides)
+
+  defp presentation_slide_position([], _slide_id), do: nil
+  defp presentation_slide_position(_slides, nil), do: nil
+
+  defp presentation_slide_position(slides, slide_id) do
+    case Enum.find_index(slides, &(&1.id == slide_id)) do
+      nil -> nil
+      idx -> idx + 1
+    end
+  end
+
+  defp presentation_adjacent_slide([], _slide_id, _direction), do: nil
+
+  defp presentation_adjacent_slide(slides, slide_id, direction)
+       when direction in ["next", "previous"] do
+    current_index =
+      Enum.find_index(slides, &(&1.id == slide_id)) || 0
+
+    offset = if(direction == "next", do: 1, else: -1)
+
+    slides
+    |> Enum.at(current_index + offset)
+  end
+
+  defp presentation_body_markdown(%{content: content}) when is_binary(content) do
+    case String.split(content, "\n", parts: 2) do
+      [_title, body] -> String.trim(body)
+      _ -> ""
+    end
+  end
+
+  defp presentation_body_markdown(_), do: ""
+
+  defp presentation_type_label(node_class) do
+    case to_string(node_class) do
+      "question" -> "Question"
+      "thesis" -> "Thesis"
+      "antithesis" -> "Counterargument"
+      "synthesis" -> "Synthesis"
+      "ideas" -> "Related Ideas"
+      "deepdive" -> "Deep Dive"
+      "origin" -> "Stream"
+      "user" -> "Comment"
+      "answer" -> "Response"
+      "explain" -> "Explanation"
+      "blind_spots" -> "Blind Spots"
+      "steel_man" -> "Steel Man"
+      "says_who" -> "Source Lens"
+      other -> other |> String.replace("_", " ") |> String.capitalize()
+    end
   end
 end

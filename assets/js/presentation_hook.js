@@ -14,6 +14,18 @@ const PresentationHook = {
       if (e.key === "Escape") {
         e.preventDefault();
         this.pushEvent("exit_presentation", {});
+        return;
+      }
+
+      if (e.key === "ArrowRight" || e.key === "PageDown") {
+        e.preventDefault();
+        this.pushEvent("presentation_step", { direction: "next" });
+        return;
+      }
+
+      if (e.key === "ArrowLeft" || e.key === "PageUp") {
+        e.preventDefault();
+        this.pushEvent("presentation_step", { direction: "previous" });
       }
     };
 
