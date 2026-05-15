@@ -563,6 +563,40 @@ defmodule DialecticWeb.GraphLiveTest do
       assert state.presentation_title == ""
     end
 
+    test "shared presentation URL preserves slide order", %{conn: conn} do
+      conn =
+        conn
+        |> log_in_user(
+          user_fixture(%{email: "shared-pres-#{System.unique_integer([:positive])}@example.com"})
+        )
+
+      {:ok, graph} = Dialectic.GraphFixtures.insert_graph_fixture("What is ethics?")
+
+      {:ok, view, _html} =
+        live(
+          conn,
+          ~p"/g/#{graph.slug}/graph?node=1&present=true&slides=1,3,2&title=Shared%20Deck"
+        )
+
+      state = :sys.get_state(view.pid).socket.assigns
+
+      assert state.presentation_mode == :presenting
+      assert state.presentation_title == "Shared Deck"
+      assert state.presentation_slide_ids == ["1", "3", "2"]
+
+      assert has_element?(view, "#presentation-agenda-slide-1")
+      assert has_element?(view, "#presentation-agenda-slide-3")
+      assert has_element?(view, "#presentation-agenda-slide-2")
+
+      html = render(view)
+      pos_1 = html |> :binary.match(~s(id="presentation-agenda-slide-1")) |> elem(0)
+      pos_3 = html |> :binary.match(~s(id="presentation-agenda-slide-3")) |> elem(0)
+      pos_2 = html |> :binary.match(~s(id="presentation-agenda-slide-2")) |> elem(0)
+
+      assert pos_1 < pos_3
+      assert pos_3 < pos_2
+    end
+
     test "graph_owner_name is assigned on mount", %{conn: conn} do
       {:ok, view, _html} = setup_live(conn)
       state = :sys.get_state(view.pid).socket.assigns
