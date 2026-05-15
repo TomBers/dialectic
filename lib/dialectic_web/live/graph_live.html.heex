@@ -20,21 +20,21 @@
     <div
       id="presentation-exit-bar"
       phx-hook="Presentation"
-      class="absolute top-0 left-0 right-0 z-[100] flex items-center justify-between gap-4 px-4 sm:px-5 h-12 bg-slate-950/92 backdrop-blur-md border-b border-slate-800 shadow-lg"
+      class="absolute top-0 left-0 right-0 z-[100] flex items-center justify-between gap-4 px-4 sm:px-5 h-12 bg-white/92 backdrop-blur-md border-b border-slate-200 shadow-sm"
     >
       <div class="flex items-center gap-2 shrink-0 min-w-0">
         <span class="inline-flex items-center rounded-full border border-slate-700 bg-slate-900/80 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-300">
           Slide {active_index || 1}/{max(length(slides), 1)}
         </span>
         <%= if active_slide do %>
-          <span class="hidden sm:inline text-xs text-slate-400 truncate">
+          <span class="hidden sm:inline text-xs text-slate-500 truncate">
             {type_label(active_slide.class)}
           </span>
         <% end %>
       </div>
 
       <div class="flex-1 text-center px-4">
-        <h1 class="text-sm sm:text-base font-semibold text-white truncate">
+        <h1 class="text-sm sm:text-base font-semibold text-slate-900 truncate">
           {@presentation_title}
         </h1>
       </div>
