@@ -873,7 +873,7 @@ const graphHook = {
       } catch (_e) {}
     });
 
-    // Reposition presentation badges when the viewport changes
+    // Reposition presentation badges when the viewport changes or nodes move
     if (this.cy) {
       if (!this._onCyPanZoom) {
         this._onCyPanZoom = () => {
@@ -891,8 +891,8 @@ const graphHook = {
         };
       }
       // Avoid duplicate bindings if this code runs multiple times
-      this.cy.off("pan zoom", this._onCyPanZoom);
-      this.cy.on("pan zoom", this._onCyPanZoom);
+      this.cy.off("pan zoom position", this._onCyPanZoom);
+      this.cy.on("pan zoom position", this._onCyPanZoom);
     }
 
     this.handleEvent("clear_search_highlights", () => {
@@ -1138,6 +1138,10 @@ const graphHook = {
     }
 
     this.cy.endBatch();
+
+    if (this._presentationIds && this._presentationIds.length > 0) {
+      this._renderPresentationBadges();
+    }
   },
 
   _renderPresentationBadges() {
@@ -1504,9 +1508,9 @@ const graphHook = {
 
     if (this.cy && this._onCyPanZoom) {
       try {
-        this.cy.off("pan zoom", this._onCyPanZoom);
+        this.cy.off("pan zoom position", this._onCyPanZoom);
       } catch (_e) {}
-      this.cy.on("pan zoom", this._onCyPanZoom);
+      this.cy.on("pan zoom position", this._onCyPanZoom);
     }
 
     if (this.cy && this._debugRedraw) {
@@ -1682,8 +1686,8 @@ const graphHook = {
 
     // Re-bind presentation badge tracking on the new cy instance
     if (this.cy && this._onCyPanZoom) {
-      this.cy.off("pan zoom", this._onCyPanZoom);
-      this.cy.on("pan zoom", this._onCyPanZoom);
+      this.cy.off("pan zoom position", this._onCyPanZoom);
+      this.cy.on("pan zoom position", this._onCyPanZoom);
     }
 
     // Re-apply presentation filter if it was active
@@ -2060,10 +2064,10 @@ const graphHook = {
       this._zoomToast.parentNode.removeChild(this._zoomToast);
       this._zoomToast = null;
     }
-    // Clean up presentation badge overlays and pan/zoom listener
+    // Clean up presentation badge overlays and badge-position listener
     if (this.cy && this._onCyPanZoom) {
       try {
-        this.cy.off("pan zoom", this._onCyPanZoom);
+        this.cy.off("pan zoom position", this._onCyPanZoom);
       } catch (_e) {}
       this._onCyPanZoom = null;
     }
