@@ -483,9 +483,19 @@ hooks.GraphLayout = {
       },
     );
 
-    // On mount, check for a saved presentation for this graph and restore it
+    // On mount, check for a saved presentation for this graph and restore it.
+    // Shared presentation URLs should win over any stale local draft.
     if (graphId) {
       try {
+        const url = new URL(window.location.href);
+        const hasSharedPresentation =
+          url.searchParams.get("present") === "true" &&
+          (url.searchParams.get("slides") || "").trim() !== "";
+
+        if (hasSharedPresentation) {
+          return;
+        }
+
         const raw = localStorage.getItem(`rg:pres:${graphId}`);
         if (raw) {
           const saved = JSON.parse(raw);
