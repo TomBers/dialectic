@@ -7,6 +7,9 @@ defmodule DialecticWeb.GraphLive do
   alias DialecticWeb.NodeComp
   alias DialecticWeb.GraphHelpers
 
+  import DialecticWeb.GraphPresentation
+  import DialecticWeb.PresentationStageComp, only: [presentation_stage: 1]
+
   alias DialecticWeb.Utils.UserUtils
   alias DialecticWeb.Utils.NodeTitleHelper
   alias Dialectic.Highlights
@@ -1132,7 +1135,7 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event("start_presenting", _params, socket) do
     ids = socket.assigns.presentation_slide_ids
-    slides = presentation_slides(socket.assigns)
+    slides = slides(socket.assigns.graph_id, ids)
 
     if length(ids) > 0 do
       # Ensure the title defaults to the graph's starting question
@@ -1166,17 +1169,17 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event("presentation_step", %{"direction" => direction}, socket)
       when direction in ["next", "previous"] do
-    slides = presentation_slides(socket.assigns)
+    slides = slides(socket.assigns.graph_id, socket.assigns.presentation_slide_ids)
 
     target_slide =
       slides
-      |> presentation_active_slide(socket.assigns.node)
+      |> active_slide(socket.assigns.node)
       |> then(fn
         nil ->
           nil
 
         active_slide ->
-          presentation_adjacent_slide(slides, active_slide.id, direction)
+          adjacent_slide(slides, active_slide.id, direction)
       end)
 
     case target_slide do
@@ -2191,75 +2194,5 @@ defmodule DialecticWeb.GraphLive do
 
   defp maybe_focus_presentation_slide(socket, slides) do
     focus_presentation_slide(socket, List.first(slides).id)
-  end
-
-  defp presentation_slides(%{graph_id: graph_id, presentation_slide_ids: ids}) do
-    ids
-    |> Enum.reduce([], fn id, acc ->
-      case GraphActions.find_node(graph_id, id) do
-        nil -> acc
-        node -> [node | acc]
-      end
-    end)
-    |> Enum.reverse()
-  end
-
-  defp presentation_active_slide([], _node), do: nil
-
-  defp presentation_active_slide(slides, %{id: current_id}) do
-    Enum.find(slides, &(&1.id == current_id)) || List.first(slides)
-  end
-
-  defp presentation_active_slide(slides, _node), do: List.first(slides)
-
-  defp presentation_slide_position([], _slide_id), do: nil
-  defp presentation_slide_position(_slides, nil), do: nil
-
-  defp presentation_slide_position(slides, slide_id) do
-    case Enum.find_index(slides, &(&1.id == slide_id)) do
-      nil -> nil
-      idx -> idx + 1
-    end
-  end
-
-  defp presentation_adjacent_slide([], _slide_id, _direction), do: nil
-
-  defp presentation_adjacent_slide(slides, slide_id, direction)
-       when direction in ["next", "previous"] do
-    current_index =
-      Enum.find_index(slides, &(&1.id == slide_id)) || 0
-
-    offset = if(direction == "next", do: 1, else: -1)
-
-    slides
-    |> Enum.at(current_index + offset)
-  end
-
-  defp presentation_body_markdown(%{content: content}) when is_binary(content) do
-    case String.split(content, "\n", parts: 2) do
-      [_title, body] -> String.trim(body)
-      _ -> ""
-    end
-  end
-
-  defp presentation_body_markdown(_), do: ""
-
-  defp presentation_type_label(node_class) do
-    case to_string(node_class) do
-      "question" -> "Question"
-      "thesis" -> "Thesis"
-      "antithesis" -> "Counterargument"
-      "synthesis" -> "Synthesis"
-      "ideas" -> "Related Ideas"
-      "deepdive" -> "Deep Dive"
-      "origin" -> "Stream"
-      "user" -> "Comment"
-      "answer" -> "Response"
-      "explain" -> "Explanation"
-      "blind_spots" -> "Blind Spots"
-      "steel_man" -> "Steel Man"
-      "says_who" -> "Source Lens"
-      other -> other |> String.replace("_", " ") |> String.capitalize()
-    end
   end
 end

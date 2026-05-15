@@ -5,6 +5,7 @@ defmodule DialecticWeb.PresentationComp do
   """
   use DialecticWeb, :live_component
 
+  import DialecticWeb.GraphPresentation, only: [type_label: 1]
   alias DialecticWeb.Utils.NodeTitleHelper
 
   # ────────────────────────────────────────────────────────────────────
@@ -201,22 +202,6 @@ defmodule DialecticWeb.PresentationComp do
       "origin" -> "bg-slate-200 text-slate-700"
       "user" -> "bg-green-200 text-green-800"
       _ -> "bg-gray-100 text-gray-600"
-    end
-  end
-
-  defp type_label(node_class) do
-    case to_string(node_class) do
-      "question" -> "Question"
-      "thesis" -> "Thesis"
-      "antithesis" -> "Counterargument"
-      "synthesis" -> "Synthesis"
-      "ideas" -> "Related Ideas"
-      "deepdive" -> "Deep Dive"
-      "origin" -> "Stream"
-      "user" -> "Comment"
-      "answer" -> "Response"
-      "explain" -> "Explanation"
-      other -> String.capitalize(other)
     end
   end
 end
