@@ -66,12 +66,14 @@ defmodule DialecticWeb.OutlineGraphLive do
   def handle_params(params, _uri, socket) do
     selected_node = resolve_target_node(socket.assigns.graph_id, params)
     previous_node_id = socket.assigns.selected_node_id
+    highlight_id = Map.get(params, "highlight")
 
     socket =
       socket
       |> assign_selected_node(selected_node)
       |> maybe_scroll_to_top(previous_node_id, selected_node)
       |> push_highlights()
+      |> maybe_scroll_to_highlight(highlight_id)
 
     {:noreply, socket}
   end
@@ -143,9 +145,30 @@ defmodule DialecticWeb.OutlineGraphLive do
   end
 
   @impl true
+  def handle_event("highlight_clicked", %{"id" => highlight_id, "node-id" => node_id}, socket) do
+    socket =
+      if MapSet.member?(socket.assigns.displayed_node_ids, node_id) do
+        push_event(socket, "scroll_to_highlight", %{id: highlight_id})
+      else
+        push_patch(socket, to: highlight_path(socket, node_id, highlight_id))
+      end
+
+    {:noreply, socket}
+  end
+
+  @impl true
   def handle_event("open_share_modal", _params, socket) do
     {:noreply, assign(socket, show_share_modal: true)}
   end
+
+  @impl true
+  def handle_event("restore_presentation", _params, socket), do: {:noreply, socket}
+
+  @impl true
+  def handle_event("close_presentation_setup", _params, socket), do: {:noreply, socket}
+
+  @impl true
+  def handle_event("close_combine_setup", _params, socket), do: {:noreply, socket}
 
   defp mount_graph(socket, graph_db, token_param) do
     {_graph_struct, graph} = GraphManager.get_graph(graph_db.title)
@@ -311,6 +334,13 @@ defmodule DialecticWeb.OutlineGraphLive do
       highlights: serialize_highlights(socket.assigns.highlights || [])
     })
   end
+
+  defp maybe_scroll_to_highlight(socket, highlight_id)
+       when is_binary(highlight_id) and highlight_id != "" do
+    push_event(socket, "scroll_to_highlight", %{id: highlight_id})
+  end
+
+  defp maybe_scroll_to_highlight(socket, _highlight_id), do: socket
 
   defp resolve_target_node(graph_id, %{"node_id" => node_id})
        when is_binary(node_id) and node_id != "" do
@@ -666,6 +696,14 @@ defmodule DialecticWeb.OutlineGraphLive do
           to: graph_path(socket.assigns.graph_struct, node.id, socket.assigns.nav_params)
         )
     end
+  end
+
+  defp highlight_path(socket, node_id, highlight_id) do
+    graph_path(
+      socket.assigns.graph_struct,
+      node_id,
+      Keyword.put(socket.assigns.nav_params, :highlight, highlight_id)
+    )
   end
 
   defp outline_indent_style(indent, step \\ 0.45) do
