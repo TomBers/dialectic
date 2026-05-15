@@ -294,6 +294,10 @@ const graphHook = {
       initialPresentationMode === "presenting" && initialPresentationIds.length > 0
         ? this._buildPresentationElements(initialPresentationIds, graph)
         : this._parseGraphElements(graph);
+    const initialDrawOptions =
+      initialPresentationMode === "presenting" && initialPresentationIds.length > 0
+        ? { skipInitialLayout: true }
+        : {};
 
     this.cy = draw_graph(
       container,
@@ -302,6 +306,7 @@ const graphHook = {
       node,
       viewMode,
       graphId,
+      initialDrawOptions,
     );
 
     // Track view mode and direction for detecting changes
@@ -385,10 +390,12 @@ const graphHook = {
     // point, so start as true. A one-shot layoutstop listener flips it back
     // once the initial layout finishes. This ensures that deferred operations
     // (e.g. presentation_filter_graph from a shared link) wait correctly.
-    this._layoutRunning = true;
-    this.cy.one("layoutstop", () => {
-      this._layoutRunning = false;
-    });
+    this._layoutRunning = initialDrawOptions.skipInitialLayout !== true;
+    if (this._layoutRunning) {
+      this.cy.one("layoutstop", () => {
+        this._layoutRunning = false;
+      });
+    }
     this._pendingCenterId = null;
     this._centerOnNodeVisible = (id) => {
       try {
@@ -873,7 +880,7 @@ const graphHook = {
       } catch (_e) {}
     });
 
-    // Reposition presentation badges when the viewport changes
+    // Reposition presentation badges when the viewport changes or nodes move
     if (this.cy) {
       if (!this._onCyPanZoom) {
         this._onCyPanZoom = () => {
@@ -891,8 +898,8 @@ const graphHook = {
         };
       }
       // Avoid duplicate bindings if this code runs multiple times
-      this.cy.off("pan zoom", this._onCyPanZoom);
-      this.cy.on("pan zoom", this._onCyPanZoom);
+      this.cy.off("pan zoom position", this._onCyPanZoom);
+      this.cy.on("pan zoom position", this._onCyPanZoom);
     }
 
     this.handleEvent("clear_search_highlights", () => {
@@ -1138,6 +1145,10 @@ const graphHook = {
     }
 
     this.cy.endBatch();
+
+    if (this._presentationIds && this._presentationIds.length > 0) {
+      this._renderPresentationBadges();
+    }
   },
 
   _renderPresentationBadges() {
@@ -1256,12 +1267,74 @@ const graphHook = {
     }
   },
 
+  _buildOrderedPresentationPositions(ids) {
+    const orderedIds = (ids || []).map((id) => String(id));
+    const count = orderedIds.length;
+
+    if (count === 0) return new Map();
+
+    const containerWidth =
+      this._container?.clientWidth || window.innerWidth || 1200;
+    const containerHeight =
+      this._container?.clientHeight || window.innerHeight || 800;
+
+    const estimatedCardWidth = containerWidth >= 1200 ? 360 : 320;
+    const estimatedCardHeight = 120;
+    const gapX = 92;
+    const gapY = 96;
+    const maxColumns = Math.min(count, 4);
+    const availableWidth = Math.max(containerWidth - 120, estimatedCardWidth);
+    const availableHeight = Math.max(containerHeight - 120, estimatedCardHeight);
+
+    let bestColumns = 1;
+    let bestScore = Number.NEGATIVE_INFINITY;
+
+    for (let columns = 1; columns <= maxColumns; columns += 1) {
+      const rows = Math.ceil(count / columns);
+      const gridWidth = columns * estimatedCardWidth + (columns - 1) * gapX;
+      const gridHeight = rows * estimatedCardHeight + (rows - 1) * gapY;
+      const fitScale = Math.min(
+        availableWidth / gridWidth,
+        availableHeight / gridHeight,
+      );
+      const emptySlots = rows * columns - count;
+      const raggedPenalty = emptySlots * 0.08;
+      const columnPenalty = columns > 2 ? (columns - 2) * 0.12 : 0;
+      const score = fitScale - raggedPenalty - columnPenalty;
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestColumns = columns;
+      }
+    }
+
+    const columns = bestColumns;
+    const rows = Math.ceil(count / columns);
+    const xStep = estimatedCardWidth + gapX;
+    const yStep = estimatedCardHeight + gapY;
+    const startX = -((columns - 1) * xStep) / 2;
+    const startY = -((rows - 1) * yStep) / 2;
+
+    return orderedIds.reduce((positions, id, idx) => {
+      const row = Math.floor(idx / columns);
+      const col = idx % columns;
+
+      positions.set(id, {
+        x: startX + col * xStep,
+        y: startY + row * yStep,
+      });
+
+      return positions;
+    }, new Map());
+  },
+
   _buildPresentationElements(
     ids,
     graphStr = this.el.dataset.graph,
     positionSource = null,
   ) {
     const keepIds = new Set((ids || []).map((id) => String(id)));
+    const orderedPositions = this._buildOrderedPresentationPositions(ids);
 
     return this._parseGraphElements(graphStr).reduce((acc, el) => {
       if (!el || !el.data) return acc;
@@ -1296,7 +1369,13 @@ const graphHook = {
         delete next.data.parent;
       }
 
-      if (
+      const orderedPosition = next.data.id
+        ? orderedPositions.get(String(next.data.id))
+        : null;
+
+      if (orderedPosition) {
+        next.position = orderedPosition;
+      } else if (
         positionSource &&
         typeof positionSource.getElementById === "function" &&
         next.data.id
@@ -1504,9 +1583,9 @@ const graphHook = {
 
     if (this.cy && this._onCyPanZoom) {
       try {
-        this.cy.off("pan zoom", this._onCyPanZoom);
+        this.cy.off("pan zoom position", this._onCyPanZoom);
       } catch (_e) {}
-      this.cy.on("pan zoom", this._onCyPanZoom);
+      this.cy.on("pan zoom position", this._onCyPanZoom);
     }
 
     if (this.cy && this._debugRedraw) {
@@ -1522,9 +1601,10 @@ const graphHook = {
       this._presentationFiltered = true;
       const currentCy = this.cy;
       this._recreateCy(this._buildPresentationElements(ids, undefined, currentCy), {
-        layoutName: "preset",
+        skipInitialLayout: true,
         preserveViewport: true,
       });
+      this._layoutRunning = false;
       this._setDepthToggleOverlayVisible(false);
       this._setPresentationHighlights(ids, { renderBadges: false });
       this._schedulePresentationViewportFit();
@@ -1682,8 +1762,8 @@ const graphHook = {
 
     // Re-bind presentation badge tracking on the new cy instance
     if (this.cy && this._onCyPanZoom) {
-      this.cy.off("pan zoom", this._onCyPanZoom);
-      this.cy.on("pan zoom", this._onCyPanZoom);
+      this.cy.off("pan zoom position", this._onCyPanZoom);
+      this.cy.on("pan zoom position", this._onCyPanZoom);
     }
 
     // Re-apply presentation filter if it was active
@@ -2060,10 +2140,10 @@ const graphHook = {
       this._zoomToast.parentNode.removeChild(this._zoomToast);
       this._zoomToast = null;
     }
-    // Clean up presentation badge overlays and pan/zoom listener
+    // Clean up presentation badge overlays and badge-position listener
     if (this.cy && this._onCyPanZoom) {
       try {
-        this.cy.off("pan zoom", this._onCyPanZoom);
+        this.cy.off("pan zoom position", this._onCyPanZoom);
       } catch (_e) {}
       this._onCyPanZoom = null;
     }
