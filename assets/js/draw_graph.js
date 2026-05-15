@@ -1755,6 +1755,16 @@ function _rebuildDepthToggleOverlays(cy, container) {
   // Clear old buttons
   overlay.innerHTML = "";
 
+  const presentationMode = cy?._ownerHook?.el?.dataset?.presentationMode || "off";
+  if (presentationMode === "presenting") {
+    overlay.style.display = "none";
+    cy._depthToggleOverlay = overlay;
+    cy._depthToggleButtons = new Map();
+    return;
+  }
+
+  overlay.style.display = "";
+
   // Store refs on the cy instance for position updates
   cy._depthToggleOverlay = overlay;
   cy._depthToggleButtons = new Map();
@@ -1837,6 +1847,18 @@ function _updateDepthTogglePositions(cy) {
   const zoom = typeof cy.zoom === "function" ? cy.zoom() : 1;
   const hideBelowZoom = 0.3;
   const scale = Math.max(0.68, Math.min(1, 0.45 + zoom * 0.55));
+  const presentationMode = cy?._ownerHook?.el?.dataset?.presentationMode || "off";
+
+  if (presentationMode === "presenting") {
+    if (cy._depthToggleOverlay) {
+      cy._depthToggleOverlay.style.display = "none";
+    }
+    return;
+  }
+
+  if (cy._depthToggleOverlay) {
+    cy._depthToggleOverlay.style.display = "";
+  }
 
   cy._depthToggleButtons.forEach((btn, nodeId) => {
     const node = cy.getElementById(nodeId);
