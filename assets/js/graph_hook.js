@@ -734,6 +734,7 @@ const graphHook = {
 
           // Keep the dataset in sync so other consumers (and hooks) can rely on it
           this.el.dataset.node = id;
+          this._syncPresentationEdgeState(id);
           if (this._debugRedraw) this._debugRedraw();
 
           // If we expanded a group or depth-hidden ancestors, run a full
@@ -1093,14 +1094,19 @@ const graphHook = {
         idSet.has(e.target().id()) || keepParentIds.has(e.target().id());
       if (srcVisible && tgtVisible) {
         e.removeClass("presentation-hidden");
+        e.addClass("presentation-edge");
+        e.removeClass("presentation-edge-active");
         e.removeStyle("display");
       } else {
         e.addClass("presentation-hidden");
+        e.removeClass("presentation-edge");
+        e.removeClass("presentation-edge-active");
         e.style("display", "none");
       }
     });
 
     this.cy.endBatch();
+    this._syncPresentationEdgeState(this.el?.dataset?.node);
     this._forceGraphRedraw();
 
     this._renderPresentationBadges();
@@ -1114,6 +1120,24 @@ const graphHook = {
         } catch (_e) {}
       });
     }
+  },
+
+  _syncPresentationEdgeState(activeNodeId) {
+    if (!this.cy || !this._presentationFiltered) return;
+
+    this.cy.startBatch();
+    this.cy.edges(".presentation-edge").removeClass("presentation-edge-active");
+
+    if (activeNodeId) {
+      const activeNode = this.cy.getElementById(activeNodeId);
+      if (activeNode && activeNode.length > 0) {
+        activeNode.connectedEdges(".presentation-edge").addClass(
+          "presentation-edge-active",
+        );
+      }
+    }
+
+    this.cy.endBatch();
   },
 
   _renderPresentationBadges() {
@@ -1140,6 +1164,7 @@ const graphHook = {
       if (!n || n.length === 0) return;
 
       const bb = n.renderedBoundingBox({ includeLabels: false });
+      const isActive = this.el?.dataset?.node === id;
 
       let badge = this._badgeElements.get(id);
       if (badge) {
@@ -1147,6 +1172,14 @@ const graphHook = {
         badge.style.top = `${bb.y1 - 8}px`;
         badge.style.left = `${bb.x2 - 8}px`;
         badge.textContent = String(idx + 1);
+        badge.style.background = isActive ? "#7c3aed" : "rgba(255,255,255,0.96)";
+        badge.style.color = isActive ? "#ffffff" : "#7c3aed";
+        badge.style.borderColor = isActive
+          ? "#7c3aed"
+          : "rgba(168,85,247,0.35)";
+        badge.style.boxShadow = isActive
+          ? "0 4px 14px rgba(124,58,237,0.28)"
+          : "0 1px 4px rgba(15,23,42,0.12)";
       } else {
         // Create a new badge element
         badge = document.createElement("div");
@@ -1156,19 +1189,24 @@ const graphHook = {
           position: absolute;
           top: ${bb.y1 - 8}px;
           left: ${bb.x2 - 8}px;
-          width: 20px;
-          height: 20px;
+          width: 18px;
+          height: 18px;
           border-radius: 50%;
-          background: #a855f7;
-          color: white;
-          font-size: 10px;
+          background: ${isActive ? "#7c3aed" : "rgba(255,255,255,0.96)"};
+          color: ${isActive ? "#ffffff" : "#7c3aed"};
+          border: 1px solid ${isActive ? "#7c3aed" : "rgba(168,85,247,0.35)"};
+          font-size: 9px;
           font-weight: 700;
           display: flex;
           align-items: center;
           justify-content: center;
           pointer-events: none;
           z-index: 10;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+          box-shadow: ${
+            isActive
+              ? "0 4px 14px rgba(124,58,237,0.28)"
+              : "0 1px 4px rgba(15,23,42,0.12)"
+          };
           line-height: 1;
         `;
         container.appendChild(badge);
@@ -1337,6 +1375,8 @@ const graphHook = {
         }
       });
 
+      this._syncPresentationEdgeState(this.el?.dataset?.node);
+
       if (renderBadges) {
         this._renderPresentationBadges();
       }
@@ -1500,6 +1540,8 @@ const graphHook = {
       this.cy.elements().removeClass("presentation-hidden");
       this.cy.elements().removeClass("presentation-hidden-parent");
       this.cy.nodes().removeClass("presentation-slide");
+      this.cy.edges().removeClass("presentation-edge");
+      this.cy.edges().removeClass("presentation-edge-active");
       this.cy.nodes().forEach((n) => n.removeData("presIndex"));
       this.cy.nodes().removeStyle("display");
       this.cy.edges().removeStyle("display");

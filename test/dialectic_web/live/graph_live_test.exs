@@ -16,6 +16,18 @@ defmodule DialecticWeb.GraphLiveTest do
     live(conn, ~p"/g/#{graph.slug}/graph?node=1")
   end
 
+  defp setup_live_for_graph(conn, graph_name) do
+    conn =
+      conn
+      |> log_in_user(
+        user_fixture(%{email: "tester-#{System.unique_integer([:positive])}@example.com"})
+      )
+
+    {:ok, graph} = Dialectic.GraphFixtures.insert_graph_fixture(graph_name)
+
+    live(conn, ~p"/g/#{graph.slug}/graph?node=1")
+  end
+
   describe "mount/3" do
     test "assigns necessary values on mount with a current user", %{conn: conn} do
       {:ok, view, _html} = setup_live(conn)
@@ -451,6 +463,55 @@ defmodule DialecticWeb.GraphLiveTest do
 
       assert state.presentation_mode == :presenting
       assert state.presentation_title == "My Talk"
+    end
+
+    test "presentation mode renders the stage, agenda, and navigation controls", %{conn: conn} do
+      {:ok, view, _html} = setup_live_for_graph(conn, "What is ethics?")
+
+      render_click(view, "enter_presentation_setup", %{})
+      render_click(view, "node_clicked", %{"id" => "1"})
+      render_click(view, "node_clicked", %{"id" => "2"})
+      render_click(view, "start_presenting", %{})
+
+      assert has_element?(view, "#presentation-stage")
+      assert has_element?(view, "#presentation-agenda")
+      assert has_element?(view, "#presentation-current-slide")
+      assert has_element?(view, "#presentation-next-slide")
+      assert has_element?(view, "#presentation-agenda-slide-1")
+      assert has_element?(view, "#presentation-agenda-slide-2")
+    end
+
+    test "presentation_go_to_slide updates the active node", %{conn: conn} do
+      {:ok, view, _html} = setup_live_for_graph(conn, "What is ethics?")
+
+      render_click(view, "enter_presentation_setup", %{})
+      render_click(view, "node_clicked", %{"id" => "1"})
+      render_click(view, "node_clicked", %{"id" => "2"})
+      render_click(view, "start_presenting", %{})
+      render_click(view, "presentation_go_to_slide", %{"node-id" => "2"})
+
+      state = :sys.get_state(view.pid).socket.assigns
+      assert state.node.id == "2"
+    end
+
+    test "presentation_step advances through the deck", %{conn: conn} do
+      {:ok, view, _html} = setup_live_for_graph(conn, "What is ethics?")
+
+      render_click(view, "enter_presentation_setup", %{})
+      render_click(view, "node_clicked", %{"id" => "1"})
+      render_click(view, "node_clicked", %{"id" => "2"})
+      render_click(view, "start_presenting", %{})
+
+      state = :sys.get_state(view.pid).socket.assigns
+      assert state.node.id == "1"
+
+      render_click(view, "presentation_step", %{"direction" => "next"})
+      state = :sys.get_state(view.pid).socket.assigns
+      assert state.node.id == "2"
+
+      render_click(view, "presentation_step", %{"direction" => "previous"})
+      state = :sys.get_state(view.pid).socket.assigns
+      assert state.node.id == "1"
     end
 
     test "restore_presentation sets title and filters invalid node IDs", %{conn: conn} do
