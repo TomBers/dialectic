@@ -8,6 +8,7 @@ defmodule DialecticWeb.ShareModalComp do
       socket
       |> assign(assigns)
       |> assign_new(:share_target, fn -> :editor end)
+      |> assign_new(:presentation_mode, fn -> nil end)
       |> assign_new(:show_preview, fn -> true end)
 
     # Only run expensive DB queries (ensure_share_token, list_shares) when
