@@ -1,7 +1,11 @@
 <div
   id="outline-layout"
+  phx-hook="GraphLayout"
   class="flex w-full flex-col overflow-hidden bg-slate-50"
   style="height: calc(100vh - 2.5rem); height: calc(100dvh - 2.5rem);"
+  data-graph-id={@graph_id}
+  data-reading-density="comfortable"
+  data-reading-font="serif"
 >
   <div class="flex-none border-b border-slate-200 bg-white/90 backdrop-blur-sm">
     <div class="grid grid-cols-1 lg:grid-cols-[20rem_minmax(0,1fr)] xl:grid-cols-[22rem_minmax(0,1fr)]">
@@ -31,6 +35,27 @@
           </div>
 
           <div class="flex flex-wrap items-center gap-2 lg:justify-self-end">
+            <button
+              id="reader-highlights-button"
+              type="button"
+              phx-click={
+                JS.dispatch("toggle-panel",
+                  to: "#outline-layout",
+                  detail: %{id: "highlights-drawer"}
+                )
+              }
+              class="inline-flex h-11 items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3.5 text-sm font-semibold text-amber-900 shadow-sm transition duration-150 hover:-translate-y-0.5 hover:border-amber-300 hover:bg-amber-100"
+              data-panel-toggle="highlights-drawer"
+            >
+              <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-200/70 text-amber-800">
+                <.icon name="hero-bookmark" class="h-4 w-4" />
+              </span>
+              <span>Highlights</span>
+              <span class="rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
+                {length(@highlights)}
+              </span>
+            </button>
+
             <button
               id="reader-share-button"
               type="button"
@@ -69,6 +94,50 @@
             <% end %>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div
+    id="highlights-drawer"
+    data-right-drawer
+    class="fixed top-0 bottom-0 right-0 z-50 w-0 overflow-hidden border-l border-slate-200 bg-white opacity-0 transform translate-x-full transition-all duration-300 ease-in-out"
+  >
+    <div class="flex h-full flex-col p-3">
+      <div class="flex items-start justify-between gap-3 border-b border-slate-200 px-1 pb-3">
+        <div>
+          <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+            Reading key
+          </p>
+          <h2 class="mt-1 text-sm font-semibold text-slate-950">Highlights</h2>
+          <p class="mt-1 text-xs leading-5 text-slate-500">
+            Jump back or add a note.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          phx-click={
+            JS.dispatch("toggle-panel", to: "#outline-layout", detail: %{id: "highlights-drawer"})
+          }
+          class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50"
+          aria-label="Close highlights panel"
+          title="Close panel"
+        >
+          <.icon name="hero-x-mark" class="h-4 w-4" />
+        </button>
+      </div>
+
+      <div class="min-h-0 flex-1 overflow-y-auto pt-3">
+        <.live_component
+          module={DialecticWeb.HighlightsPanelComp}
+          id="reader-highlights-panel"
+          highlights={@highlights}
+          current_user={@current_user}
+          graph_struct={@graph_struct}
+          graph_id={@graph_id}
+          visible_node_ids={MapSet.to_list(@displayed_node_ids)}
+        />
       </div>
     </div>
   </div>

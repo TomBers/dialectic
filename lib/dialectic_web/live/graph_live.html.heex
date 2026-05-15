@@ -219,11 +219,16 @@
     <div
       id="highlights-drawer"
       data-right-drawer
-      class="fixed top-10 bottom-0 right-0 w-0 overflow-hidden bg-white border-l border-gray-200 z-50 transform translate-x-full opacity-0 transition-all duration-300 ease-in-out"
+      class="fixed top-0 bottom-0 right-0 w-0 overflow-hidden bg-white border-l border-gray-200 z-50 transform translate-x-full opacity-0 transition-all duration-300 ease-in-out"
     >
       <div class="p-2">
         <div class="flex items-center justify-between mb-2 px-1">
-          <h2 class="text-sm font-semibold text-gray-900">Highlights</h2>
+          <div>
+            <h2 class="text-sm font-semibold text-gray-900">Highlights</h2>
+            <p class="text-[11px] text-gray-500">
+              Jump back or add a note.
+            </p>
+          </div>
           <button
             type="button"
             phx-click={
@@ -242,6 +247,8 @@
           highlights={@highlights}
           current_user={@current_user}
           graph_struct={@graph_struct}
+          graph_id={@graph_id}
+          visible_node_ids={if(@node, do: [@node.id], else: [])}
         />
       </div>
     </div>

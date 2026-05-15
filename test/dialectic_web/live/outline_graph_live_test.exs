@@ -509,6 +509,28 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     refute render(view) =~ "Generating preview..."
   end
 
+  test "reader renders a highlights drawer toggle with the current count", %{conn: conn} do
+    graph = create_graph(highlight_graph_data())
+    user = user_fixture()
+
+    {:ok, _highlight} =
+      Highlights.create_highlight(%{
+        mudg_id: graph.title,
+        node_id: "5",
+        text_source_type: "node",
+        selection_start: 0,
+        selection_end: 5,
+        selected_text_snapshot: "Maybe",
+        created_by_user_id: user.id
+      })
+
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=4")
+
+    assert has_element?(view, "#reader-highlights-button")
+    assert render(view) =~ "Reading key"
+    assert render(view) =~ "Highlights"
+  end
+
   test "reader loads highlight data for rendered nodes", %{conn: conn} do
     graph = create_graph(highlight_graph_data())
     user = user_fixture()
@@ -549,5 +571,52 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     render_hook(view, "navigate_to_node", %{"node_id" => "5"})
 
     assert_patch(view, ~p"/g/#{graph.slug}?node=5")
+  end
+
+  test "clicking a highlight on another node patches the reader with a highlight target", %{
+    conn: conn
+  } do
+    graph = create_graph(highlight_graph_data())
+    user = user_fixture()
+
+    {:ok, highlight} =
+      Highlights.create_highlight(%{
+        mudg_id: graph.title,
+        node_id: "3",
+        text_source_type: "node",
+        selection_start: 0,
+        selection_end: 5,
+        selected_text_snapshot: "It describes",
+        created_by_user_id: user.id
+      })
+
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=4")
+
+    render_click(view, "highlight_clicked", %{"id" => "#{highlight.id}", "node-id" => "3"})
+
+    assert_patch(view, ~p"/g/#{graph.slug}?node=3&highlight=#{highlight.id}")
+  end
+
+  test "clicking a highlight already on screen scrolls to it without patching", %{conn: conn} do
+    graph = create_graph(highlight_graph_data())
+    user = user_fixture()
+
+    {:ok, highlight} =
+      Highlights.create_highlight(%{
+        mudg_id: graph.title,
+        node_id: "5",
+        text_source_type: "node",
+        selection_start: 0,
+        selection_end: 5,
+        selected_text_snapshot: "Maybe",
+        created_by_user_id: user.id
+      })
+
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=5")
+    highlight_id = "#{highlight.id}"
+
+    render_click(view, "highlight_clicked", %{"id" => highlight_id, "node-id" => "5"})
+
+    assert_push_event(view, "scroll_to_highlight", %{id: ^highlight_id})
   end
 end
