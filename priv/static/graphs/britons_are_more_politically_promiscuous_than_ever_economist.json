@@ -1,0 +1,403 @@
+{
+  "nodes": [
+    {
+      "id": "1",
+      "content": "Article thesis\n\nThe article argues that Britain’s old Conservative-Labour duopoly is breaking down into a more volatile, less loyal, multi-party electorate. Voters are not simply moving from one dominant party to another; they are keeping several options open, making elections harder to predict and govern.\n\n> The 100-year-old duopoly of Conservatives and Labour in British politics is dying.\n\n> Voters are keeping their options open.",
+      "class": "origin",
+      "user": "The Economist",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "The 100-year-old duopoly of Conservatives and Labour in British politics is dying."
+    },
+    {
+      "id": "group-duopoly",
+      "content": "Collapse of the old duopoly",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "group-model",
+      "content": "The build-a-voter model",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "group-shifts",
+      "content": "Where voters are moving",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "group-loyalty",
+      "content": "Collapse of loyalty",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "group-consequence",
+      "content": "Electoral consequences",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "2",
+      "content": "Two-party dominance falls\n\nThe core evidence is the shrinking combined vote share of Conservatives and Labour. In 2024 they won only 57% of ballots, their lowest share since Labour’s infancy; current polling suggests they now attract only about 38% together.\n\n> At the general election in 2024 the two parties attracted 57% of ballots cast, their lowest tally since the 1910s.\n\n> Today, judging by the polls, they amass just 38% of prospective voters between them.",
+      "class": "premise",
+      "user": "The Economist",
+      "parent": "group-duopoly",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "They amass just 38% of prospective voters between them."
+    },
+    {
+      "id": "3",
+      "content": "No single successor\n\nThe collapse of the duopoly has not produced one obvious replacement. Reform, the Greens and Liberal Democrats are all competitive, but none is running away with the electorate. This is fragmentation rather than simple realignment.\n\n> Yet no party is racing away with the spoils: the Liberal Democrats are at 12%, the Greens at 17% and Reform UK 25%.",
+      "class": "premise",
+      "user": "The Economist",
+      "parent": "group-duopoly",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "No party is racing away with the spoils."
+    },
+    {
+      "id": "4",
+      "content": "Modeling political promiscuity\n\nThe Economist builds a voter model using More In Common polling and eight demographic characteristics: sex, age, ethnicity, region, education, employment status, housing type, and rural/urban location. It generates 275,000 permutations to represent Britain’s adult population.",
+      "class": "premise",
+      "user": "The Economist",
+      "parent": "group-model",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "We created 275,000 permutations of every characteristic to represent each of Britain’s 55m adults."
+    },
+    {
+      "id": "5",
+      "content": "More switching than ever\n\nThe model’s key finding is that voters are now more likely than ever to have moved away from their previous party. Political identity is loosening across many demographic groups.\n\n> We find that over the past two years more voters have swung away from the party they last voted for than ever before.",
+      "class": "thesis",
+      "user": "The Economist",
+      "parent": "group-model",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "More voters have swung away... than ever before."
+    },
+    {
+      "id": "6",
+      "content": "Labour’s rapid ebb\n\nLabour’s post-2024 decline is a major driver of volatility. The article highlights young black female students in the South East: about four in five voted Labour in 2024, but fewer than one in five now say they would. Gaza is identified as one cause of defections to the Greens.",
+      "class": "premise",
+      "user": "The Economist",
+      "parent": "group-shifts",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "In 2024 Labour attracted about four in five of their votes. Today, fewer than one in five say they would back it."
+    },
+    {
+      "id": "7",
+      "content": "Few groups move toward Labour\n\nThe article emphasises the asymmetry: almost no demographic profiles are now more Labour-inclined than in 2024.\n\n> Only 2% of adults are now more likely to vote Labour than they were in 2024.",
+      "class": "premise",
+      "user": "The Economist",
+      "parent": "group-shifts",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Only 2% of adults are now more likely to vote Labour."
+    },
+    {
+      "id": "8",
+      "content": "Greens and Reform benefit\n\nLabour’s weakness mainly benefits the populist-left Greens and populist-right Reform. The striking point is breadth: more than nine in ten Britons are now more open to at least one of these parties than they were in 2024.",
+      "class": "thesis",
+      "user": "The Economist",
+      "parent": "group-shifts",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "More than nine in ten Britons are now more likely to consider voting for either of those two parties than they were in 2024."
+    },
+    {
+      "id": "9",
+      "content": "Reform profile is stable\n\nReform’s typical voter has not changed much: older, white, male, less educated, living in a town in southern England. Its rise looks like intensification of an existing profile rather than demographic reinvention.",
+      "class": "premise",
+      "user": "The Economist",
+      "parent": "group-shifts",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "The typical Reform voter is little changed."
+    },
+    {
+      "id": "10",
+      "content": "Greens get younger and urban\n\nThe Green coalition is shifting more visibly. The party has become younger and more urban, and is now the most popular party among under-28s.\n\n> The Greens are now the most popular party for anyone under the age of 28, up from third in 2024.",
+      "class": "premise",
+      "user": "The Economist",
+      "parent": "group-shifts",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "The Greens are now the most popular party for anyone under the age of 28."
+    },
+    {
+      "id": "11",
+      "content": "Demographics predict less\n\nOld demographic shortcuts are weakening. Being black still predicts Labour support, but less than before; old age still predicts Conservative support, but also less than before. The electorate is becoming less legible through traditional categories.",
+      "class": "premise",
+      "user": "The Economist",
+      "parent": "group-loyalty",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "The predictive power of voters’ characteristics has changed."
+    },
+    {
+      "id": "12",
+      "content": "Identity effects shrink\n\nThe article gives concrete examples: black identity’s Labour effect falls from 25 percentage points to 16, while old age’s Tory effect falls from 17 to ten.\n\n> In 2024 someone who identified as being black had... a 25 percentage-point greater chance of voting Labour. Today that impact is 16 percentage points.\n\n> The effect of old age... has shrunk from 17 percentage points to ten.",
+      "class": "premise",
+      "user": "The Economist",
+      "parent": "group-loyalty",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "The effect of old age... has shrunk from 17 percentage points to ten."
+    },
+    {
+      "id": "13",
+      "content": "Party loyalty is gone\n\nThe article’s strongest claim is that party loyalty has effectively collapsed. Voters are willing to switch at levels unseen for generations.\n\n> Party loyalty is truly a thing of the past.\n\n> If a general election were held tomorrow... nearly 50% of voters would switch parties.",
+      "class": "thesis",
+      "user": "The Economist",
+      "parent": "group-loyalty",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Party loyalty is truly a thing of the past."
+    },
+    {
+      "id": "14",
+      "content": "Solid voters vanish\n\nThe model finds a dramatic decline in voters strongly attached to one party. In 2024, 2.5m people had a greater than 60% chance of backing one party; now only 600,000 do.",
+      "class": "premise",
+      "user": "The Economist",
+      "parent": "group-loyalty",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Now just 600,000 are that solid."
+    },
+    {
+      "id": "15",
+      "content": "Many voters have several options\n\nAbout one-fifth of Britons have demographic profiles in which four or more parties each have at least a 15% chance of winning their vote. This is what the article means by political promiscuity: multiple plausible party attachments at once.",
+      "class": "premise",
+      "user": "The Economist",
+      "parent": "group-loyalty",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "About one-fifth of Britons have a profile for which four or more parties have a 15% chance."
+    },
+    {
+      "id": "16",
+      "content": "Campaign targeting gets harder\n\nCampaigns rely on identifying likely supporters and persuadable voters. If many voters are genuinely open to several parties, targeting models become less reliable and campaign strategy becomes more complex.\n\n> That will make election campaigns, which rely on targeting likely supporters, trickier.",
+      "class": "conclusion",
+      "user": "The Economist",
+      "parent": "group-consequence",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "That will make election campaigns... trickier."
+    },
+    {
+      "id": "17",
+      "content": "Electoral system mismatch\n\nBritain’s first-past-the-post system was built around a more stable two-party world. A fragmented, impatient electorate can produce results that leave many voters feeling unrepresented or disappointed.\n\n> Britain’s electoral system was not built for this behaviour.",
+      "class": "thesis",
+      "user": "The Economist",
+      "parent": "group-consequence",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Britain’s electoral system was not built for this behaviour."
+    },
+    {
+      "id": "18",
+      "content": "Dissatisfaction and distrust\n\nThe article warns that volatile voters may lurch toward the newest outlet for frustration, then be disappointed when the system fails to deliver proportionate satisfaction. Disappointment can feed distrust.\n\n> Politics driven by impatient voters... will leave most people disappointed.\n\n> Dissatisfaction tends to increase distrust.",
+      "class": "conclusion",
+      "user": "The Economist",
+      "parent": "group-consequence",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Dissatisfaction tends to increase distrust."
+    },
+    {
+      "id": "19",
+      "content": "First test: local elections\n\nThe immediate test will be the local elections, where Labour is expected to lose many council seats. The article frames this as the first major trial of a more fluid electoral age.\n\n> The local elections on May 7th... will be the first proper test of this new swingtime era.",
+      "class": "conclusion",
+      "user": "The Economist",
+      "parent": "group-consequence",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "The first proper test of this new swingtime era."
+    }
+  ],
+  "edges": [
+    {
+      "data": {
+        "id": "e1",
+        "source": "1",
+        "target": "2"
+      }
+    },
+    {
+      "data": {
+        "id": "e2",
+        "source": "2",
+        "target": "3"
+      }
+    },
+    {
+      "data": {
+        "id": "e3",
+        "source": "3",
+        "target": "4"
+      }
+    },
+    {
+      "data": {
+        "id": "e4",
+        "source": "4",
+        "target": "5"
+      }
+    },
+    {
+      "data": {
+        "id": "e5",
+        "source": "5",
+        "target": "6"
+      }
+    },
+    {
+      "data": {
+        "id": "e6",
+        "source": "6",
+        "target": "7"
+      }
+    },
+    {
+      "data": {
+        "id": "e7",
+        "source": "7",
+        "target": "8"
+      }
+    },
+    {
+      "data": {
+        "id": "e8",
+        "source": "8",
+        "target": "9"
+      }
+    },
+    {
+      "data": {
+        "id": "e9",
+        "source": "8",
+        "target": "10"
+      }
+    },
+    {
+      "data": {
+        "id": "e10",
+        "source": "5",
+        "target": "11"
+      }
+    },
+    {
+      "data": {
+        "id": "e11",
+        "source": "11",
+        "target": "12"
+      }
+    },
+    {
+      "data": {
+        "id": "e12",
+        "source": "12",
+        "target": "13"
+      }
+    },
+    {
+      "data": {
+        "id": "e13",
+        "source": "13",
+        "target": "14"
+      }
+    },
+    {
+      "data": {
+        "id": "e14",
+        "source": "14",
+        "target": "15"
+      }
+    },
+    {
+      "data": {
+        "id": "e15",
+        "source": "15",
+        "target": "16"
+      }
+    },
+    {
+      "data": {
+        "id": "e16",
+        "source": "13",
+        "target": "17"
+      }
+    },
+    {
+      "data": {
+        "id": "e17",
+        "source": "17",
+        "target": "18"
+      }
+    },
+    {
+      "data": {
+        "id": "e18",
+        "source": "18",
+        "target": "19"
+      }
+    },
+    {
+      "data": {
+        "id": "e19",
+        "source": "5",
+        "target": "19"
+      }
+    }
+  ]
+}

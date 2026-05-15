@@ -1,0 +1,457 @@
+{
+  "nodes": [
+    {
+      "id": "1",
+      "content": "Book thesis\n\nWittgenstein’s central move is to stop looking for a hidden object called meaning and to look instead at what people do with words. The book is not a system replacing the Tractatus with another theory; it is a method for dissolving philosophical pictures that hold us captive. Words mean within activities, training, uses, and forms of life.\n\n> Don’t think, but look!\n\n> For a large class of cases... the meaning of a word is its use in the language.",
+      "class": "origin",
+      "user": "Ludwig Wittgenstein",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "The meaning of a word is its use in the language."
+    },
+    {
+      "id": "group-target",
+      "content": "Target: the picture theory of naming",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "group-games",
+      "content": "Language-games and family resemblance",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "group-rule",
+      "content": "Rules, use, and public criteria",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "group-mind",
+      "content": "Mind, privacy, and sensation",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "group-method",
+      "content": "Philosophical method",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "2",
+      "content": "Augustinian picture\n\nThe book opens with Augustine’s description of learning language: adults point to things, children associate sounds with objects, and words become names. Wittgenstein treats this as a powerful but misleading picture. It works for some nouns in some contexts, but it cannot explain orders, questions, jokes, numbers, colours, pain, games, or the many other things language does. The danger is not that naming never happens, but that one simple case becomes a model for all meaning.",
+      "class": "premise",
+      "user": "Ludwig Wittgenstein",
+      "parent": "group-target",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Augustine describes a language in which words name objects."
+    },
+    {
+      "id": "3",
+      "content": "Naming is not enough\n\nOstensive definition looks simple: point and say a word. But pointing at a pencil could mean pencil, wood, one, this colour, this shape, or writing tool, depending on what the learner is prepared to do with the sign. A gesture only teaches within a background practice. This undermines the thought that language rests on bare acts of attaching names to objects.\n\n> An ostensive definition can be variously interpreted in every case.",
+      "class": "antithesis",
+      "user": "Ludwig Wittgenstein",
+      "parent": "group-target",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "An ostensive definition can be variously interpreted in every case."
+    },
+    {
+      "id": "4",
+      "content": "Meaning as use\n\nWittgenstein’s alternative is to ask how a word is used. Meaning is not a mental image, private object, or essence hovering behind the word. To understand a word is to know how it functions in the relevant language-game: when to say it, how to respond to it, what counts as using it correctly, and what role it plays in life.\n\n> The meaning of a word is its use in the language.",
+      "class": "thesis",
+      "user": "Ludwig Wittgenstein",
+      "parent": "group-target",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "The meaning of a word is its use in the language."
+    },
+    {
+      "id": "5",
+      "content": "Language-games\n\nA language-game is a simplified scene of speech and action: builders calling for slabs, children learning words, people giving orders, telling stories, praying, calculating, reporting, joking, thanking, cursing. The point is pluralism: language has many jobs, and different jobs have different criteria. Looking at language-games breaks the spell of the idea that every sentence must work by naming or describing.",
+      "class": "thesis",
+      "user": "Ludwig Wittgenstein",
+      "parent": "group-games",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "I shall also call the whole... a language-game."
+    },
+    {
+      "id": "6",
+      "content": "Forms of life\n\nLanguage-games are not free-floating codes. They belong to shared human patterns: needs, gestures, training, reactions, institutions, and expectations. A command makes sense because there are practices of obeying; a pain-cry makes sense because there are human responses to suffering. To understand a language is therefore not merely to decode signs but to participate in a form of life.\n\n> To imagine a language means to imagine a form of life.",
+      "class": "premise",
+      "user": "Ludwig Wittgenstein",
+      "parent": "group-games",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "To imagine a language means to imagine a form of life."
+    },
+    {
+      "id": "7",
+      "content": "Family resemblance\n\nWittgenstein asks what all games have in common and finds no single essence. Board games, ball games, Olympic games, children’s games, and word games overlap in many ways, but no one feature belongs to all. Concepts often work by family resemblance: networks of similarities rather than strict definitions. This is a model for language itself.\n\n> We see a complicated network of similarities overlapping and criss-crossing.",
+      "class": "thesis",
+      "user": "Ludwig Wittgenstein",
+      "parent": "group-games",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Similarities overlapping and criss-crossing."
+    },
+    {
+      "id": "8",
+      "content": "Blurred concepts can work\n\nA concept can be useful without having a sharp boundary. We can use game, language, number, or proposition effectively even if edge cases remain contestable. Philosophers often mistake this openness for a defect and try to impose artificial precision. Wittgenstein replies that ordinary concepts often work precisely because they are flexible enough for actual life.\n\n> Is an indistinct photograph a picture of a person at all?",
+      "class": "premise",
+      "user": "Ludwig Wittgenstein",
+      "parent": "group-games",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Is an indistinct photograph a picture of a person at all?"
+    },
+    {
+      "id": "9",
+      "content": "Rules do not interpret themselves\n\nIf every application of a rule required an interpretation, then the interpretation itself would require another interpretation, and so on. A rule cannot force its own future applications by a private mental act. What stops the regress is not another hidden meaning but a practice in which some applications count as continuing correctly and others do not.\n\n> Any interpretation still hangs in the air along with what it interprets.",
+      "class": "thesis",
+      "user": "Ludwig Wittgenstein",
+      "parent": "group-rule",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Any interpretation still hangs in the air along with what it interprets."
+    },
+    {
+      "id": "10",
+      "content": "Following a rule is a practice\n\nTo follow a rule is not to consult an inner rail stretching ahead to every future case. It is to have been trained into a practice where agreement in action gives words like same, continue, add, and obey their role. This is why rule-following is public and habitual rather than a private flash of interpretation.\n\n> To obey a rule, to make a report, to give an order... are customs.",
+      "class": "synthesis",
+      "user": "Ludwig Wittgenstein",
+      "parent": "group-rule",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "To obey a rule... are customs."
+    },
+    {
+      "id": "11",
+      "content": "Private language proposal\n\nWittgenstein considers the tempting idea of a language whose words refer to what only I can know: my private sensations. I might mark S in a diary whenever a certain inner feeling occurs, thinking that inward attention fixes the meaning. This is a real argumentative target: can a sign get its meaning from a purely private act of recognition?",
+      "class": "thesis",
+      "user": "Ludwig Wittgenstein",
+      "parent": "group-mind",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "I want to keep a diary about the recurrence of a certain sensation."
+    },
+    {
+      "id": "12",
+      "content": "Private language objection\n\nThe problem is not that sensations do not exist. The problem is that a purely private sign lacks a distinction between correct and incorrect use. If I decide that S means this sensation, but no public criterion can check whether I am using S the same way tomorrow, then correctness collapses into seeming-correct. That is not a language.\n\n> Whatever is going to seem right to me is right. And that only means that here we can’t talk about right.",
+      "class": "antithesis",
+      "user": "Ludwig Wittgenstein",
+      "parent": "group-mind",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Whatever is going to seem right to me is right."
+    },
+    {
+      "id": "13",
+      "content": "Pain is not inferred\n\nWhen someone cries out, winces, or says they are in pain, we do not normally infer an invisible object from external evidence as a scientist infers a cause. Pain-language is learned in a human setting of expression, comfort, care, pretence, doubt, and response. The inner matters, but its grammar is tied to outward criteria.\n\n> An inner process stands in need of outward criteria.",
+      "class": "premise",
+      "user": "Ludwig Wittgenstein",
+      "parent": "group-mind",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "An inner process stands in need of outward criteria."
+    },
+    {
+      "id": "14",
+      "content": "Against inner objects\n\nWittgenstein does not deny that people have experiences. He denies that the meaning of sensation words is secured by pointing inward at private objects. Treating pain as a hidden thing named by a word produces philosophical puzzles about privacy and other minds. Looking at the public grammar of sensation-language dissolves the puzzle rather than solving it with a theory.",
+      "class": "synthesis",
+      "user": "Ludwig Wittgenstein",
+      "parent": "group-mind",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "The essential thing about private experience is not that each person possesses his own exemplar."
+    },
+    {
+      "id": "15",
+      "content": "Understanding is not a hidden state\n\nTo understand a word, order, or mathematical series is not to possess an occult mental state that guarantees every future use. We judge understanding by what someone can do: continue the series, obey the order, explain the word, correct mistakes, teach another. The temptation is to reify understanding into a private process; Wittgenstein redirects attention to ability and practice.",
+      "class": "thesis",
+      "user": "Ludwig Wittgenstein",
+      "parent": "group-rule",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Understanding is not a mental process."
+    },
+    {
+      "id": "16",
+      "content": "Aspect-seeing\n\nAspect-seeing, such as seeing the duck-rabbit now as a duck and now as a rabbit, shows that perception is not a raw visual given plus an optional interpretation. What we see is shaped by concepts, familiarity, comparison, and use. This connects mind and language: even perception is woven into practices of description and recognition.",
+      "class": "premise",
+      "user": "Ludwig Wittgenstein",
+      "parent": "group-mind",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "I contemplate a face, and then suddenly notice its likeness to another."
+    },
+    {
+      "id": "17",
+      "content": "Philosophical problems as bewitchment\n\nFor Wittgenstein, philosophical problems often arise when language goes on holiday: words are lifted out of ordinary use and made to look mysterious. We then ask what meaning, understanding, thinking, pain, or rule-following really are, as though each must name a hidden entity. Philosophy must break the spell cast by grammar.\n\n> Philosophy is a battle against the bewitchment of our intelligence by means of language.",
+      "class": "thesis",
+      "user": "Ludwig Wittgenstein",
+      "parent": "group-method",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Philosophy is a battle against the bewitchment of our intelligence by means of language."
+    },
+    {
+      "id": "18",
+      "content": "Description, not theory\n\nWittgenstein’s method is therapeutic rather than explanatory in the scientific sense. He does not look for a hidden mechanism beneath language; he lays out the actual uses that were already in front of us. The aim is to remove confusion, not to construct a grand theory of meaning, mind, or logic.\n\n> We must do away with all explanation, and description alone must take its place.",
+      "class": "synthesis",
+      "user": "Ludwig Wittgenstein",
+      "parent": "group-method",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Description alone must take its place."
+    },
+    {
+      "id": "19",
+      "content": "Ordinary language as reminder\n\nThe philosopher’s work is to assemble reminders: familiar examples, ordinary uses, simple language-games, and contrasts that restore our sense of how words actually function. These reminders are not trivial; they are meant to free us from pictures we did not realize were guiding our thought. Philosophy becomes a practice of orientation.",
+      "class": "premise",
+      "user": "Ludwig Wittgenstein",
+      "parent": "group-method",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "The work of the philosopher consists in assembling reminders."
+    },
+    {
+      "id": "20",
+      "content": "No single essence\n\nThe result is not a doctrine that use is the new hidden essence of language. The result is release from the craving for essence itself. Instead of one underlying structure, we find a landscape of uses, language-games, criteria, analogies, and forms of life. The task is to return from abstraction to the rough ground where words actually work.\n\n> Back to the rough ground!",
+      "class": "conclusion",
+      "user": "Ludwig Wittgenstein",
+      "parent": "group-method",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Back to the rough ground!"
+    },
+    {
+      "id": "21",
+      "content": "Lion and form of life\n\nThe lion remark condenses the point that understanding is not mere translation of sounds into meanings. A speaking lion would belong to a radically different form of life: different needs, reactions, interests, gestures, and practices. The barrier is not vocabulary alone but the shared human background that gives words their life.\n\n> If a lion could talk, we could not understand him.",
+      "class": "conclusion",
+      "user": "Ludwig Wittgenstein",
+      "parent": "group-games",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "If a lion could talk, we could not understand him."
+    },
+    {
+      "id": "22",
+      "content": "Philosophy leaves everything as it is\n\nWittgenstein’s therapy does not reform ordinary language or legislate how people must speak. It changes our relation to philosophical confusion. Everyday language is not defective because it lacks philosophical precision; the trouble begins when philosophers misuse it and then demand impossible explanations.\n\n> Philosophy may in no way interfere with the actual use of language.",
+      "class": "conclusion",
+      "user": "Ludwig Wittgenstein",
+      "parent": "group-method",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Philosophy may in no way interfere with the actual use of language."
+    }
+  ],
+  "edges": [
+    {
+      "data": {
+        "id": "e1",
+        "source": "1",
+        "target": "2"
+      }
+    },
+    {
+      "data": {
+        "id": "e2",
+        "source": "2",
+        "target": "3"
+      }
+    },
+    {
+      "data": {
+        "id": "e3",
+        "source": "3",
+        "target": "4"
+      }
+    },
+    {
+      "data": {
+        "id": "e4",
+        "source": "4",
+        "target": "5"
+      }
+    },
+    {
+      "data": {
+        "id": "e5",
+        "source": "5",
+        "target": "6"
+      }
+    },
+    {
+      "data": {
+        "id": "e6",
+        "source": "6",
+        "target": "7"
+      }
+    },
+    {
+      "data": {
+        "id": "e7",
+        "source": "7",
+        "target": "8"
+      }
+    },
+    {
+      "data": {
+        "id": "e8",
+        "source": "5",
+        "target": "9"
+      }
+    },
+    {
+      "data": {
+        "id": "e9",
+        "source": "9",
+        "target": "10"
+      }
+    },
+    {
+      "data": {
+        "id": "e10",
+        "source": "10",
+        "target": "15"
+      }
+    },
+    {
+      "data": {
+        "id": "e11",
+        "source": "5",
+        "target": "11"
+      }
+    },
+    {
+      "data": {
+        "id": "e12",
+        "source": "11",
+        "target": "12"
+      }
+    },
+    {
+      "data": {
+        "id": "e13",
+        "source": "12",
+        "target": "13"
+      }
+    },
+    {
+      "data": {
+        "id": "e14",
+        "source": "13",
+        "target": "14"
+      }
+    },
+    {
+      "data": {
+        "id": "e15",
+        "source": "14",
+        "target": "16"
+      }
+    },
+    {
+      "data": {
+        "id": "e16",
+        "source": "4",
+        "target": "17"
+      }
+    },
+    {
+      "data": {
+        "id": "e17",
+        "source": "17",
+        "target": "18"
+      }
+    },
+    {
+      "data": {
+        "id": "e18",
+        "source": "18",
+        "target": "19"
+      }
+    },
+    {
+      "data": {
+        "id": "e19",
+        "source": "19",
+        "target": "20"
+      }
+    },
+    {
+      "data": {
+        "id": "e20",
+        "source": "6",
+        "target": "21"
+      }
+    },
+    {
+      "data": {
+        "id": "e21",
+        "source": "18",
+        "target": "22"
+      }
+    },
+    {
+      "data": {
+        "id": "e22",
+        "source": "20",
+        "target": "22"
+      }
+    }
+  ]
+}

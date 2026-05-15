@@ -1,0 +1,435 @@
+{
+  "nodes": [
+    {
+      "id": "1",
+      "content": "Essay thesis\n\nCamus asks whether life can be lived without appeal to eternal meaning. His answer is neither resignation nor suicide, but lucid revolt: live with the absurd, without false consolation.\n\n> There is but one truly serious philosophical problem, and that is suicide.\n\n> The struggle itself toward the heights is enough to fill a man’s heart.",
+      "class": "origin",
+      "user": "Albert Camus",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "There is but one truly serious philosophical problem, and that is suicide."
+    },
+    {
+      "id": "group-question",
+      "content": "The central question",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "group-absurd",
+      "content": "The absurd condition",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "group-temptations",
+      "content": "Temptations and refusals",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "group-ethic",
+      "content": "Living without appeal",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "group-sisyphus",
+      "content": "Sisyphus as image",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "2",
+      "content": "Starting question\n\nCamus begins with the existential question beneath all others: if life has no final meaning, should one keep living? The essay tests whether suicide follows from absurdity.",
+      "class": "question",
+      "user": "Albert Camus",
+      "parent": "group-question",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Judging whether life is or is not worth living amounts to answering the fundamental question of philosophy."
+    },
+    {
+      "id": "3",
+      "content": "The hunger for clarity\n\nHuman beings seek unity, reason, and explanation. The mind wants the world to answer it.",
+      "class": "premise",
+      "user": "Albert Camus",
+      "parent": "group-absurd",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "The mind’s deepest desire... is an insistence upon familiarity, an appetite for clarity."
+    },
+    {
+      "id": "4",
+      "content": "The world’s silence\n\nThe world does not satisfy that hunger. The absurd arises not from humanity alone or the world alone, but from their confrontation.\n\n> The absurd is born of this confrontation between the human need and the unreasonable silence of the world.",
+      "class": "thesis",
+      "user": "Albert Camus",
+      "parent": "group-absurd",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "The absurd is born of this confrontation."
+    },
+    {
+      "id": "5",
+      "content": "Absurdity is a relation\n\nThe absurd must be preserved as a tension. If either side is abolished - the human demand or the world’s silence - the absurd disappears.",
+      "class": "premise",
+      "user": "Albert Camus",
+      "parent": "group-absurd",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "The absurd depends as much on man as on the world."
+    },
+    {
+      "id": "6",
+      "content": "Proposal: physical suicide\n\nPro: if life lacks ultimate meaning, one response is to end it. Suicide seems to confess that life is not worth the effort.",
+      "class": "thesis",
+      "user": "Albert Camus",
+      "parent": "group-temptations",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Suicide is prepared within the silence of the heart."
+    },
+    {
+      "id": "7",
+      "content": "Camus’ objection to suicide\n\nCon: suicide does not solve the absurd; it abolishes one of its terms. It is a surrender rather than a lucid answer. The task is to live with the contradiction.",
+      "class": "antithesis",
+      "user": "Albert Camus",
+      "parent": "group-temptations",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Living is keeping the absurd alive."
+    },
+    {
+      "id": "8",
+      "content": "Proposal: philosophical suicide\n\nPro: another escape is the leap - religion, transcendence, or metaphysics that converts absurdity into hidden meaning. Kierkegaard, Jaspers, and others are treated as examples of this temptation.",
+      "class": "thesis",
+      "user": "Albert Camus",
+      "parent": "group-temptations",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "The leap does not represent an extreme danger, as Kierkegaard would like it to do. The danger... lies in the subtle instant that precedes the leap."
+    },
+    {
+      "id": "9",
+      "content": "Camus’ objection to the leap\n\nCon: the leap betrays the starting point. It claims to accept the absurd but then smuggles in meaning, hope, or reconciliation. Camus wants fidelity to what is known, not consolation by what is wished.",
+      "class": "antithesis",
+      "user": "Albert Camus",
+      "parent": "group-temptations",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "I do not want to found anything on the incomprehensible."
+    },
+    {
+      "id": "10",
+      "content": "Proposal: hope as remedy\n\nPro: one might endure life by hoping for another world, future redemption, historical completion, or eventual explanation.",
+      "class": "thesis",
+      "user": "Albert Camus",
+      "parent": "group-temptations",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Hope of another life one must deserve, or trickery of those who live not for life itself but for some great idea."
+    },
+    {
+      "id": "11",
+      "content": "Camus’ objection to hope\n\nCon: hope can become evasion when it makes present life subordinate to a promised meaning. Camus asks for life without appeal.",
+      "class": "antithesis",
+      "user": "Albert Camus",
+      "parent": "group-temptations",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "What counts is not the best living but the most living."
+    },
+    {
+      "id": "12",
+      "content": "First consequence: revolt\n\nTo live absurdly is to keep saying no to false reconciliation while continuing to live. Revolt is constant lucidity.\n\n> The absurd man can only drain everything to the bitter end, and deplete himself.",
+      "class": "conclusion",
+      "user": "Albert Camus",
+      "parent": "group-ethic",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Revolt gives life its value."
+    },
+    {
+      "id": "13",
+      "content": "Second consequence: freedom\n\nWithout eternal purpose, the absurd person is released from the demand to justify life by a final end. Freedom becomes present-tense and concrete.",
+      "class": "conclusion",
+      "user": "Albert Camus",
+      "parent": "group-ethic",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "The absurd man feels released from everything outside that passionate attention crystallizing in him."
+    },
+    {
+      "id": "14",
+      "content": "Third consequence: passion\n\nCamus does not recommend despairing withdrawal. Since there is no final appeal, the point is intensity, multiplicity, and lucid experience.",
+      "class": "conclusion",
+      "user": "Albert Camus",
+      "parent": "group-ethic",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "The present and the succession of presents before a constantly conscious soul is the ideal of the absurd man."
+    },
+    {
+      "id": "15",
+      "content": "Don Juan\n\nDon Juan represents quantity and lucidity rather than eternal love. He does not seek final possession; he multiplies experience while knowing its limits.",
+      "class": "premise",
+      "user": "Albert Camus",
+      "parent": "group-ethic",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "It is not through lack of love that Don Juan goes from woman to woman."
+    },
+    {
+      "id": "16",
+      "content": "The actor\n\nThe actor lives many lives in a finite span, making visible the absurd compression of existence into roles, gestures, and endings.",
+      "class": "premise",
+      "user": "Albert Camus",
+      "parent": "group-ethic",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "The actor has three hours to be Iago or Alceste, Phaedra or Gloucester."
+    },
+    {
+      "id": "17",
+      "content": "The conqueror and creator\n\nThe conqueror and artist act without appeal to eternity. Creation does not explain the world but repeats and gives form to experience.",
+      "class": "premise",
+      "user": "Albert Camus",
+      "parent": "group-ethic",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Creating is living doubly."
+    },
+    {
+      "id": "18",
+      "content": "Sisyphus’ punishment\n\nSisyphus is condemned to endless useless labor: rolling the stone up the mountain only to watch it fall. He is the mythic image of absurd repetition.",
+      "class": "premise",
+      "user": "Albert Camus",
+      "parent": "group-sisyphus",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "The gods had condemned Sisyphus to ceaselessly rolling a rock to the top of a mountain."
+    },
+    {
+      "id": "19",
+      "content": "The lucid descent\n\nThe decisive moment is not the upward strain but the descent, when Sisyphus knows the whole truth of his condition. Consciousness transforms punishment into defiance.",
+      "class": "thesis",
+      "user": "Albert Camus",
+      "parent": "group-sisyphus",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "It is during that return, that pause, that Sisyphus interests me."
+    },
+    {
+      "id": "20",
+      "content": "One must imagine him happy\n\nCamus’ final claim is that lucidity, revolt, and ownership of fate can make even an absurd life sufficient. Sisyphus has no hope, but he has his rock and his consciousness.\n\n> One must imagine Sisyphus happy.",
+      "class": "conclusion",
+      "user": "Albert Camus",
+      "parent": "group-sisyphus",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "One must imagine Sisyphus happy."
+    }
+  ],
+  "edges": [
+    {
+      "data": {
+        "id": "e1",
+        "source": "1",
+        "target": "2"
+      }
+    },
+    {
+      "data": {
+        "id": "e2",
+        "source": "2",
+        "target": "3"
+      }
+    },
+    {
+      "data": {
+        "id": "e3",
+        "source": "3",
+        "target": "4"
+      }
+    },
+    {
+      "data": {
+        "id": "e4",
+        "source": "4",
+        "target": "5"
+      }
+    },
+    {
+      "data": {
+        "id": "e5",
+        "source": "5",
+        "target": "6"
+      }
+    },
+    {
+      "data": {
+        "id": "e6",
+        "source": "6",
+        "target": "7"
+      }
+    },
+    {
+      "data": {
+        "id": "e7",
+        "source": "5",
+        "target": "8"
+      }
+    },
+    {
+      "data": {
+        "id": "e8",
+        "source": "8",
+        "target": "9"
+      }
+    },
+    {
+      "data": {
+        "id": "e9",
+        "source": "5",
+        "target": "10"
+      }
+    },
+    {
+      "data": {
+        "id": "e10",
+        "source": "10",
+        "target": "11"
+      }
+    },
+    {
+      "data": {
+        "id": "e11",
+        "source": "7",
+        "target": "12"
+      }
+    },
+    {
+      "data": {
+        "id": "e12",
+        "source": "9",
+        "target": "12"
+      }
+    },
+    {
+      "data": {
+        "id": "e13",
+        "source": "11",
+        "target": "12"
+      }
+    },
+    {
+      "data": {
+        "id": "e14",
+        "source": "12",
+        "target": "13"
+      }
+    },
+    {
+      "data": {
+        "id": "e15",
+        "source": "13",
+        "target": "14"
+      }
+    },
+    {
+      "data": {
+        "id": "e16",
+        "source": "14",
+        "target": "15"
+      }
+    },
+    {
+      "data": {
+        "id": "e17",
+        "source": "14",
+        "target": "16"
+      }
+    },
+    {
+      "data": {
+        "id": "e18",
+        "source": "14",
+        "target": "17"
+      }
+    },
+    {
+      "data": {
+        "id": "e19",
+        "source": "12",
+        "target": "18"
+      }
+    },
+    {
+      "data": {
+        "id": "e20",
+        "source": "18",
+        "target": "19"
+      }
+    },
+    {
+      "data": {
+        "id": "e21",
+        "source": "19",
+        "target": "20"
+      }
+    },
+    {
+      "data": {
+        "id": "e22",
+        "source": "4",
+        "target": "20"
+      }
+    }
+  ]
+}

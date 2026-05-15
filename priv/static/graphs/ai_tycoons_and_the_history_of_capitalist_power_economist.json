@@ -1,0 +1,428 @@
+{
+  "nodes": [
+    {
+      "id": "1",
+      "content": "Article thesis\n\nThe article argues that the five best-known AI leaders look unsettlingly powerful, but they are part of a recurring pattern in capitalism: small clusters of strange, forceful tycoons popularise transformative technologies, accumulate immense power, create new dangers, and eventually provoke state response.\n\n> In a very real sense, these five men hold the fate of Western civilisation in their hands.\n\n> AI’s famous five are but the latest example of a common phenomenon in the history of Western capitalism.",
+      "class": "origin",
+      "user": "The Economist",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "AI’s famous five are but the latest example of a common phenomenon in the history of Western capitalism."
+    },
+    {
+      "id": "group-ai-five",
+      "content": "The AI five and their power",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "group-history",
+      "content": "Historical pattern of tycoons",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "group-measure",
+      "content": "Ranking power across waves",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "group-commonalities",
+      "content": "Three commonalities",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "group-state",
+      "content": "State constraint and conclusion",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "2",
+      "content": "The famous five\n\nThe article identifies Dario Amodei, Demis Hassabis, Elon Musk, Mark Zuckerberg, and Sam Altman as the dominant public faces of AI. Their first names alone function almost like brands, and politicians and journalists treat their statements as civilisational signals.\n\n> Dario, Demis, Elon, Mark and Sam. The five most important people in artificial intelligence are so famous that first names alone are enough to identify them.",
+      "class": "premise",
+      "user": "The Economist",
+      "parent": "group-ai-five",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "First names alone are enough to identify them."
+    },
+    {
+      "id": "3",
+      "content": "AI is already consequential\n\nThe article stresses that AI is not a remote speculation. ChatGPT has mass adoption, AI models can hack, militaries use AI tools, and economists argue over growth, jobs, and extinction risk.\n\n> Not since the splitting of the atom has a new technology created such angst.",
+      "class": "premise",
+      "user": "The Economist",
+      "parent": "group-ai-five",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Not since the splitting of the atom has a new technology created such angst."
+    },
+    {
+      "id": "4",
+      "content": "Concentrated power is unnerving\n\nThe immediate worry is political and moral: so much influence sits with a tiny number of men, some opportunistic, volatile, or only weakly accountable.\n\n> It is unnerving that so few men wield such awesome power, particularly men as opportunistic as Mr Altman or as volatile as Mr Musk.",
+      "class": "thesis",
+      "user": "The Economist",
+      "parent": "group-ai-five",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "It is unnerving that so few men wield such awesome power."
+    },
+    {
+      "id": "5",
+      "content": "Historical precedent\n\nThe article’s first major turn is comparative: AI’s concentration of power is disturbing, but not unprecedented. Railways, oil, steel, cars, banking, and the internet were all pushed to mass adoption by small groups of powerful men.\n\n> There are many examples where a small cluster of men has pushed new technologies forward - not necessarily by inventing them, but by bringing them to the masses.",
+      "class": "synthesis",
+      "user": "The Economist",
+      "parent": "group-history",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "A small cluster of men has pushed new technologies forward."
+    },
+    {
+      "id": "6",
+      "content": "Technologies remake society\n\nThese waves did more than create fortunes. They reorganised movement, energy, cities, consumption, credit, attention, and social norms. The article’s premise is that control over distribution can become control over social life.\n\n> These technologies have shaped how everyone else lives.\n\n> All of these technologies made the world richer. They also upturned social norms.",
+      "class": "premise",
+      "user": "The Economist",
+      "parent": "group-history",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "These technologies have shaped how everyone else lives."
+    },
+    {
+      "id": "7",
+      "content": "Proposition: tycoons are overrated\n\nPro: one can argue that tycoons merely monopolise the rewards of collective work. Millions contribute to invention and infrastructure; billionaires may simply have been lucky or extractive.\n\n> Technological progress is the result of the actions of millions of people.\n\n> Every billionaire is a policy failure, runs the slogan.",
+      "class": "thesis",
+      "user": "The Economist",
+      "parent": "group-history",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Every billionaire is a policy failure."
+    },
+    {
+      "id": "8",
+      "content": "Counter: tycoons are necessary\n\nCon: the article says this is too uncharitable. The decisive function of tycoons is often not invention but mass diffusion: turning technologies into cheap, scalable, widely adopted products and systems.\n\n> History shows that time and again tycoons have played the decisive role in spreading new technologies to the mass market.\n\n> In short, prosperity requires tycoons.",
+      "class": "antithesis",
+      "user": "The Economist",
+      "parent": "group-history",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Prosperity requires tycoons."
+    },
+    {
+      "id": "9",
+      "content": "Measuring tycoon power\n\nThe Economist ranks tycoons across 11 American technological waves using revenue, employment, market value, corporate control, and wealth, standardised to historical context. This is an attempt to compare power beyond celebrity or riches alone.\n\n> Riches alone would not capture the full extent of a tycoon’s power.",
+      "class": "premise",
+      "user": "The Economist",
+      "parent": "group-measure",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Riches alone would not capture the full extent of a tycoon’s power."
+    },
+    {
+      "id": "10",
+      "content": "Ford as benchmark\n\nHenry Ford ranks as the most powerful mogul because he combined wealth, employment, control, mass production, and social transformation. The Model T made the car a mass object, not just a luxury.\n\n> By our ranking, however, Henry Ford is the most powerful mogul America has seen so far.\n\n> In 1917 more than 40% of cars on America’s roads were Model Ts.",
+      "class": "thesis",
+      "user": "The Economist",
+      "parent": "group-measure",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Henry Ford is the most powerful mogul America has seen so far."
+    },
+    {
+      "id": "11",
+      "content": "Current AI leaders rank lower\n\nAltman, Amodei, and Hassabis rank lower because AI labs are young, often unprofitable, employ relatively few people, and their leaders lack Ford-like ownership or control. Their potential is enormous, but their current measured power is not yet historically supreme.\n\n> Mr Altman, Mr Amodei and Sir Demis, whose power is more directly tied to AI, all fall in the bottom half of our ranking.",
+      "class": "premise",
+      "user": "The Economist",
+      "parent": "group-measure",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "They fall in the bottom half of our ranking."
+    },
+    {
+      "id": "12",
+      "content": "AI may still be early\n\nThe article qualifies the ranking: AI may be too young for today’s leaders to have reached their apex. Unlike older waves, AI may shape many industries at once, from entertainment to defence.\n\n> It may be many years until the moguls behind AI reach the apex of their power.",
+      "class": "synthesis",
+      "user": "The Economist",
+      "parent": "group-measure",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Many years until the moguls behind AI reach the apex of their power."
+    },
+    {
+      "id": "13",
+      "content": "Commonality one: oddness\n\nThe first historical commonality is strangeness. Ford, Rockefeller, Vanderbilt, Morgan, Edison, Jobs, Musk, and Zuckerberg are presented as examples of unusual temperaments accompanying technological power.\n\n> Studying tycoons through history also reveals three important commonalities. The first is that many were deeply strange.",
+      "class": "premise",
+      "user": "The Economist",
+      "parent": "group-commonalities",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Many were deeply strange."
+    },
+    {
+      "id": "14",
+      "content": "Commonality two: new dangers\n\nThe second commonality is that new technologies create new risks: death, accidents, unsafe systems, financial bubbles, labour displacement, and public panic. AI anxiety belongs in this longer pattern of technological fear.\n\n> As these tycoons popularised new technologies, they introduced new dangers.",
+      "class": "premise",
+      "user": "The Economist",
+      "parent": "group-commonalities",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "They introduced new dangers."
+    },
+    {
+      "id": "15",
+      "content": "Physical and social hazards\n\nRailways seemed biologically alarming; aviation, oil drilling, and cars were dangerous; electricity produced safety panics. New systems also displaced old work and old ways of life.\n\n> Cars killed pedestrians and occupants alike.\n\n> Railways and cars crushed horse-based locomotion.",
+      "class": "premise",
+      "user": "The Economist",
+      "parent": "group-commonalities",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Cars killed pedestrians and occupants alike."
+    },
+    {
+      "id": "16",
+      "content": "Financial hazards\n\nTechnological waves also generate financial instability. Railways and banking expanded capacity and credit, but also amplified crashes and crises. This frames AI not only as a safety issue but as a systemic economic risk.\n\n> Over-investment in railways helped cause repeated market crashes in the 19th century.\n\n> A bigger banking system spread credit but magnified financial crises.",
+      "class": "premise",
+      "user": "The Economist",
+      "parent": "group-commonalities",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "A bigger banking system spread credit but magnified financial crises."
+    },
+    {
+      "id": "17",
+      "content": "Commonality three: the state\n\nThe third pattern is the relationship between magnates and government. Earlier tycoons often had more room for monopoly, labour discipline, cronyism, and quasi-sovereign power.\n\n> The tycoons of the 19th century undoubtedly had more latitude than their modern counterparts.",
+      "class": "premise",
+      "user": "The Economist",
+      "parent": "group-state",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "The tycoons of the 19th century undoubtedly had more latitude."
+    },
+    {
+      "id": "18",
+      "content": "Government eventually curbs excess\n\nThe article argues that governments eventually responded: Standard Oil was broken up, the Federal Reserve was created after the 1907 crisis, holding-company control was restrained, and Microsoft was nearly broken up.\n\n> From the 20th century onwards, governments curbed many of the earlier tycoons’ worst excesses.",
+      "class": "synthesis",
+      "user": "The Economist",
+      "parent": "group-state",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Governments curbed many of the earlier tycoons’ worst excesses."
+    },
+    {
+      "id": "19",
+      "content": "Implication for AI\n\nThe AI magnates may likewise face state constraint as their tools transform the economy, defence, labour, and social life. The article implies that tycoon power grows first, then public governance catches up.\n\n> As AI transforms the economy and society, the people behind it may likewise encounter governments that wish to curb their power.",
+      "class": "conclusion",
+      "user": "The Economist",
+      "parent": "group-state",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Governments that wish to curb their power."
+    },
+    {
+      "id": "20",
+      "content": "Final claim: capitalism has visible hands\n\nThe conclusion rejects the idea that capitalism is purely impersonal. Major technological phases are often driven by towering individuals who organise capital, labour, distribution, and adoption. If the current AI five are not yet Ford or Rockefeller, history suggests someone like that may emerge.\n\n> In theory, capitalism tends to be presented as impersonal and decentralised. In practice, however, its most important phases are often driven forward by individuals.\n\n> If history is any guide, a Rockefeller or Ford is likely to emerge soon enough.",
+      "class": "conclusion",
+      "user": "The Economist",
+      "parent": "group-state",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "A Rockefeller or Ford is likely to emerge soon enough."
+    }
+  ],
+  "edges": [
+    {
+      "data": {
+        "id": "e1",
+        "source": "1",
+        "target": "2"
+      }
+    },
+    {
+      "data": {
+        "id": "e2",
+        "source": "2",
+        "target": "3"
+      }
+    },
+    {
+      "data": {
+        "id": "e3",
+        "source": "3",
+        "target": "4"
+      }
+    },
+    {
+      "data": {
+        "id": "e4",
+        "source": "4",
+        "target": "5"
+      }
+    },
+    {
+      "data": {
+        "id": "e5",
+        "source": "5",
+        "target": "6"
+      }
+    },
+    {
+      "data": {
+        "id": "e6",
+        "source": "6",
+        "target": "7"
+      }
+    },
+    {
+      "data": {
+        "id": "e7",
+        "source": "7",
+        "target": "8"
+      }
+    },
+    {
+      "data": {
+        "id": "e8",
+        "source": "8",
+        "target": "9"
+      }
+    },
+    {
+      "data": {
+        "id": "e9",
+        "source": "9",
+        "target": "10"
+      }
+    },
+    {
+      "data": {
+        "id": "e10",
+        "source": "10",
+        "target": "11"
+      }
+    },
+    {
+      "data": {
+        "id": "e11",
+        "source": "11",
+        "target": "12"
+      }
+    },
+    {
+      "data": {
+        "id": "e12",
+        "source": "12",
+        "target": "13"
+      }
+    },
+    {
+      "data": {
+        "id": "e13",
+        "source": "13",
+        "target": "14"
+      }
+    },
+    {
+      "data": {
+        "id": "e14",
+        "source": "14",
+        "target": "15"
+      }
+    },
+    {
+      "data": {
+        "id": "e15",
+        "source": "14",
+        "target": "16"
+      }
+    },
+    {
+      "data": {
+        "id": "e16",
+        "source": "16",
+        "target": "17"
+      }
+    },
+    {
+      "data": {
+        "id": "e17",
+        "source": "17",
+        "target": "18"
+      }
+    },
+    {
+      "data": {
+        "id": "e18",
+        "source": "18",
+        "target": "19"
+      }
+    },
+    {
+      "data": {
+        "id": "e19",
+        "source": "19",
+        "target": "20"
+      }
+    },
+    {
+      "data": {
+        "id": "e20",
+        "source": "8",
+        "target": "20"
+      }
+    },
+    {
+      "data": {
+        "id": "e21",
+        "source": "4",
+        "target": "19"
+      }
+    }
+  ]
+}

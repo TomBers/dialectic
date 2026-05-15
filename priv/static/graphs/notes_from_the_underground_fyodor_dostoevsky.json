@@ -1,0 +1,392 @@
+{
+  "nodes": [
+    {
+      "id": "1",
+      "content": "Book thesis\n\nDostoevsky presents the Underground Man as an anti-hero whose hyper-consciousness, spite, vanity, and hunger for freedom turn against both rational utopianism and human intimacy.\n\n> I am a sick man.... I am a spiteful man. I am an unattractive man.\n\n> I did not know how to become anything; neither spiteful nor kind, neither a rascal nor an honest man, neither a hero nor an insect.",
+      "class": "origin",
+      "user": "Fyodor Dostoevsky",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "I am a sick man.... I am a spiteful man."
+    },
+    {
+      "id": "group-underground",
+      "content": "Part I: Underground",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "group-reason",
+      "content": "Reason, freedom, and revolt",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "group-confession",
+      "content": "Writing and self-deception",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "group-wetsnow",
+      "content": "Part II: Wet snow",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "group-liza",
+      "content": "Liza and failed redemption",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "2",
+      "content": "Author frames a type\n\nThe author note says this figure is imaginary, but socially necessary: a representative of a recent generation produced by modern conditions.\n\n> Such persons as the writer of these notes not only may, but positively must, exist in our society.",
+      "class": "premise",
+      "user": "Fyodor Dostoevsky",
+      "parent": "group-underground",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Such persons... positively must, exist in our society."
+    },
+    {
+      "id": "3",
+      "content": "Spite turned inward\n\nThe Underground Man refuses treatment not to hurt doctors but to injure himself from spite. His rebellion is self-sabotage.\n\n> No, I refuse to consult a doctor from spite.\n\n> I am only injuring myself and no one else.",
+      "class": "premise",
+      "user": "Fyodor Dostoevsky",
+      "parent": "group-underground",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "I am only injuring myself and no one else."
+    },
+    {
+      "id": "4",
+      "content": "Excess consciousness\n\nHis central diagnosis is that too much consciousness paralyzes action and turns even degradation into a perverse pleasure.\n\n> To be too conscious is an illness - a real thorough-going illness.\n\n> The direct, legitimate fruit of consciousness is inertia.",
+      "class": "thesis",
+      "user": "Fyodor Dostoevsky",
+      "parent": "group-underground",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "To be too conscious is an illness."
+    },
+    {
+      "id": "5",
+      "content": "The mouse underground\n\nUnlike the direct man of action, the conscious mouse cannot simply revenge itself; it broods, imagines, remembers, and buries itself alive in resentment.\n\n> In its nasty, stinking, underground home our insulted, crushed and ridiculed mouse promptly becomes absorbed in cold, malignant and, above all, everlasting spite.",
+      "class": "premise",
+      "user": "Fyodor Dostoevsky",
+      "parent": "group-underground",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Everlasting spite."
+    },
+    {
+      "id": "6",
+      "content": "Against rational interest\n\nHe attacks the idea that people do evil only from ignorance of their true interests. Humans often choose what harms them simply to assert will.\n\n> What man wants is simply independent choice, whatever that independence may cost and wherever it may lead.\n\n> One may choose what is contrary to one’s own interests.",
+      "class": "thesis",
+      "user": "Fyodor Dostoevsky",
+      "parent": "group-reason",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Independent choice, whatever that independence may cost."
+    },
+    {
+      "id": "7",
+      "content": "Not a piano-key\n\nThe Underground Man rejects deterministic visions of human life as calculation. A person is not merely reason or a predictable mechanism.\n\n> What is a man without desires, without free will and without choice, if not a stop in an organ?\n\n> Men still are men and not the keys of a piano.",
+      "class": "thesis",
+      "user": "Fyodor Dostoevsky",
+      "parent": "group-reason",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Men still are men and not the keys of a piano."
+    },
+    {
+      "id": "8",
+      "content": "Two times two\n\nMathematical certainty symbolizes rational systems that leave no room for caprice, protest, or living contradiction.\n\n> Twice two makes four seems to me simply a piece of insolence.\n\n> I admit that twice two makes four is an excellent thing, but... twice two makes five is sometimes a very charming thing too.",
+      "class": "antithesis",
+      "user": "Fyodor Dostoevsky",
+      "parent": "group-reason",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Twice two makes five is sometimes a very charming thing too."
+    },
+    {
+      "id": "9",
+      "content": "Crystal palace refused\n\nThe Crystal Palace stands for rational utopia. The Underground Man fears any perfect system at which one cannot even put out one’s tongue.\n\n> You believe in a palace of crystal that can never be destroyed.\n\n> I would rather my hand were withered off than bring one brick to such a building!",
+      "class": "antithesis",
+      "user": "Fyodor Dostoevsky",
+      "parent": "group-reason",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "I would rather my hand were withered off."
+    },
+    {
+      "id": "10",
+      "content": "Confession as performance\n\nHe claims to write only for himself, but constantly imagines readers, judges, and accusations. His confession exposes and performs self-deception.\n\n> Every man has reminiscences which he would not tell to everyone, but only to his friends.\n\n> There are other things which a man is afraid to tell even to himself.",
+      "class": "synthesis",
+      "user": "Fyodor Dostoevsky",
+      "parent": "group-confession",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Things which a man is afraid to tell even to himself."
+    },
+    {
+      "id": "11",
+      "content": "Wet snow: social humiliation\n\nPart II shows the philosophy embodied in petty social life: isolation, vanity, shame, and craving for recognition.\n\n> I am alone and they are everyone.\n\n> I was a coward and a slave.",
+      "class": "premise",
+      "user": "Fyodor Dostoevsky",
+      "parent": "group-wetsnow",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "I am alone and they are everyone."
+    },
+    {
+      "id": "12",
+      "content": "The officer on Nevsky\n\nThe collision with the officer turns dignity into an absurd project. Equality becomes not moral freedom but a shoulder bump on the street.\n\n> Why must you invariably be the first to move aside?\n\n> I had attained my object... and had put myself publicly on an equal social footing with him.",
+      "class": "premise",
+      "user": "Fyodor Dostoevsky",
+      "parent": "group-wetsnow",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Why must you invariably be the first to move aside?"
+    },
+    {
+      "id": "13",
+      "content": "Dinner with Zverkov\n\nHe forces himself into the dinner, seeking recognition while knowing he will be humiliated. His pride manufactures its own punishment.\n\n> What possessed me, what possessed me to force myself upon them?\n\n> The more tactless, the more unseemly my going would be, the more certainly I would go.",
+      "class": "premise",
+      "user": "Fyodor Dostoevsky",
+      "parent": "group-wetsnow",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "The more unseemly... the more certainly I would go."
+    },
+    {
+      "id": "14",
+      "content": "Liza appears\n\nAfter the failed revenge fantasy, he meets Liza. Her seriousness draws him out of abstraction into a real human encounter.\n\n> There was something simple and good-natured in her face, but something strangely grave.\n\n> Liza, my dear, I was wrong ... forgive me, my dear.",
+      "class": "premise",
+      "user": "Fyodor Dostoevsky",
+      "parent": "group-liza",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Liza, my dear, I was wrong."
+    },
+    {
+      "id": "15",
+      "content": "The sermon to Liza\n\nHe speaks to Liza about bondage, death, family, and love. The speech is partly sincere and partly a performance of power.\n\n> Love is a holy mystery and ought to be hidden from all other eyes.\n\n> It was the exercise of my power that attracted me most.",
+      "class": "thesis",
+      "user": "Fyodor Dostoevsky",
+      "parent": "group-liza",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "It was the exercise of my power that attracted me most."
+    },
+    {
+      "id": "16",
+      "content": "Love becomes humiliation\n\nWhen Liza visits, he cannot accept her compassion. He turns tenderness into domination and confesses that he used her to avenge his own humiliation.\n\n> I had been humiliated, so I wanted to humiliate.\n\n> Power, power was what I wanted then, sport was what I wanted.",
+      "class": "antithesis",
+      "user": "Fyodor Dostoevsky",
+      "parent": "group-liza",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "I had been humiliated, so I wanted to humiliate."
+    },
+    {
+      "id": "17",
+      "content": "The five-rouble note\n\nHis cruel payment tries to reduce Liza’s love to transaction. Her leaving the money behind is a final moral victory over him.\n\n> I opened her hand and put the money in it ... from spite.\n\n> I saw a crumpled blue five-rouble note... So she had managed to fling it from her hand on the table.",
+      "class": "conclusion",
+      "user": "Fyodor Dostoevsky",
+      "parent": "group-liza",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "I opened her hand and put the money in it ... from spite."
+    },
+    {
+      "id": "18",
+      "content": "Anti-hero and diagnosis\n\nThe book ends by naming him an anti-hero and extending the diagnosis outward: modern people are divorced from life and prefer books, systems, and abstractions to living.\n\n> A novel needs a hero, and all the traits for an anti-hero are expressly gathered together here.\n\n> We are all divorced from life, we are all cripples, every one of us, more or less.",
+      "class": "conclusion",
+      "user": "Fyodor Dostoevsky",
+      "parent": "group-confession",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "All the traits for an anti-hero are expressly gathered together here."
+    }
+  ],
+  "edges": [
+    {
+      "data": {
+        "id": "e1",
+        "source": "1",
+        "target": "2"
+      }
+    },
+    {
+      "data": {
+        "id": "e2",
+        "source": "2",
+        "target": "3"
+      }
+    },
+    {
+      "data": {
+        "id": "e3",
+        "source": "3",
+        "target": "4"
+      }
+    },
+    {
+      "data": {
+        "id": "e4",
+        "source": "4",
+        "target": "5"
+      }
+    },
+    {
+      "data": {
+        "id": "e5",
+        "source": "4",
+        "target": "6"
+      }
+    },
+    {
+      "data": {
+        "id": "e6",
+        "source": "6",
+        "target": "7"
+      }
+    },
+    {
+      "data": {
+        "id": "e7",
+        "source": "7",
+        "target": "8"
+      }
+    },
+    {
+      "data": {
+        "id": "e8",
+        "source": "8",
+        "target": "9"
+      }
+    },
+    {
+      "data": {
+        "id": "e9",
+        "source": "9",
+        "target": "10"
+      }
+    },
+    {
+      "data": {
+        "id": "e10",
+        "source": "10",
+        "target": "11"
+      }
+    },
+    {
+      "data": {
+        "id": "e11",
+        "source": "11",
+        "target": "12"
+      }
+    },
+    {
+      "data": {
+        "id": "e12",
+        "source": "12",
+        "target": "13"
+      }
+    },
+    {
+      "data": {
+        "id": "e13",
+        "source": "13",
+        "target": "14"
+      }
+    },
+    {
+      "data": {
+        "id": "e14",
+        "source": "14",
+        "target": "15"
+      }
+    },
+    {
+      "data": {
+        "id": "e15",
+        "source": "15",
+        "target": "16"
+      }
+    },
+    {
+      "data": {
+        "id": "e16",
+        "source": "16",
+        "target": "17"
+      }
+    },
+    {
+      "data": {
+        "id": "e17",
+        "source": "17",
+        "target": "18"
+      }
+    },
+    {
+      "data": {
+        "id": "e18",
+        "source": "6",
+        "target": "18"
+      }
+    },
+    {
+      "data": {
+        "id": "e19",
+        "source": "10",
+        "target": "18"
+      }
+    }
+  ]
+}

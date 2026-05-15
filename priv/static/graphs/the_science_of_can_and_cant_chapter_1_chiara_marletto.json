@@ -1,0 +1,392 @@
+{
+  "nodes": [
+    {
+      "id": "1",
+      "content": "Chapter thesis\n\nChapter 1 introduces the central shift of constructor theory: fundamental physics should not only describe what happens from initial conditions, but also what transformations are possible, impossible, and why. The key unit is a task: a specified transformation of physical systems. This lets science talk rigorously about counterfactuals - things that could happen, could not happen, or could be made to happen under the right constructor.",
+      "class": "origin",
+      "user": "Chiara Marletto",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "High-level paraphrase of Chapter 1; no direct text quoted."
+    },
+    {
+      "id": "group-problem",
+      "content": "Limits of the prevailing conception",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "group-task",
+      "content": "Tasks, constructors, and possibility",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "group-counterfactual",
+      "content": "Counterfactual explanation",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "group-reach",
+      "content": "Why this matters",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "group-method",
+      "content": "A new scientific grammar",
+      "class": "",
+      "user": "",
+      "parent": null,
+      "noted_by": [],
+      "deleted": false,
+      "compound": true,
+      "source_text": null
+    },
+    {
+      "id": "2",
+      "content": "Prevailing physics tracks trajectories\n\nThe standard image of physics often starts with a state of the world plus laws of motion, then predicts later states. That is powerful, but it can make some important statements look secondary: not what will happen, but what can and cannot be made to happen.",
+      "class": "premise",
+      "user": "Chiara Marletto",
+      "parent": "group-problem",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Paraphrase: prevailing physics is often framed in terms of prediction from initial conditions."
+    },
+    {
+      "id": "3",
+      "content": "Some truths are about possibility\n\nMany scientific claims are not simply predictions of a particular event. They say that a transformation is possible, impossible, easy, hard, accurate, approximate, repeatable, or forbidden. These claims are central to information, computation, thermodynamics, life, and knowledge.",
+      "class": "premise",
+      "user": "Chiara Marletto",
+      "parent": "group-problem",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Paraphrase: science needs modal claims about possible and impossible transformations."
+    },
+    {
+      "id": "4",
+      "content": "Counterfactuals are not optional\n\nA counterfactual says what would happen, could happen, or could be made to happen, even if it does not actually happen. Constructor theory treats these as legitimate scientific content rather than loose philosophical extras.",
+      "class": "thesis",
+      "user": "Chiara Marletto",
+      "parent": "group-counterfactual",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Paraphrase: counterfactuals become first-class scientific statements."
+    },
+    {
+      "id": "5",
+      "content": "Task as basic unit\n\nA task is a transformation specified abstractly: input attributes to output attributes. Instead of asking only what a system will do, constructor theory asks whether the task can be performed, and under what physical conditions.",
+      "class": "thesis",
+      "user": "Chiara Marletto",
+      "parent": "group-task",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Paraphrase: a task specifies input-output transformations."
+    },
+    {
+      "id": "6",
+      "content": "Constructor\n\nA constructor is something that can cause a task to happen while retaining the ability to do it again. A catalyst, a heat engine, a computer, or a living cell can be understood through this lens: they are not just things that change, but things that make transformations repeatable.",
+      "class": "premise",
+      "user": "Chiara Marletto",
+      "parent": "group-task",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Paraphrase: a constructor performs a task and can do so again."
+    },
+    {
+      "id": "7",
+      "content": "Possible vs impossible\n\nThe central distinction is whether a task is possible or impossible under the laws of physics. Possible does not mean easy or already built; it means no law forbids arbitrarily accurate approximations to the task. Impossible means no constructor can perform it, however ingenious.",
+      "class": "thesis",
+      "user": "Chiara Marletto",
+      "parent": "group-task",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Paraphrase: possible tasks are not forbidden by physical law; impossible tasks are forbidden."
+    },
+    {
+      "id": "8",
+      "content": "Laws as constraints on tasks\n\nIn this view, fundamental laws can be stated as principles about which tasks are possible and impossible. This recasts laws as constraints on transformations rather than only equations of motion.",
+      "class": "synthesis",
+      "user": "Chiara Marletto",
+      "parent": "group-task",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Paraphrase: laws can be expressed as possible/impossible task constraints."
+    },
+    {
+      "id": "9",
+      "content": "Proposition: prediction is enough\n\nPro: one might think ordinary dynamical laws already say everything. If the laws predict what will happen from every initial condition, why add another framework?",
+      "class": "thesis",
+      "user": "Chiara Marletto",
+      "parent": "group-problem",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Argument position: prediction-only physics might seem sufficient."
+    },
+    {
+      "id": "10",
+      "content": "Reply: explanations need modal structure\n\nCon: predictions alone do not capture the explanatory role of possibility. To explain why something can be copied, computed, known, adapted, or forbidden, science needs statements about classes of transformations, not only actual trajectories.",
+      "class": "antithesis",
+      "user": "Chiara Marletto",
+      "parent": "group-problem",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Argument response: modal/task statements add explanatory structure."
+    },
+    {
+      "id": "11",
+      "content": "Information depends on counterfactuals\n\nInformation is not just a physical state; it involves what could be done with that state. A bit matters because it can be copied, stored, transformed, measured, and used in alternative ways. This makes information naturally constructor-theoretic.",
+      "class": "premise",
+      "user": "Chiara Marletto",
+      "parent": "group-reach",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Paraphrase: information properties are about possible transformations."
+    },
+    {
+      "id": "12",
+      "content": "Computation as physical possibility\n\nA computer is not defined merely by one actual motion of matter, but by a repertoire of possible transformations. The same machine could run different programs and produce different outputs. That counterfactual range is part of what computation is.",
+      "class": "premise",
+      "user": "Chiara Marletto",
+      "parent": "group-reach",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Paraphrase: computation is a repertoire of possible tasks."
+    },
+    {
+      "id": "13",
+      "content": "Thermodynamics becomes clearer\n\nThermodynamics has long been full of impossibility statements, such as constraints on perpetual motion or heat-to-work conversion. Constructor theory generalizes this style: important laws often say what cannot be done.",
+      "class": "premise",
+      "user": "Chiara Marletto",
+      "parent": "group-reach",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Paraphrase: thermodynamic laws are naturally can/can’t principles."
+    },
+    {
+      "id": "14",
+      "content": "Life and knowledge\n\nLiving systems and knowledge-bearing systems are constructors of a special kind: they enable transformations that would otherwise not occur reliably. The chapter points toward a way to connect physics with information, adaptation, and explanation.",
+      "class": "premise",
+      "user": "Chiara Marletto",
+      "parent": "group-reach",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Paraphrase: life and knowledge can be understood through possible transformations."
+    },
+    {
+      "id": "15",
+      "content": "Explanatory reach\n\nThe new grammar aims to unify domains that can look disconnected: physics, computation, information, thermodynamics, and biology. The unifying question is: what transformations are possible, what are impossible, and what makes them so?",
+      "class": "conclusion",
+      "user": "Chiara Marletto",
+      "parent": "group-reach",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Paraphrase: constructor theory unifies by asking can/can’t questions."
+    },
+    {
+      "id": "16",
+      "content": "Not a rejection of existing physics\n\nConstructor theory does not discard equations of motion or successful predictive theories. It reframes what counts as fundamental explanation and highlights a complementary mode of physical law.",
+      "class": "synthesis",
+      "user": "Chiara Marletto",
+      "parent": "group-method",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Paraphrase: constructor theory complements, rather than replaces, existing physics."
+    },
+    {
+      "id": "17",
+      "content": "A science of counterfactuals\n\nThe chapter’s deeper methodological claim is that counterfactual statements can be precise, objective, and physically grounded. This allows science to discuss not just actual events but the space of possible and impossible transformations.",
+      "class": "thesis",
+      "user": "Chiara Marletto",
+      "parent": "group-method",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Paraphrase: counterfactuals can be scientifically rigorous."
+    },
+    {
+      "id": "18",
+      "content": "Final upshot\n\nChapter 1 sets up a new way to read nature: reality is not only a sequence of happenings but a landscape of permitted and forbidden transformations. The science of can and can’t is the attempt to make that landscape fundamental.",
+      "class": "conclusion",
+      "user": "Chiara Marletto",
+      "parent": "group-method",
+      "noted_by": [],
+      "deleted": false,
+      "compound": false,
+      "source_text": "Paraphrase: reality can be understood through permitted and forbidden transformations."
+    }
+  ],
+  "edges": [
+    {
+      "data": {
+        "id": "e1",
+        "source": "1",
+        "target": "2"
+      }
+    },
+    {
+      "data": {
+        "id": "e2",
+        "source": "2",
+        "target": "3"
+      }
+    },
+    {
+      "data": {
+        "id": "e3",
+        "source": "3",
+        "target": "4"
+      }
+    },
+    {
+      "data": {
+        "id": "e4",
+        "source": "4",
+        "target": "5"
+      }
+    },
+    {
+      "data": {
+        "id": "e5",
+        "source": "5",
+        "target": "6"
+      }
+    },
+    {
+      "data": {
+        "id": "e6",
+        "source": "6",
+        "target": "7"
+      }
+    },
+    {
+      "data": {
+        "id": "e7",
+        "source": "7",
+        "target": "8"
+      }
+    },
+    {
+      "data": {
+        "id": "e8",
+        "source": "2",
+        "target": "9"
+      }
+    },
+    {
+      "data": {
+        "id": "e9",
+        "source": "9",
+        "target": "10"
+      }
+    },
+    {
+      "data": {
+        "id": "e10",
+        "source": "10",
+        "target": "4"
+      }
+    },
+    {
+      "data": {
+        "id": "e11",
+        "source": "8",
+        "target": "11"
+      }
+    },
+    {
+      "data": {
+        "id": "e12",
+        "source": "11",
+        "target": "12"
+      }
+    },
+    {
+      "data": {
+        "id": "e13",
+        "source": "12",
+        "target": "13"
+      }
+    },
+    {
+      "data": {
+        "id": "e14",
+        "source": "13",
+        "target": "14"
+      }
+    },
+    {
+      "data": {
+        "id": "e15",
+        "source": "14",
+        "target": "15"
+      }
+    },
+    {
+      "data": {
+        "id": "e16",
+        "source": "15",
+        "target": "16"
+      }
+    },
+    {
+      "data": {
+        "id": "e17",
+        "source": "16",
+        "target": "17"
+      }
+    },
+    {
+      "data": {
+        "id": "e18",
+        "source": "17",
+        "target": "18"
+      }
+    },
+    {
+      "data": {
+        "id": "e19",
+        "source": "7",
+        "target": "18"
+      }
+    }
+  ]
+}
