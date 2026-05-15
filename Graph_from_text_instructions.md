@@ -38,8 +38,11 @@ Graph design:
 - Use edges to show the argument path.
 - First line of each content node should be a short title.
 - After a blank line, include the explanation in markdown.
-- Include direct source quotes where useful.
+- Include direct source quotes where useful and legally appropriate.
 - Format longer quotes as markdown blockquotes with `>`.
+- For public-domain or openly licensed texts, primary-source quotations can be used more generously.
+- For modern copyrighted texts, contemporary journalism, paywalled sources, or recent books, use mostly paraphrase and keep direct quotes short, sparse, and necessary for commentary.
+- Do not create a graph that substitutes for reading a copyrighted source.
 - Use Pro / Con labels only for genuine paired argumentation around a proposition.
 - Otherwise use normal classes like premise/thesis/antithesis/synthesis/conclusion.
 
@@ -51,6 +54,21 @@ Quality goals:
 - Avoid over-fragmentation.
 - Avoid unsupported claims not present in the text.
 - If the text is modern/copyrighted, keep direct quotes short and rely more on paraphrase.
+- Preserve the argument structure, but avoid closely reproducing the original article's prose, paragraph-by-paragraph sequence, or distinctive expression when the source is copyrighted.
+
+Copyright / source-handling guidance:
+
+- Facts, ideas, arguments, and high-level structure can generally be summarized, but the author's original expression should not be copied unnecessarily.
+- Attribution is good practice but does not by itself grant permission to reproduce protected expression.
+- For copyrighted contemporary sources:
+  - prefer paraphrase over quotation;
+  - avoid long blockquotes;
+  - avoid copying the most distinctive or expressive sentences unless genuinely needed;
+  - include only enough quotation to identify or comment on the argument;
+  - include source title, author/publication, date if known, and URL when available;
+  - ensure the graph is a companion/analysis, not a replacement for the original.
+- For public-domain texts, still check the specific edition or translation. A work may be public domain while a modern translation, introduction, or annotation is not.
+- If uncertain, flag the graph as copyright-sensitive and ask whether it should be paraphrase-only, private, or excluded from public publication.
 
 Validation:
 
