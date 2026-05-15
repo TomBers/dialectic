@@ -130,7 +130,11 @@ defmodule DialecticWeb.HighlightsPanelComp do
             acc
 
           node ->
-            Map.put_new(acc, node_id, NodeTitleHelper.extract_node_title(node, max_length: 48))
+            Map.put_new(
+              acc,
+              node_id,
+              NodeTitleHelper.extract_node_title(node, max_length: :infinity)
+            )
         end
       end)
     else
@@ -147,25 +151,31 @@ defmodule DialecticWeb.HighlightsPanelComp do
     ~H"""
     <div class="flex flex-col gap-3 pb-4">
       <%= if length(@highlights) > 0 do %>
-        <div class="rounded-xl border border-slate-200 bg-slate-50 shadow-sm">
+        <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
           <div class="grid grid-cols-3 divide-x divide-slate-200">
-            <div class="px-2.5 py-2">
-              <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+            <div class="px-2.5 py-1.5">
+              <p class="text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                 Highlights
               </p>
-              <p class="mt-0.5 text-sm font-semibold text-slate-900">{length(@highlights)}</p>
+              <p class="mt-1 text-lg font-semibold leading-none tracking-tight text-slate-950">
+                {length(@highlights)}
+              </p>
             </div>
-            <div class="px-2.5 py-2">
-              <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+            <div class="px-2.5 py-1.5">
+              <p class="text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                 Notes
               </p>
-              <p class="mt-0.5 text-sm font-semibold text-slate-900">{note_count(@highlights)}</p>
+              <p class="mt-1 text-lg font-semibold leading-none tracking-tight text-slate-950">
+                {note_count(@highlights)}
+              </p>
             </div>
-            <div class="px-2.5 py-2">
-              <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+            <div class="px-2.5 py-1.5">
+              <p class="text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                 Links
               </p>
-              <p class="mt-0.5 text-sm font-semibold text-slate-900">{total_link_count(@highlights)}</p>
+              <p class="mt-1 text-lg font-semibold leading-none tracking-tight text-slate-950">
+                {total_link_count(@highlights)}
+              </p>
             </div>
           </div>
         </div>
@@ -232,13 +242,13 @@ defmodule DialecticWeb.HighlightsPanelComp do
                   <blockquote class="border-l-2 border-slate-300 pl-4 font-serif italic text-[15px] leading-7 text-slate-900 break-words sm:text-base">
                     “{highlight.selected_text_snapshot}”
                   </blockquote>
-                  <div class="mt-3 flex items-center gap-2 pl-4">
-                    <p class="min-w-0 truncate text-sm font-semibold text-slate-700">
+                  <div class="mt-3 flex items-start gap-2 pl-4">
+                    <p class="min-w-0 text-xs font-medium leading-4 text-slate-500 break-words">
                       {node_title(@node_titles, highlight.node_id)}
                     </p>
                     <%= if visible_in_view?(highlight, @visible_node_ids) do %>
                       <span
-                        class="mt-0.5 inline-flex h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-500 ring-2 ring-emerald-100"
+                        class="mt-1 inline-flex h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-500 ring-2 ring-emerald-100"
                         title="Visible in the current view"
                         aria-label="In view"
                       >
@@ -266,15 +276,12 @@ defmodule DialecticWeb.HighlightsPanelComp do
                             phx-click="navigate_to_node"
                             phx-value-node_id={link.node_id}
                             title={"Navigate to " <> link_type_label(link.link_type)}
-                            class="inline-flex max-w-full items-center gap-1.5 rounded-full border border-white bg-white px-2.5 py-1.5 text-left shadow-sm transition hover:border-slate-300 hover:bg-slate-100"
+                            class="inline-flex max-w-full items-center gap-1 rounded-full border border-white bg-white px-2.5 py-1.5 text-left shadow-sm transition hover:border-slate-300 hover:bg-slate-100"
                           >
                             <.icon
                               name={link_type_icon(link.link_type)}
                               class={"h-3.5 w-3.5 shrink-0 " <> link_type_color(link.link_type)}
                             />
-                            <span class="truncate text-[11px] font-medium text-slate-700">
-                              {link_type_label(link.link_type)}
-                            </span>
                             <span class="truncate text-[10px] text-slate-500">
                               {node_title(@node_titles, link.node_id)}
                             </span>
