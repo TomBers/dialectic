@@ -46,7 +46,7 @@ defmodule DialecticWeb.DocumentMenuComp do
         ]}
         data-panel-toggle="presentation-drawer"
         aria-label="Start presentation setup"
-        title="Present this graph"
+        title="Present this grid"
       >
         <.icon name="hero-presentation-chart-bar" class="h-4 w-4" />
         <span class="hidden sm:inline">Present</span>

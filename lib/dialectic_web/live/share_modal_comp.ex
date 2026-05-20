@@ -181,7 +181,7 @@ defmodule DialecticWeb.ShareModalComp do
                       <%= if preview_image do %>
                         <img
                           src={preview_image}
-                          alt="Graph Preview"
+                          alt="Grid Preview"
                           class="w-full max-h-48 object-contain"
                         />
                       <% else %>

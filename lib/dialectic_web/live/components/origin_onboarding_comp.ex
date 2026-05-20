@@ -13,7 +13,7 @@ defmodule DialecticWeb.OriginOnboardingComp do
     <div class="space-y-4">
       <section class="rounded-2xl border border-slate-200 bg-slate-50/85 px-4 py-3">
         <p class="text-sm leading-6 text-slate-700">
-          Use Graph to orient yourself, then switch to Reader when you want the same point in a linear flow.
+          Use Grid to orient yourself, then switch to Reader when you want the same point in a linear flow.
         </p>
       </section>
 
@@ -21,7 +21,7 @@ defmodule DialecticWeb.OriginOnboardingComp do
         <.guide_item
           icon="hero-cursor-arrow-rays"
           icon_classes="bg-sky-50 text-sky-600 ring-sky-100"
-          title="Navigate the graph"
+          title="Navigate the grid"
         >
           Click a node to focus it. Drag to pan. Scroll to zoom.
         </.guide_item>
@@ -31,7 +31,7 @@ defmodule DialecticWeb.OriginOnboardingComp do
           icon_classes="bg-slate-100 text-slate-700 ring-slate-200"
           title="Switch views without losing your place"
         >
-          Use <span class="font-semibold text-slate-900">Reader | Graph</span>
+          Use <span class="font-semibold text-slate-900">Reader | Grid</span>
           in the top bar. It keeps you on the same node.
         </.guide_item>
 
@@ -53,7 +53,7 @@ defmodule DialecticWeb.OriginOnboardingComp do
           Use <span class="font-semibold text-slate-900">Search</span>
           to jump, <span class="font-semibold text-slate-900">Highlights</span>
           to keep passages, and <span class="font-semibold text-slate-900">Share</span>
-          when you want to send the graph.
+          when you want to send the grid.
         </.guide_item>
       </section>
 

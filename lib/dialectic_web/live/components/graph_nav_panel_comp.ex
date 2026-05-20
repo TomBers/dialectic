@@ -99,12 +99,12 @@ defmodule DialecticWeb.GraphNavPanelComp do
             </label>
           </div>
 
-          <%!-- Graph Direction --%>
+          <%!-- Grid Direction --%>
           <div class="space-y-3 pt-3 border-t border-gray-100">
             <div class="text-[11px] font-medium text-gray-600 uppercase tracking-wide">
-              Graph Direction
+              Grid Direction
             </div>
-            <div class="grid grid-cols-2 gap-1.5" role="group" aria-label="Graph direction options">
+            <div class="grid grid-cols-2 gap-1.5" role="group" aria-label="Grid direction options">
               <button
                 type="button"
                 data-graph-direction-option="TB"

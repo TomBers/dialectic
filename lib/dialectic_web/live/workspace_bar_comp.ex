@@ -34,9 +34,9 @@ defmodule DialecticWeb.WorkspaceBarComp do
       <div class="sr-only">Workspace actions</div>
 
       <div class={segment_classes(@compact)}>
-        <div class="sr-only">Switch between reader and graph views</div>
+        <div class="sr-only">Switch between reader and grid views</div>
         <div class="sr-only">Current view</div>
-        <div class="sr-only">{if @mode == :reader, do: "Reader", else: "Graph"}</div>
+        <div class="sr-only">{if @mode == :reader, do: "Reader", else: "Grid"}</div>
 
         <div class="inline-flex items-center gap-1">
           <.link
@@ -59,10 +59,10 @@ defmodule DialecticWeb.WorkspaceBarComp do
             data-view-transition-direction="graph"
             aria-current={if(@mode == :graph, do: "page", else: nil)}
             class={mode_link_classes(@mode == :graph, @compact)}
-            title="Open graph view"
+            title="Open grid view"
           >
             <.icon name="hero-squares-2x2" class="h-4 w-4" />
-            <span>Graph</span>
+            <span>Grid</span>
           </.link>
         </div>
       </div>
@@ -76,7 +76,7 @@ defmodule DialecticWeb.WorkspaceBarComp do
           type="button"
           phx-click={@search_click}
           class={action_button_classes(@compact)}
-          title="Search this graph"
+          title="Search this grid"
         >
           <.icon name="hero-magnifying-glass" class="h-4 w-4" />
           <span class="hidden sm:inline">Search</span>
@@ -118,7 +118,7 @@ defmodule DialecticWeb.WorkspaceBarComp do
           type="button"
           phx-click={@share_click}
           class={action_button_classes(@compact)}
-          title="Share this graph"
+          title="Share this grid"
         >
           <.icon name="hero-share" class="h-4 w-4" />
           <span class="hidden sm:inline">Share</span>
