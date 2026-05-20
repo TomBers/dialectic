@@ -140,58 +140,29 @@ defmodule DialecticWeb.NodeComp do
                       </span>
                     </h3>
                     <div
-                      class="selection-content w-full px-1 sm:px-2 pb-2"
+                      class="selection-content w-full px-1 pb-2 sm:px-2"
                       data-children={length(@node.children)}
                       id={"list-detector-" <> @node.id}
                     >
+                      <div class="mb-3 flex items-center gap-2 text-sm text-slate-600">
+                        <span class="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 font-medium text-amber-800 shadow-sm">
+                          <.icon name="hero-cursor-arrow-rays" class="h-3.5 w-3.5" />
+                          <span>Select text to ask a follow-up</span>
+                        </span>
+                        <span class="hidden rounded-md bg-amber-100 px-2 py-1 text-xs font-medium text-amber-900 sm:inline-flex">
+                          Example selection
+                        </span>
+                      </div>
+
                       <div
                         phx-hook="Markdown"
+                        class="cursor-text selection:bg-amber-200/80 selection:text-slate-900"
                         id={"markdown-body-#{@node.id}"}
                         data-md={@node.content || ""}
                         data-body-only="true"
                       >
                       </div>
                     </div>
-
-                    <div class="mt-2 flex items-start gap-2 rounded-xl border border-amber-200/80 bg-amber-50/80 px-3 py-2 text-sm text-amber-900">
-                      <.icon
-                        name="hero-cursor-arrow-rays"
-                        class="mt-0.5 h-4 w-4 shrink-0 text-amber-600"
-                      />
-                      <p class="leading-5">
-                        Highlight any word or phrase above to ask AI for a more specific answer.
-                      </p>
-                    </div>
-
-                    <%= if @graph_struct do %>
-                      <div class="mt-3 flex flex-col gap-3 rounded-[1.35rem] border border-sky-200 bg-sky-50/80 px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                          <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-700">
-                            Prefer the linear thread?
-                          </p>
-                          <p class="mt-1 text-sm leading-5 text-slate-700">
-                            Continue this exact point in the reader without hunting through the menu.
-                          </p>
-                        </div>
-
-                        <.link
-                          id={"node-reader-link-#{@node.id}"}
-                          navigate={
-                            graph_path(
-                              @graph_struct,
-                              @node.id,
-                              if(@token, do: [token: @token], else: [])
-                            )
-                          }
-                          class="inline-flex h-11 shrink-0 items-center gap-2 rounded-2xl border border-sky-300 bg-white px-3.5 text-sm font-semibold text-sky-900 shadow-sm transition hover:-translate-y-0.5 hover:border-sky-400 hover:bg-sky-100"
-                          data-view-transition="mode-switch"
-                          data-view-transition-direction="reader"
-                        >
-                          <.icon name="hero-document-text" class="h-4 w-4" />
-                          <span>Open reader</span>
-                        </.link>
-                      </div>
-                    <% end %>
                   </article>
 
                   <.live_component
