@@ -310,9 +310,64 @@
         tabindex="0"
       >
         <%= if @presentation_mode != :presenting do %>
-          <div class="pointer-events-none absolute left-4 top-4 z-10 hidden items-center gap-2 rounded-full border border-indigo-200/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm ring-1 ring-white/80 lg:inline-flex">
-            <.icon name="hero-cursor-arrow-rays" class="h-4 w-4 text-indigo-500" />
-            <span>Click a box to open it in the reader</span>
+          <div class="pointer-events-none absolute right-4 top-4 z-20 flex flex-col items-end gap-2">
+            <div class="pointer-events-auto inline-flex items-center gap-3 rounded-full border border-slate-200/90 bg-white/95 px-3 py-2 text-xs font-semibold text-slate-700 shadow-[0_18px_30px_-24px_rgba(15,23,42,0.55)] ring-1 ring-white/80 backdrop-blur">
+              <span class="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                Zoom
+              </span>
+              <span
+                id="graph-zoom-level"
+                data-zoom-level
+                class="min-w-[3.25rem] text-right font-semibold tabular-nums text-slate-900"
+              >
+                100%
+              </span>
+              <input
+                type="range"
+                min="0"
+                max="1000"
+                value="574"
+                step="1"
+                data-zoom-slider
+                class="h-1.5 w-32 cursor-pointer appearance-none rounded-full bg-slate-200 accent-slate-800"
+                aria-label="Adjust graph zoom"
+                title="Adjust graph zoom"
+              />
+            </div>
+
+            <div class="pointer-events-auto inline-flex items-center gap-1 rounded-[1.1rem] border border-slate-200/90 bg-white/98 p-1 shadow-[0_22px_40px_-28px_rgba(15,23,42,0.55)] ring-1 ring-white/80 backdrop-blur">
+              <button
+                type="button"
+                data-zoom-action="out"
+                class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-transparent text-slate-600 transition hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900"
+                aria-label="Zoom out"
+                title="Zoom out"
+              >
+                <.icon name="hero-minus" class="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                data-zoom-action="fit"
+                class="inline-flex h-10 items-center justify-center rounded-full border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 hover:text-slate-950"
+                aria-label="Fit graph to screen"
+                title="Fit graph to screen"
+              >
+                Fit
+              </button>
+              <button
+                type="button"
+                data-zoom-action="in"
+                class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-transparent text-slate-600 transition hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900"
+                aria-label="Zoom in"
+                title="Zoom in"
+              >
+                <.icon name="hero-plus" class="h-4 w-4" />
+              </button>
+            </div>
+
+            <div class="max-w-[17rem] rounded-full bg-white/78 px-3 py-1.5 text-[11px] font-medium text-slate-600 shadow-[0_14px_28px_-24px_rgba(15,23,42,0.45)] ring-1 ring-white/70 backdrop-blur">
+              <span>Click a box to open it in the reader.</span>
+            </div>
           </div>
         <% end %>
         <div id="cy-inner" class="h-full w-full relative" phx-update="ignore"></div>
