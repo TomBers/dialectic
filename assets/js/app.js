@@ -457,6 +457,17 @@ hooks.GraphLayout = {
       window.dispatchEvent(new Event("resize"));
     });
 
+    this.el.addEventListener("toggle-mobile-outline", () => {
+      const panel = document.getElementById("outline-mobile-nav-panel");
+      if (!panel) return;
+
+      this._applyMobileOutlineState(panel.classList.contains("hidden"));
+    });
+
+    this.el.addEventListener("close-mobile-outline", () => {
+      this._applyMobileOutlineState(false);
+    });
+
     this.restoreState();
 
     // ── Presentation localStorage persistence ──────────────────────
@@ -604,7 +615,7 @@ hooks.GraphLayout = {
         "opacity-100",
         "w-full",
         "p-4",
-        "lg:w-[44%]",
+        "lg:w-[var(--desktop-side-drawer-width)]",
         "lg:p-0",
       );
 
@@ -612,7 +623,7 @@ hooks.GraphLayout = {
         toggleBtn.classList.remove("left-2");
         toggleBtn.classList.add(
           "right-2",
-          "lg:left-[44%]",
+          "lg:left-[var(--desktop-side-drawer-width)]",
           "lg:ml-2",
           "lg:right-auto",
         );
@@ -623,7 +634,7 @@ hooks.GraphLayout = {
       }
 
       bottomElements.forEach((el) => {
-        el.classList.add("lg:left-[44%]");
+        el.classList.add("lg:left-[var(--desktop-side-drawer-width)]");
       });
     } else {
       drawer.classList.remove(
@@ -631,7 +642,7 @@ hooks.GraphLayout = {
         "opacity-100",
         "w-full",
         "p-4",
-        "lg:w-[44%]",
+        "lg:w-[var(--desktop-side-drawer-width)]",
         "lg:p-0",
       );
       drawer.classList.add(
@@ -646,7 +657,7 @@ hooks.GraphLayout = {
       if (toggleBtn) {
         toggleBtn.classList.remove(
           "right-2",
-          "lg:left-[44%]",
+          "lg:left-[var(--desktop-side-drawer-width)]",
           "lg:ml-2",
           "lg:right-auto",
         );
@@ -658,7 +669,7 @@ hooks.GraphLayout = {
       }
 
       bottomElements.forEach((el) => {
-        el.classList.remove("lg:left-[44%]");
+        el.classList.remove("lg:left-[var(--desktop-side-drawer-width)]");
       });
     }
 
@@ -692,7 +703,30 @@ hooks.GraphLayout = {
 
     window.location.replace(mobileReaderPath);
   },
+  _applyMobileOutlineState(shouldOpen) {
+    const panel = document.getElementById("outline-mobile-nav-panel");
+    const button = document.getElementById("reader-workspace-bar-outline");
+
+    if (!panel || !button) return;
+
+    panel.classList.toggle("hidden", !shouldOpen);
+
+    button.setAttribute("aria-expanded", String(shouldOpen));
+
+    const label = shouldOpen
+      ? "Hide conversation outline"
+      : "Show conversation outline";
+
+    button.setAttribute("aria-label", label);
+    button.setAttribute("title", label);
+
+    button.classList.toggle("border-slate-300", shouldOpen);
+    button.classList.toggle("bg-slate-100", shouldOpen);
+    button.classList.toggle("text-slate-950", shouldOpen);
+  },
   restoreState() {
+    this._applyMobileOutlineState(false);
+
     if (this.readingDensity) {
       this._applyReadingDensity(this.readingDensity);
     }

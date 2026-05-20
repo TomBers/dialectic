@@ -164,7 +164,7 @@ defmodule DialecticWeb.OutlineGraphLive do
   @impl true
   def handle_event("search_nodes", params, socket) do
     search_term =
-      params["search_term"]
+      (params["search_term"] || params["value"] || "")
       |> to_string()
       |> String.trim()
 

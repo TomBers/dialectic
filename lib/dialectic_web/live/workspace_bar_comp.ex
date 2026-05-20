@@ -14,6 +14,13 @@ defmodule DialecticWeb.WorkspaceBarComp do
   attr :highlights_panel_id, :string, default: nil
   attr :show_share, :boolean, default: true
   attr :share_click, :any, default: nil
+  attr :mobile_aux_id, :string, default: nil
+  attr :mobile_aux_click, :any, default: nil
+  attr :mobile_aux_open, :boolean, default: false
+  attr :mobile_aux_label, :string, default: nil
+  attr :mobile_aux_title, :string, default: nil
+  attr :mobile_aux_icon, :string, default: "hero-bars-3-bottom-left"
+  attr :mobile_aux_controls, :string, default: nil
   attr :compact, :boolean, default: false
 
   def workspace_bar(assigns) do
@@ -70,6 +77,25 @@ defmodule DialecticWeb.WorkspaceBarComp do
       <div class={divider_classes(@compact)}></div>
 
       <div class="ml-auto flex flex-wrap items-center gap-1 sm:ml-0">
+        <button
+          :if={@mobile_aux_click && @mobile_aux_label}
+          id={@mobile_aux_id}
+          type="button"
+          phx-click={@mobile_aux_click}
+          class={[
+            action_button_classes(@compact),
+            "sm:hidden",
+            @mobile_aux_open && "border-slate-300 bg-slate-100 text-slate-950"
+          ]}
+          title={@mobile_aux_title || @mobile_aux_label}
+          aria-label={@mobile_aux_title || @mobile_aux_label}
+          aria-controls={@mobile_aux_controls}
+          aria-expanded={if(@mobile_aux_controls, do: to_string(@mobile_aux_open), else: nil)}
+        >
+          <.icon name={@mobile_aux_icon} class="h-4 w-4" />
+          <span class="sr-only">{@mobile_aux_label}</span>
+        </button>
+
         <button
           :if={@show_search}
           id={"#{@id}-search"}
