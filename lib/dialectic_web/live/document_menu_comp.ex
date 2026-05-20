@@ -81,7 +81,7 @@ defmodule DialecticWeb.DocumentMenuComp do
 
   defp root_classes(true) do
     [
-      "flex w-full max-w-full items-center gap-1 rounded-[1.1rem] border border-slate-200/90 bg-white/98 px-1.5 py-1.5 shadow-[0_10px_24px_-20px_rgba(15,23,42,0.35)] sm:inline-flex sm:w-auto sm:flex-wrap sm:justify-start sm:gap-0.5 sm:rounded-[1.25rem] sm:shadow-[0_14px_30px_-22px_rgba(15,23,42,0.45)]"
+      "flex w-full max-w-full items-center gap-0.5 rounded-[0.95rem] border border-slate-200/90 bg-white/98 px-1 py-1 shadow-[0_10px_24px_-20px_rgba(15,23,42,0.35)] sm:inline-flex sm:w-auto sm:flex-wrap sm:justify-start sm:gap-0.5 sm:rounded-[1.05rem] sm:shadow-[0_14px_30px_-22px_rgba(15,23,42,0.45)]"
     ]
   end
 
@@ -93,7 +93,7 @@ defmodule DialecticWeb.DocumentMenuComp do
 
   defp action_button_classes(true) do
     [
-      "inline-flex h-9 w-9 shrink-0 items-center justify-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 text-sm font-medium text-slate-600 transition duration-150 sm:h-8 sm:w-auto sm:justify-start sm:rounded-[0.85rem] sm:border-transparent sm:bg-transparent sm:px-2.5",
+      "inline-flex h-8 w-8 shrink-0 items-center justify-center gap-1 rounded-full border border-slate-200 bg-slate-50 text-xs font-medium text-slate-600 transition duration-150 sm:h-7 sm:w-auto sm:justify-start sm:rounded-[0.7rem] sm:border-transparent sm:bg-transparent sm:px-2",
       "hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900"
     ]
   end

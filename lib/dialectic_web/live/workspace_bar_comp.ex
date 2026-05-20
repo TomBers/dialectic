@@ -158,7 +158,7 @@ defmodule DialecticWeb.WorkspaceBarComp do
 
   defp bar_classes(true) do
     [
-      "flex w-full max-w-full items-center gap-2 rounded-[1.1rem] border border-slate-200/90 bg-white/98 px-1.5 py-1.5 shadow-[0_10px_24px_-20px_rgba(15,23,42,0.35)] sm:inline-flex sm:w-auto sm:flex-wrap sm:justify-start sm:gap-1.5 sm:rounded-[1.25rem] sm:shadow-[0_14px_30px_-22px_rgba(15,23,42,0.45)]"
+      "flex w-full max-w-full items-center gap-1.5 rounded-[0.95rem] border border-slate-200/90 bg-white/98 px-1 py-1 shadow-[0_10px_24px_-20px_rgba(15,23,42,0.35)] sm:inline-flex sm:w-auto sm:flex-wrap sm:justify-start sm:gap-1 sm:rounded-[1.05rem] sm:shadow-[0_14px_30px_-22px_rgba(15,23,42,0.45)]"
     ]
   end
 
@@ -169,7 +169,7 @@ defmodule DialecticWeb.WorkspaceBarComp do
   end
 
   defp segment_classes(true) do
-    "hidden items-center gap-1 rounded-[0.95rem] bg-slate-100 p-0.5 ring-1 ring-inset ring-slate-200/80 sm:inline-flex"
+    "hidden items-center gap-0.5 rounded-[0.8rem] bg-slate-100 p-0.5 ring-1 ring-inset ring-slate-200/80 sm:inline-flex"
   end
 
   defp segment_classes(false) do
@@ -178,7 +178,7 @@ defmodule DialecticWeb.WorkspaceBarComp do
 
   defp mode_link_classes(true, true) do
     [
-      "inline-flex h-8 items-center gap-2 rounded-[0.75rem] px-2.5 text-sm font-semibold shadow-sm transition",
+      "inline-flex h-7 items-center gap-1.5 rounded-[0.65rem] px-2 text-xs font-semibold shadow-sm transition",
       "bg-white text-slate-950 ring-1 ring-slate-200/90"
     ]
   end
@@ -192,7 +192,7 @@ defmodule DialecticWeb.WorkspaceBarComp do
 
   defp mode_link_classes(false, true) do
     [
-      "inline-flex h-8 items-center gap-2 rounded-[0.75rem] px-2.5 text-sm font-semibold transition",
+      "inline-flex h-7 items-center gap-1.5 rounded-[0.65rem] px-2 text-xs font-semibold transition",
       "text-slate-500 hover:bg-white/90 hover:text-slate-900"
     ]
   end
@@ -205,7 +205,7 @@ defmodule DialecticWeb.WorkspaceBarComp do
   end
 
   defp divider_classes(true) do
-    "hidden h-5 w-px bg-slate-200 sm:block"
+    "hidden h-4 w-px bg-slate-200 sm:block"
   end
 
   defp divider_classes(false) do
@@ -214,7 +214,7 @@ defmodule DialecticWeb.WorkspaceBarComp do
 
   defp action_button_classes(true) do
     [
-      "inline-flex h-9 w-9 shrink-0 items-center justify-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 text-sm font-medium text-slate-600 transition duration-150 sm:h-8 sm:w-auto sm:justify-start sm:rounded-[0.85rem] sm:border-transparent sm:bg-transparent sm:px-2.5",
+      "inline-flex h-8 w-8 shrink-0 items-center justify-center gap-1 rounded-full border border-slate-200 bg-slate-50 text-xs font-medium text-slate-600 transition duration-150 sm:h-7 sm:w-auto sm:justify-start sm:rounded-[0.7rem] sm:border-transparent sm:bg-transparent sm:px-2",
       "hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900"
     ]
   end
@@ -227,7 +227,7 @@ defmodule DialecticWeb.WorkspaceBarComp do
   end
 
   defp kbd_classes(true) do
-    "hidden rounded-md border border-slate-200 bg-slate-100 px-1 py-0.5 text-[10px] font-semibold text-slate-500 sm:inline-flex"
+    "hidden rounded-md border border-slate-200 bg-slate-100 px-1 py-0.5 text-[9px] font-semibold text-slate-500 sm:inline-flex"
   end
 
   defp kbd_classes(false) do

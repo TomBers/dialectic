@@ -83,13 +83,13 @@
   <%!-- Shared workspace header (hidden during presentation) --%>
   <%= if @presentation_mode != :presenting do %>
     <div class="relative z-[80] hidden flex-none border-b border-slate-200/90 bg-white/97 shadow-[0_16px_32px_-30px_rgba(15,23,42,0.28)] backdrop-blur-lg sm:block">
-      <div class="px-4 py-2 sm:px-5 lg:px-6">
-        <div class="flex min-h-[50px] flex-wrap items-center justify-between gap-2">
-          <span class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
-            <.icon name="hero-squares-2x2" class="h-3.5 w-3.5" /> Grid
+      <div class="px-4 py-1 sm:px-5 lg:px-6">
+        <div class="flex min-h-[38px] flex-wrap items-center justify-between gap-1.5">
+          <span class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
+            <.icon name="hero-squares-2x2" class="h-3 w-3" /> Grid
           </span>
 
-          <div class="flex flex-wrap items-center gap-2 lg:justify-end">
+          <div class="flex flex-wrap items-center gap-1.5 lg:justify-end">
             <DialecticWeb.WorkspaceBarComp.workspace_bar
               id="graph-workspace-bar"
               mode={:graph}

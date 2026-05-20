@@ -10,26 +10,26 @@
   <div class="flex-none border-b border-slate-200/90 bg-white/97 shadow-[0_12px_24px_-26px_rgba(15,23,42,0.22)] backdrop-blur-lg sm:shadow-[0_16px_32px_-30px_rgba(15,23,42,0.28)]">
     <div class="grid grid-cols-1 lg:grid-cols-[20rem_minmax(0,1fr)] xl:grid-cols-[22rem_minmax(0,1fr)]">
       <div class="hidden border-r border-slate-200 bg-slate-50/70 lg:flex lg:items-center lg:px-4 xl:px-5">
-        <span class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
-          <.icon name="hero-document-text" class="h-3.5 w-3.5" /> Reader
+        <span class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
+          <.icon name="hero-document-text" class="h-3 w-3" /> Reader
         </span>
       </div>
 
-      <div class="px-4 py-2.5 sm:px-6 sm:py-3 lg:px-8">
-        <div class="grid gap-2.5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+      <div class="px-4 py-1 sm:px-5 lg:px-6">
+        <div class="grid gap-1.5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
           <div class="min-w-0">
-            <div class="flex min-w-0 items-center gap-2 sm:flex-wrap sm:gap-2.5">
-              <span class="hidden items-center gap-1.5 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 sm:inline-flex lg:hidden">
-                <.icon name="hero-document-text" class="h-3.5 w-3.5" /> Reader
+            <div class="flex min-w-0 items-center gap-1.5 sm:flex-wrap sm:gap-2 lg:min-h-[38px]">
+              <span class="hidden items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600 sm:inline-flex lg:hidden">
+                <.icon name="hero-document-text" class="h-3 w-3" /> Reader
               </span>
 
-              <h1 class="min-w-0 truncate text-[1.05rem] font-semibold tracking-tight text-slate-950 sm:text-[1.7rem]">
+              <h1 class="min-w-0 truncate text-base font-semibold leading-tight tracking-tight text-slate-950 sm:text-lg">
                 {@graph_struct.title}
               </h1>
             </div>
           </div>
 
-          <div class="flex flex-wrap items-center gap-2 lg:justify-self-end">
+          <div class="flex flex-wrap items-center gap-1.5 lg:justify-self-end">
             <DialecticWeb.WorkspaceBarComp.workspace_bar
               id="reader-workspace-bar"
               mode={:reader}
@@ -53,6 +53,7 @@
               highlights_count={length(@highlights)}
               highlights_panel_id="highlights-drawer"
               share_click="open_share_modal"
+              compact
             />
 
             <%= if !@can_edit do %>
