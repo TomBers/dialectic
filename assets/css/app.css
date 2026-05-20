@@ -34,23 +34,38 @@
     will-change: opacity, transform, filter;
 }
 
+html[data-view-transition-direction="reader"] {
+    --mode-switch-leave-x: -16px;
+    --mode-switch-enter-x: 16px;
+}
+
+html[data-view-transition-direction="graph"] {
+    --mode-switch-leave-x: 16px;
+    --mode-switch-enter-x: -16px;
+}
+
+html.global-modal-open #graph-layout,
+html.global-modal-open #outline-layout {
+    will-change: auto;
+}
+
 html.mode-switch-leave #graph-layout,
 html.mode-switch-leave #outline-layout {
-    opacity: 0.38;
-    transform: translateY(10px) scale(0.992);
-    filter: saturate(0.92);
+    opacity: 0.52;
+    transform: translate3d(var(--mode-switch-leave-x, 0), 0, 0) scale(0.996);
+    filter: saturate(0.96);
 }
 
 html.mode-switch-enter #graph-layout,
 html.mode-switch-enter #outline-layout {
-    animation: mode-switch-in 260ms cubic-bezier(0.22, 1, 0.36, 1);
+    animation: mode-switch-in 280ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @keyframes mode-switch-in {
     0% {
         opacity: 0;
-        transform: translateY(14px) scale(0.992);
-        filter: saturate(0.94);
+        transform: translate3d(var(--mode-switch-enter-x, 0), 0, 0) scale(0.996);
+        filter: saturate(0.97);
     }
 
     100% {

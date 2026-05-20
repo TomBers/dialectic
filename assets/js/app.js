@@ -61,6 +61,43 @@ hooks.SearchNav = SearchNav;
 hooks.Presentation = PresentationHook;
 hooks.PresentationSetup = PresentationSetupHook;
 hooks.Share = ShareHook;
+hooks.GlobalModalLayer = {
+  mounted() {
+    const header = document.getElementById("userHeader");
+    if (!header) return;
+
+    const currentCount = Number(document.body.dataset.globalModalCount || "0");
+    const nextCount = currentCount + 1;
+    document.body.dataset.globalModalCount = String(nextCount);
+
+    if (currentCount === 0) {
+      document.documentElement.classList.add("global-modal-open");
+      header.dataset.prevOpacity = header.style.opacity || "";
+      header.dataset.prevPointerEvents = header.style.pointerEvents || "";
+      header.style.opacity = "0";
+      header.style.pointerEvents = "none";
+    }
+  },
+
+  destroyed() {
+    const header = document.getElementById("userHeader");
+    if (!header) return;
+
+    const currentCount = Number(document.body.dataset.globalModalCount || "1");
+    const nextCount = Math.max(0, currentCount - 1);
+
+    if (nextCount === 0) {
+      document.documentElement.classList.remove("global-modal-open");
+      header.style.opacity = header.dataset.prevOpacity || "";
+      header.style.pointerEvents = header.dataset.prevPointerEvents || "";
+      delete header.dataset.prevOpacity;
+      delete header.dataset.prevPointerEvents;
+      delete document.body.dataset.globalModalCount;
+    } else {
+      document.body.dataset.globalModalCount = String(nextCount);
+    }
+  },
+};
 
 const MODE_SWITCH_TRANSITION_KEY = "mode-switch";
 let modeSwitchCleanupTimer = null;
@@ -70,6 +107,7 @@ const clearModeSwitchClasses = () => {
     "mode-switch-leave",
     "mode-switch-enter",
   );
+  delete document.documentElement.dataset.viewTransitionDirection;
 };
 
 const scheduleModeSwitchCleanup = (delay = 320) => {
@@ -97,6 +135,8 @@ document.addEventListener(
     }
 
     document.documentElement.dataset.viewTransition = MODE_SWITCH_TRANSITION_KEY;
+    document.documentElement.dataset.viewTransitionDirection =
+      link.dataset.viewTransitionDirection || "";
     document.documentElement.classList.remove("mode-switch-enter");
     document.documentElement.classList.add("mode-switch-leave");
     scheduleModeSwitchCleanup(900);
@@ -172,6 +212,9 @@ hooks.GraphLayout = {
   mounted() {
     this.activePanelId = null;
     this._reopenSideDrawerAfterCombine = false;
+    this._handleMobileGraphResize = () => {
+      this._redirectMobileGraphToReader();
+    };
     const graphId = this.el.dataset.graphId || "global";
     const validReadingDensities = ["compact", "comfortable", "large"];
     const validReadingFonts = ["sans", "serif"];
@@ -214,9 +257,11 @@ hooks.GraphLayout = {
     this.readingFont = validReadingFonts.includes(storedReadingFont)
       ? storedReadingFont
       : "serif";
+    this._redirectMobileGraphToReader();
     this._applyReadingDensity(this.readingDensity);
     this._applyReadingFont(this.readingFont);
     this._closeAllPanels();
+    window.addEventListener("resize", this._handleMobileGraphResize);
 
     this.el.addEventListener("set-reading-density", (e) => {
       const nextDensity = e?.detail?.value;
@@ -529,7 +574,6 @@ hooks.GraphLayout = {
     { persist = true, dispatchResize = true } = {},
   ) {
     const drawer = document.getElementById("side-drawer");
-    const graphContainer = document.getElementById("graph-main-container");
     const toggleBtn = document.getElementById("drawer-toggle");
     const bottomElements = document.querySelectorAll(".shift-with-panel");
 
@@ -551,29 +595,26 @@ hooks.GraphLayout = {
         "-translate-x-full",
         "opacity-0",
         "w-0",
-        "md:w-0",
+        "lg:w-0",
         "overflow-hidden",
+        "p-0",
       );
       drawer.classList.add(
         "translate-x-0",
         "opacity-100",
         "w-full",
-        "md:w-[44%]",
         "p-4",
+        "lg:w-[44%]",
+        "lg:p-0",
       );
-
-      if (graphContainer) {
-        graphContainer.classList.remove("w-full");
-        graphContainer.classList.add("md:w-[56%]");
-      }
 
       if (toggleBtn) {
         toggleBtn.classList.remove("left-2");
         toggleBtn.classList.add(
           "right-2",
-          "md:left-[44%]",
-          "md:ml-2",
-          "md:right-auto",
+          "lg:left-[44%]",
+          "lg:ml-2",
+          "lg:right-auto",
         );
         const path = toggleBtn.querySelector("path");
         if (path) path.setAttribute("d", "M11 19l-7-7 7-7");
@@ -582,35 +623,32 @@ hooks.GraphLayout = {
       }
 
       bottomElements.forEach((el) => {
-        el.classList.add("md:left-[44%]");
+        el.classList.add("lg:left-[44%]");
       });
     } else {
       drawer.classList.remove(
         "translate-x-0",
         "opacity-100",
         "w-full",
-        "md:w-[44%]",
         "p-4",
+        "lg:w-[44%]",
+        "lg:p-0",
       );
       drawer.classList.add(
         "-translate-x-full",
         "opacity-0",
         "w-0",
-        "md:w-0",
+        "lg:w-0",
         "overflow-hidden",
+        "p-0",
       );
-
-      if (graphContainer) {
-        graphContainer.classList.remove("md:w-[56%]");
-        graphContainer.classList.add("w-full");
-      }
 
       if (toggleBtn) {
         toggleBtn.classList.remove(
           "right-2",
-          "md:left-[44%]",
-          "md:ml-2",
-          "md:right-auto",
+          "lg:left-[44%]",
+          "lg:ml-2",
+          "lg:right-auto",
         );
         toggleBtn.classList.add("left-2");
         const path = toggleBtn.querySelector("path");
@@ -620,7 +658,7 @@ hooks.GraphLayout = {
       }
 
       bottomElements.forEach((el) => {
-        el.classList.remove("md:left-[44%]");
+        el.classList.remove("lg:left-[44%]");
       });
     }
 
@@ -629,10 +667,30 @@ hooks.GraphLayout = {
     }
   },
   updated() {
+    this._redirectMobileGraphToReader();
     this.restoreState();
   },
   reconnected() {
+    this._redirectMobileGraphToReader();
     this.restoreState();
+  },
+  destroyed() {
+    if (this._handleMobileGraphResize) {
+      window.removeEventListener("resize", this._handleMobileGraphResize);
+    }
+  },
+  _redirectMobileGraphToReader() {
+    const mobileReaderPath = this.el.dataset.mobileReaderPath;
+    const isGraphLayout = this.el.id === "graph-layout";
+    const isPresenting = this.el.dataset.presenting === "true";
+
+    if (!isGraphLayout || !mobileReaderPath || isPresenting) return;
+    if (!window.matchMedia("(max-width: 639px)").matches) return;
+
+    const currentPath = `${window.location.pathname}${window.location.search}`;
+    if (currentPath === mobileReaderPath) return;
+
+    window.location.replace(mobileReaderPath);
   },
   restoreState() {
     if (this.readingDensity) {

@@ -43,15 +43,15 @@ defmodule DialecticWeb.NodeComp do
   @impl true
   def render(assigns) do
     ~H"""
-    <div>
+    <div class="h-full min-h-0">
       <div
         id={"node-menu-" <> @node_id}
-        class="flex flex-col relative"
+        class="relative flex h-full min-h-0 flex-col"
         phx-hook="TextSelectionHook"
         data-node-id={@node.id}
         data-mudg-id={@graph_id}
         data-streaming={to_string(@streaming)}
-        style="max-height: 100vh; display: flex; flex-direction: column; padding-bottom: env(safe-area-inset-bottom);"
+        style="height: 100%; padding-bottom: env(safe-area-inset-bottom);"
       >
         <%= if @node.id == "start" do %>
           <.live_component module={DialecticWeb.StartTutorialComp} id="start-tutorial" />
@@ -59,7 +59,10 @@ defmodule DialecticWeb.NodeComp do
           <%!-- Thread View (Ancestor Chain) — hidden for now, revisit when full breadcrumb is implemented --%>
 
           <div
-            class={"flex-grow overflow-auto scroll-smooth pt-3 pb-12 px-3 sm:px-5 lg:px-6 " <> if(String.length(@node.content) == 0, do: "hidden", else: "")}
+            class={[
+              "min-h-0 flex-1 overflow-y-auto scroll-smooth px-3 pb-12 pt-3 sm:px-5 lg:px-6",
+              String.length(@node.content) == 0 && "hidden"
+            ]}
             id={"tt-node-" <> @node.id}
           >
             <div
@@ -182,6 +185,7 @@ defmodule DialecticWeb.NodeComp do
                           }
                           class="inline-flex h-11 shrink-0 items-center gap-2 rounded-2xl border border-sky-300 bg-white px-3.5 text-sm font-semibold text-sky-900 shadow-sm transition hover:-translate-y-0.5 hover:border-sky-400 hover:bg-sky-100"
                           data-view-transition="mode-switch"
+                          data-view-transition-direction="reader"
                         >
                           <.icon name="hero-document-text" class="h-4 w-4" />
                           <span>Open reader</span>

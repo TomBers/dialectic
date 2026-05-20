@@ -10,164 +10,97 @@ defmodule DialecticWeb.OriginOnboardingComp do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="space-y-5">
-      <section class="rounded-2xl border border-indigo-100 bg-indigo-50/60 p-5 sm:p-6">
-        <p class="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wide text-indigo-700 ring-1 ring-indigo-200">
-          Quick start
+    <div class="space-y-4">
+      <section class="rounded-2xl border border-slate-200 bg-slate-50/85 px-4 py-3">
+        <p class="text-sm leading-6 text-slate-700">
+          Use Graph to orient yourself, then switch to Reader when you want the same point in a linear flow.
         </p>
-        <h4 class="mt-4 text-xl font-semibold text-gray-900">
-          Branch from one good node at a time
-        </h4>
-        <p class="mt-2 text-sm text-gray-700">
-          This page turns each answer into a connected node. Read the selected node, then
-          use the actions underneath to decide what should grow next.
-        </p>
-
-        <div class="mt-5 grid gap-3 sm:grid-cols-3">
-          <div class="rounded-xl border border-white/80 bg-white/80 p-4">
-            <p class="text-sm font-semibold text-gray-900">1. Read the current node</p>
-            <p class="mt-1 text-xs text-gray-600">
-              Click a node, read it, and only then decide what needs a follow-up.
-            </p>
-          </div>
-          <div class="rounded-xl border border-white/80 bg-white/80 p-4">
-            <p class="text-sm font-semibold text-gray-900">2. Ask or Post</p>
-            <p class="mt-1 text-xs text-gray-600">
-              Ask for a new AI branch, or Post your own interpretation into the map.
-            </p>
-          </div>
-          <div class="rounded-xl border border-white/80 bg-white/80 p-4">
-            <p class="text-sm font-semibold text-gray-900">3. Save what matters</p>
-            <p class="mt-1 text-xs text-gray-600">
-              Highlight useful passages, star important nodes, then share when the grid is ready.
-            </p>
-          </div>
-        </div>
       </section>
 
-      <section class="grid gap-4 lg:grid-cols-2">
-        <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-          <p class="inline-flex items-center rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-sky-700 ring-1 ring-sky-200">
-            Bottom composer
-          </p>
-          <h5 class="mt-4 text-lg font-semibold text-gray-900">Ask and Post are different</h5>
-
-          <div class="mt-4 space-y-3">
-            <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
-              <div class="flex items-start gap-3">
-                <.icon name="hero-question-mark-circle" class="mt-0.5 h-5 w-5 shrink-0 text-sky-500" />
-                <div>
-                  <p class="text-sm font-semibold text-gray-900">Ask</p>
-                  <p class="mt-1 text-xs text-gray-600">
-                    Use when you want the AI to continue from the selected node with a new answer.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
-              <div class="flex items-start gap-3">
-                <.icon
-                  name="hero-chat-bubble-bottom-center-text"
-                  class="mt-0.5 h-5 w-5 shrink-0 text-emerald-500"
-                />
-                <div>
-                  <p class="text-sm font-semibold text-gray-900">Post</p>
-                  <p class="mt-1 text-xs text-gray-600">
-                    Use when you want your own claim, objection, example, or note inside the map.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-          <p class="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-700 ring-1 ring-amber-200">
-            Under the reader
-          </p>
-          <h5 class="mt-4 text-lg font-semibold text-gray-900">
-            Use node actions after you read
-          </h5>
-          <p class="mt-2 text-xs text-gray-600">
-            These actions now sit directly under the selected node instead of in the bottom bar.
-          </p>
-
-          <div class="mt-4 space-y-3">
-            <div class="flex items-start gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4">
-              <.icon name="hero-scale" class="mt-0.5 h-5 w-5 shrink-0 text-emerald-500" />
-              <div>
-                <p class="text-sm font-semibold text-gray-900">Pro | Con</p>
-                <p class="mt-1 text-xs text-gray-600">Test a claim from both sides.</p>
-              </div>
-            </div>
-
-            <div class="flex items-start gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4">
-              <.icon name="hero-light-bulb" class="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
-              <div>
-                <p class="text-sm font-semibold text-gray-900">Related</p>
-                <p class="mt-1 text-xs text-gray-600">
-                  Find nearby ideas, counterpoints, or adjacent angles.
-                </p>
-              </div>
-            </div>
-
-            <div class="flex items-start gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4">
-              <.icon name="hero-arrows-pointing-in" class="mt-0.5 h-5 w-5 shrink-0 text-violet-500" />
-              <div>
-                <p class="text-sm font-semibold text-gray-900">Blend</p>
-                <p class="mt-1 text-xs text-gray-600">Synthesize two nodes into one shared view.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="grid gap-4 sm:grid-cols-3">
-        <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
-          <div class="flex items-start gap-3">
-            <.icon name="hero-magnifying-glass" class="mt-0.5 h-5 w-5 shrink-0 text-gray-500" />
-            <div>
-              <p class="text-sm font-semibold text-gray-900">Select text for precision</p>
-              <p class="mt-1 text-xs text-gray-600">
-                Select any word or phrase in a node to create a highlight, save it, or ask a narrower follow-up.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
-          <div class="flex items-start gap-3">
-            <.icon name="hero-bookmark" class="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
-            <div>
-              <p class="text-sm font-semibold text-gray-900">Keep your place</p>
-              <p class="mt-1 text-xs text-gray-600">
-                Use highlights and notes to keep the grid useful when you come back later.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <a
-          href="/intro/how"
-          class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 transition hover:bg-emerald-100"
+      <section class="space-y-2.5">
+        <.guide_item
+          icon="hero-cursor-arrow-rays"
+          icon_classes="bg-sky-50 text-sky-600 ring-sky-100"
+          title="Navigate the graph"
         >
-          <div class="flex items-start gap-3">
-            <.icon name="hero-book-open" class="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
-            <div>
-              <p class="text-sm font-semibold text-gray-900">Open the full guide</p>
-              <p class="mt-1 text-xs text-gray-600">
-                See screenshots, example prompts, and a fuller breakdown of every control.
-              </p>
-            </div>
-          </div>
-        </a>
+          Click a node to focus it. Drag to pan. Scroll to zoom.
+        </.guide_item>
+
+        <.guide_item
+          icon="hero-arrows-right-left"
+          icon_classes="bg-slate-100 text-slate-700 ring-slate-200"
+          title="Switch views without losing your place"
+        >
+          Use <span class="font-semibold text-slate-900">Reader | Graph</span>
+          in the top bar. It keeps you on the same node.
+        </.guide_item>
+
+        <.guide_item
+          icon="hero-sparkles"
+          icon_classes="bg-emerald-50 text-emerald-600 ring-emerald-100"
+          title="Continue from the selected node"
+        >
+          Use <span class="font-semibold text-slate-900">Pro | Con</span>, <span class="font-semibold text-slate-900">Related</span>, or
+          <span class="font-semibold text-slate-900">Blend</span>
+          under the current node to grow the conversation.
+        </.guide_item>
+
+        <.guide_item
+          icon="hero-bookmark-square"
+          icon_classes="bg-amber-50 text-amber-600 ring-amber-100"
+          title="Save or return later"
+        >
+          Use <span class="font-semibold text-slate-900">Search</span>
+          to jump, <span class="font-semibold text-slate-900">Highlights</span>
+          to keep passages, and <span class="font-semibold text-slate-900">Share</span>
+          when you want to send the graph.
+        </.guide_item>
       </section>
 
-      <div class="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
-        <p class="text-xs text-gray-600">
-          Navigation: drag to pan, scroll to zoom, click any node to focus it.
-        </p>
+      <section class="rounded-2xl border border-emerald-200/80 bg-emerald-50/70 px-4 py-3">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p class="text-sm font-semibold text-slate-950">Need the full walkthrough?</p>
+            <p class="mt-1 text-sm leading-6 text-slate-600">
+              Open the guide for screenshots, examples, and a fuller explanation of each control.
+            </p>
+          </div>
+
+          <.link
+            href={~p"/intro/how"}
+            class="inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-emerald-300 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
+          >
+            <.icon name="hero-book-open" class="h-4 w-4" />
+            <span>Open full guide</span>
+          </.link>
+        </div>
+      </section>
+    </div>
+    """
+  end
+
+  attr :icon, :string, required: true
+  attr :icon_classes, :string, required: true
+  attr :title, :string, required: true
+  slot :inner_block, required: true
+
+  defp guide_item(assigns) do
+    ~H"""
+    <div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+      <div class="flex items-start gap-3">
+        <div class={[
+          "mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full ring-1",
+          @icon_classes
+        ]}>
+          <.icon name={@icon} class="h-4 w-4" />
+        </div>
+
+        <div class="min-w-0">
+          <h5 class="text-sm font-semibold text-slate-950">{@title}</h5>
+          <p class="mt-0.5 text-sm leading-6 text-slate-600">
+            {render_slot(@inner_block)}
+          </p>
+        </div>
       </div>
     </div>
     """

@@ -7,7 +7,7 @@
   data-reading-density="comfortable"
   data-reading-font="serif"
 >
-  <div class="flex-none border-b border-slate-200/90 bg-white/97 shadow-[0_16px_32px_-30px_rgba(15,23,42,0.28)] backdrop-blur-lg">
+  <div class="flex-none border-b border-slate-200/90 bg-white/97 shadow-[0_12px_24px_-26px_rgba(15,23,42,0.22)] backdrop-blur-lg sm:shadow-[0_16px_32px_-30px_rgba(15,23,42,0.28)]">
     <div class="grid grid-cols-1 lg:grid-cols-[20rem_minmax(0,1fr)] xl:grid-cols-[22rem_minmax(0,1fr)]">
       <div class="hidden border-r border-slate-200 bg-slate-50/70 lg:flex lg:items-center lg:px-4 xl:px-5">
         <span class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
@@ -15,15 +15,15 @@
         </span>
       </div>
 
-      <div class="px-4 py-3 sm:px-6 lg:px-8">
+      <div class="px-4 py-2.5 sm:px-6 sm:py-3 lg:px-8">
         <div class="grid gap-2.5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
           <div class="min-w-0">
-            <div class="flex flex-wrap items-center gap-2.5">
-              <span class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 lg:hidden">
+            <div class="flex min-w-0 items-center gap-2 sm:flex-wrap sm:gap-2.5">
+              <span class="hidden items-center gap-1.5 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 sm:inline-flex lg:hidden">
                 <.icon name="hero-document-text" class="h-3.5 w-3.5" /> Reader
               </span>
 
-              <h1 class="text-lg font-semibold tracking-tight text-slate-950 sm:text-[1.7rem]">
+              <h1 class="min-w-0 truncate text-[1.05rem] font-semibold tracking-tight text-slate-950 sm:text-[1.7rem]">
                 {@graph_struct.title}
               </h1>
             </div>
@@ -425,6 +425,7 @@
                     navigate={graph_editor_path(@graph_struct, @reading_terminal.id, @nav_params)}
                     class="group hidden h-11 shrink-0 items-center gap-2.5 rounded-full border border-sky-300/35 bg-sky-400/10 px-4 text-sm font-medium text-sky-100 shadow-sm transition hover:border-sky-200/60 hover:bg-sky-400/15 lg:inline-flex"
                     data-view-transition="mode-switch"
+                    data-view-transition-direction="graph"
                   >
                     <.icon name="hero-squares-2x2" class="h-4 w-4" />
                     <span>Open editor to continue</span>

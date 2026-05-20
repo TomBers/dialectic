@@ -6,33 +6,23 @@ defmodule DialecticWeb.DocumentMenuComp do
     {:ok,
      socket
      |> assign(assigns)
-     |> assign_new(:show_help_modal, fn -> false end)
-     |> assign_new(:layout_target, fn -> "#graph-layout" end)}
-  end
-
-  @impl true
-  def handle_event("open_help_modal", _params, socket) do
-    {:noreply, assign(socket, :show_help_modal, true)}
-  end
-
-  @impl true
-  def handle_event("close_help_modal", _params, socket) do
-    {:noreply, assign(socket, :show_help_modal, false)}
+     |> assign_new(:layout_target, fn -> "#graph-layout" end)
+     |> assign_new(:compact, fn -> false end)}
   end
 
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="inline-flex max-w-full flex-wrap items-center gap-1 rounded-[1.35rem] border border-slate-200/90 bg-white/98 px-2 py-2 shadow-[0_14px_30px_-22px_rgba(15,23,42,0.45)]">
+    <div class={root_classes(@compact)}>
       <button
         id={"document-menu-help-#{@id}"}
         type="button"
-        phx-click={JS.push("open_help_modal", target: @myself)}
-        class={action_button_classes()}
+        phx-click="open_help_modal"
+        class={action_button_classes(@compact)}
         title="Open how-to guide for this page"
       >
         <.icon name="hero-academic-cap" class="h-4 w-4" />
-        <span>How to use</span>
+        <span class="hidden sm:inline">How to use</span>
       </button>
 
       <button
@@ -51,7 +41,7 @@ defmodule DialecticWeb.DocumentMenuComp do
         }
         disabled={is_nil(@graph_id)}
         class={[
-          action_button_classes(),
+          action_button_classes(@compact),
           "disabled:cursor-not-allowed disabled:opacity-45"
         ]}
         data-panel-toggle="presentation-drawer"
@@ -59,7 +49,7 @@ defmodule DialecticWeb.DocumentMenuComp do
         title="Present this graph"
       >
         <.icon name="hero-presentation-chart-bar" class="h-4 w-4" />
-        <span>Present</span>
+        <span class="hidden sm:inline">Present</span>
       </button>
 
       <button
@@ -71,13 +61,13 @@ defmodule DialecticWeb.DocumentMenuComp do
             detail: %{id: "right-panel"}
           )
         }
-        class={action_button_classes()}
+        class={action_button_classes(@compact)}
         data-panel-toggle="right-panel"
         aria-label="Open workspace settings"
         title="Open workspace settings"
       >
         <.icon name="hero-adjustments-horizontal" class="h-4 w-4" />
-        <span>Settings</span>
+        <span class="hidden sm:inline">Settings</span>
       </button>
 
       <%= if @can_edit == false do %>
@@ -85,46 +75,32 @@ defmodule DialecticWeb.DocumentMenuComp do
           <.icon name="hero-lock-closed" class="h-3.5 w-3.5" /> Read only
         </div>
       <% end %>
-
-      <%= if @show_help_modal do %>
-        <div class="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-5">
-          <button
-            type="button"
-            phx-click="close_help_modal"
-            phx-target={@myself}
-            class="absolute inset-0 bg-gray-900/55 backdrop-blur-[1px]"
-            aria-label="Close how-to guide"
-          >
-          </button>
-          <div class="relative z-10 w-full max-w-3xl rounded-2xl bg-white shadow-2xl ring-1 ring-gray-200">
-            <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3">
-              <h2 class="text-sm font-semibold text-gray-900 sm:text-base">How to use this grid</h2>
-              <button
-                type="button"
-                phx-click="close_help_modal"
-                phx-target={@myself}
-                class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 text-gray-600 transition hover:bg-gray-50"
-                aria-label="Close how-to guide"
-              >
-                <.icon name="hero-x-mark" class="h-4 w-4" />
-              </button>
-            </div>
-            <div class="max-h-[78vh] overflow-y-auto p-3 sm:p-4">
-              <.live_component
-                module={DialecticWeb.OriginOnboardingComp}
-                id="origin-onboarding-modal"
-              />
-            </div>
-          </div>
-        </div>
-      <% end %>
     </div>
     """
   end
 
-  defp action_button_classes do
+  defp root_classes(true) do
     [
-      "inline-flex h-9 items-center gap-2 rounded-[0.95rem] border border-transparent px-3 text-sm font-medium text-slate-600 transition duration-150",
+      "flex w-full max-w-full items-center gap-1 rounded-[1.1rem] border border-slate-200/90 bg-white/98 px-1.5 py-1.5 shadow-[0_10px_24px_-20px_rgba(15,23,42,0.35)] sm:inline-flex sm:w-auto sm:flex-wrap sm:justify-start sm:gap-0.5 sm:rounded-[1.25rem] sm:shadow-[0_14px_30px_-22px_rgba(15,23,42,0.45)]"
+    ]
+  end
+
+  defp root_classes(false) do
+    [
+      "flex w-full max-w-full items-center gap-1 rounded-[1.2rem] border border-slate-200/90 bg-white/98 px-1.5 py-1.5 shadow-[0_10px_24px_-20px_rgba(15,23,42,0.35)] sm:inline-flex sm:w-auto sm:flex-wrap sm:justify-start sm:rounded-[1.35rem] sm:px-2 sm:py-2 sm:shadow-[0_14px_30px_-22px_rgba(15,23,42,0.45)]"
+    ]
+  end
+
+  defp action_button_classes(true) do
+    [
+      "inline-flex h-9 w-9 shrink-0 items-center justify-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 text-sm font-medium text-slate-600 transition duration-150 sm:h-8 sm:w-auto sm:justify-start sm:rounded-[0.85rem] sm:border-transparent sm:bg-transparent sm:px-2.5",
+      "hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900"
+    ]
+  end
+
+  defp action_button_classes(false) do
+    [
+      "inline-flex h-9 w-9 shrink-0 items-center justify-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 text-sm font-medium text-slate-600 transition duration-150 sm:w-auto sm:justify-start sm:rounded-[0.95rem] sm:border-transparent sm:bg-transparent sm:px-3",
       "hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900"
     ]
   end

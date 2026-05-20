@@ -839,6 +839,14 @@ defmodule DialecticWeb.GraphLive do
   end
 
   # Start stream handlers grouped with other handle_event clauses
+  def handle_event("open_help_modal", _params, socket) do
+    {:noreply, assign(socket, show_help_modal: true)}
+  end
+
+  def handle_event("close_help_modal", _params, socket) do
+    {:noreply, assign(socket, show_help_modal: false)}
+  end
+
   def handle_event("open_share_modal", _params, socket) do
     socket =
       socket
@@ -2013,6 +2021,7 @@ defmodule DialecticWeb.GraphLive do
       explore_items: [],
       explore_selected: [],
       show_start_stream_modal: false,
+      show_help_modal: false,
       show_share_modal: false,
       work_streams: [],
       exploration_stats: nil,
