@@ -5,6 +5,7 @@ defmodule DialecticWeb.OutlineGraphLive do
   alias Dialectic.Highlights
   alias Dialectic.Linear.ThreadedConv
   alias DialecticWeb.ColUtils
+  alias DialecticWeb.NodeSearch
   alias DialecticWeb.Utils.NodeTitleHelper
   alias Phoenix.PubSub
 
@@ -397,24 +398,18 @@ defmodule DialecticWeb.OutlineGraphLive do
   defp search_reader_nodes(_graph_id, ""), do: []
 
   defp search_reader_nodes(graph_id, search_term) do
-    term = String.downcase(search_term)
-
     graph_id
     |> GraphManager.vertices()
     |> Enum.reduce([], fn vertex_id, acc ->
       case GraphManager.vertex_label(graph_id, vertex_id) do
         %{} = node ->
           if visible_node?(node) do
-            enriched_node = enrich_node(node)
+            case node |> enrich_node() |> NodeSearch.annotate_result(search_term) do
+              %{search_rank: rank} = enriched_node ->
+                [{rank, sort_key(enriched_node.id), enriched_node} | acc]
 
-            if reader_search_match?(enriched_node, term) do
-              [
-                {reader_search_rank(enriched_node, term), sort_key(enriched_node.id),
-                 enriched_node}
-                | acc
-              ]
-            else
-              acc
+              nil ->
+                acc
             end
           else
             acc
@@ -427,36 +422,6 @@ defmodule DialecticWeb.OutlineGraphLive do
     |> Enum.sort_by(fn {rank, sort_id, _node} -> {rank, sort_id} end)
     |> Enum.map(fn {_rank, _sort_id, node} -> node end)
     |> Enum.take(10)
-  end
-
-  defp reader_search_match?(node, term) do
-    reader_search_blob(node)
-    |> String.downcase()
-    |> String.contains?(term)
-  end
-
-  defp reader_search_rank(node, term) do
-    title = node.full_title |> to_string() |> String.downcase()
-    body = reader_search_blob(node) |> String.downcase()
-
-    cond do
-      title == term -> {0, 0}
-      String.starts_with?(title, term) -> {0, 1}
-      String.contains?(title, term) -> {0, 2}
-      body == term -> {1, 0}
-      String.contains?(body, term) -> {1, 1}
-      true -> {2, 0}
-    end
-  end
-
-  defp reader_search_blob(node) do
-    [
-      node.full_title,
-      node.body_content,
-      Map.get(node, :content, "")
-    ]
-    |> Enum.map(&to_string/1)
-    |> Enum.join("\n")
   end
 
   defp maybe_scroll_to_highlight(socket, highlight_id)

@@ -697,7 +697,7 @@
             <div class="flex items-center gap-2 px-4 py-3 border-b border-gray-100">
               <.icon name="hero-magnifying-glass" class="w-5 h-5 text-gray-400 shrink-0" />
               <h2 id="quick-search-title" class="sr-only">Search topics</h2>
-              <form phx-change="search_nodes" class="flex-1">
+              <form id="quick-search-form" phx-change="search_nodes" class="flex-1">
                 <input
                   type="text"
                   name="search_term"
@@ -722,6 +722,7 @@
                     <%= for node <- @search_results || [] do %>
                       <li>
                         <button
+                          id={"graph-search-result-#{node.id}"}
                           type="button"
                           phx-click="node_clicked"
                           phx-value-id={node.id}
@@ -747,10 +748,22 @@
                             </span>
                           </div>
                           <div class="text-sm text-gray-900 truncate mt-0.5">
-                            {DialecticWeb.Utils.NodeTitleHelper.extract_node_title(node,
-                              max_length: 80
-                            )}
+                            {Map.get(node, :full_title) || Map.get(node, :title) ||
+                              DialecticWeb.Utils.NodeTitleHelper.extract_node_title(node,
+                                max_length: 80
+                              )}
                           </div>
+
+                          <%= if Map.get(node, :search_preview) do %>
+                            <div class="mt-1.5 flex items-start gap-2 text-left">
+                              <span class="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-500">
+                                {Map.get(node, :search_preview_label)}
+                              </span>
+                              <p class="line-clamp-2 text-xs leading-5 text-gray-500">
+                                {Map.get(node, :search_preview)}
+                              </p>
+                            </div>
+                          <% end %>
                         </button>
                       </li>
                     <% end %>

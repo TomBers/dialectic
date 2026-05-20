@@ -6,6 +6,7 @@ defmodule DialecticWeb.GraphLive do
   alias Dialectic.Accounts.User
   alias DialecticWeb.NodeComp
   alias DialecticWeb.GraphHelpers
+  alias DialecticWeb.NodeSearch
 
   import DialecticWeb.GraphPresentation
   import DialecticWeb.PresentationStageComp, only: [presentation_stage: 1]
@@ -228,16 +229,18 @@ defmodule DialecticWeb.GraphLive do
     else
       search_results =
         try do
-          term = String.downcase(search_term)
-
           GraphManager.vertices(socket.assigns.graph_id)
           |> Enum.reduce([], fn vid, acc ->
             case GraphManager.vertex_label(socket.assigns.graph_id, vid) do
               %{} = vertex ->
-                if valid_search_node(vertex) and
-                     String.contains?(String.downcase(vertex.content), term) do
-                  exact_match = if String.downcase(vertex.content) == term, do: 0, else: 1
-                  [{exact_match, vertex.id, vertex} | acc]
+                if valid_search_node(vertex) do
+                  case NodeSearch.annotate_result(vertex, search_term) do
+                    %{search_rank: rank} = result ->
+                      [{rank, vertex.id, result} | acc]
+
+                    nil ->
+                      acc
+                  end
                 else
                   acc
                 end

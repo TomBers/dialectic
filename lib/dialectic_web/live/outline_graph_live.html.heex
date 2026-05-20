@@ -663,8 +663,19 @@
                         </div>
 
                         <div class="mt-0.5 text-sm text-gray-900 truncate">
-                          {node.full_title || node.title}
+                          {Map.get(node, :full_title) || Map.get(node, :title)}
                         </div>
+
+                        <%= if Map.get(node, :search_preview) do %>
+                          <div class="mt-1.5 flex items-start gap-2 text-left">
+                            <span class="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-500">
+                              {Map.get(node, :search_preview_label)}
+                            </span>
+                            <p class="line-clamp-2 text-xs leading-5 text-gray-500">
+                              {Map.get(node, :search_preview)}
+                            </p>
+                          </div>
+                        <% end %>
                       </button>
                     </li>
                   <% end %>
