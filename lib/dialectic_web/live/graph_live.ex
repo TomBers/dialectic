@@ -254,6 +254,8 @@ defmodule DialecticWeb.GraphLive do
           |> Enum.take(10)
         rescue
           _ -> []
+        catch
+          :exit, _reason -> []
         end
 
       matching_ids = Enum.map(search_results, & &1.id)

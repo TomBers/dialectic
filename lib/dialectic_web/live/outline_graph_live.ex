@@ -398,30 +398,36 @@ defmodule DialecticWeb.OutlineGraphLive do
   defp search_reader_nodes(_graph_id, ""), do: []
 
   defp search_reader_nodes(graph_id, search_term) do
-    graph_id
-    |> GraphManager.vertices()
-    |> Enum.reduce([], fn vertex_id, acc ->
-      case GraphManager.vertex_label(graph_id, vertex_id) do
-        %{} = node ->
-          if visible_node?(node) do
-            case node |> enrich_node() |> NodeSearch.annotate_result(search_term) do
-              %{search_rank: rank} = enriched_node ->
-                [{rank, sort_key(enriched_node.id), enriched_node} | acc]
+    try do
+      graph_id
+      |> GraphManager.vertices()
+      |> Enum.reduce([], fn vertex_id, acc ->
+        case GraphManager.vertex_label(graph_id, vertex_id) do
+          %{} = node ->
+            if visible_node?(node) do
+              case node |> enrich_node() |> NodeSearch.annotate_result(search_term) do
+                %{search_rank: rank} = enriched_node ->
+                  [{rank, sort_key(enriched_node.id), enriched_node} | acc]
 
-              nil ->
-                acc
+                nil ->
+                  acc
+              end
+            else
+              acc
             end
-          else
-            acc
-          end
 
-        _ ->
-          acc
-      end
-    end)
-    |> Enum.sort_by(fn {rank, sort_id, _node} -> {rank, sort_id} end)
-    |> Enum.map(fn {_rank, _sort_id, node} -> node end)
-    |> Enum.take(10)
+          _ ->
+            acc
+        end
+      end)
+      |> Enum.sort_by(fn {rank, sort_id, _node} -> {rank, sort_id} end)
+      |> Enum.map(fn {_rank, _sort_id, node} -> node end)
+      |> Enum.take(10)
+    rescue
+      _ -> []
+    catch
+      :exit, _reason -> []
+    end
   end
 
   defp maybe_scroll_to_highlight(socket, highlight_id)

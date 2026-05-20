@@ -102,7 +102,8 @@ defmodule DialecticWeb.WorkspaceBarComp do
           type="button"
           phx-click={@search_click}
           class={action_button_classes(@compact)}
-          title="Search this grid"
+          title={search_button_label(@mode)}
+          aria-label={search_button_label(@mode)}
         >
           <.icon name="hero-magnifying-glass" class="h-4 w-4" />
           <span class="hidden sm:inline">Search</span>
@@ -144,7 +145,8 @@ defmodule DialecticWeb.WorkspaceBarComp do
           type="button"
           phx-click={@share_click}
           class={action_button_classes(@compact)}
-          title="Share this grid"
+          title={share_button_label(@mode)}
+          aria-label={share_button_label(@mode)}
         >
           <.icon name="hero-share" class="h-4 w-4" />
           <span class="hidden sm:inline">Share</span>
@@ -231,4 +233,12 @@ defmodule DialecticWeb.WorkspaceBarComp do
   defp kbd_classes(false) do
     "hidden rounded-md border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 sm:inline-flex"
   end
+
+  defp search_button_label(:reader), do: "Search topics"
+  defp search_button_label(:graph), do: "Search this grid"
+  defp search_button_label(_mode), do: "Search"
+
+  defp share_button_label(:reader), do: "Share this reader view"
+  defp share_button_label(:graph), do: "Share this grid view"
+  defp share_button_label(_mode), do: "Share this view"
 end
