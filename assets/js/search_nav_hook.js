@@ -15,6 +15,26 @@
  */
 const SearchNav = {
   mounted() {
+    this.focusInput = ({ force = false } = {}) => {
+      const active = document.activeElement;
+      if (!force && active && this.el.contains(active)) return;
+
+      const input = this.el.querySelector(
+        'input[type="text"], input:not([type]), textarea',
+      );
+      if (!input) return;
+
+      const focus = () => {
+        input.focus({ preventScroll: true });
+        if (typeof input.select === "function") {
+          input.select();
+        }
+      };
+
+      requestAnimationFrame(focus);
+      window.setTimeout(focus, 0);
+    };
+
     this._onKeydown = (e) => {
       if (e.key !== "ArrowDown" && e.key !== "ArrowUp" && e.key !== "Enter") {
         return;
@@ -58,6 +78,11 @@ const SearchNav = {
     // Capture phase ensures we fire before draw_graph.js's document-level
     // bubble-phase handler, so arrow keys stay inside the search overlay.
     document.addEventListener("keydown", this._onKeydown, true);
+    this.focusInput({ force: true });
+  },
+
+  updated() {
+    this.focusInput();
   },
 
   destroyed() {
