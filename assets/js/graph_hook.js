@@ -610,46 +610,67 @@ const graphHook = {
     };
 
     const btnPngs = Array.from(document.querySelectorAll(".download-png"));
-    const zoomControls = Array.from(document.querySelectorAll("[data-zoom-action]"));
-    const zoomSliders = Array.from(document.querySelectorAll("[data-zoom-slider]"));
-    this._zoomControlHandlers = [];
-    zoomControls.forEach((btn) => {
-      const action = btn.dataset.zoomAction;
-      const handler = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        if (action === "in") {
-          zoomBy(1.2);
-        } else if (action === "out") {
-          zoomBy(1 / 1.2);
-        } else if (action === "fit") {
-          fitGraph();
-        }
-      };
-
-      btn.addEventListener("click", handler);
-      this._zoomControlHandlers.push([btn, handler]);
-    });
-    this._zoomSliderHandlers = [];
-    zoomSliders.forEach((slider) => {
-      const inputHandler = (e) => {
-        e.stopPropagation();
-        zoomToLevel(sliderValueToZoom(parseFloat(slider.value)), {
-          announce: false,
+    this._bindZoomControls = () => {
+      if (Array.isArray(this._zoomControlHandlers)) {
+        this._zoomControlHandlers.forEach(([el, handler]) => {
+          el.removeEventListener("click", handler);
         });
-      };
-      const changeHandler = (e) => {
-        e.stopPropagation();
-        zoomToLevel(sliderValueToZoom(parseFloat(slider.value)), {
-          announce: true,
+      }
+      if (Array.isArray(this._zoomSliderHandlers)) {
+        this._zoomSliderHandlers.forEach(([el, inputHandler, changeHandler]) => {
+          el.removeEventListener("input", inputHandler);
+          el.removeEventListener("change", changeHandler);
         });
-      };
+      }
 
-      slider.addEventListener("input", inputHandler);
-      slider.addEventListener("change", changeHandler);
-      this._zoomSliderHandlers.push([slider, inputHandler, changeHandler]);
-    });
+      const zoomControls = Array.from(
+        document.querySelectorAll("[data-zoom-action]"),
+      );
+      const zoomSliders = Array.from(
+        document.querySelectorAll("[data-zoom-slider]"),
+      );
+
+      this._zoomControlHandlers = [];
+      zoomControls.forEach((btn) => {
+        const action = btn.dataset.zoomAction;
+        const handler = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          if (action === "in") {
+            zoomBy(1.2);
+          } else if (action === "out") {
+            zoomBy(1 / 1.2);
+          } else if (action === "fit") {
+            fitGraph();
+          }
+        };
+
+        btn.addEventListener("click", handler);
+        this._zoomControlHandlers.push([btn, handler]);
+      });
+
+      this._zoomSliderHandlers = [];
+      zoomSliders.forEach((slider) => {
+        const inputHandler = (e) => {
+          e.stopPropagation();
+          zoomToLevel(sliderValueToZoom(parseFloat(slider.value)), {
+            announce: false,
+          });
+        };
+        const changeHandler = (e) => {
+          e.stopPropagation();
+          zoomToLevel(sliderValueToZoom(parseFloat(slider.value)), {
+            announce: true,
+          });
+        };
+
+        slider.addEventListener("input", inputHandler);
+        slider.addEventListener("change", changeHandler);
+        this._zoomSliderHandlers.push([slider, inputHandler, changeHandler]);
+      });
+    };
+    this._bindZoomControls();
     syncZoomIndicators();
     this._syncZoomIndicators = syncZoomIndicators;
     if (this.cy && typeof this.cy.on === "function") {
@@ -2281,6 +2302,10 @@ const graphHook = {
     };
 
     ensureExploreBound();
+
+    if (this._bindZoomControls) {
+      this._bindZoomControls();
+    }
 
     if (this._bindPngButtons) {
       this._bindPngButtons();
