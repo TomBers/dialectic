@@ -211,6 +211,7 @@ hooks.PasswordToggle = {
 hooks.GraphLayout = {
   mounted() {
     this.activePanelId = null;
+    this._reopenSideDrawerAfterPresentation = false;
     this._reopenSideDrawerAfterCombine = false;
     this._handleMobileGraphResize = () => {
       this._redirectMobileGraphToReader();
@@ -232,7 +233,6 @@ hooks.GraphLayout = {
       return null;
     };
 
-    const storedDrawer = readStoredBool(this._drawerStorageKey);
     const storedBottomMenu = readStoredBool(this._bottomMenuStorageKey);
     const storedReadingDensity = (() => {
       try {
@@ -249,7 +249,7 @@ hooks.GraphLayout = {
       }
     })();
 
-    this.sideDrawerOpen = storedDrawer !== null ? storedDrawer : true;
+    this.sideDrawerOpen = true;
     this.bottomMenuOpen = storedBottomMenu !== null ? storedBottomMenu : true;
     this.readingDensity = validReadingDensities.includes(storedReadingDensity)
       ? storedReadingDensity
@@ -324,8 +324,18 @@ hooks.GraphLayout = {
       const combineWasOpen =
         combineDrawer && !combineDrawer.classList.contains("translate-x-full");
 
+      if (id === "presentation-drawer" && isClosed) {
+        this._reopenSideDrawerAfterPresentation = true;
+        if (sideDrawerIsOpen) {
+          this._applySideDrawerState(false, {
+            persist: false,
+            dispatchResize: false,
+          });
+        }
+      }
+
       if (id === "combine-drawer" && isClosed) {
-        this._reopenSideDrawerAfterCombine = !!sideDrawerIsOpen;
+        this._reopenSideDrawerAfterCombine = true;
         if (sideDrawerIsOpen) {
           this._applySideDrawerState(false, {
             persist: false,
@@ -396,15 +406,19 @@ hooks.GraphLayout = {
       }
 
       const shouldRestoreSideDrawer =
-        this._reopenSideDrawerAfterCombine &&
-        ((combineWasOpen && id !== "combine-drawer") ||
-          (id === "combine-drawer" && !isClosed));
+        (this._reopenSideDrawerAfterPresentation &&
+          ((presWasOpen && id !== "presentation-drawer") ||
+            (id === "presentation-drawer" && !isClosed))) ||
+        (this._reopenSideDrawerAfterCombine &&
+          ((combineWasOpen && id !== "combine-drawer") ||
+            (id === "combine-drawer" && !isClosed)));
 
       if (shouldRestoreSideDrawer) {
         this._applySideDrawerState(true, {
           persist: false,
           dispatchResize: false,
         });
+        this._reopenSideDrawerAfterPresentation = false;
         this._reopenSideDrawerAfterCombine = false;
       }
 
@@ -732,6 +746,24 @@ hooks.GraphLayout = {
     }
     if (this.readingFont) {
       this._applyReadingFont(this.readingFont);
+    }
+
+    const presentationDrawer = document.getElementById("presentation-drawer");
+    const combineDrawer = document.getElementById("combine-drawer");
+    const shouldReopenAfterPresentation =
+      this._reopenSideDrawerAfterPresentation &&
+      this.activePanelId !== "presentation-drawer" &&
+      (!presentationDrawer ||
+        presentationDrawer.classList.contains("translate-x-full"));
+    const shouldReopenAfterCombine =
+      this._reopenSideDrawerAfterCombine &&
+      this.activePanelId !== "combine-drawer" &&
+      (!combineDrawer || combineDrawer.classList.contains("translate-x-full"));
+
+    if (shouldReopenAfterPresentation || shouldReopenAfterCombine) {
+      this.sideDrawerOpen = true;
+      this._reopenSideDrawerAfterPresentation = false;
+      this._reopenSideDrawerAfterCombine = false;
     }
 
     // Restore side drawer state

@@ -547,35 +547,6 @@
       </div>
     <% end %>
     
-<!-- Toggle button for drawer -->
-
-    <%= if @graph_id && @presentation_mode != :presenting do %>
-      <button
-        id="drawer-toggle"
-        phx-click={JS.dispatch("toggle-side-drawer", to: "#graph-layout")}
-        aria-controls="side-drawer"
-        aria-expanded="true"
-        aria-label="Hide menu"
-        class="fixed top-1/2 z-20 -translate-y-1/2 transform cursor-pointer rounded-full bg-white p-1.5 opacity-60 shadow-sm transition-all duration-200 hover:opacity-100 right-2 lg:left-[var(--desktop-side-drawer-width)] lg:ml-2 lg:right-auto"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-6 w-6 text-gray-600"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M11 19l-7-7 7-7"
-          />
-        </svg>
-        <span class="sr-only">Toggle drawer</span>
-      </button>
-    <% end %>
-    
 <!-- Bottom menu toggle (hidden during presentation) -->
     <div
       :if={@presentation_mode != :presenting}
