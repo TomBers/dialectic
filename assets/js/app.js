@@ -219,7 +219,6 @@ hooks.GraphLayout = {
     const graphId = this.el.dataset.graphId || "global";
     const validReadingDensities = ["compact", "comfortable", "large"];
     const validReadingFonts = ["sans", "serif"];
-    this._drawerStorageKey = `rg:drawer:${graphId}`;
     this._bottomMenuStorageKey = `rg:bottom-menu:${graphId}`;
     this._readingDensityStorageKey = `rg:reading-density:${graphId}`;
     this._readingFontStorageKey = `rg:reading-font:${graphId}`;
@@ -287,22 +286,6 @@ hooks.GraphLayout = {
       } catch (_e) {}
     });
 
-    this.el.addEventListener("collapse-document-menu", () => {
-      const root = document.querySelector(
-        '[data-role="document-menu"] [data-collapse-root]',
-      );
-      if (!root) return;
-
-      const body = root.querySelector("[data-collapse-body]");
-      const icon = root.querySelector("[data-collapse-icon]");
-      const trigger = root.querySelector("[data-collapse-trigger]");
-      if (!body) return;
-
-      body.classList.add("hidden");
-      if (icon) icon.classList.remove("rotate-180");
-      if (trigger) trigger.setAttribute("aria-expanded", "false");
-    });
-
     this.el.addEventListener("toggle-panel", (e) => {
       const { id } = e.detail;
       const targetPanel = document.getElementById(id);
@@ -328,7 +311,6 @@ hooks.GraphLayout = {
         this._reopenSideDrawerAfterPresentation = true;
         if (sideDrawerIsOpen) {
           this._applySideDrawerState(false, {
-            persist: false,
             dispatchResize: false,
           });
         }
@@ -338,7 +320,6 @@ hooks.GraphLayout = {
         this._reopenSideDrawerAfterCombine = true;
         if (sideDrawerIsOpen) {
           this._applySideDrawerState(false, {
-            persist: false,
             dispatchResize: false,
           });
         }
@@ -415,7 +396,6 @@ hooks.GraphLayout = {
 
       if (shouldRestoreSideDrawer) {
         this._applySideDrawerState(true, {
-          persist: false,
           dispatchResize: false,
         });
         this._reopenSideDrawerAfterPresentation = false;
@@ -431,14 +411,13 @@ hooks.GraphLayout = {
 
       const isClosed = drawer.classList.contains("-translate-x-full");
       let shouldOpen = isClosed;
-      const persist = e?.detail?.persist !== false;
 
       if (e.detail && e.detail.force) {
         if (e.detail.force === "open") shouldOpen = true;
         if (e.detail.force === "close") shouldOpen = false;
       }
 
-      this._applySideDrawerState(shouldOpen, { persist });
+      this._applySideDrawerState(shouldOpen);
     });
 
     this.el.addEventListener("toggle-bottom-menu", () => {
@@ -594,10 +573,7 @@ hooks.GraphLayout = {
 
     this.activePanelId = null;
   },
-  _applySideDrawerState(
-    shouldOpen,
-    { persist = true, dispatchResize = true } = {},
-  ) {
+  _applySideDrawerState(shouldOpen, { dispatchResize = true } = {}) {
     const drawer = document.getElementById("side-drawer");
     const toggleBtn = document.getElementById("drawer-toggle");
     const bottomElements = document.querySelectorAll(".shift-with-panel");
@@ -605,15 +581,6 @@ hooks.GraphLayout = {
     if (!drawer) return;
 
     this.sideDrawerOpen = shouldOpen;
-
-    if (persist) {
-      try {
-        localStorage.setItem(
-          this._drawerStorageKey,
-          String(this.sideDrawerOpen),
-        );
-      } catch (_e) {}
-    }
 
     if (shouldOpen) {
       drawer.classList.remove(
