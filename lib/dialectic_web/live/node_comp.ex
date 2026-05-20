@@ -28,13 +28,15 @@ defmodule DialecticWeb.NodeComp do
        cut_off: Map.get(assigns, :cut_off, 500),
        ask_question: Map.get(assigns, :ask_question, true),
        graph_id: Map.get(assigns, :graph_id, ""),
+       graph_struct: Map.get(assigns, :graph_struct, nil),
        graph_owner_id: Map.get(assigns, :graph_owner_id, nil),
        current_user: Map.get(assigns, :current_user, nil),
        can_edit: Map.get(assigns, :can_edit, true),
        menu_visible: Map.get(assigns, :menu_visible, true),
        streaming: Map.get(assigns, :streaming, false),
        exploration_stats: Map.get(assigns, :exploration_stats, nil),
-       presentation_mode: Map.get(assigns, :presentation_mode, :off)
+       presentation_mode: Map.get(assigns, :presentation_mode, :off),
+       token: Map.get(assigns, :token, nil)
      )}
   end
 
@@ -157,6 +159,35 @@ defmodule DialecticWeb.NodeComp do
                         Highlight any word or phrase above to ask AI for a more specific answer.
                       </p>
                     </div>
+
+                    <%= if @graph_struct do %>
+                      <div class="mt-3 flex flex-col gap-3 rounded-[1.35rem] border border-sky-200 bg-sky-50/80 px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-700">
+                            Prefer the linear thread?
+                          </p>
+                          <p class="mt-1 text-sm leading-5 text-slate-700">
+                            Continue this exact point in the reader without hunting through the menu.
+                          </p>
+                        </div>
+
+                        <.link
+                          id={"node-reader-link-#{@node.id}"}
+                          navigate={
+                            graph_path(
+                              @graph_struct,
+                              @node.id,
+                              if(@token, do: [token: @token], else: [])
+                            )
+                          }
+                          class="inline-flex h-11 shrink-0 items-center gap-2 rounded-2xl border border-sky-300 bg-white px-3.5 text-sm font-semibold text-sky-900 shadow-sm transition hover:-translate-y-0.5 hover:border-sky-400 hover:bg-sky-100"
+                          data-view-transition="mode-switch"
+                        >
+                          <.icon name="hero-document-text" class="h-4 w-4" />
+                          <span>Open reader</span>
+                        </.link>
+                      </div>
+                    <% end %>
                   </article>
 
                   <.live_component

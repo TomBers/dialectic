@@ -6,7 +6,8 @@ defmodule DialecticWeb.DocumentMenuComp do
     {:ok,
      socket
      |> assign(assigns)
-     |> assign_new(:show_help_modal, fn -> false end)}
+     |> assign_new(:show_help_modal, fn -> false end)
+     |> assign_new(:layout_target, fn -> "#graph-layout" end)}
   end
 
   @impl true
@@ -22,198 +23,68 @@ defmodule DialecticWeb.DocumentMenuComp do
   @impl true
   def render(assigns) do
     ~H"""
-    <div
-      class="fixed top-14 right-2 md:right-3 lg:right-4 z-40 w-72 xl:w-[14rem] max-w-[calc(100vw-0.75rem)]"
-      data-role="document-menu"
-    >
-      <div
-        id={"top-grid-actions-root-#{@id}"}
-        class="rounded-xl border border-gray-200 bg-white/95 backdrop-blur-md shadow-lg p-2"
-        data-collapse-root
-        phx-hook="PersistCollapse"
-        data-collapse-key={"rg:grid-actions:top:#{@graph_id || "global"}"}
-        data-collapse-default="collapsed"
+    <div class="inline-flex max-w-full flex-wrap items-center gap-1 rounded-[1.35rem] border border-slate-200/90 bg-white/98 px-2 py-2 shadow-[0_14px_30px_-22px_rgba(15,23,42,0.45)]">
+      <button
+        id={"document-menu-help-#{@id}"}
+        type="button"
+        phx-click={JS.push("open_help_modal", target: @myself)}
+        class={action_button_classes()}
+        title="Open how-to guide for this page"
       >
-        <div class="flex items-start justify-between gap-2 px-1">
-          <div>
-            <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500">
-              Menu
-            </h3>
-            <p class="text-[11px] text-gray-500">
-              Search, share, present, and manage this grid from one place.
-            </p>
-          </div>
-          <button
-            type="button"
-            class="inline-flex h-8 items-center justify-center rounded-full border border-gray-200 bg-white px-2 text-gray-600 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800"
-            data-collapse-key={"rg:grid-actions:top:#{@graph_id || "global"}"}
-            onclick={
-              "const root=this.closest('[data-collapse-root]');" <>
-                "const body=root?.querySelector('[data-collapse-body]');" <>
-                "const openState=root?.querySelector('[data-collapse-open-state]');" <>
-                "const closeState=root?.querySelector('[data-collapse-close-state]');" <>
-                "if(!body)return;" <>
-                "body.classList.toggle('hidden');" <>
-                "const collapsed=body.classList.contains('hidden');" <>
-                "if(openState&&closeState){" <>
-                "openState.classList.toggle('hidden',!collapsed);" <>
-                "closeState.classList.toggle('hidden',collapsed);" <>
-                "}" <>
-                "try{localStorage.setItem(this.dataset.collapseKey,collapsed?'collapsed':'expanded')}catch(_e){}"
-            }
-            aria-label="Open or close menu"
-            title="Open or close menu"
-          >
-            <span data-collapse-open-state class="inline-flex items-center gap-1.5">
-              <.icon name="hero-bars-3" class="h-4 w-4" />
-              <span class="text-[10px] font-semibold uppercase tracking-wide">Open</span>
-            </span>
-            <span data-collapse-close-state class="hidden items-center">
-              <.icon name="hero-x-mark" class="h-4 w-4" />
-            </span>
-          </button>
+        <.icon name="hero-academic-cap" class="h-4 w-4" />
+        <span>How to use</span>
+      </button>
+
+      <button
+        id={"document-menu-present-#{@id}"}
+        type="button"
+        phx-click={
+          JS.dispatch("toggle-side-drawer",
+            to: @layout_target,
+            detail: %{force: "close", persist: false}
+          )
+          |> JS.dispatch("toggle-panel",
+            to: @layout_target,
+            detail: %{id: "presentation-drawer"}
+          )
+          |> JS.push("enter_presentation_setup")
+        }
+        disabled={is_nil(@graph_id)}
+        class={[
+          action_button_classes(),
+          "disabled:cursor-not-allowed disabled:opacity-45"
+        ]}
+        data-panel-toggle="presentation-drawer"
+        aria-label="Start presentation setup"
+        title="Present this graph"
+      >
+        <.icon name="hero-presentation-chart-bar" class="h-4 w-4" />
+        <span>Present</span>
+      </button>
+
+      <button
+        id={"document-menu-settings-#{@id}"}
+        type="button"
+        phx-click={
+          JS.dispatch("toggle-panel",
+            to: @layout_target,
+            detail: %{id: "right-panel"}
+          )
+        }
+        class={action_button_classes()}
+        data-panel-toggle="right-panel"
+        aria-label="Open workspace settings"
+        title="Open workspace settings"
+      >
+        <.icon name="hero-adjustments-horizontal" class="h-4 w-4" />
+        <span>Settings</span>
+      </button>
+
+      <%= if @can_edit == false do %>
+        <div class="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700">
+          <.icon name="hero-lock-closed" class="h-3.5 w-3.5" /> Read only
         </div>
-
-        <%= if @graph_id do %>
-          <.link
-            id={"document-menu-reader-switch-#{@id}"}
-            navigate={
-              graph_path(
-                @graph_struct,
-                Map.get(assigns[:node] || %{}, :id),
-                if(assigns[:token], do: [token: assigns[:token]], else: [])
-              )
-            }
-            class="mt-2 flex h-10 items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-3 text-blue-800 shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-100"
-            title="Open reader"
-            data-role="reader-view-primary"
-            data-view-transition="mode-switch"
-          >
-            <span class="inline-flex items-center gap-2 text-sm font-semibold">
-              <.icon name="hero-document-text" class="h-4 w-4" /> Reader
-            </span>
-            <span class="text-[11px] font-medium text-blue-700">Open reading view</span>
-          </.link>
-        <% end %>
-
-        <div
-          id={"grid-actions-body-#{@id}"}
-          data-collapse-body
-          class="mt-2 space-y-1.5 border-t border-gray-100 pt-2"
-        >
-          <button
-            type="button"
-            phx-click="open_search_overlay_click"
-            class="flex w-full items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 group"
-            title="Quick search (⌘K)"
-          >
-            <.icon name="hero-magnifying-glass" class="w-4 h-4 shrink-0" />
-            <span class="text-xs">Search topics...</span>
-            <kbd class="ml-auto inline-flex items-center rounded border border-gray-300 bg-white px-1 py-0.5 text-[9px] font-semibold text-gray-500 leading-none">
-              ⌘K
-            </kbd>
-          </button>
-          <button
-            type="button"
-            phx-click="open_help_modal"
-            phx-target={@myself}
-            class="group flex w-full items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-left transition-colors hover:bg-emerald-100"
-            title="Open how-to guide for this page"
-          >
-            <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800">
-              <.icon name="hero-academic-cap" class="w-3.5 h-3.5" /> How to use
-            </span>
-            <span class="text-[10px] text-emerald-700">Tips + highlights</span>
-          </button>
-
-          <div class="space-y-1.5">
-            <button
-              type="button"
-              class="group flex w-full items-center justify-between rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-left transition-colors hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-50"
-              phx-click={
-                Phoenix.LiveView.JS.dispatch("collapse-document-menu", to: "#graph-layout")
-                |> Phoenix.LiveView.JS.push("open_share_modal")
-              }
-              disabled={is_nil(@graph_id)}
-              title="Share graph"
-            >
-              <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-800">
-                <.icon name="hero-share" class="w-3.5 h-3.5" /> Share
-              </span>
-              <span class="text-[10px] text-indigo-700">Links and access</span>
-            </button>
-
-            <button
-              type="button"
-              phx-click={
-                Phoenix.LiveView.JS.dispatch("toggle-side-drawer",
-                  to: "#graph-layout",
-                  detail: %{force: "close", persist: false}
-                )
-                |> Phoenix.LiveView.JS.dispatch("toggle-panel",
-                  to: "#graph-layout",
-                  detail: %{id: "presentation-drawer"}
-                )
-                |> Phoenix.LiveView.JS.push("enter_presentation_setup")
-              }
-              disabled={is_nil(@graph_id)}
-              class="group flex w-full items-center justify-between rounded-lg border border-fuchsia-200 bg-fuchsia-50 px-3 py-2 text-left transition-colors hover:bg-fuchsia-100 disabled:cursor-not-allowed disabled:opacity-50"
-              data-panel-toggle="presentation-drawer"
-              aria-label="Start presentation setup"
-              title="Present"
-            >
-              <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-fuchsia-800">
-                <.icon name="hero-presentation-chart-bar" class="w-3.5 h-3.5" /> Present
-              </span>
-              <span class="text-[10px] text-fuchsia-700">Slide mode</span>
-            </button>
-
-            <button
-              type="button"
-              phx-click={
-                Phoenix.LiveView.JS.dispatch("toggle-panel",
-                  to: "#graph-layout",
-                  detail: %{id: "highlights-drawer"}
-                )
-              }
-              class="group flex w-full items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-left transition-colors hover:bg-amber-100"
-              data-panel-toggle="highlights-drawer"
-              aria-label="Toggle highlights"
-              title="Highlights"
-            >
-              <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-800">
-                <.icon name="hero-bookmark" class="w-3.5 h-3.5" /> Highlights
-              </span>
-              <span class="text-[10px] text-amber-700">Words + phrases</span>
-            </button>
-          </div>
-
-          <button
-            type="button"
-            phx-click={
-              Phoenix.LiveView.JS.dispatch("toggle-panel",
-                to: "#graph-layout",
-                detail: %{id: "right-panel"}
-              )
-            }
-            class="flex w-full items-center justify-between rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-700 transition-colors hover:bg-gray-50"
-            data-panel-toggle="right-panel"
-            aria-label="Open controls"
-            title="Views and settings"
-          >
-            <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-700">
-              <.icon name="hero-adjustments-horizontal" class="w-3.5 h-3.5" /> Controls
-            </span>
-            <span class="text-[10px] text-gray-500">Views + settings</span>
-          </button>
-
-          <%= if @can_edit == false do %>
-            <div class="inline-flex items-center gap-1 rounded-md border border-amber-200 bg-amber-100 px-2 py-1 text-[11px] font-semibold text-amber-800">
-              <.icon name="hero-lock-closed" class="w-3.5 h-3.5" /> Locked
-            </div>
-          <% end %>
-        </div>
-      </div>
+      <% end %>
 
       <%= if @show_help_modal do %>
         <div class="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-5">
@@ -249,5 +120,12 @@ defmodule DialecticWeb.DocumentMenuComp do
       <% end %>
     </div>
     """
+  end
+
+  defp action_button_classes do
+    [
+      "inline-flex h-9 items-center gap-2 rounded-[0.95rem] border border-transparent px-3 text-sm font-medium text-slate-600 transition duration-150",
+      "hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900"
+    ]
   end
 end

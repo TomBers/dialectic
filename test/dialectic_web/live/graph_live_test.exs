@@ -44,14 +44,12 @@ defmodule DialecticWeb.GraphLiveTest do
       graph = state.assigns.graph_struct
       node_id = Map.get(state.assigns.node, :id)
 
-      assert has_element?(view, "#document-menu-reader-switch-document-menu")
+      assert has_element?(view, "#graph-workspace-bar-reader")
 
       assert has_element?(
                view,
-               ~s(#document-menu-reader-switch-document-menu[href="/g/#{graph.slug}?node=#{node_id}"])
+               ~s(#graph-workspace-bar-reader[href="/g/#{graph.slug}?node=#{node_id}"])
              )
-
-      refute has_element?(view, "#grid-actions-body-document-menu [data-role='reader-view']")
     end
   end
 

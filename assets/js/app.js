@@ -216,6 +216,7 @@ hooks.GraphLayout = {
       : "serif";
     this._applyReadingDensity(this.readingDensity);
     this._applyReadingFont(this.readingFont);
+    this._closeAllPanels();
 
     this.el.addEventListener("set-reading-density", (e) => {
       const nextDensity = e?.detail?.value;
@@ -248,32 +249,17 @@ hooks.GraphLayout = {
       if (!root) return;
 
       const body = root.querySelector("[data-collapse-body]");
-      const openState = root.querySelector("[data-collapse-open-state]");
-      const closeState = root.querySelector("[data-collapse-close-state]");
+      const icon = root.querySelector("[data-collapse-icon]");
+      const trigger = root.querySelector("[data-collapse-trigger]");
       if (!body) return;
 
       body.classList.add("hidden");
-      if (openState && closeState) {
-        openState.classList.remove("hidden");
-        closeState.classList.add("hidden");
-      }
-
-      const storageKey = root.dataset.collapseKey;
-      if (!storageKey) return;
-
-      try {
-        localStorage.setItem(storageKey, "collapsed");
-      } catch (_e) {}
+      if (icon) icon.classList.remove("rotate-180");
+      if (trigger) trigger.setAttribute("aria-expanded", "false");
     });
 
     this.el.addEventListener("toggle-panel", (e) => {
       const { id } = e.detail;
-      const panels = [
-        "right-panel",
-        "highlights-drawer",
-        "presentation-drawer",
-        "combine-drawer",
-      ];
       const targetPanel = document.getElementById(id);
 
       if (!targetPanel) return;
@@ -303,35 +289,7 @@ hooks.GraphLayout = {
         }
       }
 
-      // Close all panels first
-      panels.forEach((pId) => {
-        const p = document.getElementById(pId);
-        if (p) {
-          p.classList.add(
-            "translate-x-full",
-            "opacity-0",
-            "w-0",
-            "overflow-hidden",
-          );
-          p.classList.remove(
-            "translate-x-0",
-            "opacity-100",
-            "w-full",
-            "sm:w-96",
-            "overflow-y-auto",
-          );
-        }
-
-        const btn = document.querySelector(`[data-panel-toggle="${pId}"]`);
-        if (btn) {
-          btn.classList.remove(
-            "ring-2",
-            "ring-offset-1",
-            "ring-white",
-            "scale-110",
-          );
-        }
-      });
+      this._closeAllPanels();
 
       // If a *different* panel is opening and the presentation drawer was open,
       // notify the server so it can leave setup mode.
@@ -518,6 +476,54 @@ hooks.GraphLayout = {
       }
     }
   },
+  _panelIds() {
+    return [
+      "right-panel",
+      "highlights-drawer",
+      "presentation-drawer",
+      "combine-drawer",
+    ];
+  },
+  _closeAllPanels() {
+    this._panelIds().forEach((panelId) => {
+      const panel = document.getElementById(panelId);
+      if (panel) {
+        panel.classList.add(
+          "translate-x-full",
+          "opacity-0",
+          "w-0",
+          "overflow-hidden",
+        );
+        panel.classList.remove(
+          "translate-x-0",
+          "opacity-100",
+          "w-full",
+          "sm:w-96",
+          "overflow-y-auto",
+        );
+      }
+
+      const btn = document.querySelector(`[data-panel-toggle="${panelId}"]`);
+      if (btn) {
+        btn.classList.remove(
+          "ring-2",
+          "ring-offset-1",
+          "ring-white",
+          "scale-110",
+        );
+      }
+    });
+
+    const elementsToShift = document.querySelectorAll(".shift-with-panel");
+    elementsToShift.forEach((el) => {
+      el.classList.remove("right-80", "sm:right-96");
+    });
+
+    const bottomMenu = document.getElementById("bottom-menu");
+    if (bottomMenu) bottomMenu.classList.remove("panel-open");
+
+    this.activePanelId = null;
+  },
   _applySideDrawerState(
     shouldOpen,
     { persist = true, dispatchResize = true } = {},
@@ -662,7 +668,10 @@ hooks.GraphLayout = {
       }
     }
 
-    if (!this.activePanelId) return;
+    if (!this.activePanelId) {
+      this._closeAllPanels();
+      return;
+    }
     const panel = document.getElementById(this.activePanelId);
     if (!panel) return;
 

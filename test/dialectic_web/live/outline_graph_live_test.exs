@@ -359,8 +359,8 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(view, "#outline-node-1")
     assert has_element?(view, "#outline-node-1[data-outline-selected='true']")
     assert has_element?(view, "#outline-mobile-node-1")
-    assert has_element?(view, "#reader-editor-link.hidden")
-    assert has_element?(view, "#reader-editor-link[data-view-transition='mode-switch']")
+    assert has_element?(view, "#reader-workspace-bar-graph")
+    assert has_element?(view, "#reader-workspace-bar-graph[data-view-transition='mode-switch']")
     assert has_element?(view, "#reading-node-1")
     assert has_element?(view, "#reading-node-2")
     assert has_element?(view, "#reading-node-1 span.bg-gray-900.text-gray-100", "Origin")
@@ -496,10 +496,10 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
 
     {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=2")
 
-    assert has_element?(view, "#reader-share-button")
+    assert has_element?(view, "#reader-workspace-bar-share")
 
     view
-    |> element("#reader-share-button")
+    |> element("#reader-workspace-bar-share")
     |> render_click()
 
     share_url = "#{DialecticWeb.Endpoint.url()}/g/#{graph.slug}?node=2"
@@ -507,6 +507,36 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(view, "#share-modal-hook")
     assert has_element?(view, ~s(#share-url-input[value="#{share_url}"]))
     refute render(view) =~ "Generating preview..."
+  end
+
+  test "reader search opens from the top bar and patches to the selected result", %{conn: conn} do
+    graph = create_graph()
+
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=2")
+
+    assert has_element?(view, "#reader-workspace-bar-search")
+
+    view
+    |> element("#reader-workspace-bar-search")
+    |> render_click()
+
+    assert has_element?(view, "#outline-quick-search-panel")
+
+    view
+    |> element("#outline-quick-search-form")
+    |> render_change(%{"search_term" => "biologically"})
+
+    assert has_element?(
+             view,
+             "#outline-search-result-4",
+             "Could archetypes be explained biologically?"
+           )
+
+    view
+    |> element("#outline-search-result-4")
+    |> render_click()
+
+    assert_patch(view, ~p"/g/#{graph.slug}?node=4")
   end
 
   test "reader renders a highlights drawer toggle with the current count", %{conn: conn} do
@@ -526,8 +556,8 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
 
     {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=4")
 
-    assert has_element?(view, "#reader-highlights-button")
-    assert has_element?(view, "#reader-highlights-button", "1")
+    assert has_element?(view, "#reader-workspace-bar-highlights")
+    assert has_element?(view, "#reader-workspace-bar-highlights", "1")
     assert render(view) =~ "Reading key"
     assert render(view) =~ "Highlights"
   end

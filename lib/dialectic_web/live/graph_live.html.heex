@@ -66,17 +66,57 @@
     </div>
   <% end %>
 
-  <%!-- Document-level menu in top-right (hidden during presentation) --%>
+  <%!-- Shared workspace header (hidden during presentation) --%>
   <%= if @presentation_mode != :presenting do %>
-    <.live_component
-      module={DialecticWeb.DocumentMenuComp}
-      id="document-menu"
-      graph_id={@graph_id}
-      graph_struct={@graph_struct}
-      node={@node}
-      can_edit={@can_edit}
-      token={@token}
-    />
+    <div class="relative z-[80] flex-none border-b border-slate-200/90 bg-white/97 shadow-[0_16px_32px_-30px_rgba(15,23,42,0.28)] backdrop-blur-lg">
+      <div class="px-4 py-3 sm:px-6 lg:px-8">
+        <div class="grid gap-2.5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-2.5">
+              <span class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
+                <.icon name="hero-squares-2x2" class="h-3.5 w-3.5" /> Graph
+              </span>
+
+              <h1 class="text-[1.7rem] font-semibold tracking-tight text-slate-950 sm:text-[1.9rem]">
+                {@graph_struct.title}
+              </h1>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2 lg:justify-self-end">
+            <DialecticWeb.WorkspaceBarComp.workspace_bar
+              id="graph-workspace-bar"
+              mode={:graph}
+              graph_struct={@graph_struct}
+              node_id={Map.get(@node || %{}, :id)}
+              nav_params={if(@token, do: [token: @token], else: [])}
+              show_search
+              search_click="open_search_overlay_click"
+              highlights_click={
+                JS.dispatch("toggle-panel",
+                  to: "#graph-layout",
+                  detail: %{id: "highlights-drawer"}
+                )
+              }
+              highlights_count={length(@highlights)}
+              highlights_panel_id="highlights-drawer"
+              share_click="open_share_modal"
+            />
+
+            <.live_component
+              module={DialecticWeb.DocumentMenuComp}
+              id="document-menu"
+              graph_id={@graph_id}
+              graph_struct={@graph_struct}
+              node={@node}
+              can_edit={@can_edit}
+              token={@token}
+              layout_target="#graph-layout"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
   <% end %>
 
   <.live_component
@@ -115,118 +155,10 @@
       end
     }
   />
-
-  <%= if @graph_id do %>
-    <!-- Presentation Drawer (Right panel style, same as other panels) -->
-    <div
-      id="presentation-drawer"
-      data-right-drawer
-      class="fixed top-10 bottom-0 right-0 w-0 overflow-hidden bg-white border-l border-gray-200 z-50 transform translate-x-full opacity-0 transition-all duration-300 ease-in-out"
-    >
-      <.live_component
-        module={DialecticWeb.PresentationComp}
-        id="presentation-setup"
-        mode={if @presentation_mode in [:setup, :presenting], do: :setup, else: :off}
-        slides={slides}
-        presentation_title={@presentation_title}
-      />
-    </div>
-    
-<!-- Combine Drawer (Right panel style, same as other panels) -->
-    <div
-      id="combine-drawer"
-      data-right-drawer
-      class="fixed top-10 bottom-0 right-0 w-0 overflow-hidden bg-white border-l border-gray-200 z-50 transform translate-x-full opacity-0 transition-all duration-300 ease-in-out"
-    >
-      <.live_component
-        module={DialecticWeb.CombineSetupComp}
-        id="combine-setup"
-        mode={@combine_mode}
-        selected_nodes={@combine_selected_nodes}
-      />
-    </div>
-    
-<!-- Top section (Right panel becomes slide-in drawer) -->
-    <div
-      id="right-panel"
-      data-right-drawer
-      class="fixed top-10 bottom-0 right-0 w-0 overflow-hidden bg-white border-l border-gray-200 z-50 transform translate-x-full opacity-0 transition-all duration-300 ease-in-out"
-    >
-      <div class="p-2">
-        <div class="flex items-center justify-between mb-2 px-1">
-          <h2 class="text-sm font-semibold text-gray-900">Controls</h2>
-          <button
-            type="button"
-            phx-click={
-              JS.dispatch("toggle-panel", to: "#graph-layout", detail: %{id: "right-panel"})
-            }
-            class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50"
-            aria-label="Close right panel"
-            title="Close panel"
-          >
-            <.icon name="hero-x-mark" class="w-4 h-4" />
-          </button>
-        </div>
-        <.live_component
-          module={DialecticWeb.SettingsMenuComp}
-          id="settings-menu"
-          graph_id={@graph_id}
-          node={@node}
-          work_streams={@work_streams}
-          current_user={@current_user}
-          graph_struct={@graph_struct}
-          search_term={@search_term}
-          search_results={@search_results}
-          group_states={@group_states}
-          highlights={@highlights}
-          prompt_mode={@prompt_mode}
-          token={@token}
-        />
-      </div>
-    </div>
-    
-<!-- Highlights Drawer (Right panel style) -->
-    <div
-      id="highlights-drawer"
-      data-right-drawer
-      class="fixed top-0 bottom-0 right-0 w-0 overflow-hidden bg-white border-l border-gray-200 z-50 transform translate-x-full opacity-0 transition-all duration-300 ease-in-out"
-    >
-      <div class="px-2 pb-2 pt-10">
-        <div class="flex items-center justify-between mb-2 px-1">
-          <div>
-            <h2 class="text-sm font-semibold text-gray-900">Highlights</h2>
-            <p class="text-[11px] text-gray-500">
-              Jump back or add a note.
-            </p>
-          </div>
-          <button
-            type="button"
-            phx-click={
-              JS.dispatch("toggle-panel", to: "#graph-layout", detail: %{id: "highlights-drawer"})
-            }
-            class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50"
-            aria-label="Close highlights panel"
-            title="Close panel"
-          >
-            <.icon name="hero-x-mark" class="w-4 h-4" />
-          </button>
-        </div>
-        <.live_component
-          module={DialecticWeb.HighlightsPanelComp}
-          id="highlights-panel"
-          highlights={@highlights}
-          current_user={@current_user}
-          graph_struct={@graph_struct}
-          graph_id={@graph_id}
-          visible_node_ids={if(@node, do: [@node.id], else: [])}
-        />
-      </div>
-    </div>
-  <% end %>
   
 <!-- Main content with drawer menu -->
   <div class={[
-    "flex-1 min-h-0 flex",
+    "relative z-0 flex-1 min-h-0 flex",
     if(@presentation_mode == :presenting,
       do:
         "flex-col lg:flex-row gap-0 bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.12),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(14,165,233,0.10),_transparent_38%),linear-gradient(180deg,_#f8fafc_0%,_#eef2ff_100%)] pt-14"
@@ -253,12 +185,14 @@
             streaming={@node && MapSet.member?(@streaming_nodes, @node.id)}
             live_view_topic={@live_view_topic}
             graph_id={@graph_id}
+            graph_struct={@graph_struct}
             graph_owner_id={@graph_struct && @graph_struct.user_id}
             current_user={@current_user}
             ask_question={@ask_question}
             exploration_stats={@exploration_stats}
             can_edit={@can_edit}
             presentation_mode={@presentation_mode}
+            token={@token}
           />
         </div>
       </div>
@@ -416,6 +350,119 @@
         </div>
       </.modal>
     </div>
+
+    <%= if @graph_id do %>
+      <div
+        id="presentation-drawer"
+        data-right-drawer
+        class="absolute inset-y-0 right-0 z-50 w-0 overflow-hidden border-l border-gray-200 bg-white opacity-0 transform translate-x-full transition-all duration-300 ease-in-out"
+      >
+        <.live_component
+          module={DialecticWeb.PresentationComp}
+          id="presentation-setup"
+          mode={if @presentation_mode in [:setup, :presenting], do: :setup, else: :off}
+          slides={slides}
+          presentation_title={@presentation_title}
+        />
+      </div>
+
+      <div
+        id="combine-drawer"
+        data-right-drawer
+        class="absolute inset-y-0 right-0 z-50 w-0 overflow-hidden border-l border-gray-200 bg-white opacity-0 transform translate-x-full transition-all duration-300 ease-in-out"
+      >
+        <.live_component
+          module={DialecticWeb.CombineSetupComp}
+          id="combine-setup"
+          mode={@combine_mode}
+          selected_nodes={@combine_selected_nodes}
+        />
+      </div>
+
+      <div
+        id="right-panel"
+        data-right-drawer
+        class="absolute inset-y-0 right-0 z-50 w-0 overflow-hidden border-l border-gray-200 bg-white opacity-0 transform translate-x-full transition-all duration-300 ease-in-out"
+      >
+        <div class="p-2">
+          <div class="mb-2 flex items-start justify-between px-1">
+            <div>
+              <h2 class="text-sm font-semibold text-gray-900">Workspace settings</h2>
+              <p class="text-[11px] text-gray-500">
+                Display, export, sharing, and language tools.
+              </p>
+            </div>
+            <button
+              type="button"
+              phx-click={
+                JS.dispatch("toggle-panel", to: "#graph-layout", detail: %{id: "right-panel"})
+              }
+              class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50"
+              aria-label="Close right panel"
+              title="Close panel"
+            >
+              <.icon name="hero-x-mark" class="w-4 h-4" />
+            </button>
+          </div>
+          <.live_component
+            module={DialecticWeb.SettingsMenuComp}
+            id="settings-menu"
+            graph_id={@graph_id}
+            node={@node}
+            work_streams={@work_streams}
+            current_user={@current_user}
+            graph_struct={@graph_struct}
+            search_term={@search_term}
+            search_results={@search_results}
+            group_states={@group_states}
+            highlights={@highlights}
+            prompt_mode={@prompt_mode}
+            token={@token}
+          />
+        </div>
+      </div>
+
+      <div
+        id="highlights-drawer"
+        data-right-drawer
+        class="absolute inset-y-0 right-0 z-50 w-0 overflow-hidden border-l border-gray-200 bg-white opacity-0 transform translate-x-full transition-all duration-300 ease-in-out"
+      >
+        <div class="px-2 pb-2 pt-3">
+          <div class="mb-2 flex items-center justify-between px-1">
+            <div>
+              <h2 class="text-sm font-semibold text-gray-900">Highlights</h2>
+              <p class="text-[11px] text-gray-500">
+                Jump back or add a note.
+              </p>
+            </div>
+            <button
+              type="button"
+              phx-click={
+                JS.dispatch(
+                  "toggle-panel",
+                  to: "#graph-layout",
+                  detail: %{id: "highlights-drawer"}
+                )
+              }
+              class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50"
+              aria-label="Close highlights panel"
+              title="Close panel"
+            >
+              <.icon name="hero-x-mark" class="w-4 h-4" />
+            </button>
+          </div>
+          <.live_component
+            module={DialecticWeb.HighlightsPanelComp}
+            id="highlights-panel"
+            highlights={@highlights}
+            current_user={@current_user}
+            graph_struct={@graph_struct}
+            graph_id={@graph_id}
+            visible_node_ids={if(@node, do: [@node.id], else: [])}
+          />
+        </div>
+      </div>
+    <% end %>
     
 <!-- Toggle button for drawer -->
 

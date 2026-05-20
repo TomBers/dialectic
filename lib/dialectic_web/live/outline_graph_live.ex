@@ -162,6 +162,58 @@ defmodule DialecticWeb.OutlineGraphLive do
   end
 
   @impl true
+  def handle_event("search_nodes", params, socket) do
+    search_term =
+      params["search_term"]
+      |> to_string()
+      |> String.trim()
+
+    {:noreply,
+     socket
+     |> assign(search_term: search_term)
+     |> assign(search_results: search_reader_nodes(socket.assigns.graph_id, search_term))}
+  end
+
+  @impl true
+  def handle_event("open_search_overlay_click", _params, socket) do
+    {:noreply, assign(socket, show_search_overlay: true)}
+  end
+
+  @impl true
+  def handle_event("open_search_overlay", params, socket) do
+    meta = params["metaKey"] in [true, "true"]
+    cmd = params["cmdKey"] in [true, "true"]
+    editable = params["isEditable"] in [true, "true"]
+
+    if (meta || cmd) && !editable do
+      {:noreply, assign(socket, show_search_overlay: true)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  @impl true
+  def handle_event("close_search_overlay", _params, socket) do
+    {:noreply, clear_reader_search(socket)}
+  end
+
+  @impl true
+  def handle_event("search_result_clicked", %{"id" => node_id}, socket) do
+    socket =
+      socket
+      |> clear_reader_search()
+      |> then(fn current_socket ->
+        if current_socket.assigns.selected_node_id == node_id do
+          push_event(current_socket, "scroll_to_top", %{})
+        else
+          navigate_to_node(current_socket, node_id)
+        end
+      end)
+
+    {:noreply, socket}
+  end
+
+  @impl true
   def handle_event("restore_presentation", _params, socket), do: {:noreply, socket}
 
   @impl true
@@ -224,6 +276,9 @@ defmodule DialecticWeb.OutlineGraphLive do
       compare_context: nil,
       compare_branches: [],
       show_share_modal: false,
+      show_search_overlay: false,
+      search_term: "",
+      search_results: [],
       highlights: highlights,
       page_title: graph_db.title,
       page_description: description,
@@ -333,6 +388,75 @@ defmodule DialecticWeb.OutlineGraphLive do
     push_event(socket, "highlights_loaded", %{
       highlights: serialize_highlights(socket.assigns.highlights || [])
     })
+  end
+
+  defp clear_reader_search(socket) do
+    assign(socket, show_search_overlay: false, search_term: "", search_results: [])
+  end
+
+  defp search_reader_nodes(_graph_id, ""), do: []
+
+  defp search_reader_nodes(graph_id, search_term) do
+    term = String.downcase(search_term)
+
+    graph_id
+    |> GraphManager.vertices()
+    |> Enum.reduce([], fn vertex_id, acc ->
+      case GraphManager.vertex_label(graph_id, vertex_id) do
+        %{} = node ->
+          if visible_node?(node) do
+            enriched_node = enrich_node(node)
+
+            if reader_search_match?(enriched_node, term) do
+              [
+                {reader_search_rank(enriched_node, term), sort_key(enriched_node.id),
+                 enriched_node}
+                | acc
+              ]
+            else
+              acc
+            end
+          else
+            acc
+          end
+
+        _ ->
+          acc
+      end
+    end)
+    |> Enum.sort_by(fn {rank, sort_id, _node} -> {rank, sort_id} end)
+    |> Enum.map(fn {_rank, _sort_id, node} -> node end)
+    |> Enum.take(10)
+  end
+
+  defp reader_search_match?(node, term) do
+    reader_search_blob(node)
+    |> String.downcase()
+    |> String.contains?(term)
+  end
+
+  defp reader_search_rank(node, term) do
+    title = node.full_title |> to_string() |> String.downcase()
+    body = reader_search_blob(node) |> String.downcase()
+
+    cond do
+      title == term -> {0, 0}
+      String.starts_with?(title, term) -> {0, 1}
+      String.contains?(title, term) -> {0, 2}
+      body == term -> {1, 0}
+      String.contains?(body, term) -> {1, 1}
+      true -> {2, 0}
+    end
+  end
+
+  defp reader_search_blob(node) do
+    [
+      node.full_title,
+      node.body_content,
+      Map.get(node, :content, "")
+    ]
+    |> Enum.map(&to_string/1)
+    |> Enum.join("\n")
   end
 
   defp maybe_scroll_to_highlight(socket, highlight_id)
