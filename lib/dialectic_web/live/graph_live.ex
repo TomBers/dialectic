@@ -1,5 +1,33 @@
 defmodule DialecticWeb.GraphLive do
   use DialecticWeb, :live_view
+
+  # =========================================================================
+  # Critical Thinking Tools Configuration
+  # =========================================================================
+  # Maps tool names to their GraphActions function names and whether they support text selection
+  @critical_thinking_tools %{
+    clarify: %{function: :clarify, text_function: :clarify_text, supports_text: true},
+    assumptions: %{function: :assumptions, text_function: :assumptions_text, supports_text: true},
+    counterexample: %{
+      function: :counterexample,
+      text_function: :counterexample_text,
+      supports_text: true
+    },
+    implications: %{
+      function: :implications,
+      text_function: :implications_text,
+      supports_text: true
+    },
+    blind_spots: %{function: :blind_spots, text_function: :blind_spots_text, supports_text: true},
+    says_who: %{function: :says_who, text_function: :says_who_text, supports_text: true},
+    who_disagrees: %{
+      function: :who_disagrees,
+      text_function: :who_disagrees_text,
+      supports_text: true
+    },
+    steel_man: %{function: :steel_man, text_function: :steel_man_text, supports_text: true},
+    what_if: %{function: :what_if, text_function: :what_if_text, supports_text: true}
+  }
   use DialecticWeb.GraphStreaming, preload_highlight_links: true
 
   alias Dialectic.Graph.{Vertex, GraphActions, Siblings}
@@ -545,17 +573,36 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_event("node_deepdive", %{"id" => node_id}, socket) do
-    if !socket.assigns.can_edit do
-      {:noreply, socket |> put_flash(:error, "This graph is locked")}
-    else
-      node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+  # =========================================================================
+  # Advanced Tools — Cluster 1: Core Inquiry Moves
+  # =========================================================================
 
-      update_graph(
-        socket,
-        {nil, GraphActions.deepdive(graph_action_params(socket, node))},
-        "deepdive"
-      )
+  # =========================================================================
+  # Critical Thinking Tools - Generic Handler
+  # =========================================================================
+
+  @doc """
+  Generic handler for all critical thinking tool actions on nodes.
+
+  Handles events like "node_clarify", "node_assumptions", etc. by:
+  1. Checking if the graph is editable
+  2. Finding the target node
+  3. Calling the appropriate GraphActions function
+  4. Updating the graph with the result
+
+  ## Parameters
+  - event_name: String like "node_clarify", "node_assumptions", etc.
+  - params: Map containing "id" (node_id)
+  - socket: LiveView socket
+
+  ## Returns
+  - `{:noreply, socket}` with updated graph or error flash
+  """
+  for {tool_name, _config} <- @critical_thinking_tools do
+    tool_string = Atom.to_string(tool_name)
+
+    def handle_event("node_" <> unquote(tool_string), %{"id" => node_id}, socket) do
+      apply_critical_thinking_tool(unquote(tool_name), node_id, socket)
     end
   end
 
@@ -1597,6 +1644,33 @@ defmodule DialecticWeb.GraphLive do
     update_graph(socket, {nil, comment_node}, "user")
   end
 
+  # Advanced Critical Thinking Tools for Text Selection
+
+  # =========================================================================
+  # Critical Thinking Tools - Text Selection Actions (Generic)
+  # =========================================================================
+
+  for {tool_name, _config} <- @critical_thinking_tools do
+    defp handle_selection_action(
+           unquote(tool_name),
+           selected_text,
+           node_id,
+           offsets,
+           existing_highlight,
+           _extra,
+           socket
+         ) do
+      apply_critical_thinking_tool_to_text(
+        unquote(tool_name),
+        selected_text,
+        node_id,
+        offsets,
+        existing_highlight,
+        socket
+      )
+    end
+  end
+
   defp create_pending_highlight_links(socket) do
     highlight_id = socket.assigns[:pending_link_highlight_id]
     parent_id = socket.assigns[:pending_link_parent_id]
@@ -1744,6 +1818,144 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
+  # =========================================================================
+  # Critical Thinking Tools - Helper Functions
+  # =========================================================================
+
+  # Applies a critical thinking tool to a node with proper error handling.
+  #
+  # ## Parameters
+  # - tool: Atom representing the tool (e.g., :clarify, :assumptions)
+  # - node_id: String ID of the target node
+  # - socket: LiveView socket
+  #
+  # ## Returns
+  # - `{:noreply, socket}` with updated graph or error flash
+  #
+  # ## Error Handling
+  # - Returns error flash if graph is locked (can_edit is false)
+  # - Returns error flash if node is not found
+  # - Handles nil results from GraphActions gracefully
+  defp apply_critical_thinking_tool(tool, node_id, socket) do
+    with :ok <- validate_can_edit(socket),
+         {:ok, node} <- find_node_safe(socket.assigns.graph_id, node_id),
+         {:ok, tool_config} <- get_tool_config(tool),
+         {:ok, result_node} <- apply_graph_action(tool_config, socket, node) do
+      update_graph(socket, {nil, result_node}, Atom.to_string(tool))
+    else
+      {:error, :locked} ->
+        {:noreply, put_flash(socket, :error, "This graph is locked")}
+
+      {:error, :node_not_found} ->
+        {:noreply, put_flash(socket, :error, "Node not found")}
+
+      {:error, :tool_not_found} ->
+        {:noreply, put_flash(socket, :error, "Unknown tool")}
+
+      {:error, :action_failed} ->
+        {:noreply, put_flash(socket, :error, "Failed to apply tool")}
+    end
+  end
+
+  # Applies a critical thinking tool to selected text with proper error handling.
+  #
+  # ## Parameters
+  # - tool: Atom representing the tool (e.g., :clarify, :assumptions)
+  # - selected_text: String of text to analyze
+  # - node_id: String ID of the parent node
+  # - offsets: Map with text selection offsets
+  # - existing_highlight: Existing highlight struct or nil
+  # - socket: LiveView socket
+  #
+  # ## Returns
+  # - Updated socket with new node and highlight links
+  #
+  # ## Validation
+  # - Validates selected_text is non-empty
+  # - Checks if tool supports text selection
+  # - Creates highlight and links to new node
+  defp apply_critical_thinking_tool_to_text(
+         tool,
+         selected_text,
+         node_id,
+         offsets,
+         existing_highlight,
+         socket
+       ) do
+    with :ok <- validate_selected_text(selected_text),
+         {:ok, node} <- find_node_safe(socket.assigns.graph_id, node_id),
+         {:ok, tool_config} <- get_tool_config(tool),
+         :ok <- validate_tool_supports_text(tool_config),
+         {:ok, result_node} <-
+           apply_text_graph_action(tool_config, socket, node, selected_text) do
+      highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
+
+      if result_node && highlight do
+        Highlights.add_link(highlight.id, result_node.id, Atom.to_string(tool))
+      end
+
+      update_graph(socket, {nil, result_node}, Atom.to_string(tool))
+    else
+      {:error, :empty_text} ->
+        {:noreply, put_flash(socket, :error, "Please select some text")}
+
+      {:error, :node_not_found} ->
+        {:noreply, put_flash(socket, :error, "Node not found")}
+
+      {:error, :tool_not_found} ->
+        {:noreply, put_flash(socket, :error, "Unknown tool")}
+
+      {:error, :text_not_supported} ->
+        {:noreply, put_flash(socket, :error, "This tool does not support text selection")}
+
+      {:error, :action_failed} ->
+        {:noreply, put_flash(socket, :error, "Failed to apply tool to text")}
+    end
+  end
+
+  # Validation helpers
+
+  defp validate_can_edit(%{assigns: %{can_edit: true}}), do: :ok
+  defp validate_can_edit(_socket), do: {:error, :locked}
+
+  defp validate_selected_text(text) when is_binary(text) and byte_size(text) > 0, do: :ok
+  defp validate_selected_text(_), do: {:error, :empty_text}
+
+  defp validate_tool_supports_text(%{supports_text: true}), do: :ok
+  defp validate_tool_supports_text(_), do: {:error, :text_not_supported}
+
+  defp find_node_safe(graph_id, node_id) do
+    case GraphActions.find_node(graph_id, node_id) do
+      nil -> {:error, :node_not_found}
+      node -> {:ok, node}
+    end
+  end
+
+  defp get_tool_config(tool) do
+    case Map.fetch(@critical_thinking_tools, tool) do
+      {:ok, config} -> {:ok, config}
+      :error -> {:error, :tool_not_found}
+    end
+  end
+
+  defp apply_graph_action(%{function: func}, socket, node) do
+    result = apply(GraphActions, func, [graph_action_params(socket, node)])
+
+    case result do
+      nil -> {:error, :action_failed}
+      node -> {:ok, node}
+    end
+  end
+
+  defp apply_text_graph_action(%{text_function: text_func}, socket, node, selected_text) do
+    result = apply(GraphActions, text_func, [graph_action_params(socket, node), selected_text])
+
+    case result do
+      nil -> {:error, :action_failed}
+      node -> {:ok, node}
+    end
+  end
+
   defp graph_action_params(socket, node \\ nil) do
     GraphHelpers.graph_action_params(socket, node)
   end
@@ -1866,7 +2078,16 @@ defmodule DialecticWeb.GraphLive do
              "combine",
              "ideas",
              "explain",
-             "deepdive"
+             # Critical thinking tools
+             "clarify",
+             "assumptions",
+             "counterexample",
+             "implications",
+             "blind_spots",
+             "says_who",
+             "who_disagrees",
+             "steel_man",
+             "what_if"
            ] &&
              node && Map.get(node, :id) do
           push_event(s, "center_node", %{id: node.id})
@@ -1895,7 +2116,16 @@ defmodule DialecticWeb.GraphLive do
          "combine",
          "ideas",
          "explain",
-         "deepdive"
+         # Critical thinking tools
+         "clarify",
+         "assumptions",
+         "counterexample",
+         "implications",
+         "blind_spots",
+         "says_who",
+         "who_disagrees",
+         "steel_man",
+         "what_if"
        ] do
       PubSub.broadcast(
         Dialectic.PubSub,
