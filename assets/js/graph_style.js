@@ -651,15 +651,59 @@ export function graphStyle(viewMode = "spaced") {
     selector: "node.presentation-slide",
     style: {
       "underlay-color": "#a855f7", // purple-500
-      "underlay-opacity": 0.18,
-      "underlay-padding": isCompact ? 10 : 14,
+      "underlay-opacity": 0.05,
+      "underlay-padding": isCompact ? 6 : 10,
       "underlay-shape": "roundrectangle",
-      "border-width": isCompact ? 3 : 4,
-      "border-color": "#a855f7",
+      "border-width": isCompact ? 2 : 3,
+      "border-color": "#c084fc",
       "border-style": "solid",
-      "transition-property": "underlay-opacity, border-width, border-color",
+      "background-color": "#fffefc",
+      "font-size": isCompact ? 10 : 16,
+      "font-weight": isCompact ? 500 : 575,
+      color: "#1e293b",
+      "line-height": isCompact ? 1.2 : 1.3,
+      "ghost-opacity": 0.12,
+      "transition-property":
+        "underlay-opacity, underlay-padding, border-width, border-color, background-color, font-size",
       "transition-duration": "200ms",
       "transition-timing-function": "ease-in-out-quad",
+    },
+  });
+
+  base_style.push({
+    selector: "node.presentation-slide.selected",
+    style: {
+      "underlay-opacity": 0.18,
+      "underlay-padding": isCompact ? 10 : 16,
+      "border-width": isCompact ? 3 : 4.5,
+      "border-color": "#7c3aed",
+      "background-color": "#eef5ff",
+      "ghost-opacity": 0.2,
+    },
+  });
+
+  base_style.push({
+    selector: "edge.presentation-edge",
+    style: {
+      width: isCompact ? 0.9 : 1.15,
+      "line-color": "#94a3b8",
+      "target-arrow-color": "#94a3b8",
+      "arrow-scale": isCompact ? 0.52 : 0.7,
+      opacity: 0.26,
+      "transition-property": "line-color target-arrow-color width opacity",
+      "transition-duration": "180ms",
+      "transition-timing-function": "ease-in-out-quad",
+    },
+  });
+
+  base_style.push({
+    selector: "edge.presentation-edge-active",
+    style: {
+      width: isCompact ? 1.4 : 2,
+      "line-color": "#6366f1",
+      "target-arrow-color": "#6366f1",
+      "arrow-scale": isCompact ? 0.6 : 0.85,
+      opacity: 0.62,
     },
   });
 

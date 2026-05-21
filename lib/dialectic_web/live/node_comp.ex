@@ -28,28 +28,30 @@ defmodule DialecticWeb.NodeComp do
        cut_off: Map.get(assigns, :cut_off, 500),
        ask_question: Map.get(assigns, :ask_question, true),
        graph_id: Map.get(assigns, :graph_id, ""),
+       graph_struct: Map.get(assigns, :graph_struct, nil),
        graph_owner_id: Map.get(assigns, :graph_owner_id, nil),
        current_user: Map.get(assigns, :current_user, nil),
        can_edit: Map.get(assigns, :can_edit, true),
        menu_visible: Map.get(assigns, :menu_visible, true),
        streaming: Map.get(assigns, :streaming, false),
        exploration_stats: Map.get(assigns, :exploration_stats, nil),
-       presentation_mode: Map.get(assigns, :presentation_mode, :off)
+       presentation_mode: Map.get(assigns, :presentation_mode, :off),
+       token: Map.get(assigns, :token, nil)
      )}
   end
 
   @impl true
   def render(assigns) do
     ~H"""
-    <div>
+    <div class="h-full min-h-0">
       <div
         id={"node-menu-" <> @node_id}
-        class="flex flex-col relative"
+        class="relative flex h-full min-h-0 flex-col"
         phx-hook="TextSelectionHook"
         data-node-id={@node.id}
         data-mudg-id={@graph_id}
         data-streaming={to_string(@streaming)}
-        style="max-height: 100vh; display: flex; flex-direction: column; padding-bottom: env(safe-area-inset-bottom);"
+        style="height: 100%; padding-bottom: env(safe-area-inset-bottom);"
       >
         <%= if @node.id == "start" do %>
           <.live_component module={DialecticWeb.StartTutorialComp} id="start-tutorial" />
@@ -57,7 +59,10 @@ defmodule DialecticWeb.NodeComp do
           <%!-- Thread View (Ancestor Chain) — hidden for now, revisit when full breadcrumb is implemented --%>
 
           <div
-            class={"flex-grow overflow-auto scroll-smooth pt-3 pb-12 px-3 sm:px-5 lg:px-6 " <> if(String.length(@node.content) == 0, do: "hidden", else: "")}
+            class={[
+              "min-h-0 flex-1 overflow-y-auto scroll-smooth px-3 pb-12 pt-3 sm:px-5 lg:px-6",
+              String.length(@node.content) == 0 && "hidden"
+            ]}
             id={"tt-node-" <> @node.id}
           >
             <div
@@ -135,27 +140,32 @@ defmodule DialecticWeb.NodeComp do
                       </span>
                     </h3>
                     <div
-                      class="selection-content w-full px-1 sm:px-2 pb-2"
+                      class="selection-content w-full px-1 pb-2 sm:px-2"
                       data-children={length(@node.children)}
                       id={"list-detector-" <> @node.id}
                     >
+                      <div class="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-600">
+                        <span class="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 font-medium text-amber-800 shadow-sm">
+                          <.icon name="hero-cursor-arrow-rays" class="h-3.5 w-3.5" />
+                          <span>Select text to ask a follow-up</span>
+                        </span>
+                        <span class="hidden text-xs text-slate-500 sm:inline">
+                          Select{" "}
+                          <span class="inline-block rounded-[0.2em] bg-amber-200/90 px-1 py-0.5 font-medium leading-none text-slate-900 shadow-[inset_0_-1px_0_rgba(120,53,15,0.18)]">
+                            word(s)
+                          </span>
+                          {" "}in the text, to explore that specific topic.
+                        </span>
+                      </div>
+
                       <div
                         phx-hook="Markdown"
+                        class="cursor-text selection:bg-amber-200/80 selection:text-slate-900"
                         id={"markdown-body-#{@node.id}"}
                         data-md={@node.content || ""}
                         data-body-only="true"
                       >
                       </div>
-                    </div>
-
-                    <div class="mt-2 flex items-start gap-2 rounded-xl border border-amber-200/80 bg-amber-50/80 px-3 py-2 text-sm text-amber-900">
-                      <.icon
-                        name="hero-cursor-arrow-rays"
-                        class="mt-0.5 h-4 w-4 shrink-0 text-amber-600"
-                      />
-                      <p class="leading-5">
-                        Highlight any word or phrase above to ask AI for a more specific answer.
-                      </p>
                     </div>
                   </article>
 

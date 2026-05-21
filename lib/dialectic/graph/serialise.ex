@@ -94,12 +94,22 @@ defmodule Dialectic.Graph.Serialise do
       :digraph.add_vertex(graph, Map.get(node, "id"), Vertex.deserialize(node))
     end)
 
-    # Add edges to the graph
-    Enum.each(Map.get(json, "edges"), fn edge ->
-      dat = Map.get(edge, "data")
+    # Add edges to the graph. Stored graph data is expected to be a DAG; skip
+    # dangling or cyclic edges so one corrupt user-added edge cannot wedge graph
+    # traversal in LiveViews or the GraphManager process.
+    Enum.each(Map.get(json, "edges", []), fn edge ->
+      dat = Map.get(edge, "data", %{})
       source = Map.get(dat, "source")
       target = Map.get(dat, "target")
-      :digraph.add_edge(graph, source, target)
+
+      with true <- is_binary(source) and is_binary(target),
+           {^source, _source_vertex} <- :digraph.vertex(graph, source),
+           {^target, _target_vertex} <- :digraph.vertex(graph, target),
+           false <- :digraph.get_short_path(graph, target, source) != false do
+        :digraph.add_edge(graph, source, target)
+      else
+        _ -> :ok
+      end
     end)
 
     graph

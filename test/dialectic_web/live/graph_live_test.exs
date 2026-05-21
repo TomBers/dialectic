@@ -16,6 +16,66 @@ defmodule DialecticWeb.GraphLiveTest do
     live(conn, ~p"/g/#{graph.slug}/graph?node=1")
   end
 
+  defp setup_live_for_graph(conn, graph_name) do
+    conn =
+      conn
+      |> log_in_user(
+        user_fixture(%{email: "tester-#{System.unique_integer([:positive])}@example.com"})
+      )
+
+    {:ok, graph} = Dialectic.GraphFixtures.insert_graph_fixture(graph_name)
+
+    live(conn, ~p"/g/#{graph.slug}/graph?node=1")
+  end
+
+  defp setup_live_with_data(conn, data) do
+    conn =
+      conn
+      |> log_in_user(
+        user_fixture(%{email: "searcher-#{System.unique_integer([:positive])}@example.com"})
+      )
+
+    graph =
+      Dialectic.GraphFixtures.insert_graph(%{
+        title: "Search Graph #{System.unique_integer([:positive])}",
+        data: data
+      })
+
+    live(conn, ~p"/g/#{graph.slug}/graph?node=1")
+  end
+
+  defp source_text_graph_data do
+    %{
+      "nodes" => [
+        %{
+          "id" => "1",
+          "content" => "# Shared memory",
+          "class" => "origin",
+          "user" => nil,
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false
+        },
+        %{
+          "id" => "2",
+          "content" => "Could biology still matter?",
+          "class" => "question",
+          "user" => nil,
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false,
+          "source_text" =>
+            "A laboratory paper mentions synaptic tagging and epigenetic priming in memory formation."
+        }
+      ],
+      "edges" => [
+        %{"data" => %{"id" => "1_2", "source" => "1", "target" => "2"}}
+      ]
+    }
+  end
+
   describe "mount/3" do
     test "assigns necessary values on mount with a current user", %{conn: conn} do
       {:ok, view, _html} = setup_live(conn)
@@ -32,14 +92,37 @@ defmodule DialecticWeb.GraphLiveTest do
       graph = state.assigns.graph_struct
       node_id = Map.get(state.assigns.node, :id)
 
-      assert has_element?(view, "#document-menu-reader-switch-document-menu")
+      assert has_element?(view, "#graph-workspace-bar-reader")
 
       assert has_element?(
                view,
-               ~s(#document-menu-reader-switch-document-menu[href="/g/#{graph.slug}?node=#{node_id}"])
+               ~s(#graph-workspace-bar-reader[href="/g/#{graph.slug}?node=#{node_id}"])
              )
+    end
+  end
 
-      refute has_element?(view, "#grid-actions-body-document-menu [data-role='reader-view']")
+  describe "search" do
+    test "grid search matches source text and renders a preview snippet", %{conn: conn} do
+      {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data())
+
+      view
+      |> element("#graph-workspace-bar-search")
+      |> render_click()
+
+      assert has_element?(view, "#quick-search-panel")
+
+      view
+      |> element("#quick-search-form")
+      |> render_change(%{"search_term" => "synaptic"})
+
+      assert has_element?(view, "#graph-search-result-2", "Could biology still matter?")
+      assert has_element?(view, "#graph-search-result-2", "Source")
+
+      assert has_element?(
+               view,
+               "#graph-search-result-2",
+               "synaptic tagging and epigenetic priming"
+             )
     end
   end
 
@@ -453,6 +536,55 @@ defmodule DialecticWeb.GraphLiveTest do
       assert state.presentation_title == "My Talk"
     end
 
+    test "presentation mode renders the stage, agenda, and navigation controls", %{conn: conn} do
+      {:ok, view, _html} = setup_live_for_graph(conn, "What is ethics?")
+
+      render_click(view, "enter_presentation_setup", %{})
+      render_click(view, "node_clicked", %{"id" => "1"})
+      render_click(view, "node_clicked", %{"id" => "2"})
+      render_click(view, "start_presenting", %{})
+
+      assert has_element?(view, "#presentation-stage")
+      assert has_element?(view, "#presentation-agenda")
+      assert has_element?(view, "#presentation-current-slide")
+      assert has_element?(view, "#presentation-next-slide")
+      assert has_element?(view, "#presentation-agenda-slide-1")
+      assert has_element?(view, "#presentation-agenda-slide-2")
+    end
+
+    test "presentation_go_to_slide updates the active node", %{conn: conn} do
+      {:ok, view, _html} = setup_live_for_graph(conn, "What is ethics?")
+
+      render_click(view, "enter_presentation_setup", %{})
+      render_click(view, "node_clicked", %{"id" => "1"})
+      render_click(view, "node_clicked", %{"id" => "2"})
+      render_click(view, "start_presenting", %{})
+      render_click(view, "presentation_go_to_slide", %{"node-id" => "2"})
+
+      state = :sys.get_state(view.pid).socket.assigns
+      assert state.node.id == "2"
+    end
+
+    test "presentation_step advances through the deck", %{conn: conn} do
+      {:ok, view, _html} = setup_live_for_graph(conn, "What is ethics?")
+
+      render_click(view, "enter_presentation_setup", %{})
+      render_click(view, "node_clicked", %{"id" => "1"})
+      render_click(view, "node_clicked", %{"id" => "2"})
+      render_click(view, "start_presenting", %{})
+
+      state = :sys.get_state(view.pid).socket.assigns
+      assert state.node.id == "1"
+
+      render_click(view, "presentation_step", %{"direction" => "next"})
+      state = :sys.get_state(view.pid).socket.assigns
+      assert state.node.id == "2"
+
+      render_click(view, "presentation_step", %{"direction" => "previous"})
+      state = :sys.get_state(view.pid).socket.assigns
+      assert state.node.id == "1"
+    end
+
     test "restore_presentation sets title and filters invalid node IDs", %{conn: conn} do
       {:ok, view, _html} = setup_live(conn)
 
@@ -500,6 +632,40 @@ defmodule DialecticWeb.GraphLiveTest do
 
       assert state.presentation_slide_ids == []
       assert state.presentation_title == ""
+    end
+
+    test "shared presentation URL preserves slide order", %{conn: conn} do
+      conn =
+        conn
+        |> log_in_user(
+          user_fixture(%{email: "shared-pres-#{System.unique_integer([:positive])}@example.com"})
+        )
+
+      {:ok, graph} = Dialectic.GraphFixtures.insert_graph_fixture("What is ethics?")
+
+      {:ok, view, _html} =
+        live(
+          conn,
+          ~p"/g/#{graph.slug}/graph?node=1&present=true&slides=1,3,2&title=Shared%20Deck"
+        )
+
+      state = :sys.get_state(view.pid).socket.assigns
+
+      assert state.presentation_mode == :presenting
+      assert state.presentation_title == "Shared Deck"
+      assert state.presentation_slide_ids == ["1", "3", "2"]
+
+      assert has_element?(view, "#presentation-agenda-slide-1")
+      assert has_element?(view, "#presentation-agenda-slide-3")
+      assert has_element?(view, "#presentation-agenda-slide-2")
+
+      html = render(view)
+      pos_1 = html |> :binary.match(~s(id="presentation-agenda-slide-1")) |> elem(0)
+      pos_3 = html |> :binary.match(~s(id="presentation-agenda-slide-3")) |> elem(0)
+      pos_2 = html |> :binary.match(~s(id="presentation-agenda-slide-2")) |> elem(0)
+
+      assert pos_1 < pos_3
+      assert pos_3 < pos_2
     end
 
     test "graph_owner_name is assigned on mount", %{conn: conn} do

@@ -5,10 +5,13 @@ defmodule DialecticWeb.OutlineGraphLive do
   alias Dialectic.Highlights
   alias Dialectic.Linear.ThreadedConv
   alias DialecticWeb.ColUtils
+  alias DialecticWeb.NodeSearch
   alias DialecticWeb.Utils.NodeTitleHelper
   alias Phoenix.PubSub
 
   require Logger
+
+  @max_outline_indent 4
 
   on_mount {DialecticWeb.UserAuth, :mount_current_user}
 
@@ -64,12 +67,14 @@ defmodule DialecticWeb.OutlineGraphLive do
   def handle_params(params, _uri, socket) do
     selected_node = resolve_target_node(socket.assigns.graph_id, params)
     previous_node_id = socket.assigns.selected_node_id
+    highlight_id = Map.get(params, "highlight")
 
     socket =
       socket
       |> assign_selected_node(selected_node)
       |> maybe_scroll_to_top(previous_node_id, selected_node)
       |> push_highlights()
+      |> maybe_scroll_to_highlight(highlight_id)
 
     {:noreply, socket}
   end
@@ -141,9 +146,82 @@ defmodule DialecticWeb.OutlineGraphLive do
   end
 
   @impl true
+  def handle_event("highlight_clicked", %{"id" => highlight_id, "node-id" => node_id}, socket) do
+    socket =
+      if MapSet.member?(socket.assigns.displayed_node_ids, node_id) do
+        push_event(socket, "scroll_to_highlight", %{id: highlight_id})
+      else
+        push_patch(socket, to: highlight_path(socket, node_id, highlight_id))
+      end
+
+    {:noreply, socket}
+  end
+
+  @impl true
   def handle_event("open_share_modal", _params, socket) do
     {:noreply, assign(socket, show_share_modal: true)}
   end
+
+  @impl true
+  def handle_event("search_nodes", params, socket) do
+    search_term =
+      (params["search_term"] || params["value"] || "")
+      |> to_string()
+      |> String.trim()
+
+    {:noreply,
+     socket
+     |> assign(search_term: search_term)
+     |> assign(search_results: search_reader_nodes(socket.assigns.graph_id, search_term))}
+  end
+
+  @impl true
+  def handle_event("open_search_overlay_click", _params, socket) do
+    {:noreply, assign(socket, show_search_overlay: true)}
+  end
+
+  @impl true
+  def handle_event("open_search_overlay", params, socket) do
+    meta = params["metaKey"] in [true, "true"]
+    cmd = params["cmdKey"] in [true, "true"]
+    editable = params["isEditable"] in [true, "true"]
+
+    if (meta || cmd) && !editable do
+      {:noreply, assign(socket, show_search_overlay: true)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  @impl true
+  def handle_event("close_search_overlay", _params, socket) do
+    {:noreply, clear_reader_search(socket)}
+  end
+
+  @impl true
+  def handle_event("search_result_clicked", %{"id" => node_id}, socket) do
+    socket =
+      socket
+      |> clear_reader_search()
+      |> then(fn current_socket ->
+        if current_socket.assigns.selected_node_id == node_id do
+          push_event(current_socket, "scroll_to_top", %{})
+        else
+          navigate_to_node(current_socket, node_id)
+        end
+      end)
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("restore_presentation", _params, socket), do: {:noreply, socket}
+
+  @impl true
+  def handle_event("close_presentation_setup", _params, socket), do: {:noreply, socket}
+
+  @impl true
+  def handle_event("close_combine_setup", _params, socket), do: {:noreply, socket}
 
   defp mount_graph(socket, graph_db, token_param) do
     {_graph_struct, graph} = GraphManager.get_graph(graph_db.title)
@@ -199,6 +277,9 @@ defmodule DialecticWeb.OutlineGraphLive do
       compare_context: nil,
       compare_branches: [],
       show_share_modal: false,
+      show_search_overlay: false,
+      search_term: "",
+      search_results: [],
       highlights: highlights,
       page_title: graph_db.title,
       page_description: description,
@@ -244,6 +325,7 @@ defmodule DialecticWeb.OutlineGraphLive do
       selected_node_id: nil,
       node: nil,
       selected_path: [],
+      selected_path_ids: MapSet.new(),
       displayed_node_ids: MapSet.new(),
       reading_chain: [],
       reading_terminal: nil,
@@ -276,10 +358,13 @@ defmodule DialecticWeb.OutlineGraphLive do
       |> Kernel.++(Enum.map(reading_chain, & &1.id))
       |> MapSet.new()
 
+    selected_path_ids = MapSet.new(Enum.map(selected_path, & &1.id))
+
     assign(socket,
       selected_node_id: selected_node.id,
       node: selected_node,
       selected_path: selected_path,
+      selected_path_ids: selected_path_ids,
       displayed_node_ids: displayed_node_ids,
       reading_chain: reading_chain,
       reading_terminal: reading_terminal,
@@ -305,6 +390,52 @@ defmodule DialecticWeb.OutlineGraphLive do
       highlights: serialize_highlights(socket.assigns.highlights || [])
     })
   end
+
+  defp clear_reader_search(socket) do
+    assign(socket, show_search_overlay: false, search_term: "", search_results: [])
+  end
+
+  defp search_reader_nodes(_graph_id, ""), do: []
+
+  defp search_reader_nodes(graph_id, search_term) do
+    try do
+      graph_id
+      |> GraphManager.vertices()
+      |> Enum.reduce([], fn vertex_id, acc ->
+        case GraphManager.vertex_label(graph_id, vertex_id) do
+          %{} = node ->
+            if visible_node?(node) do
+              case node |> enrich_node() |> NodeSearch.annotate_result(search_term) do
+                %{search_rank: rank} = enriched_node ->
+                  [{rank, sort_key(enriched_node.id), enriched_node} | acc]
+
+                nil ->
+                  acc
+              end
+            else
+              acc
+            end
+
+          _ ->
+            acc
+        end
+      end)
+      |> Enum.sort_by(fn {rank, sort_id, _node} -> {rank, sort_id} end)
+      |> Enum.map(fn {_rank, _sort_id, node} -> node end)
+      |> Enum.take(10)
+    rescue
+      _ -> []
+    catch
+      :exit, _reason -> []
+    end
+  end
+
+  defp maybe_scroll_to_highlight(socket, highlight_id)
+       when is_binary(highlight_id) and highlight_id != "" do
+    push_event(socket, "scroll_to_highlight", %{id: highlight_id})
+  end
+
+  defp maybe_scroll_to_highlight(socket, _highlight_id), do: socket
 
   defp resolve_target_node(graph_id, %{"node_id" => node_id})
        when is_binary(node_id) and node_id != "" do
@@ -662,8 +793,22 @@ defmodule DialecticWeb.OutlineGraphLive do
     end
   end
 
-  defp outline_indent_style(indent) do
-    "padding-left: #{0.75 + indent * 1.1}rem;"
+  defp highlight_path(socket, node_id, highlight_id) do
+    graph_path(
+      socket.assigns.graph_struct,
+      node_id,
+      Keyword.put(socket.assigns.nav_params, :highlight, highlight_id)
+    )
+  end
+
+  defp outline_indent_style(indent, step \\ 0.45) do
+    visible_indent = min(max(indent, 0), @max_outline_indent)
+    "padding-left: #{0.75 + visible_indent * step}rem;"
+  end
+
+  defp outline_indent_guides(indent) do
+    visible_indent = min(max(indent, 0), @max_outline_indent)
+    List.duplicate(:guide, visible_indent)
   end
 
   defp sort_key(id) do

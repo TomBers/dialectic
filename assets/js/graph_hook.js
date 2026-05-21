@@ -294,6 +294,10 @@ const graphHook = {
       initialPresentationMode === "presenting" && initialPresentationIds.length > 0
         ? this._buildPresentationElements(initialPresentationIds, graph)
         : this._parseGraphElements(graph);
+    const initialDrawOptions =
+      initialPresentationMode === "presenting" && initialPresentationIds.length > 0
+        ? { skipInitialLayout: true }
+        : {};
 
     this.cy = draw_graph(
       container,
@@ -302,6 +306,7 @@ const graphHook = {
       node,
       viewMode,
       graphId,
+      initialDrawOptions,
     );
 
     // Track view mode and direction for detecting changes
@@ -320,6 +325,7 @@ const graphHook = {
       initialPresentationMode,
       initialPresentationIds,
     );
+    this._scheduleFontAwareRedraw();
 
     // Initial update
     this._updateExploredStatus();
@@ -385,10 +391,12 @@ const graphHook = {
     // point, so start as true. A one-shot layoutstop listener flips it back
     // once the initial layout finishes. This ensures that deferred operations
     // (e.g. presentation_filter_graph from a shared link) wait correctly.
-    this._layoutRunning = true;
-    this.cy.one("layoutstop", () => {
-      this._layoutRunning = false;
-    });
+    this._layoutRunning = initialDrawOptions.skipInitialLayout !== true;
+    if (this._layoutRunning) {
+      this.cy.one("layoutstop", () => {
+        this._layoutRunning = false;
+      });
+    }
     this._pendingCenterId = null;
     this._centerOnNodeVisible = (id) => {
       try {
@@ -469,13 +477,49 @@ const graphHook = {
     const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
     this._zoomToast = this._zoomToast || null;
     this._zoomToastTimer = this._zoomToastTimer || null;
+    const zoomSettings = layoutConfig.zoomSettings || {};
+    const minZoom = zoomSettings.min || 0.05;
+    const maxZoom = zoomSettings.max || 4.0;
+    const zoomSliderMax = 1000;
+    const zoomMinLog = Math.log(minZoom);
+    const zoomRangeLog = Math.log(maxZoom) - zoomMinLog;
+
+    const zoomToSliderValue = (zoom) => {
+      const safeZoom = clamp(zoom, minZoom, maxZoom);
+      if (zoomRangeLog <= 0) return 0;
+
+      return Math.round(
+        ((Math.log(safeZoom) - zoomMinLog) / zoomRangeLog) * zoomSliderMax,
+      );
+    };
+
+    const sliderValueToZoom = (value) => {
+      if (zoomRangeLog <= 0) return minZoom;
+
+      const clampedValue = clamp(value, 0, zoomSliderMax);
+      const ratio = clampedValue / zoomSliderMax;
+      return Math.exp(zoomMinLog + ratio * zoomRangeLog);
+    };
+
+    const syncZoomIndicators = () => {
+      const zoom = this.cy.zoom();
+      const zoomText = Math.round(zoom * 100) + "%";
+      document.querySelectorAll("[data-zoom-level]").forEach((el) => {
+        el.textContent = zoomText;
+      });
+      document.querySelectorAll("[data-zoom-slider]").forEach((el) => {
+        el.value = String(zoomToSliderValue(zoom));
+      });
+      return zoomText;
+    };
 
     const showZoom = () => {
+      const zoomText = syncZoomIndicators();
       if (!this._zoomToast) {
         this._zoomToast = document.createElement("div");
         this._zoomToast.style.position = "absolute";
         this._zoomToast.style.right = "12px";
-        this._zoomToast.style.bottom = "48px";
+        this._zoomToast.style.bottom = "96px";
         this._zoomToast.style.padding = "2px 6px";
         this._zoomToast.style.background = "rgba(0,0,0,0.65)";
         this._zoomToast.style.color = "#fff";
@@ -485,7 +529,7 @@ const graphHook = {
         this._zoomToast.style.transition = "opacity 150ms ease";
         container.appendChild(this._zoomToast);
       }
-      this._zoomToast.textContent = Math.round(this.cy.zoom() * 100) + "%";
+      this._zoomToast.textContent = zoomText;
       this._zoomToast.style.opacity = "1";
       if (this._zoomToastTimer) clearTimeout(this._zoomToastTimer);
       this._zoomToastTimer = setTimeout(
@@ -510,68 +554,127 @@ const graphHook = {
       const current = this.cy.zoom();
       const next = clamp(
         current * factor,
-        layoutConfig.zoomSettings.min || 0.05,
-        layoutConfig.zoomSettings.max || 4.0,
+        minZoom,
+        maxZoom,
       );
       this.cy.zoom({ level: next, renderedPosition: centerPoint() });
       showZoom();
     };
 
+    const zoomToLevel = (level, { announce = false } = {}) => {
+      const next = clamp(level, minZoom, maxZoom);
+      this.cy.zoom({ level: next, renderedPosition: centerPoint() });
+      if (typeof this.cy.scheduleViewportClamp === "function") {
+        this.cy.scheduleViewportClamp({ immediate: true });
+      }
+
+      if (announce) {
+        showZoom();
+      } else {
+        syncZoomIndicators();
+      }
+    };
+
+    const visibleGraphNodes = () =>
+      this.cy.nodes().filter(
+        (n) =>
+          !n.hasClass("hidden") &&
+          !n.hasClass("depth-hidden") &&
+          !n.hasClass("presentation-hidden") &&
+          !n.hasClass("presentation-hidden-parent"),
+      );
+
     const fitGraph = () => {
-      // First center to all elements as before
-      this.cy.animate({
-        center: { eles: this.cy.elements() },
-        duration: 150,
-        easing: "ease-in-out-quad",
-      });
+      const visibleNodes = visibleGraphNodes();
+      if (!visibleNodes || visibleNodes.length === 0) return;
+
+      const fitPadding = window.matchMedia("(max-width: 1023px)").matches
+        ? 56
+        : 84;
+
+      this.cy.fit(visibleNodes, fitPadding);
 
       // Then offset horizontally so the centered content lands in the visible area, not under the right panel
-      const rect = container.getBoundingClientRect();
       const rightPanelWidth = getRightPanelWidth();
       const deltaX = rightPanelWidth > 0 ? -(rightPanelWidth / 2) : 0;
 
       if (deltaX !== 0) {
-        this.cy.animate({
-          panBy: { x: deltaX, y: 0 },
-          duration: 150,
-          easing: "ease-in-out-quad",
-        });
+        this.cy.panBy({ x: deltaX, y: 0 });
+      }
+
+      if (typeof this.cy.scheduleViewportClamp === "function") {
+        this.cy.scheduleViewportClamp({ immediate: true });
       }
 
       requestAnimationFrame(showZoom);
     };
 
     const btnPngs = Array.from(document.querySelectorAll(".download-png"));
-    const btnIn = document.getElementById("zoom-in");
-    const btnOut = document.getElementById("zoom-out");
-    const btnFit = document.getElementById("zoom-fit");
+    this._bindZoomControls = () => {
+      if (Array.isArray(this._zoomControlHandlers)) {
+        this._zoomControlHandlers.forEach(([el, handler]) => {
+          el.removeEventListener("click", handler);
+        });
+      }
+      if (Array.isArray(this._zoomSliderHandlers)) {
+        this._zoomSliderHandlers.forEach(([el, inputHandler, changeHandler]) => {
+          el.removeEventListener("input", inputHandler);
+          el.removeEventListener("change", changeHandler);
+        });
+      }
 
-    if (btnIn) {
-      this._btnInEl = btnIn;
-      this._btnInHandler = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        zoomBy(1.2);
-      };
-      btnIn.addEventListener("click", this._btnInHandler);
-    }
-    if (btnOut) {
-      this._btnOutEl = btnOut;
-      this._btnOutHandler = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        zoomBy(1 / 1.2);
-      };
-      btnOut.addEventListener("click", this._btnOutHandler);
-    }
-    if (btnFit) {
-      this._btnFitEl = btnFit;
-      this._btnFitHandler = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        fitGraph();
-      };
-      btnFit.addEventListener("click", this._btnFitHandler);
+      const zoomControls = Array.from(
+        document.querySelectorAll("[data-zoom-action]"),
+      );
+      const zoomSliders = Array.from(
+        document.querySelectorAll("[data-zoom-slider]"),
+      );
+
+      this._zoomControlHandlers = [];
+      zoomControls.forEach((btn) => {
+        const action = btn.dataset.zoomAction;
+        const handler = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          if (action === "in") {
+            zoomBy(1.2);
+          } else if (action === "out") {
+            zoomBy(1 / 1.2);
+          } else if (action === "fit") {
+            fitGraph();
+          }
+        };
+
+        btn.addEventListener("click", handler);
+        this._zoomControlHandlers.push([btn, handler]);
+      });
+
+      this._zoomSliderHandlers = [];
+      zoomSliders.forEach((slider) => {
+        const inputHandler = (e) => {
+          e.stopPropagation();
+          zoomToLevel(sliderValueToZoom(parseFloat(slider.value)), {
+            announce: false,
+          });
+        };
+        const changeHandler = (e) => {
+          e.stopPropagation();
+          zoomToLevel(sliderValueToZoom(parseFloat(slider.value)), {
+            announce: true,
+          });
+        };
+
+        slider.addEventListener("input", inputHandler);
+        slider.addEventListener("change", changeHandler);
+        this._zoomSliderHandlers.push([slider, inputHandler, changeHandler]);
+      });
+    };
+    this._bindZoomControls();
+    syncZoomIndicators();
+    this._syncZoomIndicators = syncZoomIndicators;
+    if (this.cy && typeof this.cy.on === "function") {
+      this.cy.on("zoom layoutstop", this._syncZoomIndicators);
     }
     // Shared PNG export helpers and button binding
     if (!this._exportGraphPng) {
@@ -734,6 +837,7 @@ const graphHook = {
 
           // Keep the dataset in sync so other consumers (and hooks) can rely on it
           this.el.dataset.node = id;
+          this._syncPresentationEdgeState(id);
           if (this._debugRedraw) this._debugRedraw();
 
           // If we expanded a group or depth-hidden ancestors, run a full
@@ -872,7 +976,7 @@ const graphHook = {
       } catch (_e) {}
     });
 
-    // Reposition presentation badges when the viewport changes
+    // Reposition presentation badges when the viewport changes or nodes move
     if (this.cy) {
       if (!this._onCyPanZoom) {
         this._onCyPanZoom = () => {
@@ -890,8 +994,8 @@ const graphHook = {
         };
       }
       // Avoid duplicate bindings if this code runs multiple times
-      this.cy.off("pan zoom", this._onCyPanZoom);
-      this.cy.on("pan zoom", this._onCyPanZoom);
+      this.cy.off("pan zoom position", this._onCyPanZoom);
+      this.cy.on("pan zoom position", this._onCyPanZoom);
     }
 
     this.handleEvent("clear_search_highlights", () => {
@@ -1093,14 +1197,19 @@ const graphHook = {
         idSet.has(e.target().id()) || keepParentIds.has(e.target().id());
       if (srcVisible && tgtVisible) {
         e.removeClass("presentation-hidden");
+        e.addClass("presentation-edge");
+        e.removeClass("presentation-edge-active");
         e.removeStyle("display");
       } else {
         e.addClass("presentation-hidden");
+        e.removeClass("presentation-edge");
+        e.removeClass("presentation-edge-active");
         e.style("display", "none");
       }
     });
 
     this.cy.endBatch();
+    this._syncPresentationEdgeState(this.el?.dataset?.node);
     this._forceGraphRedraw();
 
     this._renderPresentationBadges();
@@ -1113,6 +1222,28 @@ const graphHook = {
           this.cy.style().update();
         } catch (_e) {}
       });
+    }
+  },
+
+  _syncPresentationEdgeState(activeNodeId) {
+    if (!this.cy || !this._presentationFiltered) return;
+
+    this.cy.startBatch();
+    this.cy.edges(".presentation-edge").removeClass("presentation-edge-active");
+
+    if (activeNodeId) {
+      const activeNode = this.cy.getElementById(activeNodeId);
+      if (activeNode && activeNode.length > 0) {
+        activeNode.connectedEdges(".presentation-edge").addClass(
+          "presentation-edge-active",
+        );
+      }
+    }
+
+    this.cy.endBatch();
+
+    if (this._presentationIds && this._presentationIds.length > 0) {
+      this._renderPresentationBadges();
     }
   },
 
@@ -1140,6 +1271,7 @@ const graphHook = {
       if (!n || n.length === 0) return;
 
       const bb = n.renderedBoundingBox({ includeLabels: false });
+      const isActive = this.el?.dataset?.node === id;
 
       let badge = this._badgeElements.get(id);
       if (badge) {
@@ -1147,6 +1279,14 @@ const graphHook = {
         badge.style.top = `${bb.y1 - 8}px`;
         badge.style.left = `${bb.x2 - 8}px`;
         badge.textContent = String(idx + 1);
+        badge.style.background = isActive ? "#7c3aed" : "rgba(255,255,255,0.96)";
+        badge.style.color = isActive ? "#ffffff" : "#7c3aed";
+        badge.style.borderColor = isActive
+          ? "#7c3aed"
+          : "rgba(168,85,247,0.35)";
+        badge.style.boxShadow = isActive
+          ? "0 4px 14px rgba(124,58,237,0.28)"
+          : "0 1px 4px rgba(15,23,42,0.12)";
       } else {
         // Create a new badge element
         badge = document.createElement("div");
@@ -1156,19 +1296,24 @@ const graphHook = {
           position: absolute;
           top: ${bb.y1 - 8}px;
           left: ${bb.x2 - 8}px;
-          width: 20px;
-          height: 20px;
+          width: 18px;
+          height: 18px;
           border-radius: 50%;
-          background: #a855f7;
-          color: white;
-          font-size: 10px;
+          background: ${isActive ? "#7c3aed" : "rgba(255,255,255,0.96)"};
+          color: ${isActive ? "#ffffff" : "#7c3aed"};
+          border: 1px solid ${isActive ? "#7c3aed" : "rgba(168,85,247,0.35)"};
+          font-size: 9px;
           font-weight: 700;
           display: flex;
           align-items: center;
           justify-content: center;
           pointer-events: none;
           z-index: 10;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+          box-shadow: ${
+            isActive
+              ? "0 4px 14px rgba(124,58,237,0.28)"
+              : "0 1px 4px rgba(15,23,42,0.12)"
+          };
           line-height: 1;
         `;
         container.appendChild(badge);
@@ -1218,12 +1363,166 @@ const graphHook = {
     }
   },
 
+  _buildOrderedPresentationPositions(ids) {
+    const orderedIds = (ids || []).map((id) => String(id));
+    const count = orderedIds.length;
+
+    if (count === 0) return new Map();
+
+    const containerWidth =
+      this._container?.clientWidth || window.innerWidth || 1200;
+    const containerHeight =
+      this._container?.clientHeight || window.innerHeight || 800;
+
+    if (count <= 4) {
+      const estimatedCardWidth = 300;
+      const estimatedCardHeight = 150;
+      const availableWidth = Math.max(containerWidth - 48, estimatedCardWidth);
+      const availableHeight = Math.max(
+        containerHeight - 48,
+        estimatedCardHeight,
+      );
+
+      let columns = 1;
+      let rows = count;
+
+      if (count === 2) {
+        columns = containerWidth >= 760 ? 2 : 1;
+        rows = Math.ceil(count / columns);
+      } else if (count >= 3) {
+        columns = 2;
+        rows = Math.ceil(count / columns);
+      }
+
+      const targetWidthUsage =
+        columns === 1 ? 0 : count === 2 ? 0.44 : 0.46;
+      const targetHeightUsage =
+        rows === 1 ? 0 : count === 4 ? 0.38 : count === 3 ? 0.34 : 0.3;
+      const xStep =
+        columns > 1
+          ? Math.max(
+              estimatedCardWidth + 72,
+              Math.min(
+                estimatedCardWidth + 148,
+                (availableWidth * targetWidthUsage) / (columns - 1),
+              ),
+            )
+          : 0;
+      const yStep =
+        rows > 1
+          ? Math.max(
+              estimatedCardHeight + 52,
+              Math.min(
+                estimatedCardHeight + (count === 4 ? 110 : 88),
+                (availableHeight * targetHeightUsage) / (rows - 1),
+              ),
+            )
+          : 0;
+      const startX = -((columns - 1) * xStep) / 2;
+      const startY = -((rows - 1) * yStep) / 2;
+
+      return orderedIds.reduce((positions, id, idx) => {
+        const row = Math.floor(idx / columns);
+        const col = idx % columns;
+
+        positions.set(id, {
+          x: startX + col * xStep,
+          y: startY + row * yStep,
+        });
+
+        return positions;
+      }, new Map());
+    }
+
+    const estimatedCardWidth = containerWidth >= 1200 ? 360 : 320;
+    const estimatedCardHeight = 120;
+    const gapX = 92;
+    const gapY = 96;
+    const availableWidth = Math.max(containerWidth - 88, estimatedCardWidth);
+    const availableHeight = Math.max(containerHeight - 88, estimatedCardHeight);
+    const viewportAspect = availableWidth / Math.max(availableHeight, 1);
+    const minColumns =
+      count >= 4 && containerWidth >= 900
+        ? 2
+        : 1;
+    const maxColumns = Math.min(
+      count,
+      containerWidth >= 1500 ? 4 : 3,
+    );
+    const targetColumns = Math.sqrt(count * Math.max(viewportAspect, 0.8));
+
+    let bestColumns = 1;
+    let bestScore = Number.NEGATIVE_INFINITY;
+
+    for (let columns = minColumns; columns <= maxColumns; columns += 1) {
+      const rows = Math.ceil(count / columns);
+      const gridWidth = columns * estimatedCardWidth + (columns - 1) * gapX;
+      const gridHeight = rows * estimatedCardHeight + (rows - 1) * gapY;
+      const widthFill = Math.min(gridWidth / availableWidth, 1);
+      const heightFill = Math.min(gridHeight / availableHeight, 1);
+      const emptySlots = rows * columns - count;
+      const raggedPenalty = emptySlots * 0.08;
+      const columnPenalty = columns > 3 ? (columns - 3) * 0.1 : 0;
+      const targetPenalty = Math.abs(columns - targetColumns) * 0.22;
+      const singleColumnPenalty =
+        columns == 1 && count >= 4 && containerWidth >= 900 ? 0.5 : 0;
+      const score =
+        widthFill * 0.58 +
+        heightFill * 0.32 -
+        raggedPenalty -
+        columnPenalty -
+        targetPenalty -
+        singleColumnPenalty;
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestColumns = columns;
+      }
+    }
+
+    const columns = bestColumns;
+    const rows = Math.ceil(count / columns);
+    const targetWidthUsage =
+      columns == 1 ? 0.6 : columns == 2 ? 0.76 : 0.88;
+    const targetHeightUsage =
+      rows == 1 ? 0.22 : rows == 2 ? 0.64 : Math.min(0.9, 0.62 + rows * 0.07);
+    const xStep =
+      columns > 1
+        ? Math.max(
+            estimatedCardWidth + 36,
+            (availableWidth * targetWidthUsage) / (columns - 1),
+          )
+        : 0;
+    const yStep =
+      rows > 1
+        ? Math.max(
+            estimatedCardHeight + 54,
+            (availableHeight * targetHeightUsage) / (rows - 1),
+          )
+        : 0;
+    const startX = -((columns - 1) * xStep) / 2;
+    const startY = -((rows - 1) * yStep) / 2;
+
+    return orderedIds.reduce((positions, id, idx) => {
+      const row = Math.floor(idx / columns);
+      const col = idx % columns;
+
+      positions.set(id, {
+        x: startX + col * xStep,
+        y: startY + row * yStep,
+      });
+
+      return positions;
+    }, new Map());
+  },
+
   _buildPresentationElements(
     ids,
     graphStr = this.el.dataset.graph,
     positionSource = null,
   ) {
     const keepIds = new Set((ids || []).map((id) => String(id)));
+    const orderedPositions = this._buildOrderedPresentationPositions(ids);
 
     return this._parseGraphElements(graphStr).reduce((acc, el) => {
       if (!el || !el.data) return acc;
@@ -1258,7 +1557,13 @@ const graphHook = {
         delete next.data.parent;
       }
 
-      if (
+      const orderedPosition = next.data.id
+        ? orderedPositions.get(String(next.data.id))
+        : null;
+
+      if (orderedPosition) {
+        next.position = orderedPosition;
+      } else if (
         positionSource &&
         typeof positionSource.getElementById === "function" &&
         next.data.id
@@ -1278,6 +1583,23 @@ const graphHook = {
     }, []);
   },
 
+  _applyPresentationGridPositions(ids = this._presentationIds) {
+    if (!this.cy || !Array.isArray(ids) || ids.length === 0) return;
+
+    const orderedPositions = this._buildOrderedPresentationPositions(ids);
+
+    try {
+      this.cy.startBatch();
+      this.cy.nodes().forEach((node) => {
+        const position = orderedPositions.get(node.id());
+        if (position) {
+          node.position(position);
+        }
+      });
+      this.cy.endBatch();
+    } catch (_e) {}
+  },
+
   _initializePresentationState(mode, ids) {
     if (!this.cy) return;
 
@@ -1285,6 +1607,7 @@ const graphHook = {
       this._presentationIds = ids;
       this._presentationFiltered = true;
       this._setDepthToggleOverlayVisible(false);
+      this._applyPresentationGridPositions(ids);
       this._setPresentationHighlights(ids, { renderBadges: false });
       this._schedulePresentationViewportFit();
       return;
@@ -1337,6 +1660,8 @@ const graphHook = {
         }
       });
 
+      this._syncPresentationEdgeState(this.el?.dataset?.node);
+
       if (renderBadges) {
         this._renderPresentationBadges();
       }
@@ -1345,6 +1670,15 @@ const graphHook = {
 
   _fitPresentationViewport() {
     if (!this.cy) return;
+
+    this._applyPresentationGridPositions();
+
+    const visibleCount = this.cy
+      .nodes()
+      .not(".presentation-hidden")
+      .not(".presentation-hidden-parent").length;
+    const fitPadding =
+      visibleCount <= 2 ? 16 : visibleCount <= 4 ? 22 : visibleCount <= 8 ? 36 : 44;
 
     const visibleNodes = this.cy
       .nodes()
@@ -1355,12 +1689,12 @@ const graphHook = {
 
     const fitViewport =
       typeof this.cy.getFitViewport === "function"
-        ? this.cy.getFitViewport(visibleNodes, 60)
+        ? this.cy.getFitViewport(visibleNodes, fitPadding)
         : null;
 
     if (!fitViewport || !fitViewport.pan || !Number.isFinite(fitViewport.zoom)) {
       this.cy.animate({
-        fit: { eles: visibleNodes, padding: 60 },
+        fit: { eles: visibleNodes, padding: fitPadding },
         duration: 400,
         easing: "ease-in-out-quad",
         complete: () => {
@@ -1403,6 +1737,28 @@ const graphHook = {
       try {
         this.cy.forceRender();
       } catch (_e) {}
+    }
+  },
+
+  _scheduleFontAwareRedraw() {
+    const redraw = () => {
+      if (!this.cy) return;
+
+      this._forceGraphRedraw();
+
+      if (this._presentationIds && this._presentationIds.length > 0) {
+        this._renderPresentationBadges();
+      }
+    };
+
+    requestAnimationFrame(redraw);
+
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready
+        .then(() => {
+          requestAnimationFrame(redraw);
+        })
+        .catch(() => {});
     }
   },
 
@@ -1464,14 +1820,16 @@ const graphHook = {
 
     if (this.cy && this._onCyPanZoom) {
       try {
-        this.cy.off("pan zoom", this._onCyPanZoom);
+        this.cy.off("pan zoom position", this._onCyPanZoom);
       } catch (_e) {}
-      this.cy.on("pan zoom", this._onCyPanZoom);
+      this.cy.on("pan zoom position", this._onCyPanZoom);
     }
 
     if (this.cy && this._debugRedraw) {
       this.cy.on("pan zoom render", this._debugRedraw);
     }
+
+    this._scheduleFontAwareRedraw();
   },
 
   _startPresenting(ids) {
@@ -1482,9 +1840,10 @@ const graphHook = {
       this._presentationFiltered = true;
       const currentCy = this.cy;
       this._recreateCy(this._buildPresentationElements(ids, undefined, currentCy), {
-        layoutName: "preset",
+        skipInitialLayout: true,
         preserveViewport: true,
       });
+      this._layoutRunning = false;
       this._setDepthToggleOverlayVisible(false);
       this._setPresentationHighlights(ids, { renderBadges: false });
       this._schedulePresentationViewportFit();
@@ -1500,6 +1859,8 @@ const graphHook = {
       this.cy.elements().removeClass("presentation-hidden");
       this.cy.elements().removeClass("presentation-hidden-parent");
       this.cy.nodes().removeClass("presentation-slide");
+      this.cy.edges().removeClass("presentation-edge");
+      this.cy.edges().removeClass("presentation-edge-active");
       this.cy.nodes().forEach((n) => n.removeData("presIndex"));
       this.cy.nodes().removeStyle("display");
       this.cy.edges().removeStyle("display");
@@ -1640,8 +2001,8 @@ const graphHook = {
 
     // Re-bind presentation badge tracking on the new cy instance
     if (this.cy && this._onCyPanZoom) {
-      this.cy.off("pan zoom", this._onCyPanZoom);
-      this.cy.on("pan zoom", this._onCyPanZoom);
+      this.cy.off("pan zoom position", this._onCyPanZoom);
+      this.cy.on("pan zoom position", this._onCyPanZoom);
     }
 
     // Re-apply presentation filter if it was active
@@ -1781,6 +2142,11 @@ const graphHook = {
           : this._parseGraphElements(graphStr);
 
       this.cy.json({ elements: nextElements });
+
+      if (presentationMode === "presenting" && presentationIds.length > 0) {
+        this._applyPresentationGridPositions(presentationIds);
+      }
+
       if (this.cy && typeof this.cy.scratch === "function") {
         try {
           this.cy.scratch("_bulkReload", null);
@@ -1788,6 +2154,11 @@ const graphHook = {
       }
       if (typeof this.cy.enforceCollapsedState === "function") {
         this.cy.enforceCollapsedState();
+      }
+
+      if (presentationMode === "presenting" && presentationIds.length > 0) {
+        this._setPresentationHighlights(presentationIds, { renderBadges: false });
+        this._schedulePresentationViewportFit();
       }
 
       // Restore depth-collapse state after element reload
@@ -1824,7 +2195,10 @@ const graphHook = {
     ]);
     let layoutScheduled = false;
 
-    if (!sameGraph && operation === "start_stream") {
+    const presentationActive =
+      presentationMode === "presenting" && presentationIds.length > 0;
+
+    if (!sameGraph && operation === "start_stream" && !presentationActive) {
       // Reflow the graph and then ensure the newly created node is visible (deferred until layout completes)
       // Compute a safe pending center id (must be a non-empty string)
       const nextPendingId =
@@ -1857,7 +2231,7 @@ const graphHook = {
           );
         }
       });
-    } else if (!sameGraph) {
+    } else if (!sameGraph && !presentationActive) {
       // Some operations reorder elements; defer ensureVisible until layout finishes
       this._pendingCenterId = this.el.dataset.node || this._pendingCenterId;
       this._layoutRunning = true;
@@ -1928,6 +2302,10 @@ const graphHook = {
 
     ensureExploreBound();
 
+    if (this._bindZoomControls) {
+      this._bindZoomControls();
+    }
+
     if (this._bindPngButtons) {
       this._bindPngButtons();
     }
@@ -1979,20 +2357,24 @@ const graphHook = {
       this._onViewportResize = null;
       this._viewportResizePending = false;
     }
-    if (this._btnInEl && this._btnInHandler) {
-      this._btnInEl.removeEventListener("click", this._btnInHandler);
-      this._btnInEl = null;
-      this._btnInHandler = null;
+    if (Array.isArray(this._zoomControlHandlers)) {
+      this._zoomControlHandlers.forEach(([el, handler]) => {
+        el.removeEventListener("click", handler);
+      });
+      this._zoomControlHandlers = null;
     }
-    if (this._btnOutEl && this._btnOutHandler) {
-      this._btnOutEl.removeEventListener("click", this._btnOutHandler);
-      this._btnOutEl = null;
-      this._btnOutHandler = null;
+    if (Array.isArray(this._zoomSliderHandlers)) {
+      this._zoomSliderHandlers.forEach(([el, inputHandler, changeHandler]) => {
+        el.removeEventListener("input", inputHandler);
+        el.removeEventListener("change", changeHandler);
+      });
+      this._zoomSliderHandlers = null;
     }
-    if (this._btnFitEl && this._btnFitHandler) {
-      this._btnFitEl.removeEventListener("click", this._btnFitHandler);
-      this._btnFitEl = null;
-      this._btnFitHandler = null;
+    if (this.cy && this._syncZoomIndicators) {
+      try {
+        this.cy.off("zoom layoutstop", this._syncZoomIndicators);
+      } catch (_e) {}
+      this._syncZoomIndicators = null;
     }
     if (Array.isArray(this._btnPngHandlers)) {
       this._btnPngHandlers.forEach(([el, handler]) => {
@@ -2017,10 +2399,10 @@ const graphHook = {
       this._zoomToast.parentNode.removeChild(this._zoomToast);
       this._zoomToast = null;
     }
-    // Clean up presentation badge overlays and pan/zoom listener
+    // Clean up presentation badge overlays and badge-position listener
     if (this.cy && this._onCyPanZoom) {
       try {
-        this.cy.off("pan zoom", this._onCyPanZoom);
+        this.cy.off("pan zoom position", this._onCyPanZoom);
       } catch (_e) {}
       this._onCyPanZoom = null;
     }

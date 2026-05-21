@@ -41,6 +41,10 @@ defmodule DialecticWeb.GraphLive do
   alias Dialectic.Accounts.User
   alias DialecticWeb.NodeComp
   alias DialecticWeb.GraphHelpers
+  alias DialecticWeb.NodeSearch
+
+  import DialecticWeb.GraphPresentation
+  import DialecticWeb.PresentationStageComp, only: [presentation_stage: 1]
 
   alias DialecticWeb.Utils.UserUtils
   alias DialecticWeb.Utils.NodeTitleHelper
@@ -260,16 +264,18 @@ defmodule DialecticWeb.GraphLive do
     else
       search_results =
         try do
-          term = String.downcase(search_term)
-
           GraphManager.vertices(socket.assigns.graph_id)
           |> Enum.reduce([], fn vid, acc ->
             case GraphManager.vertex_label(socket.assigns.graph_id, vid) do
               %{} = vertex ->
-                if valid_search_node(vertex) and
-                     String.contains?(String.downcase(vertex.content), term) do
-                  exact_match = if String.downcase(vertex.content) == term, do: 0, else: 1
-                  [{exact_match, vertex.id, vertex} | acc]
+                if valid_search_node(vertex) do
+                  case NodeSearch.annotate_result(vertex, search_term) do
+                    %{search_rank: rank} = result ->
+                      [{rank, vertex.id, result} | acc]
+
+                    nil ->
+                      acc
+                  end
                 else
                   acc
                 end
@@ -283,6 +289,8 @@ defmodule DialecticWeb.GraphLive do
           |> Enum.take(10)
         rescue
           _ -> []
+        catch
+          :exit, _reason -> []
         end
 
       matching_ids = Enum.map(search_results, & &1.id)
@@ -890,6 +898,14 @@ defmodule DialecticWeb.GraphLive do
   end
 
   # Start stream handlers grouped with other handle_event clauses
+  def handle_event("open_help_modal", _params, socket) do
+    {:noreply, assign(socket, show_help_modal: true)}
+  end
+
+  def handle_event("close_help_modal", _params, socket) do
+    {:noreply, assign(socket, show_help_modal: false)}
+  end
+
   def handle_event("open_share_modal", _params, socket) do
     socket =
       socket
@@ -1186,6 +1202,7 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event("start_presenting", _params, socket) do
     ids = socket.assigns.presentation_slide_ids
+    slides = slides(socket.assigns.graph_id, ids)
 
     if length(ids) > 0 do
       # Ensure the title defaults to the graph's starting question
@@ -1197,6 +1214,7 @@ defmodule DialecticWeb.GraphLive do
       # Filter the graph to show only the selected nodes (no full-screen overlay)
       socket =
         socket
+        |> maybe_focus_presentation_slide(slides)
         |> assign(presentation_mode: :presenting, presentation_title: title)
         |> push_event("presentation_clear_slides", %{})
         |> push_event("toggle_site_header", %{visible: false})
@@ -1205,6 +1223,35 @@ defmodule DialecticWeb.GraphLive do
       {:noreply, socket}
     else
       {:noreply, socket}
+    end
+  end
+
+  def handle_event("presentation_go_to_slide", %{"node-id" => node_id}, socket) do
+    if node_id in socket.assigns.presentation_slide_ids do
+      {:noreply, focus_presentation_slide(socket, node_id)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_event("presentation_step", %{"direction" => direction}, socket)
+      when direction in ["next", "previous"] do
+    slides = slides(socket.assigns.graph_id, socket.assigns.presentation_slide_ids)
+
+    target_slide =
+      slides
+      |> active_slide(socket.assigns.node)
+      |> then(fn
+        nil ->
+          nil
+
+        active_slide ->
+          adjacent_slide(slides, active_slide.id, direction)
+      end)
+
+    case target_slide do
+      nil -> {:noreply, socket}
+      slide -> {:noreply, focus_presentation_slide(socket, slide.id)}
     end
   end
 
@@ -2222,6 +2269,7 @@ defmodule DialecticWeb.GraphLive do
       explore_items: [],
       explore_selected: [],
       show_start_stream_modal: false,
+      show_help_modal: false,
       show_share_modal: false,
       work_streams: [],
       exploration_stats: nil,
@@ -2381,14 +2429,27 @@ defmodule DialecticWeb.GraphLive do
     })
   end
 
-  defp presentation_slides(%{graph_id: graph_id, presentation_slide_ids: ids}) do
-    ids
-    |> Enum.reduce([], fn id, acc ->
-      case GraphActions.find_node(graph_id, id) do
-        nil -> acc
-        node -> [node | acc]
-      end
-    end)
-    |> Enum.reverse()
+  defp focus_presentation_slide(socket, nil), do: socket
+
+  defp focus_presentation_slide(socket, node_id) do
+    case GraphActions.find_node(socket.assigns.graph_id, node_id) do
+      nil ->
+        socket
+
+      node ->
+        {:noreply, updated_socket} =
+          update_graph(socket, {nil, node}, "presentation_go_to_slide")
+
+        updated_socket =
+          reapply_right_panel_state(socket, updated_socket)
+
+        push_event(updated_socket, "center_node", %{id: node.id})
+    end
+  end
+
+  defp maybe_focus_presentation_slide(socket, []), do: socket
+
+  defp maybe_focus_presentation_slide(socket, slides) do
+    focus_presentation_slide(socket, List.first(slides).id)
   end
 end

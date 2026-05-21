@@ -21,7 +21,7 @@ defmodule DialecticWeb.SettingsMenuComp do
               <div>
                 <div class="text-xs font-semibold text-gray-800">Appearance</div>
                 <p class="text-[10px] text-gray-500 leading-tight">
-                  Graph display and reading settings
+                  Grid display and reading settings
                 </p>
               </div>
             </div>

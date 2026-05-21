@@ -184,6 +184,10 @@ export function draw_graph(
     container: graph, // container to render in
     elements: elements,
     style: graphStyle(viewMode),
+    layout: {
+      name: "preset",
+      fit: false,
+    },
 
     boxSelectionEnabled: false, // box selection disabled
     autounselectify: false, // allow multi‑select
@@ -288,8 +292,15 @@ export function draw_graph(
   });
 
   // Now run the initial layout (only visible nodes are positioned)
-  // Placed after layoutRunning listeners so the initial layout is tracked
-  cy.layout(layoutOptions).run();
+  // Placed after layoutRunning listeners so the initial layout is tracked.
+  // Presentation mode can opt out and provide explicit coordinates.
+  if (options.skipInitialLayout === true) {
+    requestAnimationFrame(() => {
+      scheduleViewportClamp();
+    });
+  } else {
+    cy.layout(layoutOptions).run();
+  }
 
   // Disable Cytoscape's default wheel zoom so we fully control it
   cy.userZoomingEnabled(false);
@@ -1755,6 +1766,16 @@ function _rebuildDepthToggleOverlays(cy, container) {
   // Clear old buttons
   overlay.innerHTML = "";
 
+  const presentationMode = cy?._ownerHook?.el?.dataset?.presentationMode || "off";
+  if (presentationMode === "presenting") {
+    overlay.style.display = "none";
+    cy._depthToggleOverlay = overlay;
+    cy._depthToggleButtons = new Map();
+    return;
+  }
+
+  overlay.style.display = "";
+
   // Store refs on the cy instance for position updates
   cy._depthToggleOverlay = overlay;
   cy._depthToggleButtons = new Map();
@@ -1837,6 +1858,18 @@ function _updateDepthTogglePositions(cy) {
   const zoom = typeof cy.zoom === "function" ? cy.zoom() : 1;
   const hideBelowZoom = 0.3;
   const scale = Math.max(0.68, Math.min(1, 0.45 + zoom * 0.55));
+  const presentationMode = cy?._ownerHook?.el?.dataset?.presentationMode || "off";
+
+  if (presentationMode === "presenting") {
+    if (cy._depthToggleOverlay) {
+      cy._depthToggleOverlay.style.display = "none";
+    }
+    return;
+  }
+
+  if (cy._depthToggleOverlay) {
+    cy._depthToggleOverlay.style.display = "";
+  }
 
   cy._depthToggleButtons.forEach((btn, nodeId) => {
     const node = cy.getElementById(nodeId);
