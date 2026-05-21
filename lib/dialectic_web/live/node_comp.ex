@@ -150,11 +150,11 @@ defmodule DialecticWeb.NodeComp do
                           <span>Select text to ask a follow-up</span>
                         </span>
                         <span class="hidden text-xs text-slate-500 sm:inline">
-                          For example, select a word like
-                          <span class="mx-1 rounded-[0.2em] bg-amber-200/90 px-1 py-0.5 font-medium text-slate-900 shadow-[inset_0_-1px_0_rgba(120,53,15,0.18)]">
-                            absurd
+                          Select{" "}
+                          <span class="inline-block rounded-[0.2em] bg-amber-200/90 px-1 py-0.5 font-medium leading-none text-slate-900 shadow-[inset_0_-1px_0_rgba(120,53,15,0.18)]">
+                            word(s)
                           </span>
-                          in the text.
+                          {" "}in the text, to explore that specific topic.
                         </span>
                       </div>
 

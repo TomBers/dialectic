@@ -81,7 +81,7 @@ defmodule DialecticWeb.ActionToolbarComp do
 
   defp delete_button_class(deletable) do
     [
-      "inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition",
+      "inline-flex shrink-0 items-center justify-center gap-2 self-start whitespace-nowrap rounded-xl border px-3 py-2 text-sm font-medium transition sm:self-center",
       if(deletable,
         do: "border-rose-200 bg-rose-50 text-rose-700 hover:border-rose-300 hover:bg-rose-100",
         else: "border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed"
@@ -110,14 +110,6 @@ defmodule DialecticWeb.ActionToolbarComp do
             <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
               Keep Exploring
             </p>
-            <div>
-              <h4 class="text-base font-semibold tracking-tight text-slate-900 sm:text-lg">
-                Choose the next way to think this through.
-              </h4>
-              <p class="mt-1 max-w-xl text-sm leading-6 text-slate-600">
-                Select text in the answer above for a more specific follow-up, or pick one of these moves to test, connect, or expand the idea.
-              </p>
-            </div>
           </div>
 
           <div :if={@can_edit == false} class="sm:pt-1">
@@ -150,7 +142,7 @@ defmodule DialecticWeb.ActionToolbarComp do
               </span>
             </span>
             <span class="mt-1 inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">
-              <span>Start</span>
+              <span>Explore</span>
               <.icon
                 name="hero-arrow-right"
                 class="h-4 w-4 transition-transform group-hover:translate-x-0.5"
@@ -184,7 +176,7 @@ defmodule DialecticWeb.ActionToolbarComp do
               </span>
             </span>
             <span class="mt-1 inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-violet-700">
-              <span>Start</span>
+              <span>Explore</span>
               <.icon
                 name="hero-arrow-right"
                 class="h-4 w-4 transition-transform group-hover:translate-x-0.5"
@@ -211,7 +203,7 @@ defmodule DialecticWeb.ActionToolbarComp do
               </span>
             </span>
             <span class="mt-1 inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-orange-700">
-              <span>Start</span>
+              <span>Explore</span>
               <.icon
                 name="hero-arrow-right"
                 class="h-4 w-4 transition-transform group-hover:translate-x-0.5"
@@ -220,9 +212,8 @@ defmodule DialecticWeb.ActionToolbarComp do
           </button>
         </div>
 
-        <div class="flex flex-col gap-3 border-t border-slate-200/80 pt-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p class="text-sm font-medium text-slate-900">Need to tidy this node?</p>
+        <div class="flex flex-col gap-3 border-t border-slate-200/80 pt-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+          <div class="max-w-xl">
             <p class="mt-1 text-sm text-slate-500">
               Delete is only available to the author when nothing else in the grid depends on it.
             </p>
