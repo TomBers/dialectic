@@ -168,6 +168,60 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     }
   end
 
+  defp source_text_graph_data do
+    %{
+      "nodes" => [
+        %{
+          "id" => "1",
+          "content" => "# Shared memory",
+          "class" => "origin",
+          "user" => nil,
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false
+        },
+        %{
+          "id" => "2",
+          "content" => "How does culture shape archetypes?",
+          "class" => "question",
+          "user" => nil,
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false
+        },
+        %{
+          "id" => "3",
+          "content" => "Culture gives those patterns symbols and stories.",
+          "class" => "answer",
+          "user" => nil,
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false
+        },
+        %{
+          "id" => "4",
+          "content" => "Could biology still matter?",
+          "class" => "question",
+          "user" => nil,
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false,
+          "source_text" =>
+            "A laboratory paper mentions synaptic tagging and epigenetic priming in memory formation."
+        }
+      ],
+      "edges" => [
+        %{"data" => %{"id" => "1_2", "source" => "1", "target" => "2"}},
+        %{"data" => %{"id" => "2_3", "source" => "2", "target" => "3"}},
+        %{"data" => %{"id" => "2_4", "source" => "2", "target" => "4"}}
+      ]
+    }
+  end
+
   defp shared_leaf_graph_data do
     %{
       "nodes" => [
@@ -359,8 +413,8 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(view, "#outline-node-1")
     assert has_element?(view, "#outline-node-1[data-outline-selected='true']")
     assert has_element?(view, "#outline-mobile-node-1")
-    assert has_element?(view, "#reader-editor-link.hidden")
-    assert has_element?(view, "#reader-editor-link[data-view-transition='mode-switch']")
+    assert has_element?(view, "#reader-workspace-bar-graph")
+    assert has_element?(view, "#reader-workspace-bar-graph[data-view-transition='mode-switch']")
     assert has_element?(view, "#reading-node-1")
     assert has_element?(view, "#reading-node-2")
     assert has_element?(view, "#reading-node-1 span.bg-gray-900.text-gray-100", "Origin")
@@ -496,10 +550,10 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
 
     {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=2")
 
-    assert has_element?(view, "#reader-share-button")
+    assert has_element?(view, "#reader-workspace-bar-share")
 
     view
-    |> element("#reader-share-button")
+    |> element("#reader-workspace-bar-share")
     |> render_click()
 
     share_url = "#{DialecticWeb.Endpoint.url()}/g/#{graph.slug}?node=2"
@@ -507,6 +561,59 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(view, "#share-modal-hook")
     assert has_element?(view, ~s(#share-url-input[value="#{share_url}"]))
     refute render(view) =~ "Generating preview..."
+  end
+
+  test "reader search opens from the top bar and patches to the selected result", %{conn: conn} do
+    graph = create_graph()
+
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=2")
+
+    assert has_element?(view, "#reader-workspace-bar-search")
+
+    view
+    |> element("#reader-workspace-bar-search")
+    |> render_click()
+
+    assert has_element?(view, "#outline-quick-search-panel")
+
+    view
+    |> element("#outline-quick-search-form")
+    |> render_change(%{"search_term" => "biologically"})
+
+    assert has_element?(
+             view,
+             "#outline-search-result-4",
+             "Could archetypes be explained biologically?"
+           )
+
+    view
+    |> element("#outline-search-result-4")
+    |> render_click()
+
+    assert_patch(view, ~p"/g/#{graph.slug}?node=4")
+  end
+
+  test "reader search matches source text and renders a preview snippet", %{conn: conn} do
+    graph = create_graph(source_text_graph_data())
+
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=2")
+
+    view
+    |> element("#reader-workspace-bar-search")
+    |> render_click()
+
+    view
+    |> element("#outline-quick-search-form")
+    |> render_change(%{"search_term" => "synaptic"})
+
+    assert has_element?(view, "#outline-search-result-4", "Could biology still matter?")
+    assert has_element?(view, "#outline-search-result-4", "Source")
+
+    assert has_element?(
+             view,
+             "#outline-search-result-4",
+             "synaptic tagging and epigenetic priming"
+           )
   end
 
   test "reader renders a highlights drawer toggle with the current count", %{conn: conn} do
@@ -526,8 +633,8 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
 
     {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=4")
 
-    assert has_element?(view, "#reader-highlights-button")
-    assert has_element?(view, "#reader-highlights-button", "1")
+    assert has_element?(view, "#reader-workspace-bar-highlights")
+    assert has_element?(view, "#reader-workspace-bar-highlights", "1")
     assert render(view) =~ "Reading key"
     assert render(view) =~ "Highlights"
   end

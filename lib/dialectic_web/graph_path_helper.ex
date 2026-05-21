@@ -60,7 +60,15 @@ defmodule DialecticWeb.GraphPathHelper do
   # Appends the share_token as a "token" query param for private graphs
   defp maybe_add_token(%{is_public: false, share_token: token}, params)
        when is_binary(token) and token != "" do
-    [{"token", token} | params]
+    if Enum.any?(params, fn
+         {:token, _value} -> true
+         {"token", _value} -> true
+         _other -> false
+       end) do
+      params
+    else
+      [{"token", token} | params]
+    end
   end
 
   defp maybe_add_token(_graph, params), do: params

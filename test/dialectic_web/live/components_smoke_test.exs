@@ -21,6 +21,24 @@ defmodule DialecticWeb.ComponentsSmokeTest do
     test "module loads" do
       assert Code.ensure_loaded?(@document_menu_mod)
     end
+
+    test "renders direct help, present, and settings actions" do
+      html =
+        render_component(@document_menu_mod,
+          id: "document-menu",
+          graph_id: "graph-123",
+          graph_struct: %{title: "Test graph"},
+          can_edit: true,
+          layout_target: "#graph-layout"
+        )
+
+      assert html =~ ~s(id="document-menu-help-document-menu")
+      assert html =~ ~s(id="document-menu-present-document-menu")
+      assert html =~ ~s(id="document-menu-settings-document-menu")
+      assert html =~ "How to use"
+      assert html =~ "Present"
+      assert html =~ "Settings"
+    end
   end
 
   describe "HighlightsPanelComp" do

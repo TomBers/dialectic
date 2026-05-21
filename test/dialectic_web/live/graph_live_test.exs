@@ -28,6 +28,54 @@ defmodule DialecticWeb.GraphLiveTest do
     live(conn, ~p"/g/#{graph.slug}/graph?node=1")
   end
 
+  defp setup_live_with_data(conn, data) do
+    conn =
+      conn
+      |> log_in_user(
+        user_fixture(%{email: "searcher-#{System.unique_integer([:positive])}@example.com"})
+      )
+
+    graph =
+      Dialectic.GraphFixtures.insert_graph(%{
+        title: "Search Graph #{System.unique_integer([:positive])}",
+        data: data
+      })
+
+    live(conn, ~p"/g/#{graph.slug}/graph?node=1")
+  end
+
+  defp source_text_graph_data do
+    %{
+      "nodes" => [
+        %{
+          "id" => "1",
+          "content" => "# Shared memory",
+          "class" => "origin",
+          "user" => nil,
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false
+        },
+        %{
+          "id" => "2",
+          "content" => "Could biology still matter?",
+          "class" => "question",
+          "user" => nil,
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false,
+          "source_text" =>
+            "A laboratory paper mentions synaptic tagging and epigenetic priming in memory formation."
+        }
+      ],
+      "edges" => [
+        %{"data" => %{"id" => "1_2", "source" => "1", "target" => "2"}}
+      ]
+    }
+  end
+
   describe "mount/3" do
     test "assigns necessary values on mount with a current user", %{conn: conn} do
       {:ok, view, _html} = setup_live(conn)
@@ -44,14 +92,37 @@ defmodule DialecticWeb.GraphLiveTest do
       graph = state.assigns.graph_struct
       node_id = Map.get(state.assigns.node, :id)
 
-      assert has_element?(view, "#document-menu-reader-switch-document-menu")
+      assert has_element?(view, "#graph-workspace-bar-reader")
 
       assert has_element?(
                view,
-               ~s(#document-menu-reader-switch-document-menu[href="/g/#{graph.slug}?node=#{node_id}"])
+               ~s(#graph-workspace-bar-reader[href="/g/#{graph.slug}?node=#{node_id}"])
              )
+    end
+  end
 
-      refute has_element?(view, "#grid-actions-body-document-menu [data-role='reader-view']")
+  describe "search" do
+    test "grid search matches source text and renders a preview snippet", %{conn: conn} do
+      {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data())
+
+      view
+      |> element("#graph-workspace-bar-search")
+      |> render_click()
+
+      assert has_element?(view, "#quick-search-panel")
+
+      view
+      |> element("#quick-search-form")
+      |> render_change(%{"search_term" => "synaptic"})
+
+      assert has_element?(view, "#graph-search-result-2", "Could biology still matter?")
+      assert has_element?(view, "#graph-search-result-2", "Source")
+
+      assert has_element?(
+               view,
+               "#graph-search-result-2",
+               "synaptic tagging and epigenetic priming"
+             )
     end
   end
 

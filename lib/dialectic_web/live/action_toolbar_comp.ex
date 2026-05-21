@@ -81,7 +81,7 @@ defmodule DialecticWeb.ActionToolbarComp do
 
   defp delete_button_class(deletable) do
     [
-      "inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition",
+      "inline-flex shrink-0 items-center justify-center gap-2 self-start whitespace-nowrap rounded-xl border px-3 py-2 text-sm font-medium transition sm:self-center",
       if(deletable,
         do: "border-rose-200 bg-rose-50 text-rose-700 hover:border-rose-300 hover:bg-rose-100",
         else: "border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed"
@@ -98,26 +98,18 @@ defmodule DialecticWeb.ActionToolbarComp do
   def render(assigns) do
     ~H"""
     <div
-      class="mt-3 rounded-[1.9rem] border border-slate-200/80 bg-gradient-to-br from-white via-sky-50/70 to-indigo-50/70 p-4 shadow-[0_18px_40px_rgba(15,23,42,0.06)] sm:mt-4 sm:p-5"
+      class="mt-3 rounded-[1.7rem] border border-slate-200 bg-white p-4 shadow-[0_18px_40px_rgba(15,23,42,0.06)] sm:mt-4 sm:p-5"
       data-external="true"
       data-role="action-toolbar"
     >
       <% info = delete_info(assigns) %>
 
       <div class="flex flex-col gap-5">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div class="space-y-1">
-            <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-700">
+        <div class="flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-start sm:justify-between">
+          <div class="space-y-2">
+            <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
               Keep Exploring
             </p>
-            <div>
-              <h4 class="text-base font-semibold tracking-tight text-slate-900 sm:text-lg">
-                Where would you like to go next?
-              </h4>
-              <p class="mt-1 text-sm leading-6 text-slate-600">
-                Choose one path to test the idea, connect it to something nearby, or open a fresh angle.
-              </p>
-            </div>
           </div>
 
           <div :if={@can_edit == false} class="sm:pt-1">
@@ -131,26 +123,26 @@ defmodule DialecticWeb.ActionToolbarComp do
           </div>
         </div>
 
-        <div class="grid gap-3 sm:grid-cols-3">
+        <div class="grid gap-2.5">
           <button
             type="button"
-            class="group flex h-full flex-col items-start gap-3 rounded-[1.35rem] border-2 border-emerald-200/80 bg-gradient-to-br from-white to-emerald-50/70 px-4 py-3.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-md active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
+            class="group flex items-start gap-3 rounded-[1.2rem] border border-slate-200 bg-slate-50/80 px-4 py-3.5 text-left transition hover:border-emerald-200 hover:bg-white hover:shadow-sm active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
             phx-click="node_branch"
             phx-value-id={@node && @node.id}
             disabled={is_nil(@graph_id)}
             title="Create supporting and opposing branches from this node"
           >
-            <span class="inline-flex items-center justify-center rounded-xl bg-emerald-100 p-2.5 text-emerald-700 shadow-sm">
+            <span class="inline-flex items-center justify-center rounded-xl bg-emerald-100 p-2.5 text-emerald-700">
               <.icon name="hero-scale" class="h-5 w-5" />
             </span>
-            <span class="space-y-1">
-              <span class="block text-sm font-semibold text-slate-900">Pro | Con</span>
+            <span class="min-w-0 flex-1 space-y-1">
+              <span class="block text-sm font-semibold text-slate-900">Test it with Pro / Con</span>
               <span class="block text-sm leading-5 text-slate-600">
-                See the strongest case for it and against it.
+                Generate the strongest case for it and against it.
               </span>
             </span>
-            <span class="mt-auto flex w-full items-center justify-between border-t border-emerald-200/80 pt-2 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">
-              <span>Choose</span>
+            <span class="mt-1 inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">
+              <span>Explore</span>
               <.icon
                 name="hero-arrow-right"
                 class="h-4 w-4 transition-transform group-hover:translate-x-0.5"
@@ -160,7 +152,7 @@ defmodule DialecticWeb.ActionToolbarComp do
 
           <button
             type="button"
-            class="group flex h-full flex-col items-start gap-3 rounded-[1.35rem] border-2 border-violet-200/80 bg-gradient-to-br from-white to-violet-50/70 px-4 py-3.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-md active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-violet-100 disabled:cursor-not-allowed disabled:opacity-50"
+            class="group flex items-start gap-3 rounded-[1.2rem] border border-slate-200 bg-slate-50/80 px-4 py-3.5 text-left transition hover:border-violet-200 hover:bg-white hover:shadow-sm active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-violet-100 disabled:cursor-not-allowed disabled:opacity-50"
             phx-click={
               Phoenix.LiveView.JS.dispatch("toggle-panel",
                 to: "#graph-layout",
@@ -174,17 +166,17 @@ defmodule DialecticWeb.ActionToolbarComp do
             aria-label="Blend this node with another"
             title="Blend this node with another"
           >
-            <span class="inline-flex items-center justify-center rounded-xl bg-violet-100 p-2.5 text-violet-700 shadow-sm">
+            <span class="inline-flex items-center justify-center rounded-xl bg-violet-100 p-2.5 text-violet-700">
               <.icon name="hero-arrows-pointing-in" class="h-5 w-5" />
             </span>
-            <span class="space-y-1">
-              <span class="block text-sm font-semibold text-slate-900">Blend</span>
+            <span class="min-w-0 flex-1 space-y-1">
+              <span class="block text-sm font-semibold text-slate-900">Blend with another node</span>
               <span class="block text-sm leading-5 text-slate-600">
-                Bring this point together with another and see what emerges.
+                Combine this point with another and see what new idea emerges.
               </span>
             </span>
-            <span class="mt-auto flex w-full items-center justify-between border-t border-violet-200/80 pt-2 text-xs font-semibold uppercase tracking-[0.14em] text-violet-700">
-              <span>Choose</span>
+            <span class="mt-1 inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-violet-700">
+              <span>Explore</span>
               <.icon
                 name="hero-arrow-right"
                 class="h-4 w-4 transition-transform group-hover:translate-x-0.5"
@@ -194,24 +186,24 @@ defmodule DialecticWeb.ActionToolbarComp do
 
           <button
             type="button"
-            class="group flex h-full flex-col items-start gap-3 rounded-[1.35rem] border-2 border-orange-200/80 bg-gradient-to-br from-white to-orange-50/70 px-4 py-3.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-orange-300 hover:shadow-md active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:opacity-50"
+            class="group flex items-start gap-3 rounded-[1.2rem] border border-slate-200 bg-slate-50/80 px-4 py-3.5 text-left transition hover:border-orange-200 hover:bg-white hover:shadow-sm active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:opacity-50"
             phx-click="node_related_ideas"
             phx-value-id={@node && @node.id}
             disabled={is_nil(@graph_id)}
             title="Find related ideas"
             data-action="related-ideas"
           >
-            <span class="inline-flex items-center justify-center rounded-xl bg-orange-100 p-2.5 text-orange-700 shadow-sm">
+            <span class="inline-flex items-center justify-center rounded-xl bg-orange-100 p-2.5 text-orange-700">
               <.icon name="hero-light-bulb" class="h-5 w-5" />
             </span>
-            <span class="space-y-1">
-              <span class="block text-sm font-semibold text-slate-900">Related</span>
+            <span class="min-w-0 flex-1 space-y-1">
+              <span class="block text-sm font-semibold text-slate-900">Find related ideas</span>
               <span class="block text-sm leading-5 text-slate-600">
-                Pull in nearby ideas, comparisons, and useful directions to explore.
+                Pull in nearby ideas, comparisons, and useful directions to explore next.
               </span>
             </span>
-            <span class="mt-auto flex w-full items-center justify-between border-t border-orange-200/80 pt-2 text-xs font-semibold uppercase tracking-[0.14em] text-orange-700">
-              <span>Choose</span>
+            <span class="mt-1 inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-orange-700">
+              <span>Explore</span>
               <.icon
                 name="hero-arrow-right"
                 class="h-4 w-4 transition-transform group-hover:translate-x-0.5"
@@ -220,9 +212,8 @@ defmodule DialecticWeb.ActionToolbarComp do
           </button>
         </div>
 
-        <div class="flex flex-col gap-3 border-t border-slate-200/80 pt-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p class="text-sm font-medium text-slate-900">Need to tidy this node?</p>
+        <div class="flex flex-col gap-3 border-t border-slate-200/80 pt-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+          <div class="max-w-xl">
             <p class="mt-1 text-sm text-slate-500">
               Delete is only available to the author when nothing else in the grid depends on it.
             </p>

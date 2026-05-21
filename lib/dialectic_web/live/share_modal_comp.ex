@@ -103,14 +103,16 @@ defmodule DialecticWeb.ShareModalComp do
     <div id="share-modal-hook" phx-hook="Share">
       <%= if @show do %>
         <div
-          class="fixed inset-0 z-50 overflow-y-auto"
+          id={"share-modal-layer-#{@id}"}
+          phx-hook="GlobalModalLayer"
+          class="fixed inset-x-0 bottom-0 -top-9 z-[10020] overflow-y-auto"
           aria-labelledby="modal-title"
           role="dialog"
           aria-modal="true"
         >
           <div class="flex items-end justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
             <div
-              class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75"
+              class="fixed inset-x-0 bottom-0 -top-9 transition-opacity bg-gray-500 bg-opacity-75"
               aria-hidden="true"
               phx-click="close"
               phx-target={@myself}
@@ -179,7 +181,7 @@ defmodule DialecticWeb.ShareModalComp do
                       <%= if preview_image do %>
                         <img
                           src={preview_image}
-                          alt="Graph Preview"
+                          alt="Grid Preview"
                           class="w-full max-h-48 object-contain"
                         />
                       <% else %>

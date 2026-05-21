@@ -61,6 +61,43 @@ hooks.SearchNav = SearchNav;
 hooks.Presentation = PresentationHook;
 hooks.PresentationSetup = PresentationSetupHook;
 hooks.Share = ShareHook;
+hooks.GlobalModalLayer = {
+  mounted() {
+    const header = document.getElementById("userHeader");
+    if (!header) return;
+
+    const currentCount = Number(document.body.dataset.globalModalCount || "0");
+    const nextCount = currentCount + 1;
+    document.body.dataset.globalModalCount = String(nextCount);
+
+    if (currentCount === 0) {
+      document.documentElement.classList.add("global-modal-open");
+      header.dataset.prevOpacity = header.style.opacity || "";
+      header.dataset.prevPointerEvents = header.style.pointerEvents || "";
+      header.style.opacity = "0";
+      header.style.pointerEvents = "none";
+    }
+  },
+
+  destroyed() {
+    const header = document.getElementById("userHeader");
+    if (!header) return;
+
+    const currentCount = Number(document.body.dataset.globalModalCount || "1");
+    const nextCount = Math.max(0, currentCount - 1);
+
+    if (nextCount === 0) {
+      document.documentElement.classList.remove("global-modal-open");
+      header.style.opacity = header.dataset.prevOpacity || "";
+      header.style.pointerEvents = header.dataset.prevPointerEvents || "";
+      delete header.dataset.prevOpacity;
+      delete header.dataset.prevPointerEvents;
+      delete document.body.dataset.globalModalCount;
+    } else {
+      document.body.dataset.globalModalCount = String(nextCount);
+    }
+  },
+};
 
 const MODE_SWITCH_TRANSITION_KEY = "mode-switch";
 let modeSwitchCleanupTimer = null;
@@ -70,6 +107,7 @@ const clearModeSwitchClasses = () => {
     "mode-switch-leave",
     "mode-switch-enter",
   );
+  delete document.documentElement.dataset.viewTransitionDirection;
 };
 
 const scheduleModeSwitchCleanup = (delay = 320) => {
@@ -97,6 +135,8 @@ document.addEventListener(
     }
 
     document.documentElement.dataset.viewTransition = MODE_SWITCH_TRANSITION_KEY;
+    document.documentElement.dataset.viewTransitionDirection =
+      link.dataset.viewTransitionDirection || "";
     document.documentElement.classList.remove("mode-switch-enter");
     document.documentElement.classList.add("mode-switch-leave");
     scheduleModeSwitchCleanup(900);
@@ -171,11 +211,14 @@ hooks.PasswordToggle = {
 hooks.GraphLayout = {
   mounted() {
     this.activePanelId = null;
+    this._reopenSideDrawerAfterPresentation = false;
     this._reopenSideDrawerAfterCombine = false;
+    this._handleMobileGraphResize = () => {
+      this._redirectMobileGraphToReader();
+    };
     const graphId = this.el.dataset.graphId || "global";
     const validReadingDensities = ["compact", "comfortable", "large"];
     const validReadingFonts = ["sans", "serif"];
-    this._drawerStorageKey = `rg:drawer:${graphId}`;
     this._bottomMenuStorageKey = `rg:bottom-menu:${graphId}`;
     this._readingDensityStorageKey = `rg:reading-density:${graphId}`;
     this._readingFontStorageKey = `rg:reading-font:${graphId}`;
@@ -189,7 +232,6 @@ hooks.GraphLayout = {
       return null;
     };
 
-    const storedDrawer = readStoredBool(this._drawerStorageKey);
     const storedBottomMenu = readStoredBool(this._bottomMenuStorageKey);
     const storedReadingDensity = (() => {
       try {
@@ -206,7 +248,7 @@ hooks.GraphLayout = {
       }
     })();
 
-    this.sideDrawerOpen = storedDrawer !== null ? storedDrawer : true;
+    this.sideDrawerOpen = true;
     this.bottomMenuOpen = storedBottomMenu !== null ? storedBottomMenu : true;
     this.readingDensity = validReadingDensities.includes(storedReadingDensity)
       ? storedReadingDensity
@@ -214,8 +256,11 @@ hooks.GraphLayout = {
     this.readingFont = validReadingFonts.includes(storedReadingFont)
       ? storedReadingFont
       : "serif";
+    this._redirectMobileGraphToReader();
     this._applyReadingDensity(this.readingDensity);
     this._applyReadingFont(this.readingFont);
+    this._closeAllPanels();
+    window.addEventListener("resize", this._handleMobileGraphResize);
 
     this.el.addEventListener("set-reading-density", (e) => {
       const nextDensity = e?.detail?.value;
@@ -241,39 +286,8 @@ hooks.GraphLayout = {
       } catch (_e) {}
     });
 
-    this.el.addEventListener("collapse-document-menu", () => {
-      const root = document.querySelector(
-        '[data-role="document-menu"] [data-collapse-root]',
-      );
-      if (!root) return;
-
-      const body = root.querySelector("[data-collapse-body]");
-      const openState = root.querySelector("[data-collapse-open-state]");
-      const closeState = root.querySelector("[data-collapse-close-state]");
-      if (!body) return;
-
-      body.classList.add("hidden");
-      if (openState && closeState) {
-        openState.classList.remove("hidden");
-        closeState.classList.add("hidden");
-      }
-
-      const storageKey = root.dataset.collapseKey;
-      if (!storageKey) return;
-
-      try {
-        localStorage.setItem(storageKey, "collapsed");
-      } catch (_e) {}
-    });
-
     this.el.addEventListener("toggle-panel", (e) => {
       const { id } = e.detail;
-      const panels = [
-        "right-panel",
-        "highlights-drawer",
-        "presentation-drawer",
-        "combine-drawer",
-      ];
       const targetPanel = document.getElementById(id);
 
       if (!targetPanel) return;
@@ -293,45 +307,25 @@ hooks.GraphLayout = {
       const combineWasOpen =
         combineDrawer && !combineDrawer.classList.contains("translate-x-full");
 
-      if (id === "combine-drawer" && isClosed) {
-        this._reopenSideDrawerAfterCombine = !!sideDrawerIsOpen;
+      if (id === "presentation-drawer" && isClosed) {
+        this._reopenSideDrawerAfterPresentation = true;
         if (sideDrawerIsOpen) {
           this._applySideDrawerState(false, {
-            persist: false,
             dispatchResize: false,
           });
         }
       }
 
-      // Close all panels first
-      panels.forEach((pId) => {
-        const p = document.getElementById(pId);
-        if (p) {
-          p.classList.add(
-            "translate-x-full",
-            "opacity-0",
-            "w-0",
-            "overflow-hidden",
-          );
-          p.classList.remove(
-            "translate-x-0",
-            "opacity-100",
-            "w-full",
-            "sm:w-96",
-            "overflow-y-auto",
-          );
+      if (id === "combine-drawer" && isClosed) {
+        this._reopenSideDrawerAfterCombine = true;
+        if (sideDrawerIsOpen) {
+          this._applySideDrawerState(false, {
+            dispatchResize: false,
+          });
         }
+      }
 
-        const btn = document.querySelector(`[data-panel-toggle="${pId}"]`);
-        if (btn) {
-          btn.classList.remove(
-            "ring-2",
-            "ring-offset-1",
-            "ring-white",
-            "scale-110",
-          );
-        }
-      });
+      this._closeAllPanels();
 
       // If a *different* panel is opening and the presentation drawer was open,
       // notify the server so it can leave setup mode.
@@ -393,15 +387,18 @@ hooks.GraphLayout = {
       }
 
       const shouldRestoreSideDrawer =
-        this._reopenSideDrawerAfterCombine &&
-        ((combineWasOpen && id !== "combine-drawer") ||
-          (id === "combine-drawer" && !isClosed));
+        (this._reopenSideDrawerAfterPresentation &&
+          ((presWasOpen && id !== "presentation-drawer") ||
+            (id === "presentation-drawer" && !isClosed))) ||
+        (this._reopenSideDrawerAfterCombine &&
+          ((combineWasOpen && id !== "combine-drawer") ||
+            (id === "combine-drawer" && !isClosed)));
 
       if (shouldRestoreSideDrawer) {
         this._applySideDrawerState(true, {
-          persist: false,
           dispatchResize: false,
         });
+        this._reopenSideDrawerAfterPresentation = false;
         this._reopenSideDrawerAfterCombine = false;
       }
 
@@ -414,14 +411,13 @@ hooks.GraphLayout = {
 
       const isClosed = drawer.classList.contains("-translate-x-full");
       let shouldOpen = isClosed;
-      const persist = e?.detail?.persist !== false;
 
       if (e.detail && e.detail.force) {
         if (e.detail.force === "open") shouldOpen = true;
         if (e.detail.force === "close") shouldOpen = false;
       }
 
-      this._applySideDrawerState(shouldOpen, { persist });
+      this._applySideDrawerState(shouldOpen);
     });
 
     this.el.addEventListener("toggle-bottom-menu", () => {
@@ -452,6 +448,17 @@ hooks.GraphLayout = {
       } catch (_e) {}
 
       window.dispatchEvent(new Event("resize"));
+    });
+
+    this.el.addEventListener("toggle-mobile-outline", () => {
+      const panel = document.getElementById("outline-mobile-nav-panel");
+      if (!panel) return;
+
+      this._applyMobileOutlineState(panel.classList.contains("hidden"));
+    });
+
+    this.el.addEventListener("close-mobile-outline", () => {
+      this._applyMobileOutlineState(false);
     });
 
     this.restoreState();
@@ -518,12 +525,56 @@ hooks.GraphLayout = {
       }
     }
   },
-  _applySideDrawerState(
-    shouldOpen,
-    { persist = true, dispatchResize = true } = {},
-  ) {
+  _panelIds() {
+    return [
+      "right-panel",
+      "highlights-drawer",
+      "presentation-drawer",
+      "combine-drawer",
+    ];
+  },
+  _closeAllPanels() {
+    this._panelIds().forEach((panelId) => {
+      const panel = document.getElementById(panelId);
+      if (panel) {
+        panel.classList.add(
+          "translate-x-full",
+          "opacity-0",
+          "w-0",
+          "overflow-hidden",
+        );
+        panel.classList.remove(
+          "translate-x-0",
+          "opacity-100",
+          "w-full",
+          "sm:w-96",
+          "overflow-y-auto",
+        );
+      }
+
+      const btn = document.querySelector(`[data-panel-toggle="${panelId}"]`);
+      if (btn) {
+        btn.classList.remove(
+          "ring-2",
+          "ring-offset-1",
+          "ring-white",
+          "scale-110",
+        );
+      }
+    });
+
+    const elementsToShift = document.querySelectorAll(".shift-with-panel");
+    elementsToShift.forEach((el) => {
+      el.classList.remove("right-80", "sm:right-96");
+    });
+
+    const bottomMenu = document.getElementById("bottom-menu");
+    if (bottomMenu) bottomMenu.classList.remove("panel-open");
+
+    this.activePanelId = null;
+  },
+  _applySideDrawerState(shouldOpen, { dispatchResize = true } = {}) {
     const drawer = document.getElementById("side-drawer");
-    const graphContainer = document.getElementById("graph-main-container");
     const toggleBtn = document.getElementById("drawer-toggle");
     const bottomElements = document.querySelectorAll(".shift-with-panel");
 
@@ -531,43 +582,31 @@ hooks.GraphLayout = {
 
     this.sideDrawerOpen = shouldOpen;
 
-    if (persist) {
-      try {
-        localStorage.setItem(
-          this._drawerStorageKey,
-          String(this.sideDrawerOpen),
-        );
-      } catch (_e) {}
-    }
-
     if (shouldOpen) {
       drawer.classList.remove(
         "-translate-x-full",
         "opacity-0",
         "w-0",
-        "md:w-0",
+        "lg:w-0",
         "overflow-hidden",
+        "p-0",
       );
       drawer.classList.add(
         "translate-x-0",
         "opacity-100",
         "w-full",
-        "md:w-[44%]",
         "p-4",
+        "lg:w-[var(--desktop-side-drawer-width)]",
+        "lg:p-0",
       );
-
-      if (graphContainer) {
-        graphContainer.classList.remove("w-full");
-        graphContainer.classList.add("md:w-[56%]");
-      }
 
       if (toggleBtn) {
         toggleBtn.classList.remove("left-2");
         toggleBtn.classList.add(
           "right-2",
-          "md:left-[44%]",
-          "md:ml-2",
-          "md:right-auto",
+          "lg:left-[var(--desktop-side-drawer-width)]",
+          "lg:ml-2",
+          "lg:right-auto",
         );
         const path = toggleBtn.querySelector("path");
         if (path) path.setAttribute("d", "M11 19l-7-7 7-7");
@@ -576,35 +615,32 @@ hooks.GraphLayout = {
       }
 
       bottomElements.forEach((el) => {
-        el.classList.add("md:left-[44%]");
+        el.classList.add("lg:left-[var(--desktop-side-drawer-width)]");
       });
     } else {
       drawer.classList.remove(
         "translate-x-0",
         "opacity-100",
         "w-full",
-        "md:w-[44%]",
         "p-4",
+        "lg:w-[var(--desktop-side-drawer-width)]",
+        "lg:p-0",
       );
       drawer.classList.add(
         "-translate-x-full",
         "opacity-0",
         "w-0",
-        "md:w-0",
+        "lg:w-0",
         "overflow-hidden",
+        "p-0",
       );
-
-      if (graphContainer) {
-        graphContainer.classList.remove("md:w-[56%]");
-        graphContainer.classList.add("w-full");
-      }
 
       if (toggleBtn) {
         toggleBtn.classList.remove(
           "right-2",
-          "md:left-[44%]",
-          "md:ml-2",
-          "md:right-auto",
+          "lg:left-[var(--desktop-side-drawer-width)]",
+          "lg:ml-2",
+          "lg:right-auto",
         );
         toggleBtn.classList.add("left-2");
         const path = toggleBtn.querySelector("path");
@@ -614,7 +650,7 @@ hooks.GraphLayout = {
       }
 
       bottomElements.forEach((el) => {
-        el.classList.remove("md:left-[44%]");
+        el.classList.remove("lg:left-[var(--desktop-side-drawer-width)]");
       });
     }
 
@@ -623,17 +659,78 @@ hooks.GraphLayout = {
     }
   },
   updated() {
+    this._redirectMobileGraphToReader();
     this.restoreState();
   },
   reconnected() {
+    this._redirectMobileGraphToReader();
     this.restoreState();
   },
+  destroyed() {
+    if (this._handleMobileGraphResize) {
+      window.removeEventListener("resize", this._handleMobileGraphResize);
+    }
+  },
+  _redirectMobileGraphToReader() {
+    const mobileReaderPath = this.el.dataset.mobileReaderPath;
+    const isGraphLayout = this.el.id === "graph-layout";
+    const isPresenting = this.el.dataset.presenting === "true";
+
+    if (!isGraphLayout || !mobileReaderPath || isPresenting) return;
+    if (!window.matchMedia("(max-width: 639px)").matches) return;
+
+    const currentPath = `${window.location.pathname}${window.location.search}`;
+    if (currentPath === mobileReaderPath) return;
+
+    window.location.replace(mobileReaderPath);
+  },
+  _applyMobileOutlineState(shouldOpen) {
+    const panel = document.getElementById("outline-mobile-nav-panel");
+    const button = document.getElementById("reader-workspace-bar-outline");
+
+    if (!panel || !button) return;
+
+    panel.classList.toggle("hidden", !shouldOpen);
+
+    button.setAttribute("aria-expanded", String(shouldOpen));
+
+    const label = shouldOpen
+      ? "Hide conversation outline"
+      : "Show conversation outline";
+
+    button.setAttribute("aria-label", label);
+    button.setAttribute("title", label);
+
+    button.classList.toggle("border-slate-300", shouldOpen);
+    button.classList.toggle("bg-slate-100", shouldOpen);
+    button.classList.toggle("text-slate-950", shouldOpen);
+  },
   restoreState() {
+    this._applyMobileOutlineState(false);
+
     if (this.readingDensity) {
       this._applyReadingDensity(this.readingDensity);
     }
     if (this.readingFont) {
       this._applyReadingFont(this.readingFont);
+    }
+
+    const presentationDrawer = document.getElementById("presentation-drawer");
+    const combineDrawer = document.getElementById("combine-drawer");
+    const shouldReopenAfterPresentation =
+      this._reopenSideDrawerAfterPresentation &&
+      this.activePanelId !== "presentation-drawer" &&
+      (!presentationDrawer ||
+        presentationDrawer.classList.contains("translate-x-full"));
+    const shouldReopenAfterCombine =
+      this._reopenSideDrawerAfterCombine &&
+      this.activePanelId !== "combine-drawer" &&
+      (!combineDrawer || combineDrawer.classList.contains("translate-x-full"));
+
+    if (shouldReopenAfterPresentation || shouldReopenAfterCombine) {
+      this.sideDrawerOpen = true;
+      this._reopenSideDrawerAfterPresentation = false;
+      this._reopenSideDrawerAfterCombine = false;
     }
 
     // Restore side drawer state
@@ -662,7 +759,10 @@ hooks.GraphLayout = {
       }
     }
 
-    if (!this.activePanelId) return;
+    if (!this.activePanelId) {
+      this._closeAllPanels();
+      return;
+    }
     const panel = document.getElementById(this.activePanelId);
     if (!panel) return;
 

@@ -217,9 +217,9 @@ defmodule DialecticWeb.RightPanelComp do
                 <.icon name="hero-adjustments-horizontal" class="w-4 h-4" />
               </div>
               <div>
-                <div class="text-xs font-semibold text-gray-800">Language Level</div>
+                <div class="text-xs font-semibold text-gray-800">AI Responses</div>
                 <p class="text-[10px] text-gray-500 leading-tight">
-                  AI response complexity level
+                  Complexity and tone
                 </p>
               </div>
             </div>
@@ -278,9 +278,9 @@ defmodule DialecticWeb.RightPanelComp do
                 <.icon name="hero-folder" class="w-4 h-4" />
               </div>
               <div>
-                <div class="text-xs font-semibold text-gray-800">Public/Private</div>
+                <div class="text-xs font-semibold text-gray-800">Collaboration</div>
                 <p class="text-[10px] text-gray-500 leading-tight">
-                  Groups and access settings
+                  Groups, privacy, and sharing
                 </p>
               </div>
             </div>
@@ -362,7 +362,6 @@ defmodule DialecticWeb.RightPanelComp do
                     to: "#graph-layout",
                     detail: %{id: "right-panel"}
                   )
-                  |> Phoenix.LiveView.JS.dispatch("collapse-document-menu", to: "#graph-layout")
                   |> Phoenix.LiveView.JS.push("open_share_modal")
                 }
                 class="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors"

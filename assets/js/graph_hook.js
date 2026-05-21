@@ -477,13 +477,49 @@ const graphHook = {
     const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
     this._zoomToast = this._zoomToast || null;
     this._zoomToastTimer = this._zoomToastTimer || null;
+    const zoomSettings = layoutConfig.zoomSettings || {};
+    const minZoom = zoomSettings.min || 0.05;
+    const maxZoom = zoomSettings.max || 4.0;
+    const zoomSliderMax = 1000;
+    const zoomMinLog = Math.log(minZoom);
+    const zoomRangeLog = Math.log(maxZoom) - zoomMinLog;
+
+    const zoomToSliderValue = (zoom) => {
+      const safeZoom = clamp(zoom, minZoom, maxZoom);
+      if (zoomRangeLog <= 0) return 0;
+
+      return Math.round(
+        ((Math.log(safeZoom) - zoomMinLog) / zoomRangeLog) * zoomSliderMax,
+      );
+    };
+
+    const sliderValueToZoom = (value) => {
+      if (zoomRangeLog <= 0) return minZoom;
+
+      const clampedValue = clamp(value, 0, zoomSliderMax);
+      const ratio = clampedValue / zoomSliderMax;
+      return Math.exp(zoomMinLog + ratio * zoomRangeLog);
+    };
+
+    const syncZoomIndicators = () => {
+      const zoom = this.cy.zoom();
+      const zoomText = Math.round(zoom * 100) + "%";
+      document.querySelectorAll("[data-zoom-level]").forEach((el) => {
+        el.textContent = zoomText;
+      });
+      document.querySelectorAll("[data-zoom-slider]").forEach((el) => {
+        el.value = String(zoomToSliderValue(zoom));
+      });
+      return zoomText;
+    };
 
     const showZoom = () => {
+      const zoomText = syncZoomIndicators();
       if (!this._zoomToast) {
         this._zoomToast = document.createElement("div");
         this._zoomToast.style.position = "absolute";
         this._zoomToast.style.right = "12px";
-        this._zoomToast.style.bottom = "48px";
+        this._zoomToast.style.bottom = "96px";
         this._zoomToast.style.padding = "2px 6px";
         this._zoomToast.style.background = "rgba(0,0,0,0.65)";
         this._zoomToast.style.color = "#fff";
@@ -493,7 +529,7 @@ const graphHook = {
         this._zoomToast.style.transition = "opacity 150ms ease";
         container.appendChild(this._zoomToast);
       }
-      this._zoomToast.textContent = Math.round(this.cy.zoom() * 100) + "%";
+      this._zoomToast.textContent = zoomText;
       this._zoomToast.style.opacity = "1";
       if (this._zoomToastTimer) clearTimeout(this._zoomToastTimer);
       this._zoomToastTimer = setTimeout(
@@ -518,68 +554,127 @@ const graphHook = {
       const current = this.cy.zoom();
       const next = clamp(
         current * factor,
-        layoutConfig.zoomSettings.min || 0.05,
-        layoutConfig.zoomSettings.max || 4.0,
+        minZoom,
+        maxZoom,
       );
       this.cy.zoom({ level: next, renderedPosition: centerPoint() });
       showZoom();
     };
 
+    const zoomToLevel = (level, { announce = false } = {}) => {
+      const next = clamp(level, minZoom, maxZoom);
+      this.cy.zoom({ level: next, renderedPosition: centerPoint() });
+      if (typeof this.cy.scheduleViewportClamp === "function") {
+        this.cy.scheduleViewportClamp({ immediate: true });
+      }
+
+      if (announce) {
+        showZoom();
+      } else {
+        syncZoomIndicators();
+      }
+    };
+
+    const visibleGraphNodes = () =>
+      this.cy.nodes().filter(
+        (n) =>
+          !n.hasClass("hidden") &&
+          !n.hasClass("depth-hidden") &&
+          !n.hasClass("presentation-hidden") &&
+          !n.hasClass("presentation-hidden-parent"),
+      );
+
     const fitGraph = () => {
-      // First center to all elements as before
-      this.cy.animate({
-        center: { eles: this.cy.elements() },
-        duration: 150,
-        easing: "ease-in-out-quad",
-      });
+      const visibleNodes = visibleGraphNodes();
+      if (!visibleNodes || visibleNodes.length === 0) return;
+
+      const fitPadding = window.matchMedia("(max-width: 1023px)").matches
+        ? 56
+        : 84;
+
+      this.cy.fit(visibleNodes, fitPadding);
 
       // Then offset horizontally so the centered content lands in the visible area, not under the right panel
-      const rect = container.getBoundingClientRect();
       const rightPanelWidth = getRightPanelWidth();
       const deltaX = rightPanelWidth > 0 ? -(rightPanelWidth / 2) : 0;
 
       if (deltaX !== 0) {
-        this.cy.animate({
-          panBy: { x: deltaX, y: 0 },
-          duration: 150,
-          easing: "ease-in-out-quad",
-        });
+        this.cy.panBy({ x: deltaX, y: 0 });
+      }
+
+      if (typeof this.cy.scheduleViewportClamp === "function") {
+        this.cy.scheduleViewportClamp({ immediate: true });
       }
 
       requestAnimationFrame(showZoom);
     };
 
     const btnPngs = Array.from(document.querySelectorAll(".download-png"));
-    const btnIn = document.getElementById("zoom-in");
-    const btnOut = document.getElementById("zoom-out");
-    const btnFit = document.getElementById("zoom-fit");
+    this._bindZoomControls = () => {
+      if (Array.isArray(this._zoomControlHandlers)) {
+        this._zoomControlHandlers.forEach(([el, handler]) => {
+          el.removeEventListener("click", handler);
+        });
+      }
+      if (Array.isArray(this._zoomSliderHandlers)) {
+        this._zoomSliderHandlers.forEach(([el, inputHandler, changeHandler]) => {
+          el.removeEventListener("input", inputHandler);
+          el.removeEventListener("change", changeHandler);
+        });
+      }
 
-    if (btnIn) {
-      this._btnInEl = btnIn;
-      this._btnInHandler = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        zoomBy(1.2);
-      };
-      btnIn.addEventListener("click", this._btnInHandler);
-    }
-    if (btnOut) {
-      this._btnOutEl = btnOut;
-      this._btnOutHandler = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        zoomBy(1 / 1.2);
-      };
-      btnOut.addEventListener("click", this._btnOutHandler);
-    }
-    if (btnFit) {
-      this._btnFitEl = btnFit;
-      this._btnFitHandler = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        fitGraph();
-      };
-      btnFit.addEventListener("click", this._btnFitHandler);
+      const zoomControls = Array.from(
+        document.querySelectorAll("[data-zoom-action]"),
+      );
+      const zoomSliders = Array.from(
+        document.querySelectorAll("[data-zoom-slider]"),
+      );
+
+      this._zoomControlHandlers = [];
+      zoomControls.forEach((btn) => {
+        const action = btn.dataset.zoomAction;
+        const handler = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          if (action === "in") {
+            zoomBy(1.2);
+          } else if (action === "out") {
+            zoomBy(1 / 1.2);
+          } else if (action === "fit") {
+            fitGraph();
+          }
+        };
+
+        btn.addEventListener("click", handler);
+        this._zoomControlHandlers.push([btn, handler]);
+      });
+
+      this._zoomSliderHandlers = [];
+      zoomSliders.forEach((slider) => {
+        const inputHandler = (e) => {
+          e.stopPropagation();
+          zoomToLevel(sliderValueToZoom(parseFloat(slider.value)), {
+            announce: false,
+          });
+        };
+        const changeHandler = (e) => {
+          e.stopPropagation();
+          zoomToLevel(sliderValueToZoom(parseFloat(slider.value)), {
+            announce: true,
+          });
+        };
+
+        slider.addEventListener("input", inputHandler);
+        slider.addEventListener("change", changeHandler);
+        this._zoomSliderHandlers.push([slider, inputHandler, changeHandler]);
+      });
+    };
+    this._bindZoomControls();
+    syncZoomIndicators();
+    this._syncZoomIndicators = syncZoomIndicators;
+    if (this.cy && typeof this.cy.on === "function") {
+      this.cy.on("zoom layoutstop", this._syncZoomIndicators);
     }
     // Shared PNG export helpers and button binding
     if (!this._exportGraphPng) {
@@ -2208,6 +2303,10 @@ const graphHook = {
 
     ensureExploreBound();
 
+    if (this._bindZoomControls) {
+      this._bindZoomControls();
+    }
+
     if (this._bindPngButtons) {
       this._bindPngButtons();
     }
@@ -2259,20 +2358,24 @@ const graphHook = {
       this._onViewportResize = null;
       this._viewportResizePending = false;
     }
-    if (this._btnInEl && this._btnInHandler) {
-      this._btnInEl.removeEventListener("click", this._btnInHandler);
-      this._btnInEl = null;
-      this._btnInHandler = null;
+    if (Array.isArray(this._zoomControlHandlers)) {
+      this._zoomControlHandlers.forEach(([el, handler]) => {
+        el.removeEventListener("click", handler);
+      });
+      this._zoomControlHandlers = null;
     }
-    if (this._btnOutEl && this._btnOutHandler) {
-      this._btnOutEl.removeEventListener("click", this._btnOutHandler);
-      this._btnOutEl = null;
-      this._btnOutHandler = null;
+    if (Array.isArray(this._zoomSliderHandlers)) {
+      this._zoomSliderHandlers.forEach(([el, inputHandler, changeHandler]) => {
+        el.removeEventListener("input", inputHandler);
+        el.removeEventListener("change", changeHandler);
+      });
+      this._zoomSliderHandlers = null;
     }
-    if (this._btnFitEl && this._btnFitHandler) {
-      this._btnFitEl.removeEventListener("click", this._btnFitHandler);
-      this._btnFitEl = null;
-      this._btnFitHandler = null;
+    if (this.cy && this._syncZoomIndicators) {
+      try {
+        this.cy.off("zoom layoutstop", this._syncZoomIndicators);
+      } catch (_e) {}
+      this._syncZoomIndicators = null;
     }
     if (Array.isArray(this._btnPngHandlers)) {
       this._btnPngHandlers.forEach(([el, handler]) => {

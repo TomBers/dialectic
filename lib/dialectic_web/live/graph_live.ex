@@ -6,6 +6,7 @@ defmodule DialecticWeb.GraphLive do
   alias Dialectic.Accounts.User
   alias DialecticWeb.NodeComp
   alias DialecticWeb.GraphHelpers
+  alias DialecticWeb.NodeSearch
 
   import DialecticWeb.GraphPresentation
   import DialecticWeb.PresentationStageComp, only: [presentation_stage: 1]
@@ -228,16 +229,18 @@ defmodule DialecticWeb.GraphLive do
     else
       search_results =
         try do
-          term = String.downcase(search_term)
-
           GraphManager.vertices(socket.assigns.graph_id)
           |> Enum.reduce([], fn vid, acc ->
             case GraphManager.vertex_label(socket.assigns.graph_id, vid) do
               %{} = vertex ->
-                if valid_search_node(vertex) and
-                     String.contains?(String.downcase(vertex.content), term) do
-                  exact_match = if String.downcase(vertex.content) == term, do: 0, else: 1
-                  [{exact_match, vertex.id, vertex} | acc]
+                if valid_search_node(vertex) do
+                  case NodeSearch.annotate_result(vertex, search_term) do
+                    %{search_rank: rank} = result ->
+                      [{rank, vertex.id, result} | acc]
+
+                    nil ->
+                      acc
+                  end
                 else
                   acc
                 end
@@ -251,6 +254,8 @@ defmodule DialecticWeb.GraphLive do
           |> Enum.take(10)
         rescue
           _ -> []
+        catch
+          :exit, _reason -> []
         end
 
       matching_ids = Enum.map(search_results, & &1.id)
@@ -839,6 +844,14 @@ defmodule DialecticWeb.GraphLive do
   end
 
   # Start stream handlers grouped with other handle_event clauses
+  def handle_event("open_help_modal", _params, socket) do
+    {:noreply, assign(socket, show_help_modal: true)}
+  end
+
+  def handle_event("close_help_modal", _params, socket) do
+    {:noreply, assign(socket, show_help_modal: false)}
+  end
+
   def handle_event("open_share_modal", _params, socket) do
     socket =
       socket
@@ -2013,6 +2026,7 @@ defmodule DialecticWeb.GraphLive do
       explore_items: [],
       explore_selected: [],
       show_start_stream_modal: false,
+      show_help_modal: false,
       show_share_modal: false,
       work_streams: [],
       exploration_stats: nil,
