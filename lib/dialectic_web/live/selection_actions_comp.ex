@@ -57,9 +57,9 @@ defmodule DialecticWeb.SelectionActionsComp do
         %{
           key: "says_who",
           icon: "hero-user",
-          label: "Source",
+          label: "Source Check",
           blurb: "Says who?",
-          title: "Source: Question the authority and evidence behind claims."
+          title: "Source Check: Question the authority and evidence behind claims."
         },
         %{
           key: "blind_spots",
@@ -78,7 +78,7 @@ defmodule DialecticWeb.SelectionActionsComp do
       ]
     },
     %{
-      title: "Implications & Consequences",
+      title: "Consequences & Counterfactuals",
       tools: [
         %{
           key: "implications",
@@ -86,13 +86,6 @@ defmodule DialecticWeb.SelectionActionsComp do
           label: "Implications",
           blurb: "If true, then what?",
           title: "Implications: Trace what follows if this selection is true."
-        },
-        %{
-          key: "second_order",
-          icon: "hero-arrow-path",
-          label: "Second Order",
-          blurb: "Ripple effects?",
-          title: "Second Order: Explore indirect consequences and ripple effects."
         },
         %{
           key: "what_if",
@@ -104,28 +97,15 @@ defmodule DialecticWeb.SelectionActionsComp do
       ]
     },
     %{
-      title: "Understanding & Communication",
+      title: "Conceptual Precision",
       tools: [
         %{
           key: "clarify",
           icon: "hero-light-bulb",
-          label: "Clarify",
-          blurb: "Explain it simply",
-          title: "Clarify: Make the selected wording easier to understand."
-        },
-        %{
-          key: "simplify",
-          icon: "hero-sparkles",
-          label: "Simplify",
-          blurb: "Plain language",
-          title: "Simplify: Rewrite the selection in clearer everyday language."
-        },
-        %{
-          key: "analogy",
-          icon: "hero-arrows-right-left",
-          label: "Analogy",
-          blurb: "Like what?",
-          title: "Analogy: Compare this idea to something more familiar."
+          label: "Clarify Terms",
+          blurb: "What do we mean?",
+          title:
+            "Clarify Terms: Identify key terms, hidden ambiguity, conceptual boundaries, and what would count as evidence."
         }
       ]
     }
@@ -487,7 +467,7 @@ defmodule DialecticWeb.SelectionActionsComp do
                 <div>
                   <p class="text-sm font-semibold text-slate-900">Advanced Critical Thinking Tools</p>
                   <p class="mt-0.5 text-[12px] leading-4 text-slate-500">
-                    Stress-test the selected wording from different angles.
+                    Focused reasoning moves for stress-testing the selected wording.
                   </p>
                 </div>
                 <.icon

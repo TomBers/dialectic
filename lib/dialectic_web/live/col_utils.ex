@@ -198,13 +198,13 @@ defmodule DialecticWeb.ColUtils do
   def node_type_label("synthesis"), do: "Synthesis / Balanced View"
   def node_type_label("ideas"), do: "Related Ideas"
   # Cluster 1 — Core Inquiry Moves
-  def node_type_label("clarify"), do: "Clarify"
+  def node_type_label("clarify"), do: "Clarify Terms"
   def node_type_label("assumptions"), do: "Assumptions"
   def node_type_label("counterexample"), do: "Counterexample"
   def node_type_label("implications"), do: "Implications"
   def node_type_label("blind_spots"), do: "Blind Spots"
   # Cluster 2 — Context & Dialectical Expansion
-  def node_type_label("says_who"), do: "Says Who?"
+  def node_type_label("says_who"), do: "Source Check"
   def node_type_label("who_disagrees"), do: "Who Disagrees?"
   def node_type_label("analogy"), do: "Analogy"
   def node_type_label("steel_man"), do: "Steel Man"
@@ -230,7 +230,7 @@ defmodule DialecticWeb.ColUtils do
   def node_type_description("ideas"), do: "Related ideas and connections (Orange)"
   # Cluster 1 — Core Inquiry Moves
   def node_type_description("clarify"),
-    do: "Conceptual clarification — 'What do you mean by…?' (Teal)"
+    do: "Clarify terms and conceptual boundaries — 'What do you mean by…?' (Teal)"
 
   def node_type_description("assumptions"),
     do: "Hidden assumptions — 'What has to be true?' (Amber)"
@@ -242,7 +242,7 @@ defmodule DialecticWeb.ColUtils do
     do: "Missing perspectives — 'What's missing?' (Purple)"
 
   # Cluster 2 — Context & Dialectical Expansion
-  def node_type_description("says_who"), do: "Source examination — 'Says who?' (Sky)"
+  def node_type_description("says_who"), do: "Source and evidence check — 'Says who?' (Sky)"
   def node_type_description("who_disagrees"), do: "Mapping dissent — 'Who disagrees?' (Rose)"
 
   def node_type_description("analogy"),

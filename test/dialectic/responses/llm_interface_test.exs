@@ -21,6 +21,8 @@ defmodule Dialectic.Responses.LlmInterfaceTest do
     end
 
     test "exports all 12 critical thinking tool functions" do
+      assert Code.ensure_loaded?(Dialectic.Responses.LlmInterface)
+
       # Verify all thinking tools have corresponding gen_* functions
       thinking_tools = [
         :gen_clarify,

@@ -34,6 +34,8 @@ defmodule Dialectic.Graph.GraphActionsTest do
     end
 
     test "exports all critical thinking tool methods" do
+      assert Code.ensure_loaded?(Dialectic.Graph.GraphActions)
+
       # Full node operations
       assert function_exported?(Dialectic.Graph.GraphActions, :clarify, 2)
       assert function_exported?(Dialectic.Graph.GraphActions, :assumptions, 2)

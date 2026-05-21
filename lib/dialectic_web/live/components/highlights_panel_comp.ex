@@ -109,7 +109,7 @@ defmodule DialecticWeb.HighlightsPanelComp do
   defp link_type_label("pro"), do: "Pro Argument"
   defp link_type_label("con"), do: "Con Argument"
   defp link_type_label("related_idea"), do: "Related Idea"
-  defp link_type_label("clarify"), do: "Clarify"
+  defp link_type_label("clarify"), do: "Clarify Terms"
   defp link_type_label("assumptions"), do: "Assumptions"
   defp link_type_label("counterexample"), do: "Counterexample"
   defp link_type_label("implications"), do: "Implications"

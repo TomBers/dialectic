@@ -232,7 +232,7 @@ defmodule DialecticWeb.ActionToolbarComp do
             <div>
               <p class="text-sm font-semibold text-slate-900">Advanced Critical Thinking Tools</p>
               <p class="mt-0.5 text-xs text-slate-500">
-                Use these to stress-test claims, surface assumptions, and sharpen understanding.
+                A focused set of reasoning moves for stress-testing claims and sharpening understanding.
               </p>
             </div>
             <.icon
@@ -345,7 +345,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                   phx-click="node_says_who"
                   phx-value-id={@node && @node.id}
                   disabled={is_nil(@graph_id)}
-                  title="Source: Question the authority and evidence behind claims. Example: 'Studies show X' — which studies? Who funded them? What was the sample size? Are there conflicting studies?"
+                  title="Source Check: Question the authority and evidence behind claims. Example: 'Studies show X' — which studies? Who funded them? What was the sample size? Are there conflicting studies?"
                 >
                   <span class={[
                     "inline-flex items-center justify-center rounded-xl p-2 shadow-sm",
@@ -354,7 +354,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                     <.icon name="hero-user" class="h-4 w-4" />
                   </span>
                   <span class="space-y-0.5">
-                    <span class="block text-xs font-semibold text-slate-900">Source</span>
+                    <span class="block text-xs font-semibold text-slate-900">Source Check</span>
                     <span class="block text-xs leading-tight text-slate-600">Says who?</span>
                   </span>
                 </button>
@@ -411,10 +411,10 @@ defmodule DialecticWeb.ActionToolbarComp do
               </div>
             </div>
 
-            <%!-- Implications & Consequences --%>
+            <%!-- Consequences & Counterfactuals --%>
             <div>
               <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2 px-1">
-                Implications & Consequences
+                Consequences & Counterfactuals
               </h4>
               <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 <button
@@ -446,31 +446,6 @@ defmodule DialecticWeb.ActionToolbarComp do
                   type="button"
                   class={[
                     "group flex flex-col items-start gap-2.5 rounded-[1.1rem] px-3.5 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
-                    ColUtils.advanced_tool_surface_class("second_order")
-                  ]}
-                  phx-click="node_second_order"
-                  phx-value-id={@node && @node.id}
-                  disabled={is_nil(@graph_id)}
-                  title="Second Order: Explore indirect consequences and ripple effects. Example: 'Free college tuition' leads to more graduates, which leads to credential inflation, changing job requirements, and shifts in what skills are valued."
-                >
-                  <span class={[
-                    "inline-flex items-center justify-center rounded-xl p-2 shadow-sm",
-                    ColUtils.advanced_tool_icon_class("second_order")
-                  ]}>
-                    <.icon name="hero-arrow-path" class="h-4 w-4" />
-                  </span>
-                  <span class="space-y-0.5">
-                    <span class="block text-xs font-semibold text-slate-900">Second Order</span>
-                    <span class="block text-xs leading-tight text-slate-600">
-                      Ripple effects?
-                    </span>
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  class={[
-                    "group flex flex-col items-start gap-2.5 rounded-[1.1rem] px-3.5 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
                     ColUtils.advanced_tool_surface_class("what_if")
                   ]}
                   phx-click="node_what_if"
@@ -494,10 +469,10 @@ defmodule DialecticWeb.ActionToolbarComp do
               </div>
             </div>
 
-            <%!-- Understanding & Communication --%>
+            <%!-- Conceptual Precision --%>
             <div>
               <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2 px-1">
-                Understanding & Communication
+                Conceptual Precision
               </h4>
               <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 <button
@@ -509,7 +484,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                   phx-click="node_clarify"
                   phx-value-id={@node && @node.id}
                   disabled={is_nil(@graph_id)}
-                  title="Clarify: Make complex ideas clearer with simpler language and concrete examples. Example: 'Quantum entanglement' becomes 'When two particles are linked so that measuring one instantly affects the other, no matter the distance.'"
+                  title="Clarify Terms: Identify key terms, hidden ambiguity, conceptual boundaries, and what would count as evidence."
                 >
                   <span class={[
                     "inline-flex items-center justify-center rounded-xl p-2 shadow-sm",
@@ -518,59 +493,9 @@ defmodule DialecticWeb.ActionToolbarComp do
                     <.icon name="hero-light-bulb" class="h-4 w-4" />
                   </span>
                   <span class="space-y-0.5">
-                    <span class="block text-xs font-semibold text-slate-900">Clarify</span>
+                    <span class="block text-xs font-semibold text-slate-900">Clarify Terms</span>
                     <span class="block text-xs leading-tight text-slate-600">
-                      Explain it simply
-                    </span>
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  class={[
-                    "group flex flex-col items-start gap-2.5 rounded-[1.1rem] px-3.5 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
-                    ColUtils.advanced_tool_surface_class("simplify")
-                  ]}
-                  phx-click="node_simplify"
-                  phx-value-id={@node && @node.id}
-                  disabled={is_nil(@graph_id)}
-                  title="Simplify: Break down complex ideas into plain language anyone can understand. Example: Turn technical jargon into everyday terms with concrete examples."
-                >
-                  <span class={[
-                    "inline-flex items-center justify-center rounded-xl p-2 shadow-sm",
-                    ColUtils.advanced_tool_icon_class("simplify")
-                  ]}>
-                    <.icon name="hero-sparkles" class="h-4 w-4" />
-                  </span>
-                  <span class="space-y-0.5">
-                    <span class="block text-xs font-semibold text-slate-900">Simplify</span>
-                    <span class="block text-xs leading-tight text-slate-600">
-                      Plain language
-                    </span>
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  class={[
-                    "group flex flex-col items-start gap-2.5 rounded-[1.1rem] px-3.5 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
-                    ColUtils.advanced_tool_surface_class("analogy")
-                  ]}
-                  phx-click="node_analogy"
-                  phx-value-id={@node && @node.id}
-                  disabled={is_nil(@graph_id)}
-                  title="Analogy: Understand ideas through comparison to familiar concepts. Example: 'Blockchain is like a public ledger where everyone has a copy and can verify entries.'"
-                >
-                  <span class={[
-                    "inline-flex items-center justify-center rounded-xl p-2 shadow-sm",
-                    ColUtils.advanced_tool_icon_class("analogy")
-                  ]}>
-                    <.icon name="hero-arrows-right-left" class="h-4 w-4" />
-                  </span>
-                  <span class="space-y-0.5">
-                    <span class="block text-xs font-semibold text-slate-900">Analogy</span>
-                    <span class="block text-xs leading-tight text-slate-600">
-                      Like what?
+                      What do we mean?
                     </span>
                   </span>
                 </button>

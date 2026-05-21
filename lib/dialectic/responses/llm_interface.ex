@@ -374,9 +374,9 @@ defmodule Dialectic.Responses.LlmInterface do
     base_context = GraphManager.build_context(graph_id, node)
 
     if content_override do
-      # Selection-targeted tools should focus on the selection itself rather than
-      # re-reading the full node content.
-      {to_string(content_override), content_override}
+      # Selection-targeted tools should analyze the selected text while retaining
+      # the surrounding graph context as the Foundation for the prompt.
+      {base_context, content_override}
     else
       {base_context, node.content || ""}
     end
