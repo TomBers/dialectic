@@ -234,34 +234,17 @@
     <div
       id="graph-main-container"
       class={[
-        "relative flex-1 min-w-0",
+        "relative flex min-w-0 flex-1 flex-col",
         if(@presentation_mode == :presenting,
           do: "min-h-[42vh] lg:min-h-0",
           else: "min-h-[34vh] lg:min-h-0"
         )
       ]}
     >
-      <div
-        id="cy"
-        class={[
-          "h-full w-full relative",
-          if(@presentation_mode == :presenting, do: "border-l-0")
-        ]}
-        data-graph-id={@graph_id}
-        data-graph={@f_graph}
-        data-node={if @node, do: @node.id, else: nil}
-        data-operation={@graph_operation}
-        data-presentation-mode={@presentation_mode}
-        data-presentation-slide-ids={Jason.encode!(@presentation_slide_ids)}
-        data-div="cy-inner"
-        data-enter-shortcut="reader"
-        data-ignore-inputs="true"
-        phx-hook="Graph"
-        tabindex="0"
-      >
-        <%= if @presentation_mode != :presenting do %>
-          <div class="pointer-events-none absolute left-4 top-4 z-20 flex max-w-[calc(100%-14rem)] flex-wrap items-start gap-2">
-            <div class="pointer-events-auto">
+      <%= if @presentation_mode != :presenting do %>
+        <div class="relative z-20 flex-none border-b border-slate-200/90 bg-white/97 shadow-[0_12px_24px_-26px_rgba(15,23,42,0.22)] backdrop-blur-lg sm:shadow-[0_16px_32px_-30px_rgba(15,23,42,0.28)]">
+          <div class="px-4 py-1 sm:px-5 lg:px-6">
+            <div class="flex min-h-[38px] flex-wrap items-center justify-between gap-1.5">
               <DialecticWeb.WorkspaceBarComp.workspace_bar
                 id="graph-workspace-bar"
                 mode={:graph}
@@ -281,9 +264,7 @@
                 share_click="open_share_modal"
                 compact
               />
-            </div>
 
-            <div class="pointer-events-auto">
               <.live_component
                 module={DialecticWeb.DocumentMenuComp}
                 id="document-menu"
@@ -297,7 +278,28 @@
               />
             </div>
           </div>
+        </div>
+      <% end %>
 
+      <div
+        id="cy"
+        class={[
+          "relative h-full w-full flex-1",
+          if(@presentation_mode == :presenting, do: "border-l-0")
+        ]}
+        data-graph-id={@graph_id}
+        data-graph={@f_graph}
+        data-node={if @node, do: @node.id, else: nil}
+        data-operation={@graph_operation}
+        data-presentation-mode={@presentation_mode}
+        data-presentation-slide-ids={Jason.encode!(@presentation_slide_ids)}
+        data-div="cy-inner"
+        data-enter-shortcut="reader"
+        data-ignore-inputs="true"
+        phx-hook="Graph"
+        tabindex="0"
+      >
+        <%= if @presentation_mode != :presenting do %>
           <div class="pointer-events-none absolute right-4 top-4 z-20 flex flex-col items-end gap-2">
             <div class="pointer-events-auto inline-flex items-center gap-3 rounded-full border border-slate-200/90 bg-white/95 px-3 py-2 text-xs font-semibold text-slate-700 shadow-[0_18px_30px_-24px_rgba(15,23,42,0.55)] ring-1 ring-white/80 backdrop-blur">
               <span class="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
