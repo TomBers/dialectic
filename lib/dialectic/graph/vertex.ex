@@ -13,7 +13,18 @@ defmodule Dialectic.Graph.Vertex do
     "user",
     "question",
     "origin",
-    "deepdive"
+    "ideas",
+    # Cluster 1 — Core Inquiry Moves
+    "clarify",
+    "assumptions",
+    "counterexample",
+    "implications",
+    "blind_spots",
+    # Cluster 2 — Context & Dialectical Expansion
+    "says_who",
+    "who_disagrees",
+    "steel_man",
+    "what_if"
   ]
   # Define a custom type for class validation
   # @type class :: "assumption" | "premise" | "conclusion"
