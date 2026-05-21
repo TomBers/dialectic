@@ -144,13 +144,17 @@ defmodule DialecticWeb.NodeComp do
                       data-children={length(@node.children)}
                       id={"list-detector-" <> @node.id}
                     >
-                      <div class="mb-3 flex items-center gap-2 text-sm text-slate-600">
+                      <div class="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-600">
                         <span class="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 font-medium text-amber-800 shadow-sm">
                           <.icon name="hero-cursor-arrow-rays" class="h-3.5 w-3.5" />
                           <span>Select text to ask a follow-up</span>
                         </span>
-                        <span class="hidden rounded-md bg-amber-100 px-2 py-1 text-xs font-medium text-amber-900 sm:inline-flex">
-                          Example selection
+                        <span class="hidden text-xs text-slate-500 sm:inline">
+                          For example, select a word like
+                          <span class="mx-1 rounded-[0.2em] bg-amber-200/90 px-1 py-0.5 font-medium text-slate-900 shadow-[inset_0_-1px_0_rgba(120,53,15,0.18)]">
+                            absurd
+                          </span>
+                          in the text.
                         </span>
                       </div>
 
