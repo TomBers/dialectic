@@ -21,7 +21,7 @@ config :dialectic, Oban,
   ],
   repo: Dialectic.Repo,
   plugins: [
-    {Oban.Plugins.Lifeline, rescue_after: 60}
+    {Oban.Plugins.Lifeline, rescue_after: :timer.minutes(15)}
   ]
 
 config :dialectic,
