@@ -30,6 +30,6 @@ defmodule Dialectic.LLM.Providers.Google do
 
   @impl true
   def provider_options do
-    []
+    [google_thinking_level: "MINIMAL"]
   end
 end
