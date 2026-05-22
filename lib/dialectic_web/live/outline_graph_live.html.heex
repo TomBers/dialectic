@@ -69,7 +69,7 @@
 
   <div
     id="outline-scroll-shell"
-    class="relative flex flex-1 min-h-0 flex-col overflow-y-auto lg:grid lg:grid-cols-[20rem_minmax(0,1fr)] lg:overflow-hidden xl:grid-cols-[22rem_minmax(0,1fr)]"
+    class="relative flex flex-1 min-h-0 flex-col overflow-x-hidden overflow-y-auto lg:grid lg:grid-cols-[20rem_minmax(0,1fr)] lg:overflow-hidden xl:grid-cols-[22rem_minmax(0,1fr)]"
     phx-hook="ScrollReset"
   >
     <aside
@@ -158,7 +158,7 @@
 
     <main
       id="outline-detail"
-      class="order-1 min-h-0 overflow-visible lg:order-none lg:overflow-y-auto"
+      class="order-1 min-h-0 min-w-0 overflow-visible lg:order-none lg:overflow-y-auto"
       phx-hook="ScrollReset"
     >
       <%= if @node do %>

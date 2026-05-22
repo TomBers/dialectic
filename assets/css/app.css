@@ -24,6 +24,11 @@
     }
 }
 
+html,
+body {
+    overflow-x: hidden;
+}
+
 #graph-layout,
 #outline-layout {
     transition:
