@@ -27,7 +27,7 @@ defmodule DialecticWeb.HighlightShareImageControllerTest do
     body = response(conn, 200)
 
     assert get_resp_header(conn, "content-type") |> List.first() =~ "image/svg+xml"
-    assert body =~ ">Quote<"
+    refute body =~ ">Quote<"
     assert body =~ "The limits of my language"
     assert body =~ graph.title
     assert body =~ "RationalGrid.ai"
