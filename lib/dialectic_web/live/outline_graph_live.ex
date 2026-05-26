@@ -5,6 +5,7 @@ defmodule DialecticWeb.OutlineGraphLive do
   alias Dialectic.Highlights
   alias Dialectic.Linear.ThreadedConv
   alias DialecticWeb.ColUtils
+  alias DialecticWeb.HighlightShare
   alias DialecticWeb.NodeSearch
   alias DialecticWeb.Utils.NodeTitleHelper
   alias Phoenix.PubSub
@@ -69,12 +70,16 @@ defmodule DialecticWeb.OutlineGraphLive do
     previous_node_id = socket.assigns.selected_node_id
     highlight_id = Map.get(params, "highlight")
 
+    share_highlight =
+      HighlightShare.highlight_for_graph(socket.assigns.graph_struct, highlight_id)
+
     socket =
       socket
       |> assign_selected_node(selected_node)
       |> maybe_scroll_to_top(previous_node_id, selected_node)
       |> push_highlights()
       |> maybe_scroll_to_highlight(highlight_id)
+      |> assign_share_metadata(share_highlight)
 
     {:noreply, socket}
   end
@@ -129,7 +134,7 @@ defmodule DialecticWeb.OutlineGraphLive do
 
   @impl true
   def handle_info(:close_share_modal, socket) do
-    {:noreply, assign(socket, show_share_modal: false)}
+    {:noreply, assign(socket, show_share_modal: false, selected_share_highlight: nil)}
   end
 
   @impl true
@@ -158,8 +163,12 @@ defmodule DialecticWeb.OutlineGraphLive do
   end
 
   @impl true
-  def handle_event("open_share_modal", _params, socket) do
-    {:noreply, assign(socket, show_share_modal: true)}
+  def handle_event("open_share_modal", params, socket) do
+    share_highlight =
+      socket.assigns.graph_struct
+      |> HighlightShare.highlight_for_graph(Map.get(params, "highlight_id"))
+
+    {:noreply, assign(socket, show_share_modal: true, selected_share_highlight: share_highlight)}
   end
 
   @impl true
@@ -277,6 +286,7 @@ defmodule DialecticWeb.OutlineGraphLive do
       compare_context: nil,
       compare_branches: [],
       show_share_modal: false,
+      selected_share_highlight: nil,
       show_search_overlay: false,
       search_term: "",
       search_results: [],
@@ -301,6 +311,33 @@ defmodule DialecticWeb.OutlineGraphLive do
 
   defp reader_description(graph_db) do
     "Explore \"#{graph_db.title}\" on RationalGrid. Read the main thread in order and follow nearby branches when the argument splits."
+  end
+
+  defp assign_share_metadata(socket, %{id: _id} = highlight) do
+    graph = socket.assigns.graph_struct
+
+    assign(socket,
+      page_title: HighlightShare.page_title(graph, highlight),
+      page_description: HighlightShare.page_description(graph, highlight),
+      canonical_url: HighlightShare.share_url(graph, highlight),
+      og_image: HighlightShare.image_url(graph, highlight),
+      noindex: true
+    )
+  end
+
+  defp assign_share_metadata(socket, _highlight) do
+    graph = socket.assigns.graph_struct
+    canonical = canonical_graph_url(graph)
+    description = reader_description(graph)
+    base_url = DialecticWeb.Endpoint.url()
+
+    assign(socket,
+      page_title: graph.title,
+      page_description: description,
+      canonical_url: canonical,
+      og_image: base_url <> ~p"/images/graph_live.webp",
+      noindex: !indexable_graph?(graph)
+    )
   end
 
   defp indexable_graph?(graph_db) do

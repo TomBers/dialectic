@@ -563,6 +563,35 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     refute render(view) =~ "Generating preview..."
   end
 
+  test "highlight share button opens the share modal for the selected quote", %{conn: conn} do
+    graph = create_graph(highlight_graph_data())
+    user = user_fixture()
+
+    {:ok, highlight} =
+      Highlights.create_highlight(%{
+        mudg_id: graph.title,
+        node_id: "5",
+        text_source_type: "node",
+        selection_start: 0,
+        selection_end: 12,
+        selected_text_snapshot: "Meaning is use.",
+        created_by_user_id: user.id
+      })
+
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=5")
+
+    view
+    |> element("#highlight-share-#{highlight.id}")
+    |> render_click()
+
+    share_url = "#{DialecticWeb.Endpoint.url()}/g/#{graph.slug}?node=5&highlight=#{highlight.id}"
+
+    assert has_element?(view, "#share-modal-hook")
+    assert render(view) =~ "Share Quote"
+    assert has_element?(view, ~s(#share-url-input[value="#{share_url}"]))
+    assert render(view) =~ "/g/#{graph.slug}/highlights/#{highlight.id}/share-card.svg?v="
+  end
+
   test "reader search opens from the top bar and patches to the selected result", %{conn: conn} do
     graph = create_graph()
 

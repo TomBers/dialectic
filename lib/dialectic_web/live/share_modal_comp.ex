@@ -1,6 +1,9 @@
 defmodule DialecticWeb.ShareModalComp do
   use DialecticWeb, :live_component
   alias Dialectic.DbActions.Sharing
+  alias DialecticWeb.HighlightShare
+
+  @preview_image_style_version 2
 
   @impl true
   def update(assigns, socket) do
@@ -10,6 +13,7 @@ defmodule DialecticWeb.ShareModalComp do
       |> assign_new(:share_target, fn -> :editor end)
       |> assign_new(:presentation_mode, fn -> nil end)
       |> assign_new(:show_preview, fn -> true end)
+      |> assign_new(:selected_highlight, fn -> nil end)
 
     # Only run expensive DB queries (ensure_share_token, list_shares) when
     # the modal is actually visible. Every parent re-render (e.g. node click)
@@ -141,48 +145,83 @@ defmodule DialecticWeb.ShareModalComp do
                 </div>
                 <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
                   <h3 class="text-lg font-medium leading-6 text-gray-900" id="modal-title">
-                    <%= if @graph_struct.is_public do %>
-                      Share Grid
+                    <%= if quote_share?(@selected_highlight) do %>
+                      Share Quote
                     <% else %>
-                      Manage Collaborators
+                      <%= if @graph_struct.is_public do %>
+                        Share Grid
+                      <% else %>
+                        Manage Collaborators
+                      <% end %>
                     <% end %>
                   </h3>
                   <div class="mt-2">
-                    <%= if @graph_struct.is_public do %>
-                      <div class="p-2 bg-green-50 border border-green-200 rounded-md">
+                    <%= if quote_share?(@selected_highlight) do %>
+                      <div class="p-2 bg-indigo-50 border border-indigo-200 rounded-md">
                         <div class="flex items-center">
-                          <.icon name="hero-globe-alt" class="w-4 h-4 text-green-600 mr-2" />
-                          <p class="text-sm text-green-800 font-medium">
-                            Public Grid
+                          <.icon
+                            name="hero-chat-bubble-left-right"
+                            class="w-4 h-4 text-indigo-600 mr-2"
+                          />
+                          <p class="text-sm text-indigo-900 font-medium">
+                            Highlight Share
                           </p>
                         </div>
-                        <p class="text-xs text-green-700 mt-1">
-                          Anyone with the link can view this grid. Share it freely on social media or embed it on your website.
+                        <p class="text-xs text-indigo-700 mt-1">
+                          Share this specific quote with a direct reader link and a quote card preview.
                         </p>
                       </div>
                     <% else %>
-                      <div class="p-2 bg-amber-50 border border-amber-200 rounded-md">
-                        <div class="flex items-center">
-                          <.icon name="hero-lock-closed" class="w-4 h-4 text-amber-600 mr-2" />
-                          <p class="text-sm text-amber-800 font-medium">
-                            Private Grid
+                      <%= if @graph_struct.is_public do %>
+                        <div class="p-2 bg-green-50 border border-green-200 rounded-md">
+                          <div class="flex items-center">
+                            <.icon name="hero-globe-alt" class="w-4 h-4 text-green-600 mr-2" />
+                            <p class="text-sm text-green-800 font-medium">
+                              Public Grid
+                            </p>
+                          </div>
+                          <p class="text-xs text-green-700 mt-1">
+                            Anyone with the link can view this grid. Share it freely on social media or embed it on your website.
                           </p>
                         </div>
-                        <p class="text-xs text-amber-700 mt-1">
-                          Only people with the access token can view this grid. Make it public to share more widely.
-                        </p>
-                      </div>
+                      <% else %>
+                        <div class="p-2 bg-amber-50 border border-amber-200 rounded-md">
+                          <div class="flex items-center">
+                            <.icon name="hero-lock-closed" class="w-4 h-4 text-amber-600 mr-2" />
+                            <p class="text-sm text-amber-800 font-medium">
+                              Private Grid
+                            </p>
+                          </div>
+                          <p class="text-xs text-amber-700 mt-1">
+                            Only people with the access token can view this grid. Make it public to share more widely.
+                          </p>
+                        </div>
+                      <% end %>
                     <% end %>
                   </div>
 
-                  <%= if Map.get(@graph_struct.data || %{}, "preview_image") || @show_preview do %>
-                    <% preview_image = Map.get(@graph_struct.data || %{}, "preview_image") %>
-                    <div class="mt-4 border rounded-lg overflow-hidden shadow-sm bg-gray-50">
+                  <%= if preview_image(assigns) || @show_preview || quote_share?(@selected_highlight) do %>
+                    <% preview_image = preview_image(assigns) %>
+                    <div class={[
+                      "mt-4 overflow-hidden rounded-2xl border shadow-sm",
+                      if(quote_share?(@selected_highlight),
+                        do:
+                          "border-slate-200 bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 p-3",
+                        else: "border-slate-200 bg-gray-50"
+                      )
+                    ]}>
                       <%= if preview_image do %>
                         <img
                           src={preview_image}
-                          alt="Grid Preview"
-                          class="w-full max-h-48 object-contain"
+                          alt={preview_image_alt(assigns)}
+                          class={[
+                            "w-full object-contain",
+                            if(quote_share?(@selected_highlight),
+                              do:
+                                "rounded-xl border border-white/10 shadow-[0_20px_45px_rgba(15,23,42,0.45)]",
+                              else: "max-h-48"
+                            )
+                          ]}
                         />
                       <% else %>
                         <div class="mt-4 flex items-center justify-center h-32 bg-gray-50 border border-dashed border-gray-300 rounded-lg text-gray-400 text-sm">
@@ -195,13 +234,17 @@ defmodule DialecticWeb.ShareModalComp do
     <!-- Public Link Section -->
                   <div class="mt-4 p-3 bg-gray-50 rounded-md">
                     <label class="block text-sm font-medium text-gray-700">
-                      <%= if @graph_struct.is_public do %>
-                        Public Share Link
+                      <%= if quote_share?(@selected_highlight) do %>
+                        Quote Share Link
                       <% else %>
-                        Private Access Link
+                        <%= if @graph_struct.is_public do %>
+                          Public Share Link
+                        <% else %>
+                          Private Access Link
+                        <% end %>
                       <% end %>
                     </label>
-                    <%= if @selected_node do %>
+                    <%= if @selected_node && !quote_share?(@selected_highlight) do %>
                       <div class="mt-2 mb-2">
                         <label class="inline-flex items-center gap-2 cursor-pointer select-none text-sm text-gray-600">
                           <button
@@ -243,7 +286,7 @@ defmodule DialecticWeb.ShareModalComp do
                         type="button"
                         class="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 rounded-r-md bg-gray-50 text-gray-500 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                         data-share-copy={share_url(assigns)}
-                        data-share-toast="Link copied to clipboard!"
+                        data-share-toast={copy_toast(assigns)}
                         aria-label="Copy to clipboard"
                         id="share-copy-btn"
                       >
@@ -256,10 +299,14 @@ defmodule DialecticWeb.ShareModalComp do
                       </button>
                     </div>
                     <p class="mt-1 text-xs text-gray-500">
-                      <%= if @graph_struct.is_public do %>
-                        Anyone can access this link without authentication.
+                      <%= if quote_share?(@selected_highlight) do %>
+                        Share a direct link back to this exact highlight in the reader.
                       <% else %>
-                        Includes secure access token. Only share with trusted collaborators.
+                        <%= if @graph_struct.is_public do %>
+                          Anyone can access this link without authentication.
+                        <% else %>
+                          Includes secure access token. Only share with trusted collaborators.
+                        <% end %>
                       <% end %>
                     </p>
                   </div>
@@ -269,8 +316,8 @@ defmodule DialecticWeb.ShareModalComp do
                     <button
                       type="button"
                       data-native-share
-                      data-share-title={@graph_struct.title}
-                      data-share-text={"Check out \"#{@graph_struct.title}\" on RationalGrid"}
+                      data-share-title={share_title(assigns)}
+                      data-share-text={share_text(assigns)}
                       data-share-url={share_url(assigns)}
                       class="hidden w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-indigo-300 shadow-sm text-sm font-medium rounded-lg text-indigo-700 bg-indigo-50 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
                     >
@@ -287,7 +334,7 @@ defmodule DialecticWeb.ShareModalComp do
                       <div class="grid grid-cols-3 gap-2">
                         <%!-- X / Twitter --%>
                         <a
-                          href={"https://twitter.com/intent/tweet?text=#{URI.encode_www_form("Check out this grid on RationalGrid: " <> @graph_struct.title)}&url=#{URI.encode_www_form(share_url(assigns))}"}
+                          href={"https://twitter.com/intent/tweet?text=#{URI.encode_www_form(share_text(assigns))}&url=#{URI.encode_www_form(share_url(assigns))}"}
                           target="_blank"
                           rel="noopener noreferrer"
                           class="inline-flex flex-col items-center justify-center gap-1 px-3 py-2.5 border border-gray-200 shadow-sm text-xs font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
@@ -311,7 +358,7 @@ defmodule DialecticWeb.ShareModalComp do
                         </a>
                         <%!-- Reddit --%>
                         <a
-                          href={"https://www.reddit.com/submit?url=#{URI.encode_www_form(share_url(assigns))}&title=#{URI.encode_www_form(@graph_struct.title)}"}
+                          href={"https://www.reddit.com/submit?url=#{URI.encode_www_form(share_url(assigns))}&title=#{URI.encode_www_form(share_title(assigns))}"}
                           target="_blank"
                           rel="noopener noreferrer"
                           class="inline-flex flex-col items-center justify-center gap-1 px-3 py-2.5 border border-gray-200 shadow-sm text-xs font-medium rounded-lg text-gray-700 bg-white hover:bg-orange-50 hover:border-orange-300 hover:text-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
@@ -323,7 +370,7 @@ defmodule DialecticWeb.ShareModalComp do
                         </a>
                         <%!-- WhatsApp --%>
                         <a
-                          href={"https://wa.me/?text=#{URI.encode_www_form("Check out \"" <> @graph_struct.title <> "\" on RationalGrid: " <> share_url(assigns))}"}
+                          href={"https://wa.me/?text=#{URI.encode_www_form(share_text(assigns) <> ": " <> share_url(assigns))}"}
                           target="_blank"
                           rel="noopener noreferrer"
                           class="inline-flex flex-col items-center justify-center gap-1 px-3 py-2.5 border border-gray-200 shadow-sm text-xs font-medium rounded-lg text-gray-700 bg-white hover:bg-green-50 hover:border-green-300 hover:text-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
@@ -337,7 +384,7 @@ defmodule DialecticWeb.ShareModalComp do
                         <button
                           type="button"
                           data-share-copy={share_url(assigns)}
-                          data-share-toast="Link copied! Paste it in your Instagram story or post."
+                          data-share-toast={instagram_toast(assigns)}
                           class="inline-flex flex-col items-center justify-center gap-1 px-3 py-2.5 border border-gray-200 shadow-sm text-xs font-medium rounded-lg text-gray-700 bg-white hover:bg-pink-50 hover:border-pink-300 hover:text-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
                         >
                           <span data-copy-icon>
@@ -371,34 +418,36 @@ defmodule DialecticWeb.ShareModalComp do
                   
     <!-- Embed Code Section -->
                   <%= if @graph_struct.is_public do %>
-                    <div class="mt-4 p-3 bg-gray-50 rounded-md">
-                      <label class="block text-sm font-medium text-gray-700">Embed Code</label>
-                      <div class="mt-1 flex rounded-md shadow-sm">
-                        <textarea
-                          readonly
-                          rows="3"
-                          class="flex-1 min-w-0 block w-full px-3 py-2 rounded-l-md border-gray-300 sm:text-sm bg-white text-gray-500 font-mono text-xs"
-                          onclick="this.select()"
-                        ><iframe src={share_url(assigns)} width="100%" height="600px" frameborder="0" allowfullscreen></iframe></textarea>
-                        <button
-                          type="button"
-                          class="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 rounded-r-md bg-gray-50 text-gray-500 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                          data-share-copy={"<iframe src=\"#{share_url(assigns)}\" width=\"100%\" height=\"600px\" frameborder=\"0\" allowfullscreen></iframe>"}
-                          data-share-toast="Embed code copied!"
-                          aria-label="Copy embed code"
-                        >
-                          <span data-copy-icon>
-                            <.icon name="hero-clipboard-document" class="w-4 h-4" />
-                          </span>
-                          <span data-copy-check class="hidden">
-                            <.icon name="hero-check" class="w-4 h-4 text-green-600" />
-                          </span>
-                        </button>
+                    <%= if !quote_share?(@selected_highlight) do %>
+                      <div class="mt-4 p-3 bg-gray-50 rounded-md">
+                        <label class="block text-sm font-medium text-gray-700">Embed Code</label>
+                        <div class="mt-1 flex rounded-md shadow-sm">
+                          <textarea
+                            readonly
+                            rows="3"
+                            class="flex-1 min-w-0 block w-full px-3 py-2 rounded-l-md border-gray-300 sm:text-sm bg-white text-gray-500 font-mono text-xs"
+                            onclick="this.select()"
+                          ><iframe src={share_url(assigns)} width="100%" height="600px" frameborder="0" allowfullscreen></iframe></textarea>
+                          <button
+                            type="button"
+                            class="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 rounded-r-md bg-gray-50 text-gray-500 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            data-share-copy={"<iframe src=\"#{share_url(assigns)}\" width=\"100%\" height=\"600px\" frameborder=\"0\" allowfullscreen></iframe>"}
+                            data-share-toast="Embed code copied!"
+                            aria-label="Copy embed code"
+                          >
+                            <span data-copy-icon>
+                              <.icon name="hero-clipboard-document" class="w-4 h-4" />
+                            </span>
+                            <span data-copy-check class="hidden">
+                              <.icon name="hero-check" class="w-4 h-4 text-green-600" />
+                            </span>
+                          </button>
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500">
+                          Embed this public grid on your website or blog.
+                        </p>
                       </div>
-                      <p class="mt-1 text-xs text-gray-500">
-                        Embed this public grid on your website or blog.
-                      </p>
-                    </div>
+                    <% end %>
                   <% end %>
                   
     <!-- Invite Section (Hidden) -->
@@ -474,35 +523,106 @@ defmodule DialecticWeb.ShareModalComp do
   defp share_url(assigns) do
     graph = assigns.graph_struct
     node = assigns[:share_node] && assigns[:selected_node]
-    base = DialecticWeb.Endpoint.url()
 
+    case assigns[:selected_highlight] do
+      %{id: _id} = highlight ->
+        HighlightShare.share_url(graph, highlight)
+
+      _ ->
+        base = DialecticWeb.Endpoint.url()
+
+        params =
+          []
+          |> then(fn p ->
+            if assigns[:presentation_mode] == :presenting and
+                 is_list(assigns[:presentation_slide_ids]) and
+                 length(assigns[:presentation_slide_ids]) > 0 do
+              slides = Enum.join(assigns.presentation_slide_ids, ",")
+
+              p =
+                [{"present", "true"}, {"slides", slides} | p]
+
+              if assigns[:presentation_title] && assigns[:presentation_title] != "" do
+                [{"title", assigns.presentation_title} | p]
+              else
+                p
+              end
+            else
+              p
+            end
+          end)
+
+        path =
+          case assigns[:share_target] do
+            :reader -> graph_path(graph, if(node, do: Map.get(node, :id, "")), params)
+            _ -> graph_editor_path(graph, if(node, do: Map.get(node, :id, "")), params)
+          end
+
+        "#{base}#{path}"
+    end
+  end
+
+  defp quote_share?(%{id: _id}), do: true
+  defp quote_share?(_highlight), do: false
+
+  defp preview_image(%{selected_highlight: %{id: _id} = highlight, graph_struct: graph}) do
+    DialecticWeb.Endpoint.url() <> preview_image_path(graph, highlight)
+  end
+
+  defp preview_image(%{graph_struct: graph_struct}) do
+    Map.get(graph_struct.data || %{}, "preview_image")
+  end
+
+  defp preview_image_path(%{slug: slug} = graph, %{id: highlight_id} = highlight)
+       when is_binary(slug) and slug != "" do
     params =
       []
-      |> then(fn p ->
-        if assigns[:presentation_mode] == :presenting and
-             is_list(assigns[:presentation_slide_ids]) and
-             length(assigns[:presentation_slide_ids]) > 0 do
-          slides = Enum.join(assigns.presentation_slide_ids, ",")
+      |> maybe_add_preview_token(graph)
+      |> maybe_add_preview_version(highlight)
 
-          p =
-            [{"present", "true"}, {"slides", slides} | p]
+    path = "/g/#{slug}/highlights/#{highlight_id}/share-card.svg"
+    "#{path}?#{URI.encode_query(params)}"
+  end
 
-          if assigns[:presentation_title] && assigns[:presentation_title] != "" do
-            [{"title", assigns.presentation_title} | p]
-          else
-            p
-          end
-        else
-          p
-        end
-      end)
+  defp maybe_add_preview_token(params, %{is_public: false, share_token: token})
+       when is_binary(token) and token != "" do
+    [{"token", token} | params]
+  end
 
-    path =
-      case assigns[:share_target] do
-        :reader -> graph_path(graph, if(node, do: Map.get(node, :id, "")), params)
-        _ -> graph_editor_path(graph, if(node, do: Map.get(node, :id, "")), params)
-      end
+  defp maybe_add_preview_token(params, _graph), do: params
 
-    "#{base}#{path}"
+  defp maybe_add_preview_version(params, %{updated_at: %DateTime{} = updated_at}) do
+    [{"v", DateTime.to_unix(updated_at, :second)}, {"sv", @preview_image_style_version} | params]
+  end
+
+  defp maybe_add_preview_version(params, _highlight),
+    do: [{"sv", @preview_image_style_version} | params]
+
+  defp preview_image_alt(%{selected_highlight: %{id: _id}}), do: "Quote share preview"
+  defp preview_image_alt(_assigns), do: "Grid Preview"
+
+  defp share_title(%{selected_highlight: %{id: _id} = highlight, graph_struct: graph}) do
+    HighlightShare.page_title(graph, highlight)
+  end
+
+  defp share_title(%{graph_struct: graph_struct}), do: graph_struct.title
+
+  defp share_text(%{selected_highlight: %{id: _id} = highlight, graph_struct: graph}) do
+    HighlightShare.share_text(graph, highlight)
+  end
+
+  defp share_text(%{graph_struct: graph_struct}) do
+    "Check out \"#{graph_struct.title}\" on RationalGrid"
+  end
+
+  defp copy_toast(%{selected_highlight: %{id: _id}}), do: "Quote link copied to clipboard!"
+  defp copy_toast(_assigns), do: "Link copied to clipboard!"
+
+  defp instagram_toast(%{selected_highlight: %{id: _id}}) do
+    "Quote link copied! Paste it into your Instagram story or post."
+  end
+
+  defp instagram_toast(_assigns) do
+    "Link copied! Paste it in your Instagram story or post."
   end
 end

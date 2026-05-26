@@ -6,6 +6,7 @@ defmodule DialecticWeb.GraphLive do
   alias Dialectic.Accounts.User
   alias DialecticWeb.NodeComp
   alias DialecticWeb.GraphHelpers
+  alias DialecticWeb.HighlightShare
   alias DialecticWeb.NodeSearch
 
   import DialecticWeb.GraphPresentation
@@ -852,11 +853,15 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, assign(socket, show_help_modal: false)}
   end
 
-  def handle_event("open_share_modal", _params, socket) do
+  def handle_event("open_share_modal", params, socket) do
+    share_highlight =
+      socket.assigns.graph_struct
+      |> HighlightShare.highlight_for_graph(Map.get(params, "highlight_id"))
+
     socket =
       socket
-      |> assign(show_share_modal: true)
-      |> push_event("request_screenshot", %{})
+      |> assign(show_share_modal: true, selected_share_highlight: share_highlight)
+      |> maybe_request_share_screenshot(share_highlight)
 
     {:noreply, socket}
   end
@@ -871,7 +876,7 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("close_share_modal", _params, socket) do
-    {:noreply, assign(socket, show_share_modal: false)}
+    {:noreply, assign(socket, show_share_modal: false, selected_share_highlight: nil)}
   end
 
   def handle_event("modal_closed", _params, socket) do
@@ -1317,7 +1322,7 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_info(:close_share_modal, socket) do
-    {:noreply, assign(socket, show_share_modal: false)}
+    {:noreply, assign(socket, show_share_modal: false, selected_share_highlight: nil)}
   end
 
   # Highlight PubSub (:created, :updated, :deleted) injected by GraphStreaming
@@ -2028,6 +2033,7 @@ defmodule DialecticWeb.GraphLive do
       show_start_stream_modal: false,
       show_help_modal: false,
       show_share_modal: false,
+      selected_share_highlight: nil,
       work_streams: [],
       exploration_stats: nil,
       show_login_modal: false,
@@ -2072,6 +2078,11 @@ defmodule DialecticWeb.GraphLive do
       |> assign(highlights: highlights)
     end
   end
+
+  defp maybe_request_share_screenshot(socket, %{id: _id}), do: socket
+
+  defp maybe_request_share_screenshot(socket, _highlight),
+    do: push_event(socket, "request_screenshot", %{})
 
   defp serialize_highlights(highlights) do
     Enum.map(highlights, fn h ->
