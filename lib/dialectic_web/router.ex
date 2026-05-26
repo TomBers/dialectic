@@ -13,6 +13,14 @@ defmodule DialecticWeb.Router do
     plug :fetch_current_user
   end
 
+  pipeline :share_image do
+    plug :accepts, ["svg"]
+    plug :fetch_session
+    plug :fetch_current_user
+    plug DialecticWeb.Plugs.RateLimiter, type: :api
+    plug :put_secure_browser_headers
+  end
+
   pipeline :auth do
     plug DialecticWeb.Plugs.RateLimiter, type: :auth
   end
@@ -47,6 +55,12 @@ defmodule DialecticWeb.Router do
   end
 
   scope "/", DialecticWeb do
+    pipe_through :share_image
+
+    get "/g/:graph_name/highlights/:id/share-card.svg", HighlightShareImageController, :show
+  end
+
+  scope "/", DialecticWeb do
     pipe_through :browser
     live "/", HomeLive
     get "/my/ideas", PageController, :my_graphs
@@ -64,7 +78,6 @@ defmodule DialecticWeb.Router do
     live "/g/:graph_name/graph", GraphLive
     get "/g/:graph_name/linear", PageController, :legacy_graph_view
     get "/g/:graph_name/outline", PageController, :legacy_graph_view
-    get "/g/:graph_name/highlights/:id/share-card.svg", HighlightShareImageController, :show
     live "/g/:graph_name", OutlineGraphLive
     get "/api/graphs/md/:graph_name", PageController, :graph_md
     get "/api/graphs/json/:graph_name", PageController, :graph_json_extract

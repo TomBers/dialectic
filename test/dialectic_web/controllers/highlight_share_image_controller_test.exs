@@ -34,6 +34,30 @@ defmodule DialecticWeb.HighlightShareImageControllerTest do
     refute body =~ "Rational Grid"
   end
 
+  test "serves share cards for image accept headers", %{conn: conn} do
+    graph = insert_graph(%{title: "Share Card Accept Graph", is_public: true})
+    user = user_fixture()
+
+    {:ok, highlight} =
+      Highlights.create_highlight(%{
+        mudg_id: graph.title,
+        node_id: "1",
+        text_source_type: "node",
+        selection_start: 0,
+        selection_end: 9,
+        selected_text_snapshot: "Image clients should be able to fetch this quote card.",
+        created_by_user_id: user.id
+      })
+
+    conn =
+      conn
+      |> put_req_header("accept", "image/svg+xml")
+      |> get("/g/#{graph.slug}/highlights/#{highlight.id}/share-card.svg")
+
+    assert response(conn, 200) =~ "Image clients"
+    assert get_resp_header(conn, "content-type") |> List.first() =~ "image/svg+xml"
+  end
+
   test "requires a token for private highlight share cards", %{conn: conn} do
     graph =
       insert_graph(%{title: "Private Share Card Graph", is_public: false})

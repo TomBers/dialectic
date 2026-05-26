@@ -19,6 +19,9 @@ defmodule DialecticWeb.HighlightShare do
   @title_area_width 940
   @title_area_height 72
   @max_title_lines 2
+  @max_svg_quote_chars 800
+  @max_svg_title_chars 220
+  @sanitize_slice_multiplier 4
   @quote_font_family "Baskerville, Georgia, serif"
   @ui_font_family "Arial, Helvetica, sans-serif"
 
@@ -88,7 +91,7 @@ defmodule DialecticWeb.HighlightShare do
   end
 
   def image_svg(graph, highlight) when is_map(highlight) do
-    quote_text = sanitize_text(Map.get(highlight, :selected_text_snapshot))
+    quote_text = sanitize_text(Map.get(highlight, :selected_text_snapshot), @max_svg_quote_chars)
     title_layout = title_layout(graph.title)
     quote_layout = quote_layout(quote_text)
 
@@ -174,7 +177,7 @@ defmodule DialecticWeb.HighlightShare do
   end
 
   defp title_layout(text) do
-    title_text = sanitize_text(text)
+    title_text = sanitize_text(text, @max_svg_title_chars)
 
     Enum.find_value([30, 28, 26, 24, 22], fn font_size ->
       lines = wrap_lines_by_width(title_text, @title_area_width / font_size, @max_title_lines)
@@ -248,16 +251,18 @@ defmodule DialecticWeb.HighlightShare do
     end
   end
 
-  defp limit_lines_by_width(lines, _max_units, max_lines) when length(lines) <= max_lines,
-    do: lines
+  defp limit_lines_by_width(lines, max_units, max_lines) when length(lines) <= max_lines do
+    Enum.map(lines, &truncate_line_to_units(&1, max_units))
+  end
 
   defp limit_lines_by_width(lines, max_units, max_lines) do
     {visible_lines, overflow_lines} = Enum.split(lines, max_lines)
     overflow_text = Enum.join(overflow_lines, " ")
     merged_last_line = List.last(visible_lines) <> " " <> overflow_text
 
-    List.replace_at(
-      visible_lines,
+    visible_lines
+    |> Enum.map(&truncate_line_to_units(&1, max_units))
+    |> List.replace_at(
       max_lines - 1,
       truncate_line_to_units(merged_last_line, max_units)
     )
@@ -326,16 +331,23 @@ defmodule DialecticWeb.HighlightShare do
   defp parse_highlight_id(_id), do: :error
 
   defp excerpt(text, max_length) do
-    text
-    |> sanitize_text()
-    |> truncate(max_length)
+    sanitize_text(text, max_length)
   end
 
-  defp sanitize_text(text) do
+  defp sanitize_text(text, nil) do
     text
     |> to_string()
     |> String.replace(~r/\s+/, " ")
     |> String.trim()
+  end
+
+  defp sanitize_text(text, max_length) when is_integer(max_length) and max_length > 0 do
+    text
+    |> to_string()
+    |> String.slice(0, max_length * @sanitize_slice_multiplier)
+    |> String.replace(~r/\s+/, " ")
+    |> String.trim()
+    |> truncate(max_length)
   end
 
   defp truncate(text, max_length) when is_binary(text) do
