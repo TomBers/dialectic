@@ -3,8 +3,6 @@ defmodule DialecticWeb.ShareModalComp do
   alias Dialectic.DbActions.Sharing
   alias DialecticWeb.HighlightShare
 
-  @preview_image_style_version 10
-
   @impl true
   def update(assigns, socket) do
     socket =
@@ -591,30 +589,7 @@ defmodule DialecticWeb.ShareModalComp do
     Map.get(graph_struct.data || %{}, "preview_image")
   end
 
-  defp preview_image_path(%{slug: slug} = graph, %{id: highlight_id} = highlight)
-       when is_binary(slug) and slug != "" do
-    params =
-      []
-      |> maybe_add_preview_token(graph)
-      |> maybe_add_preview_version(highlight)
-
-    path = "/g/#{slug}/highlights/#{highlight_id}/share-card.svg"
-    "#{path}?#{URI.encode_query(params)}"
-  end
-
-  defp maybe_add_preview_token(params, %{is_public: false, share_token: token})
-       when is_binary(token) and token != "" do
-    [{"token", token} | params]
-  end
-
-  defp maybe_add_preview_token(params, _graph), do: params
-
-  defp maybe_add_preview_version(params, %{updated_at: %DateTime{} = updated_at}) do
-    [{"v", DateTime.to_unix(updated_at, :second)}, {"sv", @preview_image_style_version} | params]
-  end
-
-  defp maybe_add_preview_version(params, _highlight),
-    do: [{"sv", @preview_image_style_version} | params]
+  defp preview_image_path(graph, highlight), do: HighlightShare.image_path(graph, highlight)
 
   defp preview_image_alt(%{selected_highlight: %{id: _id}}), do: "Quote share preview"
   defp preview_image_alt(_assigns), do: "Grid Preview"
