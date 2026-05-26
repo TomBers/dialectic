@@ -3,7 +3,7 @@ defmodule DialecticWeb.ShareModalComp do
   alias Dialectic.DbActions.Sharing
   alias DialecticWeb.HighlightShare
 
-  @preview_image_style_version 2
+  @preview_image_style_version 10
 
   @impl true
   def update(assigns, socket) do
@@ -203,26 +203,29 @@ defmodule DialecticWeb.ShareModalComp do
                   <%= if preview_image(assigns) || @show_preview || quote_share?(@selected_highlight) do %>
                     <% preview_image = preview_image(assigns) %>
                     <div class={[
-                      "mt-4 overflow-hidden rounded-2xl border shadow-sm",
+                      "mt-4 overflow-hidden rounded-2xl shadow-sm",
                       if(quote_share?(@selected_highlight),
-                        do:
-                          "border-slate-200 bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 p-3",
-                        else: "border-slate-200 bg-gray-50"
+                        do: "bg-white ring-1 ring-slate-200/80",
+                        else: "border border-slate-200 bg-gray-50"
                       )
                     ]}>
                       <%= if preview_image do %>
-                        <img
-                          src={preview_image}
-                          alt={preview_image_alt(assigns)}
-                          class={[
-                            "w-full object-contain",
-                            if(quote_share?(@selected_highlight),
-                              do:
-                                "rounded-xl border border-white/10 shadow-[0_20px_45px_rgba(15,23,42,0.45)]",
-                              else: "max-h-48"
-                            )
-                          ]}
-                        />
+                        <%= if quote_share?(@selected_highlight) do %>
+                          <object
+                            data={preview_image}
+                            type="image/svg+xml"
+                            aria-label={preview_image_alt(assigns)}
+                            class="block w-full"
+                          >
+                            {preview_image_alt(assigns)}
+                          </object>
+                        <% else %>
+                          <img
+                            src={preview_image}
+                            alt={preview_image_alt(assigns)}
+                            class="block w-full object-contain max-h-48"
+                          />
+                        <% end %>
                       <% else %>
                         <div class="mt-4 flex items-center justify-center h-32 bg-gray-50 border border-dashed border-gray-300 rounded-lg text-gray-400 text-sm">
                           <span class="animate-pulse">Generating preview...</span>
@@ -313,16 +316,31 @@ defmodule DialecticWeb.ShareModalComp do
                   
     <!-- Native Web Share API (mobile) -->
                   <div class="mt-3">
-                    <button
-                      type="button"
-                      data-native-share
-                      data-share-title={share_title(assigns)}
-                      data-share-text={share_text(assigns)}
-                      data-share-url={share_url(assigns)}
-                      class="hidden w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-indigo-300 shadow-sm text-sm font-medium rounded-lg text-indigo-700 bg-indigo-50 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-                    >
-                      <.icon name="hero-share" class="w-5 h-5" /> Share via your device...
-                    </button>
+                    <div class={[
+                      "grid gap-2",
+                      if(quote_share?(@selected_highlight), do: "grid-cols-2", else: "grid-cols-1")
+                    ]}>
+                      <button
+                        type="button"
+                        data-native-share
+                        data-share-title={share_title(assigns)}
+                        data-share-text={share_text(assigns)}
+                        data-share-url={share_url(assigns)}
+                        class="hidden w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-indigo-300 shadow-sm text-sm font-medium rounded-lg text-indigo-700 bg-indigo-50 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                      >
+                        <.icon name="hero-share" class="w-5 h-5" /> Share via your device...
+                      </button>
+
+                      <%= if quote_share?(@selected_highlight) do %>
+                        <a
+                          href={download_image_url(assigns)}
+                          download={download_filename(assigns)}
+                          class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-300 shadow-sm text-sm font-medium rounded-lg text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                        >
+                          <.icon name="hero-arrow-down-tray" class="w-5 h-5" /> Download image
+                        </a>
+                      <% end %>
+                    </div>
                   </div>
                   
     <!-- Social Share Section -->
@@ -600,6 +618,28 @@ defmodule DialecticWeb.ShareModalComp do
 
   defp preview_image_alt(%{selected_highlight: %{id: _id}}), do: "Quote share preview"
   defp preview_image_alt(_assigns), do: "Grid Preview"
+
+  defp download_image_url(%{selected_highlight: %{id: _id} = highlight, graph_struct: graph}) do
+    DialecticWeb.Endpoint.url() <> preview_image_path(graph, highlight)
+  end
+
+  defp download_filename(%{graph_struct: graph_struct, selected_highlight: %{id: highlight_id}}) do
+    graph_struct.title
+    |> slugify_filename()
+    |> then(&"#{&1}-quote-#{highlight_id}.svg")
+  end
+
+  defp slugify_filename(title) do
+    title
+    |> to_string()
+    |> String.downcase()
+    |> String.replace(~r/[^a-z0-9]+/u, "-")
+    |> String.trim("-")
+    |> case do
+      "" -> "rationalgrid"
+      value -> value
+    end
+  end
 
   defp share_title(%{selected_highlight: %{id: _id} = highlight, graph_struct: graph}) do
     HighlightShare.page_title(graph, highlight)

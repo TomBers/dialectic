@@ -9,8 +9,18 @@ defmodule DialecticWeb.HighlightShare do
   @image_width 1200
   @image_height 630
   @max_quote_lines 6
-  @max_quote_line_length 34
-  @image_style_version 2
+  @image_style_version 10
+  @quote_area_left 118
+  @quote_area_top 170
+  @quote_area_width 960
+  @quote_area_height 285
+  @title_area_left 78
+  @title_area_top 500
+  @title_area_width 940
+  @title_area_height 72
+  @max_title_lines 2
+  @quote_font_family "Baskerville, Georgia, serif"
+  @ui_font_family "Arial, Helvetica, sans-serif"
 
   def highlight_for_graph(graph, highlight_id) do
     with {:ok, parsed_id} <- parse_highlight_id(highlight_id),
@@ -78,24 +88,24 @@ defmodule DialecticWeb.HighlightShare do
   end
 
   def image_svg(graph, highlight) when is_map(highlight) do
-    quote_lines =
-      wrap_lines(
-        Map.get(highlight, :selected_text_snapshot),
-        @max_quote_line_length,
-        @max_quote_lines
-      )
+    quote_text = sanitize_text(Map.get(highlight, :selected_text_snapshot))
+    title_layout = title_layout(graph.title)
+    quote_layout = quote_layout(quote_text)
 
-    title = node_title(graph, Map.get(highlight, :node_id))
-    footer = truncate(graph.title, 80)
-    quote_length = String.length(sanitize_text(Map.get(highlight, :selected_text_snapshot)))
-    quote_font_size = quote_font_size(quote_lines, quote_length)
-
-    quote_markup =
-      quote_lines
+    title_markup =
+      title_layout.lines
       |> Enum.with_index()
       |> Enum.map_join("", fn {line, index} ->
-        y = 246 + index * 64
-        ~s(<tspan x="150" y="#{y}">#{escape_xml(line)}</tspan>)
+        y = title_layout.start_y + index * title_layout.line_gap
+        ~s(<tspan x="#{@title_area_left}" y="#{y}">#{escape_xml(line)}</tspan>)
+      end)
+
+    quote_markup =
+      quote_layout.lines
+      |> Enum.with_index()
+      |> Enum.map_join("", fn {line, index} ->
+        y = quote_layout.start_y + index * quote_layout.line_gap
+        ~s(<tspan x="#{@quote_area_left}" y="#{y}">#{escape_xml(line)}</tspan>)
       end)
 
     """
@@ -103,66 +113,200 @@ defmodule DialecticWeb.HighlightShare do
       <title id="title">#{escape_xml(page_title(graph, highlight))}</title>
       <desc id="desc">#{escape_xml(page_description(graph, highlight))}</desc>
       <defs>
-        <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#0f172a" />
-          <stop offset="45%" stop-color="#1e1b4b" />
-          <stop offset="100%" stop-color="#172554" />
+        <linearGradient id="canvas" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#fffef8" />
+          <stop offset="100%" stop-color="#f6f8fc" />
         </linearGradient>
-        <linearGradient id="aurora" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.34" />
-          <stop offset="50%" stop-color="#8b5cf6" stop-opacity="0.24" />
-          <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.22" />
-        </linearGradient>
-        <linearGradient id="frame" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#fffdf7" />
-          <stop offset="100%" stop-color="#f8fafc" />
-        </linearGradient>
-        <linearGradient id="accent" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stop-color="#8b5cf6" />
-          <stop offset="100%" stop-color="#06b6d4" />
-        </linearGradient>
-        <linearGradient id="headerBand" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stop-color="#eef2ff" />
-          <stop offset="100%" stop-color="#dbeafe" />
+        <linearGradient id="wash" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#ede9fe" stop-opacity="0.8" />
+          <stop offset="100%" stop-color="#e0f2fe" stop-opacity="0.4" />
         </linearGradient>
       </defs>
 
-      <rect width="1200" height="630" fill="url(#bg)" />
-      <circle cx="1000" cy="96" r="156" fill="#8b5cf6" fill-opacity="0.16" />
-      <circle cx="112" cy="586" r="172" fill="#0ea5e9" fill-opacity="0.16" />
-      <rect x="118" y="92" width="964" height="446" rx="34" fill="#ffffff" fill-opacity="0.14" />
-      <rect x="132" y="106" width="936" height="418" rx="30" fill="url(#frame)" />
-      <rect x="132" y="106" width="936" height="418" rx="30" fill="none" stroke="#dbe4f3" stroke-width="2" />
-      <rect x="132" y="106" width="20" height="418" rx="10" fill="url(#accent)" />
-      <rect x="152" y="106" width="916" height="74" rx="30" fill="url(#headerBand)" fill-opacity="0.76" />
-      <circle cx="972" cy="470" r="98" fill="#38bdf8" fill-opacity="0.10" />
+      <rect width="1200" height="630" fill="url(#canvas)" />
+      <circle cx="1080" cy="98" r="150" fill="#eef2ff" />
+      <circle cx="150" cy="540" r="124" fill="#eff6ff" />
+      <rect x="78" y="82" width="130" height="8" rx="4" fill="url(#wash)" />
+      <text x="78" y="118" fill="#6366f1" font-size="24" font-weight="700" font-family="#{@ui_font_family}" letter-spacing="0.8">Quote</text>
 
-      <rect x="174" y="126" width="504" height="40" rx="20" fill="#eef2ff" />
-      <text x="176" y="143" fill="#4f46e5" font-size="22" font-weight="700" font-family="Inter, Arial, sans-serif" letter-spacing="1.8">RATIONALGRID HIGHLIGHT</text>
-
-      <text x="176" y="242" fill="#c4b5fd" font-size="126" font-weight="700" font-family="Georgia, serif">“</text>
-      <text fill="#172033" font-size="#{quote_font_size}" font-weight="600" font-family="Georgia, serif" letter-spacing="0.1">
+      <text x="70" y="198" fill="#c4b5fd" font-size="72" font-weight="700" font-family="#{@quote_font_family}">“</text>
+      <text fill="#172033" font-size="#{quote_layout.font_size}" font-weight="600" font-style="italic" font-family="#{@quote_font_family}" letter-spacing="0">
         #{quote_markup}
       </text>
-      <text x="940" y="396" fill="#dbe4f3" font-size="112" font-weight="700" font-family="Georgia, serif">”</text>
+      <text fill="#334155" font-size="#{title_layout.font_size}" font-weight="700" font-family="#{@ui_font_family}" letter-spacing="-0.2">
+        #{title_markup}
+      </text>
 
-      <rect x="174" y="438" width="846" height="2" fill="#dbe4f3" />
-      <rect x="174" y="462" width="586" height="48" rx="24" fill="#ffffff" stroke="#dbe4f3" />
-      <text x="176" y="502" fill="#334155" font-size="26" font-weight="700" font-family="Inter, Arial, sans-serif">#{escape_xml(title)}</text>
-
-      <text x="174" y="548" fill="#64748b" font-size="23" font-family="Inter, Arial, sans-serif">#{escape_xml(footer)}</text>
-
-      <rect x="886" y="474" width="146" height="44" rx="22" fill="#312e81" />
-      <text x="979" y="518" text-anchor="middle" fill="#e0e7ff" font-size="23" font-weight="700" font-family="Inter, Arial, sans-serif">rationalgrid.ai</text>
+      <text x="1128" y="586" text-anchor="end" fill="#64748b" fill-opacity="0.8" font-size="15" font-weight="600" font-family="#{@ui_font_family}" letter-spacing="0.2">RationalGrid.ai</text>
     </svg>
     """
   end
 
-  defp quote_font_size(quote_lines, quote_length) do
-    cond do
-      length(quote_lines) >= 5 or quote_length > 190 -> 40
-      length(quote_lines) == 4 or quote_length > 135 -> 44
-      true -> 50
+  defp quote_layout(text) do
+    Enum.find_value(candidate_font_sizes(), fn font_size ->
+      lines = wrap_lines_by_width(text, max_line_units(font_size), @max_quote_lines)
+      line_gap = quote_line_gap(font_size)
+      block_height = quote_block_height(lines, line_gap)
+
+      if block_height <= @quote_area_height do
+        %{
+          font_size: font_size,
+          line_gap: line_gap,
+          start_y: quote_start_y(block_height, font_size),
+          lines: lines
+        }
+      end
+    end) || fallback_quote_layout(text)
+  end
+
+  defp fallback_quote_layout(text) do
+    font_size = 36
+    line_gap = quote_line_gap(font_size)
+    lines = wrap_lines_by_width(text, max_line_units(font_size), @max_quote_lines)
+    block_height = quote_block_height(lines, line_gap)
+
+    %{
+      font_size: font_size,
+      line_gap: line_gap,
+      start_y: quote_start_y(block_height, font_size),
+      lines: lines
+    }
+  end
+
+  defp title_layout(text) do
+    title_text = sanitize_text(text)
+
+    Enum.find_value([30, 28, 26, 24, 22], fn font_size ->
+      lines = wrap_lines_by_width(title_text, @title_area_width / font_size, @max_title_lines)
+      line_gap = round(font_size * 1.18)
+      block_height = quote_block_height(lines, line_gap)
+
+      if block_height <= @title_area_height do
+        %{
+          font_size: font_size,
+          line_gap: line_gap,
+          start_y: @title_area_top + font_size,
+          lines: lines
+        }
+      end
+    end) || fallback_title_layout(title_text)
+  end
+
+  defp fallback_title_layout(text) do
+    font_size = 20
+    line_gap = round(font_size * 1.18)
+    lines = wrap_lines_by_width(text, @title_area_width / font_size, @max_title_lines)
+
+    %{
+      font_size: font_size,
+      line_gap: line_gap,
+      start_y: @title_area_top + font_size,
+      lines: lines
+    }
+  end
+
+  defp candidate_font_sizes, do: [82, 76, 72, 68, 64, 60, 56, 52, 48, 44, 40, 36]
+
+  defp quote_line_gap(font_size), do: round(font_size * 1.22)
+
+  defp quote_block_height(lines, line_gap) do
+    case length(lines) do
+      0 -> 0
+      1 -> line_gap
+      count -> (count - 1) * line_gap + round(line_gap * 0.92)
+    end
+  end
+
+  defp quote_start_y(block_height, font_size) do
+    extra_space = max(@quote_area_height - block_height, 0)
+    @quote_area_top + div(extra_space, 2) + font_size
+  end
+
+  defp max_line_units(font_size) do
+    @quote_area_width / font_size
+  end
+
+  defp wrap_lines_by_width(text, max_units, max_lines) do
+    text
+    |> String.split(" ", trim: true)
+    |> Enum.reduce([], fn word, acc ->
+      append_word_to_lines(acc, word, max_units)
+    end)
+    |> limit_lines_by_width(max_units, max_lines)
+  end
+
+  defp append_word_to_lines([], word, _max_units), do: [word]
+
+  defp append_word_to_lines(lines, word, max_units) do
+    current_line = List.last(lines)
+    candidate = current_line <> " " <> word
+
+    if text_units(candidate) <= max_units do
+      List.replace_at(lines, length(lines) - 1, candidate)
+    else
+      lines ++ [word]
+    end
+  end
+
+  defp limit_lines_by_width(lines, _max_units, max_lines) when length(lines) <= max_lines,
+    do: lines
+
+  defp limit_lines_by_width(lines, max_units, max_lines) do
+    {visible_lines, overflow_lines} = Enum.split(lines, max_lines)
+    overflow_text = Enum.join(overflow_lines, " ")
+    merged_last_line = List.last(visible_lines) <> " " <> overflow_text
+
+    List.replace_at(
+      visible_lines,
+      max_lines - 1,
+      truncate_line_to_units(merged_last_line, max_units)
+    )
+  end
+
+  defp truncate_line_to_units(text, max_units) do
+    trimmed = String.trim(text)
+
+    if text_units(trimmed) <= max_units do
+      trimmed
+    else
+      trimmed
+      |> String.graphemes()
+      |> Enum.reduce_while({"", 0.0}, fn grapheme, {acc, units} ->
+        next_units = units + char_units(grapheme)
+
+        if next_units + char_units("…") <= max_units do
+          {:cont, {acc <> grapheme, next_units}}
+        else
+          {:halt, {String.trim_trailing(acc) <> "…", next_units}}
+        end
+      end)
+      |> elem(0)
+    end
+  end
+
+  defp text_units(text) do
+    text
+    |> String.graphemes()
+    |> Enum.reduce(0.0, fn grapheme, total -> total + char_units(grapheme) end)
+  end
+
+  defp char_units(" "), do: 0.32
+  defp char_units("…"), do: 0.55
+
+  defp char_units(grapheme)
+       when grapheme in ["i", "l", "I", "j", "t", "'", "\"", ".", ",", ":", ";", "!"] do
+    0.28
+  end
+
+  defp char_units(grapheme) when grapheme in ["m", "w", "M", "W", "Q", "G", "@", "%", "&"] do
+    0.9
+  end
+
+  defp char_units(grapheme) do
+    if grapheme =~ ~r/[A-Z]/ do
+      0.72
+    else
+      0.56
     end
   end
 
@@ -203,38 +347,6 @@ defmodule DialecticWeb.HighlightShare do
     else
       text
     end
-  end
-
-  defp wrap_lines(text, max_length, max_lines) do
-    text
-    |> sanitize_text()
-    |> String.split(" ", trim: true)
-    |> Enum.reduce([""], fn word, [current | rest] = acc ->
-      separator = if current == "", do: "", else: " "
-      candidate = current <> separator <> word
-
-      if String.length(candidate) <= max_length do
-        [candidate | rest]
-      else
-        [word | acc]
-      end
-    end)
-    |> Enum.reverse()
-    |> Enum.reject(&(&1 == ""))
-    |> limit_lines(max_lines)
-  end
-
-  defp limit_lines(lines, max_lines) when length(lines) <= max_lines, do: lines
-
-  defp limit_lines(lines, max_lines) do
-    {visible_lines, overflow_lines} = Enum.split(lines, max_lines)
-    overflow_text = overflow_lines |> Enum.join(" ") |> truncate(28)
-
-    List.replace_at(
-      visible_lines,
-      max_lines - 1,
-      List.last(visible_lines) <> " " <> overflow_text
-    )
   end
 
   defp maybe_add_version(params, highlight) do

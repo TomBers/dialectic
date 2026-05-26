@@ -117,6 +117,8 @@ defmodule DialecticWeb.ShareModalCompTest do
       assert html =~ "Quote Share Link"
       assert html =~ ~s(value="#{escaped_expected_url}")
       assert html =~ escaped_expected_image
+      assert html =~ "Download image"
+      assert html =~ ~s(download="quote-share-modal-graph-quote-77.svg")
       assert html =~ "Quote link copied to clipboard!"
       refute html =~ "Link to current node"
     end
