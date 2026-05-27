@@ -3,6 +3,8 @@ defmodule DialecticWeb.ShareModalComp do
   alias Dialectic.DbActions.Sharing
   alias DialecticWeb.HighlightShare
 
+  @download_title_slug_max_length 96
+
   @impl true
   def update(assigns, socket) do
     socket =
@@ -231,8 +233,7 @@ defmodule DialecticWeb.ShareModalComp do
                       <% end %>
                     </div>
                   <% end %>
-                  
-    <!-- Public Link Section -->
+                  <!-- Public Link Section -->
                   <div class="mt-4 p-3 bg-gray-50 rounded-md">
                     <label class="block text-sm font-medium text-gray-700">
                       <%= if quote_share?(@selected_highlight) do %>
@@ -311,8 +312,7 @@ defmodule DialecticWeb.ShareModalComp do
                       <% end %>
                     </p>
                   </div>
-                  
-    <!-- Native Web Share API (mobile) -->
+                  <!-- Native Web Share API (mobile) -->
                   <div class="mt-3">
                     <div class={[
                       "grid gap-2",
@@ -340,8 +340,7 @@ defmodule DialecticWeb.ShareModalComp do
                       <% end %>
                     </div>
                   </div>
-                  
-    <!-- Social Share Section -->
+                  <!-- Social Share Section -->
                   <%= if @graph_struct.is_public do %>
                     <div class="mt-4">
                       <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -431,8 +430,7 @@ defmodule DialecticWeb.ShareModalComp do
                       </div>
                     </div>
                   <% end %>
-                  
-    <!-- Embed Code Section -->
+                  <!-- Embed Code Section -->
                   <%= if @graph_struct.is_public do %>
                     <%= if !quote_share?(@selected_highlight) do %>
                       <div class="mt-4 p-3 bg-gray-50 rounded-md">
@@ -465,8 +463,7 @@ defmodule DialecticWeb.ShareModalComp do
                       </div>
                     <% end %>
                   <% end %>
-                  
-    <!-- Invite Section (Hidden) -->
+                  <!-- Invite Section (Hidden) -->
                   <%!-- <div class="mt-6">
                     <form phx-submit="invite" phx-change="validate" phx-target={@myself}>
                       <label for="email" class="block text-sm font-medium text-gray-700">
@@ -490,8 +487,7 @@ defmodule DialecticWeb.ShareModalComp do
                       </div>
                     </form>
                   </div> --%>
-                  
-    <!-- Shares List (Hidden) -->
+                  <!-- Shares List (Hidden) -->
                   <%!-- <div class="mt-6">
                     <h4 class="text-sm font-medium text-gray-700">People with access</h4>
                     <ul class="mt-3 border-t border-gray-200 divide-y divide-gray-200">
@@ -599,9 +595,12 @@ defmodule DialecticWeb.ShareModalComp do
   end
 
   defp download_filename(%{graph_struct: graph_struct, selected_highlight: %{id: highlight_id}}) do
-    graph_struct.title
-    |> slugify_filename()
-    |> then(&"#{&1}-quote-#{highlight_id}.svg")
+    title_slug =
+      graph_struct.title
+      |> slugify_filename()
+      |> truncate_filename_slug()
+
+    "#{title_slug}-quote-#{highlight_id}.svg"
   end
 
   defp slugify_filename(title) do
@@ -609,6 +608,16 @@ defmodule DialecticWeb.ShareModalComp do
     |> to_string()
     |> String.downcase()
     |> String.replace(~r/[^a-z0-9]+/u, "-")
+    |> String.trim("-")
+    |> case do
+      "" -> "rationalgrid"
+      value -> value
+    end
+  end
+
+  defp truncate_filename_slug(slug) do
+    slug
+    |> String.slice(0, @download_title_slug_max_length)
     |> String.trim("-")
     |> case do
       "" -> "rationalgrid"

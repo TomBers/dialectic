@@ -39,8 +39,19 @@ defmodule DialecticWeb.HighlightShare do
     Endpoint.url() <> share_path(graph, highlight)
   end
 
-  def share_path(graph, highlight) when is_map(highlight) do
+  def share_path(%{slug: slug} = graph, highlight)
+      when is_map(highlight) and is_binary(slug) and slug != "" do
     graph_path(graph, Map.get(highlight, :node_id), highlight: Map.get(highlight, :id))
+  end
+
+  def share_path(graph, highlight) when is_map(graph) and is_map(highlight) do
+    params =
+      []
+      |> maybe_add_highlight_param(highlight)
+      |> maybe_add_token_param(graph)
+      |> maybe_add_node_param(highlight)
+
+    build_query_path("/g/#{title_identifier(graph)}", params)
   end
 
   def image_url(graph, highlight) when is_map(highlight) do
@@ -55,6 +66,18 @@ defmodule DialecticWeb.HighlightShare do
       |> maybe_add_token_param(graph)
 
     build_query_path("/g/#{slug}/highlights/#{highlight_id}/share-card.svg", params)
+  end
+
+  def image_path(graph, %{id: highlight_id} = highlight) when is_map(graph) do
+    params =
+      []
+      |> maybe_add_version(highlight)
+      |> maybe_add_token_param(graph)
+
+    build_query_path(
+      "/g/#{title_identifier(graph)}/highlights/#{highlight_id}/share-card.svg",
+      params
+    )
   end
 
   def share_text(graph, highlight) when is_map(highlight) do
@@ -445,6 +468,23 @@ defmodule DialecticWeb.HighlightShare do
   end
 
   defp maybe_add_token_param(params, _graph), do: params
+
+  defp maybe_add_highlight_param(params, %{id: highlight_id}) when not is_nil(highlight_id),
+    do: [{:highlight, highlight_id} | params]
+
+  defp maybe_add_highlight_param(params, _highlight), do: params
+
+  defp maybe_add_node_param(params, %{node_id: node_id})
+       when is_binary(node_id) and node_id != "",
+       do: [{:node, node_id} | params]
+
+  defp maybe_add_node_param(params, _highlight), do: params
+
+  defp title_identifier(%{title: title}) do
+    title
+    |> to_string()
+    |> URI.encode(&URI.char_unreserved?/1)
+  end
 
   defp build_query_path(path, []), do: path
   defp build_query_path(path, params), do: "#{path}?#{URI.encode_query(params)}"

@@ -122,5 +122,34 @@ defmodule DialecticWeb.ShareModalCompTest do
       assert html =~ "Quote link copied to clipboard!"
       refute html =~ "Link to current node"
     end
+
+    test "quote image download filename caps long graph titles" do
+      long_title = Enum.join(List.duplicate("Very Long Download Title", 8), " ")
+      graph = GraphFixtures.insert_graph(%{title: long_title, is_public: true})
+
+      html =
+        render_component(ShareModalComp,
+          id: "share-modal",
+          show: true,
+          graph_struct: graph,
+          current_user: nil,
+          selected_node: %{id: "1"},
+          selected_highlight: %{
+            id: 123,
+            node_id: "5",
+            selected_text_snapshot: "A compact quote."
+          },
+          presentation_mode: :off,
+          presentation_slide_ids: [],
+          presentation_title: "",
+          share_node: false,
+          share_target: :reader,
+          show_preview: false
+        )
+
+      assert [_, filename] = Regex.run(~r/download="([^"]+)"/, html)
+      assert String.ends_with?(filename, "-quote-123.svg")
+      assert byte_size(filename) <= 96 + byte_size("-quote-123.svg")
+    end
   end
 end
