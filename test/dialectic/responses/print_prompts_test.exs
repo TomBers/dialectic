@@ -16,7 +16,7 @@ defmodule Dialectic.Responses.PrintPromptsTest do
 
   @moduletag :skip
 
-  alias Dialectic.Responses.{Prompts, PromptsStructured, PromptsCreative}
+  alias Dialectic.Responses.Prompts
 
   defp io_device do
     # Ensure we bypass ExUnit's IO capture
