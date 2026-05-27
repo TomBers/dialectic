@@ -1,8 +1,6 @@
 defmodule Dialectic.Responses.LlmInterfaceTest do
   use ExUnit.Case, async: false
 
-  alias Dialectic.Responses.LlmInterface
-
   describe "LlmInterface API" do
     test "exports all the expected functions" do
       # Verify all expected methods exist with the correct arity

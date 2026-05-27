@@ -4,7 +4,6 @@ defmodule Dialectic.DbActions.GraphsTest do
   alias Dialectic.DbActions.Graphs
   alias Dialectic.Accounts.Graph
   alias Dialectic.Repo
-  alias Dialectic.Graph.Vertex
 
   import Dialectic.AccountsFixtures
 
