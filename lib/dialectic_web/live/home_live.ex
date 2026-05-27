@@ -286,16 +286,14 @@ defmodule DialecticWeb.HomeLive do
             </div>
           </div>
         <% end %>
-
-    <!-- Static decorative background -->
+        <!-- Static decorative background -->
         <div class="absolute inset-0 z-0">
           <div class="pointer-events-none absolute -top-32 -right-24 h-80 w-80 rounded-full bg-sky-100/50 blur-3xl">
           </div>
           <div class="pointer-events-none absolute -top-20 -left-24 h-72 w-72 rounded-full bg-slate-300/35 blur-3xl">
           </div>
         </div>
-
-    <!-- Make the hero content scroll within the viewport naturally -->
+        <!-- Make the hero content scroll within the viewport naturally -->
         <div class="relative z-10 pb-4 sm:pb-5">
           <section class="w-full" id="start-here">
             <div class="w-full bg-gradient-to-br from-[#3a0ca3] to-[#4361ee] px-4 py-5 text-white shadow-xl sm:px-6 sm:py-6">
