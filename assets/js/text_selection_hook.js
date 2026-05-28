@@ -6,7 +6,14 @@ const textSelectionHook = {
     this.handleHighlightClick = this.handleHighlightClick.bind(this);
     this.handleLinkIconClick = this.handleLinkIconClick.bind(this);
     this.renderHighlightsForNode = this.renderHighlightsForNode.bind(this);
+    this.retryPendingHighlightScroll =
+      this.retryPendingHighlightScroll.bind(this);
+    this.finalizePendingHighlightScroll =
+      this.finalizePendingHighlightScroll.bind(this);
+    this.closeHighlightsDrawerOnMobile =
+      this.closeHighlightsDrawerOnMobile.bind(this);
     this.highlightsOnly = this.el.dataset.highlightsOnly === "true";
+    this.highlightScrollRetryTimer = null;
 
     // Get node ID from data attribute
     this.nodeId = this.el.dataset.nodeId;
@@ -60,6 +67,11 @@ const textSelectionHook = {
   },
 
   destroyed() {
+    if (this.highlightScrollRetryTimer) {
+      clearTimeout(this.highlightScrollRetryTimer);
+      this.highlightScrollRetryTimer = null;
+    }
+
     this.el.removeEventListener(
       "highlight-link-clicked",
       this.handleLinkIconClick,
@@ -81,6 +93,7 @@ const textSelectionHook = {
   handleHighlightsLoaded({ highlights }) {
     window.__highlightsCache = highlights || [];
     this.renderHighlightsForNode();
+    this.retryPendingHighlightScroll();
   },
 
   renderHighlightsForNode() {
@@ -97,6 +110,7 @@ const textSelectionHook = {
     );
 
     HighlightUtils.renderHighlights(mdContainer, nodeHighlights);
+    this.retryPendingHighlightScroll();
   },
 
   // ── Link / click handling ───────────────────────────────────────────
@@ -136,36 +150,186 @@ const textSelectionHook = {
   scrollToHighlight({ id }) {
     if (!id) return;
 
-    // Use a slight delay or retry mechanism because the node might be expanding
-    // or markdown rendering might be finishing
-    const findAndScroll = (attempts = 0) => {
-      const span = this.el.querySelector(
-        `.highlight-span[data-highlight-id="${id}"]`,
-      );
-      if (span) {
-        span.scrollIntoView({ behavior: "auto", block: "center" });
+    const highlightId = id.toString();
+    const now = Date.now();
+    const pendingRequest = window.__pendingHighlightScrollRequest;
 
-        // Pulse effect
-        const originalTransition = span.style.transition;
-        const originalColor = span.style.backgroundColor;
+    if (
+      !pendingRequest ||
+      pendingRequest.mudgId !== this.mudgId ||
+      pendingRequest.id !== highlightId ||
+      (pendingRequest.status === "handled" &&
+        now - (pendingRequest.completedAt || 0) > 250)
+    ) {
+      window.__pendingHighlightScrollRequest = {
+        id: highlightId,
+        mudgId: this.mudgId,
+        status: "requested",
+        completedAt: null,
+      };
+    }
 
-        span.style.transition = "background-color 0.5s";
-        span.style.backgroundColor = "rgba(255, 165, 0, 0.6)"; // Orange pulse
+    this.retryPendingHighlightScroll(0);
+  },
 
-        setTimeout(() => {
-          span.style.backgroundColor = originalColor;
-          setTimeout(() => {
-            span.style.transition = originalTransition;
-          }, 500);
-        }, 1500);
-      } else if (attempts < 10) {
-        setTimeout(() => {
-          findAndScroll(attempts + 1);
+  retryPendingHighlightScroll(attempts = 0) {
+    const pendingRequest = window.__pendingHighlightScrollRequest;
+
+    if (
+      pendingRequest?.mudgId &&
+      this.mudgId &&
+      pendingRequest.mudgId !== this.mudgId
+    ) {
+      window.__pendingHighlightScrollRequest = null;
+      return;
+    }
+
+    if (!pendingRequest || pendingRequest.status === "handled") return;
+
+    if (this.highlightScrollRetryTimer) {
+      clearTimeout(this.highlightScrollRetryTimer);
+      this.highlightScrollRetryTimer = null;
+    }
+
+    const span = this.el.querySelector(
+      `.highlight-span[data-highlight-id="${pendingRequest.id}"]`,
+    );
+
+    if (span) {
+      this.pulseHighlight(span);
+      this.finalizePendingHighlightScroll(span, pendingRequest.id, attempts);
+      return;
+    }
+
+    if (attempts >= 20) return;
+
+    this.highlightScrollRetryTimer = setTimeout(() => {
+      this.retryPendingHighlightScroll(attempts + 1);
+    }, 100);
+  },
+
+  pulseHighlight(span) {
+    this.scrollHighlightIntoView(span);
+
+    const originalTransition = span.style.transition;
+    const originalColor = span.style.backgroundColor;
+
+    span.style.transition = "background-color 0.5s";
+    span.style.backgroundColor = "rgba(255, 165, 0, 0.6)";
+
+    setTimeout(() => {
+      span.style.backgroundColor = originalColor;
+      setTimeout(() => {
+        span.style.transition = originalTransition;
+      }, 500);
+    }, 1500);
+  },
+
+  finalizePendingHighlightScroll(span, highlightId, attempts) {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const pendingRequest = window.__pendingHighlightScrollRequest;
+
+        if (!pendingRequest || pendingRequest.id !== highlightId) return;
+
+        if (this.isHighlightInView(span)) {
+          window.__pendingHighlightScrollRequest = {
+            ...pendingRequest,
+            status: "handled",
+            completedAt: Date.now(),
+          };
+          this.closeHighlightsDrawerOnMobile();
+          return;
+        }
+
+        if (attempts >= 20) return;
+
+        this.highlightScrollRetryTimer = setTimeout(() => {
+          this.retryPendingHighlightScroll(attempts + 1);
         }, 100);
-      }
-    };
+      });
+    });
+  },
 
-    findAndScroll();
+  scrollHighlightIntoView(span) {
+    const scrollContainer = this.findScrollContainer(span);
+
+    if (!scrollContainer) {
+      span.scrollIntoView({ behavior: "auto", block: "center" });
+      return;
+    }
+
+    const spanRect = span.getBoundingClientRect();
+    const containerRect = scrollContainer.getBoundingClientRect();
+    const currentScrollTop = scrollContainer.scrollTop;
+    const containerCenter = containerRect.height / 2;
+    const spanCenter = spanRect.top - containerRect.top + spanRect.height / 2;
+    const targetScrollTop = currentScrollTop + spanCenter - containerCenter;
+
+    scrollContainer.scrollTo({
+      top: Math.max(0, targetScrollTop),
+      behavior: "auto",
+    });
+  },
+
+  isHighlightInView(span) {
+    if (!span?.isConnected) return false;
+
+    const scrollContainer = this.findScrollContainer(span);
+    const spanRect = span.getBoundingClientRect();
+
+    if (!scrollContainer) {
+      return spanRect.top >= 0 && spanRect.bottom <= window.innerHeight;
+    }
+
+    const containerRect = scrollContainer.getBoundingClientRect();
+
+    return (
+      spanRect.top >= containerRect.top &&
+      spanRect.bottom <= containerRect.bottom
+    );
+  },
+
+  closeHighlightsDrawerOnMobile() {
+    if (!window.matchMedia("(max-width: 639px)").matches) return;
+
+    const drawer = document.getElementById("highlights-drawer");
+    if (!drawer || drawer.classList.contains("translate-x-full")) return;
+
+    const layout =
+      document.getElementById("outline-layout") ||
+      document.getElementById("graph-layout");
+
+    if (!layout) return;
+
+    layout.dispatchEvent(
+      new CustomEvent("close-panel-on-mobile", {
+        detail: { id: "highlights-drawer" },
+      }),
+    );
+  },
+
+  findScrollContainer(element) {
+    let current = element.parentElement;
+
+    while (current) {
+      const style = window.getComputedStyle(current);
+      const overflowY = style.overflowY;
+      const canScroll =
+        (overflowY === "auto" || overflowY === "scroll") &&
+        current.scrollHeight > current.clientHeight;
+
+      if (canScroll) {
+        return current;
+      }
+
+      current = current.parentElement;
+    }
+
+    const scrollingElement = document.scrollingElement;
+    return scrollingElement && scrollingElement.scrollHeight > window.innerHeight
+      ? scrollingElement
+      : null;
   },
 
   // ── Text selection handling ─────────────────────────────────────────

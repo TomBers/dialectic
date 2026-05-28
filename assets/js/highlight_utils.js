@@ -77,20 +77,31 @@ const HighlightUtils = {
   renderHighlights(container, highlights) {
     if (!container || !highlights) return;
 
-    // Get existing highlight IDs
+    // Get existing highlight signatures so link/offset changes trigger a re-render.
     const existingSpans = container.querySelectorAll(".highlight-span");
-    const existingIds = new Set(
-      Array.from(existingSpans).map((span) => span.dataset.highlightId),
-    );
+    const existingSignatures = new Map();
 
-    // Get new highlight IDs
-    const newIds = new Set(highlights.map((h) => h.id.toString()));
+    Array.from(existingSpans).forEach((span) => {
+      const id = span.dataset.highlightId;
+      if (id && !existingSignatures.has(id)) {
+        existingSignatures.set(id, span.dataset.highlightSignature || "");
+      }
+    });
+
+    // Get new highlight signatures
+    const newSignatures = new Map(
+      highlights.map((h) => [h.id.toString(), this.highlightSignature(h)]),
+    );
 
     // Only proceed if there are actual changes
     const hasChanges =
-      existingIds.size !== newIds.size ||
-      Array.from(existingIds).some((id) => !newIds.has(id)) ||
-      Array.from(newIds).some((id) => !existingIds.has(id));
+      existingSignatures.size !== newSignatures.size ||
+      Array.from(existingSignatures.keys()).some(
+        (id) => !newSignatures.has(id),
+      ) ||
+      Array.from(newSignatures).some(
+        ([id, signature]) => existingSignatures.get(id) !== signature,
+      );
 
     if (!hasChanges) {
       // No changes needed - highlights are already up to date
@@ -108,6 +119,19 @@ const HighlightUtils = {
     // 3. Apply highlights
     sortedHighlights.forEach((highlight) => {
       this.applySingleHighlight(container, highlight);
+    });
+  },
+
+  highlightSignature(highlight) {
+    const links = (highlight.links || []).map((link) => [
+      link.node_id,
+      link.link_type,
+    ]);
+
+    return JSON.stringify({
+      start: highlight.selection_start,
+      end: highlight.selection_end,
+      links,
     });
   },
 
@@ -167,13 +191,19 @@ const HighlightUtils = {
       const span = document.createElement("span");
       span.className = "highlight-span";
       span.dataset.highlightId = highlight.id;
+      span.dataset.highlightSignature = this.highlightSignature(highlight);
 
-      // Add styling for highlights with links
+      // Add styling and a default navigation target for highlights with links.
+      // Individual link icons still navigate to their specific linked nodes.
       if (highlight.links && highlight.links.length > 0) {
-        span.classList.add("has-linked-nodes");
-        span.style.backgroundColor = "#fef3c7";
-        span.style.borderBottom = "2px solid #f59e0b";
-        span.style.padding = "0 2px";
+        const firstLink = highlight.links[0];
+        span.classList.add("has-linked-node");
+        span.dataset.linkedNodeId = firstLink.node_id;
+        span.dataset.linkType = firstLink.link_type;
+        span.title =
+          highlight.links.length === 1
+            ? `Linked to ${this.getLinkLabel(firstLink.link_type)}`
+            : `${highlight.links.length} linked nodes`;
       }
 
       try {

@@ -737,9 +737,11 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_event("highlight_clicked", %{"id" => highlight_id, "node-id" => node_id}, socket) do
+  def handle_event("highlight_clicked", %{"id" => highlight_id} = params, socket) do
+    node_id = params["node-id"] || params["node_id"]
+
     socket =
-      if socket.assigns.node && socket.assigns.node.id == node_id do
+      if (is_binary(node_id) and socket.assigns.node) && socket.assigns.node.id == node_id do
         socket
         |> push_event("center_node", %{id: node_id})
       else

@@ -213,8 +213,10 @@ hooks.GraphLayout = {
     this.activePanelId = null;
     this._reopenSideDrawerAfterPresentation = false;
     this._reopenSideDrawerAfterCombine = false;
+    this._mobileOutlineCloseTimer = null;
     this._handleMobileGraphResize = () => {
       this._redirectMobileGraphToReader();
+      this._syncOutlineDetailForPanel(this.activePanelId);
     };
     const graphId = this.el.dataset.graphId || "global";
     const validReadingDensities = ["compact", "comfortable", "large"];
@@ -260,6 +262,7 @@ hooks.GraphLayout = {
     this._applyReadingDensity(this.readingDensity);
     this._applyReadingFont(this.readingFont);
     this._closeAllPanels();
+    this._syncOutlineDetailForPanel(null);
     window.addEventListener("resize", this._handleMobileGraphResize);
 
     this.el.addEventListener("set-reading-density", (e) => {
@@ -366,6 +369,7 @@ hooks.GraphLayout = {
         });
 
         if (bottomMenu) bottomMenu.classList.add("panel-open");
+        this._syncOutlineDetailForPanel(id);
 
         const btn = document.querySelector(`[data-panel-toggle="${id}"]`);
         if (btn) {
@@ -384,6 +388,7 @@ hooks.GraphLayout = {
         });
 
         if (bottomMenu) bottomMenu.classList.remove("panel-open");
+        this._syncOutlineDetailForPanel(null);
       }
 
       const shouldRestoreSideDrawer =
@@ -402,6 +407,21 @@ hooks.GraphLayout = {
         this._reopenSideDrawerAfterCombine = false;
       }
 
+      window.dispatchEvent(new Event("resize"));
+    });
+
+    this.el.addEventListener("close-panel-on-mobile", (e) => {
+      if (!window.matchMedia("(max-width: 639px)").matches) return;
+
+      const { id } = e.detail || {};
+      if (!id) return;
+
+      const targetPanel = document.getElementById(id);
+      if (!targetPanel) return;
+
+      if (targetPanel.classList.contains("translate-x-full")) return;
+
+      this._closeAllPanels();
       window.dispatchEvent(new Event("resize"));
     });
 
@@ -570,8 +590,19 @@ hooks.GraphLayout = {
 
     const bottomMenu = document.getElementById("bottom-menu");
     if (bottomMenu) bottomMenu.classList.remove("panel-open");
+    this._syncOutlineDetailForPanel(null);
 
     this.activePanelId = null;
+  },
+  _syncOutlineDetailForPanel(activePanelId) {
+    const outlineDetail = document.getElementById("outline-detail");
+    if (!outlineDetail) return;
+
+    const reserveDrawerSpace =
+      activePanelId === "highlights-drawer" &&
+      window.matchMedia("(min-width: 1024px)").matches;
+
+    outlineDetail.classList.toggle("lg:pr-96", reserveDrawerSpace);
   },
   _applySideDrawerState(shouldOpen, { dispatchResize = true } = {}) {
     const drawer = document.getElementById("side-drawer");
@@ -667,6 +698,11 @@ hooks.GraphLayout = {
     this.restoreState();
   },
   destroyed() {
+    if (this._mobileOutlineCloseTimer) {
+      clearTimeout(this._mobileOutlineCloseTimer);
+      this._mobileOutlineCloseTimer = null;
+    }
+
     if (this._handleMobileGraphResize) {
       window.removeEventListener("resize", this._handleMobileGraphResize);
     }
@@ -690,7 +726,27 @@ hooks.GraphLayout = {
 
     if (!panel || !button) return;
 
-    panel.classList.toggle("hidden", !shouldOpen);
+    if (this._mobileOutlineCloseTimer) {
+      clearTimeout(this._mobileOutlineCloseTimer);
+      this._mobileOutlineCloseTimer = null;
+    }
+
+    if (shouldOpen) {
+      panel.classList.remove("hidden", "pointer-events-none", "opacity-0", "translate-x-8");
+
+      requestAnimationFrame(() => {
+        panel.classList.remove("opacity-0", "translate-x-8");
+        panel.classList.add("opacity-100", "translate-x-0");
+      });
+    } else {
+      panel.classList.remove("opacity-100", "translate-x-0");
+      panel.classList.add("opacity-0", "translate-x-8", "pointer-events-none");
+
+      this._mobileOutlineCloseTimer = setTimeout(() => {
+        panel.classList.add("hidden");
+        this._mobileOutlineCloseTimer = null;
+      }, 500);
+    }
 
     button.setAttribute("aria-expanded", String(shouldOpen));
 
@@ -763,6 +819,9 @@ hooks.GraphLayout = {
       this._closeAllPanels();
       return;
     }
+
+    this._syncOutlineDetailForPanel(this.activePanelId);
+
     const panel = document.getElementById(this.activePanelId);
     if (!panel) return;
 

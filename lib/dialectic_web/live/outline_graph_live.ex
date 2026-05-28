@@ -5,6 +5,7 @@ defmodule DialecticWeb.OutlineGraphLive do
   alias Dialectic.Highlights
   alias Dialectic.Linear.ThreadedConv
   alias DialecticWeb.ColUtils
+  alias DialecticWeb.GraphHelpers
   alias DialecticWeb.HighlightShare
   alias DialecticWeb.NodeSearch
   alias DialecticWeb.Utils.NodeTitleHelper
@@ -138,6 +139,30 @@ defmodule DialecticWeb.OutlineGraphLive do
   end
 
   @impl true
+  def handle_info({:selection_action, params}, socket) do
+    case GraphHelpers.check_selection_action_allowed(socket) do
+      {:error, :locked} ->
+        {:noreply, put_flash(socket, :error, "This graph is locked")}
+
+      {:error, :unauthenticated} ->
+        {:noreply, assign(socket, show_login_modal: true)}
+
+      :ok ->
+        {action, selected_text, node_id, offsets, existing_highlight, _extra} =
+          GraphHelpers.unpack_selection_action(params)
+
+        handle_reader_selection_action(
+          action,
+          selected_text,
+          node_id,
+          offsets,
+          existing_highlight,
+          socket
+        )
+    end
+  end
+
+  @impl true
   def handle_info(_msg, socket), do: {:noreply, socket}
 
   @impl true
@@ -151,15 +176,27 @@ defmodule DialecticWeb.OutlineGraphLive do
   end
 
   @impl true
-  def handle_event("highlight_clicked", %{"id" => highlight_id, "node-id" => node_id}, socket) do
+  def handle_event("highlight_clicked", %{"id" => highlight_id} = params, socket) do
+    node_id = params["node-id"] || params["node_id"]
+
     socket =
-      if MapSet.member?(socket.assigns.displayed_node_ids, node_id) do
+      if is_binary(node_id) and MapSet.member?(socket.assigns.displayed_node_ids, node_id) do
         push_event(socket, "scroll_to_highlight", %{id: highlight_id})
       else
         push_patch(socket, to: highlight_path(socket, node_id, highlight_id))
       end
 
     {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("show_login_required", _params, socket) do
+    {:noreply, assign(socket, show_login_modal: true)}
+  end
+
+  @impl true
+  def handle_event("close_login_modal", _params, socket) do
+    {:noreply, assign(socket, show_login_modal: false)}
   end
 
   @impl true
@@ -287,6 +324,7 @@ defmodule DialecticWeb.OutlineGraphLive do
       compare_branches: [],
       show_share_modal: false,
       selected_share_highlight: nil,
+      show_login_modal: false,
       show_search_overlay: false,
       search_term: "",
       search_results: [],
@@ -815,6 +853,52 @@ defmodule DialecticWeb.OutlineGraphLive do
     else
       "The thread above leads to another split here. Pick the direction you want to read next."
     end
+  end
+
+  defp handle_reader_selection_action(
+         :highlight_only,
+         selected_text,
+         node_id,
+         offsets,
+         existing_highlight,
+         socket
+       ) do
+    if existing_highlight do
+      {:noreply, socket}
+    else
+      attrs = %{
+        mudg_id: socket.assigns.graph_id,
+        node_id: node_id,
+        text_source_type: "node",
+        selection_start: selection_offset(offsets, :start),
+        selection_end: selection_offset(offsets, :end),
+        selected_text_snapshot: selected_text,
+        created_by_user_id: socket.assigns.current_user.id
+      }
+
+      case Highlights.create_highlight(attrs) do
+        {:ok, _highlight} ->
+          {:noreply, socket}
+
+        {:error, _changeset} ->
+          {:noreply, put_flash(socket, :error, "Could not save highlight")}
+      end
+    end
+  end
+
+  defp handle_reader_selection_action(
+         _action,
+         _selected_text,
+         _node_id,
+         _offsets,
+         _highlight,
+         socket
+       ) do
+    {:noreply, put_flash(socket, :error, "Reader view supports highlights only")}
+  end
+
+  defp selection_offset(offsets, key) do
+    Map.get(offsets, key) || Map.get(offsets, Atom.to_string(key))
   end
 
   defp navigate_to_node(socket, node_id) do
