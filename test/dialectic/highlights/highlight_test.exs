@@ -1,5 +1,6 @@
 defmodule Dialectic.Highlights.HighlightTest do
   use Dialectic.DataCase, async: true
+  alias Dialectic.Highlights
   alias Dialectic.Highlights.Highlight
   alias Dialectic.Repo
   alias Dialectic.Accounts.Graph
@@ -99,6 +100,81 @@ defmodule Dialectic.Highlights.HighlightTest do
       changeset = Highlight.changeset(%Highlight{}, attrs)
       refute changeset.valid?
       assert %{selection_end: ["must be greater than selection_start"]} = errors_on(changeset)
+    end
+  end
+
+  describe "quote_of_the_day/1" do
+    test "returns a deterministic quote from eligible public graphs" do
+      unique = System.unique_integer([:positive])
+
+      user =
+        Repo.insert!(%User{
+          email: "quote-#{unique}@example.com",
+          hashed_password: "hashed",
+          username: "quote-author-#{unique}"
+        })
+
+      graph =
+        Repo.insert!(%Graph{
+          title: "quote-graph-#{unique}",
+          data: %{"nodes" => []},
+          is_public: true,
+          is_published: true,
+          is_deleted: false,
+          user_id: user.id
+        })
+
+      ineligible_graph =
+        Repo.insert!(%Graph{
+          title: "private-quote-graph-#{unique}",
+          data: %{"nodes" => []},
+          is_public: false,
+          is_published: true,
+          is_deleted: false,
+          user_id: user.id
+        })
+
+      highlights =
+        [
+          insert_highlight!(
+            user,
+            graph,
+            "This is a substantial highlighted passage that is long enough to be displayed on the homepage."
+          ),
+          insert_highlight!(
+            user,
+            graph,
+            "Another eligible highlighted passage with enough length for the daily quote selector."
+          )
+        ]
+
+      insert_highlight!(
+        user,
+        ineligible_graph,
+        "This private graph highlight is long enough but should never be selected."
+      )
+
+      date = ~D[2026-05-28]
+
+      expected =
+        Enum.sort_by(highlights, fn highlight ->
+          :erlang.phash2({
+            Date.to_iso8601(date),
+            highlight.id,
+            highlight.selected_text_snapshot
+          })
+        end)
+        |> List.first()
+
+      assert %{
+               highlight: %{id: highlight_id},
+               graph: %{title: graph_title},
+               author_name: author_name
+             } = Highlights.quote_of_the_day(date)
+
+      assert highlight_id == expected.id
+      assert graph_title == graph.title
+      assert author_name == user.username
     end
   end
 
@@ -627,5 +703,19 @@ defmodule Dialectic.Highlights.HighlightTest do
       assert changeset.valid?
       assert {:ok, _updated} = Repo.update(changeset)
     end
+  end
+
+  defp insert_highlight!(user, graph, text) do
+    %Highlight{}
+    |> Highlight.changeset(%{
+      mudg_id: graph.title,
+      node_id: "node-#{System.unique_integer([:positive])}",
+      text_source_type: "node_content",
+      selection_start: 0,
+      selection_end: String.length(text),
+      selected_text_snapshot: text,
+      created_by_user_id: user.id
+    })
+    |> Repo.insert!()
   end
 end

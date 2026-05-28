@@ -291,53 +291,53 @@ defmodule DialecticWeb.HomeLive do
           </div>
         <% end %>
         <div class="relative z-10 pb-4 sm:pb-5">
+          <% preview_items =
+            editor_pick_preview_items(
+              if(@editor_picks_expanded, do: @all_curated_grids, else: @curated_grids),
+              @graphs
+            ) %>
+
           <section
             id="start-here"
-            class="w-full bg-gradient-to-br from-[#2b0a78] via-[#3a0ca3] to-[#4361ee] px-4 py-8 text-white shadow-xl sm:px-6 sm:py-10"
+            class="w-full bg-gradient-to-br from-[#2b0a78] via-[#3a0ca3] to-[#4361ee] px-4 py-4 text-white shadow-xl sm:px-6 sm:py-5"
           >
-            <div class="mx-auto grid w-full max-w-6xl gap-7 lg:grid-cols-[minmax(0,1.05fr)_minmax(340px,0.95fr)] lg:items-center">
-              <div class="space-y-5">
+            <div class="mx-auto grid w-full max-w-7xl grid-cols-1 gap-3 lg:grid-cols-12">
+              <div class="rounded-[1.75rem] border border-white/15 bg-white/10 p-4 shadow-sm ring-1 ring-white/10 sm:p-5 lg:col-span-5">
                 <div class="flex flex-wrap items-center justify-between gap-3">
-                  <h1 class="flex items-center gap-3 text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
+                  <h1 class="flex items-center gap-3 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
                     <img
                       src={~p"/images/favicon.webp"}
                       alt=""
                       aria-hidden="true"
-                      class="h-10 w-10 rounded-xl shadow-lg sm:h-12 sm:w-12"
+                      class="h-10 w-10 rounded-xl shadow-lg"
                     />
                     <span>RationalGrid</span>
                   </h1>
-                  <.link
-                    navigate={~p"/about"}
-                    class="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white/90 transition hover:bg-white/15 hover:text-white"
-                  >
-                    About <.icon name="hero-arrow-right" class="h-4 w-4" />
-                  </.link>
                 </div>
 
-                <div class="max-w-3xl space-y-3">
-                  <p class="text-sm font-semibold uppercase tracking-[0.22em] text-indigo-100/80">
+                <div class="mt-4 space-y-3">
+                  <p class="text-xs font-semibold uppercase tracking-[0.22em] text-indigo-100/80">
                     Read ideas as maps, not walls of text
                   </p>
-                  <h2 class="text-3xl font-semibold leading-tight tracking-tight text-white sm:text-5xl">
+                  <h2 class="text-2xl font-semibold leading-tight tracking-tight text-white sm:text-4xl">
                     Explore the questions, tensions, and evidence behind big ideas.
                   </h2>
-                  <p class="max-w-2xl text-base leading-7 text-indigo-50/90 sm:text-lg">
+                  <p class="max-w-2xl text-sm leading-6 text-indigo-50/90 sm:text-base">
                     Grids turn a topic into paths you can follow: claims, counterpoints,
                     sources, and the next question worth asking.
                   </p>
                 </div>
 
-                <div class="flex flex-wrap gap-2">
+                <div class="mt-4 flex flex-wrap gap-2">
                   <.link
-                    href="#quote-of-the-day"
-                    class="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-indigo-800 shadow-sm transition hover:bg-indigo-50"
+                    navigate={~p"/about"}
+                    class="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-sm font-semibold text-white/90 transition hover:bg-white/15 hover:text-white"
                   >
-                    <.icon name="hero-sparkles" class="h-4 w-4" /> Today’s quote
+                    About <.icon name="hero-arrow-right" class="h-4 w-4" />
                   </.link>
                   <.link
                     href="#explore"
-                    class="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/15"
+                    class="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-white/15"
                   >
                     <.icon name="hero-magnifying-glass" class="h-4 w-4" /> Browse grids
                   </.link>
@@ -346,15 +346,15 @@ defmodule DialecticWeb.HomeLive do
 
               <div
                 id="quote-of-the-day"
-                class="relative overflow-hidden rounded-[2rem] border border-white/20 bg-white/95 p-4 text-slate-950 shadow-[0_22px_55px_rgba(15,23,42,0.22)] ring-1 ring-white/40 sm:p-5"
+                class="rounded-[1.75rem] border border-white/20 bg-white/95 p-4 text-slate-950 shadow-[0_18px_42px_rgba(15,23,42,0.18)] ring-1 ring-white/40 sm:p-5 lg:col-span-7"
               >
-                <div class="space-y-4">
+                <div class="space-y-3">
                   <div class="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-indigo-700 ring-1 ring-indigo-100">
                     <.icon name="hero-sparkles" class="h-3.5 w-3.5" /> Quote of the day
                   </div>
 
                   <%= if @quote_of_day do %>
-                    <blockquote class="text-2xl font-semibold leading-snug tracking-tight text-slate-950 sm:text-3xl">
+                    <blockquote class="text-xl font-semibold italic leading-snug tracking-tight text-slate-950 sm:text-2xl">
                       “{quote_text(@quote_of_day)}”
                     </blockquote>
 
@@ -364,52 +364,63 @@ defmodule DialecticWeb.HomeLive do
                       </p>
                     <% end %>
 
-                    <div class="flex flex-col gap-3 border-t border-slate-200 pt-4">
-                      <div>
+                    <div class="flex flex-col gap-3 border-t border-slate-200 pt-3 sm:flex-row sm:items-end sm:justify-between">
+                      <div class="min-w-0">
                         <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
                           Opens a grid on
                         </p>
                         <.link
-                          navigate={graph_path(@quote_of_day.graph, @quote_of_day.highlight.node_id)}
-                          class="mt-1 block text-lg font-semibold leading-snug text-indigo-800 transition hover:text-indigo-950"
+                          navigate={
+                            graph_path(
+                              @quote_of_day.graph,
+                              @quote_of_day.highlight.node_id,
+                              highlight: @quote_of_day.highlight.id
+                            )
+                          }
+                          class="mt-1 block truncate text-base font-semibold text-indigo-800 transition hover:text-indigo-950"
                         >
                           {@quote_of_day.graph.title}
                         </.link>
-                        <%= if author_visible?(@quote_of_day.author_name) do %>
-                          <.link
-                            navigate={author_profile_path(@quote_of_day.author_name)}
-                            class="mt-1 inline-flex items-center gap-1 text-sm font-medium text-slate-600 transition hover:text-indigo-700"
-                          >
-                            <.icon name="hero-user-circle" class="h-4 w-4" />
-                            by {"@" <> @quote_of_day.author_name}
-                          </.link>
-                        <% end %>
-                      </div>
-
-                      <div class="flex flex-wrap items-center gap-2">
-                        <%= for tag <- Enum.take(@quote_of_day.graph.tags || [], 4) do %>
-                          <span class={[
-                            "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset",
-                            table_tag_color_class(tag)
-                          ]}>
-                            {tag}
+                        <div class="mt-2 flex flex-wrap items-center gap-2">
+                          <%= if author_visible?(@quote_of_day.author_name) do %>
+                            <.link
+                              navigate={author_profile_path(@quote_of_day.author_name)}
+                              class="inline-flex items-center gap-1 text-xs font-medium text-slate-600 transition hover:text-indigo-700"
+                            >
+                              <.icon name="hero-user-circle" class="h-3.5 w-3.5" />
+                              {"@" <> @quote_of_day.author_name}
+                            </.link>
+                          <% end %>
+                          <%= for tag <- Enum.take(@quote_of_day.graph.tags || [], 3) do %>
+                            <span class={[
+                              "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset",
+                              table_tag_color_class(tag)
+                            ]}>
+                              {tag}
+                            </span>
+                          <% end %>
+                          <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600 ring-1 ring-slate-200">
+                            {graph_node_count(@quote_of_day.graph)} nodes
                           </span>
-                        <% end %>
-                        <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 ring-1 ring-slate-200">
-                          {graph_node_count(@quote_of_day.graph)} nodes
-                        </span>
+                        </div>
                       </div>
 
                       <.link
-                        navigate={graph_path(@quote_of_day.graph, @quote_of_day.highlight.node_id)}
-                        class="inline-flex w-fit items-center gap-2 rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+                        navigate={
+                          graph_path(
+                            @quote_of_day.graph,
+                            @quote_of_day.highlight.node_id,
+                            highlight: @quote_of_day.highlight.id
+                          )
+                        }
+                        class="inline-flex shrink-0 items-center gap-2 rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
                       >
-                        Read this grid <.icon name="hero-arrow-right" class="h-4 w-4" />
+                        Read grid <.icon name="hero-arrow-right" class="h-4 w-4" />
                       </.link>
                     </div>
                   <% else %>
-                    <div class="space-y-4">
-                      <blockquote class="text-2xl font-semibold leading-snug tracking-tight text-slate-950 sm:text-3xl">
+                    <div class="space-y-3">
+                      <blockquote class="text-xl font-semibold italic leading-snug tracking-tight text-slate-950 sm:text-2xl">
                         “Every grid starts with one sharp question.”
                       </blockquote>
                       <p class="text-sm leading-6 text-slate-600">
@@ -429,135 +440,187 @@ defmodule DialecticWeb.HomeLive do
             </div>
           </section>
 
-          <div class="mx-auto max-w-6xl px-4 pt-3 sm:px-6 sm:pt-4">
-            <div class="flex flex-col items-stretch gap-3 sm:gap-4">
-              <% preview_items =
-                editor_pick_preview_items(
-                  if(@editor_picks_expanded, do: @all_curated_grids, else: @curated_grids),
-                  @graphs
-                ) %>
-
-              <section class="grid gap-3 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
-                <div class="relative overflow-hidden rounded-[2rem] border border-indigo-200/80 bg-gradient-to-br from-indigo-50 via-white to-sky-50/90 p-4 shadow-sm ring-1 ring-indigo-100 sm:p-5">
-                  <div class="space-y-4">
-                    <div>
-                      <div class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-200 shadow-sm">
-                        <.icon name="hero-plus" class="h-3.5 w-3.5" /> Create a grid
-                      </div>
-                      <h2 class="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
-                        Have a question? Make it explorable.
-                      </h2>
-                      <p class="mt-2 text-sm leading-6 text-slate-700">
-                        Start with a topic, claim, or tension. RationalGrid turns it into a
-                        structured opening map you can refine.
-                      </p>
+          <div class="mx-auto max-w-7xl px-4 pt-3 sm:px-6 sm:pt-4">
+            <div class="grid grid-cols-1 gap-3 lg:grid-cols-12">
+              <section class="relative min-w-0 overflow-hidden rounded-[1.75rem] border border-indigo-200/80 bg-gradient-to-br from-indigo-50 via-white to-sky-50/90 p-4 shadow-sm ring-1 ring-indigo-100 lg:col-span-6">
+                <div class="space-y-3">
+                  <div>
+                    <div class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-200 shadow-sm">
+                      <.icon name="hero-plus" class="h-3.5 w-3.5" /> Create a grid
                     </div>
+                    <h2 class="mt-3 text-xl font-semibold tracking-tight text-slate-950">
+                      Have a question? Make it explorable.
+                    </h2>
+                    <p class="mt-2 text-sm leading-6 text-slate-700">
+                      Start with a topic, claim, or tension. RationalGrid turns it into a
+                      structured opening map.
+                    </p>
+                  </div>
 
-                    <div class="rounded-[1.6rem] border border-indigo-100/90 bg-white/85 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_26px_rgba(15,23,42,0.08)] ring-1 ring-white/80 sm:p-3">
-                      <.live_component
-                        module={DialecticWeb.NewIdeaFormComp}
-                        id="new-idea-form"
-                        form={@form}
-                      />
-                    </div>
+                  <div class="rounded-[1.4rem] border border-indigo-100/90 bg-white/85 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_26px_rgba(15,23,42,0.08)] ring-1 ring-white/80">
+                    <.live_component
+                      module={DialecticWeb.NewIdeaFormComp}
+                      id="new-idea-form"
+                      form={@form}
+                    />
                   </div>
                 </div>
+              </section>
 
-                <div class="rounded-[2rem] border border-slate-200/90 bg-white/90 p-4 shadow-sm ring-1 ring-slate-200/80 sm:p-5">
-                  <div class="mb-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <section class="min-w-0 overflow-hidden rounded-[1.75rem] border border-slate-900/10 bg-slate-950 p-3 text-white shadow-sm ring-1 ring-slate-900/10 lg:col-span-6">
+                <div class="mb-3 flex items-start justify-between gap-3">
+                  <div>
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-200/80">
+                      Screenshot
+                    </p>
+                    <h2 class="mt-1 text-xl font-semibold tracking-tight text-white">
+                      What a grid looks like
+                    </h2>
+                  </div>
+                  <.link
+                    navigate={~p"/g/happiness-da4f7e"}
+                    class="inline-flex shrink-0 items-center gap-1 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-medium text-white/85 transition hover:border-sky-300/40 hover:bg-white/15 hover:text-white"
+                  >
+                    Open <.icon name="hero-arrow-top-right-on-square" class="h-3.5 w-3.5" />
+                  </.link>
+                </div>
+
+                <.link navigate={~p"/g/happiness-da4f7e"} class="group block">
+                  <div class="aspect-[16/9] overflow-hidden border border-white/10 bg-slate-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+                    <img
+                      src={~p"/images/guide/grid-workspace.webp"}
+                      alt="Preview of the Happiness grid workspace by TomBers44"
+                      class="h-full w-full object-contain object-center transition duration-300 group-hover:scale-[1.015]"
+                      loading="lazy"
+                    />
+                  </div>
+                </.link>
+
+                <p class="mt-3 text-sm leading-6 text-slate-300">
+                  A finished grid shows branching claims, questions, and context in one workspace.
+                </p>
+              </section>
+
+              <section class="min-w-0 rounded-[1.75rem] border border-slate-200/90 bg-white/90 p-4 shadow-sm ring-1 ring-slate-200/80 lg:col-span-6">
+                <div class="mb-3 flex items-start justify-between gap-3">
+                  <div>
+                    <div class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-700 ring-1 ring-slate-200">
+                      <.icon name="hero-book-open" class="h-3.5 w-3.5" /> Editor picks
+                    </div>
+                  </div>
+                  <.link
+                    href="#explore"
+                    class="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-slate-900 px-3 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800"
+                  >
+                    Browse all
+                  </.link>
+                </div>
+
+                <div class="space-y-2">
+                  <%= if preview_items == [] do %>
+                    <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
+                      Curated grids will appear here. Until then, use Explore below.
+                    </div>
+                  <% else %>
+                    <%= for {item, index} <- Enum.with_index(preview_items) do %>
+                      <DialecticWeb.PageHtml.GraphComp.render
+                        title={item.graph.title}
+                        is_public={item.graph.is_public}
+                        link={graph_path(item.graph)}
+                        count={0}
+                        tags={Enum.take(item.graph.tags || [], 3)}
+                        author_name={item.author_name}
+                        author_link={author_profile_path(item.author_name)}
+                        author_label="by"
+                        variant={:light}
+                        compact={true}
+                        show_exploration_stats={false}
+                        node_count={graph_node_count(item.graph)}
+                        is_live={false}
+                        generating={false}
+                        id={"home-pick-#{index}-#{graph_key(item.graph)}"}
+                      />
+                    <% end %>
+                  <% end %>
+                </div>
+
+                <%= if length(@all_curated_grids) > 3 do %>
+                  <div class="mt-3 flex justify-end">
+                    <button
+                      type="button"
+                      phx-click="toggle_editor_picks"
+                      class="inline-flex items-center gap-1 text-sm font-semibold text-indigo-700 transition hover:text-indigo-950"
+                    >
+                      {if @editor_picks_expanded, do: "Show fewer", else: "See more"}
+                      <.icon name="hero-arrow-right" class="h-4 w-4" />
+                    </button>
+                  </div>
+                <% end %>
+              </section>
+
+              <section
+                id="curated"
+                class="min-w-0 rounded-[1.75rem] border border-slate-200/80 bg-white/90 p-3 shadow-sm ring-1 ring-slate-200 lg:col-span-6"
+              >
+                <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700 ring-1 ring-indigo-200">
+                      <.icon name="hero-users" class="h-4 w-4 text-indigo-500" />
+                    </span>
                     <div>
-                      <div class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-700 ring-1 ring-slate-200">
-                        <.icon name="hero-book-open" class="h-3.5 w-3.5" /> Start reading
-                      </div>
-                      <h2 class="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
-                        Editor picks with a path in.
+                      <h2 class="text-sm font-semibold tracking-tight text-slate-900">
+                        Partner grids
                       </h2>
-                      <p class="mt-2 text-sm leading-6 text-slate-700">
-                        Open a grid, follow one branch, and come away with a sharper question.
+                      <p class="text-xs text-slate-600">
+                        Read grids made with collaborators and communities.
                       </p>
                     </div>
-                    <div class="flex gap-2">
-                      <.link
-                        href="#explore"
-                        class="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800"
-                      >
-                        Browse all
-                      </.link>
-                      <.link
-                        navigate={~p"/intro/how"}
-                        class="inline-flex items-center justify-center gap-2 rounded-full border border-indigo-200 bg-white px-4 py-2 text-sm font-medium text-indigo-800 transition hover:bg-indigo-50"
-                      >
-                        Guide
-                      </.link>
-                    </div>
                   </div>
 
-                  <div class="grid gap-2 sm:grid-cols-3">
-                    <%= if preview_items == [] do %>
-                      <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm leading-6 text-slate-600 sm:col-span-3">
-                        Curated grids will appear here. Until then, use the explore section below.
-                      </div>
-                    <% else %>
-                      <%= for {item, index} <- Enum.with_index(preview_items) do %>
-                        <DialecticWeb.PageHtml.GraphComp.render
-                          title={item.graph.title}
-                          is_public={item.graph.is_public}
-                          link={graph_path(item.graph)}
-                          count={0}
-                          tags={Enum.take(item.graph.tags || [], 3)}
-                          author_name={item.author_name}
-                          author_link={author_profile_path(item.author_name)}
-                          author_label="by"
-                          variant={:light}
-                          compact={true}
-                          show_exploration_stats={false}
-                          node_count={graph_node_count(item.graph)}
-                          is_live={false}
-                          generating={false}
-                          id={"home-pick-#{index}-#{graph_key(item.graph)}"}
-                        />
-                      <% end %>
+                  <%= if partner_pills(@featured_grids) != [] do %>
+                    <div class="flex flex-wrap gap-1.5 sm:justify-end">
+                      <span
+                        :for={pill <- partner_pills(@featured_grids)}
+                        class="inline-flex items-center rounded-full border border-indigo-200 bg-white/90 px-2.5 py-1 text-[11px] font-medium text-slate-700 shadow-sm"
+                      >
+                        {pill}
+                      </span>
+                    </div>
+                  <% end %>
+                </div>
+
+                <div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                  <%= if @featured_grids == [] do %>
+                    <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm leading-6 text-slate-600 sm:col-span-3">
+                      Partner grids will appear here as more public collections are featured.
+                    </div>
+                  <% else %>
+                    <%= for {item, index} <- Enum.with_index(@featured_grids) do %>
+                      <DialecticWeb.PageHtml.GraphComp.render
+                        title={item.graph.title}
+                        is_public={item.graph.is_public}
+                        link={graph_path(item.graph)}
+                        count={0}
+                        tags={Enum.take(item.graph.tags || [], 3)}
+                        author_name={item.author_name}
+                        author_link={author_profile_path(item.author_name)}
+                        author_label="by"
+                        variant={:light}
+                        compact={true}
+                        show_exploration_stats={false}
+                        node_count={graph_node_count(item.graph)}
+                        is_live={false}
+                        generating={false}
+                        id={"featured-#{index}-#{graph_key(item.graph)}"}
+                      />
                     <% end %>
-                  </div>
-
-                  <%= if length(@all_curated_grids) > 3 do %>
-                    <div class="mt-3 flex justify-end">
-                      <button
-                        type="button"
-                        phx-click="toggle_editor_picks"
-                        class="inline-flex items-center gap-1 text-sm font-semibold text-indigo-700 transition hover:text-indigo-950"
-                      >
-                        {if @editor_picks_expanded, do: "Show fewer picks", else: "See more picks"}
-                        <.icon name="hero-arrow-right" class="h-4 w-4" />
-                      </button>
-                    </div>
                   <% end %>
                 </div>
               </section>
 
-              <%!-- Curated & Featured Grids – 2-column on desktop --%>
-              <%= if @featured_grids != [] do %>
-                <section
-                  class="w-full rounded-3xl border border-slate-200/80 bg-white/90 p-2 ring-1 ring-slate-200 shadow-sm sm:p-2.5"
-                  id="curated"
-                >
-                  <div class="grid w-full grid-cols-1 gap-2 sm:gap-2.5">
-                    <.curated_grid_section
-                      items={@featured_grids}
-                      icon="hero-users"
-                      icon_class="text-indigo-500"
-                      title="Partner grids"
-                      pills={partner_pills(@featured_grids)}
-                      id_prefix="featured"
-                      section_class="from-indigo-50 via-white to-sky-50/70"
-                      icon_wrap_class="bg-indigo-100 text-indigo-700 ring-indigo-200"
-                    />
-                  </div>
-                </section>
-              <% end %>
-              <div id="explore" class="h-5"></div>
+              <div id="explore" class="h-5 lg:col-span-12"></div>
               <!-- Below: All ideas (full-width on desktop, uses available space) -->
-              <section class="w-full rounded-3xl bg-white/90 p-2.5 ring-1 ring-slate-200 sm:p-3">
+              <section class="w-full rounded-3xl bg-white/90 p-2.5 ring-1 ring-slate-200 sm:p-3 lg:col-span-12">
                 <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
                   <div class="p-2 sm:p-2.5">
                     <div class="rounded-2xl border border-slate-200 bg-gradient-to-r from-slate-50 via-white to-indigo-50/70 p-3 shadow-sm">
@@ -811,7 +874,7 @@ defmodule DialecticWeb.HomeLive do
                 </div>
               </section>
               <%!-- Social Media Links --%>
-              <section class="w-full pb-3">
+              <section class="w-full pb-3 lg:col-span-12">
                 <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#3a0ca3] to-[#4361ee] px-5 py-4 text-white shadow-xl sm:px-6 sm:py-5">
                   <div class="pointer-events-none absolute inset-0">
                     <div class="absolute -top-8 left-10 h-28 w-28 rounded-full bg-white/10 blur-2xl">
@@ -884,72 +947,6 @@ defmodule DialecticWeb.HomeLive do
         </div>
       </div>
     </div>
-    """
-  end
-
-  defp curated_grid_section(assigns) do
-    assigns = assign_new(assigns, :pills, fn -> [] end)
-
-    ~H"""
-    <section class="w-full min-w-0">
-      <div class={[
-        "h-full rounded-2xl border border-slate-200 bg-gradient-to-br shadow-sm",
-        @section_class
-      ]}>
-        <div class="p-2">
-          <div class="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div class="flex items-center gap-2">
-              <span class={[
-                "inline-flex h-7 w-7 items-center justify-center rounded-xl ring-1",
-                @icon_wrap_class
-              ]}>
-                <.icon name={@icon} class={"h-4 w-4 " <> @icon_class} />
-              </span>
-              <h2 class="text-sm font-semibold tracking-tight text-slate-900">
-                {@title}
-              </h2>
-            </div>
-            <%= if @pills != [] do %>
-              <div class="flex flex-wrap gap-1.5 sm:justify-end">
-                <span
-                  :for={pill <- @pills}
-                  class="inline-flex items-center rounded-full border border-indigo-200 bg-white/90 px-2.5 py-1 text-[11px] font-medium text-slate-700 shadow-sm"
-                >
-                  {pill}
-                </span>
-              </div>
-            <% end %>
-          </div>
-          <div class="space-y-1.5">
-            <%= for item <- @items do %>
-              <div class="relative">
-                <DialecticWeb.PageHtml.GraphComp.render
-                  title={item.graph.title}
-                  is_public={item.graph.is_public}
-                  link={graph_path(item.graph)}
-                  count={0}
-                  tags={Enum.take(item.graph.tags || [], 3)}
-                  author_name={item.author_name}
-                  author_link={author_profile_path(item.author_name)}
-                  author_label="by"
-                  variant={:light}
-                  compact={true}
-                  show_exploration_stats={false}
-                  node_count={
-                    Enum.count(item.graph.data["nodes"] || [], fn n ->
-                      !Map.get(n, "compound", false)
-                    end)
-                  }
-                  is_live={false}
-                  generating={false}
-                  id={@id_prefix <> "-" <> (item.graph.slug || "t-" <> Integer.to_string(:erlang.phash2(item.graph.title || "")))}
-                />
-              </div>
-            <% end %>
-          </div>
-        </div>
-      </div>
-    </section>
     """
   end
 
