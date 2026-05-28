@@ -95,34 +95,38 @@ defmodule DialecticWeb.NewIdeaFormComp do
                 "focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 focus:outline-none resize-none",
                 "text-[0.95rem] leading-[1.45] sm:text-[1.05rem] sm:leading-[1.5]",
                 "placeholder:text-slate-500",
-                "px-3.5 sm:pl-5 sm:pr-28",
+                @show_level_prompt && "px-3.5 sm:px-5",
+                !@show_level_prompt && "px-3.5 sm:pl-5 sm:pr-28",
                 "py-2.5",
                 "min-h-[3rem] sm:min-h-[3.2rem]"
               ]}
               autocomplete="off"
               required
             >{@content}</textarea>
-            <div class="absolute right-2 top-2 bottom-2 hidden w-24 items-start justify-center sm:flex">
+            <div
+              :if={!@show_level_prompt}
+              class="absolute right-2 top-2 bottom-2 hidden w-24 items-start justify-center sm:flex"
+            >
               <button
                 type="submit"
                 id="new-idea-submit"
-                phx-disable-with={if @show_level_prompt, do: "Starting...", else: "Next..."}
+                phx-disable-with="Next..."
                 class="inline-flex min-h-[2.35rem] w-full items-center justify-center rounded-full border border-transparent bg-slate-900 px-0 py-1.5 text-sm font-semibold leading-none text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {if @show_level_prompt, do: "Create", else: @submit_label}
+                {@submit_label}
               </button>
             </div>
           </div>
 
-          <div class="sm:hidden">
+          <div :if={!@show_level_prompt} class="sm:hidden">
             <button
               type="submit"
               id="new-idea-submit-mobile"
-              phx-disable-with={if @show_level_prompt, do: "Starting...", else: "Next..."}
+              phx-disable-with="Next..."
               class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-transparent bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-transform active:scale-[0.98] hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <.icon name="hero-arrow-right" class="h-4 w-4" />
-              {if @show_level_prompt, do: "Create grid", else: @submit_label}
+              {@submit_label}
             </button>
           </div>
 
@@ -182,6 +186,21 @@ defmodule DialecticWeb.NewIdeaFormComp do
                   </button>
                 <% end %>
               </div>
+            </div>
+
+            <div class="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <p class="text-xs text-slate-600">
+                Create uses the selected level as the starting depth for the first draft.
+              </p>
+
+              <button
+                type="submit"
+                id="new-idea-create-submit"
+                phx-disable-with="Starting..."
+                class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-transparent bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-transform active:scale-[0.98] hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:min-w-[9rem]"
+              >
+                <.icon name="hero-sparkles" class="h-4 w-4" /> Create grid
+              </button>
             </div>
           </div>
         <% end %>

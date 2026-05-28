@@ -42,9 +42,10 @@ defmodule DialecticWeb.HomeLive do
        curated_grids: [],
        all_curated_grids: [],
        featured_grids: [],
+       all_featured_grids: [],
        quote_of_day: nil,
        quick_tags: [],
-       editor_picks_expanded: false
+       featured_grids_expanded: false
      )}
   end
 
@@ -77,6 +78,7 @@ defmodule DialecticWeb.HomeLive do
        curated_grids: curated_grids,
        all_curated_grids: all_curated_grids,
        featured_grids: featured_grids,
+       all_featured_grids: all_featured_grids,
        quote_of_day: quote_of_day,
        page_title: page_title(search_term, tag, category)
      )}
@@ -116,8 +118,8 @@ defmodule DialecticWeb.HomeLive do
   end
 
   @impl true
-  def handle_event("toggle_editor_picks", _params, socket) do
-    {:noreply, assign(socket, :editor_picks_expanded, !socket.assigns.editor_picks_expanded)}
+  def handle_event("toggle_featured_grids", _params, socket) do
+    {:noreply, assign(socket, :featured_grids_expanded, !socket.assigns.featured_grids_expanded)}
   end
 
   @impl true
@@ -293,7 +295,7 @@ defmodule DialecticWeb.HomeLive do
         <div class="relative z-10 pb-4 sm:pb-5">
           <% preview_items =
             editor_pick_preview_items(
-              if(@editor_picks_expanded, do: @all_curated_grids, else: @curated_grids),
+              @curated_grids,
               @graphs
             ) %>
 
@@ -543,59 +545,45 @@ defmodule DialecticWeb.HomeLive do
                     <% end %>
                   <% end %>
                 </div>
-
-                <%= if length(@all_curated_grids) > 3 do %>
-                  <div class="mt-3 flex justify-end">
-                    <button
-                      type="button"
-                      phx-click="toggle_editor_picks"
-                      class="inline-flex items-center gap-1 text-sm font-semibold text-indigo-700 transition hover:text-indigo-950"
-                    >
-                      {if @editor_picks_expanded, do: "Show fewer", else: "See more"}
-                      <.icon name="hero-arrow-right" class="h-4 w-4" />
-                    </button>
-                  </div>
-                <% end %>
               </section>
 
               <section
                 id="curated"
-                class="min-w-0 rounded-[1.75rem] border border-slate-200/80 bg-white/90 p-3 shadow-sm ring-1 ring-slate-200 lg:col-span-6"
+                class="min-w-0 rounded-[1.75rem] border border-slate-200/80 bg-white/90 p-4 shadow-sm ring-1 ring-slate-200/80 lg:col-span-6"
               >
-                <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <div class="flex items-center gap-2">
-                    <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700 ring-1 ring-indigo-200">
-                      <.icon name="hero-users" class="h-4 w-4 text-indigo-500" />
-                    </span>
-                    <div>
-                      <h2 class="text-sm font-semibold tracking-tight text-slate-900">
-                        Partner grids
-                      </h2>
-                      <p class="text-xs text-slate-600">
-                        Read grids made with collaborators and communities.
-                      </p>
+                <div class="mb-3 flex items-start justify-between gap-3">
+                  <div class="min-w-0 space-y-2">
+                    <div class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-700 ring-1 ring-slate-200">
+                      <.icon name="hero-users" class="h-3.5 w-3.5 text-indigo-500" /> Partner grids
                     </div>
+
+                    <%= if partner_pills(@featured_grids) != [] do %>
+                      <div class="flex flex-wrap gap-1.5">
+                        <span
+                          :for={pill <- partner_pills(@featured_grids)}
+                          class="inline-flex items-center rounded-full border border-indigo-200 bg-white/90 px-2.5 py-1 text-[11px] font-medium text-slate-700 shadow-sm"
+                        >
+                          {pill}
+                        </span>
+                      </div>
+                    <% end %>
                   </div>
 
-                  <%= if partner_pills(@featured_grids) != [] do %>
-                    <div class="flex flex-wrap gap-1.5 sm:justify-end">
-                      <span
-                        :for={pill <- partner_pills(@featured_grids)}
-                        class="inline-flex items-center rounded-full border border-indigo-200 bg-white/90 px-2.5 py-1 text-[11px] font-medium text-slate-700 shadow-sm"
-                      >
-                        {pill}
-                      </span>
-                    </div>
-                  <% end %>
+                  <.link
+                    href="#explore"
+                    class="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-slate-900 px-3 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800"
+                  >
+                    Browse all
+                  </.link>
                 </div>
 
-                <div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                <div class="space-y-2">
                   <%= if @featured_grids == [] do %>
-                    <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm leading-6 text-slate-600 sm:col-span-3">
+                    <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
                       Partner grids will appear here as more public collections are featured.
                     </div>
                   <% else %>
-                    <%= for {item, index} <- Enum.with_index(@featured_grids) do %>
+                    <%= for {item, index} <- Enum.with_index(if(@featured_grids_expanded, do: @all_featured_grids, else: @featured_grids)) do %>
                       <DialecticWeb.PageHtml.GraphComp.render
                         title={item.graph.title}
                         is_public={item.graph.is_public}
@@ -616,6 +604,19 @@ defmodule DialecticWeb.HomeLive do
                     <% end %>
                   <% end %>
                 </div>
+
+                <%= if length(@all_featured_grids) > 3 do %>
+                  <div class="mt-3 flex justify-end">
+                    <button
+                      type="button"
+                      phx-click="toggle_featured_grids"
+                      class="inline-flex items-center gap-1 text-sm font-semibold text-indigo-700 transition hover:text-indigo-950"
+                    >
+                      {if @featured_grids_expanded, do: "Show fewer", else: "See more"}
+                      <.icon name="hero-arrow-right" class="h-4 w-4" />
+                    </button>
+                  </div>
+                <% end %>
               </section>
 
               <div id="explore" class="h-5 lg:col-span-12"></div>
@@ -759,11 +760,11 @@ defmodule DialecticWeb.HomeLive do
                           id={graph_dom_id(g, "home-mobile-graph")}
                           class="rounded-2xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-indigo-50/60 p-4 shadow-sm ring-1 ring-slate-200/70"
                         >
-                          <div class="flex items-start gap-3">
-                            <div class="min-w-0 flex-1">
+                          <div class="flex flex-col gap-3">
+                            <div class="min-w-0 space-y-1.5">
                               <.link
                                 navigate={graph_path(g)}
-                                class="block text-base font-semibold leading-6 text-slate-900 transition hover:text-indigo-700"
+                                class="block text-[1.05rem] font-semibold leading-7 tracking-tight text-slate-900 transition hover:text-indigo-700"
                               >
                                 {g.title}
                               </.link>
@@ -771,8 +772,9 @@ defmodule DialecticWeb.HomeLive do
                               <%= if author_visible?(author_username) do %>
                                 <.link
                                   navigate={~p"/u/#{author_username}"}
-                                  class="mt-1 inline-flex text-xs font-medium text-slate-600 transition hover:text-indigo-700"
+                                  class="inline-flex items-center gap-1 text-xs font-medium text-slate-600 transition hover:text-indigo-700"
                                 >
+                                  <.icon name="hero-user-circle" class="h-4 w-4" />
                                   by @{author_username}
                                 </.link>
                               <% end %>
@@ -780,7 +782,7 @@ defmodule DialecticWeb.HomeLive do
 
                             <.link
                               navigate={graph_path(g)}
-                              class="inline-flex h-10 shrink-0 items-center gap-2 rounded-full bg-gradient-to-br from-indigo-500 to-sky-500 px-3 text-sm font-medium text-white shadow-sm ring-1 ring-indigo-500/30 transition-transform hover:scale-[1.02] hover:shadow-md"
+                              class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-indigo-500 to-sky-500 px-4 text-sm font-semibold text-white shadow-sm ring-1 ring-indigo-500/30 transition-transform hover:scale-[1.01] hover:shadow-md"
                               aria-label={"Open " <> (g.title || "idea")}
                             >
                               <.icon name="hero-magnifying-glass" class="h-4 w-4" />
