@@ -10,6 +10,7 @@ defmodule DialecticWeb.GraphLive do
   alias DialecticWeb.NodeSearch
 
   import DialecticWeb.GraphPresentation
+  import DialecticWeb.GridChatComp, only: [grid_chat_drawer: 1, grid_chat_toggle: 1]
   import DialecticWeb.PresentationStageComp, only: [presentation_stage: 1]
 
   alias DialecticWeb.Utils.UserUtils
@@ -129,6 +130,24 @@ defmodule DialecticWeb.GraphLive do
 
   defp default_node do
     GraphHelpers.default_node()
+  end
+
+  def handle_event("send_grid_chat", %{"grid_chat" => %{"message" => message}}, socket) do
+    message = String.trim(to_string(message || ""))
+
+    socket = assign(socket, chat_form: empty_chat_form())
+
+    if message == "" do
+      {:noreply, socket}
+    else
+      Phoenix.PubSub.broadcast(
+        Dialectic.PubSub,
+        grid_chat_topic(socket.assigns.graph_id),
+        {:grid_chat_message, build_grid_chat_message(socket, message)}
+      )
+
+      {:noreply, socket}
+    end
   end
 
   def handle_event("set_prompt_mode", %{"prompt_mode" => mode}, socket) do
@@ -1337,12 +1356,12 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_info({DialecticWeb.Presence, {:leave, presence}}, socket) do
-    if is_connected_to_graph?(presence, socket.assigns.graph_id) do
-      {:noreply, refresh_graph_presences(socket)}
-    else
-      {:noreply, refresh_graph_presences(socket)}
-    end
+  def handle_info({DialecticWeb.Presence, {:leave, _presence}}, socket) do
+    {:noreply, refresh_graph_presences(socket)}
+  end
+
+  def handle_info({:grid_chat_message, message}, socket) do
+    {:noreply, stream_insert(socket, :chat_messages, message, at: -1, limit: -100)}
   end
 
   def handle_info({:other_user_change, sender_pid}, socket) do
@@ -1679,27 +1698,28 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
+  defp empty_chat_form, do: to_form(%{}, as: :grid_chat)
+
+  defp grid_chat_topic(graph_id), do: "grid_chat:#{graph_id}"
+
+  defp build_grid_chat_message(socket, message) do
+    author = presence_display_name(socket.assigns[:current_user])
+
+    %{
+      id: Ecto.UUID.generate(),
+      author: author,
+      author_initials: initials_for_name(author),
+      body: message,
+      sent_at_label: Calendar.strftime(DateTime.utc_now(), "%H:%M")
+    }
+  end
+
   defp presence_display_name(%User{} = user), do: User.display_name(user)
   defp presence_display_name(_user), do: "Guest"
 
-  defp presence_label(presence) do
-    presence
-    |> presence_first_meta()
-    |> case do
-      %{display_name: display_name} when is_binary(display_name) and display_name != "" ->
-        display_name
-
-      %{"display_name" => display_name} when is_binary(display_name) and display_name != "" ->
-        display_name
-
-      _ ->
-        "Guest"
-    end
-  end
-
-  defp presence_initials(presence) do
-    presence
-    |> presence_label()
+  defp initials_for_name(name) do
+    name
+    |> to_string()
     |> String.split(~r/[\s_-]+/, trim: true)
     |> Enum.take(2)
     |> Enum.map(fn part ->
@@ -1714,23 +1734,6 @@ defmodule DialecticWeb.GraphLive do
       initials -> initials
     end
   end
-
-  defp presence_session_count(%{metas: metas}) when is_list(metas), do: length(metas)
-  defp presence_session_count(_presence), do: 1
-
-  defp presence_title(presence) do
-    label = presence_label(presence)
-    session_count = presence_session_count(presence)
-
-    if session_count > 1 do
-      "#{label} (#{session_count} sessions)"
-    else
-      label
-    end
-  end
-
-  defp presence_first_meta(%{metas: [meta | _]}), do: meta
-  defp presence_first_meta(_presence), do: %{}
 
   defp is_connected_to_graph?(%{metas: metas}, graph_id) do
     Enum.any?(metas, fn meta ->
@@ -2113,7 +2116,9 @@ defmodule DialecticWeb.GraphLive do
       presentation_title: "",
       combine_mode: :off,
       combine_selected_nodes: [],
-      graph_owner_name: nil
+      graph_owner_name: nil,
+      presence_count: 0,
+      chat_form: empty_chat_form()
     )
   end
 
@@ -2124,6 +2129,7 @@ defmodule DialecticWeb.GraphLive do
 
       Phoenix.PubSub.subscribe(Dialectic.PubSub, live_view_topic)
       Phoenix.PubSub.subscribe(Dialectic.PubSub, graph_topic)
+      Phoenix.PubSub.subscribe(Dialectic.PubSub, grid_chat_topic(graph_id))
       Highlights.subscribe(graph_id)
 
       DialecticWeb.Presence.track_user(user, %{
@@ -2134,12 +2140,15 @@ defmodule DialecticWeb.GraphLive do
 
       DialecticWeb.Presence.subscribe()
 
+      presences = DialecticWeb.Presence.list_online_users(graph_id)
+
       # Load highlights asynchronously after connection - doesn't block initial render
       highlights = Highlights.list_highlights_with_links(mudg_id: graph_id)
 
       socket
-      |> refresh_graph_presences(graph_id)
-      |> assign(highlights: highlights)
+      |> stream(:presences, presences)
+      |> stream(:chat_messages, [])
+      |> assign(highlights: highlights, presence_count: length(presences))
       |> push_event("highlights_loaded", %{
         highlights: serialize_highlights(highlights)
       })
@@ -2149,6 +2158,7 @@ defmodule DialecticWeb.GraphLive do
 
       socket
       |> stream(:presences, [])
+      |> stream(:chat_messages, [])
       |> assign(highlights: highlights, presence_count: 0)
     end
   end

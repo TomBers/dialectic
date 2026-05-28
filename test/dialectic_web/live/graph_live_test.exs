@@ -99,6 +99,20 @@ defmodule DialecticWeb.GraphLiveTest do
                ~s(#graph-workspace-bar-reader[href="/g/#{graph.slug}?node=#{node_id}"])
              )
     end
+
+    test "renders ephemeral viewer chat and streams submitted messages", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      assert has_element?(view, "#grid-chat-toggle")
+      assert has_element?(view, "#chat-drawer")
+      assert has_element?(view, "#grid-chat-form")
+
+      view
+      |> element("#grid-chat-form")
+      |> render_submit(%{"grid_chat" => %{"message" => "Hello viewers"}})
+
+      assert has_element?(view, "#grid-chat-messages", "Hello viewers")
+    end
   end
 
   describe "search" do

@@ -551,6 +551,7 @@ hooks.GraphLayout = {
       "highlights-drawer",
       "presentation-drawer",
       "combine-drawer",
+      "chat-drawer",
     ];
   },
   _closeAllPanels() {

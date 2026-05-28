@@ -270,54 +270,17 @@
                 compact
               />
 
-              <div class="flex items-center gap-2">
-                <div
-                  :if={@graph_id && @presence_count > 0}
-                  id="graph-presence-indicator"
-                  class="hidden shrink-0 items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-medium text-slate-600 shadow-sm lg:inline-flex"
-                  title="People currently viewing this graph"
-                >
-                  <span class="inline-flex h-6 items-center gap-1 rounded-full bg-white px-1.5 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
-                    <.icon name="hero-user-group" class="h-3.5 w-3.5 text-slate-400" />
-                    <span class="xl:hidden">{@presence_count}</span>
-                    <span class="hidden xl:inline">
-                      {@presence_count} {if(@presence_count == 1, do: "viewer", else: "viewers")}
-                    </span>
-                  </span>
-                  <span class="hidden h-4 w-px bg-slate-200 xl:block"></span>
-                  <div
-                    id="graph-presence-list"
-                    phx-update="stream"
-                    class="flex max-w-[4.75rem] shrink-0 items-center -space-x-1 xl:max-w-[6.5rem]"
-                  >
-                    <div
-                      :for={{presence_dom_id, presence} <- @streams.presences}
-                      id={presence_dom_id}
-                      class="group relative inline-flex items-center"
-                      title={presence_title(presence)}
-                    >
-                      <span class="inline-flex h-5 w-5 items-center justify-center rounded-full border-2 border-slate-50 bg-gradient-to-br from-indigo-100 via-white to-violet-100 text-[8px] font-bold uppercase tracking-tight text-indigo-700 shadow-sm ring-1 ring-slate-200 xl:h-6 xl:w-6 xl:text-[9px]">
-                        {presence_initials(presence)}
-                      </span>
-                      <span class="pointer-events-none absolute left-1/2 top-[calc(100%+0.45rem)] z-50 hidden max-w-40 -translate-x-1/2 truncate rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-700 shadow-lg group-hover:block">
-                        {presence_title(presence)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <.live_component
-                  module={DialecticWeb.DocumentMenuComp}
-                  id="document-menu"
-                  graph_id={@graph_id}
-                  graph_struct={@graph_struct}
-                  node={@node}
-                  can_edit={@can_edit}
-                  token={@token}
-                  layout_target="#graph-layout"
-                  compact={true}
-                />
-              </div>
+              <.live_component
+                module={DialecticWeb.DocumentMenuComp}
+                id="document-menu"
+                graph_id={@graph_id}
+                graph_struct={@graph_struct}
+                node={@node}
+                can_edit={@can_edit}
+                token={@token}
+                layout_target="#graph-layout"
+                compact={true}
+              />
             </div>
           </div>
         </div>
@@ -342,6 +305,8 @@
         tabindex="0"
       >
         <%= if @presentation_mode != :presenting do %>
+          <.grid_chat_toggle graph_id={@graph_id} presence_count={@presence_count} />
+
           <div class="pointer-events-none absolute right-4 top-4 z-20 flex flex-col items-end gap-2">
             <div class="pointer-events-auto inline-flex items-center gap-3 rounded-full border border-slate-200/90 bg-white/95 px-3 py-2 text-xs font-semibold text-slate-700 shadow-[0_18px_30px_-24px_rgba(15,23,42,0.55)] ring-1 ring-white/80 backdrop-blur">
               <span class="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
@@ -548,6 +513,12 @@
           selected_nodes={@combine_selected_nodes}
         />
       </div>
+
+      <.grid_chat_drawer
+        presences={@streams.presences}
+        messages={@streams.chat_messages}
+        chat_form={@chat_form}
+      />
 
       <div
         id="right-panel"
