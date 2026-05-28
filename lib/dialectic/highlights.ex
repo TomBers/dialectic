@@ -63,6 +63,7 @@ defmodule Dialectic.Highlights do
     |> where([_ch, _h, g], g.is_published == true)
     |> where([_ch, _h, g], g.is_public == true)
     |> where([_ch, _h, g], g.is_deleted == false or is_nil(g.is_deleted))
+    |> where([_ch, _h, g], not is_nil(g.slug) and g.slug != "")
     |> where([_ch, h], not is_nil(h.selected_text_snapshot))
     |> where(
       [_ch, h],
@@ -79,8 +80,7 @@ defmodule Dialectic.Highlights do
       curated_highlight: ch,
       highlight: h,
       graph: g,
-      author_name: author.username,
-      note: ch.note
+      author_name: author.username
     })
     |> Repo.all()
   end
@@ -95,6 +95,7 @@ defmodule Dialectic.Highlights do
     |> where([h, g], g.is_published == true)
     |> where([h, g], g.is_public == true)
     |> where([h, g], g.is_deleted == false or is_nil(g.is_deleted))
+    |> where([h, g], not is_nil(g.slug) and g.slug != "")
     |> where([h], not is_nil(h.selected_text_snapshot))
     |> where(
       [h],
@@ -130,11 +131,20 @@ defmodule Dialectic.Highlights do
     )
   end
 
-  def remove_curated_quote_highlight(highlight_id) do
+  def remove_curated_quote_highlight(highlight_id) when is_integer(highlight_id) do
     CuratedHighlight
     |> where([ch], ch.highlight_id == ^highlight_id)
     |> Repo.delete_all()
   end
+
+  def remove_curated_quote_highlight(highlight_id) when is_binary(highlight_id) do
+    case Integer.parse(highlight_id) do
+      {id, ""} -> remove_curated_quote_highlight(id)
+      _ -> {0, nil}
+    end
+  end
+
+  def remove_curated_quote_highlight(_highlight_id), do: {0, nil}
 
   @doc """
   Returns the list of highlights matching the given criteria.

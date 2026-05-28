@@ -363,12 +363,6 @@ defmodule DialecticWeb.HomeLive do
                       “{quote_text(@quote_of_day)}”
                     </blockquote>
 
-                    <%= if quote_note(@quote_of_day) != "" do %>
-                      <p class="rounded-2xl border border-indigo-100 bg-indigo-50/70 px-3 py-2 text-sm leading-6 text-indigo-950">
-                        {quote_note(@quote_of_day)}
-                      </p>
-                    <% end %>
-
                     <div class="flex flex-col gap-3 border-t border-slate-200 pt-3 sm:flex-row sm:items-end sm:justify-between">
                       <div class="min-w-0">
                         <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
@@ -965,12 +959,6 @@ defmodule DialecticWeb.HomeLive do
     (highlight.selected_text_snapshot || "")
     |> String.trim()
     |> trim_text(360)
-  end
-
-  defp quote_note(%{highlight: highlight}) do
-    (highlight.note || "")
-    |> String.trim()
-    |> trim_text(160)
   end
 
   defp graph_node_count(graph) do

@@ -118,6 +118,7 @@ defmodule Dialectic.Highlights.HighlightTest do
       graph =
         Repo.insert!(%Graph{
           title: "quote-graph-#{unique}",
+          slug: "quote-graph-#{unique}",
           data: %{"nodes" => []},
           is_public: true,
           is_published: true,
@@ -128,6 +129,7 @@ defmodule Dialectic.Highlights.HighlightTest do
       ineligible_graph =
         Repo.insert!(%Graph{
           title: "private-quote-graph-#{unique}",
+          slug: "private-quote-graph-#{unique}",
           data: %{"nodes" => []},
           is_public: false,
           is_published: true,
@@ -192,6 +194,132 @@ defmodule Dialectic.Highlights.HighlightTest do
       assert highlight_id != private_highlight.id
       assert graph_title == graph.title
       assert author_name == user.username
+    end
+
+    test "candidate search enforces display length and graph slug requirements" do
+      unique = System.unique_integer([:positive])
+      needle = "quote-candidate-#{unique}"
+
+      user =
+        Repo.insert!(%User{
+          email: "candidate-#{unique}@example.com",
+          hashed_password: "hashed",
+          username: "candidate-author-#{unique}"
+        })
+
+      graph =
+        Repo.insert!(%Graph{
+          title: "candidate-graph-#{unique}",
+          slug: "candidate-graph-#{unique}",
+          data: %{"nodes" => []},
+          is_public: true,
+          is_published: true,
+          is_deleted: false,
+          user_id: user.id
+        })
+
+      graph_without_slug =
+        Repo.insert!(%Graph{
+          title: "candidate-no-slug-#{unique}",
+          data: %{"nodes" => []},
+          is_public: true,
+          is_published: true,
+          is_deleted: false,
+          user_id: user.id
+        })
+
+      eligible =
+        insert_highlight!(
+          user,
+          graph,
+          "#{needle} is an eligible highlighted passage with enough detail to be displayed."
+        )
+
+      short = insert_highlight!(user, graph, "#{needle} too short")
+
+      long =
+        insert_highlight!(
+          user,
+          graph,
+          "#{needle} " <> String.duplicate("long highlighted text ", 25)
+        )
+
+      no_slug =
+        insert_highlight!(
+          user,
+          graph_without_slug,
+          "#{needle} has enough detail but belongs to a graph without a slug."
+        )
+
+      result_ids =
+        needle
+        |> Highlights.list_quote_highlight_candidates()
+        |> Enum.map(& &1.highlight.id)
+
+      assert eligible.id in result_ids
+      refute short.id in result_ids
+      refute long.id in result_ids
+      refute no_slug.id in result_ids
+    end
+
+    test "curated quote highlight upsert and remove keep the pool manageable" do
+      unique = System.unique_integer([:positive])
+
+      user =
+        Repo.insert!(%User{
+          email: "quote-pool-#{unique}@example.com",
+          hashed_password: "hashed",
+          username: "quote-pool-author-#{unique}"
+        })
+
+      graph =
+        Repo.insert!(%Graph{
+          title: "quote-pool-graph-#{unique}",
+          slug: "quote-pool-graph-#{unique}",
+          data: %{"nodes" => []},
+          is_public: true,
+          is_published: true,
+          is_deleted: false,
+          user_id: user.id
+        })
+
+      highlight =
+        insert_highlight!(
+          user,
+          graph,
+          "This curated pool highlight is long enough to be selected for the homepage quote."
+        )
+
+      assert {:ok, _} =
+               Highlights.add_curated_quote_highlight(%{
+                 highlight_id: highlight.id,
+                 curator_id: user.id,
+                 note: "first",
+                 position: 2
+               })
+
+      assert {:ok, _} =
+               Highlights.add_curated_quote_highlight(%{
+                 highlight_id: highlight.id,
+                 curator_id: user.id,
+                 note: "second",
+                 position: 1
+               })
+
+      curated = Repo.get_by!(CuratedHighlight, highlight_id: highlight.id)
+      assert curated.note == "second"
+      assert curated.position == 1
+
+      matching_curated_highlights =
+        CuratedHighlight
+        |> Repo.all()
+        |> Enum.filter(&(&1.highlight_id == highlight.id))
+
+      assert length(matching_curated_highlights) == 1
+
+      assert {1, _} = Highlights.remove_curated_quote_highlight(highlight.id)
+      refute Repo.get_by(CuratedHighlight, highlight_id: highlight.id)
+      assert {0, nil} = Highlights.remove_curated_quote_highlight("not-an-id")
     end
   end
 

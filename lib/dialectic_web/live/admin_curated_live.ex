@@ -66,15 +66,19 @@ defmodule DialecticWeb.AdminCuratedLive do
   def handle_event("add_quote_highlight", %{"highlight_id" => highlight_id}, socket) do
     current_user = socket.assigns.current_user
 
-    case Highlights.add_curated_quote_highlight(%{
-           highlight_id: highlight_id,
-           curator_id: current_user.id
-         }) do
-      {:ok, _} ->
-        {:noreply,
-         socket
-         |> put_flash(:info, "Added highlight to quote pool.")
-         |> reload_quote_highlights()}
+    with {:ok, highlight_id} <- parse_highlight_id(highlight_id),
+         {:ok, _} <-
+           Highlights.add_curated_quote_highlight(%{
+             highlight_id: highlight_id,
+             curator_id: current_user.id
+           }) do
+      {:noreply,
+       socket
+       |> put_flash(:info, "Added highlight to quote pool.")
+       |> reload_quote_highlights()}
+    else
+      :error ->
+        {:noreply, put_flash(socket, :error, "Invalid highlight id.")}
 
       {:error, _changeset} ->
         {:noreply, put_flash(socket, :error, "Failed to add highlight to quote pool.")}
@@ -83,12 +87,18 @@ defmodule DialecticWeb.AdminCuratedLive do
 
   @impl true
   def handle_event("remove_quote_highlight", %{"highlight_id" => highlight_id}, socket) do
-    Highlights.remove_curated_quote_highlight(highlight_id)
+    case parse_highlight_id(highlight_id) do
+      {:ok, highlight_id} ->
+        Highlights.remove_curated_quote_highlight(highlight_id)
 
-    {:noreply,
-     socket
-     |> put_flash(:info, "Removed highlight from quote pool.")
-     |> reload_quote_highlights()}
+        {:noreply,
+         socket
+         |> put_flash(:info, "Removed highlight from quote pool.")
+         |> reload_quote_highlights()}
+
+      :error ->
+        {:noreply, put_flash(socket, :error, "Invalid highlight id.")}
+    end
   end
 
   @impl true
@@ -182,6 +192,17 @@ defmodule DialecticWeb.AdminCuratedLive do
   defp load_section(section) do
     Graphs.list_curated_grids(section, 20)
   end
+
+  defp parse_highlight_id(highlight_id) when is_integer(highlight_id), do: {:ok, highlight_id}
+
+  defp parse_highlight_id(highlight_id) when is_binary(highlight_id) do
+    case Integer.parse(highlight_id) do
+      {id, ""} -> {:ok, id}
+      _ -> :error
+    end
+  end
+
+  defp parse_highlight_id(_highlight_id), do: :error
 
   defp reload_quote_highlights(socket) do
     term = socket.assigns.quote_search_term

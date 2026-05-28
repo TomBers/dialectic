@@ -90,6 +90,24 @@ defmodule DialecticWeb.AdminCuratedLiveTest do
     end
   end
 
+  describe "quote highlight curation" do
+    setup %{conn: conn} do
+      admin = user_fixture() |> make_admin()
+      conn = log_in_user(conn, admin)
+      %{conn: conn, admin: admin}
+    end
+
+    test "invalid highlight ids are rejected without crashing", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/admin/curated")
+
+      html = render_click(view, "add_quote_highlight", %{"highlight_id" => "not-an-id"})
+      assert html =~ "Invalid highlight id"
+
+      html = render_click(view, "remove_quote_highlight", %{"highlight_id" => "not-an-id"})
+      assert html =~ "Invalid highlight id"
+    end
+  end
+
   describe "add and remove curated entries" do
     setup %{conn: conn} do
       admin = user_fixture() |> make_admin()
