@@ -260,6 +260,7 @@ hooks.GraphLayout = {
     this._applyReadingDensity(this.readingDensity);
     this._applyReadingFont(this.readingFont);
     this._closeAllPanels();
+    this._syncOutlineDetailForPanel(null);
     window.addEventListener("resize", this._handleMobileGraphResize);
 
     this.el.addEventListener("set-reading-density", (e) => {
@@ -366,6 +367,7 @@ hooks.GraphLayout = {
         });
 
         if (bottomMenu) bottomMenu.classList.add("panel-open");
+        this._syncOutlineDetailForPanel(id);
 
         const btn = document.querySelector(`[data-panel-toggle="${id}"]`);
         if (btn) {
@@ -384,6 +386,7 @@ hooks.GraphLayout = {
         });
 
         if (bottomMenu) bottomMenu.classList.remove("panel-open");
+        this._syncOutlineDetailForPanel(null);
       }
 
       const shouldRestoreSideDrawer =
@@ -570,8 +573,19 @@ hooks.GraphLayout = {
 
     const bottomMenu = document.getElementById("bottom-menu");
     if (bottomMenu) bottomMenu.classList.remove("panel-open");
+    this._syncOutlineDetailForPanel(null);
 
     this.activePanelId = null;
+  },
+  _syncOutlineDetailForPanel(activePanelId) {
+    const outlineDetail = document.getElementById("outline-detail");
+    if (!outlineDetail) return;
+
+    const reserveDrawerSpace =
+      activePanelId === "highlights-drawer" &&
+      window.matchMedia("(min-width: 1024px)").matches;
+
+    outlineDetail.classList.toggle("lg:pr-96", reserveDrawerSpace);
   },
   _applySideDrawerState(shouldOpen, { dispatchResize = true } = {}) {
     const drawer = document.getElementById("side-drawer");
@@ -763,6 +777,9 @@ hooks.GraphLayout = {
       this._closeAllPanels();
       return;
     }
+
+    this._syncOutlineDetailForPanel(this.activePanelId);
+
     const panel = document.getElementById(this.activePanelId);
     if (!panel) return;
 

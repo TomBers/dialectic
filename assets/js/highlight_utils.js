@@ -168,12 +168,17 @@ const HighlightUtils = {
       span.className = "highlight-span";
       span.dataset.highlightId = highlight.id;
 
-      // Add styling for highlights with links
+      // Add styling and a default navigation target for highlights with links.
+      // Individual link icons still navigate to their specific linked nodes.
       if (highlight.links && highlight.links.length > 0) {
-        span.classList.add("has-linked-nodes");
-        span.style.backgroundColor = "#fef3c7";
-        span.style.borderBottom = "2px solid #f59e0b";
-        span.style.padding = "0 2px";
+        const firstLink = highlight.links[0];
+        span.classList.add("has-linked-node");
+        span.dataset.linkedNodeId = firstLink.node_id;
+        span.dataset.linkType = firstLink.link_type;
+        span.title =
+          highlight.links.length === 1
+            ? `Linked to ${this.getLinkLabel(firstLink.link_type)}`
+            : `${highlight.links.length} linked nodes`;
       }
 
       try {

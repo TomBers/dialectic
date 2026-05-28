@@ -151,9 +151,11 @@ defmodule DialecticWeb.OutlineGraphLive do
   end
 
   @impl true
-  def handle_event("highlight_clicked", %{"id" => highlight_id, "node-id" => node_id}, socket) do
+  def handle_event("highlight_clicked", %{"id" => highlight_id} = params, socket) do
+    node_id = params["node-id"] || params["node_id"]
+
     socket =
-      if MapSet.member?(socket.assigns.displayed_node_ids, node_id) do
+      if is_binary(node_id) and MapSet.member?(socket.assigns.displayed_node_ids, node_id) do
         push_event(socket, "scroll_to_highlight", %{id: highlight_id})
       else
         push_patch(socket, to: highlight_path(socket, node_id, highlight_id))
