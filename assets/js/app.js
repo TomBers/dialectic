@@ -213,6 +213,7 @@ hooks.GraphLayout = {
     this.activePanelId = null;
     this._reopenSideDrawerAfterPresentation = false;
     this._reopenSideDrawerAfterCombine = false;
+    this._mobileOutlineCloseTimer = null;
     this._handleMobileGraphResize = () => {
       this._redirectMobileGraphToReader();
       this._syncOutlineDetailForPanel(this.activePanelId);
@@ -697,6 +698,11 @@ hooks.GraphLayout = {
     this.restoreState();
   },
   destroyed() {
+    if (this._mobileOutlineCloseTimer) {
+      clearTimeout(this._mobileOutlineCloseTimer);
+      this._mobileOutlineCloseTimer = null;
+    }
+
     if (this._handleMobileGraphResize) {
       window.removeEventListener("resize", this._handleMobileGraphResize);
     }
@@ -720,7 +726,27 @@ hooks.GraphLayout = {
 
     if (!panel || !button) return;
 
-    panel.classList.toggle("hidden", !shouldOpen);
+    if (this._mobileOutlineCloseTimer) {
+      clearTimeout(this._mobileOutlineCloseTimer);
+      this._mobileOutlineCloseTimer = null;
+    }
+
+    if (shouldOpen) {
+      panel.classList.remove("hidden", "pointer-events-none", "opacity-0", "translate-x-8");
+
+      requestAnimationFrame(() => {
+        panel.classList.remove("opacity-0", "translate-x-8");
+        panel.classList.add("opacity-100", "translate-x-0");
+      });
+    } else {
+      panel.classList.remove("opacity-100", "translate-x-0");
+      panel.classList.add("opacity-0", "translate-x-8", "pointer-events-none");
+
+      this._mobileOutlineCloseTimer = setTimeout(() => {
+        panel.classList.add("hidden");
+        this._mobileOutlineCloseTimer = null;
+      }, 500);
+    }
 
     button.setAttribute("aria-expanded", String(shouldOpen));
 
