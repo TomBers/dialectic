@@ -304,7 +304,7 @@ defmodule DialecticWeb.HomeLive do
             class="w-full bg-gradient-to-br from-[#2b0a78] via-[#3a0ca3] to-[#4361ee] px-4 py-4 text-white shadow-xl sm:px-6 sm:py-5"
           >
             <div class="mx-auto grid w-full max-w-7xl grid-cols-1 gap-3 lg:grid-cols-12">
-              <div class="rounded-[1.75rem] border border-white/15 bg-white/10 p-4 shadow-sm ring-1 ring-white/10 sm:p-5 lg:col-span-5">
+              <div class="rounded-[1.75rem] border border-white/15 bg-white/10 p-4 shadow-sm ring-1 ring-white/10 sm:p-5 lg:col-span-6">
                 <div class="flex flex-wrap items-center justify-between gap-3">
                   <h1 class="flex items-center gap-3 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
                     <img
@@ -319,10 +319,10 @@ defmodule DialecticWeb.HomeLive do
 
                 <div class="mt-4 space-y-3">
                   <p class="text-xs font-semibold uppercase tracking-[0.22em] text-indigo-100/80">
-                    Read ideas as maps, not walls of text
+                    Read ideas as grids, not walls of text
                   </p>
                   <h2 class="text-2xl font-semibold leading-tight tracking-tight text-white sm:text-4xl">
-                    Explore the questions, tensions, and evidence behind big ideas.
+                    Explore big ideas that do not fit in a chat box.
                   </h2>
                   <p class="max-w-2xl text-sm leading-6 text-indigo-50/90 sm:text-base">
                     Grids turn a topic into paths you can follow: claims, counterpoints,
@@ -348,7 +348,7 @@ defmodule DialecticWeb.HomeLive do
 
               <div
                 id="quote-of-the-day"
-                class="rounded-[1.75rem] border border-white/20 bg-white/95 p-4 text-slate-950 shadow-[0_18px_42px_rgba(15,23,42,0.18)] ring-1 ring-white/40 sm:p-5 lg:col-span-7"
+                class="rounded-[1.75rem] border border-white/20 bg-white/95 p-4 text-slate-950 shadow-[0_18px_42px_rgba(15,23,42,0.18)] ring-1 ring-white/40 sm:p-5 lg:col-span-6"
               >
                 <div class="space-y-3">
                   <div class="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-indigo-700 ring-1 ring-indigo-100">
