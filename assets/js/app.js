@@ -215,6 +215,7 @@ hooks.GraphLayout = {
     this._reopenSideDrawerAfterCombine = false;
     this._handleMobileGraphResize = () => {
       this._redirectMobileGraphToReader();
+      this._syncOutlineDetailForPanel(this.activePanelId);
     };
     const graphId = this.el.dataset.graphId || "global";
     const validReadingDensities = ["compact", "comfortable", "large"];

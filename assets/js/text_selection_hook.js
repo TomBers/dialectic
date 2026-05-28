@@ -156,12 +156,14 @@ const textSelectionHook = {
 
     if (
       !pendingRequest ||
+      pendingRequest.mudgId !== this.mudgId ||
       pendingRequest.id !== highlightId ||
       (pendingRequest.status === "handled" &&
         now - (pendingRequest.completedAt || 0) > 250)
     ) {
       window.__pendingHighlightScrollRequest = {
         id: highlightId,
+        mudgId: this.mudgId,
         status: "requested",
         completedAt: null,
       };
@@ -172,6 +174,16 @@ const textSelectionHook = {
 
   retryPendingHighlightScroll(attempts = 0) {
     const pendingRequest = window.__pendingHighlightScrollRequest;
+
+    if (
+      pendingRequest?.mudgId &&
+      this.mudgId &&
+      pendingRequest.mudgId !== this.mudgId
+    ) {
+      window.__pendingHighlightScrollRequest = null;
+      return;
+    }
+
     if (!pendingRequest || pendingRequest.status === "handled") return;
 
     if (this.highlightScrollRetryTimer) {
