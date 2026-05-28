@@ -6,9 +6,13 @@ defmodule Dialectic.Highlights do
   import Ecto.Query, warn: false
   alias Dialectic.Repo
 
+  alias Dialectic.Accounts.{Graph, User}
   alias Dialectic.Highlights.Highlight
 
   @topic_prefix "highlights"
+  @quote_pool_limit 80
+  @quote_min_length 48
+  @quote_max_length 360
 
   def subscribe(mudg_id) do
     Phoenix.PubSub.subscribe(Dialectic.PubSub, "#{@topic_prefix}:#{mudg_id}")
@@ -37,6 +41,37 @@ defmodule Dialectic.Highlights do
   """
   def list_highlights do
     Repo.all(Highlight)
+  end
+
+  def quote_of_the_day(date \\ Date.utc_today()) do
+    Highlight
+    |> join(:inner, [h], g in Graph, on: h.mudg_id == g.title)
+    |> join(:left, [_h, g], author in User, on: author.id == g.user_id)
+    |> where([h, g], g.is_published == true)
+    |> where([h, g], g.is_public == true)
+    |> where([h, g], g.is_deleted == false or is_nil(g.is_deleted))
+    |> where([h], not is_nil(h.selected_text_snapshot))
+    |> where(
+      [h],
+      fragment(
+        "char_length(btrim(?)) BETWEEN ? AND ?",
+        h.selected_text_snapshot,
+        ^@quote_min_length,
+        ^@quote_max_length
+      )
+    )
+    |> order_by([h], desc: h.inserted_at)
+    |> limit(^@quote_pool_limit)
+    |> select([h, g, author], %{highlight: h, graph: g, author_name: author.username})
+    |> Repo.all()
+    |> Enum.sort_by(fn %{highlight: highlight} ->
+      :erlang.phash2({
+        Date.to_iso8601(date),
+        highlight.id,
+        highlight.selected_text_snapshot
+      })
+    end)
+    |> List.first()
   end
 
   @doc """
