@@ -85,7 +85,8 @@ defmodule DialecticWeb.AdminCuratedLiveTest do
       conn = log_in_user(conn, user)
 
       {:ok, _view, html} = live(conn, ~p"/admin/curated")
-      assert html =~ "Manage Curated Grids"
+      assert html =~ "Manage Homepage Curation"
+      assert html =~ "Quote of the Day Pool"
     end
   end
 

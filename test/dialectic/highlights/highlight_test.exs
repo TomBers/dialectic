@@ -5,6 +5,7 @@ defmodule Dialectic.Highlights.HighlightTest do
   alias Dialectic.Repo
   alias Dialectic.Accounts.Graph
   alias Dialectic.Accounts.User
+  alias Dialectic.Highlights.CuratedHighlight
 
   describe "changeset/2" do
     test "valid changeset with all required fields" do
@@ -104,7 +105,7 @@ defmodule Dialectic.Highlights.HighlightTest do
   end
 
   describe "quote_of_the_day/1" do
-    test "returns a deterministic quote from eligible public graphs" do
+    test "returns a deterministic quote from the curator-selected highlight pool" do
       unique = System.unique_integer([:positive])
 
       user =
@@ -148,11 +149,25 @@ defmodule Dialectic.Highlights.HighlightTest do
           )
         ]
 
-      insert_highlight!(
-        user,
-        ineligible_graph,
-        "This private graph highlight is long enough but should never be selected."
-      )
+      Enum.each(highlights, fn highlight ->
+        Repo.insert!(%CuratedHighlight{highlight_id: highlight.id, curator_id: user.id})
+      end)
+
+      uncurated_highlight =
+        insert_highlight!(
+          user,
+          graph,
+          "This public graph highlight is long enough but should not be selected without curation."
+        )
+
+      private_highlight =
+        insert_highlight!(
+          user,
+          ineligible_graph,
+          "This private graph highlight is long enough but should never be selected."
+        )
+
+      Repo.insert!(%CuratedHighlight{highlight_id: private_highlight.id, curator_id: user.id})
 
       date = ~D[2026-05-28]
 
@@ -173,6 +188,8 @@ defmodule Dialectic.Highlights.HighlightTest do
              } = Highlights.quote_of_the_day(date)
 
       assert highlight_id == expected.id
+      assert highlight_id != uncurated_highlight.id
+      assert highlight_id != private_highlight.id
       assert graph_title == graph.title
       assert author_name == user.username
     end

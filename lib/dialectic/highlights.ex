@@ -7,7 +7,7 @@ defmodule Dialectic.Highlights do
   alias Dialectic.Repo
 
   alias Dialectic.Accounts.{Graph, User}
-  alias Dialectic.Highlights.Highlight
+  alias Dialectic.Highlights.{CuratedHighlight, Highlight}
 
   @topic_prefix "highlights"
   @quote_pool_limit 80
@@ -44,9 +44,54 @@ defmodule Dialectic.Highlights do
   end
 
   def quote_of_the_day(date \\ Date.utc_today()) do
+    list_curated_quote_highlights(@quote_pool_limit)
+    |> Enum.sort_by(fn %{highlight: highlight} ->
+      :erlang.phash2({
+        Date.to_iso8601(date),
+        highlight.id,
+        highlight.selected_text_snapshot
+      })
+    end)
+    |> List.first()
+  end
+
+  def list_curated_quote_highlights(limit \\ 20) do
+    CuratedHighlight
+    |> join(:inner, [ch], h in Highlight, on: ch.highlight_id == h.id)
+    |> join(:inner, [_ch, h], g in Graph, on: h.mudg_id == g.title)
+    |> join(:left, [_ch, _h, g], author in User, on: author.id == g.user_id)
+    |> where([_ch, _h, g], g.is_published == true)
+    |> where([_ch, _h, g], g.is_public == true)
+    |> where([_ch, _h, g], g.is_deleted == false or is_nil(g.is_deleted))
+    |> where([_ch, h], not is_nil(h.selected_text_snapshot))
+    |> where(
+      [_ch, h],
+      fragment(
+        "char_length(btrim(?)) BETWEEN ? AND ?",
+        h.selected_text_snapshot,
+        ^@quote_min_length,
+        ^@quote_max_length
+      )
+    )
+    |> order_by([ch, h], asc: ch.position, desc: h.inserted_at)
+    |> limit(^limit)
+    |> select([ch, h, g, author], %{
+      curated_highlight: ch,
+      highlight: h,
+      graph: g,
+      author_name: author.username,
+      note: ch.note
+    })
+    |> Repo.all()
+  end
+
+  def list_quote_highlight_candidates(search_term, limit \\ 30) do
+    search_pattern = "%#{String.trim(search_term)}%"
+
     Highlight
     |> join(:inner, [h], g in Graph, on: h.mudg_id == g.title)
     |> join(:left, [_h, g], author in User, on: author.id == g.user_id)
+    |> join(:left, [h, _g, _author], ch in CuratedHighlight, on: ch.highlight_id == h.id)
     |> where([h, g], g.is_published == true)
     |> where([h, g], g.is_public == true)
     |> where([h, g], g.is_deleted == false or is_nil(g.is_deleted))
@@ -60,18 +105,35 @@ defmodule Dialectic.Highlights do
         ^@quote_max_length
       )
     )
+    |> where(
+      [h, g],
+      ilike(g.title, ^search_pattern) or ilike(h.selected_text_snapshot, ^search_pattern) or
+        ilike(h.note, ^search_pattern)
+    )
     |> order_by([h], desc: h.inserted_at)
-    |> limit(^@quote_pool_limit)
-    |> select([h, g, author], %{highlight: h, graph: g, author_name: author.username})
+    |> limit(^limit)
+    |> select([h, g, author, ch], %{
+      highlight: h,
+      graph: g,
+      author_name: author.username,
+      curated_highlight_id: ch.id
+    })
     |> Repo.all()
-    |> Enum.sort_by(fn %{highlight: highlight} ->
-      :erlang.phash2({
-        Date.to_iso8601(date),
-        highlight.id,
-        highlight.selected_text_snapshot
-      })
-    end)
-    |> List.first()
+  end
+
+  def add_curated_quote_highlight(attrs) do
+    %CuratedHighlight{}
+    |> CuratedHighlight.changeset(attrs)
+    |> Repo.insert(
+      on_conflict: {:replace, [:curator_id, :note, :position, :updated_at]},
+      conflict_target: [:highlight_id]
+    )
+  end
+
+  def remove_curated_quote_highlight(highlight_id) do
+    CuratedHighlight
+    |> where([ch], ch.highlight_id == ^highlight_id)
+    |> Repo.delete_all()
   end
 
   @doc """
