@@ -308,7 +308,7 @@ defmodule DialecticWeb.HomeLive do
                   <span>RationalGrid</span>
                 </h1>
                 <p class="mx-auto max-w-5xl text-base font-semibold leading-snug text-white sm:text-lg">
-                  Expore big ideas that do not fit in a chat box.
+                  Big ideas that do not fit in a chat box.
                   <.link
                     navigate={~p"/about"}
                     class="underline decoration-white/60 underline-offset-4 hover:decoration-white"
@@ -381,11 +381,11 @@ defmodule DialecticWeb.HomeLive do
                             </span>
                           </div>
 
-                          <div class="overflow-hidden rounded-[1.2rem] border border-white/10 bg-slate-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+                          <div class="overflow-hidden border border-white/10 bg-slate-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
                             <img
                               src={~p"/images/guide/grid-workspace.webp"}
                               alt="Preview of the Happiness grid workspace by TomBers44"
-                              class="aspect-[16/9] w-full object-cover object-top transition duration-300 group-hover:scale-[1.015]"
+                              class="aspect-[16/9] w-full object-contain object-center transition duration-300 group-hover:scale-[1.015]"
                               loading="lazy"
                             />
                           </div>
@@ -697,13 +697,13 @@ defmodule DialecticWeb.HomeLive do
                       <%= for {g, _count, author_username} <- @graphs do %>
                         <article
                           id={graph_dom_id(g, "home-mobile-graph")}
-                          class="rounded-2xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-indigo-50/60 p-4 shadow-sm ring-1 ring-slate-200/70"
+                          class="rounded-[1.35rem] border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-indigo-50/60 p-3.5 shadow-sm ring-1 ring-slate-200/70 sm:rounded-2xl sm:p-4"
                         >
-                          <div class="flex items-start gap-3">
+                          <div class="flex flex-col gap-3 sm:flex-row sm:items-start">
                             <div class="min-w-0 flex-1">
                               <.link
                                 navigate={graph_path(g)}
-                                class="block text-base font-semibold leading-6 text-slate-900 transition hover:text-indigo-700"
+                                class="block text-[0.98rem] font-semibold leading-6 text-slate-900 transition hover:text-indigo-700 sm:text-base"
                               >
                                 {g.title}
                               </.link>
@@ -720,7 +720,7 @@ defmodule DialecticWeb.HomeLive do
 
                             <.link
                               navigate={graph_path(g)}
-                              class="inline-flex h-10 shrink-0 items-center gap-2 rounded-full bg-gradient-to-br from-indigo-500 to-sky-500 px-3 text-sm font-medium text-white shadow-sm ring-1 ring-indigo-500/30 transition-transform hover:scale-[1.02] hover:shadow-md"
+                              class="inline-flex h-10 w-full shrink-0 items-center justify-center gap-2 rounded-full bg-gradient-to-br from-indigo-500 to-sky-500 px-3 text-sm font-medium text-white shadow-sm ring-1 ring-indigo-500/30 transition-transform hover:scale-[1.02] hover:shadow-md sm:w-auto"
                               aria-label={"Open " <> (g.title || "idea")}
                             >
                               <.icon name="hero-magnifying-glass" class="h-4 w-4" />
@@ -729,10 +729,10 @@ defmodule DialecticWeb.HomeLive do
                           </div>
 
                           <%= if (g.tags || []) != [] do %>
-                            <div class="mt-3 flex flex-wrap gap-1.5">
+                            <div class="mt-2.5 flex flex-wrap gap-1.5">
                               <%= for tag <- Enum.take(g.tags || [], 4) do %>
                                 <span class={[
-                                  "inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-inset",
+                                  "inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-semibold ring-1 ring-inset sm:py-1 sm:text-[11px]",
                                   table_tag_color_class(tag)
                                 ]}>
                                   #{tag}
