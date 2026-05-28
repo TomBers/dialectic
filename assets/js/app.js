@@ -408,6 +408,21 @@ hooks.GraphLayout = {
       window.dispatchEvent(new Event("resize"));
     });
 
+    this.el.addEventListener("close-panel-on-mobile", (e) => {
+      if (!window.matchMedia("(max-width: 639px)").matches) return;
+
+      const { id } = e.detail || {};
+      if (!id) return;
+
+      const targetPanel = document.getElementById(id);
+      if (!targetPanel) return;
+
+      if (targetPanel.classList.contains("translate-x-full")) return;
+
+      this._closeAllPanels();
+      window.dispatchEvent(new Event("resize"));
+    });
+
     this.el.addEventListener("toggle-side-drawer", (e) => {
       const drawer = document.getElementById("side-drawer");
       if (!drawer) return;

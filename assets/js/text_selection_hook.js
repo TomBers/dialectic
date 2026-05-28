@@ -10,6 +10,8 @@ const textSelectionHook = {
       this.retryPendingHighlightScroll.bind(this);
     this.finalizePendingHighlightScroll =
       this.finalizePendingHighlightScroll.bind(this);
+    this.closeHighlightsDrawerOnMobile =
+      this.closeHighlightsDrawerOnMobile.bind(this);
     this.highlightsOnly = this.el.dataset.highlightsOnly === "true";
     this.highlightScrollRetryTimer = null;
 
@@ -224,6 +226,7 @@ const textSelectionHook = {
             status: "handled",
             completedAt: Date.now(),
           };
+          this.closeHighlightsDrawerOnMobile();
           return;
         }
 
@@ -272,6 +275,25 @@ const textSelectionHook = {
     return (
       spanRect.top >= containerRect.top &&
       spanRect.bottom <= containerRect.bottom
+    );
+  },
+
+  closeHighlightsDrawerOnMobile() {
+    if (!window.matchMedia("(max-width: 639px)").matches) return;
+
+    const drawer = document.getElementById("highlights-drawer");
+    if (!drawer || drawer.classList.contains("translate-x-full")) return;
+
+    const layout =
+      document.getElementById("outline-layout") ||
+      document.getElementById("graph-layout");
+
+    if (!layout) return;
+
+    layout.dispatchEvent(
+      new CustomEvent("close-panel-on-mobile", {
+        detail: { id: "highlights-drawer" },
+      }),
     );
   },
 
