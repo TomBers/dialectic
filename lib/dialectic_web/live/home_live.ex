@@ -301,73 +301,44 @@ defmodule DialecticWeb.HomeLive do
 
           <section
             id="start-here"
-            class="w-full bg-gradient-to-br from-[#2b0a78] via-[#3a0ca3] to-[#4361ee] px-4 py-4 text-white shadow-xl sm:px-6 sm:py-5"
+            class="w-full bg-gradient-to-br from-[#2b0a78] via-[#3a0ca3] to-[#4361ee] px-4 py-5 text-white shadow-xl sm:px-6 sm:py-7"
           >
-            <div class="mx-auto grid w-full max-w-7xl grid-cols-1 gap-3 lg:grid-cols-12">
-              <div class="rounded-[1.75rem] border border-white/15 bg-white/10 p-4 shadow-sm ring-1 ring-white/10 sm:p-5 lg:col-span-6">
+            <div class="mx-auto w-full max-w-6xl">
+              <div class="p-5 sm:p-6 lg:p-8">
                 <div class="flex flex-wrap items-center justify-between gap-3">
-                  <h1 class="flex items-center gap-3 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+                  <h1 class="flex items-center gap-3 text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl">
                     <img
                       src={~p"/images/favicon.webp"}
                       alt=""
                       aria-hidden="true"
-                      class="h-10 w-10 rounded-xl shadow-lg"
+                      class="h-10 w-10 rounded-xl shadow-lg sm:h-11 sm:w-11"
                     />
                     <span>RationalGrid</span>
                   </h1>
                 </div>
 
-                <div class="mt-4 space-y-3">
-                  <p class="text-xs font-semibold uppercase tracking-[0.22em] text-indigo-100/80">
-                    Read ideas as grids, not walls of text
-                  </p>
-                  <h2 class="text-2xl font-semibold leading-tight tracking-tight text-white sm:text-4xl">
-                    Explore big ideas that do not fit in a chat box.
-                  </h2>
-                  <p class="max-w-2xl text-sm leading-6 text-indigo-50/90 sm:text-base">
-                    Grids turn a topic into paths you can follow: claims, counterpoints,
-                    sources, and the next question worth asking.
-                  </p>
-                </div>
-
-                <div class="mt-4 flex flex-wrap gap-2">
-                  <.link
-                    navigate={~p"/about"}
-                    class="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-sm font-semibold text-white/90 transition hover:bg-white/15 hover:text-white"
-                  >
-                    About <.icon name="hero-arrow-right" class="h-4 w-4" />
-                  </.link>
-                  <.link
-                    href="#explore"
-                    class="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-white/15"
-                  >
-                    <.icon name="hero-magnifying-glass" class="h-4 w-4" /> Browse grids
-                  </.link>
-                </div>
-              </div>
-
-              <div
-                id="quote-of-the-day"
-                class="rounded-[1.75rem] border border-white/20 bg-white/95 p-4 text-slate-950 shadow-[0_18px_42px_rgba(15,23,42,0.18)] ring-1 ring-white/40 sm:p-5 lg:col-span-6"
-              >
-                <div class="space-y-3">
-                  <div class="flex flex-wrap items-center gap-2">
-                    <div class="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-indigo-700 ring-1 ring-indigo-100">
-                      <.icon name="hero-sparkles" class="h-3.5 w-3.5" /> Quote of the day
-                    </div>
-                    <span class="text-xs font-semibold text-slate-500">Curator selected</span>
+                <div class="mt-5 max-w-4xl space-y-5">
+                  <div class="flex flex-wrap items-end gap-x-3 gap-y-1">
+                    <h2 class="text-2xl font-semibold leading-tight tracking-tight text-white sm:text-4xl">
+                      Big ideas that do not fit in a chat box.
+                    </h2>
+                    <.link
+                      navigate={~p"/about"}
+                      class="mb-1 inline-flex items-center text-sm font-medium text-indigo-100/85 underline decoration-white/25 underline-offset-4 transition hover:text-white"
+                    >
+                      more
+                    </.link>
                   </div>
 
                   <%= if @quote_of_day do %>
-                    <blockquote class="text-xl font-semibold italic leading-snug tracking-tight text-slate-950 sm:text-2xl">
-                      “{quote_text(@quote_of_day)}”
-                    </blockquote>
-
-                    <div class="flex flex-col gap-3 border-t border-slate-200 pt-3 sm:flex-row sm:items-end sm:justify-between">
-                      <div class="min-w-0">
-                        <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                          Opens a grid on
-                        </p>
+                    <div
+                      id="quote-of-the-day"
+                      class="max-w-4xl space-y-3 rounded-[1.4rem] border border-white/10 bg-[#20104f]/55 px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] ring-1 ring-black/10 backdrop-blur-[2px] sm:px-5 sm:py-5"
+                    >
+                      <blockquote class="text-base font-medium italic leading-relaxed text-white/88 sm:text-lg lg:text-xl">
+                        “{quote_text(@quote_of_day)}”
+                      </blockquote>
+                      <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
                         <.link
                           navigate={
                             graph_path(
@@ -376,62 +347,32 @@ defmodule DialecticWeb.HomeLive do
                               highlight: @quote_of_day.highlight.id
                             )
                           }
-                          class="mt-1 block truncate text-base font-semibold text-indigo-800 transition hover:text-indigo-950"
+                          class="inline-flex items-center text-sm font-semibold text-indigo-100 transition hover:text-white"
                         >
                           {@quote_of_day.graph.title}
                         </.link>
-                        <div class="mt-2 flex flex-wrap items-center gap-2">
-                          <%= if author_visible?(@quote_of_day.author_name) do %>
-                            <.link
-                              navigate={author_profile_path(@quote_of_day.author_name)}
-                              class="inline-flex items-center gap-1 text-xs font-medium text-slate-600 transition hover:text-indigo-700"
-                            >
-                              <.icon name="hero-user-circle" class="h-3.5 w-3.5" />
-                              {"@" <> @quote_of_day.author_name}
-                            </.link>
-                          <% end %>
-                          <%= for tag <- Enum.take(@quote_of_day.graph.tags || [], 3) do %>
-                            <span class={[
-                              "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset",
-                              table_tag_color_class(tag)
-                            ]}>
-                              {tag}
-                            </span>
-                          <% end %>
-                          <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600 ring-1 ring-slate-200">
-                            {graph_node_count(@quote_of_day.graph)} nodes
-                          </span>
-                        </div>
+                        <.link
+                          navigate={
+                            graph_path(
+                              @quote_of_day.graph,
+                              @quote_of_day.highlight.node_id,
+                              highlight: @quote_of_day.highlight.id
+                            )
+                          }
+                          class="inline-flex items-center text-sm font-medium text-indigo-200/85 underline decoration-white/20 underline-offset-4 transition hover:text-white"
+                        >
+                          read
+                        </.link>
                       </div>
-
-                      <.link
-                        navigate={
-                          graph_path(
-                            @quote_of_day.graph,
-                            @quote_of_day.highlight.node_id,
-                            highlight: @quote_of_day.highlight.id
-                          )
-                        }
-                        class="inline-flex shrink-0 items-center gap-2 rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
-                      >
-                        Read grid <.icon name="hero-arrow-right" class="h-4 w-4" />
-                      </.link>
                     </div>
                   <% else %>
-                    <div class="space-y-3">
-                      <blockquote class="text-xl font-semibold italic leading-snug tracking-tight text-slate-950 sm:text-2xl">
+                    <div
+                      id="quote-of-the-day"
+                      class="max-w-4xl space-y-3 rounded-[1.4rem] border border-white/10 bg-[#20104f]/55 px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] ring-1 ring-black/10 backdrop-blur-[2px] sm:px-5 sm:py-5"
+                    >
+                      <blockquote class="text-base font-medium italic leading-relaxed text-white/88 sm:text-lg lg:text-xl">
                         “Every grid starts with one sharp question.”
                       </blockquote>
-                      <p class="text-sm leading-6 text-slate-600">
-                        Curator-selected highlights will appear here as the quote pool grows.
-                        For now, jump into the popular grids below and find your own thread.
-                      </p>
-                      <.link
-                        href="#explore"
-                        class="inline-flex items-center gap-2 rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
-                      >
-                        Browse popular grids <.icon name="hero-arrow-right" class="h-4 w-4" />
-                      </.link>
                     </div>
                   <% end %>
                 </div>
@@ -452,7 +393,7 @@ defmodule DialecticWeb.HomeLive do
                     </h2>
                     <p class="mt-2 text-sm leading-6 text-slate-700">
                       Start with a topic, claim, or tension. RationalGrid turns it into a
-                      structured opening map.
+                      structured grid.
                     </p>
                   </div>
 
