@@ -279,11 +279,12 @@ defmodule DialecticWeb.CoreComponents do
       <.input field={@form[:email]} type="email" />
       <.input name="my-input" errors={["oh no!"]} />
   """
+  @default_input_class "mt-2 block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6"
+
   attr :id, :any, default: nil
   attr :name, :any
 
-  attr :class, :string,
-    default: "mt-2 block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6"
+  attr :class, :string, default: @default_input_class
 
   attr :label, :string, default: nil
   attr :value, :any
@@ -363,6 +364,13 @@ defmodule DialecticWeb.CoreComponents do
   end
 
   def input(%{type: "textarea"} = assigns) do
+    textarea_class =
+      if assigns.class == @default_input_class,
+        do: "#{assigns.class} min-h-[6rem]",
+        else: assigns.class
+
+    assigns = assign(assigns, :textarea_class, textarea_class)
+
     ~H"""
     <div>
       <.label for={@id}>{@label}</.label>
@@ -370,7 +378,7 @@ defmodule DialecticWeb.CoreComponents do
         id={@id}
         name={@name}
         class={[
-          "mt-2 block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6 min-h-[6rem]",
+          @textarea_class,
           @errors == [] && "border-zinc-300 focus:border-zinc-400",
           @errors != [] && "border-rose-400 focus:border-rose-400"
         ]}
