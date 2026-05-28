@@ -270,17 +270,51 @@
                 compact
               />
 
-              <.live_component
-                module={DialecticWeb.DocumentMenuComp}
-                id="document-menu"
-                graph_id={@graph_id}
-                graph_struct={@graph_struct}
-                node={@node}
-                can_edit={@can_edit}
-                token={@token}
-                layout_target="#graph-layout"
-                compact={true}
-              />
+              <div class="flex items-center gap-2">
+                <div
+                  :if={@graph_id}
+                  id="graph-presence-indicator"
+                  class="hidden items-center gap-2 rounded-full border border-slate-200 bg-slate-50/90 px-2.5 py-1 text-xs font-medium text-slate-600 shadow-sm md:inline-flex"
+                  title="People currently viewing this graph"
+                >
+                  <span class="hidden text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 xl:inline">
+                    Viewing
+                  </span>
+                  <div id="graph-presence-list" phx-update="stream" class="flex -space-x-1.5">
+                    <div
+                      :for={{presence_dom_id, presence} <- @streams.presences}
+                      id={presence_dom_id}
+                      class="group relative inline-flex items-center"
+                      title={presence_title(presence)}
+                    >
+                      <span class="inline-flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-indigo-100 text-[10px] font-bold uppercase tracking-tight text-indigo-700 shadow-sm ring-1 ring-indigo-200">
+                        {presence_initials(presence)}
+                      </span>
+                      <span
+                        :if={presence_session_count(presence) > 1}
+                        class="absolute -right-1 -top-1 inline-flex h-4 w-4 items-center justify-center rounded-full bg-slate-900 text-[9px] font-bold leading-none text-white ring-2 ring-white"
+                      >
+                        {presence_session_count(presence)}
+                      </span>
+                      <span class="pointer-events-none absolute right-0 top-9 z-50 hidden max-w-40 truncate rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-700 shadow-lg group-hover:block">
+                        {presence_title(presence)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <.live_component
+                  module={DialecticWeb.DocumentMenuComp}
+                  id="document-menu"
+                  graph_id={@graph_id}
+                  graph_struct={@graph_struct}
+                  node={@node}
+                  can_edit={@can_edit}
+                  token={@token}
+                  layout_target="#graph-layout"
+                  compact={true}
+                />
+              </div>
             </div>
           </div>
         </div>

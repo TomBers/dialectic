@@ -1338,10 +1338,10 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_info({DialecticWeb.Presence, {:leave, presence}}, socket) do
-    if presence.metas == [] do
-      {:noreply, stream_delete(socket, :presences, presence)}
-    else
+    if is_connected_to_graph?(presence, socket.assigns.graph_id) do
       {:noreply, stream_insert(socket, :presences, presence)}
+    else
+      {:noreply, stream_delete(socket, :presences, presence)}
     end
   end
 
@@ -1679,9 +1679,66 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  defp is_connected_to_graph?(%{metas: metas}, graph_id) do
-    Enum.any?(metas, fn %{graph_id: gid} -> gid == graph_id end)
+  defp presence_display_name(%User{} = user), do: User.display_name(user)
+  defp presence_display_name(_user), do: "Guest"
+
+  defp presence_label(presence) do
+    presence
+    |> presence_first_meta()
+    |> case do
+      %{display_name: display_name} when is_binary(display_name) and display_name != "" ->
+        display_name
+
+      %{"display_name" => display_name} when is_binary(display_name) and display_name != "" ->
+        display_name
+
+      _ ->
+        "Guest"
+    end
   end
+
+  defp presence_initials(presence) do
+    presence
+    |> presence_label()
+    |> String.split(~r/[\s_-]+/, trim: true)
+    |> Enum.take(2)
+    |> Enum.map(fn part ->
+      part
+      |> String.graphemes()
+      |> List.first("")
+    end)
+    |> Enum.join()
+    |> String.upcase()
+    |> case do
+      "" -> "?"
+      initials -> initials
+    end
+  end
+
+  defp presence_session_count(%{metas: metas}) when is_list(metas), do: length(metas)
+  defp presence_session_count(_presence), do: 1
+
+  defp presence_title(presence) do
+    label = presence_label(presence)
+    session_count = presence_session_count(presence)
+
+    if session_count > 1 do
+      "#{label} (#{session_count} sessions)"
+    else
+      label
+    end
+  end
+
+  defp presence_first_meta(%{metas: [meta | _]}), do: meta
+  defp presence_first_meta(_presence), do: %{}
+
+  defp is_connected_to_graph?(%{metas: metas}, graph_id) do
+    Enum.any?(metas, fn meta ->
+      Map.get(meta, :graph_id) == graph_id or Map.get(meta, "graph_id") == graph_id
+    end)
+  end
+
+  defp is_connected_to_graph?(_presence, _graph_id), do: false
 
   def format_graph(graph) do
     if is_nil(graph) do
@@ -2057,7 +2114,13 @@ defmodule DialecticWeb.GraphLive do
       Phoenix.PubSub.subscribe(Dialectic.PubSub, live_view_topic)
       Phoenix.PubSub.subscribe(Dialectic.PubSub, graph_topic)
       Highlights.subscribe(graph_id)
-      DialecticWeb.Presence.track_user(user, %{id: user, graph_id: graph_id})
+
+      DialecticWeb.Presence.track_user(user, %{
+        id: user,
+        graph_id: graph_id,
+        display_name: presence_display_name(socket.assigns[:current_user])
+      })
+
       DialecticWeb.Presence.subscribe()
 
       presences = DialecticWeb.Presence.list_online_users(graph_id)
