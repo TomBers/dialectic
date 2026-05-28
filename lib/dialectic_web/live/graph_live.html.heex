@@ -249,7 +249,7 @@
       <%= if @presentation_mode != :presenting do %>
         <div class="relative z-20 flex-none border-b border-slate-200/90 bg-white/97 shadow-[0_12px_24px_-26px_rgba(15,23,42,0.22)] backdrop-blur-lg sm:shadow-[0_16px_32px_-30px_rgba(15,23,42,0.28)]">
           <div class="px-4 py-1 sm:px-5 lg:px-6">
-            <div class="flex min-h-[38px] flex-wrap items-center justify-between gap-1.5">
+            <div class="flex min-h-[38px] flex-wrap items-center justify-between gap-1.5 md:flex-nowrap">
               <DialecticWeb.WorkspaceBarComp.workspace_bar
                 id="graph-workspace-bar"
                 mode={:graph}
@@ -272,31 +272,34 @@
 
               <div class="flex items-center gap-2">
                 <div
-                  :if={@graph_id}
+                  :if={@graph_id && @presence_count > 0}
                   id="graph-presence-indicator"
-                  class="hidden items-center gap-2 rounded-full border border-slate-200 bg-slate-50/90 px-2.5 py-1 text-xs font-medium text-slate-600 shadow-sm md:inline-flex"
+                  class="hidden shrink-0 items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-medium text-slate-600 shadow-sm lg:inline-flex"
                   title="People currently viewing this graph"
                 >
-                  <span class="hidden text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 xl:inline">
-                    Viewing
+                  <span class="inline-flex h-6 items-center gap-1 rounded-full bg-white px-1.5 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
+                    <.icon name="hero-user-group" class="h-3.5 w-3.5 text-slate-400" />
+                    <span class="xl:hidden">{@presence_count}</span>
+                    <span class="hidden xl:inline">
+                      {@presence_count} {if(@presence_count == 1, do: "viewer", else: "viewers")}
+                    </span>
                   </span>
-                  <div id="graph-presence-list" phx-update="stream" class="flex -space-x-1.5">
+                  <span class="hidden h-4 w-px bg-slate-200 xl:block"></span>
+                  <div
+                    id="graph-presence-list"
+                    phx-update="stream"
+                    class="flex max-w-[4.75rem] shrink-0 items-center -space-x-1 xl:max-w-[6.5rem]"
+                  >
                     <div
                       :for={{presence_dom_id, presence} <- @streams.presences}
                       id={presence_dom_id}
                       class="group relative inline-flex items-center"
                       title={presence_title(presence)}
                     >
-                      <span class="inline-flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-indigo-100 text-[10px] font-bold uppercase tracking-tight text-indigo-700 shadow-sm ring-1 ring-indigo-200">
+                      <span class="inline-flex h-5 w-5 items-center justify-center rounded-full border-2 border-slate-50 bg-gradient-to-br from-indigo-100 via-white to-violet-100 text-[8px] font-bold uppercase tracking-tight text-indigo-700 shadow-sm ring-1 ring-slate-200 xl:h-6 xl:w-6 xl:text-[9px]">
                         {presence_initials(presence)}
                       </span>
-                      <span
-                        :if={presence_session_count(presence) > 1}
-                        class="absolute -right-1 -top-1 inline-flex h-4 w-4 items-center justify-center rounded-full bg-slate-900 text-[9px] font-bold leading-none text-white ring-2 ring-white"
-                      >
-                        {presence_session_count(presence)}
-                      </span>
-                      <span class="pointer-events-none absolute right-0 top-9 z-50 hidden max-w-40 truncate rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-700 shadow-lg group-hover:block">
+                      <span class="pointer-events-none absolute left-1/2 top-[calc(100%+0.45rem)] z-50 hidden max-w-40 -translate-x-1/2 truncate rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-700 shadow-lg group-hover:block">
                         {presence_title(presence)}
                       </span>
                     </div>

@@ -1331,7 +1331,7 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_info({DialecticWeb.Presence, {:join, presence}}, socket) do
     if is_connected_to_graph?(presence, socket.assigns.graph_id) do
-      {:noreply, stream_insert(socket, :presences, presence)}
+      {:noreply, refresh_graph_presences(socket)}
     else
       {:noreply, socket}
     end
@@ -1339,9 +1339,9 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_info({DialecticWeb.Presence, {:leave, presence}}, socket) do
     if is_connected_to_graph?(presence, socket.assigns.graph_id) do
-      {:noreply, stream_insert(socket, :presences, presence)}
+      {:noreply, refresh_graph_presences(socket)}
     else
-      {:noreply, stream_delete(socket, :presences, presence)}
+      {:noreply, refresh_graph_presences(socket)}
     end
   end
 
@@ -1740,6 +1740,17 @@ defmodule DialecticWeb.GraphLive do
 
   defp is_connected_to_graph?(_presence, _graph_id), do: false
 
+  defp refresh_graph_presences(socket),
+    do: refresh_graph_presences(socket, socket.assigns.graph_id)
+
+  defp refresh_graph_presences(socket, graph_id) do
+    presences = DialecticWeb.Presence.list_online_users(graph_id)
+
+    socket
+    |> stream(:presences, presences, reset: true)
+    |> assign(:presence_count, length(presences))
+  end
+
   def format_graph(graph) do
     if is_nil(graph) do
       # Return empty JSON array if graph is nil
@@ -2123,13 +2134,11 @@ defmodule DialecticWeb.GraphLive do
 
       DialecticWeb.Presence.subscribe()
 
-      presences = DialecticWeb.Presence.list_online_users(graph_id)
-
       # Load highlights asynchronously after connection - doesn't block initial render
       highlights = Highlights.list_highlights_with_links(mudg_id: graph_id)
 
       socket
-      |> stream(:presences, presences)
+      |> refresh_graph_presences(graph_id)
       |> assign(highlights: highlights)
       |> push_event("highlights_loaded", %{
         highlights: serialize_highlights(highlights)
@@ -2140,7 +2149,7 @@ defmodule DialecticWeb.GraphLive do
 
       socket
       |> stream(:presences, [])
-      |> assign(highlights: highlights)
+      |> assign(highlights: highlights, presence_count: 0)
     end
   end
 
