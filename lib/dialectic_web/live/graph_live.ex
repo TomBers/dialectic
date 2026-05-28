@@ -1702,68 +1702,6 @@ defmodule DialecticWeb.GraphLive do
 
   defp grid_chat_topic(graph_id), do: "grid_chat:#{graph_id}"
 
-  defp initial_grid_chat_messages(socket) do
-    if Mix.env() == :dev do
-      sample_grid_chat_messages(socket.assigns[:current_user])
-    else
-      []
-    end
-  end
-
-  defp sample_grid_chat_messages(current_user) do
-    current_author = presence_display_name(current_user)
-    current_author_id = current_user && current_user.id
-
-    [
-      sample_grid_chat_message(
-        "sample-grid-chat-1",
-        "Maya",
-        nil,
-        "Anyone else think the fairness question changes once the seat-holder is actually in the coffee line?",
-        "09:12"
-      ),
-      sample_grid_chat_message(
-        "sample-grid-chat-2",
-        current_author,
-        current_author_id,
-        "Yeah, that reads more like \"hold my spot for two minutes\" than claiming the whole table.",
-        "09:14"
-      ),
-      sample_grid_chat_message(
-        "sample-grid-chat-3",
-        "Guest",
-        nil,
-        "Same. The rough version is when the bag is doing all the social work for someone who is not even nearby.",
-        "09:16"
-      ),
-      sample_grid_chat_message(
-        "sample-grid-chat-4",
-        "Omar",
-        nil,
-        "Visibility matters too.\nA laptop feels occupied; a paper napkin feels like bluffing.",
-        "09:18"
-      ),
-      sample_grid_chat_message(
-        "sample-grid-chat-5",
-        current_author,
-        current_author_id,
-        "Exactly.",
-        "09:19"
-      )
-    ]
-  end
-
-  defp sample_grid_chat_message(id, author, author_id, body, sent_at_label) do
-    %{
-      id: id,
-      author_id: author_id,
-      author: author,
-      author_initials: initials_for_name(author),
-      body: body,
-      sent_at_label: sent_at_label
-    }
-  end
-
   defp build_grid_chat_message(socket, message) do
     author = presence_display_name(socket.assigns[:current_user])
 
@@ -2210,7 +2148,7 @@ defmodule DialecticWeb.GraphLive do
 
       socket
       |> stream(:presences, presences)
-      |> stream(:chat_messages, initial_grid_chat_messages(socket))
+      |> stream(:chat_messages, [])
       |> assign(highlights: highlights, presence_count: length(presences))
       |> push_event("highlights_loaded", %{
         highlights: serialize_highlights(highlights)
@@ -2221,7 +2159,7 @@ defmodule DialecticWeb.GraphLive do
 
       socket
       |> stream(:presences, [])
-      |> stream(:chat_messages, initial_grid_chat_messages(socket))
+      |> stream(:chat_messages, [])
       |> assign(highlights: highlights, presence_count: 0)
     end
   end
