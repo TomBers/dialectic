@@ -78,7 +78,7 @@ defmodule DialecticWeb.NewIdeaFormComp do
         id={@id}
         class="w-full relative"
       >
-        <div class="flex flex-col gap-1.5">
+        <div class="flex flex-col gap-3 sm:gap-1.5">
           <div class="relative min-h-[3.2rem]">
             <textarea
               name={@form[:content].name}
@@ -101,29 +101,33 @@ defmodule DialecticWeb.NewIdeaFormComp do
               autocomplete="off"
               required
             >{@content}</textarea>
-            <div class="absolute right-2 top-2 bottom-2 hidden w-24 items-start justify-center sm:flex">
-              <button
-                type="submit"
-                id="new-idea-submit"
-                phx-disable-with={if @show_level_prompt, do: "Starting...", else: "Next..."}
-                class="inline-flex min-h-[2.35rem] w-full items-center justify-center rounded-full border border-transparent bg-slate-900 px-0 py-1.5 text-sm font-semibold leading-none text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {if @show_level_prompt, do: "Create", else: @submit_label}
-              </button>
-            </div>
+            <%= if !@show_level_prompt do %>
+              <div class="absolute right-2 top-2 bottom-2 hidden w-24 items-start justify-center sm:flex">
+                <button
+                  type="submit"
+                  id="new-idea-submit"
+                  phx-disable-with="Next..."
+                  class="inline-flex min-h-[2.35rem] w-full items-center justify-center rounded-full border border-transparent bg-slate-900 px-0 py-1.5 text-sm font-semibold leading-none text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {@submit_label}
+                </button>
+              </div>
+            <% end %>
           </div>
 
-          <div class="sm:hidden">
-            <button
-              type="submit"
-              id="new-idea-submit-mobile"
-              phx-disable-with={if @show_level_prompt, do: "Starting...", else: "Next..."}
-              class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-transparent bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-transform active:scale-[0.98] hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <.icon name="hero-arrow-right" class="h-4 w-4" />
-              {if @show_level_prompt, do: "Create grid", else: @submit_label}
-            </button>
-          </div>
+          <%= if !@show_level_prompt do %>
+            <div class="sm:hidden">
+              <button
+                type="submit"
+                id="new-idea-submit-mobile"
+                phx-disable-with="Next..."
+                class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-transparent bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-transform active:scale-[0.98] hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <.icon name="hero-arrow-right" class="h-4 w-4" />
+                {@submit_label}
+              </button>
+            </div>
+          <% end %>
 
           <%= if !@show_level_prompt do %>
             <div class="flex flex-col gap-1 px-1 text-xs text-slate-600 sm:flex-row sm:items-center sm:justify-between">
@@ -138,7 +142,7 @@ defmodule DialecticWeb.NewIdeaFormComp do
             id="new-idea-level-step"
             class="mt-3 rounded-2xl border border-indigo-200 bg-indigo-50/80 px-3 py-3 shadow-sm ring-1 ring-indigo-100 animate-fade-in-up"
           >
-            <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div class="space-y-1">
                 <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-800">
                   Step 2 of 2
@@ -154,9 +158,9 @@ defmodule DialecticWeb.NewIdeaFormComp do
                 type="button"
                 phx-click="edit_prompt"
                 phx-target={@myself}
-                class="inline-flex items-center text-xs font-medium text-slate-600 transition hover:text-slate-900"
+                class="inline-flex w-full items-center justify-center rounded-full border border-indigo-200 bg-white/85 px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-indigo-300 hover:bg-white hover:text-slate-900 sm:w-auto sm:justify-start sm:border-transparent sm:bg-transparent sm:px-0 sm:py-0 sm:text-xs sm:shadow-none"
               >
-                Edit prompt
+                <.icon name="hero-pencil-square" class="h-4 w-4 sm:hidden" /> Edit prompt
               </button>
             </div>
 
@@ -181,6 +185,17 @@ defmodule DialecticWeb.NewIdeaFormComp do
                   </button>
                 <% end %>
               </div>
+            </div>
+
+            <div class="mt-3 flex justify-end">
+              <button
+                type="submit"
+                id="new-idea-create-submit"
+                phx-disable-with="Starting..."
+                class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-transparent bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+              >
+                <.icon name="hero-sparkles" class="h-4 w-4" /> Create grid
+              </button>
             </div>
           </div>
         <% end %>
