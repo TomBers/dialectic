@@ -7,6 +7,8 @@
   data-reading-density="comfortable"
   data-reading-font="serif"
 >
+  <.login_required_modal id="reader-login-modal" show={@show_login_modal} />
+
   <div class="flex-none border-b border-slate-200/90 bg-white/97 shadow-[0_12px_24px_-26px_rgba(15,23,42,0.22)] backdrop-blur-lg sm:shadow-[0_16px_32px_-30px_rgba(15,23,42,0.28)]">
     <div class="grid grid-cols-1 lg:grid-cols-[20rem_minmax(0,1fr)] xl:grid-cols-[22rem_minmax(0,1fr)]">
       <div class="hidden border-r border-slate-200 bg-slate-50/70 lg:flex lg:items-center lg:px-4 xl:px-5">
@@ -303,7 +305,7 @@
                       phx-hook="TextSelectionHook"
                       data-node-id={reading_node.id}
                       data-mudg-id={@graph_id}
-                      data-highlights-only="true"
+                      data-highlights-only="false"
                     >
                       <article class="prose prose-slate max-w-none font-serif prose-headings:font-serif prose-headings:tracking-tight prose-p:leading-7 prose-li:leading-7 prose-p:text-slate-800 prose-li:text-slate-700 prose-a:break-words prose-blockquote:border-slate-200 prose-blockquote:text-slate-600 sm:prose-lg sm:prose-p:leading-8 sm:prose-li:leading-8">
                         <div
@@ -610,6 +612,17 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <div phx-hook="SelectionActions" id="reader-selection-actions-hook">
+    <.live_component
+      module={DialecticWeb.SelectionActionsComp}
+      id="selection-actions"
+      current_user={@current_user}
+      graph_id={@graph_id}
+      can_edit={@can_edit}
+      highlight_only
+    />
   </div>
 </div>
 
