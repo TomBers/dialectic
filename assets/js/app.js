@@ -618,7 +618,7 @@ hooks.GraphLayout = {
         "-translate-x-full",
         "opacity-0",
         "w-0",
-        "lg:w-0",
+        "md:w-0",
         "overflow-hidden",
         "p-0",
       );
@@ -627,17 +627,17 @@ hooks.GraphLayout = {
         "opacity-100",
         "w-full",
         "p-4",
-        "lg:w-[var(--desktop-side-drawer-width)]",
-        "lg:p-0",
+        "md:w-[var(--desktop-side-drawer-width)]",
+        "md:p-0",
       );
 
       if (toggleBtn) {
         toggleBtn.classList.remove("left-2");
         toggleBtn.classList.add(
           "right-2",
-          "lg:left-[var(--desktop-side-drawer-width)]",
-          "lg:ml-2",
-          "lg:right-auto",
+          "md:left-[var(--desktop-side-drawer-width)]",
+          "md:ml-2",
+          "md:right-auto",
         );
         const path = toggleBtn.querySelector("path");
         if (path) path.setAttribute("d", "M11 19l-7-7 7-7");
@@ -646,7 +646,7 @@ hooks.GraphLayout = {
       }
 
       bottomElements.forEach((el) => {
-        el.classList.add("lg:left-[var(--desktop-side-drawer-width)]");
+        el.classList.add("md:left-[var(--desktop-side-drawer-width)]");
       });
     } else {
       drawer.classList.remove(
@@ -654,14 +654,14 @@ hooks.GraphLayout = {
         "opacity-100",
         "w-full",
         "p-4",
-        "lg:w-[var(--desktop-side-drawer-width)]",
-        "lg:p-0",
+        "md:w-[var(--desktop-side-drawer-width)]",
+        "md:p-0",
       );
       drawer.classList.add(
         "-translate-x-full",
         "opacity-0",
         "w-0",
-        "lg:w-0",
+        "md:w-0",
         "overflow-hidden",
         "p-0",
       );
@@ -669,9 +669,9 @@ hooks.GraphLayout = {
       if (toggleBtn) {
         toggleBtn.classList.remove(
           "right-2",
-          "lg:left-[var(--desktop-side-drawer-width)]",
-          "lg:ml-2",
-          "lg:right-auto",
+          "md:left-[var(--desktop-side-drawer-width)]",
+          "md:ml-2",
+          "md:right-auto",
         );
         toggleBtn.classList.add("left-2");
         const path = toggleBtn.querySelector("path");
@@ -681,7 +681,7 @@ hooks.GraphLayout = {
       }
 
       bottomElements.forEach((el) => {
-        el.classList.remove("lg:left-[var(--desktop-side-drawer-width)]");
+        el.classList.remove("md:left-[var(--desktop-side-drawer-width)]");
       });
     }
 
@@ -713,7 +713,7 @@ hooks.GraphLayout = {
     const isPresenting = this.el.dataset.presenting === "true";
 
     if (!isGraphLayout || !mobileReaderPath || isPresenting) return;
-    if (!window.matchMedia("(max-width: 639px)").matches) return;
+    if (!window.matchMedia("(max-width: 767px)").matches) return;
 
     const currentPath = `${window.location.pathname}${window.location.search}`;
     if (currentPath === mobileReaderPath) return;
