@@ -13,7 +13,7 @@
     )
   }
   data-graph-id={@graph_id}
-  data-presenting={@presentation_mode == :presenting}
+  data-presenting={if(@presentation_mode == :presenting, do: "true", else: "false")}
   data-reading-density="comfortable"
   data-reading-font="serif"
   data-mobile-reader-path={
@@ -34,7 +34,7 @@
     <div
       id="presentation-exit-bar"
       phx-hook="Presentation"
-      class="absolute top-0 left-0 right-0 z-40 flex items-center justify-between gap-4 px-4 sm:px-5 h-14 bg-white/92 backdrop-blur-md border-b border-slate-200 shadow-sm"
+      class="absolute top-0 left-0 right-0 z-40 flex h-14 min-w-0 items-center justify-between gap-2 px-3 sm:gap-4 sm:px-5 bg-white/92 backdrop-blur-md border-b border-slate-200 shadow-sm"
     >
       <div class="flex items-center gap-2 shrink-0 min-w-0">
         <span class="inline-flex items-center rounded-full border border-slate-700 bg-slate-900/80 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-300">
@@ -47,7 +47,7 @@
         <% end %>
       </div>
 
-      <div class="flex-1 px-4 text-center leading-tight">
+      <div class="min-w-0 flex-1 px-1 text-center leading-tight sm:px-4">
         <h1 class="text-sm sm:text-base font-semibold text-slate-900 truncate">
           {@presentation_title}
         </h1>
@@ -61,17 +61,19 @@
       <div class="flex items-center gap-2 shrink-0">
         <button
           phx-click={JS.push("open_share_modal")}
-          class="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900/80 px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:border-slate-500 hover:text-white"
+          class="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900/80 px-2 py-1.5 text-xs font-medium text-slate-200 transition hover:border-slate-500 hover:text-white sm:px-3"
           title="Share this presentation"
         >
-          <.icon name="hero-link" class="h-3.5 w-3.5" /> Share
+          <.icon name="hero-link" class="h-3.5 w-3.5" />
+          <span class="hidden sm:inline">Share</span>
         </button>
         <button
           phx-click="exit_presentation"
-          class="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900/80 px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:border-slate-500 hover:text-white"
+          class="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900/80 px-2 py-1.5 text-xs font-medium text-slate-200 transition hover:border-slate-500 hover:text-white sm:px-3"
           title="Exit presentation and show all boxes (Esc)"
         >
-          <.icon name="hero-x-mark" class="h-3.5 w-3.5" /> Exit
+          <.icon name="hero-x-mark" class="h-3.5 w-3.5" />
+          <span class="hidden sm:inline">Exit</span>
         </button>
       </div>
     </div>
