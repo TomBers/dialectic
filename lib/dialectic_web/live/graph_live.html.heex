@@ -62,6 +62,7 @@
         <button
           phx-click={JS.push("open_share_modal")}
           class="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900/80 px-2 py-1.5 text-xs font-medium text-slate-200 transition hover:border-slate-500 hover:text-white sm:px-3"
+          aria-label="Share this presentation"
           title="Share this presentation"
         >
           <.icon name="hero-link" class="h-3.5 w-3.5" />
@@ -70,6 +71,7 @@
         <button
           phx-click="exit_presentation"
           class="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900/80 px-2 py-1.5 text-xs font-medium text-slate-200 transition hover:border-slate-500 hover:text-white sm:px-3"
+          aria-label="Exit presentation and show all boxes"
           title="Exit presentation and show all boxes (Esc)"
         >
           <.icon name="hero-x-mark" class="h-3.5 w-3.5" />
