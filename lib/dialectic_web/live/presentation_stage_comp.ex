@@ -25,7 +25,7 @@ defmodule DialecticWeb.PresentationStageComp do
     ~H"""
     <section
       id="presentation-stage"
-      class="w-full shrink-0 border-b border-slate-200/80 bg-slate-950 text-slate-100 lg:h-full lg:w-[34rem] lg:border-b-0 lg:border-r lg:border-slate-800"
+      class="w-full shrink-0 border-b border-slate-200/80 bg-slate-950 text-slate-100 md:h-full md:w-[clamp(20rem,42vw,34rem)] md:border-b-0 md:border-r md:border-slate-800"
     >
       <div class="flex h-full flex-col">
         <div class="border-b border-slate-800 px-5 py-5 sm:px-6">
