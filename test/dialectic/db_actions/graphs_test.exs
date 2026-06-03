@@ -3,6 +3,7 @@ defmodule Dialectic.DbActions.GraphsTest do
 
   alias Dialectic.DbActions.Graphs
   alias Dialectic.Accounts.Graph
+  alias Dialectic.Notifications
   alias Dialectic.Repo
 
   import Dialectic.AccountsFixtures
@@ -77,6 +78,17 @@ defmodule Dialectic.DbActions.GraphsTest do
       title = unique_title("with-user")
       {:ok, graph} = Graphs.create_new_graph(title, user)
       assert graph.user_id == user.id
+    end
+
+    test "records a created event" do
+      user = user_fixture()
+      title = unique_title("created-event")
+      {:ok, graph} = Graphs.create_new_graph(title, user)
+
+      assert [event] = Notifications.list_graph_events(graph)
+      assert event.event_type == "graph.created"
+      assert event.actor_user_id == user.id
+      assert event.metadata["prompt_mode"] == "university"
     end
   end
 

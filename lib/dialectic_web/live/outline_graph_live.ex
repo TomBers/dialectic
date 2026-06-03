@@ -3,6 +3,7 @@ defmodule DialecticWeb.OutlineGraphLive do
 
   alias Dialectic.Graph.GraphActions
   alias Dialectic.Highlights
+  alias Dialectic.Notifications
   alias Dialectic.Linear.ThreadedConv
   alias DialecticWeb.ColUtils
   alias DialecticWeb.GraphHelpers
@@ -200,6 +201,43 @@ defmodule DialecticWeb.OutlineGraphLive do
   end
 
   @impl true
+  def handle_event("follow_graph", _params, socket) do
+    case socket.assigns[:current_user] do
+      nil ->
+        {:noreply, assign(socket, show_login_modal: true)}
+
+      current_user ->
+        case Notifications.follow_graph(current_user, socket.assigns.graph_struct) do
+          {:ok, _follow} ->
+            {:noreply,
+             socket
+             |> assign(:following_graph?, true)
+             |> put_flash(:info, "You are now following this grid.")}
+
+          {:error, _changeset} ->
+            {:noreply,
+             put_flash(socket, :error, "We could not follow this grid. Please try again.")}
+        end
+    end
+  end
+
+  @impl true
+  def handle_event("unfollow_graph", _params, socket) do
+    case socket.assigns[:current_user] do
+      nil ->
+        {:noreply, assign(socket, show_login_modal: true)}
+
+      current_user ->
+        :ok = Notifications.unfollow_graph(current_user, socket.assigns.graph_struct)
+
+        {:noreply,
+         socket
+         |> assign(:following_graph?, false)
+         |> put_flash(:info, "You have unfollowed this grid.")}
+    end
+  end
+
+  @impl true
   def handle_event("open_share_modal", params, socket) do
     share_highlight =
       socket.assigns.graph_struct
@@ -304,6 +342,7 @@ defmodule DialecticWeb.OutlineGraphLive do
     end
 
     outline_nodes = build_outline_nodes(graph_db.title, graph)
+    following_graph? = Notifications.following_graph?(socket.assigns[:current_user], graph_db)
 
     assign(socket,
       graph_id: graph_db.title,
@@ -325,6 +364,7 @@ defmodule DialecticWeb.OutlineGraphLive do
       show_share_modal: false,
       selected_share_highlight: nil,
       show_login_modal: false,
+      following_graph?: following_graph?,
       show_search_overlay: false,
       search_term: "",
       search_results: [],

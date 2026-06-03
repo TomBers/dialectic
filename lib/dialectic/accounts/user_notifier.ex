@@ -8,7 +8,7 @@ defmodule Dialectic.Accounts.UserNotifier do
     email =
       new()
       |> to(recipient)
-      |> from({"RationalGrid", "no-reply@rationalgrid.ai"})
+      |> from(Mailer.default_from())
       |> subject(subject)
       |> text_body(body)
 

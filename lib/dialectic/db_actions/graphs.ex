@@ -1,6 +1,7 @@
 defmodule Dialectic.DbActions.Graphs do
   alias Dialectic.Repo
   alias Dialectic.Accounts.Graph
+  alias Dialectic.Notifications
 
   import Ecto.Query
 
@@ -93,6 +94,14 @@ defmodule Dialectic.DbActions.Graphs do
     case result do
       {:ok, graph} ->
         maybe_tag_graph(graph)
+
+        record_graph_event(graph, %{
+          event_type: "graph.created",
+          actor_user: user,
+          summary: "Grid created",
+          metadata: %{prompt_mode: prompt_mode}
+        })
+
         {:ok, graph}
 
       error ->
@@ -246,9 +255,18 @@ defmodule Dialectic.DbActions.Graphs do
         {:error, :not_found}
 
       graph ->
-        graph
-        |> Graph.changeset(%{is_deleted: true})
-        |> Repo.update()
+        case graph |> Graph.changeset(%{is_deleted: true}) |> Repo.update() do
+          {:ok, updated_graph} ->
+            record_graph_event(updated_graph, %{
+              event_type: "graph.deleted",
+              summary: "Grid hidden from public listings"
+            })
+
+            {:ok, updated_graph}
+
+          error ->
+            error
+        end
     end
   end
 
@@ -263,9 +281,19 @@ defmodule Dialectic.DbActions.Graphs do
         {:error, :not_found}
 
       %Graph{user_id: user_id} = graph when user_id == user.id ->
-        graph
-        |> Graph.changeset(%{is_deleted: true})
-        |> Repo.update()
+        case graph |> Graph.changeset(%{is_deleted: true}) |> Repo.update() do
+          {:ok, updated_graph} ->
+            record_graph_event(updated_graph, %{
+              event_type: "graph.deleted",
+              actor_user: user,
+              summary: "Grid hidden from public listings"
+            })
+
+            {:ok, updated_graph}
+
+          error ->
+            error
+        end
 
       _graph ->
         {:error, :unauthorized}
@@ -281,9 +309,18 @@ defmodule Dialectic.DbActions.Graphs do
         {:error, :not_found}
 
       graph ->
-        graph
-        |> Graph.changeset(%{is_deleted: false})
-        |> Repo.update()
+        case graph |> Graph.changeset(%{is_deleted: false}) |> Repo.update() do
+          {:ok, updated_graph} ->
+            record_graph_event(updated_graph, %{
+              event_type: "graph.restored",
+              summary: "Grid restored to public listings"
+            })
+
+            {:ok, updated_graph}
+
+          error ->
+            error
+        end
     end
   end
 
@@ -335,6 +372,12 @@ defmodule Dialectic.DbActions.Graphs do
           {:tags_updated, updated_graph.title, tags}
         )
 
+        record_graph_event(updated_graph, %{
+          event_type: "graph.tags_updated",
+          summary: "Grid tags updated",
+          metadata: %{tags: tags}
+        })
+
         {:ok, updated_graph}
 
       error ->
@@ -343,9 +386,17 @@ defmodule Dialectic.DbActions.Graphs do
   end
 
   def toggle_graph_locked(graph) do
-    graph
-    |> Graph.changeset(%{is_locked: !graph.is_locked})
-    |> Repo.update!()
+    updated_graph =
+      graph
+      |> Graph.changeset(%{is_locked: !graph.is_locked})
+      |> Repo.update!()
+
+    record_graph_event(updated_graph, %{
+      event_type: if(updated_graph.is_locked, do: "graph.locked", else: "graph.unlocked"),
+      summary: if(updated_graph.is_locked, do: "Grid locked", else: "Grid unlocked")
+    })
+
+    updated_graph
   end
 
   def toggle_graph_public(graph) do
@@ -355,6 +406,12 @@ defmodule Dialectic.DbActions.Graphs do
       graph
       |> Graph.changeset(%{is_public: !graph.is_public})
       |> Repo.update!()
+
+    record_graph_event(updated_graph, %{
+      event_type:
+        if(updated_graph.is_public, do: "graph.made_public", else: "graph.made_private"),
+      summary: if(updated_graph.is_public, do: "Grid made public", else: "Grid made private")
+    })
 
     updated_graph
   end
@@ -383,6 +440,13 @@ defmodule Dialectic.DbActions.Graphs do
       end
     else
       _ -> {:error, :invalid_timestamp}
+    end
+  end
+
+  defp record_graph_event(%Graph{} = graph, attrs) do
+    case Notifications.record_graph_event(graph, attrs) do
+      {:ok, _event} -> :ok
+      {:error, _changeset} -> :ok
     end
   end
 

@@ -15,6 +15,7 @@ defmodule DialecticWeb.GraphLive do
   alias DialecticWeb.Utils.UserUtils
   alias DialecticWeb.Utils.NodeTitleHelper
   alias Dialectic.Highlights
+  alias Dialectic.Notifications
   alias Dialectic.Repo
 
   alias Phoenix.PubSub
@@ -170,6 +171,7 @@ defmodule DialecticWeb.GraphLive do
   def handle_event("node:join_group", %{"node" => nid, "parent" => gid}, socket) do
     _graph = GraphManager.set_parent(socket.assigns.graph_id, nid, gid)
     GraphManager.save_graph(socket.assigns.graph_id)
+    record_graph_update_event(socket, "join_group")
 
     {:noreply,
      socket
@@ -201,6 +203,7 @@ defmodule DialecticWeb.GraphLive do
           else
             _graph = GraphManager.remove_parent(socket.assigns.graph_id, nid)
             GraphManager.save_graph(socket.assigns.graph_id)
+            record_graph_update_event(socket, "leave_group")
 
             {:noreply,
              socket
@@ -370,6 +373,7 @@ defmodule DialecticWeb.GraphLive do
                   GraphActions.delete_node(graph_action_params(socket), node_id)
 
                 GraphManager.save_graph(socket.assigns.graph_id)
+                record_graph_update_event(socket, "delete_node", %{node_id: node_id})
                 {_, _graph2} = GraphManager.get_graph(socket.assigns.graph_id)
 
                 # Ensure we navigate to a valid, non-deleted node.
@@ -855,6 +859,41 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, assign(socket, show_help_modal: false)}
   end
 
+  def handle_event("follow_graph", _params, socket) do
+    case socket.assigns[:current_user] do
+      nil ->
+        {:noreply, assign(socket, show_login_modal: true)}
+
+      current_user ->
+        case Notifications.follow_graph(current_user, socket.assigns.graph_struct) do
+          {:ok, _follow} ->
+            {:noreply,
+             socket
+             |> assign(:following_graph?, true)
+             |> put_flash(:info, "You are now following this grid.")}
+
+          {:error, _changeset} ->
+            {:noreply,
+             put_flash(socket, :error, "We could not follow this grid. Please try again.")}
+        end
+    end
+  end
+
+  def handle_event("unfollow_graph", _params, socket) do
+    case socket.assigns[:current_user] do
+      nil ->
+        {:noreply, assign(socket, show_login_modal: true)}
+
+      current_user ->
+        :ok = Notifications.unfollow_graph(current_user, socket.assigns.graph_struct)
+
+        {:noreply,
+         socket
+         |> assign(:following_graph?, false)
+         |> put_flash(:info, "You have unfollowed this grid.")}
+    end
+  end
+
   def handle_event("open_share_modal", params, socket) do
     share_highlight =
       socket.assigns.graph_struct
@@ -917,6 +956,7 @@ defmodule DialecticWeb.GraphLive do
       if group_id do
         GraphManager.create_group(socket.assigns.graph_id, group_id, [])
         GraphManager.save_graph(socket.assigns.graph_id)
+        record_graph_update_event(socket, "create_group", %{group_id: group_id})
       end
 
       # 2) Create a new root node under the group (if provided)
@@ -1001,6 +1041,7 @@ defmodule DialecticWeb.GraphLive do
                   else
                     GraphManager.delete_node(socket.assigns.graph_id, group_id)
                     GraphManager.save_graph(socket.assigns.graph_id)
+                    record_graph_update_event(socket, "delete_group", %{group_id: group_id})
 
                     {:noreply,
                      socket
@@ -1894,16 +1935,9 @@ defmodule DialecticWeb.GraphLive do
 
     # Broadcast structural changes to other users (new nodes created, etc.)
     # Skip for operations that don't change graph structure
-    if operation in [
-         "start_stream",
-         "comment",
-         "answer",
-         "branch",
-         "combine",
-         "ideas",
-         "explain",
-         "deepdive"
-       ] do
+    if structural_graph_operation?(operation) do
+      record_graph_update_event(socket, operation, %{node_id: node && Map.get(node, :id)})
+
       PubSub.broadcast(
         Dialectic.PubSub,
         socket.assigns.graph_topic,
@@ -1912,6 +1946,37 @@ defmodule DialecticWeb.GraphLive do
     end
 
     {:noreply, new_socket}
+  end
+
+  defp structural_graph_operation?(operation) do
+    operation in [
+      "start_stream",
+      "comment",
+      "answer",
+      "branch",
+      "combine",
+      "ideas",
+      "explain",
+      "deepdive"
+    ]
+  end
+
+  defp record_graph_update_event(socket, operation, metadata \\ %{}) do
+    event_metadata =
+      metadata
+      |> Enum.reject(fn {_key, value} -> is_nil(value) end)
+      |> Enum.into(%{})
+      |> Map.put(:operation, operation)
+
+    case Notifications.record_graph_event(socket.assigns.graph_struct, %{
+           event_type: "graph.updated",
+           actor_user: socket.assigns[:current_user],
+           summary: "Grid updated",
+           metadata: event_metadata
+         }) do
+      {:ok, _event} -> :ok
+      {:error, _changeset} -> :ok
+    end
   end
 
   # Helper to preserve and re-apply right panel state across node changes/moves
@@ -2045,7 +2110,8 @@ defmodule DialecticWeb.GraphLive do
       presentation_title: "",
       combine_mode: :off,
       combine_selected_nodes: [],
-      graph_owner_name: nil
+      graph_owner_name: nil,
+      following_graph?: false
     )
   end
 
@@ -2134,6 +2200,8 @@ defmodule DialecticWeb.GraphLive do
         "isAccessibleForFree" => true
       })
 
+    following_graph? = Notifications.following_graph?(socket.assigns[:current_user], graph_db)
+
     # Resolve the graph owner's display name for presentation credits
     owner_name =
       case graph_db.user_id do
@@ -2150,6 +2218,7 @@ defmodule DialecticWeb.GraphLive do
     assign(socket,
       page_title: graph_struct.title,
       graph_owner_name: owner_name,
+      following_graph?: following_graph?,
       og_image: base_url <> ~p"/images/graph_live.webp",
       page_description: description,
       canonical_url: canonical,

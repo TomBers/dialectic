@@ -57,7 +57,7 @@ defmodule Dialectic.GraphFixtures do
     %Graph{}
     |> Graph.changeset(%{
       title: merged.title,
-      user_id: nil,
+      user_id: merged[:user_id],
       data: merged.data,
       is_public: merged.is_public,
       is_published: merged.is_published,

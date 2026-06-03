@@ -27,7 +27,9 @@ config :dialectic, Oban,
 config :dialectic,
   ecto_repos: [Dialectic.Repo],
   generators: [timestamp_type: :utc_datetime],
-  env: config_env()
+  env: config_env(),
+  email_from_name: "RationalGrid",
+  email_from_address: "no-reply@rationalgrid.ai"
 
 # Configures the endpoint
 config :dialectic, DialecticWeb.Endpoint,
