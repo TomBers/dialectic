@@ -137,6 +137,10 @@ if api_key = System.get_env("RESEND_API_KEY") do
     api_key: api_key
 end
 
+config :dialectic,
+  email_from_name: System.get_env("EMAIL_FROM_NAME") || "RationalGrid",
+  email_from_address: System.get_env("EMAIL_FROM_ADDRESS") || "no-reply@rationalgrid.ai"
+
 # Configure Google OAuth at runtime
 google_client_id = System.get_env("GOOGLE_CLIENT_ID")
 google_client_secret = System.get_env("GOOGLE_CLIENT_SECRET")

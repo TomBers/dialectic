@@ -3,6 +3,8 @@ defmodule DialecticWeb.GraphLiveTest do
   import Phoenix.LiveViewTest
   import Dialectic.AccountsFixtures
 
+  alias Dialectic.Notifications
+
   @graph_id "Satre"
 
   defp setup_live(conn) do
@@ -84,6 +86,35 @@ defmodule DialecticWeb.GraphLiveTest do
 
       assert socket.assigns.graph_id == @graph_id
       assert socket.assigns.user == "tester@example.com"
+    end
+
+    test "allows the current user to follow and unfollow the grid", %{conn: conn} do
+      user = user_fixture(%{email: "follower@example.com"})
+      conn = log_in_user(conn, user)
+
+      graph =
+        Dialectic.GraphFixtures.insert_graph(%{
+          title: "Follow Button Graph #{System.unique_integer([:positive])}"
+        })
+
+      {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}/graph?node=1")
+
+      assert has_element?(view, "#graph-workspace-bar-follow", "Follow")
+      refute Notifications.following_graph?(user, graph)
+
+      view
+      |> element("#graph-workspace-bar-follow")
+      |> render_click()
+
+      assert has_element?(view, "#graph-workspace-bar-follow", "Following")
+      assert Notifications.following_graph?(user, graph)
+
+      view
+      |> element("#graph-workspace-bar-follow")
+      |> render_click()
+
+      assert has_element?(view, "#graph-workspace-bar-follow", "Follow")
+      refute Notifications.following_graph?(user, graph)
     end
 
     test "shows a persistent reader switch for the current node", %{conn: conn} do

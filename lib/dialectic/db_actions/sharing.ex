@@ -2,6 +2,7 @@ defmodule Dialectic.DbActions.Sharing do
   import Ecto.Query
   alias Dialectic.Repo
   alias Dialectic.Accounts.{Graph, GraphShare, User}
+  alias Dialectic.Notifications
 
   @doc """
   Generates a share token for a graph if one doesn't exist.
@@ -37,23 +38,56 @@ defmodule Dialectic.DbActions.Sharing do
   Invites a user by email to a graph.
   """
   def invite_user(%Graph{} = graph, email) do
-    %GraphShare{}
-    |> GraphShare.changeset(%{
-      graph_title: graph.title,
-      email: email,
-      permission: "edit"
-    })
-    |> Repo.insert(on_conflict: :nothing)
+    result =
+      %GraphShare{}
+      |> GraphShare.changeset(%{
+        graph_title: graph.title,
+        email: email,
+        permission: "edit"
+      })
+      |> Repo.insert(on_conflict: :nothing)
+
+    case result do
+      {:ok, %GraphShare{id: nil}} ->
+        result
+
+      {:ok, _share} ->
+        record_graph_event(graph, %{
+          event_type: "graph.shared",
+          summary: "Grid shared with a collaborator",
+          metadata: %{email: email}
+        })
+
+        result
+
+      {:error, _changeset} ->
+        result
+    end
   end
 
   @doc """
   Removes a user's access to a graph.
   """
   def remove_invite(%Graph{} = graph, email) do
-    from(gs in GraphShare,
-      where: gs.graph_title == ^graph.title and gs.email == ^email
-    )
-    |> Repo.delete_all()
+    result =
+      from(gs in GraphShare,
+        where: gs.graph_title == ^graph.title and gs.email == ^email
+      )
+      |> Repo.delete_all()
+
+    case result do
+      {count, _} when count > 0 ->
+        record_graph_event(graph, %{
+          event_type: "graph.unshared",
+          summary: "Collaborator access removed",
+          metadata: %{email: email}
+        })
+
+      _ ->
+        :ok
+    end
+
+    result
   end
 
   @doc """
@@ -83,6 +117,13 @@ defmodule Dialectic.DbActions.Sharing do
       graph.user_id == user.id -> true
       has_email_access?(user.email, graph.title) -> true
       true -> false
+    end
+  end
+
+  defp record_graph_event(%Graph{} = graph, attrs) do
+    case Notifications.record_graph_event(graph, attrs) do
+      {:ok, _event} -> :ok
+      {:error, _changeset} -> :ok
     end
   end
 

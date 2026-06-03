@@ -18,6 +18,8 @@ defmodule Dialectic.Accounts.Graph do
     belongs_to :user, Dialectic.Accounts.User
     has_many :notes, Dialectic.Accounts.Note, on_delete: :delete_all
     has_many :shares, Dialectic.Accounts.GraphShare, foreign_key: :graph_title
+    has_many :follows, Dialectic.Notifications.GraphFollow, foreign_key: :graph_title
+    has_many :events, Dialectic.Notifications.GraphEvent, foreign_key: :graph_title
 
     timestamps(type: :utc_datetime)
   end

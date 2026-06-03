@@ -14,6 +14,10 @@ defmodule DialecticWeb.WorkspaceBarComp do
   attr :highlights_panel_id, :string, default: nil
   attr :show_share, :boolean, default: true
   attr :share_click, :any, default: nil
+  attr :show_follow, :boolean, default: true
+  attr :following_graph?, :boolean, default: false
+  attr :follow_click, :any, default: nil
+  attr :unfollow_click, :any, default: nil
   attr :mobile_aux_id, :string, default: nil
   attr :mobile_aux_click, :any, default: nil
   attr :mobile_aux_open, :boolean, default: false
@@ -140,6 +144,25 @@ defmodule DialecticWeb.WorkspaceBarComp do
         </button>
 
         <button
+          :if={@show_follow}
+          id={"#{@id}-follow"}
+          type="button"
+          phx-click={if(@following_graph?, do: @unfollow_click, else: @follow_click)}
+          class={follow_button_classes(@following_graph?, @compact)}
+          title={if(@following_graph?, do: "Unfollow this grid", else: "Follow this grid")}
+          aria-label={if(@following_graph?, do: "Unfollow this grid", else: "Follow this grid")}
+          aria-pressed={to_string(@following_graph?)}
+        >
+          <.icon
+            name={if(@following_graph?, do: "hero-bell-solid", else: "hero-bell")}
+            class="h-4 w-4"
+          />
+          <span class="hidden sm:inline">
+            {if @following_graph?, do: "Following", else: "Follow"}
+          </span>
+        </button>
+
+        <button
           :if={@show_share}
           id={"#{@id}-share"}
           type="button"
@@ -225,6 +248,22 @@ defmodule DialecticWeb.WorkspaceBarComp do
       "hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900"
     ]
   end
+
+  defp follow_button_classes(true, true) do
+    [
+      action_button_classes(true),
+      "border-indigo-200 bg-indigo-50 text-indigo-700 hover:border-indigo-300 hover:bg-indigo-100 hover:text-indigo-800"
+    ]
+  end
+
+  defp follow_button_classes(true, false) do
+    [
+      action_button_classes(false),
+      "border-indigo-200 bg-indigo-50 text-indigo-700 hover:border-indigo-300 hover:bg-indigo-100 hover:text-indigo-800"
+    ]
+  end
+
+  defp follow_button_classes(false, compact), do: action_button_classes(compact)
 
   defp kbd_classes(true) do
     "hidden rounded-md border border-slate-200 bg-slate-100 px-1 py-0.5 text-[9px] font-semibold text-slate-500 sm:inline-flex"

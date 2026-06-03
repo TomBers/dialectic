@@ -73,6 +73,9 @@ defmodule DialecticWeb.Router do
     live "/inspiration", InspirationLive
     live "/about", AboutLive
     live "/gallery", InfographicGalleryLive
+    live "/updates", EmailSignupLive
+    get "/updates/confirm/:token", EmailSubscriptionController, :confirm
+    get "/updates/unsubscribe/:token", EmailSubscriptionController, :unsubscribe
 
     # Slug-based routes
     live "/g/:graph_name/graph", GraphLive
@@ -149,6 +152,7 @@ defmodule DialecticWeb.Router do
       on_mount: [{DialecticWeb.UserAuth, :ensure_authenticated}] do
       live "/users/settings", UserSettingsLive, :edit
       live "/users/settings/confirm_email/:token", UserSettingsLive, :confirm_email
+      live "/notifications/activity", NotificationActivityLive
       live "/admin/curated", AdminCuratedLive
       live "/admin/graphs/import", AdminGraphImportLive
     end

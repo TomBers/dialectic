@@ -1,10 +1,12 @@
 defmodule Dialectic.Emails do
   import Swoosh.Email
 
+  alias Dialectic.Mailer
+
   def invite_email(to, inviter, graph_title, link) do
     new()
     |> to(to)
-    |> from({"RationalGrid", "no-reply@rationalgrid.ai"})
+    |> from(Mailer.default_from())
     |> subject("#{inviter} invited you to edit '#{graph_title}'")
     |> html_body("""
     <h1>Invitation to Collaborate</h1>
