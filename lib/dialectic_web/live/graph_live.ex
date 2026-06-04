@@ -3,7 +3,8 @@ defmodule DialecticWeb.GraphLive do
   use DialecticWeb.GraphStreaming, preload_highlight_links: true
 
   alias Dialectic.Graph.{Vertex, GraphActions, Siblings}
-  alias Dialectic.Accounts.{GravatarCache, User}
+  alias Dialectic.Accounts.User
+  alias DialecticWeb.GridChat
   alias DialecticWeb.NodeComp
   alias DialecticWeb.GraphHelpers
   alias DialecticWeb.HighlightShare
@@ -30,6 +31,7 @@ defmodule DialecticWeb.GraphLive do
   # Called after mount on initial page load and on every live_patch.
   # Detects ?present=true&slides=1,2,3&title=... and boots directly into
   # presenting mode so shared links open the presentation automatically.
+  @impl true
   def handle_params(%{"present" => "true", "slides" => slides_str} = params, _uri, socket) do
     slide_ids =
       slides_str
@@ -82,6 +84,7 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_params(_params, _uri, socket), do: {:noreply, socket}
 
+  @impl true
   def mount(%{"graph_name" => graph_id_uri} = params, _session, socket) do
     graph_id = URI.decode(graph_id_uri)
     user = UserUtils.current_identity(socket.assigns)
@@ -111,7 +114,7 @@ defmodule DialecticWeb.GraphLive do
         socket =
           socket
           |> assign_defaults()
-          |> subscribe_to_topics(graph_title, user)
+          |> subscribe_to_topics(graph_title)
           |> assign_graph_data(graph_db, graph_struct, node, graph_title, user)
           |> assign(token: params["token"])
           |> handle_initial_highlight(initial_highlight_id)
@@ -132,31 +135,13 @@ defmodule DialecticWeb.GraphLive do
     GraphHelpers.default_node()
   end
 
+  @impl true
   def handle_event("send_grid_chat", %{"grid_chat" => %{"message" => message}}, socket) do
-    message = String.trim(to_string(message || ""))
-
-    socket = assign(socket, chat_form: empty_chat_form())
-
-    if message == "" do
-      {:noreply, socket}
-    else
-      Phoenix.PubSub.broadcast(
-        Dialectic.PubSub,
-        grid_chat_topic(socket.assigns.graph_id),
-        {:grid_chat_message, build_grid_chat_message(socket, message)}
-      )
-
-      {:noreply, push_event(socket, "clear_grid_chat_form", %{})}
-    end
+    {:noreply, GridChat.send_message(socket, message)}
   end
 
   def handle_event("open_grid_chat", _params, socket) do
-    socket =
-      socket
-      |> maybe_load_chat_avatar()
-      |> update_chat_presence_avatar()
-
-    {:noreply, refresh_graph_presences(socket)}
+    {:noreply, GridChat.open(socket)}
   end
 
   def handle_event("set_prompt_mode", %{"prompt_mode" => mode}, socket) do
@@ -1327,6 +1312,7 @@ defmodule DialecticWeb.GraphLive do
   defp maybe_clear_presentation(socket, _params), do: socket
 
   # Handle selection action messages from SelectionActionsComp
+  @impl true
   def handle_info({:selection_action, params}, socket) do
     case GraphHelpers.check_selection_action_allowed(socket) do
       {:error, :locked} ->
@@ -1358,19 +1344,15 @@ defmodule DialecticWeb.GraphLive do
   # Highlight PubSub (:created, :updated, :deleted) injected by GraphStreaming
 
   def handle_info({DialecticWeb.Presence, {:join, presence}}, socket) do
-    if is_connected_to_graph?(presence, socket.assigns.graph_id) do
-      {:noreply, refresh_graph_presences(socket)}
-    else
-      {:noreply, socket}
-    end
+    {:noreply, GridChat.handle_presence_join(socket, presence)}
   end
 
-  def handle_info({DialecticWeb.Presence, {:leave, _presence}}, socket) do
-    {:noreply, refresh_graph_presences(socket)}
+  def handle_info({DialecticWeb.Presence, {:leave, presence}}, socket) do
+    {:noreply, GridChat.handle_presence_leave(socket, presence)}
   end
 
   def handle_info({:grid_chat_message, message}, socket) do
-    {:noreply, stream_insert(socket, :chat_messages, message, at: -1, limit: -100)}
+    {:noreply, GridChat.insert_message(socket, message)}
   end
 
   def handle_info({:other_user_change, sender_pid}, socket) do
@@ -1433,31 +1415,8 @@ defmodule DialecticWeb.GraphLive do
   end
 
   @impl true
-  def handle_async(:fetch_chat_avatar, {:ok, {:ok, %{avatar_url: avatar_url}}}, socket) do
-    socket =
-      socket
-      |> assign(:chat_avatar_loading?, false)
-      |> assign(:chat_avatar_loaded?, true)
-      |> assign(:chat_avatar_url, avatar_url)
-      |> update_chat_presence_avatar()
-
-    {:noreply, refresh_graph_presences(socket)}
-  end
-
-  @impl true
-  def handle_async(:fetch_chat_avatar, {:ok, _result}, socket) do
-    {:noreply,
-     socket
-     |> assign(:chat_avatar_loading?, false)
-     |> assign(:chat_avatar_loaded?, true)}
-  end
-
-  @impl true
-  def handle_async(:fetch_chat_avatar, {:exit, _reason}, socket) do
-    {:noreply,
-     socket
-     |> assign(:chat_avatar_loading?, false)
-     |> assign(:chat_avatar_loaded?, true)}
+  def handle_async(:fetch_chat_avatar, result, socket) do
+    {:noreply, GridChat.handle_avatar_result(socket, result)}
   end
 
   defp handle_selection_action(
@@ -1733,108 +1692,6 @@ defmodule DialecticWeb.GraphLive do
       {:ok, highlight} -> highlight
       {:error, _changeset} -> nil
     end
-  end
-
-  defp empty_chat_form, do: to_form(%{}, as: :grid_chat)
-
-  defp grid_chat_topic(graph_id), do: "grid_chat:#{graph_id}"
-
-  defp maybe_load_chat_avatar(%{assigns: %{chat_avatar_loaded?: true}} = socket), do: socket
-
-  defp maybe_load_chat_avatar(%{assigns: %{chat_avatar_loading?: true}} = socket), do: socket
-
-  defp maybe_load_chat_avatar(%{assigns: %{chat_avatar_url: url}} = socket)
-       when is_binary(url) and url != "",
-       do: assign(socket, :chat_avatar_loaded?, true)
-
-  defp maybe_load_chat_avatar(
-         %{assigns: %{current_user: %User{gravatar_id: gravatar_id}}} = socket
-       )
-       when is_binary(gravatar_id) and gravatar_id != "" do
-    case GravatarCache.get(gravatar_id) do
-      {:ok, %{avatar_url: avatar_url}} when is_binary(avatar_url) and avatar_url != "" ->
-        socket
-        |> assign(:chat_avatar_url, avatar_url)
-        |> assign(:chat_avatar_loaded?, true)
-
-      _ ->
-        socket
-        |> assign(:chat_avatar_loading?, true)
-        |> start_async(:fetch_chat_avatar, fn -> GravatarCache.fetch(gravatar_id) end)
-    end
-  end
-
-  defp maybe_load_chat_avatar(socket), do: assign(socket, :chat_avatar_loaded?, true)
-
-  defp update_chat_presence_avatar(%{assigns: %{chat_avatar_url: avatar_url}} = socket)
-       when is_binary(avatar_url) and avatar_url != "" do
-    if connected?(socket) do
-      _ =
-        DialecticWeb.Presence.update(self(), "online_users", socket.assigns.user, fn meta ->
-          meta
-          |> Map.put(:graph_id, socket.assigns.graph_id)
-          |> Map.put(:display_name, presence_display_name(socket.assigns[:current_user]))
-          |> Map.put(:avatar_url, avatar_url)
-        end)
-    end
-
-    socket
-  end
-
-  defp update_chat_presence_avatar(socket), do: socket
-
-  defp build_grid_chat_message(socket, message) do
-    author = presence_display_name(socket.assigns[:current_user])
-
-    %{
-      id: Ecto.UUID.generate(),
-      author_id: socket.assigns[:current_user] && socket.assigns.current_user.id,
-      author: author,
-      author_initials: initials_for_name(author),
-      author_avatar_url: socket.assigns[:chat_avatar_url],
-      body: message,
-      sent_at_label: Calendar.strftime(DateTime.utc_now(), "%H:%M")
-    }
-  end
-
-  defp presence_display_name(%User{} = user), do: User.display_name(user)
-  defp presence_display_name(_user), do: "Guest"
-
-  defp initials_for_name(name) do
-    name
-    |> to_string()
-    |> String.split(~r/[\s_-]+/, trim: true)
-    |> Enum.take(2)
-    |> Enum.map(fn part ->
-      part
-      |> String.graphemes()
-      |> List.first("")
-    end)
-    |> Enum.join()
-    |> String.upcase()
-    |> case do
-      "" -> "?"
-      initials -> initials
-    end
-  end
-
-  defp is_connected_to_graph?(%{metas: metas}, graph_id) do
-    Enum.any?(metas, fn meta ->
-      Map.get(meta, :graph_id) == graph_id or Map.get(meta, "graph_id") == graph_id
-    end)
-  end
-
-  defp is_connected_to_graph?(_presence, _graph_id), do: false
-
-  defp refresh_graph_presences(socket),
-    do: refresh_graph_presences(socket, socket.assigns.graph_id)
-
-  defp refresh_graph_presences(socket, graph_id) do
-    presences = DialecticWeb.Presence.list_online_users(graph_id)
-
-    socket
-    |> stream(:presences, presences, reset: true)
-    |> assign(:presence_count, length(presences))
   end
 
   def format_graph(graph) do
@@ -2199,43 +2056,28 @@ defmodule DialecticWeb.GraphLive do
       presentation_title: "",
       combine_mode: :off,
       combine_selected_nodes: [],
-      graph_owner_name: nil,
-      presence_count: 0,
-      chat_avatar_url: nil,
-      chat_avatar_loading?: false,
-      chat_avatar_loaded?: false,
-      chat_form: empty_chat_form()
+      graph_owner_name: nil
     )
+    |> assign(GridChat.default_assigns())
   end
 
-  defp subscribe_to_topics(socket, graph_id, user) do
+  defp subscribe_to_topics(socket, graph_id) do
     if connected?(socket) do
       live_view_topic = "graph_update:#{socket.id}"
       graph_topic = "graph_update:#{graph_id}"
 
       Phoenix.PubSub.subscribe(Dialectic.PubSub, live_view_topic)
       Phoenix.PubSub.subscribe(Dialectic.PubSub, graph_topic)
-      Phoenix.PubSub.subscribe(Dialectic.PubSub, grid_chat_topic(graph_id))
       Highlights.subscribe(graph_id)
 
-      DialecticWeb.Presence.track_user(user, %{
-        id: user,
-        graph_id: graph_id,
-        display_name: presence_display_name(socket.assigns[:current_user]),
-        avatar_url: socket.assigns[:chat_avatar_url]
-      })
-
-      DialecticWeb.Presence.subscribe()
-
-      presences = DialecticWeb.Presence.list_online_users(graph_id)
+      socket = GridChat.subscribe(socket, graph_id)
 
       # Load highlights asynchronously after connection - doesn't block initial render
       highlights = Highlights.list_highlights_with_links(mudg_id: graph_id)
 
       socket
-      |> stream(:presences, presences)
-      |> stream(:chat_messages, [])
-      |> assign(highlights: highlights, presence_count: length(presences))
+      |> GridChat.init_streams(graph_id)
+      |> assign(highlights: highlights)
       |> push_event("highlights_loaded", %{
         highlights: serialize_highlights(highlights)
       })
@@ -2244,9 +2086,8 @@ defmodule DialecticWeb.GraphLive do
       highlights = Highlights.list_highlights_with_links(mudg_id: graph_id)
 
       socket
-      |> stream(:presences, [])
-      |> stream(:chat_messages, [])
-      |> assign(highlights: highlights, presence_count: 0)
+      |> GridChat.init_streams(graph_id)
+      |> assign(highlights: highlights)
     end
   end
 

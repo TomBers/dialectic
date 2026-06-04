@@ -119,7 +119,7 @@ defmodule DialecticWeb.UserSettingsLive do
                       type="textarea"
                       label="Bio"
                       placeholder="Tell people a bit about yourself and what you explore on RationalGrid..."
-                      class="mt-2 block w-full rounded-lg border border-zinc-200 bg-white text-zinc-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm sm:leading-6"
+                      class="mt-2 block min-h-[6rem] w-full rounded-lg border border-zinc-200 bg-white text-zinc-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm sm:leading-6"
                     />
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4">

@@ -191,7 +191,7 @@ defmodule DialecticWeb.GridChatComp do
                     </span>
                   </div>
                   <p class={message_body_classes(message, @current_user)}>
-                    {message_body_html(message)}
+                    {message_body_text(message)}
                   </p>
                 </div>
               </div>
@@ -263,22 +263,10 @@ defmodule DialecticWeb.GridChatComp do
 
   defp message_body_classes(message, current_user) do
     [
-      "mt-px break-words text-left text-[15px] leading-[1.45] [overflow-wrap:anywhere]",
+      "mt-px whitespace-pre-wrap break-words text-left text-[15px] leading-[1.45] [overflow-wrap:anywhere]",
       authored_by_current_user?(message, current_user) && "text-slate-800",
       !authored_by_current_user?(message, current_user) && "text-slate-700"
     ]
-  end
-
-  defp message_body_html(message) do
-    message
-    |> message_body_text()
-    |> String.split(~r/\R/u, trim: false)
-    |> Enum.map_join("<br>", fn line ->
-      line
-      |> html_escape()
-      |> safe_to_string()
-    end)
-    |> raw()
   end
 
   defp message_body_text(message), do: String.trim(to_string(message.body || ""))
@@ -327,7 +315,7 @@ defmodule DialecticWeb.GridChatComp do
   defp presence_initials(presence) do
     presence
     |> presence_label()
-    |> initials_for_name()
+    |> DialecticWeb.GridChat.initials_for_name()
   end
 
   defp presence_session_count(%{metas: metas}) when is_list(metas), do: length(metas)
@@ -346,22 +334,4 @@ defmodule DialecticWeb.GridChatComp do
 
   defp presence_first_meta(%{metas: [meta | _]}), do: meta
   defp presence_first_meta(_presence), do: %{}
-
-  defp initials_for_name(name) do
-    name
-    |> to_string()
-    |> String.split(~r/[\s_-]+/, trim: true)
-    |> Enum.take(2)
-    |> Enum.map(fn part ->
-      part
-      |> String.graphemes()
-      |> List.first("")
-    end)
-    |> Enum.join()
-    |> String.upcase()
-    |> case do
-      "" -> "?"
-      initials -> initials
-    end
-  end
 end

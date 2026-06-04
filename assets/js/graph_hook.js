@@ -611,63 +611,6 @@ const graphHook = {
       requestAnimationFrame(showZoom);
     };
 
-    const graphNeedsFit = () => {
-      const visibleNodes = visibleGraphNodes();
-      if (!visibleNodes || visibleNodes.length === 0) return false;
-
-      const rect = container.getBoundingClientRect();
-      const rightPanelWidth = getRightPanelWidth();
-      const margin = 24;
-
-      let bottomOverlap = 0;
-      const bottomMenu = document.getElementById("bottom-menu");
-      if (bottomMenu) {
-        const menuRect = bottomMenu.getBoundingClientRect();
-        const menuVisible =
-          menuRect.height > 0 &&
-          !bottomMenu.classList.contains("invisible") &&
-          !bottomMenu.classList.contains("opacity-0");
-
-        if (menuVisible) {
-          bottomOverlap = Math.max(0, rect.bottom - menuRect.top);
-        }
-      }
-
-      const viewportLeft = margin;
-      const viewportTop = margin;
-      const viewportRight = Math.max(margin, rect.width - rightPanelWidth - margin);
-      const viewportBottom = Math.max(margin, rect.height - bottomOverlap - margin);
-
-      const bb = visibleNodes.boundingBox();
-      const zoom = this.cy.zoom();
-      const pan = this.cy.pan();
-
-      const renderedLeft = bb.x1 * zoom + pan.x;
-      const renderedRight = bb.x2 * zoom + pan.x;
-      const renderedTop = bb.y1 * zoom + pan.y;
-      const renderedBottom = bb.y2 * zoom + pan.y;
-
-      const overlapX = Math.max(
-        0,
-        Math.min(renderedRight, viewportRight) - Math.max(renderedLeft, viewportLeft),
-      );
-      const overlapY = Math.max(
-        0,
-        Math.min(renderedBottom, viewportBottom) - Math.max(renderedTop, viewportTop),
-      );
-
-      const minVisibleX = Math.min(
-        Math.max((viewportRight - viewportLeft) * 0.18, 72),
-        180,
-      );
-      const minVisibleY = Math.min(
-        Math.max((viewportBottom - viewportTop) * 0.18, 72),
-        180,
-      );
-
-      return overlapX < minVisibleX || overlapY < minVisibleY;
-    };
-
     const btnPngs = Array.from(document.querySelectorAll(".download-png"));
     this._bindZoomControls = () => {
       if (Array.isArray(this._zoomControlHandlers)) {
@@ -794,19 +737,13 @@ const graphHook = {
           this.cy.resize();
         } catch (_e) {}
 
-        requestAnimationFrame(() => {
-          if (!this.cy) return;
+        if (typeof this.cy.scheduleViewportClamp === "function") {
+          this.cy.scheduleViewportClamp({ immediate: true });
+        }
 
-          if (graphNeedsFit()) {
-            fitGraph();
-          } else if (typeof this.cy.scheduleViewportClamp === "function") {
-            this.cy.scheduleViewportClamp({ immediate: true });
-          }
-
-          if (this._presentationIds && this._presentationIds.length > 0) {
-            this._renderPresentationBadges();
-          }
-        });
+        if (this._presentationIds && this._presentationIds.length > 0) {
+          this._renderPresentationBadges();
+        }
       });
     };
     window.addEventListener("resize", this._onViewportResize);
