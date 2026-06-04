@@ -4,6 +4,8 @@ defmodule DialecticWeb.GridChatComp do
 
   attr :graph_id, :any, required: true
   attr :presence_count, :integer, default: 0
+  attr :avatar_url, :string, default: nil
+  attr :current_user, :any, default: nil
 
   def grid_chat_toggle(assigns) do
     ~H"""
@@ -19,18 +21,17 @@ defmodule DialecticWeb.GridChatComp do
         aria-label="Open viewer chat"
         title="Open viewer chat"
       >
-        <span class="relative inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-100 via-white to-violet-100 text-indigo-700 ring-1 ring-indigo-200/90 shadow-sm">
-          <.icon name="hero-user-group" class="h-4 w-4" />
+        <span class="relative inline-flex h-8 w-8 items-center justify-center overflow-visible rounded-full bg-gradient-to-br from-indigo-100 via-white to-violet-100 text-indigo-700 ring-1 ring-indigo-200/90 shadow-sm">
+          <img
+            :if={avatar_url?(@avatar_url)}
+            src={@avatar_url}
+            alt={chat_avatar_alt(@current_user)}
+            class="h-8 w-8 rounded-full object-cover"
+          />
+          <.icon :if={!avatar_url?(@avatar_url)} name="hero-user-group" class="h-4 w-4" />
           <span class="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-slate-900 px-1 text-[9px] font-bold leading-none text-white ring-2 ring-white">
             {@presence_count}
           </span>
-        </span>
-        <span class="text-sm font-semibold text-slate-800">
-          {viewer_count_label(@presence_count)}
-        </span>
-        <span class="hidden h-4 w-px bg-slate-200 md:block"></span>
-        <span class="hidden text-[10px] font-semibold uppercase tracking-[0.16em] text-indigo-600 md:inline">
-          Chat
         </span>
       </button>
     </div>
@@ -42,6 +43,7 @@ defmodule DialecticWeb.GridChatComp do
   attr :chat_form, :any, required: true
   attr :presence_count, :integer, default: 0
   attr :current_user, :any, default: nil
+  attr :avatar_url, :string, default: nil
 
   def grid_chat_drawer(assigns) do
     ~H"""
@@ -55,26 +57,31 @@ defmodule DialecticWeb.GridChatComp do
           <div class="flex items-start justify-between gap-3">
             <div class="min-w-0">
               <div class="flex items-center gap-3">
-                <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-100 via-white to-violet-100 text-indigo-700 ring-1 ring-indigo-200/90 shadow-sm">
-                  <.icon name="hero-chat-bubble-left-right" class="h-5 w-5" />
+                <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-100 via-white to-violet-100 text-indigo-700 ring-1 ring-indigo-200/90 shadow-sm">
+                  <img
+                    :if={avatar_url?(@avatar_url)}
+                    src={@avatar_url}
+                    alt={chat_avatar_alt(@current_user)}
+                    class="h-10 w-10 object-cover"
+                  />
+                  <.icon
+                    :if={!avatar_url?(@avatar_url)}
+                    name="hero-chat-bubble-left-right"
+                    class="h-5 w-5"
+                  />
                 </span>
                 <div class="min-w-0">
                   <div class="flex flex-wrap items-center gap-2">
                     <h2 class="truncate text-lg font-semibold tracking-tight text-slate-950">
-                      Viewer chat
+                      Chat
                     </h2>
-                    <span class="inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-semibold text-indigo-700 ring-1 ring-inset ring-indigo-200/80">
+                    <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200/80">
+                      <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
                       {viewer_count_label(@presence_count)}
                     </span>
                   </div>
-                  <p class="mt-0.5 text-sm text-slate-500">
-                    Live conversation for people exploring this grid right now.
-                  </p>
                 </div>
               </div>
-              <p class="mt-2 text-[11px] font-medium uppercase tracking-[0.16em] text-slate-400">
-                Ephemeral while viewers are here
-              </p>
             </div>
             <button
               type="button"
@@ -89,30 +96,40 @@ defmodule DialecticWeb.GridChatComp do
             </button>
           </div>
 
-          <div class="mt-3 rounded-2xl border border-slate-200/80 bg-slate-50/80 px-3 py-2.5 shadow-[0_14px_30px_-28px_rgba(15,23,42,0.3)] ring-1 ring-white/80">
-            <div class="flex items-center gap-2">
-              <p class="shrink-0 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                Here now
+          <div class="mt-2 rounded-xl border border-slate-200/80 bg-slate-50/80 px-2 py-1.5 ring-1 ring-white/80">
+            <div class="flex items-center gap-1.5">
+              <p class="shrink-0 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                Online
               </p>
               <div
                 id="grid-chat-viewers"
                 phx-update="stream"
-                class="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto pb-1"
+                class="flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto"
               >
                 <span
                   id="grid-chat-viewers-empty"
-                  class="hidden only:flex shrink-0 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-500 shadow-sm"
+                  class="hidden only:flex shrink-0 rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] text-slate-500 shadow-sm"
                 >
-                  Just you here right now
+                  Just you
                 </span>
                 <div
                   :for={{presence_dom_id, presence} <- @presences}
                   id={presence_dom_id}
-                  class="inline-flex max-w-full shrink-0 items-center gap-2 rounded-full border border-slate-200/90 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 shadow-sm ring-1 ring-white/80"
+                  class="inline-flex max-w-full shrink-0 items-center gap-1.5 rounded-full border border-slate-200/90 bg-white px-2 py-1 text-[11px] font-medium text-slate-700 shadow-sm ring-1 ring-white/80"
                   title={presence_title(presence)}
                 >
-                  <span class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-100 via-white to-violet-100 text-[9px] font-bold uppercase text-indigo-700 ring-1 ring-indigo-200/90">
-                    {presence_initials(presence)}
+                  <span class="relative inline-flex h-5 w-5 shrink-0 items-center justify-center overflow-visible rounded-full bg-gradient-to-br from-indigo-100 via-white to-violet-100 text-[8px] font-bold uppercase text-indigo-700 ring-1 ring-indigo-200/90">
+                    <span class="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white">
+                    </span>
+                    <img
+                      :if={avatar_url?(presence_avatar_url(presence))}
+                      src={presence_avatar_url(presence)}
+                      alt={presence_avatar_alt(presence)}
+                      class="h-5 w-5 rounded-full object-cover"
+                    />
+                    <span :if={!avatar_url?(presence_avatar_url(presence))}>
+                      {presence_initials(presence)}
+                    </span>
                   </span>
                   <span class="truncate">{presence_label(presence)}</span>
                   <span
@@ -148,13 +165,21 @@ defmodule DialecticWeb.GridChatComp do
             <div class={message_row_classes(message, @current_user)}>
               <div class="flex items-start gap-2.5">
                 <span class={[
-                  "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[10px] font-bold uppercase shadow-sm ring-1 ring-white/90",
+                  "inline-flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full text-[10px] font-bold uppercase shadow-sm ring-1 ring-white/90",
                   authored_by_current_user?(message, @current_user) &&
                     "bg-gradient-to-br from-indigo-600 to-violet-600 text-white",
                   !authored_by_current_user?(message, @current_user) &&
                     "bg-slate-900 text-white"
                 ]}>
-                  {message.author_initials}
+                  <img
+                    :if={avatar_url?(message_avatar_url(message))}
+                    src={message_avatar_url(message)}
+                    alt={message_avatar_alt(message)}
+                    class="h-8 w-8 object-cover"
+                  />
+                  <span :if={!avatar_url?(message_avatar_url(message))}>
+                    {message.author_initials}
+                  </span>
                 </span>
                 <div class="min-w-0 flex-1 pt-px">
                   <div class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 leading-4">
@@ -174,15 +199,15 @@ defmodule DialecticWeb.GridChatComp do
           </div>
         </div>
 
-        <div class="border-t border-slate-200/90 bg-white/94 px-3 py-3 backdrop-blur">
+        <div class="border-t border-slate-200/90 bg-white/94 px-2.5 py-2 backdrop-blur">
           <.form
             for={@chat_form}
             id="grid-chat-form"
             phx-submit="send_grid_chat"
             phx-hook="GridChatForm"
-            class="space-y-2"
+            class="flex items-end gap-2"
           >
-            <div class="[&_label]:sr-only">
+            <div class="min-w-0 flex-1 [&_label]:sr-only">
               <.input
                 field={@chat_form[:message]}
                 type="textarea"
@@ -192,20 +217,17 @@ defmodule DialecticWeb.GridChatComp do
                 autocomplete="off"
                 rows="1"
                 phx-hook="AutoExpandTextarea"
-                class="box-border block w-full overflow-hidden rounded-2xl border border-slate-200/90 bg-white px-3.5 py-3 text-[15px] leading-6 text-slate-900 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] transition placeholder:text-slate-400 focus:border-indigo-300 focus:outline-none focus:ring-4 focus:ring-indigo-100/80 resize-none min-h-[3rem] [--auto-expand-max-height:11rem] [--auto-expand-border-threshold:6]"
+                class="box-border block w-full overflow-hidden rounded-xl border border-slate-200/90 bg-white px-3 py-2 text-sm leading-5 text-slate-900 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] transition placeholder:text-slate-400 focus:border-indigo-300 focus:outline-none focus:ring-4 focus:ring-indigo-100/80 resize-none min-h-[2.5rem] [--auto-expand-max-height:9rem] [--auto-expand-border-threshold:6]"
               />
             </div>
-            <div class="flex items-center justify-between gap-3">
-              <p class="text-[11px] leading-5 text-slate-500">
-                Enter to send. Shift + Enter for a new line.
-              </p>
-              <button
-                type="submit"
-                class="inline-flex shrink-0 items-center gap-2 rounded-full bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_14px_28px_-18px_rgba(15,23,42,0.8)] transition hover:bg-slate-800"
-              >
-                Send <.icon name="hero-paper-airplane" class="h-4 w-4" />
-              </button>
-            </div>
+            <button
+              type="submit"
+              class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white shadow-[0_12px_24px_-18px_rgba(15,23,42,0.8)] transition hover:bg-slate-800"
+              aria-label="Send message"
+              title="Send"
+            >
+              <.icon name="hero-paper-airplane" class="h-4 w-4" />
+            </button>
           </.form>
         </div>
       </div>
@@ -260,6 +282,32 @@ defmodule DialecticWeb.GridChatComp do
   end
 
   defp message_body_text(message), do: String.trim(to_string(message.body || ""))
+
+  defp avatar_url?(url), do: is_binary(url) and url != ""
+
+  defp chat_avatar_alt(_current_user), do: "Your profile image"
+
+  defp presence_avatar_url(presence) do
+    presence
+    |> presence_first_meta()
+    |> avatar_url_from_meta()
+  end
+
+  defp presence_avatar_alt(presence), do: "#{presence_label(presence)} profile image"
+
+  defp message_avatar_url(message) do
+    Map.get(message, :author_avatar_url) || Map.get(message, "author_avatar_url")
+  end
+
+  defp message_avatar_alt(message), do: "#{Map.get(message, :author, "Guest")} profile image"
+
+  defp avatar_url_from_meta(%{avatar_url: avatar_url}) when is_binary(avatar_url),
+    do: avatar_url
+
+  defp avatar_url_from_meta(%{"avatar_url" => avatar_url}) when is_binary(avatar_url),
+    do: avatar_url
+
+  defp avatar_url_from_meta(_meta), do: nil
 
   defp presence_label(presence) do
     presence

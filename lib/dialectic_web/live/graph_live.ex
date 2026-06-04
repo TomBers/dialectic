@@ -3,7 +3,7 @@ defmodule DialecticWeb.GraphLive do
   use DialecticWeb.GraphStreaming, preload_highlight_links: true
 
   alias Dialectic.Graph.{Vertex, GraphActions, Siblings}
-  alias Dialectic.Accounts.User
+  alias Dialectic.Accounts.{GravatarCache, User}
   alias DialecticWeb.NodeComp
   alias DialecticWeb.GraphHelpers
   alias DialecticWeb.HighlightShare
@@ -148,6 +148,15 @@ defmodule DialecticWeb.GraphLive do
 
       {:noreply, push_event(socket, "clear_grid_chat_form", %{})}
     end
+  end
+
+  def handle_event("open_grid_chat", _params, socket) do
+    socket =
+      socket
+      |> maybe_load_chat_avatar()
+      |> update_chat_presence_avatar()
+
+    {:noreply, refresh_graph_presences(socket)}
   end
 
   def handle_event("set_prompt_mode", %{"prompt_mode" => mode}, socket) do
@@ -1423,6 +1432,34 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
+  @impl true
+  def handle_async(:fetch_chat_avatar, {:ok, {:ok, %{avatar_url: avatar_url}}}, socket) do
+    socket =
+      socket
+      |> assign(:chat_avatar_loading?, false)
+      |> assign(:chat_avatar_loaded?, true)
+      |> assign(:chat_avatar_url, avatar_url)
+      |> update_chat_presence_avatar()
+
+    {:noreply, refresh_graph_presences(socket)}
+  end
+
+  @impl true
+  def handle_async(:fetch_chat_avatar, {:ok, _result}, socket) do
+    {:noreply,
+     socket
+     |> assign(:chat_avatar_loading?, false)
+     |> assign(:chat_avatar_loaded?, true)}
+  end
+
+  @impl true
+  def handle_async(:fetch_chat_avatar, {:exit, _reason}, socket) do
+    {:noreply,
+     socket
+     |> assign(:chat_avatar_loading?, false)
+     |> assign(:chat_avatar_loaded?, true)}
+  end
+
   defp handle_selection_action(
          :explain,
          selected_text,
@@ -1702,6 +1739,50 @@ defmodule DialecticWeb.GraphLive do
 
   defp grid_chat_topic(graph_id), do: "grid_chat:#{graph_id}"
 
+  defp maybe_load_chat_avatar(%{assigns: %{chat_avatar_loaded?: true}} = socket), do: socket
+
+  defp maybe_load_chat_avatar(%{assigns: %{chat_avatar_loading?: true}} = socket), do: socket
+
+  defp maybe_load_chat_avatar(%{assigns: %{chat_avatar_url: url}} = socket)
+       when is_binary(url) and url != "",
+       do: assign(socket, :chat_avatar_loaded?, true)
+
+  defp maybe_load_chat_avatar(
+         %{assigns: %{current_user: %User{gravatar_id: gravatar_id}}} = socket
+       )
+       when is_binary(gravatar_id) and gravatar_id != "" do
+    case GravatarCache.get(gravatar_id) do
+      {:ok, %{avatar_url: avatar_url}} when is_binary(avatar_url) and avatar_url != "" ->
+        socket
+        |> assign(:chat_avatar_url, avatar_url)
+        |> assign(:chat_avatar_loaded?, true)
+
+      _ ->
+        socket
+        |> assign(:chat_avatar_loading?, true)
+        |> start_async(:fetch_chat_avatar, fn -> GravatarCache.fetch(gravatar_id) end)
+    end
+  end
+
+  defp maybe_load_chat_avatar(socket), do: assign(socket, :chat_avatar_loaded?, true)
+
+  defp update_chat_presence_avatar(%{assigns: %{chat_avatar_url: avatar_url}} = socket)
+       when is_binary(avatar_url) and avatar_url != "" do
+    if connected?(socket) do
+      _ =
+        DialecticWeb.Presence.update(self(), "online_users", socket.assigns.user, fn meta ->
+          meta
+          |> Map.put(:graph_id, socket.assigns.graph_id)
+          |> Map.put(:display_name, presence_display_name(socket.assigns[:current_user]))
+          |> Map.put(:avatar_url, avatar_url)
+        end)
+    end
+
+    socket
+  end
+
+  defp update_chat_presence_avatar(socket), do: socket
+
   defp build_grid_chat_message(socket, message) do
     author = presence_display_name(socket.assigns[:current_user])
 
@@ -1710,6 +1791,7 @@ defmodule DialecticWeb.GraphLive do
       author_id: socket.assigns[:current_user] && socket.assigns.current_user.id,
       author: author,
       author_initials: initials_for_name(author),
+      author_avatar_url: socket.assigns[:chat_avatar_url],
       body: message,
       sent_at_label: Calendar.strftime(DateTime.utc_now(), "%H:%M")
     }
@@ -2119,6 +2201,9 @@ defmodule DialecticWeb.GraphLive do
       combine_selected_nodes: [],
       graph_owner_name: nil,
       presence_count: 0,
+      chat_avatar_url: nil,
+      chat_avatar_loading?: false,
+      chat_avatar_loaded?: false,
       chat_form: empty_chat_form()
     )
   end
@@ -2136,7 +2221,8 @@ defmodule DialecticWeb.GraphLive do
       DialecticWeb.Presence.track_user(user, %{
         id: user,
         graph_id: graph_id,
-        display_name: presence_display_name(socket.assigns[:current_user])
+        display_name: presence_display_name(socket.assigns[:current_user]),
+        avatar_url: socket.assigns[:chat_avatar_url]
       })
 
       DialecticWeb.Presence.subscribe()

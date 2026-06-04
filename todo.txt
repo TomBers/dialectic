@@ -1,0 +1,8 @@
+For the notifications.
+
+Step 1 - build an internal notifcations that show up on a notifcations page.
+
+- Think about what to display - Updates on my graphs,
+Updates on Graphs I am interested in following
+
+Step 2 - turn into digested emails

@@ -414,13 +414,14 @@ const graphHook = {
       if (e.key === "Enter") {
         const t = e.target;
         const tag = (t && t.tagName) || "";
+        const isGridChatInput = t && t.closest("#grid-chat-form");
         const isEditable =
           tag === "INPUT" ||
           tag === "TEXTAREA" ||
           (t &&
             (t.isContentEditable ||
               t.closest('[contenteditable="true"], [contenteditable=""]')));
-        if (isEditable) {
+        if (isEditable && !isGridChatInput) {
           // Allow default behavior (submit/newline) but stop bubbling to LiveView shortcut
           e.stopPropagation();
         }
@@ -435,6 +436,7 @@ const graphHook = {
 
       const t = e.target;
       const tag = (t && t.tagName) || "";
+      const isGridChatInput = t && t.closest("#grid-chat-form");
       const isEditable =
         tag === "INPUT" ||
         tag === "TEXTAREA" ||
@@ -442,7 +444,7 @@ const graphHook = {
           (t.isContentEditable ||
             t.closest('[contenteditable="true"], [contenteditable=""]')));
 
-      if (isEditable) {
+      if (isEditable && !isGridChatInput) {
         e.stopPropagation();
       }
     };

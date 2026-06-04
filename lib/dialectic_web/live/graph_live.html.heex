@@ -305,7 +305,12 @@
         tabindex="0"
       >
         <%= if @presentation_mode != :presenting do %>
-          <.grid_chat_toggle graph_id={@graph_id} presence_count={@presence_count} />
+          <.grid_chat_toggle
+            graph_id={@graph_id}
+            presence_count={@presence_count}
+            avatar_url={@chat_avatar_url}
+            current_user={@current_user}
+          />
 
           <div class="pointer-events-none absolute right-4 top-4 z-20 flex flex-col items-end gap-2">
             <div class="pointer-events-auto inline-flex items-center gap-3 rounded-full border border-slate-200/90 bg-white/95 px-3 py-2 text-xs font-semibold text-slate-700 shadow-[0_18px_30px_-24px_rgba(15,23,42,0.55)] ring-1 ring-white/80 backdrop-blur">
@@ -520,6 +525,7 @@
         chat_form={@chat_form}
         presence_count={@presence_count}
         current_user={@current_user}
+        avatar_url={@chat_avatar_url}
       />
 
       <div

@@ -79,6 +79,7 @@ hooks.GridChatForm = {
       }
 
       event.preventDefault();
+      event.stopPropagation();
       if (typeof this.el.requestSubmit === "function") {
         this.el.requestSubmit();
       } else {
@@ -88,7 +89,7 @@ hooks.GridChatForm = {
       }
     };
 
-    this.textarea?.addEventListener("keydown", this.handleKeyDown);
+    this.textarea?.addEventListener("keydown", this.handleKeyDown, true);
 
     this.handleEvent("clear_grid_chat_form", () => {
       const form = this.el;
@@ -105,7 +106,7 @@ hooks.GridChatForm = {
   },
 
   destroyed() {
-    this.textarea?.removeEventListener("keydown", this.handleKeyDown);
+    this.textarea?.removeEventListener("keydown", this.handleKeyDown, true);
   },
 };
 hooks.GlobalModalLayer = {
@@ -343,6 +344,11 @@ hooks.GraphLayout = {
       if (!targetPanel) return;
 
       const isClosed = targetPanel.classList.contains("translate-x-full");
+
+      if (id === "chat-drawer" && isClosed) {
+        this.pushEvent("open_grid_chat", {});
+      }
+
       const sideDrawer = document.getElementById("side-drawer");
       const sideDrawerIsOpen =
         sideDrawer && !sideDrawer.classList.contains("-translate-x-full");
