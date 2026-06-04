@@ -32,7 +32,7 @@ defmodule DialecticWeb.GridChat do
     Presence.track_user(presence_key, %{
       id: presence_key,
       graph_id: graph_id,
-      display_name: display_name(socket.assigns[:current_user]),
+      display_name: base_display_name(socket.assigns[:current_user]),
       avatar_url: socket.assigns[:chat_avatar_url]
     })
 
@@ -44,7 +44,7 @@ defmodule DialecticWeb.GridChat do
   def init_streams(socket, graph_id) do
     presences =
       if Phoenix.LiveView.connected?(socket) do
-        Presence.list_online_users(graph_id)
+        list_online_presences(graph_id)
       else
         []
       end
@@ -179,7 +179,7 @@ defmodule DialecticWeb.GridChat do
           meta
           |> Map.put(:id, presence_key)
           |> Map.put(:graph_id, socket.assigns.graph_id)
-          |> Map.put(:display_name, display_name(socket.assigns[:current_user]))
+          |> Map.put(:display_name, base_display_name(socket.assigns[:current_user]))
           |> Map.put(:avatar_url, avatar_url)
         end)
     end
@@ -192,7 +192,7 @@ defmodule DialecticWeb.GridChat do
   defp refresh_presences(socket), do: refresh_presences(socket, socket.assigns.graph_id)
 
   defp refresh_presences(socket, graph_id) do
-    presences = Presence.list_online_users(graph_id)
+    presences = list_online_presences(graph_id)
 
     socket
     |> Phoenix.LiveView.stream(:presences, presences, reset: true)
@@ -200,7 +200,7 @@ defmodule DialecticWeb.GridChat do
   end
 
   defp build_message(socket, message) do
-    author = display_name(socket.assigns[:current_user])
+    author = display_name(socket)
 
     %{
       id: Ecto.UUID.generate(),
@@ -213,15 +213,30 @@ defmodule DialecticWeb.GridChat do
     }
   end
 
-  defp display_name(%User{} = user), do: User.display_name(user)
-  defp display_name(_user), do: "Guest"
+  defp display_name(%{assigns: %{current_user: %User{} = user}}), do: User.display_name(user)
+
+  defp display_name(socket) do
+    socket.assigns.graph_id
+    |> guest_labels_by_key()
+    |> Map.get(presence_key(socket), "Guest")
+  end
+
+  defp base_display_name(%User{} = user), do: User.display_name(user)
+  defp base_display_name(_user), do: "Guest"
 
   defp presence_key(%{assigns: %{current_user: %User{email: email}}})
        when is_binary(email) and email != "",
        do: email
 
-  defp presence_key(%{id: socket_id}) when is_binary(socket_id) and socket_id != "",
-    do: "guest:#{socket_id}"
+  defp presence_key(%{assigns: _assigns, id: socket_id})
+       when is_binary(socket_id) and socket_id != "",
+       do: "guest:#{socket_id}"
+
+  defp presence_key(%{id: id}) when is_binary(id) and id != "", do: id
+
+  defp presence_key(%{metas: [meta | _]}) do
+    Map.get(meta, :id) || Map.get(meta, "id")
+  end
 
   defp presence_key(socket), do: socket.assigns.user
 
@@ -232,4 +247,43 @@ defmodule DialecticWeb.GridChat do
   end
 
   defp connected_to_graph?(_presence, _graph_id), do: false
+
+  defp list_online_presences(graph_id) do
+    presences = Presence.list_online_users(graph_id)
+    labels_by_key = guest_labels_by_key(presences)
+
+    Enum.map(presences, fn presence ->
+      case Map.fetch(labels_by_key, presence_key(presence)) do
+        {:ok, label} -> put_presence_display_name(presence, label)
+        :error -> presence
+      end
+    end)
+  end
+
+  defp guest_labels_by_key(graph_id) when is_binary(graph_id) do
+    graph_id
+    |> Presence.list_online_users()
+    |> guest_labels_by_key()
+  end
+
+  defp guest_labels_by_key(presences) when is_list(presences) do
+    presences
+    |> Enum.map(&presence_key/1)
+    |> Enum.filter(&guest_key?/1)
+    |> Enum.sort()
+    |> Enum.with_index(1)
+    |> Map.new(fn
+      {key, 1} -> {key, "Guest"}
+      {key, index} -> {key, "Guest #{index}"}
+    end)
+  end
+
+  defp guest_key?("guest:" <> _socket_id), do: true
+  defp guest_key?(_key), do: false
+
+  defp put_presence_display_name(%{metas: metas} = presence, label) when is_list(metas) do
+    %{presence | metas: Enum.map(metas, &Map.put(&1, :display_name, label))}
+  end
+
+  defp put_presence_display_name(presence, _label), do: presence
 end

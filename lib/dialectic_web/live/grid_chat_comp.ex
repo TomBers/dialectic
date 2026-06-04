@@ -83,17 +83,29 @@ defmodule DialecticWeb.GridChatComp do
                 </div>
               </div>
             </div>
-            <button
-              type="button"
-              phx-click={
-                JS.dispatch("toggle-panel", to: "#graph-layout", detail: %{id: "chat-drawer"})
-              }
-              class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white/90 text-slate-500 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800"
-              aria-label="Close viewer chat"
-              title="Close panel"
-            >
-              <.icon name="hero-x-mark" class="h-4 w-4" />
-            </button>
+            <div class="flex shrink-0 items-center gap-1.5">
+              <button
+                type="button"
+                phx-click="open_share_modal"
+                class="inline-flex h-9 items-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50 px-2.5 text-xs font-semibold text-indigo-700 shadow-sm transition hover:border-indigo-300 hover:bg-indigo-100 hover:text-indigo-800"
+                aria-label="Invite people to this grid"
+                title="Invite people"
+              >
+                <.icon name="hero-user-plus" class="h-4 w-4" />
+                <span>Invite</span>
+              </button>
+              <button
+                type="button"
+                phx-click={
+                  JS.dispatch("toggle-panel", to: "#graph-layout", detail: %{id: "chat-drawer"})
+                }
+                class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white/90 text-slate-500 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800"
+                aria-label="Close viewer chat"
+                title="Close panel"
+              >
+                <.icon name="hero-x-mark" class="h-4 w-4" />
+              </button>
+            </div>
           </div>
 
           <div class="mt-2 rounded-xl border border-slate-200/80 bg-slate-50/80 px-2 py-1.5 ring-1 ring-white/80">
