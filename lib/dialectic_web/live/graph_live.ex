@@ -4,12 +4,14 @@ defmodule DialecticWeb.GraphLive do
 
   alias Dialectic.Graph.{Vertex, GraphActions, Siblings}
   alias Dialectic.Accounts.User
+  alias DialecticWeb.GridChat
   alias DialecticWeb.NodeComp
   alias DialecticWeb.GraphHelpers
   alias DialecticWeb.HighlightShare
   alias DialecticWeb.NodeSearch
 
   import DialecticWeb.GraphPresentation
+  import DialecticWeb.GridChatComp, only: [grid_chat_drawer: 1, grid_chat_toggle: 1]
   import DialecticWeb.PresentationStageComp, only: [presentation_stage: 1]
 
   alias DialecticWeb.Utils.UserUtils
@@ -29,6 +31,7 @@ defmodule DialecticWeb.GraphLive do
   # Called after mount on initial page load and on every live_patch.
   # Detects ?present=true&slides=1,2,3&title=... and boots directly into
   # presenting mode so shared links open the presentation automatically.
+  @impl true
   def handle_params(%{"present" => "true", "slides" => slides_str} = params, _uri, socket) do
     slide_ids =
       slides_str
@@ -81,6 +84,7 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_params(_params, _uri, socket), do: {:noreply, socket}
 
+  @impl true
   def mount(%{"graph_name" => graph_id_uri} = params, _session, socket) do
     graph_id = URI.decode(graph_id_uri)
     user = UserUtils.current_identity(socket.assigns)
@@ -110,7 +114,7 @@ defmodule DialecticWeb.GraphLive do
         socket =
           socket
           |> assign_defaults()
-          |> subscribe_to_topics(graph_title, user)
+          |> subscribe_to_topics(graph_title)
           |> assign_graph_data(graph_db, graph_struct, node, graph_title, user)
           |> assign(token: params["token"])
           |> handle_initial_highlight(initial_highlight_id)
@@ -129,6 +133,15 @@ defmodule DialecticWeb.GraphLive do
 
   defp default_node do
     GraphHelpers.default_node()
+  end
+
+  @impl true
+  def handle_event("send_grid_chat", %{"grid_chat" => %{"message" => message}}, socket) do
+    {:noreply, GridChat.send_message(socket, message)}
+  end
+
+  def handle_event("open_grid_chat", _params, socket) do
+    {:noreply, GridChat.open(socket)}
   end
 
   def handle_event("set_prompt_mode", %{"prompt_mode" => mode}, socket) do
@@ -1299,6 +1312,7 @@ defmodule DialecticWeb.GraphLive do
   defp maybe_clear_presentation(socket, _params), do: socket
 
   # Handle selection action messages from SelectionActionsComp
+  @impl true
   def handle_info({:selection_action, params}, socket) do
     case GraphHelpers.check_selection_action_allowed(socket) do
       {:error, :locked} ->
@@ -1330,19 +1344,15 @@ defmodule DialecticWeb.GraphLive do
   # Highlight PubSub (:created, :updated, :deleted) injected by GraphStreaming
 
   def handle_info({DialecticWeb.Presence, {:join, presence}}, socket) do
-    if is_connected_to_graph?(presence, socket.assigns.graph_id) do
-      {:noreply, stream_insert(socket, :presences, presence)}
-    else
-      {:noreply, socket}
-    end
+    {:noreply, GridChat.handle_presence_join(socket, presence)}
   end
 
   def handle_info({DialecticWeb.Presence, {:leave, presence}}, socket) do
-    if presence.metas == [] do
-      {:noreply, stream_delete(socket, :presences, presence)}
-    else
-      {:noreply, stream_insert(socket, :presences, presence)}
-    end
+    {:noreply, GridChat.handle_presence_leave(socket, presence)}
+  end
+
+  def handle_info({:grid_chat_message, message}, socket) do
+    {:noreply, GridChat.insert_message(socket, message)}
   end
 
   def handle_info({:other_user_change, sender_pid}, socket) do
@@ -1402,6 +1412,11 @@ defmodule DialecticWeb.GraphLive do
     else
       {:noreply, socket}
     end
+  end
+
+  @impl true
+  def handle_async(:fetch_chat_avatar, result, socket) do
+    {:noreply, GridChat.handle_avatar_result(socket, result)}
   end
 
   defp handle_selection_action(
@@ -1677,10 +1692,6 @@ defmodule DialecticWeb.GraphLive do
       {:ok, highlight} -> highlight
       {:error, _changeset} -> nil
     end
-  end
-
-  defp is_connected_to_graph?(%{metas: metas}, graph_id) do
-    Enum.any?(metas, fn %{graph_id: gid} -> gid == graph_id end)
   end
 
   def format_graph(graph) do
@@ -2047,9 +2058,10 @@ defmodule DialecticWeb.GraphLive do
       combine_selected_nodes: [],
       graph_owner_name: nil
     )
+    |> assign(GridChat.default_assigns())
   end
 
-  defp subscribe_to_topics(socket, graph_id, user) do
+  defp subscribe_to_topics(socket, graph_id) do
     if connected?(socket) do
       live_view_topic = "graph_update:#{socket.id}"
       graph_topic = "graph_update:#{graph_id}"
@@ -2057,16 +2069,14 @@ defmodule DialecticWeb.GraphLive do
       Phoenix.PubSub.subscribe(Dialectic.PubSub, live_view_topic)
       Phoenix.PubSub.subscribe(Dialectic.PubSub, graph_topic)
       Highlights.subscribe(graph_id)
-      DialecticWeb.Presence.track_user(user, %{id: user, graph_id: graph_id})
-      DialecticWeb.Presence.subscribe()
 
-      presences = DialecticWeb.Presence.list_online_users(graph_id)
+      socket = GridChat.subscribe(socket, graph_id)
 
       # Load highlights asynchronously after connection - doesn't block initial render
       highlights = Highlights.list_highlights_with_links(mudg_id: graph_id)
 
       socket
-      |> stream(:presences, presences)
+      |> GridChat.init_streams(graph_id)
       |> assign(highlights: highlights)
       |> push_event("highlights_loaded", %{
         highlights: serialize_highlights(highlights)
@@ -2076,7 +2086,7 @@ defmodule DialecticWeb.GraphLive do
       highlights = Highlights.list_highlights_with_links(mudg_id: graph_id)
 
       socket
-      |> stream(:presences, [])
+      |> GridChat.init_streams(graph_id)
       |> assign(highlights: highlights)
     end
   end

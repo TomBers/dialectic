@@ -40,6 +40,7 @@ import PresentationHook, {
   PresentationSetupHook,
 } from "./presentation_hook.js";
 import ShareHook from "./share_hook.js";
+import GridChatFormHook from "./grid_chat_form_hook.js";
 
 let hooks = {};
 
@@ -61,6 +62,7 @@ hooks.SearchNav = SearchNav;
 hooks.Presentation = PresentationHook;
 hooks.PresentationSetup = PresentationSetupHook;
 hooks.Share = ShareHook;
+hooks.GridChatForm = GridChatFormHook;
 hooks.GlobalModalLayer = {
   mounted() {
     const header = document.getElementById("userHeader");
@@ -296,6 +298,11 @@ hooks.GraphLayout = {
       if (!targetPanel) return;
 
       const isClosed = targetPanel.classList.contains("translate-x-full");
+
+      if (id === "chat-drawer" && isClosed) {
+        this.pushEvent("open_grid_chat", {});
+      }
+
       const sideDrawer = document.getElementById("side-drawer");
       const sideDrawerIsOpen =
         sideDrawer && !sideDrawer.classList.contains("-translate-x-full");
@@ -551,6 +558,7 @@ hooks.GraphLayout = {
       "highlights-drawer",
       "presentation-drawer",
       "combine-drawer",
+      "chat-drawer",
     ];
   },
   _closeAllPanels() {

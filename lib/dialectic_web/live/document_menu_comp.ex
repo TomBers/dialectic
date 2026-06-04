@@ -22,7 +22,7 @@ defmodule DialecticWeb.DocumentMenuComp do
         title="Open how-to guide for this page"
       >
         <.icon name="hero-academic-cap" class="h-4 w-4" />
-        <span class="hidden sm:inline">How to use</span>
+        <span class={action_label_classes(@compact)}>How to use</span>
       </button>
 
       <button
@@ -49,7 +49,7 @@ defmodule DialecticWeb.DocumentMenuComp do
         title="Present this grid"
       >
         <.icon name="hero-presentation-chart-bar" class="h-4 w-4" />
-        <span class="hidden sm:inline">Present</span>
+        <span class={action_label_classes(@compact)}>Present</span>
       </button>
 
       <button
@@ -67,7 +67,7 @@ defmodule DialecticWeb.DocumentMenuComp do
         title="Open workspace settings"
       >
         <.icon name="hero-adjustments-horizontal" class="h-4 w-4" />
-        <span class="hidden sm:inline">Settings</span>
+        <span class={action_label_classes(@compact)}>Settings</span>
       </button>
 
       <%= if @can_edit == false do %>
@@ -104,4 +104,7 @@ defmodule DialecticWeb.DocumentMenuComp do
       "hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900"
     ]
   end
+
+  defp action_label_classes(true), do: "hidden xl:inline"
+  defp action_label_classes(false), do: "hidden sm:inline"
 end
