@@ -163,35 +163,35 @@ defmodule DialecticWeb.GridChatComp do
           </div>
           <div :for={{message_dom_id, message} <- @messages} id={message_dom_id}>
             <div class={message_row_classes(message, @current_user)}>
-              <div class="flex items-start gap-2.5">
-                <span class={[
-                  "inline-flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full text-[10px] font-bold uppercase shadow-sm ring-1 ring-white/90",
-                  authored_by_current_user?(message, @current_user) &&
-                    "bg-gradient-to-br from-indigo-600 to-violet-600 text-white",
-                  !authored_by_current_user?(message, @current_user) &&
-                    "bg-slate-900 text-white"
-                ]}>
-                  <img
-                    :if={avatar_url?(message_avatar_url(message))}
-                    src={message_avatar_url(message)}
-                    alt={message_avatar_alt(message)}
-                    class="h-8 w-8 object-cover"
-                  />
-                  <span :if={!avatar_url?(message_avatar_url(message))}>
-                    {message.author_initials}
+              <div class="min-w-0">
+                <div class="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
+                  <span class={[
+                    "inline-flex h-4 w-4 shrink-0 translate-y-0.5 items-center justify-center overflow-hidden rounded-full text-[7px] font-bold uppercase ring-1 ring-white/90",
+                    authored_by_current_user?(message, @current_user) &&
+                      "bg-gradient-to-br from-indigo-600 to-violet-600 text-white",
+                    !authored_by_current_user?(message, @current_user) &&
+                      "bg-slate-900 text-white"
+                  ]}>
+                    <img
+                      :if={avatar_url?(message_avatar_url(message))}
+                      src={message_avatar_url(message)}
+                      alt={message_avatar_alt(message)}
+                      class="h-4 w-4 object-cover"
+                    />
+                    <span :if={!avatar_url?(message_avatar_url(message))}>
+                      {message.author_initials}
+                    </span>
                   </span>
-                </span>
-                <div class="min-w-0 flex-1 pt-px">
-                  <div class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 leading-4">
+                  <span class="inline-flex items-baseline gap-x-1.5 leading-5">
                     <span class={message_author_classes(message, @current_user)}>
                       {message.author}
                     </span>
                     <span class="text-[11px] font-medium leading-4 text-slate-400">
                       {message.sent_at_label}
                     </span>
-                  </div>
+                  </span>
                   <p class={message_body_classes(message, @current_user)}>
-                    {message_body_text(message)}
+                    {message_body_html(message)}
                   </p>
                 </div>
               </div>
@@ -255,7 +255,7 @@ defmodule DialecticWeb.GridChatComp do
 
   defp message_author_classes(message, current_user) do
     [
-      "truncate text-[13px] font-semibold leading-4",
+      "text-[12px] font-semibold leading-5",
       authored_by_current_user?(message, current_user) && "text-indigo-700",
       !authored_by_current_user?(message, current_user) && "text-slate-900"
     ]
@@ -263,10 +263,22 @@ defmodule DialecticWeb.GridChatComp do
 
   defp message_body_classes(message, current_user) do
     [
-      "mt-px whitespace-pre-wrap break-words text-left text-[15px] leading-[1.45] [overflow-wrap:anywhere]",
+      "min-w-0 flex-[1_1_100%] break-words text-left text-sm leading-5 [overflow-wrap:anywhere] sm:flex-1",
       authored_by_current_user?(message, current_user) && "text-slate-800",
       !authored_by_current_user?(message, current_user) && "text-slate-700"
     ]
+  end
+
+  defp message_body_html(message) do
+    message
+    |> message_body_text()
+    |> String.split(~r/\R/u, trim: false)
+    |> Enum.map_join("<br>", fn line ->
+      line
+      |> html_escape()
+      |> safe_to_string()
+    end)
+    |> raw()
   end
 
   defp message_body_text(message), do: String.trim(to_string(message.body || ""))
