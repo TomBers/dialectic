@@ -224,9 +224,8 @@ defmodule DialecticWeb.GridChat do
   defp base_display_name(%User{} = user), do: User.display_name(user)
   defp base_display_name(_user), do: "Guest"
 
-  defp presence_key(%{assigns: %{current_user: %User{email: email}}})
-       when is_binary(email) and email != "",
-       do: email
+  defp presence_key(%{assigns: %{current_user: %User{id: user_id}}}) when not is_nil(user_id),
+    do: "user:#{user_id}"
 
   defp presence_key(%{assigns: _assigns, id: socket_id})
        when is_binary(socket_id) and socket_id != "",
@@ -238,7 +237,7 @@ defmodule DialecticWeb.GridChat do
     Map.get(meta, :id) || Map.get(meta, "id")
   end
 
-  defp presence_key(socket), do: socket.assigns.user
+  defp presence_key(_socket), do: "guest:#{:erlang.phash2(self())}"
 
   defp connected_to_graph?(%{metas: metas}, graph_id) do
     Enum.any?(metas, fn meta ->
