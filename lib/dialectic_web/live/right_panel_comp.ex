@@ -179,25 +179,22 @@ defmodule DialecticWeb.RightPanelComp do
 
   defp activity_timestamp(inserted_at), do: to_string(inserted_at)
 
-  defp activity_node_link(%{node_id: node_id}, graph_id)
+  defp activity_node_ref(%{node_id: node_id}, graph_id)
        when is_binary(node_id) and node_id != "" do
     case GraphManager.find_node_by_id(graph_id, node_id) do
       nil ->
         nil
 
       node ->
-        if Map.get(node, :deleted, false) do
-          nil
-        else
-          %{
-            id: node_id,
-            title: NodeTitleHelper.extract_node_title(node, max_length: 70)
-          }
-        end
+        %{
+          id: node_id,
+          title: NodeTitleHelper.extract_node_title(node, max_length: 70),
+          deleted: Map.get(node, :deleted, false)
+        }
     end
   end
 
-  defp activity_node_link(_log, _graph_id), do: nil
+  defp activity_node_ref(_log, _graph_id), do: nil
 
   # Truncates content so that URI.encode_www_form(result) fits within max_encoded_len.
   # Uses binary search on grapheme count to find the longest prefix that encodes within budget.
@@ -454,19 +451,29 @@ defmodule DialecticWeb.RightPanelComp do
                 id={"grid-activity-log-#{log.id}"}
                 class="rounded-lg border border-gray-100 bg-gray-50 px-2.5 py-2"
               >
-                <% node_link = activity_node_link(log, @graph_id) %>
+                <% node_ref = activity_node_ref(log, @graph_id) %>
                 <p class="text-xs text-gray-700 leading-snug">{log.message}</p>
-                <%= if node_link do %>
-                  <button
-                    type="button"
-                    phx-click="navigate_to_node"
-                    phx-value-node_id={node_link.id}
-                    class="mt-1 inline-flex max-w-full items-center gap-1 text-[11px] font-medium text-indigo-600 hover:text-indigo-800"
-                    title={node_link.title}
+                <%= if node_ref && node_ref.deleted do %>
+                  <span
+                    class="mt-1 inline-flex max-w-full items-center gap-1 text-[11px] font-medium text-gray-500"
+                    title={node_ref.title}
                   >
-                    <.icon name="hero-arrow-top-right-on-square" class="h-3 w-3 shrink-0" />
-                    <span class="truncate">{node_link.title}</span>
-                  </button>
+                    <.icon name="hero-trash" class="h-3 w-3 shrink-0" />
+                    <span class="truncate">{node_ref.title}</span>
+                  </span>
+                <% else %>
+                  <%= if node_ref do %>
+                    <button
+                      type="button"
+                      phx-click="navigate_to_node"
+                      phx-value-node_id={node_ref.id}
+                      class="mt-1 inline-flex max-w-full items-center gap-1 text-[11px] font-medium text-indigo-600 hover:text-indigo-800"
+                      title={node_ref.title}
+                    >
+                      <.icon name="hero-arrow-top-right-on-square" class="h-3 w-3 shrink-0" />
+                      <span class="truncate">{node_ref.title}</span>
+                    </button>
+                  <% end %>
                 <% end %>
                 <p class="mt-1 text-[10px] text-gray-400">{activity_timestamp(log.inserted_at)}</p>
               </li>

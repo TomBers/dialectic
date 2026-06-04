@@ -383,6 +383,13 @@ defmodule DialecticWeb.GraphLive do
                 next_node =
                   GraphActions.delete_node(graph_action_params(socket), node_id)
 
+                _ =
+                  GridActivity.record_node_deleted_async(
+                    socket.assigns.graph_id,
+                    activity_actor(socket),
+                    node_id
+                  )
+
                 GraphManager.save_graph(socket.assigns.graph_id)
                 {_, _graph2} = GraphManager.get_graph(socket.assigns.graph_id)
 
@@ -1928,17 +1935,6 @@ defmodule DialecticWeb.GraphLive do
     end
 
     {:noreply, new_socket}
-  end
-
-  defp maybe_record_activity(socket, "delete", _node) do
-    _ =
-      GridActivity.record_node_deleted_async(
-        socket.assigns.graph_id,
-        activity_actor(socket),
-        nil
-      )
-
-    :ok
   end
 
   defp maybe_record_activity(socket, operation, node) do

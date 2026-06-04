@@ -54,5 +54,20 @@ defmodule Dialectic.GridActivityTest do
       assert latest.action == "node.deleted"
       assert previous.action == "node.created"
     end
+
+    test "accepts messages longer than the default varchar limit" do
+      user = user_fixture()
+      title = unique_title("long-message")
+      assert {:ok, _graph} = Graphs.create_new_graph(title, user)
+
+      message = String.duplicate("Activity message ", 20)
+      assert String.length(message) > 255
+      assert String.length(message) <= 500
+
+      assert {:ok, %Log{} = log} =
+               GridActivity.record_node_created(title, user, message, "2")
+
+      assert log.message == message
+    end
   end
 end
