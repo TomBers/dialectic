@@ -1,6 +1,8 @@
 defmodule DialecticWeb.RightPanelComp do
   use DialecticWeb, :live_component
+  alias Dialectic.GridActivity
   alias Dialectic.Repo
+  alias DialecticWeb.Utils.NodeTitleHelper
 
   @moduledoc """
   Accordion-style right panel with:
@@ -54,13 +56,20 @@ defmodule DialecticWeb.RightPanelComp do
       |> assign_new(:group_states, fn -> %{} end)
       |> assign_new(:prompt_mode, fn -> "university" end)
       |> assign_new(:highlights, fn -> [] end)
+      |> assign_new(:activity_logs, fn -> load_activity_logs(graph_id) end)
       |> assign_new(:editing_highlight_id, fn -> nil end)
       |> assign_new(:open_sections, fn -> MapSet.new() end)
 
     {:ok, socket}
   end
 
-  @valid_sections ~w(configure workspace export utilities)
+  @valid_sections ~w(configure workspace activity export utilities)
+
+  defp load_activity_logs(graph_id) when is_binary(graph_id) and graph_id != "" do
+    GridActivity.list_for_graph(graph_id)
+  end
+
+  defp load_activity_logs(_graph_id), do: []
 
   @impl true
   def handle_event("toggle_section", %{"section" => section}, socket)
@@ -161,6 +170,34 @@ defmodule DialecticWeb.RightPanelComp do
   defp google_translate_url(encoded_text, tl) do
     "https://translate.google.com/?sl=auto&tl=#{tl}&text=#{encoded_text}&op=translate"
   end
+
+  defp activity_timestamp(nil), do: ""
+
+  defp activity_timestamp(%DateTime{} = inserted_at) do
+    Calendar.strftime(inserted_at, "%b %d, %H:%M")
+  end
+
+  defp activity_timestamp(inserted_at), do: to_string(inserted_at)
+
+  defp activity_node_link(%{node_id: node_id}, graph_id)
+       when is_binary(node_id) and node_id != "" do
+    case GraphManager.find_node_by_id(graph_id, node_id) do
+      nil ->
+        nil
+
+      node ->
+        if Map.get(node, :deleted, false) do
+          nil
+        else
+          %{
+            id: node_id,
+            title: NodeTitleHelper.extract_node_title(node, max_length: 70)
+          }
+        end
+    end
+  end
+
+  defp activity_node_link(_log, _graph_id), do: nil
 
   # Truncates content so that URI.encode_www_form(result) fits within max_encoded_len.
   # Uses binary search on grapheme count to find the longest prefix that encodes within budget.
@@ -375,6 +412,69 @@ defmodule DialecticWeb.RightPanelComp do
                 <% end %>
               </button>
             </div>
+          <% end %>
+        </div>
+      </details>
+
+      <%!-- Activity Section --%>
+      <details
+        id="details-activity"
+        class="group rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow transition-shadow"
+        open={MapSet.member?(@open_sections, "activity")}
+      >
+        <summary
+          class="list-none cursor-pointer select-none px-3 py-2.5 rounded-lg hover:bg-gray-50/50 transition-colors"
+          phx-click="toggle_section"
+          phx-value-section="activity"
+          phx-target={@myself}
+        >
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5">
+              <div class="flex items-center justify-center w-7 h-7 rounded-md bg-amber-50 text-amber-600">
+                <.icon name="hero-clock" class="w-4 h-4" />
+              </div>
+              <div>
+                <div class="text-xs font-semibold text-gray-800">Activity</div>
+                <p class="text-[10px] text-gray-500 leading-tight">
+                  Recent grid edits
+                </p>
+              </div>
+            </div>
+            <.icon
+              name="hero-chevron-down"
+              class="w-4 h-4 text-gray-400 transition-transform duration-200 group-open:rotate-180"
+            />
+          </div>
+        </summary>
+        <div class="border-t border-gray-100 px-3 py-2.5">
+          <%= if @activity_logs && length(@activity_logs) > 0 do %>
+            <ol id="grid-activity-log" class="space-y-2 max-h-56 overflow-y-auto pr-1">
+              <li
+                :for={log <- @activity_logs}
+                id={"grid-activity-log-#{log.id}"}
+                class="rounded-lg border border-gray-100 bg-gray-50 px-2.5 py-2"
+              >
+                <% node_link = activity_node_link(log, @graph_id) %>
+                <p class="text-xs text-gray-700 leading-snug">{log.message}</p>
+                <%= if node_link do %>
+                  <button
+                    type="button"
+                    phx-click="navigate_to_node"
+                    phx-value-node_id={node_link.id}
+                    class="mt-1 inline-flex max-w-full items-center gap-1 text-[11px] font-medium text-indigo-600 hover:text-indigo-800"
+                    title={node_link.title}
+                  >
+                    <.icon name="hero-arrow-top-right-on-square" class="h-3 w-3 shrink-0" />
+                    <span class="truncate">{node_link.title}</span>
+                  </button>
+                <% end %>
+                <p class="mt-1 text-[10px] text-gray-400">{activity_timestamp(log.inserted_at)}</p>
+              </li>
+            </ol>
+          <% else %>
+            <p id="grid-activity-log-empty" class="text-[11px] text-gray-400 text-center py-2">
+              No activity yet
+            </p>
           <% end %>
         </div>
       </details>

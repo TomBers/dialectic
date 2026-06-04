@@ -1,6 +1,7 @@
 defmodule Dialectic.DbActions.Graphs do
   alias Dialectic.Repo
   alias Dialectic.Accounts.Graph
+  alias Dialectic.GridActivity
 
   import Ecto.Query
 
@@ -92,6 +93,7 @@ defmodule Dialectic.DbActions.Graphs do
 
     case result do
       {:ok, graph} ->
+        _ = GridActivity.record_graph_created_async(graph.title, user)
         maybe_tag_graph(graph)
         {:ok, graph}
 

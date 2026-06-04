@@ -17,6 +17,7 @@ defmodule DialecticWeb.GraphLive do
   alias DialecticWeb.Utils.UserUtils
   alias DialecticWeb.Utils.NodeTitleHelper
   alias Dialectic.Highlights
+  alias Dialectic.GridActivity
   alias Dialectic.Repo
 
   alias Phoenix.PubSub
@@ -1833,6 +1834,7 @@ defmodule DialecticWeb.GraphLive do
       end
 
     {nav_up, nav_down, nav_left, nav_right} = compute_nav_flags(socket.assigns.graph_id, node)
+    maybe_record_activity(socket, operation, node)
 
     # Skip f_graph regeneration for content-only updates to prevent stuttering
     # Structural operations (new nodes/edges) must regenerate so Cytoscape stays in sync
@@ -1884,7 +1886,8 @@ defmodule DialecticWeb.GraphLive do
              "combine",
              "ideas",
              "explain",
-             "deepdive"
+             "deepdive",
+             "regenerate"
            ] &&
              node && Map.get(node, :id) do
           push_event(s, "center_node", %{id: node.id})
@@ -1913,7 +1916,9 @@ defmodule DialecticWeb.GraphLive do
          "combine",
          "ideas",
          "explain",
-         "deepdive"
+         "deepdive",
+         "regenerate",
+         "delete"
        ] do
       PubSub.broadcast(
         Dialectic.PubSub,
@@ -1924,6 +1929,74 @@ defmodule DialecticWeb.GraphLive do
 
     {:noreply, new_socket}
   end
+
+  defp maybe_record_activity(socket, "delete", _node) do
+    _ =
+      GridActivity.record_node_deleted_async(
+        socket.assigns.graph_id,
+        activity_actor(socket),
+        nil
+      )
+
+    :ok
+  end
+
+  defp maybe_record_activity(socket, operation, node) do
+    actor = activity_actor(socket)
+
+    case activity_message(operation, actor) do
+      nil ->
+        :ok
+
+      message ->
+        _ =
+          GridActivity.record_node_created_async(
+            socket.assigns.graph_id,
+            actor,
+            message,
+            node_id(node)
+          )
+
+        :ok
+    end
+  end
+
+  defp activity_actor(socket), do: socket.assigns[:current_user] || socket.assigns[:user]
+
+  defp activity_message("comment", actor),
+    do: "#{GridActivity.actor_name(actor)} added a comment."
+
+  defp activity_message("user", actor),
+    do: "#{GridActivity.actor_name(actor)} added a comment."
+
+  defp activity_message("answer", actor),
+    do: "#{GridActivity.actor_name(actor)} asked a follow-up question."
+
+  defp activity_message("branch", actor),
+    do: "#{GridActivity.actor_name(actor)} branched from a node."
+
+  defp activity_message("combine", actor),
+    do: "#{GridActivity.actor_name(actor)} added a synthesis."
+
+  defp activity_message("ideas", actor),
+    do: "#{GridActivity.actor_name(actor)} added related ideas."
+
+  defp activity_message("explain", actor),
+    do: "#{GridActivity.actor_name(actor)} asked about selected text."
+
+  defp activity_message("deepdive", actor),
+    do: "#{GridActivity.actor_name(actor)} added a deep dive."
+
+  defp activity_message("start_stream", actor),
+    do: "#{GridActivity.actor_name(actor)} added a new starting point."
+
+  defp activity_message("regenerate", actor),
+    do: "#{GridActivity.actor_name(actor)} regenerated a node."
+
+  defp activity_message(_, _actor), do: nil
+
+  defp node_id(node) when is_map(node), do: Map.get(node, :id)
+  defp node_id(_), do: nil
 
   # Helper to preserve and re-apply right panel state across node changes/moves
   defp reapply_right_panel_state(socket, updated_socket) do
