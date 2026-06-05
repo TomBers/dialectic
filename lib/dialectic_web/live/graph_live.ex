@@ -17,6 +17,7 @@ defmodule DialecticWeb.GraphLive do
   alias DialecticWeb.Utils.UserUtils
   alias DialecticWeb.Utils.NodeTitleHelper
   alias Dialectic.Highlights
+  alias Dialectic.GridActivity
   alias Dialectic.Repo
 
   alias Phoenix.PubSub
@@ -381,6 +382,13 @@ defmodule DialecticWeb.GraphLive do
 
                 next_node =
                   GraphActions.delete_node(graph_action_params(socket), node_id)
+
+                _ =
+                  GridActivity.record_node_deleted_async(
+                    socket.assigns.graph_id,
+                    activity_actor(socket),
+                    node
+                  )
 
                 GraphManager.save_graph(socket.assigns.graph_id)
                 {_, _graph2} = GraphManager.get_graph(socket.assigns.graph_id)
@@ -1444,7 +1452,7 @@ defmodule DialecticWeb.GraphLive do
         Highlights.add_link(highlight.id, answer_node.id, "explain")
       end
 
-      update_graph(socket, {nil, answer_node}, "answer")
+      update_graph(socket, {nil, answer_node}, "explain")
     else
       # If highlight creation fails, still create the nodes
       update_graph(
@@ -1454,7 +1462,7 @@ defmodule DialecticWeb.GraphLive do
           "Please explain: #{selected_text}",
           minimal_context: true
         ),
-        "answer"
+        "explain"
       )
     end
   end
@@ -1571,7 +1579,7 @@ defmodule DialecticWeb.GraphLive do
         Highlights.add_link(highlight.id, answer_node.id, "question")
       end
 
-      update_graph(socket, {nil, answer_node}, "answer")
+      update_graph(socket, {nil, answer_node}, "selection_question")
     else
       # If highlight creation fails, still create the nodes
       update_graph(
@@ -1581,7 +1589,7 @@ defmodule DialecticWeb.GraphLive do
           "#{question_text}\n\nRegarding: \"#{selected_text}\"",
           selected_text
         ),
-        "answer"
+        "selection_question"
       )
     end
   end
@@ -1833,6 +1841,7 @@ defmodule DialecticWeb.GraphLive do
       end
 
     {nav_up, nav_down, nav_left, nav_right} = compute_nav_flags(socket.assigns.graph_id, node)
+    maybe_record_activity(socket, operation, node)
 
     # Skip f_graph regeneration for content-only updates to prevent stuttering
     # Structural operations (new nodes/edges) must regenerate so Cytoscape stays in sync
@@ -1884,7 +1893,9 @@ defmodule DialecticWeb.GraphLive do
              "combine",
              "ideas",
              "explain",
-             "deepdive"
+             "selection_question",
+             "deepdive",
+             "regenerate"
            ] &&
              node && Map.get(node, :id) do
           push_event(s, "center_node", %{id: node.id})
@@ -1913,7 +1924,10 @@ defmodule DialecticWeb.GraphLive do
          "combine",
          "ideas",
          "explain",
-         "deepdive"
+         "selection_question",
+         "deepdive",
+         "regenerate",
+         "delete"
        ] do
       PubSub.broadcast(
         Dialectic.PubSub,
@@ -1924,6 +1938,26 @@ defmodule DialecticWeb.GraphLive do
 
     {:noreply, new_socket}
   end
+
+  defp maybe_record_activity(socket, operation, node) do
+    case GridActivity.Actions.for_graph_operation(operation) do
+      nil ->
+        :ok
+
+      action ->
+        _ =
+          GridActivity.record_node_event_async(
+            socket.assigns.graph_id,
+            activity_actor(socket),
+            action,
+            node
+          )
+
+        :ok
+    end
+  end
+
+  defp activity_actor(socket), do: socket.assigns[:current_user] || socket.assigns[:user]
 
   # Helper to preserve and re-apply right panel state across node changes/moves
   defp reapply_right_panel_state(socket, updated_socket) do
