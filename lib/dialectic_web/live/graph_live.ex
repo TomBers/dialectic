@@ -387,7 +387,7 @@ defmodule DialecticWeb.GraphLive do
                   GridActivity.record_node_deleted_async(
                     socket.assigns.graph_id,
                     activity_actor(socket),
-                    node_id
+                    node
                   )
 
                 GraphManager.save_graph(socket.assigns.graph_id)
@@ -1452,7 +1452,7 @@ defmodule DialecticWeb.GraphLive do
         Highlights.add_link(highlight.id, answer_node.id, "explain")
       end
 
-      update_graph(socket, {nil, answer_node}, "answer")
+      update_graph(socket, {nil, answer_node}, "explain")
     else
       # If highlight creation fails, still create the nodes
       update_graph(
@@ -1462,7 +1462,7 @@ defmodule DialecticWeb.GraphLive do
           "Please explain: #{selected_text}",
           minimal_context: true
         ),
-        "answer"
+        "explain"
       )
     end
   end
@@ -1579,7 +1579,7 @@ defmodule DialecticWeb.GraphLive do
         Highlights.add_link(highlight.id, answer_node.id, "question")
       end
 
-      update_graph(socket, {nil, answer_node}, "answer")
+      update_graph(socket, {nil, answer_node}, "selection_question")
     else
       # If highlight creation fails, still create the nodes
       update_graph(
@@ -1589,7 +1589,7 @@ defmodule DialecticWeb.GraphLive do
           "#{question_text}\n\nRegarding: \"#{selected_text}\"",
           selected_text
         ),
-        "answer"
+        "selection_question"
       )
     end
   end
@@ -1893,6 +1893,7 @@ defmodule DialecticWeb.GraphLive do
              "combine",
              "ideas",
              "explain",
+             "selection_question",
              "deepdive",
              "regenerate"
            ] &&
@@ -1923,6 +1924,7 @@ defmodule DialecticWeb.GraphLive do
          "combine",
          "ideas",
          "explain",
+         "selection_question",
          "deepdive",
          "regenerate",
          "delete"
@@ -1938,19 +1940,17 @@ defmodule DialecticWeb.GraphLive do
   end
 
   defp maybe_record_activity(socket, operation, node) do
-    actor = activity_actor(socket)
-
-    case activity_message(operation, actor) do
+    case GridActivity.Actions.for_graph_operation(operation) do
       nil ->
         :ok
 
-      message ->
+      action ->
         _ =
-          GridActivity.record_node_created_async(
+          GridActivity.record_node_event_async(
             socket.assigns.graph_id,
-            actor,
-            message,
-            node_id(node)
+            activity_actor(socket),
+            action,
+            node
           )
 
         :ok
@@ -1958,41 +1958,6 @@ defmodule DialecticWeb.GraphLive do
   end
 
   defp activity_actor(socket), do: socket.assigns[:current_user] || socket.assigns[:user]
-
-  defp activity_message("comment", actor),
-    do: "#{GridActivity.actor_name(actor)} added a comment."
-
-  defp activity_message("user", actor),
-    do: "#{GridActivity.actor_name(actor)} added a comment."
-
-  defp activity_message("answer", actor),
-    do: "#{GridActivity.actor_name(actor)} asked a follow-up question."
-
-  defp activity_message("branch", actor),
-    do: "#{GridActivity.actor_name(actor)} branched from a node."
-
-  defp activity_message("combine", actor),
-    do: "#{GridActivity.actor_name(actor)} added a synthesis."
-
-  defp activity_message("ideas", actor),
-    do: "#{GridActivity.actor_name(actor)} added related ideas."
-
-  defp activity_message("explain", actor),
-    do: "#{GridActivity.actor_name(actor)} asked about selected text."
-
-  defp activity_message("deepdive", actor),
-    do: "#{GridActivity.actor_name(actor)} added a deep dive."
-
-  defp activity_message("start_stream", actor),
-    do: "#{GridActivity.actor_name(actor)} added a new starting point."
-
-  defp activity_message("regenerate", actor),
-    do: "#{GridActivity.actor_name(actor)} regenerated a node."
-
-  defp activity_message(_, _actor), do: nil
-
-  defp node_id(node) when is_map(node), do: Map.get(node, :id)
-  defp node_id(_), do: nil
 
   # Helper to preserve and re-apply right panel state across node changes/moves
   defp reapply_right_panel_state(socket, updated_socket) do

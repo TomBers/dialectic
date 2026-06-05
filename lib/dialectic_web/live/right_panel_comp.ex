@@ -179,11 +179,11 @@ defmodule DialecticWeb.RightPanelComp do
 
   defp activity_timestamp(inserted_at), do: to_string(inserted_at)
 
-  defp activity_node_ref(%{node_id: node_id}, graph_id)
+  defp activity_node_ref(%{node_id: node_id} = log, graph_id)
        when is_binary(node_id) and node_id != "" do
     case GraphManager.find_node_by_id(graph_id, node_id) do
       nil ->
-        nil
+        activity_node_ref_from_metadata(log)
 
       node ->
         %{
@@ -195,6 +195,22 @@ defmodule DialecticWeb.RightPanelComp do
   end
 
   defp activity_node_ref(_log, _graph_id), do: nil
+
+  defp activity_node_ref_from_metadata(log) do
+    metadata = Map.get(log, :metadata) || %{}
+
+    case Map.get(metadata, "node_title") do
+      title when is_binary(title) and title != "" ->
+        %{
+          id: log.node_id,
+          title: title,
+          deleted: log.action == "node.deleted"
+        }
+
+      _ ->
+        nil
+    end
+  end
 
   # Truncates content so that URI.encode_www_form(result) fits within max_encoded_len.
   # Uses binary search on grapheme count to find the longest prefix that encodes within budget.
@@ -452,7 +468,7 @@ defmodule DialecticWeb.RightPanelComp do
                 class="rounded-lg border border-gray-100 bg-gray-50 px-2.5 py-2"
               >
                 <% node_ref = activity_node_ref(log, @graph_id) %>
-                <p class="text-xs text-gray-700 leading-snug">{log.message}</p>
+                <p class="text-xs text-gray-700 leading-snug">{GridActivity.display_message(log)}</p>
                 <%= if node_ref && node_ref.deleted do %>
                   <span
                     class="mt-1 inline-flex max-w-full items-center gap-1 text-[11px] font-medium text-gray-500"
