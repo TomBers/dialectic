@@ -256,7 +256,6 @@ defmodule Dialectic.Accounts.User do
       :username,
       :bio,
       :profile_banner,
-      :profile_links,
       :theme
     ])
     |> normalize_blank(:profile_banner)
@@ -268,7 +267,6 @@ defmodule Dialectic.Accounts.User do
     |> validate_length(:bio, max: 500)
     |> validate_length(:profile_banner, max: 100)
     |> validate_inclusion(:profile_banner, Dialectic.Accounts.ProfileBanner.ids())
-    |> validate_profile_links()
     |> validate_inclusion(:theme, @valid_themes)
     |> unsafe_validate_unique(:username, Dialectic.Repo)
     |> unique_constraint(:username)

@@ -5,10 +5,7 @@ defmodule Dialectic.Repo.Migrations.AddProfileFieldsToUsers do
     alter table(:users) do
       add :username, :citext
       add :bio, :string, size: 500
-      add :avatar_path, :string, size: 500
-      add :banner_path, :string, size: 500
-      add :profile_banner, :string, size: 100
-      add :profile_links, :map, default: %{links: []}, null: false
+      add :gravatar_id, :string, size: 100
       add :theme, :string, default: "default"
     end
 

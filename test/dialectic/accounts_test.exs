@@ -793,6 +793,20 @@ defmodule Dialectic.AccountsTest do
 
       assert "is invalid" in errors_on(changeset).profile_banner
     end
+
+    test "does not mass-assign profile links" do
+      user = user_fixture()
+
+      assert {:ok, updated} =
+               Accounts.update_user_profile(user, %{
+                 username: "test22",
+                 profile_links: %{
+                   "links" => [%{"label" => "Bad", "value" => "javascript:alert(1)"}]
+                 }
+               })
+
+      assert updated.profile_links == %{"links" => []}
+    end
   end
 
   describe "update_user_profile_links/2" do
