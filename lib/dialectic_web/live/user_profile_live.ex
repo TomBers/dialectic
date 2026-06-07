@@ -4,6 +4,7 @@ defmodule DialecticWeb.UserProfileLive do
   alias Dialectic.Accounts
   alias Dialectic.Accounts.User
   alias Dialectic.Accounts.GravatarCache
+  alias Dialectic.Accounts.ProfileBanner
   alias DialecticWeb.Utils.NodeTitleHelper
 
   @impl true
@@ -63,6 +64,7 @@ defmodule DialecticWeb.UserProfileLive do
           |> assign(:profile_user, profile_user)
           |> assign(:effective_username, effective_username)
           |> assign(:avatar_url, profile_user.avatar_path)
+          |> assign(:profile_banner_url, ProfileBanner.url(profile_user.profile_banner))
           |> assign(:header_image_url, nil)
           |> assign(:theme, theme)
           |> assign(:stats, stats)
@@ -243,16 +245,25 @@ defmodule DialecticWeb.UserProfileLive do
           theme_card_class(@theme)
         ]}>
           <%!-- Banner area --%>
-          <%= if @header_image_url do %>
-            <div class="h-32 sm:h-40 overflow-hidden">
-              <img
-                src={@header_image_url}
-                alt={"#{@effective_username}'s header image"}
-                class="h-full w-full object-cover"
-              />
-            </div>
-          <% else %>
-            <div class={["h-32 sm:h-40", theme_banner_class(@theme)]}></div>
+          <%= cond do %>
+            <% @profile_banner_url -> %>
+              <div class="h-32 sm:h-40 overflow-hidden">
+                <img
+                  src={@profile_banner_url}
+                  alt={"#{@effective_username}'s profile banner"}
+                  class="h-full w-full object-cover"
+                />
+              </div>
+            <% @header_image_url -> %>
+              <div class="h-32 sm:h-40 overflow-hidden">
+                <img
+                  src={@header_image_url}
+                  alt={"#{@effective_username}'s header image"}
+                  class="h-full w-full object-cover"
+                />
+              </div>
+            <% true -> %>
+              <div class={["h-32 sm:h-40", theme_banner_class(@theme)]}></div>
           <% end %>
 
           <div class="relative px-6 pb-6">

@@ -2,6 +2,7 @@ defmodule DialecticWeb.UserSettingsLiveTest do
   use DialecticWeb.ConnCase, async: true
 
   alias Dialectic.Accounts
+  alias Dialectic.Accounts.ProfileBanner
   import Phoenix.LiveViewTest
   import Dialectic.AccountsFixtures
 
@@ -16,6 +17,7 @@ defmodule DialecticWeb.UserSettingsLiveTest do
       assert html =~ "Change password"
       assert html =~ "Profile photo"
       assert html =~ "avatar-cropper"
+      assert html =~ "Abstract Timekeeper"
     end
 
     test "redirects if user is not logged in", %{conn: conn} do
@@ -270,6 +272,23 @@ defmodule DialecticWeb.UserSettingsLiveTest do
       assert has_element?(lv, "#avatar-upload-section")
       assert has_element?(lv, "#avatar-cropper")
       assert has_element?(lv, "#avatar-file-input")
+      assert has_element?(lv, "#profile-banner-cycle-button")
+      assert has_element?(lv, "#user_profile_banner")
+    end
+
+    test "clicking the profile banner preview cycles and saves the next banner", %{
+      conn: conn,
+      user: user
+    } do
+      {:ok, lv, _html} = live(conn, ~p"/users/settings")
+
+      lv
+      |> element("#profile-banner-cycle-button")
+      |> render_click()
+
+      updated_user = Accounts.get_user!(user.id)
+      assert updated_user.profile_banner == hd(ProfileBanner.ids())
+      assert has_element?(lv, ~s(img[src="#{ProfileBanner.url(updated_user.profile_banner)}"]))
     end
 
     test "updates the user profile successfully", %{conn: conn, user: user} do
@@ -281,7 +300,8 @@ defmodule DialecticWeb.UserSettingsLiveTest do
           "user" => %{
             "username" => "newname42",
             "bio" => "Hello world!",
-            "theme" => "indigo"
+            "theme" => "indigo",
+            "profile_banner" => "rose-petals"
           }
         })
         |> render_submit()
@@ -292,6 +312,7 @@ defmodule DialecticWeb.UserSettingsLiveTest do
       assert updated_user.username == "newname42"
       assert updated_user.bio == "Hello world!"
       assert updated_user.theme == "indigo"
+      assert updated_user.profile_banner == "rose-petals"
     end
 
     test "renders errors with invalid data (phx-submit)", %{conn: conn} do

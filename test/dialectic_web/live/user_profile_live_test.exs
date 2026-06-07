@@ -56,6 +56,20 @@ defmodule DialecticWeb.UserProfileLiveTest do
       assert html =~ "I love graphs!"
     end
 
+    test "renders selected profile banner", %{conn: conn} do
+      user = create_user_with_username("banneruser")
+
+      {:ok, _} =
+        Accounts.update_user_profile(user, %{
+          username: "banneruser",
+          profile_banner: "endless-constellation"
+        })
+
+      {:ok, _lv, html} = live(conn, ~p"/u/banneruser")
+
+      assert html =~ "/images/profile-banners/endless-constellation.svg"
+    end
+
     test "renders empty graphs message when user has no public graphs", %{conn: conn} do
       _user = create_user_with_username("emptygraphs")
 

@@ -19,6 +19,7 @@ defmodule Dialectic.Accounts.User do
     field :bio, :string
     field :gravatar_id, :string
     field :avatar_path, :string
+    field :profile_banner, :string
     field :theme, :string, default: "default"
     field :is_admin, :boolean, default: false
 
@@ -258,9 +259,11 @@ defmodule Dialectic.Accounts.User do
       :username,
       :bio,
       :gravatar_id,
+      :profile_banner,
       :theme
     ])
     |> normalize_blank(:gravatar_id)
+    |> normalize_blank(:profile_banner)
     |> validate_required([:username])
     |> validate_length(:username, min: 2, max: 30)
     |> validate_format(:username, ~r/^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$|^[a-zA-Z0-9]{2}$/,
@@ -268,6 +271,8 @@ defmodule Dialectic.Accounts.User do
     )
     |> validate_length(:bio, max: 500)
     |> validate_length(:gravatar_id, max: 100)
+    |> validate_length(:profile_banner, max: 100)
+    |> validate_inclusion(:profile_banner, Dialectic.Accounts.ProfileBanner.ids())
     |> validate_format(:gravatar_id, ~r/^[a-z0-9]+$/,
       message: "must be a valid Gravatar profile slug (lowercase alphanumeric)"
     )

@@ -4,6 +4,7 @@ defmodule DialecticWeb.UserSettingsLive do
   alias Dialectic.Accounts
   alias Dialectic.Accounts.User
   alias Dialectic.Accounts.GravatarCache
+  alias Dialectic.Accounts.ProfileBanner
 
   @impl true
   def render(assigns) do
@@ -64,17 +65,36 @@ defmodule DialecticWeb.UserSettingsLive do
 
               <div class="rounded-2xl border border-zinc-200/60 bg-zinc-50/50 overflow-hidden">
                 <%!-- Header Image Preview --%>
-                <%= if @header_preview_url do %>
-                  <div class="h-24 sm:h-32 overflow-hidden">
-                    <img
-                      src={@header_preview_url}
-                      alt="Header image preview"
-                      class="h-full w-full object-cover"
-                    />
-                  </div>
-                <% else %>
-                  <div class="h-24 sm:h-32 bg-gradient-to-r from-indigo-500 to-blue-400"></div>
-                <% end %>
+                <button
+                  type="button"
+                  id="profile-banner-cycle-button"
+                  phx-click="cycle_profile_banner"
+                  class="group relative block h-24 w-full overflow-hidden text-left sm:h-32"
+                  aria-label="Change profile banner"
+                  title="Click to change profile banner"
+                >
+                  <%= cond do %>
+                    <% @banner_preview_url -> %>
+                      <img
+                        src={@banner_preview_url}
+                        alt="Profile banner preview"
+                        class="h-full w-full object-cover"
+                      />
+                    <% @header_preview_url -> %>
+                      <img
+                        src={@header_preview_url}
+                        alt="Header image preview"
+                        class="h-full w-full object-cover"
+                      />
+                    <% true -> %>
+                      <span class="block h-full w-full bg-gradient-to-r from-indigo-500 to-blue-400">
+                      </span>
+                  <% end %>
+
+                  <span class="absolute bottom-2 right-2 rounded-full bg-black/45 px-3 py-1 text-xs font-semibold text-white opacity-0 shadow-sm transition group-hover:opacity-100 group-focus-visible:opacity-100">
+                    Click to change banner
+                  </span>
+                </button>
 
                 <div class="p-5 sm:p-6">
                   <%!-- Avatar Preview --%>
@@ -240,6 +260,25 @@ defmodule DialecticWeb.UserSettingsLive do
                       placeholder="Tell people a bit about yourself and what you explore on RationalGrid..."
                       class="mt-2 block min-h-[6rem] w-full rounded-lg border border-zinc-200 bg-white text-zinc-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm sm:leading-6"
                     />
+
+                    <.input
+                      field={@profile_form[:profile_banner]}
+                      type="select"
+                      label="Profile banner"
+                      options={@profile_banner_options}
+                      class="mt-2 block w-full rounded-lg border border-zinc-200 bg-white text-zinc-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm sm:leading-6"
+                    />
+                    <p class="-mt-2 text-xs text-zinc-500">
+                      Banner patterns are local SVGs selected from the free SVGBackgrounds.com set.
+                      <a
+                        href="https://www.svgbackgrounds.com/set/free-svg-backgrounds-and-patterns/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="font-medium text-indigo-600 hover:text-indigo-500 underline"
+                      >
+                        Attribution
+                      </a>
+                    </p>
 
                     <.input
                       field={@profile_form[:theme]}
@@ -489,8 +528,10 @@ defmodule DialecticWeb.UserSettingsLive do
       |> assign(:trigger_submit, false)
       |> assign(:effective_username, effective_username)
       |> assign(:avatar_preview_url, user.avatar_path)
+      |> assign(:banner_preview_url, ProfileBanner.url(user.profile_banner))
       |> assign(:header_preview_url, nil)
       |> assign(:verified_accounts, [])
+      |> assign(:profile_banner_options, ProfileBanner.options())
       |> assign(:theme_preview, theme_preview)
 
     # Load Gravatar data — served from ETS cache when available,
@@ -522,6 +563,23 @@ defmodule DialecticWeb.UserSettingsLive do
   # --- Profile events ---
 
   @impl true
+  def handle_event("cycle_profile_banner", _params, socket) do
+    user = socket.assigns.current_user
+    next_banner = ProfileBanner.next_id(user.profile_banner)
+
+    case Accounts.update_user_profile(user, %{profile_banner: next_banner}) do
+      {:ok, updated_user} ->
+        {:noreply,
+         socket
+         |> assign(:current_user, updated_user)
+         |> assign(:profile_form, to_form(Accounts.change_user_profile(updated_user)))
+         |> assign(:banner_preview_url, ProfileBanner.url(updated_user.profile_banner))}
+
+      {:error, _changeset} ->
+        {:noreply, put_flash(socket, :error, "Unable to update profile banner.")}
+    end
+  end
+
   def handle_event("save_avatar", %{"image_data" => image_data}, socket) do
     case Accounts.update_user_avatar(socket.assigns.current_user, image_data) do
       {:ok, updated_user} ->
@@ -575,11 +633,17 @@ defmodule DialecticWeb.UserSettingsLive do
 
     theme_preview = Map.get(profile_params, "theme", user.theme || "default")
 
+    banner_preview_url =
+      profile_params
+      |> Map.get("profile_banner", user.profile_banner)
+      |> ProfileBanner.url()
+
     # Avatar preview stays as the currently saved URL — it only updates
     # after saving because we need to call the Gravatar API server-side
     {:noreply,
      socket
      |> assign(:profile_form, profile_form)
+     |> assign(:banner_preview_url, banner_preview_url)
      |> assign(:theme_preview, theme_preview)
      |> assign(:effective_username, effective_username)}
   end
@@ -599,6 +663,7 @@ defmodule DialecticWeb.UserSettingsLive do
           |> assign(:profile_form, to_form(profile_changeset))
           |> assign(:effective_username, effective_username)
           |> assign(:avatar_preview_url, updated_user.avatar_path)
+          |> assign(:banner_preview_url, ProfileBanner.url(updated_user.profile_banner))
           |> assign(:theme_preview, updated_user.theme || "default")
           |> put_flash(:info, "Profile updated successfully.")
 
