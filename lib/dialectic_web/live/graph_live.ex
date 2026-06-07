@@ -1422,11 +1422,6 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  @impl true
-  def handle_async(:fetch_chat_avatar, result, socket) do
-    {:noreply, GridChat.handle_avatar_result(socket, result)}
-  end
-
   defp handle_selection_action(
          :explain,
          selected_text,

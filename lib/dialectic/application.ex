@@ -51,9 +51,6 @@ defmodule Dialectic.Application do
       DialecticWeb.Presence,
       {Dialectic.Responses.ModeServer, []},
       {DynamicSupervisor, name: GraphSupervisor},
-      # ETS-based cache for Gravatar profile data (avoids hitting the
-      # external API on every profile page mount)
-      Dialectic.Accounts.GravatarCache,
       DialecticWeb.Endpoint
     ]
 

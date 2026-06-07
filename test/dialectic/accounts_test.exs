@@ -776,15 +776,6 @@ defmodule Dialectic.AccountsTest do
       assert "has already been taken" in errors_on(changeset).username
     end
 
-    test "allows empty gravatar_id (normalizes blank to nil)" do
-      user = user_fixture()
-
-      assert {:ok, updated} =
-               Accounts.update_user_profile(user, %{username: "test22", gravatar_id: ""})
-
-      assert updated.gravatar_id == nil
-    end
-
     test "rejects invalid theme" do
       user = user_fixture()
 

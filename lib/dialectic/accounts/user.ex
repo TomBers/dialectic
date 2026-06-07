@@ -17,7 +17,6 @@ defmodule Dialectic.Accounts.User do
     # Profile fields
     field :username, :string
     field :bio, :string
-    field :gravatar_id, :string
     field :avatar_path, :string
     field :banner_path, :string
     field :profile_banner, :string
@@ -249,23 +248,17 @@ defmodule Dialectic.Accounts.User do
   end
 
   @doc """
-  A user changeset for updating profile fields (username, bio,
-  gravatar_id, and theme).
-
-  Social links are derived from Gravatar at page load time and are
-  not stored in the database.
+  A user changeset for updating profile fields.
   """
   def profile_changeset(user, attrs) do
     user
     |> cast(attrs, [
       :username,
       :bio,
-      :gravatar_id,
       :profile_banner,
       :profile_links,
       :theme
     ])
-    |> normalize_blank(:gravatar_id)
     |> normalize_blank(:profile_banner)
     |> validate_required([:username])
     |> validate_length(:username, min: 2, max: 30)
@@ -273,13 +266,9 @@ defmodule Dialectic.Accounts.User do
       message: "must be alphanumeric with optional hyphens, cannot start or end with a hyphen"
     )
     |> validate_length(:bio, max: 500)
-    |> validate_length(:gravatar_id, max: 100)
     |> validate_length(:profile_banner, max: 100)
     |> validate_inclusion(:profile_banner, Dialectic.Accounts.ProfileBanner.ids())
     |> validate_profile_links()
-    |> validate_format(:gravatar_id, ~r/^[a-z0-9]+$/,
-      message: "must be a valid Gravatar profile slug (lowercase alphanumeric)"
-    )
     |> validate_inclusion(:theme, @valid_themes)
     |> unsafe_validate_unique(:username, Dialectic.Repo)
     |> unique_constraint(:username)

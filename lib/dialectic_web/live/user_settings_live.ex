@@ -3,7 +3,6 @@ defmodule DialecticWeb.UserSettingsLive do
 
   alias Dialectic.Accounts
   alias Dialectic.Accounts.User
-  alias Dialectic.Accounts.GravatarCache
   alias Dialectic.Accounts.ProfileBanner
   alias Dialectic.Accounts.ProfileLinks
 
@@ -250,12 +249,6 @@ defmodule DialecticWeb.UserSettingsLive do
                       <img
                         src={@banner_preview_url}
                         alt="Profile banner preview"
-                        class="h-full w-full object-cover"
-                      />
-                    <% @header_preview_url -> %>
-                      <img
-                        src={@header_preview_url}
-                        alt="Header image preview"
                         class="h-full w-full object-cover"
                       />
                     <% true -> %>
@@ -758,36 +751,11 @@ defmodule DialecticWeb.UserSettingsLive do
       |> assign(:uploaded_banner_url, user.banner_path)
       |> assign(:current_banner_id, user.profile_banner)
       |> assign(:banner_preview_url, effective_banner_url(user))
-      |> assign(:header_preview_url, nil)
-      |> assign(:verified_accounts, [])
       |> assign(:profile_banners, ProfileBanner.all())
       |> assign(:profile_links_rows, ProfileLinks.form_rows(user.profile_links))
       |> assign(:profile_links_form, profile_links_form())
       |> assign(:profile_links_error, nil)
       |> assign(:theme_preview, theme_preview)
-
-    # Load Gravatar data — served from ETS cache when available,
-    # fetched async on cache miss to avoid redundant external API calls.
-    socket =
-      case user.gravatar_id do
-        id when is_binary(id) and id != "" ->
-          case GravatarCache.get(id) do
-            {:ok, data} ->
-              # Cache hit — apply immediately, no async fetch needed
-              socket
-              |> assign(:header_preview_url, data.header_image_url)
-              |> assign(:verified_accounts, data.verified_accounts)
-
-            :miss ->
-              # Cache miss — fetch asynchronously so we don't block render
-              start_async(socket, :fetch_gravatar, fn ->
-                GravatarCache.fetch(id)
-              end)
-          end
-
-        _ ->
-          socket
-      end
 
     {:ok, socket}
   end
@@ -967,8 +935,6 @@ defmodule DialecticWeb.UserSettingsLive do
       |> Map.get("profile_banner", user.profile_banner)
       |> ProfileBanner.url()
 
-    # Avatar preview stays as the currently saved URL — it only updates
-    # after saving because we need to call the Gravatar API server-side
     {:noreply,
      socket
      |> assign(:profile_form, profile_form)
@@ -996,26 +962,6 @@ defmodule DialecticWeb.UserSettingsLive do
           |> assign(:banner_preview_url, effective_banner_url(updated_user))
           |> assign(:theme_preview, updated_user.theme || "default")
           |> put_flash(:info, "Profile updated successfully.")
-
-        # Invalidate cache and fetch updated Gravatar data asynchronously
-        old_gravatar_id = user.gravatar_id
-        if old_gravatar_id, do: GravatarCache.invalidate(old_gravatar_id)
-
-        socket =
-          case updated_user.gravatar_id do
-            id when is_binary(id) and id != "" ->
-              GravatarCache.invalidate(id)
-
-              start_async(socket, :fetch_gravatar, fn ->
-                GravatarCache.fetch(id)
-              end)
-
-            _ ->
-              socket
-              |> assign(:avatar_preview_url, updated_user.avatar_path)
-              |> assign(:header_preview_url, nil)
-              |> assign(:verified_accounts, [])
-          end
 
         {:noreply, socket}
 
@@ -1088,34 +1034,6 @@ defmodule DialecticWeb.UserSettingsLive do
       {:error, changeset} ->
         {:noreply, assign(socket, password_form: to_form(changeset))}
     end
-  end
-
-  # --- Async callbacks ---
-
-  @impl true
-  def handle_async(:fetch_gravatar, {:ok, {:ok, result}}, socket) do
-    %{
-      avatar_url: _avatar_url,
-      header_image_url: header_image_url,
-      verified_accounts: verified_accounts
-    } = result
-
-    {:noreply,
-     socket
-     |> assign(:header_preview_url, header_image_url)
-     |> assign(:verified_accounts, verified_accounts)}
-  end
-
-  @impl true
-  def handle_async(:fetch_gravatar, {:ok, _error}, socket) do
-    # Cache fetch returned an error; keep the default nil/empty assigns
-    {:noreply, socket}
-  end
-
-  @impl true
-  def handle_async(:fetch_gravatar, {:exit, _reason}, socket) do
-    # Gravatar fetch failed; keep the default nil/empty assigns
-    {:noreply, socket}
   end
 
   # --- Private helpers ---

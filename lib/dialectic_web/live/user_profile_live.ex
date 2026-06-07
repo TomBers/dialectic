@@ -3,7 +3,6 @@ defmodule DialecticWeb.UserProfileLive do
 
   alias Dialectic.Accounts
   alias Dialectic.Accounts.User
-  alias Dialectic.Accounts.GravatarCache
   alias Dialectic.Accounts.ProfileBanner
   alias Dialectic.Accounts.ProfileLinks
   alias DialecticWeb.Utils.NodeTitleHelper
@@ -66,74 +65,18 @@ defmodule DialecticWeb.UserProfileLive do
           |> assign(:effective_username, effective_username)
           |> assign(:avatar_url, profile_user.avatar_path)
           |> assign(:profile_banner_url, effective_banner_url(profile_user))
-          |> assign(:header_image_url, nil)
           |> assign(:theme, theme)
           |> assign(:stats, stats)
           |> assign(:graphs, graphs)
           |> assign(:common_tags, common_tags)
           |> assign(:profile_links, ProfileLinks.display_links(profile_user.profile_links))
-          |> assign(:verified_accounts, [])
-          |> assign(:location, nil)
           |> assign(:is_own_profile?, is_own_profile?)
           |> assign(:my_stats, my_stats)
           |> assign(:noted_notes, noted_notes)
           |> assign(:graph_to_delete, nil)
 
-        # Load Gravatar data — served from ETS cache when available,
-        # fetched async on cache miss to avoid blocking initial render
-        # and to avoid redundant external API calls on repeated mounts.
-        socket =
-          case profile_user.gravatar_id do
-            id when is_binary(id) and id != "" ->
-              case GravatarCache.get(id) do
-                {:ok, data} ->
-                  # Cache hit — apply immediately, no async fetch needed
-                  socket
-                  |> assign(:header_image_url, data.header_image_url)
-                  |> assign(:verified_accounts, data.verified_accounts)
-                  |> assign(:location, data.location)
-
-                :miss ->
-                  # Cache miss — fetch asynchronously so we don't block render
-                  start_async(socket, :fetch_gravatar, fn ->
-                    GravatarCache.fetch(id)
-                  end)
-              end
-
-            _ ->
-              socket
-          end
-
         {:ok, socket}
     end
-  end
-
-  @impl true
-  def handle_async(:fetch_gravatar, {:ok, {:ok, result}}, socket) do
-    %{
-      avatar_url: _avatar_url,
-      header_image_url: header_image_url,
-      verified_accounts: verified_accounts,
-      location: location
-    } = result
-
-    {:noreply,
-     socket
-     |> assign(:header_image_url, header_image_url)
-     |> assign(:verified_accounts, verified_accounts)
-     |> assign(:location, location)}
-  end
-
-  @impl true
-  def handle_async(:fetch_gravatar, {:ok, _error}, socket) do
-    # Cache fetch returned an error; keep default nil/empty assigns
-    {:noreply, socket}
-  end
-
-  @impl true
-  def handle_async(:fetch_gravatar, {:exit, _reason}, socket) do
-    # Gravatar fetch failed; keep the default nil/empty assigns
-    {:noreply, socket}
   end
 
   @impl true
@@ -264,14 +207,6 @@ defmodule DialecticWeb.UserProfileLive do
                   class="h-full w-full object-cover"
                 />
               </div>
-            <% @header_image_url -> %>
-              <div class="h-32 sm:h-40 overflow-hidden">
-                <img
-                  src={@header_image_url}
-                  alt={"#{@effective_username}'s header image"}
-                  class="h-full w-full object-cover"
-                />
-              </div>
             <% true -> %>
               <div class={["h-32 sm:h-40", theme_banner_class(@theme)]}></div>
           <% end %>
@@ -363,16 +298,6 @@ defmodule DialecticWeb.UserProfileLive do
                   <.icon name={profile_link_icon(link)} class="w-4 h-4" />
                   {link.label}
                 </a>
-              <% end %>
-
-              <%= if @location do %>
-                <span class={[
-                  "inline-flex items-center gap-1.5 text-sm",
-                  theme_subtext_class(@theme)
-                ]}>
-                  <.icon name="hero-map-pin" class="w-4 h-4" />
-                  {@location}
-                </span>
               <% end %>
 
               <span class={["inline-flex items-center gap-1.5 text-sm", theme_subtext_class(@theme)]}>
