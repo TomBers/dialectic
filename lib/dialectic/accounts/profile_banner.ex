@@ -13,6 +13,7 @@ defmodule Dialectic.Accounts.ProfileBanner do
   def all do
     banner_files()
     |> Enum.map(&banner_from_path/1)
+    |> Enum.uniq_by(& &1.id)
     |> Enum.sort_by(&sort_key/1)
   end
 
@@ -48,11 +49,15 @@ defmodule Dialectic.Accounts.ProfileBanner do
   defp next_id(_ids, _current_id, first), do: first
 
   defp banner_files do
-    :dialectic
-    |> :code.priv_dir()
-    |> to_string()
-    |> Path.join("static#{@banner_path}/*.svg")
-    |> Path.wildcard()
+    [
+      :dialectic
+      |> :code.priv_dir()
+      |> to_string()
+      |> Path.join("static#{@banner_path}/*.svg"),
+      Path.join(File.cwd!(), "priv/static#{@banner_path}/*.svg")
+    ]
+    |> Enum.flat_map(&Path.wildcard/1)
+    |> Enum.uniq()
   end
 
   defp banner_from_path(path) do

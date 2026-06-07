@@ -5,6 +5,8 @@ defmodule DialecticWeb.UserProfileLiveTest do
   import Phoenix.LiveViewTest
   import Dialectic.AccountsFixtures
 
+  @one_pixel_png "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII="
+
   defp create_user_with_username(username, attrs \\ %{}) do
     user = user_fixture(attrs)
     {:ok, user} = Accounts.update_user_profile(user, %{username: username})
@@ -68,6 +70,40 @@ defmodule DialecticWeb.UserProfileLiveTest do
       {:ok, _lv, html} = live(conn, ~p"/u/banneruser")
 
       assert html =~ "/images/profile-banners/endless-constellation.svg"
+    end
+
+    test "renders uploaded profile banner before selected SVG banner", %{conn: conn} do
+      user = create_user_with_username("uploadedbanner")
+
+      {:ok, user} =
+        Accounts.update_user_profile(user, %{
+          username: "uploadedbanner",
+          profile_banner: "endless-constellation"
+        })
+
+      {:ok, user} = Accounts.update_user_banner(user, @one_pixel_png)
+
+      {:ok, _lv, html} = live(conn, ~p"/u/uploadedbanner")
+
+      assert html =~ user.banner_path
+      refute html =~ "/images/profile-banners/endless-constellation.svg"
+    end
+
+    test "renders manual profile links", %{conn: conn} do
+      user = create_user_with_username("linksuser")
+
+      {:ok, _} =
+        Accounts.update_user_profile_links(user, [
+          %{"label" => "GitHub", "value" => "https://github.com/tomberman"},
+          %{"label" => "Email", "value" => "hello@example.com"}
+        ])
+
+      {:ok, _lv, html} = live(conn, ~p"/u/linksuser")
+
+      assert html =~ "GitHub"
+      assert html =~ "https://github.com/tomberman"
+      assert html =~ "Email"
+      assert html =~ "mailto:hello@example.com"
     end
 
     test "renders empty graphs message when user has no public graphs", %{conn: conn} do

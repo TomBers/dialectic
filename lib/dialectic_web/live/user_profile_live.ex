@@ -5,6 +5,7 @@ defmodule DialecticWeb.UserProfileLive do
   alias Dialectic.Accounts.User
   alias Dialectic.Accounts.GravatarCache
   alias Dialectic.Accounts.ProfileBanner
+  alias Dialectic.Accounts.ProfileLinks
   alias DialecticWeb.Utils.NodeTitleHelper
 
   @impl true
@@ -64,12 +65,13 @@ defmodule DialecticWeb.UserProfileLive do
           |> assign(:profile_user, profile_user)
           |> assign(:effective_username, effective_username)
           |> assign(:avatar_url, profile_user.avatar_path)
-          |> assign(:profile_banner_url, ProfileBanner.url(profile_user.profile_banner))
+          |> assign(:profile_banner_url, effective_banner_url(profile_user))
           |> assign(:header_image_url, nil)
           |> assign(:theme, theme)
           |> assign(:stats, stats)
           |> assign(:graphs, graphs)
           |> assign(:common_tags, common_tags)
+          |> assign(:profile_links, ProfileLinks.display_links(profile_user.profile_links))
           |> assign(:verified_accounts, [])
           |> assign(:location, nil)
           |> assign(:is_own_profile?, is_own_profile?)
@@ -199,6 +201,14 @@ defmodule DialecticWeb.UserProfileLive do
 
   defp flash_key("info"), do: :info
   defp flash_key("error"), do: :error
+
+  defp profile_link_icon(%{kind: "email"}), do: "hero-envelope"
+  defp profile_link_icon(_), do: "hero-link"
+
+  defp effective_banner_url(%User{banner_path: path}) when is_binary(path) and path != "",
+    do: path
+
+  defp effective_banner_url(%User{profile_banner: banner}), do: ProfileBanner.url(banner)
 
   @impl true
   def render(assigns) do
@@ -340,18 +350,18 @@ defmodule DialecticWeb.UserProfileLive do
 
             <%!-- Social Links & Info --%>
             <div class="mt-4 flex flex-wrap items-center gap-3">
-              <%= for account <- @verified_accounts do %>
+              <%= for link <- @profile_links do %>
                 <a
-                  href={account.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href={link.href}
+                  target={if link.kind == "url", do: "_blank", else: nil}
+                  rel={if link.kind == "url", do: "noopener noreferrer me", else: "me"}
                   class={[
                     "inline-flex items-center gap-1.5 text-sm font-medium transition",
                     theme_link_class(@theme)
                   ]}
                 >
-                  <img src={account.service_icon} alt={account.service_label} class="w-4 h-4" />
-                  {account.service_label}
+                  <.icon name={profile_link_icon(link)} class="w-4 h-4" />
+                  {link.label}
                 </a>
               <% end %>
 

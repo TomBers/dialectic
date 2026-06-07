@@ -19,7 +19,9 @@ defmodule Dialectic.Accounts.User do
     field :bio, :string
     field :gravatar_id, :string
     field :avatar_path, :string
+    field :banner_path, :string
     field :profile_banner, :string
+    field :profile_links, :map, default: %{"links" => []}
     field :theme, :string, default: "default"
     field :is_admin, :boolean, default: false
 
@@ -260,6 +262,7 @@ defmodule Dialectic.Accounts.User do
       :bio,
       :gravatar_id,
       :profile_banner,
+      :profile_links,
       :theme
     ])
     |> normalize_blank(:gravatar_id)
@@ -273,12 +276,29 @@ defmodule Dialectic.Accounts.User do
     |> validate_length(:gravatar_id, max: 100)
     |> validate_length(:profile_banner, max: 100)
     |> validate_inclusion(:profile_banner, Dialectic.Accounts.ProfileBanner.ids())
+    |> validate_profile_links()
     |> validate_format(:gravatar_id, ~r/^[a-z0-9]+$/,
       message: "must be a valid Gravatar profile slug (lowercase alphanumeric)"
     )
     |> validate_inclusion(:theme, @valid_themes)
     |> unsafe_validate_unique(:username, Dialectic.Repo)
     |> unique_constraint(:username)
+  end
+
+  def banner_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:banner_path])
+    |> normalize_blank(:banner_path)
+    |> validate_length(:banner_path, max: 500)
+    |> validate_format(:banner_path, ~r|^/uploads/banners/[A-Za-z0-9._-]+$|,
+      message: "must be a valid uploaded banner path"
+    )
+  end
+
+  def profile_links_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:profile_links])
+    |> validate_profile_links()
   end
 
   def avatar_changeset(user, attrs) do
@@ -289,6 +309,15 @@ defmodule Dialectic.Accounts.User do
     |> validate_format(:avatar_path, ~r|^/uploads/avatars/[A-Za-z0-9._-]+$|,
       message: "must be a valid uploaded avatar path"
     )
+  end
+
+  defp validate_profile_links(changeset) do
+    validate_change(changeset, :profile_links, fn :profile_links, profile_links ->
+      case Dialectic.Accounts.ProfileLinks.validate_storage(profile_links) do
+        :ok -> []
+        {:error, message} -> [profile_links: message]
+      end
+    end)
   end
 
   # Normalizes a blank string change to nil so optional fields don't

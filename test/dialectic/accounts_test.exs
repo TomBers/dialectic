@@ -804,14 +804,77 @@ defmodule Dialectic.AccountsTest do
     end
   end
 
+  describe "update_user_profile_links/2" do
+    test "stores arbitrary URL and email profile links" do
+      user = user_fixture()
+
+      assert {:ok, updated} =
+               Accounts.update_user_profile_links(user, [
+                 %{"label" => "GitHub", "value" => "github.com/tomberman"},
+                 %{"label" => "Email", "value" => "hello@example.com"}
+               ])
+
+      assert %{
+               "links" => [
+                 %{
+                   "label" => "GitHub",
+                   "value" => "https://github.com/tomberman",
+                   "href" => "https://github.com/tomberman",
+                   "kind" => "url"
+                 },
+                 %{
+                   "label" => "Email",
+                   "value" => "hello@example.com",
+                   "href" => "mailto:hello@example.com",
+                   "kind" => "email"
+                 }
+               ]
+             } = updated.profile_links
+    end
+
+    test "rejects unsafe profile link schemes" do
+      user = user_fixture()
+
+      assert {:error, message} =
+               Accounts.update_user_profile_links(user, [
+                 %{"label" => "Bad", "value" => "javascript:alert(1)"}
+               ])
+
+      assert message =~ "HTTP(S) URLs or email"
+    end
+  end
+
+  describe "update_user_banner/2 and remove_user_banner/1" do
+    test "stores a local banner path and removes the file" do
+      user = user_fixture()
+
+      assert {:ok, updated} = Accounts.update_user_banner(user, @one_pixel_png)
+      assert updated.banner_path =~ ~r|^/uploads/banners/banner-#{updated.id}-.*\.png$|
+
+      full_path = uploaded_image_full_path(updated.banner_path)
+      assert File.exists?(full_path)
+
+      assert {:ok, removed} = Accounts.remove_user_banner(updated)
+      assert removed.banner_path == nil
+      refute File.exists?(full_path)
+    end
+
+    test "rejects invalid banner image data" do
+      user = user_fixture()
+
+      assert {:error, :invalid_image} =
+               Accounts.update_user_banner(user, "data:text/plain;base64,nope")
+    end
+  end
+
   describe "update_user_avatar/2 and remove_user_avatar/1" do
     test "stores a local avatar path and removes the file" do
       user = user_fixture()
 
       assert {:ok, updated} = Accounts.update_user_avatar(user, @one_pixel_png)
-      assert updated.avatar_path =~ ~r|^/uploads/avatars/user-#{updated.id}-.*\.png$|
+      assert updated.avatar_path =~ ~r|^/uploads/avatars/avatar-#{updated.id}-.*\.png$|
 
-      full_path = uploaded_avatar_full_path(updated.avatar_path)
+      full_path = uploaded_image_full_path(updated.avatar_path)
       assert File.exists?(full_path)
 
       assert {:ok, removed} = Accounts.remove_user_avatar(updated)
@@ -1007,12 +1070,12 @@ defmodule Dialectic.AccountsTest do
     end
   end
 
-  defp uploaded_avatar_full_path(avatar_path) do
-    filename = Path.basename(avatar_path)
+  defp uploaded_image_full_path(public_path) do
+    path = String.trim_leading(public_path, "/")
 
     :dialectic
     |> :code.priv_dir()
     |> to_string()
-    |> Path.join("static/uploads/avatars/#{filename}")
+    |> Path.join("static/#{path}")
   end
 end

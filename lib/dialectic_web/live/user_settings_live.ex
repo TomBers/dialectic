@@ -5,10 +5,182 @@ defmodule DialecticWeb.UserSettingsLive do
   alias Dialectic.Accounts.User
   alias Dialectic.Accounts.GravatarCache
   alias Dialectic.Accounts.ProfileBanner
+  alias Dialectic.Accounts.ProfileLinks
 
   @impl true
   def render(assigns) do
     ~H"""
+    <.modal id="profile-banner-picker-modal" class="border-zinc-200">
+      <div class="space-y-5">
+        <div>
+          <h2 id="profile-banner-picker-title" class="text-lg font-semibold text-zinc-900">
+            Choose a profile banner
+          </h2>
+          <p id="profile-banner-picker-description" class="mt-1 text-sm text-zinc-600">
+            Pick a banner below. Each preview uses the same crop and height as your public profile page.
+          </p>
+        </div>
+
+        <div
+          id="banner-cropper"
+          phx-hook="BannerCropper"
+          phx-update="ignore"
+          class="rounded-xl border border-zinc-200 bg-zinc-50 p-4"
+        >
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 class="text-sm font-semibold text-zinc-900">Upload your own banner</h3>
+              <p class="mt-1 text-xs text-zinc-500">
+                Crop a wide image to match the profile header. Uploaded banners override SVG choices.
+              </p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <label
+                for="banner-file-input"
+                class="inline-flex cursor-pointer items-center justify-center rounded-lg bg-zinc-900 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-zinc-800"
+              >
+                Choose image
+              </label>
+              <input
+                id="banner-file-input"
+                data-banner-input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                class="hidden"
+              />
+            </div>
+          </div>
+
+          <div data-banner-editor class="mt-4 hidden rounded-xl border border-zinc-200 bg-white p-4">
+            <canvas
+              data-banner-canvas
+              width="640"
+              height="168"
+              class="h-auto w-full cursor-move rounded-lg border border-zinc-200 bg-white shadow-sm"
+            >
+            </canvas>
+
+            <div class="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+              <div>
+                <label for="banner-zoom" class="text-xs font-medium text-zinc-600">Zoom</label>
+                <input
+                  id="banner-zoom"
+                  data-banner-zoom
+                  type="range"
+                  min="1"
+                  max="3"
+                  step="0.01"
+                  value="1"
+                  class="mt-2 w-full accent-indigo-600"
+                />
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  data-banner-save
+                  class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+                >
+                  Save banner
+                </button>
+                <button
+                  type="button"
+                  data-banner-cancel
+                  class="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 shadow-sm hover:bg-zinc-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+
+            <p data-banner-error class="mt-3 hidden text-sm text-red-600"></p>
+          </div>
+        </div>
+
+        <%= if @uploaded_banner_url do %>
+          <div class="flex justify-end">
+            <button
+              type="button"
+              id="remove-uploaded-banner-button"
+              phx-click="remove_banner"
+              class="inline-flex items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-semibold text-zinc-700 shadow-sm hover:bg-zinc-50"
+            >
+              Remove uploaded banner
+            </button>
+          </div>
+        <% end %>
+
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <button
+            type="button"
+            id="profile-banner-option-theme-gradient"
+            phx-click={
+              hide_modal("profile-banner-picker-modal")
+              |> JS.push("select_profile_banner", value: %{id: "theme-gradient"})
+            }
+            class={[
+              "overflow-hidden rounded-xl border-2 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600",
+              is_nil(@current_banner_id) && "border-indigo-500 ring-2 ring-indigo-200",
+              @current_banner_id && "border-zinc-200",
+              @uploaded_banner_url && "opacity-60"
+            ]}
+          >
+            <div class="h-32 overflow-hidden sm:h-40">
+              <div class="h-full w-full bg-gradient-to-r from-indigo-500 to-blue-400"></div>
+            </div>
+            <div class="flex items-center justify-between px-3 py-2">
+              <span class="text-sm font-semibold text-zinc-900">Theme gradient</span>
+              <%= if is_nil(@current_banner_id) do %>
+                <span class="text-xs font-semibold text-indigo-600">Selected</span>
+              <% end %>
+            </div>
+          </button>
+
+          <%= for banner <- @profile_banners do %>
+            <button
+              type="button"
+              id={"profile-banner-option-" <> banner.id}
+              phx-click={
+                hide_modal("profile-banner-picker-modal")
+                |> JS.push("select_profile_banner", value: %{id: banner.id})
+              }
+              class={[
+                "overflow-hidden rounded-xl border-2 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600",
+                @current_banner_id == banner.id && "border-indigo-500 ring-2 ring-indigo-200",
+                @current_banner_id != banner.id && "border-zinc-200",
+                @uploaded_banner_url && "opacity-60"
+              ]}
+            >
+              <div class="h-32 overflow-hidden sm:h-40">
+                <img
+                  src={banner.path}
+                  alt={banner.name <> " banner preview"}
+                  class="h-full w-full object-cover"
+                />
+              </div>
+              <div class="flex items-center justify-between px-3 py-2">
+                <span class="text-sm font-semibold text-zinc-900">{banner.name}</span>
+                <%= if @current_banner_id == banner.id do %>
+                  <span class="text-xs font-semibold text-indigo-600">Selected</span>
+                <% end %>
+              </div>
+            </button>
+          <% end %>
+        </div>
+
+        <p class="text-xs text-zinc-500">
+          Banner patterns are local SVGs selected from the free SVGBackgrounds.com set.
+          <a
+            href="https://www.svgbackgrounds.com/set/free-svg-backgrounds-and-patterns/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="font-medium text-indigo-600 hover:text-indigo-500 underline"
+          >
+            Attribution
+          </a>
+        </p>
+      </div>
+    </.modal>
+
     <div class="mx-auto max-w-3xl px-6 py-14">
       <div class="rounded-2xl border border-zinc-200/70 bg-white shadow-sm">
         <div class="flex flex-col gap-4 border-b border-zinc-100 px-6 py-5 sm:flex-row sm:items-start sm:justify-between">
@@ -67,11 +239,11 @@ defmodule DialecticWeb.UserSettingsLive do
                 <%!-- Header Image Preview --%>
                 <button
                   type="button"
-                  id="profile-banner-cycle-button"
-                  phx-click="cycle_profile_banner"
-                  class="group relative block h-24 w-full overflow-hidden text-left sm:h-32"
-                  aria-label="Change profile banner"
-                  title="Click to change profile banner"
+                  id="profile-banner-picker-button"
+                  phx-click={show_modal("profile-banner-picker-modal")}
+                  class="group relative block h-32 w-full overflow-hidden text-left sm:h-40"
+                  aria-label="Choose profile banner"
+                  title="Choose profile banner"
                 >
                   <%= cond do %>
                     <% @banner_preview_url -> %>
@@ -92,14 +264,14 @@ defmodule DialecticWeb.UserSettingsLive do
                   <% end %>
 
                   <span class="absolute bottom-2 right-2 rounded-full bg-black/45 px-3 py-1 text-xs font-semibold text-white opacity-0 shadow-sm transition group-hover:opacity-100 group-focus-visible:opacity-100">
-                    Click to change banner
+                    Choose banner
                   </span>
                 </button>
 
-                <div class="p-5 sm:p-6">
+                <div class="relative px-6 pb-6">
                   <%!-- Avatar Preview --%>
-                  <div class="mb-6 flex items-center gap-4 -mt-10">
-                    <div class="h-16 w-16 rounded-full border-2 border-white shadow-sm flex items-center justify-center overflow-hidden flex-shrink-0">
+                  <div class="mb-6 flex flex-col gap-4 -mt-12 sm:-mt-14 sm:flex-row sm:items-end">
+                    <div class="h-24 w-24 sm:h-28 sm:w-28 rounded-full border-4 border-white shadow-sm flex items-center justify-center overflow-hidden flex-shrink-0">
                       <%= if @avatar_preview_url do %>
                         <img
                           src={@avatar_preview_url}
@@ -107,12 +279,12 @@ defmodule DialecticWeb.UserSettingsLive do
                           class="h-full w-full object-cover rounded-full"
                         />
                       <% else %>
-                        <div class="h-full w-full flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600 text-xl font-bold">
+                        <div class="h-full w-full flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600 text-3xl font-bold">
                           {String.first(@effective_username) |> String.upcase()}
                         </div>
                       <% end %>
                     </div>
-                    <div class="pt-4">
+                    <div class="min-w-0 pb-1 sm:pt-12">
                       <p class="text-sm font-medium text-zinc-900">{@effective_username}</p>
                       <%= if @avatar_preview_url do %>
                         <p class="text-xs text-emerald-600 mt-0.5">Uploaded photo</p>
@@ -261,24 +433,24 @@ defmodule DialecticWeb.UserSettingsLive do
                       class="mt-2 block min-h-[6rem] w-full rounded-lg border border-zinc-200 bg-white text-zinc-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm sm:leading-6"
                     />
 
-                    <.input
-                      field={@profile_form[:profile_banner]}
-                      type="select"
-                      label="Profile banner"
-                      options={@profile_banner_options}
-                      class="mt-2 block w-full rounded-lg border border-zinc-200 bg-white text-zinc-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm sm:leading-6"
-                    />
-                    <p class="-mt-2 text-xs text-zinc-500">
-                      Banner patterns are local SVGs selected from the free SVGBackgrounds.com set.
-                      <a
-                        href="https://www.svgbackgrounds.com/set/free-svg-backgrounds-and-patterns/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="font-medium text-indigo-600 hover:text-indigo-500 underline"
-                      >
-                        Attribution
-                      </a>
-                    </p>
+                    <div class="rounded-xl border border-zinc-200 bg-white p-4">
+                      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <h3 class="text-sm font-semibold text-zinc-900">Profile banner</h3>
+                          <p class="mt-1 text-xs text-zinc-500">
+                            Click the banner preview above to choose a different SVG background.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          id="profile-banner-picker-secondary-button"
+                          phx-click={show_modal("profile-banner-picker-modal")}
+                          class="inline-flex items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-semibold text-zinc-700 shadow-sm hover:bg-zinc-50"
+                        >
+                          Choose banner
+                        </button>
+                      </div>
+                    </div>
 
                     <.input
                       field={@profile_form[:theme]}
@@ -305,32 +477,6 @@ defmodule DialecticWeb.UserSettingsLive do
                       </div>
                     </div>
 
-                    <%= if @verified_accounts != [] do %>
-                      <div class="h-px bg-zinc-100 my-2"></div>
-
-                      <p class="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-2">
-                        Connected accounts
-                      </p>
-
-                      <div class="flex flex-wrap gap-2">
-                        <%= for account <- @verified_accounts do %>
-                          <a
-                            href={account.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-700 shadow-sm hover:bg-zinc-50 transition"
-                          >
-                            <img
-                              src={account.service_icon}
-                              alt={account.service_label}
-                              class="w-4 h-4"
-                            />
-                            {account.service_label}
-                          </a>
-                        <% end %>
-                      </div>
-                    <% end %>
-
                     <:actions>
                       <.button
                         phx-disable-with="Saving..."
@@ -340,6 +486,87 @@ defmodule DialecticWeb.UserSettingsLive do
                       </.button>
                     </:actions>
                   </.simple_form>
+
+                  <div
+                    id="profile-links-section"
+                    class="mt-10 rounded-xl border border-zinc-200 bg-white p-4"
+                  >
+                    <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <h3 class="text-sm font-semibold text-zinc-900">Profile links</h3>
+                        <p class="mt-1 text-xs text-zinc-500">
+                          Add any links, email addresses, communities, Discord servers, or other places people can find you.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        id="add-profile-link-button"
+                        phx-click="add_profile_link"
+                        class="inline-flex items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-semibold text-zinc-700 shadow-sm hover:bg-zinc-50"
+                      >
+                        <.icon name="hero-plus" class="mr-1.5 h-4 w-4" /> Add link
+                      </button>
+                    </div>
+
+                    <.form
+                      for={@profile_links_form}
+                      id="profile_links_form"
+                      phx-change="validate_profile_links"
+                      phx-submit="update_profile_links"
+                    >
+                      <div class="space-y-4">
+                        <%= for {link, index} <- Enum.with_index(@profile_links_rows) do %>
+                          <div class="rounded-lg border border-zinc-100 bg-zinc-50/60 p-3">
+                            <div class="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)_auto] sm:items-start">
+                              <.input
+                                id={"profile_links_#{index}_label"}
+                                name={"profile_links[links][#{index}][label]"}
+                                type="text"
+                                label={if index == 0, do: "Label", else: nil}
+                                value={link["label"]}
+                                placeholder="GitHub, Email, Discord"
+                                class="mt-2 block w-full rounded-lg border border-zinc-200 bg-white text-zinc-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm sm:leading-6"
+                              />
+
+                              <.input
+                                id={"profile_links_#{index}_value"}
+                                name={"profile_links[links][#{index}][value]"}
+                                type="text"
+                                label={if index == 0, do: "URL or email", else: nil}
+                                value={link["value"]}
+                                placeholder="https://example.com or you@example.com"
+                                class="mt-2 block w-full rounded-lg border border-zinc-200 bg-white text-zinc-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm sm:leading-6"
+                              />
+
+                              <button
+                                type="button"
+                                id={"remove-profile-link-#{index}"}
+                                phx-click="remove_profile_link"
+                                phx-value-index={index}
+                                class="mt-2 inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 text-sm font-semibold text-zinc-600 shadow-sm hover:bg-zinc-50 sm:mt-8"
+                                aria-label={"Remove profile link #{index + 1}"}
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+                        <% end %>
+                      </div>
+
+                      <%= if @profile_links_error do %>
+                        <p class="mt-3 text-sm text-red-600">{@profile_links_error}</p>
+                      <% end %>
+
+                      <div class="mt-4 flex items-center justify-end">
+                        <.button
+                          phx-disable-with="Saving links..."
+                          class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                        >
+                          Save profile links
+                        </.button>
+                      </div>
+                    </.form>
+                  </div>
                 </div>
               </div>
             </section>
@@ -528,10 +755,15 @@ defmodule DialecticWeb.UserSettingsLive do
       |> assign(:trigger_submit, false)
       |> assign(:effective_username, effective_username)
       |> assign(:avatar_preview_url, user.avatar_path)
-      |> assign(:banner_preview_url, ProfileBanner.url(user.profile_banner))
+      |> assign(:uploaded_banner_url, user.banner_path)
+      |> assign(:current_banner_id, user.profile_banner)
+      |> assign(:banner_preview_url, effective_banner_url(user))
       |> assign(:header_preview_url, nil)
       |> assign(:verified_accounts, [])
-      |> assign(:profile_banner_options, ProfileBanner.options())
+      |> assign(:profile_banners, ProfileBanner.all())
+      |> assign(:profile_links_rows, ProfileLinks.form_rows(user.profile_links))
+      |> assign(:profile_links_form, profile_links_form())
+      |> assign(:profile_links_error, nil)
       |> assign(:theme_preview, theme_preview)
 
     # Load Gravatar data — served from ETS cache when available,
@@ -563,20 +795,59 @@ defmodule DialecticWeb.UserSettingsLive do
   # --- Profile events ---
 
   @impl true
-  def handle_event("cycle_profile_banner", _params, socket) do
+  def handle_event("select_profile_banner", %{"id" => id}, socket) do
     user = socket.assigns.current_user
-    next_banner = ProfileBanner.next_id(user.profile_banner)
+    banner_id = banner_id_from_param(id)
 
-    case Accounts.update_user_profile(user, %{profile_banner: next_banner}) do
+    case select_profile_banner(user, banner_id) do
       {:ok, updated_user} ->
         {:noreply,
          socket
          |> assign(:current_user, updated_user)
          |> assign(:profile_form, to_form(Accounts.change_user_profile(updated_user)))
-         |> assign(:banner_preview_url, ProfileBanner.url(updated_user.profile_banner))}
+         |> assign(:uploaded_banner_url, nil)
+         |> assign(:current_banner_id, updated_user.profile_banner)
+         |> assign(:banner_preview_url, effective_banner_url(updated_user))}
 
       {:error, _changeset} ->
         {:noreply, put_flash(socket, :error, "Unable to update profile banner.")}
+    end
+  end
+
+  def handle_event("save_banner", %{"image_data" => image_data}, socket) do
+    case Accounts.update_user_banner(socket.assigns.current_user, image_data) do
+      {:ok, updated_user} ->
+        {:noreply,
+         socket
+         |> assign(:current_user, updated_user)
+         |> assign(:uploaded_banner_url, updated_user.banner_path)
+         |> assign(:banner_preview_url, effective_banner_url(updated_user))
+         |> put_flash(:info, "Profile banner updated successfully.")}
+
+      {:error, :too_large} ->
+        {:noreply, put_flash(socket, :error, "Profile banner image is too large.")}
+
+      {:error, :invalid_image} ->
+        {:noreply,
+         put_flash(socket, :error, "Please choose a valid PNG, JPG, or WebP banner image.")}
+
+      {:error, _reason} ->
+        {:noreply, put_flash(socket, :error, "Unable to save profile banner.")}
+    end
+  end
+
+  def handle_event("remove_banner", _params, socket) do
+    case Accounts.remove_user_banner(socket.assigns.current_user) do
+      {:ok, updated_user} ->
+        {:noreply,
+         socket
+         |> assign(:current_user, updated_user)
+         |> assign(:uploaded_banner_url, nil)
+         |> assign(:banner_preview_url, effective_banner_url(updated_user))
+         |> put_flash(:info, "Uploaded banner removed.")}
+
+      {:error, _reason} ->
+        {:noreply, put_flash(socket, :error, "Unable to remove uploaded banner.")}
     end
   end
 
@@ -597,6 +868,64 @@ defmodule DialecticWeb.UserSettingsLive do
 
       {:error, _reason} ->
         {:noreply, put_flash(socket, :error, "Unable to save profile photo.")}
+    end
+  end
+
+  def handle_event("validate_profile_links", %{"profile_links" => params}, socket) do
+    rows = params |> ProfileLinks.rows_from_params() |> ensure_profile_link_rows()
+
+    {:noreply,
+     socket
+     |> assign(:profile_links_rows, rows)
+     |> assign(:profile_links_error, profile_links_error(rows))}
+  end
+
+  def handle_event("add_profile_link", _params, socket) do
+    rows = socket.assigns.profile_links_rows ++ [ProfileLinks.empty_row()]
+
+    {:noreply,
+     socket
+     |> assign(:profile_links_rows, rows)
+     |> assign(:profile_links_error, profile_links_error(rows))}
+  end
+
+  def handle_event("remove_profile_link", %{"index" => index}, socket) do
+    rows =
+      socket.assigns.profile_links_rows
+      |> List.delete_at(parse_index(index))
+      |> ensure_profile_link_rows()
+
+    {:noreply,
+     socket
+     |> assign(:profile_links_rows, rows)
+     |> assign(:profile_links_error, profile_links_error(rows))}
+  end
+
+  def handle_event("update_profile_links", %{"profile_links" => params}, socket) do
+    rows = params |> ProfileLinks.rows_from_params() |> ensure_profile_link_rows()
+
+    case Accounts.update_user_profile_links(socket.assigns.current_user, rows) do
+      {:ok, updated_user} ->
+        rows = ProfileLinks.form_rows(updated_user.profile_links)
+
+        {:noreply,
+         socket
+         |> assign(:current_user, updated_user)
+         |> assign(:profile_links_rows, rows)
+         |> assign(:profile_links_error, nil)
+         |> put_flash(:info, "Profile links updated successfully.")}
+
+      {:error, message} when is_binary(message) ->
+        {:noreply,
+         socket
+         |> assign(:profile_links_rows, rows)
+         |> assign(:profile_links_error, message)}
+
+      {:error, _changeset} ->
+        {:noreply,
+         socket
+         |> assign(:profile_links_rows, rows)
+         |> assign(:profile_links_error, "Unable to save profile links.")}
     end
   end
 
@@ -663,7 +992,8 @@ defmodule DialecticWeb.UserSettingsLive do
           |> assign(:profile_form, to_form(profile_changeset))
           |> assign(:effective_username, effective_username)
           |> assign(:avatar_preview_url, updated_user.avatar_path)
-          |> assign(:banner_preview_url, ProfileBanner.url(updated_user.profile_banner))
+          |> assign(:current_banner_id, updated_user.profile_banner)
+          |> assign(:banner_preview_url, effective_banner_url(updated_user))
           |> assign(:theme_preview, updated_user.theme || "default")
           |> put_flash(:info, "Profile updated successfully.")
 
@@ -789,6 +1119,42 @@ defmodule DialecticWeb.UserSettingsLive do
   end
 
   # --- Private helpers ---
+
+  defp effective_banner_url(%User{banner_path: path}) when is_binary(path) and path != "",
+    do: path
+
+  defp effective_banner_url(%User{profile_banner: banner}), do: ProfileBanner.url(banner)
+
+  defp select_profile_banner(user, banner_id) do
+    with {:ok, user} <- Accounts.remove_user_banner(user) do
+      Accounts.update_user_profile(user, %{profile_banner: banner_id})
+    end
+  end
+
+  defp banner_id_from_param("theme-gradient"), do: nil
+  defp banner_id_from_param(id), do: id
+
+  defp profile_links_form, do: to_form(%{}, as: :profile_links)
+
+  defp ensure_profile_link_rows([]), do: [ProfileLinks.empty_row()]
+  defp ensure_profile_link_rows(rows), do: rows
+
+  defp profile_links_error(rows) do
+    case ProfileLinks.prepare_for_storage(rows) do
+      {:ok, _profile_links} -> nil
+      {:error, message} -> message
+    end
+  end
+
+  defp parse_index(index) when is_binary(index) do
+    case Integer.parse(index) do
+      {integer, _rest} -> integer
+      :error -> 0
+    end
+  end
+
+  defp parse_index(index) when is_integer(index), do: index
+  defp parse_index(_), do: 0
 
   defp theme_preview_class("indigo"),
     do: "bg-gradient-to-r from-indigo-600 to-blue-500 border-indigo-300"
