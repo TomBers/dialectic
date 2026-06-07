@@ -6,6 +6,15 @@ defmodule DialecticWeb.UserSettingsLive do
   alias Dialectic.Accounts.ProfileBanner
   alias Dialectic.Accounts.ProfileLinks
 
+  @theme_options [
+    {"Light", "default"},
+    {"Indigo", "indigo"},
+    {"Violet", "violet"},
+    {"Emerald", "emerald"},
+    {"Amber", "amber"},
+    {"Rose", "rose"}
+  ]
+
   @impl true
   def render(assigns) do
     ~H"""
@@ -13,10 +22,10 @@ defmodule DialecticWeb.UserSettingsLive do
       <div class="space-y-5">
         <div>
           <h2 id="profile-banner-picker-title" class="text-lg font-semibold text-zinc-900">
-            Choose a profile banner
+            Choose or upload a profile banner
           </h2>
           <p id="profile-banner-picker-description" class="mt-1 text-sm text-zinc-600">
-            Pick a banner below. Each preview uses the same crop and height as your public profile page.
+            This banner sits at the top of your public profile home.
           </p>
         </div>
 
@@ -45,7 +54,7 @@ defmodule DialecticWeb.UserSettingsLive do
                 data-banner-input
                 type="file"
                 accept="image/png,image/jpeg,image/webp"
-                class="hidden"
+                class="sr-only"
               />
             </div>
           </div>
@@ -96,7 +105,10 @@ defmodule DialecticWeb.UserSettingsLive do
         </div>
 
         <%= if @uploaded_banner_url do %>
-          <div class="flex justify-end">
+          <div class="flex flex-col gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 sm:flex-row sm:items-center sm:justify-between">
+            <p class="text-sm font-medium text-emerald-800">
+              Uploaded banner is active.
+            </p>
             <button
               type="button"
               id="remove-uploaded-banner-button"
@@ -118,9 +130,9 @@ defmodule DialecticWeb.UserSettingsLive do
             }
             class={[
               "overflow-hidden rounded-xl border-2 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600",
-              is_nil(@current_banner_id) && "border-indigo-500 ring-2 ring-indigo-200",
-              @current_banner_id && "border-zinc-200",
-              @uploaded_banner_url && "opacity-60"
+              is_nil(@uploaded_banner_url) && is_nil(@current_banner_id) &&
+                "border-indigo-500 ring-2 ring-indigo-200",
+              (@uploaded_banner_url || @current_banner_id) && "border-zinc-200"
             ]}
           >
             <div class="h-32 overflow-hidden sm:h-40">
@@ -128,7 +140,7 @@ defmodule DialecticWeb.UserSettingsLive do
             </div>
             <div class="flex items-center justify-between px-3 py-2">
               <span class="text-sm font-semibold text-zinc-900">Theme gradient</span>
-              <%= if is_nil(@current_banner_id) do %>
+              <%= if is_nil(@uploaded_banner_url) && is_nil(@current_banner_id) do %>
                 <span class="text-xs font-semibold text-indigo-600">Selected</span>
               <% end %>
             </div>
@@ -144,9 +156,9 @@ defmodule DialecticWeb.UserSettingsLive do
               }
               class={[
                 "overflow-hidden rounded-xl border-2 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600",
-                @current_banner_id == banner.id && "border-indigo-500 ring-2 ring-indigo-200",
-                @current_banner_id != banner.id && "border-zinc-200",
-                @uploaded_banner_url && "opacity-60"
+                is_nil(@uploaded_banner_url) && @current_banner_id == banner.id &&
+                  "border-indigo-500 ring-2 ring-indigo-200",
+                (@uploaded_banner_url || @current_banner_id != banner.id) && "border-zinc-200"
               ]}
             >
               <div class="h-32 overflow-hidden sm:h-40">
@@ -158,7 +170,7 @@ defmodule DialecticWeb.UserSettingsLive do
               </div>
               <div class="flex items-center justify-between px-3 py-2">
                 <span class="text-sm font-semibold text-zinc-900">{banner.name}</span>
-                <%= if @current_banner_id == banner.id do %>
+                <%= if is_nil(@uploaded_banner_url) && @current_banner_id == banner.id do %>
                   <span class="text-xs font-semibold text-indigo-600">Selected</span>
                 <% end %>
               </div>
@@ -182,31 +194,41 @@ defmodule DialecticWeb.UserSettingsLive do
 
     <div class="mx-auto max-w-3xl px-6 py-14">
       <div class="rounded-2xl border border-zinc-200/70 bg-white shadow-sm">
-        <div class="flex flex-col gap-4 border-b border-zinc-100 px-6 py-5 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h1 class="text-xl font-semibold tracking-tight text-zinc-900">
-              Account settings
-            </h1>
-            <p class="mt-1 text-sm text-zinc-600">
-              Manage your profile, email address, and password settings.
-            </p>
-          </div>
+        <div class="border-b border-zinc-100 px-6 py-5">
+          <div class="flex items-start justify-between gap-4">
+            <div class="min-w-0">
+              <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                Profile settings
+              </p>
+              <h1 class="mt-1 text-xl font-semibold tracking-tight text-zinc-900">
+                Profile home
+              </h1>
+              <p class="mt-1 max-w-2xl text-sm text-zinc-600">
+                Shape the public page where your grids, ideas, and ways to connect are gathered.
+              </p>
+            </div>
 
-          <div class="flex items-center gap-3">
-            <.link
-              navigate={~p"/u/#{@effective_username}"}
-              id="user-settings-view-profile"
-              class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-            >
-              <.icon name="hero-user" class="w-4 h-4 mr-1.5" /> View Profile
-            </.link>
             <.link
               href={~p"/users/log_out"}
               method="delete"
               id="user-settings-logout"
-              class="inline-flex items-center justify-center rounded-xl bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-zinc-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
+              class="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-500 shadow-sm hover:bg-zinc-50 hover:text-zinc-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
+              aria-label="Log out"
+              title="Log out"
             >
-              Log out
+              <.icon name="hero-arrow-right-on-rectangle" class="h-4 w-4" />
+            </.link>
+          </div>
+
+          <div class="mt-4 flex flex-wrap items-center gap-2 text-sm">
+            <span class="text-zinc-500">Public URL</span>
+            <.link
+              navigate={~p"/u/#{@effective_username}"}
+              id="user-settings-view-profile"
+              class="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-1.5 font-medium text-zinc-800 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+            >
+              /u/{@effective_username}
+              <.icon name="hero-arrow-top-right-on-square" class="h-3.5 w-3.5" />
             </.link>
           </div>
         </div>
@@ -221,9 +243,9 @@ defmodule DialecticWeb.UserSettingsLive do
                 </div>
 
                 <div>
-                  <h2 class="text-base font-semibold text-zinc-900">Profile</h2>
+                  <h2 class="text-base font-semibold text-zinc-900">Public profile</h2>
                   <p class="mt-1 text-sm text-zinc-600">
-                    Customize how others see you on RationalGrid. Your profile is publicly visible at
+                    Customize the page people see when they visit
                     <.link
                       navigate={~p"/u/#{@effective_username}"}
                       class="font-medium text-indigo-600 hover:text-indigo-500"
@@ -293,7 +315,7 @@ defmodule DialecticWeb.UserSettingsLive do
                       <div>
                         <h3 class="text-sm font-semibold text-zinc-900">Profile photo</h3>
                         <p class="mt-1 text-xs text-zinc-500">
-                          Upload a photo, crop it square, then save. This MVP stores the image locally.
+                          Upload and crop the avatar shown beside your username.
                         </p>
                       </div>
 
@@ -327,7 +349,7 @@ defmodule DialecticWeb.UserSettingsLive do
                           data-avatar-input
                           type="file"
                           accept="image/png,image/jpeg,image/webp"
-                          class="hidden"
+                          class="sr-only"
                         />
                       </div>
 
@@ -410,6 +432,13 @@ defmodule DialecticWeb.UserSettingsLive do
                     phx-submit="update_profile"
                     phx-change="validate_profile"
                   >
+                    <div>
+                      <h3 class="text-sm font-semibold text-zinc-900">Profile basics</h3>
+                      <p class="mt-1 text-xs text-zinc-500">
+                        Set the username, short intro, and color theme for your public profile home.
+                      </p>
+                    </div>
+
                     <.input
                       field={@profile_form[:username]}
                       type="text"
@@ -426,47 +455,46 @@ defmodule DialecticWeb.UserSettingsLive do
                       class="mt-2 block min-h-[6rem] w-full rounded-lg border border-zinc-200 bg-white text-zinc-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm sm:leading-6"
                     />
 
-                    <div class="rounded-xl border border-zinc-200 bg-white p-4">
-                      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                          <h3 class="text-sm font-semibold text-zinc-900">Profile banner</h3>
-                          <p class="mt-1 text-xs text-zinc-500">
-                            Click the banner preview above to choose a different SVG background.
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          id="profile-banner-picker-secondary-button"
-                          phx-click={show_modal("profile-banner-picker-modal")}
-                          class="inline-flex items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-semibold text-zinc-700 shadow-sm hover:bg-zinc-50"
-                        >
-                          Choose banner
-                        </button>
-                      </div>
-                    </div>
-
-                    <.input
-                      field={@profile_form[:theme]}
-                      type="select"
-                      label="Profile theme"
-                      options={[
-                        {"Light (default)", "default"},
-                        {"Indigo", "indigo"},
-                        {"Violet", "violet"},
-                        {"Emerald", "emerald"},
-                        {"Amber", "amber"},
-                        {"Rose", "rose"}
-                      ]}
-                      class="mt-2 block w-full rounded-lg border border-zinc-200 bg-white text-zinc-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm sm:leading-6"
+                    <input
+                      type="hidden"
+                      id="profile-theme-value"
+                      name={@profile_form[:theme].name}
+                      value={@theme_preview}
                     />
 
-                    <%!-- Theme Preview --%>
-                    <div class="mt-2">
-                      <p class="text-xs font-medium text-zinc-500 mb-2">Theme preview</p>
-                      <div class={[
-                        "h-10 w-full rounded-lg border transition-colors",
-                        theme_preview_class(@theme_preview)
-                      ]}>
+                    <div>
+                      <div class="mb-2 flex items-center justify-between gap-3">
+                        <p class="text-sm font-semibold text-zinc-900">Profile colour</p>
+                        <p class="text-xs font-medium text-zinc-500">{theme_label(@theme_preview)}</p>
+                      </div>
+                      <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                        <%= for {label, value} <- theme_options() do %>
+                          <button
+                            type="button"
+                            id={"profile-theme-option-#{value}"}
+                            phx-click="select_profile_theme"
+                            phx-value-theme={value}
+                            class={[
+                              "group rounded-xl border bg-white p-2 text-left transition hover:border-indigo-300 hover:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600",
+                              @theme_preview == value && "border-indigo-500 ring-2 ring-indigo-100",
+                              @theme_preview != value && "border-zinc-200"
+                            ]}
+                            aria-pressed={to_string(@theme_preview == value)}
+                          >
+                            <span class={[
+                              "block h-10 rounded-lg border transition-colors",
+                              theme_preview_class(value)
+                            ]}>
+                            </span>
+                            <span class={[
+                              "mt-2 block text-xs font-semibold",
+                              @theme_preview == value && "text-indigo-700",
+                              @theme_preview != value && "text-zinc-700"
+                            ]}>
+                              {label}
+                            </span>
+                          </button>
+                        <% end %>
                       </div>
                     </div>
 
@@ -488,7 +516,7 @@ defmodule DialecticWeb.UserSettingsLive do
                       <div>
                         <h3 class="text-sm font-semibold text-zinc-900">Profile links</h3>
                         <p class="mt-1 text-xs text-zinc-500">
-                          Add any links, email addresses, communities, Discord servers, or other places people can find you.
+                          Add the places people should use to follow your work or get in touch.
                         </p>
                       </div>
                       <button
@@ -536,10 +564,11 @@ defmodule DialecticWeb.UserSettingsLive do
                                 id={"remove-profile-link-#{index}"}
                                 phx-click="remove_profile_link"
                                 phx-value-index={index}
-                                class="mt-2 inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 text-sm font-semibold text-zinc-600 shadow-sm hover:bg-zinc-50 sm:mt-8"
+                                class="mt-2 inline-flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 shadow-sm hover:bg-zinc-50 sm:mt-8"
                                 aria-label={"Remove profile link #{index + 1}"}
+                                title="Remove link"
                               >
-                                Remove
+                                <.icon name="hero-trash" class="h-4 w-4" />
                               </button>
                             </div>
                           </div>
@@ -574,7 +603,7 @@ defmodule DialecticWeb.UserSettingsLive do
                 </div>
 
                 <div>
-                  <h2 class="text-base font-semibold text-zinc-900">Email</h2>
+                  <h2 class="text-base font-semibold text-zinc-900">Account email</h2>
                   <p class="mt-1 text-sm text-zinc-600">
                     Update the email address associated with your account.
                   </p>
@@ -629,7 +658,7 @@ defmodule DialecticWeb.UserSettingsLive do
                 </div>
 
                 <div>
-                  <h2 class="text-base font-semibold text-zinc-900">Password</h2>
+                  <h2 class="text-base font-semibold text-zinc-900">Account password</h2>
                   <p class="mt-1 text-sm text-zinc-600">
                     Change your password. You'll be asked to log in again after updating.
                   </p>
@@ -911,6 +940,17 @@ defmodule DialecticWeb.UserSettingsLive do
     end
   end
 
+  def handle_event("select_profile_theme", %{"theme" => theme}, socket) do
+    theme =
+      if theme in theme_values() do
+        theme
+      else
+        socket.assigns.theme_preview
+      end
+
+    {:noreply, assign(socket, :theme_preview, theme)}
+  end
+
   @impl true
   def handle_event("validate_profile", %{"user" => profile_params}, socket) do
     user = socket.assigns.current_user
@@ -931,9 +971,15 @@ defmodule DialecticWeb.UserSettingsLive do
     theme_preview = Map.get(profile_params, "theme", user.theme || "default")
 
     banner_preview_url =
-      profile_params
-      |> Map.get("profile_banner", user.profile_banner)
-      |> ProfileBanner.url()
+      case socket.assigns.uploaded_banner_url do
+        path when is_binary(path) and path != "" ->
+          path
+
+        _ ->
+          profile_params
+          |> Map.get("profile_banner", user.profile_banner)
+          |> ProfileBanner.url()
+      end
 
     {:noreply,
      socket
@@ -1073,6 +1119,16 @@ defmodule DialecticWeb.UserSettingsLive do
 
   defp parse_index(index) when is_integer(index), do: index
   defp parse_index(_), do: 0
+
+  defp theme_options, do: @theme_options
+  defp theme_values, do: Enum.map(@theme_options, &elem(&1, 1))
+
+  defp theme_label(theme) do
+    @theme_options
+    |> Enum.find_value("Light", fn {label, value} ->
+      if value == theme, do: label
+    end)
+  end
 
   defp theme_preview_class("indigo"),
     do: "bg-gradient-to-r from-indigo-600 to-blue-500 border-indigo-300"

@@ -275,12 +275,26 @@ defmodule DialecticWeb.UserSettingsLiveTest do
       assert has_element?(lv, "#avatar-cropper")
       assert has_element?(lv, "#avatar-file-input")
       assert has_element?(lv, "#profile-banner-picker-button")
-      assert has_element?(lv, "#profile-banner-picker-secondary-button")
       assert has_element?(lv, "#banner-cropper")
       assert has_element?(lv, "#banner-file-input")
       assert has_element?(lv, "#profile-links-section")
       assert has_element?(lv, "#profile_links_form")
+      assert has_element?(lv, "#profile-theme-option-emerald")
+      assert has_element?(lv, ~s(input#profile-theme-value[name="user[theme]"]))
+      refute has_element?(lv, "#profile-banner-picker-secondary-button")
+      refute has_element?(lv, "#user_theme")
       refute has_element?(lv, "#user_profile_banner")
+    end
+
+    test "clicking a profile colour updates the profile theme value", %{conn: conn} do
+      {:ok, lv, _html} = live(conn, ~p"/users/settings")
+
+      lv
+      |> element("#profile-theme-option-emerald")
+      |> render_click()
+
+      assert has_element?(lv, ~s(input#profile-theme-value[value="emerald"]))
+      assert has_element?(lv, ~s(#profile-theme-option-emerald[aria-pressed="true"]))
     end
 
     test "saving an uploaded banner updates the preview", %{conn: conn, user: user} do
@@ -290,6 +304,26 @@ defmodule DialecticWeb.UserSettingsLiveTest do
 
       updated_user = Accounts.get_user!(user.id)
       assert updated_user.banner_path =~ ~r|^/uploads/banners/banner-#{updated_user.id}-.*\.png$|
+      assert has_element?(lv, ~s(img[src="#{updated_user.banner_path}"]))
+    end
+
+    test "profile validation keeps an uploaded banner preview", %{conn: conn, user: user} do
+      {:ok, lv, _html} = live(conn, ~p"/users/settings")
+
+      render_hook(lv, "save_banner", %{"image_data" => @one_pixel_png})
+
+      updated_user = Accounts.get_user!(user.id)
+
+      lv
+      |> element("#profile_form")
+      |> render_change(%{
+        "user" => %{
+          "username" => "newname42",
+          "bio" => "Still thinking",
+          "theme" => "emerald"
+        }
+      })
+
       assert has_element?(lv, ~s(img[src="#{updated_user.banner_path}"]))
     end
 
@@ -349,6 +383,10 @@ defmodule DialecticWeb.UserSettingsLiveTest do
 
     test "updates the user profile successfully", %{conn: conn, user: user} do
       {:ok, lv, _html} = live(conn, ~p"/users/settings")
+
+      lv
+      |> element("#profile-theme-option-indigo")
+      |> render_click()
 
       result =
         lv
