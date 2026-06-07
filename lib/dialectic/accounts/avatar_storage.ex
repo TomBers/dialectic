@@ -1,7 +1,7 @@
 defmodule Dialectic.Accounts.AvatarStorage do
   @moduledoc false
 
-  alias Dialectic.Accounts.User
+  alias Dialectic.Accounts.{TigrisStorage, User}
 
   @avatar_prefix "/uploads/avatars"
   @banner_prefix "/uploads/banners"
@@ -24,8 +24,8 @@ defmodule Dialectic.Accounts.AvatarStorage do
   def delete_user_avatar(%User{} = user), do: delete_avatar_path(user.avatar_path)
   def delete_user_banner(%User{} = user), do: delete_banner_path(user.banner_path)
 
-  def delete_avatar_path(path), do: delete_path(path, @avatar_prefix, images_dir(:avatar))
-  def delete_banner_path(path), do: delete_path(path, @banner_prefix, images_dir(:banner))
+  def delete_avatar_path(path), do: delete_image_path(path, @avatar_prefix, :avatar)
+  def delete_banner_path(path), do: delete_image_path(path, @banner_prefix, :banner)
 
   defp decode_data_url("data:" <> data_url) do
     case String.split(data_url, ",", parts: 2) do
@@ -70,8 +70,18 @@ defmodule Dialectic.Accounts.AvatarStorage do
   end
 
   defp write_image(user_id, mime_type, bytes, kind) do
+    filename = image_filename(user_id, mime_type, kind)
+
+    if TigrisStorage.configured?() do
+      key = object_key(kind, filename)
+      TigrisStorage.put_object(key, bytes, mime_type)
+    else
+      write_local_image(filename, bytes, kind)
+    end
+  end
+
+  defp write_local_image(filename, bytes, kind) do
     with :ok <- File.mkdir_p(images_dir(kind)),
-         filename <- image_filename(user_id, mime_type, kind),
          path <- Path.join(images_dir(kind), filename),
          :ok <- File.write(path, bytes) do
       {:ok, public_prefix(kind) <> "/" <> filename}
@@ -88,7 +98,22 @@ defmodule Dialectic.Accounts.AvatarStorage do
   defp extension_for("image/webp"), do: "webp"
   defp extension_for(_), do: "png"
 
-  defp delete_path(path, prefix, directory) when is_binary(path) do
+  defp delete_image_path(path, prefix, kind) when is_binary(path) do
+    cond do
+      String.starts_with?(path, prefix <> "/") ->
+        delete_local_path(path, prefix, images_dir(kind))
+
+      true ->
+        case TigrisStorage.object_key_from_public_url(path) do
+          {:ok, key} -> TigrisStorage.delete_object(key)
+          :error -> :ok
+        end
+    end
+  end
+
+  defp delete_image_path(_path, _prefix, _kind), do: :ok
+
+  defp delete_local_path(path, prefix, directory) do
     with true <- String.starts_with?(path, prefix <> "/"),
          filename <- Path.basename(path),
          full_path <- Path.join(directory, filename) do
@@ -98,7 +123,8 @@ defmodule Dialectic.Accounts.AvatarStorage do
     :ok
   end
 
-  defp delete_path(_path, _prefix, _directory), do: :ok
+  defp object_key(kind, filename),
+    do: String.trim_leading(public_prefix(kind), "/") <> "/" <> filename
 
   defp public_prefix(:avatar), do: @avatar_prefix
   defp public_prefix(:banner), do: @banner_prefix

@@ -4,7 +4,7 @@ defmodule Dialectic.AccountsTest do
   alias Dialectic.Accounts
 
   import Dialectic.AccountsFixtures
-  alias Dialectic.Accounts.{User, UserToken}
+  alias Dialectic.Accounts.{TigrisStorage, User, UserToken}
 
   describe "get_user_by_email/1" do
     test "does not return the user if the email does not exist" do
@@ -832,6 +832,47 @@ defmodule Dialectic.AccountsTest do
                ])
 
       assert message =~ "HTTP(S) URLs or email"
+    end
+  end
+
+  describe "Tigris-backed profile image storage" do
+    setup do
+      original_config = Application.get_env(:dialectic, :profile_image_storage)
+
+      Req.Test.stub(TigrisStorage, fn conn ->
+        assert conn.method in ["PUT", "DELETE"]
+        assert String.starts_with?(conn.request_path, "/test-bucket/uploads/")
+        assert [_authorization] = Plug.Conn.get_req_header(conn, "authorization")
+        assert [_amz_date] = Plug.Conn.get_req_header(conn, "x-amz-date")
+        Plug.Conn.send_resp(conn, 200, "")
+      end)
+
+      Application.put_env(:dialectic, :profile_image_storage,
+        tigris: [
+          access_key_id: "test-access-key",
+          secret_access_key: "test-secret-key",
+          region: "auto",
+          endpoint_url: "https://fly.storage.tigris.dev",
+          bucket: "test-bucket",
+          req_options: [plug: {Req.Test, TigrisStorage}],
+          signing_datetime: ~U[2026-06-07 12:00:00Z]
+        ]
+      )
+
+      on_exit(fn -> Application.put_env(:dialectic, :profile_image_storage, original_config) end)
+      :ok
+    end
+
+    test "stores avatar uploads as Tigris public URLs and deletes them" do
+      user = user_fixture()
+
+      assert {:ok, updated} = Accounts.update_user_avatar(user, @one_pixel_png)
+
+      assert updated.avatar_path =~
+               ~r|^https://fly\.storage\.tigris\.dev/test-bucket/uploads/avatars/avatar-#{updated.id}-.*\.png$|
+
+      assert {:ok, removed} = Accounts.remove_user_avatar(updated)
+      assert removed.avatar_path == nil
     end
   end
 

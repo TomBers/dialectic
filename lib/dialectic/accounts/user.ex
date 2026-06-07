@@ -279,9 +279,7 @@ defmodule Dialectic.Accounts.User do
     |> cast(attrs, [:banner_path])
     |> normalize_blank(:banner_path)
     |> validate_length(:banner_path, max: 500)
-    |> validate_format(:banner_path, ~r|^/uploads/banners/[A-Za-z0-9._-]+$|,
-      message: "must be a valid uploaded banner path"
-    )
+    |> validate_uploaded_image_path(:banner_path, ~r|^/uploads/banners/[A-Za-z0-9._-]+$|)
   end
 
   def profile_links_changeset(user, attrs) do
@@ -295,10 +293,33 @@ defmodule Dialectic.Accounts.User do
     |> cast(attrs, [:avatar_path])
     |> normalize_blank(:avatar_path)
     |> validate_length(:avatar_path, max: 500)
-    |> validate_format(:avatar_path, ~r|^/uploads/avatars/[A-Za-z0-9._-]+$|,
-      message: "must be a valid uploaded avatar path"
-    )
+    |> validate_uploaded_image_path(:avatar_path, ~r|^/uploads/avatars/[A-Za-z0-9._-]+$|)
   end
+
+  defp validate_uploaded_image_path(changeset, field, local_pattern) do
+    validate_change(changeset, field, fn ^field, value ->
+      cond do
+        is_nil(value) or value == "" ->
+          []
+
+        is_binary(value) and Regex.match?(local_pattern, value) ->
+          []
+
+        valid_http_url?(value) ->
+          []
+
+        true ->
+          [{field, "must be a valid uploaded image path"}]
+      end
+    end)
+  end
+
+  defp valid_http_url?(value) when is_binary(value) do
+    uri = URI.parse(value)
+    uri.scheme in ["http", "https"] and is_binary(uri.host) and uri.host != ""
+  end
+
+  defp valid_http_url?(_), do: false
 
   defp validate_profile_links(changeset) do
     validate_change(changeset, :profile_links, fn :profile_links, profile_links ->

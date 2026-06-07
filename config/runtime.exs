@@ -20,6 +20,23 @@ if System.get_env("PHX_SERVER") do
   config :dialectic, DialecticWeb.Endpoint, server: true
 end
 
+tigris_access_key_id = System.get_env("AWS_ACCESS_KEY_ID")
+tigris_secret_access_key = System.get_env("AWS_SECRET_ACCESS_KEY")
+tigris_endpoint_url = System.get_env("AWS_ENDPOINT_URL_S3")
+tigris_bucket = System.get_env("BUCKET_NAME") || System.get_env("TIGRIS_BUCKET")
+
+if tigris_access_key_id && tigris_secret_access_key && tigris_endpoint_url && tigris_bucket do
+  config :dialectic, :profile_image_storage,
+    tigris: [
+      access_key_id: tigris_access_key_id,
+      secret_access_key: tigris_secret_access_key,
+      region: System.get_env("AWS_REGION") || "auto",
+      endpoint_url: tigris_endpoint_url,
+      bucket: tigris_bucket,
+      public_base_url: System.get_env("TIGRIS_PUBLIC_BASE_URL")
+    ]
+end
+
 if config_env() == :prod do
   database_url =
     System.get_env("DATABASE_URL") ||
