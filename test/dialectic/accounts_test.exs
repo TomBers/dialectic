@@ -726,6 +726,8 @@ defmodule Dialectic.AccountsTest do
     end
   end
 
+  @one_pixel_png "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII="
+
   describe "update_user_profile/2" do
     test "updates username, bio, and theme" do
       user = user_fixture()
@@ -788,6 +790,29 @@ defmodule Dialectic.AccountsTest do
                Accounts.update_user_profile(user, %{username: "test22", theme: "neon"})
 
       assert "is invalid" in errors_on(changeset).theme
+    end
+  end
+
+  describe "update_user_avatar/2 and remove_user_avatar/1" do
+    test "stores a local avatar path and removes the file" do
+      user = user_fixture()
+
+      assert {:ok, updated} = Accounts.update_user_avatar(user, @one_pixel_png)
+      assert updated.avatar_path =~ ~r|^/uploads/avatars/user-#{updated.id}-.*\.png$|
+
+      full_path = uploaded_avatar_full_path(updated.avatar_path)
+      assert File.exists?(full_path)
+
+      assert {:ok, removed} = Accounts.remove_user_avatar(updated)
+      assert removed.avatar_path == nil
+      refute File.exists?(full_path)
+    end
+
+    test "rejects invalid avatar image data" do
+      user = user_fixture()
+
+      assert {:error, :invalid_image} =
+               Accounts.update_user_avatar(user, "data:text/plain;base64,nope")
     end
   end
 
@@ -969,5 +994,14 @@ defmodule Dialectic.AccountsTest do
 
       assert Accounts.list_user_public_graphs(user1) == []
     end
+  end
+
+  defp uploaded_avatar_full_path(avatar_path) do
+    filename = Path.basename(avatar_path)
+
+    :dialectic
+    |> :code.priv_dir()
+    |> to_string()
+    |> Path.join("static/uploads/avatars/#{filename}")
   end
 end

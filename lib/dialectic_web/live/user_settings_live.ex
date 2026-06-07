@@ -95,8 +95,127 @@ defmodule DialecticWeb.UserSettingsLive do
                     <div class="pt-4">
                       <p class="text-sm font-medium text-zinc-900">{@effective_username}</p>
                       <%= if @avatar_preview_url do %>
-                        <p class="text-xs text-emerald-600 mt-0.5">Gravatar connected</p>
+                        <p class="text-xs text-emerald-600 mt-0.5">Uploaded photo</p>
                       <% end %>
+                    </div>
+                  </div>
+
+                  <div
+                    id="avatar-upload-section"
+                    class="mb-6 rounded-xl border border-zinc-200 bg-white p-4"
+                  >
+                    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <h3 class="text-sm font-semibold text-zinc-900">Profile photo</h3>
+                        <p class="mt-1 text-xs text-zinc-500">
+                          Upload a photo, crop it square, then save. This MVP stores the image locally.
+                        </p>
+                      </div>
+
+                      <%= if @avatar_preview_url do %>
+                        <button
+                          type="button"
+                          id="avatar-remove-button"
+                          phx-click="remove_avatar"
+                          class="inline-flex items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-semibold text-zinc-700 shadow-sm hover:bg-zinc-50"
+                        >
+                          Remove photo
+                        </button>
+                      <% end %>
+                    </div>
+
+                    <div
+                      id="avatar-cropper"
+                      phx-hook="AvatarCropper"
+                      phx-update="ignore"
+                      class="mt-4 space-y-4"
+                    >
+                      <div>
+                        <label
+                          for="avatar-file-input"
+                          class="inline-flex cursor-pointer items-center justify-center rounded-lg bg-zinc-900 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-zinc-800"
+                        >
+                          Choose photo
+                        </label>
+                        <input
+                          id="avatar-file-input"
+                          data-avatar-input
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp"
+                          class="hidden"
+                        />
+                      </div>
+
+                      <div
+                        data-avatar-editor
+                        class="hidden rounded-xl border border-zinc-200 bg-zinc-50 p-4"
+                      >
+                        <div class="flex flex-col gap-4 md:flex-row">
+                          <div class="flex justify-center">
+                            <canvas
+                              data-avatar-canvas
+                              width="320"
+                              height="320"
+                              class="h-80 w-80 max-w-full cursor-move rounded-full border border-zinc-200 bg-white shadow-sm"
+                            >
+                            </canvas>
+                          </div>
+
+                          <div class="flex-1 space-y-4">
+                            <div>
+                              <label for="avatar-zoom" class="text-xs font-medium text-zinc-600">
+                                Zoom
+                              </label>
+                              <input
+                                id="avatar-zoom"
+                                data-avatar-zoom
+                                type="range"
+                                min="1"
+                                max="3"
+                                step="0.01"
+                                value="1"
+                                class="mt-2 w-full accent-indigo-600"
+                              />
+                            </div>
+
+                            <div class="flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                data-avatar-rotate-left
+                                class="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-semibold text-zinc-700 shadow-sm hover:bg-zinc-50"
+                              >
+                                Rotate left
+                              </button>
+                              <button
+                                type="button"
+                                data-avatar-rotate-right
+                                class="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-semibold text-zinc-700 shadow-sm hover:bg-zinc-50"
+                              >
+                                Rotate right
+                              </button>
+                            </div>
+
+                            <p data-avatar-error class="hidden text-sm text-red-600"></p>
+
+                            <div class="flex flex-wrap gap-2 pt-2">
+                              <button
+                                type="button"
+                                data-avatar-save
+                                class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+                              >
+                                Save photo
+                              </button>
+                              <button
+                                type="button"
+                                data-avatar-cancel
+                                class="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 shadow-sm hover:bg-zinc-50"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -122,44 +241,20 @@ defmodule DialecticWeb.UserSettingsLive do
                       class="mt-2 block min-h-[6rem] w-full rounded-lg border border-zinc-200 bg-white text-zinc-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm sm:leading-6"
                     />
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-                      <div>
-                        <.input
-                          field={@profile_form[:gravatar_id]}
-                          type="text"
-                          label="Gravatar ID"
-                          placeholder="e.g. phenomenal1a25bedd6b"
-                          class="mt-2 block w-full rounded-lg border border-zinc-200 bg-white text-zinc-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm sm:leading-6"
-                        />
-                        <p class="mt-1 text-xs text-zinc-500">
-                          Your Gravatar profile slug — the last part of your
-                          <a
-                            href="https://gravatar.com"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="text-indigo-600 hover:text-indigo-500 underline"
-                          >
-                            gravatar.com
-                          </a>
-                          profile URL. Leave blank for the default icon.
-                        </p>
-                      </div>
-
-                      <.input
-                        field={@profile_form[:theme]}
-                        type="select"
-                        label="Profile theme"
-                        options={[
-                          {"Light (default)", "default"},
-                          {"Indigo", "indigo"},
-                          {"Violet", "violet"},
-                          {"Emerald", "emerald"},
-                          {"Amber", "amber"},
-                          {"Rose", "rose"}
-                        ]}
-                        class="mt-2 block w-full rounded-lg border border-zinc-200 bg-white text-zinc-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm sm:leading-6"
-                      />
-                    </div>
+                    <.input
+                      field={@profile_form[:theme]}
+                      type="select"
+                      label="Profile theme"
+                      options={[
+                        {"Light (default)", "default"},
+                        {"Indigo", "indigo"},
+                        {"Violet", "violet"},
+                        {"Emerald", "emerald"},
+                        {"Amber", "amber"},
+                        {"Rose", "rose"}
+                      ]}
+                      class="mt-2 block w-full rounded-lg border border-zinc-200 bg-white text-zinc-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm sm:leading-6"
+                    />
 
                     <%!-- Theme Preview --%>
                     <div class="mt-2">
@@ -171,7 +266,6 @@ defmodule DialecticWeb.UserSettingsLive do
                       </div>
                     </div>
 
-                    <%!-- Connected Accounts from Gravatar --%>
                     <%= if @verified_accounts != [] do %>
                       <div class="h-px bg-zinc-100 my-2"></div>
 
@@ -196,33 +290,6 @@ defmodule DialecticWeb.UserSettingsLive do
                           </a>
                         <% end %>
                       </div>
-
-                      <p class="mt-1.5 text-xs text-zinc-500">
-                        Social links are pulled from your
-                        <a
-                          href="https://gravatar.com/profile"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          class="text-indigo-600 hover:text-indigo-500 underline"
-                        >
-                          Gravatar profile
-                        </a>
-                      </p>
-                    <% else %>
-                      <div class="h-px bg-zinc-100 my-2"></div>
-
-                      <p class="text-xs text-zinc-500">
-                        Social links are pulled from your
-                        <a
-                          href="https://gravatar.com/profile"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          class="text-indigo-600 hover:text-indigo-500 underline"
-                        >
-                          Gravatar profile
-                        </a>
-                        — add verified accounts there to display them here.
-                      </p>
                     <% end %>
 
                     <:actions>
@@ -421,7 +488,7 @@ defmodule DialecticWeb.UserSettingsLive do
       |> assign(:profile_form, to_form(profile_changeset))
       |> assign(:trigger_submit, false)
       |> assign(:effective_username, effective_username)
-      |> assign(:avatar_preview_url, nil)
+      |> assign(:avatar_preview_url, user.avatar_path)
       |> assign(:header_preview_url, nil)
       |> assign(:verified_accounts, [])
       |> assign(:theme_preview, theme_preview)
@@ -435,7 +502,6 @@ defmodule DialecticWeb.UserSettingsLive do
             {:ok, data} ->
               # Cache hit — apply immediately, no async fetch needed
               socket
-              |> assign(:avatar_preview_url, data.avatar_url)
               |> assign(:header_preview_url, data.header_image_url)
               |> assign(:verified_accounts, data.verified_accounts)
 
@@ -454,6 +520,41 @@ defmodule DialecticWeb.UserSettingsLive do
   end
 
   # --- Profile events ---
+
+  @impl true
+  def handle_event("save_avatar", %{"image_data" => image_data}, socket) do
+    case Accounts.update_user_avatar(socket.assigns.current_user, image_data) do
+      {:ok, updated_user} ->
+        {:noreply,
+         socket
+         |> assign(:current_user, updated_user)
+         |> assign(:avatar_preview_url, updated_user.avatar_path)
+         |> put_flash(:info, "Profile photo updated successfully.")}
+
+      {:error, :too_large} ->
+        {:noreply, put_flash(socket, :error, "Profile photo is too large.")}
+
+      {:error, :invalid_image} ->
+        {:noreply, put_flash(socket, :error, "Please choose a valid PNG, JPG, or WebP image.")}
+
+      {:error, _reason} ->
+        {:noreply, put_flash(socket, :error, "Unable to save profile photo.")}
+    end
+  end
+
+  def handle_event("remove_avatar", _params, socket) do
+    case Accounts.remove_user_avatar(socket.assigns.current_user) do
+      {:ok, updated_user} ->
+        {:noreply,
+         socket
+         |> assign(:current_user, updated_user)
+         |> assign(:avatar_preview_url, nil)
+         |> put_flash(:info, "Profile photo removed.")}
+
+      {:error, _reason} ->
+        {:noreply, put_flash(socket, :error, "Unable to remove profile photo.")}
+    end
+  end
 
   @impl true
   def handle_event("validate_profile", %{"user" => profile_params}, socket) do
@@ -497,6 +598,7 @@ defmodule DialecticWeb.UserSettingsLive do
           |> assign(:current_user, updated_user)
           |> assign(:profile_form, to_form(profile_changeset))
           |> assign(:effective_username, effective_username)
+          |> assign(:avatar_preview_url, updated_user.avatar_path)
           |> assign(:theme_preview, updated_user.theme || "default")
           |> put_flash(:info, "Profile updated successfully.")
 
@@ -515,7 +617,7 @@ defmodule DialecticWeb.UserSettingsLive do
 
             _ ->
               socket
-              |> assign(:avatar_preview_url, nil)
+              |> assign(:avatar_preview_url, updated_user.avatar_path)
               |> assign(:header_preview_url, nil)
               |> assign(:verified_accounts, [])
           end
@@ -598,14 +700,13 @@ defmodule DialecticWeb.UserSettingsLive do
   @impl true
   def handle_async(:fetch_gravatar, {:ok, {:ok, result}}, socket) do
     %{
-      avatar_url: avatar_url,
+      avatar_url: _avatar_url,
       header_image_url: header_image_url,
       verified_accounts: verified_accounts
     } = result
 
     {:noreply,
      socket
-     |> assign(:avatar_preview_url, avatar_url)
      |> assign(:header_preview_url, header_image_url)
      |> assign(:verified_accounts, verified_accounts)}
   end

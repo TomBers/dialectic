@@ -14,6 +14,8 @@ defmodule DialecticWeb.UserSettingsLiveTest do
 
       assert html =~ "Change email"
       assert html =~ "Change password"
+      assert html =~ "Profile photo"
+      assert html =~ "avatar-cropper"
     end
 
     test "redirects if user is not logged in", %{conn: conn} do
@@ -260,6 +262,14 @@ defmodule DialecticWeb.UserSettingsLiveTest do
         })
 
       assert result =~ "should be at least 2 character(s)"
+    end
+
+    test "renders the profile photo editor", %{conn: conn} do
+      {:ok, lv, _html} = live(conn, ~p"/users/settings")
+
+      assert has_element?(lv, "#avatar-upload-section")
+      assert has_element?(lv, "#avatar-cropper")
+      assert has_element?(lv, "#avatar-file-input")
     end
 
     test "updates the user profile successfully", %{conn: conn, user: user} do

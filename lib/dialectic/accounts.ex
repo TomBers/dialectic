@@ -6,7 +6,7 @@ defmodule Dialectic.Accounts do
   import Ecto.Query, warn: false
   alias Dialectic.Repo
 
-  alias Dialectic.Accounts.{User, UserToken, UserNotifier, Graph}
+  alias Dialectic.Accounts.{User, UserToken, UserNotifier, Graph, AvatarStorage}
 
   ## Database getters
 
@@ -499,6 +499,36 @@ defmodule Dialectic.Accounts do
     user
     |> User.profile_changeset(attrs)
     |> Repo.update()
+  end
+
+  def update_user_avatar(%User{} = user, image_data) do
+    case AvatarStorage.store_user_avatar(user, image_data) do
+      {:ok, avatar_path} ->
+        case user |> User.avatar_changeset(%{avatar_path: avatar_path}) |> Repo.update() do
+          {:ok, updated_user} ->
+            {:ok, updated_user}
+
+          {:error, changeset} ->
+            AvatarStorage.delete_avatar_path(avatar_path)
+            {:error, changeset}
+        end
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  def remove_user_avatar(%User{} = user) do
+    old_avatar_path = user.avatar_path
+
+    case user |> User.avatar_changeset(%{avatar_path: nil}) |> Repo.update() do
+      {:ok, updated_user} ->
+        AvatarStorage.delete_avatar_path(old_avatar_path)
+        {:ok, updated_user}
+
+      {:error, changeset} ->
+        {:error, changeset}
+    end
   end
 
   @doc """

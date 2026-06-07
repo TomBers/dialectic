@@ -62,7 +62,7 @@ defmodule DialecticWeb.UserProfileLive do
           |> assign(:page_title, "#{effective_username} — Profile")
           |> assign(:profile_user, profile_user)
           |> assign(:effective_username, effective_username)
-          |> assign(:avatar_url, nil)
+          |> assign(:avatar_url, profile_user.avatar_path)
           |> assign(:header_image_url, nil)
           |> assign(:theme, theme)
           |> assign(:stats, stats)
@@ -85,7 +85,6 @@ defmodule DialecticWeb.UserProfileLive do
                 {:ok, data} ->
                   # Cache hit — apply immediately, no async fetch needed
                   socket
-                  |> assign(:avatar_url, data.avatar_url)
                   |> assign(:header_image_url, data.header_image_url)
                   |> assign(:verified_accounts, data.verified_accounts)
                   |> assign(:location, data.location)
@@ -108,7 +107,7 @@ defmodule DialecticWeb.UserProfileLive do
   @impl true
   def handle_async(:fetch_gravatar, {:ok, {:ok, result}}, socket) do
     %{
-      avatar_url: avatar_url,
+      avatar_url: _avatar_url,
       header_image_url: header_image_url,
       verified_accounts: verified_accounts,
       location: location
@@ -116,7 +115,6 @@ defmodule DialecticWeb.UserProfileLive do
 
     {:noreply,
      socket
-     |> assign(:avatar_url, avatar_url)
      |> assign(:header_image_url, header_image_url)
      |> assign(:verified_accounts, verified_accounts)
      |> assign(:location, location)}

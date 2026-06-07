@@ -18,6 +18,7 @@ defmodule Dialectic.Accounts.User do
     field :username, :string
     field :bio, :string
     field :gravatar_id, :string
+    field :avatar_path, :string
     field :theme, :string, default: "default"
     field :is_admin, :boolean, default: false
 
@@ -273,6 +274,16 @@ defmodule Dialectic.Accounts.User do
     |> validate_inclusion(:theme, @valid_themes)
     |> unsafe_validate_unique(:username, Dialectic.Repo)
     |> unique_constraint(:username)
+  end
+
+  def avatar_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:avatar_path])
+    |> normalize_blank(:avatar_path)
+    |> validate_length(:avatar_path, max: 500)
+    |> validate_format(:avatar_path, ~r|^/uploads/avatars/[A-Za-z0-9._-]+$|,
+      message: "must be a valid uploaded avatar path"
+    )
   end
 
   # Normalizes a blank string change to nil so optional fields don't

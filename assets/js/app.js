@@ -41,6 +41,7 @@ import PresentationHook, {
 } from "./presentation_hook.js";
 import ShareHook from "./share_hook.js";
 import GridChatFormHook from "./grid_chat_form_hook.js";
+import AvatarCropper from "./avatar_cropper_hook.js";
 
 let hooks = {};
 
@@ -63,6 +64,7 @@ hooks.Presentation = PresentationHook;
 hooks.PresentationSetup = PresentationSetupHook;
 hooks.Share = ShareHook;
 hooks.GridChatForm = GridChatFormHook;
+hooks.AvatarCropper = AvatarCropper;
 hooks.GlobalModalLayer = {
   mounted() {
     const header = document.getElementById("userHeader");
