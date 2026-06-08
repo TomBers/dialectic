@@ -8,6 +8,7 @@ defmodule DialecticWeb.HomeGridRowComp do
   attr :label, :string, default: nil
   attr :tag_limit, :integer, default: 3
   attr :variant, :atom, default: :row
+  slot :action
 
   def home_grid_row(assigns) do
     ~H"""
@@ -53,27 +54,37 @@ defmodule DialecticWeb.HomeGridRowComp do
         </div>
       </div>
 
-      <.link
-        navigate={graph_path(@graph)}
-        class={action_link_class(@variant)}
-        aria-label={"Open " <> (@graph.title || "grid")}
-      >
-        <%= if @variant == :card do %>
+      <%= if @variant == :card do %>
+        <.link
+          navigate={graph_path(@graph)}
+          class={action_link_class(@variant)}
+          aria-label={"Open " <> (@graph.title || "grid")}
+        >
           <.icon name="hero-magnifying-glass" class="h-4 w-4" />
           <span>Open</span>
-        <% else %>
-          <.icon
-            name="hero-arrow-up-right"
-            class="absolute right-2 top-2 h-3.5 w-3.5 text-slate-400 transition group-hover/count:text-indigo-600"
-          />
-          <p class="text-base font-semibold leading-5 text-slate-950">
-            {graph_node_count(@graph)}
-          </p>
-          <p class="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500 transition group-hover/count:text-indigo-600">
-            ideas
-          </p>
-        <% end %>
-      </.link>
+        </.link>
+      <% else %>
+        <div class="flex items-center justify-between gap-3 sm:justify-end">
+          <.link
+            navigate={graph_path(@graph)}
+            class={action_link_class(@variant)}
+            aria-label={"Open " <> (@graph.title || "grid")}
+          >
+            <.icon
+              name="hero-arrow-up-right"
+              class="absolute right-2 top-2 h-3.5 w-3.5 text-slate-400 transition group-hover/count:text-indigo-600"
+            />
+            <p class="text-base font-semibold leading-5 text-slate-950">
+              {graph_node_count(@graph)}
+            </p>
+            <p class="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500 transition group-hover/count:text-indigo-600">
+              ideas
+            </p>
+          </.link>
+
+          {render_slot(@action)}
+        </div>
+      <% end %>
     </article>
     """
   end
