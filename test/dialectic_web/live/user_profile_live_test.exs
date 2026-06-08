@@ -17,12 +17,13 @@ defmodule DialecticWeb.UserProfileLiveTest do
     unique_suffix = System.unique_integer([:positive])
     slug = Keyword.get(opts, :slug, "slug-#{unique_suffix}")
     tags = Keyword.get(opts, :tags, [])
+    nodes = Keyword.get(opts, :nodes, [%{"id" => "1", "label" => "Node"}])
     unique_title = "#{title}-#{unique_suffix}"
 
     Dialectic.Repo.insert!(%Dialectic.Accounts.Graph{
       title: unique_title,
       slug: slug,
-      data: %{"nodes" => [%{"id" => "1", "label" => "Node"}]},
+      data: %{"nodes" => nodes},
       tags: tags,
       is_public: true,
       is_published: true,
@@ -40,13 +41,13 @@ defmodule DialecticWeb.UserProfileLiveTest do
       assert html =~ "profiletest"
       assert html =~ "— Profile"
       assert html =~ "Member since"
-      assert html =~ "Grids Created"
-      assert html =~ "Ideas Explored"
-      assert html =~ "Days Active"
+      assert html =~ "Grids"
+      assert html =~ "Ideas"
+      assert html =~ "Days"
       # Should not see edit link when not logged in
       refute html =~ "Edit Profile"
-      # Should see "Graphs by" heading for other users
-      assert html =~ "Grids by profiletest"
+      # Should see archive heading for other users
+      assert html =~ "Grid archive by profiletest"
     end
 
     test "renders bio when present", %{conn: conn} do
@@ -131,8 +132,34 @@ defmodule DialecticWeb.UserProfileLiveTest do
 
       {:ok, _lv, html} = live(conn, ~p"/u/taguser")
 
-      assert html =~ "Mainly talking about"
+      assert html =~ "Topics"
       assert html =~ "elixir"
+    end
+
+    test "renders metadata-driven start here cards for public graphs", %{conn: conn} do
+      user = create_user_with_username("starthere")
+
+      create_public_graph(user, "Seed Question",
+        slug: "seed-question",
+        tags: ["attention"],
+        nodes: [%{"id" => "1", "label" => "Node"}]
+      )
+
+      create_public_graph(user, "Deep Question",
+        slug: "deep-question",
+        tags: ["media", "psychology"],
+        nodes: Enum.map(1..22, fn id -> %{"id" => Integer.to_string(id), "label" => "Node"} end)
+      )
+
+      {:ok, _lv, html} = live(conn, ~p"/u/starthere")
+
+      assert html =~ "Start here"
+      assert html =~ "Entry points"
+      assert html =~ "Deep Question"
+      assert html =~ "Deep dive"
+      assert html =~ "22 ideas"
+      assert html =~ "find thinking on"
+      assert html =~ "public grids"
     end
   end
 
@@ -154,7 +181,7 @@ defmodule DialecticWeb.UserProfileLiveTest do
 
       assert html =~ "Account Settings"
       assert html =~ "profile-settings-link"
-      assert html =~ "My Public Grids"
+      assert html =~ "Public grid archive"
     end
 
     test "does not show 'Account Settings' link when viewing another user's profile", %{
@@ -169,7 +196,7 @@ defmodule DialecticWeb.UserProfileLiveTest do
         |> live(~p"/u/otheruser")
 
       refute html =~ "profile-settings-link"
-      assert html =~ "Grids by otheruser"
+      assert html =~ "Grid archive by otheruser"
     end
 
     test "shows 'Create your first grid' only on own empty profile", %{conn: conn} do

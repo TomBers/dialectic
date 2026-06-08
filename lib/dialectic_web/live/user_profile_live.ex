@@ -22,6 +22,8 @@ defmodule DialecticWeb.UserProfileLive do
 
         effective_username = User.effective_username(profile_user)
         common_tags = Accounts.get_common_tags(profile_user, graphs: graphs)
+        featured_graphs = featured_graphs(graphs)
+        current_focus = current_focus_text(common_tags, graphs)
 
         is_own_profile? =
           case socket.assigns[:current_user] do
@@ -67,6 +69,8 @@ defmodule DialecticWeb.UserProfileLive do
           |> assign(:theme, nil)
           |> assign(:stats, stats)
           |> assign(:graphs, graphs)
+          |> assign(:featured_graphs, featured_graphs)
+          |> assign(:current_focus, current_focus)
           |> assign(:common_tags, common_tags)
           |> assign(:profile_links, ProfileLinks.display_links(profile_user.profile_links))
           |> assign(:is_own_profile?, is_own_profile?)
@@ -111,12 +115,16 @@ defmodule DialecticWeb.UserProfileLive do
         graphs = Accounts.list_user_public_graphs(profile_user)
         stats = Accounts.get_profile_stats(profile_user, graphs)
         common_tags = Accounts.get_common_tags(profile_user, graphs: graphs)
+        featured_graphs = featured_graphs(graphs)
+        current_focus = current_focus_text(common_tags, graphs)
 
         {:noreply,
          socket
          |> assign(:graph_to_delete, nil)
          |> assign(:my_stats, my_stats)
          |> assign(:graphs, graphs)
+         |> assign(:featured_graphs, featured_graphs)
+         |> assign(:current_focus, current_focus)
          |> assign(:stats, stats)
          |> assign(:common_tags, common_tags)
          |> put_flash(:info, "Grid \"#{title}\" has been deleted.")}
@@ -190,16 +198,16 @@ defmodule DialecticWeb.UserProfileLive do
     <.flash kind={:error} title="Error!" flash={@flash} id="profile-flash-error" />
 
     <div class={["min-h-screen w-full", theme_bg_class(@theme)]}>
-      <div class="mx-auto max-w-5xl px-4 sm:px-6 py-10 sm:py-14">
+      <div class="mx-auto max-w-6xl px-4 sm:px-6 py-8 sm:py-12">
         <%!-- Profile Header --%>
         <div class={[
-          "rounded-2xl border shadow-lg overflow-hidden",
+          "overflow-hidden rounded-[1.75rem] border shadow-[0_28px_70px_-48px_rgba(15,23,42,0.45)]",
           theme_card_class(@theme)
         ]}>
           <%!-- Banner area --%>
           <%= cond do %>
             <% @profile_banner_url -> %>
-              <div class="h-32 sm:h-40 overflow-hidden">
+              <div class="h-36 overflow-hidden sm:h-44">
                 <img
                   src={@profile_banner_url}
                   alt={"#{@effective_username}'s profile banner"}
@@ -207,12 +215,12 @@ defmodule DialecticWeb.UserProfileLive do
                 />
               </div>
             <% true -> %>
-              <div class={["h-32 sm:h-40", theme_banner_class(@theme)]}></div>
+              <div class={["h-36 sm:h-44", theme_banner_class(@theme)]}></div>
           <% end %>
 
-          <div class="relative px-6 pb-6">
+          <div class="relative px-5 pb-6 sm:px-8 sm:pb-8">
             <%!-- Avatar --%>
-            <div class="flex flex-col sm:flex-row sm:items-end gap-4 -mt-12 sm:-mt-14">
+            <div class="flex flex-col gap-4 -mt-12 sm:-mt-14 sm:flex-row sm:items-end">
               <div class={[
                 "h-24 w-24 sm:h-28 sm:w-28 rounded-full border-4 flex items-center justify-center overflow-hidden flex-shrink-0",
                 theme_avatar_border_class(@theme)
@@ -233,9 +241,9 @@ defmodule DialecticWeb.UserProfileLive do
                 <% end %>
               </div>
 
-              <div class="flex-1 min-w-0 pb-1">
+              <div class="min-w-0 flex-1 pb-1">
                 <h1 class={[
-                  "text-2xl sm:text-3xl font-bold tracking-tight truncate",
+                  "truncate text-3xl font-semibold tracking-tight sm:text-4xl",
                   theme_heading_class(@theme)
                 ]}>
                   {@effective_username}
@@ -258,18 +266,86 @@ defmodule DialecticWeb.UserProfileLive do
               </div>
             </div>
 
-            <%!-- Bio --%>
-            <%= if @profile_user.bio && @profile_user.bio != "" do %>
-              <p class={["mt-4 text-sm leading-relaxed max-w-2xl", theme_body_text_class(@theme)]}>
-                {@profile_user.bio}
-              </p>
-            <% end %>
+            <div class="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-end">
+              <div>
+                <%= if @profile_user.bio && @profile_user.bio != "" do %>
+                  <p class="max-w-3xl text-xl font-medium leading-8 tracking-tight text-slate-900 sm:text-2xl sm:leading-9">
+                    {@profile_user.bio}
+                  </p>
+                <% end %>
+
+                <%= if @current_focus do %>
+                  <div class="mt-4 inline-flex max-w-2xl items-start gap-2 rounded-2xl bg-slate-50 px-3 py-2 text-sm leading-6 text-slate-600 ring-1 ring-slate-200">
+                    <.icon name="hero-sparkles" class="mt-0.5 h-4 w-4 shrink-0 text-indigo-500" />
+                    <p>{@current_focus}</p>
+                  </div>
+                <% end %>
+
+                <%!-- Social Links & Info --%>
+                <div class="mt-4 flex flex-wrap items-center gap-3">
+                  <%= for link <- @profile_links do %>
+                    <a
+                      href={link.href}
+                      target={if link.kind == "url", do: "_blank", else: nil}
+                      rel={if link.kind == "url", do: "noopener noreferrer me", else: "me"}
+                      class={[
+                        "inline-flex items-center gap-1.5 text-sm font-medium transition",
+                        theme_link_class(@theme)
+                      ]}
+                    >
+                      <.icon name={profile_link_icon(link)} class="w-4 h-4" />
+                      {link.label}
+                    </a>
+                  <% end %>
+
+                  <span class={[
+                    "inline-flex items-center gap-1.5 text-sm",
+                    theme_subtext_class(@theme)
+                  ]}>
+                    <.icon name="hero-calendar-days" class="w-4 h-4" />
+                    Member since {Calendar.strftime(@stats.member_since, "%B %Y")}
+                  </span>
+                </div>
+              </div>
+
+              <div class="rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
+                <div class="grid grid-cols-3 gap-2 text-center">
+                  <div>
+                    <p class="text-lg font-semibold leading-6 text-slate-950">
+                      {@stats.graphs_created}
+                    </p>
+                    <p class="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                      Grids
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-lg font-semibold leading-6 text-slate-950">
+                      {@stats.total_nodes}
+                    </p>
+                    <p class="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                      Ideas
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-lg font-semibold leading-6 text-slate-950">
+                      {format_member_duration(@stats.member_since)}
+                    </p>
+                    <p class="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                      Days
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
 
             <%!-- Common Tags --%>
             <%= if @common_tags != [] do %>
-              <div class="mt-3 flex flex-wrap items-center gap-1.5">
-                <span class={["text-xs font-medium", theme_subtext_class(@theme)]}>
-                  Mainly talking about:
+              <div class="mt-6 flex flex-wrap items-center gap-1.5 border-t border-slate-100 pt-4">
+                <span class={[
+                  "text-xs font-semibold uppercase tracking-[0.14em]",
+                  theme_subtext_class(@theme)
+                ]}>
+                  Topics
                 </span>
                 <%= for tag <- @common_tags do %>
                   <span class={[
@@ -281,67 +357,87 @@ defmodule DialecticWeb.UserProfileLive do
                 <% end %>
               </div>
             <% end %>
+          </div>
+        </div>
 
-            <%!-- Social Links & Info --%>
-            <div class="mt-4 flex flex-wrap items-center gap-3">
-              <%= for link <- @profile_links do %>
-                <a
-                  href={link.href}
-                  target={if link.kind == "url", do: "_blank", else: nil}
-                  rel={if link.kind == "url", do: "noopener noreferrer me", else: "me"}
+        <%= if @featured_graphs != [] do %>
+          <section id="profile-start-here" class="mt-10">
+            <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p class="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-600">
+                  Start here
+                </p>
+                <h2 class="mt-1 text-2xl font-semibold tracking-tight text-slate-950">
+                  Entry points
+                </h2>
+              </div>
+
+              <p class="max-w-xl text-sm leading-6 text-slate-600 sm:text-right">
+                A few substantial public grids selected from depth, tags, and recency.
+              </p>
+            </div>
+
+            <div class="grid gap-4 lg:grid-cols-3">
+              <%= for {graph, index} <- Enum.with_index(@featured_graphs) do %>
+                <.link
+                  navigate={graph_path(graph)}
                   class={[
-                    "inline-flex items-center gap-1.5 text-sm font-medium transition",
-                    theme_link_class(@theme)
+                    "group flex flex-col overflow-hidden border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md",
+                    featured_card_class(index)
                   ]}
                 >
-                  <.icon name={profile_link_icon(link)} class="w-4 h-4" />
-                  {link.label}
-                </a>
+                  <div class={[
+                    "border-b border-slate-100 bg-gradient-to-br from-slate-950 via-indigo-950 to-sky-900",
+                    featured_card_header_class(index)
+                  ]}>
+                    <div class="flex items-start justify-between gap-3">
+                      <span class="inline-flex items-center rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white ring-1 ring-white/20">
+                        {exploration_label(graph)}
+                      </span>
+                      <span class="shrink-0 text-xs font-semibold text-white/60">
+                        {graph_updated_label(graph)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class={featured_card_body_class(index)}>
+                    <h3 class={[
+                      "font-semibold leading-7 text-slate-950 group-hover:text-indigo-700",
+                      featured_card_title_class(index)
+                    ]}>
+                      {graph.title}
+                    </h3>
+
+                    <p class="mt-2 line-clamp-2 min-h-12 text-sm leading-6 text-slate-600">
+                      {graph_preview_sentence(graph)}
+                    </p>
+
+                    <div class="mt-4 flex min-h-12 flex-wrap content-start gap-1.5">
+                      <%= for tag <- Enum.take(graph.tags || [], 3) do %>
+                        <span class={[
+                          "inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset",
+                          table_tag_color_class(tag, @theme)
+                        ]}>
+                          #{tag}
+                        </span>
+                      <% end %>
+                    </div>
+
+                    <div class="mt-auto flex items-center justify-between border-t border-slate-100 pt-3 text-xs font-medium text-slate-500">
+                      <span>{graph_node_count(graph)} ideas</span>
+                      <span class="inline-flex items-center gap-1 text-indigo-600 group-hover:text-indigo-700">
+                        Open grid <.icon name="hero-arrow-right" class="h-3.5 w-3.5" />
+                      </span>
+                    </div>
+                  </div>
+                </.link>
               <% end %>
-
-              <span class={["inline-flex items-center gap-1.5 text-sm", theme_subtext_class(@theme)]}>
-                <.icon name="hero-calendar-days" class="w-4 h-4" />
-                Member since {Calendar.strftime(@stats.member_since, "%B %Y")}
-              </span>
             </div>
-          </div>
-        </div>
-
-        <%!-- Stats Bar --%>
-        <div class="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-4">
-          <div class={["rounded-xl border p-4 text-center shadow-sm", theme_card_class(@theme)]}>
-            <p class={["text-2xl sm:text-3xl font-bold", theme_heading_class(@theme)]}>
-              {@stats.graphs_created}
-            </p>
-            <p class={["text-xs sm:text-sm font-medium mt-1", theme_subtext_class(@theme)]}>
-              Grids Created
-            </p>
-          </div>
-
-          <div class={["rounded-xl border p-4 text-center shadow-sm", theme_card_class(@theme)]}>
-            <p class={["text-2xl sm:text-3xl font-bold", theme_heading_class(@theme)]}>
-              {@stats.total_nodes}
-            </p>
-            <p class={["text-xs sm:text-sm font-medium mt-1", theme_subtext_class(@theme)]}>
-              Ideas Explored
-            </p>
-          </div>
-
-          <div class={[
-            "rounded-xl border p-4 text-center shadow-sm col-span-2 sm:col-span-1",
-            theme_card_class(@theme)
-          ]}>
-            <p class={["text-2xl sm:text-3xl font-bold", theme_heading_class(@theme)]}>
-              {format_member_duration(@stats.member_since)}
-            </p>
-            <p class={["text-xs sm:text-sm font-medium mt-1", theme_subtext_class(@theme)]}>
-              Days Active
-            </p>
-          </div>
-        </div>
+          </section>
+        <% end %>
 
         <%!-- Graphs Section --%>
-        <div class="mt-8">
+        <div class="mt-10 border-t border-slate-200 pt-8">
           <button
             type="button"
             phx-click={
@@ -356,9 +452,9 @@ defmodule DialecticWeb.UserProfileLive do
           >
             <h2 class="text-lg sm:text-xl font-semibold tracking-tight">
               <%= if @is_own_profile? do %>
-                My Public Grids
+                Public grid archive
               <% else %>
-                Grids by {@effective_username}
+                Grid archive by {@effective_username}
               <% end %>
               <span class={[
                 "ml-2 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
@@ -400,103 +496,81 @@ defmodule DialecticWeb.UserProfileLive do
                 <% end %>
               </div>
             <% else %>
-              <div class={["rounded-xl border shadow-sm overflow-hidden", theme_card_class(@theme)]}>
-                <div class="overflow-x-auto">
-                  <table class="min-w-full border-separate border-spacing-0 text-left text-sm">
-                    <thead class={table_header_class(@theme)}>
-                      <tr>
-                        <th class="px-4 py-2.5 font-semibold">Grid</th>
-                        <th class="px-4 py-2.5 font-semibold">Tags</th>
-                        <th class="px-4 py-2.5 text-center font-semibold">Nodes</th>
-                        <th class="px-4 py-2.5 text-right font-semibold">Open</th>
-                        <%= if @is_own_profile? do %>
-                          <th class="px-4 py-2.5 text-right font-semibold">Delete</th>
-                        <% end %>
-                      </tr>
-                    </thead>
-                    <tbody class={table_body_class(@theme)}>
-                      <%= for graph <- @graphs do %>
-                        <tr class={table_row_class(@theme)}>
-                          <td class="px-4 py-3">
-                            <.link
-                              navigate={graph_path(graph)}
-                              class={[
-                                "hidden lg:block font-semibold hover:underline",
-                                table_link_class(@theme)
-                              ]}
-                            >
-                              {graph.title}
-                            </.link>
-                            <.link
-                              navigate={graph_path(graph)}
-                              class={[
-                                "lg:hidden font-semibold hover:underline",
-                                table_link_class(@theme)
-                              ]}
-                            >
-                              {graph.title}
-                            </.link>
-                          </td>
-                          <td class="px-4 py-3">
-                            <div class="flex flex-wrap gap-1">
-                              <%= for tag <- Enum.take(graph.tags || [], 3) do %>
-                                <span class={[
-                                  "inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset",
-                                  table_tag_color_class(tag, @theme)
-                                ]}>
-                                  #{tag}
-                                </span>
-                              <% end %>
-                            </div>
-                          </td>
-                          <td class={["px-4 py-3 text-center", theme_subtext_class(@theme)]}>
-                            {Enum.count(graph.data["nodes"] || [], fn n ->
-                              !Map.get(n, "compound", false)
-                            end)}
-                          </td>
-                          <td class="px-4 py-3 text-right">
-                            <.link
-                              navigate={graph_path(graph)}
-                              class={[
-                                "hidden lg:inline-flex h-8 w-8 items-center justify-center rounded-full",
-                                theme_icon_button_class(@theme)
-                              ]}
-                              aria-label={"Open " <> (graph.title || "grid")}
-                            >
-                              <.icon name="hero-arrow-top-right-on-square" class="h-4 w-4" />
-                            </.link>
-                            <.link
-                              navigate={graph_path(graph)}
-                              class={[
-                                "lg:hidden inline-flex h-8 w-8 items-center justify-center rounded-full",
-                                theme_icon_button_class(@theme)
-                              ]}
-                              aria-label={"Open " <> (graph.title || "grid")}
-                            >
-                              <.icon name="hero-arrow-top-right-on-square" class="h-4 w-4" />
-                            </.link>
-                          </td>
-                          <%= if @is_own_profile? do %>
-                            <td class="px-4 py-3 text-right">
-                              <button
-                                type="button"
-                                phx-click={
-                                  JS.push("show_delete_modal", value: %{title: graph.title})
-                                  |> show_modal("delete-graph-modal")
-                                }
-                                id={"delete-public-grid-btn-" <> (graph.slug || Integer.to_string(:erlang.phash2(graph.title || "")))}
-                                class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-red-500/80 hover:bg-red-600 text-white shadow-sm transition-transform hover:scale-105"
-                                title="Delete grid"
-                                aria-label={"Delete " <> (graph.title || "grid")}
-                              >
-                                <.icon name="hero-trash" class="h-4 w-4" />
-                              </button>
-                            </td>
+              <div class={["overflow-hidden rounded-2xl border shadow-sm", theme_card_class(@theme)]}>
+                <div class="divide-y divide-slate-100">
+                  <%= for graph <- @graphs do %>
+                    <div class="group grid gap-4 p-4 transition hover:bg-slate-50 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                      <div class="min-w-0">
+                        <.link
+                          navigate={graph_path(graph)}
+                          class={[
+                            "block truncate text-base font-semibold leading-6",
+                            table_link_class(@theme)
+                          ]}
+                        >
+                          {graph.title}
+                        </.link>
+
+                        <p class="mt-1 line-clamp-2 max-w-2xl text-sm leading-6 text-slate-600">
+                          {graph_preview_sentence(graph)}
+                        </p>
+
+                        <div class="mt-3 flex flex-wrap items-center gap-1.5">
+                          <%= if Enum.empty?(graph.tags || []) do %>
+                            <span class="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500 ring-1 ring-inset ring-slate-200">
+                              Untagged
+                            </span>
+                          <% else %>
+                            <%= for tag <- Enum.take(graph.tags || [], 4) do %>
+                              <span class={[
+                                "inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset",
+                                table_tag_color_class(tag, @theme)
+                              ]}>
+                                #{tag}
+                              </span>
+                            <% end %>
                           <% end %>
-                        </tr>
-                      <% end %>
-                    </tbody>
-                  </table>
+                        </div>
+                      </div>
+
+                      <div class="flex items-center justify-between gap-3 sm:justify-end">
+                        <.link
+                          navigate={graph_path(graph)}
+                          class="group/count relative min-w-24 rounded-xl bg-slate-50 px-3 py-2 text-center ring-1 ring-slate-200 transition hover:bg-indigo-50 hover:ring-indigo-200"
+                          aria-label={"Open " <> (graph.title || "grid")}
+                        >
+                          <.icon
+                            name="hero-arrow-up-right"
+                            class="absolute right-2 top-2 h-3.5 w-3.5 text-slate-400 transition group-hover/count:text-indigo-600"
+                          />
+                          <p class="text-base font-semibold leading-5 text-slate-950">
+                            {graph_node_count(graph)}
+                          </p>
+                          <p class="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500 transition group-hover/count:text-indigo-600">
+                            ideas
+                          </p>
+                        </.link>
+
+                        <div class="flex items-center justify-end">
+                          <%= if @is_own_profile? do %>
+                            <button
+                              type="button"
+                              phx-click={
+                                JS.push("show_delete_modal", value: %{title: graph.title})
+                                |> show_modal("delete-graph-modal")
+                              }
+                              id={"delete-public-grid-btn-" <> (graph.slug || Integer.to_string(:erlang.phash2(graph.title || "")))}
+                              class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600"
+                              title="Delete grid"
+                              aria-label={"Delete " <> (graph.title || "grid")}
+                            >
+                              <.icon name="hero-trash" class="h-4 w-4" />
+                            </button>
+                          <% end %>
+                        </div>
+                      </div>
+                    </div>
+                  <% end %>
                 </div>
               </div>
             <% end %>
@@ -795,6 +869,98 @@ defmodule DialecticWeb.UserProfileLive do
     end
   end
 
+  defp featured_graphs(graphs) do
+    graphs
+    |> Enum.sort_by(fn graph ->
+      {-featured_graph_score(graph), -graph_unix(graph), String.downcase(graph.title || "")}
+    end)
+    |> Enum.take(3)
+  end
+
+  defp featured_graph_score(graph) do
+    tag_count = length(graph.tags || [])
+    tag_bonus = min(tag_count, 5) * 12
+    missing_tag_penalty = if tag_count == 0, do: -20, else: 0
+
+    min(graph_node_count(graph), 30) * 2 + tag_bonus + missing_tag_penalty
+  end
+
+  defp current_focus_text(common_tags, graphs) do
+    case Enum.take(common_tags, 3) do
+      [] ->
+        if graphs == [] do
+          nil
+        else
+          "You'll find #{length(graphs)} public grids here, with #{total_node_count(graphs)} connected ideas to explore."
+        end
+
+      tags ->
+        "You'll find thinking on #{human_join(tags)} here, spread across #{length(graphs)} public grids."
+    end
+  end
+
+  defp graph_preview_sentence(graph) do
+    case Enum.take(graph.tags || [], 2) do
+      [] ->
+        "A #{String.downcase(exploration_label(graph))} built from #{graph_node_count(graph)} connected ideas."
+
+      tags ->
+        "A #{String.downcase(exploration_label(graph))} around #{human_join(tags)}."
+    end
+  end
+
+  defp exploration_label(graph) do
+    cond do
+      graph_node_count(graph) >= 20 -> "Deep dive"
+      graph_node_count(graph) <= 4 -> "Seedling"
+      true -> "Developing map"
+    end
+  end
+
+  defp graph_updated_label(graph) do
+    case graph.updated_at || graph.inserted_at do
+      %DateTime{} = updated_at -> Calendar.strftime(updated_at, "%b %Y")
+      _ -> "Recently"
+    end
+  end
+
+  defp graph_node_count(graph) do
+    (graph.data || %{})
+    |> Map.get("nodes", [])
+    |> Enum.count(fn node -> !Map.get(node, "compound", false) end)
+  end
+
+  defp total_node_count(graphs) do
+    Enum.reduce(graphs, 0, fn graph, count -> count + graph_node_count(graph) end)
+  end
+
+  defp graph_unix(graph) do
+    case graph.updated_at || graph.inserted_at do
+      %DateTime{} = datetime -> DateTime.to_unix(datetime)
+      _ -> 0
+    end
+  end
+
+  defp human_join([]), do: ""
+  defp human_join([one]), do: one
+  defp human_join([first, second]), do: "#{first} and #{second}"
+
+  defp human_join(items) do
+    {last, rest} = List.pop_at(items, -1)
+    Enum.join(rest, ", ") <> ", and " <> last
+  end
+
+  defp featured_card_class(0), do: "min-h-[24rem] rounded-[1.35rem]"
+  defp featured_card_class(_), do: "min-h-[24rem] rounded-2xl"
+
+  defp featured_card_header_class(_), do: "h-24 p-4"
+
+  defp featured_card_body_class(0), do: "flex flex-1 flex-col p-4"
+  defp featured_card_body_class(_), do: "flex flex-1 flex-col p-4"
+
+  defp featured_card_title_class(0), do: "line-clamp-3 text-lg"
+  defp featured_card_title_class(_), do: "line-clamp-3 text-base"
+
   # --- Profile class helpers ---
 
   defp theme_bg_class(_), do: "bg-gray-50"
@@ -808,7 +974,6 @@ defmodule DialecticWeb.UserProfileLive do
 
   defp theme_heading_class(_), do: "text-gray-900"
   defp theme_subtext_class(_), do: "text-gray-500"
-  defp theme_body_text_class(_), do: "text-gray-700"
   defp theme_link_class(_), do: "text-indigo-600 hover:text-indigo-500"
 
   defp theme_button_class(_), do: "bg-indigo-600 text-white hover:bg-indigo-500"
