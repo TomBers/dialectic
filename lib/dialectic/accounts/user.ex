@@ -2,8 +2,6 @@ defmodule Dialectic.Accounts.User do
   use Ecto.Schema
   import Ecto.Changeset
 
-  @valid_themes ~w(default indigo violet emerald amber rose)
-
   schema "users" do
     field :email, :string
     field :password, :string, virtual: true, redact: true
@@ -21,7 +19,6 @@ defmodule Dialectic.Accounts.User do
     field :banner_path, :string
     field :profile_banner, :string
     field :profile_links, :map, default: %{"links" => []}
-    field :theme, :string, default: "default"
     field :is_admin, :boolean, default: false
 
     has_many :graphs, Dialectic.Accounts.Graph, on_delete: :delete_all
@@ -29,11 +26,6 @@ defmodule Dialectic.Accounts.User do
 
     timestamps(type: :utc_datetime)
   end
-
-  @doc """
-  Returns the list of valid theme names.
-  """
-  def valid_themes, do: @valid_themes
 
   @doc """
   Derives a default username from the user's email address.
@@ -255,8 +247,7 @@ defmodule Dialectic.Accounts.User do
     |> cast(attrs, [
       :username,
       :bio,
-      :profile_banner,
-      :theme
+      :profile_banner
     ])
     |> normalize_blank(:profile_banner)
     |> validate_required([:username])
@@ -267,7 +258,6 @@ defmodule Dialectic.Accounts.User do
     |> validate_length(:bio, max: 500)
     |> validate_length(:profile_banner, max: 100)
     |> validate_inclusion(:profile_banner, Dialectic.Accounts.ProfileBanner.ids())
-    |> validate_inclusion(:theme, @valid_themes)
     |> unsafe_validate_unique(:username, Dialectic.Repo)
     |> unique_constraint(:username)
   end

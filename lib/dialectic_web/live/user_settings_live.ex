@@ -6,15 +6,6 @@ defmodule DialecticWeb.UserSettingsLive do
   alias Dialectic.Accounts.ProfileBanner
   alias Dialectic.Accounts.ProfileLinks
 
-  @theme_options [
-    {"Light", "default"},
-    {"Indigo", "indigo"},
-    {"Violet", "violet"},
-    {"Emerald", "emerald"},
-    {"Amber", "amber"},
-    {"Rose", "rose"}
-  ]
-
   @impl true
   def render(assigns) do
     ~H"""
@@ -435,7 +426,7 @@ defmodule DialecticWeb.UserSettingsLive do
                     <div>
                       <h3 class="text-sm font-semibold text-zinc-900">Profile basics</h3>
                       <p class="mt-1 text-xs text-zinc-500">
-                        Set the username, short intro, and color theme for your public profile home.
+                        Set the username and short intro for your public profile home.
                       </p>
                     </div>
 
@@ -454,49 +445,6 @@ defmodule DialecticWeb.UserSettingsLive do
                       placeholder="Tell people a bit about yourself and what you explore on RationalGrid..."
                       class="mt-2 block min-h-[6rem] w-full rounded-lg border border-zinc-200 bg-white text-zinc-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm sm:leading-6"
                     />
-
-                    <input
-                      type="hidden"
-                      id="profile-theme-value"
-                      name={@profile_form[:theme].name}
-                      value={@theme_preview}
-                    />
-
-                    <div>
-                      <div class="mb-2 flex items-center justify-between gap-3">
-                        <p class="text-sm font-semibold text-zinc-900">Profile colour</p>
-                        <p class="text-xs font-medium text-zinc-500">{theme_label(@theme_preview)}</p>
-                      </div>
-                      <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                        <%= for {label, value} <- theme_options() do %>
-                          <button
-                            type="button"
-                            id={"profile-theme-option-#{value}"}
-                            phx-click="select_profile_theme"
-                            phx-value-theme={value}
-                            class={[
-                              "group rounded-xl border bg-white p-2 text-left transition hover:border-indigo-300 hover:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600",
-                              @theme_preview == value && "border-indigo-500 ring-2 ring-indigo-100",
-                              @theme_preview != value && "border-zinc-200"
-                            ]}
-                            aria-pressed={to_string(@theme_preview == value)}
-                          >
-                            <span class={[
-                              "block h-10 rounded-lg border transition-colors",
-                              theme_preview_class(value)
-                            ]}>
-                            </span>
-                            <span class={[
-                              "mt-2 block text-xs font-semibold",
-                              @theme_preview == value && "text-indigo-700",
-                              @theme_preview != value && "text-zinc-700"
-                            ]}>
-                              {label}
-                            </span>
-                          </button>
-                        <% end %>
-                      </div>
-                    </div>
 
                     <:actions>
                       <.button
@@ -764,8 +712,6 @@ defmodule DialecticWeb.UserSettingsLive do
 
     profile_changeset = Accounts.change_user_profile(user)
 
-    theme_preview = user.theme || "default"
-
     socket =
       socket
       |> assign(:current_password, nil)
@@ -784,7 +730,6 @@ defmodule DialecticWeb.UserSettingsLive do
       |> assign(:profile_links_rows, ProfileLinks.form_rows(user.profile_links))
       |> assign(:profile_links_form, profile_links_form())
       |> assign(:profile_links_error, nil)
-      |> assign(:theme_preview, theme_preview)
 
     {:ok, socket}
   end
@@ -940,17 +885,6 @@ defmodule DialecticWeb.UserSettingsLive do
     end
   end
 
-  def handle_event("select_profile_theme", %{"theme" => theme}, socket) do
-    theme =
-      if theme in theme_values() do
-        theme
-      else
-        socket.assigns.theme_preview
-      end
-
-    {:noreply, assign(socket, :theme_preview, theme)}
-  end
-
   @impl true
   def handle_event("validate_profile", %{"user" => profile_params}, socket) do
     user = socket.assigns.current_user
@@ -968,8 +902,6 @@ defmodule DialecticWeb.UserSettingsLive do
         _ -> User.effective_username(user)
       end
 
-    theme_preview = Map.get(profile_params, "theme", user.theme || "default")
-
     banner_preview_url =
       case socket.assigns.uploaded_banner_url do
         path when is_binary(path) and path != "" ->
@@ -985,7 +917,6 @@ defmodule DialecticWeb.UserSettingsLive do
      socket
      |> assign(:profile_form, profile_form)
      |> assign(:banner_preview_url, banner_preview_url)
-     |> assign(:theme_preview, theme_preview)
      |> assign(:effective_username, effective_username)}
   end
 
@@ -1006,7 +937,6 @@ defmodule DialecticWeb.UserSettingsLive do
           |> assign(:avatar_preview_url, updated_user.avatar_path)
           |> assign(:current_banner_id, updated_user.profile_banner)
           |> assign(:banner_preview_url, effective_banner_url(updated_user))
-          |> assign(:theme_preview, updated_user.theme || "default")
           |> put_flash(:info, "Profile updated successfully.")
 
         {:noreply, socket}
@@ -1119,32 +1049,4 @@ defmodule DialecticWeb.UserSettingsLive do
 
   defp parse_index(index) when is_integer(index), do: index
   defp parse_index(_), do: 0
-
-  defp theme_options, do: @theme_options
-  defp theme_values, do: Enum.map(@theme_options, &elem(&1, 1))
-
-  defp theme_label(theme) do
-    @theme_options
-    |> Enum.find_value("Light", fn {label, value} ->
-      if value == theme, do: label
-    end)
-  end
-
-  defp theme_preview_class("indigo"),
-    do: "bg-gradient-to-r from-indigo-600 to-blue-500 border-indigo-300"
-
-  defp theme_preview_class("violet"),
-    do: "bg-gradient-to-r from-violet-600 to-purple-500 border-violet-300"
-
-  defp theme_preview_class("emerald"),
-    do: "bg-gradient-to-r from-emerald-600 to-teal-500 border-emerald-300"
-
-  defp theme_preview_class("amber"),
-    do: "bg-gradient-to-r from-amber-500 to-orange-500 border-amber-300"
-
-  defp theme_preview_class("rose"),
-    do: "bg-gradient-to-r from-rose-600 to-pink-500 border-rose-300"
-
-  defp theme_preview_class(_),
-    do: "bg-gradient-to-r from-indigo-500 to-blue-400 border-zinc-200"
 end

@@ -22,7 +22,6 @@ defmodule DialecticWeb.UserProfileLive do
 
         effective_username = User.effective_username(profile_user)
         common_tags = Accounts.get_common_tags(profile_user, graphs: graphs)
-        theme = profile_user.theme || "default"
 
         is_own_profile? =
           case socket.assigns[:current_user] do
@@ -65,7 +64,7 @@ defmodule DialecticWeb.UserProfileLive do
           |> assign(:effective_username, effective_username)
           |> assign(:avatar_url, profile_user.avatar_path)
           |> assign(:profile_banner_url, effective_banner_url(profile_user))
-          |> assign(:theme, theme)
+          |> assign(:theme, nil)
           |> assign(:stats, stats)
           |> assign(:graphs, graphs)
           |> assign(:common_tags, common_tags)
@@ -458,14 +457,20 @@ defmodule DialecticWeb.UserProfileLive do
                           <td class="px-4 py-3 text-right">
                             <.link
                               navigate={graph_path(graph)}
-                              class="hidden lg:inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-sky-500 text-white shadow-sm ring-1 ring-indigo-500/30 transition-transform hover:scale-105"
+                              class={[
+                                "hidden lg:inline-flex h-8 w-8 items-center justify-center rounded-full",
+                                theme_icon_button_class(@theme)
+                              ]}
                               aria-label={"Open " <> (graph.title || "grid")}
                             >
                               <.icon name="hero-arrow-top-right-on-square" class="h-4 w-4" />
                             </.link>
                             <.link
                               navigate={graph_path(graph)}
-                              class="lg:hidden inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-sky-500 text-white shadow-sm ring-1 ring-indigo-500/30 transition-transform hover:scale-105"
+                              class={[
+                                "lg:hidden inline-flex h-8 w-8 items-center justify-center rounded-full",
+                                theme_icon_button_class(@theme)
+                              ]}
                               aria-label={"Open " <> (graph.title || "grid")}
                             >
                               <.icon name="hero-arrow-top-right-on-square" class="h-4 w-4" />
@@ -621,14 +626,20 @@ defmodule DialecticWeb.UserProfileLive do
                             <td class="px-4 py-3 text-right">
                               <.link
                                 navigate={graph_path(g)}
-                                class="hidden lg:inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-sky-500 text-white shadow-sm ring-1 ring-indigo-500/30 transition-transform hover:scale-105"
+                                class={[
+                                  "hidden lg:inline-flex h-8 w-8 items-center justify-center rounded-full",
+                                  theme_icon_button_class(@theme)
+                                ]}
                                 aria-label={"Open " <> (g.title || "grid")}
                               >
                                 <.icon name="hero-arrow-top-right-on-square" class="h-4 w-4" />
                               </.link>
                               <.link
                                 navigate={graph_path(g)}
-                                class="lg:hidden inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-sky-500 text-white shadow-sm ring-1 ring-indigo-500/30 transition-transform hover:scale-105"
+                                class={[
+                                  "lg:hidden inline-flex h-8 w-8 items-center justify-center rounded-full",
+                                  theme_icon_button_class(@theme)
+                                ]}
                                 aria-label={"Open " <> (g.title || "grid")}
                               >
                                 <.icon name="hero-arrow-top-right-on-square" class="h-4 w-4" />
@@ -784,123 +795,39 @@ defmodule DialecticWeb.UserProfileLive do
     end
   end
 
-  # --- Theme class helpers ---
+  # --- Profile class helpers ---
 
-  defp theme_bg_class("indigo"), do: "bg-gradient-to-b from-indigo-950 to-slate-950"
-  defp theme_bg_class("violet"), do: "bg-gradient-to-b from-violet-950 to-slate-950"
-  defp theme_bg_class("emerald"), do: "bg-gradient-to-b from-emerald-950 to-slate-950"
-  defp theme_bg_class("amber"), do: "bg-gradient-to-b from-amber-950 to-slate-950"
-  defp theme_bg_class("rose"), do: "bg-gradient-to-b from-rose-950 to-slate-950"
   defp theme_bg_class(_), do: "bg-gray-50"
-
-  defp theme_card_class("indigo"), do: "bg-white/10 border-white/15 backdrop-blur-md"
-  defp theme_card_class("violet"), do: "bg-white/10 border-white/15 backdrop-blur-md"
-  defp theme_card_class("emerald"), do: "bg-white/10 border-white/15 backdrop-blur-md"
-  defp theme_card_class("amber"), do: "bg-white/10 border-white/15 backdrop-blur-md"
-  defp theme_card_class("rose"), do: "bg-white/10 border-white/15 backdrop-blur-md"
   defp theme_card_class(_), do: "bg-white border-gray-200"
 
-  defp theme_banner_class("indigo"), do: "bg-gradient-to-r from-indigo-600 to-blue-500"
-  defp theme_banner_class("violet"), do: "bg-gradient-to-r from-violet-600 to-purple-500"
-  defp theme_banner_class("emerald"), do: "bg-gradient-to-r from-emerald-600 to-teal-500"
-  defp theme_banner_class("amber"), do: "bg-gradient-to-r from-amber-500 to-orange-500"
-  defp theme_banner_class("rose"), do: "bg-gradient-to-r from-rose-600 to-pink-500"
   defp theme_banner_class(_), do: "bg-gradient-to-r from-indigo-500 to-blue-400"
 
-  defp theme_avatar_border_class("default"), do: "border-white bg-white"
-  defp theme_avatar_border_class(_), do: "border-white/30 bg-white/10"
+  defp theme_avatar_border_class(_), do: "border-white bg-white"
 
-  defp theme_avatar_default_class("indigo"), do: "bg-indigo-500/30 text-indigo-200"
-  defp theme_avatar_default_class("violet"), do: "bg-violet-500/30 text-violet-200"
-  defp theme_avatar_default_class("emerald"), do: "bg-emerald-500/30 text-emerald-200"
-  defp theme_avatar_default_class("amber"), do: "bg-amber-500/30 text-amber-200"
-  defp theme_avatar_default_class("rose"), do: "bg-rose-500/30 text-rose-200"
   defp theme_avatar_default_class(_), do: "bg-indigo-100 text-indigo-600"
 
-  defp theme_heading_class(theme) when theme in ~w(indigo violet emerald amber rose),
-    do: "text-white"
-
   defp theme_heading_class(_), do: "text-gray-900"
-
-  defp theme_subtext_class(theme) when theme in ~w(indigo violet emerald amber rose),
-    do: "text-white/60"
-
   defp theme_subtext_class(_), do: "text-gray-500"
-
-  defp theme_body_text_class(theme) when theme in ~w(indigo violet emerald amber rose),
-    do: "text-white/80"
-
   defp theme_body_text_class(_), do: "text-gray-700"
-
-  defp theme_link_class("indigo"), do: "text-indigo-300 hover:text-indigo-200"
-  defp theme_link_class("violet"), do: "text-violet-300 hover:text-violet-200"
-  defp theme_link_class("emerald"), do: "text-emerald-300 hover:text-emerald-200"
-  defp theme_link_class("amber"), do: "text-amber-300 hover:text-amber-200"
-  defp theme_link_class("rose"), do: "text-rose-300 hover:text-rose-200"
   defp theme_link_class(_), do: "text-indigo-600 hover:text-indigo-500"
 
-  defp theme_button_class("indigo"), do: "bg-indigo-500 text-white hover:bg-indigo-400"
-  defp theme_button_class("violet"), do: "bg-violet-500 text-white hover:bg-violet-400"
-  defp theme_button_class("emerald"), do: "bg-emerald-500 text-white hover:bg-emerald-400"
-  defp theme_button_class("amber"), do: "bg-amber-500 text-white hover:bg-amber-400"
-  defp theme_button_class("rose"), do: "bg-rose-500 text-white hover:bg-rose-400"
   defp theme_button_class(_), do: "bg-indigo-600 text-white hover:bg-indigo-500"
 
-  defp theme_tag_class("indigo"), do: "bg-indigo-500/20 text-indigo-200 ring-1 ring-indigo-400/30"
-  defp theme_tag_class("violet"), do: "bg-violet-500/20 text-violet-200 ring-1 ring-violet-400/30"
+  defp theme_icon_button_class(_),
+    do:
+      "bg-gradient-to-br from-indigo-500 to-sky-500 text-white shadow-sm ring-1 ring-indigo-500/30 transition-transform hover:scale-105"
 
-  defp theme_tag_class("emerald"),
-    do: "bg-emerald-500/20 text-emerald-200 ring-1 ring-emerald-400/30"
-
-  defp theme_tag_class("amber"), do: "bg-amber-500/20 text-amber-200 ring-1 ring-amber-400/30"
-  defp theme_tag_class("rose"), do: "bg-rose-500/20 text-rose-200 ring-1 ring-rose-400/30"
   defp theme_tag_class(_), do: "bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200"
 
   # --- Table helper classes ---
 
-  defp table_header_class(theme) when theme in ~w(indigo violet emerald amber rose),
-    do: "bg-white/10 text-xs uppercase tracking-wide text-white/80"
-
   defp table_header_class(_), do: "bg-slate-50 text-xs uppercase tracking-wide text-slate-600"
-
-  defp table_body_class(theme) when theme in ~w(indigo violet emerald amber rose),
-    do: "divide-y divide-white/10"
-
   defp table_body_class(_), do: "divide-y divide-slate-200"
-
-  defp table_row_class(theme) when theme in ~w(indigo violet emerald amber rose),
-    do: "align-top transition-colors hover:bg-white/5"
 
   defp table_row_class(_),
     do: "align-top transition-colors odd:bg-slate-50 even:bg-white hover:bg-indigo-50/50"
 
-  defp table_link_class(theme) when theme in ~w(indigo violet emerald amber rose),
-    do: "text-white hover:text-white/80"
-
   defp table_link_class(_), do: "text-slate-900 hover:text-indigo-700"
-
-  defp table_tag_color_class(tag, theme) when theme in ~w(indigo violet emerald amber rose) do
-    colors = [
-      "bg-rose-500/15 text-rose-100 ring-rose-300/30",
-      "bg-orange-500/15 text-orange-100 ring-orange-300/30",
-      "bg-amber-500/15 text-amber-100 ring-amber-300/30",
-      "bg-lime-500/15 text-lime-100 ring-lime-300/30",
-      "bg-green-500/15 text-green-100 ring-green-300/30",
-      "bg-emerald-500/15 text-emerald-100 ring-emerald-300/30",
-      "bg-teal-500/15 text-teal-100 ring-teal-300/30",
-      "bg-cyan-500/15 text-cyan-100 ring-cyan-300/30",
-      "bg-sky-500/15 text-sky-100 ring-sky-300/30",
-      "bg-blue-500/15 text-blue-100 ring-blue-300/30",
-      "bg-indigo-500/15 text-indigo-100 ring-indigo-300/30",
-      "bg-violet-500/15 text-violet-100 ring-violet-300/30",
-      "bg-purple-500/15 text-purple-100 ring-purple-300/30",
-      "bg-fuchsia-500/15 text-fuchsia-100 ring-fuchsia-300/30",
-      "bg-pink-500/15 text-pink-100 ring-pink-300/30"
-    ]
-
-    idx = :erlang.phash2(tag, length(colors))
-    Enum.at(colors, idx)
-  end
 
   defp table_tag_color_class(tag, _theme) do
     colors = [

@@ -729,20 +729,18 @@ defmodule Dialectic.AccountsTest do
   @one_pixel_png "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII="
 
   describe "update_user_profile/2" do
-    test "updates username, bio, theme, and profile banner" do
+    test "updates username, bio, and profile banner" do
       user = user_fixture()
 
       assert {:ok, updated} =
                Accounts.update_user_profile(user, %{
                  username: "newname",
                  bio: "Hello!",
-                 theme: "indigo",
                  profile_banner: "liquid-cheese"
                })
 
       assert updated.username == "newname"
       assert updated.bio == "Hello!"
-      assert updated.theme == "indigo"
       assert updated.profile_banner == "liquid-cheese"
     end
 
@@ -774,15 +772,6 @@ defmodule Dialectic.AccountsTest do
       {:ok, _} = Accounts.update_user_profile(user1, %{username: "unique99"})
       assert {:error, changeset} = Accounts.update_user_profile(user2, %{username: "unique99"})
       assert "has already been taken" in errors_on(changeset).username
-    end
-
-    test "rejects invalid theme" do
-      user = user_fixture()
-
-      assert {:error, changeset} =
-               Accounts.update_user_profile(user, %{username: "test22", theme: "neon"})
-
-      assert "is invalid" in errors_on(changeset).theme
     end
 
     test "rejects invalid profile banner" do

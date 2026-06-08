@@ -279,22 +279,11 @@ defmodule DialecticWeb.UserSettingsLiveTest do
       assert has_element?(lv, "#banner-file-input")
       assert has_element?(lv, "#profile-links-section")
       assert has_element?(lv, "#profile_links_form")
-      assert has_element?(lv, "#profile-theme-option-emerald")
-      assert has_element?(lv, ~s(input#profile-theme-value[name="user[theme]"]))
+      refute has_element?(lv, "#profile-theme-option-emerald")
+      refute has_element?(lv, ~s(input#profile-theme-value[name="user[theme]"]))
       refute has_element?(lv, "#profile-banner-picker-secondary-button")
       refute has_element?(lv, "#user_theme")
       refute has_element?(lv, "#user_profile_banner")
-    end
-
-    test "clicking a profile colour updates the profile theme value", %{conn: conn} do
-      {:ok, lv, _html} = live(conn, ~p"/users/settings")
-
-      lv
-      |> element("#profile-theme-option-emerald")
-      |> render_click()
-
-      assert has_element?(lv, ~s(input#profile-theme-value[value="emerald"]))
-      assert has_element?(lv, ~s(#profile-theme-option-emerald[aria-pressed="true"]))
     end
 
     test "saving an uploaded banner updates the preview", %{conn: conn, user: user} do
@@ -384,17 +373,12 @@ defmodule DialecticWeb.UserSettingsLiveTest do
     test "updates the user profile successfully", %{conn: conn, user: user} do
       {:ok, lv, _html} = live(conn, ~p"/users/settings")
 
-      lv
-      |> element("#profile-theme-option-indigo")
-      |> render_click()
-
       result =
         lv
         |> form("#profile_form", %{
           "user" => %{
             "username" => "newname42",
-            "bio" => "Hello world!",
-            "theme" => "indigo"
+            "bio" => "Hello world!"
           }
         })
         |> render_submit()
@@ -404,7 +388,6 @@ defmodule DialecticWeb.UserSettingsLiveTest do
       updated_user = Accounts.get_user!(user.id)
       assert updated_user.username == "newname42"
       assert updated_user.bio == "Hello world!"
-      assert updated_user.theme == "indigo"
     end
 
     test "renders errors with invalid data (phx-submit)", %{conn: conn} do

@@ -206,17 +206,6 @@ defmodule DialecticWeb.UserProfileLiveTest do
     end
   end
 
-  describe "theme support" do
-    test "applies theme classes when user has a non-default theme", %{conn: conn} do
-      user = create_user_with_username("themeduser")
-      {:ok, _} = Accounts.update_user_profile(user, %{username: "themeduser", theme: "indigo"})
-
-      {:ok, _lv, html} = live(conn, ~p"/u/themeduser")
-
-      assert html =~ "from-indigo"
-    end
-  end
-
   describe "graph rendering" do
     test "renders graph links using the graph slug", %{conn: conn} do
       user = create_user_with_username("iduser")
