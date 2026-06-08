@@ -6,7 +6,7 @@ defmodule DialecticWeb.HomeLiveTest do
   import Dialectic.AccountsFixtures
   import Phoenix.LiveViewTest
 
-  test "renders mobile graph cards alongside the desktop table", %{conn: conn} do
+  test "renders mobile graph cards alongside the desktop graph list", %{conn: conn} do
     graph =
       insert_graph(%{
         title: "Mobile Home Grid",
@@ -53,10 +53,13 @@ defmodule DialecticWeb.HomeLiveTest do
     {:ok, view, _html} = live(conn, ~p"/?search=Mobile Home Grid")
 
     assert has_element?(view, "#home-graph-mobile-list")
-    assert has_element?(view, "#home-graph-desktop-table")
+    assert has_element?(view, "#home-graph-desktop-list")
     assert has_element?(view, "#home-mobile-graph-#{graph.slug}")
     assert has_element?(view, "#home-mobile-graph-#{graph.slug} a", graph.title)
     assert has_element?(view, "#home-mobile-graph-#{graph.slug} a[aria-label]")
+    assert has_element?(view, "#home-desktop-graph-#{graph.slug}")
+    assert has_element?(view, "#home-desktop-graph-#{graph.slug} a", graph.title)
+    assert has_element?(view, "#home-desktop-graph-#{graph.slug} a[aria-label]")
   end
 
   test "logged in users see profile entry in the header without a settings link", %{conn: conn} do
