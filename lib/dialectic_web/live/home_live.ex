@@ -458,37 +458,20 @@ defmodule DialecticWeb.HomeLive do
                           <% end %>
                         </div>
 
-                        <div class="space-y-2">
-                          <%= for {item, index} <- Enum.with_index(preview_items) do %>
-                            <div>
-                              <div class="mb-1 flex justify-end">
-                                <span class="inline-flex rounded-full bg-white/95 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 ring-1 ring-slate-200">
-                                  Editor’s pick
-                                </span>
-                              </div>
-                              <DialecticWeb.PageHtml.GraphComp.render
-                                title={item.graph.title}
-                                is_public={item.graph.is_public}
-                                link={graph_path(item.graph)}
-                                count={0}
-                                tags={Enum.take(item.graph.tags || [], 3)}
+                        <div
+                          id="home-editor-picks-list"
+                          class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+                        >
+                          <div class="divide-y divide-slate-100">
+                            <%= for {item, index} <- Enum.with_index(preview_items) do %>
+                              <.home_grid_row
+                                graph={item.graph}
                                 author_name={item.author_name}
-                                author_link={author_profile_path(item.author_name)}
-                                author_label="by"
-                                variant={:light}
-                                compact={true}
-                                show_exploration_stats={false}
-                                node_count={
-                                  Enum.count(item.graph.data["nodes"] || [], fn n ->
-                                    !Map.get(n, "compound", false)
-                                  end)
-                                }
-                                is_live={false}
-                                generating={false}
                                 id={"hero-explore-#{index}-#{item.graph.slug || Integer.to_string(:erlang.phash2(item.graph.title || ""))}"}
+                                label="Editor’s pick"
                               />
-                            </div>
-                          <% end %>
+                            <% end %>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -932,36 +915,98 @@ defmodule DialecticWeb.HomeLive do
               </div>
             <% end %>
           </div>
-          <div class="space-y-1.5">
-            <%= for item <- @items do %>
-              <div class="relative">
-                <DialecticWeb.PageHtml.GraphComp.render
-                  title={item.graph.title}
-                  is_public={item.graph.is_public}
-                  link={graph_path(item.graph)}
-                  count={0}
-                  tags={Enum.take(item.graph.tags || [], 3)}
+          <div
+            id={"#{@id_prefix}-grids-list"}
+            class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+          >
+            <div class="divide-y divide-slate-100">
+              <%= for item <- @items do %>
+                <.home_grid_row
+                  graph={item.graph}
                   author_name={item.author_name}
-                  author_link={author_profile_path(item.author_name)}
-                  author_label="by"
-                  variant={:light}
-                  compact={true}
-                  show_exploration_stats={false}
-                  node_count={
-                    Enum.count(item.graph.data["nodes"] || [], fn n ->
-                      !Map.get(n, "compound", false)
-                    end)
-                  }
-                  is_live={false}
-                  generating={false}
                   id={@id_prefix <> "-" <> (item.graph.slug || "t-" <> Integer.to_string(:erlang.phash2(item.graph.title || "")))}
                 />
-              </div>
-            <% end %>
+              <% end %>
+            </div>
           </div>
         </div>
       </div>
     </section>
+    """
+  end
+
+  defp home_grid_row(assigns) do
+    assigns = assign_new(assigns, :label, fn -> nil end)
+
+    ~H"""
+    <article
+      id={@id}
+      class="group grid gap-3 p-3 transition hover:bg-slate-50 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
+    >
+      <div class="min-w-0">
+        <.link
+          navigate={graph_path(@graph)}
+          class="block line-clamp-2 text-sm font-semibold leading-5 text-slate-900 hover:text-indigo-700"
+        >
+          {@graph.title}
+        </.link>
+
+        <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+          <p class="line-clamp-2 text-xs leading-5 text-slate-600 sm:text-sm sm:leading-6">
+            {graph_preview_sentence(@graph)}
+          </p>
+
+          <%= if author_visible?(@author_name) do %>
+            <.link
+              navigate={~p"/u/#{@author_name}"}
+              class="inline-flex text-xs font-medium text-slate-600 transition hover:text-indigo-700"
+            >
+              by {@author_name}
+            </.link>
+          <% end %>
+        </div>
+
+        <div class="mt-2 flex flex-wrap items-center gap-1.5">
+          <%= if @label do %>
+            <span class="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500 ring-1 ring-inset ring-slate-200">
+              {@label}
+            </span>
+          <% end %>
+
+          <%= if Enum.empty?(@graph.tags || []) do %>
+            <span class="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500 ring-1 ring-inset ring-slate-200">
+              Untagged
+            </span>
+          <% else %>
+            <%= for tag <- Enum.take(@graph.tags || [], 3) do %>
+              <span class={[
+                "inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset",
+                table_tag_color_class(tag)
+              ]}>
+                #{tag}
+              </span>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+
+      <.link
+        navigate={graph_path(@graph)}
+        class="group/count relative min-w-24 rounded-xl bg-slate-50 px-3 py-2 text-center ring-1 ring-slate-200 transition hover:bg-indigo-50 hover:ring-indigo-200"
+        aria-label={"Open " <> (@graph.title || "grid")}
+      >
+        <.icon
+          name="hero-arrow-up-right"
+          class="absolute right-2 top-2 h-3.5 w-3.5 text-slate-400 transition group-hover/count:text-indigo-600"
+        />
+        <p class="text-base font-semibold leading-5 text-slate-950">
+          {graph_node_count(@graph)}
+        </p>
+        <p class="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500 transition group-hover/count:text-indigo-600">
+          ideas
+        </p>
+      </.link>
+    </article>
     """
   end
 
@@ -999,10 +1044,6 @@ defmodule DialecticWeb.HomeLive do
     |> Enum.map(&Map.get(&1, :author_name))
     |> Enum.filter(&author_visible?/1)
     |> Enum.uniq_by(&(String.trim(&1) |> String.downcase()))
-  end
-
-  defp author_profile_path(author_name) do
-    if author_visible?(author_name), do: ~p"/u/#{author_name}", else: nil
   end
 
   defp author_visible?(author_name) when is_binary(author_name) do
