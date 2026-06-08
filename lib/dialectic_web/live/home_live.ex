@@ -1086,9 +1086,11 @@ defmodule DialecticWeb.HomeLive do
   end
 
   defp exploration_label(graph) do
+    node_count = graph_node_count(graph)
+
     cond do
-      graph_node_count(graph) >= 20 -> "Deep dive"
-      graph_node_count(graph) <= 4 -> "Seedling"
+      node_count >= 20 -> "Deep dive"
+      node_count <= 4 -> "Seedling"
       true -> "Developing map"
     end
   end
