@@ -6,6 +6,7 @@ defmodule DialecticWeb.UserProfileLive do
   alias Dialectic.Accounts.ProfileBanner
   alias Dialectic.Accounts.ProfileLinks
   alias DialecticWeb.Utils.NodeTitleHelper
+  import DialecticWeb.HomeGridRowComp
 
   @impl true
   def mount(%{"username" => username}, _session, socket) do
@@ -499,77 +500,28 @@ defmodule DialecticWeb.UserProfileLive do
               <div class={["overflow-hidden rounded-2xl border shadow-sm", theme_card_class(@theme)]}>
                 <div class="divide-y divide-slate-100">
                   <%= for graph <- @graphs do %>
-                    <div class="group grid gap-4 p-4 transition hover:bg-slate-50 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-                      <div class="min-w-0">
-                        <.link
-                          navigate={graph_path(graph)}
-                          class={[
-                            "block truncate text-base font-semibold leading-6",
-                            table_link_class(@theme)
-                          ]}
+                    <.home_grid_row
+                      graph={graph}
+                      id={"profile-public-grid-" <> (graph.slug || Integer.to_string(:erlang.phash2(graph.title || "")))}
+                      variant={:comfortable}
+                      tag_limit={4}
+                    >
+                      <:action :if={@is_own_profile?}>
+                        <button
+                          type="button"
+                          phx-click={
+                            JS.push("show_delete_modal", value: %{title: graph.title})
+                            |> show_modal("delete-graph-modal")
+                          }
+                          id={"delete-public-grid-btn-" <> (graph.slug || Integer.to_string(:erlang.phash2(graph.title || "")))}
+                          class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600"
+                          title="Delete grid"
+                          aria-label={"Delete " <> (graph.title || "grid")}
                         >
-                          {graph.title}
-                        </.link>
-
-                        <p class="mt-1 line-clamp-2 max-w-2xl text-sm leading-6 text-slate-600">
-                          {graph_preview_sentence(graph)}
-                        </p>
-
-                        <div class="mt-3 flex flex-wrap items-center gap-1.5">
-                          <%= if Enum.empty?(graph.tags || []) do %>
-                            <span class="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500 ring-1 ring-inset ring-slate-200">
-                              Untagged
-                            </span>
-                          <% else %>
-                            <%= for tag <- Enum.take(graph.tags || [], 4) do %>
-                              <span class={[
-                                "inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset",
-                                table_tag_color_class(tag, @theme)
-                              ]}>
-                                #{tag}
-                              </span>
-                            <% end %>
-                          <% end %>
-                        </div>
-                      </div>
-
-                      <div class="flex items-center justify-between gap-3 sm:justify-end">
-                        <.link
-                          navigate={graph_path(graph)}
-                          class="group/count relative min-w-24 rounded-xl bg-slate-50 px-3 py-2 text-center ring-1 ring-slate-200 transition hover:bg-indigo-50 hover:ring-indigo-200"
-                          aria-label={"Open " <> (graph.title || "grid")}
-                        >
-                          <.icon
-                            name="hero-arrow-up-right"
-                            class="absolute right-2 top-2 h-3.5 w-3.5 text-slate-400 transition group-hover/count:text-indigo-600"
-                          />
-                          <p class="text-base font-semibold leading-5 text-slate-950">
-                            {graph_node_count(graph)}
-                          </p>
-                          <p class="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500 transition group-hover/count:text-indigo-600">
-                            ideas
-                          </p>
-                        </.link>
-
-                        <div class="flex items-center justify-end">
-                          <%= if @is_own_profile? do %>
-                            <button
-                              type="button"
-                              phx-click={
-                                JS.push("show_delete_modal", value: %{title: graph.title})
-                                |> show_modal("delete-graph-modal")
-                              }
-                              id={"delete-public-grid-btn-" <> (graph.slug || Integer.to_string(:erlang.phash2(graph.title || "")))}
-                              class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600"
-                              title="Delete grid"
-                              aria-label={"Delete " <> (graph.title || "grid")}
-                            >
-                              <.icon name="hero-trash" class="h-4 w-4" />
-                            </button>
-                          <% end %>
-                        </div>
-                      </div>
-                    </div>
+                          <.icon name="hero-trash" class="h-4 w-4" />
+                        </button>
+                      </:action>
+                    </.home_grid_row>
                   <% end %>
                 </div>
               </div>
