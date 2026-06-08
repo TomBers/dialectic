@@ -2,6 +2,7 @@ defmodule Dialectic.Accounts.ProfileBanner do
   @moduledoc false
 
   @banner_path "/images/profile-banners"
+  @digest_suffix ~r/-[a-f0-9]{32}$/i
   @featured_order [
     "liquid-cheese",
     "diagonal-stripes",
@@ -57,7 +58,14 @@ defmodule Dialectic.Accounts.ProfileBanner do
       Path.join(File.cwd!(), "priv/static#{@banner_path}/*.svg")
     ]
     |> Enum.flat_map(&Path.wildcard/1)
+    |> Enum.reject(&digested_asset?/1)
     |> Enum.uniq()
+  end
+
+  defp digested_asset?(path) do
+    path
+    |> Path.basename(".svg")
+    |> String.match?(@digest_suffix)
   end
 
   defp banner_from_path(path) do
