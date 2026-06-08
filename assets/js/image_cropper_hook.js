@@ -7,8 +7,8 @@ export const createImageCropperHook = (config) => ({
       wheelStep: 0.05,
       minScale: 1,
       maxScale: 3,
-      outputType: "image/png",
-      outputQuality: 0.92,
+      outputType: "image/webp",
+      outputQuality: 0.9,
       allowRotation: false,
       ...config,
     };
@@ -21,8 +21,12 @@ export const createImageCropperHook = (config) => ({
     this.error = this.el.querySelector(`[data-${prefix}-error]`);
     this.saveButton = this.el.querySelector(`[data-${prefix}-save]`);
     this.cancelButton = this.el.querySelector(`[data-${prefix}-cancel]`);
-    this.rotateLeftButton = this.el.querySelector(`[data-${prefix}-rotate-left]`);
-    this.rotateRightButton = this.el.querySelector(`[data-${prefix}-rotate-right]`);
+    this.rotateLeftButton = this.el.querySelector(
+      `[data-${prefix}-rotate-left]`,
+    );
+    this.rotateRightButton = this.el.querySelector(
+      `[data-${prefix}-rotate-right]`,
+    );
     this.ctx = this.canvas?.getContext("2d");
     this.image = null;
     this.imageUrl = null;
@@ -46,10 +50,14 @@ export const createImageCropperHook = (config) => ({
       this.rotateRightButton?.addEventListener("click", () => this.rotate(90));
     }
 
-    this.canvas?.addEventListener("pointerdown", (event) => this.startDrag(event));
+    this.canvas?.addEventListener("pointerdown", (event) =>
+      this.startDrag(event),
+    );
     this.canvas?.addEventListener("pointermove", (event) => this.drag(event));
     this.canvas?.addEventListener("pointerup", (event) => this.endDrag(event));
-    this.canvas?.addEventListener("pointercancel", (event) => this.endDrag(event));
+    this.canvas?.addEventListener("pointercancel", (event) =>
+      this.endDrag(event),
+    );
     this.canvas?.addEventListener("wheel", (event) => this.handleWheel(event), {
       passive: false,
     });
@@ -131,7 +139,8 @@ export const createImageCropperHook = (config) => ({
   handleWheel(event) {
     if (!this.image || !this.zoom) return;
     event.preventDefault();
-    const direction = event.deltaY > 0 ? -this.config.wheelStep : this.config.wheelStep;
+    const direction =
+      event.deltaY > 0 ? -this.config.wheelStep : this.config.wheelStep;
     const nextScale = Math.min(
       this.config.maxScale,
       Math.max(this.config.minScale, this.scale + direction),
@@ -157,9 +166,16 @@ export const createImageCropperHook = (config) => ({
       this.config.outputWidth / this.config.canvasWidth,
       this.config.outputHeight / this.config.canvasHeight,
     );
-    this.drawToContext(outputCtx, this.config.canvasWidth, this.config.canvasHeight);
+    this.drawToContext(
+      outputCtx,
+      this.config.canvasWidth,
+      this.config.canvasHeight,
+    );
 
-    const imageData = output.toDataURL(this.config.outputType, this.config.outputQuality);
+    const imageData = output.toDataURL(
+      this.config.outputType,
+      this.config.outputQuality,
+    );
     this.saveButton.disabled = true;
     this.saveButton.textContent = "Saving...";
 
@@ -177,13 +193,21 @@ export const createImageCropperHook = (config) => ({
     this.ctx.fillRect(0, 0, this.config.canvasWidth, this.config.canvasHeight);
 
     if (!this.image) return;
-    this.drawToContext(this.ctx, this.config.canvasWidth, this.config.canvasHeight);
+    this.drawToContext(
+      this.ctx,
+      this.config.canvasWidth,
+      this.config.canvasHeight,
+    );
   },
 
   drawToContext(ctx, width, height) {
     const rotated = this.config.allowRotation && this.rotation % 180 !== 0;
-    const imageWidth = rotated ? this.image.naturalHeight : this.image.naturalWidth;
-    const imageHeight = rotated ? this.image.naturalWidth : this.image.naturalHeight;
+    const imageWidth = rotated
+      ? this.image.naturalHeight
+      : this.image.naturalWidth;
+    const imageHeight = rotated
+      ? this.image.naturalWidth
+      : this.image.naturalHeight;
     const baseScale = Math.max(width / imageWidth, height / imageHeight);
     const drawScale = baseScale * this.scale;
 
