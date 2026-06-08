@@ -702,7 +702,6 @@ defmodule DialecticWeb.HomeLive do
                               author_name={author_username}
                               author_marker="@"
                               id={graph_dom_id(g, "home-desktop-graph")}
-                              variant={:comfortable}
                               tag_limit={4}
                             />
                           <% end %>

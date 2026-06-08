@@ -11,6 +11,8 @@ defmodule DialecticWeb.HomeGridRowComp do
   slot :action
 
   def home_grid_row(assigns) do
+    assigns = assign(assigns, :node_count, graph_node_count(assigns.graph))
+
     ~H"""
     <article id={@id} class={article_class(@variant)}>
       <div class="min-w-0 flex-1">
@@ -20,7 +22,7 @@ defmodule DialecticWeb.HomeGridRowComp do
 
         <div class={meta_class(@variant)}>
           <p class={preview_class(@variant)}>
-            {graph_preview_sentence(@graph)}
+            {graph_preview_sentence(@graph, @node_count)}
           </p>
 
           <%= if author_visible?(@author_name) do %>
@@ -70,16 +72,20 @@ defmodule DialecticWeb.HomeGridRowComp do
             class={action_link_class(@variant)}
             aria-label={"Open " <> (@graph.title || "grid")}
           >
-            <.icon
-              name="hero-arrow-up-right"
-              class="absolute right-2 top-2 h-3.5 w-3.5 text-slate-400 transition group-hover/count:text-indigo-600"
-            />
-            <p class="text-base font-semibold leading-5 text-slate-950">
-              {graph_node_count(@graph)}
-            </p>
-            <p class="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500 transition group-hover/count:text-indigo-600">
-              ideas
-            </p>
+            <%= if @variant == :row do %>
+              <.icon name="hero-arrow-up-right" class="h-4 w-4" />
+            <% else %>
+              <.icon
+                name="hero-arrow-up-right"
+                class="absolute right-2 top-2 h-3.5 w-3.5 text-slate-400 transition group-hover/count:text-indigo-600"
+              />
+              <p class="text-base font-semibold leading-5 text-slate-950">
+                {@node_count}
+              </p>
+              <p class="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500 transition group-hover/count:text-indigo-600">
+                ideas
+              </p>
+            <% end %>
           </.link>
 
           {render_slot(@action)}
@@ -145,6 +151,10 @@ defmodule DialecticWeb.HomeGridRowComp do
     "mt-3 inline-flex h-10 w-full shrink-0 items-center justify-center gap-2 rounded-full bg-gradient-to-br from-indigo-500 to-sky-500 px-3 text-sm font-medium text-white shadow-sm ring-1 ring-indigo-500/30 transition-transform hover:scale-[1.02] hover:shadow-md sm:w-auto"
   end
 
+  defp action_link_class(:row) do
+    "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-slate-500 ring-1 ring-slate-200 transition hover:bg-indigo-50 hover:text-indigo-700 hover:ring-indigo-200"
+  end
+
   defp action_link_class(_variant) do
     "group/count relative min-w-24 rounded-xl bg-slate-50 px-3 py-2 text-center ring-1 ring-slate-200 transition hover:bg-indigo-50 hover:ring-indigo-200"
   end
@@ -160,19 +170,17 @@ defmodule DialecticWeb.HomeGridRowComp do
 
   defp author_visible?(_), do: false
 
-  defp graph_preview_sentence(graph) do
+  defp graph_preview_sentence(graph, node_count) do
     case Enum.take(graph.tags || [], 2) do
       [] ->
-        "A #{String.downcase(exploration_label(graph))} built from #{graph_node_count(graph)} connected ideas."
+        "A #{String.downcase(exploration_label(node_count))} built from #{node_count} connected ideas."
 
       tags ->
-        "A #{String.downcase(exploration_label(graph))} around #{human_join(tags)}."
+        "A #{String.downcase(exploration_label(node_count))} around #{human_join(tags)}."
     end
   end
 
-  defp exploration_label(graph) do
-    node_count = graph_node_count(graph)
-
+  defp exploration_label(node_count) do
     cond do
       node_count >= 20 -> "Deep dive"
       node_count <= 4 -> "Seedling"
