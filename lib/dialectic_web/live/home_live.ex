@@ -694,7 +694,10 @@ defmodule DialecticWeb.HomeLive do
                               <%= if author_visible?(author_username) do %>
                                 <.link
                                   navigate={~p"/u/#{author_username}"}
-                                  class="mt-1 inline-flex text-xs font-medium text-slate-600 transition hover:text-indigo-700"
+                                  class={[
+                                    "inline-flex text-xs font-semibold text-indigo-700 underline decoration-indigo-300 underline-offset-4 transition hover:text-indigo-900 hover:decoration-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200",
+                                    "mt-1"
+                                  ]}
                                 >
                                   by @{author_username}
                                 </.link>
@@ -754,7 +757,7 @@ defmodule DialecticWeb.HomeLive do
                                   <%= if author_visible?(author_username) do %>
                                     <.link
                                       navigate={~p"/u/#{author_username}"}
-                                      class="inline-flex text-xs font-medium text-slate-600 transition hover:text-indigo-700"
+                                      class="inline-flex text-xs font-semibold text-indigo-700 underline decoration-indigo-300 underline-offset-4 transition hover:text-indigo-900 hover:decoration-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200"
                                     >
                                       by @{author_username}
                                     </.link>
@@ -959,7 +962,7 @@ defmodule DialecticWeb.HomeLive do
           <%= if author_visible?(@author_name) do %>
             <.link
               navigate={~p"/u/#{@author_name}"}
-              class="inline-flex text-xs font-medium text-slate-600 transition hover:text-indigo-700"
+              class="inline-flex text-xs font-semibold text-indigo-700 underline decoration-indigo-300 underline-offset-4 transition hover:text-indigo-900 hover:decoration-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200"
             >
               by {@author_name}
             </.link>
