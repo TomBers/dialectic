@@ -783,6 +783,21 @@ defmodule Dialectic.AccountsTest do
       assert "is invalid" in errors_on(changeset).profile_banner
     end
 
+    test "allows clearing a selected profile banner" do
+      user = user_fixture()
+
+      assert {:ok, user} =
+               Accounts.update_user_profile(user, %{
+                 username: "test22",
+                 profile_banner: "liquid-cheese"
+               })
+
+      assert {:ok, updated} =
+               Accounts.update_user_profile(user, %{username: "test22", profile_banner: nil})
+
+      assert updated.profile_banner == nil
+    end
+
     test "does not mass-assign profile links" do
       user = user_fixture()
 

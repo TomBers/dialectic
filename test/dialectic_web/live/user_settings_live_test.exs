@@ -328,6 +328,45 @@ defmodule DialecticWeb.UserSettingsLiveTest do
       assert has_element?(lv, ~s(img[src="#{ProfileBanner.url("rose-petals")}"]))
     end
 
+    test "clicking a profile banner preview clears an uploaded banner", %{conn: conn, user: user} do
+      {:ok, lv, _html} = live(conn, ~p"/users/settings")
+
+      render_hook(lv, "save_banner", %{"image_data" => @one_pixel_png})
+
+      uploaded_user = Accounts.get_user!(user.id)
+      uploaded_path = uploaded_image_full_path(uploaded_user.banner_path)
+      assert File.exists?(uploaded_path)
+
+      lv
+      |> element("#profile-banner-option-rose-petals")
+      |> render_click()
+
+      updated_user = Accounts.get_user!(user.id)
+      assert updated_user.profile_banner == "rose-petals"
+      assert updated_user.banner_path == nil
+      refute File.exists?(uploaded_path)
+    end
+
+    test "invalid profile banner selection does not remove an uploaded banner", %{
+      conn: conn,
+      user: user
+    } do
+      {:ok, lv, _html} = live(conn, ~p"/users/settings")
+
+      render_hook(lv, "save_banner", %{"image_data" => @one_pixel_png})
+
+      uploaded_user = Accounts.get_user!(user.id)
+      uploaded_path = uploaded_image_full_path(uploaded_user.banner_path)
+      assert File.exists?(uploaded_path)
+
+      render_hook(lv, "select_profile_banner", %{"id" => "unknown"})
+
+      updated_user = Accounts.get_user!(user.id)
+      assert updated_user.profile_banner == nil
+      assert updated_user.banner_path == uploaded_user.banner_path
+      assert File.exists?(uploaded_path)
+    end
+
     test "adds and saves flexible profile links", %{conn: conn, user: user} do
       {:ok, lv, _html} = live(conn, ~p"/users/settings")
 
@@ -418,5 +457,14 @@ defmodule DialecticWeb.UserSettingsLiveTest do
 
       assert result =~ "has already been taken"
     end
+  end
+
+  defp uploaded_image_full_path(public_path) do
+    path = String.trim_leading(public_path, "/")
+
+    :dialectic
+    |> :code.priv_dir()
+    |> to_string()
+    |> Path.join("static/#{path}")
   end
 end

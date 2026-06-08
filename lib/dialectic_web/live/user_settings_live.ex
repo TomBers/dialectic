@@ -1020,8 +1020,8 @@ defmodule DialecticWeb.UserSettingsLive do
   defp effective_banner_url(%User{profile_banner: banner}), do: ProfileBanner.url(banner)
 
   defp select_profile_banner(user, banner_id) do
-    with {:ok, user} <- Accounts.remove_user_banner(user) do
-      Accounts.update_user_profile(user, %{profile_banner: banner_id})
+    with {:ok, user} <- Accounts.update_user_profile(user, %{profile_banner: banner_id}) do
+      Accounts.remove_user_banner(user)
     end
   end
 
