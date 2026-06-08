@@ -2,8 +2,11 @@ defmodule DialecticWeb.UserSettingsLiveTest do
   use DialecticWeb.ConnCase, async: true
 
   alias Dialectic.Accounts
+  alias Dialectic.Accounts.ProfileBanner
   import Phoenix.LiveViewTest
   import Dialectic.AccountsFixtures
+
+  @one_pixel_png "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII="
 
   describe "Settings page" do
     test "renders settings page", %{conn: conn} do
@@ -14,6 +17,9 @@ defmodule DialecticWeb.UserSettingsLiveTest do
 
       assert html =~ "Change email"
       assert html =~ "Change password"
+      assert html =~ "Profile photo"
+      assert html =~ "avatar-cropper"
+      assert html =~ "Liquid Cheese"
     end
 
     test "redirects if user is not logged in", %{conn: conn} do
@@ -262,6 +268,147 @@ defmodule DialecticWeb.UserSettingsLiveTest do
       assert result =~ "should be at least 2 character(s)"
     end
 
+    test "renders the profile photo editor", %{conn: conn} do
+      {:ok, lv, _html} = live(conn, ~p"/users/settings")
+
+      assert has_element?(lv, "#avatar-upload-section")
+      assert has_element?(lv, "#avatar-cropper")
+      assert has_element?(lv, "#avatar-file-input")
+      assert has_element?(lv, "#profile-banner-picker-button")
+      assert has_element?(lv, "#banner-cropper")
+      assert has_element?(lv, "#banner-file-input")
+      assert has_element?(lv, "#profile-links-section")
+      assert has_element?(lv, "#profile_links_form")
+      refute has_element?(lv, "#profile-theme-option-emerald")
+      refute has_element?(lv, ~s(input#profile-theme-value[name="user[theme]"]))
+      refute has_element?(lv, "#profile-banner-picker-secondary-button")
+      refute has_element?(lv, "#user_theme")
+      refute has_element?(lv, "#user_profile_banner")
+    end
+
+    test "saving an uploaded banner updates the preview", %{conn: conn, user: user} do
+      {:ok, lv, _html} = live(conn, ~p"/users/settings")
+
+      render_hook(lv, "save_banner", %{"image_data" => @one_pixel_png})
+
+      updated_user = Accounts.get_user!(user.id)
+      assert updated_user.banner_path =~ ~r|^/uploads/banners/banner-#{updated_user.id}-.*\.png$|
+      assert has_element?(lv, ~s(img[src="#{updated_user.banner_path}"]))
+    end
+
+    test "profile validation keeps an uploaded banner preview", %{conn: conn, user: user} do
+      {:ok, lv, _html} = live(conn, ~p"/users/settings")
+
+      render_hook(lv, "save_banner", %{"image_data" => @one_pixel_png})
+
+      updated_user = Accounts.get_user!(user.id)
+
+      lv
+      |> element("#profile_form")
+      |> render_change(%{
+        "user" => %{
+          "username" => "newname42",
+          "bio" => "Still thinking",
+          "theme" => "emerald"
+        }
+      })
+
+      assert has_element?(lv, ~s(img[src="#{updated_user.banner_path}"]))
+    end
+
+    test "clicking a profile banner preview saves that banner", %{conn: conn, user: user} do
+      {:ok, lv, _html} = live(conn, ~p"/users/settings")
+
+      lv
+      |> element("#profile-banner-option-rose-petals")
+      |> render_click()
+
+      updated_user = Accounts.get_user!(user.id)
+      assert updated_user.profile_banner == "rose-petals"
+      assert has_element?(lv, ~s(img[src="#{ProfileBanner.url("rose-petals")}"]))
+    end
+
+    test "clicking a profile banner preview clears an uploaded banner", %{conn: conn, user: user} do
+      {:ok, lv, _html} = live(conn, ~p"/users/settings")
+
+      render_hook(lv, "save_banner", %{"image_data" => @one_pixel_png})
+
+      uploaded_user = Accounts.get_user!(user.id)
+      uploaded_path = uploaded_image_full_path(uploaded_user.banner_path)
+      assert File.exists?(uploaded_path)
+
+      lv
+      |> element("#profile-banner-option-rose-petals")
+      |> render_click()
+
+      updated_user = Accounts.get_user!(user.id)
+      assert updated_user.profile_banner == "rose-petals"
+      assert updated_user.banner_path == nil
+      refute File.exists?(uploaded_path)
+    end
+
+    test "invalid profile banner selection does not remove an uploaded banner", %{
+      conn: conn,
+      user: user
+    } do
+      {:ok, lv, _html} = live(conn, ~p"/users/settings")
+
+      render_hook(lv, "save_banner", %{"image_data" => @one_pixel_png})
+
+      uploaded_user = Accounts.get_user!(user.id)
+      uploaded_path = uploaded_image_full_path(uploaded_user.banner_path)
+      assert File.exists?(uploaded_path)
+
+      render_hook(lv, "select_profile_banner", %{"id" => "unknown"})
+
+      updated_user = Accounts.get_user!(user.id)
+      assert updated_user.profile_banner == nil
+      assert updated_user.banner_path == uploaded_user.banner_path
+      assert File.exists?(uploaded_path)
+    end
+
+    test "adds and saves flexible profile links", %{conn: conn, user: user} do
+      {:ok, lv, _html} = live(conn, ~p"/users/settings")
+
+      lv
+      |> element("#add-profile-link-button")
+      |> render_click()
+
+      assert has_element?(lv, "#profile_links_1_label")
+
+      result =
+        lv
+        |> form("#profile_links_form", %{
+          "profile_links" => %{
+            "links" => %{
+              "0" => %{"label" => "GitHub", "value" => "github.com/tomberman"},
+              "1" => %{"label" => "Email", "value" => "hello@example.com"}
+            }
+          }
+        })
+        |> render_submit()
+
+      assert result =~ "Profile links updated successfully"
+
+      updated_user = Accounts.get_user!(user.id)
+      assert [%{"label" => "GitHub"}, %{"label" => "Email"}] = updated_user.profile_links["links"]
+    end
+
+    test "renders profile link validation errors", %{conn: conn} do
+      {:ok, lv, _html} = live(conn, ~p"/users/settings")
+
+      result =
+        lv
+        |> form("#profile_links_form", %{
+          "profile_links" => %{
+            "links" => %{"0" => %{"label" => "Bad", "value" => "javascript:alert(1)"}}
+          }
+        })
+        |> render_submit()
+
+      assert result =~ "HTTP(S) URLs or email"
+    end
+
     test "updates the user profile successfully", %{conn: conn, user: user} do
       {:ok, lv, _html} = live(conn, ~p"/users/settings")
 
@@ -270,8 +417,7 @@ defmodule DialecticWeb.UserSettingsLiveTest do
         |> form("#profile_form", %{
           "user" => %{
             "username" => "newname42",
-            "bio" => "Hello world!",
-            "theme" => "indigo"
+            "bio" => "Hello world!"
           }
         })
         |> render_submit()
@@ -281,7 +427,6 @@ defmodule DialecticWeb.UserSettingsLiveTest do
       updated_user = Accounts.get_user!(user.id)
       assert updated_user.username == "newname42"
       assert updated_user.bio == "Hello world!"
-      assert updated_user.theme == "indigo"
     end
 
     test "renders errors with invalid data (phx-submit)", %{conn: conn} do
@@ -312,5 +457,14 @@ defmodule DialecticWeb.UserSettingsLiveTest do
 
       assert result =~ "has already been taken"
     end
+  end
+
+  defp uploaded_image_full_path(public_path) do
+    path = String.trim_leading(public_path, "/")
+
+    :dialectic
+    |> :code.priv_dir()
+    |> to_string()
+    |> Path.join("static/#{path}")
   end
 end

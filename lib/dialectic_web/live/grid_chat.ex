@@ -1,7 +1,7 @@
 defmodule DialecticWeb.GridChat do
   @moduledoc false
 
-  alias Dialectic.Accounts.{GravatarCache, User}
+  alias Dialectic.Accounts.User
   alias DialecticWeb.Presence
   alias Phoenix.PubSub
 
@@ -96,27 +96,6 @@ defmodule DialecticWeb.GridChat do
     )
   end
 
-  def handle_avatar_result(socket, {:ok, {:ok, %{avatar_url: avatar_url}}}) do
-    socket
-    |> Phoenix.Component.assign(:chat_avatar_loading?, false)
-    |> Phoenix.Component.assign(:chat_avatar_loaded?, true)
-    |> Phoenix.Component.assign(:chat_avatar_url, avatar_url)
-    |> update_presence_avatar()
-    |> refresh_presences()
-  end
-
-  def handle_avatar_result(socket, {:ok, _result}) do
-    socket
-    |> Phoenix.Component.assign(:chat_avatar_loading?, false)
-    |> Phoenix.Component.assign(:chat_avatar_loaded?, true)
-  end
-
-  def handle_avatar_result(socket, {:exit, _reason}) do
-    socket
-    |> Phoenix.Component.assign(:chat_avatar_loading?, false)
-    |> Phoenix.Component.assign(:chat_avatar_loaded?, true)
-  end
-
   def initials_for_name(name) do
     name
     |> to_string()
@@ -150,21 +129,11 @@ defmodule DialecticWeb.GridChat do
        when is_binary(url) and url != "",
        do: Phoenix.Component.assign(socket, :chat_avatar_loaded?, true)
 
-  defp maybe_load_avatar(%{assigns: %{current_user: %User{gravatar_id: gravatar_id}}} = socket)
-       when is_binary(gravatar_id) and gravatar_id != "" do
-    case GravatarCache.get(gravatar_id) do
-      {:ok, %{avatar_url: avatar_url}} when is_binary(avatar_url) and avatar_url != "" ->
-        socket
-        |> Phoenix.Component.assign(:chat_avatar_url, avatar_url)
-        |> Phoenix.Component.assign(:chat_avatar_loaded?, true)
-
-      _ ->
-        socket
-        |> Phoenix.Component.assign(:chat_avatar_loading?, true)
-        |> Phoenix.LiveView.start_async(:fetch_chat_avatar, fn ->
-          GravatarCache.fetch(gravatar_id)
-        end)
-    end
+  defp maybe_load_avatar(%{assigns: %{current_user: %User{avatar_path: avatar_path}}} = socket)
+       when is_binary(avatar_path) and avatar_path != "" do
+    socket
+    |> Phoenix.Component.assign(:chat_avatar_url, avatar_path)
+    |> Phoenix.Component.assign(:chat_avatar_loaded?, true)
   end
 
   defp maybe_load_avatar(socket), do: Phoenix.Component.assign(socket, :chat_avatar_loaded?, true)
