@@ -887,7 +887,7 @@ defmodule Dialectic.AccountsTest do
       assert {:ok, updated} = Accounts.update_user_avatar(user, @one_pixel_png)
 
       assert updated.avatar_path =~
-               ~r|^https://fly\.storage\.tigris\.dev/test-bucket/uploads/avatars/avatar-#{updated.id}-.*\.png$|
+               ~r|^https://test-bucket\.t3\.tigrisfiles\.io/uploads/avatars/avatar-#{updated.id}-.*\.png$|
 
       assert {:ok, removed} = Accounts.remove_user_avatar(updated)
       assert removed.avatar_path == nil

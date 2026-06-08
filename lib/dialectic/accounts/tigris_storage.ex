@@ -33,9 +33,9 @@ defmodule Dialectic.Accounts.TigrisStorage do
 
   def object_key_from_public_url(public_url) when is_binary(public_url) do
     with {:ok, config} <- config(),
-         true <- String.starts_with?(public_url, public_base_url(config) <> "/") do
+         {:ok, public_base_url} <- matching_public_base_url(config, public_url) do
       public_url
-      |> String.replace_prefix(public_base_url(config) <> "/", "")
+      |> String.replace_prefix(public_base_url <> "/", "")
       |> URI.decode()
       |> then(&{:ok, &1})
     else
@@ -181,9 +181,30 @@ defmodule Dialectic.Accounts.TigrisStorage do
   defp public_base_url(config) do
     case config[:public_base_url] do
       url when is_binary(url) and url != "" -> String.trim_trailing(url, "/")
-      _ -> api_base_url(config) <> "/" <> config[:bucket]
+      _ -> default_tigris_public_base_url(config)
     end
   end
+
+  defp matching_public_base_url(config, public_url) do
+    config
+    |> public_base_urls()
+    |> Enum.find(&String.starts_with?(public_url, &1 <> "/"))
+    |> case do
+      nil -> :error
+      public_base_url -> {:ok, public_base_url}
+    end
+  end
+
+  defp public_base_urls(config) do
+    [
+      public_base_url(config),
+      default_tigris_public_base_url(config),
+      api_base_url(config) <> "/" <> config[:bucket]
+    ]
+    |> Enum.uniq()
+  end
+
+  defp default_tigris_public_base_url(config), do: "https://#{config[:bucket]}.t3.tigrisfiles.io"
 
   defp api_base_url(config), do: config[:endpoint_url] |> String.trim_trailing("/")
 
