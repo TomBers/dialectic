@@ -12,38 +12,10 @@ defmodule DialecticWeb.ActivityLive do
     {:ok,
      socket
      |> assign(:page_title, "Activity")
-     |> assign(:topic_form, to_form(%{"name" => ""}, as: :topic))
      |> assign_activity(user)}
   end
 
   @impl true
-  def handle_event("follow_topic", %{"topic" => %{"name" => topic}}, socket) do
-    user = socket.assigns.current_user
-
-    socket =
-      case Follows.follow_topic(user, topic) do
-        {:ok, _follow} ->
-          socket
-          |> put_flash(:info, "Topic followed.")
-          |> assign(:topic_form, to_form(%{"name" => ""}, as: :topic))
-
-        {:error, _reason} ->
-          put_flash(socket, :error, "Could not follow that topic.")
-      end
-
-    {:noreply, assign_activity(socket, user)}
-  end
-
-  def handle_event("unfollow_topic", %{"topic" => topic}, socket) do
-    user = socket.assigns.current_user
-    {:ok, _count} = Follows.unfollow_topic(user, topic)
-
-    {:noreply,
-     socket
-     |> put_flash(:info, "Topic unfollowed.")
-     |> assign_activity(user)}
-  end
-
   def handle_event("mark_seen", _params, socket) do
     user = socket.assigns.current_user
     Follows.mark_seen(user)
@@ -55,8 +27,10 @@ defmodule DialecticWeb.ActivityLive do
   end
 
   defp assign_activity(socket, user) do
+    follows = Follows.list_user_follows(user)
+
     socket
-    |> assign(:follows, Follows.list_user_follows(user))
+    |> assign(:follows, Enum.reject(follows, &(&1.target_type == "topic")))
     |> assign(:activity_logs, Follows.list_activity_feed(user, limit: 75))
   end
 
@@ -71,12 +45,10 @@ defmodule DialecticWeb.ActivityLive do
   defp follow_label(%{target_type: "user", target_user: %User{} = user}),
     do: User.display_name(user)
 
-  defp follow_label(%{target_type: "topic", topic: topic}), do: "##{topic}"
   defp follow_label(follow), do: follow.target_type
 
   defp follow_icon(%{target_type: "graph"}), do: "hero-squares-2x2"
   defp follow_icon(%{target_type: "user"}), do: "hero-user"
-  defp follow_icon(%{target_type: "topic"}), do: "hero-tag"
   defp follow_icon(_follow), do: "hero-bell"
 
   defp node_label(%{metadata: %{"node_title" => title}}) when is_binary(title) and title != "" do
@@ -114,29 +86,10 @@ defmodule DialecticWeb.ActivityLive do
         <div class="mt-6 grid gap-4 lg:grid-cols-[18rem_minmax(0,1fr)]">
           <aside class="space-y-4">
             <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <h2 class="text-sm font-semibold text-slate-950">Follow a topic</h2>
-              <.form
-                for={@topic_form}
-                id="activity-topic-follow-form"
-                phx-submit="follow_topic"
-                class="mt-3 space-y-3"
-              >
-                <.input field={@topic_form[:name]} type="text" label="Topic" placeholder="philosophy" />
-                <button
-                  id="activity-follow-topic-button"
-                  type="submit"
-                  class="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-slate-950 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
-                >
-                  <.icon name="hero-plus" class="h-4 w-4" /> Follow topic
-                </button>
-              </.form>
-            </section>
-
-            <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <h2 class="text-sm font-semibold text-slate-950">Following</h2>
               <%= if @follows == [] do %>
                 <p id="activity-following-empty" class="mt-3 text-sm leading-6 text-slate-500">
-                  Follow a grid, user, or topic to build this feed.
+                  Follow a grid or user to build this feed.
                 </p>
               <% else %>
                 <div id="activity-following-list" class="mt-3 flex flex-wrap gap-2">
@@ -144,16 +97,6 @@ defmodule DialecticWeb.ActivityLive do
                     <span class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700">
                       <.icon name={follow_icon(follow)} class="h-3.5 w-3.5" />
                       {follow_label(follow)}
-                      <button
-                        :if={follow.target_type == "topic"}
-                        type="button"
-                        phx-click="unfollow_topic"
-                        phx-value-topic={follow.topic}
-                        class="ml-0.5 text-slate-400 transition hover:text-red-600"
-                        aria-label={"Unfollow " <> follow.topic}
-                      >
-                        <.icon name="hero-x-mark" class="h-3.5 w-3.5" />
-                      </button>
                     </span>
                   <% end %>
                 </div>

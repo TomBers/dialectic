@@ -22,7 +22,7 @@ defmodule DialecticWeb.ActivityLiveTest do
     assert {:error, {:redirect, %{to: "/users/log_in"}}} = live(conn, ~p"/activity")
   end
 
-  test "renders followed activity and topic controls", %{conn: conn} do
+  test "renders followed activity without topic follow controls", %{conn: conn} do
     viewer = user_fixture()
     author = user_fixture()
     graph = create_graph(author, "activity-topic", %{tags: ["epistemology"]})
@@ -37,19 +37,15 @@ defmodule DialecticWeb.ActivityLiveTest do
         parents: []
       })
 
-    {:ok, lv, _html} =
+    {:ok, lv, html} =
       conn
       |> log_in_user(viewer)
       |> live(~p"/activity")
 
-    assert has_element?(lv, "#activity-topic-follow-form")
-    assert has_element?(lv, "#activity-following-list", "#epistemology")
+    refute has_element?(lv, "#activity-topic-follow-form")
+    refute has_element?(lv, "#activity-following-list", "#epistemology")
     assert has_element?(lv, "#activity-log-#{log.id}", graph.title)
-
-    lv
-    |> form("#activity-topic-follow-form", %{"topic" => %{"name" => "logic"}})
-    |> render_submit()
-
-    assert Follows.following_topic?(viewer, "logic")
+    assert html =~ ~s(href="/activity")
+    assert html =~ "Activity"
   end
 end
