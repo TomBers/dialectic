@@ -249,6 +249,15 @@ defmodule DialecticWeb.UserProfileLiveTest do
       assert has_element?(lv, "#profile-follow-button", "Follow")
     end
 
+    test "crafted unauthenticated profile follow events do not crash", %{conn: conn} do
+      _profile_user = create_user_with_username("craftedfollow")
+
+      {:ok, lv, _html} = live(conn, ~p"/u/craftedfollow")
+
+      assert render_click(lv, "follow_profile") =~ "Log in to follow profiles."
+      assert render_click(lv, "unfollow_profile") =~ "Log in to manage followed profiles."
+    end
+
     test "shows the activity link on own profile", %{conn: conn} do
       user = create_user_with_username("activitylink")
 

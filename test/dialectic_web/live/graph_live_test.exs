@@ -125,6 +125,20 @@ defmodule DialecticWeb.GraphLiveTest do
       assert has_element?(view, "#graph-follow-grid-button", "Follow")
     end
 
+    test "crafted unauthenticated unfollow event opens the login modal", %{conn: conn} do
+      graph =
+        Dialectic.GraphFixtures.insert_graph(%{
+          title: "Unauth Graph Follow #{System.unique_integer([:positive])}",
+          data: source_text_graph_data()
+        })
+
+      {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}/graph?node=1")
+
+      html = render_click(view, "unfollow_graph")
+
+      assert html =~ "Login Required"
+    end
+
     test "renders ephemeral viewer chat and streams submitted messages", %{conn: conn} do
       {:ok, view, _html} = setup_live(conn)
 

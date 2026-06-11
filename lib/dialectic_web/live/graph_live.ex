@@ -348,13 +348,18 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("unfollow_graph", _params, socket) do
-    user = socket.assigns.current_user
-    {:ok, _count} = Follows.unfollow_graph(user, socket.assigns.graph_struct)
+    case socket.assigns[:current_user] do
+      nil ->
+        {:noreply, assign(socket, show_login_modal: true)}
 
-    {:noreply,
-     socket
-     |> assign(:following_graph?, false)
-     |> put_flash(:info, "Grid unfollowed.")}
+      user ->
+        {:ok, _count} = Follows.unfollow_graph(user, socket.assigns.graph_struct)
+
+        {:noreply,
+         socket
+         |> assign(:following_graph?, false)
+         |> put_flash(:info, "Grid unfollowed.")}
+    end
   end
 
   def handle_event("note", %{"node" => node_id}, socket) do

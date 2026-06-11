@@ -6,6 +6,7 @@ defmodule Dialectic.FollowsTest do
   alias Dialectic.Accounts.Graph
   alias Dialectic.DbActions.Graphs
   alias Dialectic.Follows
+  alias Dialectic.Follows.Follow
   alias Dialectic.GridActivity
 
   defp create_graph(owner, title, attrs \\ %{}) do
@@ -44,6 +45,23 @@ defmodule Dialectic.FollowsTest do
     assert Follows.following_topic?(follower, "ethics")
     assert {:ok, 1} = Follows.unfollow_topic(follower, "ETHICS")
     refute Follows.following_topic?(follower, "ethics")
+  end
+
+  test "user-scoped follow functions handle unauthenticated callers" do
+    author = user_fixture()
+    graph = create_graph(author, "unauthenticated-target", %{tags: ["ethics"]})
+
+    assert {:error, :unauthenticated} = Follows.follow_graph(nil, graph)
+    assert {:error, :unauthenticated} = Follows.unfollow_graph(nil, graph)
+    refute Follows.following_graph?(nil, graph)
+
+    assert {:error, :unauthenticated} = Follows.follow_user(nil, author)
+    assert {:error, :unauthenticated} = Follows.unfollow_user(nil, author)
+    refute Follows.following_user?(nil, author)
+
+    assert Follows.list_user_follows(nil) == []
+    assert Follows.list_activity_feed(nil) == []
+    assert {:error, :unauthenticated} = Follows.mark_seen(nil)
   end
 
   test "activity feed combines followed graph, followed user, topics, and own graphs" do
@@ -124,5 +142,30 @@ defmodule Dialectic.FollowsTest do
     feed_ids = follower |> Follows.list_activity_feed(limit: 20) |> Enum.map(& &1.id)
 
     refute private_log.id in feed_ids
+  end
+
+  test "follow changeset surfaces database check constraint errors" do
+    user = user_fixture()
+
+    assert {:error, changeset} =
+             %Follow{}
+             |> Follow.changeset(%{
+               follower_user_id: user.id,
+               target_type: "graph"
+             })
+             |> Repo.insert()
+
+    assert {"is invalid", _} = changeset.errors[:target_type]
+
+    assert {:error, changeset} =
+             %Follow{}
+             |> Follow.changeset(%{
+               follower_user_id: user.id,
+               target_type: "user",
+               target_user_id: user.id
+             })
+             |> Repo.insert()
+
+    assert {"is invalid", _} = changeset.errors[:target_user_id]
   end
 end

@@ -120,6 +120,9 @@ defmodule DialecticWeb.UserProfileLive do
          |> assign(:following_profile?, true)
          |> put_flash(:info, "Profile followed.")}
 
+      {:error, :unauthenticated} ->
+        {:noreply, put_flash(socket, :error, "Log in to follow profiles.")}
+
       {:error, _reason} ->
         {:noreply, put_flash(socket, :error, "Could not follow this profile.")}
     end
@@ -130,12 +133,16 @@ defmodule DialecticWeb.UserProfileLive do
     current_user = socket.assigns.current_user
     profile_user = socket.assigns.profile_user
 
-    {:ok, _count} = Follows.unfollow_user(current_user, profile_user)
+    case Follows.unfollow_user(current_user, profile_user) do
+      {:ok, _count} ->
+        {:noreply,
+         socket
+         |> assign(:following_profile?, false)
+         |> put_flash(:info, "Profile unfollowed.")}
 
-    {:noreply,
-     socket
-     |> assign(:following_profile?, false)
-     |> put_flash(:info, "Profile unfollowed.")}
+      {:error, :unauthenticated} ->
+        {:noreply, put_flash(socket, :error, "Log in to manage followed profiles.")}
+    end
   end
 
   @impl true

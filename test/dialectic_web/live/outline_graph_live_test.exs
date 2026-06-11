@@ -649,6 +649,16 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(view, "#reader-follow-grid-button", "Follow")
   end
 
+  test "crafted unauthenticated reader unfollow event opens the login modal", %{conn: conn} do
+    graph = create_graph()
+
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=2")
+
+    html = render_click(view, "unfollow_graph")
+
+    assert html =~ "Login Required"
+  end
+
   test "reader search matches source text and renders a preview snippet", %{conn: conn} do
     graph = create_graph(source_text_graph_data())
 

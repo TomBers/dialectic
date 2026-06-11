@@ -9,6 +9,8 @@ defmodule Dialectic.Follows do
 
   @default_feed_limit 50
 
+  def follow_graph(nil, %Graph{}), do: {:error, :unauthenticated}
+
   def follow_graph(%User{} = user, %Graph{} = graph) do
     if Sharing.can_access?(user, graph) and graph.is_deleted != true do
       insert_follow(%{
@@ -21,14 +23,19 @@ defmodule Dialectic.Follows do
     end
   end
 
+  def unfollow_graph(nil, %Graph{}), do: {:error, :unauthenticated}
+
   def unfollow_graph(%User{} = user, %Graph{} = graph) do
     delete_follow(user.id, graph: graph.title)
   end
+
+  def following_graph?(nil, %Graph{}), do: false
 
   def following_graph?(%User{} = user, %Graph{} = graph) do
     exists_follow?(user.id, graph: graph.title)
   end
 
+  def follow_user(nil, %User{}), do: {:error, :unauthenticated}
   def follow_user(%User{id: same_id}, %User{id: same_id}), do: {:error, :self_follow}
 
   def follow_user(%User{} = follower, %User{} = target_user) do
@@ -39,9 +46,13 @@ defmodule Dialectic.Follows do
     })
   end
 
+  def unfollow_user(nil, %User{}), do: {:error, :unauthenticated}
+
   def unfollow_user(%User{} = follower, %User{} = target_user) do
     delete_follow(follower.id, user: target_user.id)
   end
+
+  def following_user?(nil, %User{}), do: false
 
   def following_user?(%User{} = follower, %User{} = target_user) do
     exists_follow?(follower.id, user: target_user.id)
@@ -73,7 +84,11 @@ defmodule Dialectic.Follows do
     |> Repo.all()
   end
 
-  def list_activity_feed(%User{} = user, opts \\ []) do
+  def list_user_follows(nil), do: []
+
+  def list_activity_feed(user, opts \\ [])
+
+  def list_activity_feed(%User{} = user, opts) do
     limit = Keyword.get(opts, :limit, @default_feed_limit)
 
     graph_titles = followed_graph_titles(user)
@@ -97,12 +112,16 @@ defmodule Dialectic.Follows do
     |> Repo.all()
   end
 
+  def list_activity_feed(nil, _opts), do: []
+
   def mark_seen(%User{} = user) do
     now = DateTime.utc_now() |> DateTime.truncate(:second)
 
     from(f in Follow, where: f.follower_user_id == ^user.id)
     |> Repo.update_all(set: [last_seen_at: now, updated_at: now])
   end
+
+  def mark_seen(nil), do: {:error, :unauthenticated}
 
   defp insert_follow(attrs) do
     %Follow{}
