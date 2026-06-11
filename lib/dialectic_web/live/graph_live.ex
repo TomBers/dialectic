@@ -17,6 +17,7 @@ defmodule DialecticWeb.GraphLive do
   alias DialecticWeb.Utils.UserUtils
   alias DialecticWeb.Utils.NodeTitleHelper
   alias Dialectic.Highlights
+  alias Dialectic.Follows
   alias Dialectic.GridActivity
   alias Dialectic.Repo
 
@@ -325,6 +326,35 @@ defmodule DialecticWeb.GraphLive do
   def handle_event("toggle_public_graph", _, socket) do
     graph_struct = GraphActions.toggle_graph_public(graph_action_params(socket))
     {:noreply, socket |> assign(graph_struct: graph_struct)}
+  end
+
+  def handle_event("follow_graph", _params, socket) do
+    case socket.assigns[:current_user] do
+      nil ->
+        {:noreply, assign(socket, show_login_modal: true)}
+
+      user ->
+        case Follows.follow_graph(user, socket.assigns.graph_struct) do
+          {:ok, _follow} ->
+            {:noreply,
+             socket
+             |> assign(:following_graph?, true)
+             |> put_flash(:info, "Grid followed.")}
+
+          {:error, _reason} ->
+            {:noreply, put_flash(socket, :error, "Could not follow this grid.")}
+        end
+    end
+  end
+
+  def handle_event("unfollow_graph", _params, socket) do
+    user = socket.assigns.current_user
+    {:ok, _count} = Follows.unfollow_graph(user, socket.assigns.graph_struct)
+
+    {:noreply,
+     socket
+     |> assign(:following_graph?, false)
+     |> put_flash(:info, "Grid unfollowed.")}
   end
 
   def handle_event("note", %{"node" => node_id}, socket) do
@@ -2199,6 +2229,7 @@ defmodule DialecticWeb.GraphLive do
       graph_topic: "graph_update:#{graph_id}",
       graph_struct: graph_struct,
       graph_id: graph_id,
+      following_graph?: following_graph?(socket.assigns[:current_user], graph_struct),
       f_graph: GraphManager.format_graph_json(graph_id),
       node: node,
       form: to_form(changeset),
@@ -2212,6 +2243,12 @@ defmodule DialecticWeb.GraphLive do
       prompt_mode: Atom.to_string(Dialectic.Responses.ModeServer.get_mode(graph_id))
     )
   end
+
+  defp following_graph?(%User{} = user, graph) do
+    Follows.following_graph?(user, graph)
+  end
+
+  defp following_graph?(_user, _graph), do: false
 
   defp handle_initial_highlight(socket, highlight_id) do
     if connected?(socket) && highlight_id do

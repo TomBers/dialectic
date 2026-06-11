@@ -5,6 +5,7 @@ defmodule DialecticWeb.UserProfileLive do
   alias Dialectic.Accounts.User
   alias Dialectic.Accounts.ProfileBanner
   alias Dialectic.Accounts.ProfileLinks
+  alias Dialectic.Follows
   alias DialecticWeb.Utils.NodeTitleHelper
   import DialecticWeb.HomeGridRowComp
 
@@ -75,6 +76,10 @@ defmodule DialecticWeb.UserProfileLive do
           |> assign(:common_tags, common_tags)
           |> assign(:profile_links, ProfileLinks.display_links(profile_user.profile_links))
           |> assign(:is_own_profile?, is_own_profile?)
+          |> assign(
+            :following_profile?,
+            following_profile?(socket.assigns[:current_user], profile_user)
+          )
           |> assign(:my_stats, my_stats)
           |> assign(:noted_notes, noted_notes)
           |> assign(:graph_to_delete, nil)
@@ -101,6 +106,36 @@ defmodule DialecticWeb.UserProfileLive do
   @impl true
   def handle_event("cancel_delete", _params, socket) do
     {:noreply, assign(socket, :graph_to_delete, nil)}
+  end
+
+  @impl true
+  def handle_event("follow_profile", _params, socket) do
+    current_user = socket.assigns.current_user
+    profile_user = socket.assigns.profile_user
+
+    case Follows.follow_user(current_user, profile_user) do
+      {:ok, _follow} ->
+        {:noreply,
+         socket
+         |> assign(:following_profile?, true)
+         |> put_flash(:info, "Profile followed.")}
+
+      {:error, _reason} ->
+        {:noreply, put_flash(socket, :error, "Could not follow this profile.")}
+    end
+  end
+
+  @impl true
+  def handle_event("unfollow_profile", _params, socket) do
+    current_user = socket.assigns.current_user
+    profile_user = socket.assigns.profile_user
+
+    {:ok, _count} = Follows.unfollow_user(current_user, profile_user)
+
+    {:noreply,
+     socket
+     |> assign(:following_profile?, false)
+     |> put_flash(:info, "Profile unfollowed.")}
   end
 
   @impl true
@@ -160,6 +195,12 @@ defmodule DialecticWeb.UserProfileLive do
     do: path
 
   defp effective_banner_url(%User{profile_banner: banner}), do: ProfileBanner.url(banner)
+
+  defp following_profile?(%User{} = current_user, %User{} = profile_user) do
+    current_user.id != profile_user.id and Follows.following_user?(current_user, profile_user)
+  end
+
+  defp following_profile?(_current_user, _profile_user), do: false
 
   @impl true
   def render(assigns) do
@@ -254,6 +295,13 @@ defmodule DialecticWeb.UserProfileLive do
               <div class="flex items-center gap-2 pb-1">
                 <%= if @is_own_profile? do %>
                   <.link
+                    navigate={~p"/activity"}
+                    id="profile-activity-link"
+                    class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+                  >
+                    <.icon name="hero-bell" class="w-4 h-4" /> Activity
+                  </.link>
+                  <.link
                     navigate={~p"/users/settings"}
                     id="profile-settings-link"
                     class={[
@@ -263,6 +311,41 @@ defmodule DialecticWeb.UserProfileLive do
                   >
                     <.icon name="hero-cog-6-tooth" class="w-4 h-4" /> Account Settings
                   </.link>
+                <% else %>
+                  <%= if @current_user do %>
+                    <button
+                      id="profile-follow-button"
+                      type="button"
+                      phx-click={
+                        if(@following_profile?, do: "unfollow_profile", else: "follow_profile")
+                      }
+                      class={[
+                        "inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold shadow-sm transition",
+                        if(@following_profile?,
+                          do: "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
+                          else: "bg-slate-950 text-white hover:bg-slate-800"
+                        )
+                      ]}
+                    >
+                      <.icon
+                        name={if(@following_profile?, do: "hero-check", else: "hero-plus")}
+                        class="w-4 h-4"
+                      />
+                      <%= if @following_profile? do %>
+                        Following
+                      <% else %>
+                        Follow
+                      <% end %>
+                    </button>
+                  <% else %>
+                    <.link
+                      navigate={~p"/users/log_in"}
+                      id="profile-follow-login-link"
+                      class="inline-flex items-center gap-1.5 rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+                    >
+                      <.icon name="hero-plus" class="w-4 h-4" /> Follow
+                    </.link>
+                  <% end %>
                 <% end %>
               </div>
             </div>

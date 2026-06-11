@@ -1,5 +1,7 @@
 defmodule DialecticWeb.GraphLiveTest do
   use DialecticWeb.ConnCase, async: false
+  alias Dialectic.Follows
+
   import Phoenix.LiveViewTest
   import Dialectic.AccountsFixtures
 
@@ -98,6 +100,29 @@ defmodule DialecticWeb.GraphLiveTest do
                view,
                ~s(#graph-workspace-bar-reader[href="/g/#{graph.slug}?node=#{node_id}"])
              )
+    end
+
+    test "can follow and unfollow the current grid", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+      assigns = :sys.get_state(view.pid).socket.assigns
+      user = assigns.current_user
+      graph = assigns.graph_struct
+
+      assert has_element?(view, "#graph-follow-grid-button", "Follow")
+
+      view
+      |> element("#graph-follow-grid-button")
+      |> render_click()
+
+      assert Follows.following_graph?(user, graph)
+      assert has_element?(view, "#graph-follow-grid-button", "Following")
+
+      view
+      |> element("#graph-follow-grid-button")
+      |> render_click()
+
+      refute Follows.following_graph?(user, graph)
+      assert has_element?(view, "#graph-follow-grid-button", "Follow")
     end
 
     test "renders ephemeral viewer chat and streams submitted messages", %{conn: conn} do

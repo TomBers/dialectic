@@ -1,6 +1,7 @@
 defmodule DialecticWeb.OutlineGraphLiveTest do
   use DialecticWeb.ConnCase, async: false
 
+  alias Dialectic.Follows
   alias Dialectic.Highlights
 
   import Dialectic.AccountsFixtures
@@ -620,6 +621,32 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     |> render_click()
 
     assert_patch(view, ~p"/g/#{graph.slug}?node=4")
+  end
+
+  test "reader can follow and unfollow the current grid", %{conn: conn} do
+    user = user_fixture()
+    graph = create_graph()
+
+    {:ok, view, _html} =
+      conn
+      |> log_in_user(user)
+      |> live(~p"/g/#{graph.slug}?node=2")
+
+    assert has_element?(view, "#reader-follow-grid-button", "Follow")
+
+    view
+    |> element("#reader-follow-grid-button")
+    |> render_click()
+
+    assert Follows.following_graph?(user, graph)
+    assert has_element?(view, "#reader-follow-grid-button", "Following")
+
+    view
+    |> element("#reader-follow-grid-button")
+    |> render_click()
+
+    refute Follows.following_graph?(user, graph)
+    assert has_element?(view, "#reader-follow-grid-button", "Follow")
   end
 
   test "reader search matches source text and renders a preview snippet", %{conn: conn} do

@@ -2,6 +2,7 @@ defmodule DialecticWeb.UserProfileLiveTest do
   use DialecticWeb.ConnCase, async: true
 
   alias Dialectic.Accounts
+  alias Dialectic.Follows
   import Phoenix.LiveViewTest
   import Dialectic.AccountsFixtures
 
@@ -220,6 +221,43 @@ defmodule DialecticWeb.UserProfileLiveTest do
         |> live(~p"/u/emptyother")
 
       refute html =~ "Create your first grid"
+    end
+
+    test "can follow and unfollow another user's profile", %{conn: conn} do
+      profile_user = create_user_with_username("followprofile")
+      viewer = user_fixture()
+
+      {:ok, lv, _html} =
+        conn
+        |> log_in_user(viewer)
+        |> live(~p"/u/followprofile")
+
+      assert has_element?(lv, "#profile-follow-button", "Follow")
+
+      lv
+      |> element("#profile-follow-button")
+      |> render_click()
+
+      assert Follows.following_user?(viewer, profile_user)
+      assert has_element?(lv, "#profile-follow-button", "Following")
+
+      lv
+      |> element("#profile-follow-button")
+      |> render_click()
+
+      refute Follows.following_user?(viewer, profile_user)
+      assert has_element?(lv, "#profile-follow-button", "Follow")
+    end
+
+    test "shows the activity link on own profile", %{conn: conn} do
+      user = create_user_with_username("activitylink")
+
+      {:ok, lv, _html} =
+        conn
+        |> log_in_user(user)
+        |> live(~p"/u/activitylink")
+
+      assert has_element?(lv, ~s(#profile-activity-link[href="/activity"]))
     end
   end
 
