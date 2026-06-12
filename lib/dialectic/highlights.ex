@@ -77,6 +77,19 @@ defmodule Dialectic.Highlights do
     Repo.all(query)
   end
 
+  def list_user_highlights(%Dialectic.Accounts.User{id: user_id}),
+    do: list_user_highlights(user_id)
+
+  def list_user_highlights(nil), do: []
+
+  def list_user_highlights(user_id) when is_integer(user_id) do
+    Highlight
+    |> where([h], h.created_by_user_id == ^user_id)
+    |> order_by([h], desc: h.inserted_at)
+    |> preload([:mudg])
+    |> Repo.all()
+  end
+
   @doc """
   Gets a single highlight.
 

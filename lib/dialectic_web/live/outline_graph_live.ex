@@ -2,6 +2,7 @@ defmodule DialecticWeb.OutlineGraphLive do
   use DialecticWeb, :live_view
 
   alias Dialectic.Graph.GraphActions
+  alias Dialectic.Follows
   alias Dialectic.Highlights
   alias Dialectic.Linear.ThreadedConv
   alias DialecticWeb.ColUtils
@@ -269,6 +270,42 @@ defmodule DialecticWeb.OutlineGraphLive do
   @impl true
   def handle_event("close_combine_setup", _params, socket), do: {:noreply, socket}
 
+  @impl true
+  def handle_event("follow_graph", _params, socket) do
+    case socket.assigns[:current_user] do
+      nil ->
+        {:noreply, assign(socket, show_login_modal: true)}
+
+      user ->
+        case Follows.follow_graph(user, socket.assigns.graph_struct) do
+          {:ok, _follow} ->
+            {:noreply,
+             socket
+             |> assign(:following_graph?, true)
+             |> put_flash(:info, "Grid followed.")}
+
+          {:error, _reason} ->
+            {:noreply, put_flash(socket, :error, "Could not follow this grid.")}
+        end
+    end
+  end
+
+  @impl true
+  def handle_event("unfollow_graph", _params, socket) do
+    case socket.assigns[:current_user] do
+      nil ->
+        {:noreply, assign(socket, show_login_modal: true)}
+
+      user ->
+        {:ok, _count} = Follows.unfollow_graph(user, socket.assigns.graph_struct)
+
+        {:noreply,
+         socket
+         |> assign(:following_graph?, false)
+         |> put_flash(:info, "Grid unfollowed.")}
+    end
+  end
+
   defp mount_graph(socket, graph_db, token_param) do
     {_graph_struct, graph} = GraphManager.get_graph(graph_db.title)
 
@@ -328,6 +365,7 @@ defmodule DialecticWeb.OutlineGraphLive do
       show_search_overlay: false,
       search_term: "",
       search_results: [],
+      following_graph?: following_graph?(socket.assigns[:current_user], graph_db),
       highlights: highlights,
       page_title: graph_db.title,
       page_description: description,
@@ -381,6 +419,12 @@ defmodule DialecticWeb.OutlineGraphLive do
   defp indexable_graph?(graph_db) do
     graph_db.is_public == true and graph_db.is_published == true and graph_db.is_deleted != true
   end
+
+  defp following_graph?(%Dialectic.Accounts.User{} = user, graph) do
+    Follows.following_graph?(user, graph)
+  end
+
+  defp following_graph?(_user, _graph), do: false
 
   defp refresh_outline(socket) do
     {_graph_struct, graph} = GraphManager.get_graph(socket.assigns.graph_id)

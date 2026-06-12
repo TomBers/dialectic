@@ -4,6 +4,7 @@ defmodule DialecticWeb.HomeLive do
   alias Dialectic.Graph.GraphActions
   alias Dialectic.Graph.Vertex
   alias DialecticWeb.Utils.UserUtils
+  import DialecticWeb.GridCardComp
   import DialecticWeb.HomeGridRowComp
   require Logger
 
@@ -525,7 +526,7 @@ defmodule DialecticWeb.HomeLive do
               <%!-- Curated & Featured Grids – 2-column on desktop --%>
               <%= if @featured_grids != [] do %>
                 <section
-                  class="w-full rounded-3xl border border-slate-200/80 bg-white/90 p-2 ring-1 ring-slate-200 shadow-sm sm:p-2.5"
+                  class="w-full overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-[linear-gradient(135deg,#f8fafc_0%,#ffffff_48%,#f0fdfa_100%)] p-2 shadow-[0_24px_70px_-54px_rgba(15,23,42,0.9)] ring-1 ring-white sm:p-3"
                   id="curated"
                 >
                   <div class="grid w-full grid-cols-1 gap-2 sm:gap-2.5">
@@ -536,7 +537,7 @@ defmodule DialecticWeb.HomeLive do
                       title="Partner grids"
                       pills={partner_pills(@featured_grids)}
                       id_prefix="featured"
-                      section_class="from-indigo-50 via-white to-sky-50/70"
+                      section_class="from-indigo-50 via-white to-teal-50"
                       icon_wrap_class="bg-indigo-100 text-indigo-700 ring-indigo-200"
                     />
                   </div>
@@ -544,17 +545,22 @@ defmodule DialecticWeb.HomeLive do
               <% end %>
               <div id="explore" class="h-5"></div>
               <!-- Below: All ideas (full-width on desktop, uses available space) -->
-              <section class="w-full rounded-3xl bg-white/90 p-2.5 ring-1 ring-slate-200 sm:p-3">
-                <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
-                  <div class="p-2 sm:p-2.5">
-                    <div class="rounded-2xl border border-slate-200 bg-gradient-to-r from-slate-50 via-white to-indigo-50/70 p-3 shadow-sm">
+              <section
+                id="popular-grids"
+                class="w-full overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-[linear-gradient(135deg,#fff7ed_0%,#ffffff_45%,#eef2ff_100%)] p-2 shadow-[0_24px_70px_-54px_rgba(15,23,42,0.9)] ring-1 ring-white sm:p-3"
+              >
+                <div class="overflow-hidden rounded-[1.35rem] bg-white shadow-sm ring-1 ring-slate-200/80">
+                  <div class="h-1 bg-[linear-gradient(90deg,#0f766e_0%,#f59e0b_48%,#4f46e5_100%)]">
+                  </div>
+                  <div class="bg-[linear-gradient(135deg,#0f172a_0%,#134e4a_54%,#7c2d12_100%)] p-3 text-white shadow-sm sm:p-4">
+                    <div>
                       <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                         <div class="min-w-0">
-                          <div class="inline-flex items-center gap-1 rounded-full bg-slate-900 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white">
+                          <div class="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-100 ring-1 ring-white/15">
                             <.icon name="hero-sparkles" class="h-3.5 w-3.5" /> Explore
                           </div>
                           <div class="mt-2 flex flex-wrap items-center gap-2">
-                            <h2 class="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">
+                            <h2 class="text-xl font-semibold tracking-tight text-white sm:text-2xl">
                               <%= cond do %>
                                 <% @active_tag -> %>
                                   Ideas tagged with "{@active_tag}"
@@ -568,8 +574,11 @@ defmodule DialecticWeb.HomeLive do
                                   Popular Grids
                               <% end %>
                             </h2>
-                            <span class="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700">
+                            <span class="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-xs font-medium text-white/85">
                               Community-built
+                            </span>
+                            <span class="inline-flex items-center rounded-full border border-amber-200/30 bg-amber-300/15 px-2.5 py-1 text-xs font-medium text-amber-50">
+                              {length(@graphs)} grids
                             </span>
                           </div>
                         </div>
@@ -590,7 +599,7 @@ defmodule DialecticWeb.HomeLive do
                               value={@search_term}
                               phx-debounce="300"
                               placeholder="Search ideas..."
-                              class="h-10 w-full rounded-full border border-slate-300 bg-white px-10 pr-10 text-sm text-slate-900 placeholder:text-slate-500 shadow-sm transition focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                              class="h-10 w-full rounded-full border border-white/60 bg-white px-10 pr-10 text-sm text-slate-900 placeholder:text-slate-500 shadow-sm transition focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-200"
                               autocomplete="off"
                             />
                             <%= if @search_term && @search_term != "" do %>
@@ -610,7 +619,7 @@ defmodule DialecticWeb.HomeLive do
                       <div class="mt-3 flex flex-col gap-2 xl:flex-row xl:flex-wrap xl:items-start xl:justify-between">
                         <%= if @popular_tags != [] do %>
                           <div class="flex min-w-0 items-center gap-2">
-                            <span class="flex-shrink-0 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                            <span class="flex-shrink-0 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/65">
                               Trending
                             </span>
                             <div class="flex w-full gap-1.5 overflow-x-auto pb-1 -mb-1 xl:w-auto xl:max-w-none xl:flex-wrap xl:overflow-visible">
@@ -619,15 +628,15 @@ defmodule DialecticWeb.HomeLive do
                                   patch={~p"/?tag=#{tag}"}
                                   class={[
                                     "inline-flex flex-shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors whitespace-nowrap",
-                                    (@active_tag == tag && "border-slate-900 bg-slate-900 text-white") ||
-                                      "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-100"
+                                    (@active_tag == tag && "border-white bg-white text-slate-950") ||
+                                      "border-white/10 bg-white/10 text-white/80 hover:border-white/25 hover:bg-white/15"
                                   ]}
                                 >
                                   <span>#{tag}</span>
                                   <span class={[
                                     "rounded-full px-1.5 py-0.5 text-[10px]",
-                                    (@active_tag == tag && "bg-white/15 text-white") ||
-                                      "bg-slate-100 text-slate-500"
+                                    (@active_tag == tag && "bg-slate-950/10 text-slate-700") ||
+                                      "bg-white/10 text-white/70"
                                   ]}>
                                     {count}
                                   </span>
@@ -643,8 +652,8 @@ defmodule DialecticWeb.HomeLive do
                             class={[
                               "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
                               (!@active_category && !@active_tag && @search_term == "" &&
-                                 "border-slate-900 bg-slate-900 text-white") ||
-                                "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-100"
+                                 "border-white bg-white text-slate-950") ||
+                                "border-white/10 bg-white/10 text-white/80 hover:border-white/25 hover:bg-white/15"
                             ]}
                           >
                             All
@@ -654,8 +663,8 @@ defmodule DialecticWeb.HomeLive do
                             class={[
                               "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
                               (@active_category == "deep_dives" &&
-                                 "border-slate-900 bg-slate-900 text-white") ||
-                                "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-100"
+                                 "border-white bg-white text-slate-950") ||
+                                "border-white/10 bg-white/10 text-white/80 hover:border-white/25 hover:bg-white/15"
                             ]}
                           >
                             Deep Dives
@@ -665,8 +674,8 @@ defmodule DialecticWeb.HomeLive do
                             class={[
                               "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
                               (@active_category == "seedlings" &&
-                                 "border-slate-900 bg-slate-900 text-white") ||
-                                "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-100"
+                                 "border-white bg-white text-slate-950") ||
+                                "border-white/10 bg-white/10 text-white/80 hover:border-white/25 hover:bg-white/15"
                             ]}
                           >
                             Seedlings
@@ -676,37 +685,20 @@ defmodule DialecticWeb.HomeLive do
                     </div>
                   </div>
 
-                  <div class="border-t border-slate-200">
-                    <div id="home-graph-mobile-list" class="space-y-3 p-3 md:hidden">
+                  <div class="border-t border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)]">
+                    <div
+                      id="home-graph-card-list"
+                      class="grid gap-4 p-3 sm:p-3.5 md:grid-cols-2 xl:grid-cols-3"
+                    >
                       <%= for {g, _count, author_username} <- @graphs do %>
-                        <.home_grid_row
+                        <.grid_card
                           graph={g}
                           author_name={author_username}
                           author_marker="@"
-                          id={graph_dom_id(g, "home-mobile-graph")}
-                          variant={:card}
+                          id={graph_dom_id(g, "home-card-graph")}
                           tag_limit={4}
                         />
                       <% end %>
-                    </div>
-
-                    <div class="hidden p-3 sm:p-3.5 md:block">
-                      <div
-                        id="home-graph-desktop-list"
-                        class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
-                      >
-                        <div class="divide-y divide-slate-100">
-                          <%= for {g, _count, author_username} <- @graphs do %>
-                            <.home_grid_row
-                              graph={g}
-                              author_name={author_username}
-                              author_marker="@"
-                              id={graph_dom_id(g, "home-desktop-graph")}
-                              tag_limit={4}
-                            />
-                          <% end %>
-                        </div>
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -789,26 +781,35 @@ defmodule DialecticWeb.HomeLive do
   end
 
   defp curated_grid_section(assigns) do
-    assigns = assign_new(assigns, :pills, fn -> [] end)
+    assigns =
+      assigns
+      |> assign_new(:pills, fn -> [] end)
+      |> assign(:card_label, curated_card_label(assigns.title))
 
     ~H"""
-    <section class="w-full min-w-0">
+    <section class="w-full min-w-0 overflow-hidden rounded-[1.35rem] border border-slate-200/80 bg-white shadow-sm">
+      <div class="h-1 bg-[linear-gradient(90deg,#4f46e5_0%,#14b8a6_52%,#f59e0b_100%)]"></div>
       <div class={[
-        "h-full rounded-2xl border border-slate-200 bg-gradient-to-br shadow-sm",
+        "h-full bg-gradient-to-br",
         @section_class
       ]}>
-        <div class="p-2">
-          <div class="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div class="p-3 sm:p-4">
+          <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div class="flex items-center gap-2">
               <span class={[
-                "inline-flex h-7 w-7 items-center justify-center rounded-xl ring-1",
+                "inline-flex h-10 w-10 items-center justify-center rounded-2xl shadow-sm ring-1",
                 @icon_wrap_class
               ]}>
-                <.icon name={@icon} class={"h-4 w-4 " <> @icon_class} />
+                <.icon name={@icon} class={"h-5 w-5 " <> @icon_class} />
               </span>
-              <h2 class="text-sm font-semibold tracking-tight text-slate-900">
-                {@title}
-              </h2>
+              <div class="min-w-0">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  Curated
+                </p>
+                <h2 class="text-lg font-semibold tracking-tight text-slate-950">
+                  {@title}
+                </h2>
+              </div>
             </div>
             <%= if @pills != [] do %>
               <div class="flex flex-wrap gap-1.5 sm:justify-end">
@@ -821,19 +822,17 @@ defmodule DialecticWeb.HomeLive do
               </div>
             <% end %>
           </div>
-          <div
-            id={"#{@id_prefix}-grids-list"}
-            class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
-          >
-            <div class="divide-y divide-slate-100">
-              <%= for item <- @items do %>
-                <.home_grid_row
-                  graph={item.graph}
-                  author_name={item.author_name}
-                  id={@id_prefix <> "-" <> (item.graph.slug || "t-" <> Integer.to_string(:erlang.phash2(item.graph.title || "")))}
-                />
-              <% end %>
-            </div>
+          <div id={"#{@id_prefix}-grids-list"} class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <%= for item <- @items do %>
+              <.grid_card
+                graph={item.graph}
+                author_name={item.author_name}
+                author_marker="@"
+                id={@id_prefix <> "-" <> (item.graph.slug || "t-" <> Integer.to_string(:erlang.phash2(item.graph.title || "")))}
+                label={@card_label}
+                tag_limit={3}
+              />
+            <% end %>
           </div>
         </div>
       </div>
@@ -869,6 +868,9 @@ defmodule DialecticWeb.HomeLive do
   end
 
   defp preview_key(item), do: item.graph.slug || item.graph.title || ""
+
+  defp curated_card_label("Partner grids"), do: "Partner grid"
+  defp curated_card_label(_title), do: "Curated grid"
 
   defp partner_pills(items) do
     items

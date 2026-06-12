@@ -143,6 +143,20 @@
           </.link>
           <%= if @current_user do %>
             <.link
+              href={~p"/activity"}
+              class={[
+                "inline-flex items-center gap-1 rounded-full px-2 py-1 font-semibold text-white transition",
+                if(active_path == "/activity",
+                  do: "bg-white/24 text-white shadow-sm",
+                  else:
+                    "hover:bg-white/22 hover:text-white hover:ring-1 hover:ring-white/35 hover:shadow-[0_6px_14px_rgba(24,16,88,0.24)]"
+                )
+              ]}
+            >
+              <.icon name="hero-bell" class="h-3.5 w-3.5" />
+              <span class="hidden sm:inline">Activity</span>
+            </.link>
+            <.link
               href={~p"/u/#{@current_user.username}"}
               class={[
                 "inline-flex items-center gap-1 rounded-full px-2 py-1 font-semibold text-white transition",
