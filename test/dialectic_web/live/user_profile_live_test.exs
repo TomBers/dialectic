@@ -2,7 +2,9 @@ defmodule DialecticWeb.UserProfileLiveTest do
   use DialecticWeb.ConnCase, async: true
 
   alias Dialectic.Accounts
+  alias Dialectic.DbActions.Notes
   alias Dialectic.Follows
+  alias Dialectic.Highlights
   import Phoenix.LiveViewTest
   import Dialectic.AccountsFixtures
 
@@ -19,6 +21,7 @@ defmodule DialecticWeb.UserProfileLiveTest do
     slug = Keyword.get(opts, :slug, "slug-#{unique_suffix}")
     tags = Keyword.get(opts, :tags, [])
     nodes = Keyword.get(opts, :nodes, [%{"id" => "1", "label" => "Node"}])
+    is_public = Keyword.get(opts, :is_public, true)
     unique_title = "#{title}-#{unique_suffix}"
 
     Dialectic.Repo.insert!(%Dialectic.Accounts.Graph{
@@ -26,11 +29,15 @@ defmodule DialecticWeb.UserProfileLiveTest do
       slug: slug,
       data: %{"nodes" => nodes},
       tags: tags,
-      is_public: true,
+      is_public: is_public,
       is_published: true,
       is_deleted: false,
       user_id: user.id
     })
+  end
+
+  defp create_private_graph(user, title, opts) do
+    create_public_graph(user, title, Keyword.put(opts, :is_public, false))
   end
 
   describe "successful render" do
@@ -268,6 +275,53 @@ defmodule DialecticWeb.UserProfileLiveTest do
 
       assert has_element?(lv, ~s(#profile-activity-link[href="/activity"]))
     end
+
+    test "shows noted nodes and saved highlights on own profile", %{conn: conn} do
+      user = create_user_with_username("highlightprofile")
+
+      graph =
+        create_public_graph(user, "Quote Grid",
+          slug: "quote-grid",
+          tags: [],
+          nodes: [
+            %{
+              "id" => "quote-node",
+              "content" => "# Source Node Title\n\nBody text."
+            }
+          ]
+        )
+
+      {:ok, note} = Notes.add_note(graph.title, "quote-node", user)
+
+      {:ok, highlight} =
+        Highlights.create_highlight(%{
+          mudg_id: graph.title,
+          node_id: "quote-node",
+          text_source_type: "node",
+          text_source_id: "quote-node",
+          selection_start: 0,
+          selection_end: 21,
+          selected_text_snapshot: "This is a saved quote.",
+          note: "A useful saved thought.",
+          created_by_user_id: user.id
+        })
+
+      {:ok, lv, html} =
+        conn
+        |> log_in_user(user)
+        |> live(~p"/u/highlightprofile")
+
+      assert html =~ "Thinking library"
+      assert html =~ "Noted ideas"
+      assert has_element?(lv, "#profile-noted-note-#{note.id}")
+      assert html =~ "Highlights"
+      refute html =~ "My Notes"
+      assert has_element?(lv, "#profile-highlight-#{highlight.id}")
+      assert render(lv) =~ "This is a saved quote."
+      assert render(lv) =~ "A useful saved thought."
+      assert render(lv) =~ "Source Node Title"
+      assert render(lv) =~ graph.title
+    end
   end
 
   describe "case-insensitive username lookup" do
@@ -294,18 +348,21 @@ defmodule DialecticWeb.UserProfileLiveTest do
   end
 
   describe "graph deletion" do
-    test "shows delete button on own profile for All My Grids section", %{conn: conn} do
+    test "shows only private grids in the private grids section", %{conn: conn} do
       user = create_user_with_username("deleteuser")
-      graph = create_public_graph(user, "Graph To Delete", slug: "delete-test", tags: [])
+      public_graph = create_public_graph(user, "Public Graph", slug: "public-graph", tags: [])
+      private_graph = create_private_graph(user, "Private Graph", slug: "private-graph", tags: [])
 
       {:ok, _lv, html} =
         conn
         |> log_in_user(user)
         |> live(~p"/u/deleteuser")
 
-      # Delete button should be visible in All My Grids section
-      assert html =~ "delete-grid-btn-"
-      assert html =~ graph.title
+      assert html =~ "Private grids"
+      assert html =~ "delete-grid-btn-private-graph"
+      assert html =~ private_graph.title
+      refute html =~ "delete-grid-btn-public-graph"
+      assert html =~ public_graph.title
     end
 
     test "does not show delete button when viewing another user's profile", %{conn: conn} do
@@ -338,7 +395,7 @@ defmodule DialecticWeb.UserProfileLiveTest do
 
     test "can delete own graph via confirmation modal", %{conn: conn} do
       user = create_user_with_username("confirmdel")
-      graph = create_public_graph(user, "Deletable Graph", slug: "deletable", tags: [])
+      graph = create_private_graph(user, "Deletable Graph", slug: "deletable", tags: [])
 
       {:ok, lv, _html} =
         conn
@@ -363,7 +420,7 @@ defmodule DialecticWeb.UserProfileLiveTest do
       updated_graph = Dialectic.Repo.get_by(Dialectic.Accounts.Graph, title: graph.title)
       assert updated_graph.is_deleted == true
 
-      # Graph should no longer be visible in the All My Grids section
+      # Graph should no longer be visible in the Private grids section
       # Note: The title might still be in the flash message, so we check specifically
       # that the graph card is gone by checking for the delete button
       refute html =~ "delete-grid-btn-deletable"
@@ -371,7 +428,7 @@ defmodule DialecticWeb.UserProfileLiveTest do
 
     test "can cancel graph deletion", %{conn: conn} do
       user = create_user_with_username("canceluser")
-      graph = create_public_graph(user, "Keep This Graph", slug: "keep-graph", tags: [])
+      graph = create_private_graph(user, "Keep This Graph", slug: "keep-graph", tags: [])
 
       {:ok, lv, _html} =
         conn

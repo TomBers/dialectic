@@ -2,12 +2,13 @@ defmodule DialecticWeb.UserProfileLive do
   use DialecticWeb, :live_view
 
   alias Dialectic.Accounts
+  alias Dialectic.Accounts.Graph
   alias Dialectic.Accounts.User
   alias Dialectic.Accounts.ProfileBanner
   alias Dialectic.Accounts.ProfileLinks
   alias Dialectic.Follows
+  alias Dialectic.Highlights
   alias DialecticWeb.Utils.NodeTitleHelper
-  import DialecticWeb.HomeGridRowComp
 
   @impl true
   def mount(%{"username" => username}, _session, socket) do
@@ -33,32 +34,15 @@ defmodule DialecticWeb.UserProfileLive do
             _ -> false
           end
 
-        # Load My Ideas data when viewing own profile
-        {my_stats, noted_notes} =
+        # Load private library data only when viewing your own profile.
+        {my_stats, private_graphs, noted_notes, saved_highlights} =
           if is_own_profile? do
             stats = Dialectic.DbActions.Notes.get_my_stats(profile_user)
 
-            noted =
-              stats.notes
-              |> Enum.filter(& &1.is_noted)
-              |> Enum.map(fn note ->
-                node_title =
-                  (note.graph.data["nodes"] || [])
-                  |> Enum.find_value(fn n ->
-                    if n["id"] == note.node_id do
-                      case NodeTitleHelper.extract_node_title(n) do
-                        "Untitled" -> nil
-                        title -> title
-                      end
-                    end
-                  end)
-
-                Map.put(note, :node_title, node_title || "Node #{note.node_id}")
-              end)
-
-            {stats, noted}
+            {stats, private_graphs(stats), noted_notes(stats),
+             Highlights.list_user_highlights(profile_user)}
           else
-            {nil, []}
+            {nil, [], [], []}
           end
 
         socket =
@@ -81,7 +65,9 @@ defmodule DialecticWeb.UserProfileLive do
             following_profile?(socket.assigns[:current_user], profile_user)
           )
           |> assign(:my_stats, my_stats)
+          |> assign(:private_graphs, private_graphs)
           |> assign(:noted_notes, noted_notes)
+          |> assign(:saved_highlights, saved_highlights)
           |> assign(:graph_to_delete, nil)
 
         {:ok, socket}
@@ -165,6 +151,7 @@ defmodule DialecticWeb.UserProfileLive do
          socket
          |> assign(:graph_to_delete, nil)
          |> assign(:my_stats, my_stats)
+         |> assign(:private_graphs, private_graphs(my_stats))
          |> assign(:graphs, graphs)
          |> assign(:featured_graphs, featured_graphs)
          |> assign(:current_focus, current_focus)
@@ -209,6 +196,169 @@ defmodule DialecticWeb.UserProfileLive do
 
   defp following_profile?(_current_user, _profile_user), do: false
 
+  defp private_graphs(%{graphs: graphs}) when is_list(graphs) do
+    Enum.filter(graphs, &(&1.is_public != true))
+  end
+
+  defp private_graphs(_stats), do: []
+
+  defp noted_notes(%{notes: notes}) when is_list(notes) do
+    notes
+    |> Enum.filter(& &1.is_noted)
+    |> Enum.map(&put_note_node_title/1)
+  end
+
+  defp noted_notes(_stats), do: []
+
+  defp put_note_node_title(%{graph: %Graph{} = graph, node_id: node_id} = note) do
+    Map.put(note, :node_title, node_title(graph, node_id))
+  end
+
+  defp put_note_node_title(%{node_id: node_id} = note) do
+    Map.put(note, :node_title, fallback_node_title(node_id))
+  end
+
+  defp note_path(%{graph: %Graph{} = graph, node_id: node_id}), do: graph_path(graph, node_id)
+
+  defp note_graph_title(%{graph: %Graph{title: title}}), do: title
+  defp note_graph_title(%{graph_title: title}) when is_binary(title), do: title
+  defp note_graph_title(_note), do: "Grid"
+
+  defp node_title(%Graph{} = graph, node_id) when is_binary(node_id) and node_id != "" do
+    graph
+    |> graph_node(node_id)
+    |> case do
+      nil -> fallback_node_title(node_id)
+      node -> NodeTitleHelper.extract_node_title(node, max_length: 72)
+    end
+  end
+
+  defp node_title(_graph, node_id), do: fallback_node_title(node_id)
+
+  defp fallback_node_title(node_id) when is_binary(node_id) and node_id != "",
+    do: "Node #{node_id}"
+
+  defp fallback_node_title(_node_id), do: "Node"
+
+  defp highlight_path(%{mudg: %Graph{} = graph, node_id: node_id, id: id}) do
+    graph_path(graph, node_id, highlight: id)
+  end
+
+  defp highlight_graph_title(%{mudg: %Graph{title: title}}), do: title
+  defp highlight_graph_title(%{mudg_id: title}) when is_binary(title), do: title
+  defp highlight_graph_title(_highlight), do: "Grid"
+
+  defp highlight_note?(%{note: note}) when is_binary(note), do: String.trim(note) != ""
+  defp highlight_note?(_highlight), do: false
+
+  defp highlight_node_title(%{mudg: %Graph{} = graph, node_id: node_id})
+       when is_binary(node_id) and node_id != "" do
+    node_title(graph, node_id)
+  end
+
+  defp highlight_node_title(%{node_id: node_id}) when is_binary(node_id) and node_id != "",
+    do: fallback_node_title(node_id)
+
+  defp highlight_node_title(_highlight), do: "Node"
+
+  defp graph_node(%Graph{data: data}, node_id) when is_map(data) do
+    nodes = Map.get(data, "nodes") || Map.get(data, :nodes) || []
+
+    if is_list(nodes) do
+      Enum.find(nodes, &((Map.get(&1, "id") || Map.get(&1, :id)) == node_id))
+    end
+  end
+
+  defp graph_node(_graph, _node_id), do: nil
+
+  attr :id, :string, required: true
+  attr :graph, :map, required: true
+  attr :tag_limit, :integer, default: 4
+  attr :show_visibility, :boolean, default: false
+  slot :action
+
+  defp profile_grid_card(assigns) do
+    assigns =
+      assigns
+      |> assign(:node_count, graph_node_count(assigns.graph))
+      |> assign(:tags, Enum.take(assigns.graph.tags || [], assigns.tag_limit))
+
+    ~H"""
+    <article
+      id={@id}
+      class="group flex min-h-72 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-teal-200 hover:shadow-lg"
+    >
+      <div class={grid_card_header_class(@graph)}>
+        <div class="flex items-start justify-between gap-3">
+          <span class="inline-flex items-center rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white ring-1 ring-white/20">
+            {exploration_label(@graph)}
+          </span>
+          <span :if={@show_visibility} class={grid_visibility_class(@graph)}>
+            <.icon name={grid_visibility_icon(@graph)} class="h-3.5 w-3.5" />
+            {grid_visibility_label(@graph)}
+          </span>
+        </div>
+      </div>
+
+      <div class="flex flex-1 flex-col p-4">
+        <div class="flex items-start justify-between gap-4">
+          <.link
+            navigate={graph_path(@graph)}
+            class="line-clamp-3 text-base font-semibold leading-6 text-slate-950 transition group-hover:text-teal-700"
+          >
+            {@graph.title}
+          </.link>
+          <div class="shrink-0 rounded-xl bg-slate-50 px-3 py-2 text-center ring-1 ring-slate-200">
+            <p class="text-base font-semibold leading-5 text-slate-950">{@node_count}</p>
+            <p class="mt-0.5 text-[10px] font-semibold uppercase text-slate-500">ideas</p>
+          </div>
+        </div>
+
+        <p class="mt-3 line-clamp-2 min-h-10 text-sm leading-5 text-slate-600">
+          {graph_preview_sentence(@graph)}
+        </p>
+
+        <div class="mt-4 flex min-h-12 flex-wrap content-start gap-1.5">
+          <%= if @tags == [] do %>
+            <span class="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500 ring-1 ring-inset ring-slate-200">
+              Untagged
+            </span>
+          <% else %>
+            <%= for tag <- @tags do %>
+              <span class={[
+                "inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset",
+                table_tag_color_class(tag, nil)
+              ]}>
+                #{tag}
+              </span>
+            <% end %>
+          <% end %>
+        </div>
+
+        <div class="mt-auto flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
+          <span class="text-xs font-medium text-slate-500">
+            {graph_updated_label(@graph)}
+          </span>
+
+          <div class="flex items-center gap-2">
+            <.link
+              navigate={graph_path(@graph)}
+              class="inline-flex items-center gap-1.5 rounded-full bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-teal-700"
+              aria-label={"Open " <> (@graph.title || "grid")}
+            >
+              Open <.icon name="hero-arrow-up-right" class="h-3.5 w-3.5" />
+            </.link>
+
+            <%= if @action != [] do %>
+              {render_slot(@action)}
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </article>
+    """
+  end
+
   @impl true
   def render(assigns) do
     ~H"""
@@ -250,28 +400,28 @@ defmodule DialecticWeb.UserProfileLive do
       <div class="mx-auto max-w-6xl px-4 sm:px-6 py-8 sm:py-12">
         <%!-- Profile Header --%>
         <div class={[
-          "overflow-hidden rounded-[1.75rem] border shadow-[0_28px_70px_-48px_rgba(15,23,42,0.45)]",
-          theme_card_class(@theme)
+          "relative overflow-hidden rounded-[2rem] border border-slate-900/10 bg-slate-950 text-white shadow-[0_36px_110px_-56px_rgba(15,23,42,0.85)]"
         ]}>
           <%!-- Banner area --%>
-          <%= cond do %>
-            <% @profile_banner_url -> %>
-              <div class="h-36 overflow-hidden sm:h-44">
+          <div class="relative h-52 overflow-hidden sm:h-64">
+            <%= cond do %>
+              <% @profile_banner_url -> %>
                 <img
                   src={@profile_banner_url}
                   alt={"#{@effective_username}'s profile banner"}
-                  class="h-full w-full object-cover"
+                  class="absolute inset-0 h-full w-full object-cover"
                 />
-              </div>
-            <% true -> %>
-              <div class={["h-36 sm:h-44", theme_banner_class(@theme)]}></div>
-          <% end %>
+              <% true -> %>
+                <div class={["absolute inset-0", theme_banner_class(@theme)]}></div>
+            <% end %>
+            <div class="absolute inset-x-0 bottom-0 h-px bg-white/10"></div>
+          </div>
 
-          <div class="relative px-5 pb-6 sm:px-8 sm:pb-8">
+          <div class="relative px-5 pb-6 pt-5 sm:px-8 sm:pb-8 sm:pt-6">
             <%!-- Avatar --%>
-            <div class="flex flex-col gap-4 -mt-12 sm:-mt-14 sm:flex-row sm:items-end">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-end">
               <div class={[
-                "h-24 w-24 sm:h-28 sm:w-28 rounded-full border-4 flex items-center justify-center overflow-hidden flex-shrink-0",
+                "h-24 w-24 sm:h-28 sm:w-28 rounded-full border-4 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-2xl shadow-slate-950/35",
                 theme_avatar_border_class(@theme)
               ]}>
                 <%= if @avatar_url do %>
@@ -291,30 +441,27 @@ defmodule DialecticWeb.UserProfileLive do
               </div>
 
               <div class="min-w-0 flex-1 pb-1">
-                <h1 class={[
-                  "truncate text-3xl font-semibold tracking-tight sm:text-4xl",
-                  theme_heading_class(@theme)
-                ]}>
+                <p class="mb-1 text-xs font-semibold uppercase text-cyan-200">
+                  Thinking profile
+                </p>
+                <h1 class="truncate text-4xl font-semibold text-white sm:text-6xl">
                   {@effective_username}
                 </h1>
               </div>
 
-              <div class="flex items-center gap-2 pb-1">
+              <div class="flex flex-wrap items-center gap-2 pb-1">
                 <%= if @is_own_profile? do %>
                   <.link
                     navigate={~p"/activity"}
                     id="profile-activity-link"
-                    class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+                    class="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-white/15"
                   >
                     <.icon name="hero-bell" class="w-4 h-4" /> Activity
                   </.link>
                   <.link
                     navigate={~p"/users/settings"}
                     id="profile-settings-link"
-                    class={[
-                      "inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold shadow-sm transition",
-                      theme_button_class(@theme)
-                    ]}
+                    class="inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-sm transition hover:bg-cyan-50"
                   >
                     <.icon name="hero-cog-6-tooth" class="w-4 h-4" /> Account Settings
                   </.link>
@@ -329,8 +476,8 @@ defmodule DialecticWeb.UserProfileLive do
                       class={[
                         "inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold shadow-sm transition",
                         if(@following_profile?,
-                          do: "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
-                          else: "bg-slate-950 text-white hover:bg-slate-800"
+                          do: "border border-white/15 bg-white/10 text-white hover:bg-white/15",
+                          else: "bg-white text-slate-950 hover:bg-cyan-50"
                         )
                       ]}
                     >
@@ -348,7 +495,7 @@ defmodule DialecticWeb.UserProfileLive do
                     <.link
                       navigate={~p"/users/log_in"}
                       id="profile-follow-login-link"
-                      class="inline-flex items-center gap-1.5 rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+                      class="inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-sm transition hover:bg-cyan-50"
                     >
                       <.icon name="hero-plus" class="w-4 h-4" /> Follow
                     </.link>
@@ -360,14 +507,14 @@ defmodule DialecticWeb.UserProfileLive do
             <div class="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-end">
               <div>
                 <%= if @profile_user.bio && @profile_user.bio != "" do %>
-                  <p class="max-w-3xl text-xl font-medium leading-8 tracking-tight text-slate-900 sm:text-2xl sm:leading-9">
+                  <p class="max-w-3xl text-2xl font-semibold leading-9 text-white sm:text-3xl sm:leading-10">
                     {@profile_user.bio}
                   </p>
                 <% end %>
 
                 <%= if @current_focus do %>
-                  <div class="mt-4 inline-flex max-w-2xl items-start gap-2 rounded-2xl bg-slate-50 px-3 py-2 text-sm leading-6 text-slate-600 ring-1 ring-slate-200">
-                    <.icon name="hero-sparkles" class="mt-0.5 h-4 w-4 shrink-0 text-indigo-500" />
+                  <div class="mt-5 inline-flex max-w-2xl items-start gap-2 rounded-2xl bg-white/10 px-3 py-2 text-sm leading-6 text-slate-100 ring-1 ring-white/15">
+                    <.icon name="hero-sparkles" class="mt-0.5 h-4 w-4 shrink-0 text-cyan-200" />
                     <p>{@current_focus}</p>
                   </div>
                 <% end %>
@@ -379,49 +526,43 @@ defmodule DialecticWeb.UserProfileLive do
                       href={link.href}
                       target={if link.kind == "url", do: "_blank", else: nil}
                       rel={if link.kind == "url", do: "noopener noreferrer me", else: "me"}
-                      class={[
-                        "inline-flex items-center gap-1.5 text-sm font-medium transition",
-                        theme_link_class(@theme)
-                      ]}
+                      class="inline-flex items-center gap-1.5 text-sm font-semibold text-cyan-200 transition hover:text-white"
                     >
                       <.icon name={profile_link_icon(link)} class="w-4 h-4" />
                       {link.label}
                     </a>
                   <% end %>
 
-                  <span class={[
-                    "inline-flex items-center gap-1.5 text-sm",
-                    theme_subtext_class(@theme)
-                  ]}>
+                  <span class="inline-flex items-center gap-1.5 text-sm text-slate-300">
                     <.icon name="hero-calendar-days" class="w-4 h-4" />
                     Member since {Calendar.strftime(@stats.member_since, "%B %Y")}
                   </span>
                 </div>
               </div>
 
-              <div class="rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
+              <div class="rounded-2xl border border-white/10 bg-white/10 p-3 shadow-2xl shadow-slate-950/20 backdrop-blur">
                 <div class="grid grid-cols-3 gap-2 text-center">
                   <div>
-                    <p class="text-lg font-semibold leading-6 text-slate-950">
+                    <p class="text-2xl font-semibold leading-7 text-white">
                       {@stats.graphs_created}
                     </p>
-                    <p class="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                    <p class="mt-1 text-[10px] font-semibold uppercase text-slate-300">
                       Grids
                     </p>
                   </div>
                   <div>
-                    <p class="text-lg font-semibold leading-6 text-slate-950">
+                    <p class="text-2xl font-semibold leading-7 text-white">
                       {@stats.total_nodes}
                     </p>
-                    <p class="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                    <p class="mt-1 text-[10px] font-semibold uppercase text-slate-300">
                       Ideas
                     </p>
                   </div>
                   <div>
-                    <p class="text-lg font-semibold leading-6 text-slate-950">
+                    <p class="text-2xl font-semibold leading-7 text-white">
                       {format_member_duration(@stats.member_since)}
                     </p>
-                    <p class="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                    <p class="mt-1 text-[10px] font-semibold uppercase text-slate-300">
                       Days
                     </p>
                   </div>
@@ -431,18 +572,12 @@ defmodule DialecticWeb.UserProfileLive do
 
             <%!-- Common Tags --%>
             <%= if @common_tags != [] do %>
-              <div class="mt-6 flex flex-wrap items-center gap-1.5 border-t border-slate-100 pt-4">
-                <span class={[
-                  "text-xs font-semibold uppercase tracking-[0.14em]",
-                  theme_subtext_class(@theme)
-                ]}>
+              <div class="mt-6 flex flex-wrap items-center gap-1.5 border-t border-white/10 pt-4">
+                <span class="text-xs font-semibold uppercase text-slate-300">
                   Topics
                 </span>
                 <%= for tag <- @common_tags do %>
-                  <span class={[
-                    "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
-                    theme_tag_class(@theme)
-                  ]}>
+                  <span class="inline-flex items-center rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-semibold text-white ring-1 ring-white/15">
                     {tag}
                   </span>
                 <% end %>
@@ -452,13 +587,13 @@ defmodule DialecticWeb.UserProfileLive do
         </div>
 
         <%= if @featured_graphs != [] do %>
-          <section id="profile-start-here" class="mt-10">
-            <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <section id="profile-start-here" class="mt-12">
+            <div class="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p class="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-600">
+                <p class="text-xs font-semibold uppercase text-teal-700">
                   Start here
                 </p>
-                <h2 class="mt-1 text-2xl font-semibold tracking-tight text-slate-950">
+                <h2 class="mt-1 text-3xl font-semibold text-slate-950">
                   Entry points
                 </h2>
               </div>
@@ -468,17 +603,17 @@ defmodule DialecticWeb.UserProfileLive do
               </p>
             </div>
 
-            <div class="grid gap-4 lg:grid-cols-3">
+            <div class="grid gap-4 lg:grid-cols-12">
               <%= for {graph, index} <- Enum.with_index(@featured_graphs) do %>
                 <.link
                   navigate={graph_path(graph)}
                   class={[
-                    "group flex flex-col overflow-hidden border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md",
+                    "group flex flex-col overflow-hidden border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-teal-200 hover:shadow-xl",
                     featured_card_class(index)
                   ]}
                 >
                   <div class={[
-                    "border-b border-slate-100 bg-gradient-to-br from-slate-950 via-indigo-950 to-sky-900",
+                    "border-b border-white/10",
                     featured_card_header_class(index)
                   ]}>
                     <div class="flex items-start justify-between gap-3">
@@ -493,7 +628,7 @@ defmodule DialecticWeb.UserProfileLive do
 
                   <div class={featured_card_body_class(index)}>
                     <h3 class={[
-                      "font-semibold leading-7 text-slate-950 group-hover:text-indigo-700",
+                      "font-semibold leading-7 text-slate-950 group-hover:text-teal-700",
                       featured_card_title_class(index)
                     ]}>
                       {graph.title}
@@ -516,7 +651,7 @@ defmodule DialecticWeb.UserProfileLive do
 
                     <div class="mt-auto flex items-center justify-between border-t border-slate-100 pt-3 text-xs font-medium text-slate-500">
                       <span>{graph_node_count(graph)} ideas</span>
-                      <span class="inline-flex items-center gap-1 text-indigo-600 group-hover:text-indigo-700">
+                      <span class="inline-flex items-center gap-1 text-teal-700 group-hover:text-teal-800">
                         Open grid <.icon name="hero-arrow-right" class="h-3.5 w-3.5" />
                       </span>
                     </div>
@@ -555,16 +690,19 @@ defmodule DialecticWeb.UserProfileLive do
               </span>
             </h2>
             <span>
-              <span id="public-grids-chevron-up">
+              <span id="public-grids-chevron-up" class={if(@featured_graphs != [], do: "hidden")}>
                 <.icon name="hero-chevron-up" class={"w-5 h-5 " <> theme_subtext_class(@theme)} />
               </span>
-              <span id="public-grids-chevron-down" class="hidden">
+              <span
+                id="public-grids-chevron-down"
+                class={if(@featured_graphs != [], do: "", else: "hidden")}
+              >
                 <.icon name="hero-chevron-down" class={"w-5 h-5 " <> theme_subtext_class(@theme)} />
               </span>
             </span>
           </button>
 
-          <div id="public-grids-content">
+          <div id="public-grids-content" class={if(@featured_graphs != [], do: "hidden")}>
             <%= if @graphs == [] do %>
               <div class={["rounded-xl border p-8 text-center shadow-sm", theme_card_class(@theme)]}>
                 <.icon
@@ -587,41 +725,189 @@ defmodule DialecticWeb.UserProfileLive do
                 <% end %>
               </div>
             <% else %>
-              <div class={["overflow-hidden rounded-2xl border shadow-sm", theme_card_class(@theme)]}>
-                <div class="divide-y divide-slate-100">
-                  <%= for graph <- @graphs do %>
-                    <.home_grid_row
-                      graph={graph}
-                      id={"profile-public-grid-" <> (graph.slug || Integer.to_string(:erlang.phash2(graph.title || "")))}
-                      variant={:comfortable}
-                      tag_limit={4}
-                    >
-                      <:action :if={@is_own_profile?}>
-                        <button
-                          type="button"
-                          phx-click={
-                            JS.push("show_delete_modal", value: %{title: graph.title})
-                            |> show_modal("delete-graph-modal")
-                          }
-                          id={"delete-public-grid-btn-" <> (graph.slug || Integer.to_string(:erlang.phash2(graph.title || "")))}
-                          class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600"
-                          title="Delete grid"
-                          aria-label={"Delete " <> (graph.title || "grid")}
-                        >
-                          <.icon name="hero-trash" class="h-4 w-4" />
-                        </button>
-                      </:action>
-                    </.home_grid_row>
-                  <% end %>
-                </div>
+              <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <%= for graph <- @graphs do %>
+                  <.profile_grid_card
+                    graph={graph}
+                    id={"profile-public-grid-" <> (graph.slug || Integer.to_string(:erlang.phash2(graph.title || "")))}
+                    tag_limit={4}
+                  >
+                    <:action :if={@is_own_profile?}>
+                      <button
+                        type="button"
+                        phx-click={
+                          JS.push("show_delete_modal", value: %{title: graph.title})
+                          |> show_modal("delete-graph-modal")
+                        }
+                        id={"delete-public-grid-btn-" <> (graph.slug || Integer.to_string(:erlang.phash2(graph.title || "")))}
+                        class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-red-100 bg-red-50 text-red-600 transition hover:bg-red-100"
+                        title="Delete grid"
+                        aria-label={"Delete " <> (graph.title || "grid")}
+                      >
+                        <.icon name="hero-trash" class="h-4 w-4" />
+                      </button>
+                    </:action>
+                  </.profile_grid_card>
+                <% end %>
               </div>
             <% end %>
           </div>
         </div>
 
-        <%!-- My Ideas Section (own profile only) --%>
+        <%!-- Private thinking library (own profile only) --%>
         <%= if @is_own_profile? && @my_stats do %>
-          <div class="mt-8">
+          <section
+            id="profile-thinking-library"
+            class="mt-12 overflow-hidden rounded-[2rem] border border-slate-900 bg-slate-950 shadow-[0_30px_90px_-58px_rgba(15,23,42,0.9)]"
+          >
+            <div class="flex flex-col gap-3 border-b border-white/10 p-5 sm:flex-row sm:items-end sm:justify-between sm:p-6">
+              <div>
+                <p class="text-xs font-semibold uppercase text-cyan-200">
+                  Saved attention
+                </p>
+                <h2 class="mt-1 text-3xl font-semibold text-white">
+                  Thinking library
+                </h2>
+              </div>
+            </div>
+
+            <div class="grid gap-px bg-white/10 lg:grid-cols-2">
+              <section id="profile-noted-panel" class="overflow-hidden bg-white">
+                <div class="flex items-start justify-between gap-4 border-b border-slate-100 p-5">
+                  <div class="flex min-w-0 items-start gap-3">
+                    <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-700 ring-1 ring-amber-200">
+                      <.icon name="hero-bookmark" class="h-5 w-5" />
+                    </span>
+                    <div>
+                      <h3 class="text-base font-semibold tracking-tight text-slate-950">
+                        Noted ideas
+                        <span class={[
+                          "ml-2 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+                          theme_tag_class(@theme)
+                        ]}>
+                          {length(@noted_notes)}
+                        </span>
+                      </h3>
+                      <p class="mt-1 text-sm leading-5 text-slate-500">
+                        Nodes worth returning to.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  id="profile-noted-content"
+                  class="max-h-[34rem] overflow-y-auto divide-y divide-slate-100"
+                >
+                  <%= if @noted_notes == [] do %>
+                    <div class="p-8 text-center">
+                      <.icon
+                        name="hero-bookmark"
+                        class={"mx-auto mb-3 h-10 w-10 " <> theme_subtext_class(@theme)}
+                      />
+                      <p class={["text-sm", theme_subtext_class(@theme)]}>
+                        No noted ideas yet. Use the node note control to save ideas here.
+                      </p>
+                    </div>
+                  <% else %>
+                    <%= for note <- @noted_notes do %>
+                      <.link
+                        navigate={note_path(note)}
+                        id={"profile-noted-note-#{note.id}"}
+                        class="group flex gap-3 p-4 transition hover:bg-slate-50"
+                      >
+                        <span class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-700 ring-1 ring-amber-200">
+                          <.icon name="hero-bookmark" class="h-4 w-4" />
+                        </span>
+                        <span class="min-w-0">
+                          <span class="block line-clamp-2 text-sm font-semibold leading-6 text-slate-900 group-hover:text-indigo-700">
+                            {note.node_title}
+                          </span>
+                          <span class="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
+                            <.icon name="hero-arrow-top-right-on-square" class="h-3 w-3" />
+                            <span>{note_graph_title(note)}</span>
+                          </span>
+                        </span>
+                      </.link>
+                    <% end %>
+                  <% end %>
+                </div>
+              </section>
+
+              <section id="profile-highlights-panel" class="overflow-hidden bg-white">
+                <div class="flex items-start justify-between gap-4 border-b border-slate-100 p-5">
+                  <div class="flex min-w-0 items-start gap-3">
+                    <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200">
+                      <.icon name="hero-bookmark-square" class="h-5 w-5" />
+                    </span>
+                    <div>
+                      <h3 class="text-base font-semibold tracking-tight text-slate-950">
+                        Highlights
+                        <span class={[
+                          "ml-2 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+                          theme_tag_class(@theme)
+                        ]}>
+                          {length(@saved_highlights)}
+                        </span>
+                      </h3>
+                      <p class="mt-1 text-sm leading-5 text-slate-500">
+                        Sentence-level quotes and annotations.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  id="highlights-content"
+                  class="max-h-[34rem] overflow-y-auto divide-y divide-slate-100"
+                >
+                  <%= if @saved_highlights == [] do %>
+                    <div class="p-8 text-center">
+                      <.icon
+                        name="hero-bookmark-square"
+                        class={"mx-auto mb-3 h-10 w-10 " <> theme_subtext_class(@theme)}
+                      />
+                      <p class={["text-sm", theme_subtext_class(@theme)]}>
+                        No highlights yet. Select a quote in a grid to save it here.
+                      </p>
+                    </div>
+                  <% else %>
+                    <%= for highlight <- @saved_highlights do %>
+                      <.link
+                        navigate={highlight_path(highlight)}
+                        id={"profile-highlight-#{highlight.id}"}
+                        class="group block p-4 transition hover:bg-slate-50"
+                      >
+                        <blockquote class="border-l-2 border-indigo-300 pl-3 text-sm font-medium leading-6 text-slate-900 line-clamp-4 group-hover:text-indigo-700">
+                          “{highlight.selected_text_snapshot}”
+                        </blockquote>
+
+                        <p
+                          :if={highlight_note?(highlight)}
+                          class={["mt-3 text-xs leading-5 line-clamp-2", theme_subtext_class(@theme)]}
+                        >
+                          {highlight.note}
+                        </p>
+
+                        <div class={[
+                          "mt-3 flex flex-wrap items-center gap-1.5 text-xs",
+                          theme_subtext_class(@theme)
+                        ]}>
+                          <.icon name="hero-arrow-top-right-on-square" class="h-3 w-3" />
+                          <span>{highlight_graph_title(highlight)}</span>
+                          <span>·</span>
+                          <span>{highlight_node_title(highlight)}</span>
+                        </div>
+                      </.link>
+                    <% end %>
+                  <% end %>
+                </div>
+              </section>
+            </div>
+          </section>
+
+          <%!-- Private grids Section --%>
+          <div id="profile-grid-workspace" class="mt-8">
             <button
               type="button"
               phx-click={
@@ -635,26 +921,26 @@ defmodule DialecticWeb.UserProfileLive do
               ]}
             >
               <h2 class="text-lg sm:text-xl font-semibold tracking-tight">
-                All My Grids
+                Private grids
                 <span class={[
                   "ml-2 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
                   theme_tag_class(@theme)
                 ]}>
-                  {length(@my_stats.graphs)}
+                  {length(@private_graphs)}
                 </span>
               </h2>
               <span>
-                <span id="all-grids-chevron-up">
+                <span id="all-grids-chevron-up" class="hidden">
                   <.icon name="hero-chevron-up" class={"w-5 h-5 " <> theme_subtext_class(@theme)} />
                 </span>
-                <span id="all-grids-chevron-down" class="hidden">
+                <span id="all-grids-chevron-down">
                   <.icon name="hero-chevron-down" class={"w-5 h-5 " <> theme_subtext_class(@theme)} />
                 </span>
               </span>
             </button>
 
-            <div id="all-grids-content">
-              <%= if @my_stats.graphs == [] do %>
+            <div id="all-grids-content" class="hidden">
+              <%= if @private_graphs == [] do %>
                 <div class={[
                   "rounded-xl border p-8 text-center shadow-sm",
                   theme_card_class(@theme)
@@ -664,7 +950,7 @@ defmodule DialecticWeb.UserProfileLive do
                     class={"w-10 h-10 mx-auto mb-3 " <> theme_subtext_class(@theme)}
                   />
                   <p class={["text-sm", theme_subtext_class(@theme)]}>
-                    No grids yet. Ask a question to create your first one!
+                    No private grids. Private drafts and unpublished explorations will appear here.
                   </p>
                   <.link
                     navigate={~p"/"}
@@ -673,209 +959,34 @@ defmodule DialecticWeb.UserProfileLive do
                       theme_button_class(@theme)
                     ]}
                   >
-                    <.icon name="hero-plus" class="w-4 h-4" /> Create a grid
+                    <.icon name="hero-plus" class="w-4 h-4" /> Create a private grid
                   </.link>
                 </div>
               <% else %>
-                <div class={["rounded-xl border shadow-sm overflow-hidden", theme_card_class(@theme)]}>
-                  <div class="overflow-x-auto">
-                    <table class="min-w-full border-separate border-spacing-0 text-left text-sm">
-                      <thead class={table_header_class(@theme)}>
-                        <tr>
-                          <th class="px-4 py-2.5 font-semibold">Grid</th>
-                          <th class="px-4 py-2.5 font-semibold">Tags</th>
-                          <th class="px-4 py-2.5 text-center font-semibold">Visibility</th>
-                          <th class="px-4 py-2.5 text-center font-semibold">Nodes</th>
-                          <th class="px-4 py-2.5 text-right font-semibold">Open</th>
-                          <th class="px-4 py-2.5 text-right font-semibold">Delete</th>
-                        </tr>
-                      </thead>
-                      <tbody class={table_body_class(@theme)}>
-                        <%= for g <- @my_stats.graphs do %>
-                          <tr class={table_row_class(@theme)}>
-                            <td class="px-4 py-3">
-                              <.link
-                                navigate={graph_path(g)}
-                                class={[
-                                  "hidden lg:block font-semibold hover:underline",
-                                  table_link_class(@theme)
-                                ]}
-                              >
-                                {g.title}
-                              </.link>
-                              <.link
-                                navigate={graph_path(g)}
-                                class={[
-                                  "lg:hidden font-semibold hover:underline",
-                                  table_link_class(@theme)
-                                ]}
-                              >
-                                {g.title}
-                              </.link>
-                            </td>
-                            <td class="px-4 py-3">
-                              <div class="flex flex-wrap gap-1">
-                                <%= for tag <- Enum.take(g.tags || [], 3) do %>
-                                  <span class={[
-                                    "inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset",
-                                    table_tag_color_class(tag, @theme)
-                                  ]}>
-                                    #{tag}
-                                  </span>
-                                <% end %>
-                              </div>
-                            </td>
-                            <td class="px-4 py-3 text-center">
-                              <%= if g.is_public do %>
-                                <span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
-                                  <.icon name="hero-globe-alt" class="h-3 w-3" /> Public
-                                </span>
-                              <% else %>
-                                <span class="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
-                                  <.icon name="hero-lock-closed" class="h-3 w-3" /> Private
-                                </span>
-                              <% end %>
-                            </td>
-                            <td class={["px-4 py-3 text-center", theme_subtext_class(@theme)]}>
-                              {g.node_count}
-                            </td>
-                            <td class="px-4 py-3 text-right">
-                              <.link
-                                navigate={graph_path(g)}
-                                class={[
-                                  "hidden lg:inline-flex h-8 w-8 items-center justify-center rounded-full",
-                                  theme_icon_button_class(@theme)
-                                ]}
-                                aria-label={"Open " <> (g.title || "grid")}
-                              >
-                                <.icon name="hero-arrow-top-right-on-square" class="h-4 w-4" />
-                              </.link>
-                              <.link
-                                navigate={graph_path(g)}
-                                class={[
-                                  "lg:hidden inline-flex h-8 w-8 items-center justify-center rounded-full",
-                                  theme_icon_button_class(@theme)
-                                ]}
-                                aria-label={"Open " <> (g.title || "grid")}
-                              >
-                                <.icon name="hero-arrow-top-right-on-square" class="h-4 w-4" />
-                              </.link>
-                            </td>
-                            <td class="px-4 py-3 text-right">
-                              <button
-                                type="button"
-                                phx-click={
-                                  JS.push("show_delete_modal", value: %{title: g.title})
-                                  |> show_modal("delete-graph-modal")
-                                }
-                                id={"delete-grid-btn-" <> (g.slug || Integer.to_string(:erlang.phash2(g.title || "")))}
-                                class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-red-500/80 hover:bg-red-600 text-white shadow-sm transition-transform hover:scale-105"
-                                title="Delete grid"
-                                aria-label={"Delete " <> (g.title || "grid")}
-                              >
-                                <.icon name="hero-trash" class="h-4 w-4" />
-                              </button>
-                            </td>
-                          </tr>
-                        <% end %>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              <% end %>
-            </div>
-          </div>
-
-          <%!-- My Notes Section --%>
-          <div class="mt-8">
-            <button
-              type="button"
-              phx-click={
-                JS.toggle(to: "#notes-content")
-                |> JS.toggle(to: "#notes-chevron-down")
-                |> JS.toggle(to: "#notes-chevron-up")
-              }
-              class={[
-                "w-full flex items-center justify-between text-left group mb-4",
-                theme_heading_class(@theme)
-              ]}
-            >
-              <h2 class="text-lg sm:text-xl font-semibold tracking-tight">
-                My Notes
-                <span class={[
-                  "ml-2 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
-                  theme_tag_class(@theme)
-                ]}>
-                  {length(@noted_notes)}
-                </span>
-              </h2>
-              <span>
-                <span id="notes-chevron-up">
-                  <.icon name="hero-chevron-up" class={"w-5 h-5 " <> theme_subtext_class(@theme)} />
-                </span>
-                <span id="notes-chevron-down" class="hidden">
-                  <.icon name="hero-chevron-down" class={"w-5 h-5 " <> theme_subtext_class(@theme)} />
-                </span>
-              </span>
-            </button>
-
-            <div id="notes-content">
-              <%= if @noted_notes == [] do %>
-                <div class={[
-                  "rounded-xl border p-8 text-center shadow-sm",
-                  theme_card_class(@theme)
-                ]}>
-                  <.icon
-                    name="hero-bookmark"
-                    class={"w-10 h-10 mx-auto mb-3 " <> theme_subtext_class(@theme)}
-                  />
-                  <p class={["text-sm", theme_subtext_class(@theme)]}>
-                    No notes yet. Click the note icon on any node to save it here.
-                  </p>
-                </div>
-              <% else %>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <%= for note <- @noted_notes do %>
-                    <%!-- Desktop link (graph view) --%>
-                    <.link
-                      navigate={graph_path(note.graph, note.node_id)}
-                      class={[
-                        "hidden lg:block rounded-xl p-4 transition-all",
-                        theme_card_class(@theme),
-                        theme_link_class(@theme)
-                      ]}
+                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  <%= for g <- @private_graphs do %>
+                    <.profile_grid_card
+                      graph={g}
+                      id={"profile-workspace-grid-" <> (g.slug || Integer.to_string(:erlang.phash2(g.title || "")))}
+                      tag_limit={3}
+                      show_visibility={true}
                     >
-                      <div class={[
-                        "text-sm font-medium mb-1.5 line-clamp-2",
-                        theme_heading_class(@theme)
-                      ]}>
-                        {note.node_title}
-                      </div>
-                      <div class={["flex items-center gap-1.5 text-xs", theme_subtext_class(@theme)]}>
-                        <.icon name="hero-arrow-top-right-on-square" class="h-3 w-3" />
-                        {note.graph_title}
-                      </div>
-                    </.link>
-                    <%!-- Mobile link (linear view) --%>
-                    <.link
-                      navigate={graph_path(note.graph, note.node_id)}
-                      class={[
-                        "lg:hidden block rounded-xl p-4 transition-all",
-                        theme_card_class(@theme),
-                        theme_link_class(@theme)
-                      ]}
-                    >
-                      <div class={[
-                        "text-sm font-medium mb-1.5 line-clamp-2",
-                        theme_heading_class(@theme)
-                      ]}>
-                        {note.node_title}
-                      </div>
-                      <div class={["flex items-center gap-1.5 text-xs", theme_subtext_class(@theme)]}>
-                        <.icon name="hero-arrow-top-right-on-square" class="h-3 w-3" />
-                        {note.graph_title}
-                      </div>
-                    </.link>
+                      <:action>
+                        <button
+                          type="button"
+                          phx-click={
+                            JS.push("show_delete_modal", value: %{title: g.title})
+                            |> show_modal("delete-graph-modal")
+                          }
+                          id={"delete-grid-btn-" <> (g.slug || Integer.to_string(:erlang.phash2(g.title || "")))}
+                          class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-red-100 bg-red-50 text-red-600 transition hover:bg-red-100"
+                          title="Delete grid"
+                          aria-label={"Delete " <> (g.title || "grid")}
+                        >
+                          <.icon name="hero-trash" class="h-4 w-4" />
+                        </button>
+                      </:action>
+                    </.profile_grid_card>
                   <% end %>
                 </div>
               <% end %>
@@ -960,11 +1071,42 @@ defmodule DialecticWeb.UserProfileLive do
   end
 
   defp graph_updated_label(graph) do
-    case graph.updated_at || graph.inserted_at do
+    case Map.get(graph, :updated_at) || Map.get(graph, :inserted_at) do
       %DateTime{} = updated_at -> Calendar.strftime(updated_at, "%b %Y")
       _ -> "Recently"
     end
   end
+
+  defp grid_card_header_class(graph) do
+    [
+      "h-24 p-4",
+      grid_header_tint(graph)
+    ]
+  end
+
+  defp grid_header_tint(graph) do
+    case rem(:erlang.phash2(graph.title || "grid"), 3) do
+      0 -> "bg-[linear-gradient(135deg,#0f172a_0%,#0f766e_58%,#d97706_100%)]"
+      1 -> "bg-[linear-gradient(135deg,#111827_0%,#164e63_58%,#0f766e_100%)]"
+      _ -> "bg-[linear-gradient(135deg,#111827_0%,#7c2d12_58%,#f59e0b_100%)]"
+    end
+  end
+
+  defp grid_visibility_label(%{is_public: true}), do: "Public"
+  defp grid_visibility_label(_graph), do: "Private"
+
+  defp grid_visibility_icon(%{is_public: true}), do: "hero-globe-alt"
+  defp grid_visibility_icon(_graph), do: "hero-lock-closed"
+
+  defp grid_visibility_class(%{is_public: true}) do
+    "inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-400/15 px-2 py-1 text-[11px] font-semibold text-emerald-50 ring-1 ring-emerald-200/25"
+  end
+
+  defp grid_visibility_class(_graph) do
+    "inline-flex shrink-0 items-center gap-1 rounded-full bg-white/10 px-2 py-1 text-[11px] font-semibold text-white ring-1 ring-white/20"
+  end
+
+  defp graph_node_count(%{node_count: count}) when is_integer(count), do: count
 
   defp graph_node_count(graph) do
     (graph.data || %{})
@@ -992,23 +1134,33 @@ defmodule DialecticWeb.UserProfileLive do
     Enum.join(rest, ", ") <> ", and " <> last
   end
 
-  defp featured_card_class(0), do: "min-h-[24rem] rounded-[1.35rem]"
-  defp featured_card_class(_), do: "min-h-[24rem] rounded-2xl"
+  defp featured_card_class(0), do: "min-h-[28rem] rounded-[1.35rem] lg:col-span-6"
+  defp featured_card_class(_), do: "min-h-[28rem] rounded-2xl lg:col-span-3"
 
-  defp featured_card_header_class(_), do: "h-24 p-4"
+  defp featured_card_header_class(0),
+    do: "h-36 p-5 bg-[linear-gradient(135deg,#0f172a_0%,#0f766e_55%,#d97706_100%)]"
 
-  defp featured_card_body_class(0), do: "flex flex-1 flex-col p-4"
+  defp featured_card_header_class(1),
+    do: "h-36 p-5 bg-[linear-gradient(135deg,#111827_0%,#7c2d12_58%,#f59e0b_100%)]"
+
+  defp featured_card_header_class(_),
+    do: "h-36 p-5 bg-[linear-gradient(135deg,#111827_0%,#164e63_58%,#0f766e_100%)]"
+
+  defp featured_card_body_class(0), do: "flex flex-1 flex-col p-5"
   defp featured_card_body_class(_), do: "flex flex-1 flex-col p-4"
 
-  defp featured_card_title_class(0), do: "line-clamp-3 text-lg"
+  defp featured_card_title_class(0), do: "line-clamp-4 text-2xl"
   defp featured_card_title_class(_), do: "line-clamp-3 text-base"
 
   # --- Profile class helpers ---
 
-  defp theme_bg_class(_), do: "bg-gray-50"
+  defp theme_bg_class(_),
+    do: "bg-[linear-gradient(180deg,#f8fafc_0%,#eef7f6_46%,#fff7ed_100%)]"
+
   defp theme_card_class(_), do: "bg-white border-gray-200"
 
-  defp theme_banner_class(_), do: "bg-gradient-to-r from-indigo-500 to-blue-400"
+  defp theme_banner_class(_),
+    do: "bg-[linear-gradient(135deg,#0f172a_0%,#0f766e_58%,#d97706_100%)]"
 
   defp theme_avatar_border_class(_), do: "border-white bg-white"
 
@@ -1016,25 +1168,13 @@ defmodule DialecticWeb.UserProfileLive do
 
   defp theme_heading_class(_), do: "text-gray-900"
   defp theme_subtext_class(_), do: "text-gray-500"
-  defp theme_link_class(_), do: "text-indigo-600 hover:text-indigo-500"
+  defp theme_link_class(_), do: "text-teal-700 hover:text-teal-600"
 
-  defp theme_button_class(_), do: "bg-indigo-600 text-white hover:bg-indigo-500"
+  defp theme_button_class(_), do: "bg-slate-950 text-white hover:bg-slate-800"
 
-  defp theme_icon_button_class(_),
-    do:
-      "bg-gradient-to-br from-indigo-500 to-sky-500 text-white shadow-sm ring-1 ring-indigo-500/30 transition-transform hover:scale-105"
-
-  defp theme_tag_class(_), do: "bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200"
+  defp theme_tag_class(_), do: "bg-teal-50 text-teal-700 ring-1 ring-teal-200"
 
   # --- Table helper classes ---
-
-  defp table_header_class(_), do: "bg-slate-50 text-xs uppercase tracking-wide text-slate-600"
-  defp table_body_class(_), do: "divide-y divide-slate-200"
-
-  defp table_row_class(_),
-    do: "align-top transition-colors odd:bg-slate-50 even:bg-white hover:bg-indigo-50/50"
-
-  defp table_link_class(_), do: "text-slate-900 hover:text-indigo-700"
 
   defp table_tag_color_class(tag, _theme) do
     colors = [
