@@ -9,6 +9,7 @@ defmodule DialecticWeb.UserProfileLive do
   alias Dialectic.Follows
   alias Dialectic.Highlights
   alias DialecticWeb.Utils.NodeTitleHelper
+  import DialecticWeb.GridCardComp
 
   @impl true
   def mount(%{"username" => username}, _session, socket) do
@@ -271,94 +272,6 @@ defmodule DialecticWeb.UserProfileLive do
 
   defp graph_node(_graph, _node_id), do: nil
 
-  attr :id, :string, required: true
-  attr :graph, :map, required: true
-  attr :tag_limit, :integer, default: 4
-  attr :show_visibility, :boolean, default: false
-  slot :action
-
-  defp profile_grid_card(assigns) do
-    assigns =
-      assigns
-      |> assign(:node_count, graph_node_count(assigns.graph))
-      |> assign(:tags, Enum.take(assigns.graph.tags || [], assigns.tag_limit))
-
-    ~H"""
-    <article
-      id={@id}
-      class="group flex min-h-72 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-teal-200 hover:shadow-lg"
-    >
-      <div class={grid_card_header_class(@graph)}>
-        <div class="flex items-start justify-between gap-3">
-          <span class="inline-flex items-center rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white ring-1 ring-white/20">
-            {exploration_label(@graph)}
-          </span>
-          <span :if={@show_visibility} class={grid_visibility_class(@graph)}>
-            <.icon name={grid_visibility_icon(@graph)} class="h-3.5 w-3.5" />
-            {grid_visibility_label(@graph)}
-          </span>
-        </div>
-      </div>
-
-      <div class="flex flex-1 flex-col p-4">
-        <div class="flex items-start justify-between gap-4">
-          <.link
-            navigate={graph_path(@graph)}
-            class="line-clamp-3 text-base font-semibold leading-6 text-slate-950 transition group-hover:text-teal-700"
-          >
-            {@graph.title}
-          </.link>
-          <div class="shrink-0 rounded-xl bg-slate-50 px-3 py-2 text-center ring-1 ring-slate-200">
-            <p class="text-base font-semibold leading-5 text-slate-950">{@node_count}</p>
-            <p class="mt-0.5 text-[10px] font-semibold uppercase text-slate-500">ideas</p>
-          </div>
-        </div>
-
-        <p class="mt-3 line-clamp-2 min-h-10 text-sm leading-5 text-slate-600">
-          {graph_preview_sentence(@graph)}
-        </p>
-
-        <div class="mt-4 flex min-h-12 flex-wrap content-start gap-1.5">
-          <%= if @tags == [] do %>
-            <span class="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500 ring-1 ring-inset ring-slate-200">
-              Untagged
-            </span>
-          <% else %>
-            <%= for tag <- @tags do %>
-              <span class={[
-                "inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset",
-                table_tag_color_class(tag, nil)
-              ]}>
-                #{tag}
-              </span>
-            <% end %>
-          <% end %>
-        </div>
-
-        <div class="mt-auto flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
-          <span class="text-xs font-medium text-slate-500">
-            {graph_updated_label(@graph)}
-          </span>
-
-          <div class="flex items-center gap-2">
-            <.link
-              navigate={graph_path(@graph)}
-              class="inline-flex items-center gap-1.5 rounded-full bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-teal-700"
-              aria-label={"Open " <> (@graph.title || "grid")}
-            >
-              Open <.icon name="hero-arrow-up-right" class="h-3.5 w-3.5" />
-            </.link>
-
-            <%= if @action != [] do %>
-              {render_slot(@action)}
-            <% end %>
-          </div>
-        </div>
-      </div>
-    </article>
-    """
-  end
-
   @impl true
   def render(assigns) do
     ~H"""
@@ -605,58 +518,13 @@ defmodule DialecticWeb.UserProfileLive do
 
             <div class="grid gap-4 lg:grid-cols-12">
               <%= for {graph, index} <- Enum.with_index(@featured_graphs) do %>
-                <.link
-                  navigate={graph_path(graph)}
-                  class={[
-                    "group flex flex-col overflow-hidden border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-teal-200 hover:shadow-xl",
-                    featured_card_class(index)
-                  ]}
-                >
-                  <div class={[
-                    "border-b border-white/10",
-                    featured_card_header_class(index)
-                  ]}>
-                    <div class="flex items-start justify-between gap-3">
-                      <span class="inline-flex items-center rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white ring-1 ring-white/20">
-                        {exploration_label(graph)}
-                      </span>
-                      <span class="shrink-0 text-xs font-semibold text-white/60">
-                        {graph_updated_label(graph)}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div class={featured_card_body_class(index)}>
-                    <h3 class={[
-                      "font-semibold leading-7 text-slate-950 group-hover:text-teal-700",
-                      featured_card_title_class(index)
-                    ]}>
-                      {graph.title}
-                    </h3>
-
-                    <p class="mt-2 line-clamp-2 min-h-12 text-sm leading-6 text-slate-600">
-                      {graph_preview_sentence(graph)}
-                    </p>
-
-                    <div class="mt-4 flex min-h-12 flex-wrap content-start gap-1.5">
-                      <%= for tag <- Enum.take(graph.tags || [], 3) do %>
-                        <span class={[
-                          "inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset",
-                          table_tag_color_class(tag, @theme)
-                        ]}>
-                          #{tag}
-                        </span>
-                      <% end %>
-                    </div>
-
-                    <div class="mt-auto flex items-center justify-between border-t border-slate-100 pt-3 text-xs font-medium text-slate-500">
-                      <span>{graph_node_count(graph)} ideas</span>
-                      <span class="inline-flex items-center gap-1 text-teal-700 group-hover:text-teal-800">
-                        Open grid <.icon name="hero-arrow-right" class="h-3.5 w-3.5" />
-                      </span>
-                    </div>
-                  </div>
-                </.link>
+                <.grid_card
+                  graph={graph}
+                  id={"profile-featured-grid-" <> (graph.slug || Integer.to_string(:erlang.phash2(graph.title || "")))}
+                  variant={:featured}
+                  featured_index={index}
+                  tag_limit={3}
+                />
               <% end %>
             </div>
           </section>
@@ -727,7 +595,7 @@ defmodule DialecticWeb.UserProfileLive do
             <% else %>
               <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <%= for graph <- @graphs do %>
-                  <.profile_grid_card
+                  <.grid_card
                     graph={graph}
                     id={"profile-public-grid-" <> (graph.slug || Integer.to_string(:erlang.phash2(graph.title || "")))}
                     tag_limit={4}
@@ -747,7 +615,7 @@ defmodule DialecticWeb.UserProfileLive do
                         <.icon name="hero-trash" class="h-4 w-4" />
                       </button>
                     </:action>
-                  </.profile_grid_card>
+                  </.grid_card>
                 <% end %>
               </div>
             <% end %>
@@ -965,7 +833,7 @@ defmodule DialecticWeb.UserProfileLive do
               <% else %>
                 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   <%= for g <- @private_graphs do %>
-                    <.profile_grid_card
+                    <.grid_card
                       graph={g}
                       id={"profile-workspace-grid-" <> (g.slug || Integer.to_string(:erlang.phash2(g.title || "")))}
                       tag_limit={3}
@@ -986,7 +854,7 @@ defmodule DialecticWeb.UserProfileLive do
                           <.icon name="hero-trash" class="h-4 w-4" />
                         </button>
                       </:action>
-                    </.profile_grid_card>
+                    </.grid_card>
                   <% end %>
                 </div>
               <% end %>
@@ -1052,66 +920,18 @@ defmodule DialecticWeb.UserProfileLive do
     end
   end
 
-  defp graph_preview_sentence(graph) do
-    case Enum.take(graph.tags || [], 2) do
-      [] ->
-        "A #{String.downcase(exploration_label(graph))} built from #{graph_node_count(graph)} connected ideas."
-
-      tags ->
-        "A #{String.downcase(exploration_label(graph))} around #{human_join(tags)}."
-    end
-  end
-
-  defp exploration_label(graph) do
-    cond do
-      graph_node_count(graph) >= 20 -> "Deep dive"
-      graph_node_count(graph) <= 4 -> "Seedling"
-      true -> "Developing map"
-    end
-  end
-
-  defp graph_updated_label(graph) do
-    case Map.get(graph, :updated_at) || Map.get(graph, :inserted_at) do
-      %DateTime{} = updated_at -> Calendar.strftime(updated_at, "%b %Y")
-      _ -> "Recently"
-    end
-  end
-
-  defp grid_card_header_class(graph) do
-    [
-      "h-24 p-4",
-      grid_header_tint(graph)
-    ]
-  end
-
-  defp grid_header_tint(graph) do
-    case rem(:erlang.phash2(graph.title || "grid"), 3) do
-      0 -> "bg-[linear-gradient(135deg,#0f172a_0%,#0f766e_58%,#d97706_100%)]"
-      1 -> "bg-[linear-gradient(135deg,#111827_0%,#164e63_58%,#0f766e_100%)]"
-      _ -> "bg-[linear-gradient(135deg,#111827_0%,#7c2d12_58%,#f59e0b_100%)]"
-    end
-  end
-
-  defp grid_visibility_label(%{is_public: true}), do: "Public"
-  defp grid_visibility_label(_graph), do: "Private"
-
-  defp grid_visibility_icon(%{is_public: true}), do: "hero-globe-alt"
-  defp grid_visibility_icon(_graph), do: "hero-lock-closed"
-
-  defp grid_visibility_class(%{is_public: true}) do
-    "inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-400/15 px-2 py-1 text-[11px] font-semibold text-emerald-50 ring-1 ring-emerald-200/25"
-  end
-
-  defp grid_visibility_class(_graph) do
-    "inline-flex shrink-0 items-center gap-1 rounded-full bg-white/10 px-2 py-1 text-[11px] font-semibold text-white ring-1 ring-white/20"
-  end
-
   defp graph_node_count(%{node_count: count}) when is_integer(count), do: count
 
   defp graph_node_count(graph) do
-    (graph.data || %{})
-    |> Map.get("nodes", [])
-    |> Enum.count(fn node -> !Map.get(node, "compound", false) end)
+    nodes =
+      (Map.get(graph, :data) || %{})
+      |> then(fn data -> Map.get(data, "nodes") || Map.get(data, :nodes) || [] end)
+
+    if is_list(nodes) do
+      Enum.count(nodes, fn node -> !Map.get(node, "compound", false) end)
+    else
+      0
+    end
   end
 
   defp total_node_count(graphs) do
@@ -1134,24 +954,6 @@ defmodule DialecticWeb.UserProfileLive do
     Enum.join(rest, ", ") <> ", and " <> last
   end
 
-  defp featured_card_class(0), do: "min-h-[28rem] rounded-[1.35rem] lg:col-span-6"
-  defp featured_card_class(_), do: "min-h-[28rem] rounded-2xl lg:col-span-3"
-
-  defp featured_card_header_class(0),
-    do: "h-36 p-5 bg-[linear-gradient(135deg,#0f172a_0%,#0f766e_55%,#d97706_100%)]"
-
-  defp featured_card_header_class(1),
-    do: "h-36 p-5 bg-[linear-gradient(135deg,#111827_0%,#7c2d12_58%,#f59e0b_100%)]"
-
-  defp featured_card_header_class(_),
-    do: "h-36 p-5 bg-[linear-gradient(135deg,#111827_0%,#164e63_58%,#0f766e_100%)]"
-
-  defp featured_card_body_class(0), do: "flex flex-1 flex-col p-5"
-  defp featured_card_body_class(_), do: "flex flex-1 flex-col p-4"
-
-  defp featured_card_title_class(0), do: "line-clamp-4 text-2xl"
-  defp featured_card_title_class(_), do: "line-clamp-3 text-base"
-
   # --- Profile class helpers ---
 
   defp theme_bg_class(_),
@@ -1173,29 +975,4 @@ defmodule DialecticWeb.UserProfileLive do
   defp theme_button_class(_), do: "bg-slate-950 text-white hover:bg-slate-800"
 
   defp theme_tag_class(_), do: "bg-teal-50 text-teal-700 ring-1 ring-teal-200"
-
-  # --- Table helper classes ---
-
-  defp table_tag_color_class(tag, _theme) do
-    colors = [
-      "bg-rose-50 text-rose-700 ring-rose-600/20",
-      "bg-orange-50 text-orange-700 ring-orange-600/20",
-      "bg-amber-50 text-amber-700 ring-amber-600/20",
-      "bg-lime-50 text-lime-700 ring-lime-600/20",
-      "bg-green-50 text-green-700 ring-green-600/20",
-      "bg-emerald-50 text-emerald-700 ring-emerald-600/20",
-      "bg-teal-50 text-teal-700 ring-teal-600/20",
-      "bg-cyan-50 text-cyan-700 ring-cyan-600/20",
-      "bg-sky-50 text-sky-700 ring-sky-600/20",
-      "bg-blue-50 text-blue-700 ring-blue-600/20",
-      "bg-indigo-50 text-indigo-700 ring-indigo-600/20",
-      "bg-violet-50 text-violet-700 ring-violet-600/20",
-      "bg-purple-50 text-purple-700 ring-purple-600/20",
-      "bg-fuchsia-50 text-fuchsia-700 ring-fuchsia-600/20",
-      "bg-pink-50 text-pink-700 ring-pink-600/20"
-    ]
-
-    idx = :erlang.phash2(tag, length(colors))
-    Enum.at(colors, idx)
-  end
 end
