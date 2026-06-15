@@ -546,7 +546,7 @@ defmodule DialecticWeb.UserProfileLive do
           >
             <h2 class="text-lg sm:text-xl font-semibold tracking-tight">
               <%= if @is_own_profile? do %>
-                Public grid archive
+                Public grids
               <% else %>
                 Grid archive by {@effective_username}
               <% end %>

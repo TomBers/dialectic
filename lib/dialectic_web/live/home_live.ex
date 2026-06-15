@@ -44,7 +44,9 @@ defmodule DialecticWeb.HomeLive do
        all_curated_grids: [],
        featured_grids: [],
        quick_tags: [],
-       editor_picks_expanded: false
+       editor_picks_expanded: false,
+       page_description:
+         "RationalGrid helps students, lecturers, and researchers learn by mapping the connections across all information, from astronomy to zoology."
      )}
   end
 
@@ -310,7 +312,8 @@ defmodule DialecticWeb.HomeLive do
                   <span>RationalGrid</span>
                 </h1>
                 <p class="mx-auto max-w-5xl text-base font-semibold leading-snug text-white sm:text-lg">
-                  Big ideas that do not fit in a chat box.
+                  Learn by mapping the connections across <strong>all information</strong>,
+                  from astronomy to zoology.
                   <.link
                     navigate={~p"/about"}
                     class="underline decoration-white/60 underline-offset-4 hover:decoration-white"
@@ -318,6 +321,17 @@ defmodule DialecticWeb.HomeLive do
                     more
                   </.link>
                 </p>
+                <div class="flex flex-wrap items-center justify-center gap-2 text-xs font-semibold text-white/85">
+                  <span class="rounded-full border border-white/15 bg-white/10 px-3 py-1">
+                    For students
+                  </span>
+                  <span class="rounded-full border border-white/15 bg-white/10 px-3 py-1">
+                    For lecturers
+                  </span>
+                  <span class="rounded-full border border-white/15 bg-white/10 px-3 py-1">
+                    For researchers
+                  </span>
+                </div>
               </div>
             </div>
           </section>
@@ -344,11 +358,12 @@ defmodule DialecticWeb.HomeLive do
                           <.icon name="hero-plus" class="h-3.5 w-3.5" /> Create a grid
                         </div>
                         <h2 class="mt-3 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
-                          Turn one question into a structured grid.
+                          Turn one question into a connected learning grid.
                         </h2>
                         <p class="mt-2 max-w-xl text-sm leading-6 text-slate-700 sm:text-[0.95rem]">
-                          Start with a topic, claim, or tension. After the first step, we’ll ask
-                          one quick question about depth before building the opening grid.
+                          Start with a topic, claim, or tension. Map claims, sources, and
+                          counterpoints so a class or research project can see how the
+                          information fits together.
                         </p>
                       </div>
 
@@ -422,10 +437,11 @@ defmodule DialecticWeb.HomeLive do
                           <.icon name="hero-magnifying-glass" class="h-3.5 w-3.5" /> Explore grids
                         </div>
                         <h2 class="mt-3 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
-                          Start from something that already exists.
+                          Explore how other people connect ideas.
                         </h2>
                         <p class="mt-2 max-w-xl text-sm leading-6 text-slate-700 sm:text-[0.95rem]">
-                          Browse editor picks before you decide what to make yourself.
+                          Browse finished grids to follow the links between concepts, evidence,
+                          and questions before making your own.
                         </p>
                       </div>
 
