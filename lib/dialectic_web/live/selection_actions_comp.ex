@@ -7,6 +7,7 @@ defmodule DialecticWeb.SelectionActionsComp do
   """
   use DialecticWeb, :live_component
   alias Dialectic.Highlights
+  alias DialecticWeb.ColUtils
 
   @critical_tool_actions %{
     "clarify" => :clarify,
@@ -498,10 +499,16 @@ defmodule DialecticWeb.SelectionActionsComp do
                           phx-target={@myself}
                           disabled={!@can_edit || has_link_type?(@links, tool.key)}
                           title={tool.title}
-                          class="group flex min-h-[86px] flex-col items-start justify-between rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+                          class={[
+                            "group flex min-h-[86px] flex-col items-start justify-between rounded-2xl px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50",
+                            ColUtils.advanced_tool_surface_class(tool.key)
+                          ]}
                         >
                           <span class="space-y-1">
-                            <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100">
+                            <span class={[
+                              "inline-flex h-8 w-8 items-center justify-center rounded-xl ring-1 ring-white/70",
+                              ColUtils.advanced_tool_icon_class(tool.key)
+                            ]}>
                               <.icon name={tool.icon} class="h-4 w-4" />
                             </span>
                             <span class="block text-sm font-semibold leading-4 text-slate-900">
@@ -511,7 +518,10 @@ defmodule DialecticWeb.SelectionActionsComp do
                               {tool.blurb}
                             </span>
                           </span>
-                          <span class="mt-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-indigo-600">
+                          <span class={[
+                            "mt-2 text-[10px] font-semibold uppercase tracking-[0.12em]",
+                            ColUtils.advanced_tool_text_class(tool.key)
+                          ]}>
                             <%= if has_link_type?(@links, tool.key) do %>
                               Added
                             <% else %>
