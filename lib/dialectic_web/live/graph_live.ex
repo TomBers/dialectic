@@ -32,16 +32,20 @@ defmodule DialecticWeb.GraphLive do
 
   alias Dialectic.Graph.{Vertex, GraphActions, Siblings}
   alias Dialectic.Accounts.User
+  alias DialecticWeb.GridChat
   alias DialecticWeb.NodeComp
   alias DialecticWeb.GraphHelpers
+  alias DialecticWeb.HighlightShare
   alias DialecticWeb.NodeSearch
 
   import DialecticWeb.GraphPresentation
+  import DialecticWeb.GridChatComp, only: [grid_chat_drawer: 1, grid_chat_toggle: 1]
   import DialecticWeb.PresentationStageComp, only: [presentation_stage: 1]
 
   alias DialecticWeb.Utils.UserUtils
   alias DialecticWeb.Utils.NodeTitleHelper
   alias Dialectic.Highlights
+  alias Dialectic.GridActivity
   alias Dialectic.Repo
 
   alias Phoenix.PubSub
@@ -56,6 +60,7 @@ defmodule DialecticWeb.GraphLive do
   # Called after mount on initial page load and on every live_patch.
   # Detects ?present=true&slides=1,2,3&title=... and boots directly into
   # presenting mode so shared links open the presentation automatically.
+  @impl true
   def handle_params(%{"present" => "true", "slides" => slides_str} = params, _uri, socket) do
     slide_ids =
       slides_str
@@ -108,6 +113,7 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_params(_params, _uri, socket), do: {:noreply, socket}
 
+  @impl true
   def mount(%{"graph_name" => graph_id_uri} = params, _session, socket) do
     graph_id = URI.decode(graph_id_uri)
     user = UserUtils.current_identity(socket.assigns)
@@ -137,7 +143,7 @@ defmodule DialecticWeb.GraphLive do
         socket =
           socket
           |> assign_defaults()
-          |> subscribe_to_topics(graph_title, user)
+          |> subscribe_to_topics(graph_title)
           |> assign_graph_data(graph_db, graph_struct, node, graph_title, user)
           |> assign(token: params["token"])
           |> handle_initial_highlight(initial_highlight_id)
@@ -156,6 +162,15 @@ defmodule DialecticWeb.GraphLive do
 
   defp default_node do
     GraphHelpers.default_node()
+  end
+
+  @impl true
+  def handle_event("send_grid_chat", %{"grid_chat" => %{"message" => message}}, socket) do
+    {:noreply, GridChat.send_message(socket, message)}
+  end
+
+  def handle_event("open_grid_chat", _params, socket) do
+    {:noreply, GridChat.open(socket)}
   end
 
   def handle_event("set_prompt_mode", %{"prompt_mode" => mode}, socket) do
@@ -395,6 +410,13 @@ defmodule DialecticWeb.GraphLive do
 
                 next_node =
                   GraphActions.delete_node(graph_action_params(socket), node_id)
+
+                _ =
+                  GridActivity.record_node_deleted_async(
+                    socket.assigns.graph_id,
+                    activity_actor(socket),
+                    node
+                  )
 
                 GraphManager.save_graph(socket.assigns.graph_id)
                 {_, _graph2} = GraphManager.get_graph(socket.assigns.graph_id)
@@ -783,9 +805,11 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_event("highlight_clicked", %{"id" => highlight_id, "node-id" => node_id}, socket) do
+  def handle_event("highlight_clicked", %{"id" => highlight_id} = params, socket) do
+    node_id = params["node-id"] || params["node_id"]
+
     socket =
-      if socket.assigns.node && socket.assigns.node.id == node_id do
+      if (is_binary(node_id) and socket.assigns.node) && socket.assigns.node.id == node_id do
         socket
         |> push_event("center_node", %{id: node_id})
       else
@@ -899,11 +923,15 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, assign(socket, show_help_modal: false)}
   end
 
-  def handle_event("open_share_modal", _params, socket) do
+  def handle_event("open_share_modal", params, socket) do
+    share_highlight =
+      socket.assigns.graph_struct
+      |> HighlightShare.highlight_for_graph(Map.get(params, "highlight_id"))
+
     socket =
       socket
-      |> assign(show_share_modal: true)
-      |> push_event("request_screenshot", %{})
+      |> assign(show_share_modal: true, selected_share_highlight: share_highlight)
+      |> maybe_request_share_screenshot(share_highlight)
 
     {:noreply, socket}
   end
@@ -918,7 +946,7 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("close_share_modal", _params, socket) do
-    {:noreply, assign(socket, show_share_modal: false)}
+    {:noreply, assign(socket, show_share_modal: false, selected_share_highlight: nil)}
   end
 
   def handle_event("modal_closed", _params, socket) do
@@ -1339,6 +1367,7 @@ defmodule DialecticWeb.GraphLive do
   defp maybe_clear_presentation(socket, _params), do: socket
 
   # Handle selection action messages from SelectionActionsComp
+  @impl true
   def handle_info({:selection_action, params}, socket) do
     case GraphHelpers.check_selection_action_allowed(socket) do
       {:error, :locked} ->
@@ -1364,25 +1393,21 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_info(:close_share_modal, socket) do
-    {:noreply, assign(socket, show_share_modal: false)}
+    {:noreply, assign(socket, show_share_modal: false, selected_share_highlight: nil)}
   end
 
   # Highlight PubSub (:created, :updated, :deleted) injected by GraphStreaming
 
   def handle_info({DialecticWeb.Presence, {:join, presence}}, socket) do
-    if is_connected_to_graph?(presence, socket.assigns.graph_id) do
-      {:noreply, stream_insert(socket, :presences, presence)}
-    else
-      {:noreply, socket}
-    end
+    {:noreply, GridChat.handle_presence_join(socket, presence)}
   end
 
   def handle_info({DialecticWeb.Presence, {:leave, presence}}, socket) do
-    if presence.metas == [] do
-      {:noreply, stream_delete(socket, :presences, presence)}
-    else
-      {:noreply, stream_insert(socket, :presences, presence)}
-    end
+    {:noreply, GridChat.handle_presence_leave(socket, presence)}
+  end
+
+  def handle_info({:grid_chat_message, message}, socket) do
+    {:noreply, GridChat.insert_message(socket, message)}
   end
 
   def handle_info({:other_user_change, sender_pid}, socket) do
@@ -1469,7 +1494,7 @@ defmodule DialecticWeb.GraphLive do
         Highlights.add_link(highlight.id, answer_node.id, "explain")
       end
 
-      update_graph(socket, {nil, answer_node}, "answer")
+      update_graph(socket, {nil, answer_node}, "explain")
     else
       # If highlight creation fails, still create the nodes
       update_graph(
@@ -1479,7 +1504,7 @@ defmodule DialecticWeb.GraphLive do
           "Please explain: #{selected_text}",
           minimal_context: true
         ),
-        "answer"
+        "explain"
       )
     end
   end
@@ -1596,7 +1621,7 @@ defmodule DialecticWeb.GraphLive do
         Highlights.add_link(highlight.id, answer_node.id, "question")
       end
 
-      update_graph(socket, {nil, answer_node}, "answer")
+      update_graph(socket, {nil, answer_node}, "selection_question")
     else
       # If highlight creation fails, still create the nodes
       update_graph(
@@ -1606,7 +1631,7 @@ defmodule DialecticWeb.GraphLive do
           "#{question_text}\n\nRegarding: \"#{selected_text}\"",
           selected_text
         ),
-        "answer"
+        "selection_question"
       )
     end
   end
@@ -1744,10 +1769,6 @@ defmodule DialecticWeb.GraphLive do
       {:ok, highlight} -> highlight
       {:error, _changeset} -> nil
     end
-  end
-
-  defp is_connected_to_graph?(%{metas: metas}, graph_id) do
-    Enum.any?(metas, fn %{graph_id: gid} -> gid == graph_id end)
   end
 
   def format_graph(graph) do
@@ -2027,6 +2048,7 @@ defmodule DialecticWeb.GraphLive do
       end
 
     {nav_up, nav_down, nav_left, nav_right} = compute_nav_flags(socket.assigns.graph_id, node)
+    maybe_record_activity(socket, operation, node)
 
     # Skip f_graph regeneration for content-only updates to prevent stuttering
     # Structural operations (new nodes/edges) must regenerate so Cytoscape stays in sync
@@ -2078,16 +2100,9 @@ defmodule DialecticWeb.GraphLive do
              "combine",
              "ideas",
              "explain",
-             # Critical thinking tools
-             "clarify",
-             "assumptions",
-             "counterexample",
-             "implications",
-             "blind_spots",
-             "says_who",
-             "who_disagrees",
-             "steel_man",
-             "what_if"
+             "selection_question",
+             "deepdive",
+             "regenerate"
            ] &&
              node && Map.get(node, :id) do
           push_event(s, "center_node", %{id: node.id})
@@ -2116,16 +2131,10 @@ defmodule DialecticWeb.GraphLive do
          "combine",
          "ideas",
          "explain",
-         # Critical thinking tools
-         "clarify",
-         "assumptions",
-         "counterexample",
-         "implications",
-         "blind_spots",
-         "says_who",
-         "who_disagrees",
-         "steel_man",
-         "what_if"
+         "selection_question",
+         "deepdive",
+         "regenerate",
+         "delete"
        ] do
       PubSub.broadcast(
         Dialectic.PubSub,
@@ -2136,6 +2145,26 @@ defmodule DialecticWeb.GraphLive do
 
     {:noreply, new_socket}
   end
+
+  defp maybe_record_activity(socket, operation, node) do
+    case GridActivity.Actions.for_graph_operation(operation) do
+      nil ->
+        :ok
+
+      action ->
+        _ =
+          GridActivity.record_node_event_async(
+            socket.assigns.graph_id,
+            activity_actor(socket),
+            action,
+            node
+          )
+
+        :ok
+    end
+  end
+
+  defp activity_actor(socket), do: socket.assigns[:current_user] || socket.assigns[:user]
 
   # Helper to preserve and re-apply right panel state across node changes/moves
   defp reapply_right_panel_state(socket, updated_socket) do
@@ -2258,6 +2287,7 @@ defmodule DialecticWeb.GraphLive do
       show_start_stream_modal: false,
       show_help_modal: false,
       show_share_modal: false,
+      selected_share_highlight: nil,
       work_streams: [],
       exploration_stats: nil,
       show_login_modal: false,
@@ -2269,9 +2299,10 @@ defmodule DialecticWeb.GraphLive do
       combine_selected_nodes: [],
       graph_owner_name: nil
     )
+    |> assign(GridChat.default_assigns())
   end
 
-  defp subscribe_to_topics(socket, graph_id, user) do
+  defp subscribe_to_topics(socket, graph_id) do
     if connected?(socket) do
       live_view_topic = "graph_update:#{socket.id}"
       graph_topic = "graph_update:#{graph_id}"
@@ -2279,16 +2310,14 @@ defmodule DialecticWeb.GraphLive do
       Phoenix.PubSub.subscribe(Dialectic.PubSub, live_view_topic)
       Phoenix.PubSub.subscribe(Dialectic.PubSub, graph_topic)
       Highlights.subscribe(graph_id)
-      DialecticWeb.Presence.track_user(user, %{id: user, graph_id: graph_id})
-      DialecticWeb.Presence.subscribe()
 
-      presences = DialecticWeb.Presence.list_online_users(graph_id)
+      socket = GridChat.subscribe(socket, graph_id)
 
       # Load highlights asynchronously after connection - doesn't block initial render
       highlights = Highlights.list_highlights_with_links(mudg_id: graph_id)
 
       socket
-      |> stream(:presences, presences)
+      |> GridChat.init_streams(graph_id)
       |> assign(highlights: highlights)
       |> push_event("highlights_loaded", %{
         highlights: serialize_highlights(highlights)
@@ -2298,10 +2327,15 @@ defmodule DialecticWeb.GraphLive do
       highlights = Highlights.list_highlights_with_links(mudg_id: graph_id)
 
       socket
-      |> stream(:presences, [])
+      |> GridChat.init_streams(graph_id)
       |> assign(highlights: highlights)
     end
   end
+
+  defp maybe_request_share_screenshot(socket, %{id: _id}), do: socket
+
+  defp maybe_request_share_screenshot(socket, _highlight),
+    do: push_event(socket, "request_screenshot", %{})
 
   defp serialize_highlights(highlights) do
     Enum.map(highlights, fn h ->

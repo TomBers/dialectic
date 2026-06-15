@@ -1,7 +1,10 @@
 defmodule DialecticWeb.SeoControllerTest do
   use DialecticWeb.ConnCase, async: false
 
+  import Dialectic.AccountsFixtures
   import Dialectic.GraphFixtures
+
+  alias Dialectic.Highlights
 
   describe "GET /robots.txt" do
     test "blocks duplicate editor and query-variant routes", %{conn: conn} do
@@ -53,6 +56,37 @@ defmodule DialecticWeb.SeoControllerTest do
       body = html_response(conn, 200)
 
       assert body =~ ~s(<meta name="robots" content="noindex, nofollow">)
+    end
+
+    test "highlight share links publish quote-specific metadata", %{conn: conn} do
+      graph = insert_graph(%{title: "Quote SEO Graph"})
+      user = user_fixture()
+
+      {:ok, highlight} =
+        Highlights.create_highlight(%{
+          mudg_id: graph.title,
+          node_id: "1",
+          text_source_type: "node",
+          selection_start: 0,
+          selection_end: 8,
+          selected_text_snapshot: "A good quotation should point beyond itself.",
+          created_by_user_id: user.id
+        })
+
+      conn = get(conn, "/g/#{graph.slug}?node=1&highlight=#{highlight.id}")
+      body = html_response(conn, 200)
+      base_url = DialecticWeb.Endpoint.url()
+
+      assert body =~ ~s(<meta name="robots" content="noindex, nofollow">)
+
+      assert body =~
+               ~s(<link rel="canonical" href="#{base_url}/g/#{graph.slug}?node=1&amp;highlight=#{highlight.id}")
+
+      assert body =~
+               ~s(<meta property="og:image" content="#{base_url}/g/#{graph.slug}/highlights/#{highlight.id}/share-card.svg?v=)
+
+      assert body =~ "A good quotation should point beyond itself."
+      assert body =~ "Quote SEO Graph"
     end
   end
 end

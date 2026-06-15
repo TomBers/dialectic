@@ -40,6 +40,9 @@ import PresentationHook, {
   PresentationSetupHook,
 } from "./presentation_hook.js";
 import ShareHook from "./share_hook.js";
+import GridChatFormHook from "./grid_chat_form_hook.js";
+import AvatarCropper from "./avatar_cropper_hook.js";
+import BannerCropper from "./banner_cropper_hook.js";
 
 let hooks = {};
 
@@ -61,6 +64,9 @@ hooks.SearchNav = SearchNav;
 hooks.Presentation = PresentationHook;
 hooks.PresentationSetup = PresentationSetupHook;
 hooks.Share = ShareHook;
+hooks.GridChatForm = GridChatFormHook;
+hooks.AvatarCropper = AvatarCropper;
+hooks.BannerCropper = BannerCropper;
 hooks.GlobalModalLayer = {
   mounted() {
     const header = document.getElementById("userHeader");
@@ -213,8 +219,10 @@ hooks.GraphLayout = {
     this.activePanelId = null;
     this._reopenSideDrawerAfterPresentation = false;
     this._reopenSideDrawerAfterCombine = false;
+    this._mobileOutlineCloseTimer = null;
     this._handleMobileGraphResize = () => {
       this._redirectMobileGraphToReader();
+      this._syncOutlineDetailForPanel(this.activePanelId);
     };
     const graphId = this.el.dataset.graphId || "global";
     const validReadingDensities = ["compact", "comfortable", "large"];
@@ -260,6 +268,7 @@ hooks.GraphLayout = {
     this._applyReadingDensity(this.readingDensity);
     this._applyReadingFont(this.readingFont);
     this._closeAllPanels();
+    this._syncOutlineDetailForPanel(null);
     window.addEventListener("resize", this._handleMobileGraphResize);
 
     this.el.addEventListener("set-reading-density", (e) => {
@@ -293,6 +302,11 @@ hooks.GraphLayout = {
       if (!targetPanel) return;
 
       const isClosed = targetPanel.classList.contains("translate-x-full");
+
+      if (id === "chat-drawer" && isClosed) {
+        this.pushEvent("open_grid_chat", {});
+      }
+
       const sideDrawer = document.getElementById("side-drawer");
       const sideDrawerIsOpen =
         sideDrawer && !sideDrawer.classList.contains("-translate-x-full");
@@ -366,6 +380,7 @@ hooks.GraphLayout = {
         });
 
         if (bottomMenu) bottomMenu.classList.add("panel-open");
+        this._syncOutlineDetailForPanel(id);
 
         const btn = document.querySelector(`[data-panel-toggle="${id}"]`);
         if (btn) {
@@ -384,6 +399,7 @@ hooks.GraphLayout = {
         });
 
         if (bottomMenu) bottomMenu.classList.remove("panel-open");
+        this._syncOutlineDetailForPanel(null);
       }
 
       const shouldRestoreSideDrawer =
@@ -402,6 +418,21 @@ hooks.GraphLayout = {
         this._reopenSideDrawerAfterCombine = false;
       }
 
+      window.dispatchEvent(new Event("resize"));
+    });
+
+    this.el.addEventListener("close-panel-on-mobile", (e) => {
+      if (!window.matchMedia("(max-width: 639px)").matches) return;
+
+      const { id } = e.detail || {};
+      if (!id) return;
+
+      const targetPanel = document.getElementById(id);
+      if (!targetPanel) return;
+
+      if (targetPanel.classList.contains("translate-x-full")) return;
+
+      this._closeAllPanels();
       window.dispatchEvent(new Event("resize"));
     });
 
@@ -531,6 +562,7 @@ hooks.GraphLayout = {
       "highlights-drawer",
       "presentation-drawer",
       "combine-drawer",
+      "chat-drawer",
     ];
   },
   _closeAllPanels() {
@@ -570,8 +602,19 @@ hooks.GraphLayout = {
 
     const bottomMenu = document.getElementById("bottom-menu");
     if (bottomMenu) bottomMenu.classList.remove("panel-open");
+    this._syncOutlineDetailForPanel(null);
 
     this.activePanelId = null;
+  },
+  _syncOutlineDetailForPanel(activePanelId) {
+    const outlineDetail = document.getElementById("outline-detail");
+    if (!outlineDetail) return;
+
+    const reserveDrawerSpace =
+      activePanelId === "highlights-drawer" &&
+      window.matchMedia("(min-width: 1024px)").matches;
+
+    outlineDetail.classList.toggle("lg:pr-96", reserveDrawerSpace);
   },
   _applySideDrawerState(shouldOpen, { dispatchResize = true } = {}) {
     const drawer = document.getElementById("side-drawer");
@@ -587,7 +630,7 @@ hooks.GraphLayout = {
         "-translate-x-full",
         "opacity-0",
         "w-0",
-        "lg:w-0",
+        "md:w-0",
         "overflow-hidden",
         "p-0",
       );
@@ -596,17 +639,17 @@ hooks.GraphLayout = {
         "opacity-100",
         "w-full",
         "p-4",
-        "lg:w-[var(--desktop-side-drawer-width)]",
-        "lg:p-0",
+        "md:w-[var(--desktop-side-drawer-width)]",
+        "md:p-0",
       );
 
       if (toggleBtn) {
         toggleBtn.classList.remove("left-2");
         toggleBtn.classList.add(
           "right-2",
-          "lg:left-[var(--desktop-side-drawer-width)]",
-          "lg:ml-2",
-          "lg:right-auto",
+          "md:left-[var(--desktop-side-drawer-width)]",
+          "md:ml-2",
+          "md:right-auto",
         );
         const path = toggleBtn.querySelector("path");
         if (path) path.setAttribute("d", "M11 19l-7-7 7-7");
@@ -615,7 +658,7 @@ hooks.GraphLayout = {
       }
 
       bottomElements.forEach((el) => {
-        el.classList.add("lg:left-[var(--desktop-side-drawer-width)]");
+        el.classList.add("md:left-[var(--desktop-side-drawer-width)]");
       });
     } else {
       drawer.classList.remove(
@@ -623,14 +666,14 @@ hooks.GraphLayout = {
         "opacity-100",
         "w-full",
         "p-4",
-        "lg:w-[var(--desktop-side-drawer-width)]",
-        "lg:p-0",
+        "md:w-[var(--desktop-side-drawer-width)]",
+        "md:p-0",
       );
       drawer.classList.add(
         "-translate-x-full",
         "opacity-0",
         "w-0",
-        "lg:w-0",
+        "md:w-0",
         "overflow-hidden",
         "p-0",
       );
@@ -638,9 +681,9 @@ hooks.GraphLayout = {
       if (toggleBtn) {
         toggleBtn.classList.remove(
           "right-2",
-          "lg:left-[var(--desktop-side-drawer-width)]",
-          "lg:ml-2",
-          "lg:right-auto",
+          "md:left-[var(--desktop-side-drawer-width)]",
+          "md:ml-2",
+          "md:right-auto",
         );
         toggleBtn.classList.add("left-2");
         const path = toggleBtn.querySelector("path");
@@ -650,7 +693,7 @@ hooks.GraphLayout = {
       }
 
       bottomElements.forEach((el) => {
-        el.classList.remove("lg:left-[var(--desktop-side-drawer-width)]");
+        el.classList.remove("md:left-[var(--desktop-side-drawer-width)]");
       });
     }
 
@@ -667,6 +710,11 @@ hooks.GraphLayout = {
     this.restoreState();
   },
   destroyed() {
+    if (this._mobileOutlineCloseTimer) {
+      clearTimeout(this._mobileOutlineCloseTimer);
+      this._mobileOutlineCloseTimer = null;
+    }
+
     if (this._handleMobileGraphResize) {
       window.removeEventListener("resize", this._handleMobileGraphResize);
     }
@@ -677,7 +725,7 @@ hooks.GraphLayout = {
     const isPresenting = this.el.dataset.presenting === "true";
 
     if (!isGraphLayout || !mobileReaderPath || isPresenting) return;
-    if (!window.matchMedia("(max-width: 639px)").matches) return;
+    if (!window.matchMedia("(max-width: 767px)").matches) return;
 
     const currentPath = `${window.location.pathname}${window.location.search}`;
     if (currentPath === mobileReaderPath) return;
@@ -690,7 +738,27 @@ hooks.GraphLayout = {
 
     if (!panel || !button) return;
 
-    panel.classList.toggle("hidden", !shouldOpen);
+    if (this._mobileOutlineCloseTimer) {
+      clearTimeout(this._mobileOutlineCloseTimer);
+      this._mobileOutlineCloseTimer = null;
+    }
+
+    if (shouldOpen) {
+      panel.classList.remove("hidden", "pointer-events-none", "opacity-0", "translate-x-8");
+
+      requestAnimationFrame(() => {
+        panel.classList.remove("opacity-0", "translate-x-8");
+        panel.classList.add("opacity-100", "translate-x-0");
+      });
+    } else {
+      panel.classList.remove("opacity-100", "translate-x-0");
+      panel.classList.add("opacity-0", "translate-x-8", "pointer-events-none");
+
+      this._mobileOutlineCloseTimer = setTimeout(() => {
+        panel.classList.add("hidden");
+        this._mobileOutlineCloseTimer = null;
+      }, 500);
+    }
 
     button.setAttribute("aria-expanded", String(shouldOpen));
 
@@ -763,6 +831,9 @@ hooks.GraphLayout = {
       this._closeAllPanels();
       return;
     }
+
+    this._syncOutlineDetailForPanel(this.activePanelId);
+
     const panel = document.getElementById(this.activePanelId);
     if (!panel) return;
 

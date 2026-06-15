@@ -317,21 +317,15 @@ defmodule DialecticWeb.HighlightsPanelComp do
 
                   <div class="flex items-center justify-end gap-1.5 border-t border-slate-100 pt-1">
                     <button
+                      id={"highlight-share-#{highlight.id}"}
                       type="button"
-                      data-copy-url={DialecticWeb.Endpoint.url() <> graph_path(@graph_struct, highlight.node_id, highlight: highlight.id)}
-                      onclick="navigator.clipboard.writeText(this.dataset.copyUrl).then(() => {
-                        const el = this.querySelector('.copy-feedback');
-                        el.classList.remove('hidden');
-                        setTimeout(() => el.classList.add('hidden'), 2000);
-                      })"
-                      class="relative inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
-                      title="Copy link"
+                      phx-click="open_share_modal"
+                      phx-value-highlight_id={highlight.id}
+                      class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+                      title="Share quote"
                     >
-                      <.icon name="hero-link" class="h-3.5 w-3.5" />
-                      <span>Copy link</span>
-                      <span class="copy-feedback hidden absolute bottom-full left-1/2 z-10 mb-1 -translate-x-1/2 whitespace-nowrap rounded bg-slate-900 px-2 py-1 text-[10px] text-white">
-                        Copied!
-                      </span>
+                      <.icon name="hero-share" class="h-3.5 w-3.5" />
+                      <span>Share</span>
                     </button>
 
                     <%= if @current_user && @current_user.id == highlight.created_by_user_id do %>

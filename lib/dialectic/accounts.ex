@@ -6,7 +6,7 @@ defmodule Dialectic.Accounts do
   import Ecto.Query, warn: false
   alias Dialectic.Repo
 
-  alias Dialectic.Accounts.{User, UserToken, UserNotifier, Graph}
+  alias Dialectic.Accounts.{User, UserToken, UserNotifier, Graph, AvatarStorage, ProfileLinks}
 
   ## Database getters
 
@@ -499,6 +499,78 @@ defmodule Dialectic.Accounts do
     user
     |> User.profile_changeset(attrs)
     |> Repo.update()
+  end
+
+  def update_user_profile_links(%User{} = user, rows) do
+    case ProfileLinks.prepare_for_storage(rows) do
+      {:ok, profile_links} ->
+        user
+        |> User.profile_links_changeset(%{profile_links: profile_links})
+        |> Repo.update()
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  def update_user_banner(%User{} = user, image_data) do
+    case AvatarStorage.store_user_banner(user, image_data) do
+      {:ok, banner_path} ->
+        case user |> User.banner_changeset(%{banner_path: banner_path}) |> Repo.update() do
+          {:ok, updated_user} ->
+            {:ok, updated_user}
+
+          {:error, changeset} ->
+            AvatarStorage.delete_banner_path(banner_path)
+            {:error, changeset}
+        end
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  def remove_user_banner(%User{} = user) do
+    old_banner_path = user.banner_path
+
+    case user |> User.banner_changeset(%{banner_path: nil}) |> Repo.update() do
+      {:ok, updated_user} ->
+        AvatarStorage.delete_banner_path(old_banner_path)
+        {:ok, updated_user}
+
+      {:error, changeset} ->
+        {:error, changeset}
+    end
+  end
+
+  def update_user_avatar(%User{} = user, image_data) do
+    case AvatarStorage.store_user_avatar(user, image_data) do
+      {:ok, avatar_path} ->
+        case user |> User.avatar_changeset(%{avatar_path: avatar_path}) |> Repo.update() do
+          {:ok, updated_user} ->
+            {:ok, updated_user}
+
+          {:error, changeset} ->
+            AvatarStorage.delete_avatar_path(avatar_path)
+            {:error, changeset}
+        end
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  def remove_user_avatar(%User{} = user) do
+    old_avatar_path = user.avatar_path
+
+    case user |> User.avatar_changeset(%{avatar_path: nil}) |> Repo.update() do
+      {:ok, updated_user} ->
+        AvatarStorage.delete_avatar_path(old_avatar_path)
+        {:ok, updated_user}
+
+      {:error, changeset} ->
+        {:error, changeset}
+    end
   end
 
   @doc """

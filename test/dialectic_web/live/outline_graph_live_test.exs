@@ -563,6 +563,35 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     refute render(view) =~ "Generating preview..."
   end
 
+  test "highlight share button opens the share modal for the selected quote", %{conn: conn} do
+    graph = create_graph(highlight_graph_data())
+    user = user_fixture()
+
+    {:ok, highlight} =
+      Highlights.create_highlight(%{
+        mudg_id: graph.title,
+        node_id: "5",
+        text_source_type: "node",
+        selection_start: 0,
+        selection_end: 12,
+        selected_text_snapshot: "Meaning is use.",
+        created_by_user_id: user.id
+      })
+
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=5")
+
+    view
+    |> element("#highlight-share-#{highlight.id}")
+    |> render_click()
+
+    share_url = "#{DialecticWeb.Endpoint.url()}/g/#{graph.slug}?node=5&highlight=#{highlight.id}"
+
+    assert has_element?(view, "#share-modal-hook")
+    assert render(view) =~ "Share Quote"
+    assert has_element?(view, ~s(#share-url-input[value="#{share_url}"]))
+    assert render(view) =~ "/g/#{graph.slug}/highlights/#{highlight.id}/share-card.svg?v="
+  end
+
   test "reader search opens from the top bar and patches to the selected result", %{conn: conn} do
     graph = create_graph()
 
@@ -663,12 +692,72 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
 
     assert has_element?(
              view,
-             "#reading-highlight-5[phx-hook='TextSelectionHook'][data-highlights-only='true']"
+             "#reading-highlight-5[phx-hook='TextSelectionHook'][data-highlights-only='false']"
            )
+
+    assert has_element?(view, "#reader-selection-actions-hook[phx-hook='SelectionActions']")
+    assert has_element?(view, "#selection-actions button[phx-click='highlight_only']")
+    refute has_element?(view, "#selection-actions button[phx-click='explain']")
 
     assert_push_event(view, "highlights_loaded", %{
       highlights: [%{node_id: "5", links: [%{node_id: "3", link_type: "explain"}]}]
     })
+  end
+
+  test "reader selection action creates a highlight only", %{conn: conn} do
+    user = user_fixture()
+    conn = log_in_user(conn, user)
+    graph = create_graph(highlight_graph_data())
+
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=5")
+
+    send(view.pid, {
+      :selection_action,
+      %{
+        action: :highlight_only,
+        selected_text: "Maybe",
+        node_id: "5",
+        offsets: %{"start" => 0, "end" => 5},
+        highlight: nil
+      }
+    })
+
+    render(view)
+
+    assert [highlight] = Highlights.list_highlights_with_links(mudg_id: graph.title)
+    assert highlight.node_id == "5"
+    assert highlight.selection_start == 0
+    assert highlight.selection_end == 5
+    assert highlight.selected_text_snapshot == "Maybe"
+    assert highlight.created_by_user_id == user.id
+
+    assert_push_event(view, "highlights_loaded", %{
+      highlights: [%{id: id, node_id: "5"}]
+    })
+
+    assert id == highlight.id
+  end
+
+  test "reader selection action prompts login for signed-out users", %{conn: conn} do
+    graph = create_graph(highlight_graph_data())
+
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=5")
+
+    send(view.pid, {
+      :selection_action,
+      %{
+        action: :highlight_only,
+        selected_text: "Maybe",
+        node_id: "5",
+        offsets: %{"start" => 0, "end" => 5},
+        highlight: nil
+      }
+    })
+
+    html = render(view)
+
+    assert html =~ "Login Required"
+    assert Highlights.list_highlights_with_links(mudg_id: graph.title) == []
   end
 
   test "highlight link navigation patches the reader to the target node", %{conn: conn} do

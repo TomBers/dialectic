@@ -5,6 +5,8 @@ defmodule DialecticWeb.UserProfileLiveTest do
   import Phoenix.LiveViewTest
   import Dialectic.AccountsFixtures
 
+  @one_pixel_png "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII="
+
   defp create_user_with_username(username, attrs \\ %{}) do
     user = user_fixture(attrs)
     {:ok, user} = Accounts.update_user_profile(user, %{username: username})
@@ -15,12 +17,13 @@ defmodule DialecticWeb.UserProfileLiveTest do
     unique_suffix = System.unique_integer([:positive])
     slug = Keyword.get(opts, :slug, "slug-#{unique_suffix}")
     tags = Keyword.get(opts, :tags, [])
+    nodes = Keyword.get(opts, :nodes, [%{"id" => "1", "label" => "Node"}])
     unique_title = "#{title}-#{unique_suffix}"
 
     Dialectic.Repo.insert!(%Dialectic.Accounts.Graph{
       title: unique_title,
       slug: slug,
-      data: %{"nodes" => [%{"id" => "1", "label" => "Node"}]},
+      data: %{"nodes" => nodes},
       tags: tags,
       is_public: true,
       is_published: true,
@@ -38,13 +41,13 @@ defmodule DialecticWeb.UserProfileLiveTest do
       assert html =~ "profiletest"
       assert html =~ "— Profile"
       assert html =~ "Member since"
-      assert html =~ "Grids Created"
-      assert html =~ "Ideas Explored"
-      assert html =~ "Days Active"
+      assert html =~ "Grids"
+      assert html =~ "Ideas"
+      assert html =~ "Days"
       # Should not see edit link when not logged in
       refute html =~ "Edit Profile"
-      # Should see "Graphs by" heading for other users
-      assert html =~ "Grids by profiletest"
+      # Should see archive heading for other users
+      assert html =~ "Grid archive by profiletest"
     end
 
     test "renders bio when present", %{conn: conn} do
@@ -54,6 +57,54 @@ defmodule DialecticWeb.UserProfileLiveTest do
       {:ok, _lv, html} = live(conn, ~p"/u/biouser")
 
       assert html =~ "I love graphs!"
+    end
+
+    test "renders selected profile banner", %{conn: conn} do
+      user = create_user_with_username("banneruser")
+
+      {:ok, _} =
+        Accounts.update_user_profile(user, %{
+          username: "banneruser",
+          profile_banner: "endless-constellation"
+        })
+
+      {:ok, _lv, html} = live(conn, ~p"/u/banneruser")
+
+      assert html =~ "/images/profile-banners/endless-constellation.svg"
+    end
+
+    test "renders uploaded profile banner before selected SVG banner", %{conn: conn} do
+      user = create_user_with_username("uploadedbanner")
+
+      {:ok, user} =
+        Accounts.update_user_profile(user, %{
+          username: "uploadedbanner",
+          profile_banner: "endless-constellation"
+        })
+
+      {:ok, user} = Accounts.update_user_banner(user, @one_pixel_png)
+
+      {:ok, _lv, html} = live(conn, ~p"/u/uploadedbanner")
+
+      assert html =~ user.banner_path
+      refute html =~ "/images/profile-banners/endless-constellation.svg"
+    end
+
+    test "renders manual profile links", %{conn: conn} do
+      user = create_user_with_username("linksuser")
+
+      {:ok, _} =
+        Accounts.update_user_profile_links(user, [
+          %{"label" => "GitHub", "value" => "https://github.com/tomberman"},
+          %{"label" => "Email", "value" => "hello@example.com"}
+        ])
+
+      {:ok, _lv, html} = live(conn, ~p"/u/linksuser")
+
+      assert html =~ "GitHub"
+      assert html =~ "https://github.com/tomberman"
+      assert html =~ "Email"
+      assert html =~ "mailto:hello@example.com"
     end
 
     test "renders empty graphs message when user has no public graphs", %{conn: conn} do
@@ -81,8 +132,34 @@ defmodule DialecticWeb.UserProfileLiveTest do
 
       {:ok, _lv, html} = live(conn, ~p"/u/taguser")
 
-      assert html =~ "Mainly talking about"
+      assert html =~ "Topics"
       assert html =~ "elixir"
+    end
+
+    test "renders metadata-driven start here cards for public graphs", %{conn: conn} do
+      user = create_user_with_username("starthere")
+
+      create_public_graph(user, "Seed Question",
+        slug: "seed-question",
+        tags: ["attention"],
+        nodes: [%{"id" => "1", "label" => "Node"}]
+      )
+
+      create_public_graph(user, "Deep Question",
+        slug: "deep-question",
+        tags: ["media", "psychology"],
+        nodes: Enum.map(1..22, fn id -> %{"id" => Integer.to_string(id), "label" => "Node"} end)
+      )
+
+      {:ok, _lv, html} = live(conn, ~p"/u/starthere")
+
+      assert html =~ "Start here"
+      assert html =~ "Entry points"
+      assert html =~ "Deep Question"
+      assert html =~ "Deep dive"
+      assert html =~ "22 ideas"
+      assert html =~ "find thinking on"
+      assert html =~ "public grids"
     end
   end
 
@@ -104,7 +181,7 @@ defmodule DialecticWeb.UserProfileLiveTest do
 
       assert html =~ "Account Settings"
       assert html =~ "profile-settings-link"
-      assert html =~ "My Public Grids"
+      assert html =~ "Public grid archive"
     end
 
     test "does not show 'Account Settings' link when viewing another user's profile", %{
@@ -119,7 +196,7 @@ defmodule DialecticWeb.UserProfileLiveTest do
         |> live(~p"/u/otheruser")
 
       refute html =~ "profile-settings-link"
-      assert html =~ "Grids by otheruser"
+      assert html =~ "Grid archive by otheruser"
     end
 
     test "shows 'Create your first grid' only on own empty profile", %{conn: conn} do
@@ -153,17 +230,6 @@ defmodule DialecticWeb.UserProfileLiveTest do
       {:ok, _lv, html} = live(conn, ~p"/u/mixedcase")
 
       assert html =~ "MixedCase"
-    end
-  end
-
-  describe "theme support" do
-    test "applies theme classes when user has a non-default theme", %{conn: conn} do
-      user = create_user_with_username("themeduser")
-      {:ok, _} = Accounts.update_user_profile(user, %{username: "themeduser", theme: "indigo"})
-
-      {:ok, _lv, html} = live(conn, ~p"/u/themeduser")
-
-      assert html =~ "from-indigo"
     end
   end
 

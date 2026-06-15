@@ -63,10 +63,10 @@ defmodule DialecticWeb.ComponentsSmokeTest do
 
       assert html =~ ~s(id="highlight-card-123")
       assert html =~ ~s(id="highlight-note-edit-123")
+      assert html =~ ~s(id="highlight-share-123")
       assert html =~ "Add note"
       assert html =~ "Important idea"
-      assert html =~ "Copy link"
-      assert html =~ "/g/test-graph?node=node_abc123&amp;highlight=123"
+      assert html =~ "Share"
     end
 
     test "renders a note form with stable controls when a highlight is being edited" do

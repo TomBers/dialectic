@@ -4,7 +4,7 @@ defmodule Dialectic.AccountsTest do
   alias Dialectic.Accounts
 
   import Dialectic.AccountsFixtures
-  alias Dialectic.Accounts.{User, UserToken}
+  alias Dialectic.Accounts.{TigrisStorage, User, UserToken}
 
   describe "get_user_by_email/1" do
     test "does not return the user if the email does not exist" do
@@ -726,20 +726,22 @@ defmodule Dialectic.AccountsTest do
     end
   end
 
+  @one_pixel_png "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII="
+
   describe "update_user_profile/2" do
-    test "updates username, bio, and theme" do
+    test "updates username, bio, and profile banner" do
       user = user_fixture()
 
       assert {:ok, updated} =
                Accounts.update_user_profile(user, %{
                  username: "newname",
                  bio: "Hello!",
-                 theme: "indigo"
+                 profile_banner: "liquid-cheese"
                })
 
       assert updated.username == "newname"
       assert updated.bio == "Hello!"
-      assert updated.theme == "indigo"
+      assert updated.profile_banner == "liquid-cheese"
     end
 
     test "rejects blank username" do
@@ -772,22 +774,169 @@ defmodule Dialectic.AccountsTest do
       assert "has already been taken" in errors_on(changeset).username
     end
 
-    test "allows empty gravatar_id (normalizes blank to nil)" do
-      user = user_fixture()
-
-      assert {:ok, updated} =
-               Accounts.update_user_profile(user, %{username: "test22", gravatar_id: ""})
-
-      assert updated.gravatar_id == nil
-    end
-
-    test "rejects invalid theme" do
+    test "rejects invalid profile banner" do
       user = user_fixture()
 
       assert {:error, changeset} =
-               Accounts.update_user_profile(user, %{username: "test22", theme: "neon"})
+               Accounts.update_user_profile(user, %{username: "test22", profile_banner: "unknown"})
 
-      assert "is invalid" in errors_on(changeset).theme
+      assert "is invalid" in errors_on(changeset).profile_banner
+    end
+
+    test "allows clearing a selected profile banner" do
+      user = user_fixture()
+
+      assert {:ok, user} =
+               Accounts.update_user_profile(user, %{
+                 username: "test22",
+                 profile_banner: "liquid-cheese"
+               })
+
+      assert {:ok, updated} =
+               Accounts.update_user_profile(user, %{username: "test22", profile_banner: nil})
+
+      assert updated.profile_banner == nil
+    end
+
+    test "does not mass-assign profile links" do
+      user = user_fixture()
+
+      assert {:ok, updated} =
+               Accounts.update_user_profile(user, %{
+                 username: "test22",
+                 profile_links: %{
+                   "links" => [%{"label" => "Bad", "value" => "javascript:alert(1)"}]
+                 }
+               })
+
+      assert updated.profile_links == %{"links" => []}
+    end
+  end
+
+  describe "update_user_profile_links/2" do
+    test "stores arbitrary URL and email profile links" do
+      user = user_fixture()
+
+      assert {:ok, updated} =
+               Accounts.update_user_profile_links(user, [
+                 %{"label" => "GitHub", "value" => "github.com/tomberman"},
+                 %{"label" => "Email", "value" => "hello@example.com"}
+               ])
+
+      assert %{
+               "links" => [
+                 %{
+                   "label" => "GitHub",
+                   "value" => "https://github.com/tomberman",
+                   "href" => "https://github.com/tomberman",
+                   "kind" => "url"
+                 },
+                 %{
+                   "label" => "Email",
+                   "value" => "hello@example.com",
+                   "href" => "mailto:hello@example.com",
+                   "kind" => "email"
+                 }
+               ]
+             } = updated.profile_links
+    end
+
+    test "rejects unsafe profile link schemes" do
+      user = user_fixture()
+
+      assert {:error, message} =
+               Accounts.update_user_profile_links(user, [
+                 %{"label" => "Bad", "value" => "javascript:alert(1)"}
+               ])
+
+      assert message =~ "HTTP(S) URLs or email"
+    end
+  end
+
+  describe "Tigris-backed profile image storage" do
+    setup do
+      original_config = Application.get_env(:dialectic, :profile_image_storage)
+
+      Req.Test.stub(TigrisStorage, fn conn ->
+        assert conn.method in ["PUT", "DELETE"]
+        assert String.starts_with?(conn.request_path, "/test-bucket/uploads/")
+        assert [_authorization] = Plug.Conn.get_req_header(conn, "authorization")
+        assert [_amz_date] = Plug.Conn.get_req_header(conn, "x-amz-date")
+        Plug.Conn.send_resp(conn, 200, "")
+      end)
+
+      Application.put_env(:dialectic, :profile_image_storage,
+        tigris: [
+          access_key_id: "test-access-key",
+          secret_access_key: "test-secret-key",
+          region: "auto",
+          endpoint_url: "https://fly.storage.tigris.dev",
+          bucket: "test-bucket",
+          req_options: [plug: {Req.Test, TigrisStorage}],
+          signing_datetime: ~U[2026-06-07 12:00:00Z]
+        ]
+      )
+
+      on_exit(fn -> Application.put_env(:dialectic, :profile_image_storage, original_config) end)
+      :ok
+    end
+
+    test "stores avatar uploads as Tigris public URLs and deletes them" do
+      user = user_fixture()
+
+      assert {:ok, updated} = Accounts.update_user_avatar(user, @one_pixel_png)
+
+      assert updated.avatar_path =~
+               ~r|^https://test-bucket\.t3\.tigrisfiles\.io/uploads/avatars/avatar-#{updated.id}-.*\.png$|
+
+      assert {:ok, removed} = Accounts.remove_user_avatar(updated)
+      assert removed.avatar_path == nil
+    end
+  end
+
+  describe "update_user_banner/2 and remove_user_banner/1" do
+    test "stores a local banner path and removes the file" do
+      user = user_fixture()
+
+      assert {:ok, updated} = Accounts.update_user_banner(user, @one_pixel_png)
+      assert updated.banner_path =~ ~r|^/uploads/banners/banner-#{updated.id}-.*\.png$|
+
+      full_path = uploaded_image_full_path(updated.banner_path)
+      assert File.exists?(full_path)
+
+      assert {:ok, removed} = Accounts.remove_user_banner(updated)
+      assert removed.banner_path == nil
+      refute File.exists?(full_path)
+    end
+
+    test "rejects invalid banner image data" do
+      user = user_fixture()
+
+      assert {:error, :invalid_image} =
+               Accounts.update_user_banner(user, "data:text/plain;base64,nope")
+    end
+  end
+
+  describe "update_user_avatar/2 and remove_user_avatar/1" do
+    test "stores a local avatar path and removes the file" do
+      user = user_fixture()
+
+      assert {:ok, updated} = Accounts.update_user_avatar(user, @one_pixel_png)
+      assert updated.avatar_path =~ ~r|^/uploads/avatars/avatar-#{updated.id}-.*\.png$|
+
+      full_path = uploaded_image_full_path(updated.avatar_path)
+      assert File.exists?(full_path)
+
+      assert {:ok, removed} = Accounts.remove_user_avatar(updated)
+      assert removed.avatar_path == nil
+      refute File.exists?(full_path)
+    end
+
+    test "rejects invalid avatar image data" do
+      user = user_fixture()
+
+      assert {:error, :invalid_image} =
+               Accounts.update_user_avatar(user, "data:text/plain;base64,nope")
     end
   end
 
@@ -969,5 +1118,14 @@ defmodule Dialectic.AccountsTest do
 
       assert Accounts.list_user_public_graphs(user1) == []
     end
+  end
+
+  defp uploaded_image_full_path(public_path) do
+    path = String.trim_leading(public_path, "/")
+
+    :dialectic
+    |> :code.priv_dir()
+    |> to_string()
+    |> Path.join("static/#{path}")
   end
 end

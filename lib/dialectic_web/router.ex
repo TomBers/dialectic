@@ -13,6 +13,14 @@ defmodule DialecticWeb.Router do
     plug :fetch_current_user
   end
 
+  pipeline :share_image do
+    plug :accepts, ["svg"]
+    plug :fetch_session
+    plug :fetch_current_user
+    plug DialecticWeb.Plugs.RateLimiter, type: :api
+    plug :put_secure_browser_headers
+  end
+
   pipeline :auth do
     plug DialecticWeb.Plugs.RateLimiter, type: :auth
   end
@@ -44,6 +52,12 @@ defmodule DialecticWeb.Router do
   # Sitemap for search engine discovery (no session/CSRF needed)
   scope "/", DialecticWeb do
     get "/sitemap.xml", SitemapController, :index
+  end
+
+  scope "/", DialecticWeb do
+    pipe_through :share_image
+
+    get "/g/:graph_name/highlights/:id/share-card.svg", HighlightShareImageController, :show
   end
 
   scope "/", DialecticWeb do

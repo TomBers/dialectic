@@ -21,13 +21,14 @@ config :dialectic, Oban,
   ],
   repo: Dialectic.Repo,
   plugins: [
-    {Oban.Plugins.Lifeline, rescue_after: 60}
+    {Oban.Plugins.Lifeline, rescue_after: :timer.minutes(15)}
   ]
 
 config :dialectic,
   ecto_repos: [Dialectic.Repo],
   generators: [timestamp_type: :utc_datetime],
-  env: config_env()
+  env: config_env(),
+  profile_image_storage: [tigris: []]
 
 # Configures the endpoint
 config :dialectic, DialecticWeb.Endpoint,

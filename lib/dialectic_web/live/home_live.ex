@@ -4,6 +4,7 @@ defmodule DialecticWeb.HomeLive do
   alias Dialectic.Graph.GraphActions
   alias Dialectic.Graph.Vertex
   alias DialecticWeb.Utils.UserUtils
+  import DialecticWeb.HomeGridRowComp
   require Logger
 
   on_mount {DialecticWeb.UserAuth, :mount_current_user}
@@ -286,16 +287,14 @@ defmodule DialecticWeb.HomeLive do
             </div>
           </div>
         <% end %>
-        
-    <!-- Static decorative background -->
+        <!-- Static decorative background -->
         <div class="absolute inset-0 z-0">
           <div class="pointer-events-none absolute -top-32 -right-24 h-80 w-80 rounded-full bg-sky-100/50 blur-3xl">
           </div>
           <div class="pointer-events-none absolute -top-20 -left-24 h-72 w-72 rounded-full bg-slate-300/35 blur-3xl">
           </div>
         </div>
-        
-    <!-- Make the hero content scroll within the viewport naturally -->
+        <!-- Make the hero content scroll within the viewport naturally -->
         <div class="relative z-10 pb-4 sm:pb-5">
           <section class="w-full" id="start-here">
             <div class="w-full bg-gradient-to-br from-[#3a0ca3] to-[#4361ee] px-4 py-5 text-white shadow-xl sm:px-6 sm:py-6">
@@ -310,7 +309,7 @@ defmodule DialecticWeb.HomeLive do
                   <span>RationalGrid</span>
                 </h1>
                 <p class="mx-auto max-w-5xl text-base font-semibold leading-snug text-white sm:text-lg">
-                  Expore big ideas that do not fit in a chat box.
+                  Big ideas that do not fit in a chat box.
                   <.link
                     navigate={~p"/about"}
                     class="underline decoration-white/60 underline-offset-4 hover:decoration-white"
@@ -383,11 +382,11 @@ defmodule DialecticWeb.HomeLive do
                             </span>
                           </div>
 
-                          <div class="overflow-hidden rounded-[1.2rem] border border-white/10 bg-slate-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+                          <div class="overflow-hidden border border-white/10 bg-slate-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
                             <img
-                              src={~p"/images/guide/grid-workspace.png"}
+                              src={~p"/images/guide/grid-workspace.webp"}
                               alt="Preview of the Happiness grid workspace by TomBers44"
-                              class="aspect-[16/9] w-full object-cover object-top transition duration-300 group-hover:scale-[1.015]"
+                              class="aspect-[16/9] w-full object-contain object-center transition duration-300 group-hover:scale-[1.015]"
                               loading="lazy"
                             />
                           </div>
@@ -460,37 +459,20 @@ defmodule DialecticWeb.HomeLive do
                           <% end %>
                         </div>
 
-                        <div class="space-y-2">
-                          <%= for {item, index} <- Enum.with_index(preview_items) do %>
-                            <div>
-                              <div class="mb-1 flex justify-end">
-                                <span class="inline-flex rounded-full bg-white/95 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 ring-1 ring-slate-200">
-                                  Editor’s pick
-                                </span>
-                              </div>
-                              <DialecticWeb.PageHtml.GraphComp.render
-                                title={item.graph.title}
-                                is_public={item.graph.is_public}
-                                link={graph_path(item.graph)}
-                                count={0}
-                                tags={Enum.take(item.graph.tags || [], 3)}
+                        <div
+                          id="home-editor-picks-list"
+                          class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+                        >
+                          <div class="divide-y divide-slate-100">
+                            <%= for {item, index} <- Enum.with_index(preview_items) do %>
+                              <.home_grid_row
+                                graph={item.graph}
                                 author_name={item.author_name}
-                                author_link={author_profile_path(item.author_name)}
-                                author_label="by"
-                                variant={:light}
-                                compact={true}
-                                show_exploration_stats={false}
-                                node_count={
-                                  Enum.count(item.graph.data["nodes"] || [], fn n ->
-                                    !Map.get(n, "compound", false)
-                                  end)
-                                }
-                                is_live={false}
-                                generating={false}
                                 id={"hero-explore-#{index}-#{item.graph.slug || Integer.to_string(:erlang.phash2(item.graph.title || ""))}"}
+                                label="Editor’s pick"
                               />
-                            </div>
-                          <% end %>
+                            <% end %>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -520,7 +502,7 @@ defmodule DialecticWeb.HomeLive do
 
                   <div class="overflow-hidden rounded-[1.6rem] border border-slate-200 bg-slate-950 shadow-[0_18px_40px_rgba(15,23,42,0.12)]">
                     <img
-                      src={~p"/images/guide/grid-workspace.png"}
+                      src={~p"/images/guide/grid-workspace.webp"}
                       alt="Expanded preview of the Happiness grid workspace by TomBers44"
                       class="w-full object-contain"
                     />
@@ -697,120 +679,34 @@ defmodule DialecticWeb.HomeLive do
                   <div class="border-t border-slate-200">
                     <div id="home-graph-mobile-list" class="space-y-3 p-3 md:hidden">
                       <%= for {g, _count, author_username} <- @graphs do %>
-                        <article
+                        <.home_grid_row
+                          graph={g}
+                          author_name={author_username}
+                          author_marker="@"
                           id={graph_dom_id(g, "home-mobile-graph")}
-                          class="rounded-2xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-indigo-50/60 p-4 shadow-sm ring-1 ring-slate-200/70"
-                        >
-                          <div class="flex items-start gap-3">
-                            <div class="min-w-0 flex-1">
-                              <.link
-                                navigate={graph_path(g)}
-                                class="block text-base font-semibold leading-6 text-slate-900 transition hover:text-indigo-700"
-                              >
-                                {g.title}
-                              </.link>
-
-                              <%= if author_visible?(author_username) do %>
-                                <.link
-                                  navigate={~p"/u/#{author_username}"}
-                                  class="mt-1 inline-flex text-xs font-medium text-slate-600 transition hover:text-indigo-700"
-                                >
-                                  by @{author_username}
-                                </.link>
-                              <% end %>
-                            </div>
-
-                            <.link
-                              navigate={graph_path(g)}
-                              class="inline-flex h-10 shrink-0 items-center gap-2 rounded-full bg-gradient-to-br from-indigo-500 to-sky-500 px-3 text-sm font-medium text-white shadow-sm ring-1 ring-indigo-500/30 transition-transform hover:scale-[1.02] hover:shadow-md"
-                              aria-label={"Open " <> (g.title || "idea")}
-                            >
-                              <.icon name="hero-magnifying-glass" class="h-4 w-4" />
-                              <span>Open</span>
-                            </.link>
-                          </div>
-
-                          <%= if (g.tags || []) != [] do %>
-                            <div class="mt-3 flex flex-wrap gap-1.5">
-                              <%= for tag <- Enum.take(g.tags || [], 4) do %>
-                                <span class={[
-                                  "inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-inset",
-                                  table_tag_color_class(tag)
-                                ]}>
-                                  #{tag}
-                                </span>
-                              <% end %>
-                            </div>
-                          <% end %>
-                        </article>
+                          variant={:card}
+                          tag_limit={4}
+                        />
                       <% end %>
                     </div>
 
-                    <div class="hidden overflow-x-auto p-3 sm:p-3.5 md:block">
-                      <table
-                        id="home-graph-desktop-table"
-                        class="min-w-full border-separate border-spacing-0 text-left text-sm"
+                    <div class="hidden p-3 sm:p-3.5 md:block">
+                      <div
+                        id="home-graph-desktop-list"
+                        class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
                       >
-                        <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-600">
-                          <tr>
-                            <th class="px-4 py-2.5 font-semibold shadow-[inset_0_-1px_0_0_rgb(226_232_240)]">
-                              Idea
-                            </th>
-                            <th class="px-4 py-2.5 font-semibold shadow-[inset_0_-1px_0_0_rgb(226_232_240)]">
-                              Tags
-                            </th>
-                            <th class="px-4 py-2.5 text-right font-semibold shadow-[inset_0_-1px_0_0_rgb(226_232_240)]">
-                              Open
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-200">
+                        <div class="divide-y divide-slate-100">
                           <%= for {g, _count, author_username} <- @graphs do %>
-                            <tr class="align-top transition-colors odd:bg-slate-100 even:bg-white hover:bg-indigo-50/80">
-                              <td class="px-4 py-3">
-                                <%!-- Desktop link (graph view) --%>
-                                <.link
-                                  navigate={graph_path(g)}
-                                  class="line-clamp-2 font-semibold text-slate-900 hover:text-indigo-700"
-                                >
-                                  {g.title}
-                                </.link>
-                                <%= if author_visible?(author_username) do %>
-                                  <.link
-                                    navigate={~p"/u/#{author_username}"}
-                                    class="mt-1 inline-flex text-xs text-slate-600 hover:text-indigo-700"
-                                  >
-                                    by @{author_username}
-                                  </.link>
-                                <% end %>
-                              </td>
-                              <td class="px-4 py-3">
-                                <div class="flex flex-wrap gap-1">
-                                  <%= for tag <- Enum.take(g.tags || [], 4) do %>
-                                    <span class={[
-                                      "inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset",
-                                      table_tag_color_class(tag)
-                                    ]}>
-                                      #{tag}
-                                    </span>
-                                  <% end %>
-                                </div>
-                              </td>
-                              <td class="px-4 py-3 text-right">
-                                <%!-- Desktop link (graph view) --%>
-                                <.link
-                                  navigate={graph_path(g)}
-                                  class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-sky-500 text-white shadow-sm ring-1 ring-indigo-500/30 transition-transform hover:scale-105 hover:shadow-md"
-                                  aria-label={"Open " <> (g.title || "idea")}
-                                >
-                                  <.icon name="hero-magnifying-glass" class="h-4 w-4" />
-                                  <span class="sr-only">Open</span>
-                                </.link>
-                              </td>
-                            </tr>
+                            <.home_grid_row
+                              graph={g}
+                              author_name={author_username}
+                              author_marker="@"
+                              id={graph_dom_id(g, "home-desktop-graph")}
+                              tag_limit={4}
+                            />
                           <% end %>
-                        </tbody>
-                      </table>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -925,32 +821,19 @@ defmodule DialecticWeb.HomeLive do
               </div>
             <% end %>
           </div>
-          <div class="space-y-1.5">
-            <%= for item <- @items do %>
-              <div class="relative">
-                <DialecticWeb.PageHtml.GraphComp.render
-                  title={item.graph.title}
-                  is_public={item.graph.is_public}
-                  link={graph_path(item.graph)}
-                  count={0}
-                  tags={Enum.take(item.graph.tags || [], 3)}
+          <div
+            id={"#{@id_prefix}-grids-list"}
+            class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+          >
+            <div class="divide-y divide-slate-100">
+              <%= for item <- @items do %>
+                <.home_grid_row
+                  graph={item.graph}
                   author_name={item.author_name}
-                  author_link={author_profile_path(item.author_name)}
-                  author_label="by"
-                  variant={:light}
-                  compact={true}
-                  show_exploration_stats={false}
-                  node_count={
-                    Enum.count(item.graph.data["nodes"] || [], fn n ->
-                      !Map.get(n, "compound", false)
-                    end)
-                  }
-                  is_live={false}
-                  generating={false}
                   id={@id_prefix <> "-" <> (item.graph.slug || "t-" <> Integer.to_string(:erlang.phash2(item.graph.title || "")))}
                 />
-              </div>
-            <% end %>
+              <% end %>
+            </div>
           </div>
         </div>
       </div>
@@ -994,10 +877,6 @@ defmodule DialecticWeb.HomeLive do
     |> Enum.uniq_by(&(String.trim(&1) |> String.downcase()))
   end
 
-  defp author_profile_path(author_name) do
-    if author_visible?(author_name), do: ~p"/u/#{author_name}", else: nil
-  end
-
   defp author_visible?(author_name) when is_binary(author_name) do
     normalized = author_name |> String.trim() |> String.downcase()
     normalized != "" and normalized not in ["anonymous", "anon", "-"]
@@ -1022,29 +901,6 @@ defmodule DialecticWeb.HomeLive do
       true ->
         Dialectic.DbActions.Graphs.all_graphs_with_notes(search_term, limit: limit)
     end
-  end
-
-  defp table_tag_color_class(tag) do
-    colors = [
-      "bg-rose-50 text-rose-700 ring-rose-600/20",
-      "bg-orange-50 text-orange-700 ring-orange-600/20",
-      "bg-amber-50 text-amber-700 ring-amber-600/20",
-      "bg-lime-50 text-lime-700 ring-lime-600/20",
-      "bg-green-50 text-green-700 ring-green-600/20",
-      "bg-emerald-50 text-emerald-700 ring-emerald-600/20",
-      "bg-teal-50 text-teal-700 ring-teal-600/20",
-      "bg-cyan-50 text-cyan-700 ring-cyan-600/20",
-      "bg-sky-50 text-sky-700 ring-sky-600/20",
-      "bg-blue-50 text-blue-700 ring-blue-600/20",
-      "bg-indigo-50 text-indigo-700 ring-indigo-600/20",
-      "bg-violet-50 text-violet-700 ring-violet-600/20",
-      "bg-purple-50 text-purple-700 ring-purple-600/20",
-      "bg-fuchsia-50 text-fuchsia-700 ring-fuchsia-600/20",
-      "bg-pink-50 text-pink-700 ring-pink-600/20"
-    ]
-
-    idx = :erlang.phash2(tag, length(colors))
-    Enum.at(colors, idx)
   end
 
   defp graph_dom_id(graph, prefix) do

@@ -2,8 +2,6 @@ defmodule Dialectic.Accounts.User do
   use Ecto.Schema
   import Ecto.Changeset
 
-  @valid_themes ~w(default indigo violet emerald amber rose)
-
   schema "users" do
     field :email, :string
     field :password, :string, virtual: true, redact: true
@@ -17,8 +15,10 @@ defmodule Dialectic.Accounts.User do
     # Profile fields
     field :username, :string
     field :bio, :string
-    field :gravatar_id, :string
-    field :theme, :string, default: "default"
+    field :avatar_path, :string
+    field :banner_path, :string
+    field :profile_banner, :string
+    field :profile_links, :map, default: %{"links" => []}
     field :is_admin, :boolean, default: false
 
     has_many :graphs, Dialectic.Accounts.Graph, on_delete: :delete_all
@@ -26,11 +26,6 @@ defmodule Dialectic.Accounts.User do
 
     timestamps(type: :utc_datetime)
   end
-
-  @doc """
-  Returns the list of valid theme names.
-  """
-  def valid_themes, do: @valid_themes
 
   @doc """
   Derives a default username from the user's email address.
@@ -245,34 +240,82 @@ defmodule Dialectic.Accounts.User do
   end
 
   @doc """
-  A user changeset for updating profile fields (username, bio,
-  gravatar_id, and theme).
-
-  Social links are derived from Gravatar at page load time and are
-  not stored in the database.
+  A user changeset for updating profile fields.
   """
   def profile_changeset(user, attrs) do
     user
     |> cast(attrs, [
       :username,
       :bio,
-      :gravatar_id,
-      :theme
+      :profile_banner
     ])
-    |> normalize_blank(:gravatar_id)
+    |> normalize_blank(:profile_banner)
     |> validate_required([:username])
     |> validate_length(:username, min: 2, max: 30)
     |> validate_format(:username, ~r/^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$|^[a-zA-Z0-9]{2}$/,
       message: "must be alphanumeric with optional hyphens, cannot start or end with a hyphen"
     )
     |> validate_length(:bio, max: 500)
-    |> validate_length(:gravatar_id, max: 100)
-    |> validate_format(:gravatar_id, ~r/^[a-z0-9]+$/,
-      message: "must be a valid Gravatar profile slug (lowercase alphanumeric)"
-    )
-    |> validate_inclusion(:theme, @valid_themes)
+    |> validate_length(:profile_banner, max: 100)
+    |> validate_inclusion(:profile_banner, [nil | Dialectic.Accounts.ProfileBanner.ids()])
     |> unsafe_validate_unique(:username, Dialectic.Repo)
     |> unique_constraint(:username)
+  end
+
+  def banner_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:banner_path])
+    |> normalize_blank(:banner_path)
+    |> validate_length(:banner_path, max: 500)
+    |> validate_uploaded_image_path(:banner_path, ~r|^/uploads/banners/[A-Za-z0-9._-]+$|)
+  end
+
+  def profile_links_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:profile_links])
+    |> validate_profile_links()
+  end
+
+  def avatar_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:avatar_path])
+    |> normalize_blank(:avatar_path)
+    |> validate_length(:avatar_path, max: 500)
+    |> validate_uploaded_image_path(:avatar_path, ~r|^/uploads/avatars/[A-Za-z0-9._-]+$|)
+  end
+
+  defp validate_uploaded_image_path(changeset, field, local_pattern) do
+    validate_change(changeset, field, fn ^field, value ->
+      cond do
+        is_nil(value) or value == "" ->
+          []
+
+        is_binary(value) and Regex.match?(local_pattern, value) ->
+          []
+
+        valid_http_url?(value) ->
+          []
+
+        true ->
+          [{field, "must be a valid uploaded image path"}]
+      end
+    end)
+  end
+
+  defp valid_http_url?(value) when is_binary(value) do
+    uri = URI.parse(value)
+    uri.scheme in ["http", "https"] and is_binary(uri.host) and uri.host != ""
+  end
+
+  defp valid_http_url?(_), do: false
+
+  defp validate_profile_links(changeset) do
+    validate_change(changeset, :profile_links, fn :profile_links, profile_links ->
+      case Dialectic.Accounts.ProfileLinks.validate_storage(profile_links) do
+        :ok -> []
+        {:error, message} -> [profile_links: message]
+      end
+    end)
   end
 
   # Normalizes a blank string change to nil so optional fields don't

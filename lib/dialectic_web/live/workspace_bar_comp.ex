@@ -56,7 +56,7 @@ defmodule DialecticWeb.WorkspaceBarComp do
             title="Open reader view"
           >
             <.icon name="hero-document-text" class="h-4 w-4" />
-            <span>Reader</span>
+            <span class={mode_label_classes(@compact)}>Reader</span>
           </.link>
 
           <.link
@@ -69,7 +69,7 @@ defmodule DialecticWeb.WorkspaceBarComp do
             title="Open grid view"
           >
             <.icon name="hero-squares-2x2" class="h-4 w-4" />
-            <span>Grid</span>
+            <span class={mode_label_classes(@compact)}>Grid</span>
           </.link>
         </div>
       </div>
@@ -106,7 +106,7 @@ defmodule DialecticWeb.WorkspaceBarComp do
           aria-label={search_button_label(@mode)}
         >
           <.icon name="hero-magnifying-glass" class="h-4 w-4" />
-          <span class="hidden sm:inline">Search</span>
+          <span class={action_label_classes(@compact)}>Search</span>
           <kbd class={kbd_classes(@compact)}>
             ⌘K
           </kbd>
@@ -129,7 +129,7 @@ defmodule DialecticWeb.WorkspaceBarComp do
           }
         >
           <.icon name="hero-bookmark" class="h-4 w-4" />
-          <span class="hidden sm:inline">Highlights</span>
+          <span class={action_label_classes(@compact)}>Highlights</span>
           <span
             :if={@highlights_count > 0}
             aria-hidden="true"
@@ -149,7 +149,7 @@ defmodule DialecticWeb.WorkspaceBarComp do
           aria-label={share_button_label(@mode)}
         >
           <.icon name="hero-share" class="h-4 w-4" />
-          <span class="hidden sm:inline">Share</span>
+          <span class={action_label_classes(@compact)}>Share</span>
         </button>
       </div>
     </div>
@@ -204,6 +204,9 @@ defmodule DialecticWeb.WorkspaceBarComp do
     ]
   end
 
+  defp mode_label_classes(true), do: "hidden lg:inline"
+  defp mode_label_classes(false), do: "inline"
+
   defp divider_classes(true) do
     "hidden h-4 w-px bg-slate-200 sm:block"
   end
@@ -226,8 +229,11 @@ defmodule DialecticWeb.WorkspaceBarComp do
     ]
   end
 
+  defp action_label_classes(true), do: "hidden xl:inline"
+  defp action_label_classes(false), do: "hidden sm:inline"
+
   defp kbd_classes(true) do
-    "hidden rounded-md border border-slate-200 bg-slate-100 px-1 py-0.5 text-[9px] font-semibold text-slate-500 sm:inline-flex"
+    "hidden rounded-md border border-slate-200 bg-slate-100 px-1 py-0.5 text-[9px] font-semibold text-slate-500 2xl:inline-flex"
   end
 
   defp kbd_classes(false) do
