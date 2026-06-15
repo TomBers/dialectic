@@ -457,6 +457,74 @@ defmodule DialecticWeb.SelectionActionsComp do
             </div>
 
             <%= if !@highlight_only do %>
+              <div class="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <button
+                  type="button"
+                  id={"selection-advanced-tools-toggle-#{@id}"}
+                  phx-click="toggle_advanced_tools"
+                  phx-target={@myself}
+                  class="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-slate-50"
+                >
+                  <span>
+                    <span class="block text-sm font-semibold text-slate-900">
+                      Critical thinking tools
+                    </span>
+                    <span class="block text-[11px] leading-4 text-slate-500">
+                      Probe the selected text from a more precise angle.
+                    </span>
+                  </span>
+                  <.icon
+                    name="hero-chevron-down"
+                    class={
+                      "h-4 w-4 text-slate-500 transition-transform" <>
+                        if(@advanced_tools_open, do: " rotate-180", else: "")
+                    }
+                  />
+                </button>
+
+                <%= if @advanced_tools_open do %>
+                  <div class="space-y-3 border-t border-slate-200 bg-slate-50/70 px-3 py-3">
+                    <div :for={section <- @advanced_tool_sections} class="space-y-2">
+                      <div class="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                        {section.title}
+                      </div>
+                      <div class="grid gap-2 sm:grid-cols-3">
+                        <button
+                          :for={tool <- section.tools}
+                          type="button"
+                          id={"selection-tool-#{@id}-#{tool.key}"}
+                          phx-click="critical_tool"
+                          phx-value-tool={tool.key}
+                          phx-target={@myself}
+                          disabled={!@can_edit || has_link_type?(@links, tool.key)}
+                          title={tool.title}
+                          class="group flex min-h-[86px] flex-col items-start justify-between rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <span class="space-y-1">
+                            <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100">
+                              <.icon name={tool.icon} class="h-4 w-4" />
+                            </span>
+                            <span class="block text-sm font-semibold leading-4 text-slate-900">
+                              {tool.label}
+                            </span>
+                            <span class="block text-[11px] leading-4 text-slate-500">
+                              {tool.blurb}
+                            </span>
+                          </span>
+                          <span class="mt-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-indigo-600">
+                            <%= if has_link_type?(@links, tool.key) do %>
+                              Added
+                            <% else %>
+                              Use this
+                            <% end %>
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+
               <div class="mt-3 rounded-2xl border border-slate-200 bg-slate-50/85 p-3 shadow-sm">
                 <form phx-submit="submit_input" phx-target={@myself} class="flex flex-col gap-2.5">
                   <div class="flex items-center justify-between gap-3">

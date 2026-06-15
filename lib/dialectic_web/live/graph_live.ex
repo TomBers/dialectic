@@ -28,6 +28,23 @@ defmodule DialecticWeb.GraphLive do
     steel_man: %{function: :steel_man, text_function: :steel_man_text, supports_text: true},
     what_if: %{function: :what_if, text_function: :what_if_text, supports_text: true}
   }
+
+  @critical_thinking_operations @critical_thinking_tools
+                                |> Map.keys()
+                                |> Enum.map(&Atom.to_string/1)
+  @node_creation_operations [
+                              "start_stream",
+                              "comment",
+                              "answer",
+                              "branch",
+                              "combine",
+                              "ideas",
+                              "explain",
+                              "selection_question",
+                              "deepdive",
+                              "regenerate"
+                            ] ++ @critical_thinking_operations
+  @structural_graph_operations ["delete" | @node_creation_operations]
   use DialecticWeb.GraphStreaming, preload_highlight_links: true
 
   alias Dialectic.Graph.{Vertex, GraphActions, Siblings}
@@ -1903,7 +1920,8 @@ defmodule DialecticWeb.GraphLive do
          existing_highlight,
          socket
        ) do
-    with :ok <- validate_selected_text(selected_text),
+    with :ok <- validate_can_edit(socket),
+         :ok <- validate_selected_text(selected_text),
          {:ok, node} <- find_node_safe(socket.assigns.graph_id, node_id),
          {:ok, tool_config} <- get_tool_config(tool),
          :ok <- validate_tool_supports_text(tool_config),
@@ -1917,6 +1935,9 @@ defmodule DialecticWeb.GraphLive do
 
       update_graph(socket, {nil, result_node}, Atom.to_string(tool))
     else
+      {:error, :locked} ->
+        {:noreply, put_flash(socket, :error, "This graph is locked")}
+
       {:error, :empty_text} ->
         {:noreply, put_flash(socket, :error, "Please select some text")}
 
@@ -2092,19 +2113,7 @@ defmodule DialecticWeb.GraphLive do
       end)
       |> then(fn s ->
         # Ensure newly created nodes are selected immediately
-        if operation in [
-             "start_stream",
-             "comment",
-             "answer",
-             "branch",
-             "combine",
-             "ideas",
-             "explain",
-             "selection_question",
-             "deepdive",
-             "regenerate"
-           ] &&
-             node && Map.get(node, :id) do
+        if operation in @node_creation_operations && node && Map.get(node, :id) do
           push_event(s, "center_node", %{id: node.id})
         else
           s
@@ -2123,19 +2132,7 @@ defmodule DialecticWeb.GraphLive do
 
     # Broadcast structural changes to other users (new nodes created, etc.)
     # Skip for operations that don't change graph structure
-    if operation in [
-         "start_stream",
-         "comment",
-         "answer",
-         "branch",
-         "combine",
-         "ideas",
-         "explain",
-         "selection_question",
-         "deepdive",
-         "regenerate",
-         "delete"
-       ] do
+    if operation in @structural_graph_operations do
       PubSub.broadcast(
         Dialectic.PubSub,
         socket.assigns.graph_topic,

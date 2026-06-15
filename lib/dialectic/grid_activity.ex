@@ -240,6 +240,7 @@ defmodule Dialectic.GridActivity do
       "node.selection_explained" -> "#{actor} asked about selected text."
       "node.selection_question.created" -> "#{actor} asked a question about selected text."
       "node.deep_dive.created" -> "#{actor} added a deep dive."
+      "node.critical_tool.created" -> "#{actor} used a critical thinking tool."
       "node.starting_point.created" -> "#{actor} added a new starting point."
       "node.regenerated" -> "#{actor} regenerated a node."
       "node.deleted" -> "#{actor} deleted a node."

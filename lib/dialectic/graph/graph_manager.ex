@@ -133,6 +133,21 @@ defmodule GraphManager do
     Dialectic.DbActions.DbWorker.save_snapshot(path, json, ts)
   end
 
+  defp persist_graph(path, graph) do
+    if Application.get_env(:dialectic, :sync_tasks_for_testing, false) do
+      save_graph_to_db(path, graph)
+    else
+      Task.Supervisor.start_child(Dialectic.TaskSupervisor, fn ->
+        save_graph_to_db(path, graph)
+      end)
+    end
+  end
+
+  defp persist_graph_now(path, graph) do
+    json = Serialise.graph_to_json(graph)
+    Dialectic.DbActions.Graphs.save_graph(path, json)
+  end
+
   def handle_call(:get_graph, _from, {graph_struct, graph}) do
     {:reply, {graph_struct, graph}, {graph_struct, graph}}
   end
@@ -265,14 +280,7 @@ defmodule GraphManager do
   end
 
   def handle_call({:save_graph, path}, _from, {graph_struct, graph}) do
-    result =
-      if Application.get_env(:dialectic, :sync_tasks_for_testing, false) do
-        save_graph_to_db(path, graph)
-      else
-        Task.Supervisor.start_child(Dialectic.TaskSupervisor, fn ->
-          save_graph_to_db(path, graph)
-        end)
-      end
+    result = persist_graph(path, graph)
 
     {:reply, result, {graph_struct, graph}}
   end
@@ -307,6 +315,7 @@ defmodule GraphManager do
       {_id, vertex} ->
         updated_vertex = Map.merge(vertex, fields)
         :digraph.add_vertex(graph, node_id, updated_vertex)
+        persist_graph_now(graph_struct.title, graph)
         {:reply, updated_vertex, {graph_struct, graph}}
 
       false ->
