@@ -98,13 +98,14 @@ defmodule Dialectic.Graph.GraphActions do
     - question: The comment text
     - prefix: Optional prefix to prepend to the comment
   """
-  def comment({graph_id, node, user, _live_view_topic}, question, prefix \\ "") do
+  def comment({graph_id, node, user, _live_view_topic}, question, prefix \\ "", opts \\ []) do
     GraphManager.add_child(
       graph_id,
       [node],
       fn _ -> prefix <> question end,
       "user",
-      user
+      user,
+      opts
     )
   end
 
@@ -262,6 +263,13 @@ defmodule Dialectic.Graph.GraphActions do
       {^tool_key, class, llm_fn, _doc} ->
         content_override = Keyword.get(opts, :content_override)
 
+        add_child_opts =
+          if content_override do
+            [fields: %{source_text: content_override}]
+          else
+            []
+          end
+
         GraphManager.add_child(
           graph_id,
           [node],
@@ -275,7 +283,8 @@ defmodule Dialectic.Graph.GraphActions do
             ])
           end,
           class,
-          user
+          user,
+          add_child_opts
         )
     end
   end
@@ -299,20 +308,11 @@ defmodule Dialectic.Graph.GraphActions do
         {graph_id, node, user, live_view_topic},
         selected_text
       ) do
-    tool_node =
-      apply_thinking_tool(
-        tool_key,
-        {graph_id, node, user, live_view_topic},
-        content_override: selected_text
-      )
-
-    if tool_node do
-      GraphManager.update_vertex_fields(graph_id, tool_node.id, %{
-        source_text: selected_text
-      })
-
-      GraphManager.find_node_by_id(graph_id, tool_node.id)
-    end
+    apply_thinking_tool(
+      tool_key,
+      {graph_id, node, user, live_view_topic},
+      content_override: selected_text
+    )
   end
 
   # Generate public API functions for each thinking tool
@@ -454,16 +454,9 @@ defmodule Dialectic.Graph.GraphActions do
         [node],
         fn _ -> question_text end,
         "question",
-        user
+        user,
+        fields: %{source_text: selected_text}
       )
-
-    # Store the selected text as metadata on the question node
-    GraphManager.update_vertex_fields(graph_id, question_node.id, %{
-      source_text: selected_text
-    })
-
-    # Reload the question node to get the updated version
-    question_node = GraphManager.find_node_by_id(graph_id, question_node.id)
 
     # Generate answer with minimal context (focused on the selection)
     answer_node =

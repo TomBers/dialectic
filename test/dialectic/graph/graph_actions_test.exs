@@ -52,8 +52,11 @@ defmodule Dialectic.Graph.GraphActionsTest do
       assert function_exported?(Dialectic.Graph.GraphActions, :assumptions_text, 2)
       assert function_exported?(Dialectic.Graph.GraphActions, :counterexample_text, 2)
       assert function_exported?(Dialectic.Graph.GraphActions, :implications_text, 2)
-      assert function_exported?(Dialectic.Graph.GraphActions, :steel_man_text, 2)
+      assert function_exported?(Dialectic.Graph.GraphActions, :blind_spots_text, 2)
       assert function_exported?(Dialectic.Graph.GraphActions, :says_who_text, 2)
+      assert function_exported?(Dialectic.Graph.GraphActions, :who_disagrees_text, 2)
+      assert function_exported?(Dialectic.Graph.GraphActions, :steel_man_text, 2)
+      assert function_exported?(Dialectic.Graph.GraphActions, :what_if_text, 2)
     end
   end
 
@@ -126,11 +129,11 @@ defmodule Dialectic.Graph.GraphActionsTest do
     # - assumptions/assumptions_text
     # - counterexample/counterexample_text
     # - implications/implications_text
-    # - blind_spots (full node only)
+    # - blind_spots/blind_spots_text
     # - says_who/says_who_text
-    # - who_disagrees (full node only)
+    # - who_disagrees/who_disagrees_text
     # - steel_man/steel_man_text
-    # - what_if (full node only)
+    # - what_if/what_if_text
 
     test "all critical thinking tools have correct arity" do
       # Full node operations (2 params: graph_action_params tuple, opts)
@@ -149,8 +152,11 @@ defmodule Dialectic.Graph.GraphActionsTest do
       assert 2 == Function.info(&GraphActions.assumptions_text/2)[:arity]
       assert 2 == Function.info(&GraphActions.counterexample_text/2)[:arity]
       assert 2 == Function.info(&GraphActions.implications_text/2)[:arity]
-      assert 2 == Function.info(&GraphActions.steel_man_text/2)[:arity]
+      assert 2 == Function.info(&GraphActions.blind_spots_text/2)[:arity]
       assert 2 == Function.info(&GraphActions.says_who_text/2)[:arity]
+      assert 2 == Function.info(&GraphActions.who_disagrees_text/2)[:arity]
+      assert 2 == Function.info(&GraphActions.steel_man_text/2)[:arity]
+      assert 2 == Function.info(&GraphActions.what_if_text/2)[:arity]
     end
   end
 end

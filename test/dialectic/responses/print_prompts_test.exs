@@ -133,8 +133,8 @@ defmodule Dialectic.Responses.PrintPromptsTest do
     print_prompt("Structured — Related ideas", related)
 
     print_prompt(
-      "Structured — Related Ideas",
-      Prompts.related_ideas(context_a, "Temporal difference learning")
+      "Structured — Clarify Terms",
+      Prompts.clarify(context_a, "Ambiguity in the phrase 'learning from feedback'")
     )
 
     :ok

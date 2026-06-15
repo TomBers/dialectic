@@ -143,11 +143,6 @@ defmodule GraphManager do
     end
   end
 
-  defp persist_graph_now(path, graph) do
-    json = Serialise.graph_to_json(graph)
-    Dialectic.DbActions.Graphs.save_graph(path, json)
-  end
-
   def handle_call(:get_graph, _from, {graph_struct, graph}) do
     {:reply, {graph_struct, graph}, {graph_struct, graph}}
   end
@@ -315,7 +310,6 @@ defmodule GraphManager do
       {_id, vertex} ->
         updated_vertex = Map.merge(vertex, fields)
         :digraph.add_vertex(graph, node_id, updated_vertex)
-        persist_graph_now(graph_struct.title, graph)
         {:reply, updated_vertex, {graph_struct, graph}}
 
       false ->
@@ -522,7 +516,7 @@ defmodule GraphManager do
     GenServer.call(via_tuple(path), {:find_node_by_id, node_id})
   end
 
-  def add_child(graph_id, parents, llm_fn, class, user) do
+  def add_child(graph_id, parents, llm_fn, class, user, opts \\ []) do
     content =
       case class do
         c when c in ["user", "question"] ->
@@ -543,8 +537,16 @@ defmodule GraphManager do
         end
       end)
 
+    node_fields = Keyword.get(opts, :fields, %{})
+
     node =
-      add_node(graph_id, %Vertex{content: content, class: class, user: user, parent: parent_group})
+      add_node(
+        graph_id,
+        Map.merge(
+          %Vertex{content: content, class: class, user: user, parent: parent_group},
+          node_fields
+        )
+      )
 
     # Stream response to the Node using supervised task
     if Application.get_env(:dialectic, :sync_tasks_for_testing, false) do

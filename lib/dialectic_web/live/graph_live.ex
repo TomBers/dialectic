@@ -41,7 +41,6 @@ defmodule DialecticWeb.GraphLive do
                               "ideas",
                               "explain",
                               "selection_question",
-                              "deepdive",
                               "regenerate"
                             ] ++ @critical_thinking_operations
   @structural_graph_operations ["delete" | @node_creation_operations]
@@ -1670,14 +1669,12 @@ defmodule DialecticWeb.GraphLive do
     comment_node =
       GraphActions.comment(
         graph_action_params(socket, parent_node),
-        full_comment
+        full_comment,
+        "",
+        fields: %{source_text: selected_text}
       )
 
     if comment_node do
-      GraphManager.update_vertex_fields(socket.assigns.graph_id, comment_node.id, %{
-        source_text: selected_text
-      })
-
       if highlight do
         Highlights.add_link(highlight.id, comment_node.id, "comment")
       end
