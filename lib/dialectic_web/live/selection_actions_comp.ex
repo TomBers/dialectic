@@ -7,7 +7,6 @@ defmodule DialecticWeb.SelectionActionsComp do
   """
   use DialecticWeb, :live_component
   alias Dialectic.Highlights
-  alias DialecticWeb.ColUtils
 
   @critical_tool_actions %{
     "clarify" => :clarify,
@@ -253,10 +252,6 @@ defmodule DialecticWeb.SelectionActionsComp do
 
   defp has_pros_or_cons?(links) do
     has_link_type?(links, "pro") || has_link_type?(links, "con")
-  end
-
-  defp advanced_tool_used?(links, tool_key) do
-    has_link_type?(links, tool_key)
   end
 
   @impl true
