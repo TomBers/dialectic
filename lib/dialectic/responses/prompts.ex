@@ -362,9 +362,9 @@ defmodule Dialectic.Responses.Prompts do
       """
       The Foundation represents existing discussion.
 
-      **Your task:** Perform conceptual clarification on: **#{sanitize_title(claim)}**
+      **Your task:** Use **Clarify Terms** on: **#{sanitize_title(claim)}**
 
-      Examine this claim through the lens of "What do you mean by...?" — the most fundamental move in philosophical inquiry. Focus on:
+      Ask "What do we mean?" Examine this claim through the lens of "What do you mean by...?" — the most fundamental move in philosophical inquiry. Focus on:
 
       - **Key terms:** Identify 2-4 terms or phrases that carry significant conceptual weight. For each, explore: How is it being used here? What alternative definitions exist? What does each definition include or exclude?
       - **Hidden ambiguities:** Surface places where the same word might be doing double duty, or where vagueness masks important distinctions
@@ -389,7 +389,7 @@ defmodule Dialectic.Responses.Prompts do
       """
       A specific statement or concept was highlighted from the text above: **#{sanitize_title(selection_text)}**
 
-      **Your task:** Perform conceptual clarification — ask "What do you mean by...?" of this selection.
+      **Your task:** Use **Clarify Terms** on this selection — ask "What do we mean?" and "What do you mean by...?"
 
       Focus on:
       - **Key terms:** Identify 2-4 terms or phrases that carry significant conceptual weight. For each, explore: How is it being used here? What alternative definitions exist? What does each definition include or exclude?
@@ -415,7 +415,7 @@ defmodule Dialectic.Responses.Prompts do
       """
       The Foundation represents existing discussion.
 
-      **Your task:** Surface the hidden premises underlying: **#{sanitize_title(claim)}**
+      **Your task:** Use **Assumptions** to reveal what must be true for: **#{sanitize_title(claim)}**
 
       Ask "What has to be true for this claim to hold?" Excavate assumptions across multiple dimensions:
 
@@ -447,7 +447,7 @@ defmodule Dialectic.Responses.Prompts do
       """
       A specific statement or concept was highlighted from the text above: **#{sanitize_title(selection_text)}**
 
-      **Your task:** Surface the hidden premises underlying this selection — ask "What has to be true?"
+      **Your task:** Use **Assumptions** on this selection — reveal what must be true and ask "What has to be true?"
 
       Excavate assumptions across multiple dimensions:
       - **Factual assumptions:** What empirical claims does this take for granted? What would have to be true about the world?
@@ -478,9 +478,9 @@ defmodule Dialectic.Responses.Prompts do
       """
       The Foundation represents existing discussion.
 
-      **Your task:** Test the boundaries of: **#{sanitize_title(claim)}**
+      **Your task:** Use **Test** to challenge: **#{sanitize_title(claim)}**
 
-      Ask "Is that always true?" and hunt for cases where it breaks down:
+      Ask "Is that always true?" and hunt for counterexamples or cases where it breaks down:
 
       - **Direct counterexamples:** Find concrete, real-world cases where the claim demonstrably fails. Historical examples, documented cases, or well-known instances carry special weight.
       - **Edge cases:** Explore boundary conditions. What happens at extremes? In unusual circumstances? When variables are pushed to their limits?
@@ -510,9 +510,9 @@ defmodule Dialectic.Responses.Prompts do
       """
       A specific statement or concept was highlighted from the text above: **#{sanitize_title(selection_text)}**
 
-      **Your task:** Test the boundaries of this selection — ask "Is that always true?"
+      **Your task:** Use **Test** on this selection — ask "Is that always true?"
 
-      Hunt for cases where it breaks down:
+      Hunt for counterexamples or cases where it breaks down:
       - **Direct counterexamples:** Find concrete, real-world cases where this demonstrably fails. Historical examples, documented cases, or well-known instances carry special weight.
       - **Edge cases:** Explore boundary conditions. What happens at extremes? In unusual circumstances?
       - **Domain boundaries:** Where does this apply and where does it not? What's the scope of validity?
@@ -541,9 +541,9 @@ defmodule Dialectic.Responses.Prompts do
       """
       The Foundation represents existing discussion.
 
-      **Your task:** Trace the implications of: **#{sanitize_title(claim)}**
+      **Your task:** Use **Implications** to trace what follows from: **#{sanitize_title(claim)}**
 
-      Ask "So what?" and follow the consequences relentlessly:
+      Ask "If true, then what?" and follow the consequences relentlessly:
 
       - **Immediate implications:** If this is true, what else must be true? What follows directly and necessarily?
       - **Practical implications:** What should we DO differently if this is correct? How would it change decisions, policies, or behaviors?
@@ -569,7 +569,7 @@ defmodule Dialectic.Responses.Prompts do
       """
       A specific statement or concept was highlighted from the text above: **#{sanitize_title(selection_text)}**
 
-      **Your task:** Trace the implications of this selection — ask "So what?"
+      **Your task:** Use **Implications** on this selection — ask "If true, then what?"
 
       Follow the consequences relentlessly:
       - **Immediate implications:** If this is true, what else must be true? What follows directly and necessarily?
@@ -596,9 +596,9 @@ defmodule Dialectic.Responses.Prompts do
       """
       The Foundation represents existing discussion.
 
-      **Your task:** Identify the blind spots in: **#{sanitize_title(claim)}**
+      **Your task:** Use **Blind Spots** to identify what is missing from: **#{sanitize_title(claim)}**
 
-      Ask "What's missing?" and illuminate what remains unseen:
+      Ask "What are we missing?" and illuminate what remains unseen:
 
       - **Missing perspectives:** Whose voices, experiences, or viewpoints are absent? Who would see this differently? What would this look like from another culture, time period, discipline, or social position?
       - **Missing evidence:** What data, research, or empirical investigation would help? What questions remain unanswered? What would we need to know to be more confident?
@@ -629,7 +629,7 @@ defmodule Dialectic.Responses.Prompts do
       """
       A specific statement or concept was highlighted from the text above: **#{sanitize_title(selection_text)}**
 
-      **Your task:** Identify the blind spots in this selection — ask "What's missing?"
+      **Your task:** Use **Blind Spots** on this selection — ask "What are we missing?"
 
       Illuminate what remains unseen:
       - **Missing perspectives:** Whose voices or viewpoints are absent? Who would see this differently?
@@ -663,7 +663,7 @@ defmodule Dialectic.Responses.Prompts do
       """
       The Foundation represents existing discussion.
 
-      **Your task:** Examine the origin and authority behind: **#{sanitize_title(claim)}**
+      **Your task:** Use **Source Check** to examine the authority and evidence behind: **#{sanitize_title(claim)}**
 
       Ask "Says who?" and investigate the foundations of credibility:
 
@@ -693,7 +693,7 @@ defmodule Dialectic.Responses.Prompts do
       """
       A specific statement or concept was highlighted from the text above: **#{sanitize_title(selection_text)}**
 
-      **Your task:** Examine the origin and authority behind this selection — ask "Says who?"
+      **Your task:** Use **Source Check** on this selection — ask "Says who?" and examine the authority and evidence behind it.
 
       Investigate the foundations of credibility:
       - **Origin:** Where does this claim come from? Who first articulated it? In what context did it emerge?
@@ -722,7 +722,7 @@ defmodule Dialectic.Responses.Prompts do
       """
       The Foundation represents existing discussion.
 
-      **Your task:** Map the landscape of dissent around: **#{sanitize_title(claim)}**
+      **Your task:** Use **Who Disagrees** to map other perspectives around: **#{sanitize_title(claim)}**
 
       Ask "Who disagrees?" and survey the full range of opposition:
 
@@ -752,7 +752,7 @@ defmodule Dialectic.Responses.Prompts do
       """
       A specific statement or concept was highlighted from the text above: **#{sanitize_title(selection_text)}**
 
-      **Your task:** Map the landscape of dissent around this selection — ask "Who disagrees?"
+      **Your task:** Use **Who Disagrees** on this selection — ask "Who disagrees?" and map other perspectives.
 
       Survey the full range of opposition:
       - **Named critics:** Identify specific thinkers or scholars who have argued against this. What are their main objections?
@@ -781,7 +781,7 @@ defmodule Dialectic.Responses.Prompts do
       """
       The Foundation represents existing discussion.
 
-      **Your task:** Construct the strongest possible version of: **#{sanitize_title(claim)}**
+      **Your task:** Use **Steel Man** to construct the strongest, most charitable version of: **#{sanitize_title(claim)}**
 
       Steel-man this position by building the argument a brilliant, well-informed advocate would make:
 
@@ -810,7 +810,7 @@ defmodule Dialectic.Responses.Prompts do
       """
       A specific statement or concept was highlighted from the text above: **#{sanitize_title(selection_text)}**
 
-      **Your task:** Construct the strongest possible version of this selection — steel-man the argument.
+      **Your task:** Use **Steel Man** on this selection — construct the strongest, most charitable version of the argument.
 
       Build the case a brilliant, well-informed advocate would make:
       - **Charitable interpretation:** What's the strongest version of what's being claimed?
@@ -838,7 +838,7 @@ defmodule Dialectic.Responses.Prompts do
       """
       The Foundation represents existing discussion.
 
-      **Your task:** Explore counterfactuals around: **#{sanitize_title(claim)}**
+      **Your task:** Use **What If** to explore hypothetical scenarios around: **#{sanitize_title(claim)}**
 
       Ask "What if we change X?" and investigate how the claim transforms:
 
@@ -872,7 +872,7 @@ defmodule Dialectic.Responses.Prompts do
       """
       A specific statement or concept was highlighted from the text above: **#{sanitize_title(selection_text)}**
 
-      **Your task:** Explore counterfactuals around this selection — ask "What if we change X?"
+      **Your task:** Use **What If** on this selection — explore hypothetical scenarios by asking "What if we change X?"
 
       Investigate how the claim transforms:
       - **Parameter variation:** What if key quantities or timeframes were different? Where are the thresholds?

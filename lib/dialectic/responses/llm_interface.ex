@@ -364,8 +364,13 @@ defmodule Dialectic.Responses.LlmInterface do
 
     if content_override do
       # Selection-targeted tools should analyze the selected text while retaining
-      # the surrounding graph context as the Foundation for the prompt.
-      {base_context, content_override}
+      # both the surrounding graph context and the containing node text as the Foundation.
+      context =
+        [base_context, node.content || ""]
+        |> Enum.reject(&(&1 == ""))
+        |> Enum.join("\n\n")
+
+      {context, content_override}
     else
       {base_context, node.content || ""}
     end
