@@ -233,17 +233,52 @@ defmodule Dialectic.Responses.PromptsTest do
     end
   end
 
-  describe "deep_dive/2" do
-    test "generates prompt for in-depth exploration" do
-      context = "Overview of the topic"
-      topic = "Machine Learning"
+  describe "critical thinking tool prompt alignment" do
+    test "node prompts reflect the user-facing action labels" do
+      context = "Prior discussion"
+      claim = "Public transport should be free"
 
-      result = Prompts.deep_dive(context, topic)
+      assert Prompts.clarify(context, claim) =~ "Use **Clarify Terms**"
+      assert Prompts.clarify(context, claim) =~ "What do we mean?"
 
-      assert result =~ topic
-      assert result =~ "deep dive"
-      assert result =~ "BEYOND the overview"
-      assert result =~ "beyond normal 500-word limit"
+      assert Prompts.assumptions(context, claim) =~ "Use **Assumptions**"
+      assert Prompts.assumptions(context, claim) =~ "What has to be true"
+
+      assert Prompts.counterexample(context, claim) =~ "Use **Test**"
+      assert Prompts.counterexample(context, claim) =~ "Is that always true?"
+
+      assert Prompts.implications(context, claim) =~ "Use **Implications**"
+      assert Prompts.implications(context, claim) =~ "If true, then what?"
+
+      assert Prompts.blind_spots(context, claim) =~ "Use **Blind Spots**"
+      assert Prompts.blind_spots(context, claim) =~ "What are we missing?"
+
+      assert Prompts.says_who(context, claim) =~ "Use **Source Check**"
+      assert Prompts.says_who(context, claim) =~ "Says who?"
+
+      assert Prompts.who_disagrees(context, claim) =~ "Use **Who Disagrees**"
+      assert Prompts.who_disagrees(context, claim) =~ "other perspectives"
+
+      assert Prompts.steel_man(context, claim) =~ "Use **Steel Man**"
+      assert Prompts.steel_man(context, claim) =~ "strongest, most charitable version"
+
+      assert Prompts.what_if(context, claim) =~ "Use **What If**"
+      assert Prompts.what_if(context, claim) =~ "hypothetical scenarios"
+    end
+
+    test "selection prompts reflect the user-facing action labels" do
+      context = "Containing paragraph and prior context"
+      selection = "the state should fund art"
+
+      assert Prompts.clarify_selection(context, selection) =~ "Use **Clarify Terms**"
+      assert Prompts.assumptions_selection(context, selection) =~ "Use **Assumptions**"
+      assert Prompts.counterexample_selection(context, selection) =~ "Use **Test**"
+      assert Prompts.implications_selection(context, selection) =~ "Use **Implications**"
+      assert Prompts.blind_spots_selection(context, selection) =~ "Use **Blind Spots**"
+      assert Prompts.says_who_selection(context, selection) =~ "Use **Source Check**"
+      assert Prompts.who_disagrees_selection(context, selection) =~ "Use **Who Disagrees**"
+      assert Prompts.steel_man_selection(context, selection) =~ "Use **Steel Man**"
+      assert Prompts.what_if_selection(context, selection) =~ "Use **What If**"
     end
   end
 end

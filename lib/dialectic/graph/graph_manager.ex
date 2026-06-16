@@ -133,6 +133,16 @@ defmodule GraphManager do
     Dialectic.DbActions.DbWorker.save_snapshot(path, json, ts)
   end
 
+  defp persist_graph(path, graph) do
+    if Application.get_env(:dialectic, :sync_tasks_for_testing, false) do
+      save_graph_to_db(path, graph)
+    else
+      Task.Supervisor.start_child(Dialectic.TaskSupervisor, fn ->
+        save_graph_to_db(path, graph)
+      end)
+    end
+  end
+
   def handle_call(:get_graph, _from, {graph_struct, graph}) do
     {:reply, {graph_struct, graph}, {graph_struct, graph}}
   end
@@ -265,14 +275,7 @@ defmodule GraphManager do
   end
 
   def handle_call({:save_graph, path}, _from, {graph_struct, graph}) do
-    result =
-      if Application.get_env(:dialectic, :sync_tasks_for_testing, false) do
-        save_graph_to_db(path, graph)
-      else
-        Task.Supervisor.start_child(Dialectic.TaskSupervisor, fn ->
-          save_graph_to_db(path, graph)
-        end)
-      end
+    result = persist_graph(path, graph)
 
     {:reply, result, {graph_struct, graph}}
   end
@@ -513,7 +516,7 @@ defmodule GraphManager do
     GenServer.call(via_tuple(path), {:find_node_by_id, node_id})
   end
 
-  def add_child(graph_id, parents, llm_fn, class, user) do
+  def add_child(graph_id, parents, llm_fn, class, user, opts \\ []) do
     content =
       case class do
         c when c in ["user", "question"] ->
@@ -534,8 +537,16 @@ defmodule GraphManager do
         end
       end)
 
+    node_fields = Keyword.get(opts, :fields, %{})
+
     node =
-      add_node(graph_id, %Vertex{content: content, class: class, user: user, parent: parent_group})
+      add_node(
+        graph_id,
+        Map.merge(
+          %Vertex{content: content, class: class, user: user, parent: parent_group},
+          node_fields
+        )
+      )
 
     # Stream response to the Node using supervised task
     if Application.get_env(:dialectic, :sync_tasks_for_testing, false) do

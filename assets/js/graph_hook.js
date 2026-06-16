@@ -2191,7 +2191,6 @@ const graphHook = {
       "explain",
       "branch",
       "ideas",
-      "deepdive",
       "comment",
       "answer",
       "combine",

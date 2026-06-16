@@ -92,9 +92,9 @@ defmodule Dialectic.Responses.Prompts do
     """
   end
 
-  defp citation_encouragement_for_deep_dive do
+  defp epistemic_honesty_footer do
     """
-    **Source references:** A deep dive benefits greatly from engagement with primary texts. Quote directly from foundational works, seminal papers, or authoritative sources using blockquotes (> ). Reference specific authors, titles, chapters, or studies. Where scholars or thinkers disagree, cite the specific works representing each position. Link to key references using inline links ([text](url)) — prefer stable, authoritative URLs such as DOI links, arXiv, Wikipedia, Stanford Encyclopedia of Philosophy, or official publisher pages.
+    **Epistemic honesty:** Do not invent named sources, critics, studies, works, quotes, or links. If you are uncertain, say so explicitly and describe what would need to be checked. Clearly distinguish what follows from the Foundation from broader background knowledge or plausible lines of inquiry.
     """
   end
 
@@ -349,52 +349,550 @@ defmodule Dialectic.Responses.Prompts do
     ])
   end
 
-  @doc """
-  Provide a deeper exploration of a specific text selection.
-  """
-  @spec deep_dive_selection(String.t(), String.t()) :: String.t()
-  def deep_dive_selection(context, selection_text) do
-    join_blocks([
-      frame_minimal_context(context),
-      """
-      A specific topic was highlighted from the text above: **#{sanitize_title(selection_text)}**
-
-      **Your task:** Write a deep dive specifically on **#{sanitize_title(selection_text)}** that goes significantly deeper than the context provided.
-
-      Focus on:
-      - Surprising or counterintuitive aspects that challenge common understanding of this concept
-      - Adding technical depth, nuance, or complexity specific to this concept
-      - Vivid real-world examples, case studies, or historical episodes that bring the concept to life
-      - Active debates, unresolved tensions, or open questions among experts
-      - Exploring implications, edge cases, or subtleties that most treatments overlook
-
-      You may write at length (beyond normal 500-word limit). Focus on adding substantial new understanding.
-      """,
-      citation_encouragement_for_deep_dive()
-    ])
-  end
+  # ---- Cluster 1: Core Inquiry Moves -----------------------------------------
 
   @doc """
-  Provide a deeper exploration of a topic for advanced learners.
+  Conceptual clarification — “What do you mean by…?”
+  Identifies how key terms are being used and surfaces ambiguity.
   """
-  @spec deep_dive(String.t(), String.t()) :: String.t()
-  def deep_dive(context, topic) do
+  @spec clarify(String.t(), String.t()) :: String.t()
+  def clarify(context, claim) do
     join_blocks([
       frame_context(context),
       """
-      The Foundation provides an overview of **#{sanitize_title(topic)}**.
+      The Foundation represents existing discussion.
 
-      **Your task:** Write a deep dive that goes BEYOND the overview by:
-      - Leading with the most surprising, counterintuitive, or commonly misunderstood aspect of this topic
-      - Adding technical depth, nuance, or complexity
-      - Using vivid real-world examples, case studies, or historical episodes that make abstract ideas tangible
-      - Surfacing active debates, unresolved tensions, or open questions among experts
-      - Exploring implications, edge cases, or subtleties that most treatments overlook
+      **Your task:** Use **Clarify Terms** on: **#{sanitize_title(claim)}**
 
-      You may write at length (beyond normal 500-word limit). Focus on adding substantial new understanding.
+      Ask "What do we mean?" Examine this claim through the lens of "What do you mean by...?" — the most fundamental move in philosophical inquiry. Focus on:
+
+      - **Key terms:** Identify 2-4 terms or phrases that carry significant conceptual weight. For each, explore: How is it being used here? What alternative definitions exist? What does each definition include or exclude?
+      - **Hidden ambiguities:** Surface places where the same word might be doing double duty, or where vagueness masks important distinctions
+      - **Conceptual boundaries:** Where does this concept end and neighboring concepts begin? What's the difference between this and closely related ideas?
+      - **Operational definitions:** How would we actually recognize or measure what's being claimed? What would count as evidence?
+      - **Stipulative vs. descriptive:** Is the claim defining terms a certain way (stipulative) or describing how they're actually used (descriptive)? Does this matter for evaluating the claim?
+
+      The goal is not to attack the claim but to sharpen it — to transform fuzzy intuitions into precise propositions that can be properly evaluated.
       """,
-      citation_encouragement_for_deep_dive(),
+      citation_encouragement(),
       anti_repetition_footer()
     ])
   end
+
+  @doc """
+  Conceptual clarification for a specific text selection.
+  """
+  @spec clarify_selection(String.t(), String.t()) :: String.t()
+  def clarify_selection(context, selection_text) do
+    join_blocks([
+      frame_minimal_context(context),
+      """
+      A specific statement or concept was highlighted from the text above: **#{sanitize_title(selection_text)}**
+
+      **Your task:** Use **Clarify Terms** on this selection — ask "What do we mean?" and "What do you mean by...?"
+
+      Focus on:
+      - **Key terms:** Identify 2-4 terms or phrases that carry significant conceptual weight. For each, explore: How is it being used here? What alternative definitions exist? What does each definition include or exclude?
+      - **Hidden ambiguities:** Surface places where the same word might be doing double duty, or where vagueness masks important distinctions
+      - **Conceptual boundaries:** Where does this concept end and neighboring concepts begin? What's the difference between this and closely related ideas?
+      - **Operational definitions:** How would we actually recognize or measure what's being claimed? What would count as evidence?
+      - **Stipulative vs. descriptive:** Is the claim defining terms a certain way or describing how they're actually used?
+
+      The goal is not to attack the selection but to sharpen it — to transform fuzzy intuitions into precise propositions that can be properly evaluated.
+      """,
+      citation_encouragement()
+    ])
+  end
+
+  @doc """
+  Surface hidden premises — "What has to be true?"
+  Excavates the factual, value, conceptual, and logical assumptions underlying a claim.
+  """
+  @spec assumptions(String.t(), String.t()) :: String.t()
+  def assumptions(context, claim) do
+    join_blocks([
+      frame_context(context),
+      """
+      The Foundation represents existing discussion.
+
+      **Your task:** Use **Assumptions** to reveal what must be true for: **#{sanitize_title(claim)}**
+
+      Ask "What has to be true for this claim to hold?" Excavate assumptions across multiple dimensions:
+
+      - **Factual assumptions:** What empirical claims does this argument take for granted? What would have to be true about the world?
+      - **Value assumptions:** What must we value, prioritize, or consider important? What ethical or aesthetic commitments are smuggled in?
+      - **Conceptual assumptions:** What definitions, categories, or frameworks are assumed? What conceptual scheme makes this claim intelligible?
+      - **Logical assumptions:** What inferential leaps occur? What causal claims are embedded? What's the assumed relationship between premises and conclusion?
+      - **Contextual assumptions:** What historical, cultural, or situational factors are taken as given? Who is the assumed audience?
+
+      For each assumption you surface:
+      1. State it explicitly
+      2. Assess how controversial or contestable it is
+      3. Note what happens to the argument if this assumption is challenged
+
+      The goal is to make the invisible scaffolding visible — to show what the claim is secretly standing on.
+      """,
+      citation_encouragement(),
+      anti_repetition_footer()
+    ])
+  end
+
+  @doc """
+  Surface hidden premises for a specific text selection.
+  """
+  @spec assumptions_selection(String.t(), String.t()) :: String.t()
+  def assumptions_selection(context, selection_text) do
+    join_blocks([
+      frame_minimal_context(context),
+      """
+      A specific statement or concept was highlighted from the text above: **#{sanitize_title(selection_text)}**
+
+      **Your task:** Use **Assumptions** on this selection — reveal what must be true and ask "What has to be true?"
+
+      Excavate assumptions across multiple dimensions:
+      - **Factual assumptions:** What empirical claims does this take for granted? What would have to be true about the world?
+      - **Value assumptions:** What must we value, prioritize, or consider important? What ethical commitments are smuggled in?
+      - **Conceptual assumptions:** What definitions, categories, or frameworks are assumed? What conceptual scheme makes this intelligible?
+      - **Logical assumptions:** What inferential leaps occur? What causal claims are embedded?
+      - **Contextual assumptions:** What historical, cultural, or situational factors are taken as given?
+
+      For each assumption you surface:
+      1. State it explicitly
+      2. Assess how controversial or contestable it is
+      3. Note what happens to the argument if this assumption is challenged
+
+      The goal is to make the invisible scaffolding visible — to show what this claim is secretly standing on.
+      """,
+      citation_encouragement()
+    ])
+  end
+
+  @doc """
+  Find counterexamples — "Is that always true?"
+  Identifies direct counterexamples, edge cases, and domain boundaries.
+  """
+  @spec counterexample(String.t(), String.t()) :: String.t()
+  def counterexample(context, claim) do
+    join_blocks([
+      frame_context(context),
+      """
+      The Foundation represents existing discussion.
+
+      **Your task:** Use **Test** to challenge: **#{sanitize_title(claim)}**
+
+      Ask "Is that always true?" and hunt for counterexamples or cases where it breaks down:
+
+      - **Direct counterexamples:** Find concrete, real-world cases where the claim demonstrably fails. Historical examples, documented cases, or well-known instances carry special weight.
+      - **Edge cases:** Explore boundary conditions. What happens at extremes? In unusual circumstances? When variables are pushed to their limits?
+      - **Domain boundaries:** Where does this claim apply and where does it not? What's the scope of validity? Are there entire contexts where it doesn't hold?
+      - **Thought experiments:** Construct hypothetical scenarios that test the claim's limits. What minimal changes would break it?
+      - **Category errors:** Are there types of cases that seem relevant but where the claim simply doesn't apply? Why not?
+
+      For each counterexample:
+      1. Describe it vividly and specifically
+      2. Explain why it constitutes a genuine challenge (not just an exception that proves the rule)
+      3. Assess whether it refutes the claim entirely, restricts its scope, or reveals needed qualifications
+
+      The goal is rigorous stress-testing — finding the cracks before committing to the claim.
+      """,
+      citation_encouragement(),
+      anti_repetition_footer()
+    ])
+  end
+
+  @doc """
+  Find counterexamples for a specific text selection.
+  """
+  @spec counterexample_selection(String.t(), String.t()) :: String.t()
+  def counterexample_selection(context, selection_text) do
+    join_blocks([
+      frame_minimal_context(context),
+      """
+      A specific statement or concept was highlighted from the text above: **#{sanitize_title(selection_text)}**
+
+      **Your task:** Use **Test** on this selection — ask "Is that always true?"
+
+      Hunt for counterexamples or cases where it breaks down:
+      - **Direct counterexamples:** Find concrete, real-world cases where this demonstrably fails. Historical examples, documented cases, or well-known instances carry special weight.
+      - **Edge cases:** Explore boundary conditions. What happens at extremes? In unusual circumstances?
+      - **Domain boundaries:** Where does this apply and where does it not? What's the scope of validity?
+      - **Thought experiments:** Construct hypothetical scenarios that test the limits. What minimal changes would break it?
+      - **Category errors:** Are there types of cases that seem relevant but where this simply doesn't apply?
+
+      For each counterexample:
+      1. Describe it vividly and specifically
+      2. Explain why it constitutes a genuine challenge
+      3. Assess whether it refutes the claim entirely, restricts its scope, or reveals needed qualifications
+
+      The goal is rigorous stress-testing — finding the cracks before committing to the claim.
+      """,
+      citation_encouragement()
+    ])
+  end
+
+  @doc """
+  Trace implications — "So what?"
+  Explores immediate, practical, conceptual, and uncomfortable consequences.
+  """
+  @spec implications(String.t(), String.t()) :: String.t()
+  def implications(context, claim) do
+    join_blocks([
+      frame_context(context),
+      """
+      The Foundation represents existing discussion.
+
+      **Your task:** Use **Implications** to trace what follows from: **#{sanitize_title(claim)}**
+
+      Ask "If true, then what?" and follow the consequences relentlessly:
+
+      - **Immediate implications:** If this is true, what else must be true? What follows directly and necessarily?
+      - **Practical implications:** What should we DO differently if this is correct? How would it change decisions, policies, or behaviors?
+      - **Conceptual implications:** What other beliefs or frameworks need revision? What becomes inconsistent with our existing commitments?
+      - **Uncomfortable implications:** What follows that we might not want to accept? Does this lead to conclusions that seem absurd, immoral, or counterintuitive (reductio ad absurdum)?
+      - **Second-order effects:** If people widely adopted this view, what would the downstream consequences be? What feedback loops might emerge?
+      - **Existential implications:** What does this mean for how we should live, what we should value, or who we should become?
+
+      Be thorough and unflinching. The test of a belief is whether we can accept where it leads. Surface implications the original claim might prefer to hide from.
+      """,
+      citation_encouragement(),
+      anti_repetition_footer()
+    ])
+  end
+
+  @doc """
+  Trace implications for a specific text selection.
+  """
+  @spec implications_selection(String.t(), String.t()) :: String.t()
+  def implications_selection(context, selection_text) do
+    join_blocks([
+      frame_minimal_context(context),
+      """
+      A specific statement or concept was highlighted from the text above: **#{sanitize_title(selection_text)}**
+
+      **Your task:** Use **Implications** on this selection — ask "If true, then what?"
+
+      Follow the consequences relentlessly:
+      - **Immediate implications:** If this is true, what else must be true? What follows directly and necessarily?
+      - **Practical implications:** What should we DO differently if this is correct? How would it change decisions or behaviors?
+      - **Conceptual implications:** What other beliefs or frameworks need revision? What becomes inconsistent?
+      - **Uncomfortable implications:** What follows that we might not want to accept? Does this lead to absurd or counterintuitive conclusions?
+      - **Second-order effects:** If people widely adopted this view, what would the downstream consequences be?
+      - **Existential implications:** What does this mean for how we should live or what we should value?
+
+      Be thorough and unflinching. The test of a belief is whether we can accept where it leads. Surface implications the original claim might prefer to hide from.
+      """,
+      citation_encouragement()
+    ])
+  end
+
+  @doc """
+  Identify blind spots — "What's missing?"
+  Surfaces missing perspectives, evidence, questions, context, and excluded alternatives.
+  """
+  @spec blind_spots(String.t(), String.t()) :: String.t()
+  def blind_spots(context, claim) do
+    join_blocks([
+      frame_context(context),
+      """
+      The Foundation represents existing discussion.
+
+      **Your task:** Use **Blind Spots** to identify what is missing from: **#{sanitize_title(claim)}**
+
+      Ask "What are we missing?" and illuminate what remains unseen:
+
+      - **Missing perspectives:** Whose voices, experiences, or viewpoints are absent? Who would see this differently? What would this look like from another culture, time period, discipline, or social position?
+      - **Missing evidence:** What data, research, or empirical investigation would help? What questions remain unanswered? What would we need to know to be more confident?
+      - **Missing questions:** What obvious questions does this fail to ask? What elephants are in the room? What's conspicuously unaddressed?
+      - **Missing context:** What historical, cultural, economic, or situational factors are ignored? What background conditions matter but aren't mentioned?
+      - **Excluded alternatives:** What options, explanations, or possibilities are implicitly ruled out? What's been assumed away rather than argued against?
+      - **Structural blind spots:** What can't this framework see by its very nature? What are the built-in limitations of this way of thinking?
+
+      For each blind spot:
+      1. Identify it specifically
+      2. Explain why it matters — what might change if we addressed it
+      3. Suggest how it might be remedied
+
+      The goal is not to attack but to complete — to see what the claim cannot see about itself.
+      """,
+      citation_encouragement(),
+      anti_repetition_footer()
+    ])
+  end
+
+  @doc """
+  Identify blind spots for a specific text selection.
+  """
+  @spec blind_spots_selection(String.t(), String.t()) :: String.t()
+  def blind_spots_selection(context, selection_text) do
+    join_blocks([
+      frame_minimal_context(context),
+      """
+      A specific statement or concept was highlighted from the text above: **#{sanitize_title(selection_text)}**
+
+      **Your task:** Use **Blind Spots** on this selection — ask "What are we missing?"
+
+      Illuminate what remains unseen:
+      - **Missing perspectives:** Whose voices or viewpoints are absent? Who would see this differently?
+      - **Missing evidence:** What data or research would help? What questions remain unanswered?
+      - **Missing questions:** What obvious questions does this fail to ask? What's conspicuously unaddressed?
+      - **Missing context:** What historical, cultural, or situational factors are ignored?
+      - **Excluded alternatives:** What options or explanations are implicitly ruled out?
+      - **Structural blind spots:** What can't this framework see by its very nature?
+
+      For each blind spot:
+      1. Identify it specifically
+      2. Explain why it matters — what might change if we addressed it
+      3. Suggest how it might be remedied
+
+      The goal is not to attack but to complete — to see what the claim cannot see about itself.
+      """,
+      citation_encouragement()
+    ])
+  end
+
+  # ---- Cluster 2: Context & Dialectical Expansion ----------------------------
+
+  @doc """
+  Examine origin and authority — "Says who?"
+  Investigates the source, evidence base, methodology, and credibility of claims.
+  """
+  @spec says_who(String.t(), String.t()) :: String.t()
+  def says_who(context, claim) do
+    join_blocks([
+      frame_context(context),
+      """
+      The Foundation represents existing discussion.
+
+      **Your task:** Use **Source Check** to examine the authority and evidence behind: **#{sanitize_title(claim)}**
+
+      Ask "Says who?" and investigate the foundations of credibility:
+
+      - **Origin:** Where does this claim come from? Who first articulated it? In what context did it emerge? What motivated its creation?
+      - **Evidence base:** What evidence supports this claim? How strong is it? What methodology produced it? Has it been replicated, peer-reviewed, or independently verified?
+      - **Authority:** Who endorses this view? What are their credentials, potential biases, or conflicts of interest? Is this mainstream or fringe within relevant expert communities?
+      - **Track record:** How have similar claims from this source held up over time? What's the credibility history?
+      - **Counter-authorities:** Who with comparable credentials disagrees? What do they say and why? Is there genuine expert disagreement?
+      - **Institutional context:** What institutions, funding sources, or power structures support this claim? Whose interests does it serve?
+      - **Epistemic status:** Is this presented as established fact, scientific consensus, expert opinion, educated guess, or speculation? Is that presentation warranted?
+
+      The goal is not cynical dismissal but calibrated trust — understanding how much weight this claim should carry and why.
+      """,
+      citation_encouragement(),
+      epistemic_honesty_footer(),
+      anti_repetition_footer()
+    ])
+  end
+
+  @doc """
+  Examine origin and authority for a specific text selection.
+  """
+  @spec says_who_selection(String.t(), String.t()) :: String.t()
+  def says_who_selection(context, selection_text) do
+    join_blocks([
+      frame_minimal_context(context),
+      """
+      A specific statement or concept was highlighted from the text above: **#{sanitize_title(selection_text)}**
+
+      **Your task:** Use **Source Check** on this selection — ask "Says who?" and examine the authority and evidence behind it.
+
+      Investigate the foundations of credibility:
+      - **Origin:** Where does this claim come from? Who first articulated it? In what context did it emerge?
+      - **Evidence base:** What evidence supports this? How strong is it? What methodology produced it?
+      - **Authority:** Who endorses this view? What are their credentials, potential biases, or conflicts of interest?
+      - **Track record:** How have similar claims from this source held up over time?
+      - **Counter-authorities:** Who with comparable credentials disagrees? What do they say?
+      - **Institutional context:** What institutions or power structures support this claim? Whose interests does it serve?
+      - **Epistemic status:** Is this established fact, consensus, expert opinion, or speculation? Is that warranted?
+
+      The goal is not cynical dismissal but calibrated trust — understanding how much weight this claim should carry.
+      """,
+      citation_encouragement(),
+      epistemic_honesty_footer()
+    ])
+  end
+
+  @doc """
+  Map the landscape of dissent — "Who disagrees?"
+  Surveys alternative positions, schools of thought, and the full range of disagreement.
+  """
+  @spec who_disagrees(String.t(), String.t()) :: String.t()
+  def who_disagrees(context, claim) do
+    join_blocks([
+      frame_context(context),
+      """
+      The Foundation represents existing discussion.
+
+      **Your task:** Use **Who Disagrees** to map other perspectives around: **#{sanitize_title(claim)}**
+
+      Ask "Who disagrees?" and survey the full range of opposition:
+
+      - **Named critics:** Identify specific thinkers, scholars, or public figures who have argued against this position. What are their main objections? Where can their critiques be found?
+      - **Schools of thought:** What intellectual traditions, disciplines, or ideological camps take opposing views? How do their alternative frameworks lead to different conclusions?
+      - **Types of disagreement:** Distinguish between those who reject the premise entirely, those who accept the premise but dispute the conclusion, and those who think the question itself is malformed.
+      - **Strength of objections:** Which critiques are most powerful? Which have the most empirical or logical force? Which remain largely unanswered?
+      - **Historical evolution:** How has opposition evolved over time? Have critics been refuted, vindicated, or ignored?
+      - **Current debates:** Where are the live controversies? What's actively contested versus settled?
+      - **Unusual alliances:** Are there surprising combinations of thinkers who agree in opposing this? What does that tell us?
+
+      Present the disagreement fairly. The goal is intellectual cartography — a map of the contested terrain, not a verdict.
+      """,
+      citation_encouragement(),
+      epistemic_honesty_footer(),
+      anti_repetition_footer()
+    ])
+  end
+
+  @doc """
+  Map the landscape of dissent for a specific text selection.
+  """
+  @spec who_disagrees_selection(String.t(), String.t()) :: String.t()
+  def who_disagrees_selection(context, selection_text) do
+    join_blocks([
+      frame_minimal_context(context),
+      """
+      A specific statement or concept was highlighted from the text above: **#{sanitize_title(selection_text)}**
+
+      **Your task:** Use **Who Disagrees** on this selection — ask "Who disagrees?" and map other perspectives.
+
+      Survey the full range of opposition:
+      - **Named critics:** Identify specific thinkers or scholars who have argued against this. What are their main objections?
+      - **Schools of thought:** What intellectual traditions or disciplines take opposing views?
+      - **Types of disagreement:** Who rejects the premise? Who disputes the conclusion? Who thinks the question is malformed?
+      - **Strength of objections:** Which critiques are most powerful? Which remain largely unanswered?
+      - **Historical evolution:** How has opposition evolved over time?
+      - **Current debates:** Where are the live controversies? What's actively contested?
+      - **Unusual alliances:** Are there surprising combinations of critics? What does that suggest?
+
+      Present the disagreement fairly. The goal is intellectual cartography — a map of the contested terrain, not a verdict.
+      """,
+      citation_encouragement(),
+      epistemic_honesty_footer()
+    ])
+  end
+
+  @doc """
+  Construct the strongest version — Steel man the argument.
+  Builds the most charitable, powerful form of the position.
+  """
+  @spec steel_man(String.t(), String.t()) :: String.t()
+  def steel_man(context, claim) do
+    join_blocks([
+      frame_context(context),
+      """
+      The Foundation represents existing discussion.
+
+      **Your task:** Use **Steel Man** to construct the strongest, most charitable version of: **#{sanitize_title(claim)}**
+
+      Steel-man this position by building the argument a brilliant, well-informed advocate would make:
+
+      - **Charitable interpretation:** Start from the most reasonable, defensible reading. What's the strongest version of what's being claimed?
+      - **Better arguments:** What arguments support this position that weren't mentioned? What's the best case, not just the stated case?
+      - **Strongest evidence:** What data, studies, examples, or precedents most powerfully support this view? Include evidence the original argument may have missed.
+      - **Addressing weaknesses:** Anticipate the strongest objections and show how a sophisticated defender would respond. Don't ignore problems — resolve them.
+      - **Deeper foundations:** What philosophical, empirical, or logical principles undergird this position when fully developed?
+      - **Formidable advocates:** Who are the most impressive thinkers who hold versions of this view? What do their sophisticated versions look like?
+
+      The goal is to make this position as strong as it can possibly be — to understand what you'd be taking on if you disagreed. Only after steel-manning can criticism be truly meaningful.
+      """,
+      citation_encouragement_for_arguments(),
+      epistemic_honesty_footer(),
+      anti_repetition_footer()
+    ])
+  end
+
+  @doc """
+  Construct the strongest version for a specific text selection.
+  """
+  @spec steel_man_selection(String.t(), String.t()) :: String.t()
+  def steel_man_selection(context, selection_text) do
+    join_blocks([
+      frame_minimal_context(context),
+      """
+      A specific statement or concept was highlighted from the text above: **#{sanitize_title(selection_text)}**
+
+      **Your task:** Use **Steel Man** on this selection — construct the strongest, most charitable version of the argument.
+
+      Build the case a brilliant, well-informed advocate would make:
+      - **Charitable interpretation:** What's the strongest version of what's being claimed?
+      - **Better arguments:** What arguments support this position that weren't mentioned?
+      - **Strongest evidence:** What data, studies, or examples most powerfully support this view?
+      - **Addressing weaknesses:** How would a sophisticated defender respond to the strongest objections?
+      - **Deeper foundations:** What philosophical or logical principles undergird this position when fully developed?
+      - **Formidable advocates:** Who are the most impressive thinkers who hold versions of this view?
+
+      The goal is to make this position as strong as it can possibly be. Only after steel-manning can criticism be truly meaningful.
+      """,
+      citation_encouragement_for_arguments(),
+      epistemic_honesty_footer()
+    ])
+  end
+
+  @doc """
+  Explore counterfactuals — "What if we change X?"
+  Investigates how the claim changes under different conditions or assumptions.
+  """
+  @spec what_if(String.t(), String.t()) :: String.t()
+  def what_if(context, claim) do
+    join_blocks([
+      frame_context(context),
+      """
+      The Foundation represents existing discussion.
+
+      **Your task:** Use **What If** to explore hypothetical scenarios around: **#{sanitize_title(claim)}**
+
+      Ask "What if we change X?" and investigate how the claim transforms:
+
+      - **Parameter variation:** What if key quantities, timeframes, or magnitudes were different? Where are the thresholds that change the conclusion?
+      - **Assumption reversal:** What if we flip core assumptions? If the opposite were true, what would follow?
+      - **Context shifts:** What if this occurred in a different era, culture, economic system, or technological context? How robust is the claim across contexts?
+      - **Actor substitution:** What if different people, groups, or entities were involved? How sensitive is the claim to who's doing what?
+      - **Missing factor introduction:** What if we add considerations that were excluded? What external shocks or new variables would change the picture?
+      - **Historical counterfactuals:** What if key events had gone differently? What does the road not taken reveal about necessity vs. contingency?
+      - **Future scenarios:** Under what future conditions does this claim become more or less true?
+
+      For each illuminating counterfactual:
+      1. Specify the change clearly
+      2. Trace through the consequences
+      3. Identify what this reveals about the original claim's robustness or fragility
+
+      Counterfactual reasoning reveals what's essential versus accidental, and exposes hidden dependencies.
+      """,
+      citation_encouragement(),
+      anti_repetition_footer()
+    ])
+  end
+
+  @doc """
+  Explore counterfactuals for a specific text selection.
+  """
+  @spec what_if_selection(String.t(), String.t()) :: String.t()
+  def what_if_selection(context, selection_text) do
+    join_blocks([
+      frame_minimal_context(context),
+      """
+      A specific statement or concept was highlighted from the text above: **#{sanitize_title(selection_text)}**
+
+      **Your task:** Use **What If** on this selection — explore hypothetical scenarios by asking "What if we change X?"
+
+      Investigate how the claim transforms:
+      - **Parameter variation:** What if key quantities or timeframes were different? Where are the thresholds?
+      - **Assumption reversal:** What if we flip core assumptions? What would follow?
+      - **Context shifts:** What if this occurred in a different era, culture, or technological context?
+      - **Actor substitution:** What if different people or groups were involved?
+      - **Missing factor introduction:** What if we add considerations that were excluded?
+      - **Historical counterfactuals:** What if key events had gone differently?
+      - **Future scenarios:** Under what future conditions does this become more or less true?
+
+      For each illuminating counterfactual:
+      1. Specify the change clearly
+      2. Trace through the consequences
+      3. Identify what this reveals about the original claim's robustness or fragility
+
+      Counterfactual reasoning reveals what's essential versus accidental, and exposes hidden dependencies.
+      """,
+      citation_encouragement()
+    ])
+  end
+
+  # ---- Cluster 3: Clarity & Communication ------------------------------------
 end

@@ -1,6 +1,7 @@
 defmodule DialecticWeb.ActionToolbarComp do
   use DialecticWeb, :live_component
 
+  alias DialecticWeb.ColUtils
   alias DialecticWeb.Utils.UserUtils
 
   @moduledoc """
@@ -13,6 +14,108 @@ defmodule DialecticWeb.ActionToolbarComp do
   - `:graph_id` - The graph ID
   - `:can_edit` - Boolean indicating if editing is allowed
   """
+
+  @primary_critical_tools [
+    %{
+      key: "assumptions",
+      event: "node_assumptions",
+      icon: "hero-cube-transparent",
+      label: "Assumptions",
+      blurb: "What has to be true?",
+      title:
+        "Assumptions: Reveal what must be true for this claim to work. Example: 'Remote work is better' assumes people have suitable home spaces, reliable internet, and self-discipline."
+    },
+    %{
+      key: "counterexample",
+      event: "node_counterexample",
+      icon: "hero-x-mark",
+      label: "Test",
+      blurb: "Is that always true?",
+      title:
+        "Test: Find counterexamples that challenge this claim. Example: If someone claims 'All successful people wake up early', counterexamples include successful artists, programmers, and entrepreneurs who are night owls."
+    },
+    %{
+      key: "implications",
+      event: "node_implications",
+      icon: "hero-arrow-trending-up",
+      label: "Implications",
+      blurb: "If true, then what?",
+      title:
+        "Implications: What would happen if this were true? Example: 'Universal basic income' implies changes to work incentives, tax systems, inflation, and social safety nets."
+    }
+  ]
+
+  @secondary_critical_tool_sections [
+    %{
+      title: "Precision & missing context",
+      tools: [
+        %{
+          key: "clarify",
+          event: "node_clarify",
+          icon: "hero-light-bulb",
+          label: "Clarify Terms",
+          blurb: "What do we mean?",
+          title:
+            "Clarify Terms: Identify key terms, hidden ambiguity, conceptual boundaries, and what would count as evidence."
+        },
+        %{
+          key: "blind_spots",
+          event: "node_blind_spots",
+          icon: "hero-eye-slash",
+          label: "Blind Spots",
+          blurb: "What are we missing?",
+          title:
+            "Blind Spots: Identify perspectives, factors, or constraints being overlooked. Example: A tech solution might ignore users without internet access or digital literacy."
+        }
+      ]
+    },
+    %{
+      title: "Dialogue & sources",
+      tools: [
+        %{
+          key: "says_who",
+          event: "node_says_who",
+          icon: "hero-user",
+          label: "Source Check",
+          blurb: "Says who?",
+          title:
+            "Source Check: Question the authority and evidence behind claims. Example: 'Studies show X' — which studies? Who funded them? What was the sample size? Are there conflicting studies?"
+        },
+        %{
+          key: "who_disagrees",
+          event: "node_who_disagrees",
+          icon: "hero-users",
+          label: "Who Disagrees",
+          blurb: "Other perspectives?",
+          title:
+            "Who Disagrees: Explore different perspectives and opposing viewpoints. Example: For 'Everyone should go to college', consider vocational experts, entrepreneurs, and trades professionals."
+        },
+        %{
+          key: "steel_man",
+          event: "node_steel_man",
+          icon: "hero-star",
+          label: "Steel Man",
+          blurb: "Strongest argument",
+          title:
+            "Steel Man: Build the strongest, most charitable version of this argument — the opposite of a straw man. Example: If someone says 'We should ban cars', the steel man would be 'In dense urban areas, reducing car dependency through better public transit and walkable design could improve health, reduce emissions, and create more livable communities.'"
+        }
+      ]
+    },
+    %{
+      title: "Counterfactuals",
+      tools: [
+        %{
+          key: "what_if",
+          event: "node_what_if",
+          icon: "hero-question-mark-circle",
+          label: "What If",
+          blurb: "Hypothetical scenarios",
+          title:
+            "What If: Explore hypothetical scenarios and alternative possibilities. Example: 'What if we had universal healthcare?' or 'What if fossil fuels ran out tomorrow?'"
+        }
+      ]
+    }
+  ]
 
   defp delete_info(assigns) do
     node = assigns[:node]
@@ -91,11 +194,32 @@ defmodule DialecticWeb.ActionToolbarComp do
 
   @impl true
   def update(assigns, socket) do
-    {:ok, assign(socket, assigns)}
+    {:ok,
+     socket
+     |> assign(assigns)
+     |> assign_new(:advanced_tools_open, fn -> false end)
+     |> assign_new(:more_advanced_tools_open, fn -> false end)}
+  end
+
+  @impl true
+  def handle_event("toggle_advanced_tools", _, socket) do
+    {:noreply, assign(socket, :advanced_tools_open, !socket.assigns.advanced_tools_open)}
+  end
+
+  @impl true
+  def handle_event("toggle_more_advanced_tools", _, socket) do
+    {:noreply,
+     assign(socket, :more_advanced_tools_open, !socket.assigns.more_advanced_tools_open)}
   end
 
   @impl true
   def render(assigns) do
+    assigns =
+      assign(assigns,
+        primary_critical_tools: @primary_critical_tools,
+        secondary_critical_tool_sections: @secondary_critical_tool_sections
+      )
+
     ~H"""
     <div
       class="mt-3 rounded-[1.7rem] border border-slate-200 bg-white p-4 shadow-[0_18px_40px_rgba(15,23,42,0.06)] sm:mt-4 sm:p-5"
@@ -210,6 +334,124 @@ defmodule DialecticWeb.ActionToolbarComp do
               />
             </span>
           </button>
+        </div>
+
+        <%!-- Advanced Critical Thinking Tools Section --%>
+        <div class="border-t border-slate-200/80 pt-4">
+          <button
+            type="button"
+            class="w-full flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-left transition hover:bg-slate-50"
+            phx-click="toggle_advanced_tools"
+            phx-target={@myself}
+          >
+            <div>
+              <p class="text-sm font-semibold text-slate-900">Advanced Critical Thinking Tools</p>
+              <p class="mt-0.5 text-xs text-slate-500">
+                A focused set of reasoning moves for stress-testing claims and sharpening understanding.
+              </p>
+            </div>
+            <.icon
+              name="hero-chevron-down"
+              class={
+                if @advanced_tools_open,
+                  do: "h-5 w-5 text-slate-400 transition-transform rotate-180",
+                  else: "h-5 w-5 text-slate-400 transition-transform"
+              }
+            />
+          </button>
+
+          <div class={["mt-3 space-y-3", !@advanced_tools_open && "hidden"]}>
+            <div>
+              <h4 class="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Essential moves
+              </h4>
+              <div class="grid gap-2 sm:grid-cols-3">
+                <button
+                  :for={tool <- @primary_critical_tools}
+                  type="button"
+                  class={[
+                    "group flex flex-col items-start gap-2.5 rounded-[1.1rem] px-3.5 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+                    ColUtils.advanced_tool_surface_class(tool.key)
+                  ]}
+                  phx-click={tool.event}
+                  phx-value-id={@node && @node.id}
+                  disabled={is_nil(@graph_id)}
+                  title={tool.title}
+                >
+                  <span class={[
+                    "inline-flex items-center justify-center rounded-xl p-2 shadow-sm",
+                    ColUtils.advanced_tool_icon_class(tool.key)
+                  ]}>
+                    <.icon name={tool.icon} class="h-4 w-4" />
+                  </span>
+                  <span class="space-y-0.5">
+                    <span class="block text-xs font-semibold text-slate-900">{tool.label}</span>
+                    <span class="block text-xs leading-tight text-slate-600">{tool.blurb}</span>
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <div class="rounded-2xl border border-slate-200 bg-slate-50/60">
+              <button
+                type="button"
+                class="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left transition hover:bg-white/70"
+                phx-click="toggle_more_advanced_tools"
+                phx-target={@myself}
+              >
+                <span>
+                  <span class="block text-xs font-semibold text-slate-800">More tools</span>
+                  <span class="block text-[11px] leading-4 text-slate-500">
+                    Optional moves for sources, missing context, alternative views, and hypotheticals.
+                  </span>
+                </span>
+                <.icon
+                  name="hero-chevron-down"
+                  class={
+                    if @more_advanced_tools_open,
+                      do: "h-4 w-4 text-slate-400 transition-transform rotate-180",
+                      else: "h-4 w-4 text-slate-400 transition-transform"
+                  }
+                />
+              </button>
+
+              <div class={[
+                "space-y-3 border-t border-slate-200 px-3 py-3",
+                !@more_advanced_tools_open && "hidden"
+              ]}>
+                <div :for={section <- @secondary_critical_tool_sections} class="space-y-2">
+                  <h4 class="px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    {section.title}
+                  </h4>
+                  <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    <button
+                      :for={tool <- section.tools}
+                      type="button"
+                      class={[
+                        "group flex flex-col items-start gap-2.5 rounded-[1.1rem] px-3.5 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+                        ColUtils.advanced_tool_surface_class(tool.key)
+                      ]}
+                      phx-click={tool.event}
+                      phx-value-id={@node && @node.id}
+                      disabled={is_nil(@graph_id)}
+                      title={tool.title}
+                    >
+                      <span class={[
+                        "inline-flex items-center justify-center rounded-xl p-2 shadow-sm",
+                        ColUtils.advanced_tool_icon_class(tool.key)
+                      ]}>
+                        <.icon name={tool.icon} class="h-4 w-4" />
+                      </span>
+                      <span class="space-y-0.5">
+                        <span class="block text-xs font-semibold text-slate-900">{tool.label}</span>
+                        <span class="block text-xs leading-tight text-slate-600">{tool.blurb}</span>
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="flex flex-col gap-3 border-t border-slate-200/80 pt-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4">

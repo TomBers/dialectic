@@ -8,6 +8,7 @@ defmodule Dialectic.GridActivity.Actions do
   @node_selection_explained "node.selection_explained"
   @node_selection_question_created "node.selection_question.created"
   @node_deep_dive_created "node.deep_dive.created"
+  @node_critical_tool_created "node.critical_tool.created"
   @node_starting_point_created "node.starting_point.created"
   @node_regenerated "node.regenerated"
   @node_deleted "node.deleted"
@@ -22,6 +23,7 @@ defmodule Dialectic.GridActivity.Actions do
     @node_selection_explained,
     @node_selection_question_created,
     @node_deep_dive_created,
+    @node_critical_tool_created,
     @node_starting_point_created,
     @node_regenerated,
     @node_deleted
@@ -38,6 +40,7 @@ defmodule Dialectic.GridActivity.Actions do
   def node_selection_explained, do: @node_selection_explained
   def node_selection_question_created, do: @node_selection_question_created
   def node_deep_dive_created, do: @node_deep_dive_created
+  def node_critical_tool_created, do: @node_critical_tool_created
   def node_starting_point_created, do: @node_starting_point_created
   def node_regenerated, do: @node_regenerated
   def node_deleted, do: @node_deleted
@@ -51,6 +54,21 @@ defmodule Dialectic.GridActivity.Actions do
   def for_graph_operation("explain"), do: @node_selection_explained
   def for_graph_operation("selection_question"), do: @node_selection_question_created
   def for_graph_operation("deepdive"), do: @node_deep_dive_created
+
+  def for_graph_operation(operation)
+      when operation in [
+             "clarify",
+             "assumptions",
+             "counterexample",
+             "implications",
+             "blind_spots",
+             "says_who",
+             "who_disagrees",
+             "steel_man",
+             "what_if"
+           ],
+      do: @node_critical_tool_created
+
   def for_graph_operation("start_stream"), do: @node_starting_point_created
   def for_graph_operation("regenerate"), do: @node_regenerated
   def for_graph_operation(_operation), do: nil

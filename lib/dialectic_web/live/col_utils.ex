@@ -18,7 +18,18 @@ defmodule DialecticWeb.ColUtils do
   def border_class("antithesis"), do: "border-red-500"
   def border_class("synthesis"), do: "border-violet-500"
   def border_class("ideas"), do: "border-orange-500"
-  def border_class("deepdive"), do: "border-cyan-500"
+  # Cluster 1 — Core Inquiry Moves
+  def border_class("clarify"), do: "border-teal-500"
+  def border_class("assumptions"), do: "border-amber-500"
+  def border_class("counterexample"), do: "border-red-500"
+  def border_class("implications"), do: "border-indigo-500"
+  def border_class("blind_spots"), do: "border-purple-500"
+  # Cluster 2 — Context & Dialectical Expansion
+  def border_class("says_who"), do: "border-sky-500"
+  def border_class("who_disagrees"), do: "border-rose-500"
+  def border_class("steel_man"), do: "border-yellow-500"
+  def border_class("what_if"), do: "border-fuchsia-500"
+  # Cluster 3 — Clarity & Communication
   def border_class(_), do: "border-gray-200"
 
   @doc """
@@ -33,7 +44,18 @@ defmodule DialecticWeb.ColUtils do
   def badge_class("antithesis"), do: "bg-red-50 text-red-700 ring-1 ring-red-600/10"
   def badge_class("synthesis"), do: "bg-violet-50 text-violet-700 ring-1 ring-violet-600/10"
   def badge_class("ideas"), do: "bg-orange-50 text-orange-700 ring-1 ring-orange-600/10"
-  def badge_class("deepdive"), do: "bg-cyan-50 text-cyan-700 ring-1 ring-cyan-600/10"
+  # Cluster 1 — Core Inquiry Moves
+  def badge_class("clarify"), do: "bg-teal-50 text-teal-700 ring-1 ring-teal-600/10"
+  def badge_class("assumptions"), do: "bg-amber-50 text-amber-700 ring-1 ring-amber-600/10"
+  def badge_class("counterexample"), do: "bg-red-50 text-red-700 ring-1 ring-red-600/10"
+  def badge_class("implications"), do: "bg-indigo-50 text-indigo-700 ring-1 ring-indigo-600/10"
+  def badge_class("blind_spots"), do: "bg-purple-50 text-purple-700 ring-1 ring-purple-600/10"
+  # Cluster 2 — Context & Dialectical Expansion
+  def badge_class("says_who"), do: "bg-sky-50 text-sky-700 ring-1 ring-sky-600/10"
+  def badge_class("who_disagrees"), do: "bg-rose-50 text-rose-700 ring-1 ring-rose-600/10"
+  def badge_class("steel_man"), do: "bg-yellow-50 text-yellow-700 ring-1 ring-yellow-600/10"
+  def badge_class("what_if"), do: "bg-fuchsia-50 text-fuchsia-700 ring-1 ring-fuchsia-600/10"
+  # Cluster 3 — Clarity & Communication
   def badge_class(_), do: "bg-gray-100 text-gray-600 ring-1 ring-gray-500/10"
 
   @doc """
@@ -47,8 +69,95 @@ defmodule DialecticWeb.ColUtils do
   def dot_class("antithesis"), do: "bg-red-500"
   def dot_class("synthesis"), do: "bg-violet-500"
   def dot_class("ideas"), do: "bg-orange-500"
-  def dot_class("deepdive"), do: "bg-cyan-500"
+  # Cluster 1 — Core Inquiry Moves
+  def dot_class("clarify"), do: "bg-teal-500"
+  def dot_class("assumptions"), do: "bg-amber-500"
+  def dot_class("counterexample"), do: "bg-red-500"
+  def dot_class("implications"), do: "bg-indigo-500"
+  def dot_class("blind_spots"), do: "bg-purple-500"
+  # Cluster 2 — Context & Dialectical Expansion
+  def dot_class("says_who"), do: "bg-sky-500"
+  def dot_class("who_disagrees"), do: "bg-rose-500"
+  def dot_class("steel_man"), do: "bg-yellow-500"
+  def dot_class("what_if"), do: "bg-fuchsia-500"
+  # Cluster 3 — Clarity & Communication
   def dot_class(_), do: "bg-gray-300"
+
+  @doc """
+  Returns the accent classes for advanced-tool cards in node and selection toolbars.
+  """
+  def advanced_tool_surface_class("clarify"),
+    do:
+      "border-2 border-teal-200/80 bg-gradient-to-br from-white to-teal-50/70 hover:border-teal-300"
+
+  def advanced_tool_surface_class("assumptions"),
+    do:
+      "border-2 border-amber-200/80 bg-gradient-to-br from-white to-amber-50/70 hover:border-amber-300"
+
+  def advanced_tool_surface_class("counterexample"),
+    do:
+      "border-2 border-red-200/80 bg-gradient-to-br from-white to-red-50/70 hover:border-red-300"
+
+  def advanced_tool_surface_class("implications"),
+    do:
+      "border-2 border-indigo-200/80 bg-gradient-to-br from-white to-indigo-50/70 hover:border-indigo-300"
+
+  def advanced_tool_surface_class("blind_spots"),
+    do:
+      "border-2 border-purple-200/80 bg-gradient-to-br from-white to-purple-50/70 hover:border-purple-300"
+
+  def advanced_tool_surface_class("says_who"),
+    do:
+      "border-2 border-sky-200/80 bg-gradient-to-br from-white to-sky-50/70 hover:border-sky-300"
+
+  def advanced_tool_surface_class("who_disagrees"),
+    do:
+      "border-2 border-rose-200/80 bg-gradient-to-br from-white to-rose-50/70 hover:border-rose-300"
+
+  def advanced_tool_surface_class("steel_man"),
+    do:
+      "border-2 border-yellow-200/80 bg-gradient-to-br from-white to-yellow-50/70 hover:border-yellow-300"
+
+  def advanced_tool_surface_class("what_if"),
+    do:
+      "border-2 border-fuchsia-200/80 bg-gradient-to-br from-white to-fuchsia-50/70 hover:border-fuchsia-300"
+
+  def advanced_tool_surface_class(_),
+    do:
+      "border-2 border-slate-200/80 bg-gradient-to-br from-white to-slate-50/70 hover:border-slate-300"
+
+  @doc """
+  Returns the icon chip classes for advanced-tool buttons.
+  """
+  def advanced_tool_icon_class("clarify"), do: "bg-teal-100 text-teal-700"
+  def advanced_tool_icon_class("assumptions"), do: "bg-amber-100 text-amber-700"
+  def advanced_tool_icon_class("counterexample"), do: "bg-red-100 text-red-700"
+  def advanced_tool_icon_class("implications"), do: "bg-indigo-100 text-indigo-700"
+  def advanced_tool_icon_class("blind_spots"), do: "bg-purple-100 text-purple-700"
+  def advanced_tool_icon_class("says_who"), do: "bg-sky-100 text-sky-700"
+  def advanced_tool_icon_class("who_disagrees"), do: "bg-rose-100 text-rose-700"
+  def advanced_tool_icon_class("steel_man"), do: "bg-yellow-100 text-yellow-700"
+  def advanced_tool_icon_class("what_if"), do: "bg-fuchsia-100 text-fuchsia-700"
+  def advanced_tool_icon_class(_), do: "bg-slate-100 text-slate-700"
+
+  @doc """
+  Returns the accent text color for advanced-tool icons.
+  """
+  def advanced_tool_text_class("clarify"), do: "text-teal-700"
+  def advanced_tool_text_class("assumptions"), do: "text-amber-700"
+  def advanced_tool_text_class("counterexample"), do: "text-red-700"
+  def advanced_tool_text_class("implications"), do: "text-indigo-700"
+  def advanced_tool_text_class("blind_spots"), do: "text-purple-700"
+  def advanced_tool_text_class("says_who"), do: "text-sky-700"
+  def advanced_tool_text_class("who_disagrees"), do: "text-rose-700"
+  def advanced_tool_text_class("steel_man"), do: "text-yellow-700"
+  def advanced_tool_text_class("what_if"), do: "text-fuchsia-700"
+  def advanced_tool_text_class(_), do: "text-slate-700"
+
+  @doc """
+  Returns shared selection-toolbar classes for advanced-tool buttons.
+  """
+  def advanced_tool_button_class(type), do: advanced_tool_surface_class(type)
 
   @doc """
   Returns a human-readable label for a node type.
@@ -61,7 +170,18 @@ defmodule DialecticWeb.ColUtils do
   def node_type_label("antithesis"), do: "Con / Counterpoint"
   def node_type_label("synthesis"), do: "Synthesis / Balanced View"
   def node_type_label("ideas"), do: "Related Ideas"
-  def node_type_label("deepdive"), do: "Deep Dive"
+  # Cluster 1 — Core Inquiry Moves
+  def node_type_label("clarify"), do: "Clarify Terms"
+  def node_type_label("assumptions"), do: "Assumptions"
+  def node_type_label("counterexample"), do: "Counterexample"
+  def node_type_label("implications"), do: "Implications"
+  def node_type_label("blind_spots"), do: "Blind Spots"
+  # Cluster 2 — Context & Dialectical Expansion
+  def node_type_label("says_who"), do: "Source Check"
+  def node_type_label("who_disagrees"), do: "Who Disagrees?"
+  def node_type_label("steel_man"), do: "Steel Man"
+  def node_type_label("what_if"), do: "What If?"
+  # Cluster 3 — Clarity & Communication
   def node_type_label(_), do: "Node"
 
   @doc """
@@ -78,6 +198,28 @@ defmodule DialecticWeb.ColUtils do
     do: "A balanced synthesis of multiple perspectives (Purple)"
 
   def node_type_description("ideas"), do: "Related ideas and connections (Orange)"
-  def node_type_description("deepdive"), do: "An in-depth exploration of a topic (Cyan)"
+  # Cluster 1 — Core Inquiry Moves
+  def node_type_description("clarify"),
+    do: "Clarify terms and conceptual boundaries — 'What do you mean by…?' (Teal)"
+
+  def node_type_description("assumptions"),
+    do: "Hidden assumptions — 'What has to be true?' (Amber)"
+
+  def node_type_description("counterexample"), do: "Testing limits — 'Is that always true?' (Red)"
+  def node_type_description("implications"), do: "Tracing consequences — 'So what?' (Indigo)"
+
+  def node_type_description("blind_spots"),
+    do: "Missing perspectives — 'What's missing?' (Purple)"
+
+  # Cluster 2 — Context & Dialectical Expansion
+  def node_type_description("says_who"), do: "Source and evidence check — 'Says who?' (Sky)"
+  def node_type_description("who_disagrees"), do: "Mapping dissent — 'Who disagrees?' (Rose)"
+
+  def node_type_description("steel_man"), do: "Strongest version of the argument (Yellow)"
+
+  def node_type_description("what_if"),
+    do: "Counterfactual exploration — 'What if we change X?' (Fuchsia)"
+
+  # Cluster 3 — Clarity & Communication
   def node_type_description(_), do: "A node in the conversation"
 end
