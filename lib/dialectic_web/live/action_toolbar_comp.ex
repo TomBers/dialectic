@@ -15,6 +15,108 @@ defmodule DialecticWeb.ActionToolbarComp do
   - `:can_edit` - Boolean indicating if editing is allowed
   """
 
+  @primary_critical_tools [
+    %{
+      key: "assumptions",
+      event: "node_assumptions",
+      icon: "hero-cube-transparent",
+      label: "Assumptions",
+      blurb: "What has to be true?",
+      title:
+        "Assumptions: Reveal what must be true for this claim to work. Example: 'Remote work is better' assumes people have suitable home spaces, reliable internet, and self-discipline."
+    },
+    %{
+      key: "counterexample",
+      event: "node_counterexample",
+      icon: "hero-x-mark",
+      label: "Test",
+      blurb: "Is that always true?",
+      title:
+        "Test: Find counterexamples that challenge this claim. Example: If someone claims 'All successful people wake up early', counterexamples include successful artists, programmers, and entrepreneurs who are night owls."
+    },
+    %{
+      key: "implications",
+      event: "node_implications",
+      icon: "hero-arrow-trending-up",
+      label: "Implications",
+      blurb: "If true, then what?",
+      title:
+        "Implications: What would happen if this were true? Example: 'Universal basic income' implies changes to work incentives, tax systems, inflation, and social safety nets."
+    }
+  ]
+
+  @secondary_critical_tool_sections [
+    %{
+      title: "Precision & missing context",
+      tools: [
+        %{
+          key: "clarify",
+          event: "node_clarify",
+          icon: "hero-light-bulb",
+          label: "Clarify Terms",
+          blurb: "What do we mean?",
+          title:
+            "Clarify Terms: Identify key terms, hidden ambiguity, conceptual boundaries, and what would count as evidence."
+        },
+        %{
+          key: "blind_spots",
+          event: "node_blind_spots",
+          icon: "hero-eye-slash",
+          label: "Blind Spots",
+          blurb: "What are we missing?",
+          title:
+            "Blind Spots: Identify perspectives, factors, or constraints being overlooked. Example: A tech solution might ignore users without internet access or digital literacy."
+        }
+      ]
+    },
+    %{
+      title: "Dialogue & sources",
+      tools: [
+        %{
+          key: "says_who",
+          event: "node_says_who",
+          icon: "hero-user",
+          label: "Source Check",
+          blurb: "Says who?",
+          title:
+            "Source Check: Question the authority and evidence behind claims. Example: 'Studies show X' — which studies? Who funded them? What was the sample size? Are there conflicting studies?"
+        },
+        %{
+          key: "who_disagrees",
+          event: "node_who_disagrees",
+          icon: "hero-users",
+          label: "Who Disagrees",
+          blurb: "Other perspectives?",
+          title:
+            "Who Disagrees: Explore different perspectives and opposing viewpoints. Example: For 'Everyone should go to college', consider vocational experts, entrepreneurs, and trades professionals."
+        },
+        %{
+          key: "steel_man",
+          event: "node_steel_man",
+          icon: "hero-star",
+          label: "Steel Man",
+          blurb: "Strongest argument",
+          title:
+            "Steel Man: Build the strongest, most charitable version of this argument — the opposite of a straw man. Example: If someone says 'We should ban cars', the steel man would be 'In dense urban areas, reducing car dependency through better public transit and walkable design could improve health, reduce emissions, and create more livable communities.'"
+        }
+      ]
+    },
+    %{
+      title: "Counterfactuals",
+      tools: [
+        %{
+          key: "what_if",
+          event: "node_what_if",
+          icon: "hero-question-mark-circle",
+          label: "What If",
+          blurb: "Hypothetical scenarios",
+          title:
+            "What If: Explore hypothetical scenarios and alternative possibilities. Example: 'What if we had universal healthcare?' or 'What if fossil fuels ran out tomorrow?'"
+        }
+      ]
+    }
+  ]
+
   defp delete_info(assigns) do
     node = assigns[:node]
     can_edit = assigns[:can_edit]
@@ -95,7 +197,8 @@ defmodule DialecticWeb.ActionToolbarComp do
     {:ok,
      socket
      |> assign(assigns)
-     |> assign_new(:advanced_tools_open, fn -> false end)}
+     |> assign_new(:advanced_tools_open, fn -> false end)
+     |> assign_new(:more_advanced_tools_open, fn -> false end)}
   end
 
   @impl true
@@ -104,7 +207,19 @@ defmodule DialecticWeb.ActionToolbarComp do
   end
 
   @impl true
+  def handle_event("toggle_more_advanced_tools", _, socket) do
+    {:noreply,
+     assign(socket, :more_advanced_tools_open, !socket.assigns.more_advanced_tools_open)}
+  end
+
+  @impl true
   def render(assigns) do
+    assigns =
+      assign(assigns,
+        primary_critical_tools: @primary_critical_tools,
+        secondary_critical_tool_sections: @secondary_critical_tool_sections
+      )
+
     ~H"""
     <div
       class="mt-3 rounded-[1.7rem] border border-slate-200 bg-white p-4 shadow-[0_18px_40px_rgba(15,23,42,0.06)] sm:mt-4 sm:p-5"
@@ -245,260 +360,95 @@ defmodule DialecticWeb.ActionToolbarComp do
             />
           </button>
 
-          <div class={["mt-3 space-y-4", !@advanced_tools_open && "hidden"]}>
-            <%!-- Core Analysis --%>
+          <div class={["mt-3 space-y-3", !@advanced_tools_open && "hidden"]}>
             <div>
-              <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2 px-1">
-                Core Analysis
+              <h4 class="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Essential moves
               </h4>
-              <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                <%!-- Steel Man - First in list --%>
+              <div class="grid gap-2 sm:grid-cols-3">
                 <button
+                  :for={tool <- @primary_critical_tools}
                   type="button"
                   class={[
                     "group flex flex-col items-start gap-2.5 rounded-[1.1rem] px-3.5 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
-                    ColUtils.advanced_tool_surface_class("steel_man")
+                    ColUtils.advanced_tool_surface_class(tool.key)
                   ]}
-                  phx-click="node_steel_man"
+                  phx-click={tool.event}
                   phx-value-id={@node && @node.id}
                   disabled={is_nil(@graph_id)}
-                  title="Steel Man: Build the strongest, most charitable version of this argument — the opposite of a straw man. Example: If someone says 'We should ban cars', the steel man would be 'In dense urban areas, reducing car dependency through better public transit and walkable design could improve health, reduce emissions, and create more livable communities.'"
+                  title={tool.title}
                 >
                   <span class={[
                     "inline-flex items-center justify-center rounded-xl p-2 shadow-sm",
-                    ColUtils.advanced_tool_icon_class("steel_man")
+                    ColUtils.advanced_tool_icon_class(tool.key)
                   ]}>
-                    <.icon name="hero-star" class="h-4 w-4" />
+                    <.icon name={tool.icon} class="h-4 w-4" />
                   </span>
                   <span class="space-y-0.5">
-                    <span class="block text-xs font-semibold text-slate-900">Steel Man</span>
-                    <span class="block text-xs leading-tight text-slate-600">
-                      Strongest argument
-                    </span>
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  class={[
-                    "group flex flex-col items-start gap-2.5 rounded-[1.1rem] px-3.5 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
-                    ColUtils.advanced_tool_surface_class("assumptions")
-                  ]}
-                  phx-click="node_assumptions"
-                  phx-value-id={@node && @node.id}
-                  disabled={is_nil(@graph_id)}
-                  title="Assumptions: Reveal what must be true for this claim to work. Example: 'Remote work is better' assumes people have suitable home spaces, reliable internet, and self-discipline."
-                >
-                  <span class={[
-                    "inline-flex items-center justify-center rounded-xl p-2 shadow-sm",
-                    ColUtils.advanced_tool_icon_class("assumptions")
-                  ]}>
-                    <.icon name="hero-cube-transparent" class="h-4 w-4" />
-                  </span>
-                  <span class="space-y-0.5">
-                    <span class="block text-xs font-semibold text-slate-900">Assumptions</span>
-                    <span class="block text-xs leading-tight text-slate-600">
-                      What has to be true?
-                    </span>
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  class={[
-                    "group flex flex-col items-start gap-2.5 rounded-[1.1rem] px-3.5 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
-                    ColUtils.advanced_tool_surface_class("counterexample")
-                  ]}
-                  phx-click="node_counterexample"
-                  phx-value-id={@node && @node.id}
-                  disabled={is_nil(@graph_id)}
-                  title="Test: Find counterexamples that challenge this claim. Example: If someone claims 'All successful people wake up early', counterexamples include successful artists, programmers, and entrepreneurs who are night owls."
-                >
-                  <span class={[
-                    "inline-flex items-center justify-center rounded-xl p-2 shadow-sm",
-                    ColUtils.advanced_tool_icon_class("counterexample")
-                  ]}>
-                    <.icon name="hero-x-mark" class="h-4 w-4" />
-                  </span>
-                  <span class="space-y-0.5">
-                    <span class="block text-xs font-semibold text-slate-900">Test</span>
-                    <span class="block text-xs leading-tight text-slate-600">
-                      Is that always true?
-                    </span>
+                    <span class="block text-xs font-semibold text-slate-900">{tool.label}</span>
+                    <span class="block text-xs leading-tight text-slate-600">{tool.blurb}</span>
                   </span>
                 </button>
               </div>
             </div>
 
-            <%!-- Critical Evaluation --%>
-            <div>
-              <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2 px-1">
-                Critical Evaluation
-              </h4>
-              <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                <button
-                  type="button"
-                  class={[
-                    "group flex flex-col items-start gap-2.5 rounded-[1.1rem] px-3.5 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
-                    ColUtils.advanced_tool_surface_class("says_who")
-                  ]}
-                  phx-click="node_says_who"
-                  phx-value-id={@node && @node.id}
-                  disabled={is_nil(@graph_id)}
-                  title="Source Check: Question the authority and evidence behind claims. Example: 'Studies show X' — which studies? Who funded them? What was the sample size? Are there conflicting studies?"
-                >
-                  <span class={[
-                    "inline-flex items-center justify-center rounded-xl p-2 shadow-sm",
-                    ColUtils.advanced_tool_icon_class("says_who")
-                  ]}>
-                    <.icon name="hero-user" class="h-4 w-4" />
+            <div class="rounded-2xl border border-slate-200 bg-slate-50/60">
+              <button
+                type="button"
+                class="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left transition hover:bg-white/70"
+                phx-click="toggle_more_advanced_tools"
+                phx-target={@myself}
+              >
+                <span>
+                  <span class="block text-xs font-semibold text-slate-800">More tools</span>
+                  <span class="block text-[11px] leading-4 text-slate-500">
+                    Optional moves for sources, missing context, alternative views, and hypotheticals.
                   </span>
-                  <span class="space-y-0.5">
-                    <span class="block text-xs font-semibold text-slate-900">Source Check</span>
-                    <span class="block text-xs leading-tight text-slate-600">Says who?</span>
-                  </span>
-                </button>
+                </span>
+                <.icon
+                  name="hero-chevron-down"
+                  class={
+                    if @more_advanced_tools_open,
+                      do: "h-4 w-4 text-slate-400 transition-transform rotate-180",
+                      else: "h-4 w-4 text-slate-400 transition-transform"
+                  }
+                />
+              </button>
 
-                <button
-                  type="button"
-                  class={[
-                    "group flex flex-col items-start gap-2.5 rounded-[1.1rem] px-3.5 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
-                    ColUtils.advanced_tool_surface_class("blind_spots")
-                  ]}
-                  phx-click="node_blind_spots"
-                  phx-value-id={@node && @node.id}
-                  disabled={is_nil(@graph_id)}
-                  title="Blind Spots: Identify perspectives, factors, or constraints being overlooked. Example: A tech solution might ignore users without internet access or digital literacy."
-                >
-                  <span class={[
-                    "inline-flex items-center justify-center rounded-xl p-2 shadow-sm",
-                    ColUtils.advanced_tool_icon_class("blind_spots")
-                  ]}>
-                    <.icon name="hero-eye-slash" class="h-4 w-4" />
-                  </span>
-                  <span class="space-y-0.5">
-                    <span class="block text-xs font-semibold text-slate-900">Blind Spots</span>
-                    <span class="block text-xs leading-tight text-slate-600">
-                      What are we missing?
-                    </span>
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  class={[
-                    "group flex flex-col items-start gap-2.5 rounded-[1.1rem] px-3.5 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
-                    ColUtils.advanced_tool_surface_class("who_disagrees")
-                  ]}
-                  phx-click="node_who_disagrees"
-                  phx-value-id={@node && @node.id}
-                  disabled={is_nil(@graph_id)}
-                  title="Who Disagrees: Explore different perspectives and opposing viewpoints. Example: For 'Everyone should go to college', consider vocational experts, entrepreneurs, and trades professionals."
-                >
-                  <span class={[
-                    "inline-flex items-center justify-center rounded-xl p-2 shadow-sm",
-                    ColUtils.advanced_tool_icon_class("who_disagrees")
-                  ]}>
-                    <.icon name="hero-users" class="h-4 w-4" />
-                  </span>
-                  <span class="space-y-0.5">
-                    <span class="block text-xs font-semibold text-slate-900">Who Disagrees</span>
-                    <span class="block text-xs leading-tight text-slate-600">
-                      Other perspectives?
-                    </span>
-                  </span>
-                </button>
-              </div>
-            </div>
-
-            <%!-- Consequences & Counterfactuals --%>
-            <div>
-              <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2 px-1">
-                Consequences & Counterfactuals
-              </h4>
-              <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                <button
-                  type="button"
-                  class={[
-                    "group flex flex-col items-start gap-2.5 rounded-[1.1rem] px-3.5 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
-                    ColUtils.advanced_tool_surface_class("implications")
-                  ]}
-                  phx-click="node_implications"
-                  phx-value-id={@node && @node.id}
-                  disabled={is_nil(@graph_id)}
-                  title="Implications: What would happen if this were true? Example: 'Universal basic income' implies changes to work incentives, tax systems, inflation, and social safety nets."
-                >
-                  <span class={[
-                    "inline-flex items-center justify-center rounded-xl p-2 shadow-sm",
-                    ColUtils.advanced_tool_icon_class("implications")
-                  ]}>
-                    <.icon name="hero-arrow-trending-up" class="h-4 w-4" />
-                  </span>
-                  <span class="space-y-0.5">
-                    <span class="block text-xs font-semibold text-slate-900">Implications</span>
-                    <span class="block text-xs leading-tight text-slate-600">
-                      If true, then what?
-                    </span>
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  class={[
-                    "group flex flex-col items-start gap-2.5 rounded-[1.1rem] px-3.5 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
-                    ColUtils.advanced_tool_surface_class("what_if")
-                  ]}
-                  phx-click="node_what_if"
-                  phx-value-id={@node && @node.id}
-                  disabled={is_nil(@graph_id)}
-                  title="What If: Explore hypothetical scenarios and alternative possibilities. Example: 'What if we had universal healthcare?' or 'What if fossil fuels ran out tomorrow?'"
-                >
-                  <span class={[
-                    "inline-flex items-center justify-center rounded-xl p-2 shadow-sm",
-                    ColUtils.advanced_tool_icon_class("what_if")
-                  ]}>
-                    <.icon name="hero-question-mark-circle" class="h-4 w-4" />
-                  </span>
-                  <span class="space-y-0.5">
-                    <span class="block text-xs font-semibold text-slate-900">What If</span>
-                    <span class="block text-xs leading-tight text-slate-600">
-                      Hypothetical scenarios
-                    </span>
-                  </span>
-                </button>
-              </div>
-            </div>
-
-            <%!-- Conceptual Precision --%>
-            <div>
-              <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2 px-1">
-                Conceptual Precision
-              </h4>
-              <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                <button
-                  type="button"
-                  class={[
-                    "group flex flex-col items-start gap-2.5 rounded-[1.1rem] px-3.5 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
-                    ColUtils.advanced_tool_surface_class("clarify")
-                  ]}
-                  phx-click="node_clarify"
-                  phx-value-id={@node && @node.id}
-                  disabled={is_nil(@graph_id)}
-                  title="Clarify Terms: Identify key terms, hidden ambiguity, conceptual boundaries, and what would count as evidence."
-                >
-                  <span class={[
-                    "inline-flex items-center justify-center rounded-xl p-2 shadow-sm",
-                    ColUtils.advanced_tool_icon_class("clarify")
-                  ]}>
-                    <.icon name="hero-light-bulb" class="h-4 w-4" />
-                  </span>
-                  <span class="space-y-0.5">
-                    <span class="block text-xs font-semibold text-slate-900">Clarify Terms</span>
-                    <span class="block text-xs leading-tight text-slate-600">
-                      What do we mean?
-                    </span>
-                  </span>
-                </button>
+              <div class={[
+                "space-y-3 border-t border-slate-200 px-3 py-3",
+                !@more_advanced_tools_open && "hidden"
+              ]}>
+                <div :for={section <- @secondary_critical_tool_sections} class="space-y-2">
+                  <h4 class="px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    {section.title}
+                  </h4>
+                  <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    <button
+                      :for={tool <- section.tools}
+                      type="button"
+                      class={[
+                        "group flex flex-col items-start gap-2.5 rounded-[1.1rem] px-3.5 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+                        ColUtils.advanced_tool_surface_class(tool.key)
+                      ]}
+                      phx-click={tool.event}
+                      phx-value-id={@node && @node.id}
+                      disabled={is_nil(@graph_id)}
+                      title={tool.title}
+                    >
+                      <span class={[
+                        "inline-flex items-center justify-center rounded-xl p-2 shadow-sm",
+                        ColUtils.advanced_tool_icon_class(tool.key)
+                      ]}>
+                        <.icon name={tool.icon} class="h-4 w-4" />
+                      </span>
+                      <span class="space-y-0.5">
+                        <span class="block text-xs font-semibold text-slate-900">{tool.label}</span>
+                        <span class="block text-xs leading-tight text-slate-600">{tool.blurb}</span>
+                      </span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
