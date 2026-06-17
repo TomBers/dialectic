@@ -73,8 +73,8 @@ defmodule DialecticWeb.ActionToolbarComp do
           key: "who_disagrees",
           event: "node_who_disagrees",
           icon: "hero-users",
-          label: "Who Disagrees",
-          blurb: "Other perspectives?",
+          label: "Other Perspectives",
+          blurb: "Who disagrees?",
           title:
             "Who Disagrees: Explore different perspectives and opposing viewpoints. Example: For 'Everyone should go to college', consider vocational experts, entrepreneurs, and trades professionals."
         }
