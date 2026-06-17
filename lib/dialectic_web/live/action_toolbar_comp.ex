@@ -334,7 +334,7 @@ defmodule DialecticWeb.ActionToolbarComp do
             <div>
               <p class="text-sm font-semibold text-slate-900">Advanced Critical Thinking Tools</p>
               <p class="mt-0.5 text-xs text-slate-500">
-                Grouped into Understand, Challenge, and Expand moves for choosing the right reasoning angle.
+                A toolkit for better understanding ideas, stress-testing them, and exploring where they lead.
               </p>
             </div>
             <.icon

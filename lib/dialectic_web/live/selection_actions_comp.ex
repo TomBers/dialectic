@@ -467,7 +467,7 @@ defmodule DialecticWeb.SelectionActionsComp do
                       Critical thinking tools
                     </span>
                     <span class="block text-[11px] leading-4 text-slate-500">
-                      Choose an Understand, Challenge, or Expand move for this selection.
+                      A toolkit for better understanding ideas, stress-testing them, and exploring where they lead.
                     </span>
                   </span>
                   <.icon
