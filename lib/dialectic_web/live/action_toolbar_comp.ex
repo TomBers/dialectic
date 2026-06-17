@@ -209,7 +209,7 @@ defmodule DialecticWeb.ActionToolbarComp do
 
     ~H"""
     <div
-      class="mt-3 min-w-0 overflow-hidden rounded-[1.7rem] border border-slate-200 bg-white p-4 shadow-[0_18px_40px_rgba(15,23,42,0.06)] [overflow-wrap:anywhere] sm:mt-4 sm:p-5"
+      class="mt-3 min-w-0 overflow-hidden break-words rounded-[1.7rem] border border-slate-200 bg-white p-4 shadow-[0_18px_40px_rgba(15,23,42,0.06)] sm:mt-4 sm:p-5"
       data-external="true"
       data-role="action-toolbar"
     >
@@ -252,7 +252,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                 Generate the strongest case for it and against it.
               </span>
             </span>
-            <span class="ml-auto mt-1 inline-flex shrink-0 items-center gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">
+            <span class="ml-auto mt-1 inline-flex shrink-0 items-center gap-1 text-xs font-semibold uppercase tracking-wider text-emerald-700">
               <span>Explore</span>
               <.icon
                 name="hero-arrow-right"
@@ -286,7 +286,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                 Combine this point with another and see what new idea emerges.
               </span>
             </span>
-            <span class="ml-auto mt-1 inline-flex shrink-0 items-center gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-violet-700">
+            <span class="ml-auto mt-1 inline-flex shrink-0 items-center gap-1 text-xs font-semibold uppercase tracking-wider text-violet-700">
               <span>Explore</span>
               <.icon
                 name="hero-arrow-right"
@@ -313,7 +313,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                 Pull in nearby ideas, comparisons, and useful directions to explore next.
               </span>
             </span>
-            <span class="ml-auto mt-1 inline-flex shrink-0 items-center gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-orange-700">
+            <span class="ml-auto mt-1 inline-flex shrink-0 items-center gap-1 text-xs font-semibold uppercase tracking-wider text-orange-700">
               <span>Explore</span>
               <.icon
                 name="hero-arrow-right"
@@ -352,7 +352,7 @@ defmodule DialecticWeb.ActionToolbarComp do
               <h4 class="px-1 text-xs font-semibold uppercase tracking-wider text-slate-500">
                 {section.title}
               </h4>
-              <div class="grid min-w-0 gap-2 sm:grid-cols-2 xl:grid-cols-4">
+              <div class="grid min-w-0 gap-2 sm:grid-cols-2">
                 <button
                   :for={tool <- section.tools}
                   type="button"
