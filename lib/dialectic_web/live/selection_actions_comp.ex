@@ -69,8 +69,8 @@ defmodule DialecticWeb.SelectionActionsComp do
         %{
           key: "who_disagrees",
           icon: "hero-users",
-          label: "Who Disagrees",
-          blurb: "Other perspectives?",
+          label: "Other Perspectives",
+          blurb: "Who disagrees?",
           title: "Who Disagrees: Explore opposing viewpoints."
         }
       ]
