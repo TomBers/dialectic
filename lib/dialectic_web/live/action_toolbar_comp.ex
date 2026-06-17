@@ -209,7 +209,7 @@ defmodule DialecticWeb.ActionToolbarComp do
 
     ~H"""
     <div
-      class="mt-3 rounded-[1.7rem] border border-slate-200 bg-white p-4 shadow-[0_18px_40px_rgba(15,23,42,0.06)] sm:mt-4 sm:p-5"
+      class="mt-3 min-w-0 overflow-hidden break-words rounded-[1.7rem] border border-slate-200 bg-white p-4 shadow-[0_18px_40px_rgba(15,23,42,0.06)] sm:mt-4 sm:p-5"
       data-external="true"
       data-role="action-toolbar"
     >
@@ -237,22 +237,22 @@ defmodule DialecticWeb.ActionToolbarComp do
         <div class="grid gap-2.5">
           <button
             type="button"
-            class="group flex items-start gap-3 rounded-[1.2rem] border border-slate-200 bg-slate-50/80 px-4 py-3.5 text-left transition hover:border-emerald-200 hover:bg-white hover:shadow-sm active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
+            class="group flex w-full min-w-0 flex-wrap items-start gap-3 overflow-hidden rounded-[1.2rem] border border-slate-200 bg-slate-50/80 px-4 py-3.5 text-left transition hover:border-emerald-200 hover:bg-white hover:shadow-sm active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
             phx-click="node_branch"
             phx-value-id={@node && @node.id}
             disabled={is_nil(@graph_id)}
             title="Create supporting and opposing branches from this node"
           >
-            <span class="inline-flex items-center justify-center rounded-xl bg-emerald-100 p-2.5 text-emerald-700">
+            <span class="inline-flex shrink-0 items-center justify-center rounded-xl bg-emerald-100 p-2.5 text-emerald-700">
               <.icon name="hero-scale" class="h-5 w-5" />
             </span>
-            <span class="min-w-0 flex-1 space-y-1">
+            <span class="min-w-[min(12rem,100%)] flex-1 space-y-1">
               <span class="block text-sm font-semibold text-slate-900">Test it with Pro / Con</span>
               <span class="block text-sm leading-5 text-slate-600">
                 Generate the strongest case for it and against it.
               </span>
             </span>
-            <span class="mt-1 inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">
+            <span class="ml-auto mt-1 inline-flex shrink-0 items-center gap-1 text-xs font-semibold uppercase tracking-wider text-emerald-700">
               <span>Explore</span>
               <.icon
                 name="hero-arrow-right"
@@ -263,7 +263,7 @@ defmodule DialecticWeb.ActionToolbarComp do
 
           <button
             type="button"
-            class="group flex items-start gap-3 rounded-[1.2rem] border border-slate-200 bg-slate-50/80 px-4 py-3.5 text-left transition hover:border-violet-200 hover:bg-white hover:shadow-sm active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-violet-100 disabled:cursor-not-allowed disabled:opacity-50"
+            class="group flex w-full min-w-0 flex-wrap items-start gap-3 overflow-hidden rounded-[1.2rem] border border-slate-200 bg-slate-50/80 px-4 py-3.5 text-left transition hover:border-violet-200 hover:bg-white hover:shadow-sm active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-violet-100 disabled:cursor-not-allowed disabled:opacity-50"
             phx-click={
               Phoenix.LiveView.JS.dispatch("toggle-panel",
                 to: "#graph-layout",
@@ -277,16 +277,16 @@ defmodule DialecticWeb.ActionToolbarComp do
             aria-label="Blend this node with another"
             title="Blend this node with another"
           >
-            <span class="inline-flex items-center justify-center rounded-xl bg-violet-100 p-2.5 text-violet-700">
+            <span class="inline-flex shrink-0 items-center justify-center rounded-xl bg-violet-100 p-2.5 text-violet-700">
               <.icon name="hero-arrows-pointing-in" class="h-5 w-5" />
             </span>
-            <span class="min-w-0 flex-1 space-y-1">
+            <span class="min-w-[min(12rem,100%)] flex-1 space-y-1">
               <span class="block text-sm font-semibold text-slate-900">Blend with another node</span>
               <span class="block text-sm leading-5 text-slate-600">
                 Combine this point with another and see what new idea emerges.
               </span>
             </span>
-            <span class="mt-1 inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-violet-700">
+            <span class="ml-auto mt-1 inline-flex shrink-0 items-center gap-1 text-xs font-semibold uppercase tracking-wider text-violet-700">
               <span>Explore</span>
               <.icon
                 name="hero-arrow-right"
@@ -297,23 +297,23 @@ defmodule DialecticWeb.ActionToolbarComp do
 
           <button
             type="button"
-            class="group flex items-start gap-3 rounded-[1.2rem] border border-slate-200 bg-slate-50/80 px-4 py-3.5 text-left transition hover:border-orange-200 hover:bg-white hover:shadow-sm active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:opacity-50"
+            class="group flex w-full min-w-0 flex-wrap items-start gap-3 overflow-hidden rounded-[1.2rem] border border-slate-200 bg-slate-50/80 px-4 py-3.5 text-left transition hover:border-orange-200 hover:bg-white hover:shadow-sm active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:opacity-50"
             phx-click="node_related_ideas"
             phx-value-id={@node && @node.id}
             disabled={is_nil(@graph_id)}
             title="Find related ideas"
             data-action="related-ideas"
           >
-            <span class="inline-flex items-center justify-center rounded-xl bg-orange-100 p-2.5 text-orange-700">
+            <span class="inline-flex shrink-0 items-center justify-center rounded-xl bg-orange-100 p-2.5 text-orange-700">
               <.icon name="hero-light-bulb" class="h-5 w-5" />
             </span>
-            <span class="min-w-0 flex-1 space-y-1">
+            <span class="min-w-[min(12rem,100%)] flex-1 space-y-1">
               <span class="block text-sm font-semibold text-slate-900">Find related ideas</span>
               <span class="block text-sm leading-5 text-slate-600">
                 Pull in nearby ideas, comparisons, and useful directions to explore next.
               </span>
             </span>
-            <span class="mt-1 inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-orange-700">
+            <span class="ml-auto mt-1 inline-flex shrink-0 items-center gap-1 text-xs font-semibold uppercase tracking-wider text-orange-700">
               <span>Explore</span>
               <.icon
                 name="hero-arrow-right"
@@ -327,11 +327,11 @@ defmodule DialecticWeb.ActionToolbarComp do
         <div class="border-t border-slate-200/80 pt-4">
           <button
             type="button"
-            class="w-full flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-left transition hover:bg-slate-50"
+            class="flex w-full min-w-0 items-center justify-between gap-2 rounded-lg px-3 py-2 text-left transition hover:bg-slate-50"
             phx-click="toggle_advanced_tools"
             phx-target={@myself}
           >
-            <div>
+            <div class="min-w-0">
               <p class="text-sm font-semibold text-slate-900">Advanced Critical Thinking Tools</p>
               <p class="mt-0.5 text-xs text-slate-500">
                 A toolkit for better understanding ideas, stress-testing them, and exploring where they lead.
@@ -352,12 +352,12 @@ defmodule DialecticWeb.ActionToolbarComp do
               <h4 class="px-1 text-xs font-semibold uppercase tracking-wider text-slate-500">
                 {section.title}
               </h4>
-              <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+              <div class="grid min-w-0 gap-2 sm:grid-cols-2">
                 <button
                   :for={tool <- section.tools}
                   type="button"
                   class={[
-                    "group flex flex-col items-start gap-2.5 rounded-[1.1rem] px-3.5 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+                    "group flex min-w-0 flex-col items-start gap-2.5 overflow-hidden rounded-[1.1rem] px-3.5 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
                     ColUtils.advanced_tool_surface_class(tool.key)
                   ]}
                   phx-click={tool.event}
@@ -371,7 +371,7 @@ defmodule DialecticWeb.ActionToolbarComp do
                   ]}>
                     <.icon name={tool.icon} class="h-4 w-4" />
                   </span>
-                  <span class="space-y-0.5">
+                  <span class="min-w-0 space-y-0.5">
                     <span class="block text-xs font-semibold text-slate-900">{tool.label}</span>
                     <span class="block text-xs leading-tight text-slate-600">{tool.blurb}</span>
                   </span>
