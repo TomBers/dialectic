@@ -21,33 +21,9 @@ defmodule DialecticWeb.SelectionActionsComp do
     "what_if" => :what_if
   }
 
-  @primary_critical_tools [
+  @critical_tool_sections [
     %{
-      key: "assumptions",
-      icon: "hero-cube-transparent",
-      label: "Assumptions",
-      blurb: "What has to be true?",
-      title: "Assumptions: Reveal what must be true for this claim to work."
-    },
-    %{
-      key: "counterexample",
-      icon: "hero-x-mark",
-      label: "Test",
-      blurb: "Is that always true?",
-      title: "Test: Find counterexamples that challenge this claim."
-    },
-    %{
-      key: "implications",
-      icon: "hero-arrow-trending-up",
-      label: "Implications",
-      blurb: "If true, then what?",
-      title: "Implications: Trace what follows if this selection is true."
-    }
-  ]
-
-  @secondary_critical_tool_sections [
-    %{
-      title: "Precision & missing context",
+      title: "Understand",
       tools: [
         %{
           key: "clarify",
@@ -58,30 +34,18 @@ defmodule DialecticWeb.SelectionActionsComp do
             "Clarify Terms: Identify key terms, hidden ambiguity, conceptual boundaries, and what would count as evidence."
         },
         %{
-          key: "blind_spots",
-          icon: "hero-eye-slash",
-          label: "Blind Spots",
-          blurb: "What are we missing?",
-          title: "Blind Spots: Identify perspectives or constraints being overlooked."
-        }
-      ]
-    },
-    %{
-      title: "Dialogue & sources",
-      tools: [
+          key: "assumptions",
+          icon: "hero-cube-transparent",
+          label: "Assumptions",
+          blurb: "What has to be true?",
+          title: "Assumptions: Reveal what must be true for this claim to work."
+        },
         %{
           key: "says_who",
           icon: "hero-user",
           label: "Source Check",
           blurb: "Says who?",
           title: "Source Check: Question the authority and evidence behind claims."
-        },
-        %{
-          key: "who_disagrees",
-          icon: "hero-users",
-          label: "Who Disagrees",
-          blurb: "Other perspectives?",
-          title: "Who Disagrees: Explore opposing viewpoints."
         },
         %{
           key: "steel_man",
@@ -93,8 +57,41 @@ defmodule DialecticWeb.SelectionActionsComp do
       ]
     },
     %{
-      title: "Counterfactuals",
+      title: "Challenge",
       tools: [
+        %{
+          key: "counterexample",
+          icon: "hero-x-mark",
+          label: "Test",
+          blurb: "Is that always true?",
+          title: "Test: Find counterexamples that challenge this claim."
+        },
+        %{
+          key: "who_disagrees",
+          icon: "hero-users",
+          label: "Who Disagrees",
+          blurb: "Other perspectives?",
+          title: "Who Disagrees: Explore opposing viewpoints."
+        }
+      ]
+    },
+    %{
+      title: "Expand",
+      tools: [
+        %{
+          key: "implications",
+          icon: "hero-arrow-trending-up",
+          label: "Implications",
+          blurb: "If true, then what?",
+          title: "Implications: Trace what follows if this selection is true."
+        },
+        %{
+          key: "blind_spots",
+          icon: "hero-eye-slash",
+          label: "Blind Spots",
+          blurb: "What are we missing?",
+          title: "Blind Spots: Identify perspectives or constraints being overlooked."
+        },
         %{
           key: "what_if",
           icon: "hero-question-mark-circle",
@@ -118,8 +115,7 @@ defmodule DialecticWeb.SelectionActionsComp do
        highlight: nil,
        links: [],
        ask_question: true,
-       advanced_tools_open: false,
-       more_advanced_tools_open: false
+       advanced_tools_open: false
      )}
   end
 
@@ -204,11 +200,6 @@ defmodule DialecticWeb.SelectionActionsComp do
   end
 
   @impl true
-  def handle_event("toggle_more_advanced_tools", _params, socket) do
-    {:noreply, update(socket, :more_advanced_tools_open, &(!&1))}
-  end
-
-  @impl true
   def handle_event("critical_tool", %{"tool" => tool}, socket) do
     case Map.fetch(@critical_tool_actions, tool) do
       {:ok, action} ->
@@ -262,10 +253,7 @@ defmodule DialecticWeb.SelectionActionsComp do
   @impl true
   def render(assigns) do
     assigns =
-      assign(assigns,
-        primary_critical_tools: @primary_critical_tools,
-        secondary_critical_tool_sections: @secondary_critical_tool_sections
-      )
+      assign(assigns, critical_tool_sections: @critical_tool_sections)
 
     ~H"""
     <div id={@id}>
@@ -479,7 +467,7 @@ defmodule DialecticWeb.SelectionActionsComp do
                       Critical thinking tools
                     </span>
                     <span class="block text-[11px] leading-4 text-slate-500">
-                      Probe the selected text from a more precise angle.
+                      A toolkit for better understanding ideas, stress-testing them, and exploring where they lead.
                     </span>
                   </span>
                   <.icon
@@ -492,14 +480,14 @@ defmodule DialecticWeb.SelectionActionsComp do
                 </button>
 
                 <%= if @advanced_tools_open do %>
-                  <div class="space-y-3 border-t border-slate-200 bg-slate-50/70 px-3 py-3">
-                    <div class="space-y-2">
+                  <div class="space-y-4 border-t border-slate-200 bg-slate-50/70 px-3 py-3">
+                    <div :for={section <- @critical_tool_sections} class="space-y-2">
                       <div class="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                        Essential moves
+                        {section.title}
                       </div>
-                      <div class="grid gap-2 sm:grid-cols-3">
+                      <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                         <button
-                          :for={tool <- @primary_critical_tools}
+                          :for={tool <- section.tools}
                           type="button"
                           id={"selection-tool-#{@id}-#{tool.key}"}
                           phx-click="critical_tool"
@@ -538,81 +526,6 @@ defmodule DialecticWeb.SelectionActionsComp do
                           </span>
                         </button>
                       </div>
-                    </div>
-
-                    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white/80">
-                      <button
-                        type="button"
-                        id={"selection-more-tools-toggle-#{@id}"}
-                        phx-click="toggle_more_advanced_tools"
-                        phx-target={@myself}
-                        class="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition hover:bg-white"
-                      >
-                        <span>
-                          <span class="block text-xs font-semibold text-slate-800">More tools</span>
-                          <span class="block text-[11px] leading-4 text-slate-500">
-                            Optional moves for sources, missing context, alternative views, and hypotheticals.
-                          </span>
-                        </span>
-                        <.icon
-                          name="hero-chevron-down"
-                          class={
-                            "h-4 w-4 text-slate-500 transition-transform" <>
-                              if(@more_advanced_tools_open, do: " rotate-180", else: "")
-                          }
-                        />
-                      </button>
-
-                      <%= if @more_advanced_tools_open do %>
-                        <div class="space-y-3 border-t border-slate-200 px-3 py-3">
-                          <div :for={section <- @secondary_critical_tool_sections} class="space-y-2">
-                            <div class="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                              {section.title}
-                            </div>
-                            <div class="grid gap-2 sm:grid-cols-3">
-                              <button
-                                :for={tool <- section.tools}
-                                type="button"
-                                id={"selection-tool-#{@id}-#{tool.key}"}
-                                phx-click="critical_tool"
-                                phx-value-tool={tool.key}
-                                phx-target={@myself}
-                                disabled={!@can_edit || has_link_type?(@links, tool.key)}
-                                title={tool.title}
-                                class={[
-                                  "group flex min-h-[86px] flex-col items-start justify-between rounded-2xl px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50",
-                                  ColUtils.advanced_tool_surface_class(tool.key)
-                                ]}
-                              >
-                                <span class="space-y-1">
-                                  <span class={[
-                                    "inline-flex h-8 w-8 items-center justify-center rounded-xl ring-1 ring-white/70",
-                                    ColUtils.advanced_tool_icon_class(tool.key)
-                                  ]}>
-                                    <.icon name={tool.icon} class="h-4 w-4" />
-                                  </span>
-                                  <span class="block text-sm font-semibold leading-4 text-slate-900">
-                                    {tool.label}
-                                  </span>
-                                  <span class="block text-[11px] leading-4 text-slate-500">
-                                    {tool.blurb}
-                                  </span>
-                                </span>
-                                <span class={[
-                                  "mt-2 text-[10px] font-semibold uppercase tracking-[0.12em]",
-                                  ColUtils.advanced_tool_text_class(tool.key)
-                                ]}>
-                                  <%= if has_link_type?(@links, tool.key) do %>
-                                    Added
-                                  <% else %>
-                                    Use this
-                                  <% end %>
-                                </span>
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      <% end %>
                     </div>
                   </div>
                 <% end %>
