@@ -53,7 +53,7 @@ defmodule DialecticWeb.GridCardComp do
               {@title}
             </.link>
 
-            <%= if author_visible?(@author_name) do %>
+            <%= if author_visible?(@author_name) and @variant != :compact do %>
               <.link
                 navigate={~p"/u/#{@author_name}"}
                 class="mt-1 inline-flex text-xs font-semibold text-teal-700 underline decoration-teal-300 underline-offset-4 transition hover:text-teal-900 hover:decoration-teal-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-200"
@@ -63,7 +63,7 @@ defmodule DialecticWeb.GridCardComp do
             <% end %>
           </div>
 
-          <%= if @variant != :featured do %>
+          <%= if @variant not in [:featured, :compact] do %>
             <div
               class="shrink-0 rounded-xl bg-slate-50 px-3 py-2 text-center ring-1 ring-slate-200"
               aria-label={"#{@node_count} ideas"}
@@ -78,7 +78,7 @@ defmodule DialecticWeb.GridCardComp do
           {graph_preview_sentence(@graph, @node_count)}
         </p>
 
-        <div class="mt-4 flex min-h-12 flex-wrap content-start gap-1.5">
+        <div class={tag_container_class(@variant)}>
           <%= if @tags == [] do %>
             <span class="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500 ring-1 ring-inset ring-slate-200">
               Untagged
@@ -95,9 +95,9 @@ defmodule DialecticWeb.GridCardComp do
           <% end %>
         </div>
 
-        <div class="mt-auto flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
+        <div class={footer_class(@variant)}>
           <span class="text-xs font-medium text-slate-500">
-            {@node_count} ideas - {graph_updated_label(@graph)}
+            {footer_meta_text(@variant, @node_count, @graph)}
           </span>
 
           <div class="flex items-center gap-2">
@@ -134,6 +134,13 @@ defmodule DialecticWeb.GridCardComp do
     ]
   end
 
+  defp card_class(:compact, _index, tag) do
+    [
+      card_base_class(tag),
+      "min-h-0 rounded-xl"
+    ]
+  end
+
   defp card_class(_variant, _index, tag) do
     [
       card_base_class(tag),
@@ -151,22 +158,43 @@ defmodule DialecticWeb.GridCardComp do
   defp card_header_class(:featured, graph),
     do: ["h-36 p-5", tag_gradient_class(primary_tag(graph))]
 
+  defp card_header_class(:compact, graph),
+    do: ["h-12 p-2.5", tag_gradient_class(primary_tag(graph))]
+
   defp card_header_class(_variant, graph),
     do: ["h-24 p-4", tag_gradient_class(primary_tag(graph))]
 
   defp card_body_class(:featured, 0), do: "flex flex-1 flex-col p-5"
   defp card_body_class(:featured, _index), do: "flex flex-1 flex-col p-4"
+  defp card_body_class(:compact, _index), do: "flex flex-1 flex-col p-2.5"
   defp card_body_class(_variant, _index), do: "flex flex-1 flex-col p-4"
 
   defp card_title_class(:featured, 0), do: "line-clamp-4 text-2xl"
   defp card_title_class(:featured, _index), do: "line-clamp-3 text-base"
+  defp card_title_class(:compact, _index), do: "line-clamp-2 text-sm"
   defp card_title_class(_variant, _index), do: "line-clamp-3 text-base"
 
   defp preview_class(:featured), do: "mt-2 line-clamp-2 min-h-12 text-sm leading-6 text-slate-600"
+  defp preview_class(:compact), do: "mt-1 line-clamp-1 min-h-4 text-xs leading-4 text-slate-600"
   defp preview_class(_variant), do: "mt-3 line-clamp-2 min-h-10 text-sm leading-5 text-slate-600"
+
+  defp tag_container_class(:compact),
+    do: "mt-2 flex min-h-7 flex-wrap content-start gap-1"
+
+  defp tag_container_class(_variant), do: "mt-4 flex min-h-12 flex-wrap content-start gap-1.5"
+
+  defp footer_class(:compact),
+    do: "mt-auto flex items-center justify-between gap-2 border-t border-slate-100 pt-2"
+
+  defp footer_class(_variant),
+    do: "mt-auto flex items-center justify-between gap-3 border-t border-slate-100 pt-3"
 
   defp open_link_class(:featured) do
     "inline-flex items-center gap-1 text-xs font-semibold text-teal-700 transition hover:text-teal-800"
+  end
+
+  defp open_link_class(:compact) do
+    "inline-flex h-7 w-7 items-center justify-center rounded-full bg-slate-950 text-white transition hover:bg-teal-700"
   end
 
   defp open_link_class(_variant) do
@@ -174,10 +202,17 @@ defmodule DialecticWeb.GridCardComp do
   end
 
   defp open_link_text(:featured), do: "Open grid"
+  defp open_link_text(:compact), do: ""
   defp open_link_text(_variant), do: "Open"
 
   defp open_link_icon(:featured), do: "hero-arrow-right"
   defp open_link_icon(_variant), do: "hero-arrow-up-right"
+
+  defp footer_meta_text(:compact, node_count, _graph), do: "#{node_count} ideas"
+
+  defp footer_meta_text(_variant, node_count, graph) do
+    "#{node_count} ideas - #{graph_updated_label(graph)}"
+  end
 
   defp author_text(author_name, marker), do: "by " <> marker <> author_name
 

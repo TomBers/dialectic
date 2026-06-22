@@ -18,7 +18,7 @@ defmodule DialecticWeb.NewIdeaFormComp do
       |> assign(assigns)
       |> assign_new(:id, fn -> "new-idea-form" end)
       |> assign_new(:placeholder, fn ->
-        "Ask a question, name a topic, or frame a tension"
+        "Ask a question or name a topic"
       end)
       |> assign_new(:submit_label, fn -> "Next" end)
       |> assign_new(:selected_mode, fn -> "high_school" end)
@@ -131,8 +131,8 @@ defmodule DialecticWeb.NewIdeaFormComp do
 
           <%= if !@show_level_prompt do %>
             <div class="flex flex-col gap-1 px-1 text-xs text-slate-600 sm:flex-row sm:items-center sm:justify-between">
-              <p>Step 1 of 2: describe the grid you want to start.</p>
-              <p class="hidden sm:block">You’ll choose the level of detail next.</p>
+              <p>Step 1 of 2: start with what you want to understand.</p>
+              <p class="hidden sm:block">You’ll choose the answer level next.</p>
             </div>
           <% end %>
         </div>
@@ -148,10 +148,10 @@ defmodule DialecticWeb.NewIdeaFormComp do
                   Step 2 of 2
                 </p>
                 <p class="text-sm font-semibold text-slate-900">
-                  Choose the starting level for the first draft.
+                  Choose how detailed the first answers should be.
                 </p>
                 <p class="text-xs text-slate-600">
-                  This only shapes the opening pass. You can refine the grid after it loads.
+                  Start simple, or begin closer to expert depth. You can change this later.
                 </p>
               </div>
               <button

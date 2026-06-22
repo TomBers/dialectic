@@ -5,7 +5,6 @@ defmodule DialecticWeb.HomeLive do
   alias Dialectic.Graph.Vertex
   alias DialecticWeb.Utils.UserUtils
   import DialecticWeb.GridCardComp
-  import DialecticWeb.HomeGridRowComp
   require Logger
 
   on_mount {DialecticWeb.UserAuth, :mount_current_user}
@@ -46,7 +45,7 @@ defmodule DialecticWeb.HomeLive do
        quick_tags: [],
        editor_picks_expanded: false,
        page_description:
-         "RationalGrid helps students, lecturers, and researchers learn by mapping the connections across all information, from astronomy to zoology."
+         "RationalGrid helps people understand complex topics by turning questions into persistent, shared grids they can keep questioning from any idea, sentence, or word."
      )}
   end
 
@@ -63,7 +62,7 @@ defmodule DialecticWeb.HomeLive do
     all_curated_grids = Graphs.list_curated_grids("curated", 20)
     all_featured_grids = Graphs.list_curated_grids("featured", 20)
 
-    curated_grids = preview_curated_grids(all_curated_grids, 3, socket.assigns.preview_seed)
+    curated_grids = preview_curated_grids(all_curated_grids, 4, socket.assigns.preview_seed)
 
     featured_grids =
       preview_curated_grids(all_featured_grids, 3, socket.assigns.preview_seed)
@@ -290,213 +289,242 @@ defmodule DialecticWeb.HomeLive do
             </div>
           </div>
         <% end %>
-        <!-- Static decorative background -->
-        <div class="absolute inset-0 z-0">
-          <div class="pointer-events-none absolute -top-32 -right-24 h-80 w-80 rounded-full bg-sky-100/50 blur-3xl">
-          </div>
-          <div class="pointer-events-none absolute -top-20 -left-24 h-72 w-72 rounded-full bg-slate-300/35 blur-3xl">
-          </div>
-        </div>
-        <!-- Make the hero content scroll within the viewport naturally -->
         <div class="relative z-10 pb-4 sm:pb-5">
-          <section class="w-full" id="start-here">
-            <div class="w-full bg-gradient-to-br from-[#3a0ca3] to-[#4361ee] px-4 py-5 text-white shadow-xl sm:px-6 sm:py-6">
-              <div class="mx-auto flex w-full max-w-6xl flex-col items-center gap-2.5 text-center sm:gap-3">
-                <h1 class="flex items-center justify-center gap-3 text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
+          <section class="w-full border-b border-slate-200 bg-white" id="start-here">
+            <div class="mx-auto grid w-full max-w-6xl gap-7 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-[minmax(0,1fr)_minmax(320px,420px)] lg:items-center lg:py-12">
+              <div class="max-w-3xl">
+                <div class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm">
                   <img
                     src={~p"/images/favicon.webp"}
                     alt=""
                     aria-hidden="true"
-                    class="h-10 w-10 rounded-xl shadow-lg sm:h-12 sm:w-12"
-                  />
-                  <span>RationalGrid</span>
+                    class="h-5 w-5 rounded-md"
+                  /> RationalGrid
+                </div>
+                <h1 class="mt-4 max-w-2xl text-3xl font-semibold leading-tight tracking-tight text-slate-950 sm:text-5xl">
+                  Understand hard topics, one question at a time.
                 </h1>
-                <p class="mx-auto max-w-5xl text-base font-semibold leading-snug text-white sm:text-lg">
-                  Learn by mapping the connections across <strong>all information</strong>,
-                  from astronomy to zoology.
-                  <.link
-                    navigate={~p"/about"}
-                    class="underline decoration-white/60 underline-offset-4 hover:decoration-white"
-                  >
-                    more
-                  </.link>
+                <p class="mt-4 max-w-2xl text-sm leading-6 text-slate-700 sm:text-lg sm:leading-7">
+                  Start with any question. RationalGrid builds a persistent map you can keep
+                  questioning from any idea, sentence, or word, alone or with other people.
                 </p>
-                <div class="flex flex-wrap items-center justify-center gap-2 text-xs font-semibold text-white/85">
-                  <span class="rounded-full border border-white/15 bg-white/10 px-3 py-1">
-                    For students
-                  </span>
-                  <span class="rounded-full border border-white/15 bg-white/10 px-3 py-1">
-                    For lecturers
-                  </span>
-                  <span class="rounded-full border border-white/15 bg-white/10 px-3 py-1">
-                    For researchers
-                  </span>
+
+                <div
+                  id="home-start-panel"
+                  class="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-2 shadow-sm ring-1 ring-white sm:p-3"
+                >
+                  <div class="mb-3 flex flex-col gap-1 px-1 sm:flex-row sm:items-center sm:justify-between">
+                    <p class="text-sm font-semibold text-slate-950">Start a grid</p>
+                    <p class="text-xs text-slate-600">
+                      Choose the answer level next.
+                    </p>
+                  </div>
+                  <.live_component
+                    module={DialecticWeb.NewIdeaFormComp}
+                    id="new-idea-form"
+                    form={@form}
+                    placeholder="Ask a question or name a topic"
+                  />
+                </div>
+              </div>
+
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
+                <div class="flex items-center justify-between gap-3">
+                  <p class="text-sm font-semibold text-slate-950">What happens next</p>
+                  <.link
+                    navigate={~p"/intro/how"}
+                    class="text-sm font-medium text-indigo-700 transition hover:text-indigo-900"
+                  >
+                    Guide
+                  </.link>
+                </div>
+                <div class="mt-4 grid gap-3">
+                  <div class="flex gap-3 rounded-xl border border-slate-200 bg-white p-3">
+                    <span class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700">
+                      <.icon name="hero-question-mark-circle" class="h-4 w-4" />
+                    </span>
+                    <div>
+                      <p class="text-sm font-semibold text-slate-950">Ask anything</p>
+                      <p class="mt-0.5 text-sm leading-5 text-slate-600">
+                        Begin with a topic, claim, sentence, or confusion.
+                      </p>
+                    </div>
+                  </div>
+                  <div class="flex gap-3 rounded-xl border border-slate-200 bg-white p-3">
+                    <span class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-teal-50 text-teal-700">
+                      <.icon name="hero-squares-2x2" class="h-4 w-4" />
+                    </span>
+                    <div>
+                      <p class="text-sm font-semibold text-slate-950">Grow a lasting grid</p>
+                      <p class="mt-0.5 text-sm leading-5 text-slate-600">
+                        Every answer becomes part of a map you can return to.
+                      </p>
+                    </div>
+                  </div>
+                  <div class="flex gap-3 rounded-xl border border-slate-200 bg-white p-3">
+                    <span class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-700">
+                      <.icon name="hero-cursor-arrow-rays" class="h-4 w-4" />
+                    </span>
+                    <div>
+                      <p class="text-sm font-semibold text-slate-950">Question any part</p>
+                      <p class="mt-0.5 text-sm leading-5 text-slate-600">
+                        Follow up from a node, a sentence, or a single word.
+                      </p>
+                    </div>
+                  </div>
+                  <div class="flex gap-3 rounded-xl border border-slate-200 bg-white p-3">
+                    <span class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-sky-50 text-sky-700">
+                      <.icon name="hero-users" class="h-4 w-4" />
+                    </span>
+                    <div>
+                      <p class="text-sm font-semibold text-slate-950">Think together</p>
+                      <p class="mt-0.5 text-sm leading-5 text-slate-600">
+                        Share the grid, use thinking tools, or present the path.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </section>
 
-          <div class="mx-auto max-w-6xl px-4 pt-2 sm:px-6 sm:pt-3">
-            <div class="flex flex-col items-stretch gap-2.5 sm:gap-3">
-              <section class="w-full">
-                <% preview_items =
-                  editor_pick_preview_items(
-                    if(@editor_picks_expanded, do: @all_curated_grids, else: @curated_grids),
-                    @graphs
-                  ) %>
-                <div class="grid gap-3 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-stretch">
-                  <div class="relative overflow-hidden rounded-[2rem] border border-indigo-200/80 bg-gradient-to-br from-indigo-50 via-white to-sky-50/90 px-4 py-4 shadow-[0_18px_40px_rgba(15,23,42,0.10)] ring-1 ring-indigo-200/70 sm:px-6 sm:py-5">
-                    <div class="pointer-events-none absolute inset-0">
-                      <div class="absolute -top-16 right-8 h-40 w-40 rounded-full bg-indigo-200/35 blur-3xl">
-                      </div>
-                      <div class="absolute bottom-0 left-0 h-32 w-44 rounded-full bg-sky-200/25 blur-3xl">
-                      </div>
-                    </div>
-                    <div class="relative flex h-full flex-col gap-5">
-                      <div class="max-w-2xl">
-                        <div class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-200 shadow-sm">
-                          <.icon name="hero-plus" class="h-3.5 w-3.5" /> Create a grid
-                        </div>
-                        <h2 class="mt-3 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
-                          Turn one question into a connected learning grid.
-                        </h2>
-                        <p class="mt-2 max-w-xl text-sm leading-6 text-slate-700 sm:text-[0.95rem]">
-                          Start with a topic, claim, or tension. Map claims, sources, and
-                          counterpoints so a class or research project can see how the
-                          information fits together.
-                        </p>
-                      </div>
-
-                      <div class="rounded-[1.6rem] border border-indigo-100/90 bg-white/80 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_26px_rgba(15,23,42,0.08)] ring-1 ring-white/80 sm:p-3">
-                        <.live_component
-                          module={DialecticWeb.NewIdeaFormComp}
-                          id="new-idea-form"
-                          form={@form}
-                        />
-                      </div>
-
-                      <div class="rounded-[1.6rem] border border-slate-900/10 bg-slate-950/95 p-3 shadow-[0_14px_34px_rgba(15,23,42,0.18)] ring-1 ring-white/10 sm:p-4">
-                        <button
-                          id="home-example-grid-preview"
-                          type="button"
-                          phx-click={show_modal("home-example-grid-modal")}
-                          class="group block w-full text-left"
-                          aria-label="Expand the Happiness grid example"
-                        >
-                          <div class="mb-3 flex items-start justify-between gap-3">
-                            <div>
-                              <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-200/80">
-                                Example grid
-                              </p>
-                              <p class="mt-1 text-base font-semibold text-white sm:text-lg">
-                                Happiness
-                              </p>
-                            </div>
-                            <span class="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-medium text-white/85 transition group-hover:border-sky-300/40 group-hover:bg-white/15 group-hover:text-white">
-                              <.icon name="hero-magnifying-glass-plus" class="h-4 w-4" />
-                              Click to expand
-                            </span>
-                          </div>
-
-                          <div class="overflow-hidden border border-white/10 bg-slate-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-                            <img
-                              src={~p"/images/guide/grid-workspace.webp"}
-                              alt="Preview of the Happiness grid workspace by TomBers44"
-                              class="aspect-[16/9] w-full object-contain object-center transition duration-300 group-hover:scale-[1.015]"
-                              loading="lazy"
-                            />
-                          </div>
-                        </button>
-
-                        <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
-                          <p class="text-sm leading-6 text-slate-300">
-                            See what a finished grid looks like before you start your own.
-                          </p>
-                          <.link
-                            navigate={~p"/g/happiness-da4f7e"}
-                            class="inline-flex items-center gap-2 rounded-full border border-sky-300/35 bg-sky-400/10 px-4 py-2 text-sm font-medium text-sky-100 transition hover:border-sky-200/60 hover:bg-sky-400/15"
-                          >
-                            <.icon name="hero-arrow-top-right-on-square" class="h-4 w-4" />
-                            Open live grid
-                          </.link>
-                        </div>
-                      </div>
-                    </div>
+          <section id="home-product-preview" class="w-full border-y border-slate-800 bg-slate-950">
+            <% preview_items =
+              editor_pick_preview_items(
+                if(@editor_picks_expanded, do: @all_curated_grids, else: @curated_grids),
+                @graphs
+              ) %>
+            <div class="mx-auto w-full max-w-6xl px-4 py-7 sm:px-6 sm:py-8">
+              <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div class="max-w-2xl">
+                  <div class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-100">
+                    <.icon name="hero-sparkles" class="h-3.5 w-3.5" /> Product preview
                   </div>
+                  <h2 class="mt-3 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+                    See how a question becomes a shared workspace.
+                  </h2>
+                  <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
+                    Inspect a live grid, then browse examples when you want a starting point.
+                  </p>
+                </div>
+                <.link
+                  navigate={~p"/intro/how"}
+                  class="inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:border-white/25 hover:bg-white/15"
+                >
+                  <.icon name="hero-book-open" class="h-4 w-4" /> Read the guide
+                </.link>
+              </div>
 
-                  <div class="relative overflow-hidden rounded-[2rem] border border-slate-200/90 bg-gradient-to-br from-white via-slate-50 to-indigo-50/60 px-4 py-4 shadow-[0_18px_40px_rgba(15,23,42,0.08)] ring-1 ring-slate-200/80 sm:px-6 sm:py-5">
-                    <div class="pointer-events-none absolute inset-0">
-                      <div class="absolute -right-10 top-0 h-32 w-32 rounded-full bg-indigo-100/40 blur-3xl">
+              <div class="grid gap-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-stretch">
+                <div class="overflow-hidden rounded-2xl border border-white/10 bg-white px-4 py-4 shadow-[0_18px_44px_rgba(0,0,0,0.22)] sm:px-5 sm:py-5 lg:h-full">
+                  <div class="flex h-full flex-col gap-4">
+                    <div class="max-w-2xl">
+                      <div class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-600">
+                        <.icon name="hero-eye" class="h-3.5 w-3.5" /> See it in action
                       </div>
-                      <div class="absolute bottom-0 left-0 h-28 w-40 rounded-full bg-slate-200/45 blur-3xl">
-                      </div>
+                      <h2 class="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
+                        A grid becomes your shared trail through an idea.
+                      </h2>
                     </div>
-                    <div class="relative flex h-full flex-col gap-4">
-                      <div>
-                        <div class="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-700 shadow-sm ring-1 ring-slate-200">
-                          <.icon name="hero-magnifying-glass" class="h-3.5 w-3.5" /> Explore grids
-                        </div>
-                        <h2 class="mt-3 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
-                          Explore how other people connect ideas.
-                        </h2>
-                        <p class="mt-2 max-w-xl text-sm leading-6 text-slate-700 sm:text-[0.95rem]">
-                          Browse finished grids to follow the links between concepts, evidence,
-                          and questions before making your own.
-                        </p>
-                      </div>
 
-                      <div class="grid gap-2 sm:grid-cols-2">
-                        <.link
-                          href="#explore"
-                          class="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800"
-                        >
-                          <.icon name="hero-magnifying-glass" class="h-4 w-4" /> Browse all grids
-                        </.link>
-                        <.link
-                          navigate={~p"/intro/how"}
-                          class="inline-flex items-center justify-center gap-2 rounded-full border border-indigo-200 bg-white/90 px-4 py-2 text-sm font-medium text-indigo-800 transition hover:border-indigo-300 hover:bg-indigo-50"
-                        >
-                          <.icon name="hero-book-open" class="h-4 w-4" /> Read the guide
-                        </.link>
-                      </div>
-
-                      <div class="rounded-[1.6rem] border border-slate-200/90 bg-white/85 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_26px_rgba(15,23,42,0.06)] ring-1 ring-white/80">
-                        <div class="mb-2 flex items-center justify-between gap-2">
-                          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                            Editor picks
-                          </p>
-                          <%= if length(@all_curated_grids) > 3 do %>
-                            <button
-                              type="button"
-                              phx-click="toggle_editor_picks"
-                              class="text-xs font-medium text-indigo-700 transition hover:text-indigo-900"
-                            >
-                              {if @editor_picks_expanded, do: "Show less", else: "See all picks"}
-                            </button>
-                          <% end %>
-                        </div>
-
-                        <div
-                          id="home-editor-picks-list"
-                          class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
-                        >
-                          <div class="divide-y divide-slate-100">
-                            <%= for {item, index} <- Enum.with_index(preview_items) do %>
-                              <.home_grid_row
-                                graph={item.graph}
-                                author_name={item.author_name}
-                                id={"hero-explore-#{index}-#{item.graph.slug || Integer.to_string(:erlang.phash2(item.graph.title || ""))}"}
-                                label="Editor’s pick"
-                              />
-                            <% end %>
+                    <div class="rounded-2xl border border-slate-900/10 bg-slate-950 p-3 shadow-sm sm:p-4">
+                      <button
+                        id="home-example-grid-preview"
+                        type="button"
+                        phx-click={show_modal("home-example-grid-modal")}
+                        class="group block w-full text-left"
+                        aria-label="Expand the Happiness grid example"
+                      >
+                        <div class="mb-3 flex items-start justify-between gap-3">
+                          <div>
+                            <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-200/80">
+                              Example grid
+                            </p>
+                            <p class="mt-1 text-base font-semibold text-white sm:text-lg">
+                              Happiness
+                            </p>
                           </div>
+                          <span class="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-medium text-white/85 transition group-hover:border-sky-300/40 group-hover:bg-white/15 group-hover:text-white">
+                            <.icon name="hero-magnifying-glass-plus" class="h-4 w-4" />
+                            Click to expand
+                          </span>
                         </div>
+
+                        <div class="overflow-hidden border border-white/10 bg-slate-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+                          <img
+                            src={~p"/images/guide/grid-workspace.webp"}
+                            alt="Preview of the Happiness grid workspace by TomBers84"
+                            class="aspect-[16/9] w-full object-contain object-center transition duration-300 group-hover:scale-[1.015]"
+                            loading="lazy"
+                          />
+                        </div>
+                      </button>
+
+                      <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
+                        <p class="text-sm leading-6 text-slate-300">
+                          See what a finished grid looks like before you start your own.
+                        </p>
+                        <.link
+                          navigate={~p"/g/happiness-da4f7e"}
+                          class="inline-flex items-center gap-2 rounded-full border border-sky-300/35 bg-sky-400/10 px-4 py-2 text-sm font-medium text-sky-100 transition hover:border-sky-200/60 hover:bg-sky-400/15"
+                        >
+                          <.icon name="hero-arrow-top-right-on-square" class="h-4 w-4" />
+                          Open live grid
+                        </.link>
                       </div>
                     </div>
                   </div>
                 </div>
-              </section>
 
+                <div class="overflow-hidden rounded-2xl border border-white/10 bg-white px-4 py-4 shadow-[0_18px_44px_rgba(0,0,0,0.22)] sm:px-5 sm:py-5 lg:h-full">
+                  <div class="flex h-full flex-col gap-4">
+                    <div>
+                      <div class="inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-800">
+                        <.icon name="hero-star" class="h-3.5 w-3.5" /> Curated graphs
+                      </div>
+                      <h2 class="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
+                        Best of existing graphs
+                      </h2>
+                    </div>
+
+                    <div class="grid gap-2 sm:grid-cols-2">
+                      <.link
+                        href="#explore"
+                        class="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800"
+                      >
+                        <.icon name="hero-magnifying-glass" class="h-4 w-4" /> Browse all grids
+                      </.link>
+                      <.link
+                        navigate={~p"/gallery"}
+                        class="inline-flex items-center justify-center gap-2 rounded-full border border-indigo-200 bg-white/90 px-4 py-2 text-sm font-medium text-indigo-800 transition hover:border-indigo-300 hover:bg-indigo-50"
+                      >
+                        <.icon name="hero-photo" class="h-4 w-4" /> Open gallery
+                      </.link>
+                    </div>
+
+                    <div
+                      id="home-editor-picks-list"
+                      class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:flex-1 lg:grid-rows-2"
+                    >
+                      <%= for {item, index} <- Enum.with_index(preview_items) do %>
+                        <.grid_card
+                          graph={item.graph}
+                          author_name={item.author_name}
+                          id={"hero-explore-#{index}-#{item.graph.slug || Integer.to_string(:erlang.phash2(item.graph.title || ""))}"}
+                          variant={:compact}
+                          label="Selected graph"
+                          tag_limit={2}
+                        />
+                      <% end %>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div class="mx-auto max-w-6xl px-4 pt-5 sm:px-6 sm:pt-6">
+            <div class="flex flex-col items-stretch gap-4 sm:gap-5">
               <.modal id="home-example-grid-modal" class="border-indigo-100/90">
                 <div class="space-y-5">
                   <div class="space-y-2">
@@ -520,7 +548,7 @@ defmodule DialecticWeb.HomeLive do
                   <div class="overflow-hidden rounded-[1.6rem] border border-slate-200 bg-slate-950 shadow-[0_18px_40px_rgba(15,23,42,0.12)]">
                     <img
                       src={~p"/images/guide/grid-workspace.webp"}
-                      alt="Expanded preview of the Happiness grid workspace by TomBers44"
+                      alt="Expanded preview of the Happiness grid workspace by TomBers84"
                       class="w-full object-contain"
                     />
                   </div>
