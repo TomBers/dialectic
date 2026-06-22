@@ -187,7 +187,7 @@ defmodule DialecticWeb.GridCardComp do
     },
     default: %{
       card: "min-h-72 rounded-2xl",
-      header: "h-18 p-4",
+      header: "h-20 p-4",
       body: "flex flex-1 flex-col p-4",
       title: "line-clamp-3 text-base",
       preview: "mt-3 line-clamp-2 min-h-10 text-sm leading-5 text-slate-600",
@@ -221,11 +221,12 @@ defmodule DialecticWeb.GridCardComp do
       assigns
       |> assign(:node_count, graph_node_count(assigns.graph))
       |> assign(:tags, Enum.take(graph_tags(assigns.graph), assigns.tag_limit))
+      |> assign(:primary_tag, primary_tag(assigns.graph))
       |> assign(:title, graph_title(assigns.graph))
 
     ~H"""
-    <article id={@id} class={card_class(@variant, @featured_index, primary_tag(@graph))}>
-      <div class={card_header_class(@variant, @graph)} style={card_header_style(@tags)}>
+    <article id={@id} class={card_class(@variant, @featured_index, @primary_tag)}>
+      <div class={card_header_class(@variant, @graph)} style={card_header_style(@primary_tag)}>
         <div class="flex items-start justify-between gap-3">
           <span class="inline-flex items-center rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white ring-1 ring-white/20">
             {@label || exploration_label(@node_count)}
@@ -451,50 +452,19 @@ defmodule DialecticWeb.GridCardComp do
     Enum.find(graph_tags(graph), fn tag -> is_binary(tag) and String.trim(tag) != "" end)
   end
 
-  defp card_header_style(tags) do
-    tags
-    |> tag_palette_stops()
+  defp card_header_style(tag) do
+    tag
+    |> tag_palette_stop()
     |> header_gradient_style()
   end
 
-  defp tag_palette_stops(tags) do
-    tags
-    |> Enum.filter(&is_binary/1)
-    |> Enum.map(&tag_palette_key/1)
-    |> Enum.reject(&(&1 == :default))
-    |> Enum.uniq()
-    |> Enum.map(&Map.fetch!(@tag_palette_stops, &1))
+  defp tag_palette_stop(tag) do
+    @tag_palette_stops
+    |> Map.fetch!(tag_palette_key(tag))
   end
 
-  defp header_gradient_style([]),
-    do: header_gradient_style([Map.fetch!(@tag_palette_stops, :default)])
-
-  defp header_gradient_style([{dark, mid, bright}]) do
+  defp header_gradient_style({dark, mid, bright}) do
     "background: linear-gradient(135deg, #{dark} 0%, #{mid} 52%, #{bright} 100%);"
-  end
-
-  defp header_gradient_style([{dark, _, _} | _rest] = stops) do
-    colors =
-      stops
-      |> Enum.take(4)
-      |> Enum.map(fn {_dark, mid, _bright} -> mid end)
-      |> then(&[dark | &1])
-      |> Enum.uniq()
-
-    "background: linear-gradient(135deg, #{gradient_stop_list(colors)});"
-  end
-
-  defp gradient_stop_list([color]), do: "#{color} 0%, #{color} 100%"
-
-  defp gradient_stop_list(colors) do
-    final_index = length(colors) - 1
-
-    colors
-    |> Enum.with_index()
-    |> Enum.map(fn {color, index} ->
-      "#{color} #{round(index * 100 / final_index)}%"
-    end)
-    |> Enum.join(", ")
   end
 
   defp tag_border_class(tag) do
