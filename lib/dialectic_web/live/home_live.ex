@@ -291,17 +291,12 @@ defmodule DialecticWeb.HomeLive do
         <% end %>
         <div class="relative z-10 pb-4 sm:pb-5">
           <section class="w-full border-b border-slate-200 bg-white" id="start-here">
-            <div class="mx-auto grid w-full max-w-6xl gap-7 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-[minmax(0,1fr)_minmax(320px,420px)] lg:items-center lg:py-12">
-              <div class="max-w-3xl">
-                <div class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm">
-                  <img
-                    src={~p"/images/favicon.webp"}
-                    alt=""
-                    aria-hidden="true"
-                    class="h-5 w-5 rounded-md"
-                  /> RationalGrid
-                </div>
-                <h1 class="mt-4 max-w-2xl text-3xl font-semibold leading-tight tracking-tight text-slate-950 sm:text-5xl">
+            <div class="mx-auto grid w-full max-w-6xl gap-7 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-[minmax(0,1fr)_minmax(320px,430px)] lg:items-stretch lg:py-12">
+              <div class="flex max-w-3xl flex-col justify-center">
+                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-teal-700">
+                  Shared thinking grids
+                </p>
+                <h1 class="mt-3 max-w-2xl text-3xl font-semibold leading-tight tracking-tight text-slate-950 sm:text-5xl">
                   Understand hard topics, one question at a time.
                 </h1>
                 <p class="mt-4 max-w-2xl text-sm leading-6 text-slate-700 sm:text-lg sm:leading-7">
@@ -328,59 +323,76 @@ defmodule DialecticWeb.HomeLive do
                 </div>
               </div>
 
-              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
-                <div class="flex items-center justify-between gap-3">
-                  <p class="text-sm font-semibold text-slate-950">What happens next</p>
-                  <.link
-                    navigate={~p"/intro/how"}
-                    class="text-sm font-medium text-indigo-700 transition hover:text-indigo-900"
-                  >
-                    Guide
-                  </.link>
+              <div
+                id="home-start-story-panel"
+                class="relative overflow-hidden rounded-2xl border border-slate-200 bg-[linear-gradient(135deg,#f8fafc_0%,#ffffff_48%,#f0fdfa_100%)] p-4 shadow-sm ring-1 ring-white lg:h-full"
+              >
+                <div class="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,#4f46e5_0%,#14b8a6_42%,#f59e0b_72%,#ec4899_100%)]">
                 </div>
-                <div class="mt-4 grid gap-3">
-                  <div class="flex gap-3 rounded-xl border border-slate-200 bg-white p-3">
-                    <span class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700">
-                      <.icon name="hero-question-mark-circle" class="h-4 w-4" />
-                    </span>
-                    <div>
-                      <p class="text-sm font-semibold text-slate-950">Ask anything</p>
-                      <p class="mt-0.5 text-sm leading-5 text-slate-600">
-                        Begin with a topic, claim, sentence, or confusion.
-                      </p>
-                    </div>
+                <div class="relative flex h-full flex-col">
+                  <div class="flex items-center justify-between gap-3">
+                    <p class="text-sm font-semibold text-slate-950">What happens next</p>
+                    <.link
+                      navigate={~p"/intro/how"}
+                      class="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-white/85 px-3 py-1.5 text-sm font-medium text-indigo-700 shadow-sm transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-900"
+                    >
+                      Guide <.icon name="hero-arrow-up-right" class="h-3.5 w-3.5" />
+                    </.link>
                   </div>
-                  <div class="flex gap-3 rounded-xl border border-slate-200 bg-white p-3">
-                    <span class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-teal-50 text-teal-700">
-                      <.icon name="hero-squares-2x2" class="h-4 w-4" />
-                    </span>
-                    <div>
-                      <p class="text-sm font-semibold text-slate-950">Grow a lasting grid</p>
-                      <p class="mt-0.5 text-sm leading-5 text-slate-600">
-                        Every answer becomes part of a map you can return to.
-                      </p>
+
+                  <div class="relative mt-4 grid flex-1 gap-3">
+                    <div
+                      aria-hidden="true"
+                      class="absolute bottom-10 left-[1.35rem] top-10 w-px bg-[linear-gradient(180deg,#c7d2fe_0%,#99f6e4_45%,#fde68a_72%,#fbcfe8_100%)]"
+                    >
                     </div>
-                  </div>
-                  <div class="flex gap-3 rounded-xl border border-slate-200 bg-white p-3">
-                    <span class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-700">
-                      <.icon name="hero-cursor-arrow-rays" class="h-4 w-4" />
-                    </span>
-                    <div>
-                      <p class="text-sm font-semibold text-slate-950">Question any part</p>
-                      <p class="mt-0.5 text-sm leading-5 text-slate-600">
-                        Follow up from a node, a sentence, or a single word.
-                      </p>
+
+                    <div class="relative flex gap-3 rounded-xl border border-indigo-100 bg-white/90 p-3 shadow-sm">
+                      <span class="relative z-10 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200">
+                        <.icon name="hero-question-mark-circle" class="h-4 w-4" />
+                      </span>
+                      <div>
+                        <p class="text-sm font-semibold text-slate-950">Ask anything</p>
+                        <p class="mt-0.5 text-sm leading-5 text-slate-600">
+                          Begin with a topic, claim, sentence, or confusion.
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  <div class="flex gap-3 rounded-xl border border-slate-200 bg-white p-3">
-                    <span class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-sky-50 text-sky-700">
-                      <.icon name="hero-users" class="h-4 w-4" />
-                    </span>
-                    <div>
-                      <p class="text-sm font-semibold text-slate-950">Think together</p>
-                      <p class="mt-0.5 text-sm leading-5 text-slate-600">
-                        Share the grid, use thinking tools, or present the path.
-                      </p>
+
+                    <div class="relative flex gap-3 rounded-xl border border-teal-100 bg-white/90 p-3 shadow-sm">
+                      <span class="relative z-10 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-700 ring-1 ring-teal-200">
+                        <.icon name="hero-squares-2x2" class="h-4 w-4" />
+                      </span>
+                      <div>
+                        <p class="text-sm font-semibold text-slate-950">Grow a lasting grid</p>
+                        <p class="mt-0.5 text-sm leading-5 text-slate-600">
+                          Every answer becomes part of a map you can return to.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div class="relative flex gap-3 rounded-xl border border-amber-100 bg-white/90 p-3 shadow-sm">
+                      <span class="relative z-10 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-700 ring-1 ring-amber-200">
+                        <.icon name="hero-cursor-arrow-rays" class="h-4 w-4" />
+                      </span>
+                      <div>
+                        <p class="text-sm font-semibold text-slate-950">Question any part</p>
+                        <p class="mt-0.5 text-sm leading-5 text-slate-600">
+                          Follow up from a node, a sentence, or a single word.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div class="relative flex gap-3 rounded-xl border border-sky-100 bg-white/90 p-3 shadow-sm">
+                      <span class="relative z-10 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-700 ring-1 ring-sky-200">
+                        <.icon name="hero-users" class="h-4 w-4" />
+                      </span>
+                      <div>
+                        <p class="text-sm font-semibold text-slate-950">Think together</p>
+                        <p class="mt-0.5 text-sm leading-5 text-slate-600">
+                          Share the grid, use thinking tools, or present the path.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
