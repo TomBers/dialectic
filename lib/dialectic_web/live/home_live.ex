@@ -354,7 +354,7 @@ defmodule DialecticWeb.HomeLive do
                       <div>
                         <p class="text-sm font-semibold text-slate-950">Ask anything</p>
                         <p class="mt-0.5 text-sm leading-5 text-slate-600">
-                          Begin with a topic, claim, sentence, or confusion.
+                          Begin with a topic, claim, quote, source text, person, or confusion.
                         </p>
                       </div>
                     </div>
@@ -366,19 +366,20 @@ defmodule DialecticWeb.HomeLive do
                       <div>
                         <p class="text-sm font-semibold text-slate-950">Grow a lasting grid</p>
                         <p class="mt-0.5 text-sm leading-5 text-slate-600">
-                          Every answer becomes part of a map you can return to.
+                          Every answer becomes part of a lasting grid you can return to.
                         </p>
                       </div>
                     </div>
 
                     <div class="relative flex gap-3 rounded-xl border border-amber-100 bg-white/90 p-3 shadow-sm">
                       <span class="relative z-10 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-700 ring-1 ring-amber-200">
-                        <.icon name="hero-cursor-arrow-rays" class="h-4 w-4" />
+                        <.icon name="hero-wrench-screwdriver" class="h-4 w-4" />
                       </span>
                       <div>
                         <p class="text-sm font-semibold text-slate-950">Question any part</p>
                         <p class="mt-0.5 text-sm leading-5 text-slate-600">
-                          Follow up from a node, a sentence, or a single word.
+                          Use critical thinking tools on the whole answer, or zoom in on a
+                          sentence or word.
                         </p>
                       </div>
                     </div>
@@ -390,7 +391,8 @@ defmodule DialecticWeb.HomeLive do
                       <div>
                         <p class="text-sm font-semibold text-slate-950">Think together</p>
                         <p class="mt-0.5 text-sm leading-5 text-slate-600">
-                          Share the grid, use thinking tools, or present the path.
+                          Think together through questions, and share your ideas so others can
+                          build on them.
                         </p>
                       </div>
                     </div>
