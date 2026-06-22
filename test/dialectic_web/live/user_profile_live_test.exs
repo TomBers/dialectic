@@ -182,14 +182,13 @@ defmodule DialecticWeb.UserProfileLiveTest do
     test "shows 'Account Settings' link when viewing own profile", %{conn: conn} do
       user = create_user_with_username("ownprofile")
 
-      {:ok, _lv, html} =
+      {:ok, lv, _html} =
         conn
         |> log_in_user(user)
         |> live(~p"/u/ownprofile")
 
-      assert html =~ "Account Settings"
-      assert html =~ "profile-settings-link"
-      assert html =~ "Public grid archive"
+      assert has_element?(lv, "#profile-settings-link", "Account Settings")
+      assert has_element?(lv, "#public-grids-content")
     end
 
     test "does not show 'Account Settings' link when viewing another user's profile", %{
@@ -198,13 +197,13 @@ defmodule DialecticWeb.UserProfileLiveTest do
       _other_user = create_user_with_username("otheruser")
       viewer = user_fixture()
 
-      {:ok, _lv, html} =
+      {:ok, lv, _html} =
         conn
         |> log_in_user(viewer)
         |> live(~p"/u/otheruser")
 
-      refute html =~ "profile-settings-link"
-      assert html =~ "Grid archive by otheruser"
+      refute has_element?(lv, "#profile-settings-link")
+      assert has_element?(lv, "#public-grids-content")
     end
 
     test "shows 'Create your first grid' only on own empty profile", %{conn: conn} do

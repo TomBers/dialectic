@@ -4,6 +4,8 @@ defmodule DialecticWeb.UserRegistrationLiveTest do
   import Phoenix.LiveViewTest
   import Dialectic.AccountsFixtures
 
+  alias Dialectic.Accounts.User
+
   describe "Registration page" do
     test "renders registration page", %{conn: conn} do
       {:ok, _lv, html} = live(conn, ~p"/users/register")
@@ -45,7 +47,8 @@ defmodule DialecticWeb.UserRegistrationLiveTest do
       render_submit(form)
       conn = follow_trigger_action(form, conn)
 
-      assert redirected_to(conn) == ~p"/"
+      assert redirected_to(conn) == ~p"/u/#{User.default_username_from_email(email)}"
+      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "personal thinking homepage"
 
       # Now do a logged in request and assert on the menu
       conn = get(conn, "/")
