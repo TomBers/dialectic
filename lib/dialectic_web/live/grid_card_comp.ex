@@ -1,6 +1,192 @@
 defmodule DialecticWeb.GridCardComp do
   use DialecticWeb, :html
 
+  @tag_palettes %{
+    philosophy: %{
+      gradient: "bg-[linear-gradient(135deg,#1e1b4b_0%,#7e22ce_52%,#f59e0b_100%)]",
+      border: "border-violet-200 hover:border-violet-300 hover:shadow-violet-950/10",
+      pill: "bg-violet-50 text-violet-700 ring-violet-600/20"
+    },
+    mind: %{
+      gradient: "bg-[linear-gradient(135deg,#172554_0%,#4f46e5_50%,#ec4899_100%)]",
+      border: "border-indigo-200 hover:border-indigo-300 hover:shadow-indigo-950/10",
+      pill: "bg-indigo-50 text-indigo-700 ring-indigo-600/20"
+    },
+    wellbeing: %{
+      gradient: "bg-[linear-gradient(135deg,#064e3b_0%,#0d9488_52%,#38bdf8_100%)]",
+      border: "border-emerald-200 hover:border-emerald-300 hover:shadow-emerald-950/10",
+      pill: "bg-emerald-50 text-emerald-700 ring-emerald-600/20"
+    },
+    technology: %{
+      gradient: "bg-[linear-gradient(135deg,#020617_0%,#2563eb_50%,#22d3ee_100%)]",
+      border: "border-blue-200 hover:border-blue-300 hover:shadow-blue-950/10",
+      pill: "bg-blue-50 text-blue-700 ring-blue-600/20"
+    },
+    society: %{
+      gradient: "bg-[linear-gradient(135deg,#431407_0%,#b91c1c_50%,#f59e0b_100%)]",
+      border: "border-orange-200 hover:border-orange-300 hover:shadow-orange-950/10",
+      pill: "bg-orange-50 text-orange-700 ring-orange-600/20"
+    },
+    history: %{
+      gradient: "bg-[linear-gradient(135deg,#422006_0%,#b45309_52%,#fbbf24_100%)]",
+      border: "border-amber-200 hover:border-amber-300 hover:shadow-amber-950/10",
+      pill: "bg-amber-50 text-amber-700 ring-amber-600/20"
+    },
+    arts: %{
+      gradient: "bg-[linear-gradient(135deg,#4a044e_0%,#c026d3_52%,#fb7185_100%)]",
+      border: "border-fuchsia-200 hover:border-fuchsia-300 hover:shadow-fuchsia-950/10",
+      pill: "bg-fuchsia-50 text-fuchsia-700 ring-fuchsia-600/20"
+    },
+    science: %{
+      gradient: "bg-[linear-gradient(135deg,#0f172a_0%,#0284c7_52%,#2dd4bf_100%)]",
+      border: "border-sky-200 hover:border-sky-300 hover:shadow-sky-950/10",
+      pill: "bg-sky-50 text-sky-700 ring-sky-600/20"
+    },
+    space: %{
+      gradient: "bg-[linear-gradient(135deg,#111827_0%,#4338ca_48%,#06b6d4_100%)]",
+      border: "border-indigo-200 hover:border-indigo-300 hover:shadow-indigo-950/10",
+      pill: "bg-indigo-50 text-indigo-700 ring-indigo-600/20"
+    },
+    earth: %{
+      gradient: "bg-[linear-gradient(135deg,#14532d_0%,#65a30d_52%,#fbbf24_100%)]",
+      border: "border-lime-200 hover:border-lime-300 hover:shadow-lime-950/10",
+      pill: "bg-lime-50 text-lime-700 ring-lime-600/20"
+    },
+    sports: %{
+      gradient: "bg-[linear-gradient(135deg,#083344_0%,#0d9488_52%,#f97316_100%)]",
+      border: "border-teal-200 hover:border-teal-300 hover:shadow-teal-950/10",
+      pill: "bg-teal-50 text-teal-700 ring-teal-600/20"
+    },
+    rose: %{
+      gradient: "bg-[linear-gradient(135deg,#111827_0%,#9f1239_58%,#f43f5e_100%)]",
+      border: "border-rose-200 hover:border-rose-300 hover:shadow-rose-950/10",
+      pill: "bg-rose-50 text-rose-700 ring-rose-600/20"
+    },
+    ember: %{
+      gradient: "bg-[linear-gradient(135deg,#111827_0%,#9a3412_58%,#f97316_100%)]",
+      border: "border-orange-200 hover:border-orange-300 hover:shadow-orange-950/10",
+      pill: "bg-orange-50 text-orange-700 ring-orange-600/20"
+    },
+    gold: %{
+      gradient: "bg-[linear-gradient(135deg,#111827_0%,#92400e_58%,#f59e0b_100%)]",
+      border: "border-amber-200 hover:border-amber-300 hover:shadow-amber-950/10",
+      pill: "bg-amber-50 text-amber-700 ring-amber-600/20"
+    },
+    leaf: %{
+      gradient: "bg-[linear-gradient(135deg,#111827_0%,#3f6212_58%,#84cc16_100%)]",
+      border: "border-lime-200 hover:border-lime-300 hover:shadow-lime-950/10",
+      pill: "bg-lime-50 text-lime-700 ring-lime-600/20"
+    },
+    forest: %{
+      gradient: "bg-[linear-gradient(135deg,#111827_0%,#166534_58%,#22c55e_100%)]",
+      border: "border-green-200 hover:border-green-300 hover:shadow-green-950/10",
+      pill: "bg-green-50 text-green-700 ring-green-600/20"
+    },
+    jade: %{
+      gradient: "bg-[linear-gradient(135deg,#111827_0%,#065f46_58%,#10b981_100%)]",
+      border: "border-emerald-200 hover:border-emerald-300 hover:shadow-emerald-950/10",
+      pill: "bg-emerald-50 text-emerald-700 ring-emerald-600/20"
+    },
+    lagoon: %{
+      gradient: "bg-[linear-gradient(135deg,#111827_0%,#0f766e_58%,#14b8a6_100%)]",
+      border: "border-teal-200 hover:border-teal-300 hover:shadow-teal-950/10",
+      pill: "bg-teal-50 text-teal-700 ring-teal-600/20"
+    },
+    aqua: %{
+      gradient: "bg-[linear-gradient(135deg,#111827_0%,#155e75_58%,#06b6d4_100%)]",
+      border: "border-cyan-200 hover:border-cyan-300 hover:shadow-cyan-950/10",
+      pill: "bg-cyan-50 text-cyan-700 ring-cyan-600/20"
+    },
+    sky: %{
+      gradient: "bg-[linear-gradient(135deg,#111827_0%,#075985_58%,#38bdf8_100%)]",
+      border: "border-sky-200 hover:border-sky-300 hover:shadow-sky-950/10",
+      pill: "bg-sky-50 text-sky-700 ring-sky-600/20"
+    },
+    blue: %{
+      gradient: "bg-[linear-gradient(135deg,#111827_0%,#1d4ed8_58%,#60a5fa_100%)]",
+      border: "border-blue-200 hover:border-blue-300 hover:shadow-blue-950/10",
+      pill: "bg-blue-50 text-blue-700 ring-blue-600/20"
+    },
+    indigo: %{
+      gradient: "bg-[linear-gradient(135deg,#111827_0%,#4338ca_58%,#818cf8_100%)]",
+      border: "border-indigo-200 hover:border-indigo-300 hover:shadow-indigo-950/10",
+      pill: "bg-indigo-50 text-indigo-700 ring-indigo-600/20"
+    },
+    violet: %{
+      gradient: "bg-[linear-gradient(135deg,#111827_0%,#6d28d9_58%,#a78bfa_100%)]",
+      border: "border-violet-200 hover:border-violet-300 hover:shadow-violet-950/10",
+      pill: "bg-violet-50 text-violet-700 ring-violet-600/20"
+    },
+    orchid: %{
+      gradient: "bg-[linear-gradient(135deg,#111827_0%,#7e22ce_58%,#c084fc_100%)]",
+      border: "border-purple-200 hover:border-purple-300 hover:shadow-purple-950/10",
+      pill: "bg-purple-50 text-purple-700 ring-purple-600/20"
+    },
+    magenta: %{
+      gradient: "bg-[linear-gradient(135deg,#111827_0%,#a21caf_58%,#e879f9_100%)]",
+      border: "border-fuchsia-200 hover:border-fuchsia-300 hover:shadow-fuchsia-950/10",
+      pill: "bg-fuchsia-50 text-fuchsia-700 ring-fuchsia-600/20"
+    },
+    pink: %{
+      gradient: "bg-[linear-gradient(135deg,#111827_0%,#be185d_58%,#f472b6_100%)]",
+      border: "border-pink-200 hover:border-pink-300 hover:shadow-pink-950/10",
+      pill: "bg-pink-50 text-pink-700 ring-pink-600/20"
+    },
+    default: %{
+      gradient: "bg-[linear-gradient(135deg,#111827_0%,#334155_58%,#64748b_100%)]",
+      border: "border-slate-200 hover:border-slate-300 hover:shadow-slate-950/10",
+      pill: "bg-slate-100 text-slate-600 ring-slate-600/20"
+    }
+  }
+
+  @fallback_palette_keys [
+    :rose,
+    :ember,
+    :gold,
+    :leaf,
+    :forest,
+    :jade,
+    :lagoon,
+    :aqua,
+    :sky,
+    :blue,
+    :indigo,
+    :violet,
+    :orchid,
+    :magenta,
+    :pink
+  ]
+
+  @tag_palette_stops %{
+    philosophy: {"#1e1b4b", "#7e22ce", "#f59e0b"},
+    mind: {"#172554", "#4f46e5", "#ec4899"},
+    wellbeing: {"#064e3b", "#0d9488", "#38bdf8"},
+    technology: {"#020617", "#2563eb", "#22d3ee"},
+    society: {"#431407", "#b91c1c", "#f59e0b"},
+    history: {"#422006", "#b45309", "#fbbf24"},
+    arts: {"#4a044e", "#c026d3", "#fb7185"},
+    science: {"#0f172a", "#0284c7", "#2dd4bf"},
+    space: {"#111827", "#4338ca", "#06b6d4"},
+    earth: {"#14532d", "#65a30d", "#fbbf24"},
+    sports: {"#083344", "#0d9488", "#f97316"},
+    rose: {"#111827", "#9f1239", "#f43f5e"},
+    ember: {"#111827", "#9a3412", "#f97316"},
+    gold: {"#111827", "#92400e", "#f59e0b"},
+    leaf: {"#111827", "#3f6212", "#84cc16"},
+    forest: {"#111827", "#166534", "#22c55e"},
+    jade: {"#111827", "#065f46", "#10b981"},
+    lagoon: {"#111827", "#0f766e", "#14b8a6"},
+    aqua: {"#111827", "#155e75", "#06b6d4"},
+    sky: {"#111827", "#075985", "#38bdf8"},
+    blue: {"#111827", "#1d4ed8", "#60a5fa"},
+    indigo: {"#111827", "#4338ca", "#818cf8"},
+    violet: {"#111827", "#6d28d9", "#a78bfa"},
+    orchid: {"#111827", "#7e22ce", "#c084fc"},
+    magenta: {"#111827", "#a21caf", "#e879f9"},
+    pink: {"#111827", "#be185d", "#f472b6"},
+    default: {"#111827", "#334155", "#64748b"}
+  }
+
   attr :id, :string, required: true
   attr :graph, :map, required: true
   attr :author_name, :string, default: nil
@@ -21,7 +207,7 @@ defmodule DialecticWeb.GridCardComp do
 
     ~H"""
     <article id={@id} class={card_class(@variant, @featured_index, primary_tag(@graph))}>
-      <div class={card_header_class(@variant, @graph)}>
+      <div class={card_header_class(@variant, @graph)} style={card_header_style(@tags)}>
         <div class="flex items-start justify-between gap-3">
           <span class="inline-flex items-center rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white ring-1 ring-white/20">
             {@label || exploration_label(@node_count)}
@@ -162,7 +348,7 @@ defmodule DialecticWeb.GridCardComp do
     do: ["h-12 p-2.5", tag_gradient_class(primary_tag(graph))]
 
   defp card_header_class(_variant, graph),
-    do: ["h-24 p-4", tag_gradient_class(primary_tag(graph))]
+    do: ["h-20 p-4", tag_gradient_class(primary_tag(graph))]
 
   defp card_body_class(:featured, 0), do: "flex flex-1 flex-col p-5"
   defp card_body_class(:featured, _index), do: "flex flex-1 flex-col p-4"
@@ -299,73 +485,185 @@ defmodule DialecticWeb.GridCardComp do
     Enum.find(graph_tags(graph), fn tag -> is_binary(tag) and String.trim(tag) != "" end)
   end
 
-  defp tag_color_index(tag) when is_binary(tag) do
-    :erlang.phash2(String.downcase(tag), 15)
+  defp tag_gradient_class(tag) do
+    tag |> tag_palette() |> Map.fetch!(:gradient)
   end
 
-  defp tag_color_index(_tag), do: nil
+  defp card_header_style(tags) do
+    tags
+    |> tag_palette_stops()
+    |> header_gradient_style()
+  end
 
-  defp tag_gradient_class(tag) do
-    case tag_color_index(tag) do
-      0 -> "bg-[linear-gradient(135deg,#111827_0%,#9f1239_58%,#f43f5e_100%)]"
-      1 -> "bg-[linear-gradient(135deg,#111827_0%,#9a3412_58%,#f97316_100%)]"
-      2 -> "bg-[linear-gradient(135deg,#111827_0%,#92400e_58%,#f59e0b_100%)]"
-      3 -> "bg-[linear-gradient(135deg,#111827_0%,#3f6212_58%,#84cc16_100%)]"
-      4 -> "bg-[linear-gradient(135deg,#111827_0%,#166534_58%,#22c55e_100%)]"
-      5 -> "bg-[linear-gradient(135deg,#111827_0%,#065f46_58%,#10b981_100%)]"
-      6 -> "bg-[linear-gradient(135deg,#111827_0%,#0f766e_58%,#14b8a6_100%)]"
-      7 -> "bg-[linear-gradient(135deg,#111827_0%,#155e75_58%,#06b6d4_100%)]"
-      8 -> "bg-[linear-gradient(135deg,#111827_0%,#075985_58%,#38bdf8_100%)]"
-      9 -> "bg-[linear-gradient(135deg,#111827_0%,#1d4ed8_58%,#60a5fa_100%)]"
-      10 -> "bg-[linear-gradient(135deg,#111827_0%,#4338ca_58%,#818cf8_100%)]"
-      11 -> "bg-[linear-gradient(135deg,#111827_0%,#6d28d9_58%,#a78bfa_100%)]"
-      12 -> "bg-[linear-gradient(135deg,#111827_0%,#7e22ce_58%,#c084fc_100%)]"
-      13 -> "bg-[linear-gradient(135deg,#111827_0%,#a21caf_58%,#e879f9_100%)]"
-      14 -> "bg-[linear-gradient(135deg,#111827_0%,#be185d_58%,#f472b6_100%)]"
-      _other -> "bg-[linear-gradient(135deg,#111827_0%,#334155_58%,#64748b_100%)]"
-    end
+  defp tag_palette_stops(tags) do
+    tags
+    |> Enum.filter(&is_binary/1)
+    |> Enum.map(&tag_palette_key/1)
+    |> Enum.reject(&(&1 == :default))
+    |> Enum.uniq()
+    |> Enum.map(&Map.fetch!(@tag_palette_stops, &1))
+  end
+
+  defp header_gradient_style([]), do: nil
+
+  defp header_gradient_style([{dark, mid, bright}]) do
+    "background: linear-gradient(135deg, #{dark} 0%, #{mid} 52%, #{bright} 100%);"
+  end
+
+  defp header_gradient_style([{dark, _, _} | _rest] = stops) do
+    colors =
+      stops
+      |> Enum.take(4)
+      |> Enum.map(fn {_dark, mid, _bright} -> mid end)
+      |> then(&[dark | &1])
+      |> Enum.uniq()
+
+    "background: linear-gradient(135deg, #{gradient_stop_list(colors)});"
+  end
+
+  defp gradient_stop_list([color]), do: "#{color} 0%, #{color} 100%"
+
+  defp gradient_stop_list(colors) do
+    final_index = length(colors) - 1
+
+    colors
+    |> Enum.with_index()
+    |> Enum.map(fn {color, index} ->
+      "#{color} #{round(index * 100 / final_index)}%"
+    end)
+    |> Enum.join(", ")
   end
 
   defp tag_border_class(tag) do
-    case tag_color_index(tag) do
-      0 -> "border-rose-200 hover:border-rose-300 hover:shadow-rose-950/10"
-      1 -> "border-orange-200 hover:border-orange-300 hover:shadow-orange-950/10"
-      2 -> "border-amber-200 hover:border-amber-300 hover:shadow-amber-950/10"
-      3 -> "border-lime-200 hover:border-lime-300 hover:shadow-lime-950/10"
-      4 -> "border-green-200 hover:border-green-300 hover:shadow-green-950/10"
-      5 -> "border-emerald-200 hover:border-emerald-300 hover:shadow-emerald-950/10"
-      6 -> "border-teal-200 hover:border-teal-300 hover:shadow-teal-950/10"
-      7 -> "border-cyan-200 hover:border-cyan-300 hover:shadow-cyan-950/10"
-      8 -> "border-sky-200 hover:border-sky-300 hover:shadow-sky-950/10"
-      9 -> "border-blue-200 hover:border-blue-300 hover:shadow-blue-950/10"
-      10 -> "border-indigo-200 hover:border-indigo-300 hover:shadow-indigo-950/10"
-      11 -> "border-violet-200 hover:border-violet-300 hover:shadow-violet-950/10"
-      12 -> "border-purple-200 hover:border-purple-300 hover:shadow-purple-950/10"
-      13 -> "border-fuchsia-200 hover:border-fuchsia-300 hover:shadow-fuchsia-950/10"
-      14 -> "border-pink-200 hover:border-pink-300 hover:shadow-pink-950/10"
-      _other -> "border-slate-200 hover:border-slate-300 hover:shadow-slate-950/10"
-    end
+    tag |> tag_palette() |> Map.fetch!(:border)
   end
 
   defp tag_pill_class(tag) do
-    colors = [
-      "bg-rose-50 text-rose-700 ring-rose-600/20",
-      "bg-orange-50 text-orange-700 ring-orange-600/20",
-      "bg-amber-50 text-amber-700 ring-amber-600/20",
-      "bg-lime-50 text-lime-700 ring-lime-600/20",
-      "bg-green-50 text-green-700 ring-green-600/20",
-      "bg-emerald-50 text-emerald-700 ring-emerald-600/20",
-      "bg-teal-50 text-teal-700 ring-teal-600/20",
-      "bg-cyan-50 text-cyan-700 ring-cyan-600/20",
-      "bg-sky-50 text-sky-700 ring-sky-600/20",
-      "bg-blue-50 text-blue-700 ring-blue-600/20",
-      "bg-indigo-50 text-indigo-700 ring-indigo-600/20",
-      "bg-violet-50 text-violet-700 ring-violet-600/20",
-      "bg-purple-50 text-purple-700 ring-purple-600/20",
-      "bg-fuchsia-50 text-fuchsia-700 ring-fuchsia-600/20",
-      "bg-pink-50 text-pink-700 ring-pink-600/20"
-    ]
+    tag |> tag_palette() |> Map.fetch!(:pill)
+  end
 
-    Enum.at(colors, tag_color_index(tag) || 0)
+  defp tag_palette(tag) do
+    @tag_palettes
+    |> Map.get(tag_palette_key(tag), @tag_palettes.default)
+  end
+
+  defp tag_palette_key(tag) when is_binary(tag) do
+    normalized = normalize_tag(tag)
+
+    cond do
+      normalized == "" ->
+        :default
+
+      topic_match?(normalized, [
+        "philosophy",
+        "ethics",
+        "epistemology",
+        "metaphysics",
+        "ontology",
+        "logic",
+        "phenomenology",
+        "post structuralism",
+        "critical theory",
+        "deconstruction",
+        "existentialism",
+        "meaning",
+        "purpose",
+        "absurdism"
+      ]) ->
+        :philosophy
+
+      topic_match?(normalized, [
+        "psychology",
+        "cognition",
+        "consciousness",
+        "subconscious",
+        "memory",
+        "mind"
+      ]) ->
+        :mind
+
+      topic_match?(normalized, ["well being", "wellbeing", "health", "mental health"]) ->
+        :wellbeing
+
+      technology_tag?(normalized) ->
+        :technology
+
+      topic_match?(normalized, [
+        "sociology",
+        "society",
+        "politics",
+        "geopolitics",
+        "economics",
+        "anthropology",
+        "cultural studies",
+        "social theory"
+      ]) ->
+        :society
+
+      topic_match?(normalized, ["history", "historiography"]) ->
+        :history
+
+      topic_match?(normalized, [
+        "literature",
+        "language",
+        "creativity",
+        "speculative fiction",
+        "aesthetics"
+      ]) ->
+        :arts
+
+      topic_match?(normalized, ["space", "cosmology", "astronomy"]) ->
+        :space
+
+      topic_match?(normalized, ["ecology", "agriculture", "environment", "climate"]) ->
+        :earth
+
+      topic_match?(normalized, [
+        "physics",
+        "quantum",
+        "field theory",
+        "higgs",
+        "science",
+        "discovery"
+      ]) ->
+        :science
+
+      topic_match?(normalized, ["sports", "rowing"]) ->
+        :sports
+
+      true ->
+        fallback_palette_key(normalized)
+    end
+  end
+
+  defp tag_palette_key(_tag), do: :default
+
+  defp technology_tag?(normalized) do
+    normalized == "ai" or
+      topic_match?(normalized, [
+        "artificial intelligence",
+        "machine learning",
+        "algorithm",
+        "data science",
+        "technology",
+        "cryptography",
+        "privacy",
+        "security"
+      ])
+  end
+
+  defp topic_match?(normalized, topics) do
+    Enum.any?(topics, &String.contains?(normalized, &1))
+  end
+
+  defp fallback_palette_key(normalized) do
+    Enum.at(@fallback_palette_keys, :erlang.phash2(normalized, length(@fallback_palette_keys)))
+  end
+
+  defp normalize_tag(tag) do
+    tag
+    |> String.downcase()
+    |> String.replace(~r/[^a-z0-9]+/, " ")
+    |> String.trim()
   end
 end
