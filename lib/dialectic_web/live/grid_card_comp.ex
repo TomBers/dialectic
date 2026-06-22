@@ -3,137 +3,110 @@ defmodule DialecticWeb.GridCardComp do
 
   @tag_palettes %{
     philosophy: %{
-      gradient: "bg-[linear-gradient(135deg,#1e1b4b_0%,#7e22ce_52%,#f59e0b_100%)]",
       border: "border-violet-200 hover:border-violet-300 hover:shadow-violet-950/10",
       pill: "bg-violet-50 text-violet-700 ring-violet-600/20"
     },
     mind: %{
-      gradient: "bg-[linear-gradient(135deg,#172554_0%,#4f46e5_50%,#ec4899_100%)]",
       border: "border-indigo-200 hover:border-indigo-300 hover:shadow-indigo-950/10",
       pill: "bg-indigo-50 text-indigo-700 ring-indigo-600/20"
     },
     wellbeing: %{
-      gradient: "bg-[linear-gradient(135deg,#064e3b_0%,#0d9488_52%,#38bdf8_100%)]",
       border: "border-emerald-200 hover:border-emerald-300 hover:shadow-emerald-950/10",
       pill: "bg-emerald-50 text-emerald-700 ring-emerald-600/20"
     },
     technology: %{
-      gradient: "bg-[linear-gradient(135deg,#020617_0%,#2563eb_50%,#22d3ee_100%)]",
       border: "border-blue-200 hover:border-blue-300 hover:shadow-blue-950/10",
       pill: "bg-blue-50 text-blue-700 ring-blue-600/20"
     },
     society: %{
-      gradient: "bg-[linear-gradient(135deg,#431407_0%,#b91c1c_50%,#f59e0b_100%)]",
       border: "border-orange-200 hover:border-orange-300 hover:shadow-orange-950/10",
       pill: "bg-orange-50 text-orange-700 ring-orange-600/20"
     },
     history: %{
-      gradient: "bg-[linear-gradient(135deg,#422006_0%,#b45309_52%,#fbbf24_100%)]",
       border: "border-amber-200 hover:border-amber-300 hover:shadow-amber-950/10",
       pill: "bg-amber-50 text-amber-700 ring-amber-600/20"
     },
     arts: %{
-      gradient: "bg-[linear-gradient(135deg,#4a044e_0%,#c026d3_52%,#fb7185_100%)]",
       border: "border-fuchsia-200 hover:border-fuchsia-300 hover:shadow-fuchsia-950/10",
       pill: "bg-fuchsia-50 text-fuchsia-700 ring-fuchsia-600/20"
     },
     science: %{
-      gradient: "bg-[linear-gradient(135deg,#0f172a_0%,#0284c7_52%,#2dd4bf_100%)]",
       border: "border-sky-200 hover:border-sky-300 hover:shadow-sky-950/10",
       pill: "bg-sky-50 text-sky-700 ring-sky-600/20"
     },
     space: %{
-      gradient: "bg-[linear-gradient(135deg,#111827_0%,#4338ca_48%,#06b6d4_100%)]",
       border: "border-indigo-200 hover:border-indigo-300 hover:shadow-indigo-950/10",
       pill: "bg-indigo-50 text-indigo-700 ring-indigo-600/20"
     },
     earth: %{
-      gradient: "bg-[linear-gradient(135deg,#14532d_0%,#65a30d_52%,#fbbf24_100%)]",
       border: "border-lime-200 hover:border-lime-300 hover:shadow-lime-950/10",
       pill: "bg-lime-50 text-lime-700 ring-lime-600/20"
     },
     sports: %{
-      gradient: "bg-[linear-gradient(135deg,#083344_0%,#0d9488_52%,#f97316_100%)]",
       border: "border-teal-200 hover:border-teal-300 hover:shadow-teal-950/10",
       pill: "bg-teal-50 text-teal-700 ring-teal-600/20"
     },
     rose: %{
-      gradient: "bg-[linear-gradient(135deg,#111827_0%,#9f1239_58%,#f43f5e_100%)]",
       border: "border-rose-200 hover:border-rose-300 hover:shadow-rose-950/10",
       pill: "bg-rose-50 text-rose-700 ring-rose-600/20"
     },
     ember: %{
-      gradient: "bg-[linear-gradient(135deg,#111827_0%,#9a3412_58%,#f97316_100%)]",
       border: "border-orange-200 hover:border-orange-300 hover:shadow-orange-950/10",
       pill: "bg-orange-50 text-orange-700 ring-orange-600/20"
     },
     gold: %{
-      gradient: "bg-[linear-gradient(135deg,#111827_0%,#92400e_58%,#f59e0b_100%)]",
       border: "border-amber-200 hover:border-amber-300 hover:shadow-amber-950/10",
       pill: "bg-amber-50 text-amber-700 ring-amber-600/20"
     },
     leaf: %{
-      gradient: "bg-[linear-gradient(135deg,#111827_0%,#3f6212_58%,#84cc16_100%)]",
       border: "border-lime-200 hover:border-lime-300 hover:shadow-lime-950/10",
       pill: "bg-lime-50 text-lime-700 ring-lime-600/20"
     },
     forest: %{
-      gradient: "bg-[linear-gradient(135deg,#111827_0%,#166534_58%,#22c55e_100%)]",
       border: "border-green-200 hover:border-green-300 hover:shadow-green-950/10",
       pill: "bg-green-50 text-green-700 ring-green-600/20"
     },
     jade: %{
-      gradient: "bg-[linear-gradient(135deg,#111827_0%,#065f46_58%,#10b981_100%)]",
       border: "border-emerald-200 hover:border-emerald-300 hover:shadow-emerald-950/10",
       pill: "bg-emerald-50 text-emerald-700 ring-emerald-600/20"
     },
     lagoon: %{
-      gradient: "bg-[linear-gradient(135deg,#111827_0%,#0f766e_58%,#14b8a6_100%)]",
       border: "border-teal-200 hover:border-teal-300 hover:shadow-teal-950/10",
       pill: "bg-teal-50 text-teal-700 ring-teal-600/20"
     },
     aqua: %{
-      gradient: "bg-[linear-gradient(135deg,#111827_0%,#155e75_58%,#06b6d4_100%)]",
       border: "border-cyan-200 hover:border-cyan-300 hover:shadow-cyan-950/10",
       pill: "bg-cyan-50 text-cyan-700 ring-cyan-600/20"
     },
     sky: %{
-      gradient: "bg-[linear-gradient(135deg,#111827_0%,#075985_58%,#38bdf8_100%)]",
       border: "border-sky-200 hover:border-sky-300 hover:shadow-sky-950/10",
       pill: "bg-sky-50 text-sky-700 ring-sky-600/20"
     },
     blue: %{
-      gradient: "bg-[linear-gradient(135deg,#111827_0%,#1d4ed8_58%,#60a5fa_100%)]",
       border: "border-blue-200 hover:border-blue-300 hover:shadow-blue-950/10",
       pill: "bg-blue-50 text-blue-700 ring-blue-600/20"
     },
     indigo: %{
-      gradient: "bg-[linear-gradient(135deg,#111827_0%,#4338ca_58%,#818cf8_100%)]",
       border: "border-indigo-200 hover:border-indigo-300 hover:shadow-indigo-950/10",
       pill: "bg-indigo-50 text-indigo-700 ring-indigo-600/20"
     },
     violet: %{
-      gradient: "bg-[linear-gradient(135deg,#111827_0%,#6d28d9_58%,#a78bfa_100%)]",
       border: "border-violet-200 hover:border-violet-300 hover:shadow-violet-950/10",
       pill: "bg-violet-50 text-violet-700 ring-violet-600/20"
     },
     orchid: %{
-      gradient: "bg-[linear-gradient(135deg,#111827_0%,#7e22ce_58%,#c084fc_100%)]",
       border: "border-purple-200 hover:border-purple-300 hover:shadow-purple-950/10",
       pill: "bg-purple-50 text-purple-700 ring-purple-600/20"
     },
     magenta: %{
-      gradient: "bg-[linear-gradient(135deg,#111827_0%,#a21caf_58%,#e879f9_100%)]",
       border: "border-fuchsia-200 hover:border-fuchsia-300 hover:shadow-fuchsia-950/10",
       pill: "bg-fuchsia-50 text-fuchsia-700 ring-fuchsia-600/20"
     },
     pink: %{
-      gradient: "bg-[linear-gradient(135deg,#111827_0%,#be185d_58%,#f472b6_100%)]",
       border: "border-pink-200 hover:border-pink-300 hover:shadow-pink-950/10",
       pill: "bg-pink-50 text-pink-700 ring-pink-600/20"
     },
     default: %{
-      gradient: "bg-[linear-gradient(135deg,#111827_0%,#334155_58%,#64748b_100%)]",
       border: "border-slate-200 hover:border-slate-300 hover:shadow-slate-950/10",
       pill: "bg-slate-100 text-slate-600 ring-slate-600/20"
     }
@@ -185,6 +158,51 @@ defmodule DialecticWeb.GridCardComp do
     magenta: {"#111827", "#a21caf", "#e879f9"},
     pink: {"#111827", "#be185d", "#f472b6"},
     default: {"#111827", "#334155", "#64748b"}
+  }
+
+  @card_variant_classes %{
+    featured: %{
+      card: "min-h-[28rem] rounded-2xl lg:col-span-3",
+      header: "h-36 p-5",
+      body: "flex flex-1 flex-col p-4",
+      title: "line-clamp-3 text-base",
+      preview: "mt-2 line-clamp-2 min-h-12 text-sm leading-6 text-slate-600",
+      tag_container: "mt-4 flex min-h-12 flex-wrap content-start gap-1.5",
+      footer: "mt-auto flex items-center justify-between gap-3 border-t border-slate-100 pt-3",
+      open_link:
+        "inline-flex items-center gap-1 text-xs font-semibold text-teal-700 transition hover:text-teal-800",
+      open_text: "Open grid"
+    },
+    compact: %{
+      card: "min-h-0 rounded-xl",
+      header: "h-12 p-2.5",
+      body: "flex flex-1 flex-col p-2.5",
+      title: "line-clamp-2 text-sm",
+      preview: "mt-1 line-clamp-1 min-h-4 text-xs leading-4 text-slate-600",
+      tag_container: "mt-2 flex min-h-7 flex-wrap content-start gap-1",
+      footer: "mt-auto flex items-center justify-between gap-2 border-t border-slate-100 pt-2",
+      open_link:
+        "inline-flex h-7 w-7 items-center justify-center rounded-full bg-slate-950 text-white transition hover:bg-teal-700",
+      open_text: ""
+    },
+    default: %{
+      card: "min-h-72 rounded-2xl",
+      header: "h-18 p-4",
+      body: "flex flex-1 flex-col p-4",
+      title: "line-clamp-3 text-base",
+      preview: "mt-3 line-clamp-2 min-h-10 text-sm leading-5 text-slate-600",
+      tag_container: "mt-4 flex min-h-12 flex-wrap content-start gap-1.5",
+      footer: "mt-auto flex items-center justify-between gap-3 border-t border-slate-100 pt-3",
+      open_link:
+        "inline-flex items-center gap-1.5 rounded-full bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-teal-700",
+      open_text: "Open"
+    }
+  }
+
+  @featured_lead_classes %{
+    card: "min-h-[28rem] rounded-[1.35rem] lg:col-span-6",
+    body: "flex flex-1 flex-col p-5",
+    title: "line-clamp-4 text-2xl"
   }
 
   attr :id, :string, required: true
@@ -306,31 +324,10 @@ defmodule DialecticWeb.GridCardComp do
     """
   end
 
-  defp card_class(:featured, 0, tag) do
+  defp card_class(variant, index, tag) do
     [
       card_base_class(tag),
-      "min-h-[28rem] rounded-[1.35rem] lg:col-span-6"
-    ]
-  end
-
-  defp card_class(:featured, _index, tag) do
-    [
-      card_base_class(tag),
-      "min-h-[28rem] rounded-2xl lg:col-span-3"
-    ]
-  end
-
-  defp card_class(:compact, _index, tag) do
-    [
-      card_base_class(tag),
-      "min-h-0 rounded-xl"
-    ]
-  end
-
-  defp card_class(_variant, _index, tag) do
-    [
-      card_base_class(tag),
-      "min-h-72 rounded-2xl"
+      variant_class(variant, index, :card)
     ]
   end
 
@@ -341,55 +338,24 @@ defmodule DialecticWeb.GridCardComp do
     ]
   end
 
-  defp card_header_class(:featured, graph),
-    do: ["h-36 p-5", tag_gradient_class(primary_tag(graph))]
+  defp card_header_class(variant, _graph), do: variant_class(variant, 1, :header)
+  defp card_body_class(variant, index), do: variant_class(variant, index, :body)
+  defp card_title_class(variant, index), do: variant_class(variant, index, :title)
+  defp preview_class(variant), do: variant_class(variant, 1, :preview)
+  defp tag_container_class(variant), do: variant_class(variant, 1, :tag_container)
+  defp footer_class(variant), do: variant_class(variant, 1, :footer)
+  defp open_link_class(variant), do: variant_class(variant, 1, :open_link)
+  defp open_link_text(variant), do: variant_class(variant, 1, :open_text)
 
-  defp card_header_class(:compact, graph),
-    do: ["h-12 p-2.5", tag_gradient_class(primary_tag(graph))]
-
-  defp card_header_class(_variant, graph),
-    do: ["h-20 p-4", tag_gradient_class(primary_tag(graph))]
-
-  defp card_body_class(:featured, 0), do: "flex flex-1 flex-col p-5"
-  defp card_body_class(:featured, _index), do: "flex flex-1 flex-col p-4"
-  defp card_body_class(:compact, _index), do: "flex flex-1 flex-col p-2.5"
-  defp card_body_class(_variant, _index), do: "flex flex-1 flex-col p-4"
-
-  defp card_title_class(:featured, 0), do: "line-clamp-4 text-2xl"
-  defp card_title_class(:featured, _index), do: "line-clamp-3 text-base"
-  defp card_title_class(:compact, _index), do: "line-clamp-2 text-sm"
-  defp card_title_class(_variant, _index), do: "line-clamp-3 text-base"
-
-  defp preview_class(:featured), do: "mt-2 line-clamp-2 min-h-12 text-sm leading-6 text-slate-600"
-  defp preview_class(:compact), do: "mt-1 line-clamp-1 min-h-4 text-xs leading-4 text-slate-600"
-  defp preview_class(_variant), do: "mt-3 line-clamp-2 min-h-10 text-sm leading-5 text-slate-600"
-
-  defp tag_container_class(:compact),
-    do: "mt-2 flex min-h-7 flex-wrap content-start gap-1"
-
-  defp tag_container_class(_variant), do: "mt-4 flex min-h-12 flex-wrap content-start gap-1.5"
-
-  defp footer_class(:compact),
-    do: "mt-auto flex items-center justify-between gap-2 border-t border-slate-100 pt-2"
-
-  defp footer_class(_variant),
-    do: "mt-auto flex items-center justify-between gap-3 border-t border-slate-100 pt-3"
-
-  defp open_link_class(:featured) do
-    "inline-flex items-center gap-1 text-xs font-semibold text-teal-700 transition hover:text-teal-800"
+  defp variant_class(:featured, 0, key) do
+    Map.get(@featured_lead_classes, key) || variant_class(:featured, 1, key)
   end
 
-  defp open_link_class(:compact) do
-    "inline-flex h-7 w-7 items-center justify-center rounded-full bg-slate-950 text-white transition hover:bg-teal-700"
+  defp variant_class(variant, _index, key) do
+    @card_variant_classes
+    |> Map.get(variant, @card_variant_classes.default)
+    |> Map.fetch!(key)
   end
-
-  defp open_link_class(_variant) do
-    "inline-flex items-center gap-1.5 rounded-full bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-teal-700"
-  end
-
-  defp open_link_text(:featured), do: "Open grid"
-  defp open_link_text(:compact), do: ""
-  defp open_link_text(_variant), do: "Open"
 
   defp open_link_icon(:featured), do: "hero-arrow-right"
   defp open_link_icon(_variant), do: "hero-arrow-up-right"
@@ -485,10 +451,6 @@ defmodule DialecticWeb.GridCardComp do
     Enum.find(graph_tags(graph), fn tag -> is_binary(tag) and String.trim(tag) != "" end)
   end
 
-  defp tag_gradient_class(tag) do
-    tag |> tag_palette() |> Map.fetch!(:gradient)
-  end
-
   defp card_header_style(tags) do
     tags
     |> tag_palette_stops()
@@ -504,7 +466,8 @@ defmodule DialecticWeb.GridCardComp do
     |> Enum.map(&Map.fetch!(@tag_palette_stops, &1))
   end
 
-  defp header_gradient_style([]), do: nil
+  defp header_gradient_style([]),
+    do: header_gradient_style([Map.fetch!(@tag_palette_stops, :default)])
 
   defp header_gradient_style([{dark, mid, bright}]) do
     "background: linear-gradient(135deg, #{dark} 0%, #{mid} 52%, #{bright} 100%);"
