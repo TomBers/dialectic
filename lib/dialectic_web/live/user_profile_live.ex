@@ -426,13 +426,13 @@ defmodule DialecticWeb.UserProfileLive do
     <.flash kind={:error} title="Error!" flash={@flash} id="profile-flash-error" />
 
     <div class={["min-h-screen w-full", theme_bg_class(@theme)]}>
-      <div class="mx-auto max-w-6xl px-4 sm:px-6 py-8 sm:py-12">
+      <div class="mx-auto max-w-6xl px-4 pb-8 pt-4 sm:px-6 sm:pb-12 sm:pt-6">
         <%!-- Profile Header --%>
         <div class={[
           "relative overflow-hidden rounded-[2rem] border border-slate-900/10 bg-slate-950 text-white shadow-[0_36px_110px_-56px_rgba(15,23,42,0.85)]"
         ]}>
           <%!-- Banner area --%>
-          <div class="relative h-52 overflow-hidden sm:h-64">
+          <div class="relative h-36 overflow-hidden sm:h-44 lg:h-48">
             <%= cond do %>
               <% @profile_banner_url -> %>
                 <img
