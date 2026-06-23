@@ -470,10 +470,7 @@ defmodule DialecticWeb.UserProfileLive do
               </div>
 
               <div class="min-w-0 flex-1 pb-1">
-                <p class="mb-1 text-xs font-semibold uppercase text-cyan-200">
-                  Thinking profile
-                </p>
-                <h1 class="truncate text-4xl font-semibold text-white sm:text-6xl">
+                <h1 class="break-words text-4xl font-semibold leading-[1.15] text-white sm:text-6xl sm:leading-[1.15]">
                   {@effective_username}
                 </h1>
               </div>
