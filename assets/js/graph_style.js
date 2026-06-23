@@ -195,7 +195,8 @@ const GRAPH_GROUP_LABEL_FONT_FAMILY = GRAPH_LABEL_FONT_FAMILY;
 
 export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
   const isCompact = viewMode === "compact";
-  const compoundLabel = (n) => n.id() === "Main" && mainGroupTitle ? mainGroupTitle : n.data("id");
+  const compoundLabel = (n) =>
+    n.id() === "Main" && mainGroupTitle ? mainGroupTitle : n.data("id");
 
   const base_style = [
     {
@@ -363,6 +364,25 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
         "border-color": "#d8e1ea",
         shape: "roundrectangle",
         "corner-radius": isCompact ? 12 : 24,
+      },
+    },
+    {
+      selector: 'node[compound][id = "Main"]',
+      style: {
+        "font-size": isCompact ? 13 : 18,
+        "font-weight": 700,
+        "text-transform": "none",
+        "text-wrap": "none",
+        "text-max-width": isCompact ? 560 : 960,
+        "text-margin-y": () => {
+          const dir = localStorage.getItem("graph_direction") || "TB";
+          return dir === "BT" ? 24 : -24;
+        },
+        padding: isCompact ? "28px" : "56px",
+        color: "#1e293b",
+        "text-background-opacity": 0,
+        "text-border-width": 0,
+        "text-border-opacity": 0,
       },
     },
     { selector: ".hidden", style: { display: "none" } },
