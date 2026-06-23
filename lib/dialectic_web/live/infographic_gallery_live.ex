@@ -37,6 +37,7 @@ defmodule DialecticWeb.InfographicGalleryLive do
     {:ok,
      assign(socket,
        page_title: "Infographic Gallery",
+       contact_mailto: "mailto:hello@rationalgrid.ai?subject=Infographic%20request",
        infographics: infographics,
        selected_infographic: nil
      )}
@@ -122,6 +123,33 @@ defmodule DialecticWeb.InfographicGalleryLive do
             </div>
           </button>
         </div>
+
+        <section
+          id="gallery-infographic-cta"
+          class="mt-10 rounded-2xl border border-blue-200 bg-white/80 p-5 shadow-sm backdrop-blur dark:border-blue-900/60 dark:bg-gray-900/70 sm:flex sm:items-center sm:justify-between sm:gap-6"
+        >
+          <div class="flex items-start gap-3">
+            <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+              <.icon name="hero-envelope" class="h-5 w-5" />
+            </span>
+            <div>
+              <h2 class="text-base font-semibold text-gray-950 dark:text-white">
+                Want an infographic for your idea?
+              </h2>
+              <p class="mt-1 text-sm leading-6 text-gray-600 dark:text-gray-300">
+                Contact us and we can talk about turning a RationalGrid map into a shareable visual.
+              </p>
+            </div>
+          </div>
+
+          <a
+            href={@contact_mailto}
+            id="gallery-infographic-contact-link"
+            class="mt-4 inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 sm:mt-0"
+          >
+            Contact us <.icon name="hero-arrow-right" class="ml-2 h-4 w-4" />
+          </a>
+        </section>
 
         <%!-- Back to Home --%>
         <div class="text-center mt-12">

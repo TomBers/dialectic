@@ -129,5 +129,17 @@ defmodule DialecticWeb.InfographicGalleryLiveTest do
 
       assert has_element?(view, "a[href='/']", "Back to Home")
     end
+
+    test "shows infographic contact CTA", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/gallery")
+
+      assert has_element?(view, "#gallery-infographic-cta", "Want an infographic for your idea?")
+      assert has_element?(view, "#gallery-infographic-contact-link", "Contact us")
+
+      assert has_element?(
+               view,
+               ~s(a[href="mailto:hello@rationalgrid.ai?subject=Infographic%20request"])
+             )
+    end
   end
 end
