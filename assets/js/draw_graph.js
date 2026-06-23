@@ -183,7 +183,7 @@ export function draw_graph(
   const cy = cytoscape({
     container: graph, // container to render in
     elements: elements,
-    style: graphStyle(viewMode),
+    style: graphStyle(viewMode, graphId),
     layout: {
       name: "preset",
       fit: false,

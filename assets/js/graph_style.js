@@ -193,8 +193,10 @@ const GRAPH_LABEL_FONT_FAMILY =
   'InterVariable, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 const GRAPH_GROUP_LABEL_FONT_FAMILY = GRAPH_LABEL_FONT_FAMILY;
 
-export function graphStyle(viewMode = "spaced") {
+export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
   const isCompact = viewMode === "compact";
+  const compoundLabel = (n) =>
+    n.id() === "Main" && mainGroupTitle ? mainGroupTitle : n.data("id");
 
   const base_style = [
     {
@@ -324,7 +326,7 @@ export function graphStyle(viewMode = "spaced") {
     {
       selector: "node[compound]",
       style: {
-        label: "data(id)", // ← use the id field
+        label: compoundLabel,
         "text-halign": () => {
           const dir = localStorage.getItem("graph_direction") || "TB";
           return dir === "RL" ? "right" : dir === "LR" ? "left" : "center";
@@ -362,6 +364,25 @@ export function graphStyle(viewMode = "spaced") {
         "border-color": "#d8e1ea",
         shape: "roundrectangle",
         "corner-radius": isCompact ? 12 : 24,
+      },
+    },
+    {
+      selector: 'node[compound][id = "Main"]',
+      style: {
+        "font-size": isCompact ? 13 : 18,
+        "font-weight": 700,
+        "text-transform": "none",
+        "text-wrap": "none",
+        "text-max-width": isCompact ? 560 : 960,
+        "text-margin-y": () => {
+          const dir = localStorage.getItem("graph_direction") || "TB";
+          return dir === "BT" ? 24 : -24;
+        },
+        padding: isCompact ? "28px" : "56px",
+        color: "#1e293b",
+        "text-background-opacity": 0,
+        "text-border-width": 0,
+        "text-border-opacity": 0,
       },
     },
     { selector: ".hidden", style: { display: "none" } },
@@ -417,7 +438,7 @@ export function graphStyle(viewMode = "spaced") {
         "background-position-y": "50%",
 
         /* text centred inside the card */
-        label: "data(id)",
+        label: compoundLabel,
         "text-valign": "center",
         "text-halign": "center",
         "text-margin-x": 0,
