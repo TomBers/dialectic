@@ -58,6 +58,39 @@
               compact
             />
 
+            <%= if @current_user do %>
+              <button
+                id="reader-follow-grid-button"
+                type="button"
+                phx-click={if(@following_graph?, do: "unfollow_graph", else: "follow_graph")}
+                class={[
+                  "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold transition",
+                  if(@following_graph?,
+                    do: "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
+                    else: "bg-slate-950 text-white hover:bg-slate-800"
+                  )
+                ]}
+              >
+                <.icon
+                  name={if(@following_graph?, do: "hero-check", else: "hero-plus")}
+                  class="h-3.5 w-3.5"
+                />
+                <%= if @following_graph? do %>
+                  Following
+                <% else %>
+                  Follow
+                <% end %>
+              </button>
+            <% else %>
+              <.link
+                navigate={~p"/users/log_in"}
+                id="reader-follow-grid-login-link"
+                class="inline-flex items-center gap-1 rounded-full bg-slate-950 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-slate-800"
+              >
+                <.icon name="hero-plus" class="h-3.5 w-3.5" /> Follow
+              </.link>
+            <% end %>
+
             <%= if !@can_edit do %>
               <span class="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700">
                 <.icon name="hero-lock-closed" class="h-3.5 w-3.5" /> Read only

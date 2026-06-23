@@ -3,6 +3,8 @@ defmodule DialecticWeb.UserSessionControllerTest do
 
   import Dialectic.AccountsFixtures
 
+  alias Dialectic.Accounts.User
+
   setup do
     %{user: user_fixture()}
   end
@@ -64,8 +66,10 @@ defmodule DialecticWeb.UserSessionControllerTest do
           }
         })
 
-      assert redirected_to(conn) == ~p"/"
-      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "Account created successfully"
+      assert redirected_to(conn) == ~p"/u/#{User.effective_username(user)}"
+
+      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~
+               "Your profile is your personal thinking homepage"
     end
 
     test "login following password update", %{conn: conn, user: user} do

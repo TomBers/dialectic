@@ -2,11 +2,12 @@ defmodule DialecticWeb.HomeLiveTest do
   use DialecticWeb.ConnCase, async: true
 
   alias Dialectic.Accounts
+  alias Dialectic.DbActions.Graphs
   import Dialectic.GraphFixtures
   import Dialectic.AccountsFixtures
   import Phoenix.LiveViewTest
 
-  test "renders mobile graph cards alongside the desktop graph list", %{conn: conn} do
+  test "renders graph cards in the main homepage list", %{conn: conn} do
     graph =
       insert_graph(%{
         title: "Mobile Home Grid",
@@ -52,14 +53,37 @@ defmodule DialecticWeb.HomeLiveTest do
 
     {:ok, view, _html} = live(conn, ~p"/?search=Mobile Home Grid")
 
-    assert has_element?(view, "#home-graph-mobile-list")
-    assert has_element?(view, "#home-graph-desktop-list")
-    assert has_element?(view, "#home-mobile-graph-#{graph.slug}")
-    assert has_element?(view, "#home-mobile-graph-#{graph.slug} a", graph.title)
-    assert has_element?(view, "#home-mobile-graph-#{graph.slug} a[aria-label]")
-    assert has_element?(view, "#home-desktop-graph-#{graph.slug}")
-    assert has_element?(view, "#home-desktop-graph-#{graph.slug} a", graph.title)
-    assert has_element?(view, "#home-desktop-graph-#{graph.slug} a[aria-label]")
+    assert has_element?(view, "#popular-grids")
+    assert has_element?(view, "#home-graph-card-list")
+    assert has_element?(view, "#home-card-graph-#{graph.slug}")
+    assert has_element?(view, "#home-card-graph-#{graph.slug} a", graph.title)
+    assert has_element?(view, "#home-card-graph-#{graph.slug} a[aria-label]")
+    refute has_element?(view, ~s([data-tw-container="Home graph list"]))
+  end
+
+  test "renders partner grids as shared cards", %{conn: conn} do
+    unique = System.unique_integer([:positive])
+
+    graph =
+      insert_graph(%{
+        title: "Featured Partner Grid #{unique}",
+        slug: "featured-partner-grid-#{unique}"
+      })
+
+    {:ok, _curated_grid} =
+      Graphs.add_curated_grid(%{
+        graph_title: graph.title,
+        section: "featured",
+        position: 0
+      })
+
+    {:ok, view, _html} = live(conn, ~p"/")
+
+    assert has_element?(view, "#curated")
+    assert has_element?(view, "#featured-grids-list")
+    assert has_element?(view, "#featured-#{graph.slug}")
+    assert has_element?(view, "#featured-#{graph.slug} a", graph.title)
+    assert has_element?(view, "#featured-#{graph.slug}", "Partner grid")
   end
 
   test "logged in users see profile entry in the header without a settings link", %{conn: conn} do
