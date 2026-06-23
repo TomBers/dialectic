@@ -86,6 +86,44 @@ defmodule Dialectic.Follows do
 
   def list_user_follows(nil), do: []
 
+  def list_user_following_users(%User{} = user) do
+    Follow
+    |> where([f], f.follower_user_id == ^user.id and f.target_type == "user")
+    |> order_by([f], desc: f.inserted_at)
+    |> preload([:target_user])
+    |> Repo.all()
+    |> Enum.map(& &1.target_user)
+    |> Enum.reject(&is_nil/1)
+  end
+
+  def list_user_following_users(nil), do: []
+
+  def list_user_followers(%User{} = user) do
+    Follow
+    |> where([f], f.target_user_id == ^user.id and f.target_type == "user")
+    |> order_by([f], desc: f.inserted_at)
+    |> preload([:follower])
+    |> Repo.all()
+    |> Enum.map(& &1.follower)
+    |> Enum.reject(&is_nil/1)
+  end
+
+  def list_user_followers(nil), do: []
+
+  def list_user_following_graphs(%User{} = user) do
+    Follow
+    |> where([f], f.follower_user_id == ^user.id and f.target_type == "graph")
+    |> order_by([f], desc: f.inserted_at)
+    |> preload(graph: [:user])
+    |> Repo.all()
+    |> Enum.map(& &1.graph)
+    |> Enum.reject(&is_nil/1)
+    |> Enum.reject(&(&1.is_deleted == true))
+    |> Enum.filter(&Sharing.can_access?(user, &1))
+  end
+
+  def list_user_following_graphs(nil), do: []
+
   def list_activity_feed(user, opts \\ [])
 
   def list_activity_feed(%User{} = user, opts) do

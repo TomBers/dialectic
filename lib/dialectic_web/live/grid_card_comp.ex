@@ -267,7 +267,6 @@ defmodule DialecticWeb.GridCardComp do
               </.link>
             <% end %>
           </div>
-
         </div>
 
         <p class={preview_class(@variant)}>

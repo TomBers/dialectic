@@ -23,6 +23,8 @@ defmodule DialecticWeb.UserProfileLive do
       profile_user ->
         graphs = Accounts.list_user_public_graphs(profile_user)
         stats = Accounts.get_profile_stats(profile_user, graphs)
+        following_users = Follows.list_user_following_users(profile_user)
+        follower_users = Follows.list_user_followers(profile_user)
 
         effective_username = User.effective_username(profile_user)
         common_tags = Accounts.get_common_tags(profile_user, graphs: graphs)
@@ -36,14 +38,15 @@ defmodule DialecticWeb.UserProfileLive do
           end
 
         # Load private library data only when viewing your own profile.
-        {my_stats, private_graphs, noted_notes, saved_highlights} =
+        {my_stats, private_graphs, noted_notes, saved_highlights, followed_graphs} =
           if is_own_profile? do
             stats = Dialectic.DbActions.Notes.get_my_stats(profile_user)
 
             {stats, private_graphs(stats), noted_notes(stats),
-             Highlights.list_user_highlights(profile_user)}
+             Highlights.list_user_highlights(profile_user),
+             Follows.list_user_following_graphs(profile_user)}
           else
-            {nil, [], [], []}
+            {nil, [], [], [], []}
           end
 
         socket =
@@ -55,6 +58,8 @@ defmodule DialecticWeb.UserProfileLive do
           |> assign(:profile_banner_url, effective_banner_url(profile_user))
           |> assign(:theme, nil)
           |> assign(:stats, stats)
+          |> assign(:following_users, following_users)
+          |> assign(:follower_users, follower_users)
           |> assign(:graphs, graphs)
           |> assign(:featured_graphs, featured_graphs)
           |> assign(:current_focus, current_focus)
@@ -69,6 +74,7 @@ defmodule DialecticWeb.UserProfileLive do
           |> assign(:private_graphs, private_graphs)
           |> assign(:noted_notes, noted_notes)
           |> assign(:saved_highlights, saved_highlights)
+          |> assign(:followed_graphs, followed_graphs)
           |> assign(:graph_to_delete, nil)
 
         {:ok, socket}
@@ -105,6 +111,7 @@ defmodule DialecticWeb.UserProfileLive do
         {:noreply,
          socket
          |> assign(:following_profile?, true)
+         |> refresh_social_stats()
          |> put_flash(:info, "Profile followed.")}
 
       {:error, :unauthenticated} ->
@@ -125,6 +132,7 @@ defmodule DialecticWeb.UserProfileLive do
         {:noreply,
          socket
          |> assign(:following_profile?, false)
+         |> refresh_social_stats()
          |> put_flash(:info, "Profile unfollowed.")}
 
       {:error, :unauthenticated} ->
@@ -196,6 +204,93 @@ defmodule DialecticWeb.UserProfileLive do
   end
 
   defp following_profile?(_current_user, _profile_user), do: false
+
+  defp refresh_social_stats(socket) do
+    profile_user = socket.assigns.profile_user
+
+    socket
+    |> assign(:following_users, Follows.list_user_following_users(profile_user))
+    |> assign(:follower_users, Follows.list_user_followers(profile_user))
+  end
+
+  defp show_social_modal(type) when type in ["following", "followers"] do
+    other_type = if type == "following", do: "followers", else: "following"
+    panel_title = "profile-social-#{type}-panel-title"
+
+    %JS{}
+    |> JS.add_class("hidden", to: "#profile-social-#{other_type}-panel")
+    |> JS.remove_class("hidden", to: "#profile-social-#{type}-panel")
+    |> JS.set_attribute({"aria-labelledby", panel_title},
+      to: "#profile-social-modal [role='dialog']"
+    )
+    |> show_modal("profile-social-modal")
+  end
+
+  defp profile_user_path(%User{} = user), do: ~p"/u/#{User.effective_username(user)}"
+
+  defp user_initial(%User{} = user) do
+    user
+    |> User.effective_username()
+    |> String.first()
+    |> String.upcase()
+  end
+
+  defp graph_author_name(%Graph{user: %User{} = user}), do: User.effective_username(user)
+  defp graph_author_name(_graph), do: nil
+
+  defp social_users_panel(assigns) do
+    ~H"""
+    <div id={@id} class={["profile-social-panel", @hidden && "hidden"]}>
+      <div class="mb-5">
+        <p class="text-xs font-semibold uppercase text-cyan-700">
+          {@effective_username}
+        </p>
+        <h2 id={"#{@id}-title"} class="mt-1 text-2xl font-semibold text-slate-950">
+          {@title}
+        </h2>
+      </div>
+
+      <div id={"#{@id}-users"} class="max-h-[28rem] overflow-y-auto divide-y divide-slate-100">
+        <%= if @users == [] do %>
+          <div id={"#{@id}-empty"} class="rounded-xl border border-slate-200 p-8 text-center">
+            <.icon name="hero-user-group" class="mx-auto mb-3 h-10 w-10 text-slate-400" />
+            <p class="text-sm text-slate-500">
+              {@empty_text}
+            </p>
+          </div>
+        <% else %>
+          <%= for user <- @users do %>
+            <.link
+              navigate={profile_user_path(user)}
+              id={"#{@id}-user-#{user.id}"}
+              class="flex items-center gap-3 px-1 py-3 transition hover:bg-slate-50 sm:px-3"
+            >
+              <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-900 text-sm font-semibold text-white">
+                <%= if user.avatar_path do %>
+                  <img
+                    src={user.avatar_path}
+                    alt={"#{User.effective_username(user)}'s avatar"}
+                    class="h-full w-full object-cover"
+                  />
+                <% else %>
+                  {user_initial(user)}
+                <% end %>
+              </span>
+              <span class="min-w-0">
+                <span class="block truncate text-sm font-semibold text-slate-950">
+                  {User.effective_username(user)}
+                </span>
+                <span :if={user.bio && user.bio != ""} class="block truncate text-xs text-slate-500">
+                  {user.bio}
+                </span>
+              </span>
+            </.link>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+    """
+  end
 
   defp private_graphs(%{graphs: graphs}) when is_list(graphs) do
     Enum.filter(graphs, &(&1.is_public != true))
@@ -303,6 +398,27 @@ defmodule DialecticWeb.UserProfileLive do
             Delete Grid
           </button>
         </div>
+      </div>
+    </.modal>
+
+    <.modal id="profile-social-modal" class="mx-auto w-full max-w-2xl">
+      <div id="profile-social-modal-panel">
+        <.social_users_panel
+          id="profile-social-following-panel"
+          hidden={true}
+          effective_username={@effective_username}
+          title="Following"
+          users={@following_users}
+          empty_text="Not following any profiles yet."
+        />
+        <.social_users_panel
+          id="profile-social-followers-panel"
+          hidden={true}
+          effective_username={@effective_username}
+          title="Followers"
+          users={@follower_users}
+          empty_text="No profile followers yet."
+        />
       </div>
     </.modal>
 
@@ -455,7 +571,7 @@ defmodule DialecticWeb.UserProfileLive do
 
               <div class="rounded-2xl border border-white/10 bg-white/10 p-3 shadow-2xl shadow-slate-950/20 backdrop-blur">
                 <div class="grid grid-cols-3 gap-2 text-center">
-                  <div>
+                  <div class="px-1 py-1">
                     <p class="text-2xl font-semibold leading-7 text-white">
                       {@stats.graphs_created}
                     </p>
@@ -463,7 +579,7 @@ defmodule DialecticWeb.UserProfileLive do
                       Grids
                     </p>
                   </div>
-                  <div>
+                  <div class="px-1 py-1">
                     <p class="text-2xl font-semibold leading-7 text-white">
                       {@stats.total_nodes}
                     </p>
@@ -471,7 +587,7 @@ defmodule DialecticWeb.UserProfileLive do
                       Ideas
                     </p>
                   </div>
-                  <div>
+                  <div class="px-1 py-1">
                     <p class="text-2xl font-semibold leading-7 text-white">
                       {format_member_duration(@stats.member_since)}
                     </p>
@@ -479,6 +595,35 @@ defmodule DialecticWeb.UserProfileLive do
                       Days
                     </p>
                   </div>
+                </div>
+
+                <div class="mt-2 grid grid-cols-2 gap-2 border-t border-white/10 pt-2 text-center">
+                  <button
+                    id="profile-following-stat"
+                    type="button"
+                    phx-click={show_social_modal("following")}
+                    class="rounded-xl px-2 py-1 transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-cyan-200"
+                  >
+                    <p class="text-2xl font-semibold leading-7 text-white">
+                      {length(@following_users)}
+                    </p>
+                    <p class="mt-1 text-[10px] font-semibold uppercase text-slate-300">
+                      Following
+                    </p>
+                  </button>
+                  <button
+                    id="profile-followers-stat"
+                    type="button"
+                    phx-click={show_social_modal("followers")}
+                    class="rounded-xl px-2 py-1 transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-cyan-200"
+                  >
+                    <p class="text-2xl font-semibold leading-7 text-white">
+                      {length(@follower_users)}
+                    </p>
+                    <p class="mt-1 text-[10px] font-semibold uppercase text-slate-300">
+                      Followers
+                    </p>
+                  </button>
                 </div>
               </div>
             </div>
@@ -641,7 +786,7 @@ defmodule DialecticWeb.UserProfileLive do
 
             <div class="grid gap-px bg-white/10 lg:grid-cols-2">
               <section id="profile-noted-panel" class="overflow-hidden bg-white">
-                <div class="flex items-start justify-between gap-4 border-b border-slate-100 p-5">
+                <div class="relative flex items-start justify-between gap-4 border-b-2 border-slate-200 bg-slate-50/80 p-5 after:absolute after:bottom-[-2px] after:left-5 after:h-1 after:w-24 after:rounded-full after:bg-amber-400">
                   <div class="flex min-w-0 items-start gap-3">
                     <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-700 ring-1 ring-amber-200">
                       <.icon name="hero-bookmark" class="h-5 w-5" />
@@ -703,7 +848,7 @@ defmodule DialecticWeb.UserProfileLive do
               </section>
 
               <section id="profile-highlights-panel" class="overflow-hidden bg-white">
-                <div class="flex items-start justify-between gap-4 border-b border-slate-100 p-5">
+                <div class="relative flex items-start justify-between gap-4 border-b-2 border-slate-200 bg-slate-50/80 p-5 after:absolute after:bottom-[-2px] after:left-5 after:h-1 after:w-24 after:rounded-full after:bg-indigo-400">
                   <div class="flex min-w-0 items-start gap-3">
                     <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200">
                       <.icon name="hero-bookmark-square" class="h-5 w-5" />
@@ -772,6 +917,53 @@ defmodule DialecticWeb.UserProfileLive do
                 </div>
               </section>
             </div>
+          </section>
+
+          <section id="profile-followed-grids" class="mt-8">
+            <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p class="text-xs font-semibold uppercase text-teal-700">
+                  Following
+                </p>
+                <h2 class="text-lg font-semibold tracking-tight text-slate-950 sm:text-xl">
+                  Grids you follow
+                  <span class={[
+                    "ml-2 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+                    theme_tag_class(@theme)
+                  ]}>
+                    {length(@followed_graphs)}
+                  </span>
+                </h2>
+              </div>
+            </div>
+
+            <%= if @followed_graphs == [] do %>
+              <div
+                id="profile-followed-grids-empty"
+                class={["rounded-xl border p-8 text-center shadow-sm", theme_card_class(@theme)]}
+              >
+                <.icon
+                  name="hero-squares-2x2"
+                  class={"mx-auto mb-3 h-10 w-10 " <> theme_subtext_class(@theme)}
+                />
+                <p class={["text-sm", theme_subtext_class(@theme)]}>
+                  Follow grids to keep them close to your profile.
+                </p>
+              </div>
+            <% else %>
+              <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <%= for graph <- @followed_graphs do %>
+                  <.grid_card
+                    graph={graph}
+                    id={"profile-followed-grid-" <> (graph.slug || Integer.to_string(:erlang.phash2(graph.title || "")))}
+                    author_name={graph_author_name(graph)}
+                    author_marker="by"
+                    label="Following"
+                    tag_limit={3}
+                  />
+                <% end %>
+              </div>
+            <% end %>
           </section>
 
           <%!-- Private grids Section --%>

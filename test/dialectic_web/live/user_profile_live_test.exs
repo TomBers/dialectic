@@ -246,6 +246,7 @@ defmodule DialecticWeb.UserProfileLiveTest do
 
       assert Follows.following_user?(viewer, profile_user)
       assert has_element?(lv, "#profile-follow-button", "Following")
+      assert has_element?(lv, "#profile-followers-stat", "1")
 
       lv
       |> element("#profile-follow-button")
@@ -253,6 +254,41 @@ defmodule DialecticWeb.UserProfileLiveTest do
 
       refute Follows.following_user?(viewer, profile_user)
       assert has_element?(lv, "#profile-follow-button", "Follow")
+      assert has_element?(lv, "#profile-followers-stat", "0")
+    end
+
+    test "shows following and follower stats with modal user lists", %{conn: conn} do
+      profile_user = create_user_with_username("socialprofile")
+      followed_user = create_user_with_username("profilefollowing")
+      follower_user = create_user_with_username("profilefollower")
+
+      assert {:ok, _follow} = Follows.follow_user(profile_user, followed_user)
+      assert {:ok, _follow} = Follows.follow_user(follower_user, profile_user)
+
+      {:ok, lv, _html} = live(conn, ~p"/u/socialprofile")
+
+      assert has_element?(lv, "#profile-following-stat", "1")
+      assert has_element?(lv, "#profile-followers-stat", "1")
+
+      assert has_element?(lv, "#profile-social-following-panel-title", "Following")
+
+      assert has_element?(
+               lv,
+               "#profile-social-following-panel-user-#{followed_user.id}",
+               "profilefollowing"
+             )
+
+      refute has_element?(lv, "#profile-social-following-panel-user-#{follower_user.id}")
+
+      assert has_element?(lv, "#profile-social-followers-panel-title", "Followers")
+
+      assert has_element?(
+               lv,
+               "#profile-social-followers-panel-user-#{follower_user.id}",
+               "profilefollower"
+             )
+
+      refute has_element?(lv, "#profile-social-followers-panel-user-#{followed_user.id}")
     end
 
     test "crafted unauthenticated profile follow events do not crash", %{conn: conn} do
@@ -320,6 +356,34 @@ defmodule DialecticWeb.UserProfileLiveTest do
       assert render(lv) =~ "A useful saved thought."
       assert render(lv) =~ "Source Node Title"
       assert render(lv) =~ graph.title
+    end
+
+    test "shows grids followed by the profile owner after the thinking library", %{conn: conn} do
+      user = create_user_with_username("followedgridprofile")
+      graph_author = create_user_with_username("followedgridauthor")
+
+      followed_graph =
+        create_public_graph(graph_author, "Followed Grid",
+          slug: "followed-grid-link",
+          tags: ["attention"]
+        )
+
+      assert {:ok, _follow} = Follows.follow_graph(user, followed_graph)
+
+      {:ok, lv, _html} =
+        conn
+        |> log_in_user(user)
+        |> live(~p"/u/followedgridprofile")
+
+      assert has_element?(lv, "#profile-followed-grids")
+      assert has_element?(lv, "#profile-followed-grid-followed-grid-link")
+
+      assert has_element?(
+               lv,
+               ~s(#profile-followed-grid-followed-grid-link a[href="/g/followed-grid-link"])
+             )
+
+      assert has_element?(lv, "#profile-followed-grid-followed-grid-link", "followedgridauthor")
     end
   end
 
