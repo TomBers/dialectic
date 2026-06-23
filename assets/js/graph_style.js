@@ -189,6 +189,9 @@ const cols = {
 const cutoff = 140;
 const SPACED_NODE_WIDTH = 300;
 const SPACED_NODE_TEXT_PADDING = 28;
+const MAIN_GROUP_TITLE_MIN_RENDERED_WIDTH = 280;
+const MAIN_GROUP_TITLE_MAX_RENDERED_WIDTH = 960;
+const MAIN_GROUP_TITLE_RENDERED_MARGIN = 96;
 const GRAPH_LABEL_FONT_FAMILY =
   'InterVariable, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 const GRAPH_GROUP_LABEL_FONT_FAMILY = GRAPH_LABEL_FONT_FAMILY;
@@ -372,8 +375,9 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
         "font-size": isCompact ? 13 : 18,
         "font-weight": 700,
         "text-transform": "none",
-        "text-wrap": "none",
-        "text-max-width": isCompact ? 560 : 960,
+        "text-wrap": "wrap",
+        "text-max-width": (n) => getMainGroupTitleMaxWidth(n, isCompact),
+        "line-height": 1.25,
         "text-margin-y": () => {
           const dir = localStorage.getItem("graph_direction") || "TB";
           return dir === "BT" ? 24 : -24;
@@ -779,4 +783,35 @@ function getCompactCollapsedWidth(n) {
 
   // Min 70px, max 150px
   return Math.max(70, Math.min(150, computed));
+}
+
+function getMainGroupTitleMaxWidth(n, isCompact) {
+  const fallback = isCompact ? 560 : 960;
+
+  try {
+    const cy = n.cy && n.cy();
+    const container = cy && cy.container && cy.container();
+    const zoom = cy && typeof cy.zoom === "function" ? cy.zoom() : 1;
+    const rect = container && container.getBoundingClientRect();
+
+    if (!rect || !Number.isFinite(rect.width) || rect.width <= 0) {
+      return fallback;
+    }
+
+    const maxRenderedWidth = isCompact
+      ? Math.min(560, rect.width - 32)
+      : Math.min(
+          MAIN_GROUP_TITLE_MAX_RENDERED_WIDTH,
+          rect.width - MAIN_GROUP_TITLE_RENDERED_MARGIN,
+        );
+
+    const renderedWidth = Math.max(
+      MAIN_GROUP_TITLE_MIN_RENDERED_WIDTH,
+      maxRenderedWidth,
+    );
+
+    return renderedWidth / Math.max(zoom || 1, 0.05);
+  } catch (_e) {
+    return fallback;
+  }
 }
