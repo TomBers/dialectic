@@ -789,6 +789,13 @@ const graphHook = {
         // Update content data (this triggers style function recalculation)
         n.data("content", newContent);
 
+        if (String(id) === "1") {
+          const mainGroup = this.cy.getElementById("Main");
+          if (mainGroup && mainGroup.length > 0 && mainGroup.data("compound")) {
+            mainGroup.data("title", newLabel.trim() || mainGroup.data("id"));
+          }
+        }
+
         // End batch to apply changes once
         if (this.cy && typeof this.cy.endBatch === "function") {
           this.cy.endBatch();
