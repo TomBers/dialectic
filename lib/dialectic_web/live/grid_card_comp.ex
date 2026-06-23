@@ -187,7 +187,7 @@ defmodule DialecticWeb.GridCardComp do
     },
     default: %{
       card: "min-h-72 rounded-2xl",
-      header: "h-20 p-4",
+      header: "h-18 p-4",
       body: "flex flex-1 flex-col p-4",
       title: "line-clamp-3 text-base",
       preview: "mt-3 line-clamp-2 min-h-10 text-sm leading-5 text-slate-600",
@@ -268,15 +268,6 @@ defmodule DialecticWeb.GridCardComp do
             <% end %>
           </div>
 
-          <%= if @variant not in [:featured, :compact] do %>
-            <div
-              class="shrink-0 rounded-xl bg-slate-50 px-3 py-2 text-center ring-1 ring-slate-200"
-              aria-label={"#{@node_count} ideas"}
-            >
-              <p class="text-base font-semibold leading-5 text-slate-950">{@node_count}</p>
-              <p class="mt-0.5 text-[10px] font-semibold uppercase text-slate-500">ideas</p>
-            </div>
-          <% end %>
         </div>
 
         <p class={preview_class(@variant)}>

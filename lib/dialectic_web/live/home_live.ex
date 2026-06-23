@@ -494,10 +494,10 @@ defmodule DialecticWeb.HomeLive do
                   <div class="flex h-full flex-col gap-4">
                     <div>
                       <div class="inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-800">
-                        <.icon name="hero-star" class="h-3.5 w-3.5" /> Curated graphs
+                        <.icon name="hero-star" class="h-3.5 w-3.5" /> Curated grids
                       </div>
                       <h2 class="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
-                        Best of existing graphs
+                        Best of existing grids
                       </h2>
                     </div>
 
