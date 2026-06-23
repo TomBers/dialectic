@@ -244,6 +244,33 @@ export function draw_graph(
   };
   let clampPending = false;
   let clampInProgress = false;
+  let responsiveLabelStylePending = false;
+  const refreshResponsiveLabelStyles = ({ immediate = false } = {}) => {
+    if (!cy || (typeof cy.destroyed === "function" && cy.destroyed())) {
+      return;
+    }
+
+    const runRefresh = () => {
+      responsiveLabelStylePending = false;
+      if (!cy || (typeof cy.destroyed === "function" && cy.destroyed())) {
+        return;
+      }
+
+      try {
+        cy.style().update();
+      } catch (_e) {}
+    };
+
+    if (immediate) {
+      runRefresh();
+      return;
+    }
+
+    if (responsiveLabelStylePending) return;
+    responsiveLabelStylePending = true;
+    requestAnimationFrame(runRefresh);
+  };
+
   const scheduleViewportClamp = ({ immediate = false } = {}) => {
     if (
       clampInProgress ||
@@ -1009,6 +1036,7 @@ export function draw_graph(
   cy.enforceCollapsedState = () => enforceCollapsedState(cy);
   cy.constrainViewport = () => constrainViewport(cy, container);
   cy.scheduleViewportClamp = (opts) => scheduleViewportClamp(opts);
+  cy.refreshResponsiveLabelStyles = (opts) => refreshResponsiveLabelStyles(opts);
 
   // Expose depth-collapse helpers on the cy instance for graph_hook.js
   cy.saveDepthCollapseState = () => saveDepthCollapseState(cy);
@@ -1043,6 +1071,7 @@ export function draw_graph(
   };
 
   cy.on("pan zoom", queueViewportClamp);
+  cy.on("zoom", () => refreshResponsiveLabelStyles());
   cy.on("mouseup touchend", flushViewportClamp);
 
   // ── Depth-toggle overlay buttons (expand/collapse via mouse click) ──

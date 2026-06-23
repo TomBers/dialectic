@@ -737,6 +737,10 @@ const graphHook = {
           this.cy.resize();
         } catch (_e) {}
 
+        if (typeof this.cy.refreshResponsiveLabelStyles === "function") {
+          this.cy.refreshResponsiveLabelStyles({ immediate: true });
+        }
+
         if (typeof this.cy.scheduleViewportClamp === "function") {
           this.cy.scheduleViewportClamp({ immediate: true });
         }
