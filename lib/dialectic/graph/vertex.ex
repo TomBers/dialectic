@@ -355,7 +355,7 @@ defmodule Dialectic.Graph.Vertex do
     children
   end
 
-  def to_cytoscape_format(graph, graph_title \\ nil) do
+  def to_cytoscape_format(graph) do
     # IO.inspect(graph, label: "Cytoscape graph")
     # Get all vertices and edges from the digraph
     vertices = :digraph.vertices(graph)
@@ -384,13 +384,9 @@ defmodule Dialectic.Graph.Vertex do
                           content: dat.content
                         }
                         |> then(fn m ->
-                          if Map.get(dat, :compound, false) do
-                            m
-                            |> Map.put(:compound, true)
-                            |> Map.put(:title, compound_title(vid, dat, graph_title))
-                          else
-                            m
-                          end
+                          if Map.get(dat, :compound, false),
+                            do: Map.put(m, :compound, true),
+                            else: m
                         end)
                     }
                   ]
@@ -434,14 +430,5 @@ defmodule Dialectic.Graph.Vertex do
 
     # Combine nodes and edges into final format
     nodes ++ edges
-  end
-
-  defp compound_title("Main", _dat, title) when is_binary(title) and title != "", do: title
-
-  defp compound_title(vid, dat, _title) do
-    case Map.get(dat, :content) do
-      content when is_binary(content) and content != "" -> content
-      _ -> vid
-    end
   end
 end

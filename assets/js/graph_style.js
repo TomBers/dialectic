@@ -189,14 +189,13 @@ const cols = {
 const cutoff = 140;
 const SPACED_NODE_WIDTH = 300;
 const SPACED_NODE_TEXT_PADDING = 28;
-const MAIN_GROUP_TITLE_MAX_WIDTH = 560;
-const COMPACT_MAIN_GROUP_TITLE_MAX_WIDTH = 360;
 const GRAPH_LABEL_FONT_FAMILY =
   'InterVariable, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 const GRAPH_GROUP_LABEL_FONT_FAMILY = GRAPH_LABEL_FONT_FAMILY;
 
-export function graphStyle(viewMode = "spaced") {
+export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
   const isCompact = viewMode === "compact";
+  const compoundLabel = (n) => n.id() === "Main" && mainGroupTitle ? mainGroupTitle : n.data("id");
 
   const base_style = [
     {
@@ -326,7 +325,7 @@ export function graphStyle(viewMode = "spaced") {
     {
       selector: "node[compound]",
       style: {
-        label: (n) => compoundLabel(n),
+        label: compoundLabel,
         "text-halign": () => {
           const dir = localStorage.getItem("graph_direction") || "TB";
           return dir === "RL" ? "right" : dir === "LR" ? "left" : "center";
@@ -364,23 +363,6 @@ export function graphStyle(viewMode = "spaced") {
         "border-color": "#d8e1ea",
         shape: "roundrectangle",
         "corner-radius": isCompact ? 12 : 24,
-      },
-    },
-    {
-      selector: 'node[compound][id = "Main"]',
-      style: {
-        "font-size": isCompact ? 12 : 16,
-        "font-weight": 700,
-        "text-transform": "none",
-        "text-wrap": "wrap",
-        "text-max-width": isCompact
-          ? COMPACT_MAIN_GROUP_TITLE_MAX_WIDTH
-          : MAIN_GROUP_TITLE_MAX_WIDTH,
-        "text-margin-y": isCompact ? -10 : -14,
-        color: "#1e293b",
-        "text-background-color": "#ffffff",
-        "text-background-padding": isCompact ? 3 : 6,
-        "text-border-width": 0,
       },
     },
     { selector: ".hidden", style: { display: "none" } },
@@ -436,7 +418,7 @@ export function graphStyle(viewMode = "spaced") {
         "background-position-y": "50%",
 
         /* text centred inside the card */
-        label: (n) => compoundLabel(n),
+        label: compoundLabel,
         "text-valign": "center",
         "text-halign": "center",
         "text-margin-x": 0,
@@ -450,19 +432,6 @@ export function graphStyle(viewMode = "spaced") {
           return getCompactCollapsedWidth(n) - 25;
         },
         color: "#64748b",
-      },
-    },
-    {
-      selector: 'node[compound][collapsed = "true"][id = "Main"]',
-      style: {
-        width: isCompact ? COMPACT_MAIN_GROUP_TITLE_MAX_WIDTH : MAIN_GROUP_TITLE_MAX_WIDTH,
-        "font-size": isCompact ? 12 : 14,
-        "font-weight": 700,
-        "text-transform": "none",
-        "text-max-width": isCompact
-          ? COMPACT_MAIN_GROUP_TITLE_MAX_WIDTH - 34
-          : MAIN_GROUP_TITLE_MAX_WIDTH - 42,
-        color: "#1e293b",
       },
     },
     // Edge styling — darkened for better visibility (4.76:1 contrast)
@@ -782,7 +751,7 @@ function getCompactNodeWidth(n) {
 }
 
 function getCompactCollapsedWidth(n) {
-  const label = compoundLabel(n);
+  const label = n.data("id") || "";
   // Estimate width: ~7px per character at 10px font + padding for chevron
   const charWidth = 7;
   const padding = 30; // Extra padding for chevron and margins
@@ -790,8 +759,4 @@ function getCompactCollapsedWidth(n) {
 
   // Min 70px, max 150px
   return Math.max(70, Math.min(150, computed));
-}
-
-function compoundLabel(n) {
-  return n.data("title") || n.data("id") || "";
 }

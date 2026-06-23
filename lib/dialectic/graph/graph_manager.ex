@@ -266,7 +266,7 @@ defmodule GraphManager do
   def handle_call(:format_graph_json, _from, {graph_struct, graph}) do
     json =
       try do
-        graph |> Vertex.to_cytoscape_format(graph_struct.title) |> Jason.encode!()
+        graph |> Vertex.to_cytoscape_format() |> Jason.encode!()
       rescue
         _ -> "[]"
       end
