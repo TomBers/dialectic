@@ -355,12 +355,11 @@ defmodule Dialectic.Graph.Vertex do
     children
   end
 
-  def to_cytoscape_format(graph) do
+  def to_cytoscape_format(graph, graph_title \\ nil) do
     # IO.inspect(graph, label: "Cytoscape graph")
     # Get all vertices and edges from the digraph
     vertices = :digraph.vertices(graph)
     edges = :digraph.edges(graph)
-    main_group_title = main_group_title(graph)
 
     # Convert vertices to cytoscape nodes format
     nodes =
@@ -388,7 +387,7 @@ defmodule Dialectic.Graph.Vertex do
                           if Map.get(dat, :compound, false) do
                             m
                             |> Map.put(:compound, true)
-                            |> Map.put(:title, compound_title(vid, dat, main_group_title))
+                            |> Map.put(:title, compound_title(vid, dat, graph_title))
                           else
                             m
                           end
@@ -435,28 +434,6 @@ defmodule Dialectic.Graph.Vertex do
 
     # Combine nodes and edges into final format
     nodes ++ edges
-  end
-
-  defp main_group_title(graph) do
-    case :digraph.vertex(graph, "1") do
-      {"1", %{content: content}} when is_binary(content) ->
-        content
-        |> String.replace(~r/\r\n|\r/, "\n")
-        |> String.split("\n")
-        |> List.first()
-        |> Kernel.||("")
-        |> String.replace(~r/^\s*\#{1,6}\s*/, "")
-        |> String.replace(~r/^\s*title\s*:?\s*/i, "")
-        |> String.replace("**", "")
-        |> String.trim()
-        |> case do
-          "" -> nil
-          title -> title
-        end
-
-      _ ->
-        nil
-    end
   end
 
   defp compound_title("Main", _dat, title) when is_binary(title) and title != "", do: title
