@@ -40,27 +40,11 @@ defmodule DialecticWeb.NodeComp do
      )}
   end
 
-  @regeneratable_classes [
-    "thesis",
-    "antithesis",
-    "ideas",
-    "answer",
-    "synthesis",
-    "clarify",
-    "assumptions",
-    "counterexample",
-    "implications",
-    "blind_spots",
-    "says_who",
-    "who_disagrees",
-    "steel_man",
-    "what_if"
-  ]
+  defp show_regenerate_cta?(%{id: id, class: class}) when is_binary(id) and is_binary(class) do
+    id != "" and id != "start" and class not in ["", "origin", "question", "user"]
+  end
 
-  defp regeneratable_node?(%{class: class}) when is_binary(class),
-    do: class in @regeneratable_classes
-
-  defp regeneratable_node?(_node), do: false
+  defp show_regenerate_cta?(_node), do: false
 
   @impl true
   def render(assigns) do
@@ -206,53 +190,87 @@ defmodule DialecticWeb.NodeComp do
           </div>
 
           <%= if String.length(@node.content) == 0 do %>
-            <div class="node mb-2 p-6 sm:p-8">
-              <%!-- Animated shimmer skeleton lines --%>
-              <div class="space-y-4">
-                <div class="h-5 rounded-md w-3/4 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_infinite]">
-                </div>
-                <div class="space-y-2.5">
-                  <div class="h-3.5 rounded-md w-full bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_0.1s_infinite]">
-                  </div>
-                  <div class="h-3.5 rounded-md w-5/6 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_0.2s_infinite]">
-                  </div>
-                  <div class="h-3.5 rounded-md w-4/6 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_0.3s_infinite]">
-                  </div>
-                </div>
-                <div class="space-y-2.5 pt-2">
-                  <div class="h-3.5 rounded-md w-full bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_0.4s_infinite]">
-                  </div>
-                  <div class="h-3.5 rounded-md w-2/3 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_0.5s_infinite]">
-                  </div>
-                </div>
+            <div class="node relative mb-2 overflow-hidden rounded-[1.75rem] border border-indigo-100 bg-gradient-to-br from-white via-indigo-50/70 to-sky-50/60 p-6 shadow-[0_24px_70px_rgba(79,70,229,0.14)] sm:p-8">
+              <div class="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-indigo-200/40 blur-3xl">
               </div>
-              <%!-- Typing indicator dots --%>
-              <div class="flex flex-col gap-4 pt-6 sm:flex-row sm:items-center sm:justify-between">
-                <div class="flex items-center gap-1.5">
-                  <span class="text-xs text-gray-400 font-medium">Thinking</span>
-                  <span class="flex gap-0.5">
-                    <span class="w-1 h-1 rounded-full bg-indigo-400 animate-[typing_1.4s_ease-in-out_infinite]">
+              <div class="pointer-events-none absolute -bottom-20 left-6 h-36 w-36 rounded-full bg-sky-200/30 blur-3xl">
+              </div>
+
+              <div class="relative space-y-6">
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div class="flex items-start gap-3">
+                    <span class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-200/80">
+                      <.icon name="hero-sparkles" class="h-5 w-5" />
                     </span>
-                    <span class="w-1 h-1 rounded-full bg-indigo-400 animate-[typing_1.4s_ease-in-out_-0.16s_infinite]">
+                    <div class="min-w-0">
+                      <p class="text-sm font-semibold uppercase tracking-[0.18em] text-indigo-500">
+                        Generating response
+                      </p>
+                      <h3 class="mt-1 text-lg font-semibold tracking-tight text-slate-950 sm:text-xl">
+                        Thinking this through
+                      </h3>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-1.5 rounded-full border border-indigo-100 bg-white/80 px-3 py-1.5 shadow-sm backdrop-blur">
+                    <span class="text-xs font-medium text-indigo-700">Thinking</span>
+                    <span class="flex gap-0.5">
+                      <span class="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-[typing_1.4s_ease-in-out_infinite]">
+                      </span>
+                      <span class="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-[typing_1.4s_ease-in-out_-0.16s_infinite]">
+                      </span>
+                      <span class="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-[typing_1.4s_ease-in-out_-0.32s_infinite]">
+                      </span>
                     </span>
-                    <span class="w-1 h-1 rounded-full bg-indigo-400 animate-[typing_1.4s_ease-in-out_-0.32s_infinite]">
-                    </span>
-                  </span>
+                  </div>
                 </div>
 
-                <button
-                  :if={@can_edit && regeneratable_node?(@node)}
-                  id={"regenerate-thinking-node-#{@node.id}"}
-                  type="button"
-                  class="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-100 sm:self-auto"
-                  phx-click="node_regenerate"
-                  phx-value-id={@node.id}
-                  data-confirm="Try generating this node again? The stuck placeholder will be replaced."
-                  title="Regenerate this stuck node"
+                <%!-- Animated shimmer skeleton lines --%>
+                <div class="rounded-2xl border border-white/70 bg-white/65 p-4 shadow-inner shadow-indigo-100/40 backdrop-blur-sm">
+                  <div class="space-y-4">
+                    <div class="h-5 rounded-md w-3/4 bg-gradient-to-r from-indigo-100/70 via-white to-indigo-100/70 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_infinite]">
+                    </div>
+                    <div class="space-y-2.5">
+                      <div class="h-3.5 rounded-md w-full bg-gradient-to-r from-slate-100 via-white to-indigo-100/70 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_0.1s_infinite]">
+                      </div>
+                      <div class="h-3.5 rounded-md w-5/6 bg-gradient-to-r from-slate-100 via-white to-indigo-100/70 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_0.2s_infinite]">
+                      </div>
+                      <div class="h-3.5 rounded-md w-4/6 bg-gradient-to-r from-slate-100 via-white to-indigo-100/70 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_0.3s_infinite]">
+                      </div>
+                    </div>
+                    <div class="space-y-2.5 pt-2">
+                      <div class="h-3.5 rounded-md w-full bg-gradient-to-r from-slate-100 via-white to-indigo-100/70 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_0.4s_infinite]">
+                      </div>
+                      <div class="h-3.5 rounded-md w-2/3 bg-gradient-to-r from-slate-100 via-white to-indigo-100/70 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_0.5s_infinite]">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  :if={@can_edit && show_regenerate_cta?(@node)}
+                  class="thinking-regenerate-cta flex flex-col gap-3 rounded-2xl border border-indigo-200 bg-white/90 p-4 shadow-lg shadow-indigo-100/70 backdrop-blur sm:flex-row sm:items-center sm:justify-between"
                 >
-                  <.icon name="hero-arrow-path" class="h-4 w-4" />
-                  <span>Regenerate</span>
-                </button>
+                  <div class="min-w-0">
+                    <p class="text-sm font-semibold text-slate-900">Taking longer than expected?</p>
+                    <p class="mt-0.5 text-sm text-slate-600">
+                      You can safely replace this placeholder and try generating it again.
+                    </p>
+                  </div>
+
+                  <button
+                    id={"regenerate-thinking-node-#{@node.id}"}
+                    type="button"
+                    class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-200/80 transition hover:bg-indigo-700 hover:shadow-indigo-300/80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-200"
+                    phx-click="node_regenerate"
+                    phx-value-id={@node.id}
+                    data-confirm="Try generating this node again? The stuck placeholder will be replaced."
+                    title="Regenerate this stuck node"
+                  >
+                    <.icon name="hero-arrow-path" class="h-4 w-4" />
+                    <span>Regenerate</span>
+                  </button>
+                </div>
               </div>
             </div>
           <% end %>
