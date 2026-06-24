@@ -40,6 +40,28 @@ defmodule DialecticWeb.NodeComp do
      )}
   end
 
+  @regeneratable_classes [
+    "thesis",
+    "antithesis",
+    "ideas",
+    "answer",
+    "synthesis",
+    "clarify",
+    "assumptions",
+    "counterexample",
+    "implications",
+    "blind_spots",
+    "says_who",
+    "who_disagrees",
+    "steel_man",
+    "what_if"
+  ]
+
+  defp regeneratable_node?(%{class: class}) when is_binary(class),
+    do: class in @regeneratable_classes
+
+  defp regeneratable_node?(_node), do: false
+
   @impl true
   def render(assigns) do
     ~H"""
@@ -205,16 +227,32 @@ defmodule DialecticWeb.NodeComp do
                 </div>
               </div>
               <%!-- Typing indicator dots --%>
-              <div class="flex items-center gap-1.5 pt-6">
-                <span class="text-xs text-gray-400 font-medium">Thinking</span>
-                <span class="flex gap-0.5">
-                  <span class="w-1 h-1 rounded-full bg-indigo-400 animate-[typing_1.4s_ease-in-out_infinite]">
+              <div class="flex flex-col gap-4 pt-6 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs text-gray-400 font-medium">Thinking</span>
+                  <span class="flex gap-0.5">
+                    <span class="w-1 h-1 rounded-full bg-indigo-400 animate-[typing_1.4s_ease-in-out_infinite]">
+                    </span>
+                    <span class="w-1 h-1 rounded-full bg-indigo-400 animate-[typing_1.4s_ease-in-out_-0.16s_infinite]">
+                    </span>
+                    <span class="w-1 h-1 rounded-full bg-indigo-400 animate-[typing_1.4s_ease-in-out_-0.32s_infinite]">
+                    </span>
                   </span>
-                  <span class="w-1 h-1 rounded-full bg-indigo-400 animate-[typing_1.4s_ease-in-out_-0.16s_infinite]">
-                  </span>
-                  <span class="w-1 h-1 rounded-full bg-indigo-400 animate-[typing_1.4s_ease-in-out_-0.32s_infinite]">
-                  </span>
-                </span>
+                </div>
+
+                <button
+                  :if={@can_edit && regeneratable_node?(@node)}
+                  id={"regenerate-thinking-node-#{@node.id}"}
+                  type="button"
+                  class="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-100 sm:self-auto"
+                  phx-click="node_regenerate"
+                  phx-value-id={@node.id}
+                  data-confirm="Try generating this node again? The stuck placeholder will be replaced."
+                  title="Regenerate this stuck node"
+                >
+                  <.icon name="hero-arrow-path" class="h-4 w-4" />
+                  <span>Regenerate</span>
+                </button>
               </div>
             </div>
           <% end %>
