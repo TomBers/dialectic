@@ -533,7 +533,13 @@ defmodule DialecticWeb.UserProfileLive do
             <div class="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-end">
               <div>
                 <%= if @profile_user.bio && @profile_user.bio != "" do %>
-                  <p class="max-w-3xl text-2xl font-semibold leading-9 text-white sm:text-3xl sm:leading-10">
+                  <p
+                    id="profile-bio"
+                    class={[
+                      "max-w-3xl font-semibold text-white",
+                      profile_bio_text_class(@profile_user.bio)
+                    ]}
+                  >
                     {@profile_user.bio}
                   </p>
                 <% end %>
@@ -1164,4 +1170,26 @@ defmodule DialecticWeb.UserProfileLive do
   defp theme_button_class(_), do: "bg-slate-950 text-white hover:bg-slate-800"
 
   defp theme_tag_class(_), do: "bg-teal-50 text-teal-700 ring-1 ring-teal-200"
+
+  defp profile_bio_size(bio) when is_binary(bio) do
+    bio
+    |> String.trim()
+    |> String.length()
+    |> profile_bio_size()
+  end
+
+  defp profile_bio_size(length) when length <= 80, do: "short"
+  defp profile_bio_size(length) when length <= 160, do: "medium"
+  defp profile_bio_size(_length), do: "long"
+
+  defp profile_bio_text_class(bio) when is_binary(bio),
+    do: bio |> profile_bio_size() |> profile_bio_size_text_class()
+
+  defp profile_bio_size_text_class("short"),
+    do: "text-2xl leading-9 sm:text-3xl sm:leading-10"
+
+  defp profile_bio_size_text_class("medium"),
+    do: "text-xl leading-8 sm:text-2xl sm:leading-9"
+
+  defp profile_bio_size_text_class("long"), do: "text-lg leading-7 sm:text-xl sm:leading-8"
 end
