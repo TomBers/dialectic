@@ -62,9 +62,31 @@ defmodule DialecticWeb.UserProfileLiveTest do
       user = create_user_with_username("biouser")
       {:ok, _} = Accounts.update_user_profile(user, %{username: "biouser", bio: "I love graphs!"})
 
-      {:ok, _lv, html} = live(conn, ~p"/u/biouser")
+      {:ok, lv, _html} = live(conn, ~p"/u/biouser")
 
-      assert html =~ "I love graphs!"
+      assert has_element?(lv, "#profile-bio.text-2xl", "I love graphs!")
+    end
+
+    test "scales bio text for medium and long bios", %{conn: conn} do
+      medium_bio =
+        "I build public thinking maps for careful questions, useful disagreements, and shared curiosity."
+
+      long_bio =
+        "I build public thinking maps for careful questions, useful disagreements, shared curiosity, and the patient work of turning scattered notes into durable conversations that other people can revisit."
+
+      medium_user = create_user_with_username("mediumbio")
+      long_user = create_user_with_username("longbio")
+
+      {:ok, _} =
+        Accounts.update_user_profile(medium_user, %{username: "mediumbio", bio: medium_bio})
+
+      {:ok, _} = Accounts.update_user_profile(long_user, %{username: "longbio", bio: long_bio})
+
+      {:ok, medium_lv, _html} = live(conn, ~p"/u/mediumbio")
+      {:ok, long_lv, _html} = live(conn, ~p"/u/longbio")
+
+      assert has_element?(medium_lv, "#profile-bio.text-xl", medium_bio)
+      assert has_element?(long_lv, "#profile-bio.text-lg", long_bio)
     end
 
     test "renders selected profile banner", %{conn: conn} do
