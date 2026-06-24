@@ -154,6 +154,70 @@ defmodule DialecticWeb.GraphLiveTest do
     end
   end
 
+  describe "selection actions" do
+    test "pros/cons creates thesis and antithesis children for the selected text", %{conn: conn} do
+      {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data())
+      graph_id = :sys.get_state(view.pid).socket.assigns.graph_id
+      parent_before = GraphManager.find_node_by_id(graph_id, "1")
+
+      stale_thesis =
+        GraphManager.add_node(graph_id, %Dialectic.Graph.Vertex{
+          content: "Old stuck pro",
+          class: "thesis",
+          user: "tester@example.com",
+          source_text: "different selection"
+        })
+
+      stale_ideas =
+        GraphManager.add_node(graph_id, %Dialectic.Graph.Vertex{
+          content: "Old related idea",
+          class: "ideas",
+          user: "tester@example.com",
+          source_text: "synaptic tagging"
+        })
+
+      GraphManager.add_edges(graph_id, stale_thesis, [parent_before])
+      GraphManager.add_edges(graph_id, stale_ideas, [parent_before])
+
+      send(view.pid, {
+        :selection_action,
+        %{
+          action: :pros_cons,
+          selected_text: "synaptic tagging",
+          node_id: "1",
+          offsets: %{"start" => 0, "end" => 16},
+          highlight: nil
+        }
+      })
+
+      :sys.get_state(view.pid)
+      parent = GraphManager.find_node_by_id(graph_id, "1")
+
+      selected_text_branch_children =
+        Enum.filter(parent.children, fn child ->
+          child.source_text == "synaptic tagging" and child.class in ["thesis", "antithesis"]
+        end)
+
+      child_classes = selected_text_branch_children |> Enum.map(& &1.class) |> Enum.sort()
+
+      assert child_classes == ["antithesis", "thesis"]
+
+      [highlight] = Dialectic.Highlights.list_highlights(mudg_id: graph_id, node_id: "1")
+      links = Dialectic.Highlights.get_links(highlight)
+      linked_node_ids = Enum.map(links, & &1.node_id)
+
+      linked_classes =
+        linked_node_ids |> Enum.map(&GraphManager.find_node_by_id(graph_id, &1).class)
+
+      assert Enum.sort(Enum.map(links, & &1.link_type)) == ["con", "pro"]
+      assert Enum.sort(linked_classes) == ["antithesis", "thesis"]
+
+      assert Enum.all?(linked_node_ids, fn node_id ->
+               Enum.any?(selected_text_branch_children, &(&1.id == node_id))
+             end)
+    end
+  end
+
   describe "search" do
     test "grid search matches source text and renders a preview snippet", %{conn: conn} do
       {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data())

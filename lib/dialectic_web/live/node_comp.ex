@@ -40,8 +40,26 @@ defmodule DialecticWeb.NodeComp do
      )}
   end
 
+  @regeneratable_classes [
+    "thesis",
+    "antithesis",
+    "ideas",
+    "answer",
+    "explain",
+    "synthesis",
+    "clarify",
+    "assumptions",
+    "counterexample",
+    "implications",
+    "blind_spots",
+    "says_who",
+    "who_disagrees",
+    "steel_man",
+    "what_if"
+  ]
+
   defp show_regenerate_cta?(%{id: id, class: class}) when is_binary(id) and is_binary(class) do
-    id != "" and id != "start" and class not in ["", "origin", "question", "user"]
+    id != "" and id != "start" and class in @regeneratable_classes
   end
 
   defp show_regenerate_cta?(_node), do: false

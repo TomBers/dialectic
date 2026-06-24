@@ -454,6 +454,8 @@ defmodule Dialectic.Graph.GraphActions do
         question_text,
         selected_text
       ) do
+    child_opts = source_text_opts(selected_text)
+
     # Create question node with both the question and the selected text context
     question_node =
       GraphManager.add_child(
@@ -462,7 +464,7 @@ defmodule Dialectic.Graph.GraphActions do
         fn _ -> question_text end,
         "question",
         user,
-        fields: %{source_text: selected_text}
+        child_opts
       )
 
     # Generate answer with minimal context (focused on the selection)
@@ -474,7 +476,8 @@ defmodule Dialectic.Graph.GraphActions do
           LlmInterface.gen_response_minimal_context(question_node, n, graph_id, live_view_topic)
         end,
         "answer",
-        user
+        user,
+        child_opts
       )
 
     {nil, answer_node}
