@@ -604,6 +604,10 @@ defmodule DialecticWeb.ShareModalComp do
     DialecticWeb.Endpoint.url() <> preview_image_path(graph, highlight)
   end
 
+  defp preview_image(%{share_target: :reader, graph_struct: graph}) do
+    HighlightShare.graph_image_url(graph)
+  end
+
   defp preview_image(%{graph_struct: graph_struct}) do
     Map.get(graph_struct.data || %{}, "preview_image")
   end
@@ -611,6 +615,7 @@ defmodule DialecticWeb.ShareModalComp do
   defp preview_image_path(graph, highlight), do: HighlightShare.image_path(graph, highlight)
 
   defp preview_image_alt(%{selected_highlight: %{id: _id}}), do: "Quote share preview"
+  defp preview_image_alt(%{share_target: :reader}), do: "Grid share image preview"
   defp preview_image_alt(_assigns), do: "Grid Preview"
 
   defp download_image_url(%{selected_highlight: %{id: _id} = highlight, graph_struct: graph}) do

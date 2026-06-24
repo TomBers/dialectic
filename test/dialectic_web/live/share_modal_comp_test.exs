@@ -56,6 +56,8 @@ defmodule DialecticWeb.ShareModalCompTest do
       assert html =~ "Download image"
       assert html =~ "data-download-svg-png"
       assert html =~ "/g/#{graph.slug}/share-card.svg"
+      assert html =~ ~s(src="http://localhost:4002/g/#{graph.slug}/share-card.svg)
+      assert html =~ ~s(alt="Grid share image preview")
       assert html =~ ~s(data-download-filename="reader-share-modal-graph-grid.png")
       refute html =~ "data-download-grid-png"
     end
