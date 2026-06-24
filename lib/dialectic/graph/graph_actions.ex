@@ -137,11 +137,13 @@ defmodule Dialectic.Graph.GraphActions do
     - type: The type of response node to create
   """
   def answer_selection({graph_id, node, user, live_view_topic}, selection, type) do
+    selection = normalize_source_text(selection)
+
     GraphManager.add_child(
       graph_id,
       [node],
       fn n ->
-        LlmInterface.gen_selection_response(node, n, graph_id, selection, live_view_topic)
+        LlmInterface.gen_selection_response(node, n, graph_id, selection || "", live_view_topic)
       end,
       type,
       user,
@@ -160,7 +162,7 @@ defmodule Dialectic.Graph.GraphActions do
     nil (both child nodes are created as side effects)
   """
   def branch({graph_id, node, user, live_view_topic}, opts \\ []) do
-    content_override = Keyword.get(opts, :content_override)
+    content_override = opts |> Keyword.get(:content_override) |> normalize_source_text()
 
     child_opts = source_text_opts(content_override)
 
@@ -224,7 +226,7 @@ defmodule Dialectic.Graph.GraphActions do
     The newly created ideas node
   """
   def related_ideas({graph_id, node, user, live_view_topic}, opts \\ []) do
-    content_override = Keyword.get(opts, :content_override)
+    content_override = opts |> Keyword.get(:content_override) |> normalize_source_text()
 
     GraphManager.add_child(
       graph_id,
@@ -267,7 +269,7 @@ defmodule Dialectic.Graph.GraphActions do
         nil
 
       {^tool_key, class, llm_fn, _doc} ->
-        content_override = Keyword.get(opts, :content_override)
+        content_override = opts |> Keyword.get(:content_override) |> normalize_source_text()
 
         add_child_opts = source_text_opts(content_override)
 
@@ -399,7 +401,7 @@ defmodule Dialectic.Graph.GraphActions do
   """
   def ask_and_answer({graph_id, node, user, live_view_topic}, question_text, opts \\ []) do
     minimal_context = Keyword.get(opts, :minimal_context, false)
-    source_text = Keyword.get(opts, :source_text)
+    source_text = opts |> Keyword.get(:source_text) |> normalize_source_text()
     child_opts = source_text_opts(source_text)
 
     # Use a 'question' node for follow-up questions
