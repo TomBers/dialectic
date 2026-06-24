@@ -58,6 +58,26 @@ defmodule DialecticWeb.HighlightShare do
     Endpoint.url() <> image_path(graph, highlight)
   end
 
+  def graph_image_url(graph), do: Endpoint.url() <> graph_image_path(graph)
+
+  def graph_image_path(%{slug: slug} = graph) when is_binary(slug) and slug != "" do
+    params =
+      []
+      |> maybe_add_graph_version(graph)
+      |> maybe_add_token_param(graph)
+
+    build_query_path("/g/#{slug}/share-card.svg", params)
+  end
+
+  def graph_image_path(graph) when is_map(graph) do
+    params =
+      []
+      |> maybe_add_graph_version(graph)
+      |> maybe_add_token_param(graph)
+
+    build_query_path("/g/#{title_identifier(graph)}/share-card.svg", params)
+  end
+
   def image_path(%{slug: slug} = graph, %{id: highlight_id} = highlight)
       when is_binary(slug) and slug != "" do
     params =
@@ -111,6 +131,66 @@ defmodule DialecticWeb.HighlightShare do
         end
       end
     end)
+  end
+
+  def graph_image_svg(graph) do
+    title_layout = grid_title_layout(graph.title)
+
+    title_markup =
+      title_layout.lines
+      |> Enum.with_index()
+      |> Enum.map_join("", fn {line, index} ->
+        y = title_layout.start_y + index * title_layout.line_gap
+        ~s(<tspan x="#{@quote_area_left}" y="#{y}">#{escape_xml(line)}</tspan>)
+      end)
+
+    """
+    <svg xmlns="http://www.w3.org/2000/svg" width="#{@image_width}" height="#{@image_height}" viewBox="0 0 #{@image_width} #{@image_height}" role="img" aria-labelledby="title desc">
+      <title id="title">#{escape_xml(graph.title)} · RationalGrid</title>
+      <desc id="desc">Share card for #{escape_xml(graph.title)} on RationalGrid</desc>
+      <defs>
+        <linearGradient id="canvas" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#f8fbff" />
+          <stop offset="52%" stop-color="#fbf7ff" />
+          <stop offset="100%" stop-color="#fffaf2" />
+        </linearGradient>
+        <radialGradient id="violetHalo" cx="18%" cy="12%" r="72%">
+          <stop offset="0%" stop-color="#ddd6fe" stop-opacity="0.72" />
+          <stop offset="100%" stop-color="#ddd6fe" stop-opacity="0" />
+        </radialGradient>
+        <radialGradient id="blueHalo" cx="86%" cy="18%" r="68%">
+          <stop offset="0%" stop-color="#bae6fd" stop-opacity="0.68" />
+          <stop offset="100%" stop-color="#bae6fd" stop-opacity="0" />
+        </radialGradient>
+        <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#7c3aed" />
+          <stop offset="52%" stop-color="#4f46e5" />
+          <stop offset="100%" stop-color="#0ea5e9" />
+        </linearGradient>
+        <filter id="cardShadow" x="-8%" y="-10%" width="116%" height="124%">
+          <feDropShadow dx="0" dy="22" stdDeviation="22" flood-color="#475569" flood-opacity="0.16" />
+        </filter>
+      </defs>
+
+      <rect width="1200" height="630" fill="url(#canvas)" />
+      <rect width="1200" height="630" fill="url(#violetHalo)" />
+      <rect width="1200" height="630" fill="url(#blueHalo)" />
+      <circle cx="1040" cy="126" r="132" fill="#eef2ff" fill-opacity="0.78" />
+      <circle cx="160" cy="538" r="118" fill="#eff6ff" fill-opacity="0.8" />
+
+      <rect x="52" y="44" width="1096" height="542" rx="44" fill="#ffffff" fill-opacity="0.94" filter="url(#cardShadow)" />
+      <rect x="52.5" y="44.5" width="1095" height="541" rx="43.5" fill="none" stroke="#e2e8f0" stroke-opacity="0.92" />
+      <rect x="52" y="44" width="1096" height="542" rx="44" fill="#ffffff" fill-opacity="0.36" />
+
+      <text x="1092" y="98" text-anchor="end" fill="#475569" fill-opacity="0.86" font-size="17" font-weight="700" font-family="#{@ui_font_family}" letter-spacing="0.15">RationalGrid.ai</text>
+      <line x1="96" y1="134" x2="1104" y2="134" stroke="#e2e8f0" stroke-width="1" stroke-opacity="0.9" />
+      <rect x="96" y="478" width="230" height="6" rx="3" fill="url(#accent)" opacity="0.92" />
+      <text x="96" y="510" fill="#64748b" font-size="17" font-weight="700" font-family="#{@ui_font_family}" letter-spacing="0.35">Grid on RationalGrid</text>
+      <text fill="#111827" font-size="#{title_layout.font_size}" font-weight="800" font-family="#{@ui_font_family}" letter-spacing="-0.55" paint-order="stroke" stroke="#ffffff" stroke-width="2" stroke-opacity="0.38">
+        #{title_markup}
+      </text>
+    </svg>
+    """
   end
 
   def image_svg(graph, highlight) when is_map(highlight) do
@@ -220,6 +300,25 @@ defmodule DialecticWeb.HighlightShare do
       start_y: quote_start_y(block_height, font_size),
       lines: lines
     }
+  end
+
+  defp grid_title_layout(text) do
+    title_text = sanitize_text(text, @max_svg_title_chars)
+
+    Enum.find_value([76, 72, 68, 64, 60, 56, 52, 48, 44, 40], fn font_size ->
+      lines = wrap_lines_by_width(title_text, @quote_area_width / font_size, 3)
+      line_gap = round(font_size * 1.12)
+      block_height = quote_block_height(lines, line_gap)
+
+      if block_height <= @quote_area_height do
+        %{
+          font_size: font_size,
+          line_gap: line_gap,
+          start_y: quote_start_y(block_height, font_size),
+          lines: lines
+        }
+      end
+    end) || fallback_quote_layout(title_text)
   end
 
   defp title_layout(text) do
@@ -450,6 +549,15 @@ defmodule DialecticWeb.HighlightShare do
       |> Kernel.<>("…")
     else
       text
+    end
+  end
+
+  defp maybe_add_graph_version(params, graph) do
+    params = [{"sv", @image_style_version} | params]
+
+    case Map.get(graph, :updated_at) || Map.get(graph, :inserted_at) do
+      %DateTime{} = updated_at -> [{"v", DateTime.to_unix(updated_at, :second)} | params]
+      _ -> params
     end
   end
 

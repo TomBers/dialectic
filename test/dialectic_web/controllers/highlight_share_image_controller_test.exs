@@ -8,6 +8,32 @@ defmodule DialecticWeb.HighlightShareImageControllerTest do
   alias Dialectic.Highlights
   alias Dialectic.Repo
 
+  test "renders an svg share card for a public grid", %{conn: conn} do
+    graph = insert_graph(%{title: "Grid Title Share Card", is_public: true})
+
+    conn = get(conn, "/g/#{graph.slug}/share-card.svg")
+    body = response(conn, 200)
+
+    assert get_resp_header(conn, "content-type") |> List.first() =~ "image/svg+xml"
+    assert body =~ "Grid Title Share Card"
+    assert body =~ "Grid on RationalGrid"
+    assert body =~ "RationalGrid.ai"
+  end
+
+  test "requires a token for private grid share cards", %{conn: conn} do
+    graph =
+      insert_graph(%{title: "Private Grid Share Card", is_public: false})
+      |> Graph.changeset(%{share_token: "secret-token"})
+      |> Repo.update!()
+
+    forbidden_conn = get(conn, "/g/#{graph.slug}/share-card.svg")
+    assert response(forbidden_conn, 403)
+
+    authed_conn = get(conn, "/g/#{graph.slug}/share-card.svg?token=#{graph.share_token}")
+
+    assert response(authed_conn, 200) =~ "Private Grid Share Card"
+  end
+
   test "renders an svg share card for a public highlight", %{conn: conn} do
     graph = insert_graph(%{title: "Share Card Graph", is_public: true})
     user = user_fixture()

@@ -4,6 +4,25 @@ defmodule DialecticWeb.HighlightShareImageController do
   alias Dialectic.DbActions.Graphs
   alias DialecticWeb.HighlightShare
 
+  def graph(conn, %{"graph_name" => graph_name} = params) do
+    current_user = conn.assigns[:current_user]
+    graph = Graphs.get_graph_by_slug_or_title(graph_name)
+
+    cond do
+      is_nil(graph) ->
+        send_resp(conn, :not_found, "Not found")
+
+      not has_access?(current_user, graph, params) ->
+        send_resp(conn, :forbidden, "Forbidden")
+
+      true ->
+        conn
+        |> put_resp_content_type("image/svg+xml")
+        |> put_resp_header("cache-control", cache_control(graph))
+        |> send_resp(200, HighlightShare.graph_image_svg(graph))
+    end
+  end
+
   def show(conn, %{"graph_name" => graph_name, "id" => highlight_id} = params) do
     current_user = conn.assigns[:current_user]
     graph = Graphs.get_graph_by_slug_or_title(graph_name)

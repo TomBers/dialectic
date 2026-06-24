@@ -35,6 +35,31 @@ defmodule DialecticWeb.ShareModalCompTest do
       assert html =~ ~s(data-download-filename="share-modal-graph-grid.png")
     end
 
+    test "reader share downloads a generated grid title image" do
+      graph = GraphFixtures.insert_graph(%{title: "Reader Share Modal Graph", is_public: true})
+
+      html =
+        render_component(ShareModalComp,
+          id: "share-modal",
+          show: true,
+          graph_struct: graph,
+          current_user: nil,
+          selected_node: %{id: "1"},
+          presentation_mode: :off,
+          presentation_slide_ids: [],
+          presentation_title: "",
+          share_node: true,
+          share_target: :reader,
+          show_preview: false
+        )
+
+      assert html =~ "Download image"
+      assert html =~ "data-download-svg-png"
+      assert html =~ "/g/#{graph.slug}/share-card.svg"
+      assert html =~ ~s(data-download-filename="reader-share-modal-graph-grid.png")
+      refute html =~ "data-download-grid-png"
+    end
+
     test "share modal keeps graph mode for node and presentation links" do
       graph =
         GraphFixtures.insert_graph(%{
