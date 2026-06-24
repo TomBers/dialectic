@@ -1537,7 +1537,8 @@ defmodule DialecticWeb.GraphLive do
         GraphActions.ask_and_answer(
           graph_action_params(socket, socket.assigns.node),
           "Please explain: #{selected_text}",
-          minimal_context: true
+          minimal_context: true,
+          source_text: selected_text
         )
 
       # Link the highlight to the answer node using new link system
@@ -1553,7 +1554,8 @@ defmodule DialecticWeb.GraphLive do
         GraphActions.ask_and_answer(
           graph_action_params(socket, socket.assigns.node),
           "Please explain: #{selected_text}",
-          minimal_context: true
+          minimal_context: true,
+          source_text: selected_text
         ),
         "explain"
       )
@@ -1597,7 +1599,11 @@ defmodule DialecticWeb.GraphLive do
     # Store highlight ID for linking after graph updates
     socket =
       if highlight do
-        assign(socket, pending_link_highlight_id: highlight.id, pending_link_parent_id: node_id)
+        assign(socket,
+          pending_link_highlight_id: highlight.id,
+          pending_link_parent_id: node_id,
+          pending_link_selected_text: selected_text
+        )
       else
         socket
       end
@@ -1748,60 +1754,69 @@ defmodule DialecticWeb.GraphLive do
   defp create_pending_highlight_links(socket) do
     highlight_id = socket.assigns[:pending_link_highlight_id]
     parent_id = socket.assigns[:pending_link_parent_id]
-
-    Logger.debug(
-      "[create_pending_highlight_links] Called with highlight_id=#{inspect(highlight_id)}, parent_id=#{inspect(parent_id)}"
-    )
+    selected_text = normalize_selection_text(socket.assigns[:pending_link_selected_text])
 
     if highlight_id && parent_id do
-      # Re-fetch parent to get newly created children
       parent_node = GraphActions.find_node(socket.assigns.graph_id, parent_id)
 
-      Logger.debug(
-        "[create_pending_highlight_links] Parent node: #{inspect(parent_node && parent_node.id)}, children count: #{inspect(parent_node && length(parent_node.children || []))}"
-      )
-
-      Logger.debug(
-        "[create_pending_highlight_links] All children: #{inspect(parent_node && parent_node.children)}"
-      )
-
-      if parent_node && parent_node.children do
-        # Get the two most recent children (thesis and antithesis)
-        recent_children = Enum.take(parent_node.children, -2)
-
-        Logger.debug(
-          "[create_pending_highlight_links] Recent children (last 2): #{inspect(recent_children |> Enum.map(& &1.id))}"
-        )
-
-        Enum.each(recent_children, fn child_node ->
-          Logger.debug(
-            "[create_pending_highlight_links] Processing child node: #{inspect(child_node.id)}, class: #{inspect(child_node.class)}"
-          )
-
-          link_type =
-            case child_node.class do
-              "thesis" -> "pro"
-              "antithesis" -> "con"
-              _ -> nil
-            end
-
-          Logger.debug(
-            "[create_pending_highlight_links] Link type for #{child_node.id}: #{inspect(link_type)}"
-          )
-
-          if link_type do
-            result = Highlights.add_link(highlight_id, child_node.id, link_type)
-            Logger.debug("[create_pending_highlight_links] add_link result: #{inspect(result)}")
-          end
+      if selected_text && parent_node && parent_node.children do
+        parent_node.children
+        |> Enum.filter(fn child_node ->
+          child_node.class in ["thesis", "antithesis"] and
+            normalize_selection_text(Map.get(child_node, :source_text)) == selected_text
+        end)
+        |> newest_child_by_class()
+        |> Enum.each(fn {child_node, link_type} ->
+          _ = Highlights.add_link(highlight_id, child_node.id, link_type)
         end)
       end
 
-      # Clear pending link data
-      assign(socket, pending_link_highlight_id: nil, pending_link_parent_id: nil)
+      assign(socket,
+        pending_link_highlight_id: nil,
+        pending_link_parent_id: nil,
+        pending_link_selected_text: nil
+      )
     else
       socket
     end
   end
+
+  defp newest_child_by_class(children) do
+    children
+    |> Enum.group_by(& &1.class)
+    |> Enum.flat_map(fn
+      {"thesis", class_children} -> newest_link(class_children, "pro")
+      {"antithesis", class_children} -> newest_link(class_children, "con")
+      _other -> []
+    end)
+  end
+
+  defp newest_link(children, link_type) do
+    case Enum.max_by(children, &node_id_sort_value/1, fn -> nil end) do
+      nil -> []
+      child -> [{child, link_type}]
+    end
+  end
+
+  defp node_id_sort_value(%{id: id}) when is_binary(id) do
+    case Integer.parse(id) do
+      {int, ""} -> int
+      _ -> 0
+    end
+  end
+
+  defp node_id_sort_value(_node), do: 0
+
+  defp normalize_selection_text(text) when is_binary(text) do
+    text
+    |> String.trim()
+    |> case do
+      "" -> nil
+      normalized -> normalized
+    end
+  end
+
+  defp normalize_selection_text(_text), do: nil
 
   defp create_highlight(socket, node_id, offsets, selected_text) do
     highlight_attrs = %{
