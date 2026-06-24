@@ -144,7 +144,8 @@ defmodule Dialectic.Graph.GraphActions do
         LlmInterface.gen_selection_response(node, n, graph_id, selection, live_view_topic)
       end,
       type,
-      user
+      user,
+      source_text_opts(selection)
     )
   end
 
@@ -161,6 +162,8 @@ defmodule Dialectic.Graph.GraphActions do
   def branch({graph_id, node, user, live_view_topic}, opts \\ []) do
     content_override = Keyword.get(opts, :content_override)
 
+    child_opts = source_text_opts(content_override)
+
     GraphManager.add_child(
       graph_id,
       [node],
@@ -168,7 +171,8 @@ defmodule Dialectic.Graph.GraphActions do
         LlmInterface.gen_thesis(node, n, graph_id, live_view_topic, content_override)
       end,
       "thesis",
-      user
+      user,
+      child_opts
     )
 
     GraphManager.add_child(
@@ -178,7 +182,8 @@ defmodule Dialectic.Graph.GraphActions do
         LlmInterface.gen_antithesis(node, n, graph_id, live_view_topic, content_override)
       end,
       "antithesis",
-      user
+      user,
+      child_opts
     )
   end
 
@@ -228,7 +233,8 @@ defmodule Dialectic.Graph.GraphActions do
         LlmInterface.gen_related_ideas(node, n, graph_id, live_view_topic, content_override)
       end,
       "ideas",
-      user
+      user,
+      source_text_opts(content_override)
     )
   end
 
@@ -263,12 +269,7 @@ defmodule Dialectic.Graph.GraphActions do
       {^tool_key, class, llm_fn, _doc} ->
         content_override = Keyword.get(opts, :content_override)
 
-        add_child_opts =
-          if content_override do
-            [fields: %{source_text: content_override}]
-          else
-            []
-          end
+        add_child_opts = source_text_opts(content_override)
 
         GraphManager.add_child(
           graph_id,
@@ -398,6 +399,8 @@ defmodule Dialectic.Graph.GraphActions do
   """
   def ask_and_answer({graph_id, node, user, live_view_topic}, question_text, opts \\ []) do
     minimal_context = Keyword.get(opts, :minimal_context, false)
+    source_text = Keyword.get(opts, :source_text)
+    child_opts = source_text_opts(source_text)
 
     # Use a 'question' node for follow-up questions
     question_node =
@@ -406,7 +409,8 @@ defmodule Dialectic.Graph.GraphActions do
         [node],
         fn _ -> question_text end,
         "question",
-        user
+        user,
+        child_opts
       )
 
     answer_node =
@@ -421,7 +425,8 @@ defmodule Dialectic.Graph.GraphActions do
           end
         end,
         "answer",
-        user
+        user,
+        child_opts
       )
 
     {nil, answer_node}
@@ -473,6 +478,32 @@ defmodule Dialectic.Graph.GraphActions do
     {nil, answer_node}
   end
 
+  defp source_text_opts(source_text) do
+    case normalize_source_text(source_text) do
+      nil -> []
+      text -> [fields: %{source_text: text}]
+    end
+  end
+
+  defp normalize_source_text(source_text) when is_binary(source_text) do
+    source_text
+    |> String.trim()
+    |> case do
+      "" -> nil
+      text -> text
+    end
+  end
+
+  defp normalize_source_text(_source_text), do: nil
+
+  defp node_source_text(%{} = node) do
+    node
+    |> Map.get(:source_text)
+    |> normalize_source_text()
+  end
+
+  defp node_source_text(_node), do: nil
+
   # Private helper to validate whether a node type can be regenerated
   defp validate_regeneration(class, parents) do
     # Get all thinking tool classes
@@ -485,7 +516,7 @@ defmodule Dialectic.Graph.GraphActions do
           do: {true, nil},
           else: {false, "Need at least 2 parent nodes for synthesis"}
 
-      class in ["thesis", "antithesis", "ideas", "answer"] or
+      class in ["thesis", "antithesis", "ideas", "answer", "explain"] or
           class in thinking_tool_classes ->
         if List.first(parents) != nil,
           do: {true, nil},
@@ -552,31 +583,68 @@ defmodule Dialectic.Graph.GraphActions do
   # Dispatches to the appropriate function based on node type
   defp regenerate_by_type(stuck_node, graph_id, parents, user, live_view_topic) do
     parent = List.first(parents)
+    source_text = node_source_text(stuck_node) || node_source_text(parent)
+    source_text_opts = source_text_opts(source_text)
 
     case stuck_node.class do
       "thesis" ->
         GraphManager.add_child(
           graph_id,
           [parent],
-          fn n -> LlmInterface.gen_thesis(parent, n, graph_id, live_view_topic) end,
+          fn n -> LlmInterface.gen_thesis(parent, n, graph_id, live_view_topic, source_text) end,
           "thesis",
-          user
+          user,
+          source_text_opts
         )
 
       "antithesis" ->
         GraphManager.add_child(
           graph_id,
           [parent],
-          fn n -> LlmInterface.gen_antithesis(parent, n, graph_id, live_view_topic) end,
+          fn n ->
+            LlmInterface.gen_antithesis(parent, n, graph_id, live_view_topic, source_text)
+          end,
           "antithesis",
-          user
+          user,
+          source_text_opts
         )
 
       "ideas" ->
-        related_ideas({graph_id, parent, user, live_view_topic})
+        related_ideas({graph_id, parent, user, live_view_topic}, content_override: source_text)
 
       "answer" ->
-        answer({graph_id, parent, user, live_view_topic})
+        if source_text do
+          GraphManager.add_child(
+            graph_id,
+            [parent],
+            fn n ->
+              LlmInterface.gen_response_minimal_context(parent, n, graph_id, live_view_topic)
+            end,
+            "answer",
+            user,
+            source_text_opts
+          )
+        else
+          answer({graph_id, parent, user, live_view_topic})
+        end
+
+      "explain" ->
+        GraphManager.add_child(
+          graph_id,
+          [parent],
+          fn n ->
+            LlmInterface.gen_selection_response(
+              parent,
+              n,
+              graph_id,
+              source_text || "",
+              live_view_topic
+            )
+          end,
+          "explain",
+          user,
+          source_text_opts
+        )
 
       "synthesis" ->
         [p1, p2 | _] = parents
@@ -591,7 +659,9 @@ defmodule Dialectic.Graph.GraphActions do
           end)
 
         if tool_key do
-          apply_thinking_tool(tool_key, {graph_id, parent, user, live_view_topic})
+          apply_thinking_tool(tool_key, {graph_id, parent, user, live_view_topic},
+            content_override: source_text
+          )
         end
     end
   end

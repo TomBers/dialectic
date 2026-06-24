@@ -1537,7 +1537,8 @@ defmodule DialecticWeb.GraphLive do
         GraphActions.ask_and_answer(
           graph_action_params(socket, socket.assigns.node),
           "Please explain: #{selected_text}",
-          minimal_context: true
+          minimal_context: true,
+          source_text: selected_text
         )
 
       # Link the highlight to the answer node using new link system
@@ -1553,7 +1554,8 @@ defmodule DialecticWeb.GraphLive do
         GraphActions.ask_and_answer(
           graph_action_params(socket, socket.assigns.node),
           "Please explain: #{selected_text}",
-          minimal_context: true
+          minimal_context: true,
+          source_text: selected_text
         ),
         "explain"
       )

@@ -105,6 +105,25 @@ defmodule Dialectic.Graph.IntegrationGraphActionsTest do
     assert antithesis_node.class == "antithesis"
   end
 
+  test "selected-text branch stores source_text and preserves it when regenerated", %{graph: _} do
+    selected_text = "This specific excerpt should stay in focus"
+    {_graph, answer_node} = inital_qa()
+
+    _ = GraphActions.branch(graph_param(answer_node), content_override: selected_text)
+
+    thesis_node = GraphActions.find_node(@graph_id, "3")
+    antithesis_node = GraphActions.find_node(@graph_id, "4")
+
+    assert thesis_node.source_text == selected_text
+    assert antithesis_node.source_text == selected_text
+
+    assert {:ok, regenerated_node} =
+             GraphActions.regenerate_node(graph_param(thesis_node), thesis_node.id)
+
+    assert regenerated_node.class == "thesis"
+    assert regenerated_node.source_text == selected_text
+  end
+
   test "combine creates synthesis node with two parents", %{graph: _} do
     {_, node1} = branched_graph()
 
