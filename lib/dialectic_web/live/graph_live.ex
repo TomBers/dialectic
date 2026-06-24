@@ -46,7 +46,7 @@ defmodule DialecticWeb.GraphLive do
   @structural_graph_operations ["delete" | @node_creation_operations]
   use DialecticWeb.GraphStreaming, preload_highlight_links: true
 
-  alias Dialectic.Graph.{Vertex, GraphActions, Siblings}
+  alias Dialectic.Graph.{Vertex, GraphActions, Siblings, StructuralRoot}
   alias Dialectic.Accounts.User
   alias DialecticWeb.GridChat
   alias DialecticWeb.NodeComp
@@ -94,7 +94,7 @@ defmodule DialecticWeb.GraphLive do
 
     valid_slide_ids =
       Enum.filter(slide_ids, fn id ->
-        GraphActions.find_node(graph_id, id) != nil
+        valid_presentation_slide_id?(graph_id, id)
       end)
 
     title =
@@ -154,7 +154,7 @@ defmodule DialecticWeb.GraphLive do
         node =
           case GraphManager.best_node(graph_title, node_id) do
             nil -> default_node()
-            v -> v
+            v -> display_node(graph_title, v)
           end
 
         socket =
@@ -293,7 +293,8 @@ defmodule DialecticWeb.GraphLive do
           |> Enum.reduce([], fn vid, acc ->
             case GraphManager.vertex_label(socket.assigns.graph_id, vid) do
               %{} = vertex ->
-                if valid_search_node(vertex) do
+                if valid_search_node(vertex) and
+                     not StructuralRoot.structural?(vertex, socket.assigns.graph_id) do
                   case NodeSearch.annotate_result(vertex, search_term) do
                     %{search_rank: rank} = result ->
                       [{rank, vertex.id, result} | acc]
@@ -769,17 +770,19 @@ defmodule DialecticWeb.GraphLive do
       socket.assigns.presentation_mode == :setup ->
         ids = socket.assigns.presentation_slide_ids
         from_search = params["from-search"] == "true"
+        node = GraphActions.find_node(socket.assigns.graph_id, id)
+
+        selectable_slide? =
+          node != nil and not StructuralRoot.structural?(node, socket.assigns.graph_id)
 
         updated_ids =
-          if id in ids do
-            List.delete(ids, id)
-          else
-            ids ++ [id]
+          cond do
+            not selectable_slide? -> ids
+            id in ids -> List.delete(ids, id)
+            true -> ids ++ [id]
           end
 
         # Still navigate to the node so the user can see its content
-        node = GraphActions.find_node(socket.assigns.graph_id, id)
-
         if node == nil do
           socket =
             socket
@@ -1215,7 +1218,7 @@ defmodule DialecticWeb.GraphLive do
       # Validate that the IDs actually exist in this graph
       valid_ids =
         Enum.filter(ids, fn id ->
-          GraphActions.find_node(socket.assigns.graph_id, id) != nil
+          valid_presentation_slide_id?(socket.assigns.graph_id, id)
         end)
 
       socket =
@@ -2100,6 +2103,7 @@ defmodule DialecticWeb.GraphLive do
         socket
       end
 
+    node = display_node(socket.assigns.graph_id, node)
     {nav_up, nav_down, nav_left, nav_right} = compute_nav_flags(socket.assigns.graph_id, node)
     maybe_record_activity(socket, operation, node)
 
@@ -2291,6 +2295,43 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
+  defp display_node(_graph_id, nil), do: nil
+
+  defp display_node(graph_id, node) do
+    if StructuralRoot.structural?(node, graph_id) do
+      first_visible_child(graph_id, node) || Map.put(node, :structural_root?, true)
+    else
+      node
+    end
+  end
+
+  defp first_visible_child(graph_id, node) do
+    graph_id
+    |> GraphManager.out_neighbours(node.id)
+    |> Enum.map(&GraphActions.find_node(graph_id, &1))
+    |> Enum.filter(fn child ->
+      is_map(child) and not Map.get(child, :deleted, false) and
+        not Map.get(child, :compound, false) and
+        not StructuralRoot.structural?(child, graph_id)
+    end)
+    |> Enum.sort_by(&node_sort_key(&1.id))
+    |> List.first()
+  end
+
+  defp valid_presentation_slide_id?(graph_id, id) do
+    case GraphActions.find_node(graph_id, id) do
+      nil -> false
+      node -> not StructuralRoot.structural?(node, graph_id)
+    end
+  end
+
+  defp node_sort_key(id) do
+    case Integer.parse(to_string(id)) do
+      {int, _rest} -> {0, int}
+      :error -> {1, to_string(id)}
+    end
+  end
+
   defp assign_defaults(socket) do
     user = UserUtils.current_identity(socket.assigns)
 
@@ -2383,6 +2424,7 @@ defmodule DialecticWeb.GraphLive do
   end
 
   defp assign_graph_data(socket, graph_db, graph_struct, node, graph_id, user) do
+    node = display_node(graph_id, node)
     changeset = GraphActions.create_new_node(user) |> Vertex.changeset()
     can_edit = !graph_struct.is_locked
     {nav_up, nav_down, nav_left, nav_right} = compute_nav_flags(graph_id, node)

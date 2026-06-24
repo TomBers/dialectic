@@ -392,6 +392,50 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     })
   end
 
+  defp structural_origin_graph(title) do
+    insert_graph(%{
+      title: title,
+      data: %{
+        "nodes" => [
+          %{
+            "id" => "1",
+            "content" => "## #{title}",
+            "class" => "origin",
+            "user" => nil,
+            "parent" => nil,
+            "noted_by" => [],
+            "deleted" => false,
+            "compound" => false
+          },
+          %{
+            "id" => "2",
+            "content" => "First readable path",
+            "class" => "question",
+            "user" => nil,
+            "parent" => nil,
+            "noted_by" => [],
+            "deleted" => false,
+            "compound" => false
+          },
+          %{
+            "id" => "3",
+            "content" => "Second readable path",
+            "class" => "question",
+            "user" => nil,
+            "parent" => nil,
+            "noted_by" => [],
+            "deleted" => false,
+            "compound" => false
+          }
+        ],
+        "edges" => [
+          %{"data" => %{"id" => "1_2", "source" => "1", "target" => "2"}},
+          %{"data" => %{"id" => "1_3", "source" => "1", "target" => "3"}}
+        ]
+      }
+    })
+  end
+
   test "mounts the reader at the start of the graph and renders through the next split", %{
     conn: conn
   } do
@@ -424,6 +468,25 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(view, "#next-choice-3")
     assert has_element?(view, "#next-choice-4")
     refute has_element?(view, "#outline-branch-compare")
+  end
+
+  test "reader skips a title-only structural origin and starts at the first real node", %{
+    conn: conn
+  } do
+    title = "Structural Origin Reader #{System.unique_integer([:positive])}"
+    graph = structural_origin_graph(title)
+
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=1")
+    assigns = :sys.get_state(view.pid).socket.assigns
+
+    assert assigns.selected_node_id == "2"
+    assert assigns.node.id == "2"
+    assert Enum.map(assigns.outline_nodes, & &1.id) == ["2", "3"]
+    assert Enum.map(assigns.reading_chain, & &1.id) == ["2"]
+    refute has_element?(view, "#outline-node-1")
+    refute has_element?(view, "#reading-node-1")
+    assert has_element?(view, "#outline-node-2[data-outline-selected='true']")
+    assert has_element?(view, "#reading-node-2")
   end
 
   test "node_id param selects the requested node and keeps its outline entry", %{conn: conn} do

@@ -355,11 +355,12 @@ defmodule Dialectic.Graph.Vertex do
     children
   end
 
-  def to_cytoscape_format(graph) do
+  def to_cytoscape_format(graph, opts \\ []) do
     # IO.inspect(graph, label: "Cytoscape graph")
     # Get all vertices and edges from the digraph
     vertices = :digraph.vertices(graph)
     edges = :digraph.edges(graph)
+    hidden_node_ids = opts |> Keyword.get(:hidden_node_ids, []) |> MapSet.new()
 
     # Convert vertices to cytoscape nodes format
     nodes =
@@ -367,12 +368,14 @@ defmodule Dialectic.Graph.Vertex do
         # Get the vertex label/data from the digraph
         case :digraph.vertex(graph, vertex) do
           {vid, dat} ->
-            # Create cytoscape node format
-            case dat.deleted do
-              true ->
+            cond do
+              MapSet.member?(hidden_node_ids, vid) ->
                 acc
 
-              false ->
+              dat.deleted ->
+                acc
+
+              true ->
                 acc ++
                   [
                     %{
@@ -403,12 +406,16 @@ defmodule Dialectic.Graph.Vertex do
         with {_, v1, v2, _} <- :digraph.edge(graph, edge),
              {source_id, s_dat} <- :digraph.vertex(graph, v1),
              {target_id, t_dat} <- :digraph.vertex(graph, v2) do
-          # Create edge ID from source and target names
-          edge_id = source_id <> "_" <> target_id
-
-          # Create cytoscape edge format
-          case !(s_dat.deleted or t_dat.deleted) do
+          case MapSet.member?(hidden_node_ids, source_id) or
+                 MapSet.member?(hidden_node_ids, target_id) or s_dat.deleted or t_dat.deleted do
             true ->
+              acc
+
+            false ->
+              # Create edge ID from source and target names
+              edge_id = source_id <> "_" <> target_id
+
+              # Create cytoscape edge format
               acc ++
                 [
                   %{
@@ -419,9 +426,6 @@ defmodule Dialectic.Graph.Vertex do
                     }
                   }
                 ]
-
-            false ->
-              acc
           end
         else
           _ -> acc

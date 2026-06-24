@@ -266,7 +266,14 @@ defmodule GraphManager do
   def handle_call(:format_graph_json, _from, {graph_struct, graph}) do
     json =
       try do
-        graph |> Vertex.to_cytoscape_format() |> Jason.encode!()
+        hidden_node_ids =
+          graph
+          |> Dialectic.Graph.StructuralRoot.root_id_if_structural(graph_struct.title)
+          |> List.wrap()
+
+        graph
+        |> Vertex.to_cytoscape_format(hidden_node_ids: hidden_node_ids)
+        |> Jason.encode!()
       rescue
         _ -> "[]"
       end

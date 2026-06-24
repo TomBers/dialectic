@@ -1,7 +1,7 @@
 defmodule DialecticWeb.OutlineGraphLive do
   use DialecticWeb, :live_view
 
-  alias Dialectic.Graph.GraphActions
+  alias Dialectic.Graph.{GraphActions, StructuralRoot}
   alias Dialectic.Follows
   alias Dialectic.Highlights
   alias Dialectic.Linear.ThreadedConv
@@ -461,7 +461,7 @@ defmodule DialecticWeb.OutlineGraphLive do
       socket.assigns.graph_id
       |> GraphManager.path_to_node(selected_node)
       |> Enum.reverse()
-      |> Enum.filter(&visible_node?/1)
+      |> Enum.filter(&visible_node?(socket.assigns.graph_id, &1))
       |> Enum.map(&enrich_node/1)
 
     reading_chain = build_reading_chain(socket.assigns.graph_id, selected_node)
@@ -523,7 +523,7 @@ defmodule DialecticWeb.OutlineGraphLive do
       |> Enum.reduce([], fn vertex_id, acc ->
         case GraphManager.vertex_label(graph_id, vertex_id) do
           %{} = node ->
-            if visible_node?(node) do
+            if visible_node?(graph_id, node) do
               case node |> enrich_node() |> NodeSearch.annotate_result(search_term) do
                 %{search_rank: rank} = enriched_node ->
                   [{rank, sort_key(enriched_node.id), enriched_node} | acc]
@@ -573,13 +573,13 @@ defmodule DialecticWeb.OutlineGraphLive do
   defp current_selected_node(graph_id, node_id) do
     node = GraphActions.find_node(graph_id, node_id)
 
-    if visible_node?(node), do: node, else: nil
+    if visible_node?(graph_id, node), do: node, else: nil
   end
 
   defp default_target_node(graph_id) do
     node = GraphManager.best_node(graph_id, nil)
 
-    if visible_node?(node) do
+    if visible_node?(graph_id, node) do
       node
     else
       first_visible_node(graph_id)
@@ -591,13 +591,13 @@ defmodule DialecticWeb.OutlineGraphLive do
 
     graph
     |> ThreadedConv.prepare_conversation()
-    |> Enum.find(&visible_node?/1)
+    |> Enum.find(&visible_node?(graph_id, &1))
   end
 
   defp build_outline_nodes(graph_id, graph) do
     graph
     |> ThreadedConv.prepare_conversation()
-    |> Enum.filter(&visible_node?/1)
+    |> Enum.filter(&visible_node?(graph_id, &1))
     |> Enum.map(fn node ->
       children = list_non_deleted_children(graph_id, node.id)
 
@@ -754,7 +754,7 @@ defmodule DialecticWeb.OutlineGraphLive do
     graph_id
     |> GraphManager.out_neighbours(node_id)
     |> Enum.map(&GraphActions.find_node(graph_id, &1))
-    |> Enum.filter(&visible_node?/1)
+    |> Enum.filter(&visible_node?(graph_id, &1))
     |> Enum.sort_by(&sort_key(&1.id))
   end
 
@@ -771,6 +771,10 @@ defmodule DialecticWeb.OutlineGraphLive do
   defp visible_node?(%{compound: true}), do: false
   defp visible_node?(%{}), do: true
   defp visible_node?(_), do: false
+
+  defp visible_node?(graph_id, node) do
+    visible_node?(node) and not StructuralRoot.structural?(node, graph_id)
+  end
 
   defp display_title(node, opts \\ []) do
     node

@@ -78,6 +78,47 @@ defmodule DialecticWeb.GraphLiveTest do
     }
   end
 
+  defp structural_origin_graph_data(title) do
+    %{
+      "nodes" => [
+        %{
+          "id" => "1",
+          "content" => "## #{title}",
+          "class" => "origin",
+          "user" => nil,
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false
+        },
+        %{
+          "id" => "2",
+          "content" => "First real node",
+          "class" => "question",
+          "user" => nil,
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false
+        },
+        %{
+          "id" => "3",
+          "content" => "Second real node",
+          "class" => "question",
+          "user" => nil,
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false
+        }
+      ],
+      "edges" => [
+        %{"data" => %{"id" => "1_2", "source" => "1", "target" => "2"}},
+        %{"data" => %{"id" => "1_3", "source" => "1", "target" => "3"}}
+      ]
+    }
+  end
+
   describe "mount/3" do
     test "assigns necessary values on mount with a current user", %{conn: conn} do
       {:ok, view, _html} = setup_live(conn)
@@ -86,6 +127,37 @@ defmodule DialecticWeb.GraphLiveTest do
 
       assert socket.assigns.graph_id == @graph_id
       assert socket.assigns.user == "tester@example.com"
+    end
+
+    test "treats a title-only origin as a hidden structural root", %{conn: conn} do
+      title = "Structural Origin Graph #{System.unique_integer([:positive])}"
+
+      conn =
+        conn
+        |> log_in_user(
+          user_fixture(%{email: "structural-#{System.unique_integer([:positive])}@example.com"})
+        )
+
+      graph =
+        Dialectic.GraphFixtures.insert_graph(%{
+          title: title,
+          data: structural_origin_graph_data(title)
+        })
+
+      {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}/graph?node=1")
+      assigns = :sys.get_state(view.pid).socket.assigns
+      elements = Jason.decode!(assigns.f_graph)
+      element_ids = Enum.map(elements, &get_in(&1, ["data", "id"]))
+
+      assert assigns.node.id == "2"
+      refute "1" in element_ids
+      assert "2" in element_ids
+      assert "3" in element_ids
+
+      refute Enum.any?(elements, fn element ->
+               get_in(element, ["data", "source"]) == "1" or
+                 get_in(element, ["data", "target"]) == "1"
+             end)
     end
 
     test "shows a persistent reader switch for the current node", %{conn: conn} do
@@ -411,41 +483,41 @@ defmodule DialecticWeb.GraphLiveTest do
     end
 
     test "close_presentation_setup hides drawer but keeps slide deck", %{conn: conn} do
-      {:ok, view, _html} = setup_live(conn)
+      {:ok, view, _html} = setup_live_for_graph(conn, "What is ethics?")
 
       # Enter setup and add a slide via node_clicked
       render_click(view, "enter_presentation_setup", %{})
-      render_click(view, "node_clicked", %{"id" => "1"})
+      render_click(view, "node_clicked", %{"id" => "2"})
       state = :sys.get_state(view.pid).socket.assigns
       assert state.presentation_mode == :setup
-      assert "1" in state.presentation_slide_ids
+      assert "2" in state.presentation_slide_ids
 
       # Close the setup drawer — slides should be preserved
       render_click(view, "close_presentation_setup", %{})
       state = :sys.get_state(view.pid).socket.assigns
 
       assert state.presentation_mode == :off
-      assert "1" in state.presentation_slide_ids
+      assert "2" in state.presentation_slide_ids
     end
 
     test "exit_presentation without clear_slides keeps deck", %{conn: conn} do
-      {:ok, view, _html} = setup_live(conn)
+      {:ok, view, _html} = setup_live_for_graph(conn, "What is ethics?")
 
       render_click(view, "enter_presentation_setup", %{})
-      render_click(view, "node_clicked", %{"id" => "1"})
+      render_click(view, "node_clicked", %{"id" => "2"})
 
       render_click(view, "exit_presentation", %{})
       state = :sys.get_state(view.pid).socket.assigns
 
       assert state.presentation_mode == :off
-      assert "1" in state.presentation_slide_ids
+      assert "2" in state.presentation_slide_ids
     end
 
     test "exit_presentation with clear_slides wipes deck", %{conn: conn} do
-      {:ok, view, _html} = setup_live(conn)
+      {:ok, view, _html} = setup_live_for_graph(conn, "What is ethics?")
 
       render_click(view, "enter_presentation_setup", %{})
-      render_click(view, "node_clicked", %{"id" => "1"})
+      render_click(view, "node_clicked", %{"id" => "2"})
 
       render_click(view, "exit_presentation", %{"clear_slides" => "true"})
       state = :sys.get_state(view.pid).socket.assigns
@@ -455,44 +527,49 @@ defmodule DialecticWeb.GraphLiveTest do
     end
 
     test "node_clicked in setup mode toggles slide IDs", %{conn: conn} do
-      {:ok, view, _html} = setup_live(conn)
+      {:ok, view, _html} = setup_live_for_graph(conn, "What is ethics?")
 
       render_click(view, "enter_presentation_setup", %{})
 
-      # Add node "1"
+      # Structural root "1" is display-only and cannot be added as a slide.
       render_click(view, "node_clicked", %{"id" => "1"})
       state = :sys.get_state(view.pid).socket.assigns
-      assert state.presentation_slide_ids == ["1"]
+      assert state.presentation_slide_ids == []
 
       # Add node "2"
       render_click(view, "node_clicked", %{"id" => "2"})
       state = :sys.get_state(view.pid).socket.assigns
-      assert state.presentation_slide_ids == ["1", "2"]
-
-      # Toggle node "1" off
-      render_click(view, "node_clicked", %{"id" => "1"})
-      state = :sys.get_state(view.pid).socket.assigns
       assert state.presentation_slide_ids == ["2"]
+
+      # Add node "3"
+      render_click(view, "node_clicked", %{"id" => "3"})
+      state = :sys.get_state(view.pid).socket.assigns
+      assert state.presentation_slide_ids == ["2", "3"]
+
+      # Toggle node "2" off
+      render_click(view, "node_clicked", %{"id" => "2"})
+      state = :sys.get_state(view.pid).socket.assigns
+      assert state.presentation_slide_ids == ["3"]
     end
 
     test "presentation_remove_slide removes the specified node", %{conn: conn} do
-      {:ok, view, _html} = setup_live(conn)
+      {:ok, view, _html} = setup_live_for_graph(conn, "What is ethics?")
 
       render_click(view, "enter_presentation_setup", %{})
-      render_click(view, "node_clicked", %{"id" => "1"})
       render_click(view, "node_clicked", %{"id" => "2"})
+      render_click(view, "node_clicked", %{"id" => "3"})
 
-      render_click(view, "presentation_remove_slide", %{"node-id" => "1"})
+      render_click(view, "presentation_remove_slide", %{"node-id" => "2"})
       state = :sys.get_state(view.pid).socket.assigns
-      assert state.presentation_slide_ids == ["2"]
+      assert state.presentation_slide_ids == ["3"]
     end
 
     test "presentation_clear_slides empties the deck", %{conn: conn} do
-      {:ok, view, _html} = setup_live(conn)
+      {:ok, view, _html} = setup_live_for_graph(conn, "What is ethics?")
 
       render_click(view, "enter_presentation_setup", %{})
-      render_click(view, "node_clicked", %{"id" => "1"})
       render_click(view, "node_clicked", %{"id" => "2"})
+      render_click(view, "node_clicked", %{"id" => "3"})
 
       render_click(view, "presentation_clear_slides", %{})
       state = :sys.get_state(view.pid).socket.assigns
@@ -500,32 +577,32 @@ defmodule DialecticWeb.GraphLiveTest do
     end
 
     test "presentation_reorder sanitizes duplicates and unknown IDs", %{conn: conn} do
-      {:ok, view, _html} = setup_live(conn)
+      {:ok, view, _html} = setup_live_for_graph(conn, "What is ethics?")
 
       render_click(view, "enter_presentation_setup", %{})
-      render_click(view, "node_clicked", %{"id" => "1"})
       render_click(view, "node_clicked", %{"id" => "2"})
+      render_click(view, "node_clicked", %{"id" => "3"})
 
       # Reorder with duplicates and an unknown ID — should be sanitized
       render_click(view, "presentation_reorder", %{
-        "order" => ["2", "1", "2", "unknown_id"]
+        "order" => ["3", "2", "3", "unknown_id"]
       })
 
       state = :sys.get_state(view.pid).socket.assigns
-      assert state.presentation_slide_ids == ["2", "1"]
+      assert state.presentation_slide_ids == ["3", "2"]
     end
 
     test "start_presenting transitions to :presenting mode", %{conn: conn} do
-      {:ok, view, _html} = setup_live(conn)
+      {:ok, view, _html} = setup_live_for_graph(conn, "What is ethics?")
 
       render_click(view, "enter_presentation_setup", %{})
-      render_click(view, "node_clicked", %{"id" => "1"})
+      render_click(view, "node_clicked", %{"id" => "2"})
 
       render_click(view, "start_presenting", %{})
       state = :sys.get_state(view.pid).socket.assigns
 
       assert state.presentation_mode == :presenting
-      assert state.presentation_slide_ids == ["1"]
+      assert state.presentation_slide_ids == ["2"]
     end
 
     test "start_presenting with empty deck does not transition", %{conn: conn} do
@@ -563,10 +640,10 @@ defmodule DialecticWeb.GraphLiveTest do
     end
 
     test "presentation_clear_slides also resets the title", %{conn: conn} do
-      {:ok, view, _html} = setup_live(conn)
+      {:ok, view, _html} = setup_live_for_graph(conn, "What is ethics?")
 
       render_click(view, "enter_presentation_setup", %{})
-      render_click(view, "node_clicked", %{"id" => "1"})
+      render_click(view, "node_clicked", %{"id" => "2"})
       render_click(view, "update_presentation_title", %{"title" => "My Presentation"})
 
       render_click(view, "presentation_clear_slides", %{})
@@ -577,10 +654,10 @@ defmodule DialecticWeb.GraphLiveTest do
     end
 
     test "title persists through start_presenting", %{conn: conn} do
-      {:ok, view, _html} = setup_live(conn)
+      {:ok, view, _html} = setup_live_for_graph(conn, "What is ethics?")
 
       render_click(view, "enter_presentation_setup", %{})
-      render_click(view, "node_clicked", %{"id" => "1"})
+      render_click(view, "node_clicked", %{"id" => "2"})
       render_click(view, "update_presentation_title", %{"title" => "My Talk"})
       render_click(view, "start_presenting", %{})
       state = :sys.get_state(view.pid).socket.assigns
@@ -593,49 +670,49 @@ defmodule DialecticWeb.GraphLiveTest do
       {:ok, view, _html} = setup_live_for_graph(conn, "What is ethics?")
 
       render_click(view, "enter_presentation_setup", %{})
-      render_click(view, "node_clicked", %{"id" => "1"})
       render_click(view, "node_clicked", %{"id" => "2"})
+      render_click(view, "node_clicked", %{"id" => "3"})
       render_click(view, "start_presenting", %{})
 
       assert has_element?(view, "#presentation-stage")
       assert has_element?(view, "#presentation-agenda")
       assert has_element?(view, "#presentation-current-slide")
       assert has_element?(view, "#presentation-next-slide")
-      assert has_element?(view, "#presentation-agenda-slide-1")
       assert has_element?(view, "#presentation-agenda-slide-2")
+      assert has_element?(view, "#presentation-agenda-slide-3")
     end
 
     test "presentation_go_to_slide updates the active node", %{conn: conn} do
       {:ok, view, _html} = setup_live_for_graph(conn, "What is ethics?")
 
       render_click(view, "enter_presentation_setup", %{})
-      render_click(view, "node_clicked", %{"id" => "1"})
       render_click(view, "node_clicked", %{"id" => "2"})
+      render_click(view, "node_clicked", %{"id" => "3"})
       render_click(view, "start_presenting", %{})
-      render_click(view, "presentation_go_to_slide", %{"node-id" => "2"})
+      render_click(view, "presentation_go_to_slide", %{"node-id" => "3"})
 
       state = :sys.get_state(view.pid).socket.assigns
-      assert state.node.id == "2"
+      assert state.node.id == "3"
     end
 
     test "presentation_step advances through the deck", %{conn: conn} do
       {:ok, view, _html} = setup_live_for_graph(conn, "What is ethics?")
 
       render_click(view, "enter_presentation_setup", %{})
-      render_click(view, "node_clicked", %{"id" => "1"})
       render_click(view, "node_clicked", %{"id" => "2"})
+      render_click(view, "node_clicked", %{"id" => "3"})
       render_click(view, "start_presenting", %{})
 
       state = :sys.get_state(view.pid).socket.assigns
-      assert state.node.id == "1"
+      assert state.node.id == "2"
 
       render_click(view, "presentation_step", %{"direction" => "next"})
       state = :sys.get_state(view.pid).socket.assigns
-      assert state.node.id == "2"
+      assert state.node.id == "3"
 
       render_click(view, "presentation_step", %{"direction" => "previous"})
       state = :sys.get_state(view.pid).socket.assigns
-      assert state.node.id == "1"
+      assert state.node.id == "2"
     end
 
     test "restore_presentation sets title and filters invalid node IDs", %{conn: conn} do
@@ -657,23 +734,22 @@ defmodule DialecticWeb.GraphLiveTest do
     end
 
     test "restore_presentation does not overwrite existing slides", %{conn: conn} do
-      {:ok, view, _html} = setup_live(conn)
+      {:ok, view, _html} = setup_live_for_graph(conn, "What is ethics?")
 
-      # Add a slide via setup mode (node_clicked adds the ID without
-      # requiring the node to exist in the graph)
+      # Add a slide via setup mode.
       render_click(view, "enter_presentation_setup", %{})
-      render_click(view, "node_clicked", %{"id" => "1"})
+      render_click(view, "node_clicked", %{"id" => "2"})
 
       # Now try to restore — should be ignored because slides already exist
       render_click(view, "restore_presentation", %{
-        "slide_ids" => ["2"],
+        "slide_ids" => ["3"],
         "title" => "Should be ignored"
       })
 
       state = :sys.get_state(view.pid).socket.assigns
-      assert state.presentation_slide_ids == ["1"]
+      assert state.presentation_slide_ids == ["2"]
       # Title is auto-populated with graph title when entering setup
-      assert state.presentation_title == @graph_id
+      assert state.presentation_title == "What is ethics?"
     end
 
     test "restore_presentation handles malformed params gracefully", %{conn: conn} do
@@ -706,18 +782,16 @@ defmodule DialecticWeb.GraphLiveTest do
 
       assert state.presentation_mode == :presenting
       assert state.presentation_title == "Shared Deck"
-      assert state.presentation_slide_ids == ["1", "3", "2"]
+      assert state.presentation_slide_ids == ["3", "2"]
 
-      assert has_element?(view, "#presentation-agenda-slide-1")
       assert has_element?(view, "#presentation-agenda-slide-3")
       assert has_element?(view, "#presentation-agenda-slide-2")
+      refute has_element?(view, "#presentation-agenda-slide-1")
 
       html = render(view)
-      pos_1 = html |> :binary.match(~s(id="presentation-agenda-slide-1")) |> elem(0)
       pos_3 = html |> :binary.match(~s(id="presentation-agenda-slide-3")) |> elem(0)
       pos_2 = html |> :binary.match(~s(id="presentation-agenda-slide-2")) |> elem(0)
 
-      assert pos_1 < pos_3
       assert pos_3 < pos_2
     end
 
