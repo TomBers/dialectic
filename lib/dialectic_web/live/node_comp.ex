@@ -27,6 +27,7 @@ defmodule DialecticWeb.NodeComp do
        form: Map.get(assigns, :form, nil),
        cut_off: Map.get(assigns, :cut_off, 500),
        ask_question: Map.get(assigns, :ask_question, true),
+       structural_root?: Map.get(node, :structural_root?, false),
        graph_id: Map.get(assigns, :graph_id, ""),
        graph_struct: Map.get(assigns, :graph_struct, nil),
        graph_owner_id: Map.get(assigns, :graph_owner_id, nil),
@@ -53,7 +54,7 @@ defmodule DialecticWeb.NodeComp do
         data-streaming={to_string(@streaming)}
         style="height: 100%; padding-bottom: env(safe-area-inset-bottom);"
       >
-        <%= if @node.id == "start" do %>
+        <%= if @node.id == "start" or @structural_root? do %>
           <.live_component module={DialecticWeb.StartTutorialComp} id="start-tutorial" />
         <% else %>
           <%!-- Thread View (Ancestor Chain) — hidden for now, revisit when full breadcrumb is implemented --%>

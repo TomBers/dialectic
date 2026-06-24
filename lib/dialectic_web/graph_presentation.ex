@@ -3,14 +3,14 @@ defmodule DialecticWeb.GraphPresentation do
   Shared helpers for graph presentation mode.
   """
 
-  alias Dialectic.Graph.GraphActions
+  alias Dialectic.Graph.{GraphActions, StructuralRoot}
 
   def slides(graph_id, ids) when is_list(ids) do
     ids
     |> Enum.reduce([], fn id, acc ->
       case GraphActions.find_node(graph_id, id) do
         nil -> acc
-        node -> [node | acc]
+        node -> if StructuralRoot.structural?(node, graph_id), do: acc, else: [node | acc]
       end
     end)
     |> Enum.reverse()
