@@ -30,6 +30,36 @@ defmodule DialecticWeb.ShareModalCompTest do
           DialecticWeb.GraphPathHelper.graph_editor_path(graph)
 
       assert html =~ ~s(value="#{expected_url}")
+      assert html =~ "Download image"
+      assert html =~ "data-download-grid-png"
+      assert html =~ ~s(data-download-filename="share-modal-graph-grid.png")
+    end
+
+    test "reader share downloads a generated grid title image" do
+      graph = GraphFixtures.insert_graph(%{title: "Reader Share Modal Graph", is_public: true})
+
+      html =
+        render_component(ShareModalComp,
+          id: "share-modal",
+          show: true,
+          graph_struct: graph,
+          current_user: nil,
+          selected_node: %{id: "1"},
+          presentation_mode: :off,
+          presentation_slide_ids: [],
+          presentation_title: "",
+          share_node: true,
+          share_target: :reader,
+          show_preview: false
+        )
+
+      assert html =~ "Download image"
+      assert html =~ "data-download-svg-png"
+      assert html =~ "/g/#{graph.slug}/share-card.svg"
+      assert html =~ ~s(src="http://localhost:4002/g/#{graph.slug}/share-card.svg)
+      assert html =~ ~s(alt="Grid share image preview")
+      assert html =~ ~s(data-download-filename="reader-share-modal-graph-grid.png")
+      refute html =~ "data-download-grid-png"
     end
 
     test "share modal keeps graph mode for node and presentation links" do
@@ -117,8 +147,9 @@ defmodule DialecticWeb.ShareModalCompTest do
       assert html =~ "Quote Share Link"
       assert html =~ ~s(value="#{escaped_expected_url}")
       assert html =~ escaped_expected_image
-      assert html =~ "Download image"
-      assert html =~ ~s(download="quote-share-modal-graph-quote-77.svg")
+      assert html =~ "Download PNG"
+      assert html =~ ~s(data-download-svg-png="#{escaped_expected_image})
+      assert html =~ ~s(data-download-filename="quote-share-modal-graph-quote-77.png")
       assert html =~ "Quote link copied to clipboard!"
       refute html =~ "Link to current node"
     end
@@ -147,9 +178,9 @@ defmodule DialecticWeb.ShareModalCompTest do
           show_preview: false
         )
 
-      assert [_, filename] = Regex.run(~r/download="([^"]+)"/, html)
-      assert String.ends_with?(filename, "-quote-123.svg")
-      assert byte_size(filename) <= 96 + byte_size("-quote-123.svg")
+      assert [_, filename] = Regex.run(~r/data-download-filename="([^"]+)"/, html)
+      assert String.ends_with?(filename, "-quote-123.png")
+      assert byte_size(filename) <= 96 + byte_size("-quote-123.png")
     end
   end
 end

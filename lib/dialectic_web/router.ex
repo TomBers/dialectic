@@ -57,6 +57,7 @@ defmodule DialecticWeb.Router do
   scope "/", DialecticWeb do
     pipe_through :share_image
 
+    get "/g/:graph_name/share-card.svg", HighlightShareImageController, :graph
     get "/g/:graph_name/highlights/:id/share-card.svg", HighlightShareImageController, :show
   end
 

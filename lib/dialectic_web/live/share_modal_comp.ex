@@ -329,14 +329,34 @@ defmodule DialecticWeb.ShareModalComp do
                         <.icon name="hero-share" class="w-5 h-5" /> Share via your device...
                       </button>
 
-                      <%= if quote_share?(@selected_highlight) do %>
-                        <a
-                          href={download_image_url(assigns)}
-                          download={download_filename(assigns)}
-                          class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-300 shadow-sm text-sm font-medium rounded-lg text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-                        >
-                          <.icon name="hero-arrow-down-tray" class="w-5 h-5" /> Download image
-                        </a>
+                      <%= cond do %>
+                        <% quote_share?(@selected_highlight) -> %>
+                          <button
+                            type="button"
+                            data-download-svg-png={download_image_url(assigns)}
+                            data-download-filename={download_filename(assigns)}
+                            class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-300 shadow-sm text-sm font-medium rounded-lg text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors disabled:cursor-wait disabled:opacity-60"
+                          >
+                            <.icon name="hero-arrow-down-tray" class="w-5 h-5" /> Download PNG
+                          </button>
+                        <% reader_share?(assigns) -> %>
+                          <button
+                            type="button"
+                            data-download-svg-png={download_image_url(assigns)}
+                            data-download-filename={download_filename(assigns)}
+                            class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-300 shadow-sm text-sm font-medium rounded-lg text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors disabled:cursor-wait disabled:opacity-60"
+                          >
+                            <.icon name="hero-arrow-down-tray" class="w-5 h-5" /> Download image
+                          </button>
+                        <% true -> %>
+                          <button
+                            type="button"
+                            data-download-grid-png
+                            data-download-filename={download_filename(assigns)}
+                            class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-300 shadow-sm text-sm font-medium rounded-lg text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                          >
+                            <.icon name="hero-arrow-down-tray" class="w-5 h-5" /> Download image
+                          </button>
                       <% end %>
                     </div>
                   </div>
@@ -577,8 +597,15 @@ defmodule DialecticWeb.ShareModalComp do
   defp quote_share?(%{id: _id}), do: true
   defp quote_share?(_highlight), do: false
 
+  defp reader_share?(%{share_target: :reader}), do: true
+  defp reader_share?(_assigns), do: false
+
   defp preview_image(%{selected_highlight: %{id: _id} = highlight, graph_struct: graph}) do
     DialecticWeb.Endpoint.url() <> preview_image_path(graph, highlight)
+  end
+
+  defp preview_image(%{share_target: :reader, graph_struct: graph}) do
+    HighlightShare.graph_image_url(graph)
   end
 
   defp preview_image(%{graph_struct: graph_struct}) do
@@ -588,10 +615,15 @@ defmodule DialecticWeb.ShareModalComp do
   defp preview_image_path(graph, highlight), do: HighlightShare.image_path(graph, highlight)
 
   defp preview_image_alt(%{selected_highlight: %{id: _id}}), do: "Quote share preview"
+  defp preview_image_alt(%{share_target: :reader}), do: "Grid share image preview"
   defp preview_image_alt(_assigns), do: "Grid Preview"
 
   defp download_image_url(%{selected_highlight: %{id: _id} = highlight, graph_struct: graph}) do
     DialecticWeb.Endpoint.url() <> preview_image_path(graph, highlight)
+  end
+
+  defp download_image_url(%{graph_struct: graph}) do
+    HighlightShare.graph_image_url(graph)
   end
 
   defp download_filename(%{graph_struct: graph_struct, selected_highlight: %{id: highlight_id}}) do
@@ -600,7 +632,16 @@ defmodule DialecticWeb.ShareModalComp do
       |> slugify_filename()
       |> truncate_filename_slug()
 
-    "#{title_slug}-quote-#{highlight_id}.svg"
+    "#{title_slug}-quote-#{highlight_id}.png"
+  end
+
+  defp download_filename(%{graph_struct: graph_struct}) do
+    title_slug =
+      graph_struct.title
+      |> slugify_filename()
+      |> truncate_filename_slug()
+
+    "#{title_slug}-grid.png"
   end
 
   defp slugify_filename(title) do

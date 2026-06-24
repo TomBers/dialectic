@@ -181,7 +181,7 @@ defmodule DialecticWeb.OutlineGraphLive do
     node_id = params["node-id"] || params["node_id"]
 
     socket =
-      if is_binary(node_id) and MapSet.member?(socket.assigns.displayed_node_ids, node_id) do
+      if is_binary(node_id) and MapSet.member?(socket.assigns.highlight_node_ids, node_id) do
         push_event(socket, "scroll_to_highlight", %{id: highlight_id})
       else
         push_patch(socket, to: highlight_path(socket, node_id, highlight_id))
@@ -354,6 +354,7 @@ defmodule DialecticWeb.OutlineGraphLive do
       node: nil,
       selected_path: [],
       displayed_node_ids: MapSet.new(),
+      highlight_node_ids: MapSet.new(),
       reading_chain: [],
       reading_terminal: nil,
       next_choices: [],
@@ -446,6 +447,7 @@ defmodule DialecticWeb.OutlineGraphLive do
       selected_path: [],
       selected_path_ids: MapSet.new(),
       displayed_node_ids: MapSet.new(),
+      highlight_node_ids: MapSet.new(),
       reading_chain: [],
       reading_terminal: nil,
       next_choices: [],
@@ -477,6 +479,12 @@ defmodule DialecticWeb.OutlineGraphLive do
       |> Kernel.++(Enum.map(reading_chain, & &1.id))
       |> MapSet.new()
 
+    highlight_node_ids =
+      reading_chain
+      |> Enum.filter(&highlight_container_mounted?/1)
+      |> Enum.map(& &1.id)
+      |> MapSet.new()
+
     selected_path_ids = MapSet.new(Enum.map(selected_path, & &1.id))
 
     assign(socket,
@@ -485,6 +493,7 @@ defmodule DialecticWeb.OutlineGraphLive do
       selected_path: selected_path,
       selected_path_ids: selected_path_ids,
       displayed_node_ids: displayed_node_ids,
+      highlight_node_ids: highlight_node_ids,
       reading_chain: reading_chain,
       reading_terminal: reading_terminal,
       next_choices: next_choices,
@@ -618,6 +627,10 @@ defmodule DialecticWeb.OutlineGraphLive do
     graph_id
     |> do_build_reading_chain(selected_node, MapSet.new())
     |> Enum.map(&enrich_node/1)
+  end
+
+  defp highlight_container_mounted?(node) do
+    String.trim(Map.get(node, :body_content, "") || "") != ""
   end
 
   defp do_build_reading_chain(_graph_id, nil, _visited), do: []

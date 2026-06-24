@@ -831,6 +831,30 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert_patch(view, ~p"/g/#{graph.slug}?node=3&highlight=#{highlight.id}")
   end
 
+  test "clicking a highlight on an outline path node patches when its text is not mounted", %{
+    conn: conn
+  } do
+    graph = create_graph(highlight_graph_data())
+    user = user_fixture()
+
+    {:ok, highlight} =
+      Highlights.create_highlight(%{
+        mudg_id: graph.title,
+        node_id: "2",
+        text_source_type: "node",
+        selection_start: 0,
+        selection_end: 5,
+        selected_text_snapshot: "Could",
+        created_by_user_id: user.id
+      })
+
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=5")
+
+    render_click(view, "highlight_clicked", %{"id" => "#{highlight.id}", "node-id" => "2"})
+
+    assert_patch(view, ~p"/g/#{graph.slug}?node=2&highlight=#{highlight.id}")
+  end
+
   test "clicking a highlight already on screen scrolls to it without patching", %{conn: conn} do
     graph = create_graph(highlight_graph_data())
     user = user_fixture()

@@ -680,7 +680,7 @@ const graphHook = {
     }
     // Shared PNG export helpers and button binding
     if (!this._exportGraphPng) {
-      this._exportGraphPng = () => {
+      this._exportGraphPng = (filename = "") => {
         try {
           const dataUrl = this.cy.png({
             full: true,
@@ -691,7 +691,7 @@ const graphHook = {
           const ts = new Date().toISOString().replace(/[:.]/g, "-");
           const a = document.createElement("a");
           a.href = dataUrl;
-          a.download = `graph-full-${ts}.png`;
+          a.download = filename || `graph-full-${ts}.png`;
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
@@ -699,6 +699,13 @@ const graphHook = {
           // no-op
         }
       };
+    }
+
+    if (!this._downloadGraphPngHandler) {
+      this._downloadGraphPngHandler = (event) => {
+        this._exportGraphPng(event?.detail?.filename || "");
+      };
+      window.addEventListener("download-graph-png", this._downloadGraphPngHandler);
     }
 
     if (!this._exportPngHandler) {
@@ -2387,6 +2394,10 @@ const graphHook = {
         el.removeEventListener("click", handler);
       });
       this._btnPngHandlers = null;
+    }
+    if (this._downloadGraphPngHandler) {
+      window.removeEventListener("download-graph-png", this._downloadGraphPngHandler);
+      this._downloadGraphPngHandler = null;
     }
     if (this._exploreBtnEl && this._exploreClickHandler) {
       this._exploreBtnEl.removeEventListener(
