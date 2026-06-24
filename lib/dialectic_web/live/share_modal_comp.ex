@@ -330,13 +330,23 @@ defmodule DialecticWeb.ShareModalComp do
                       </button>
 
                       <%= if quote_share?(@selected_highlight) do %>
-                        <a
-                          href={download_image_url(assigns)}
-                          download={download_filename(assigns)}
+                        <button
+                          type="button"
+                          data-download-svg-png={download_image_url(assigns)}
+                          data-download-filename={download_filename(assigns)}
+                          class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-300 shadow-sm text-sm font-medium rounded-lg text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors disabled:cursor-wait disabled:opacity-60"
+                        >
+                          <.icon name="hero-arrow-down-tray" class="w-5 h-5" /> Download PNG
+                        </button>
+                      <% else %>
+                        <button
+                          type="button"
+                          data-download-grid-png
+                          data-download-filename={download_filename(assigns)}
                           class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-300 shadow-sm text-sm font-medium rounded-lg text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
                         >
                           <.icon name="hero-arrow-down-tray" class="w-5 h-5" /> Download image
-                        </a>
+                        </button>
                       <% end %>
                     </div>
                   </div>
@@ -600,7 +610,16 @@ defmodule DialecticWeb.ShareModalComp do
       |> slugify_filename()
       |> truncate_filename_slug()
 
-    "#{title_slug}-quote-#{highlight_id}.svg"
+    "#{title_slug}-quote-#{highlight_id}.png"
+  end
+
+  defp download_filename(%{graph_struct: graph_struct}) do
+    title_slug =
+      graph_struct.title
+      |> slugify_filename()
+      |> truncate_filename_slug()
+
+    "#{title_slug}-grid.png"
   end
 
   defp slugify_filename(title) do
