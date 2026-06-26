@@ -38,11 +38,17 @@ defmodule DialecticWeb.AskFormComp do
       |> assign_new(:show_hint, fn -> true end)
       |> assign_new(:prompt_mode, fn -> "structured" end)
       |> assign_new(:node, fn -> nil end)
+      |> assign_new(:disabled, fn -> false end)
       |> then(fn s ->
-        if Map.has_key?(assigns, :placeholder) and not is_nil(assigns[:placeholder]) do
-          assign(s, :placeholder, assigns[:placeholder])
-        else
-          assign(s, :placeholder, "Write a comment or ask AI to continue...")
+        cond do
+          Map.has_key?(assigns, :placeholder) and not is_nil(assigns[:placeholder]) ->
+            assign(s, :placeholder, assigns[:placeholder])
+
+          s.assigns.disabled ->
+            assign(s, :placeholder, "Choose an existing response to continue the grid...")
+
+          true ->
+            assign(s, :placeholder, "Write a comment or ask AI to continue...")
         end
       end)
 
@@ -58,6 +64,7 @@ defmodule DialecticWeb.AskFormComp do
         phx-submit={@submit_event || "reply-and-answer"}
         id={@id}
         class="w-full min-w-0"
+        aria-disabled={@disabled}
       >
         <%!-- Compact Replying-to indicator --%>
         <%= if @node && @node.id do %>
@@ -87,7 +94,15 @@ defmodule DialecticWeb.AskFormComp do
               rows="1"
               placeholder={@placeholder}
               phx-hook="AutoExpandTextarea"
-              class="box-border w-full h-10 min-h-[2.5rem] rounded-3xl border border-gray-300 bg-white py-2.5 pl-4 pr-[11.25rem] text-sm focus:border-indigo-500 focus:outline-none focus:ring-0 resize-none"
+              disabled={@disabled}
+              class={[
+                "box-border w-full h-10 min-h-[2.5rem] rounded-3xl border py-2.5 pl-4 pr-[11.25rem] text-sm focus:outline-none focus:ring-0 resize-none",
+                if(@disabled,
+                  do:
+                    "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-500 placeholder:text-slate-400",
+                  else: "border-gray-300 bg-white focus:border-indigo-500"
+                )
+              ]}
             >{Phoenix.HTML.Form.normalize_value("text", @form[:content].value)}</textarea>
 
             <%!-- Two submit buttons inside the input --%>
@@ -97,8 +112,21 @@ defmodule DialecticWeb.AskFormComp do
                 type="submit"
                 name="submit_action"
                 value="post"
-                class="inline-flex h-7 items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-3 text-xs font-semibold leading-none text-emerald-700 transition-all hover:border-emerald-300 hover:bg-emerald-100"
-                title="Add your comment without an AI reply"
+                disabled={@disabled}
+                class={[
+                  "inline-flex h-7 items-center gap-1 rounded-full border px-3 text-xs font-semibold leading-none transition-all disabled:cursor-not-allowed disabled:opacity-50",
+                  if(@disabled,
+                    do: "border-slate-200 bg-slate-100 text-slate-400",
+                    else:
+                      "border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100"
+                  )
+                ]}
+                title={
+                  if(@disabled,
+                    do: "Choose an existing response to continue",
+                    else: "Add your comment without an AI reply"
+                  )
+                }
               >
                 <.icon name="hero-chat-bubble-left-ellipsis" class="h-3.5 w-3.5" />
                 <span>Comment</span>
@@ -106,8 +134,20 @@ defmodule DialecticWeb.AskFormComp do
               <%!-- Ask button — default submit (no name, so no submit_action param) --%>
               <button
                 type="submit"
-                class="inline-flex h-7 items-center gap-1 rounded-full bg-indigo-600 px-3 text-xs font-semibold leading-none text-white shadow-sm transition-all hover:bg-indigo-700 hover:shadow-md"
-                title="Ask and get an AI response"
+                disabled={@disabled}
+                class={[
+                  "inline-flex h-7 items-center gap-1 rounded-full px-3 text-xs font-semibold leading-none shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-50",
+                  if(@disabled,
+                    do: "bg-slate-300 text-white shadow-none",
+                    else: "bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-md"
+                  )
+                ]}
+                title={
+                  if(@disabled,
+                    do: "Choose an existing response to continue",
+                    else: "Ask and get an AI response"
+                  )
+                }
               >
                 <.icon name="hero-sparkles" class="h-3.5 w-3.5" />
                 <span>Ask AI</span>

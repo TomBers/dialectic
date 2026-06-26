@@ -5,9 +5,6 @@ defmodule DialecticWeb.PageHtml.GraphComp do
     assigns = assign(assigns, :variant, assigns[:variant] || :glass)
     assigns = assign(assigns, :compact, assigns[:compact] || false)
 
-    assigns =
-      assign(assigns, :show_exploration_stats, Map.get(assigns, :show_exploration_stats, true))
-
     ~H"""
     <div class={[
       "relative block group h-full rounded-lg ring-1 transition-colors flex flex-col",
@@ -79,20 +76,6 @@ defmodule DialecticWeb.PageHtml.GraphComp do
                 badge_class(@variant, :deep_dive)
               ]}>
                 <.icon name="hero-book-open" class="w-3 h-3 mr-1" /> Deep Dive
-              </span>
-            <% end %>
-
-            <%= if @show_exploration_stats do %>
-              <span
-                phx-hook="ExplorationStats"
-                id={"stats-" <> @id}
-                data-graph-id={@title}
-                data-total={@node_count}
-                class={[
-                  "inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold ring-1 ring-inset",
-                  stats_class(@variant)
-                ]}
-              >
               </span>
             <% end %>
           <% end %>
@@ -221,18 +204,6 @@ defmodule DialecticWeb.PageHtml.GraphComp do
   defp author_class(:light), do: "bg-gray-100 text-gray-700 ring-gray-200"
   defp author_class(:home), do: "bg-cyan-400/20 text-cyan-100 ring-cyan-200/40"
   defp author_class(_glass), do: "bg-white/15 text-white ring-white/20"
-
-  defp stats_class(:light) do
-    "bg-gray-100 text-gray-600 ring-gray-500/10"
-  end
-
-  defp stats_class(:home) do
-    "bg-black/25 text-white/85 ring-white/20"
-  end
-
-  defp stats_class(_glass) do
-    "bg-white/10 text-white/80 ring-white/15"
-  end
 
   defp badge_class(:light, :seedling) do
     "bg-gradient-to-r from-emerald-50 to-teal-50 text-emerald-700 ring-emerald-600/20"

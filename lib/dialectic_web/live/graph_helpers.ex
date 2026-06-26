@@ -26,6 +26,28 @@ defmodule DialecticWeb.GraphHelpers do
     %{id: "1", content: "", children: [], parents: []}
   end
 
+  def origin_branching_disabled?(%{} = node) do
+    origin_node?(node) && live_children(node) != []
+  end
+
+  def origin_branching_disabled?(_node), do: false
+
+  defp origin_node?(%{} = node) do
+    to_string(Map.get(node, :class, "")) == "origin" || to_string(Map.get(node, :id, "")) == "1"
+  end
+
+  defp live_children(%{} = node) do
+    node
+    |> Map.get(:children, [])
+    |> case do
+      children when is_list(children) ->
+        Enum.reject(children, fn child -> Map.get(child, :deleted, false) end)
+
+      _ ->
+        []
+    end
+  end
+
   # ── Graph action params ───────────────────────────────────────────────
 
   @doc """

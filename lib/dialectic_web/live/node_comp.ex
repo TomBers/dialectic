@@ -1,6 +1,9 @@
 defmodule DialecticWeb.NodeComp do
   use DialecticWeb, :live_component
 
+  alias DialecticWeb.GraphHelpers
+  alias DialecticWeb.GridCardComp
+
   @impl true
   def update(assigns, socket) do
     base_node =
@@ -34,7 +37,6 @@ defmodule DialecticWeb.NodeComp do
        can_edit: Map.get(assigns, :can_edit, true),
        menu_visible: Map.get(assigns, :menu_visible, true),
        streaming: Map.get(assigns, :streaming, false),
-       exploration_stats: Map.get(assigns, :exploration_stats, nil),
        presentation_mode: Map.get(assigns, :presentation_mode, :off),
        token: Map.get(assigns, :token, nil)
      )}
@@ -64,6 +66,30 @@ defmodule DialecticWeb.NodeComp do
 
   defp show_regenerate_cta?(_node), do: false
 
+  defp node_title_size_class(%{content: content}) when is_binary(content) do
+    case title_text_length(content) do
+      length when length >= 96 -> "text-[15px] sm:text-base md:text-lg"
+      length when length >= 64 -> "text-base sm:text-lg md:text-xl"
+      _length -> "text-lg sm:text-xl md:text-[1.65rem]"
+    end
+  end
+
+  defp node_title_size_class(_node), do: "text-lg sm:text-xl md:text-[1.65rem]"
+
+  defp title_text_length(content) do
+    content
+    |> String.replace(~r/\r\n|\r/, "\n")
+    |> String.trim_leading()
+    |> String.split("\n", parts: 2)
+    |> List.first()
+    |> to_string()
+    |> String.replace(~r/^\s*\#{1,6}\s*/, "")
+    |> String.replace(~r/^\s*title\s*:?\s*/i, "")
+    |> String.replace("**", "")
+    |> String.trim()
+    |> String.length()
+  end
+
   @impl true
   def render(assigns) do
     ~H"""
@@ -71,7 +97,7 @@ defmodule DialecticWeb.NodeComp do
       <div
         id={"node-menu-" <> @node_id}
         class="relative flex h-full min-h-0 flex-col"
-        phx-hook="TextSelectionHook"
+        phx-hook={unless GraphHelpers.origin_branching_disabled?(@node), do: "TextSelectionHook"}
         data-node-id={@node.id}
         data-mudg-id={@graph_id}
         data-streaming={to_string(@streaming)}
@@ -100,7 +126,16 @@ defmodule DialecticWeb.NodeComp do
                     data-role="node-content"
                   >
                     <%!-- Client-side Markdown rendering via Markdown hook --%>
-                    <h3 class="mt-0 text-lg sm:text-xl md:text-[1.65rem] mb-3 pb-3 border-b border-gray-200/90 flex items-start justify-between gap-4 leading-tight tracking-tight text-gray-900">
+                    <% origin_meta? =
+                      GraphHelpers.origin_branching_disabled?(@node) && is_map(@graph_struct) %>
+                    <h3 class={[
+                      "mt-0 flex items-start justify-between gap-4 leading-tight tracking-tight text-gray-900",
+                      node_title_size_class(@node),
+                      if(origin_meta?,
+                        do: "mb-2 pb-0",
+                        else: "mb-3 border-b border-gray-200/90 pb-3"
+                      )
+                    ]}>
                       <span
                         class="flex-1"
                         phx-hook="Markdown"
@@ -156,30 +191,53 @@ defmodule DialecticWeb.NodeComp do
                             </svg>
                           <% end %>
                         </button>
-                        <%= if @exploration_stats do %>
-                          <span class="flex-none text-xs font-medium text-gray-500 bg-gray-100 rounded-full px-2 py-1 whitespace-nowrap mt-1">
-                            {@exploration_stats["explored"]} / {@exploration_stats["total"]} explored
-                          </span>
-                        <% end %>
                       </span>
                     </h3>
+                    <div
+                      :if={origin_meta?}
+                      id={"origin-intro-subheading-#{@node.id}"}
+                      class="not-prose mb-5 space-y-2.5 border-b border-gray-200/90 pb-4"
+                    >
+                      <p class="text-sm leading-6 text-slate-700">
+                        {graph_preview(@graph_struct)}
+                      </p>
+
+                      <div class="flex flex-wrap gap-1.5">
+                        <%= for tag <- graph_tags(@graph_struct) do %>
+                          <span class={[
+                            "inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset",
+                            GridCardComp.tag_pill_classes(tag)
+                          ]}>
+                            #{tag}
+                          </span>
+                        <% end %>
+                      </div>
+                    </div>
+
                     <div
                       class="selection-content w-full px-1 pb-2 sm:px-2"
                       data-children={length(@node.children)}
                       id={"list-detector-" <> @node.id}
                     >
-                      <div class="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-600">
-                        <span class="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 font-medium text-amber-800 shadow-sm">
-                          <.icon name="hero-cursor-arrow-rays" class="h-3.5 w-3.5" />
-                          <span>Select text to ask a follow-up</span>
-                        </span>
-                        <span class="hidden text-xs text-slate-500 sm:inline">
-                          Select{" "}
-                          <span class="inline-block rounded-[0.2em] bg-amber-200/90 px-1 py-0.5 font-medium leading-none text-slate-900 shadow-[inset_0_-1px_0_rgba(120,53,15,0.18)]">
-                            word(s)
+                      <div
+                        :if={!GraphHelpers.origin_branching_disabled?(@node)}
+                        class="not-prose mb-2.5 rounded-lg border border-amber-200 bg-amber-50/80 px-2.5 py-1.5 shadow-sm ring-1 ring-amber-100"
+                      >
+                        <div class="flex items-center gap-2">
+                          <span class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700 ring-1 ring-amber-200">
+                            <.icon name="hero-cursor-arrow-rays" class="h-3 w-3" />
                           </span>
-                          {" "}in the text, to explore that specific topic.
-                        </span>
+                          <div class="min-w-0">
+                            <p class="text-xs leading-4 text-slate-700">
+                              <span class="font-semibold text-slate-950">
+                                Select text for a focused follow-up.
+                              </span>
+                              <span class="hidden sm:inline">
+                                Highlight any phrase to explore it.
+                              </span>
+                            </p>
+                          </div>
+                        </div>
                       </div>
 
                       <div
@@ -193,15 +251,40 @@ defmodule DialecticWeb.NodeComp do
                     </div>
                   </article>
 
-                  <.live_component
-                    module={DialecticWeb.ActionToolbarComp}
-                    id={"action-toolbar-#{@node.id}"}
-                    node={@node}
-                    user={@user}
-                    current_user={@current_user}
-                    graph_id={@graph_id}
-                    can_edit={@can_edit}
-                  />
+                  <%= if GraphHelpers.origin_branching_disabled?(@node) do %>
+                    <div
+                      id={"origin-intro-#{@node.id}"}
+                      class="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_14px_32px_rgba(15,23,42,0.05)]"
+                      data-external="true"
+                      data-role="origin-intro"
+                    >
+                      <div class="border-b border-slate-200 bg-slate-50/80 px-4 py-3 sm:px-5">
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                          Start here
+                        </p>
+                        <h4 class="mt-1 text-base font-semibold leading-6 tracking-tight text-slate-950">
+                          How to use the grid
+                        </h4>
+                      </div>
+
+                      <div class="px-4 py-2.5 sm:px-5">
+                        <.live_component
+                          module={DialecticWeb.OriginOnboardingComp}
+                          id={"origin-onboarding-#{@node.id}"}
+                        />
+                      </div>
+                    </div>
+                  <% else %>
+                    <.live_component
+                      module={DialecticWeb.ActionToolbarComp}
+                      id={"action-toolbar-#{@node.id}"}
+                      node={@node}
+                      user={@user}
+                      current_user={@current_user}
+                      graph_id={@graph_id}
+                      can_edit={@can_edit}
+                    />
+                  <% end %>
                 </div>
               </div>
             </div>
@@ -297,4 +380,24 @@ defmodule DialecticWeb.NodeComp do
     </div>
     """
   end
+
+  defp graph_tags(%{} = graph) do
+    graph
+    |> Map.get(:tags, [])
+    |> case do
+      tags when is_list(tags) ->
+        tags
+        |> Enum.filter(&(is_binary(&1) and String.trim(&1) != ""))
+        |> Enum.take(4)
+
+      _other ->
+        []
+    end
+  end
+
+  defp graph_tags(_graph), do: []
+
+  defp graph_preview(%{} = graph), do: GridCardComp.preview_sentence(graph)
+
+  defp graph_preview(_graph), do: "A connected grid of ideas."
 end

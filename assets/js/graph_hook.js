@@ -327,9 +327,6 @@ const graphHook = {
     );
     this._scheduleFontAwareRedraw();
 
-    // Initial update
-    this._updateExploredStatus();
-
     this.handleEvent("request_screenshot", () => {
       if (this.cy) {
         const stateSelected = this.cy.$(":selected");
@@ -869,7 +866,6 @@ const graphHook = {
               requestAnimationFrame(() =>
                 ensureVisible(this.cy, container, id),
               );
-              if (this._updateExploredStatus) this._updateExploredStatus();
             });
             return;
           }
@@ -882,8 +878,6 @@ const graphHook = {
 
           // Only pan if the node is outside the visible area (preserve existing layout)
           requestAnimationFrame(() => ensureVisible(this.cy, container, id));
-
-          if (this._updateExploredStatus) this._updateExploredStatus();
         }
       } catch (_e) {
         // no-op, avoid breaking on transient DOM/cy states
@@ -983,7 +977,6 @@ const graphHook = {
             try {
               this.cy.style().update();
             } catch (_e) {}
-            if (this._updateExploredStatus) this._updateExploredStatus();
           });
         }
       } catch (_e) {}
@@ -2009,7 +2002,6 @@ const graphHook = {
     this._lastGraphDirection = localStorage.getItem("graph_direction") || "TB";
 
     // Re-bind all event handlers and update state
-    if (this._updateExploredStatus) this._updateExploredStatus();
     if (this._bindPngButtons) this._bindPngButtons();
 
     // Re-bind presentation badge tracking on the new cy instance
@@ -2057,58 +2049,6 @@ const graphHook = {
         // Update tracked direction AFTER layout completes successfully
         this._lastGraphDirection = newDirection;
       });
-    }
-  },
-
-  _updateExploredStatus() {
-    try {
-      const graphId = this.el.dataset.graphId;
-      if (!graphId) return;
-
-      const storageKey = `dialectic_explored_${graphId}`;
-      let explored = new Set();
-      try {
-        const stored = localStorage.getItem(storageKey);
-        if (stored) {
-          JSON.parse(stored).forEach((id) => explored.add(id));
-        }
-      } catch (e) {}
-
-      // Mark current node as explored
-      const currentNodeId = this.el.dataset.node;
-      if (currentNodeId) {
-        if (!explored.has(currentNodeId)) {
-          explored.add(currentNodeId);
-          localStorage.setItem(storageKey, JSON.stringify([...explored]));
-        }
-      }
-
-      // Apply visual state & update progress
-      if (this.cy) {
-        // Styles simplified: removed 'explored' class application
-
-        // Calculate progress (exclude compound parents)
-        const realNodes = this.cy.nodes().filter((n) => !n.isParent());
-        const total = realNodes.length;
-        const exploredCount = realNodes.filter((n) =>
-          explored.has(n.id()),
-        ).length;
-
-        // Only send progress update if values have changed (debounce)
-        if (
-          !this._lastProgress ||
-          this._lastProgress.explored !== exploredCount ||
-          this._lastProgress.total !== total
-        ) {
-          this.pushEvent("update_exploration_progress", {
-            explored: exploredCount,
-            total: total,
-          });
-          this._lastProgress = { explored: exploredCount, total: total };
-        }
-      }
-    } catch (e) {
-      // no-op
     }
   },
 
@@ -2192,8 +2132,6 @@ const graphHook = {
       this._setDepthToggleOverlayVisible(false);
       this._setPresentationHighlights(presentationIds);
     }
-
-    if (this._updateExploredStatus) this._updateExploredStatus();
 
     // Defer endBatch until after layout starts or after the no-layout path below
 

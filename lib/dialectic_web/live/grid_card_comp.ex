@@ -315,6 +315,10 @@ defmodule DialecticWeb.GridCardComp do
     """
   end
 
+  def preview_sentence(graph), do: graph_preview_sentence(graph, graph_node_count(graph))
+
+  def tag_pill_classes(tag), do: tag_pill_class(tag)
+
   defp card_class(variant, index, tag) do
     [
       card_base_class(tag),
