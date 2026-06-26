@@ -90,6 +90,23 @@ defmodule DialecticWeb.NodeComp do
     |> String.length()
   end
 
+  defp existing_follow_up_questions_json(%{children: children}) when is_list(children) do
+    children
+    |> Enum.filter(fn child ->
+      Map.get(child, :class) == "question" and not Map.get(child, :deleted, false)
+    end)
+    |> Enum.map(fn child ->
+      child
+      |> Map.get(:content, "")
+      |> to_string()
+      |> String.trim()
+    end)
+    |> Enum.reject(&(&1 == ""))
+    |> Jason.encode!()
+  end
+
+  defp existing_follow_up_questions_json(_node), do: "[]"
+
   @impl true
   def render(assigns) do
     ~H"""
@@ -246,6 +263,7 @@ defmodule DialecticWeb.NodeComp do
                         id={"markdown-body-#{@node.id}"}
                         data-md={@node.content || ""}
                         data-body-only="true"
+                        data-existing-follow-up-questions={existing_follow_up_questions_json(@node)}
                       >
                       </div>
                     </div>

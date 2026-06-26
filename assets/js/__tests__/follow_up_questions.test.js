@@ -123,4 +123,30 @@ describe("enhanceFollowUpQuestions", () => {
         .followUpQuestion,
     ).toBe("What does vacuum decay imply?");
   });
+
+  it("disables a button when that question already exists as a child", () => {
+    const askQuestion = vi.fn();
+    const root = rootWith(`
+      <h2>Follow-up questions</h2>
+      <ol>
+        <li>Question one?</li>
+        <li>Question two?</li>
+        <li>Question three?</li>
+      </ol>
+    `);
+    root.setAttribute(
+      "data-existing-follow-up-questions",
+      JSON.stringify([" question TWO? "]),
+    );
+
+    enhanceFollowUpQuestions(root, askQuestion);
+
+    const button = root.querySelector("#markdown-body-test-follow-up-2");
+    expect(button.disabled).toBe(true);
+    expect(button.dataset.followUpQuestionAsked).toBe("true");
+    expect(button.textContent).toContain("Asked");
+
+    button.click();
+    expect(askQuestion).not.toHaveBeenCalled();
+  });
 });

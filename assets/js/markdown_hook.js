@@ -168,6 +168,13 @@ function normalizedHeadingText(text) {
     .replace(/\s+/g, " ");
 }
 
+function normalizedQuestionText(text) {
+  return (text || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
 const FOLLOW_UP_HEADINGS = new Set([
   "follow up questions",
   "followup questions",
@@ -224,23 +231,58 @@ function findFollowUpListAfterHeading(heading) {
   return null;
 }
 
-function buildFollowUpPanel(root, questions, askQuestion) {
+function readExistingFollowUpQuestions(root) {
+  const raw = root.getAttribute("data-existing-follow-up-questions") || "[]";
+
+  try {
+    const questions = JSON.parse(raw);
+    if (!Array.isArray(questions)) return new Set();
+
+    return new Set(
+      questions
+        .map((question) => normalizedQuestionText(question))
+        .filter((question) => question !== ""),
+    );
+  } catch (_error) {
+    return new Set();
+  }
+}
+
+function buildFollowUpPanel(root, questions, askQuestion, existingQuestions) {
   const panel = document.createElement("div");
   panel.className = "not-prose mt-3 grid gap-2";
   panel.setAttribute("data-follow-up-question-panel", "true");
 
   questions.forEach((question, index) => {
+    const alreadyAsked = existingQuestions.has(normalizedQuestionText(question));
     const button = document.createElement("button");
     button.type = "button";
     button.id = `${root.id || "markdown"}-follow-up-${index + 1}`;
     button.className =
       "group flex w-full items-start gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-left text-sm font-medium leading-5 text-slate-800 shadow-sm transition hover:border-sky-300 hover:bg-sky-50 hover:text-slate-950 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 disabled:cursor-wait disabled:opacity-70";
+    if (alreadyAsked) {
+      button.className =
+        "group flex w-full items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-left text-sm font-medium leading-5 text-slate-500 shadow-sm disabled:cursor-not-allowed disabled:opacity-80";
+    }
     button.setAttribute("data-follow-up-question", question);
-    button.setAttribute("aria-label", `Ask follow-up question: ${question}`);
+    button.setAttribute(
+      "aria-label",
+      alreadyAsked
+        ? `Already asked follow-up question: ${question}`
+        : `Ask follow-up question: ${question}`,
+    );
+    if (alreadyAsked) {
+      button.disabled = true;
+      button.setAttribute("data-follow-up-question-asked", "true");
+    }
 
     const number = document.createElement("span");
     number.className =
       "mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-sky-100 text-[11px] font-semibold text-sky-700 group-hover:bg-sky-200";
+    if (alreadyAsked) {
+      number.className =
+        "mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-200 text-[11px] font-semibold text-slate-500";
+    }
     number.textContent = String(index + 1);
 
     const text = document.createElement("span");
@@ -249,8 +291,17 @@ function buildFollowUpPanel(root, questions, askQuestion) {
 
     button.append(number, text);
 
+    if (alreadyAsked) {
+      const status = document.createElement("span");
+      status.className =
+        "ml-auto shrink-0 rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-semibold text-slate-600";
+      status.textContent = "Asked";
+      button.appendChild(status);
+    }
+
     button.addEventListener("click", () => {
       if (typeof askQuestion !== "function") return;
+      if (button.disabled) return;
 
       button.disabled = true;
       askQuestion(question);
@@ -264,6 +315,7 @@ function buildFollowUpPanel(root, questions, askQuestion) {
 
 export function enhanceFollowUpQuestions(root, askQuestion) {
   const headings = root.querySelectorAll("h2, h3");
+  const existingQuestions = readExistingFollowUpQuestions(root);
 
   headings.forEach((heading) => {
     if (!isFollowUpHeading(heading)) return;
@@ -275,7 +327,12 @@ export function enhanceFollowUpQuestions(root, askQuestion) {
     const questions = followUpQuestionsFromList(list);
     if (questions.length !== 3) return;
 
-    const panel = buildFollowUpPanel(root, questions, askQuestion);
+    const panel = buildFollowUpPanel(
+      root,
+      questions,
+      askQuestion,
+      existingQuestions,
+    );
     list.dataset.followUpQuestionsEnhanced = "true";
     list.replaceWith(panel);
   });
@@ -356,7 +413,9 @@ function renderMdInto(el, askQuestion) {
   }
 
   // Use a per-element cache to avoid unnecessary DOM churn
-  const currentHash = hashString(md);
+  const existingFollowUpQuestions =
+    el.getAttribute("data-existing-follow-up-questions") || "[]";
+  const currentHash = hashString(md + "|FOLLOW_UPS|" + existingFollowUpQuestions);
   if (el.__markdownHash === currentHash && el.innerHTML.trim() !== "") {
     return; // No change since last render
   }
