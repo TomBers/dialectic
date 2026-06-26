@@ -286,26 +286,30 @@ defmodule Dialectic.Workers.LLMWorker do
   end
 
   defp has_follow_up_questions?(text) when is_binary(text) do
-    case Regex.run(~r/(?:^|\n)##\s+Follow-up questions\s*\n(?<body>[\s\S]*)/i, text,
-           capture: ["body"]
-         ) do
-      [body] ->
-        question_count =
+    case split_at_follow_up_section(text) do
+      {_before, body} ->
+        lines =
           body
           |> String.split("\n")
-          |> Enum.count(fn line -> Regex.match?(~r/^\s*\d+\.\s+.+\?\s*$/, line) end)
+          |> Enum.map(&String.trim/1)
+          |> Enum.reject(&(&1 == ""))
 
-        question_count >= 3
+        length(lines) == 3 and Enum.all?(lines, &numbered_question_line?/1)
 
-      _ ->
+      :not_found ->
         false
     end
   end
 
   defp has_follow_up_questions?(_text), do: false
 
+  defp numbered_question_line?(line) do
+    Regex.match?(~r/^\d+[\.)]\s+.+\?$/, line)
+  end
+
   defp append_fallback_follow_ups(text, instruction) do
     topic = extract_initial_topic(instruction)
+    text = strip_follow_up_section(text)
 
     questions = [
       "What historical context most changes how we should understand #{topic}?",
@@ -321,6 +325,20 @@ defmodule Dialectic.Workers.LLMWorker do
       "3. #{Enum.at(questions, 2)}"
     ]
     |> Enum.join("\n\n")
+  end
+
+  defp strip_follow_up_section(text) do
+    case split_at_follow_up_section(text) do
+      {before, _body} -> String.trim_trailing(before)
+      :not_found -> String.trim_trailing(text)
+    end
+  end
+
+  defp split_at_follow_up_section(text) do
+    case Regex.split(~r/^##\s+Follow-up questions\s*$/im, text, parts: 2) do
+      [before, body] -> {before, body}
+      [_text] -> :not_found
+    end
   end
 
   defp extract_initial_topic(instruction) do

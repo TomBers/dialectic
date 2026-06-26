@@ -171,4 +171,23 @@ describe("enhanceFollowUpQuestions", () => {
     button.click();
     expect(askQuestion).not.toHaveBeenCalled();
   });
+
+  it("can leave follow-up questions as regular markdown in reader mode", () => {
+    const root = rootWith(`
+      <p>Main answer remains.</p>
+      <h2>Follow-up questions</h2>
+      <ol>
+        <li>Question one?</li>
+        <li>Question two?</li>
+        <li>Question three?</li>
+      </ol>
+    `);
+
+    expect(
+      root.querySelectorAll("button[data-follow-up-question]"),
+    ).toHaveLength(0);
+    expect(root.textContent).toContain("Follow-up questions");
+    expect(root.textContent).toContain("Question one?");
+    expect(root.querySelector("ol")).not.toBeNull();
+  });
 });

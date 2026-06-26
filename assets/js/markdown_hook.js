@@ -419,8 +419,14 @@ function renderMdInto(el, askQuestion) {
   // Use a per-element cache to avoid unnecessary DOM churn
   const existingFollowUpQuestions =
     el.getAttribute("data-existing-follow-up-questions") || "[]";
+  const enhanceFollowUpQuestionsEnabled =
+    el.getAttribute("data-enhance-follow-up-questions") !== "false";
   const currentHash = hashString(
-    md + "|FOLLOW_UPS|" + existingFollowUpQuestions,
+    md +
+      "|FOLLOW_UPS|" +
+      existingFollowUpQuestions +
+      "|ENHANCE_FOLLOW_UPS|" +
+      enhanceFollowUpQuestionsEnabled,
   );
   if (el.__markdownHash === currentHash && el.innerHTML.trim() !== "") {
     return; // No change since last render
@@ -437,7 +443,10 @@ function renderMdInto(el, askQuestion) {
 
   // Enhance anchors for safety/UX
   enhanceLinks(el);
-  enhanceFollowUpQuestions(el, askQuestion);
+
+  if (enhanceFollowUpQuestionsEnabled) {
+    enhanceFollowUpQuestions(el, askQuestion);
+  }
 
   // Cache this render
   el.__markdownHash = currentHash;

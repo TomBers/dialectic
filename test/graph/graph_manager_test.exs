@@ -18,11 +18,37 @@ defmodule GraphManagerTest do
   defp stop_graph_process(graph_id) do
     case :global.whereis_name({:graph, graph_id}) do
       pid when is_pid(pid) ->
-        DynamicSupervisor.terminate_child(GraphSupervisor, pid)
-        wait_until_unregistered(graph_id, 20)
+        ref = Process.monitor(pid)
+
+        case DynamicSupervisor.terminate_child(GraphSupervisor, pid) do
+          :ok -> :ok
+          {:error, :not_found} -> if Process.alive?(pid), do: Process.exit(pid, :kill)
+          {:error, _reason} -> if Process.alive?(pid), do: Process.exit(pid, :kill)
+        end
+
+        wait_for_process_down(pid, ref, 1_000)
+        wait_until_unregistered(graph_id, 100)
 
       :undefined ->
         :ok
+    end
+  end
+
+  defp wait_for_process_down(pid, ref, timeout) do
+    receive do
+      {:DOWN, ^ref, :process, ^pid, _reason} ->
+        :ok
+    after
+      timeout ->
+        if Process.alive?(pid), do: Process.exit(pid, :kill)
+
+        receive do
+          {:DOWN, ^ref, :process, ^pid, _reason} -> :ok
+        after
+          timeout ->
+            Process.demonitor(ref, [:flush])
+            :ok
+        end
     end
   end
 
