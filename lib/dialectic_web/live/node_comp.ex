@@ -66,6 +66,30 @@ defmodule DialecticWeb.NodeComp do
 
   defp show_regenerate_cta?(_node), do: false
 
+  defp node_title_size_class(%{content: content}) when is_binary(content) do
+    case title_text_length(content) do
+      length when length >= 96 -> "text-[15px] sm:text-base md:text-lg"
+      length when length >= 64 -> "text-base sm:text-lg md:text-xl"
+      _length -> "text-lg sm:text-xl md:text-[1.65rem]"
+    end
+  end
+
+  defp node_title_size_class(_node), do: "text-lg sm:text-xl md:text-[1.65rem]"
+
+  defp title_text_length(content) do
+    content
+    |> String.replace(~r/\r\n|\r/, "\n")
+    |> String.trim_leading()
+    |> String.split("\n", parts: 2)
+    |> List.first()
+    |> to_string()
+    |> String.replace(~r/^\s*\#{1,6}\s*/, "")
+    |> String.replace(~r/^\s*title\s*:?\s*/i, "")
+    |> String.replace("**", "")
+    |> String.trim()
+    |> String.length()
+  end
+
   @impl true
   def render(assigns) do
     ~H"""
@@ -105,7 +129,8 @@ defmodule DialecticWeb.NodeComp do
                     <% origin_meta? =
                       GraphHelpers.origin_branching_disabled?(@node) && is_map(@graph_struct) %>
                     <h3 class={[
-                      "mt-0 flex items-start justify-between gap-4 text-lg leading-tight tracking-tight text-gray-900 sm:text-xl md:text-[1.65rem]",
+                      "mt-0 flex items-start justify-between gap-4 leading-tight tracking-tight text-gray-900",
+                      node_title_size_class(@node),
                       if(origin_meta?,
                         do: "mb-2 pb-0",
                         else: "mb-3 border-b border-gray-200/90 pb-3"
@@ -196,18 +221,20 @@ defmodule DialecticWeb.NodeComp do
                     >
                       <div
                         :if={!GraphHelpers.origin_branching_disabled?(@node)}
-                        class="not-prose mb-3 rounded-xl border border-amber-200 bg-amber-50/80 px-2.5 py-2 shadow-sm ring-1 ring-amber-100"
+                        class="not-prose mb-2.5 rounded-lg border border-amber-200 bg-amber-50/80 px-2.5 py-1.5 shadow-sm ring-1 ring-amber-100"
                       >
-                        <div class="flex items-start gap-2">
-                          <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700 ring-1 ring-amber-200">
-                            <.icon name="hero-cursor-arrow-rays" class="h-3.5 w-3.5" />
+                        <div class="flex items-center gap-2">
+                          <span class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700 ring-1 ring-amber-200">
+                            <.icon name="hero-cursor-arrow-rays" class="h-3 w-3" />
                           </span>
                           <div class="min-w-0">
-                            <p class="text-sm font-semibold leading-4 text-slate-950">
-                              Select text to ask a focused follow-up
-                            </p>
-                            <p class="mt-0.5 text-[11px] leading-4 text-slate-600">
-                              Highlight any phrase in the response to explore that specific idea.
+                            <p class="text-xs leading-4 text-slate-700">
+                              <span class="font-semibold text-slate-950">
+                                Select text for a focused follow-up.
+                              </span>
+                              <span class="hidden sm:inline">
+                                Highlight any phrase to explore it.
+                              </span>
                             </p>
                           </div>
                         </div>
