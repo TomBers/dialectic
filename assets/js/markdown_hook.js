@@ -169,10 +169,7 @@ function normalizedHeadingText(text) {
 }
 
 function normalizedQuestionText(text) {
-  return (text || "")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, " ");
+  return (text || "").trim().toLowerCase().replace(/\s+/g, " ");
 }
 
 const FOLLOW_UP_HEADINGS = new Set([
@@ -206,10 +203,15 @@ function questionTextFromListItem(item) {
 }
 
 function followUpQuestionsFromList(list) {
-  return Array.from(list.children)
-    .filter((child) => child.tagName === "LI")
-    .map(questionTextFromListItem)
-    .filter((text) => text.endsWith("?"));
+  const items = Array.from(list.children).filter(
+    (child) => child.tagName === "LI",
+  );
+  if (items.length !== 3) return [];
+
+  const questions = items.map(questionTextFromListItem);
+  if (questions.some((text) => !text.endsWith("?"))) return [];
+
+  return questions;
 }
 
 function findFollowUpListAfterHeading(heading) {
@@ -254,7 +256,9 @@ function buildFollowUpPanel(root, questions, askQuestion, existingQuestions) {
   panel.setAttribute("data-follow-up-question-panel", "true");
 
   questions.forEach((question, index) => {
-    const alreadyAsked = existingQuestions.has(normalizedQuestionText(question));
+    const alreadyAsked = existingQuestions.has(
+      normalizedQuestionText(question),
+    );
     const button = document.createElement("button");
     button.type = "button";
     button.id = `${root.id || "markdown"}-follow-up-${index + 1}`;
@@ -415,7 +419,9 @@ function renderMdInto(el, askQuestion) {
   // Use a per-element cache to avoid unnecessary DOM churn
   const existingFollowUpQuestions =
     el.getAttribute("data-existing-follow-up-questions") || "[]";
-  const currentHash = hashString(md + "|FOLLOW_UPS|" + existingFollowUpQuestions);
+  const currentHash = hashString(
+    md + "|FOLLOW_UPS|" + existingFollowUpQuestions,
+  );
   if (el.__markdownHash === currentHash && el.innerHTML.trim() !== "") {
     return; // No change since last render
   }

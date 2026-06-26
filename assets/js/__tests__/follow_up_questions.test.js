@@ -62,10 +62,32 @@ describe("enhanceFollowUpQuestions", () => {
 
     enhanceFollowUpQuestions(root, vi.fn());
 
-    expect(root.querySelectorAll("button[data-follow-up-question]")).toHaveLength(
-      0,
-    );
+    expect(
+      root.querySelectorAll("button[data-follow-up-question]"),
+    ).toHaveLength(0);
     expect(root.querySelector("ol")).not.toBeNull();
+  });
+
+  it("preserves follow-up lists that include extra generated content", () => {
+    const root = rootWith(`
+      <h2>Follow-up questions</h2>
+      <ol>
+        <li>Question one?</li>
+        <li>Question two?</li>
+        <li>Question three?</li>
+        <li>Additional context that should remain visible.</li>
+      </ol>
+    `);
+
+    enhanceFollowUpQuestions(root, vi.fn());
+
+    expect(
+      root.querySelectorAll("button[data-follow-up-question]"),
+    ).toHaveLength(0);
+    expect(root.querySelector("ol")).not.toBeNull();
+    expect(root.textContent).toContain(
+      "Additional context that should remain visible.",
+    );
   });
 
   it("does not convert unrelated lists", () => {
@@ -80,9 +102,9 @@ describe("enhanceFollowUpQuestions", () => {
 
     enhanceFollowUpQuestions(root, vi.fn());
 
-    expect(root.querySelectorAll("button[data-follow-up-question]")).toHaveLength(
-      0,
-    );
+    expect(
+      root.querySelectorAll("button[data-follow-up-question]"),
+    ).toHaveLength(0);
     expect(root.querySelector("ol")).not.toBeNull();
   });
 

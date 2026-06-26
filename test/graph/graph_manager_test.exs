@@ -7,10 +7,36 @@ defmodule GraphManagerTest do
   @test_user "test_user"
 
   setup do
-    # Ensure graph is removed from registry before each test
-    GraphManager.reset_graph(@graph_id)
+    stop_graph_process(@graph_id)
     Dialectic.GraphFixtures.insert_graph_fixture(@graph_id)
+
+    on_exit(fn -> stop_graph_process(@graph_id) end)
+
     :ok
+  end
+
+  defp stop_graph_process(graph_id) do
+    case :global.whereis_name({:graph, graph_id}) do
+      pid when is_pid(pid) ->
+        DynamicSupervisor.terminate_child(GraphSupervisor, pid)
+        wait_until_unregistered(graph_id, 20)
+
+      :undefined ->
+        :ok
+    end
+  end
+
+  defp wait_until_unregistered(_graph_id, 0), do: :ok
+
+  defp wait_until_unregistered(graph_id, attempts) do
+    case :global.whereis_name({:graph, graph_id}) do
+      :undefined ->
+        :ok
+
+      _pid ->
+        Process.sleep(10)
+        wait_until_unregistered(graph_id, attempts - 1)
+    end
   end
 
   describe "process management" do
@@ -37,6 +63,18 @@ defmodule GraphManagerTest do
 
       {updated_graph_struct, _graph} = GraphManager.get_graph(@graph_id)
       assert updated_graph_struct.tags == ["physics", "determinism"]
+    end
+
+    test "preserves live graph data when cached graph struct is updated" do
+      {graph_struct, _graph} = GraphManager.get_graph(@graph_id)
+      live_node = GraphManager.add_node(@graph_id, %Vertex{content: "live", class: "answer"})
+
+      stale_graph_struct = %{graph_struct | tags: ["updated"], data: %{nodes: [], edges: []}}
+      assert :ok = GraphManager.update_graph_struct(@graph_id, stale_graph_struct)
+
+      {updated_graph_struct, _graph} = GraphManager.get_graph(@graph_id)
+      assert updated_graph_struct.tags == ["updated"]
+      assert Enum.any?(updated_graph_struct.data.nodes, &(&1.id == live_node.id))
     end
 
     test "update_graph_struct is a no-op when graph process is not running" do

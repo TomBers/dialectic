@@ -141,10 +141,13 @@ defmodule Dialectic.Responses.Prompts do
       2. A clear, substantive answer that rewards the reader's attention
       3. A final section with the exact heading `## Follow-up questions`
 
+      Keep the main answer concise enough that you always have room for the final `## Follow-up questions` section.
+
       In the `## Follow-up questions` section:
       - Include exactly 3 numbered questions
       - Make each item a single, self-contained question ending with a question mark
       - Do not add commentary, labels, or related topics in that section
+      - Do not stop before writing this section
 
       Build on the Foundation without repeating it.
       """,
