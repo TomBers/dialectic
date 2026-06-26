@@ -10,46 +10,67 @@ defmodule DialecticWeb.OriginOnboardingComp do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="space-y-3">
+    <div class="space-y-4">
+      <div class="space-y-1.5">
+        <p class="text-sm font-semibold leading-5 text-slate-950">
+          This grid starts with your question.
+        </p>
+        <p class="text-sm leading-5 text-slate-600">
+          Each box is a question, an AI answer, or a comment. Open one, then follow the
+          branch that interests you. Share the grid to think together live.
+        </p>
+      </div>
+
       <section class="divide-y divide-slate-100">
         <.guide_item
-          icon="hero-cursor-arrow-rays"
+          icon="hero-arrow-turn-down-right"
           icon_classes="bg-sky-50 text-sky-600 ring-sky-100"
-          text="Click a node, drag to pan, scroll to zoom."
+          title="Open the first response"
+          text="Click the connected box in the map to read the first answer."
         />
 
         <.guide_item
-          icon="hero-arrows-right-left"
-          icon_classes="bg-slate-100 text-slate-700 ring-slate-200"
-          text="Switch Reader | Grid without losing your place."
-        />
-
-        <.guide_item
-          icon="hero-sparkles"
+          icon="hero-question-mark-circle"
           icon_classes="bg-emerald-50 text-emerald-600 ring-emerald-100"
-          text="Use Pro, Con, Related, or Blend below a node."
+          title="Ask from any idea"
+          text="Use a suggested follow-up, select a phrase, or type your own question."
         />
 
         <.guide_item
-          icon="hero-bookmark-square"
+          icon="hero-scale"
+          icon_classes="bg-violet-50 text-violet-600 ring-violet-100"
+          title="Compare and connect"
+          text="Try Pro / Con, Related, or Blend when you want the map to branch."
+        />
+
+        <.guide_item
+          icon="hero-user-group"
           icon_classes="bg-amber-50 text-amber-600 ring-amber-100"
-          text="Search, highlight, or share from the top bar."
+          title="Think together live"
+          text="Share the grid for real-time, multiplayer thinking around the same topic."
         />
       </section>
 
-      <.link
-        href={~p"/intro/how"}
-        class="inline-flex items-center gap-2 text-sm font-semibold text-emerald-700 transition hover:text-emerald-800"
-      >
-        <.icon name="hero-book-open" class="h-4 w-4" />
-        <span>Open full guide</span>
-      </.link>
+      <div class="flex flex-wrap items-center gap-3 border-t border-slate-100 pt-3">
+        <.link
+          href={~p"/intro/how"}
+          class="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-100 transition hover:bg-emerald-100 hover:text-emerald-800"
+        >
+          <.icon name="hero-book-open" class="h-4 w-4" />
+          <span>Open the full guide</span>
+        </.link>
+
+        <p class="text-xs leading-5 text-slate-500">
+          A good first session is simple: read one node, ask one better question.
+        </p>
+      </div>
     </div>
     """
   end
 
   attr :icon, :string, required: true
   attr :icon_classes, :string, required: true
+  attr :title, :string, required: true
   attr :text, :string, required: true
 
   defp guide_item(assigns) do
@@ -63,7 +84,10 @@ defmodule DialecticWeb.OriginOnboardingComp do
           <.icon name={@icon} class="h-4 w-4" />
         </div>
 
-        <p class="min-w-0 text-sm font-medium leading-5 text-slate-800">{@text}</p>
+        <div class="min-w-0">
+          <p class="text-sm font-semibold leading-5 text-slate-900">{@title}</p>
+          <p class="text-sm leading-5 text-slate-600">{@text}</p>
+        </div>
       </div>
     </div>
     """
