@@ -37,7 +37,6 @@ defmodule DialecticWeb.NodeComp do
        can_edit: Map.get(assigns, :can_edit, true),
        menu_visible: Map.get(assigns, :menu_visible, true),
        streaming: Map.get(assigns, :streaming, false),
-       exploration_stats: Map.get(assigns, :exploration_stats, nil),
        presentation_mode: Map.get(assigns, :presentation_mode, :off),
        token: Map.get(assigns, :token, nil)
      )}
@@ -104,7 +103,7 @@ defmodule DialecticWeb.NodeComp do
                   >
                     <%!-- Client-side Markdown rendering via Markdown hook --%>
                     <% origin_meta? =
-                      GraphHelpers.origin_branching_disabled?(@node) && @graph_struct %>
+                      GraphHelpers.origin_branching_disabled?(@node) && is_map(@graph_struct) %>
                     <h3 class={[
                       "mt-0 flex items-start justify-between gap-4 text-lg leading-tight tracking-tight text-gray-900 sm:text-xl md:text-[1.65rem]",
                       if(origin_meta?,
@@ -167,11 +166,6 @@ defmodule DialecticWeb.NodeComp do
                             </svg>
                           <% end %>
                         </button>
-                        <%= if @exploration_stats do %>
-                          <span class="flex-none text-xs font-medium text-gray-500 bg-gray-100 rounded-full px-2 py-1 whitespace-nowrap mt-1">
-                            {@exploration_stats["explored"]} / {@exploration_stats["total"]} explored
-                          </span>
-                        <% end %>
                       </span>
                     </h3>
                     <div
@@ -202,17 +196,17 @@ defmodule DialecticWeb.NodeComp do
                     >
                       <div
                         :if={!GraphHelpers.origin_branching_disabled?(@node)}
-                        class="not-prose mb-4 rounded-xl border border-amber-200 bg-amber-50/80 px-3 py-2.5 shadow-sm ring-1 ring-amber-100"
+                        class="not-prose mb-3 rounded-xl border border-amber-200 bg-amber-50/80 px-2.5 py-2 shadow-sm ring-1 ring-amber-100"
                       >
-                        <div class="flex items-start gap-2.5">
-                          <span class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700 ring-1 ring-amber-200">
-                            <.icon name="hero-cursor-arrow-rays" class="h-4 w-4" />
+                        <div class="flex items-start gap-2">
+                          <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700 ring-1 ring-amber-200">
+                            <.icon name="hero-cursor-arrow-rays" class="h-3.5 w-3.5" />
                           </span>
                           <div class="min-w-0">
-                            <p class="text-sm font-semibold leading-5 text-slate-950">
+                            <p class="text-sm font-semibold leading-4 text-slate-950">
                               Select text to ask a focused follow-up
                             </p>
-                            <p class="mt-0.5 text-xs leading-5 text-slate-600">
+                            <p class="mt-0.5 text-[11px] leading-4 text-slate-600">
                               Highlight any phrase in the response to explore that specific idea.
                             </p>
                           </div>

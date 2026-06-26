@@ -1138,10 +1138,6 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_event("update_exploration_progress", params, socket) do
-    {:noreply, assign(socket, :exploration_stats, params)}
-  end
-
   # ── Presentation mode events ──────────────────────────────────────
 
   def handle_event("enter_presentation_setup", _params, socket) do
@@ -2333,7 +2329,6 @@ defmodule DialecticWeb.GraphLive do
       show_share_modal: false,
       selected_share_highlight: nil,
       work_streams: [],
-      exploration_stats: nil,
       show_login_modal: false,
       highlights: [],
       presentation_mode: :off,
