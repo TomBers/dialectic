@@ -1457,6 +1457,14 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, GridChat.insert_message(socket, message)}
   end
 
+  def handle_info({:graph_struct_updated, %{title: title} = graph_struct}, socket) do
+    if socket.assigns.graph_id == title do
+      {:noreply, assign(socket, graph_struct: graph_struct)}
+    else
+      {:noreply, socket}
+    end
+  end
+
   def handle_info({:other_user_change, sender_pid}, socket) do
     # Skip if it's our own change - we've already updated our view
     if self() != sender_pid do

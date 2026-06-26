@@ -27,6 +27,18 @@ defmodule GraphManagerTest do
       assert graph1 == graph2
     end
 
+    test "updates cached graph struct when tags change" do
+      {graph_struct, _graph} = GraphManager.get_graph(@graph_id)
+      assert graph_struct.tags == []
+
+      {:ok, _updated_graph} =
+        graph_struct
+        |> Dialectic.DbActions.Graphs.update_tags(["physics", "determinism"])
+
+      {updated_graph_struct, _graph} = GraphManager.get_graph(@graph_id)
+      assert updated_graph_struct.tags == ["physics", "determinism"]
+    end
+
     test "registry properly tracks graph processes" do
       # refute GraphManager.exists?(@graph_id)
       GraphManager.get_graph(@graph_id)

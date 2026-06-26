@@ -147,6 +147,10 @@ defmodule GraphManager do
     {:reply, {graph_struct, graph}, {graph_struct, graph}}
   end
 
+  def handle_call({:update_graph_struct, updated_graph_struct}, _from, {_graph_struct, graph}) do
+    {:reply, :ok, {updated_graph_struct, graph}}
+  end
+
   def handle_call({:add_vertex, vertex}, _from, {graph_struct, graph}) do
     existing_ids =
       :digraph.vertices(graph)
@@ -514,6 +518,14 @@ defmodule GraphManager do
 
   def find_node_by_id(path, node_id) do
     GenServer.call(via_tuple(path), {:find_node_by_id, node_id})
+  end
+
+  def update_graph_struct(path, graph_struct) do
+    if exists?(path) do
+      GenServer.call(via_tuple(path), {:update_graph_struct, graph_struct})
+    else
+      :ok
+    end
   end
 
   def add_child(graph_id, parents, llm_fn, class, user, opts \\ []) do
