@@ -2,6 +2,7 @@ defmodule DialecticWeb.NodeComp do
   use DialecticWeb, :live_component
 
   alias DialecticWeb.GraphHelpers
+  alias DialecticWeb.GridCardComp
 
   @impl true
   def update(assigns, socket) do
@@ -102,7 +103,15 @@ defmodule DialecticWeb.NodeComp do
                     data-role="node-content"
                   >
                     <%!-- Client-side Markdown rendering via Markdown hook --%>
-                    <h3 class="mt-0 text-lg sm:text-xl md:text-[1.65rem] mb-3 pb-3 border-b border-gray-200/90 flex items-start justify-between gap-4 leading-tight tracking-tight text-gray-900">
+                    <% origin_meta? =
+                      GraphHelpers.origin_branching_disabled?(@node) && @graph_struct %>
+                    <h3 class={[
+                      "mt-0 flex items-start justify-between gap-4 text-lg leading-tight tracking-tight text-gray-900 sm:text-xl md:text-[1.65rem]",
+                      if(origin_meta?,
+                        do: "mb-2 pb-0",
+                        else: "mb-3 border-b border-gray-200/90 pb-3"
+                      )
+                    ]}>
                       <span
                         class="flex-1"
                         phx-hook="Markdown"
@@ -166,25 +175,48 @@ defmodule DialecticWeb.NodeComp do
                       </span>
                     </h3>
                     <div
+                      :if={origin_meta?}
+                      id={"origin-intro-subheading-#{@node.id}"}
+                      class="not-prose mb-5 space-y-2.5 border-b border-gray-200/90 pb-4"
+                    >
+                      <p class="text-sm leading-6 text-slate-700">
+                        {graph_preview(@graph_struct)}
+                      </p>
+
+                      <div class="flex flex-wrap gap-1.5">
+                        <%= for tag <- graph_tags(@graph_struct) do %>
+                          <span class={[
+                            "inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset",
+                            GridCardComp.tag_pill_classes(tag)
+                          ]}>
+                            #{tag}
+                          </span>
+                        <% end %>
+                      </div>
+                    </div>
+
+                    <div
                       class="selection-content w-full px-1 pb-2 sm:px-2"
                       data-children={length(@node.children)}
                       id={"list-detector-" <> @node.id}
                     >
                       <div
                         :if={!GraphHelpers.origin_branching_disabled?(@node)}
-                        class="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-600"
+                        class="not-prose mb-4 rounded-xl border border-amber-200 bg-amber-50/80 px-3 py-2.5 shadow-sm ring-1 ring-amber-100"
                       >
-                        <span class="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 font-medium text-amber-800 shadow-sm">
-                          <.icon name="hero-cursor-arrow-rays" class="h-3.5 w-3.5" />
-                          <span>Select text to ask a follow-up</span>
-                        </span>
-                        <span class="hidden text-xs text-slate-500 sm:inline">
-                          Select{" "}
-                          <span class="inline-block rounded-[0.2em] bg-amber-200/90 px-1 py-0.5 font-medium leading-none text-slate-900 shadow-[inset_0_-1px_0_rgba(120,53,15,0.18)]">
-                            word(s)
+                        <div class="flex items-start gap-2.5">
+                          <span class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700 ring-1 ring-amber-200">
+                            <.icon name="hero-cursor-arrow-rays" class="h-4 w-4" />
                           </span>
-                          {" "}in the text, to explore that specific topic.
-                        </span>
+                          <div class="min-w-0">
+                            <p class="text-sm font-semibold leading-5 text-slate-950">
+                              Select text to ask a focused follow-up
+                            </p>
+                            <p class="mt-0.5 text-xs leading-5 text-slate-600">
+                              Highlight any phrase in the response to explore that specific idea.
+                            </p>
+                          </div>
+                        </div>
                       </div>
 
                       <div
@@ -205,16 +237,16 @@ defmodule DialecticWeb.NodeComp do
                       data-external="true"
                       data-role="origin-intro"
                     >
-                      <div class="border-b border-slate-200 bg-slate-50/80 px-4 py-3.5 sm:px-5">
+                      <div class="border-b border-slate-200 bg-slate-50/80 px-4 py-3 sm:px-5">
                         <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                           Start here
                         </p>
                         <h4 class="mt-1 text-base font-semibold leading-6 tracking-tight text-slate-950">
-                          Use this grid from any response.
+                          How to use the grid
                         </h4>
                       </div>
 
-                      <div class="px-4 py-3.5 sm:px-5">
+                      <div class="px-4 py-2.5 sm:px-5">
                         <.live_component
                           module={DialecticWeb.OriginOnboardingComp}
                           id={"origin-onboarding-#{@node.id}"}
@@ -327,4 +359,24 @@ defmodule DialecticWeb.NodeComp do
     </div>
     """
   end
+
+  defp graph_tags(%{} = graph) do
+    graph
+    |> Map.get(:tags, [])
+    |> case do
+      tags when is_list(tags) ->
+        tags
+        |> Enum.filter(&(is_binary(&1) and String.trim(&1) != ""))
+        |> Enum.take(4)
+
+      _other ->
+        []
+    end
+  end
+
+  defp graph_tags(_graph), do: []
+
+  defp graph_preview(%{} = graph), do: GridCardComp.preview_sentence(graph)
+
+  defp graph_preview(_graph), do: "A connected grid of ideas."
 end

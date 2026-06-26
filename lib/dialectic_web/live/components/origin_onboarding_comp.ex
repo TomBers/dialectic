@@ -11,7 +11,7 @@ defmodule DialecticWeb.OriginOnboardingComp do
   def render(assigns) do
     ~H"""
     <div class="space-y-3">
-      <section class="space-y-2">
+      <section class="divide-y divide-slate-100">
         <.guide_item
           icon="hero-cursor-arrow-rays"
           icon_classes="bg-sky-50 text-sky-600 ring-sky-100"
@@ -54,7 +54,7 @@ defmodule DialecticWeb.OriginOnboardingComp do
 
   defp guide_item(assigns) do
     ~H"""
-    <div class="rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
+    <div class="py-2.5 first:pt-0 last:pb-0">
       <div class="flex items-center gap-3">
         <div class={[
           "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full ring-1",
