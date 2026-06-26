@@ -39,6 +39,13 @@ defmodule GraphManagerTest do
       assert updated_graph_struct.tags == ["physics", "determinism"]
     end
 
+    test "update_graph_struct is a no-op when graph process is not running" do
+      graph_struct = Dialectic.DbActions.Graphs.get_graph_by_title(@graph_id)
+      GraphManager.reset_graph(@graph_id)
+
+      assert :ok = GraphManager.update_graph_struct(@graph_id, graph_struct)
+    end
+
     test "registry properly tracks graph processes" do
       # refute GraphManager.exists?(@graph_id)
       GraphManager.get_graph(@graph_id)

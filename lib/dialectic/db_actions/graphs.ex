@@ -336,7 +336,7 @@ defmodule Dialectic.DbActions.Graphs do
         Phoenix.PubSub.broadcast(
           Dialectic.PubSub,
           "graph_update:#{updated_graph.title}",
-          {:graph_struct_updated, updated_graph}
+          {:graph_tags_updated, updated_graph.title, tags}
         )
 
         Phoenix.PubSub.broadcast(

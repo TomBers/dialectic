@@ -521,10 +521,15 @@ defmodule GraphManager do
   end
 
   def update_graph_struct(path, graph_struct) do
-    if exists?(path) do
+    try do
       GenServer.call(via_tuple(path), {:update_graph_struct, graph_struct})
-    else
-      :ok
+    catch
+      :exit, reason ->
+        if recoverable_call_exit?(reason) do
+          :ok
+        else
+          exit(reason)
+        end
     end
   end
 

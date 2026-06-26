@@ -1457,8 +1457,9 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, GridChat.insert_message(socket, message)}
   end
 
-  def handle_info({:graph_struct_updated, %{title: title} = graph_struct}, socket) do
+  def handle_info({:graph_tags_updated, title, tags}, socket) do
     if socket.assigns.graph_id == title do
+      graph_struct = Map.put(socket.assigns.graph_struct, :tags, tags)
       {:noreply, assign(socket, graph_struct: graph_struct)}
     else
       {:noreply, socket}
