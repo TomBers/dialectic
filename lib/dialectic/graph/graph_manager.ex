@@ -148,6 +148,7 @@ defmodule GraphManager do
   end
 
   def handle_call({:update_graph_struct, updated_graph_struct}, _from, {_graph_struct, graph}) do
+    updated_graph_struct = %{updated_graph_struct | data: Serialise.graph_to_json(graph)}
     {:reply, :ok, {updated_graph_struct, graph}}
   end
 

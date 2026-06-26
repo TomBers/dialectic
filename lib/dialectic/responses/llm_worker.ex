@@ -151,6 +151,7 @@ defmodule Dialectic.Workers.LLMWorker do
              ctx,
              api_key: api_key_val,
              finch_name: finch_name,
+             max_tokens: 4096,
              provider_options: provider_options,
              req_http_options: [connect_options: [timeout: connect_timeout]],
              receive_timeout: receive_timeout
@@ -203,21 +204,45 @@ defmodule Dialectic.Workers.LLMWorker do
             Utils.set_node_content(graph, to_node, final_full_text, live_view_topic)
           end
 
-          if byte_size(final_full_text) > 0 do
-            total_ms = System.monotonic_time(:millisecond) - start_time
+          finish_reason = ReqLLM.StreamResponse.finish_reason(stream_resp)
 
-            Logger.info(
-              "[LLMWorker] job_id=#{job_id} completed total=#{total_ms}ms bytes=#{byte_size(final_full_text)}"
-            )
+          cond do
+            byte_size(final_full_text) == 0 ->
+              Logger.warning(
+                "#{provider_label(provider_mod)} stream yielded no tokens; will retry (empty_stream)"
+              )
 
-            finalize(graph, to_node, live_view_topic)
-            :ok
-          else
-            Logger.warning(
-              "#{provider_label(provider_mod)} stream yielded no tokens; will retry (empty_stream)"
-            )
+              {:error, :empty_stream}
 
-            {:error, :empty_stream}
+            incomplete_finish?(finish_reason) ->
+              Logger.warning(
+                "[LLMWorker] job_id=#{job_id} stopped before completion finish_reason=#{inspect(finish_reason)} bytes=#{byte_size(final_full_text)}"
+              )
+
+              {:error, {:incomplete_stream, finish_reason}}
+
+            missing_required_follow_ups?(instruction, final_full_text) ->
+              final_full_text = append_fallback_follow_ups(final_full_text, instruction)
+              Utils.set_node_content(graph, to_node, final_full_text, live_view_topic)
+
+              total_ms = System.monotonic_time(:millisecond) - start_time
+
+              Logger.warning(
+                "[LLMWorker] job_id=#{job_id} completed without required follow-ups; appended fallback follow-up questions total=#{total_ms}ms bytes=#{byte_size(final_full_text)} finish_reason=#{inspect(finish_reason)}"
+              )
+
+              finalize(graph, to_node, live_view_topic)
+              :ok
+
+            true ->
+              total_ms = System.monotonic_time(:millisecond) - start_time
+
+              Logger.info(
+                "[LLMWorker] job_id=#{job_id} completed total=#{total_ms}ms bytes=#{byte_size(final_full_text)} finish_reason=#{inspect(finish_reason)}"
+              )
+
+              finalize(graph, to_node, live_view_topic)
+              :ok
           end
 
         {:error, err} ->
@@ -246,6 +271,84 @@ defmodule Dialectic.Workers.LLMWorker do
   end
 
   # Note: Exceptions in do_llm_request will propagate up to perform/1
+
+  defp incomplete_finish?(finish_reason) do
+    finish_reason in [:length, :incomplete, :cancelled, :error, :content_filter]
+  end
+
+  defp missing_required_follow_ups?(instruction, text) do
+    initial_explainer_request?(instruction) and not has_follow_up_questions?(text)
+  end
+
+  defp initial_explainer_request?(instruction) do
+    is_binary(instruction) and
+      String.contains?(instruction, "exact heading `## Follow-up questions`")
+  end
+
+  defp has_follow_up_questions?(text) when is_binary(text) do
+    case split_at_follow_up_section(text) do
+      {_before, body} ->
+        lines =
+          body
+          |> String.split("\n")
+          |> Enum.map(&String.trim/1)
+          |> Enum.reject(&(&1 == ""))
+
+        length(lines) == 3 and Enum.all?(lines, &numbered_question_line?/1)
+
+      :not_found ->
+        false
+    end
+  end
+
+  defp has_follow_up_questions?(_text), do: false
+
+  defp numbered_question_line?(line) do
+    Regex.match?(~r/^\d+[\.)]\s+.+\?$/, line)
+  end
+
+  defp append_fallback_follow_ups(text, instruction) do
+    topic = extract_initial_topic(instruction)
+    text = strip_follow_up_section(text)
+
+    questions = [
+      "What historical context most changes how we should understand #{topic}?",
+      "Which interpretation of #{topic} is most contested, and why?",
+      "What detail about #{topic} would be most rewarding to explore next?"
+    ]
+
+    [
+      String.trim_trailing(text),
+      "## Follow-up questions",
+      "1. #{Enum.at(questions, 0)}",
+      "2. #{Enum.at(questions, 1)}",
+      "3. #{Enum.at(questions, 2)}"
+    ]
+    |> Enum.join("\n\n")
+  end
+
+  defp strip_follow_up_section(text) do
+    case split_at_follow_up_section(text) do
+      {before, _body} -> String.trim_trailing(before)
+      :not_found -> String.trim_trailing(text)
+    end
+  end
+
+  defp split_at_follow_up_section(text) do
+    case Regex.split(~r/^##\s+Follow-up questions\s*$/im, text, parts: 2) do
+      [before, body] -> {before, body}
+      [_text] -> :not_found
+    end
+  end
+
+  defp extract_initial_topic(instruction) do
+    case Regex.run(~r/\*\*Your task:\*\* Answer \*\*(?<topic>.*?)\*\*/s, instruction,
+           capture: ["topic"]
+         ) do
+      [topic] -> topic |> String.replace(~r/\s+/, " ") |> String.trim()
+      _ -> "this topic"
+    end
+  end
 
   # -- Internals ----------------------------------------------------------------
 

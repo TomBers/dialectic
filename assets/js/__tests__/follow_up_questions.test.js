@@ -62,10 +62,32 @@ describe("enhanceFollowUpQuestions", () => {
 
     enhanceFollowUpQuestions(root, vi.fn());
 
-    expect(root.querySelectorAll("button[data-follow-up-question]")).toHaveLength(
-      0,
-    );
+    expect(
+      root.querySelectorAll("button[data-follow-up-question]"),
+    ).toHaveLength(0);
     expect(root.querySelector("ol")).not.toBeNull();
+  });
+
+  it("preserves follow-up lists that include extra generated content", () => {
+    const root = rootWith(`
+      <h2>Follow-up questions</h2>
+      <ol>
+        <li>Question one?</li>
+        <li>Question two?</li>
+        <li>Question three?</li>
+        <li>Additional context that should remain visible.</li>
+      </ol>
+    `);
+
+    enhanceFollowUpQuestions(root, vi.fn());
+
+    expect(
+      root.querySelectorAll("button[data-follow-up-question]"),
+    ).toHaveLength(0);
+    expect(root.querySelector("ol")).not.toBeNull();
+    expect(root.textContent).toContain(
+      "Additional context that should remain visible.",
+    );
   });
 
   it("does not convert unrelated lists", () => {
@@ -80,9 +102,9 @@ describe("enhanceFollowUpQuestions", () => {
 
     enhanceFollowUpQuestions(root, vi.fn());
 
-    expect(root.querySelectorAll("button[data-follow-up-question]")).toHaveLength(
-      0,
-    );
+    expect(
+      root.querySelectorAll("button[data-follow-up-question]"),
+    ).toHaveLength(0);
     expect(root.querySelector("ol")).not.toBeNull();
   });
 
@@ -148,5 +170,24 @@ describe("enhanceFollowUpQuestions", () => {
 
     button.click();
     expect(askQuestion).not.toHaveBeenCalled();
+  });
+
+  it("can leave follow-up questions as regular markdown in reader mode", () => {
+    const root = rootWith(`
+      <p>Main answer remains.</p>
+      <h2>Follow-up questions</h2>
+      <ol>
+        <li>Question one?</li>
+        <li>Question two?</li>
+        <li>Question three?</li>
+      </ol>
+    `);
+
+    expect(
+      root.querySelectorAll("button[data-follow-up-question]"),
+    ).toHaveLength(0);
+    expect(root.textContent).toContain("Follow-up questions");
+    expect(root.textContent).toContain("Question one?");
+    expect(root.querySelector("ol")).not.toBeNull();
   });
 });
