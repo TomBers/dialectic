@@ -173,7 +173,9 @@ defmodule Dialectic.Responses.PromptsTest do
       result = Prompts.initial_explainer(context, topic)
 
       assert result =~ topic
-      assert result =~ "follow-up questions"
+      assert result =~ "exact heading `## Follow-up questions`"
+      assert result =~ "Include exactly 3 numbered questions"
+      assert result =~ "single, self-contained question ending with a question mark"
       assert result =~ "Build on the Foundation"
     end
   end
