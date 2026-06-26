@@ -139,7 +139,12 @@ defmodule Dialectic.Responses.Prompts do
       Include:
       1. A compelling opening — lead with a surprising fact, a counterintuitive insight, or a thought-provoking quote that reframes how the reader thinks about this topic
       2. A clear, substantive answer that rewards the reader's attention
-      3. 2-3 provocative follow-up questions or related topics that make the reader want to explore further
+      3. A final section with the exact heading `## Follow-up questions`
+
+      In the `## Follow-up questions` section:
+      - Include exactly 3 numbered questions
+      - Make each item a single, self-contained question ending with a question mark
+      - Do not add commentary, labels, or related topics in that section
 
       Build on the Foundation without repeating it.
       """,

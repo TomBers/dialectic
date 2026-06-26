@@ -331,6 +331,14 @@ defmodule Dialectic.DbActions.Graphs do
   def update_tags(graph, tags) when is_list(tags) do
     case graph |> Graph.changeset(%{tags: tags}) |> Repo.update() do
       {:ok, updated_graph} ->
+        GraphManager.update_graph_struct(updated_graph.title, updated_graph)
+
+        Phoenix.PubSub.broadcast(
+          Dialectic.PubSub,
+          "graph_update:#{updated_graph.title}",
+          {:graph_tags_updated, updated_graph.title, tags}
+        )
+
         Phoenix.PubSub.broadcast(
           Dialectic.PubSub,
           "graphs",
