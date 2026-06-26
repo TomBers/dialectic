@@ -201,24 +201,20 @@ defmodule DialecticWeb.NodeComp do
                   <%= if GraphHelpers.origin_branching_disabled?(@node) do %>
                     <div
                       id={"origin-intro-#{@node.id}"}
-                      class="mt-3 overflow-hidden rounded-[1.7rem] border border-slate-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.06)] sm:mt-4"
+                      class="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_14px_32px_rgba(15,23,42,0.05)]"
                       data-external="true"
                       data-role="origin-intro"
                     >
-                      <div class="border-b border-slate-200 bg-slate-50/80 px-4 py-4 sm:px-5">
+                      <div class="border-b border-slate-200 bg-slate-50/80 px-4 py-3.5 sm:px-5">
                         <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                           Start here
                         </p>
-                        <h4 class="mt-1 text-base font-semibold tracking-tight text-slate-950">
-                          This is the shared starting point for the grid.
+                        <h4 class="mt-1 text-base font-semibold leading-6 tracking-tight text-slate-950">
+                          Use this grid from any response.
                         </h4>
                       </div>
 
-                      <div class="space-y-4 px-4 py-4 sm:px-5">
-                        <p class="text-sm leading-6 text-slate-600">
-                          To keep the Reader clear, continue from an existing response rather than branching again from the origin.
-                        </p>
-
+                      <div class="px-4 py-3.5 sm:px-5">
                         <.live_component
                           module={DialecticWeb.OriginOnboardingComp}
                           id={"origin-onboarding-#{@node.id}"}
