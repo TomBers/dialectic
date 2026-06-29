@@ -343,20 +343,36 @@ defmodule DialecticWeb.HomeLive do
 
                 <div
                   id="home-start-panel"
-                  class="mt-7 rounded-[1.65rem] border border-white/15 bg-white p-2.5 shadow-[0_28px_90px_-44px_rgba(20,184,166,0.75)] ring-1 ring-white/70 sm:p-3"
+                  class="relative mt-7 rounded-[1.8rem] bg-[linear-gradient(135deg,rgba(45,212,191,0.95),rgba(255,255,255,0.92)_34%,rgba(251,191,36,0.95)_68%,rgba(56,189,248,0.95))] p-[1px] shadow-[0_34px_110px_-42px_rgba(20,184,166,0.95)]"
                 >
-                  <div class="mb-3 flex flex-col gap-1 px-1 sm:flex-row sm:items-center sm:justify-between">
-                    <p class="text-sm font-semibold text-slate-950">Preserve a line of thought</p>
-                    <p class="text-xs text-slate-600">
-                      Start with a question, topic, insight, or pasted AI response.
-                    </p>
+                  <div class="relative overflow-hidden rounded-[calc(1.8rem-1px)] bg-white p-3 ring-1 ring-white/80 sm:p-3.5">
+                    <div
+                      class="pointer-events-none absolute inset-x-5 top-0 h-px bg-[linear-gradient(90deg,rgba(45,212,191,0),rgba(45,212,191,0.9),rgba(251,191,36,0.9),rgba(56,189,248,0))]"
+                      aria-hidden="true"
+                    >
+                    </div>
+                    <div class="mb-3 flex flex-col gap-2 px-1 md:flex-row md:items-start md:justify-between">
+                      <div>
+                        <p class="inline-flex items-center gap-1.5 rounded-full bg-slate-950 px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-white shadow-sm">
+                          <.icon name="hero-sparkles" class="h-3.5 w-3.5 text-amber-300" /> Start here
+                        </p>
+                        <p class="mt-2 text-base font-semibold text-slate-950">
+                          Start a trail worth following
+                        </p>
+                      </div>
+                      <p class="max-w-[18rem] text-xs leading-5 text-slate-600 md:text-right">
+                        Ask the question, paste the answer, or name the idea you want to explore.
+                      </p>
+                    </div>
+                    <div class="rounded-[1.25rem] bg-slate-50/80 p-1.5 ring-1 ring-slate-200/80">
+                      <.live_component
+                        module={DialecticWeb.NewIdeaFormComp}
+                        id="new-idea-form"
+                        form={@form}
+                        placeholder="What idea should we explore together?"
+                      />
+                    </div>
                   </div>
-                  <.live_component
-                    module={DialecticWeb.NewIdeaFormComp}
-                    id="new-idea-form"
-                    form={@form}
-                    placeholder="What thinking should not disappear?"
-                  />
                 </div>
               </div>
 
