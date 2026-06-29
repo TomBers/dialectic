@@ -11,7 +11,7 @@ defmodule DialecticWeb.AboutLive do
      |> assign(:contact_mailto, "mailto:hello@rationalgrid.ai")
      |> assign(
        :page_description,
-       "Learn how RationalGrid helps people map arguments, concepts, and complex subjects in a persistent shared grid."
+       "RationalGrid is a not-for-profit learning platform for turning disappearing AI chats into public trails of questions, ideas, and shared understanding."
      )
      |> assign(
        :feedback_form,
@@ -94,30 +94,30 @@ defmodule DialecticWeb.AboutLive do
 
         <div class="mx-auto mt-6 max-w-3xl text-center">
           <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight">
-            RationalGrid helps you think through ideas that do not fit in a chat box.
+            Your best thinking should not vanish into chat history.
           </h1>
           <p class="mx-auto mt-6 max-w-2xl text-lg sm:text-xl text-white/85 leading-relaxed">
-            Use it to map arguments, concepts, evidence, and counterarguments in a shared
-            visual grid. Instead of losing the thread in a long conversation, you build a
-            structure you can inspect, improve, and revisit.
+            RationalGrid exists because AI should help people build understanding, not just
+            produce another private stream of replies. Every question, answer, highlight,
+            and objection can become part of a learning trail that remains useful.
           </p>
           <p class="mx-auto mt-4 max-w-2xl text-base text-white/70 leading-relaxed">
-            It is designed for learning, teaching, research, and public reasoning around
-            topics where the relationships between ideas matter.
+            The aim is simple: make serious thinking easier to revisit, easier to challenge,
+            and easier for other people to build from.
           </p>
 
           <div class="mt-8 flex flex-wrap items-center justify-center gap-3 text-sm text-white/75">
             <span class="rounded-full bg-white/10 px-4 py-2 ring-1 ring-white/15">
-              Arguments &amp; counterarguments
+              Durable thinking
             </span>
             <span class="rounded-full bg-white/10 px-4 py-2 ring-1 ring-white/15">
-              Source texts &amp; concepts
+              Shared questioning
             </span>
             <span class="rounded-full bg-white/10 px-4 py-2 ring-1 ring-white/15">
-              Revision &amp; teaching
+              Public learning trails
             </span>
             <span class="rounded-full bg-white/10 px-4 py-2 ring-1 ring-white/15">
-              Shared inquiry
+              Open access
             </span>
           </div>
 
@@ -151,18 +151,20 @@ defmodule DialecticWeb.AboutLive do
         <div class="text-center mb-12">
           <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Why RationalGrid exists</h2>
           <p class="mx-auto max-w-3xl text-gray-600">
-            The point is simple: help people build understanding around complex subjects
-            without flattening them into a disposable stream of replies.
+            Chat is good for getting a response. Learning needs something more durable:
+            a place where questions, disagreements, sources, and revisions can keep their
+            shape long after the conversation that produced them has ended.
           </p>
         </div>
 
         <div class="grid gap-6 md:grid-cols-3">
           <div class="rounded-2xl bg-slate-50 p-8 ring-1 ring-slate-200">
             <p class="text-sm font-semibold uppercase tracking-wide text-[#3a0ca3]">Used for</p>
-            <h3 class="mt-3 text-xl font-bold text-gray-900">Questions that branch</h3>
+            <h3 class="mt-3 text-xl font-bold text-gray-900">Questions worth keeping</h3>
             <p class="mt-4 text-gray-700 leading-relaxed">
-              Use RationalGrid when you need to compare positions, unpack a text, follow
-              evidence, or teach a difficult concept without reducing it to one answer.
+              The important questions are rarely finished in one answer. They deserve a
+              structure where claims, evidence, counterarguments, and sources can remain
+              visible.
             </p>
           </div>
 
@@ -174,7 +176,7 @@ defmodule DialecticWeb.AboutLive do
             <p class="mt-4 text-gray-700 leading-relaxed">
               Serious topics are rarely linear. RationalGrid makes the shape of a
               discussion visible so people can see how claims connect, where disagreements
-              sit, and what still needs explaining.
+              sit, and why an idea changed over time.
             </p>
           </div>
 
@@ -187,7 +189,8 @@ defmodule DialecticWeb.AboutLive do
             </h3>
             <p class="mt-4 text-gray-700 leading-relaxed">
               ChatGPT and Claude are excellent at producing responses. RationalGrid turns
-              responses into a persistent map you can inspect, share, and keep improving.
+              responses into a persistent map that can be inspected, shared, questioned,
+              and improved by more than one person.
             </p>
           </div>
         </div>
@@ -203,7 +206,7 @@ defmodule DialecticWeb.AboutLive do
           </h2>
           <p class="mx-auto max-w-3xl text-gray-600">
             RationalGrid complements tools like ChatGPT and Claude by preserving the
-            structure, collaboration, and memory that chat interfaces tend to lose.
+            structure, memory, and shared context that chat interfaces tend to lose.
           </p>
         </div>
 
@@ -215,7 +218,7 @@ defmodule DialecticWeb.AboutLive do
             <h3 class="mt-5 text-xl font-bold text-gray-900">See the whole argument</h3>
             <p class="mt-3 text-gray-700 leading-relaxed">
               A chat gives you the latest reply. RationalGrid keeps the surrounding
-              branches, tradeoffs, and related ideas visible at the same time.
+              branches, tradeoffs, questions, and related ideas visible at the same time.
             </p>
           </div>
 
@@ -223,10 +226,10 @@ defmodule DialecticWeb.AboutLive do
             <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
               <.icon name="hero-user-group" class="w-6 h-6" />
             </div>
-            <h3 class="mt-5 text-xl font-bold text-gray-900">Work on the same map</h3>
+            <h3 class="mt-5 text-xl font-bold text-gray-900">Contribute to the same map</h3>
             <p class="mt-3 text-gray-700 leading-relaxed">
-              Share one grid with classmates, colleagues, or collaborators instead of
-              copying fragments between separate chat sessions.
+              A shared map lets classmates, colleagues, and readers meet around the same
+              question instead of copying fragments between private chats.
             </p>
           </div>
 
@@ -234,10 +237,10 @@ defmodule DialecticWeb.AboutLive do
             <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
               <.icon name="hero-circle-stack" class="w-6 h-6" />
             </div>
-            <h3 class="mt-5 text-xl font-bold text-gray-900">Keep what you learn</h3>
+            <h3 class="mt-5 text-xl font-bold text-gray-900">Keep what the group learns</h3>
             <p class="mt-3 text-gray-700 leading-relaxed">
-              Your work stays useful as reference and revision material instead of sinking
-              into old chat history.
+              Public grids, nodes, highlights, and profiles become reference material that
+              others can return to when the same question comes up again.
             </p>
           </div>
         </div>
@@ -249,7 +252,7 @@ defmodule DialecticWeb.AboutLive do
                 Want the feature walkthrough?
               </p>
               <p class="mt-1 text-gray-600">
-                The guide covers the workflow, interface, and product capabilities in detail.
+                The guide covers prompts, branching, comments, highlights, and sharing in detail.
               </p>
             </div>
             <.link
@@ -263,13 +266,73 @@ defmodule DialecticWeb.AboutLive do
       </div>
     </section>
 
+    <%!-- 4. Public learning trails --%>
+    <section class="bg-white py-20">
+      <div class="mx-auto max-w-5xl px-6">
+        <div class="grid gap-10 lg:grid-cols-[0.9fr,1.1fr] lg:items-center">
+          <div>
+            <p class="inline-flex items-center rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-teal-700 ring-1 ring-teal-200">
+              <.icon name="hero-user-group" class="mr-1 h-3.5 w-3.5" /> Learning together
+            </p>
+            <h2 class="mt-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+              Learning trails should help the next person
+            </h2>
+            <p class="mt-4 text-gray-700 leading-relaxed">
+              A profile is more than a user page. It is a record of the questions someone
+              has cared enough to explore, the grids they have built, and the directions
+              their thinking has taken.
+            </p>
+            <p class="mt-3 text-gray-600 leading-relaxed">
+              That creates a public-good version of learning: you can follow people whose
+              questions matter to you, start from what they have already found, and add the
+              next useful question or insight when the trail reaches the edge of what is known.
+            </p>
+          </div>
+
+          <div class="grid gap-4 sm:grid-cols-2">
+            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <.icon name="hero-magnifying-glass" class="h-6 w-6 text-sky-600" />
+              <h3 class="mt-3 font-bold text-gray-900">Start from visible work</h3>
+              <p class="mt-2 text-sm leading-6 text-gray-600">
+                Public grids make someone else's learning legible instead of leaving it hidden in private notes.
+              </p>
+            </div>
+
+            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <.icon name="hero-question-mark-circle" class="h-6 w-6 text-indigo-600" />
+              <h3 class="mt-3 font-bold text-gray-900">Question the reference</h3>
+              <p class="mt-2 text-sm leading-6 text-gray-600">
+                A living reference should invite follow-up questions, not pretend the subject is closed.
+              </p>
+            </div>
+
+            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <.icon name="hero-chat-bubble-bottom-center-text" class="h-6 w-6 text-emerald-600" />
+              <h3 class="mt-3 font-bold text-gray-900">Improve the commons</h3>
+              <p class="mt-2 text-sm leading-6 text-gray-600">
+                Questions, examples, objections, and highlights make the map more useful for the next reader.
+              </p>
+            </div>
+
+            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <.icon name="hero-rss" class="h-6 w-6 text-amber-600" />
+              <h3 class="mt-3 font-bold text-gray-900">Follow curiosity</h3>
+              <p class="mt-2 text-sm leading-6 text-gray-600">
+                Profiles make it possible to follow people by the ideas they explore, not just what they post.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <%!-- 4. Partners Section --%>
     <section class="bg-slate-50 py-20">
       <div class="mx-auto max-w-5xl px-6">
         <div class="text-center mb-14">
           <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Our Partners</h2>
           <p class="text-gray-500 max-w-2xl mx-auto">
-            Working together to make knowledge more accessible.
+            Working together to make learning more open, participatory, and useful to others.
           </p>
         </div>
 
@@ -305,7 +368,7 @@ defmodule DialecticWeb.AboutLive do
             </div>
             <h3 class="font-bold text-gray-400 mb-1">Your Organisation Here</h3>
             <p class="text-sm text-gray-400">
-              We're looking for educational institutions and non-profits who share our mission of open access learning.
+              We're looking for educational institutions and non-profits who want people to learn by asking, contributing, and building together.
             </p>
           </div>
 
@@ -318,7 +381,7 @@ defmodule DialecticWeb.AboutLive do
             </div>
             <h3 class="font-bold text-gray-400 mb-1">Partner With Us</h3>
             <p class="text-sm text-gray-400">
-              Join a growing community dedicated to improving discourse and critical thinking through technology.
+              Join a growing community dedicated to better questions, shared references, and collaborative critical thinking.
             </p>
           </div>
         </div>
@@ -442,13 +505,13 @@ defmodule DialecticWeb.AboutLive do
             </div>
             <div class="space-y-4 text-gray-700 leading-relaxed text-sm">
               <p>
-                Tom created RationalGrid out of a conviction that AI could do much more than answer questions in a linear chat — it could help people actually think. The idea was to build a tool where every response becomes a box in a living knowledge map, letting users branch, compare, and expand ideas visually rather than scrolling through walls of text.
+                Tom created RationalGrid out of a conviction that AI could do much more than answer questions in a linear chat — it could help people actually think together. The idea was to build a tool where every response becomes a box in a living knowledge map, letting users branch, compare, challenge, and extend ideas visually rather than scrolling through walls of text.
               </p>
               <p>
                 As the sole developer, Tom designed and built the entire platform from the ground up — the real-time collaborative graph engine, the AI integration layer, the presentation mode, export system, and everything in between. The stack is Elixir and Phoenix LiveView, chosen for their strengths in real-time, concurrent applications.
               </p>
               <p>
-                Tom's background spans software engineering and a long-standing interest in philosophy and critical thinking. RationalGrid is where those two worlds meet: a tool built with care to help people reason better, together.
+                Tom's background spans software engineering and a long-standing interest in philosophy and critical thinking. RationalGrid is where those two worlds meet: a tool built with care to help people reason better together, and to make each person's learning journey useful to the next person.
               </p>
             </div>
             <div class="mt-4">
@@ -699,7 +762,7 @@ defmodule DialecticWeb.AboutLive do
               <h3 class="font-bold text-gray-900">Google Gemini</h3>
             </div>
             <p class="text-sm text-gray-600 leading-relaxed">
-              AI models generate branching responses, summaries, pros and cons, and comparative analysis — turning questions into rich knowledge maps.
+              AI models generate branching responses, summaries, pros and cons, and comparative analysis — turning questions into knowledge maps people can keep questioning and extending.
             </p>
           </div>
         </div>
@@ -872,9 +935,9 @@ defmodule DialecticWeb.AboutLive do
     <%!-- 11. CTA / Footer --%>
     <section class="bg-gradient-to-br from-[#3a0ca3] to-[#4361ee] py-20 text-white">
       <div class="mx-auto max-w-3xl px-6 text-center">
-        <h2 class="text-3xl sm:text-4xl font-bold mb-4">Ready to expand?</h2>
+        <h2 class="text-3xl sm:text-4xl font-bold mb-4">Ready to contribute?</h2>
         <p class="text-white/70 text-lg mb-10 max-w-xl mx-auto">
-          Start mapping your ideas, challenging assumptions, and building understanding — it's free to use and always will be.
+          Start mapping your ideas, challenging assumptions, and building a reference others can question, follow, and extend — it's free to use and always will be.
         </p>
         <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-14">
           <.link
@@ -884,7 +947,7 @@ defmodule DialecticWeb.AboutLive do
               "bg-white text-[#3a0ca3] shadow-lg hover:bg-white/95 hover:shadow-xl transition"
             ]}
           >
-            <.icon name="hero-sparkles" class="w-5 h-5" /> Start Expanding
+            <.icon name="hero-sparkles" class="w-5 h-5" /> Start Contributing
           </.link>
           <.link
             navigate={~p"/intro/how"}
