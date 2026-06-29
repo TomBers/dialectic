@@ -86,6 +86,24 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(view, "#featured-#{graph.slug}", "Partner grid")
   end
 
+  test "renders the profile promotion section for visitors", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/")
+
+    assert has_element?(view, "#home-profile-section")
+
+    assert has_element?(
+             view,
+             "#home-profile-section",
+             "Your learning has a home people can follow."
+           )
+
+    assert has_element?(
+             view,
+             ~s(#home-profile-section a[href="/users/register"]),
+             "Create your profile"
+           )
+  end
+
   test "logged in users see profile entry in the header without a settings link", %{conn: conn} do
     user = user_fixture()
     {:ok, user} = Accounts.update_user_profile(user, %{username: "headerprofile"})

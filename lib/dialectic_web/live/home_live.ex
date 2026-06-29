@@ -1,5 +1,6 @@
 defmodule DialecticWeb.HomeLive do
   use DialecticWeb, :live_view
+  alias Dialectic.Accounts.User
   alias Dialectic.DbActions.Graphs
   alias Dialectic.Graph.GraphActions
   alias Dialectic.Graph.Vertex
@@ -602,6 +603,194 @@ defmodule DialecticWeb.HomeLive do
                           tag_limit={2}
                         />
                       <% end %>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section
+            id="home-profile-section"
+            class="w-full border-b border-slate-200 bg-[linear-gradient(135deg,#ffffff_0%,#f8fafc_44%,#ecfeff_100%)]"
+          >
+            <div class="mx-auto grid w-full max-w-6xl gap-6 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-[minmax(0,0.92fr)_minmax(360px,0.72fr)] lg:items-center">
+              <div>
+                <div class="inline-flex items-center gap-2 rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-800">
+                  <.icon name="hero-user-group" class="h-3.5 w-3.5" /> Profiles and follows
+                </div>
+                <h2 class="mt-3 max-w-2xl text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
+                  Your learning has a home people can follow.
+                </h2>
+                <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-700 sm:text-base sm:leading-7">
+                  Build a public profile around the ideas you are exploring. Your grids,
+                  highlights, and followed ideas become a visible learning trail, and people can
+                  follow you to keep up with what you are thinking through next.
+                </p>
+
+                <div class="mt-5 grid gap-3 sm:grid-cols-3">
+                  <div class="border border-slate-200 bg-white p-3 shadow-sm">
+                    <.icon name="hero-identification" class="h-5 w-5 text-teal-700" />
+                    <p class="mt-2 text-sm font-semibold text-slate-950">Personal library</p>
+                    <p class="mt-1 text-sm leading-5 text-slate-600">
+                      Public grids and saved highlights collect around your profile.
+                    </p>
+                  </div>
+                  <div class="border border-slate-200 bg-white p-3 shadow-sm">
+                    <.icon name="hero-user-plus" class="h-5 w-5 text-indigo-700" />
+                    <p class="mt-2 text-sm font-semibold text-slate-950">Follow thinkers</p>
+                    <p class="mt-1 text-sm leading-5 text-slate-600">
+                      Follow profiles and grids to track the ideas people keep exploring.
+                    </p>
+                  </div>
+                  <div class="border border-slate-200 bg-white p-3 shadow-sm">
+                    <.icon name="hero-link" class="h-5 w-5 text-amber-700" />
+                    <p class="mt-2 text-sm font-semibold text-slate-950">Shareable memory</p>
+                    <p class="mt-1 text-sm leading-5 text-slate-600">
+                      Every profile, grid, node, and highlight can be opened from its own URL.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="mt-5 flex flex-col gap-2 sm:flex-row">
+                  <%= if @current_user do %>
+                    <.link
+                      navigate={~p"/u/#{User.effective_username(@current_user)}"}
+                      class="inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+                    >
+                      <.icon name="hero-user-circle" class="h-4 w-4" /> View my profile
+                    </.link>
+                  <% else %>
+                    <.link
+                      navigate={~p"/users/register"}
+                      class="inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+                    >
+                      <.icon name="hero-user-plus" class="h-4 w-4" /> Create your profile
+                    </.link>
+                  <% end %>
+                  <.link
+                    href="#explore"
+                    class="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-slate-400 hover:bg-slate-50"
+                  >
+                    <.icon name="hero-magnifying-glass" class="h-4 w-4" /> Explore public grids
+                  </.link>
+                </div>
+              </div>
+
+              <div class="overflow-hidden rounded-[1.75rem] border border-slate-900/10 bg-slate-950 text-white shadow-[0_28px_90px_-54px_rgba(15,23,42,0.95)]">
+                <div class="relative h-24 overflow-hidden border-b border-white/10 bg-orange-500">
+                  <img
+                    src={~p"/images/profile-banners/flat-mountains.svg"}
+                    alt=""
+                    class="absolute inset-0 h-full w-full object-cover"
+                    aria-hidden="true"
+                  />
+                </div>
+                <div class="px-4 pb-4">
+                  <div class="mt-4 flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                      <img
+                        src={~p"/images/tom.webp"}
+                        alt="TomBers's avatar"
+                        class="h-16 w-16 rounded-full border-4 border-white bg-slate-950 object-cover shadow-2xl shadow-slate-950/35"
+                      />
+                      <div class="min-w-0">
+                        <p class="text-2xl font-semibold tracking-tight text-white">TomBers</p>
+                        <p class="text-sm font-semibold text-slate-300">Makes MuDG</p>
+                      </div>
+                    </div>
+                    <span class="inline-flex items-center gap-1 rounded-xl border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white">
+                      <.icon name="hero-user-plus" class="h-3.5 w-3.5" /> Follow
+                    </span>
+                  </div>
+
+                  <p class="mt-4 rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-sm font-medium leading-5 text-slate-100">
+                    You’ll find thinking on Philosophy, Sociology, and History here, spread across
+                    127 public grids.
+                  </p>
+
+                  <div class="mt-4 grid grid-cols-3 divide-x divide-white/10 rounded-xl border border-white/10 bg-white/10 text-center">
+                    <div class="px-2 py-3">
+                      <p class="text-xl font-semibold text-white">127</p>
+                      <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-300">
+                        grids
+                      </p>
+                    </div>
+                    <div class="px-2 py-3">
+                      <p class="text-xl font-semibold text-white">1425</p>
+                      <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-300">
+                        ideas
+                      </p>
+                    </div>
+                    <div class="px-2 py-3">
+                      <p class="text-xl font-semibold text-white">2</p>
+                      <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-300">
+                        followers
+                      </p>
+                    </div>
+                  </div>
+
+                  <div class="mt-4 flex flex-wrap gap-1.5 border-b border-white/10 pb-4">
+                    <span class="rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
+                      Philosophy
+                    </span>
+                    <span class="rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
+                      Sociology
+                    </span>
+                    <span class="rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
+                      History
+                    </span>
+                    <span class="rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
+                      Ethics
+                    </span>
+                    <span class="rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
+                      Psychology
+                    </span>
+                  </div>
+
+                  <div class="mt-4 space-y-2">
+                    <div class="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.06] p-3 shadow-sm">
+                      <span class="mt-0.5 inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-teal-300/15 text-teal-100 ring-1 ring-teal-200/20">
+                        <.icon name="hero-squares-2x2" class="h-4 w-4" />
+                      </span>
+                      <div>
+                        <p class="text-sm font-semibold text-white">
+                          What is the collective subconscious?
+                        </p>
+                        <p class="mt-0.5 text-sm leading-5 text-slate-300">
+                          A public deep dive followers can open and build on.
+                        </p>
+                        <p class="mt-1 text-xs font-medium text-teal-200">
+                          /g/what-is-the-collective-subconscious-637e9a
+                        </p>
+                      </div>
+                    </div>
+
+                    <div class="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.06] p-3 shadow-sm">
+                      <span class="mt-0.5 inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-amber-300/15 text-amber-100 ring-1 ring-amber-200/20">
+                        <.icon name="hero-pencil-square" class="h-4 w-4" />
+                      </span>
+                      <div>
+                        <p class="text-sm font-semibold text-white">Highlighted a passage</p>
+                        <p class="mt-0.5 text-sm leading-5 text-slate-300">
+                          Saved a quote with its source, notes, and share link.
+                        </p>
+                        <p class="mt-1 text-xs font-medium text-amber-200">
+                          unique highlight URL
+                        </p>
+                      </div>
+                    </div>
+
+                    <div class="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.06] p-3 shadow-sm">
+                      <span class="mt-0.5 inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-indigo-300/15 text-indigo-100 ring-1 ring-indigo-200/20">
+                        <.icon name="hero-user-plus" class="h-4 w-4" />
+                      </span>
+                      <div>
+                        <p class="text-sm font-semibold text-white">People can follow along</p>
+                        <p class="mt-0.5 text-sm leading-5 text-slate-300">
+                          Followers see public grids and activity from the ideas you are building.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
