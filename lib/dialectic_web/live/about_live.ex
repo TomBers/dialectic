@@ -326,7 +326,7 @@ defmodule DialecticWeb.AboutLive do
       </div>
     </section>
 
-    <%!-- 4. Partners Section --%>
+    <%!-- 5. Partners Section --%>
     <section class="bg-slate-50 py-20">
       <div class="mx-auto max-w-5xl px-6">
         <div class="text-center mb-14">
