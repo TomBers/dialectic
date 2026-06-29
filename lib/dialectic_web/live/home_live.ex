@@ -45,7 +45,7 @@ defmodule DialecticWeb.HomeLive do
        quick_tags: [],
        editor_picks_expanded: false,
        page_description:
-         "RationalGrid helps people understand complex topics by turning questions into persistent, shared grids they can keep questioning from any idea, sentence, or word."
+         "Every AI chat disappears. RationalGrid turns important conversations into durable, shared thinking grids you can return to, branch from, and build on."
      )}
   end
 
@@ -290,109 +290,157 @@ defmodule DialecticWeb.HomeLive do
           </div>
         <% end %>
         <div class="relative z-10 pb-4 sm:pb-5">
-          <section class="w-full border-b border-slate-200 bg-white" id="start-here">
-            <div class="mx-auto grid w-full max-w-6xl gap-7 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-[minmax(0,1fr)_minmax(320px,430px)] lg:items-stretch lg:py-12">
+          <section
+            class="relative isolate w-full overflow-hidden border-b border-slate-900 bg-slate-950"
+            id="start-here"
+          >
+            <img
+              src={~p"/images/guide/grid-workspace.webp"}
+              alt=""
+              class="absolute inset-0 -z-20 h-full w-full object-cover opacity-[0.14]"
+              aria-hidden="true"
+            />
+            <div class="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(2,6,23,0.99)_0%,rgba(15,23,42,0.93)_46%,rgba(15,23,42,0.76)_100%)]">
+            </div>
+            <div class="absolute inset-x-0 bottom-0 -z-10 h-28 bg-[linear-gradient(180deg,rgba(2,6,23,0)_0%,rgba(2,6,23,1)_100%)]">
+            </div>
+
+            <div class="mx-auto grid w-full max-w-6xl gap-8 px-4 py-9 sm:px-6 sm:py-11 lg:min-h-[610px] lg:grid-cols-[minmax(0,0.95fr)_minmax(360px,0.75fr)] lg:items-center lg:py-12">
               <div class="flex max-w-3xl flex-col justify-center">
-                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-teal-700">
-                  Shared thinking grids
+                <p class="inline-flex w-fit items-center gap-2 rounded-full border border-teal-300/25 bg-teal-300/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-teal-100">
+                  <span class="h-1.5 w-1.5 rounded-full bg-teal-300"></span>
+                  Durable thinking for the AI age
                 </p>
-                <h1 class="mt-3 max-w-2xl text-3xl font-semibold leading-tight tracking-tight text-slate-950 sm:text-5xl">
-                  Understand hard topics, one question at a time.
+                <h1 class="mt-5 max-w-3xl text-4xl font-semibold leading-[0.98] tracking-tight text-white sm:text-6xl">
+                  Every AI chat disappears. Your thinking shouldn't.
                 </h1>
-                <p class="mt-4 max-w-2xl text-sm leading-6 text-slate-700 sm:text-lg sm:leading-7">
-                  Start with any question. RationalGrid builds a persistent map you can keep
-                  questioning from any idea, sentence, or word, alone or with other people.
+                <p class="mt-5 max-w-2xl text-base leading-7 text-slate-200 sm:text-xl sm:leading-8">
+                  RationalGrid turns important AI conversations into a living map of claims,
+                  questions, sources, and next steps, so your best thinking can be returned to,
+                  challenged, shared, and improved.
                 </p>
+                <div class="mt-6 grid gap-2 text-sm text-slate-200 sm:grid-cols-3">
+                  <div class="border-l border-teal-300/50 bg-white/[0.06] px-3 py-2 ring-1 ring-white/10">
+                    <p class="font-semibold text-white">Keep the thread</p>
+                    <p class="mt-0.5 leading-5 text-slate-300">
+                      Save the reasoning, not just the final answer.
+                    </p>
+                  </div>
+                  <div class="border-l border-amber-300/50 bg-white/[0.06] px-3 py-2 ring-1 ring-white/10">
+                    <p class="font-semibold text-white">Branch from any point</p>
+                    <p class="mt-0.5 leading-5 text-slate-300">
+                      Question a claim, sentence, or word later.
+                    </p>
+                  </div>
+                  <div class="border-l border-sky-300/50 bg-white/[0.06] px-3 py-2 ring-1 ring-white/10">
+                    <p class="font-semibold text-white">Build with others</p>
+                    <p class="mt-0.5 leading-5 text-slate-300">
+                      Turn private chats into shared workspaces.
+                    </p>
+                  </div>
+                </div>
 
                 <div
                   id="home-start-panel"
-                  class="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-2 shadow-sm ring-1 ring-white sm:p-3"
+                  class="mt-7 rounded-[1.65rem] border border-white/15 bg-white p-2.5 shadow-[0_28px_90px_-44px_rgba(20,184,166,0.75)] ring-1 ring-white/70 sm:p-3"
                 >
                   <div class="mb-3 flex flex-col gap-1 px-1 sm:flex-row sm:items-center sm:justify-between">
-                    <p class="text-sm font-semibold text-slate-950">Start a grid</p>
+                    <p class="text-sm font-semibold text-slate-950">Preserve a line of thought</p>
                     <p class="text-xs text-slate-600">
-                      Choose the answer level next.
+                      Start with a question, topic, or pasted AI response.
                     </p>
                   </div>
                   <.live_component
                     module={DialecticWeb.NewIdeaFormComp}
                     id="new-idea-form"
                     form={@form}
-                    placeholder="Ask a question or name a topic"
+                    placeholder="What thinking should not disappear?"
                   />
                 </div>
               </div>
 
-              <div
-                id="home-start-story-panel"
-                class="relative overflow-hidden rounded-2xl border border-slate-200 bg-[linear-gradient(135deg,#f8fafc_0%,#ffffff_48%,#f0fdfa_100%)] p-4 shadow-sm ring-1 ring-white lg:h-full"
-              >
-                <div class="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,#4f46e5_0%,#14b8a6_42%,#f59e0b_72%,#ec4899_100%)]">
+              <div class="relative">
+                <div class="absolute -left-4 top-10 hidden h-[82%] w-px bg-[linear-gradient(180deg,rgba(45,212,191,0),rgba(45,212,191,0.75),rgba(251,191,36,0.65),rgba(56,189,248,0))] lg:block">
                 </div>
-                <div class="relative flex h-full flex-col">
+                <div
+                  id="home-start-story-panel"
+                  class="relative overflow-hidden rounded-[1.75rem] border border-white/15 bg-slate-900/70 p-4 shadow-[0_34px_100px_-46px_rgba(0,0,0,0.95)] ring-1 ring-white/10 backdrop-blur-md"
+                >
                   <div class="flex items-center justify-between gap-3">
-                    <p class="text-sm font-semibold text-slate-950">What happens next</p>
+                    <p class="text-sm font-semibold text-white">Why it matters</p>
                     <.link
                       navigate={~p"/intro/how"}
-                      class="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-white/85 px-3 py-1.5 text-sm font-medium text-indigo-700 shadow-sm transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-900"
+                      class="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-sm font-medium text-white shadow-sm transition hover:border-white/25 hover:bg-white/15"
                     >
                       Guide <.icon name="hero-arrow-up-right" class="h-3.5 w-3.5" />
                     </.link>
                   </div>
 
-                  <div class="relative mt-4 grid flex-1 gap-3">
-                    <div
-                      aria-hidden="true"
-                      class="absolute bottom-10 left-[1.35rem] top-10 w-px bg-[linear-gradient(180deg,#c7d2fe_0%,#99f6e4_45%,#fde68a_72%,#fbcfe8_100%)]"
-                    >
+                  <div class="mt-4 overflow-hidden border border-white/10 bg-slate-950 shadow-[0_16px_50px_-34px_rgba(56,189,248,0.8)]">
+                    <img
+                      src={~p"/images/guide/grid-workspace.webp"}
+                      alt="Happiness grid workspace showing connected ideas"
+                      class="aspect-[16/5] w-full object-cover object-top"
+                    />
+                    <div class="flex items-center justify-between gap-3 border-t border-white/10 px-3 py-2 text-xs text-slate-300">
+                      <span class="font-medium text-white">Happiness, mapped and reusable</span>
+                      <span class="hidden text-slate-400 sm:inline">
+                        Graph, branches, notes, and sources stay together
+                      </span>
                     </div>
+                  </div>
 
-                    <div class="relative flex gap-3 rounded-xl border border-indigo-100 bg-white/90 p-3 shadow-sm">
-                      <span class="relative z-10 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200">
+                  <div class="relative mt-4 grid flex-1 gap-3">
+                    <div class="relative flex gap-3 border border-white/10 bg-white/[0.08] p-3 shadow-sm">
+                      <span class="relative z-10 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-indigo-400/15 text-indigo-100 ring-1 ring-indigo-200/25">
                         <.icon name="hero-question-mark-circle" class="h-4 w-4" />
                       </span>
                       <div>
-                        <p class="text-sm font-semibold text-slate-950">Ask anything</p>
-                        <p class="mt-0.5 text-sm leading-5 text-slate-600">
-                          Begin with a topic, claim, quote, source text, person, or confusion.
+                        <p class="text-sm font-semibold text-white">Chats are disposable</p>
+                        <p class="mt-0.5 text-sm leading-5 text-slate-300">
+                          Useful answers vanish into long histories, screenshots, and forgotten tabs.
                         </p>
                       </div>
                     </div>
 
-                    <div class="relative flex gap-3 rounded-xl border border-teal-100 bg-white/90 p-3 shadow-sm">
-                      <span class="relative z-10 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-700 ring-1 ring-teal-200">
+                    <div class="relative flex gap-3 border border-teal-200/20 bg-teal-300/[0.09] p-3 shadow-sm">
+                      <span class="relative z-10 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-teal-300/15 text-teal-100 ring-1 ring-teal-200/25">
                         <.icon name="hero-squares-2x2" class="h-4 w-4" />
                       </span>
                       <div>
-                        <p class="text-sm font-semibold text-slate-950">Grow a lasting grid</p>
-                        <p class="mt-0.5 text-sm leading-5 text-slate-600">
-                          Every answer becomes part of a lasting grid you can return to.
+                        <p class="text-sm font-semibold text-white">
+                          Grids make thinking durable
+                        </p>
+                        <p class="mt-0.5 text-sm leading-5 text-slate-300">
+                          Each useful answer becomes a structured workspace you can return to.
                         </p>
                       </div>
                     </div>
 
-                    <div class="relative flex gap-3 rounded-xl border border-amber-100 bg-white/90 p-3 shadow-sm">
-                      <span class="relative z-10 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-700 ring-1 ring-amber-200">
+                    <div class="relative flex gap-3 border border-amber-200/20 bg-amber-300/[0.08] p-3 shadow-sm">
+                      <span class="relative z-10 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-amber-300/15 text-amber-100 ring-1 ring-amber-200/25">
                         <.icon name="hero-wrench-screwdriver" class="h-4 w-4" />
                       </span>
                       <div>
-                        <p class="text-sm font-semibold text-slate-950">Question any part</p>
-                        <p class="mt-0.5 text-sm leading-5 text-slate-600">
-                          Use critical thinking tools on the whole answer, or zoom in on a
-                          sentence or word.
+                        <p class="text-sm font-semibold text-white">
+                          AI becomes a thinking partner
+                        </p>
+                        <p class="mt-0.5 text-sm leading-5 text-slate-300">
+                          Branch from claims, assumptions, sources, or details instead of starting over.
                         </p>
                       </div>
                     </div>
 
-                    <div class="relative flex gap-3 rounded-xl border border-sky-100 bg-white/90 p-3 shadow-sm">
-                      <span class="relative z-10 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-700 ring-1 ring-sky-200">
+                    <div class="relative flex gap-3 border border-sky-200/20 bg-sky-300/[0.08] p-3 shadow-sm">
+                      <span class="relative z-10 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-sky-300/15 text-sky-100 ring-1 ring-sky-200/25">
                         <.icon name="hero-users" class="h-4 w-4" />
                       </span>
                       <div>
-                        <p class="text-sm font-semibold text-slate-950">Think together</p>
-                        <p class="mt-0.5 text-sm leading-5 text-slate-600">
-                          Think together through questions, and share your ideas so others can
-                          build on them.
+                        <p class="text-sm font-semibold text-white">
+                          Work can outlive one session
+                        </p>
+                        <p class="mt-0.5 text-sm leading-5 text-slate-300">
+                          Share a grid with a class, team, or collaborator so they can build on it too.
                         </p>
                       </div>
                     </div>
@@ -402,7 +450,10 @@ defmodule DialecticWeb.HomeLive do
             </div>
           </section>
 
-          <section id="home-product-preview" class="w-full border-y border-slate-800 bg-slate-950">
+          <section
+            id="home-product-preview"
+            class="w-full border-y border-slate-800 bg-[linear-gradient(180deg,#020617_0%,#050816_58%,#0f172a_100%)]"
+          >
             <% preview_items =
               editor_pick_preview_items(
                 if(@editor_picks_expanded, do: @all_curated_grids, else: @curated_grids),
@@ -410,16 +461,37 @@ defmodule DialecticWeb.HomeLive do
               ) %>
             <div class="mx-auto w-full max-w-6xl px-4 py-7 sm:px-6 sm:py-8">
               <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                <div class="max-w-2xl">
+                <div class="max-w-3xl">
                   <div class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-100">
-                    <.icon name="hero-sparkles" class="h-3.5 w-3.5" /> Product preview
+                    <.icon name="hero-sparkles" class="h-3.5 w-3.5" /> The proof
                   </div>
                   <h2 class="mt-3 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-                    See how a question becomes a shared workspace.
+                    A learning workspace for exploring, questioning, and remembering.
                   </h2>
-                  <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
-                    Inspect a live grid, then browse examples when you want a starting point.
+                  <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-300">
+                    Ask AI for answers, test them with critical thinking tools, highlight any
+                    passage, and keep every grid, node, and highlight tied to your profile with
+                    its own URL.
                   </p>
+                  <div class="mt-4 grid gap-2 text-xs font-medium text-slate-200 sm:grid-cols-2 lg:grid-cols-5">
+                    <div class="inline-flex items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-2">
+                      <.icon name="hero-magnifying-glass" class="h-4 w-4 text-sky-200" />
+                      Explore ideas
+                    </div>
+                    <div class="inline-flex items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-2">
+                      <.icon name="hero-sparkles" class="h-4 w-4 text-teal-200" /> AI answers
+                    </div>
+                    <div class="inline-flex items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-2">
+                      <.icon name="hero-wrench-screwdriver" class="h-4 w-4 text-amber-200" />
+                      Critical tools
+                    </div>
+                    <div class="inline-flex items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-2">
+                      <.icon name="hero-bookmark" class="h-4 w-4 text-indigo-200" /> Profile memory
+                    </div>
+                    <div class="inline-flex items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-2">
+                      <.icon name="hero-link" class="h-4 w-4 text-rose-200" /> Unique URLs
+                    </div>
+                  </div>
                 </div>
                 <.link
                   navigate={~p"/intro/how"}
@@ -437,7 +509,7 @@ defmodule DialecticWeb.HomeLive do
                         <.icon name="hero-eye" class="h-3.5 w-3.5" /> See it in action
                       </div>
                       <h2 class="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
-                        A grid becomes your shared trail through an idea.
+                        A finished grid is a conversation that still works tomorrow.
                       </h2>
                     </div>
 
@@ -476,7 +548,7 @@ defmodule DialecticWeb.HomeLive do
 
                       <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
                         <p class="text-sm leading-6 text-slate-300">
-                          See what a finished grid looks like before you start your own.
+                          See how one topic becomes a durable trail of questions, answers, and branches.
                         </p>
                         <.link
                           navigate={~p"/g/happiness-da4f7e"}
@@ -497,7 +569,7 @@ defmodule DialecticWeb.HomeLive do
                         <.icon name="hero-star" class="h-3.5 w-3.5" /> Curated grids
                       </div>
                       <h2 class="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
-                        Best of existing grids
+                        Thinking worth returning to
                       </h2>
                     </div>
 
@@ -569,7 +641,7 @@ defmodule DialecticWeb.HomeLive do
 
                   <div class="flex flex-wrap items-center justify-between gap-3">
                     <p class="text-sm text-slate-600">
-                      Use this as a reference for what your first grid can become.
+                      Use this as a reference for how a chat can become a lasting workspace.
                     </p>
                     <.link
                       navigate={~p"/g/happiness-da4f7e"}
@@ -629,7 +701,7 @@ defmodule DialecticWeb.HomeLive do
                                 <% @search_term != "" -> %>
                                   Search results for "{@search_term}"
                                 <% true -> %>
-                                  Popular Grids
+                                  Durable Thinking
                               <% end %>
                             </h2>
                             <span class="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-xs font-medium text-white/85">
