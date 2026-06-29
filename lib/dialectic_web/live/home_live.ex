@@ -318,7 +318,7 @@ defmodule DialecticWeb.HomeLive do
                 <p class="mt-5 max-w-2xl text-base leading-7 text-slate-200 sm:text-xl sm:leading-8">
                   RationalGrid turns important AI conversations into a living map of claims,
                   questions, sources, and next steps, so your best thinking can be returned to,
-                  challenged, shared, and improved.
+                  challenged, extended, and improved with other people.
                 </p>
                 <div class="mt-6 grid gap-2 text-sm text-slate-200 sm:grid-cols-3">
                   <div class="border-l border-teal-300/50 bg-white/[0.06] px-3 py-2 ring-1 ring-white/10">
@@ -330,13 +330,13 @@ defmodule DialecticWeb.HomeLive do
                   <div class="border-l border-amber-300/50 bg-white/[0.06] px-3 py-2 ring-1 ring-white/10">
                     <p class="font-semibold text-white">Branch from any point</p>
                     <p class="mt-0.5 leading-5 text-slate-300">
-                      Question a claim, sentence, or word later.
+                      Add a question, insight, or new direction later.
                     </p>
                   </div>
                   <div class="border-l border-sky-300/50 bg-white/[0.06] px-3 py-2 ring-1 ring-white/10">
                     <p class="font-semibold text-white">Build with others</p>
                     <p class="mt-0.5 leading-5 text-slate-300">
-                      Turn private chats into shared workspaces.
+                      Turn private chats into shared learning spaces.
                     </p>
                   </div>
                 </div>
@@ -348,7 +348,7 @@ defmodule DialecticWeb.HomeLive do
                   <div class="mb-3 flex flex-col gap-1 px-1 sm:flex-row sm:items-center sm:justify-between">
                     <p class="text-sm font-semibold text-slate-950">Preserve a line of thought</p>
                     <p class="text-xs text-slate-600">
-                      Start with a question, topic, or pasted AI response.
+                      Start with a question, topic, insight, or pasted AI response.
                     </p>
                   </div>
                   <.live_component
@@ -427,7 +427,7 @@ defmodule DialecticWeb.HomeLive do
                           AI becomes a thinking partner
                         </p>
                         <p class="mt-0.5 text-sm leading-5 text-slate-300">
-                          Branch from claims, assumptions, sources, or details instead of starting over.
+                          Branch from claims, assumptions, sources, or details with your own questions.
                         </p>
                       </div>
                     </div>
@@ -441,7 +441,7 @@ defmodule DialecticWeb.HomeLive do
                           Work can outlive one session
                         </p>
                         <p class="mt-0.5 text-sm leading-5 text-slate-300">
-                          Share a grid with a class, team, or collaborator so they can build on it too.
+                          Share a grid so a class, team, or reader can add their own direction.
                         </p>
                       </div>
                     </div>
@@ -467,12 +467,12 @@ defmodule DialecticWeb.HomeLive do
                     <.icon name="hero-sparkles" class="h-3.5 w-3.5" /> The proof
                   </div>
                   <h2 class="mt-3 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-                    A learning workspace for exploring, questioning, and remembering.
+                    A learning workspace for exploring, contributing, and remembering.
                   </h2>
                   <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-300">
                     Ask AI for answers, test them with critical thinking tools, highlight any
-                    passage, and keep every grid, node, and highlight tied to your profile with
-                    its own URL.
+                    passage, add your own questions and insights, and keep every grid, node,
+                    and highlight tied to your profile with its own URL.
                   </p>
                   <div class="mt-4 grid gap-2 text-xs font-medium text-slate-200 sm:grid-cols-2 lg:grid-cols-5">
                     <div class="inline-flex items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-2">
@@ -483,8 +483,7 @@ defmodule DialecticWeb.HomeLive do
                       <.icon name="hero-sparkles" class="h-4 w-4 text-teal-200" /> AI answers
                     </div>
                     <div class="inline-flex items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-2">
-                      <.icon name="hero-wrench-screwdriver" class="h-4 w-4 text-amber-200" />
-                      Critical tools
+                      <.icon name="hero-plus-circle" class="h-4 w-4 text-amber-200" /> Add direction
                     </div>
                     <div class="inline-flex items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-2">
                       <.icon name="hero-bookmark" class="h-4 w-4 text-indigo-200" /> Profile memory
@@ -510,7 +509,7 @@ defmodule DialecticWeb.HomeLive do
                         <.icon name="hero-eye" class="h-3.5 w-3.5" /> See it in action
                       </div>
                       <h2 class="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
-                        A finished grid is a conversation that still works tomorrow.
+                        A grid is a reference you can keep questioning.
                       </h2>
                     </div>
 
@@ -549,7 +548,7 @@ defmodule DialecticWeb.HomeLive do
 
                       <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
                         <p class="text-sm leading-6 text-slate-300">
-                          See how one topic becomes a durable trail of questions, answers, and branches.
+                          See how one topic becomes a shared trail of answers, questions, and new directions.
                         </p>
                         <.link
                           navigate={~p"/g/happiness-da4f7e"}
@@ -620,12 +619,14 @@ defmodule DialecticWeb.HomeLive do
                   <.icon name="hero-user-group" class="h-3.5 w-3.5" /> Profiles and follows
                 </div>
                 <h2 class="mt-3 max-w-2xl text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
-                  Your learning has a home people can follow.
+                  Turn your learning into a public good.
                 </h2>
                 <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-700 sm:text-base sm:leading-7">
                   Build a public profile around the ideas you are exploring. Your grids,
                   highlights, and followed ideas become a visible learning trail, and people can
-                  follow you to keep up with what you are thinking through next.
+                  follow you to keep up with what you are thinking through next. Like a living
+                  reference page, your journey helps others find a starting point and ask their
+                  own questions, add insights, and push the conversation in new directions.
                 </p>
 
                 <div class="mt-5 grid gap-3 sm:grid-cols-3">
@@ -633,21 +634,21 @@ defmodule DialecticWeb.HomeLive do
                     <.icon name="hero-identification" class="h-5 w-5 text-teal-700" />
                     <p class="mt-2 text-sm font-semibold text-slate-950">Personal library</p>
                     <p class="mt-1 text-sm leading-5 text-slate-600">
-                      Public grids and saved highlights collect around your profile.
+                      Public grids and highlights become entry points others can build from.
                     </p>
                   </div>
                   <div class="border border-slate-200 bg-white p-3 shadow-sm">
                     <.icon name="hero-user-plus" class="h-5 w-5 text-indigo-700" />
                     <p class="mt-2 text-sm font-semibold text-slate-950">Follow thinkers</p>
                     <p class="mt-1 text-sm leading-5 text-slate-600">
-                      Follow profiles and grids to track the ideas people keep exploring.
+                      Follow profiles, then ask new questions from the ideas they uncover.
                     </p>
                   </div>
                   <div class="border border-slate-200 bg-white p-3 shadow-sm">
-                    <.icon name="hero-link" class="h-5 w-5 text-amber-700" />
-                    <p class="mt-2 text-sm font-semibold text-slate-950">Shareable memory</p>
+                    <.icon name="hero-plus-circle" class="h-5 w-5 text-amber-700" />
+                    <p class="mt-2 text-sm font-semibold text-slate-950">Shared contribution</p>
                     <p class="mt-1 text-sm leading-5 text-slate-600">
-                      Every profile, grid, node, and highlight can be opened from its own URL.
+                      Every profile, grid, node, and highlight has a URL for adding context.
                     </p>
                   </div>
                 </div>
@@ -758,7 +759,7 @@ defmodule DialecticWeb.HomeLive do
                           What is the collective subconscious?
                         </p>
                         <p class="mt-0.5 text-sm leading-5 text-slate-300">
-                          A public deep dive followers can open and build on.
+                          A public deep dive followers can question, extend, and build on.
                         </p>
                         <p class="mt-1 text-xs font-medium text-teal-200">
                           /g/what-is-the-collective-subconscious-637e9a
@@ -773,7 +774,7 @@ defmodule DialecticWeb.HomeLive do
                       <div>
                         <p class="text-sm font-semibold text-white">Highlighted a passage</p>
                         <p class="mt-0.5 text-sm leading-5 text-slate-300">
-                          Saved a quote with its source, notes, and share link.
+                          Saved a quote so others can add context, objections, or next steps.
                         </p>
                         <p class="mt-1 text-xs font-medium text-amber-200">
                           unique highlight URL
@@ -788,7 +789,7 @@ defmodule DialecticWeb.HomeLive do
                       <div>
                         <p class="text-sm font-semibold text-white">People can follow along</p>
                         <p class="mt-0.5 text-sm leading-5 text-slate-300">
-                          Followers see public grids and activity from the ideas you are building.
+                          Followers see activity and contribute their own questions from your trail.
                         </p>
                       </div>
                     </div>
