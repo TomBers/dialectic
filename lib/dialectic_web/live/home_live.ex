@@ -42,6 +42,7 @@ defmodule DialecticWeb.HomeLive do
        preview_seed: home_preview_seed(),
        curated_grids: [],
        all_curated_grids: [],
+       editor_pick_grids: [],
        featured_grids: [],
        quick_tags: [],
        page_description:
@@ -63,6 +64,7 @@ defmodule DialecticWeb.HomeLive do
     all_featured_grids = Graphs.list_curated_grids("featured", 20)
 
     curated_grids = preview_curated_grids(all_curated_grids, 4, socket.assigns.preview_seed)
+    editor_pick_grids = editor_pick_grids(all_curated_grids, 2)
 
     featured_grids =
       preview_curated_grids(all_featured_grids, 3, socket.assigns.preview_seed)
@@ -76,6 +78,7 @@ defmodule DialecticWeb.HomeLive do
        popular_tags: popular_tags,
        curated_grids: curated_grids,
        all_curated_grids: all_curated_grids,
+       editor_pick_grids: editor_pick_grids,
        featured_grids: featured_grids,
        page_title: page_title(search_term, tag, category)
      )}
@@ -378,7 +381,7 @@ defmodule DialecticWeb.HomeLive do
                       module={DialecticWeb.NewIdeaFormComp}
                       id="new-idea-form"
                       form={@form}
-                      placeholder="What conversation should we keep?"
+                      placeholder="What should we explore?"
                     />
                   </div>
                 </div>
@@ -436,12 +439,31 @@ defmodule DialecticWeb.HomeLive do
                     <.icon name="hero-sparkles" class="h-3.5 w-3.5" /> The proof
                   </div>
                   <h2 class="mt-3 text-2xl font-semibold text-white sm:text-3xl">
-                    See how one conversation becomes a grid.
+                    See how one inquiry becomes a grid.
                   </h2>
                   <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-300">
                     A grid keeps the answer, the branches, and the next questions together so the
                     work can keep developing after the first AI response.
                   </p>
+                </div>
+                <div class="mt-4 flex gap-2 overflow-x-auto pb-1 text-xs font-medium text-slate-200 sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0 lg:grid-cols-5">
+                  <div class="inline-flex min-w-max items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-2 sm:min-w-0">
+                    <.icon name="hero-map" class="h-4 w-4 text-sky-200" /> Explore the territory
+                  </div>
+                  <div class="inline-flex min-w-max items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-2 sm:min-w-0">
+                    <.icon name="hero-scale" class="h-4 w-4 text-teal-200" /> Test critically
+                  </div>
+                  <div class="inline-flex min-w-max items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-2 sm:min-w-0">
+                    <.icon name="hero-arrow-turn-down-right" class="h-4 w-4 text-amber-200" />
+                    Branch and develop
+                  </div>
+                  <div class="inline-flex min-w-max items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-2 sm:min-w-0">
+                    <.icon name="hero-bookmark" class="h-4 w-4 text-indigo-200" />
+                    Remember what matters
+                  </div>
+                  <div class="inline-flex min-w-max items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-2 sm:min-w-0">
+                    <.icon name="hero-share" class="h-4 w-4 text-rose-200" /> Share the path
+                  </div>
                 </div>
               </div>
 
@@ -505,6 +527,53 @@ defmodule DialecticWeb.HomeLive do
                     </div>
                   </div>
                 </div>
+
+                <%= if @editor_pick_grids != [] do %>
+                  <div class="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-4 ring-1 ring-white/5 sm:p-5">
+                    <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                      <div>
+                        <div class="inline-flex items-center gap-2 rounded-full border border-amber-200/20 bg-amber-300/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-normal text-amber-100">
+                          <.icon name="hero-star" class="h-3.5 w-3.5" /> Editor’s picks
+                        </div>
+                        <h3 class="mt-2 text-xl font-semibold text-white">
+                          Thinking worth returning to
+                        </h3>
+                      </div>
+                      <div class="flex flex-col gap-2 sm:flex-row">
+                        <.link
+                          href="#explore"
+                          class="inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:border-white/25 hover:bg-white/15"
+                        >
+                          <.icon name="hero-magnifying-glass" class="h-4 w-4" /> Browse all
+                        </.link>
+                        <.link
+                          navigate={~p"/gallery"}
+                          class="inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:border-white/25 hover:bg-white/15"
+                        >
+                          <.icon name="hero-photo" class="h-4 w-4" /> Gallery
+                        </.link>
+                      </div>
+                    </div>
+
+                    <div
+                      id="home-editor-picks-list"
+                      class="flex gap-3 overflow-x-auto pb-1 md:grid md:grid-cols-2 md:overflow-visible md:pb-0"
+                    >
+                      <%= for {item, index} <- Enum.with_index(@editor_pick_grids) do %>
+                        <div class="min-w-[17.5rem] md:min-w-0">
+                          <.grid_card
+                            graph={item.graph}
+                            author_name={item.author_name}
+                            id={"home-editor-pick-#{index}-#{item.graph.slug || Integer.to_string(:erlang.phash2(item.graph.title || ""))}"}
+                            variant={:compact}
+                            label="Editor’s pick"
+                            tag_limit={2}
+                          />
+                        </div>
+                      <% end %>
+                    </div>
+                  </div>
+                <% end %>
               </div>
             </div>
           </section>
@@ -1079,6 +1148,31 @@ defmodule DialecticWeb.HomeLive do
   end
 
   defp preview_key(item), do: item.graph.slug || item.graph.title || ""
+
+  defp editor_pick_grids(items, limit) do
+    items = items || []
+    {deep_dives, other_grids} = Enum.split_with(items, &(home_graph_node_count(&1.graph) >= 20))
+
+    (deep_dives ++ other_grids)
+    |> Enum.take(limit)
+  end
+
+  defp home_graph_node_count(%{node_count: count}) when is_integer(count), do: count
+
+  defp home_graph_node_count(graph) do
+    nodes =
+      (Map.get(graph, :data) || %{})
+      |> then(fn data -> Map.get(data, "nodes") || Map.get(data, :nodes) || [] end)
+
+    if is_list(nodes) do
+      Enum.count(nodes, fn node ->
+        compound? = Map.get(node, "compound", Map.get(node, :compound, false))
+        compound? != true
+      end)
+    else
+      0
+    end
+  end
 
   defp display_popular_tags(tags, limit) do
     tags
