@@ -112,8 +112,10 @@ defmodule DialecticWeb.HighlightShareTest do
   end
 
   defp quote_lines(svg) do
-    ~r/<tspan x="112" y="\d+">([^<]+)<\/tspan>/
-    |> Regex.scan(svg)
+    [_, quote_block] = Regex.run(~r/<text fill="#fff7ed"[^>]*>(.*?)<\/text>/s, svg)
+
+    ~r/<tspan\b[^>]*>([^<]+)<\/tspan>/
+    |> Regex.scan(quote_block)
     |> Enum.map(&Enum.at(&1, 1))
   end
 end
