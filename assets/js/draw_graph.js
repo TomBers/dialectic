@@ -334,7 +334,9 @@ export function draw_graph(
 
   const applySelectionContext = (nodeOrId) => {
     try {
-      cy.elements().removeClass("selected-neighbor selected-edge");
+      cy.$(".selected-neighbor, .selected-edge").removeClass(
+        "selected-neighbor selected-edge",
+      );
 
       const selected =
         typeof nodeOrId === "string" ? cy.getElementById(nodeOrId) : nodeOrId;
