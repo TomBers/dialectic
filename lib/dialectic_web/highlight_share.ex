@@ -9,20 +9,15 @@ defmodule DialecticWeb.HighlightShare do
   @image_width 1200
   @image_height 630
   @max_quote_lines 6
-  @image_style_version 11
-  @quote_area_left 138
-  @quote_area_top 176
+  @image_style_version 17
+  @quote_area_left 112
+  @quote_area_top 146
   @quote_area_width 920
-  @quote_area_height 292
-  @title_area_left 96
-  @title_area_top 520
-  @title_area_width 820
-  @title_area_height 62
-  @max_title_lines 2
+  @quote_area_height 350
   @max_svg_quote_chars 800
   @max_svg_title_chars 220
   @sanitize_slice_multiplier 4
-  @quote_font_family "Baskerville, Georgia, serif"
+  @quote_font_family "Georgia, 'Times New Roman', serif"
   @ui_font_family "Arial, Helvetica, sans-serif"
 
   def highlight_for_graph(graph, highlight_id) do
@@ -195,17 +190,13 @@ defmodule DialecticWeb.HighlightShare do
 
   def image_svg(graph, highlight) when is_map(highlight) do
     quote_text = sanitize_text(Map.get(highlight, :selected_text_snapshot), @max_svg_quote_chars)
-    title_layout = title_layout(graph.title)
     quote_layout = quote_layout(quote_text)
-    source_label = "From #{node_title(graph, Map.get(highlight, :node_id))}" |> sanitize_text(78)
 
-    title_markup =
-      title_layout.lines
-      |> Enum.with_index()
-      |> Enum.map_join("", fn {line, index} ->
-        y = title_layout.start_y + index * title_layout.line_gap
-        ~s(<tspan x="#{@title_area_left}" y="#{y}">#{escape_xml(line)}</tspan>)
-      end)
+    source_label =
+      graph
+      |> node_title(Map.get(highlight, :node_id))
+      |> sanitize_text(140)
+      |> truncate_line_to_units(900 / 24)
 
     quote_markup =
       quote_layout.lines
@@ -220,59 +211,94 @@ defmodule DialecticWeb.HighlightShare do
       <title id="title">#{escape_xml(page_title(graph, highlight))}</title>
       <desc id="desc">#{escape_xml(page_description(graph, highlight))}</desc>
       <defs>
-        <linearGradient id="canvas" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#f8fbff" />
-          <stop offset="52%" stop-color="#fbf7ff" />
-          <stop offset="100%" stop-color="#fffaf2" />
+        <linearGradient id="quoteCanvas" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#120f16" />
+          <stop offset="45%" stop-color="#21132a" />
+          <stop offset="100%" stop-color="#08231f" />
         </linearGradient>
-        <radialGradient id="violetHalo" cx="18%" cy="12%" r="72%">
-          <stop offset="0%" stop-color="#ddd6fe" stop-opacity="0.72" />
-          <stop offset="100%" stop-color="#ddd6fe" stop-opacity="0" />
+        <radialGradient id="amberBloom" cx="12%" cy="12%" r="68%">
+          <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.52" />
+          <stop offset="100%" stop-color="#f59e0b" stop-opacity="0" />
         </radialGradient>
-        <radialGradient id="blueHalo" cx="86%" cy="18%" r="68%">
-          <stop offset="0%" stop-color="#bae6fd" stop-opacity="0.68" />
-          <stop offset="100%" stop-color="#bae6fd" stop-opacity="0" />
+        <radialGradient id="tealBloom" cx="88%" cy="18%" r="72%">
+          <stop offset="0%" stop-color="#14b8a6" stop-opacity="0.42" />
+          <stop offset="100%" stop-color="#14b8a6" stop-opacity="0" />
         </radialGradient>
-        <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stop-color="#7c3aed" />
-          <stop offset="52%" stop-color="#4f46e5" />
-          <stop offset="100%" stop-color="#0ea5e9" />
+        <radialGradient id="violetBloom" cx="66%" cy="88%" r="62%">
+          <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.36" />
+          <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0" />
+        </radialGradient>
+        <linearGradient id="quotePanel" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#fff7ed" stop-opacity="0.18" />
+          <stop offset="42%" stop-color="#ffffff" stop-opacity="0.07" />
+          <stop offset="100%" stop-color="#2dd4bf" stop-opacity="0.13" />
+        </linearGradient>
+        <linearGradient id="highlightAccent" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#f59e0b" />
+          <stop offset="48%" stop-color="#fef3c7" />
+          <stop offset="100%" stop-color="#2dd4bf" />
+        </linearGradient>
+        <linearGradient id="brandMark" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#fbbf24" />
+          <stop offset="100%" stop-color="#14b8a6" />
         </linearGradient>
         <filter id="cardShadow" x="-8%" y="-10%" width="116%" height="124%">
-          <feDropShadow dx="0" dy="22" stdDeviation="22" flood-color="#475569" flood-opacity="0.16" />
+          <feDropShadow dx="0" dy="28" stdDeviation="24" flood-color="#000000" flood-opacity="0.36" />
+        </filter>
+        <filter id="softGlow" x="-35%" y="-35%" width="170%" height="170%">
+          <feGaussianBlur stdDeviation="18" result="blur" />
+          <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0.96 0 1 0 0 0.65 0 0 1 0 0.20 0 0 0 0.55 0" />
+          <feMerge>
+            <feMergeNode />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
         </filter>
       </defs>
 
-      <rect width="1200" height="630" fill="url(#canvas)" />
-      <rect width="1200" height="630" fill="url(#violetHalo)" />
-      <rect width="1200" height="630" fill="url(#blueHalo)" />
-      <circle cx="1040" cy="126" r="132" fill="#eef2ff" fill-opacity="0.78" />
-      <circle cx="160" cy="538" r="118" fill="#eff6ff" fill-opacity="0.8" />
+      <rect width="1200" height="630" fill="url(#quoteCanvas)" />
+      <rect width="1200" height="630" fill="url(#amberBloom)" />
+      <rect width="1200" height="630" fill="url(#tealBloom)" />
+      <rect width="1200" height="630" fill="url(#violetBloom)" />
+      <path d="M-40 492 C220 402 356 638 606 500 C820 382 948 438 1240 284" fill="none" stroke="#fbbf24" stroke-opacity="0.18" stroke-width="2" />
+      <path d="M-30 158 C186 250 312 24 548 142 C806 270 944 76 1232 118" fill="none" stroke="#2dd4bf" stroke-opacity="0.18" stroke-width="2" />
+      <circle cx="1032" cy="112" r="168" fill="#14b8a6" fill-opacity="0.12" />
+      <circle cx="158" cy="516" r="152" fill="#f59e0b" fill-opacity="0.11" />
 
-      <rect x="52" y="44" width="1096" height="542" rx="44" fill="#ffffff" fill-opacity="0.94" filter="url(#cardShadow)" />
-      <rect x="52.5" y="44.5" width="1095" height="541" rx="43.5" fill="none" stroke="#e2e8f0" stroke-opacity="0.92" />
-      <rect x="52" y="44" width="1096" height="542" rx="44" fill="#ffffff" fill-opacity="0.36" />
+      <rect x="38" y="34" width="1124" height="562" rx="40" fill="#0b1017" fill-opacity="0.82" filter="url(#cardShadow)" />
+      <rect x="38.5" y="34.5" width="1123" height="561" rx="39.5" fill="none" stroke="#ffffff" stroke-opacity="0.13" />
+      <rect x="58" y="54" width="1084" height="522" rx="30" fill="url(#quotePanel)" stroke="#ffffff" stroke-opacity="0.12" />
 
-      <text x="1092" y="98" text-anchor="end" fill="#475569" fill-opacity="0.86" font-size="17" font-weight="700" font-family="#{@ui_font_family}" letter-spacing="0.15">RationalGrid.ai</text>
-      <line x1="96" y1="134" x2="1104" y2="134" stroke="#e2e8f0" stroke-width="1" stroke-opacity="0.9" />
+      <circle cx="92" cy="92" r="16" fill="url(#brandMark)" filter="url(#softGlow)" />
+      <path d="M92 83 L100 92 L92 101 L84 92 Z" fill="#0b1017" fill-opacity="0.88" />
+      <text x="121" y="98" fill="#f8fafc" fill-opacity="0.9" font-size="17" font-weight="800" font-family="#{@ui_font_family}" letter-spacing="0">RationalGrid.ai</text>
 
-      <text x="82" y="284" fill="#7c3aed" fill-opacity="0.12" font-size="178" font-weight="700" font-family="#{@quote_font_family}">“</text>
-      <text x="1076" y="458" text-anchor="end" fill="#0ea5e9" fill-opacity="0.10" font-size="156" font-weight="700" font-family="#{@quote_font_family}">”</text>
-      <text fill="#111827" font-size="#{quote_layout.font_size}" font-weight="600" font-style="italic" font-family="#{@quote_font_family}" letter-spacing="-0.15" paint-order="stroke" stroke="#ffffff" stroke-width="2" stroke-opacity="0.38">
+      <rect x="86" y="126" width="1028" height="1" fill="#ffffff" fill-opacity="0.13" />
+      <rect x="86" y="514" width="344" height="6" rx="3" fill="url(#highlightAccent)" opacity="0.96" />
+
+      <text x="58" y="286" fill="#fbbf24" fill-opacity="0.10" font-size="198" font-weight="700" font-family="#{@quote_font_family}">“</text>
+      <text x="1142" y="500" text-anchor="end" fill="#2dd4bf" fill-opacity="0.08" font-size="154" font-weight="700" font-family="#{@quote_font_family}">”</text>
+      <text fill="#fff7ed" font-size="#{quote_layout.font_size}" font-weight="700" font-family="#{@quote_font_family}" letter-spacing="0" paint-order="stroke" stroke="#120f16" stroke-width="2.2" stroke-opacity="0.24">
         #{quote_markup}
       </text>
 
-      <rect x="96" y="478" width="230" height="6" rx="3" fill="url(#accent)" opacity="0.92" />
-      <text x="96" y="510" fill="#64748b" font-size="17" font-weight="700" font-family="#{@ui_font_family}" letter-spacing="0.35">#{escape_xml(source_label)}</text>
-      <text fill="#253044" font-size="#{title_layout.font_size}" font-weight="800" font-family="#{@ui_font_family}" letter-spacing="-0.35">
-        #{title_markup}
-      </text>
+      <text x="86" y="552" fill="#f8fafc" fill-opacity="0.9" font-size="24" font-weight="800" font-family="#{@ui_font_family}" letter-spacing="0">#{escape_xml(source_label)}</text>
     </svg>
     """
   end
 
   defp quote_layout(text) do
-    Enum.find_value(candidate_font_sizes(), fn font_size ->
+    text
+    |> quote_layout_candidates()
+    |> Enum.max_by(&quote_layout_score/1, fn -> nil end)
+    |> case do
+      nil -> fallback_quote_layout(text)
+      layout -> layout
+    end
+  end
+
+  defp quote_layout_candidates(text) do
+    candidate_font_sizes()
+    |> Enum.map(fn font_size ->
       lines = wrap_lines_by_width(text, max_line_units(font_size), @max_quote_lines)
       line_gap = quote_line_gap(font_size)
       block_height = quote_block_height(lines, line_gap)
@@ -285,7 +311,23 @@ defmodule DialecticWeb.HighlightShare do
           lines: lines
         }
       end
-    end) || fallback_quote_layout(text)
+    end)
+    |> Enum.reject(&is_nil/1)
+  end
+
+  defp quote_layout_score(%{font_size: font_size, lines: lines}) do
+    max_units = max_line_units(font_size)
+    line_units = Enum.map(lines, &text_units/1)
+    longest_line = Enum.max(line_units, fn -> 1 end)
+    shortest_line = Enum.min(line_units, fn -> 1 end)
+    average_line = Enum.sum(line_units) / max(length(line_units), 1)
+    line_count_penalty = max(length(lines) - 3, 0) * 0.18
+
+    fill_score = average_line / max_units
+    balance_score = shortest_line / max(longest_line, 1)
+    font_score = font_size / 76
+
+    fill_score * 0.45 + balance_score * 0.35 + font_score * 0.2 - line_count_penalty
   end
 
   defp fallback_quote_layout(text) do
@@ -319,38 +361,6 @@ defmodule DialecticWeb.HighlightShare do
         }
       end
     end) || fallback_quote_layout(title_text)
-  end
-
-  defp title_layout(text) do
-    title_text = sanitize_text(text, @max_svg_title_chars)
-
-    Enum.find_value([28, 26, 24, 22, 20], fn font_size ->
-      lines = wrap_lines_by_width(title_text, @title_area_width / font_size, @max_title_lines)
-      line_gap = round(font_size * 1.18)
-      block_height = quote_block_height(lines, line_gap)
-
-      if block_height <= @title_area_height do
-        %{
-          font_size: font_size,
-          line_gap: line_gap,
-          start_y: @title_area_top + font_size,
-          lines: lines
-        }
-      end
-    end) || fallback_title_layout(title_text)
-  end
-
-  defp fallback_title_layout(text) do
-    font_size = 20
-    line_gap = round(font_size * 1.18)
-    lines = wrap_lines_by_width(text, @title_area_width / font_size, @max_title_lines)
-
-    %{
-      font_size: font_size,
-      line_gap: line_gap,
-      start_y: @title_area_top + font_size,
-      lines: lines
-    }
   end
 
   defp candidate_font_sizes, do: [76, 72, 68, 64, 60, 56, 52, 48, 44, 40, 36]
