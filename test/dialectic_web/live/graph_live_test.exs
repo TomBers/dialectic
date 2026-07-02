@@ -151,6 +151,19 @@ defmodule DialecticWeb.GraphLiveTest do
       |> render_submit(%{"grid_chat" => %{"message" => "Hello viewers"}})
 
       assert has_element?(view, "#grid-chat-messages", "Hello viewers")
+      assert has_element?(view, "#grid-chat-toggle[aria-label='Open viewer chat, 1 message']")
+    end
+
+    test "viewer chat toggle count is capped to retained stream messages", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      for index <- 1..101 do
+        view
+        |> element("#grid-chat-form")
+        |> render_submit(%{"grid_chat" => %{"message" => "Chat message #{index}"}})
+      end
+
+      assert has_element?(view, "#grid-chat-toggle[aria-label='Open viewer chat, 100 messages']")
     end
   end
 
