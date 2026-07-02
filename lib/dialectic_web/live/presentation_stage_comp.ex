@@ -202,7 +202,7 @@ defmodule DialecticWeb.PresentationStageComp do
                       class="flex w-full items-start gap-2 rounded-xl border border-white/10 bg-slate-900/60 px-3 py-2 text-left transition hover:border-slate-500 hover:bg-slate-900"
                     >
                       <.icon
-                        name="hero-arrow-turn-down-right"
+                        name="hero-arrow-uturn-right"
                         class="mt-0.5 h-4 w-4 shrink-0 text-slate-400"
                       />
                       <span class="text-sm leading-5 text-slate-200">
