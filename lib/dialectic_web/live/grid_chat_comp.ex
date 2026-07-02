@@ -4,6 +4,8 @@ defmodule DialecticWeb.GridChatComp do
 
   attr :graph_id, :any, required: true
   attr :presence_count, :integer, default: 0
+  attr :has_messages?, :boolean, default: false
+  attr :message_count, :integer, default: 0
   attr :avatar_url, :string, default: nil
   attr :current_user, :any, default: nil
 
@@ -16,12 +18,24 @@ defmodule DialecticWeb.GridChatComp do
         type="button"
         phx-click={JS.dispatch("toggle-panel", to: "#graph-layout", detail: %{id: "chat-drawer"})}
         data-panel-toggle="chat-drawer"
-        class="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-slate-200/90 bg-white/96 px-2.5 py-1.5 text-xs font-semibold text-slate-700 shadow-[0_18px_30px_-24px_rgba(15,23,42,0.55)] ring-1 ring-white/80 backdrop-blur transition hover:border-indigo-200/80 hover:bg-indigo-50/80 hover:text-indigo-800"
+        class={[
+          "pointer-events-auto inline-flex items-center gap-2 rounded-full border px-2.5 py-1.5 text-xs font-semibold shadow-[0_18px_30px_-24px_rgba(15,23,42,0.55)] ring-1 backdrop-blur transition",
+          @has_messages? &&
+            "border-amber-300/90 bg-amber-50/96 text-amber-950 ring-amber-200/90 hover:border-amber-400 hover:bg-amber-100/90 hover:text-amber-950",
+          !@has_messages? &&
+            "border-slate-200/90 bg-white/96 text-slate-700 ring-white/80 hover:border-indigo-200/80 hover:bg-indigo-50/80 hover:text-indigo-800"
+        ]}
         aria-controls="chat-drawer"
-        aria-label="Open viewer chat"
-        title="Open viewer chat"
+        aria-label={chat_toggle_label(@message_count)}
+        title={chat_toggle_label(@message_count)}
       >
-        <span class="relative inline-flex h-8 w-8 items-center justify-center overflow-visible rounded-full bg-gradient-to-br from-indigo-100 via-white to-violet-100 text-indigo-700 ring-1 ring-indigo-200/90 shadow-sm">
+        <span class={[
+          "relative inline-flex h-8 w-8 items-center justify-center overflow-visible rounded-full ring-1 shadow-sm",
+          @has_messages? &&
+            "bg-gradient-to-br from-amber-200 via-white to-orange-100 text-amber-800 ring-amber-300/90",
+          !@has_messages? &&
+            "bg-gradient-to-br from-indigo-100 via-white to-violet-100 text-indigo-700 ring-indigo-200/90"
+        ]}>
           <img
             :if={avatar_url?(@avatar_url)}
             src={@avatar_url}
@@ -32,6 +46,16 @@ defmodule DialecticWeb.GridChatComp do
           <span class="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-slate-900 px-1 text-[9px] font-bold leading-none text-white ring-2 ring-white">
             {@presence_count}
           </span>
+          <span
+            :if={@has_messages?}
+            class="absolute -bottom-0.5 -right-0.5 inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-500 ring-2 ring-white"
+            aria-hidden="true"
+          >
+            <span class="h-1.5 w-1.5 rounded-full bg-white"></span>
+          </span>
+        </span>
+        <span :if={@has_messages?} class="hidden pr-1 text-[11px] font-semibold sm:inline">
+          {message_count_label(@message_count)}
         </span>
       </button>
     </div>
@@ -296,6 +320,15 @@ defmodule DialecticWeb.GridChatComp do
   defp message_body_text(message), do: String.trim(to_string(message.body || ""))
 
   defp avatar_url?(url), do: is_binary(url) and url != ""
+
+  defp chat_toggle_label(message_count) when is_integer(message_count) and message_count > 0,
+    do: "Open viewer chat, #{message_count_label(message_count)}"
+
+  defp chat_toggle_label(_message_count), do: "Open viewer chat"
+
+  defp message_count_label(1), do: "1 message"
+  defp message_count_label(count) when is_integer(count), do: "#{count} messages"
+  defp message_count_label(_count), do: "New messages"
 
   defp chat_avatar_alt(_current_user), do: "Your profile image"
 

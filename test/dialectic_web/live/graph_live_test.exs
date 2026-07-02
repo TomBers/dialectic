@@ -151,6 +151,7 @@ defmodule DialecticWeb.GraphLiveTest do
       |> render_submit(%{"grid_chat" => %{"message" => "Hello viewers"}})
 
       assert has_element?(view, "#grid-chat-messages", "Hello viewers")
+      assert has_element?(view, "#grid-chat-toggle[aria-label='Open viewer chat, 1 message']")
     end
   end
 

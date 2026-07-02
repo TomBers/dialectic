@@ -16,6 +16,8 @@ defmodule DialecticWeb.GridChat do
       chat_avatar_url: nil,
       chat_avatar_loading?: false,
       chat_avatar_loaded?: false,
+      chat_has_messages?: false,
+      chat_message_count: 0,
       chat_form: empty_form()
     }
   end
@@ -90,9 +92,15 @@ defmodule DialecticWeb.GridChat do
   def handle_presence_leave(socket, _presence), do: refresh_presences(socket)
 
   def insert_message(socket, message) do
-    Phoenix.LiveView.stream_insert(socket, :chat_messages, message,
+    socket
+    |> Phoenix.LiveView.stream_insert(:chat_messages, message,
       at: -1,
       limit: @message_stream_limit
+    )
+    |> Phoenix.Component.assign(:chat_has_messages?, true)
+    |> Phoenix.Component.assign(
+      :chat_message_count,
+      (socket.assigns[:chat_message_count] || 0) + 1
     )
   end
 
