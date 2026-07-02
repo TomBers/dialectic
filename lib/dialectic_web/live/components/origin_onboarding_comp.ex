@@ -23,8 +23,7 @@ defmodule DialecticWeb.OriginOnboardingComp do
 
       <section class="divide-y divide-slate-100">
         <.guide_item
-          icon="hero-arrow-turn-down-right"
-          marker="node"
+          icon="hero-arrow-uturn-right"
           icon_classes="bg-sky-50 text-sky-600 ring-sky-100"
           title="Open the first response"
           text="Click the connected box in the map to read the first answer."
