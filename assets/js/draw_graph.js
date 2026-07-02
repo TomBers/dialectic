@@ -332,6 +332,42 @@ export function draw_graph(
   // Disable Cytoscape's default wheel zoom so we fully control it
   cy.userZoomingEnabled(false);
 
+  const applySelectionContext = (nodeOrId) => {
+    try {
+      cy.elements().removeClass("selected-neighbor selected-edge");
+
+      const selected =
+        typeof nodeOrId === "string" ? cy.getElementById(nodeOrId) : nodeOrId;
+
+      if (!selected || selected.length === 0 || selected.isParent()) return;
+
+      const contextualEdges = selected.connectedEdges().filter((edge) => {
+        return (
+          !edge.hasClass("hidden") &&
+          !edge.hasClass("depth-hidden") &&
+          !edge.hasClass("presentation-hidden")
+        );
+      });
+
+      contextualEdges.addClass("selected-edge");
+
+      contextualEdges
+        .connectedNodes()
+        .filter((node) => {
+          return (
+            node.id() !== selected.id() &&
+            !node.isParent() &&
+            !node.hasClass("hidden") &&
+            !node.hasClass("depth-hidden") &&
+            !node.hasClass("presentation-hidden")
+          );
+        })
+        .addClass("selected-neighbor");
+    } catch (_e) {}
+  };
+
+  cy.applySelectionContext = applySelectionContext;
+
   // Hover styles are defined per-type in graph_style.js and applied via "node-hover" class
 
   // Toggle hover class, excluding compound (parent) nodes
@@ -571,6 +607,7 @@ export function draw_graph(
           // Update selection visuals immediately for responsiveness
           cy.elements().removeClass("selected");
           target.addClass("selected");
+          applySelectionContext(target);
 
           // Ensure the target is visible (expand depth/group if needed)
           if (
@@ -880,6 +917,7 @@ export function draw_graph(
     // Update selection visuals immediately for responsiveness (same as keyboard nav)
     cy.elements().removeClass("selected");
     n.addClass("selected");
+    applySelectionContext(n);
 
     // Ensure node is within visible bounds using model-space + zoom/pan; pan minimally if off-screen
     const rect = container.getBoundingClientRect();
@@ -945,6 +983,7 @@ export function draw_graph(
     }
     if (initial) {
       initial.addClass("selected");
+      applySelectionContext(initial);
     }
     scheduleViewportClamp();
   });

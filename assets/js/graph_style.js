@@ -2,13 +2,13 @@ import { INDIGO_500 } from "./colors.js";
 
 const defaultNodeStyle = {
   text: "#1f2937", // gray-800
-  background: "#ffffff",
-  border: "#d1d5db", // gray-300 (strengthened from gray-200 for better node definition)
-  hoverBackground: "#eef2ff", // indigo-50 — clearer interactive hover cue
-  hoverBorder: "#6366f1", // indigo-500
+  background: "#fffdf8",
+  border: "#cbd5e1", // slate-300
+  hoverBackground: "#f0fdfa", // teal-50
+  hoverBorder: "#14b8a6", // teal-500
   selectedText: "#1f2937", // keep dark text for readability
-  selectedBackground: "#e5e7eb", // gray-200 — visible tint, high contrast (11.86:1)
-  selectedBorder: "#4b5563", // gray-600 — stronger selection indicator
+  selectedBackground: "#e6fffb",
+  selectedBorder: "#0f766e", // teal-700 — stronger selection indicator
 };
 
 // Modern color palette — backgrounds at *-100 for visible type tinting,
@@ -298,23 +298,32 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
         "line-height": isCompact ? 1.2 : 1.45,
 
         /* aesthetics ------------------------------------------------------ */
-        shape: "rectangle",
-        "corner-radius": isCompact ? 6 : 12,
-        "border-width": isCompact ? 0.75 : 1.5,
-        "border-color": "#d1d5db", // gray-300 (strengthened from gray-200)
-        "background-color": "#ffffff",
+        shape: "roundrectangle",
+        "corner-radius": isCompact ? 9 : 16,
+        "border-width": isCompact ? 1 : 1.75,
+        "border-color": "#cbd5e1",
+        "background-color": "#fffdf8",
+        "background-opacity": 0.98,
         color: "#1f2937",
+        "text-outline-width": isCompact ? 0 : 1,
+        "text-outline-color": "rgba(255,255,255,0.62)",
+        "text-outline-opacity": isCompact ? 0 : 0.65,
 
         /* drop shadow via ghost — gives nodes a floating-card feel */
         ghost: "yes",
         "ghost-offset-x": isCompact ? 1 : 2,
-        "ghost-offset-y": isCompact ? 1 : 2,
-        "ghost-opacity": 0.08,
+        "ghost-offset-y": isCompact ? 2 : 4,
+        "ghost-opacity": isCompact ? 0.08 : 0.14,
+        "shadow-blur": isCompact ? 8 : 18,
+        "shadow-color": "#0f172a",
+        "shadow-opacity": isCompact ? 0.08 : 0.12,
+        "shadow-offset-x": 0,
+        "shadow-offset-y": isCompact ? 1 : 5,
 
         /* smooth transitions for hover / select state changes */
         "transition-property":
-          "background-color border-color border-width shadow-blur shadow-color shadow-offset-x shadow-offset-y",
-        "transition-duration": "150ms",
+          "background-color border-color border-width opacity underlay-opacity underlay-padding shadow-blur shadow-opacity shadow-offset-y",
+        "transition-duration": "170ms",
         "transition-timing-function": "ease-in-out-sine",
       },
     },
@@ -322,8 +331,8 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
       selector: "node:active",
       style: {
         "border-width": 3,
-        "border-color": "#3b82f6",
-        "background-color": "#eff6ff",
+        "border-color": "#0f766e",
+        "background-color": "#ecfdf5",
       },
     },
     {
@@ -346,27 +355,27 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
         "font-size": isCompact ? 10 : 11,
         "font-weight": 600,
         "text-transform": "uppercase",
-        color: "#64748b",
+        color: "#475569",
         "text-outline-width": 0,
         "text-outline-opacity": 0,
         "text-opacity": 1,
-        "text-background-color": "#f8fafc",
-        "text-background-opacity": 0.9,
-        "text-background-padding": isCompact ? 2 : 4,
+        "text-background-color": "#ffffff",
+        "text-background-opacity": 0.78,
+        "text-background-padding": isCompact ? 3 : 5,
         "text-background-shape": "roundrectangle",
-        "text-border-color": "#e2e8f0",
-        "text-border-opacity": 0.95,
+        "text-border-color": "#cbd5e1",
+        "text-border-opacity": 0.72,
         "text-border-width": 0.75,
         "text-border-style": "solid",
-        padding: isCompact ? "12px" : "32px",
+        padding: isCompact ? "16px" : "40px",
 
-        "background-opacity": 0.25,
-        "background-color": "#ffffff", // white
-        "border-width": isCompact ? 1 : 2,
-        "border-style": "dashed",
-        "border-color": "#d8e1ea",
+        "background-opacity": 0.2,
+        "background-color": "#f8fafc",
+        "border-width": isCompact ? 1.25 : 2,
+        "border-style": "dotted",
+        "border-color": "#94a3b8",
         shape: "roundrectangle",
-        "corner-radius": isCompact ? 12 : 24,
+        "corner-radius": isCompact ? 16 : 32,
       },
     },
     {
@@ -383,7 +392,7 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
           return dir === "BT" ? 24 : -24;
         },
         padding: isCompact ? "28px" : "56px",
-        color: "#1e293b",
+        color: "#0f172a",
         "text-background-opacity": 0,
         "text-border-width": 0,
         "text-border-opacity": 0,
@@ -428,9 +437,9 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
         shape: "roundrectangle",
         "corner-radius": isCompact ? 14 : 24,
         "background-opacity": 1,
-        "background-color": "#ffffff",
+        "background-color": "#fffdf8",
         "border-width": isCompact ? 1.5 : 2,
-        "border-color": "#e2e8f0",
+        "border-color": "#cbd5e1",
         "border-style": "solid",
 
         /* chevron indicator (right side) */
@@ -455,23 +464,23 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
           if (!isCompact) return 180;
           return getCompactCollapsedWidth(n) - 25;
         },
-        color: "#64748b",
+        color: "#475569",
       },
     },
-    // Edge styling — darkened for better visibility (4.76:1 contrast)
+    // Edge styling — quieter by default, stronger on context/hover
     {
       selector: "edge",
       style: {
-        width: isCompact ? 1 : 1.5,
-        "line-color": "#64748b", // slate-500 (darkened from slate-400 for readability)
+        width: isCompact ? 0.9 : 1.25,
+        "line-color": "#94a3b8",
         "edge-distances": "node-position",
         "curve-style": "bezier",
-        "target-arrow-shape": "triangle-backcurve", // more elegant arrow
-        "target-arrow-color": "#64748b", // slate-500
-        "arrow-scale": isCompact ? 0.6 : 0.8,
-        "control-point-step-size": isCompact ? 25 : 40,
+        "target-arrow-shape": "vee",
+        "target-arrow-color": "#94a3b8",
+        "arrow-scale": isCompact ? 0.55 : 0.72,
+        "control-point-step-size": isCompact ? 28 : 46,
         "control-point-weight": 0.5,
-        opacity: 0.65, // raised from 0.55 for better edge visibility
+        opacity: 0.42,
         /* smooth transition so hover fade-in feels polished */
         "transition-property": "line-color target-arrow-color width opacity",
         "transition-duration": "150ms",
@@ -481,9 +490,9 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
     {
       selector: ".edge-hover",
       style: {
-        width: isCompact ? 2 : 3,
-        "line-color": "#3b82f6", // blue-500
-        "target-arrow-color": "#3b82f6",
+        width: isCompact ? 1.8 : 2.6,
+        "line-color": "#0f766e",
+        "target-arrow-color": "#0f766e",
         "z-index": 9998,
         opacity: 1,
       },
@@ -501,10 +510,14 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
       "border-style": "solid",
       color: defaultNodeStyle.selectedText,
       "underlay-color": defaultNodeStyle.selectedBorder,
-      "underlay-opacity": 0.12,
-      "underlay-padding": isCompact ? 10 : 14,
+      "underlay-opacity": 0.2,
+      "underlay-padding": isCompact ? 12 : 18,
       "underlay-shape": "roundrectangle",
-      "ghost-opacity": 0.22,
+      "ghost-opacity": 0.28,
+      "shadow-blur": isCompact ? 14 : 26,
+      "shadow-opacity": 0.18,
+      "shadow-offset-y": isCompact ? 2 : 7,
+      "z-index": 9997,
     },
   });
 
@@ -516,10 +529,25 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
       "border-width": isCompact ? 2.25 : 3,
       "border-style": "solid",
       "underlay-color": defaultNodeStyle.hoverBorder,
-      "underlay-opacity": 0.08,
-      "underlay-padding": isCompact ? 6 : 10,
+      "underlay-opacity": 0.13,
+      "underlay-padding": isCompact ? 8 : 12,
       "underlay-shape": "roundrectangle",
-      "ghost-opacity": 0.16,
+      "ghost-opacity": 0.22,
+      "shadow-blur": isCompact ? 12 : 22,
+      "shadow-opacity": 0.15,
+      "shadow-offset-y": isCompact ? 2 : 6,
+    },
+  });
+
+  base_style.push({
+    selector: "edge.selected-edge",
+    style: {
+      width: isCompact ? 1.8 : 2.4,
+      "line-color": "#0f766e",
+      "target-arrow-color": "#0f766e",
+      "arrow-scale": isCompact ? 0.62 : 0.86,
+      opacity: 0.86,
+      "z-index": 9996,
     },
   });
 
@@ -546,10 +574,11 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
         "border-style": "solid",
         color: cols[nodeType].text, // keep dark text on hover
         "underlay-color": cols[nodeType].hoverBorder || cols[nodeType].border,
-        "underlay-opacity": 0.1,
-        "underlay-padding": isCompact ? 6 : 10,
+        "underlay-opacity": 0.14,
+        "underlay-padding": isCompact ? 8 : 12,
         "underlay-shape": "roundrectangle",
-        "ghost-opacity": 0.18, // deepen shadow slightly on hover
+        "ghost-opacity": 0.22, // deepen shadow slightly on hover
+        "shadow-opacity": 0.16,
       },
     });
 
@@ -564,10 +593,14 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
         color: cols[nodeType].selectedText,
         /* wide halo well outside the border so it reads as a glow, not a second border */
         "underlay-color": cols[nodeType].selectedBorder,
-        "underlay-opacity": 0.12,
-        "underlay-padding": isCompact ? 10 : 14,
+        "underlay-opacity": 0.2,
+        "underlay-padding": isCompact ? 12 : 18,
         "underlay-shape": "roundrectangle",
-        "ghost-opacity": 0.22,
+        "ghost-opacity": 0.3,
+        "shadow-blur": isCompact ? 14 : 26,
+        "shadow-opacity": 0.2,
+        "shadow-offset-y": isCompact ? 2 : 7,
+        "z-index": 9997,
       },
     });
 
@@ -579,6 +612,20 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
       },
     });
   }
+
+  base_style.push({
+    selector: "node.selected-neighbor",
+    style: {
+      "border-width": isCompact ? 2 : 2.75,
+      "border-style": "solid",
+      "underlay-color": "#14b8a6",
+      "underlay-opacity": 0.075,
+      "underlay-padding": isCompact ? 6 : 10,
+      "underlay-shape": "roundrectangle",
+      "ghost-opacity": 0.18,
+      "shadow-opacity": 0.13,
+    },
+  });
 
   base_style.push({
     selector:
