@@ -47,7 +47,7 @@ defmodule DialecticWeb.HighlightShareTest do
       highlight = %{id: 42}
 
       assert HighlightShare.image_path(graph, highlight) ==
-               "/g/Graph%20Title%20With%20Spaces/highlights/42/share-card.svg?sv=11"
+               "/g/Graph%20Title%20With%20Spaces/highlights/42/share-card.svg?sv=17"
     end
 
     test "fallback image paths include private graph token" do
@@ -67,9 +67,53 @@ defmodule DialecticWeb.HighlightShareTest do
              )
 
       assert URI.decode_query(URI.parse(path).query) == %{
-               "sv" => "11",
+               "sv" => "17",
                "token" => "secret-token"
              }
     end
+  end
+
+  describe "image svg" do
+    test "balances short quote lines across the share card" do
+      graph = %{
+        title: "Capitalism and Schizophrenia (Deleuze and Guattari)",
+        slug: "capitalism-and-schizophrenia-deleuze-and-guattari-e7527d",
+        is_public: true,
+        data: %{
+          "nodes" => [
+            %{
+              "id" => 20,
+              "content" => "# Primary Sources and Structural Mechanisms of the Big Other\n\nBody"
+            }
+          ]
+        }
+      }
+
+      highlight = %{
+        id: 107,
+        node_id: 20,
+        selected_text_snapshot: "The unconscious is that part of the concrete discourse"
+      }
+
+      svg = HighlightShare.image_svg(graph, highlight)
+
+      assert quote_lines(svg) == [
+               "The unconscious is that part",
+               "of the concrete discourse"
+             ]
+
+      refute String.contains?(svg, "HIGHLIGHTED INSIGHT")
+
+      assert String.contains?(
+               svg,
+               ">Primary Sources and Structural Mechanisms of the Big Other</text>"
+             )
+    end
+  end
+
+  defp quote_lines(svg) do
+    ~r/<tspan x="112" y="\d+">([^<]+)<\/tspan>/
+    |> Regex.scan(svg)
+    |> Enum.map(&Enum.at(&1, 1))
   end
 end
