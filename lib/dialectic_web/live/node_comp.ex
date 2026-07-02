@@ -68,13 +68,13 @@ defmodule DialecticWeb.NodeComp do
 
   defp node_title_size_class(%{content: content}) when is_binary(content) do
     case title_text_length(content) do
-      length when length >= 96 -> "text-[15px] sm:text-base md:text-lg"
-      length when length >= 64 -> "text-base sm:text-lg md:text-xl"
-      _length -> "text-lg sm:text-xl md:text-[1.65rem]"
+      length when length >= 96 -> "text-[15px] sm:text-base md:text-[1.05rem]"
+      length when length >= 64 -> "text-base sm:text-[1.05rem] md:text-lg"
+      _length -> "text-lg sm:text-[1.15rem] md:text-[1.35rem]"
     end
   end
 
-  defp node_title_size_class(_node), do: "text-lg sm:text-xl md:text-[1.65rem]"
+  defp node_title_size_class(_node), do: "text-lg sm:text-[1.15rem] md:text-[1.35rem]"
 
   defp title_text_length(content) do
     content
@@ -145,6 +145,8 @@ defmodule DialecticWeb.NodeComp do
                     <%!-- Client-side Markdown rendering via Markdown hook --%>
                     <% origin_meta? =
                       GraphHelpers.origin_branching_disabled?(@node) && is_map(@graph_struct) %>
+                    <% essence = node_essence(@node) %>
+                    <% show_essence? = essence != "" && !origin_meta? %>
                     <h3 class={[
                       "mt-0 flex items-start justify-between gap-4 leading-tight tracking-tight text-gray-900",
                       node_title_size_class(@node),
@@ -232,25 +234,40 @@ defmodule DialecticWeb.NodeComp do
                     </div>
 
                     <div
+                      :if={show_essence?}
+                      id={"node-essence-#{@node.id}"}
+                      class="not-prose mb-4 rounded-xl border border-slate-200 bg-slate-50/90 px-3 py-3 ring-1 ring-white"
+                    >
+                      <div class="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                        <.icon name="hero-light-bulb" class="h-3.5 w-3.5 text-amber-500" />
+                        <span>Essence</span>
+                      </div>
+                      <p class="text-[15px] leading-[1.65] text-slate-800">
+                        {essence}
+                      </p>
+                    </div>
+
+                    <div
                       class="selection-content w-full px-1 pb-2 sm:px-2"
+                      data-has-essence={to_string(show_essence?)}
                       data-children={length(@node.children)}
                       id={"list-detector-" <> @node.id}
                     >
                       <div
                         :if={!GraphHelpers.origin_branching_disabled?(@node)}
-                        class="not-prose mb-2.5 rounded-lg border border-amber-200 bg-amber-50/80 px-2.5 py-1.5 shadow-sm ring-1 ring-amber-100"
+                        class="not-prose mb-3 rounded-lg border border-slate-200 bg-slate-50/80 px-2.5 py-1.5"
                       >
                         <div class="flex items-center gap-2">
-                          <span class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700 ring-1 ring-amber-200">
+                          <span class="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white text-slate-500 ring-1 ring-slate-200">
                             <.icon name="hero-cursor-arrow-rays" class="h-3 w-3" />
                           </span>
                           <div class="min-w-0">
-                            <p class="text-xs leading-4 text-slate-700">
-                              <span class="font-semibold text-slate-950">
-                                Select text for a focused follow-up.
+                            <p class="text-[11px] leading-4 text-slate-500">
+                              <span class="font-medium text-slate-700">
+                                Select any phrase to explore it.
                               </span>
                               <span class="hidden sm:inline">
-                                Highlight any phrase to explore it.
+                                The grid can branch from precise text.
                               </span>
                             </p>
                           </div>
@@ -397,6 +414,101 @@ defmodule DialecticWeb.NodeComp do
       </div>
     </div>
     """
+  end
+
+  defp node_essence(%{content: content}) when is_binary(content) do
+    content
+    |> extract_node_body_content()
+    |> first_readable_markdown_block()
+    |> sanitize_essence_text()
+    |> limit_essence_text(360)
+  end
+
+  defp node_essence(_node), do: ""
+
+  defp extract_node_body_content(content) do
+    normalized_content =
+      content
+      |> to_string()
+      |> String.replace(~r/\r\n|\r/, "\n")
+
+    rest =
+      normalized_content
+      |> String.split("\n")
+      |> Enum.drop(1)
+      |> Enum.join("\n")
+      |> String.trim_leading()
+
+    case String.split(rest, "\n") do
+      [first_line | remaining_lines] ->
+        if String.match?(first_line, ~r/^\s*\#{1,6}\s+\S/) or
+             String.match?(first_line, ~r/^\s*(title|Title)\s*:?\s*/) do
+          Enum.join(remaining_lines, "\n")
+        else
+          rest
+        end
+
+      [] ->
+        rest
+    end
+    |> String.trim()
+  end
+
+  defp first_readable_markdown_block(body) do
+    body
+    |> String.split(~r/\n{2,}/)
+    |> Enum.map(&String.trim/1)
+    |> Enum.find("", &readable_paragraph_block?/1)
+  end
+
+  defp readable_paragraph_block?(""), do: false
+
+  defp readable_paragraph_block?(block) do
+    first_line =
+      block
+      |> String.split("\n", parts: 2)
+      |> List.first()
+      |> to_string()
+
+    not String.match?(first_line, ~r/^\s*(\#{1,6}\s|[-*+]\s+|\d+\.\s+|>\s|```|~~~)/)
+  end
+
+  defp sanitize_essence_text(content) do
+    content
+    |> to_string()
+    |> String.replace(~r/!\[([^\]]*)\]\([^)]+\)/u, "\\1")
+    |> String.replace(~r/\[([^\]]+)\]\([^)]+\)/u, "\\1")
+    |> String.replace(~r/`([^`]+)`/u, "\\1")
+    |> String.replace(~r/^\s*>\s?/mu, "")
+    |> String.replace(~r/^\s*[-*+]\s+/mu, "")
+    |> String.replace(~r/[*_`~#]/u, "")
+    |> String.replace(~r/\s+/, " ")
+    |> String.trim()
+  end
+
+  defp limit_essence_text("", _limit), do: ""
+
+  defp limit_essence_text(text, limit) do
+    two_sentence_summary =
+      text
+      |> String.split(~r/(?<=[.!?])\s+/, parts: 3, trim: true)
+      |> Enum.take(2)
+      |> Enum.join(" ")
+
+    cond do
+      two_sentence_summary != "" and String.length(two_sentence_summary) <= limit ->
+        two_sentence_summary
+
+      String.length(text) <= limit ->
+        text
+
+      true ->
+        text
+        |> String.slice(0, limit)
+        |> String.replace(~r/\s+\S*$/, "")
+        |> String.trim()
+        |> Kernel.<>("...")
+    end
   end
 
   defp graph_tags(%{} = graph) do

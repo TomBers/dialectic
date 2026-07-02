@@ -227,6 +227,11 @@ hooks.GraphLayout = {
     const graphId = this.el.dataset.graphId || "global";
     const validReadingDensities = ["compact", "comfortable", "large"];
     const validReadingFonts = ["sans", "serif"];
+    const defaultReadingFont = validReadingFonts.includes(
+      this.el.dataset.readingFont,
+    )
+      ? this.el.dataset.readingFont
+      : "serif";
     this._bottomMenuStorageKey = `rg:bottom-menu:${graphId}`;
     this._readingDensityStorageKey = `rg:reading-density:${graphId}`;
     this._readingFontStorageKey = `rg:reading-font:${graphId}`;
@@ -263,7 +268,7 @@ hooks.GraphLayout = {
       : "comfortable";
     this.readingFont = validReadingFonts.includes(storedReadingFont)
       ? storedReadingFont
-      : "serif";
+      : defaultReadingFont;
     this._redirectMobileGraphToReader();
     this._applyReadingDensity(this.readingDensity);
     this._applyReadingFont(this.readingFont);
