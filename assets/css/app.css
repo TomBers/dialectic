@@ -102,7 +102,7 @@ html.mode-switch-enter #outline-layout {
         192px 192px,
         192px 192px,
         auto;
-    overflow: hidden;
+    overflow: visible;
 }
 
 #cy.graph-territory-surface::before {
@@ -1266,17 +1266,22 @@ button[type="submit"]:active {
     background: #f3f4f6;
 }
 
-#graph-layout[data-reading-density="compact"] .reading-density-btn[data-reading-density-option="compact"],
-#graph-layout[data-reading-density="comfortable"] .reading-density-btn[data-reading-density-option="comfortable"],
-#graph-layout[data-reading-density="large"] .reading-density-btn[data-reading-density-option="large"] {
+#graph-layout[data-reading-density="compact"]
+    .reading-density-btn[data-reading-density-option="compact"],
+#graph-layout[data-reading-density="comfortable"]
+    .reading-density-btn[data-reading-density-option="comfortable"],
+#graph-layout[data-reading-density="large"]
+    .reading-density-btn[data-reading-density-option="large"] {
     background: #eef2ff;
     border-color: #c7d2fe;
     color: #3730a3;
     box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.2);
 }
 
-#graph-layout[data-reading-font="sans"] .reading-font-btn[data-reading-font-option="sans"],
-#graph-layout[data-reading-font="serif"] .reading-font-btn[data-reading-font-option="serif"] {
+#graph-layout[data-reading-font="sans"]
+    .reading-font-btn[data-reading-font-option="sans"],
+#graph-layout[data-reading-font="serif"]
+    .reading-font-btn[data-reading-font-option="serif"] {
     background: #eef2ff;
     border-color: #c7d2fe;
     color: #3730a3;
@@ -1295,7 +1300,10 @@ button[type="submit"]:active {
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    max-width: var(--rg-read-max-width, 68ch); /* optimal measure: ~60-75 characters per line */
+    max-width: var(
+        --rg-read-max-width,
+        68ch
+    ); /* optimal measure: ~60-75 characters per line */
     width: min(100%, var(--rg-read-max-width, 68ch));
     margin-inline: auto;
 }
@@ -1317,7 +1325,9 @@ button[type="submit"]:active {
 }
 
 /* First rendered markdown paragraph acts as the graph drawer's Essence block. */
-.selection-content [phx-hook="Markdown"][data-body-only="true"] > p:first-of-type {
+.selection-content
+    [phx-hook="Markdown"][data-body-only="true"]
+    > p:first-of-type {
     margin: 0 0 1.05rem;
     border: 1px solid rgba(148, 163, 184, 0.28);
     border-radius: 0.75rem;
