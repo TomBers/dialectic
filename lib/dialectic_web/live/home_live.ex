@@ -454,7 +454,7 @@ defmodule DialecticWeb.HomeLive do
                     <.icon name="hero-scale" class="h-4 w-4 text-teal-200" /> Test critically
                   </div>
                   <div class="inline-flex min-w-max items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-2 sm:min-w-0">
-                    <.icon name="hero-arrow-turn-down-right" class="h-4 w-4 text-amber-200" />
+                    <.icon name="hero-squares-plus" class="h-4 w-4 text-amber-200" />
                     Branch and develop
                   </div>
                   <div class="inline-flex min-w-max items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-2 sm:min-w-0">

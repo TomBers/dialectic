@@ -583,7 +583,7 @@ defmodule DialecticWeb.ActivityLive do
   defp action_icon(%{action: action}) when is_binary(action) do
     cond do
       String.contains?(action, "comment") -> "hero-chat-bubble-left-right"
-      String.contains?(action, "branch") -> "hero-arrow-turn-down-right"
+      String.contains?(action, "branch") -> "hero-squares-plus"
       String.contains?(action, "question") -> "hero-question-mark-circle"
       true -> "hero-bolt"
     end
