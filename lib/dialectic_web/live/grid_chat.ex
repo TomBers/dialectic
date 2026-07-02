@@ -9,6 +9,7 @@ defmodule DialecticWeb.GridChat do
 
   @max_message_length 500
   @message_stream_limit -100
+  @message_count_limit abs(@message_stream_limit)
 
   def default_assigns do
     %{
@@ -100,7 +101,7 @@ defmodule DialecticWeb.GridChat do
     |> Phoenix.Component.assign(:chat_has_messages?, true)
     |> Phoenix.Component.assign(
       :chat_message_count,
-      (socket.assigns[:chat_message_count] || 0) + 1
+      min((socket.assigns[:chat_message_count] || 0) + 1, @message_count_limit)
     )
   end
 
