@@ -137,6 +137,7 @@ html.mode-switch-enter #outline-layout {
 }
 
 #cy.graph-territory-surface #cy-inner {
+    position: relative;
     z-index: 1;
 }
 
@@ -1299,19 +1300,6 @@ button[type="submit"]:active {
     margin-inline: auto;
 }
 
-.selection-content[data-has-essence="true"]
-    [phx-hook="Markdown"][data-body-only="true"]
-    > p:first-child {
-    display: none;
-}
-
-.selection-content[data-has-essence="true"]
-    [phx-hook="Markdown"][data-body-only="true"]
-    > p:first-child
-    + h2 {
-    margin-top: 0.65em;
-}
-
 /* Linear view defaults to the serif reading face for long-form scanning */
 #linear-main-content .selection-content {
     font-family:
@@ -1328,14 +1316,78 @@ button[type="submit"]:active {
     letter-spacing: -0.01em;
 }
 
-/* First paragraph — steady inspection prose, not a full reader lead. */
-.selection-content > p:first-child {
-    font-size: var(--rg-read-lead-size, 1.04em);
-    line-height: var(--rg-read-lead-line-height, 1.65);
+/* First rendered markdown paragraph acts as the graph drawer's Essence block. */
+.selection-content [phx-hook="Markdown"][data-body-only="true"] > p:first-of-type {
+    margin: 0 0 1.05rem;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    border-radius: 0.75rem;
+    background:
+        linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.96)),
+        #0f172a;
+    padding: 0.95rem 1rem;
+    color: #f8fafc; /* slate-50 */
+    font-size: 0.94em;
     font-weight: 400;
-    color: #1f2937; /* gray-800 */
-    margin-top: 0.05em;
-    margin-bottom: 0.95em;
+    line-height: 1.65;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        0 16px 34px rgba(15, 23, 42, 0.14);
+}
+
+.selection-content
+    [phx-hook="Markdown"][data-body-only="true"]
+    > p:first-of-type::before {
+    content: "Essence";
+    display: block;
+    margin-bottom: 0.35rem;
+    color: #fbbf24; /* amber-400 */
+    font-family: var(--rg-read-heading-font-family);
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.selection-content
+    [phx-hook="Markdown"][data-body-only="true"]
+    > p:first-of-type
+    + h2 {
+    margin-top: 0.65em;
+}
+
+.selection-content
+    [phx-hook="Markdown"][data-body-only="true"]
+    > p:first-of-type
+    strong {
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.selection-content
+    [phx-hook="Markdown"][data-body-only="true"]
+    > p:first-of-type
+    a[href] {
+    color: #fde68a; /* amber-200 */
+    text-decoration-color: rgba(253, 230, 138, 0.62);
+}
+
+.selection-content
+    [phx-hook="Markdown"][data-body-only="true"]
+    > p:first-of-type
+    a[href]:hover {
+    color: #fef3c7; /* amber-100 */
+    background-color: rgba(251, 191, 36, 0.12);
+    text-decoration-color: rgba(253, 230, 138, 0.9);
+}
+
+.selection-content
+    [phx-hook="Markdown"][data-body-only="true"]
+    > p:first-of-type
+    code {
+    border-color: rgba(226, 232, 240, 0.18);
+    background: rgba(15, 23, 42, 0.62);
+    color: #e2e8f0;
 }
 
 .selection-content h1 {

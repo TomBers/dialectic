@@ -219,7 +219,7 @@ defmodule DialecticWeb.NodeSearch do
     case String.split(rest, "\n") do
       [first_line | remaining_lines] ->
         if String.match?(first_line, ~r/^\s*\#{1,6}\s+\S/) or
-             String.match?(first_line, ~r/^\s*(title|Title)\s*:?\s*/) do
+             String.match?(first_line, ~r/^\s*title\b\s*:?\s*/i) do
           Enum.join(remaining_lines, "\n")
         else
           rest
