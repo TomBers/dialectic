@@ -230,14 +230,6 @@ defmodule DialecticWeb.GridCardComp do
 
     ~H"""
     <article id={@id} class={card_class(@variant, @featured_index, @primary_tag)}>
-      <.link
-        navigate={graph_path(@graph)}
-        aria-label={"Open " <> @title}
-        class="absolute inset-0 z-10 rounded-[inherit] focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2"
-      >
-        <span class="sr-only">Open {@title}</span>
-      </.link>
-
       <div class={card_header_class(@variant, @graph)} style={card_header_style(@primary_tag)}>
         <svg
           aria-hidden="true"
