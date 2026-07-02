@@ -139,6 +139,18 @@ const constrainViewport = (cy, container) => {
   return true;
 };
 
+const fitVisibleGraph = (cy, padding) => {
+  if (!cy || (typeof cy.destroyed === "function" && cy.destroyed())) {
+    return false;
+  }
+
+  const visibleNodes = cy.nodes().filter(VISIBLE_GRAPH_NODE_FILTER);
+  if (!visibleNodes || visibleNodes.length === 0) return false;
+
+  cy.fit(visibleNodes, padding);
+  return true;
+};
+
 export function draw_graph(
   graph,
   context,
@@ -166,18 +178,19 @@ export function draw_graph(
       : layoutConfig.baseLayout;
 
   // Create a modified layout config for small graphs
+  const initialFitPadding = isSmallGraph ? 200 : 84;
   const layoutOptions =
     options.layoutName === "preset"
       ? {
           name: "preset",
           fit: false,
-          padding: isSmallGraph ? 200 : baseLayoutConfig.padding,
+          padding: initialFitPadding,
         }
       : {
           ...baseLayoutConfig,
           rankDir: graphDirection,
-          // For small graphs, use a larger padding to prevent excessive zoom
-          padding: isSmallGraph ? 200 : baseLayoutConfig.padding,
+          fit: false,
+          padding: initialFitPadding,
         };
 
   const cy = cytoscape({
@@ -244,6 +257,7 @@ export function draw_graph(
   };
   let clampPending = false;
   let clampInProgress = false;
+  let layoutRunning = false;
   let responsiveLabelStylePending = false;
   const refreshResponsiveLabelStyles = ({ immediate = false } = {}) => {
     if (!cy || (typeof cy.destroyed === "function" && cy.destroyed())) {
@@ -280,6 +294,11 @@ export function draw_graph(
       return;
     }
 
+    if (layoutRunning) {
+      clampPending = true;
+      return;
+    }
+
     const runClamp = () => {
       clampPending = false;
       if (
@@ -287,6 +306,11 @@ export function draw_graph(
         !cy ||
         (typeof cy.destroyed === "function" && cy.destroyed())
       ) {
+        return;
+      }
+
+      if (layoutRunning) {
+        clampPending = true;
         return;
       }
 
@@ -309,13 +333,28 @@ export function draw_graph(
   };
 
   // Track layout running to avoid pre-layout panning/centering flicker
-  let layoutRunning = false;
+  let initialGraphFitted = options.skipInitialLayout === true;
   cy.on("layoutstart", () => {
     layoutRunning = true;
   });
   cy.on("layoutstop", () => {
     layoutRunning = false;
-    scheduleViewportClamp();
+    const hadPendingClamp = clampPending;
+    clampPending = false;
+
+    if (!initialGraphFitted) {
+      initialGraphFitted = true;
+      requestAnimationFrame(() => {
+        if (!cy || (typeof cy.destroyed === "function" && cy.destroyed())) return;
+        fitVisibleGraph(cy, initialFitPadding);
+        scheduleViewportClamp({ immediate: hadPendingClamp });
+        refreshResponsiveLabelStyles();
+      });
+      return;
+    }
+
+    scheduleViewportClamp({ immediate: hadPendingClamp });
+    refreshResponsiveLabelStyles();
   });
 
   // Now run the initial layout (only visible nodes are positioned)
@@ -331,6 +370,44 @@ export function draw_graph(
 
   // Disable Cytoscape's default wheel zoom so we fully control it
   cy.userZoomingEnabled(false);
+
+  const applySelectionContext = (nodeOrId) => {
+    try {
+      cy.$(".selected-neighbor, .selected-edge").removeClass(
+        "selected-neighbor selected-edge",
+      );
+
+      const selected =
+        typeof nodeOrId === "string" ? cy.getElementById(nodeOrId) : nodeOrId;
+
+      if (!selected || selected.length === 0 || selected.isParent()) return;
+
+      const contextualEdges = selected.connectedEdges().filter((edge) => {
+        return (
+          !edge.hasClass("hidden") &&
+          !edge.hasClass("depth-hidden") &&
+          !edge.hasClass("presentation-hidden")
+        );
+      });
+
+      contextualEdges.addClass("selected-edge");
+
+      contextualEdges
+        .connectedNodes()
+        .filter((node) => {
+          return (
+            node.id() !== selected.id() &&
+            !node.isParent() &&
+            !node.hasClass("hidden") &&
+            !node.hasClass("depth-hidden") &&
+            !node.hasClass("presentation-hidden")
+          );
+        })
+        .addClass("selected-neighbor");
+    } catch (_e) {}
+  };
+
+  cy.applySelectionContext = applySelectionContext;
 
   // Hover styles are defined per-type in graph_style.js and applied via "node-hover" class
 
@@ -571,6 +648,7 @@ export function draw_graph(
           // Update selection visuals immediately for responsiveness
           cy.elements().removeClass("selected");
           target.addClass("selected");
+          applySelectionContext(target);
 
           // Ensure the target is visible (expand depth/group if needed)
           if (
@@ -880,6 +958,7 @@ export function draw_graph(
     // Update selection visuals immediately for responsiveness (same as keyboard nav)
     cy.elements().removeClass("selected");
     n.addClass("selected");
+    applySelectionContext(n);
 
     // Ensure node is within visible bounds using model-space + zoom/pan; pan minimally if off-screen
     const rect = container.getBoundingClientRect();
@@ -945,6 +1024,7 @@ export function draw_graph(
     }
     if (initial) {
       initial.addClass("selected");
+      applySelectionContext(initial);
     }
     scheduleViewportClamp();
   });

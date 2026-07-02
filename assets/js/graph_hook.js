@@ -331,9 +331,11 @@ const graphHook = {
       if (this.cy) {
         const stateSelected = this.cy.$(":selected");
         const classSelected = this.cy.$(".selected");
+        const contextSelected = this.cy.$(".selected-neighbor, .selected-edge");
 
         stateSelected.unselect();
         classSelected.removeClass("selected");
+        contextSelected.removeClass("selected-neighbor selected-edge");
 
         setTimeout(() => {
           if (!this.cy) return;
@@ -346,6 +348,13 @@ const graphHook = {
 
           stateSelected.select();
           classSelected.addClass("selected");
+          contextSelected.forEach((ele) => {
+            if (ele.isEdge && ele.isEdge()) {
+              ele.addClass("selected-edge");
+            } else {
+              ele.addClass("selected-neighbor");
+            }
+          });
           this.pushEvent("save_screenshot", { image: png });
         }, 200);
       }
@@ -844,6 +853,9 @@ const graphHook = {
             needsReflow = true;
           }
           nodeToCenter.addClass("selected");
+          if (typeof this.cy.applySelectionContext === "function") {
+            this.cy.applySelectionContext(nodeToCenter);
+          }
 
           // Keep the dataset in sync so other consumers (and hooks) can rely on it
           this.el.dataset.node = id;
@@ -2021,6 +2033,9 @@ const graphHook = {
     if (this.cy && currentNode) {
       this.cy.elements().removeClass("selected");
       this.cy.getElementById(currentNode).addClass("selected");
+      if (typeof this.cy.applySelectionContext === "function") {
+        this.cy.applySelectionContext(currentNode);
+      }
     }
   },
 
@@ -2213,6 +2228,9 @@ const graphHook = {
       this.cy.endBatch();
     this.cy.elements().removeClass("selected");
     this.cy.getElementById(node).addClass("selected");
+    if (typeof this.cy.applySelectionContext === "function") {
+      this.cy.applySelectionContext(node);
+    }
     this._syncPresentationState();
 
     // Bind Explore button to always open modal; gather items on demand

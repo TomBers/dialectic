@@ -400,7 +400,7 @@ function renderMdInto(el, askQuestion) {
       const first2 = lines2[0];
       if (
         /^\s*#{1,6}\s+\S/.test(first2) ||
-        /^\s*(title|Title)\s*:?\s*/.test(first2)
+        /^\s*title\b\s*:?\s*/i.test(first2)
       ) {
         md = lines2.slice(1).join("\n");
       } else {

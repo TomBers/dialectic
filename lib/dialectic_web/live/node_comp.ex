@@ -68,13 +68,13 @@ defmodule DialecticWeb.NodeComp do
 
   defp node_title_size_class(%{content: content}) when is_binary(content) do
     case title_text_length(content) do
-      length when length >= 96 -> "text-[15px] sm:text-base md:text-lg"
-      length when length >= 64 -> "text-base sm:text-lg md:text-xl"
-      _length -> "text-lg sm:text-xl md:text-[1.65rem]"
+      length when length >= 96 -> "text-[15px] sm:text-base md:text-[1.05rem]"
+      length when length >= 64 -> "text-base sm:text-[1.05rem] md:text-lg"
+      _length -> "text-lg sm:text-[1.15rem] md:text-[1.35rem]"
     end
   end
 
-  defp node_title_size_class(_node), do: "text-lg sm:text-xl md:text-[1.65rem]"
+  defp node_title_size_class(_node), do: "text-lg sm:text-[1.15rem] md:text-[1.35rem]"
 
   defp title_text_length(content) do
     content
@@ -84,7 +84,7 @@ defmodule DialecticWeb.NodeComp do
     |> List.first()
     |> to_string()
     |> String.replace(~r/^\s*\#{1,6}\s*/, "")
-    |> String.replace(~r/^\s*title\s*:?\s*/i, "")
+    |> String.replace(~r/^\s*title\b\s*:?\s*/i, "")
     |> String.replace("**", "")
     |> String.trim()
     |> String.length()
@@ -238,23 +238,16 @@ defmodule DialecticWeb.NodeComp do
                     >
                       <div
                         :if={!GraphHelpers.origin_branching_disabled?(@node)}
-                        class="not-prose mb-2.5 rounded-lg border border-amber-200 bg-amber-50/80 px-2.5 py-1.5 shadow-sm ring-1 ring-amber-100"
+                        class="not-prose mb-4 mt-1 flex items-center gap-1.5 px-0.5 text-[11px] leading-4 text-slate-500"
                       >
-                        <div class="flex items-center gap-2">
-                          <span class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700 ring-1 ring-amber-200">
-                            <.icon name="hero-cursor-arrow-rays" class="h-3 w-3" />
+                        <span class="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-amber-600/80">
+                          <.icon name="hero-cursor-arrow-rays" class="h-3.5 w-3.5" />
+                        </span>
+                        <p class="min-w-0">
+                          <span class="font-medium text-slate-700">
+                            Select a word or phrase to open a focused branch.
                           </span>
-                          <div class="min-w-0">
-                            <p class="text-xs leading-4 text-slate-700">
-                              <span class="font-semibold text-slate-950">
-                                Select text for a focused follow-up.
-                              </span>
-                              <span class="hidden sm:inline">
-                                Highlight any phrase to explore it.
-                              </span>
-                            </p>
-                          </div>
-                        </div>
+                        </p>
                       </div>
 
                       <div

@@ -88,6 +88,59 @@ html.mode-switch-enter #outline-layout {
 }
 
 /* This file is for your main application CSS */
+/* Graph canvas surface */
+#cy.graph-territory-surface {
+    background:
+        linear-gradient(rgba(15, 23, 42, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(15, 23, 42, 0.035) 1px, transparent 1px),
+        linear-gradient(rgba(20, 184, 166, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(79, 70, 229, 0.03) 1px, transparent 1px),
+        linear-gradient(180deg, #fbfdff 0%, #f6f8fb 48%, #eef7f5 100%);
+    background-size:
+        48px 48px,
+        48px 48px,
+        192px 192px,
+        192px 192px,
+        auto;
+    overflow: visible;
+}
+
+#cy.graph-territory-surface::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+        repeating-linear-gradient(
+            28deg,
+            transparent 0 28px,
+            rgba(15, 23, 42, 0.025) 28px 29px,
+            transparent 29px 62px
+        ),
+        repeating-linear-gradient(
+            -18deg,
+            transparent 0 42px,
+            rgba(20, 184, 166, 0.024) 42px 43px,
+            transparent 43px 96px
+        );
+    opacity: 0.72;
+}
+
+#cy.graph-territory-surface::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    box-shadow: inset 0 0 90px rgba(15, 23, 42, 0.08);
+}
+
+#cy.graph-territory-surface #cy-inner {
+    position: relative;
+    z-index: 1;
+}
+
 /* Make graph nodes feel clickable */
 #cy-inner,
 #cy-inner canvas {
@@ -1155,32 +1208,32 @@ button[type="submit"]:active {
         Georgia, "Times New Roman", serif;
     --rg-read-font-family: var(--rg-read-font-family-sans);
     --rg-read-heading-font-family: var(--rg-read-font-family-sans);
-    --rg-read-font-size: 1.05rem;
-    --rg-read-line-height: 1.76;
-    --rg-read-max-width: 68ch;
-    --rg-read-para-margin: 0.84em;
-    --rg-read-lead-size: 1.07em;
-    --rg-read-lead-line-height: 1.68;
+    --rg-read-font-size: 1.02rem;
+    --rg-read-line-height: 1.7;
+    --rg-read-max-width: 62ch;
+    --rg-read-para-margin: 0.88em;
+    --rg-read-lead-size: 1em;
+    --rg-read-lead-line-height: 1.7;
     --rg-read-letter-spacing: -0.0025em;
     --rg-read-word-spacing: 0.02em;
 }
 
 #graph-layout[data-reading-density="compact"] {
-    --rg-read-font-size: 0.93rem;
-    --rg-read-line-height: 1.58;
-    --rg-read-max-width: 60ch;
-    --rg-read-para-margin: 0.62em;
-    --rg-read-lead-size: 0.98em;
-    --rg-read-lead-line-height: 1.52;
+    --rg-read-font-size: 0.94rem;
+    --rg-read-line-height: 1.6;
+    --rg-read-max-width: 58ch;
+    --rg-read-para-margin: 0.66em;
+    --rg-read-lead-size: 1em;
+    --rg-read-lead-line-height: 1.6;
 }
 
 #graph-layout[data-reading-density="large"] {
-    --rg-read-font-size: 1.2rem;
-    --rg-read-line-height: 1.98;
-    --rg-read-max-width: 74ch;
-    --rg-read-para-margin: 1.08em;
-    --rg-read-lead-size: 1.14em;
-    --rg-read-lead-line-height: 1.84;
+    --rg-read-font-size: 1.14rem;
+    --rg-read-line-height: 1.84;
+    --rg-read-max-width: 66ch;
+    --rg-read-para-margin: 1em;
+    --rg-read-lead-size: 1.04em;
+    --rg-read-lead-line-height: 1.74;
 }
 
 #graph-layout[data-reading-font="serif"] {
@@ -1213,17 +1266,22 @@ button[type="submit"]:active {
     background: #f3f4f6;
 }
 
-#graph-layout[data-reading-density="compact"] .reading-density-btn[data-reading-density-option="compact"],
-#graph-layout[data-reading-density="comfortable"] .reading-density-btn[data-reading-density-option="comfortable"],
-#graph-layout[data-reading-density="large"] .reading-density-btn[data-reading-density-option="large"] {
+#graph-layout[data-reading-density="compact"]
+    .reading-density-btn[data-reading-density-option="compact"],
+#graph-layout[data-reading-density="comfortable"]
+    .reading-density-btn[data-reading-density-option="comfortable"],
+#graph-layout[data-reading-density="large"]
+    .reading-density-btn[data-reading-density-option="large"] {
     background: #eef2ff;
     border-color: #c7d2fe;
     color: #3730a3;
     box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.2);
 }
 
-#graph-layout[data-reading-font="sans"] .reading-font-btn[data-reading-font-option="sans"],
-#graph-layout[data-reading-font="serif"] .reading-font-btn[data-reading-font-option="serif"] {
+#graph-layout[data-reading-font="sans"]
+    .reading-font-btn[data-reading-font-option="sans"],
+#graph-layout[data-reading-font="serif"]
+    .reading-font-btn[data-reading-font-option="serif"] {
     background: #eef2ff;
     border-color: #c7d2fe;
     color: #3730a3;
@@ -1242,7 +1300,10 @@ button[type="submit"]:active {
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    max-width: var(--rg-read-max-width, 68ch); /* optimal measure: ~60-75 characters per line */
+    max-width: var(
+        --rg-read-max-width,
+        68ch
+    ); /* optimal measure: ~60-75 characters per line */
     width: min(100%, var(--rg-read-max-width, 68ch));
     margin-inline: auto;
 }
@@ -1263,21 +1324,87 @@ button[type="submit"]:active {
     letter-spacing: -0.01em;
 }
 
-/* Lead paragraph — larger and slightly heavier, but NOT italic (Inter italic is harder to read at body size) */
-.selection-content > p:first-child {
-    font-size: var(--rg-read-lead-size, 1.04em);
-    line-height: var(--rg-read-lead-line-height, 1.65);
-    font-weight: 500;
-    color: #111827; /* gray-900 */
-    margin-top: 0.15em;
-    margin-bottom: 0.9em;
+/* First rendered markdown paragraph acts as the graph drawer's Essence block. */
+.selection-content
+    [phx-hook="Markdown"][data-body-only="true"]
+    > p:first-of-type {
+    margin: 0 0 1.05rem;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    border-radius: 0.75rem;
+    background:
+        linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.96)),
+        #0f172a;
+    padding: 0.95rem 1rem;
+    color: #f8fafc; /* slate-50 */
+    font-size: 0.94em;
+    font-weight: 400;
+    line-height: 1.65;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        0 16px 34px rgba(15, 23, 42, 0.14);
+}
+
+.selection-content
+    [phx-hook="Markdown"][data-body-only="true"]
+    > p:first-of-type::before {
+    content: "Essence";
+    display: block;
+    margin-bottom: 0.35rem;
+    color: #fbbf24; /* amber-400 */
+    font-family: var(--rg-read-heading-font-family);
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.selection-content
+    [phx-hook="Markdown"][data-body-only="true"]
+    > p:first-of-type
+    + h2 {
+    margin-top: 0.65em;
+}
+
+.selection-content
+    [phx-hook="Markdown"][data-body-only="true"]
+    > p:first-of-type
+    strong {
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.selection-content
+    [phx-hook="Markdown"][data-body-only="true"]
+    > p:first-of-type
+    a[href] {
+    color: #fde68a; /* amber-200 */
+    text-decoration-color: rgba(253, 230, 138, 0.62);
+}
+
+.selection-content
+    [phx-hook="Markdown"][data-body-only="true"]
+    > p:first-of-type
+    a[href]:hover {
+    color: #fef3c7; /* amber-100 */
+    background-color: rgba(251, 191, 36, 0.12);
+    text-decoration-color: rgba(253, 230, 138, 0.9);
+}
+
+.selection-content
+    [phx-hook="Markdown"][data-body-only="true"]
+    > p:first-of-type
+    code {
+    border-color: rgba(226, 232, 240, 0.18);
+    background: rgba(15, 23, 42, 0.62);
+    color: #e2e8f0;
 }
 
 .selection-content h1 {
     font-family: var(--rg-read-heading-font-family);
     margin-top: 0.25em;
     margin-bottom: 0.5em;
-    font-size: 1.8rem;
+    font-size: 1.55rem;
     line-height: 1.2;
     font-weight: 800;
     letter-spacing: -0.01em;
@@ -1288,7 +1415,7 @@ button[type="submit"]:active {
     font-family: var(--rg-read-heading-font-family);
     margin-top: 1.4em;
     margin-bottom: 0.5em;
-    font-size: 1.25rem;
+    font-size: 1.16rem;
     font-weight: 700;
     line-height: 1.25;
     padding-left: 0.6em;
@@ -1299,7 +1426,7 @@ button[type="submit"]:active {
     font-family: var(--rg-read-heading-font-family);
     margin-top: 1.2em;
     margin-bottom: 0.4em;
-    font-size: 1.1rem;
+    font-size: 1.04rem;
     font-weight: 600;
     line-height: 1.3;
     color: #1f2937; /* gray-800 */
@@ -1541,8 +1668,14 @@ button[type="submit"]:active {
     background-color: rgba(224, 231, 255, 0.7); /* indigo-100 tinted */
 }
 
-/* Domain badges inside selection-content — slightly bolder */
+/* Domain badges inside selection-content — quiet by default, visible on hover */
 .selection-content .link-domain {
+    color: #94a3b8; /* slate-400 */
+    background: #f8fafc; /* slate-50 */
+    border-color: #e2e8f0; /* slate-200 */
+}
+
+.selection-content a[href]:hover .link-domain {
     color: #6366f1; /* indigo-500 */
     background: #eef2ff; /* indigo-50 */
     border-color: #c7d2fe; /* indigo-200 */

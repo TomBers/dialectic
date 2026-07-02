@@ -158,35 +158,35 @@ defmodule DialecticWeb.WorkspaceBarComp do
 
   defp bar_classes(true) do
     [
-      "flex w-full max-w-full items-center gap-1.5 rounded-[0.95rem] border border-slate-200/90 bg-white/98 px-1 py-1 shadow-[0_10px_24px_-20px_rgba(15,23,42,0.35)] sm:inline-flex sm:w-auto sm:flex-wrap sm:justify-start sm:gap-1 sm:rounded-[1.05rem] sm:shadow-[0_14px_30px_-22px_rgba(15,23,42,0.45)]"
+      "flex w-full max-w-full items-center gap-1.5 rounded-[0.95rem] border border-slate-300 bg-slate-50/95 px-1 py-1 ring-1 ring-white/80 sm:inline-flex sm:w-auto sm:flex-wrap sm:justify-start sm:gap-1 sm:rounded-[1.05rem]"
     ]
   end
 
   defp bar_classes(false) do
     [
-      "flex w-full max-w-full items-center gap-2 rounded-[1.2rem] border border-slate-200/90 bg-white/98 px-1.5 py-1.5 shadow-[0_10px_24px_-20px_rgba(15,23,42,0.35)] sm:inline-flex sm:w-auto sm:flex-wrap sm:justify-start sm:rounded-[1.35rem] sm:px-2 sm:py-2 sm:shadow-[0_14px_30px_-22px_rgba(15,23,42,0.45)]"
+      "flex w-full max-w-full items-center gap-2 rounded-[1.2rem] border border-slate-300 bg-slate-50/95 px-1.5 py-1.5 ring-1 ring-white/80 sm:inline-flex sm:w-auto sm:flex-wrap sm:justify-start sm:rounded-[1.35rem] sm:px-2 sm:py-2"
     ]
   end
 
   defp segment_classes(true) do
-    "hidden items-center gap-0.5 rounded-[0.8rem] bg-slate-100 p-0.5 ring-1 ring-inset ring-slate-200/80 sm:inline-flex"
+    "hidden items-center gap-0.5 rounded-[0.8rem] bg-white p-0.5 ring-1 ring-inset ring-slate-300/90 sm:inline-flex"
   end
 
   defp segment_classes(false) do
-    "hidden items-center gap-1 rounded-[1rem] bg-slate-100 p-1 ring-1 ring-inset ring-slate-200/80 sm:inline-flex"
+    "hidden items-center gap-1 rounded-[1rem] bg-white p-1 ring-1 ring-inset ring-slate-300/90 sm:inline-flex"
   end
 
   defp mode_link_classes(true, true) do
     [
       "inline-flex h-7 items-center gap-1.5 rounded-[0.65rem] px-2 text-xs font-semibold shadow-sm transition",
-      "bg-white text-slate-950 ring-1 ring-slate-200/90"
+      "bg-slate-950 text-white ring-1 ring-slate-950"
     ]
   end
 
   defp mode_link_classes(true, false) do
     [
       "inline-flex h-8 items-center gap-2 rounded-[0.8rem] px-3 text-sm font-semibold shadow-sm transition",
-      "bg-white text-slate-950 ring-1 ring-slate-200/90"
+      "bg-slate-950 text-white ring-1 ring-slate-950"
     ]
   end
 
@@ -208,24 +208,24 @@ defmodule DialecticWeb.WorkspaceBarComp do
   defp mode_label_classes(false), do: "inline"
 
   defp divider_classes(true) do
-    "hidden h-4 w-px bg-slate-200 sm:block"
+    "hidden h-4 w-px bg-slate-300 sm:block"
   end
 
   defp divider_classes(false) do
-    "hidden h-6 w-px bg-slate-200 sm:block"
+    "hidden h-6 w-px bg-slate-300 sm:block"
   end
 
   defp action_button_classes(true) do
     [
-      "inline-flex h-8 w-8 shrink-0 items-center justify-center gap-1 rounded-full border border-slate-200 bg-slate-50 text-xs font-medium text-slate-600 transition duration-150 sm:h-7 sm:w-auto sm:justify-start sm:rounded-[0.7rem] sm:border-transparent sm:bg-transparent sm:px-2",
-      "hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900"
+      "inline-flex h-8 w-8 shrink-0 items-center justify-center gap-1 rounded-full border border-slate-200 bg-white text-xs font-semibold text-slate-700 transition duration-150 sm:h-7 sm:w-auto sm:justify-start sm:rounded-[0.7rem] sm:border-slate-200 sm:px-2.5",
+      "hover:border-slate-300 hover:bg-white hover:text-slate-950"
     ]
   end
 
   defp action_button_classes(false) do
     [
-      "inline-flex h-9 w-9 shrink-0 items-center justify-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 text-sm font-medium text-slate-600 transition duration-150 sm:w-auto sm:justify-start sm:rounded-[0.95rem] sm:border-transparent sm:bg-transparent sm:px-3",
-      "hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900"
+      "inline-flex h-9 w-9 shrink-0 items-center justify-center gap-1.5 rounded-full border border-slate-200 bg-white text-sm font-semibold text-slate-700 transition duration-150 sm:w-auto sm:justify-start sm:rounded-[0.95rem] sm:border-slate-200 sm:px-3",
+      "hover:border-slate-300 hover:bg-white hover:text-slate-950"
     ]
   end
 

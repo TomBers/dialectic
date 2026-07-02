@@ -69,6 +69,7 @@ defmodule DialecticWeb.OriginOnboardingComp do
   end
 
   attr :icon, :string, required: true
+  attr :marker, :string, default: "icon"
   attr :icon_classes, :string, required: true
   attr :title, :string, required: true
   attr :text, :string, required: true
@@ -77,12 +78,24 @@ defmodule DialecticWeb.OriginOnboardingComp do
     ~H"""
     <div class="py-2.5 first:pt-0 last:pb-0">
       <div class="flex items-center gap-3">
-        <div class={[
-          "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full ring-1",
-          @icon_classes
-        ]}>
-          <.icon name={@icon} class="h-4 w-4" />
-        </div>
+        <%= if @marker == "node" do %>
+          <div
+            class="inline-flex h-8 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-[#fffdf8] shadow-[0_2px_0_rgba(15,23,42,0.13),0_8px_18px_rgba(15,23,42,0.08)] ring-1 ring-white"
+            aria-hidden="true"
+          >
+            <span class="flex w-5 flex-col gap-1">
+              <span class="h-1 rounded-full bg-slate-700/75"></span>
+              <span class="h-1 rounded-full bg-slate-400/80"></span>
+            </span>
+          </div>
+        <% else %>
+          <div class={[
+            "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full ring-1",
+            @icon_classes
+          ]}>
+            <.icon name={@icon} class="h-4 w-4" />
+          </div>
+        <% end %>
 
         <div class="min-w-0">
           <p class="text-sm font-semibold leading-5 text-slate-900">{@title}</p>
