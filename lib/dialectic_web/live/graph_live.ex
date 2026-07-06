@@ -128,7 +128,9 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_params(_params, _uri, socket), do: {:noreply, socket}
+  def handle_params(_params, _uri, socket) do
+    {:noreply, socket}
+  end
 
   @impl true
   def mount(%{"graph_name" => graph_id_uri} = params, _session, socket) do

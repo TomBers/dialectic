@@ -5,6 +5,7 @@ defmodule DialecticWeb.WorkspaceBarComp do
   attr :mode, :atom, required: true
   attr :graph_struct, :map, required: true
   attr :node_id, :string, default: nil
+  attr :ask_node_id, :string, default: nil
   attr :nav_params, :list, default: []
   attr :show_search, :boolean, default: false
   attr :search_click, :any, default: nil
@@ -24,26 +25,32 @@ defmodule DialecticWeb.WorkspaceBarComp do
   attr :compact, :boolean, default: false
 
   def workspace_bar(assigns) do
-    node_id =
-      case assigns.node_id do
-        nil -> nil
-        value -> to_string(value)
-      end
+    node_id = normalize_node_id(assigns.node_id)
+    ask_node_id = normalize_node_id(assigns.ask_node_id) || node_id
 
     assigns =
       assigns
       |> assign(:node_id, node_id)
+      |> assign(:ask_node_id, ask_node_id)
       |> assign(:reader_path, graph_path(assigns.graph_struct, node_id, assigns.nav_params))
       |> assign(:graph_path, graph_editor_path(assigns.graph_struct, node_id, assigns.nav_params))
+      |> assign(
+        :ask_path,
+        graph_editor_path(
+          assigns.graph_struct,
+          ask_node_id,
+          [{"focus", "ask"} | assigns.nav_params]
+        )
+      )
 
     ~H"""
     <div id={@id} class={bar_classes(@compact)}>
       <div class="sr-only">Workspace actions</div>
 
       <div class={segment_classes(@compact)}>
-        <div class="sr-only">Switch between reader and grid views</div>
+        <div class="sr-only">Switch between read and edit views</div>
         <div class="sr-only">Current view</div>
-        <div class="sr-only">{if @mode == :reader, do: "Reader", else: "Grid"}</div>
+        <div class="sr-only">{if @mode == :reader, do: "Read", else: "Edit"}</div>
 
         <div class="inline-flex items-center gap-1">
           <.link
@@ -56,7 +63,7 @@ defmodule DialecticWeb.WorkspaceBarComp do
             title="Open reader view"
           >
             <.icon name="hero-document-text" class="h-4 w-4" />
-            <span class={mode_label_classes(@compact)}>Reader</span>
+            <span class={mode_label_classes(@compact)}>Read</span>
           </.link>
 
           <.link
@@ -66,10 +73,10 @@ defmodule DialecticWeb.WorkspaceBarComp do
             data-view-transition-direction="graph"
             aria-current={if(@mode == :graph, do: "page", else: nil)}
             class={mode_link_classes(@mode == :graph, @compact)}
-            title="Open grid view"
+            title="Open edit view"
           >
-            <.icon name="hero-squares-2x2" class="h-4 w-4" />
-            <span class={mode_label_classes(@compact)}>Grid</span>
+            <.icon name="hero-pencil-square" class="h-4 w-4" />
+            <span class={mode_label_classes(@compact)}>Edit</span>
           </.link>
         </div>
       </div>
@@ -77,6 +84,19 @@ defmodule DialecticWeb.WorkspaceBarComp do
       <div class={divider_classes(@compact)}></div>
 
       <div class="ml-auto flex flex-wrap items-center gap-1 sm:ml-0">
+        <.link
+          :if={@mode == :reader and is_binary(@ask_node_id) and @ask_node_id != ""}
+          id={"#{@id}-ask-question"}
+          navigate={@ask_path}
+          data-view-transition="mode-switch"
+          data-view-transition-direction="graph"
+          class={ask_question_link_classes(@compact)}
+          title="Ask a question from this point"
+        >
+          <.icon name="hero-question-mark-circle" class="h-4 w-4" />
+          <span>Ask a question</span>
+        </.link>
+
         <button
           :if={@mobile_aux_click && @mobile_aux_label}
           id={@mobile_aux_id}
@@ -156,51 +176,68 @@ defmodule DialecticWeb.WorkspaceBarComp do
     """
   end
 
+  defp normalize_node_id(nil), do: nil
+  defp normalize_node_id(value), do: to_string(value)
+
   defp bar_classes(true) do
     [
-      "flex w-full max-w-full items-center gap-1.5 rounded-[0.95rem] border border-slate-300 bg-slate-50/95 px-1 py-1 ring-1 ring-white/80 sm:inline-flex sm:w-auto sm:flex-wrap sm:justify-start sm:gap-1 sm:rounded-[1.05rem]"
+      "flex w-full max-w-full items-center gap-1.5 rounded-[0.95rem] border border-indigo-200 bg-indigo-50/80 px-1 py-1 shadow-sm ring-1 ring-white/80 sm:inline-flex sm:w-auto sm:flex-wrap sm:justify-start sm:gap-1 sm:rounded-[1.05rem]"
     ]
   end
 
   defp bar_classes(false) do
     [
-      "flex w-full max-w-full items-center gap-2 rounded-[1.2rem] border border-slate-300 bg-slate-50/95 px-1.5 py-1.5 ring-1 ring-white/80 sm:inline-flex sm:w-auto sm:flex-wrap sm:justify-start sm:rounded-[1.35rem] sm:px-2 sm:py-2"
+      "flex w-full max-w-full items-center gap-2 rounded-[1.2rem] border border-indigo-200 bg-indigo-50/80 px-1.5 py-1.5 shadow-sm ring-1 ring-white/80 sm:inline-flex sm:w-auto sm:flex-wrap sm:justify-start sm:rounded-[1.35rem] sm:px-2 sm:py-2"
     ]
   end
 
   defp segment_classes(true) do
-    "hidden items-center gap-0.5 rounded-[0.8rem] bg-white p-0.5 ring-1 ring-inset ring-slate-300/90 sm:inline-flex"
+    "hidden items-center gap-0.5 rounded-[0.8rem] bg-white/90 p-0.5 ring-1 ring-inset ring-indigo-200 sm:inline-flex"
   end
 
   defp segment_classes(false) do
-    "hidden items-center gap-1 rounded-[1rem] bg-white p-1 ring-1 ring-inset ring-slate-300/90 sm:inline-flex"
+    "hidden items-center gap-1 rounded-[1rem] bg-white/90 p-1 ring-1 ring-inset ring-indigo-200 sm:inline-flex"
   end
 
   defp mode_link_classes(true, true) do
     [
       "inline-flex h-7 items-center gap-1.5 rounded-[0.65rem] px-2 text-xs font-semibold shadow-sm transition",
-      "bg-slate-950 text-white ring-1 ring-slate-950"
+      "bg-indigo-600 text-white ring-1 ring-indigo-600"
     ]
   end
 
   defp mode_link_classes(true, false) do
     [
       "inline-flex h-8 items-center gap-2 rounded-[0.8rem] px-3 text-sm font-semibold shadow-sm transition",
-      "bg-slate-950 text-white ring-1 ring-slate-950"
+      "bg-indigo-600 text-white ring-1 ring-indigo-600"
     ]
   end
 
   defp mode_link_classes(false, true) do
     [
       "inline-flex h-7 items-center gap-1.5 rounded-[0.65rem] px-2 text-xs font-semibold transition",
-      "text-slate-500 hover:bg-white/90 hover:text-slate-900"
+      "text-indigo-700 hover:bg-indigo-100 hover:text-indigo-900"
     ]
   end
 
   defp mode_link_classes(false, false) do
     [
       "inline-flex h-8 items-center gap-2 rounded-[0.8rem] px-3 text-sm font-semibold transition",
-      "text-slate-500 hover:bg-white/90 hover:text-slate-900"
+      "text-indigo-700 hover:bg-indigo-100 hover:text-indigo-900"
+    ]
+  end
+
+  defp ask_question_link_classes(true) do
+    [
+      "hidden h-8 shrink-0 items-center justify-center gap-1.5 rounded-full bg-slate-950 px-3 text-xs font-semibold text-white shadow-sm transition md:inline-flex",
+      "hover:bg-slate-800"
+    ]
+  end
+
+  defp ask_question_link_classes(false) do
+    [
+      "hidden h-9 shrink-0 items-center justify-center gap-1.5 rounded-full bg-slate-950 px-3.5 text-sm font-semibold text-white shadow-sm transition md:inline-flex",
+      "hover:bg-slate-800"
     ]
   end
 

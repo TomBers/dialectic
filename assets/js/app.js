@@ -220,6 +220,7 @@ hooks.GraphLayout = {
     this._reopenSideDrawerAfterPresentation = false;
     this._reopenSideDrawerAfterCombine = false;
     this._mobileOutlineCloseTimer = null;
+    this._askFocusTimer = null;
     this._handleMobileGraphResize = () => {
       this._redirectMobileGraphToReader();
       this._syncOutlineDetailForPanel(this.activePanelId);
@@ -232,7 +233,6 @@ hooks.GraphLayout = {
     )
       ? this.el.dataset.readingFont
       : "serif";
-    this._bottomMenuStorageKey = `rg:bottom-menu:${graphId}`;
     this._readingDensityStorageKey = `rg:reading-density:${graphId}`;
     this._readingFontStorageKey = `rg:reading-font:${graphId}`;
 
@@ -245,7 +245,6 @@ hooks.GraphLayout = {
       return null;
     };
 
-    const storedBottomMenu = readStoredBool(this._bottomMenuStorageKey);
     const storedReadingDensity = (() => {
       try {
         return localStorage.getItem(this._readingDensityStorageKey);
@@ -262,7 +261,6 @@ hooks.GraphLayout = {
     })();
 
     this.sideDrawerOpen = true;
-    this.bottomMenuOpen = storedBottomMenu !== null ? storedBottomMenu : true;
     this.readingDensity = validReadingDensities.includes(storedReadingDensity)
       ? storedReadingDensity
       : "comfortable";
@@ -456,36 +454,6 @@ hooks.GraphLayout = {
       this._applySideDrawerState(shouldOpen);
     });
 
-    this.el.addEventListener("toggle-bottom-menu", () => {
-      const menu = document.getElementById("bottom-menu");
-      const handle = document.getElementById("bottom-menu-handle");
-
-      if (!menu) return;
-
-      const isVisible = menu.classList.contains("visible");
-
-      if (isVisible) {
-        this.bottomMenuOpen = false;
-        menu.classList.remove("scale-100", "opacity-100", "visible");
-        menu.classList.add("scale-90", "opacity-0", "invisible");
-        if (handle) handle.classList.remove("hidden");
-      } else {
-        this.bottomMenuOpen = true;
-        menu.classList.remove("scale-90", "opacity-0", "invisible");
-        menu.classList.add("scale-100", "opacity-100", "visible");
-        if (handle) handle.classList.add("hidden");
-      }
-
-      try {
-        localStorage.setItem(
-          this._bottomMenuStorageKey,
-          String(this.bottomMenuOpen),
-        );
-      } catch (_e) {}
-
-      window.dispatchEvent(new Event("resize"));
-    });
-
     this.el.addEventListener("toggle-mobile-outline", () => {
       const panel = document.getElementById("outline-mobile-nav-panel");
       if (!panel) return;
@@ -498,6 +466,7 @@ hooks.GraphLayout = {
     });
 
     this.restoreState();
+    this._focusAskInputFromUrl();
 
     // ── Presentation localStorage persistence ──────────────────────
     this.handleEvent(
@@ -709,15 +678,22 @@ hooks.GraphLayout = {
   updated() {
     this._redirectMobileGraphToReader();
     this.restoreState();
+    this._focusAskInputFromUrl();
   },
   reconnected() {
     this._redirectMobileGraphToReader();
     this.restoreState();
+    this._focusAskInputFromUrl();
   },
   destroyed() {
     if (this._mobileOutlineCloseTimer) {
       clearTimeout(this._mobileOutlineCloseTimer);
       this._mobileOutlineCloseTimer = null;
+    }
+
+    if (this._askFocusTimer) {
+      clearTimeout(this._askFocusTimer);
+      this._askFocusTimer = null;
     }
 
     if (this._handleMobileGraphResize) {
@@ -736,6 +712,47 @@ hooks.GraphLayout = {
     if (currentPath === mobileReaderPath) return;
 
     window.location.replace(mobileReaderPath);
+  },
+  _focusAskInputFromUrl() {
+    if (this.el.id !== "graph-layout") return;
+
+    const url = new URL(window.location.href);
+    this._pendingAskFocus = url.searchParams.get("focus") === "ask";
+
+    if (!this._pendingAskFocus || this._askFocusTimer) return;
+
+    const focusInput = (attemptsLeft) => {
+      if (!this._pendingAskFocus) return;
+
+      const input = document.getElementById("global-chat-input");
+
+      if (!input || input.disabled) {
+        if (attemptsLeft > 0 && this._pendingAskFocus) {
+          this._askFocusTimer = window.setTimeout(() => {
+            this._askFocusTimer = null;
+            focusInput(attemptsLeft - 1);
+          }, 100);
+        }
+
+        return;
+      }
+
+      input.focus({ preventScroll: true });
+      this._pendingAskFocus = false;
+
+      const cleanUrl = new URL(window.location.href);
+      cleanUrl.searchParams.delete("focus");
+      window.history.replaceState(
+        {},
+        "",
+        `${cleanUrl.pathname}${cleanUrl.search}${cleanUrl.hash}`,
+      );
+    };
+
+    this._askFocusTimer = window.setTimeout(() => {
+      this._askFocusTimer = null;
+      focusInput(10);
+    }, 120);
   },
   _applyMobileOutlineState(shouldOpen) {
     const panel = document.getElementById("outline-mobile-nav-panel");
@@ -818,17 +835,6 @@ hooks.GraphLayout = {
         this.el.dispatchEvent(
           new CustomEvent("toggle-side-drawer", { detail: { force: "close" } }),
         );
-      }
-    }
-
-    // Restore bottom menu state
-    const bottomMenu = document.getElementById("bottom-menu");
-    if (bottomMenu && this.bottomMenuOpen !== undefined) {
-      const isVisible = bottomMenu.classList.contains("visible");
-      if (this.bottomMenuOpen && !isVisible) {
-        this.el.dispatchEvent(new Event("toggle-bottom-menu"));
-      } else if (!this.bottomMenuOpen && isVisible) {
-        this.el.dispatchEvent(new Event("toggle-bottom-menu"));
       }
     }
 
