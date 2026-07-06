@@ -85,7 +85,7 @@ defmodule DialecticWeb.WorkspaceBarComp do
 
       <div class="ml-auto flex flex-wrap items-center gap-1 sm:ml-0">
         <.link
-          :if={@mode == :reader}
+          :if={@mode == :reader and is_binary(@ask_node_id) and @ask_node_id != ""}
           id={"#{@id}-ask-question"}
           navigate={@ask_path}
           data-view-transition="mode-switch"

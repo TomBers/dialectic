@@ -717,17 +717,17 @@ hooks.GraphLayout = {
     if (this.el.id !== "graph-layout") return;
 
     const url = new URL(window.location.href);
-    if (url.searchParams.get("focus") === "ask") {
-      this._pendingAskFocus = true;
-    }
+    this._pendingAskFocus = url.searchParams.get("focus") === "ask";
 
     if (!this._pendingAskFocus || this._askFocusTimer) return;
 
     const focusInput = (attemptsLeft) => {
+      if (!this._pendingAskFocus) return;
+
       const input = document.getElementById("global-chat-input");
 
       if (!input || input.disabled) {
-        if (attemptsLeft > 0) {
+        if (attemptsLeft > 0 && this._pendingAskFocus) {
           this._askFocusTimer = window.setTimeout(() => {
             this._askFocusTimer = null;
             focusInput(attemptsLeft - 1);

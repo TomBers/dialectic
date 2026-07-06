@@ -23,7 +23,6 @@ defmodule DialecticWeb.AskFormComp do
   - `show_hint` (boolean, optional): When true and `graph_id` is nil, show a hint above the input. Defaults to `true`.
   - `prompt_mode` (string, optional): Current AI mode ("structured" or "creative"). Used for display only.
   - `node` (map | nil, optional): The currently active node. Used to display current node indicator.
-  - `autofocus` (boolean, optional): When true, autofocus the textarea. Defaults to `false`.
   """
 
   @impl true
@@ -40,7 +39,6 @@ defmodule DialecticWeb.AskFormComp do
       |> assign_new(:prompt_mode, fn -> "structured" end)
       |> assign_new(:node, fn -> nil end)
       |> assign_new(:disabled, fn -> false end)
-      |> assign_new(:autofocus, fn -> false end)
       |> then(fn s ->
         cond do
           Map.has_key?(assigns, :placeholder) and not is_nil(assigns[:placeholder]) ->
@@ -97,7 +95,6 @@ defmodule DialecticWeb.AskFormComp do
               placeholder={@placeholder}
               phx-hook="AutoExpandTextarea"
               disabled={@disabled}
-              autofocus={@autofocus && !@disabled}
               class={[
                 "box-border w-full h-10 min-h-[2.5rem] rounded-3xl border py-2.5 pl-4 pr-[11.25rem] text-sm focus:outline-none focus:ring-0 resize-none",
                 if(@disabled,

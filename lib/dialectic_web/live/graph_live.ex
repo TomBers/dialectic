@@ -128,8 +128,8 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_params(params, _uri, socket) do
-    {:noreply, assign(socket, focus_ask: Map.get(params, "focus") == "ask")}
+  def handle_params(_params, _uri, socket) do
+    {:noreply, socket}
   end
 
   @impl true
@@ -165,7 +165,6 @@ defmodule DialecticWeb.GraphLive do
           |> subscribe_to_topics(graph_title)
           |> assign_graph_data(graph_db, graph_struct, node, graph_title, user)
           |> assign(token: params["token"])
-          |> assign(focus_ask: Map.get(params, "focus") == "ask")
           |> handle_initial_highlight(initial_highlight_id)
 
         {:ok, socket}
