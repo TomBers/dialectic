@@ -233,7 +233,6 @@ hooks.GraphLayout = {
     )
       ? this.el.dataset.readingFont
       : "serif";
-    this._bottomMenuStorageKey = `rg:bottom-menu:${graphId}`;
     this._readingDensityStorageKey = `rg:reading-density:${graphId}`;
     this._readingFontStorageKey = `rg:reading-font:${graphId}`;
 
@@ -246,7 +245,6 @@ hooks.GraphLayout = {
       return null;
     };
 
-    const storedBottomMenu = readStoredBool(this._bottomMenuStorageKey);
     const storedReadingDensity = (() => {
       try {
         return localStorage.getItem(this._readingDensityStorageKey);
@@ -263,7 +261,6 @@ hooks.GraphLayout = {
     })();
 
     this.sideDrawerOpen = true;
-    this.bottomMenuOpen = storedBottomMenu !== null ? storedBottomMenu : true;
     this.readingDensity = validReadingDensities.includes(storedReadingDensity)
       ? storedReadingDensity
       : "comfortable";
@@ -455,36 +452,6 @@ hooks.GraphLayout = {
       }
 
       this._applySideDrawerState(shouldOpen);
-    });
-
-    this.el.addEventListener("toggle-bottom-menu", () => {
-      const menu = document.getElementById("bottom-menu");
-      const handle = document.getElementById("bottom-menu-handle");
-
-      if (!menu) return;
-
-      const isVisible = menu.classList.contains("visible");
-
-      if (isVisible) {
-        this.bottomMenuOpen = false;
-        menu.classList.remove("scale-100", "opacity-100", "visible");
-        menu.classList.add("scale-90", "opacity-0", "invisible");
-        if (handle) handle.classList.remove("hidden");
-      } else {
-        this.bottomMenuOpen = true;
-        menu.classList.remove("scale-90", "opacity-0", "invisible");
-        menu.classList.add("scale-100", "opacity-100", "visible");
-        if (handle) handle.classList.add("hidden");
-      }
-
-      try {
-        localStorage.setItem(
-          this._bottomMenuStorageKey,
-          String(this.bottomMenuOpen),
-        );
-      } catch (_e) {}
-
-      window.dispatchEvent(new Event("resize"));
     });
 
     this.el.addEventListener("toggle-mobile-outline", () => {
@@ -756,15 +723,6 @@ hooks.GraphLayout = {
 
     if (!this._pendingAskFocus || this._askFocusTimer) return;
 
-    const bottomMenu = document.getElementById("bottom-menu");
-    if (
-      bottomMenu &&
-      this.bottomMenuOpen === false &&
-      !bottomMenu.classList.contains("visible")
-    ) {
-      this.el.dispatchEvent(new Event("toggle-bottom-menu"));
-    }
-
     const focusInput = (attemptsLeft) => {
       const input = document.getElementById("global-chat-input");
 
@@ -877,17 +835,6 @@ hooks.GraphLayout = {
         this.el.dispatchEvent(
           new CustomEvent("toggle-side-drawer", { detail: { force: "close" } }),
         );
-      }
-    }
-
-    // Restore bottom menu state
-    const bottomMenu = document.getElementById("bottom-menu");
-    if (bottomMenu && this.bottomMenuOpen !== undefined) {
-      const isVisible = bottomMenu.classList.contains("visible");
-      if (this.bottomMenuOpen && !isVisible) {
-        this.el.dispatchEvent(new Event("toggle-bottom-menu"));
-      } else if (!this.bottomMenuOpen && isVisible) {
-        this.el.dispatchEvent(new Event("toggle-bottom-menu"));
       }
     }
 

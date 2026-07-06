@@ -647,44 +647,6 @@
       </div>
     <% end %>
     
-<!-- Bottom menu toggle (hidden during presentation) -->
-    <div
-      :if={@presentation_mode != :presenting}
-      id="bottom-menu-handle"
-      class="pointer-events-none fixed bottom-0 left-0 right-0 z-30 hidden px-1 pb-3 shift-with-panel transition-[right,left] duration-300 ease-in-out md:left-[var(--desktop-side-drawer-width)]"
-      style="padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem);"
-    >
-      <div class="mx-auto w-full max-w-xl">
-        <div class="flex justify-center">
-          <button
-            id="bottom-menu-toggle"
-            phx-click={JS.dispatch("toggle-bottom-menu", to: "#graph-layout")}
-            aria-controls="bottom-menu"
-            aria-expanded="false"
-            aria-label="Show bottom menu"
-            class="roof-handle inline-flex items-center justify-center w-24 h-7 rounded-full bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 shadow-sm pointer-events-auto"
-            type="button"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M5 15l7-7 7 7"
-              />
-            </svg>
-            <span class="sr-only">Open bottom menu</span>
-          </button>
-        </div>
-      </div>
-    </div>
-    
 <!-- Chat input bar (hidden during presentation) -->
     <div
       :if={@presentation_mode != :presenting}
@@ -694,46 +656,26 @@
     >
       <div class="mx-auto w-full max-w-4xl">
         <div class="relative">
-          <div class="flex justify-center -mt-4 mb-2">
-            <button
-              id="bottom-menu-close"
-              phx-click={JS.dispatch("toggle-bottom-menu", to: "#graph-layout")}
-              aria-controls="bottom-menu"
-              aria-expanded="true"
-              aria-label="Hide bottom menu"
-              class="roof-handle inline-flex items-center justify-center w-24 h-7 rounded-full bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 shadow-sm pointer-events-auto"
-              type="button"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
+          <div class="pointer-events-auto transform-gpu rounded-t-[1.75rem] rounded-2xl bg-[linear-gradient(135deg,rgba(45,212,191,0.86),rgba(255,255,255,0.96)_36%,rgba(251,191,36,0.72)_70%,rgba(99,102,241,0.84))] p-[1px] shadow-[0_28px_74px_-48px_rgba(20,184,166,0.85)] transition-all duration-200 ease-out translate-y-0">
+            <div class="relative overflow-hidden rounded-t-[calc(1.75rem-1px)] rounded-[calc(1rem-1px)] bg-white/95 px-1.5 pt-2 pb-2 shadow-xl ring-1 ring-white/80 backdrop-blur">
+              <div
+                class="pointer-events-none absolute inset-x-6 top-0 h-px bg-[linear-gradient(90deg,rgba(45,212,191,0),rgba(45,212,191,0.9),rgba(251,191,36,0.7),rgba(99,102,241,0.85),rgba(56,189,248,0))]"
+                aria-hidden="true"
               >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19 9l-7 7-7-7"
+              </div>
+              <div class="px-1.5">
+                <.live_component
+                  module={DialecticWeb.AskFormComp}
+                  id="global-chat-form"
+                  form={@form}
+                  ask_question={@ask_question}
+                  prompt_mode={@prompt_mode}
+                  graph_id={@graph_id}
+                  node={@node}
+                  autofocus={@focus_ask}
+                  disabled={GraphHelpers.origin_branching_disabled?(@node)}
                 />
-              </svg>
-              <span class="sr-only">Close bottom menu</span>
-            </button>
-          </div>
-          <div class="bg-white/95 backdrop-blur border border-gray-200 shadow-xl rounded-t-[1.75rem] rounded-2xl px-1.5 pt-2 pb-2 pointer-events-auto transform-gpu transition-all duration-200 ease-out translate-y-0">
-            <div class="px-1.5">
-              <.live_component
-                module={DialecticWeb.AskFormComp}
-                id="global-chat-form"
-                form={@form}
-                ask_question={@ask_question}
-                prompt_mode={@prompt_mode}
-                graph_id={@graph_id}
-                node={@node}
-                autofocus={@focus_ask}
-                disabled={GraphHelpers.origin_branching_disabled?(@node)}
-              />
+              </div>
             </div>
           </div>
         </div>
