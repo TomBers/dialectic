@@ -404,32 +404,38 @@
                     id={"next-choice-#{choice.id}"}
                     patch={graph_path(@graph_struct, choice.id, @nav_params)}
                     class={[
-                      "group block overflow-hidden rounded-[1.4rem] border-2 bg-white px-4 py-4 shadow-sm transition duration-150 active:scale-[0.995] hover:-translate-y-0.5 hover:shadow-md hover:text-slate-950 sm:rounded-2xl",
+                      "group relative block overflow-hidden rounded-[1.35rem] border bg-white/95 p-4 shadow-[0_14px_34px_-28px_rgba(15,23,42,0.5)] ring-1 ring-slate-950/[0.03] transition duration-200 active:scale-[0.995] hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white hover:shadow-[0_22px_42px_-28px_rgba(15,23,42,0.55)] hover:text-slate-950 sm:rounded-2xl sm:p-4.5",
                       DialecticWeb.ColUtils.border_class(choice.class)
                     ]}
                   >
-                    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-3">
-                      <div class="flex min-w-0 items-start gap-3">
+                    <div class={[
+                      "absolute inset-x-0 top-0 h-1",
+                      DialecticWeb.ColUtils.dot_class(choice.class)
+                    ]}>
+                    </div>
+
+                    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-3">
+                      <div class="flex min-w-0 flex-1 items-start gap-3">
                         <span class={[
-                          "mt-1.5 h-3 w-3 shrink-0 rounded-full ring-4 ring-white shadow-sm",
+                          "mt-1.5 h-3 w-3 shrink-0 rounded-full ring-4 ring-slate-50 shadow-sm transition group-hover:scale-110",
                           DialecticWeb.ColUtils.dot_class(choice.class)
                         ]}>
                         </span>
 
                         <div class="min-w-0 flex-1">
-                          <div class="flex flex-wrap items-center gap-2">
+                          <div class="flex flex-wrap items-center gap-2.5">
                             <span class={[
-                              "inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold",
+                              "inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold shadow-sm ring-1 ring-white/70",
                               DialecticWeb.ColUtils.badge_class(choice.class)
                             ]}>
                               {DialecticWeb.ColUtils.node_type_label(choice.class)}
                             </span>
-                            <span class="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                            <span class="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                               Read next
                             </span>
                           </div>
 
-                          <p class="mt-3 text-[1.02rem] font-semibold leading-6 text-slate-900 sm:text-base">
+                          <p class="mt-3 text-[1.04rem] font-semibold leading-6 text-slate-950 sm:text-[1.03rem]">
                             {choice.title}
                           </p>
                           <%= if choice.leaf_title do %>
@@ -437,30 +443,24 @@
                               This path eventually reaches {choice.leaf_title}.
                             </p>
                           <% else %>
-                            <p class="mt-2 text-sm leading-6 text-slate-600">
+                            <p class="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">
                               {choice.content_preview}
                             </p>
                           <% end %>
                         </div>
                       </div>
 
-                      <span class={[
-                        "hidden h-10 w-10 shrink-0 items-center justify-center rounded-full border shadow-sm transition group-hover:translate-x-0.5 sm:inline-flex",
-                        DialecticWeb.ColUtils.badge_class(choice.class)
-                      ]}>
+                      <span class="hidden h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-950 text-white shadow-sm transition group-hover:translate-x-0.5 group-hover:bg-indigo-600 sm:inline-flex">
                         <.icon name="hero-arrow-right" class="h-4 w-4" />
                       </span>
                     </div>
 
                     <div class="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 sm:hidden">
-                      <span class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                      <span class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
                         Open this branch
                       </span>
 
-                      <span class={[
-                        "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border shadow-sm transition group-hover:translate-x-0.5",
-                        DialecticWeb.ColUtils.badge_class(choice.class)
-                      ]}>
+                      <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-950 text-white shadow-sm transition group-hover:translate-x-0.5 group-hover:bg-indigo-600">
                         <.icon name="hero-arrow-right" class="h-4 w-4" />
                       </span>
                     </div>
