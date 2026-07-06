@@ -220,6 +220,7 @@ hooks.GraphLayout = {
     this._reopenSideDrawerAfterPresentation = false;
     this._reopenSideDrawerAfterCombine = false;
     this._mobileOutlineCloseTimer = null;
+    this._askFocusTimer = null;
     this._handleMobileGraphResize = () => {
       this._redirectMobileGraphToReader();
       this._syncOutlineDetailForPanel(this.activePanelId);
@@ -498,6 +499,7 @@ hooks.GraphLayout = {
     });
 
     this.restoreState();
+    this._focusAskInputFromUrl();
 
     // ── Presentation localStorage persistence ──────────────────────
     this.handleEvent(
@@ -709,15 +711,22 @@ hooks.GraphLayout = {
   updated() {
     this._redirectMobileGraphToReader();
     this.restoreState();
+    this._focusAskInputFromUrl();
   },
   reconnected() {
     this._redirectMobileGraphToReader();
     this.restoreState();
+    this._focusAskInputFromUrl();
   },
   destroyed() {
     if (this._mobileOutlineCloseTimer) {
       clearTimeout(this._mobileOutlineCloseTimer);
       this._mobileOutlineCloseTimer = null;
+    }
+
+    if (this._askFocusTimer) {
+      clearTimeout(this._askFocusTimer);
+      this._askFocusTimer = null;
     }
 
     if (this._handleMobileGraphResize) {
@@ -736,6 +745,56 @@ hooks.GraphLayout = {
     if (currentPath === mobileReaderPath) return;
 
     window.location.replace(mobileReaderPath);
+  },
+  _focusAskInputFromUrl() {
+    if (this.el.id !== "graph-layout") return;
+
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("focus") === "ask") {
+      this._pendingAskFocus = true;
+    }
+
+    if (!this._pendingAskFocus || this._askFocusTimer) return;
+
+    const bottomMenu = document.getElementById("bottom-menu");
+    if (
+      bottomMenu &&
+      this.bottomMenuOpen === false &&
+      !bottomMenu.classList.contains("visible")
+    ) {
+      this.el.dispatchEvent(new Event("toggle-bottom-menu"));
+    }
+
+    const focusInput = (attemptsLeft) => {
+      const input = document.getElementById("global-chat-input");
+
+      if (!input || input.disabled) {
+        if (attemptsLeft > 0) {
+          this._askFocusTimer = window.setTimeout(() => {
+            this._askFocusTimer = null;
+            focusInput(attemptsLeft - 1);
+          }, 100);
+        }
+
+        return;
+      }
+
+      input.focus({ preventScroll: true });
+      this._pendingAskFocus = false;
+
+      const cleanUrl = new URL(window.location.href);
+      cleanUrl.searchParams.delete("focus");
+      window.history.replaceState(
+        {},
+        "",
+        `${cleanUrl.pathname}${cleanUrl.search}${cleanUrl.hash}`,
+      );
+    };
+
+    this._askFocusTimer = window.setTimeout(() => {
+      this._askFocusTimer = null;
+      focusInput(10);
+    }, 120);
   },
   _applyMobileOutlineState(shouldOpen) {
     const panel = document.getElementById("outline-mobile-nav-panel");
