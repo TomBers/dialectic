@@ -996,6 +996,25 @@ defmodule DialecticWeb.OutlineGraphLive do
     end
   end
 
+  defp challenge_action_label(%{class: "answer"}), do: "Challenge answer"
+  defp challenge_action_label(%{class: "question"}), do: "Challenge question"
+  defp challenge_action_label(%{class: "origin"}), do: "Challenge prompt"
+  defp challenge_action_label(%{class: "user"}), do: "Challenge comment"
+
+  defp challenge_action_label(%{class: class}) do
+    label =
+      class
+      |> ColUtils.node_type_label()
+      |> String.split("/")
+      |> List.first()
+      |> String.trim()
+      |> String.downcase()
+
+    "Challenge #{label}"
+  end
+
+  defp challenge_action_label(_node), do: "Challenge node"
+
   defp token_params(token) when is_binary(token) and token != "", do: [token: token]
   defp token_params(_token), do: []
 end

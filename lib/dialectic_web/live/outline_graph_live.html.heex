@@ -353,6 +353,27 @@
                     </div>
                   <% end %>
                 <% end %>
+
+                <% challenge_label = challenge_action_label(reading_node) %>
+                <div class="mt-6 flex justify-end border-t border-slate-100 pt-4">
+                  <.link
+                    id={"outline-reading-node-#{reading_node.id}-ask"}
+                    navigate={
+                      graph_editor_path(@graph_struct, reading_node.id, [
+                        {"focus", "ask"} | @nav_params
+                      ])
+                    }
+                    class="group hidden h-9 items-center gap-2 rounded-full border border-slate-200 bg-white/90 py-1 pl-1.5 pr-3 text-xs font-semibold text-slate-700 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.45)] ring-1 ring-white/80 transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-950 hover:text-white hover:shadow-[0_14px_28px_-18px_rgba(15,23,42,0.55)] md:inline-flex"
+                    data-view-transition="mode-switch"
+                    data-view-transition-direction="graph"
+                    title={"#{challenge_label} from this point"}
+                  >
+                    <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-50 text-amber-700 ring-1 ring-amber-200/70 transition group-hover:bg-white/10 group-hover:text-amber-200 group-hover:ring-white/15">
+                      <.icon name="hero-scale" class="h-3.5 w-3.5" />
+                    </span>
+                    <span>{challenge_label}</span>
+                  </.link>
+                </div>
               </article>
 
               <%= if index < last_reading_index do %>
