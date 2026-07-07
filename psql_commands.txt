@@ -5,6 +5,10 @@ fly postgres connect -a mudg-db
 \dt - list tables
 select * from graphs; - normal SQL commands
 
+SELECT id, email
+FROM users
+ORDER BY email;
+
 UPDATE "Graph"
 SET is_published = false
 WHERE title = '<graph_title>';
