@@ -4,6 +4,7 @@ defmodule DialecticWeb.PromotionMaterialControllerTest do
   import Dialectic.AccountsFixtures
   import Dialectic.GraphFixtures
 
+  alias Dialectic.Content.PromotionMaterial
   alias Dialectic.Highlights
 
   test "returns promotion material for a public grid without auth", %{conn: conn} do
@@ -47,20 +48,57 @@ defmodule DialecticWeb.PromotionMaterialControllerTest do
     assert [%{"id" => highlight_id}] = response["raw"]["highlights"]
     assert highlight_id == highlight.id
 
+    assert Enum.map(response["raw"]["key_questions"], & &1["source"]) == [
+             "first_answer_follow_up",
+             "first_answer_follow_up",
+             "first_answer_follow_up",
+             "user_question"
+           ]
+
+    assert Enum.map(response["raw"]["key_questions"], & &1["question"]) == [
+             "What evidence shows AI tutors improve transfer?",
+             "When does help become dependency?",
+             "How should teachers audit generated explanations?",
+             "What classroom evidence would change your mind about whether AI tutors actually improve independent critical thinking over a full school year?"
+           ]
+
     asset_kinds = Enum.map(response["assets"], & &1["kind"])
     assert "grid_card" in asset_kinds
     assert "highlight_card" in asset_kinds
-    assert "follow_up_question_card" in asset_kinds
+    assert "key_question_card" in asset_kinds
 
-    assert Enum.any?(response["assets"], fn asset ->
-             asset["kind"] == "follow_up_question_card" and
+    key_question_assets = Enum.filter(response["assets"], &(&1["kind"] == "key_question_card"))
+    assert length(key_question_assets) == 4
+
+    assert Enum.any?(key_question_assets, fn asset ->
+             asset["source"] == "first_answer_follow_up" and
                asset["url"] =~ "/g/#{graph.slug}/follow-up-card.svg" and
-               asset["url"] =~ "question="
+               asset["url"] =~ "question=" and
+               asset["image_svg_url"] == asset["url"] and
+               asset["preview_url"] == asset["url"]
+           end)
+
+    assert Enum.any?(key_question_assets, fn asset ->
+             asset["source"] == "user_question" and
+               asset["node_id"] == "4" and
+               asset["question"] ==
+                 "What classroom evidence would change your mind about whether AI tutors actually improve independent critical thinking over a full school year?"
            end)
 
     assert Enum.map(response["posts"], & &1["platform"]) == ["x", "linkedin"]
     assert response["posts"] |> List.first() |> Map.fetch!("body") =~ "utm_campaign=weekly_topic"
     assert response["posts"] |> List.first() |> Map.fetch!("body") =~ "What evidence shows"
+  end
+
+  test "builder returns all sections by default" do
+    graph = promotion_graph("Default Include Promotion Grid")
+
+    response = PromotionMaterial.build(graph)
+
+    assert Map.has_key?(response, "grid")
+    assert Map.has_key?(response, "raw")
+    assert Map.has_key?(response, "assets")
+    assert Map.has_key?(response, "posts")
   end
 
   test "respects include filters", %{conn: conn} do
@@ -117,6 +155,14 @@ defmodule DialecticWeb.PromotionMaterialControllerTest do
                 "id" => "3",
                 "content" => "Students may outsource the productive struggle of learning.",
                 "class" => "antithesis",
+                "deleted" => false,
+                "compound" => false
+              },
+              %{
+                "id" => "4",
+                "content" =>
+                  "What classroom evidence would change your mind about whether AI tutors actually improve independent critical thinking over a full school year?",
+                "class" => "question",
                 "deleted" => false,
                 "compound" => false
               }

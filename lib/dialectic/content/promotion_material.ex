@@ -10,24 +10,25 @@ defmodule Dialectic.Content.PromotionMaterial do
   @all_include @default_include
 
   def build(graph, opts \\ []) do
-    include = opts |> Keyword.get(:include, @default_include) |> normalize_include()
+    include = opts |> Keyword.get(:include) |> normalize_include()
     platforms = opts |> Keyword.get(:platforms, []) |> normalize_list()
     campaign = opts |> Keyword.get(:utm_campaign, "promotion_api") |> to_string()
     graph_url = graph_url(graph)
 
     first_answer = first_answer_node(graph)
     follow_up_questions = first_answer |> node_content() |> FollowUpQuestions.extract()
+    key_questions = key_questions(graph, first_answer, follow_up_questions)
     highlights = Highlights.list_highlights(mudg_id: graph.title)
-    raw = raw_material(graph, first_answer, follow_up_questions, highlights)
+    raw = raw_material(graph, first_answer, follow_up_questions, key_questions, highlights)
 
     %{}
     |> maybe_put(include, "grid", fn -> grid_material(graph, graph_url) end)
     |> maybe_put(include, "raw", fn -> raw end)
     |> maybe_put(include, "assets", fn ->
-      asset_material(graph, highlights, follow_up_questions, first_answer)
+      asset_material(graph, highlights, key_questions)
     end)
     |> maybe_put(include, "posts", fn ->
-      post_material(graph, platforms, follow_up_questions, graph_url, campaign)
+      post_material(graph, platforms, Enum.map(key_questions, & &1.question), graph_url, campaign)
     end)
   end
 
@@ -47,7 +48,7 @@ defmodule Dialectic.Content.PromotionMaterial do
     }
   end
 
-  defp raw_material(graph, first_answer, follow_up_questions, highlights) do
+  defp raw_material(graph, first_answer, follow_up_questions, key_questions, highlights) do
     nodes =
       graph
       |> Content.graph_nodes()
@@ -60,17 +61,22 @@ defmodule Dialectic.Content.PromotionMaterial do
       origin_question: origin_question(graph, nodes),
       first_answer: first_answer_summary(first_answer),
       follow_up_questions: follow_up_questions,
+      key_questions: key_questions,
       highlights: Enum.map(highlights, &highlight_material(graph, &1)),
       key_nodes: nodes
     }
   end
 
-  defp asset_material(graph, highlights, follow_up_questions, first_answer) do
+  defp asset_material(graph, highlights, key_questions) do
+    graph_asset_url = HighlightShare.graph_image_url(graph)
+
     graph_asset = %{
       kind: "grid_card",
       title: graph.title,
       mime_type: "image/svg+xml",
-      url: HighlightShare.graph_image_url(graph),
+      url: graph_asset_url,
+      image_svg_url: graph_asset_url,
+      preview_url: graph_asset_url,
       recommended_platforms: ~w(x linkedin substack bluesky)
     }
 
@@ -78,6 +84,8 @@ defmodule Dialectic.Content.PromotionMaterial do
       highlights
       |> Enum.take(6)
       |> Enum.map(fn highlight ->
+        image_url = HighlightShare.image_url(graph, highlight)
+
         %{
           kind: "highlight_card",
           highlight_id: highlight.id,
@@ -85,26 +93,36 @@ defmodule Dialectic.Content.PromotionMaterial do
           title: "Highlighted quote",
           text: Content.excerpt(highlight.selected_text_snapshot, 220),
           mime_type: "image/svg+xml",
-          url: HighlightShare.image_url(graph, highlight),
+          url: image_url,
+          image_svg_url: image_url,
+          preview_url: image_url,
           recommended_platforms: ~w(instagram linkedin x bluesky)
         }
       end)
 
-    follow_up_assets =
-      follow_up_questions
+    key_question_assets =
+      key_questions
       |> Enum.with_index(1)
       |> Enum.map(fn {question, index} ->
+        image_url = question_card_url(graph, question.node_id, question.question)
+
         %{
-          kind: "follow_up_question_card",
+          kind: "key_question_card",
+          source: question.source,
           index: index,
-          question: question,
+          node_id: question.node_id,
+          title: "Key question",
+          text: question.question,
+          question: question.question,
           mime_type: "image/svg+xml",
-          url: follow_up_card_url(graph, first_answer, question),
+          url: image_url,
+          image_svg_url: image_url,
+          preview_url: image_url,
           recommended_platforms: ~w(instagram linkedin x bluesky)
         }
       end)
 
-    [graph_asset] ++ highlight_assets ++ follow_up_assets
+    [graph_asset] ++ highlight_assets ++ key_question_assets
   end
 
   defp post_material(_graph, [], _follow_up_questions, _graph_url, _campaign), do: []
@@ -141,6 +159,71 @@ defmodule Dialectic.Content.PromotionMaterial do
     }
   end
 
+  defp key_questions(graph, first_answer, follow_up_questions) do
+    follow_up_items =
+      follow_up_questions
+      |> Enum.with_index(1)
+      |> Enum.map(fn {question, index} ->
+        %{
+          source: "first_answer_follow_up",
+          index: index,
+          node_id: node_id(first_answer) || "1",
+          question: question
+        }
+      end)
+
+    user_question_items =
+      graph
+      |> Content.graph_nodes()
+      |> Enum.reject(&hidden_node?/1)
+      |> Enum.filter(&(node_class(&1) == "question"))
+      |> Enum.map(fn node ->
+        %{
+          source: "user_question",
+          node_id: node_id(node),
+          question: question_text(node)
+        }
+      end)
+
+    (follow_up_items ++ user_question_items)
+    |> Enum.map(&clean_question_item/1)
+    |> Enum.reject(&is_nil/1)
+    |> uniq_by_question()
+  end
+
+  defp clean_question_item(%{question: question} = item) do
+    question = question |> Content.excerpt(500) |> String.trim()
+
+    if question != "" and String.ends_with?(question, "?") do
+      %{item | question: question, node_id: to_string(item.node_id || "1")}
+    end
+  end
+
+  defp uniq_by_question(items) do
+    {_seen, items} =
+      Enum.reduce(items, {MapSet.new(), []}, fn item, {seen, acc} ->
+        key = item.question |> String.downcase() |> String.replace(~r/\s+/, " ")
+
+        if MapSet.member?(seen, key) do
+          {seen, acc}
+        else
+          {MapSet.put(seen, key), [item | acc]}
+        end
+      end)
+
+    Enum.reverse(items)
+  end
+
+  defp question_text(node) do
+    node
+    |> node_content()
+    |> Content.excerpt(500)
+    |> String.trim()
+  end
+
+  defp node_id(nil), do: nil
+  defp node_id(node), do: Map.get(node, "id") || Map.get(node, :id)
+
   defp first_answer_summary(nil), do: nil
 
   defp first_answer_summary(node) do
@@ -159,16 +242,10 @@ defmodule Dialectic.Content.PromotionMaterial do
     end
   end
 
-  defp follow_up_card_url(graph, first_answer, question) do
-    node_id =
-      case first_answer do
-        nil -> "1"
-        node -> Map.get(node, "id") || Map.get(node, :id) || "1"
-      end
-
+  defp question_card_url(graph, node_id, question) do
     DialecticWeb.Endpoint.url() <>
       "/g/#{graph_identifier(graph)}/follow-up-card.svg?" <>
-      URI.encode_query(%{node: to_string(node_id), question: question})
+      URI.encode_query(%{node: to_string(node_id || "1"), question: question})
   end
 
   defp graph_url(graph),
@@ -181,17 +258,56 @@ defmodule Dialectic.Content.PromotionMaterial do
   end
 
   defp first_answer_node(graph) do
+    nodes = graph |> Content.graph_nodes() |> Enum.reject(&hidden_node?/1)
+    nodes_by_id = Map.new(nodes, &{to_string(node_id(&1)), &1})
+
+    origin_id =
+      nodes
+      |> Enum.find(&(node_class(&1) == "origin"))
+      |> node_id()
+      |> to_string()
+
     graph
-    |> Content.graph_nodes()
-    |> Enum.find(fn node ->
-      node_class(node) == "answer" and not hidden_node?(node)
-    end)
+    |> graph_edges()
+    |> Enum.find_value(fn edge ->
+      with %{from: ^origin_id, to: target_id} <- edge,
+           %{} = node <- Map.get(nodes_by_id, target_id),
+           true <- node_class(node) == "answer" do
+        node
+      else
+        _ -> nil
+      end
+    end) ||
+      Enum.find(nodes, &(node_class(&1) == "answer"))
   end
 
   defp hidden_node?(node) do
     Map.get(node, "deleted") == true or Map.get(node, :deleted) == true or
       Map.get(node, "compound") == true or Map.get(node, :compound) == true
   end
+
+  defp graph_edges(graph) do
+    graph
+    |> get_in_data("edges")
+    |> Enum.map(&graph_edge/1)
+    |> Enum.reject(&is_nil/1)
+  end
+
+  defp graph_edge(%{"data" => %{"source" => source, "target" => target}})
+       when not is_nil(source) and not is_nil(target) do
+    %{from: to_string(source), to: to_string(target)}
+  end
+
+  defp graph_edge(_edge), do: nil
+
+  defp get_in_data(%{data: data}, key) when is_map(data) do
+    case Map.get(data, key) do
+      value when is_list(value) -> value
+      _ -> []
+    end
+  end
+
+  defp get_in_data(_graph, _key), do: []
 
   defp node_class(node), do: Map.get(node, "class") || Map.get(node, :class) || ""
   defp node_content(nil), do: ""
@@ -228,12 +344,12 @@ defmodule Dialectic.Content.PromotionMaterial do
   end
 
   defp recommended_asset_kinds(platform) when platform in ["instagram"] do
-    ~w(follow_up_question_card highlight_card grid_card)
+    ~w(key_question_card highlight_card grid_card)
   end
 
   defp recommended_asset_kinds(platform)
        when platform in ["linkedin", "x", "bluesky", "threads"] do
-    ~w(follow_up_question_card grid_card highlight_card)
+    ~w(key_question_card grid_card highlight_card)
   end
 
   defp recommended_asset_kinds(_platform), do: ~w(grid_card highlight_card)
