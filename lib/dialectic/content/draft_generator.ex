@@ -280,18 +280,18 @@ defmodule Dialectic.Content.DraftGenerator do
     branches = source.key_points |> Enum.take(3) |> Enum.map(&point_text/1)
     follow_ups = source.follow_up_questions |> Enum.take(3) |> numbered_lines()
 
-    thread_posts =
-      [
-        "1/ A question worth mapping: #{truncate(source.question, 190)}",
-        follow_ups != "" && "2/ Key follow-up questions:\n#{follow_ups}",
-        first_highlight_sentence(source) &&
-          "3/ A highlighted point: #{truncate(first_highlight_sentence(source), 220)}",
-        branches != [] && "4/ Branches so far:\n#{numbered_lines(branches)}",
-        "#{if(follow_ups != "", do: "5", else: "4")}/ #{follow_up_cta(source, post_type)}\n#{url}"
-      ]
-      |> Enum.reject(&blank?/1)
+    highlighted_point = first_highlight_sentence(source)
 
-    Enum.join(thread_posts, "\n\n")
+    [
+      "A question worth mapping: #{truncate(source.question, 190)}",
+      if(follow_ups != "", do: "Key follow-up questions:\n#{follow_ups}"),
+      if(highlighted_point, do: "A highlighted point: #{truncate(highlighted_point, 220)}"),
+      if(branches != [], do: "Branches so far:\n#{numbered_lines(branches)}"),
+      "#{follow_up_cta(source, post_type)}\n#{url}"
+    ]
+    |> Enum.reject(&blank?/1)
+    |> Enum.with_index(1)
+    |> Enum.map_join("\n\n", fn {post, index} -> "#{index}/ #{post}" end)
   end
 
   defp reddit_body(source, url, _post_type) do
@@ -505,5 +505,6 @@ defmodule Dialectic.Content.DraftGenerator do
   defp blank_to_nil(value) when value in [nil, ""], do: nil
   defp blank_to_nil(value), do: to_string(value)
 
+  defp blank?(false), do: true
   defp blank?(value), do: value in [nil, ""] or String.trim(to_string(value)) == ""
 end

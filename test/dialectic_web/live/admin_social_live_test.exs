@@ -1,5 +1,5 @@
 defmodule DialecticWeb.AdminSocialLiveTest do
-  use DialecticWeb.ConnCase, async: true
+  use DialecticWeb.ConnCase, async: false
 
   import Phoenix.LiveViewTest
   import Dialectic.AccountsFixtures

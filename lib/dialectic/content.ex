@@ -24,7 +24,12 @@ defmodule Dialectic.Content do
         order_by: [desc: g.updated_at],
         limit: ^limit,
         select:
-          {g, fragment("COALESCE(jsonb_array_length(?->'nodes'), 0)", g.data), author.username}
+          {g,
+           fragment(
+             "COALESCE(CASE WHEN jsonb_typeof(?->'nodes') = 'array' THEN jsonb_array_length(?->'nodes') ELSE 0 END, 0)",
+             g.data,
+             g.data
+           ), author.username}
 
     Repo.all(query)
   end

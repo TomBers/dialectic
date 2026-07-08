@@ -37,6 +37,14 @@ defmodule DialecticWeb.HighlightShareImageControllerTest do
     assert body =~ "RationalGrid.ai"
   end
 
+  test "returns 400 for follow-up cards without a question", %{conn: conn} do
+    graph = insert_graph(%{title: "Missing Follow Up Question", is_public: true})
+
+    conn = get(conn, "/g/#{graph.slug}/follow-up-card.svg")
+
+    assert response(conn, 400) == "Missing question"
+  end
+
   test "requires a token for private grid share cards", %{conn: conn} do
     graph =
       insert_graph(%{title: "Private Grid Share Card", is_public: false})

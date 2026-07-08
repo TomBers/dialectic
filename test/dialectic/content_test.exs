@@ -22,6 +22,40 @@ defmodule Dialectic.ContentTest do
       refute "Private Content Candidate" in titles
     end
 
+    test "candidate graph node count handles missing or non-array nodes" do
+      graph =
+        GraphFixtures.insert_graph(%{
+          title: "Malformed Nodes Content Candidate",
+          data: %{"nodes" => %{"not" => "a list"}, "edges" => []}
+        })
+
+      assert [{listed_graph, 0, _author}] = Content.list_candidate_graphs(graph.title)
+      assert listed_graph.title == graph.title
+    end
+
+    test "template generator creates threads without optional sections" do
+      graph =
+        GraphFixtures.insert_graph(%{
+          title: "Sparse Thread Candidate",
+          data: %{
+            "nodes" => [
+              %{"id" => "1", "content" => "## What is wisdom?", "class" => "origin"}
+            ],
+            "edges" => []
+          }
+        })
+
+      assert {:ok, [%{body: body}]} =
+               DraftGenerator.generate_pack(graph,
+                 platforms: ["threads"],
+                 url: "https://rationalgrid.com/g/wisdom"
+               )
+
+      assert body =~ "1/ A question worth mapping"
+      assert body =~ "2/ What perspective"
+      refute body =~ "false"
+    end
+
     test "template generator defaults to no platforms" do
       graph = GraphFixtures.insert_graph(%{title: "No Default Platforms"})
 

@@ -23,10 +23,13 @@ defmodule DialecticWeb.HighlightShareImageController do
     end
   end
 
-  def follow_up(conn, %{"graph_name" => graph_name, "question" => question} = params) do
+  def follow_up(conn, %{"graph_name" => graph_name} = params) do
     current_user = conn.assigns[:current_user]
     graph = Graphs.get_graph_by_slug_or_title(graph_name)
-    question = question |> to_string() |> String.trim() |> String.slice(0, 280)
+
+    question =
+      params |> Map.get("question", "") |> to_string() |> String.trim() |> String.slice(0, 280)
+
     node_id = params |> Map.get("node", "1") |> to_string()
 
     cond do
