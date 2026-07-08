@@ -8,39 +8,7 @@ defmodule Dialectic.ContentTest do
   alias Dialectic.GraphFixtures
   alias Dialectic.Highlights
 
-  describe "content drafts" do
-    test "creates, lists, and marks drafts as used" do
-      graph = GraphFixtures.insert_graph(%{title: "Content Draft Graph"})
-      user = user_fixture()
-
-      {:ok, draft} =
-        Content.create_draft(
-          %{
-            graph_title: graph.title,
-            platform: "x",
-            format: "short_post",
-            title: "Question hook",
-            body: "What perspective is missing?",
-            status: "draft",
-            utm_source: "x",
-            utm_campaign: "content_studio",
-            metadata: %{"post_type" => "question_hook"}
-          },
-          user
-        )
-
-      assert draft.created_by_id == user.id
-      assert draft.graph_title == graph.title
-
-      assert [listed] = Content.list_drafts(graph_title: graph.title)
-      assert listed.id == draft.id
-      assert listed.graph.title == graph.title
-
-      {:ok, used} = Content.mark_draft_used(draft)
-      assert used.status == "used"
-      assert used.published_at
-    end
-
+  describe "content studio" do
     test "lists public candidate graphs and hides private graphs" do
       public_graph = GraphFixtures.insert_graph(%{title: "Public Content Candidate"})
 
@@ -54,7 +22,16 @@ defmodule Dialectic.ContentTest do
       refute "Private Content Candidate" in titles
     end
 
-    test "template generator uses highlights without an LLM" do
+    test "template generator defaults to no platforms" do
+      graph = GraphFixtures.insert_graph(%{title: "No Default Platforms"})
+
+      assert {:ok, []} =
+               DraftGenerator.generate_pack(graph,
+                 url: "https://rationalgrid.com/g/no-default-platforms"
+               )
+    end
+
+    test "template generator uses highlights and supplied follow-up questions without an LLM" do
       graph =
         GraphFixtures.insert_graph(%{
           title: "AI Tutors and Critical Thinking",
@@ -69,8 +46,7 @@ defmodule Dialectic.ContentTest do
               },
               %{
                 "id" => "2",
-                "content" =>
-                  "Personalized feedback can help students notice mistakes.\n\n## Follow-up questions\n1. What kinds of feedback build independence?\n2. When does assistance become dependence?\n3. How should teachers audit AI explanations?",
+                "content" => "Personalized feedback can help students notice mistakes.",
                 "class" => "answer",
                 "deleted" => false,
                 "compound" => false
@@ -93,7 +69,7 @@ defmodule Dialectic.ContentTest do
           created_by_user_id: user.id
         })
 
-      assert {:ok, drafts} =
+      assert {:ok, posts} =
                DraftGenerator.generate_pack(graph,
                  platforms: ["x", "linkedin", "substack"],
                  post_type: "quote_excerpt",
@@ -106,12 +82,12 @@ defmodule Dialectic.ContentTest do
                  utm_campaign: "test_campaign"
                )
 
-      assert Enum.map(drafts, & &1.platform) == ["x", "linkedin", "substack"]
-      assert Enum.all?(drafts, &(&1.metadata["source"] == "template"))
+      assert Enum.map(posts, & &1.platform) == ["x", "linkedin", "substack"]
+      assert Enum.all?(posts, &(&1.metadata["source"] == "template"))
 
-      x_body = drafts |> Enum.find(&(&1.platform == "x")) |> Map.fetch!(:body)
-      linkedin_body = drafts |> Enum.find(&(&1.platform == "linkedin")) |> Map.fetch!(:body)
-      substack_body = drafts |> Enum.find(&(&1.platform == "substack")) |> Map.fetch!(:body)
+      x_body = posts |> Enum.find(&(&1.platform == "x")) |> Map.fetch!(:body)
+      linkedin_body = posts |> Enum.find(&(&1.platform == "linkedin")) |> Map.fetch!(:body)
+      substack_body = posts |> Enum.find(&(&1.platform == "substack")) |> Map.fetch!(:body)
 
       assert x_body =~ "What kinds of feedback build independence?"
       assert x_body =~ "utm_source=x"
@@ -136,7 +112,12 @@ defmodule Dialectic.ContentTest do
           }
         })
 
-      nodes = Content.list_graph_nodes(graph)
+      nodes =
+        graph
+        |> Content.graph_nodes()
+        |> Enum.reject(&(Map.get(&1, "deleted") == true or Map.get(&1, "compound") == true))
+        |> Enum.map(&Content.node_summary/1)
+        |> Enum.sort_by(fn node -> {node.sort_class, node.title} end)
 
       assert Enum.map(nodes, & &1.id) == ["1", "2"]
       assert hd(nodes).title == "Main Question"

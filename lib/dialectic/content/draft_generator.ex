@@ -2,10 +2,9 @@ defmodule Dialectic.Content.DraftGenerator do
   @moduledoc false
 
   alias Dialectic.Content
-  alias Dialectic.Content.ContentDraft
   alias Dialectic.Highlights
 
-  @default_platforms ~w(x instagram linkedin substack)
+  @default_platforms []
 
   @platforms [
     %{
@@ -103,16 +102,12 @@ defmodule Dialectic.Content.DraftGenerator do
   end
 
   defp valid_platforms(platforms) do
-    valid = MapSet.new(ContentDraft.platforms())
+    valid = @platforms |> Enum.map(& &1.id) |> MapSet.new()
 
     platforms
     |> List.wrap()
     |> Enum.map(&to_string/1)
     |> Enum.filter(&MapSet.member?(valid, &1))
-    |> case do
-      [] -> @default_platforms
-      values -> values
-    end
   end
 
   defp output_specs(platforms, base_url, campaign) do

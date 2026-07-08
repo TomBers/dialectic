@@ -43,7 +43,7 @@ import ShareHook from "./share_hook.js";
 import GridChatFormHook from "./grid_chat_form_hook.js";
 import AvatarCropper from "./avatar_cropper_hook.js";
 import BannerCropper from "./banner_cropper_hook.js";
-import ContentDraftsHook from "./content_draft_hook.js";
+import ContentStudioHook from "./content_studio_hook.js";
 
 let hooks = {};
 
@@ -68,7 +68,7 @@ hooks.Share = ShareHook;
 hooks.GridChatForm = GridChatFormHook;
 hooks.AvatarCropper = AvatarCropper;
 hooks.BannerCropper = BannerCropper;
-hooks.ContentDrafts = ContentDraftsHook;
+hooks.ContentStudio = ContentStudioHook;
 hooks.GlobalModalLayer = {
   mounted() {
     const header = document.getElementById("userHeader");
@@ -142,7 +142,8 @@ document.addEventListener(
       return;
     }
 
-    document.documentElement.dataset.viewTransition = MODE_SWITCH_TRANSITION_KEY;
+    document.documentElement.dataset.viewTransition =
+      MODE_SWITCH_TRANSITION_KEY;
     document.documentElement.dataset.viewTransitionDirection =
       link.dataset.viewTransitionDirection || "";
     document.documentElement.classList.remove("mode-switch-enter");
@@ -768,7 +769,12 @@ hooks.GraphLayout = {
     }
 
     if (shouldOpen) {
-      panel.classList.remove("hidden", "pointer-events-none", "opacity-0", "translate-x-8");
+      panel.classList.remove(
+        "hidden",
+        "pointer-events-none",
+        "opacity-0",
+        "translate-x-8",
+      );
 
       requestAnimationFrame(() => {
         panel.classList.remove("opacity-0", "translate-x-8");
@@ -1034,7 +1040,10 @@ window.addEventListener("phx:page-loading-start", (event) => {
 window.addEventListener("phx:page-loading-stop", (event) => {
   if (shouldShowTopbar(event)) topbar.hide();
 
-  if (document.documentElement.dataset.viewTransition !== MODE_SWITCH_TRANSITION_KEY) {
+  if (
+    document.documentElement.dataset.viewTransition !==
+    MODE_SWITCH_TRANSITION_KEY
+  ) {
     return;
   }
 

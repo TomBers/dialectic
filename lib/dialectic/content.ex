@@ -4,7 +4,6 @@ defmodule Dialectic.Content do
   import Ecto.Query
 
   alias Dialectic.Accounts.Graph
-  alias Dialectic.Content.ContentDraft
   alias Dialectic.Repo
   alias DialecticWeb.Utils.NodeTitleHelper
 
@@ -39,54 +38,6 @@ defmodule Dialectic.Content do
     |> Repo.one()
   end
 
-  def list_graph_nodes(%Graph{} = graph, opts \\ []) do
-    limit = Keyword.get(opts, :limit, 30)
-
-    graph
-    |> graph_nodes()
-    |> Enum.reject(&hidden_node?/1)
-    |> Enum.map(&node_summary/1)
-    |> Enum.sort_by(fn node -> {node.sort_class, node.title} end)
-    |> Enum.take(limit)
-  end
-
-  def create_draft(attrs, created_by) when is_map(attrs) do
-    %ContentDraft{}
-    |> ContentDraft.create_changeset(attrs, created_by)
-    |> Repo.insert()
-  end
-
-  def update_draft(%ContentDraft{} = draft, attrs) when is_map(attrs) do
-    draft
-    |> ContentDraft.update_changeset(attrs)
-    |> Repo.update()
-  end
-
-  def mark_draft_used(%ContentDraft{} = draft) do
-    update_draft(draft, %{
-      status: "used",
-      published_at: DateTime.utc_now() |> DateTime.truncate(:second)
-    })
-  end
-
-  def archive_draft(%ContentDraft{} = draft) do
-    update_draft(draft, %{status: "archived"})
-  end
-
-  def get_draft!(id), do: Repo.get!(ContentDraft, id)
-
-  def list_drafts(opts \\ []) do
-    limit = Keyword.get(opts, :limit, @default_limit)
-    graph_title = Keyword.get(opts, :graph_title)
-
-    ContentDraft
-    |> maybe_filter_graph(graph_title)
-    |> preload([:graph, :created_by])
-    |> order_by([d], desc: d.inserted_at)
-    |> limit(^limit)
-    |> Repo.all()
-  end
-
   def graph_nodes(%Graph{data: %{"nodes" => nodes}}) when is_list(nodes), do: nodes
   def graph_nodes(_graph), do: []
 
@@ -109,17 +60,6 @@ defmodule Dialectic.Content do
     |> String.replace(~r/\s+/u, " ")
     |> String.trim()
     |> truncate(max_length)
-  end
-
-  defp maybe_filter_graph(query, nil), do: query
-  defp maybe_filter_graph(query, ""), do: query
-
-  defp maybe_filter_graph(query, graph_title),
-    do: where(query, [d], d.graph_title == ^graph_title)
-
-  defp hidden_node?(node) do
-    Map.get(node, "deleted") == true or Map.get(node, :deleted) == true or
-      Map.get(node, "compound") == true or Map.get(node, :compound) == true
   end
 
   defp node_sort_class(%{"class" => "origin"}), do: 0

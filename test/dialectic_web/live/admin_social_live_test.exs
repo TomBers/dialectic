@@ -4,7 +4,6 @@ defmodule DialecticWeb.AdminSocialLiveTest do
   import Phoenix.LiveViewTest
   import Dialectic.AccountsFixtures
 
-  alias Dialectic.Content
   alias Dialectic.Content.DraftGenerator
   alias Dialectic.GraphFixtures
   alias Dialectic.Highlights
@@ -12,28 +11,26 @@ defmodule DialecticWeb.AdminSocialLiveTest do
 
   defmodule FakeGenerator do
     def generate_pack(graph, opts) do
-      drafts =
+      posts =
         opts
         |> Keyword.fetch!(:platforms)
         |> Enum.map(fn platform ->
           %{
             graph_title: graph.title,
-            node_id: opts[:node_id],
             platform: platform,
             platform_label: DraftGenerator.platform_label(platform),
             format: DraftGenerator.platform_format(platform),
-            title: "#{DraftGenerator.platform_label(platform)} draft",
+            title: "#{DraftGenerator.platform_label(platform)} post",
             body:
-              "Draft for #{graph.title} on #{platform}\n\n#{opts[:url]}?utm_source=#{platform}",
+              "Post for #{graph.title} on #{platform}\n\n#{opts[:url]}?utm_source=#{platform}",
             excerpt: "A test hook for #{platform}",
-            status: "draft",
             utm_source: platform,
             utm_campaign: "content_studio",
             metadata: %{"post_type" => opts[:post_type], "source" => "test"}
           }
         end)
 
-      {:ok, drafts}
+      {:ok, posts}
     end
   end
 
@@ -88,14 +85,14 @@ defmodule DialecticWeb.AdminSocialLiveTest do
   end
 
   setup do
-    original_generator = Application.get_env(:dialectic, :content_draft_generator)
-    Application.put_env(:dialectic, :content_draft_generator, FakeGenerator)
+    original_generator = Application.get_env(:dialectic, :content_post_generator)
+    Application.put_env(:dialectic, :content_post_generator, FakeGenerator)
 
     on_exit(fn ->
       if original_generator do
-        Application.put_env(:dialectic, :content_draft_generator, original_generator)
+        Application.put_env(:dialectic, :content_post_generator, original_generator)
       else
-        Application.delete_env(:dialectic, :content_draft_generator)
+        Application.delete_env(:dialectic, :content_post_generator)
       end
     end)
   end
@@ -115,7 +112,7 @@ defmodule DialecticWeb.AdminSocialLiveTest do
       assert to =~ "/users/log_in"
     end
 
-    test "admin user can access the page", %{conn: conn} do
+    test "admin user can access the page with no platforms selected", %{conn: conn} do
       admin = user_fixture() |> make_admin()
       conn = log_in_user(conn, admin)
 
@@ -123,10 +120,12 @@ defmodule DialecticWeb.AdminSocialLiveTest do
 
       assert html =~ "Content Studio"
       assert html =~ "content-generate-form"
+      assert html =~ "Nothing is selected by default"
+      refute html =~ ~s(id="content-platform-x" checked)
     end
   end
 
-  describe "draft generation" do
+  describe "post generation" do
     setup %{conn: conn} do
       admin = user_fixture() |> make_admin()
       graph = content_graph("AI Tutor Content Pack #{System.unique_integer([:positive])}")
@@ -134,7 +133,7 @@ defmodule DialecticWeb.AdminSocialLiveTest do
       %{conn: log_in_user(conn, admin), admin: admin, graph: graph}
     end
 
-    test "admin can generate, edit, save, and mark a draft as used", %{
+    test "admin can choose platforms and generate post copy", %{
       conn: conn,
       graph: graph,
       admin: admin
@@ -164,7 +163,7 @@ defmodule DialecticWeb.AdminSocialLiveTest do
         |> element("button[phx-click=select_graph][phx-value-title='#{graph.title}']")
         |> render_click()
 
-      assert html =~ "Should AI tutors teach critical thinking?"
+      assert html =~ graph.title
       assert html =~ "Key follow-up questions"
       assert html =~ "What evidence shows AI tutors improve transfer?"
       assert html =~ "/g/#{graph.slug}/follow-up-card.svg"
@@ -174,48 +173,27 @@ defmodule DialecticWeb.AdminSocialLiveTest do
       refute html =~ "/g/#{graph.slug}/full-grid.svg"
       assert html =~ "AI tutors can personalize feedback"
       assert html =~ "Download PNG"
+      refute html =~ "Focus node"
+      refute html =~ "Saved drafts"
+
+      view |> element("#content-platform-x") |> render_click()
+      view |> element("#content-platform-instagram") |> render_click()
+      view |> element("#content-platform-linkedin") |> render_click()
+      view |> element("#content-platform-substack") |> render_click()
 
       html =
         view
         |> form("#content-generate-form", %{
-          "content_generation" => %{
-            "post_type" => "question_hook",
-            "node_id" => "1"
-          }
+          "content_generation" => %{"post_type" => "question_hook"}
         })
         |> render_submit()
 
-      assert html =~ "Generated 4 drafts"
-      assert html =~ "X draft"
-      assert html =~ "Instagram draft"
-      assert html =~ "Substack draft"
-
-      html =
-        view
-        |> form("#generated-draft-form-0", %{
-          "draft" => %{
-            "index" => "0",
-            "title" => "Edited X hook",
-            "body" => "Edited text asking what is missing.",
-            "excerpt" => "Edited summary"
-          }
-        })
-        |> render_submit()
-
-      assert html =~ "Saved X draft."
-      assert [draft] = Content.list_drafts(graph_title: graph.title)
-      assert draft.title == "Edited X hook"
-      assert draft.body == "Edited text asking what is missing."
-      assert draft.node_id == "1"
-      assert draft.metadata["post_type"] == "question_hook"
-
-      html =
-        view
-        |> element("#saved-content-draft-#{draft.id} button[phx-click=mark_used]")
-        |> render_click()
-
-      assert html =~ "Marked draft as used."
-      assert Content.get_draft!(draft.id).status == "used"
+      assert html =~ "Generated 4 posts"
+      assert html =~ "X post"
+      assert html =~ "Instagram post"
+      assert html =~ "Substack post"
+      assert html =~ "generated-post-0"
+      refute html =~ "Save draft"
     end
   end
 end

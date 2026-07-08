@@ -35,13 +35,10 @@ defmodule DialecticWeb.AdminSocialLive do
          search_term: "",
          graph_results: Content.list_candidate_graphs("", limit: 12),
          selected_graph: nil,
-         candidate_nodes: [],
-         selected_platforms: DraftGenerator.default_platforms(),
-         generated_drafts: [],
-         saved_drafts: Content.list_drafts(limit: 12),
+         selected_platforms: [],
+         generated_posts: [],
          follow_up_source_markdown: "",
-         visual_assets: [],
-         generating?: false
+         visual_assets: []
        )}
     end
   end
@@ -63,15 +60,11 @@ defmodule DialecticWeb.AdminSocialLive do
         {:noreply, put_flash(socket, :error, "Could not find a public grid named #{title}.")}
 
       graph ->
-        nodes = Content.list_graph_nodes(graph, limit: 40)
-
         {:noreply,
          assign(socket,
            selected_graph: graph,
-           candidate_nodes: nodes,
            generation_form: generation_form(),
-           generated_drafts: [],
-           saved_drafts: Content.list_drafts(graph_title: graph.title, limit: 12),
+           generated_posts: [],
            follow_up_source_markdown: first_answer_markdown(graph),
            visual_assets: visual_assets(graph)
          )}
@@ -98,7 +91,7 @@ defmodule DialecticWeb.AdminSocialLive do
   end
 
   @impl true
-  def handle_event("generate_drafts", %{"content_generation" => params}, socket) do
+  def handle_event("generate_posts", %{"content_generation" => params}, socket) do
     socket = assign(socket, generation_form: generation_form(params))
     graph = socket.assigns.selected_graph
     platforms = socket.assigns.selected_platforms
@@ -111,11 +104,10 @@ defmodule DialecticWeb.AdminSocialLive do
         {:noreply, put_flash(socket, :error, "Choose at least one platform.")}
 
       true ->
-        generator = Application.get_env(:dialectic, :content_draft_generator, DraftGenerator)
+        generator = Application.get_env(:dialectic, :content_post_generator, DraftGenerator)
 
         opts = [
           platforms: platforms,
-          node_id: Map.get(params, "node_id"),
           post_type: Map.get(params, "post_type", @default_post_type),
           follow_up_questions: Map.get(params, "follow_up_questions", []),
           url: public_graph_url(graph),
@@ -123,70 +115,26 @@ defmodule DialecticWeb.AdminSocialLive do
         ]
 
         case generator.generate_pack(graph, opts) do
-          {:ok, drafts} when is_list(drafts) and drafts != [] ->
+          {:ok, posts} when is_list(posts) and posts != [] ->
             {:noreply,
              socket
-             |> put_flash(:info, "Generated #{length(drafts)} draft#{plural(drafts)}.")
-             |> assign(generated_drafts: attach_draft_forms(drafts))}
+             |> put_flash(:info, "Generated #{length(posts)} post#{plural(posts)}.")
+             |> assign(generated_posts: posts)}
 
           {:ok, []} ->
-            {:noreply, put_flash(socket, :error, "The generator returned no drafts.")}
+            {:noreply, put_flash(socket, :error, "The generator returned no posts.")}
 
           {:error, reason} ->
             {:noreply,
-             put_flash(socket, :error, "Could not generate drafts: #{format_error(reason)}")}
+             put_flash(socket, :error, "Could not generate posts: #{format_error(reason)}")}
         end
-    end
-  end
-
-  @impl true
-  def handle_event("save_generated_draft", %{"draft" => %{"index" => index} = params}, socket) do
-    with {index, ""} <- Integer.parse(index),
-         draft when is_map(draft) <- Enum.at(socket.assigns.generated_drafts, index),
-         attrs <- generated_draft_attrs(draft, params),
-         {:ok, _saved} <- Content.create_draft(attrs, socket.assigns.current_user) do
-      graph_title = socket.assigns.selected_graph && socket.assigns.selected_graph.title
-
-      {:noreply,
-       socket
-       |> put_flash(:info, "Saved #{draft.platform_label} draft.")
-       |> assign(saved_drafts: Content.list_drafts(graph_title: graph_title, limit: 12))}
-    else
-      _ ->
-        {:noreply, put_flash(socket, :error, "Could not save this draft.")}
-    end
-  end
-
-  @impl true
-  def handle_event("mark_used", %{"id" => id}, socket) do
-    draft = Content.get_draft!(id)
-
-    case Content.mark_draft_used(draft) do
-      {:ok, _draft} ->
-        {:noreply, refresh_saved_drafts(socket, "Marked draft as used.")}
-
-      {:error, _changeset} ->
-        {:noreply, put_flash(socket, :error, "Could not update draft.")}
-    end
-  end
-
-  @impl true
-  def handle_event("archive_draft", %{"id" => id}, socket) do
-    draft = Content.get_draft!(id)
-
-    case Content.archive_draft(draft) do
-      {:ok, _draft} ->
-        {:noreply, refresh_saved_drafts(socket, "Archived draft.")}
-
-      {:error, _changeset} ->
-        {:noreply, put_flash(socket, :error, "Could not archive draft.")}
     end
   end
 
   @impl true
   def render(assigns) do
     ~H"""
-    <div id="content-studio" phx-hook="ContentDrafts" class="mx-auto max-w-7xl px-6 py-10">
+    <div id="content-studio" phx-hook="ContentStudio" class="mx-auto max-w-7xl px-6 py-10">
       <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <.link
@@ -197,14 +145,14 @@ defmodule DialecticWeb.AdminSocialLive do
           </.link>
           <h1 class="mt-4 text-2xl font-bold text-gray-900">Content Studio</h1>
           <p class="mt-2 max-w-3xl text-sm leading-6 text-gray-500">
-            Generate text-first campaign drafts from public RationalGrid topics. Start with copy/export, then mark what you use.
+            Generate post copy and visual assets from public RationalGrid topics.
           </p>
         </div>
 
         <div class="rounded-2xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
-          <p class="font-semibold">Phase 1: draft assistant</p>
+          <p class="font-semibold">Simple campaign helper</p>
           <p class="mt-1 text-xs leading-5 text-indigo-700">
-            No external posting yet. Review, edit, copy, and save before sharing.
+            Choose a grid, tick platforms, generate copy, then copy or download assets.
           </p>
         </div>
       </div>
@@ -261,37 +209,44 @@ defmodule DialecticWeb.AdminSocialLive do
           </div>
 
           <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <h2 class="text-base font-semibold text-gray-900">2. Select outputs</h2>
+            <h2 class="text-base font-semibold text-gray-900">2. Pick platforms</h2>
             <p class="mt-1 text-sm text-gray-500">
-              Current channels are selected by default. Add others when a topic fits.
+              Nothing is selected by default. Tick only the platforms you want copy for.
             </p>
 
-            <div class="mt-4 grid grid-cols-2 gap-2">
+            <div class="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
               <%= for platform <- DraftGenerator.platform_options() do %>
-                <button
-                  id={"content-platform-#{platform.id}"}
-                  type="button"
-                  phx-click="toggle_platform"
-                  phx-value-platform={platform.id}
+                <label
+                  for={"content-platform-#{platform.id}"}
                   class={[
-                    "rounded-xl border px-3 py-2 text-left text-sm transition",
+                    "flex cursor-pointer items-start gap-3 rounded-xl border px-3 py-2.5 text-sm transition",
                     if(platform.id in @selected_platforms,
                       do: "border-indigo-300 bg-indigo-50 text-indigo-900 shadow-sm",
                       else: "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
                     )
                   ]}
                 >
-                  <span class="block font-semibold">{platform.label}</span>
-                  <span class="mt-0.5 block text-[11px] text-gray-500">
-                    {String.replace(platform.format, "_", " ")}
+                  <input
+                    id={"content-platform-#{platform.id}"}
+                    type="checkbox"
+                    checked={platform.id in @selected_platforms}
+                    phx-click="toggle_platform"
+                    phx-value-platform={platform.id}
+                    class="mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <span>
+                    <span class="block font-semibold">{platform.label}</span>
+                    <span class="mt-0.5 block text-[11px] text-gray-500">
+                      {String.replace(platform.format, "_", " ")}
+                    </span>
                   </span>
-                </button>
+                </label>
               <% end %>
             </div>
           </div>
 
           <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <h2 class="text-base font-semibold text-gray-900">3. Generate a campaign pack</h2>
+            <h2 class="text-base font-semibold text-gray-900">3. Generate post copy</h2>
 
             <%= if @selected_graph do %>
               <div class="mt-3 rounded-xl bg-gray-50 p-3">
@@ -334,14 +289,14 @@ defmodule DialecticWeb.AdminSocialLive do
                 <ol data-follow-up-question-list class="mt-3 hidden space-y-2"></ol>
               </div>
             <% else %>
-              <p class="mt-3 text-sm text-gray-500">Choose a grid before generating drafts.</p>
+              <p class="mt-3 text-sm text-gray-500">Choose a grid before generating copy.</p>
             <% end %>
 
             <.form
               for={@generation_form}
               id="content-generate-form"
               phx-change="update_generation"
-              phx-submit="generate_drafts"
+              phx-submit="generate_posts"
               class="mt-4 space-y-4"
             >
               <.input
@@ -349,13 +304,6 @@ defmodule DialecticWeb.AdminSocialLive do
                 type="select"
                 label="Post angle"
                 options={@post_type_options}
-              />
-              <.input
-                field={@generation_form[:node_id]}
-                type="select"
-                label="Focus node"
-                prompt="Whole grid"
-                options={node_options(@candidate_nodes)}
               />
 
               <div data-follow-up-question-inputs></div>
@@ -366,7 +314,7 @@ defmodule DialecticWeb.AdminSocialLive do
                 class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={is_nil(@selected_graph) || @selected_platforms == []}
               >
-                <.icon name="hero-sparkles" class="h-4 w-4" /> Generate drafts
+                <.icon name="hero-sparkles" class="h-4 w-4" /> Generate post copy
               </button>
             </.form>
           </div>
@@ -374,7 +322,7 @@ defmodule DialecticWeb.AdminSocialLive do
           <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
             <h2 class="text-base font-semibold text-gray-900">4. Visual assets</h2>
             <p class="mt-1 text-sm text-gray-500">
-              Reuse existing RationalGrid share-card generation for graph cards and highlighted quotes.
+              Reuse existing RationalGrid share-card generation for topic cards, highlighted quotes, and follow-up questions.
             </p>
 
             <%= cond do %>
@@ -437,148 +385,47 @@ defmodule DialecticWeb.AdminSocialLive do
           <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
             <div class="flex items-start justify-between gap-4">
               <div>
-                <h2 class="text-base font-semibold text-gray-900">Generated drafts</h2>
+                <h2 class="text-base font-semibold text-gray-900">Generated post copy</h2>
                 <p class="mt-1 text-sm text-gray-500">
-                  Edit the text, copy it, or save it to the draft history.
+                  Edit a textarea if needed, then copy the text for that platform.
                 </p>
               </div>
             </div>
 
-            <%= if @generated_drafts == [] do %>
+            <%= if @generated_posts == [] do %>
               <div class="mt-5 rounded-xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center text-sm text-gray-500">
-                Generated campaign drafts will appear here.
+                Generated post copy will appear here.
               </div>
             <% else %>
-              <div id="generated-content-drafts" class="mt-5 space-y-4">
-                <%= for {draft, index} <- Enum.with_index(@generated_drafts) do %>
+              <div id="generated-content-posts" class="mt-5 space-y-4">
+                <%= for {post, index} <- Enum.with_index(@generated_posts) do %>
                   <article
-                    id={draft.temp_id}
+                    id={"generated-post-#{index}"}
                     class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm"
                   >
                     <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
                       <div>
                         <span class="rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700">
-                          {draft.platform_label}
+                          {post.platform_label}
                         </span>
                         <span class="ml-2 text-xs font-medium text-gray-500">
-                          {String.replace(draft.format, "_", " ")}
+                          {String.replace(post.format, "_", " ")}
                         </span>
                       </div>
                       <button
                         type="button"
-                        data-copy-target={"#generated-draft-body-#{index}"}
+                        data-copy-target={"#generated-post-body-#{index}"}
                         class="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-semibold text-gray-700 transition hover:bg-gray-50"
                       >
                         <.icon name="hero-clipboard-document" class="h-3.5 w-3.5" /> Copy text
                       </button>
                     </div>
 
-                    <.form
-                      for={draft.form}
-                      id={"generated-draft-form-#{index}"}
-                      phx-submit="save_generated_draft"
-                      class="space-y-3"
-                    >
-                      <input type="hidden" name="draft[index]" value={index} />
-                      <.input
-                        id={"generated-draft-title-#{index}"}
-                        field={draft.form[:title]}
-                        type="text"
-                        label="Title"
-                      />
-                      <.input
-                        id={"generated-draft-body-#{index}"}
-                        field={draft.form[:body]}
-                        type="textarea"
-                        label="Body"
-                        rows="10"
-                        class="mt-2 block w-full rounded-lg border px-3 py-2 text-sm leading-6 text-zinc-900 focus:ring-0"
-                      />
-                      <.input
-                        id={"generated-draft-excerpt-#{index}"}
-                        field={draft.form[:excerpt]}
-                        type="text"
-                        label="Internal hook summary"
-                      />
-
-                      <button
-                        type="submit"
-                        class="inline-flex items-center gap-2 rounded-lg bg-gray-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-gray-700"
-                      >
-                        <.icon name="hero-bookmark" class="h-3.5 w-3.5" /> Save draft
-                      </button>
-                    </.form>
-                  </article>
-                <% end %>
-              </div>
-            <% end %>
-          </div>
-
-          <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <div class="flex items-start justify-between gap-4">
-              <div>
-                <h2 class="text-base font-semibold text-gray-900">Saved drafts</h2>
-                <p class="mt-1 text-sm text-gray-500">
-                  Keep a history of copy you used or want to revisit.
-                </p>
-              </div>
-            </div>
-
-            <%= if @saved_drafts == [] do %>
-              <div class="mt-5 rounded-xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center text-sm text-gray-500">
-                No saved drafts yet.
-              </div>
-            <% else %>
-              <div id="saved-content-drafts" class="mt-5 space-y-3">
-                <%= for draft <- @saved_drafts do %>
-                  <article
-                    id={"saved-content-draft-#{draft.id}"}
-                    class="rounded-2xl border border-gray-200 p-4"
-                  >
-                    <div class="flex flex-wrap items-center justify-between gap-2">
-                      <div>
-                        <span class="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700">
-                          {DraftGenerator.platform_label(draft.platform)}
-                        </span>
-                        <span class="ml-2 rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-gray-500 ring-1 ring-gray-200">
-                          {draft.status}
-                        </span>
-                      </div>
-                      <div class="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          data-copy-target={"#saved-draft-body-#{draft.id}"}
-                          class="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-semibold text-gray-700 transition hover:bg-gray-50"
-                        >
-                          <.icon name="hero-clipboard-document" class="h-3.5 w-3.5" /> Copy
-                        </button>
-                        <button
-                          type="button"
-                          phx-click="mark_used"
-                          phx-value-id={draft.id}
-                          class="inline-flex items-center gap-1.5 rounded-lg border border-green-200 bg-green-50 px-2.5 py-1.5 text-xs font-semibold text-green-700 transition hover:bg-green-100"
-                        >
-                          <.icon name="hero-check" class="h-3.5 w-3.5" /> Used
-                        </button>
-                        <button
-                          type="button"
-                          phx-click="archive_draft"
-                          phx-value-id={draft.id}
-                          class="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-semibold text-gray-600 transition hover:bg-gray-50"
-                        >
-                          <.icon name="hero-archive-box" class="h-3.5 w-3.5" /> Archive
-                        </button>
-                      </div>
-                    </div>
-
-                    <h3 class="mt-3 text-sm font-semibold text-gray-900">
-                      {draft.title || draft.graph_title}
-                    </h3>
+                    <p class="text-sm font-semibold text-gray-900">{post.title}</p>
                     <textarea
-                      id={"saved-draft-body-#{draft.id}"}
-                      readonly
-                      class="mt-3 min-h-32 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm leading-6 text-gray-700"
-                    >{draft.body}</textarea>
+                      id={"generated-post-body-#{index}"}
+                      class="mt-3 min-h-56 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm leading-6 text-gray-800 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                    >{post.body}</textarea>
                   </article>
                 <% end %>
               </div>
@@ -593,48 +440,11 @@ defmodule DialecticWeb.AdminSocialLive do
   defp generation_form(params \\ %{}) do
     params =
       Map.merge(
-        %{"post_type" => @default_post_type, "node_id" => ""},
+        %{"post_type" => @default_post_type},
         Map.new(params, fn {key, value} -> {to_string(key), value} end)
       )
 
     to_form(params, as: :content_generation)
-  end
-
-  defp attach_draft_forms(drafts) do
-    drafts
-    |> Enum.with_index()
-    |> Enum.map(fn {draft, index} ->
-      draft
-      |> Map.put(:temp_id, "generated-content-draft-#{index}")
-      |> Map.put(:form, generated_form(draft))
-    end)
-  end
-
-  defp generated_form(draft) do
-    to_form(
-      %{
-        "title" => Map.get(draft, :title, ""),
-        "body" => Map.get(draft, :body, ""),
-        "excerpt" => Map.get(draft, :excerpt, "")
-      },
-      as: :draft
-    )
-  end
-
-  defp generated_draft_attrs(draft, params) do
-    %{
-      graph_title: draft.graph_title,
-      node_id: draft.node_id,
-      platform: draft.platform,
-      format: draft.format,
-      title: Map.get(params, "title", draft.title),
-      body: Map.get(params, "body", draft.body),
-      excerpt: Map.get(params, "excerpt", draft.excerpt),
-      status: "draft",
-      utm_source: draft.utm_source,
-      utm_campaign: draft.utm_campaign,
-      metadata: draft.metadata || %{}
-    }
   end
 
   defp first_answer_markdown(graph) do
@@ -708,22 +518,10 @@ defmodule DialecticWeb.AdminSocialLive do
     Highlights.list_highlights(mudg_id: graph_title)
   end
 
-  defp node_options(nodes) do
-    Enum.map(nodes, fn node -> {"#{node.title} · #{node.class}", node.id} end)
-  end
-
   defp public_graph_url(graph), do: DialecticWeb.Endpoint.url() <> graph_path(graph)
 
-  defp refresh_saved_drafts(socket, message) do
-    graph_title = socket.assigns.selected_graph && socket.assigns.selected_graph.title
-
-    socket
-    |> put_flash(:info, message)
-    |> assign(saved_drafts: Content.list_drafts(graph_title: graph_title, limit: 12))
-  end
-
   defp plural([_one]), do: ""
-  defp plural(_drafts), do: "s"
+  defp plural(_posts), do: "s"
 
   defp format_error(error) when is_binary(error), do: error
   defp format_error(error), do: inspect(error)

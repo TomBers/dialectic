@@ -1,7 +1,7 @@
 import { followUpQuestionsFromMarkdown } from "./markdown_hook.js";
 import { showToast, copyToClipboard } from "./toast.js";
 
-const ContentDraftsHook = {
+const ContentStudioHook = {
   mounted() {
     this._renderFollowUpQuestions();
 
@@ -233,4 +233,4 @@ function escapeAttribute(value) {
   return escapeHtml(value);
 }
 
-export default ContentDraftsHook;
+export default ContentStudioHook;
