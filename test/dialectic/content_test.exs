@@ -8,7 +8,7 @@ defmodule Dialectic.ContentTest do
   alias Dialectic.GraphFixtures
   alias Dialectic.Highlights
 
-  describe "content studio" do
+  describe "promotion material" do
     test "lists public candidate graphs and hides private graphs" do
       public_graph = GraphFixtures.insert_graph(%{title: "Public Content Candidate"})
 

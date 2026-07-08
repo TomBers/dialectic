@@ -37,9 +37,14 @@ defmodule Dialectic.Content do
   def get_public_graph(title) when is_binary(title) do
     Graph
     |> where([g], g.title == ^title)
-    |> where([g], g.is_public == true)
-    |> where([g], g.is_published == true)
-    |> where([g], g.is_deleted == false or is_nil(g.is_deleted))
+    |> public_graph_query()
+    |> Repo.one()
+  end
+
+  def get_public_graph_by_slug_or_title(identifier) when is_binary(identifier) do
+    Graph
+    |> where([g], g.slug == ^identifier or g.title == ^identifier)
+    |> public_graph_query()
     |> Repo.one()
   end
 
@@ -65,6 +70,13 @@ defmodule Dialectic.Content do
     |> String.replace(~r/\s+/u, " ")
     |> String.trim()
     |> truncate(max_length)
+  end
+
+  defp public_graph_query(query) do
+    query
+    |> where([g], g.is_public == true)
+    |> where([g], g.is_published == true)
+    |> where([g], g.is_deleted == false or is_nil(g.is_deleted))
   end
 
   defp node_sort_class(%{"class" => "origin"}), do: 0

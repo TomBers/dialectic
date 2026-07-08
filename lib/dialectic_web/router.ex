@@ -94,6 +94,7 @@ defmodule DialecticWeb.Router do
   scope "/api", DialecticWeb do
     pipe_through :api
 
+    get "/promotion/grids/:graph_name/materials", PromotionMaterialController, :show
     # get "/graphs/json/:graph_name", PageController, :graph_json
   end
 
@@ -153,7 +154,6 @@ defmodule DialecticWeb.Router do
       live "/users/settings/confirm_email/:token", UserSettingsLive, :confirm_email
       live "/activity", ActivityLive
       live "/admin/curated", AdminCuratedLive
-      live "/admin/social", AdminSocialLive
       live "/admin/graphs/import", AdminGraphImportLive
     end
   end
