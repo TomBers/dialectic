@@ -39,6 +39,7 @@ defmodule DialecticWeb.AdminSocialLive do
          selected_platforms: DraftGenerator.default_platforms(),
          generated_drafts: [],
          saved_drafts: Content.list_drafts(limit: 12),
+         follow_up_source_markdown: "",
          visual_assets: [],
          generating?: false
        )}
@@ -71,6 +72,7 @@ defmodule DialecticWeb.AdminSocialLive do
            generation_form: generation_form(),
            generated_drafts: [],
            saved_drafts: Content.list_drafts(graph_title: graph.title, limit: 12),
+           follow_up_source_markdown: first_answer_markdown(graph),
            visual_assets: visual_assets(graph)
          )}
     end
@@ -115,6 +117,7 @@ defmodule DialecticWeb.AdminSocialLive do
           platforms: platforms,
           node_id: Map.get(params, "node_id"),
           post_type: Map.get(params, "post_type", @default_post_type),
+          follow_up_questions: Map.get(params, "follow_up_questions", []),
           url: public_graph_url(graph),
           utm_campaign: "content_studio"
         ]
@@ -304,6 +307,32 @@ defmodule DialecticWeb.AdminSocialLive do
                   <.icon name="hero-arrow-top-right-on-square" class="h-3.5 w-3.5" />
                 </.link>
               </div>
+
+              <div
+                id="content-key-follow-up-questions"
+                data-follow-up-question-source={@follow_up_source_markdown}
+                data-follow-up-card-url-template={follow_up_card_url_template(@selected_graph)}
+                data-follow-up-card-filename-prefix={filename_slug(@selected_graph.title)}
+                class="mt-3 rounded-xl border border-sky-100 bg-white p-3"
+              >
+                <div class="flex items-start gap-2">
+                  <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-sky-100 text-sky-700">
+                    <.icon name="hero-question-mark-circle" class="h-4 w-4" />
+                  </span>
+                  <div class="min-w-0 flex-1">
+                    <p class="text-xs font-semibold uppercase tracking-wide text-sky-700">
+                      Key follow-up questions
+                    </p>
+                    <p class="mt-1 text-xs leading-5 text-slate-500">
+                      Parsed with the same follow-up question logic used in the graph view.
+                    </p>
+                  </div>
+                </div>
+                <p data-follow-up-question-empty class="mt-3 text-sm text-slate-500">
+                  No follow-up question block found in the first answer yet.
+                </p>
+                <ol data-follow-up-question-list class="mt-3 hidden space-y-2"></ol>
+              </div>
             <% else %>
               <p class="mt-3 text-sm text-gray-500">Choose a grid before generating drafts.</p>
             <% end %>
@@ -328,6 +357,8 @@ defmodule DialecticWeb.AdminSocialLive do
                 prompt="Whole grid"
                 options={node_options(@candidate_nodes)}
               />
+
+              <div data-follow-up-question-inputs></div>
 
               <button
                 id="content-generate-btn"
@@ -396,6 +427,7 @@ defmodule DialecticWeb.AdminSocialLive do
                       </div>
                     </article>
                   <% end %>
+                  <div data-follow-up-asset-list class="space-y-4"></div>
                 </div>
             <% end %>
           </div>
@@ -603,6 +635,41 @@ defmodule DialecticWeb.AdminSocialLive do
       utm_campaign: draft.utm_campaign,
       metadata: draft.metadata || %{}
     }
+  end
+
+  defp first_answer_markdown(graph) do
+    graph
+    |> first_answer_node()
+    |> case do
+      nil -> ""
+      node -> Map.get(node, "content") || Map.get(node, :content) || ""
+    end
+  end
+
+  defp follow_up_card_url_template(graph) do
+    node_id =
+      graph
+      |> first_answer_node()
+      |> case do
+        nil -> "1"
+        node -> Map.get(node, "id") || Map.get(node, :id) || "1"
+      end
+      |> to_string()
+
+    identifier = graph.slug || URI.encode(graph.title, &URI.char_unreserved?/1)
+
+    DialecticWeb.Endpoint.url() <>
+      "/g/#{identifier}/follow-up-card.svg?" <>
+      URI.encode_query(%{node: node_id, question: "__QUESTION__"})
+  end
+
+  defp first_answer_node(graph) do
+    graph
+    |> Content.graph_nodes()
+    |> Enum.find(fn node ->
+      (Map.get(node, "class") || Map.get(node, :class)) == "answer" and
+        Map.get(node, "deleted") != true and Map.get(node, :deleted) != true
+    end)
   end
 
   defp visual_assets(graph) do

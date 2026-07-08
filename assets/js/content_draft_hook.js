@@ -1,7 +1,10 @@
+import { followUpQuestionsFromMarkdown } from "./markdown_hook.js";
 import { showToast, copyToClipboard } from "./toast.js";
 
 const ContentDraftsHook = {
   mounted() {
+    this._renderFollowUpQuestions();
+
     this._onClick = async (event) => {
       const downloadButton = event.target.closest("[data-download-svg-png]");
       if (downloadButton && this.el.contains(downloadButton)) {
@@ -26,10 +29,112 @@ const ContentDraftsHook = {
     this.el.addEventListener("click", this._onClick);
   },
 
+  updated() {
+    this._renderFollowUpQuestions();
+  },
+
   destroyed() {
     if (this._onClick) {
       this.el.removeEventListener("click", this._onClick);
     }
+  },
+
+  _renderFollowUpQuestions() {
+    this.el
+      .querySelectorAll("[data-follow-up-question-source]")
+      .forEach((el) => {
+        const source = el.getAttribute("data-follow-up-question-source") || "";
+        const list = el.querySelector("[data-follow-up-question-list]");
+        const empty = el.querySelector("[data-follow-up-question-empty]");
+        if (!list) return;
+
+        const questions = followUpQuestionsFromMarkdown(source);
+        list.replaceChildren();
+        this._syncFollowUpInputs(questions);
+        this._renderFollowUpAssets(el, questions);
+
+        if (questions.length === 0) {
+          if (empty) empty.classList.remove("hidden");
+          list.classList.add("hidden");
+          return;
+        }
+
+        if (empty) empty.classList.add("hidden");
+        list.classList.remove("hidden");
+
+        questions.forEach((question, index) => {
+          const item = document.createElement("li");
+          item.className =
+            "rounded-lg border border-sky-100 bg-sky-50 px-3 py-2 text-sm font-medium leading-5 text-slate-800";
+          item.textContent = `${index + 1}. ${question}`;
+          list.appendChild(item);
+        });
+      });
+  },
+
+  _syncFollowUpInputs(questions) {
+    this.el
+      .querySelectorAll("[data-follow-up-question-inputs]")
+      .forEach((el) => {
+        el.replaceChildren();
+
+        questions.forEach((question) => {
+          const input = document.createElement("input");
+          input.type = "hidden";
+          input.name = "content_generation[follow_up_questions][]";
+          input.value = question;
+          el.appendChild(input);
+        });
+      });
+  },
+
+  _renderFollowUpAssets(sourceEl, questions) {
+    const list = this.el.querySelector("[data-follow-up-asset-list]");
+    if (!list) return;
+
+    list.replaceChildren();
+    if (questions.length === 0) return;
+
+    const template =
+      sourceEl.getAttribute("data-follow-up-card-url-template") || "";
+    const filenamePrefix =
+      sourceEl.getAttribute("data-follow-up-card-filename-prefix") ||
+      "rationalgrid-follow-up";
+    if (!template.includes("__QUESTION__")) return;
+
+    const heading = document.createElement("div");
+    heading.className = "pt-1";
+    heading.innerHTML = `
+        <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Question cards</p>
+        <p class="mt-1 text-xs leading-5 text-gray-500">Image assets generated from the key follow-up questions.</p>
+      `;
+    list.appendChild(heading);
+
+    questions.forEach((question, index) => {
+      const url = template.replace(
+        "__QUESTION__",
+        encodeURIComponent(question),
+      );
+      const filename = `${filenamePrefix}-follow-up-${index + 1}.png`;
+      const article = document.createElement("article");
+      article.className =
+        "overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm";
+      article.innerHTML = `
+          <img src="${escapeAttribute(url)}" alt="${escapeAttribute(question)}" class="block aspect-[1200/630] w-full bg-gray-50 object-contain" loading="lazy" />
+          <div class="space-y-3 p-3">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Follow-up question card</p>
+              <h3 class="mt-1 text-sm font-semibold text-gray-900">Question ${index + 1}</h3>
+              <p class="mt-1 text-xs leading-5 text-gray-500">${escapeHtml(question)}</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button type="button" data-copy-text="${escapeAttribute(url)}" class="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-semibold text-gray-700 transition hover:bg-gray-50">Copy URL</button>
+              <button type="button" data-download-svg-png="${escapeAttribute(url)}" data-download-filename="${escapeAttribute(filename)}" class="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1.5 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-100 disabled:cursor-wait disabled:opacity-60">Download PNG</button>
+            </div>
+          </div>
+        `;
+      list.appendChild(article);
+    });
   },
 
   _copyText(button) {
@@ -114,5 +219,18 @@ const ContentDraftsHook = {
     URL.revokeObjectURL(url);
   },
 };
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function escapeAttribute(value) {
+  return escapeHtml(value);
+}
 
 export default ContentDraftsHook;

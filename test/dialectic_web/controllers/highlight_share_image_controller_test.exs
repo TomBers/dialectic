@@ -20,6 +20,23 @@ defmodule DialecticWeb.HighlightShareImageControllerTest do
     assert body =~ "RationalGrid.ai"
   end
 
+  test "renders an svg follow-up question card using highlight card styling", %{conn: conn} do
+    graph = insert_graph(%{title: "Follow Up Question Card", is_public: true})
+
+    conn =
+      get(
+        conn,
+        "/g/#{graph.slug}/follow-up-card.svg?" <>
+          URI.encode_query(%{node: "1", question: "What should be explored next?"})
+      )
+
+    body = response(conn, 200)
+
+    assert get_resp_header(conn, "content-type") |> List.first() =~ "image/svg+xml"
+    assert body =~ "What should be explored next?"
+    assert body =~ "RationalGrid.ai"
+  end
+
   test "requires a token for private grid share cards", %{conn: conn} do
     graph =
       insert_graph(%{title: "Private Grid Share Card", is_public: false})

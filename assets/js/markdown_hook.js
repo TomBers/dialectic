@@ -250,6 +250,29 @@ function readExistingFollowUpQuestions(root) {
   }
 }
 
+export function followUpQuestionsFromRoot(root) {
+  const questions = [];
+  const headings = root.querySelectorAll("h2, h3");
+
+  headings.forEach((heading) => {
+    if (!isFollowUpHeading(heading)) return;
+
+    const list = findFollowUpListAfterHeading(heading);
+    if (!list) return;
+
+    const found = followUpQuestionsFromList(list);
+    if (found.length === 3) questions.push(...found);
+  });
+
+  return questions;
+}
+
+export function followUpQuestionsFromMarkdown(markdown) {
+  const root = document.createElement("div");
+  root.innerHTML = DOMPurify.sanitize(marked.parse(markdown || ""));
+  return followUpQuestionsFromRoot(root);
+}
+
 function buildFollowUpPanel(root, questions, askQuestion, existingQuestions) {
   const panel = document.createElement("div");
   panel.className = "not-prose mt-3 grid gap-2";

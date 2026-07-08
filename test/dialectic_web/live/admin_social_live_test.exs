@@ -62,7 +62,8 @@ defmodule DialecticWeb.AdminSocialLiveTest do
           },
           %{
             "id" => "2",
-            "content" => "AI tutors can personalize feedback at scale.",
+            "content" =>
+              "AI tutors can personalize feedback at scale.\n\n## Follow-up questions\n1. What evidence shows AI tutors improve transfer?\n2. When does help become dependency?\n3. How should teachers audit generated explanations?",
             "class" => "answer",
             "user" => "",
             "parent" => nil,
@@ -164,6 +165,9 @@ defmodule DialecticWeb.AdminSocialLiveTest do
         |> render_click()
 
       assert html =~ "Should AI tutors teach critical thinking?"
+      assert html =~ "Key follow-up questions"
+      assert html =~ "What evidence shows AI tutors improve transfer?"
+      assert html =~ "/g/#{graph.slug}/follow-up-card.svg"
       assert html =~ "Visual assets"
       assert html =~ "/g/#{graph.slug}/share-card.svg"
       assert html =~ "/g/#{graph.slug}/highlights/"
@@ -174,7 +178,10 @@ defmodule DialecticWeb.AdminSocialLiveTest do
       html =
         view
         |> form("#content-generate-form", %{
-          "content_generation" => %{"post_type" => "question_hook", "node_id" => "1"}
+          "content_generation" => %{
+            "post_type" => "question_hook",
+            "node_id" => "1"
+          }
         })
         |> render_submit()
 

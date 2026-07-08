@@ -1,5 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
-import { enhanceFollowUpQuestions } from "../markdown_hook.js";
+import {
+  enhanceFollowUpQuestions,
+  followUpQuestionsFromMarkdown,
+} from "../markdown_hook.js";
 
 function rootWith(html) {
   const root = document.createElement("div");
@@ -8,6 +11,25 @@ function rootWith(html) {
   document.body.replaceChildren(root);
   return root;
 }
+
+describe("follow-up question parsing", () => {
+  it("extracts the first answer follow-up questions from markdown", () => {
+    const questions = followUpQuestionsFromMarkdown(`
+Main answer text.
+
+## Follow-up questions
+1. What evidence shows AI tutors improve transfer?
+2. When does help become dependency?
+3. How should teachers audit generated explanations?
+`);
+
+    expect(questions).toEqual([
+      "What evidence shows AI tutors improve transfer?",
+      "When does help become dependency?",
+      "How should teachers audit generated explanations?",
+    ]);
+  });
+});
 
 describe("enhanceFollowUpQuestions", () => {
   it("turns a stable follow-up questions list into buttons", () => {

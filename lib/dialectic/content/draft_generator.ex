@@ -80,8 +80,9 @@ defmodule Dialectic.Content.DraftGenerator do
     node_id = opts[:node_id]
     base_url = Keyword.fetch!(opts, :url)
     campaign = Keyword.get(opts, :utm_campaign, "content_studio")
+    follow_up_questions = opts |> Keyword.get(:follow_up_questions, []) |> clean_questions()
 
-    source = build_source(graph, node_id)
+    source = build_source(graph, node_id, follow_up_questions)
 
     drafts =
       platforms
@@ -89,6 +90,16 @@ defmodule Dialectic.Content.DraftGenerator do
       |> Enum.map(&draft_for_platform(&1, graph, source, post_type, node_id))
 
     {:ok, drafts}
+  end
+
+  defp clean_questions(questions) do
+    questions
+    |> List.wrap()
+    |> Enum.map(&to_string/1)
+    |> Enum.map(&String.trim/1)
+    |> Enum.filter(&String.ends_with?(&1, "?"))
+    |> Enum.uniq()
+    |> Enum.take(8)
   end
 
   defp valid_platforms(platforms) do
@@ -115,7 +126,7 @@ defmodule Dialectic.Content.DraftGenerator do
     end)
   end
 
-  defp build_source(graph, node_id) do
+  defp build_source(graph, node_id, follow_up_questions) do
     nodes =
       graph
       |> Content.graph_nodes()
@@ -124,8 +135,6 @@ defmodule Dialectic.Content.DraftGenerator do
     selected_node = selected_node(nodes, node_id)
     summaries = Enum.map(nodes, &Content.node_summary/1)
     origin = Enum.find(summaries, &(&1.class == "origin")) || List.first(summaries)
-
-    follow_up_questions = extract_follow_up_questions(nodes)
 
     highlights =
       [mudg_id: graph.title]
@@ -195,31 +204,45 @@ defmodule Dialectic.Content.DraftGenerator do
   end
 
   defp x_body(source, url, post_type) do
-    [
-      short_hook(source, post_type),
-      maybe_quote(source, 170),
-      cta(post_type),
-      url
-    ]
-    |> compact_join("\n\n")
+    if source.follow_up_questions != [] do
+      [
+        "A key follow-up question from this RationalGrid topic:",
+        smart_quote(truncate(List.first(source.follow_up_questions), 210)),
+        follow_up_cta(source, post_type),
+        url
+      ]
+      |> compact_join("\n\n")
+    else
+      [
+        short_hook(source, post_type),
+        maybe_quote(source, 170),
+        cta(post_type),
+        url
+      ]
+      |> compact_join("\n\n")
+    end
   end
 
   defp bluesky_body(source, url, post_type) do
+    question = List.first(source.follow_up_questions) || source.question
+
     [
       "A question I’d like more perspectives on:",
-      smart_quote(truncate(source.question, 220)),
-      cta(post_type),
+      smart_quote(truncate(question, 220)),
+      follow_up_cta(source, post_type),
       url
     ]
     |> compact_join("\n\n")
   end
 
   defp mastodon_body(source, url, post_type) do
+    question = List.first(source.follow_up_questions) || source.question
+
     [
       "I’m collecting careful arguments around this question:",
-      smart_quote(truncate(source.question, 220)),
+      smart_quote(truncate(question, 220)),
       first_highlight_sentence(source),
-      cta(post_type),
+      follow_up_cta(source, post_type),
       url
     ]
     |> compact_join("\n\n")
@@ -227,13 +250,15 @@ defmodule Dialectic.Content.DraftGenerator do
 
   defp linkedin_body(source, url, post_type) do
     branches = bullet_points(source.key_points, 4)
+    follow_ups = source.follow_up_questions |> Enum.take(3) |> bullet_lines()
 
     [
       "I’m mapping a question on RationalGrid:",
       smart_quote(source.question),
       if(branches != "", do: "Some branches already worth testing:\n#{branches}"),
+      if(follow_ups != "", do: "The key follow-up questions are:\n#{follow_ups}"),
       maybe_quote(source, 260),
-      cta(post_type),
+      follow_up_cta(source, post_type),
       url
     ]
     |> compact_join("\n\n")
@@ -258,14 +283,16 @@ defmodule Dialectic.Content.DraftGenerator do
 
   defp threads_body(source, url, post_type) do
     branches = source.key_points |> Enum.take(3) |> Enum.map(&point_text/1)
+    follow_ups = source.follow_up_questions |> Enum.take(3) |> numbered_lines()
 
     thread_posts =
       [
         "1/ A question worth mapping: #{truncate(source.question, 190)}",
+        follow_ups != "" && "2/ Key follow-up questions:\n#{follow_ups}",
         first_highlight_sentence(source) &&
-          "2/ A highlighted point: #{truncate(first_highlight_sentence(source), 220)}",
-        branches != [] && "3/ Branches so far:\n#{numbered_lines(branches)}",
-        "4/ #{cta(post_type)}\n#{url}"
+          "3/ A highlighted point: #{truncate(first_highlight_sentence(source), 220)}",
+        branches != [] && "4/ Branches so far:\n#{numbered_lines(branches)}",
+        "#{if(follow_ups != "", do: "5", else: "4")}/ #{follow_up_cta(source, post_type)}\n#{url}"
       ]
       |> Enum.reject(&blank?/1)
 
@@ -343,6 +370,12 @@ defmodule Dialectic.Content.DraftGenerator do
     "What perspective, source, objection, or example should be added next?"
   end
 
+  defp follow_up_cta(%{follow_up_questions: []}, post_type), do: cta(post_type)
+
+  defp follow_up_cta(_source, _post_type) do
+    "Which of these questions is most important to answer next — and what should be added?"
+  end
+
   defp maybe_quote(%{highlights: [highlight | _]}, max_length) do
     smart_quote(truncate(highlight, max_length))
   end
@@ -376,72 +409,6 @@ defmodule Dialectic.Content.DraftGenerator do
     }
   end
 
-  defp extract_follow_up_questions(nodes) do
-    nodes
-    |> Enum.flat_map(fn node ->
-      node
-      |> node_content()
-      |> extract_follow_up_questions_from_content()
-    end)
-    |> Enum.uniq()
-    |> Enum.take(8)
-  end
-
-  defp extract_follow_up_questions_from_content(content) do
-    lines = content |> to_string() |> String.split("\n")
-
-    case Enum.find_index(lines, &follow_up_heading?/1) do
-      nil -> []
-      index -> lines |> Enum.drop(index + 1) |> collect_question_lines([])
-    end
-  end
-
-  defp follow_up_heading?(line) do
-    String.match?(
-      line,
-      ~r/^\s*\#{0,6}\s*(follow[- ]?up questions|further exploration|next questions)\s*$/i
-    )
-  end
-
-  defp collect_question_lines([], acc), do: Enum.reverse(acc)
-
-  defp collect_question_lines([line | rest], acc) do
-    trimmed = String.trim(line)
-
-    cond do
-      trimmed == "" and acc == [] ->
-        collect_question_lines(rest, acc)
-
-      trimmed == "" ->
-        Enum.reverse(acc)
-
-      question = list_question(trimmed) ->
-        collect_question_lines(rest, [question | acc])
-
-      String.ends_with?(trimmed, "?") ->
-        collect_question_lines(rest, [clean_question(trimmed) | acc])
-
-      acc == [] ->
-        collect_question_lines(rest, acc)
-
-      true ->
-        Enum.reverse(acc)
-    end
-  end
-
-  defp list_question(line) do
-    case Regex.run(~r/^\s*(?:[-*]|\d+[.)])\s+(.*\?)\s*$/u, line) do
-      [_, question] -> clean_question(question)
-      _ -> nil
-    end
-  end
-
-  defp clean_question(question) do
-    question
-    |> String.replace(~r/^\*\*[^*]+:\*\*\s*/u, "")
-    |> String.trim()
-  end
-
   defp selected_node(_nodes, node_id) when node_id in [nil, ""], do: nil
 
   defp selected_node(nodes, node_id) do
@@ -454,8 +421,6 @@ defmodule Dialectic.Content.DraftGenerator do
     Map.get(node, "deleted") == true or Map.get(node, :deleted) == true or
       Map.get(node, "compound") == true or Map.get(node, :compound) == true
   end
-
-  defp node_content(node), do: Map.get(node, "content") || Map.get(node, :content) || ""
 
   defp highlight_summary(highlight) do
     [highlight.selected_text_snapshot, highlight.note]

@@ -54,7 +54,7 @@ defmodule Dialectic.ContentTest do
       refute "Private Content Candidate" in titles
     end
 
-    test "template generator uses highlights and follow-up questions without an LLM" do
+    test "template generator uses highlights without an LLM" do
       graph =
         GraphFixtures.insert_graph(%{
           title: "AI Tutors and Critical Thinking",
@@ -95,20 +95,28 @@ defmodule Dialectic.ContentTest do
 
       assert {:ok, drafts} =
                DraftGenerator.generate_pack(graph,
-                 platforms: ["x", "substack"],
+                 platforms: ["x", "linkedin", "substack"],
                  post_type: "quote_excerpt",
+                 follow_up_questions: [
+                   "What kinds of feedback build independence?",
+                   "When does assistance become dependence?",
+                   "How should teachers audit AI explanations?"
+                 ],
                  url: "https://rationalgrid.com/g/ai-tutors",
                  utm_campaign: "test_campaign"
                )
 
-      assert Enum.map(drafts, & &1.platform) == ["x", "substack"]
+      assert Enum.map(drafts, & &1.platform) == ["x", "linkedin", "substack"]
       assert Enum.all?(drafts, &(&1.metadata["source"] == "template"))
 
       x_body = drafts |> Enum.find(&(&1.platform == "x")) |> Map.fetch!(:body)
+      linkedin_body = drafts |> Enum.find(&(&1.platform == "linkedin")) |> Map.fetch!(:body)
       substack_body = drafts |> Enum.find(&(&1.platform == "substack")) |> Map.fetch!(:body)
 
-      assert x_body =~ "Personalized feedback"
+      assert x_body =~ "What kinds of feedback build independence?"
       assert x_body =~ "utm_source=x"
+      assert linkedin_body =~ "The key follow-up questions are"
+      assert linkedin_body =~ "When does assistance become dependence?"
       assert substack_body =~ "What kinds of feedback build independence?"
       assert substack_body =~ "Highlighted lines"
     end
