@@ -152,6 +152,7 @@ defmodule DialecticWeb.Router do
       live "/users/settings/confirm_email/:token", UserSettingsLive, :confirm_email
       live "/activity", ActivityLive
       live "/admin/curated", AdminCuratedLive
+      live "/admin/social", AdminSocialLive
       live "/admin/graphs/import", AdminGraphImportLive
     end
   end

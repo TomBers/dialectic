@@ -146,12 +146,20 @@ defmodule DialecticWeb.AdminCuratedLive do
         Add or remove grids from the curated and featured sections on the home page.
       </p>
 
-      <.link
-        navigate={~p"/admin/graphs/import"}
-        class="mb-8 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 transition"
-      >
-        <.icon name="hero-arrow-up-tray" class="h-4 w-4" /> Import graph JSON
-      </.link>
+      <div class="mb-8 flex flex-wrap gap-3">
+        <.link
+          navigate={~p"/admin/social"}
+          class="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
+        >
+          <.icon name="hero-megaphone" class="h-4 w-4" /> Content Studio
+        </.link>
+        <.link
+          navigate={~p"/admin/graphs/import"}
+          class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 transition"
+        >
+          <.icon name="hero-arrow-up-tray" class="h-4 w-4" /> Import graph JSON
+        </.link>
+      </div>
 
       <%!-- Search and Add --%>
       <div class="rounded-xl border border-gray-200 bg-white shadow-sm p-6 mb-8">
