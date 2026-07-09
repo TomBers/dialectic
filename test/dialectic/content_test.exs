@@ -5,54 +5,43 @@ defmodule Dialectic.ContentTest do
   alias Dialectic.GraphFixtures
 
   describe "promotion material" do
-    test "lists public candidate graphs and hides private graphs" do
-      public_graph = GraphFixtures.insert_graph(%{title: "Public Content Candidate"})
+    test "lists public graphs and hides private/deleted graphs" do
+      public_graph = GraphFixtures.insert_graph(%{title: "Public Promotion Graph"})
 
       _private_graph =
-        GraphFixtures.insert_graph(%{title: "Private Content Candidate", is_public: false})
+        GraphFixtures.insert_graph(%{title: "Private Promotion Graph", is_public: false})
 
-      results = Content.list_candidate_graphs("Content Candidate")
-      titles = Enum.map(results, fn {graph, _node_count, _author} -> graph.title end)
+      _deleted_graph =
+        GraphFixtures.insert_graph(%{title: "Deleted Promotion Graph", is_deleted: true})
+
+      results = Content.list_public_graphs()
+      titles = Enum.map(results, fn {graph, _node_count} -> graph.title end)
 
       assert public_graph.title in titles
-      refute "Private Content Candidate" in titles
+      refute "Private Promotion Graph" in titles
+      refute "Deleted Promotion Graph" in titles
     end
 
-    test "candidate graph node count handles missing or non-array nodes" do
+    test "public graph node count handles missing or non-array nodes" do
       graph =
         GraphFixtures.insert_graph(%{
-          title: "Malformed Nodes Content Candidate",
+          title: "Malformed Nodes Promotion Graph",
           data: %{"nodes" => %{"not" => "a list"}, "edges" => []}
         })
 
-      assert [{listed_graph, 0, _author}] = Content.list_candidate_graphs(graph.title)
-      assert listed_graph.title == graph.title
+      assert {_listed_graph, 0} =
+               Content.list_public_graphs()
+               |> Enum.find(fn {listed_graph, _node_count} ->
+                 listed_graph.title == graph.title
+               end)
     end
 
-    test "summarizes graph nodes without deleted or compound nodes" do
-      graph =
-        GraphFixtures.insert_graph(%{
-          title: "Node Summary Candidate",
-          data: %{
-            "nodes" => [
-              %{"id" => "1", "content" => "## Main Question", "class" => "origin"},
-              %{"id" => "2", "content" => "A useful answer", "class" => "answer"},
-              %{"id" => "3", "content" => "Hidden", "class" => "answer", "deleted" => true},
-              %{"id" => "4", "content" => "Group", "class" => "origin", "compound" => true}
-            ],
-            "edges" => []
-          }
-        })
+    test "gets public graph by slug or title" do
+      graph = GraphFixtures.insert_graph(%{title: "Get Public Promotion Graph"})
 
-      nodes =
-        graph
-        |> Content.graph_nodes()
-        |> Enum.reject(&(Map.get(&1, "deleted") == true or Map.get(&1, "compound") == true))
-        |> Enum.map(&Content.node_summary/1)
-        |> Enum.sort_by(fn node -> {node.sort_class, node.title} end)
-
-      assert Enum.map(nodes, & &1.id) == ["1", "2"]
-      assert hd(nodes).title == "Main Question"
+      assert Content.get_public_graph_by_slug_or_title(graph.slug).title == graph.title
+      assert Content.get_public_graph_by_slug_or_title(graph.title).slug == graph.slug
+      assert is_nil(Content.get_public_graph_by_slug_or_title("missing"))
     end
   end
 end

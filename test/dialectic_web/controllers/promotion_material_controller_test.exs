@@ -63,7 +63,7 @@ defmodule DialecticWeb.PromotionMaterialControllerTest do
     refute Enum.any?(slugs, &(&1 == _deleted_graph.slug))
   end
 
-  test "returns promotion material for a public grid", %{conn: conn} do
+  test "returns graph metadata, raw graph data, and highlights", %{conn: conn} do
     graph = promotion_graph("AI Tutors Promotion Grid")
     user = user_fixture()
 
@@ -85,50 +85,36 @@ defmodule DialecticWeb.PromotionMaterialControllerTest do
 
     response = json_response(conn, 200)
 
-    assert response["grid"]["title"] == graph.title
-    assert response["grid"]["slug"] == graph.slug
-    assert response["grid"]["url"] =~ "/g/#{graph.slug}"
-    assert response["content"]["origin_question"] == "Should AI tutors teach critical thinking?"
+    assert response["metadata"]["title"] == graph.title
+    assert response["metadata"]["slug"] == graph.slug
+    assert response["metadata"]["url"] =~ "/g/#{graph.slug}"
+    assert response["graph"] == graph.data
 
-    assert response["content"]["follow_up_questions"] == [
-             "What evidence shows AI tutors improve transfer?",
-             "When does help become dependency?",
-             "How should teachers audit generated explanations?"
-           ]
-
-    assert [%{"id" => highlight_id}] = response["content"]["highlights"]
+    assert [%{"id" => highlight_id} = highlight_response] = response["highlights"]
     assert highlight_id == highlight.id
+    assert highlight_response["node_id"] == "2"
+    assert highlight_response["text"] == "AI tutors can personalize feedback at scale."
+    assert highlight_response["text_source_type"] == "node"
 
-    assert Enum.map(response["content"]["key_questions"], & &1["source"]) == [
-             "first_answer_follow_up",
-             "first_answer_follow_up",
-             "first_answer_follow_up",
-             "user_question"
-           ]
-
-    assert Enum.map(response["content"]["key_questions"], & &1["question"]) == [
-             "What evidence shows AI tutors improve transfer?",
-             "When does help become dependency?",
-             "How should teachers audit generated explanations?",
-             "What classroom evidence would change your mind about whether AI tutors actually improve independent critical thinking over a full school year?"
-           ]
-
+    refute Map.has_key?(response, "content")
     refute Map.has_key?(response, "assets")
     refute Map.has_key?(response, "posts")
   end
 
-  test "builder returns grid and content by default" do
+  test "builder returns metadata, graph, and highlights" do
     graph = promotion_graph("Default Include Promotion Grid")
 
     response = PromotionMaterial.build(graph)
 
-    assert Map.has_key?(response, "grid")
-    assert Map.has_key?(response, "content")
+    assert Map.has_key?(response, "metadata")
+    assert Map.has_key?(response, "graph")
+    assert Map.has_key?(response, "highlights")
+    refute Map.has_key?(response, "content")
     refute Map.has_key?(response, "assets")
     refute Map.has_key?(response, "posts")
   end
 
-  test "returns grid and content and ignores include filters", %{conn: conn} do
+  test "returns metadata, graph, and highlights and ignores include filters", %{conn: conn} do
     graph = promotion_graph("All Sections Promotion Grid")
 
     conn =
@@ -138,10 +124,11 @@ defmodule DialecticWeb.PromotionMaterialControllerTest do
 
     response = json_response(conn, 200)
 
-    assert Map.has_key?(response, "grid")
-    assert Map.has_key?(response, "content")
+    assert Map.has_key?(response, "metadata")
+    assert Map.has_key?(response, "graph")
+    assert Map.has_key?(response, "highlights")
+    refute Map.has_key?(response, "content")
     refute Map.has_key?(response, "assets")
-    refute Map.has_key?(response, "posts")
   end
 
   test "returns 404 for unknown or non-public grids", %{conn: conn} do
@@ -182,24 +169,8 @@ defmodule DialecticWeb.PromotionMaterialControllerTest do
               },
               %{
                 "id" => "2",
-                "content" =>
-                  "AI tutors can personalize feedback at scale.\n\n## Follow-up questions\n1. What evidence shows AI tutors improve transfer?\n2. When does help become dependency?\n3. How should teachers audit generated explanations?",
+                "content" => "AI tutors can personalize feedback at scale.",
                 "class" => "answer",
-                "deleted" => false,
-                "compound" => false
-              },
-              %{
-                "id" => "3",
-                "content" => "Students may outsource the productive struggle of learning.",
-                "class" => "antithesis",
-                "deleted" => false,
-                "compound" => false
-              },
-              %{
-                "id" => "4",
-                "content" =>
-                  "What classroom evidence would change your mind about whether AI tutors actually improve independent critical thinking over a full school year?",
-                "class" => "question",
                 "deleted" => false,
                 "compound" => false
               }

@@ -29,7 +29,6 @@ defmodule Dialectic.Workers.LLMWorker do
 
   require Logger
 
-  alias Dialectic.Content.FollowUpQuestions
   alias Dialectic.Responses.Utils
   alias Dialectic.Responses.{PromptsStructured, ModeServer}
 
@@ -278,12 +277,34 @@ defmodule Dialectic.Workers.LLMWorker do
   end
 
   defp missing_required_follow_ups?(instruction, text) do
-    initial_explainer_request?(instruction) and not FollowUpQuestions.present?(text)
+    initial_explainer_request?(instruction) and not has_follow_up_questions?(text)
   end
 
   defp initial_explainer_request?(instruction) do
     is_binary(instruction) and
       String.contains?(instruction, "exact heading `## Follow-up questions`")
+  end
+
+  defp has_follow_up_questions?(text) when is_binary(text) do
+    case split_at_follow_up_section(text) do
+      {_before, body} ->
+        lines =
+          body
+          |> String.split("\n")
+          |> Enum.map(&String.trim/1)
+          |> Enum.reject(&(&1 == ""))
+
+        length(lines) == 3 and Enum.all?(lines, &numbered_question_line?/1)
+
+      :not_found ->
+        false
+    end
+  end
+
+  defp has_follow_up_questions?(_text), do: false
+
+  defp numbered_question_line?(line) do
+    Regex.match?(~r/^\d+[\.)]\s+.+\?$/, line)
   end
 
   defp append_fallback_follow_ups(text, instruction) do
@@ -296,10 +317,29 @@ defmodule Dialectic.Workers.LLMWorker do
       "What detail about #{topic} would be most rewarding to explore next?"
     ]
 
-    FollowUpQuestions.append_section(text, questions)
+    [
+      String.trim_trailing(text),
+      "## Follow-up questions",
+      "1. #{Enum.at(questions, 0)}",
+      "2. #{Enum.at(questions, 1)}",
+      "3. #{Enum.at(questions, 2)}"
+    ]
+    |> Enum.join("\n\n")
   end
 
-  defp strip_follow_up_section(text), do: FollowUpQuestions.strip_section(text)
+  defp strip_follow_up_section(text) do
+    case split_at_follow_up_section(text) do
+      {before, _body} -> String.trim_trailing(before)
+      :not_found -> String.trim_trailing(text)
+    end
+  end
+
+  defp split_at_follow_up_section(text) do
+    case Regex.split(~r/^##\s+Follow-up questions\s*$/im, text, parts: 2) do
+      [before, body] -> {before, body}
+      [_text] -> :not_found
+    end
+  end
 
   defp extract_initial_topic(instruction) do
     case Regex.run(~r/\*\*Your task:\*\* Answer \*\*(?<topic>.*?)\*\*/s, instruction,
