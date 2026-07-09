@@ -4,7 +4,6 @@ defmodule Dialectic.Content.PromotionMaterial do
   alias Dialectic.Content
   alias Dialectic.Content.FollowUpQuestions
   alias Dialectic.Highlights
-  alias DialecticWeb.HighlightShare
 
   def list_graphs do
     graphs = Content.list_public_graphs()
@@ -19,17 +18,15 @@ defmodule Dialectic.Content.PromotionMaterial do
   end
 
   def build(graph, _opts \\ []) do
-    graph_url = graph_url(graph)
     first_answer = first_answer_node(graph)
     follow_up_questions = first_answer |> node_content() |> FollowUpQuestions.extract()
     key_questions = key_questions(graph, first_answer, follow_up_questions)
     highlights = Highlights.list_highlights(mudg_id: graph.title)
-    raw = raw_material(graph, first_answer, follow_up_questions, key_questions, highlights)
 
     %{
-      "grid" => grid_material(graph, graph_url),
-      "raw" => raw,
-      "assets" => asset_material(graph, highlights, key_questions)
+      "grid" => grid_material(graph),
+      "content" =>
+        content_material(graph, first_answer, follow_up_questions, key_questions, highlights)
     }
   end
 
@@ -38,7 +35,7 @@ defmodule Dialectic.Content.PromotionMaterial do
       title: graph.title,
       slug: graph.slug,
       url: graph_url(graph),
-      materials_url: materials_url(graph),
+      api_url: graph_api_url(graph),
       tags: graph.tags || [],
       node_count: node_count,
       inserted_at: iso8601(graph.inserted_at),
@@ -46,13 +43,13 @@ defmodule Dialectic.Content.PromotionMaterial do
     }
   end
 
-  defp grid_material(graph, graph_url) do
+  defp grid_material(graph) do
     nodes = Content.graph_nodes(graph)
 
     %{
       title: graph.title,
       slug: graph.slug,
-      url: graph_url,
+      url: graph_url(graph),
       graph_url:
         DialecticWeb.Endpoint.url() <> DialecticWeb.GraphPathHelper.graph_editor_path(graph),
       tags: graph.tags || [],
@@ -62,7 +59,7 @@ defmodule Dialectic.Content.PromotionMaterial do
     }
   end
 
-  defp raw_material(graph, first_answer, follow_up_questions, key_questions, highlights) do
+  defp content_material(graph, first_answer, follow_up_questions, key_questions, highlights) do
     nodes =
       graph
       |> Content.graph_nodes()
@@ -76,74 +73,17 @@ defmodule Dialectic.Content.PromotionMaterial do
       first_answer: first_answer_summary(first_answer),
       follow_up_questions: follow_up_questions,
       key_questions: key_questions,
-      highlights: Enum.map(highlights, &highlight_material(graph, &1)),
+      highlights: Enum.map(highlights, &highlight_material/1),
       key_nodes: nodes
     }
   end
 
-  defp asset_material(graph, highlights, key_questions) do
-    graph_asset_url = HighlightShare.graph_image_url(graph)
-
-    graph_asset = %{
-      kind: "grid_card",
-      title: graph.title,
-      mime_type: "image/svg+xml",
-      url: graph_asset_url,
-      image_svg_url: graph_asset_url,
-      preview_url: graph_asset_url
-    }
-
-    highlight_assets =
-      highlights
-      |> Enum.take(6)
-      |> Enum.map(fn highlight ->
-        image_url = HighlightShare.image_url(graph, highlight)
-
-        %{
-          kind: "highlight_card",
-          highlight_id: highlight.id,
-          node_id: highlight.node_id,
-          title: "Highlighted quote",
-          text: Content.excerpt(highlight.selected_text_snapshot, 220),
-          mime_type: "image/svg+xml",
-          url: image_url,
-          image_svg_url: image_url,
-          preview_url: image_url
-        }
-      end)
-
-    key_question_assets =
-      key_questions
-      |> Enum.with_index(1)
-      |> Enum.map(fn {question, index} ->
-        image_url = question_card_url(graph, question.node_id, question.question)
-
-        %{
-          kind: "key_question_card",
-          source: question.source,
-          index: index,
-          node_id: question.node_id,
-          title: "Key question",
-          text: question.question,
-          question: question.question,
-          mime_type: "image/svg+xml",
-          url: image_url,
-          image_svg_url: image_url,
-          preview_url: image_url
-        }
-      end)
-
-    [graph_asset] ++ highlight_assets ++ key_question_assets
-  end
-
-  defp highlight_material(graph, highlight) do
+  defp highlight_material(highlight) do
     %{
       id: highlight.id,
       node_id: highlight.node_id,
       text: highlight.selected_text_snapshot,
-      note: highlight.note,
-      share_url: HighlightShare.share_url(graph, highlight),
-      image_svg_url: HighlightShare.image_url(graph, highlight)
+      note: highlight.note
     }
   end
 
@@ -230,17 +170,11 @@ defmodule Dialectic.Content.PromotionMaterial do
     end
   end
 
-  defp question_card_url(graph, node_id, question) do
-    DialecticWeb.Endpoint.url() <>
-      "/g/#{graph_identifier(graph)}/follow-up-card.svg?" <>
-      URI.encode_query(%{node: to_string(node_id || "1"), question: question})
-  end
-
   defp graph_url(graph),
     do: DialecticWeb.Endpoint.url() <> DialecticWeb.GraphPathHelper.graph_path(graph)
 
-  defp materials_url(graph) do
-    DialecticWeb.Endpoint.url() <> "/api/promotion/grids/#{graph_identifier(graph)}/materials"
+  defp graph_api_url(graph) do
+    DialecticWeb.Endpoint.url() <> "/api/promotion/grids/#{graph_identifier(graph)}"
   end
 
   defp graph_identifier(%{slug: slug}) when is_binary(slug) and slug != "", do: slug

@@ -1,5 +1,5 @@
 defmodule DialecticWeb.PromotionMaterialControllerTest do
-  use DialecticWeb.ConnCase, async: true
+  use DialecticWeb.ConnCase, async: false
 
   import Dialectic.AccountsFixtures
   import Dialectic.GraphFixtures
@@ -7,12 +7,47 @@ defmodule DialecticWeb.PromotionMaterialControllerTest do
   alias Dialectic.Content.PromotionMaterial
   alias Dialectic.Highlights
 
+  @token "test-promotion-token"
+
+  setup do
+    original_token = Application.get_env(:dialectic, :promotion_api_token)
+    Application.put_env(:dialectic, :promotion_api_token, @token)
+
+    on_exit(fn ->
+      if original_token do
+        Application.put_env(:dialectic, :promotion_api_token, original_token)
+      else
+        Application.delete_env(:dialectic, :promotion_api_token)
+      end
+    end)
+  end
+
+  test "returns 503 when promotion token is not configured", %{conn: conn} do
+    Application.delete_env(:dialectic, :promotion_api_token)
+
+    conn = get(conn, ~p"/api/promotion/grids")
+
+    assert json_response(conn, 503) == %{"error" => "Promotion API token is not configured"}
+  end
+
+  test "rejects missing or wrong bearer token", %{conn: conn} do
+    conn = get(conn, ~p"/api/promotion/grids")
+    assert json_response(conn, 401) == %{"error" => "Unauthorized"}
+
+    conn =
+      recycle(conn)
+      |> put_req_header("authorization", "Bearer wrong-token")
+      |> get(~p"/api/promotion/grids")
+
+    assert json_response(conn, 401) == %{"error" => "Unauthorized"}
+  end
+
   test "lists all public promotion grids", %{conn: conn} do
     public_graph = promotion_graph("Promotion Index Public Grid")
     _private_graph = promotion_graph("Promotion Index Private Grid", is_public: false)
     _deleted_graph = promotion_graph("Promotion Index Deleted Grid", is_deleted: true)
 
-    conn = get(conn, ~p"/api/promotion/grids")
+    conn = conn |> authed() |> get(~p"/api/promotion/grids")
     response = json_response(conn, 200)
 
     matching = Enum.filter(response["grids"], &(&1["slug"] == public_graph.slug))
@@ -21,14 +56,14 @@ defmodule DialecticWeb.PromotionMaterialControllerTest do
     assert [grid] = matching
     assert grid["title"] == public_graph.title
     assert grid["url"] =~ "/g/#{public_graph.slug}"
-    assert grid["materials_url"] =~ "/api/promotion/grids/#{public_graph.slug}/materials"
+    assert grid["api_url"] =~ "/api/promotion/grids/#{public_graph.slug}"
 
     slugs = Enum.map(response["grids"], & &1["slug"])
     refute Enum.any?(slugs, &(&1 == _private_graph.slug))
     refute Enum.any?(slugs, &(&1 == _deleted_graph.slug))
   end
 
-  test "returns promotion material for a public grid without auth", %{conn: conn} do
+  test "returns promotion material for a public grid", %{conn: conn} do
     graph = promotion_graph("AI Tutors Promotion Grid")
     user = user_fixture()
 
@@ -44,89 +79,68 @@ defmodule DialecticWeb.PromotionMaterialControllerTest do
       })
 
     conn =
-      get(
-        conn,
-        ~p"/api/promotion/grids/#{graph.slug}/materials"
-      )
+      conn
+      |> authed()
+      |> get(~p"/api/promotion/grids/#{graph.slug}")
 
     response = json_response(conn, 200)
 
     assert response["grid"]["title"] == graph.title
     assert response["grid"]["slug"] == graph.slug
     assert response["grid"]["url"] =~ "/g/#{graph.slug}"
-    assert response["raw"]["origin_question"] == "Should AI tutors teach critical thinking?"
+    assert response["content"]["origin_question"] == "Should AI tutors teach critical thinking?"
 
-    assert response["raw"]["follow_up_questions"] == [
+    assert response["content"]["follow_up_questions"] == [
              "What evidence shows AI tutors improve transfer?",
              "When does help become dependency?",
              "How should teachers audit generated explanations?"
            ]
 
-    assert [%{"id" => highlight_id}] = response["raw"]["highlights"]
+    assert [%{"id" => highlight_id}] = response["content"]["highlights"]
     assert highlight_id == highlight.id
 
-    assert Enum.map(response["raw"]["key_questions"], & &1["source"]) == [
+    assert Enum.map(response["content"]["key_questions"], & &1["source"]) == [
              "first_answer_follow_up",
              "first_answer_follow_up",
              "first_answer_follow_up",
              "user_question"
            ]
 
-    assert Enum.map(response["raw"]["key_questions"], & &1["question"]) == [
+    assert Enum.map(response["content"]["key_questions"], & &1["question"]) == [
              "What evidence shows AI tutors improve transfer?",
              "When does help become dependency?",
              "How should teachers audit generated explanations?",
              "What classroom evidence would change your mind about whether AI tutors actually improve independent critical thinking over a full school year?"
            ]
 
-    asset_kinds = Enum.map(response["assets"], & &1["kind"])
-    assert "grid_card" in asset_kinds
-    assert "highlight_card" in asset_kinds
-    assert "key_question_card" in asset_kinds
-
-    key_question_assets = Enum.filter(response["assets"], &(&1["kind"] == "key_question_card"))
-    assert length(key_question_assets) == 4
-
-    assert Enum.any?(key_question_assets, fn asset ->
-             asset["source"] == "first_answer_follow_up" and
-               asset["url"] =~ "/g/#{graph.slug}/follow-up-card.svg" and
-               asset["url"] =~ "question=" and
-               asset["image_svg_url"] == asset["url"] and
-               asset["preview_url"] == asset["url"]
-           end)
-
-    assert Enum.any?(key_question_assets, fn asset ->
-             asset["source"] == "user_question" and
-               asset["node_id"] == "4" and
-               asset["question"] ==
-                 "What classroom evidence would change your mind about whether AI tutors actually improve independent critical thinking over a full school year?"
-           end)
-
-    refute Map.has_key?(List.first(response["assets"]), "recommended_platforms")
+    refute Map.has_key?(response, "assets")
     refute Map.has_key?(response, "posts")
   end
 
-  test "builder returns all material sections by default" do
+  test "builder returns grid and content by default" do
     graph = promotion_graph("Default Include Promotion Grid")
 
     response = PromotionMaterial.build(graph)
 
     assert Map.has_key?(response, "grid")
-    assert Map.has_key?(response, "raw")
-    assert Map.has_key?(response, "assets")
+    assert Map.has_key?(response, "content")
+    refute Map.has_key?(response, "assets")
     refute Map.has_key?(response, "posts")
   end
 
-  test "always returns all material sections and ignores include filters", %{conn: conn} do
+  test "returns grid and content and ignores include filters", %{conn: conn} do
     graph = promotion_graph("All Sections Promotion Grid")
 
-    conn = get(conn, ~p"/api/promotion/grids/#{graph.slug}/materials", %{"include" => "grid,raw"})
+    conn =
+      conn
+      |> authed()
+      |> get(~p"/api/promotion/grids/#{graph.slug}", %{"include" => "grid"})
 
     response = json_response(conn, 200)
 
     assert Map.has_key?(response, "grid")
-    assert Map.has_key?(response, "raw")
-    assert Map.has_key?(response, "assets")
+    assert Map.has_key?(response, "content")
+    refute Map.has_key?(response, "assets")
     refute Map.has_key?(response, "posts")
   end
 
@@ -134,14 +148,21 @@ defmodule DialecticWeb.PromotionMaterialControllerTest do
     private_graph = promotion_graph("Private Promotion Grid", is_public: false)
 
     assert %{"error" => "Grid not found"} =
-             get(conn, ~p"/api/promotion/grids/missing/materials") |> json_response(404)
+             conn
+             |> authed()
+             |> get(~p"/api/promotion/grids/missing")
+             |> json_response(404)
 
     conn = recycle(conn)
 
     assert %{"error" => "Grid not found"} =
-             get(conn, ~p"/api/promotion/grids/#{private_graph.slug}/materials")
+             conn
+             |> authed()
+             |> get(~p"/api/promotion/grids/#{private_graph.slug}")
              |> json_response(404)
   end
+
+  defp authed(conn), do: put_req_header(conn, "authorization", "Bearer #{@token}")
 
   defp promotion_graph(title, attrs \\ []) do
     insert_graph(
