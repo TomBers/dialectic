@@ -25,11 +25,7 @@ defmodule DialecticWeb.PromotionMaterialControllerTest do
     conn =
       get(
         conn,
-        ~p"/api/promotion/grids/#{graph.slug}/materials",
-        %{
-          "platforms" => "x,linkedin",
-          "utm_campaign" => "weekly_topic"
-        }
+        ~p"/api/promotion/grids/#{graph.slug}/materials"
       )
 
     response = json_response(conn, 200)
@@ -85,12 +81,11 @@ defmodule DialecticWeb.PromotionMaterialControllerTest do
                  "What classroom evidence would change your mind about whether AI tutors actually improve independent critical thinking over a full school year?"
            end)
 
-    assert Enum.map(response["posts"], & &1["platform"]) == ["x", "linkedin"]
-    assert response["posts"] |> List.first() |> Map.fetch!("body") =~ "utm_campaign=weekly_topic"
-    assert response["posts"] |> List.first() |> Map.fetch!("body") =~ "What evidence shows"
+    refute Map.has_key?(List.first(response["assets"]), "recommended_platforms")
+    refute Map.has_key?(response, "posts")
   end
 
-  test "builder returns all sections by default" do
+  test "builder returns all material sections by default" do
     graph = promotion_graph("Default Include Promotion Grid")
 
     response = PromotionMaterial.build(graph)
@@ -98,11 +93,11 @@ defmodule DialecticWeb.PromotionMaterialControllerTest do
     assert Map.has_key?(response, "grid")
     assert Map.has_key?(response, "raw")
     assert Map.has_key?(response, "assets")
-    assert Map.has_key?(response, "posts")
+    refute Map.has_key?(response, "posts")
   end
 
-  test "respects include filters", %{conn: conn} do
-    graph = promotion_graph("Raw Only Promotion Grid")
+  test "always returns all material sections and ignores include filters", %{conn: conn} do
+    graph = promotion_graph("All Sections Promotion Grid")
 
     conn = get(conn, ~p"/api/promotion/grids/#{graph.slug}/materials", %{"include" => "grid,raw"})
 
@@ -110,7 +105,7 @@ defmodule DialecticWeb.PromotionMaterialControllerTest do
 
     assert Map.has_key?(response, "grid")
     assert Map.has_key?(response, "raw")
-    refute Map.has_key?(response, "assets")
+    assert Map.has_key?(response, "assets")
     refute Map.has_key?(response, "posts")
   end
 

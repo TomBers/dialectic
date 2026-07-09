@@ -4,7 +4,7 @@ defmodule DialecticWeb.PromotionMaterialController do
   alias Dialectic.Content
   alias Dialectic.Content.PromotionMaterial
 
-  def show(conn, %{"graph_name" => graph_name} = params) do
+  def show(conn, %{"graph_name" => graph_name}) do
     case Content.get_public_graph_by_slug_or_title(graph_name) do
       nil ->
         conn
@@ -12,14 +12,7 @@ defmodule DialecticWeb.PromotionMaterialController do
         |> json(%{error: "Grid not found"})
 
       graph ->
-        material =
-          PromotionMaterial.build(graph,
-            include: Map.get(params, "include"),
-            platforms: Map.get(params, "platforms"),
-            utm_campaign: Map.get(params, "utm_campaign", "promotion_api")
-          )
-
-        json(conn, material)
+        json(conn, PromotionMaterial.build(graph))
     end
   end
 end

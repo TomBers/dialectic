@@ -2,34 +2,23 @@ defmodule Dialectic.Content.PromotionMaterial do
   @moduledoc false
 
   alias Dialectic.Content
-  alias Dialectic.Content.{DraftGenerator, FollowUpQuestions}
+  alias Dialectic.Content.FollowUpQuestions
   alias Dialectic.Highlights
   alias DialecticWeb.HighlightShare
 
-  @default_include MapSet.new(~w(grid raw assets posts))
-  @all_include @default_include
-
-  def build(graph, opts \\ []) do
-    include = opts |> Keyword.get(:include) |> normalize_include()
-    platforms = opts |> Keyword.get(:platforms, []) |> normalize_list()
-    campaign = opts |> Keyword.get(:utm_campaign, "promotion_api") |> to_string()
+  def build(graph, _opts \\ []) do
     graph_url = graph_url(graph)
-
     first_answer = first_answer_node(graph)
     follow_up_questions = first_answer |> node_content() |> FollowUpQuestions.extract()
     key_questions = key_questions(graph, first_answer, follow_up_questions)
     highlights = Highlights.list_highlights(mudg_id: graph.title)
     raw = raw_material(graph, first_answer, follow_up_questions, key_questions, highlights)
 
-    %{}
-    |> maybe_put(include, "grid", fn -> grid_material(graph, graph_url) end)
-    |> maybe_put(include, "raw", fn -> raw end)
-    |> maybe_put(include, "assets", fn ->
-      asset_material(graph, highlights, key_questions)
-    end)
-    |> maybe_put(include, "posts", fn ->
-      post_material(graph, platforms, Enum.map(key_questions, & &1.question), graph_url, campaign)
-    end)
+    %{
+      "grid" => grid_material(graph, graph_url),
+      "raw" => raw,
+      "assets" => asset_material(graph, highlights, key_questions)
+    }
   end
 
   defp grid_material(graph, graph_url) do
@@ -76,8 +65,7 @@ defmodule Dialectic.Content.PromotionMaterial do
       mime_type: "image/svg+xml",
       url: graph_asset_url,
       image_svg_url: graph_asset_url,
-      preview_url: graph_asset_url,
-      recommended_platforms: ~w(x linkedin substack bluesky)
+      preview_url: graph_asset_url
     }
 
     highlight_assets =
@@ -95,8 +83,7 @@ defmodule Dialectic.Content.PromotionMaterial do
           mime_type: "image/svg+xml",
           url: image_url,
           image_svg_url: image_url,
-          preview_url: image_url,
-          recommended_platforms: ~w(instagram linkedin x bluesky)
+          preview_url: image_url
         }
       end)
 
@@ -117,35 +104,11 @@ defmodule Dialectic.Content.PromotionMaterial do
           mime_type: "image/svg+xml",
           url: image_url,
           image_svg_url: image_url,
-          preview_url: image_url,
-          recommended_platforms: ~w(instagram linkedin x bluesky)
+          preview_url: image_url
         }
       end)
 
     [graph_asset] ++ highlight_assets ++ key_question_assets
-  end
-
-  defp post_material(_graph, [], _follow_up_questions, _graph_url, _campaign), do: []
-
-  defp post_material(graph, platforms, follow_up_questions, graph_url, campaign) do
-    {:ok, posts} =
-      DraftGenerator.generate_pack(graph,
-        platforms: platforms,
-        follow_up_questions: follow_up_questions,
-        url: graph_url,
-        utm_campaign: campaign
-      )
-
-    Enum.map(posts, fn post ->
-      %{
-        platform: post.platform,
-        format: post.format,
-        title: post.title,
-        body: post.body,
-        excerpt: post.excerpt,
-        asset_kinds: recommended_asset_kinds(post.platform)
-      }
-    end)
   end
 
   defp highlight_material(graph, highlight) do
@@ -312,47 +275,6 @@ defmodule Dialectic.Content.PromotionMaterial do
   defp node_class(node), do: Map.get(node, "class") || Map.get(node, :class) || ""
   defp node_content(nil), do: ""
   defp node_content(node), do: Map.get(node, "content") || Map.get(node, :content) || ""
-
-  defp normalize_include(value) do
-    value
-    |> normalize_list()
-    |> case do
-      [] -> @default_include
-      values -> values |> Enum.filter(&MapSet.member?(@all_include, &1)) |> MapSet.new()
-    end
-  end
-
-  defp normalize_list(nil), do: []
-
-  defp normalize_list(value) when is_binary(value) do
-    value
-    |> String.split(",")
-    |> Enum.map(&String.trim/1)
-    |> Enum.reject(&(&1 == ""))
-  end
-
-  defp normalize_list(value) when is_list(value) do
-    value
-    |> Enum.flat_map(&normalize_list/1)
-    |> Enum.uniq()
-  end
-
-  defp normalize_list(value), do: [to_string(value)]
-
-  defp maybe_put(map, include, key, fun) do
-    if MapSet.member?(include, key), do: Map.put(map, key, fun.()), else: map
-  end
-
-  defp recommended_asset_kinds(platform) when platform in ["instagram"] do
-    ~w(key_question_card highlight_card grid_card)
-  end
-
-  defp recommended_asset_kinds(platform)
-       when platform in ["linkedin", "x", "bluesky", "threads"] do
-    ~w(key_question_card grid_card highlight_card)
-  end
-
-  defp recommended_asset_kinds(_platform), do: ~w(grid_card highlight_card)
 
   defp iso8601(nil), do: nil
   defp iso8601(%DateTime{} = datetime), do: DateTime.to_iso8601(datetime)
