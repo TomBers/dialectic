@@ -25,10 +25,10 @@ defmodule Dialectic.Content do
   end
 
   def get_public_graph_by_slug_or_title(identifier) when is_binary(identifier) do
-    Graph
-    |> where([g], g.slug == ^identifier or g.title == ^identifier)
-    |> public_graph_query()
-    |> Repo.one()
+    base_query = public_graph_query(Graph)
+
+    Repo.one(from g in base_query, where: g.slug == ^identifier) ||
+      Repo.one(from g in base_query, where: g.title == ^identifier)
   end
 
   def node_count(%Graph{} = graph) do

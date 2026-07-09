@@ -43,5 +43,22 @@ defmodule Dialectic.ContentTest do
       assert Content.get_public_graph_by_slug_or_title(graph.title).slug == graph.slug
       assert is_nil(Content.get_public_graph_by_slug_or_title("missing"))
     end
+
+    test "slug lookup takes precedence over another graph title" do
+      _title_match =
+        GraphFixtures.insert_graph(%{
+          title: "promotion-slug-collision",
+          slug: "promotion-title-match"
+        })
+
+      slug_match =
+        GraphFixtures.insert_graph(%{
+          title: "Promotion Slug Match",
+          slug: "promotion-slug-collision"
+        })
+
+      assert Content.get_public_graph_by_slug_or_title("promotion-slug-collision").title ==
+               slug_match.title
+    end
   end
 end

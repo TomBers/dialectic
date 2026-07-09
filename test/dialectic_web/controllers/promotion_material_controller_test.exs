@@ -10,14 +10,23 @@ defmodule DialecticWeb.PromotionMaterialControllerTest do
   @token "test-promotion-token"
 
   setup do
-    original_token = Application.get_env(:dialectic, :promotion_api_token)
+    original_app_token = Application.get_env(:dialectic, :promotion_api_token)
+    original_system_token = System.get_env("PROMOTION_API_TOKEN")
+
     Application.put_env(:dialectic, :promotion_api_token, @token)
+    System.delete_env("PROMOTION_API_TOKEN")
 
     on_exit(fn ->
-      if original_token do
-        Application.put_env(:dialectic, :promotion_api_token, original_token)
+      if original_app_token do
+        Application.put_env(:dialectic, :promotion_api_token, original_app_token)
       else
         Application.delete_env(:dialectic, :promotion_api_token)
+      end
+
+      if original_system_token do
+        System.put_env("PROMOTION_API_TOKEN", original_system_token)
+      else
+        System.delete_env("PROMOTION_API_TOKEN")
       end
     end)
   end
