@@ -6,6 +6,18 @@ defmodule Dialectic.Content.PromotionMaterial do
   alias Dialectic.Highlights
   alias DialecticWeb.HighlightShare
 
+  def list_graphs do
+    graphs = Content.list_public_graphs()
+
+    %{
+      "count" => length(graphs),
+      "grids" =>
+        Enum.map(graphs, fn {graph, node_count} ->
+          graph_index_material(graph, node_count)
+        end)
+    }
+  end
+
   def build(graph, _opts \\ []) do
     graph_url = graph_url(graph)
     first_answer = first_answer_node(graph)
@@ -18,6 +30,19 @@ defmodule Dialectic.Content.PromotionMaterial do
       "grid" => grid_material(graph, graph_url),
       "raw" => raw,
       "assets" => asset_material(graph, highlights, key_questions)
+    }
+  end
+
+  defp graph_index_material(graph, node_count) do
+    %{
+      title: graph.title,
+      slug: graph.slug,
+      url: graph_url(graph),
+      materials_url: materials_url(graph),
+      tags: graph.tags || [],
+      node_count: node_count,
+      inserted_at: iso8601(graph.inserted_at),
+      updated_at: iso8601(graph.updated_at)
     }
   end
 
@@ -213,6 +238,10 @@ defmodule Dialectic.Content.PromotionMaterial do
 
   defp graph_url(graph),
     do: DialecticWeb.Endpoint.url() <> DialecticWeb.GraphPathHelper.graph_path(graph)
+
+  defp materials_url(graph) do
+    DialecticWeb.Endpoint.url() <> "/api/promotion/grids/#{graph_identifier(graph)}/materials"
+  end
 
   defp graph_identifier(%{slug: slug}) when is_binary(slug) and slug != "", do: slug
 

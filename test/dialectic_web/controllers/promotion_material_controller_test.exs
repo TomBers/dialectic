@@ -7,6 +7,27 @@ defmodule DialecticWeb.PromotionMaterialControllerTest do
   alias Dialectic.Content.PromotionMaterial
   alias Dialectic.Highlights
 
+  test "lists all public promotion grids", %{conn: conn} do
+    public_graph = promotion_graph("Promotion Index Public Grid")
+    _private_graph = promotion_graph("Promotion Index Private Grid", is_public: false)
+    _deleted_graph = promotion_graph("Promotion Index Deleted Grid", is_deleted: true)
+
+    conn = get(conn, ~p"/api/promotion/grids")
+    response = json_response(conn, 200)
+
+    matching = Enum.filter(response["grids"], &(&1["slug"] == public_graph.slug))
+
+    assert response["count"] >= 1
+    assert [grid] = matching
+    assert grid["title"] == public_graph.title
+    assert grid["url"] =~ "/g/#{public_graph.slug}"
+    assert grid["materials_url"] =~ "/api/promotion/grids/#{public_graph.slug}/materials"
+
+    slugs = Enum.map(response["grids"], & &1["slug"])
+    refute Enum.any?(slugs, &(&1 == _private_graph.slug))
+    refute Enum.any?(slugs, &(&1 == _deleted_graph.slug))
+  end
+
   test "returns promotion material for a public grid without auth", %{conn: conn} do
     graph = promotion_graph("AI Tutors Promotion Grid")
     user = user_fixture()

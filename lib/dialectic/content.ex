@@ -34,6 +34,24 @@ defmodule Dialectic.Content do
     Repo.all(query)
   end
 
+  def list_public_graphs do
+    query =
+      from g in Graph,
+        where: g.is_published == true,
+        where: g.is_public == true,
+        where: g.is_deleted == false or is_nil(g.is_deleted),
+        order_by: [desc: g.updated_at],
+        select:
+          {g,
+           fragment(
+             "COALESCE(CASE WHEN jsonb_typeof(?->'nodes') = 'array' THEN jsonb_array_length(?->'nodes') ELSE 0 END, 0)",
+             g.data,
+             g.data
+           )}
+
+    Repo.all(query)
+  end
+
   def get_public_graph(title) when is_binary(title) do
     Graph
     |> where([g], g.title == ^title)
