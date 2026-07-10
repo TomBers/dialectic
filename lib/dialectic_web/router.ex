@@ -93,7 +93,8 @@ defmodule DialecticWeb.Router do
   scope "/api", DialecticWeb do
     pipe_through :api
 
-    # get "/graphs/json/:graph_name", PageController, :graph_json
+    get "/promotion/grids", PromotionMaterialController, :index
+    get "/promotion/grids/:graph_name", PromotionMaterialController, :show
   end
 
   scope "/api", DialecticWeb do
