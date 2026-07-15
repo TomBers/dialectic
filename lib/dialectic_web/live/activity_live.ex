@@ -349,6 +349,7 @@ defmodule DialecticWeb.ActivityLive do
         unseen?: tracks_seen? && unseen_since?(latest.inserted_at, seen_at)
       }
     end)
+    |> Enum.sort_by(& &1.occurred_at, {:desc, DateTime})
   end
 
   defp followed_after?(_inserted_at, %{followed_at: nil}), do: true
