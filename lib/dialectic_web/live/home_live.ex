@@ -293,10 +293,13 @@ defmodule DialecticWeb.HomeLive do
             class="relative isolate flex min-h-[78svh] w-full items-center overflow-hidden border-b border-slate-900 bg-slate-950 text-white sm:min-h-[82svh]"
           >
             <video
+              id="home-video-hero-player"
+              phx-hook="VideoPlayback"
+              phx-update="ignore"
+              data-playback-rate="4.5"
               class="absolute inset-0 -z-20 h-full w-full object-cover opacity-70"
               autoplay={true}
               muted={true}
-              loop={true}
               playsinline={true}
               preload="metadata"
               aria-hidden="true"
