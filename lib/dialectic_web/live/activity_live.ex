@@ -4,6 +4,7 @@ defmodule DialecticWeb.ActivityLive do
   import Ecto.Query
 
   alias Dialectic.Accounts.{Graph, User}
+  alias Dialectic.Accounts.ProfileBanner
   alias Dialectic.Follows
   alias Dialectic.Follows.Follow
   alias Dialectic.GridActivity
@@ -24,6 +25,7 @@ defmodule DialecticWeb.ActivityLive do
     {:ok,
      socket
      |> assign(:page_title, "Activity")
+     |> assign(:profile_banner_url, effective_banner_url(user))
      |> assign(:activity_tab, "feed")
      |> assign(:activity_filter, "all")
      |> assign_activity(user)}
@@ -486,6 +488,12 @@ defmodule DialecticWeb.ActivityLive do
   defp display_name(%User{} = user), do: User.display_name(user)
   defp display_name(_user), do: "Someone"
 
+  defp effective_banner_url(%User{banner_path: path}) when is_binary(path) and path != "",
+    do: path
+
+  defp effective_banner_url(%User{profile_banner: banner}), do: ProfileBanner.url(banner)
+  defp effective_banner_url(_user), do: nil
+
   defp profile_initials(%User{} = user) do
     user
     |> display_name()
@@ -645,102 +653,144 @@ defmodule DialecticWeb.ActivityLive do
     ~H"""
     <div
       id="activity-page"
-      class="min-h-screen bg-[linear-gradient(180deg,#eef2ff_0%,#f8fafc_24rem,#f8fafc_100%)] px-4 py-6 sm:px-6 sm:py-8"
+      class="min-h-screen bg-[linear-gradient(180deg,#eef2ff_0%,#f8fafc_20rem,#f8fafc_100%)] px-4 py-5 sm:px-6 sm:py-6"
     >
       <div class="mx-auto max-w-6xl">
-        <header class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 via-indigo-600 to-violet-700 px-5 py-6 text-white shadow-xl shadow-indigo-200/50 sm:px-8 sm:py-8">
-          <div class="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-white/10 blur-3xl">
-          </div>
-          <div class="pointer-events-none absolute -bottom-24 left-1/3 h-48 w-48 rounded-full bg-violet-300/20 blur-3xl">
+        <header class="relative overflow-hidden rounded-[2rem] border border-slate-900/10 bg-slate-950 text-white">
+          <div class="relative h-28 overflow-hidden sm:h-36 lg:h-40">
+            <%= if @profile_banner_url do %>
+              <img
+                src={@profile_banner_url}
+                alt={"#{display_name(@current_user)}'s profile banner"}
+                class="absolute inset-0 h-full w-full object-cover"
+              />
+            <% else %>
+              <div class="absolute inset-0 bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800">
+              </div>
+            <% end %>
+            <div class="absolute inset-x-0 bottom-0 h-px bg-white/10"></div>
           </div>
 
-          <div class="relative flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-            <div class="flex items-start gap-4">
-              <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-lg font-bold ring-1 ring-white/25 backdrop-blur-sm">
-                {profile_initials(@current_user)}
-              </div>
-              <div>
-                <p class="inline-flex items-center gap-2 rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-indigo-50 ring-1 ring-white/15">
-                  <.icon name="hero-bolt" class="h-3.5 w-3.5" /> Your network
-                </p>
-                <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Activity</h1>
-                <p class="mt-2 max-w-lg text-sm leading-6 text-indigo-100">
-                  See what the people and grids you care about are talking about.
-                </p>
-              </div>
+          <div class="relative px-5 pb-5 pt-4 sm:px-7 sm:pb-6 sm:pt-5">
+            <div class="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-white/10 blur-3xl">
+            </div>
+            <div class="pointer-events-none absolute -bottom-24 left-1/3 h-48 w-48 rounded-full bg-violet-300/20 blur-3xl">
             </div>
 
-            <button
-              :if={@activity_stats.new_following > 0}
-              id="activity-mark-seen-button"
-              type="button"
-              phx-click="mark_seen"
-              class="relative inline-flex items-center justify-center gap-1.5 rounded-xl bg-white px-3.5 py-2.5 text-sm font-semibold text-indigo-700 shadow-lg shadow-indigo-900/15 transition hover:bg-indigo-50"
-            >
-              <.icon name="hero-check" class="h-4 w-4" /> Mark as seen
-              <span
-                :if={@activity_stats.new_following > 0}
-                class="ml-1 rounded-full bg-indigo-100 px-2 py-0.5 text-xs text-indigo-700"
-              >
-                {@activity_stats.new_following}
-              </span>
-            </button>
-          </div>
+            <div class="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div class="flex items-center gap-2.5">
+                <div class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-indigo-100 text-2xl font-bold text-indigo-600 sm:h-24 sm:w-24">
+                  <%= if @current_user && @current_user.avatar_path do %>
+                    <img
+                      src={@current_user.avatar_path}
+                      alt={"#{display_name(@current_user)}'s avatar"}
+                      class="h-full w-full object-cover"
+                    />
+                  <% else %>
+                    <span>{profile_initials(@current_user)}</span>
+                  <% end %>
+                </div>
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-[0.14em] text-cyan-200">
+                    Your network
+                  </p>
+                  <h1 class="mt-1 break-words text-3xl font-semibold leading-tight sm:text-4xl">
+                    {display_name(@current_user)}
+                  </h1>
+                  <p class="mt-1 text-sm font-medium text-slate-300">Activity</p>
+                </div>
+              </div>
 
-          <section id="activity-summary" class="relative mt-7 grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <button
-              id="activity-summary-feed"
-              type="button"
-              phx-click="show_area"
-              phx-value-area="feed"
-              class="group inline-flex items-center gap-2 rounded-xl bg-white/10 px-3 py-2.5 text-left font-medium text-white ring-1 ring-white/15 transition hover:bg-white/20"
+              <button
+                :if={@activity_stats.new_following > 0}
+                id="activity-mark-seen-button"
+                type="button"
+                phx-click="mark_seen"
+                class="relative inline-flex items-center justify-center gap-1.5 rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-sm font-semibold text-white transition hover:bg-white/15"
+              >
+                <.icon name="hero-check" class="h-4 w-4" /> Mark seen
+                <span
+                  :if={@activity_stats.new_following > 0}
+                  class="ml-1 rounded-full bg-white/15 px-2 py-0.5 text-xs text-white"
+                >
+                  {@activity_stats.new_following}
+                </span>
+              </button>
+              <.link
+                navigate={~p"/users/settings"}
+                id="activity-settings-link"
+                class="inline-flex items-center justify-center gap-1.5 rounded-xl bg-white px-3 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-50"
+              >
+                <.icon name="hero-cog-6-tooth" class="h-4 w-4" /> Settings
+              </.link>
+            </div>
+
+            <section
+              id="activity-summary"
+              class="relative mt-5 grid grid-cols-2 gap-1 rounded-2xl border border-white/10 bg-white/10 p-3 backdrop-blur sm:grid-cols-4"
             >
-              <.icon name="hero-rss" class="h-4 w-4 text-sky-200" />
-              <span>
-                <strong class="block text-base font-bold">{@activity_stats.feed_count}</strong><span class="text-xs text-indigo-100">feed events</span>
+              <button
+                id="activity-summary-feed"
+                type="button"
+                phx-click="show_area"
+                phx-value-area="feed"
+                class="group inline-flex min-w-0 items-center gap-1.5 rounded-xl px-2 py-1.5 text-left font-medium text-white transition hover:bg-white/10 sm:gap-2"
+              >
+                <.icon name="hero-rss" class="h-4 w-4 shrink-0 text-sky-200" />
+                <span class="min-w-0 truncate">
+                  <strong class="block text-xl font-semibold leading-6">
+                    {@activity_stats.feed_count}
+                  </strong>
+                  <span class="text-[10px] font-semibold uppercase text-slate-300">Feed events</span>
+                </span>
+              </button>
+              <button
+                id="activity-summary-my-grids"
+                type="button"
+                phx-click="show_area"
+                phx-value-area="my_grids"
+                class="group inline-flex min-w-0 items-center gap-1.5 rounded-xl px-2 py-1.5 text-left font-medium text-white transition hover:bg-white/10 sm:gap-2"
+              >
+                <.icon name="hero-squares-2x2" class="h-4 w-4 shrink-0 text-amber-200" />
+                <span class="min-w-0 truncate">
+                  <strong class="text-sm font-bold sm:text-base">
+                    {@activity_stats.owned_update_count}
+                  </strong>
+                  <span class="text-[10px] font-semibold uppercase text-slate-300">Grid updates</span>
+                </span>
+              </button>
+              <button
+                id="activity-summary-following"
+                type="button"
+                phx-click="show_area"
+                phx-value-area="following"
+                class="group inline-flex min-w-0 items-center gap-1.5 rounded-xl px-2 py-1.5 text-left font-medium text-white transition hover:bg-white/10 sm:gap-2"
+              >
+                <.icon name="hero-user-group" class="h-4 w-4 shrink-0 text-emerald-200" />
+                <span class="min-w-0 truncate">
+                  <strong class="text-sm font-bold sm:text-base">
+                    {@activity_stats.followed_grids + @activity_stats.followed_users}
+                  </strong>
+                  <span class="text-[10px] font-semibold uppercase text-slate-300">Following</span>
+                </span>
+              </button>
+              <span class="inline-flex min-w-0 items-center gap-1.5 rounded-xl px-2 py-1.5 font-medium text-white sm:gap-2">
+                <.icon name="hero-clock" class="h-4 w-4 shrink-0 text-indigo-200" />
+                <span class="min-w-0 truncate">
+                  <strong class="block text-[10px] font-semibold uppercase leading-6 text-slate-300">
+                    Latest activity
+                  </strong>
+                  <span class="text-xs">{last_update_label(@activity_stats.last_update)}</span>
+                </span>
               </span>
-            </button>
-            <button
-              id="activity-summary-my-grids"
-              type="button"
-              phx-click="show_area"
-              phx-value-area="my_grids"
-              class="group inline-flex items-center gap-2 rounded-xl bg-white/10 px-3 py-2.5 text-left font-medium text-white ring-1 ring-white/15 transition hover:bg-white/20"
-            >
-              <.icon name="hero-squares-2x2" class="h-4 w-4 text-amber-200" />
-              <span>
-                <strong class="block text-base font-bold">
-                  {@activity_stats.owned_update_count}
-                </strong><span class="text-xs text-indigo-100">grid updates</span>
-              </span>
-            </button>
-            <button
-              id="activity-summary-following"
-              type="button"
-              phx-click="show_area"
-              phx-value-area="following"
-              class="group inline-flex items-center gap-2 rounded-xl bg-white/10 px-3 py-2.5 text-left font-medium text-white ring-1 ring-white/15 transition hover:bg-white/20"
-            >
-              <.icon name="hero-user-group" class="h-4 w-4 text-emerald-200" />
-              <span>
-                <strong class="block text-base font-bold">
-                  {@activity_stats.followed_grids + @activity_stats.followed_users}
-                </strong><span class="text-xs text-indigo-100">following</span>
-              </span>
-            </button>
-            <span class="inline-flex items-center gap-2 rounded-xl bg-white/10 px-3 py-2.5 font-medium text-white ring-1 ring-white/15">
-              <.icon name="hero-clock" class="h-4 w-4 text-indigo-200" />
-              <span>
-                <strong class="block text-xs font-semibold text-indigo-100">LATEST ACTIVITY</strong><span class="text-sm">{last_update_label(@activity_stats.last_update)}</span>
-              </span>
-            </span>
-          </section>
+            </section>
+          </div>
         </header>
 
-        <div class="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div
             id="activity-tabs"
-            class="inline-flex w-full rounded-xl border border-slate-200 bg-white p-1.5 shadow-sm sm:w-auto"
+            class="inline-flex w-full rounded-lg border border-slate-200 bg-white p-1 sm:w-auto"
           >
             <button
               id="activity-tab-feed"
@@ -748,9 +798,9 @@ defmodule DialecticWeb.ActivityLive do
               phx-click="set_tab"
               phx-value-tab="feed"
               class={[
-                "flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold transition sm:flex-none",
+                "flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-semibold transition sm:flex-none",
                 if(@activity_tab == "feed",
-                  do: "bg-slate-950 text-white shadow-sm",
+                  do: "bg-slate-950 text-white",
                   else: "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
                 )
               ]}
@@ -766,9 +816,9 @@ defmodule DialecticWeb.ActivityLive do
               phx-click="set_tab"
               phx-value-tab="my_grids"
               class={[
-                "flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold transition sm:flex-none",
+                "flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-semibold transition sm:flex-none",
                 if(@activity_tab == "my_grids",
-                  do: "bg-slate-950 text-white shadow-sm",
+                  do: "bg-slate-950 text-white",
                   else: "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
                 )
               ]}
@@ -784,9 +834,9 @@ defmodule DialecticWeb.ActivityLive do
               phx-click="set_tab"
               phx-value-tab="following"
               class={[
-                "flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold transition sm:flex-none",
+                "flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-semibold transition sm:flex-none",
                 if(@activity_tab == "following",
-                  do: "bg-slate-950 text-white shadow-sm",
+                  do: "bg-slate-950 text-white",
                   else: "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
                 )
               ]}
@@ -810,7 +860,7 @@ defmodule DialecticWeb.ActivityLive do
                 phx-click="set_filter"
                 phx-value-filter={filter.id}
                 class={[
-                  "inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition",
+                  "inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-semibold transition",
                   if(@activity_filter == filter.id,
                     do: "border-indigo-200 bg-indigo-50 text-indigo-700",
                     else:
@@ -834,12 +884,12 @@ defmodule DialecticWeb.ActivityLive do
           </div>
         </div>
 
-        <main class="mt-5">
+        <main class="mt-4">
           <section :if={@activity_tab == "feed"} id="activity-feed-panel">
             <%= if @activity_feed_items == [] do %>
               <div
                 id="activity-feed-empty"
-                class="rounded-lg border border-slate-200 bg-white p-10 text-center shadow-sm"
+                class="rounded-lg border border-slate-200 bg-white p-10 text-center"
               >
                 <.icon name="hero-bell-alert" class="mx-auto h-10 w-10 text-slate-300" />
                 <h2 class="mt-3 text-base font-semibold text-slate-950">
@@ -852,57 +902,57 @@ defmodule DialecticWeb.ActivityLive do
             <% else %>
               <ol
                 id="activity-stream"
-                class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+                class="overflow-hidden rounded-xl border border-slate-200 bg-white"
               >
                 <%= for item <- @activity_feed_items do %>
                   <li
                     id={"activity-item-#{item.id}"}
                     class={[
-                      "group relative border-b border-slate-100 border-l-4 p-4 transition last:border-b-0 hover:bg-slate-50/70 sm:p-5",
+                      "group relative border-b border-slate-100 border-l-4 p-3 transition last:border-b-0 hover:bg-slate-50/70 sm:p-4",
                       item_accent_class(item),
                       unseen_item?(item) && "ring-1 ring-indigo-100"
                     ]}
                   >
-                    <div class="flex items-start gap-3">
+                    <div class="flex items-start gap-2.5">
                       <div class={[
-                        "mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
+                        "mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
                         item_icon_tone_class(item)
                       ]}>
                         <.icon name={item.icon} class="h-5 w-5" />
                       </div>
 
                       <div class="min-w-0 flex-1">
-                        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                           <div class="min-w-0">
                             <div class="flex flex-wrap items-center gap-2 text-xs font-semibold">
                               <span class="text-slate-600">{item_source_label(item)}</span>
                               <span
                                 :if={unseen_item?(item)}
-                                class="rounded-full bg-indigo-600 px-2 py-0.5 text-[11px] text-white shadow-sm"
+                                class="rounded-full bg-indigo-600 px-2 py-0.5 text-[11px] text-white"
                               >
                                 New
                               </span>
                               <span class="text-slate-400">· {activity_time(item.occurred_at)}</span>
                             </div>
 
-                            <p class="mt-1 text-sm font-semibold leading-6 text-slate-950">
+                            <p class="mt-0.5 text-sm font-semibold leading-5 text-slate-950">
                               {item.title}
                             </p>
 
                             <.link
                               :if={item.path && item.body}
                               navigate={item.path}
-                              class="mt-2 inline-flex max-w-full items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+                              class="mt-1.5 inline-flex max-w-full items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
                             >
                               <.icon name="hero-squares-2x2" class="h-3.5 w-3.5 shrink-0" />
                               <span class="truncate">{item.body}</span>
                             </.link>
 
-                            <p :if={node_context(item)} class="mt-2 text-xs text-slate-500">
+                            <p :if={node_context(item)} class="mt-1 text-xs text-slate-500">
                               {node_context(item)}
                             </p>
 
-                            <p class="mt-2 text-xs font-medium text-slate-400">
+                            <p class="mt-1 text-xs font-medium text-slate-400">
                               {item_detail(item)}
                             </p>
                           </div>
@@ -910,7 +960,7 @@ defmodule DialecticWeb.ActivityLive do
                           <.link
                             :if={item.path}
                             navigate={item.path}
-                            class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition group-hover:border-indigo-200 group-hover:text-indigo-700 hover:bg-indigo-50"
+                            class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition group-hover:border-indigo-200 group-hover:text-indigo-700 hover:bg-indigo-50"
                           >
                             {item.action_label} <.icon name="hero-arrow-right" class="h-3.5 w-3.5" />
                           </.link>
@@ -927,7 +977,7 @@ defmodule DialecticWeb.ActivityLive do
             <%= if @owned_grid_items == [] do %>
               <div
                 id="activity-my-grids-empty"
-                class="rounded-lg border border-slate-200 bg-white p-10 text-center shadow-sm"
+                class="rounded-lg border border-slate-200 bg-white p-10 text-center"
               >
                 <.icon name="hero-squares-2x2" class="mx-auto h-10 w-10 text-slate-300" />
                 <h2 class="mt-3 text-base font-semibold text-slate-950">
@@ -940,18 +990,18 @@ defmodule DialecticWeb.ActivityLive do
             <% else %>
               <ol
                 id="owned-grid-updates"
-                class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+                class="overflow-hidden rounded-xl border border-slate-200 bg-white"
               >
                 <%= for item <- @owned_grid_items do %>
                   <li
                     id={"activity-item-#{item.id}"}
                     class={[
-                      "group relative border-b border-slate-100 p-4 transition last:border-b-0 hover:bg-slate-50/70 sm:p-5",
+                      "group relative border-b border-slate-100 p-3 transition last:border-b-0 hover:bg-slate-50/70 sm:p-4",
                       item_accent_class(item)
                     ]}
                   >
-                    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div class="flex min-w-0 gap-3">
+                    <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <div class="flex min-w-0 gap-2.5">
                         <div class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-600 ring-1 ring-amber-100">
                           <.icon name="hero-pencil-square" class="h-5 w-5" />
                         </div>
@@ -963,17 +1013,17 @@ defmodule DialecticWeb.ActivityLive do
                             </span>
                             <span class="text-slate-400">{activity_time(item.occurred_at)}</span>
                           </div>
-                          <h2 class="mt-1 text-base font-semibold leading-6 text-slate-950">
+                          <h2 class="mt-0.5 text-base font-semibold leading-5 text-slate-950">
                             {item.graph.title}
                           </h2>
-                          <p class="mt-1 text-sm text-slate-500">{item_detail(item)}</p>
+                          <p class="mt-0.5 text-sm text-slate-500">{item_detail(item)}</p>
                         </div>
                       </div>
 
                       <.link
                         :if={item.path}
                         navigate={item.path}
-                        class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition group-hover:border-indigo-200 group-hover:text-indigo-700 hover:bg-indigo-50"
+                        class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition group-hover:border-indigo-200 group-hover:text-indigo-700 hover:bg-indigo-50"
                       >
                         {item.action_label} <.icon name="hero-arrow-right" class="h-3.5 w-3.5" />
                       </.link>
@@ -981,7 +1031,7 @@ defmodule DialecticWeb.ActivityLive do
 
                     <ol
                       :if={item_preview_logs(item) != []}
-                      class="mt-4 grid gap-2 border-t border-slate-100 pt-3 sm:ml-12"
+                      class="mt-3 grid gap-1.5 border-t border-slate-100 pt-2.5 sm:ml-11"
                     >
                       <%= for log <- item_preview_logs(item) do %>
                         <li
@@ -1013,7 +1063,7 @@ defmodule DialecticWeb.ActivityLive do
             <%= if @follows == [] do %>
               <div
                 id="activity-following-empty"
-                class="rounded-lg border border-slate-200 bg-white p-10 text-center shadow-sm"
+                class="rounded-lg border border-slate-200 bg-white p-10 text-center"
               >
                 <.icon name="hero-user-group" class="mx-auto h-10 w-10 text-slate-300" />
                 <h2 class="mt-3 text-base font-semibold text-slate-950">
@@ -1026,7 +1076,7 @@ defmodule DialecticWeb.ActivityLive do
             <% else %>
               <div
                 id="activity-following-list"
-                class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
+                class="overflow-hidden rounded-lg border border-slate-200 bg-white"
               >
                 <div class="border-b border-slate-100 px-4 py-3">
                   <h2 class="text-sm font-semibold text-slate-950">Grids and people you follow</h2>
