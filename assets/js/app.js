@@ -43,6 +43,7 @@ import ShareHook from "./share_hook.js";
 import GridChatFormHook from "./grid_chat_form_hook.js";
 import AvatarCropper from "./avatar_cropper_hook.js";
 import BannerCropper from "./banner_cropper_hook.js";
+import VideoPlaybackHook from "./video_playback_hook.js";
 
 let hooks = {};
 
@@ -67,6 +68,7 @@ hooks.Share = ShareHook;
 hooks.GridChatForm = GridChatFormHook;
 hooks.AvatarCropper = AvatarCropper;
 hooks.BannerCropper = BannerCropper;
+hooks.VideoPlayback = VideoPlaybackHook;
 hooks.GlobalModalLayer = {
   mounted() {
     const header = document.getElementById("userHeader");
