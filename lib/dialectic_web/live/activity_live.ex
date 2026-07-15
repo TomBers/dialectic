@@ -4,6 +4,7 @@ defmodule DialecticWeb.ActivityLive do
   import Ecto.Query
 
   alias Dialectic.Accounts.{Graph, User}
+  alias Dialectic.Accounts.ProfileBanner
   alias Dialectic.Follows
   alias Dialectic.Follows.Follow
   alias Dialectic.GridActivity
@@ -24,6 +25,7 @@ defmodule DialecticWeb.ActivityLive do
     {:ok,
      socket
      |> assign(:page_title, "Activity")
+     |> assign(:profile_banner_url, effective_banner_url(user))
      |> assign(:activity_tab, "feed")
      |> assign(:activity_filter, "all")
      |> assign_activity(user)}
@@ -349,6 +351,7 @@ defmodule DialecticWeb.ActivityLive do
         unseen?: tracks_seen? && unseen_since?(latest.inserted_at, seen_at)
       }
     end)
+    |> Enum.sort_by(& &1.occurred_at, {:desc, DateTime})
   end
 
   defp followed_after?(_inserted_at, %{followed_at: nil}), do: true
@@ -484,6 +487,26 @@ defmodule DialecticWeb.ActivityLive do
 
   defp display_name(%User{} = user), do: User.display_name(user)
   defp display_name(_user), do: "Someone"
+
+  defp effective_banner_url(%User{banner_path: path}) when is_binary(path) and path != "",
+    do: path
+
+  defp effective_banner_url(%User{profile_banner: banner}), do: ProfileBanner.url(banner)
+  defp effective_banner_url(_user), do: nil
+
+  defp profile_initials(%User{} = user) do
+    user
+    |> display_name()
+    |> String.split(~r/\s+/, trim: true)
+    |> case do
+      [first, last | _] -> String.slice(first, 0, 1) <> String.slice(last, 0, 1)
+      [name] -> String.slice(name, 0, 2)
+      _ -> "DI"
+    end
+    |> String.upcase()
+  end
+
+  defp profile_initials(_user), do: "DI"
 
   defp update_count_label(1), do: "1 update"
   defp update_count_label(count), do: "#{count} updates"
@@ -628,403 +651,512 @@ defmodule DialecticWeb.ActivityLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div id="activity-page" class="min-h-screen bg-[#f7f9fc] px-4 py-6 sm:px-6 sm:py-8">
-      <div class="mx-auto max-w-5xl">
-        <header class="border-b border-slate-200 pb-5">
-          <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p class="inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-white px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-indigo-700 shadow-sm">
-                <.icon name="hero-bolt" class="h-3.5 w-3.5" /> Network activity
-              </p>
-              <h1 class="mt-3 text-3xl font-semibold tracking-tight text-slate-950">Activity</h1>
+    <div
+      id="activity-page"
+      class="min-h-screen bg-[linear-gradient(180deg,#eef2ff_0%,#f8fafc_20rem,#f8fafc_100%)] px-4 py-5 sm:px-6 sm:py-6"
+    >
+      <div class="mx-auto max-w-6xl">
+        <header class="relative overflow-hidden rounded-[2rem] border border-slate-900/10 bg-slate-950 text-white">
+          <div class="relative h-28 overflow-hidden sm:h-36 lg:h-40">
+            <%= if @profile_banner_url do %>
+              <img
+                src={@profile_banner_url}
+                alt={"#{display_name(@current_user)}'s profile banner"}
+                class="absolute inset-0 h-full w-full object-cover"
+              />
+            <% else %>
+              <div class="absolute inset-0 bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800">
+              </div>
+            <% end %>
+            <div class="absolute inset-x-0 bottom-0 h-px bg-white/10"></div>
+          </div>
+
+          <div class="relative px-5 pb-5 pt-4 sm:px-7 sm:pb-6 sm:pt-5">
+            <div class="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-white/10 blur-3xl">
+            </div>
+            <div class="pointer-events-none absolute -bottom-24 left-1/3 h-48 w-48 rounded-full bg-violet-300/20 blur-3xl">
             </div>
 
-            <button
-              :if={@activity_stats.new_following > 0}
-              id="activity-mark-seen-button"
-              type="button"
-              phx-click="mark_seen"
-              class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
-            >
-              <.icon name="hero-check" class="h-4 w-4" /> Mark following seen
-              <span
-                :if={@activity_stats.new_following > 0}
-                class="ml-1 rounded-full bg-indigo-600 px-2 py-0.5 text-xs text-white"
-              >
-                {@activity_stats.new_following}
-              </span>
-            </button>
-          </div>
+            <div class="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div class="flex items-center gap-2.5">
+                <div class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-indigo-100 text-2xl font-bold text-indigo-600 sm:h-24 sm:w-24">
+                  <%= if @current_user && @current_user.avatar_path do %>
+                    <img
+                      src={@current_user.avatar_path}
+                      alt={"#{display_name(@current_user)}'s avatar"}
+                      class="h-full w-full object-cover"
+                    />
+                  <% else %>
+                    <span>{profile_initials(@current_user)}</span>
+                  <% end %>
+                </div>
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-[0.14em] text-cyan-200">
+                    Your network
+                  </p>
+                  <h1 class="mt-1 break-words text-3xl font-semibold leading-tight sm:text-4xl">
+                    {display_name(@current_user)}
+                  </h1>
+                  <p class="mt-1 text-sm font-medium text-slate-300">Activity</p>
+                </div>
+              </div>
 
-          <section id="activity-summary" class="mt-4 flex flex-wrap items-center gap-2 text-sm">
-            <button
-              id="activity-summary-feed"
-              type="button"
-              phx-click="show_area"
-              phx-value-area="feed"
-              class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 font-medium text-slate-700 shadow-sm transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800"
+              <button
+                :if={@activity_stats.new_following > 0}
+                id="activity-mark-seen-button"
+                type="button"
+                phx-click="mark_seen"
+                class="relative inline-flex items-center justify-center gap-1.5 rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-sm font-semibold text-white transition hover:bg-white/15"
+              >
+                <.icon name="hero-check" class="h-4 w-4" /> Mark seen
+                <span
+                  :if={@activity_stats.new_following > 0}
+                  class="ml-1 rounded-full bg-white/15 px-2 py-0.5 text-xs text-white"
+                >
+                  {@activity_stats.new_following}
+                </span>
+              </button>
+              <.link
+                navigate={~p"/users/settings"}
+                id="activity-settings-link"
+                class="inline-flex items-center justify-center gap-1.5 rounded-xl bg-white px-3 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-50"
+              >
+                <.icon name="hero-cog-6-tooth" class="h-4 w-4" /> Settings
+              </.link>
+            </div>
+
+            <section
+              id="activity-summary"
+              class="relative mt-5 grid grid-cols-2 gap-1 rounded-2xl border border-white/10 bg-white/10 p-3 backdrop-blur sm:grid-cols-4"
             >
-              <.icon name="hero-rss" class="h-4 w-4 text-sky-600" /> {@activity_stats.feed_count} feed events
-            </button>
-            <button
-              id="activity-summary-my-grids"
-              type="button"
-              phx-click="show_area"
-              phx-value-area="my_grids"
-              class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 font-medium text-slate-700 shadow-sm transition hover:border-amber-200 hover:bg-amber-50 hover:text-amber-800"
-            >
-              <.icon name="hero-squares-2x2" class="h-4 w-4 text-amber-600" /> {update_count_label(
-                @activity_stats.owned_update_count
-              )} on your grids
-            </button>
-            <button
-              id="activity-summary-following"
-              type="button"
-              phx-click="show_area"
-              phx-value-area="following"
-              class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 font-medium text-slate-700 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800"
-            >
-              <.icon name="hero-user-group" class="h-4 w-4 text-emerald-600" />
-              {@activity_stats.followed_grids + @activity_stats.followed_users} following
-            </button>
-            <span class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 font-medium text-slate-700 shadow-sm">
-              <.icon name="hero-clock" class="h-4 w-4 text-slate-500" />
-              Latest {last_update_label(@activity_stats.last_update)}
-            </span>
-          </section>
+              <button
+                id="activity-summary-feed"
+                type="button"
+                phx-click="show_area"
+                phx-value-area="feed"
+                class="group inline-flex min-w-0 items-center gap-1.5 rounded-xl px-2 py-1.5 text-left font-medium text-white transition hover:bg-white/10 sm:gap-2"
+              >
+                <.icon name="hero-rss" class="h-4 w-4 shrink-0 text-sky-200" />
+                <span class="min-w-0 truncate">
+                  <strong class="block text-xl font-semibold leading-6">
+                    {@activity_stats.feed_count}
+                  </strong>
+                  <span class="text-[10px] font-semibold uppercase text-slate-300">Feed events</span>
+                </span>
+              </button>
+              <button
+                id="activity-summary-my-grids"
+                type="button"
+                phx-click="show_area"
+                phx-value-area="my_grids"
+                class="group inline-flex min-w-0 items-center gap-1.5 rounded-xl px-2 py-1.5 text-left font-medium text-white transition hover:bg-white/10 sm:gap-2"
+              >
+                <.icon name="hero-squares-2x2" class="h-4 w-4 shrink-0 text-amber-200" />
+                <span class="min-w-0 truncate">
+                  <strong class="text-sm font-bold sm:text-base">
+                    {@activity_stats.owned_update_count}
+                  </strong>
+                  <span class="text-[10px] font-semibold uppercase text-slate-300">Grid updates</span>
+                </span>
+              </button>
+              <button
+                id="activity-summary-following"
+                type="button"
+                phx-click="show_area"
+                phx-value-area="following"
+                class="group inline-flex min-w-0 items-center gap-1.5 rounded-xl px-2 py-1.5 text-left font-medium text-white transition hover:bg-white/10 sm:gap-2"
+              >
+                <.icon name="hero-user-group" class="h-4 w-4 shrink-0 text-emerald-200" />
+                <span class="min-w-0 truncate">
+                  <strong class="text-sm font-bold sm:text-base">
+                    {@activity_stats.followed_grids + @activity_stats.followed_users}
+                  </strong>
+                  <span class="text-[10px] font-semibold uppercase text-slate-300">Following</span>
+                </span>
+              </button>
+              <span class="inline-flex min-w-0 items-center gap-1.5 rounded-xl px-2 py-1.5 font-medium text-white sm:gap-2">
+                <.icon name="hero-clock" class="h-4 w-4 shrink-0 text-indigo-200" />
+                <span class="min-w-0 truncate">
+                  <strong class="block text-[10px] font-semibold uppercase leading-6 text-slate-300">
+                    Latest activity
+                  </strong>
+                  <span class="text-xs">{last_update_label(@activity_stats.last_update)}</span>
+                </span>
+              </span>
+            </section>
+          </div>
         </header>
 
-        <div class="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div
-            id="activity-tabs"
-            class="inline-flex w-full rounded-lg border border-slate-200 bg-white p-1 shadow-sm sm:w-auto"
-          >
-            <button
-              id="activity-tab-feed"
-              type="button"
-              phx-click="set_tab"
-              phx-value-tab="feed"
-              class={[
-                "flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-semibold transition sm:flex-none",
-                if(@activity_tab == "feed",
-                  do: "bg-slate-950 text-white shadow-sm",
-                  else: "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
-                )
-              ]}
-            >
-              <.icon name="hero-rss" class="h-4 w-4" /> Feed
-              <span class="rounded-full bg-white/15 px-2 py-0.5 text-xs">
-                {@activity_stats.feed_count}
-              </span>
-            </button>
-            <button
-              id="activity-tab-my-grids"
-              type="button"
-              phx-click="set_tab"
-              phx-value-tab="my_grids"
-              class={[
-                "flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-semibold transition sm:flex-none",
-                if(@activity_tab == "my_grids",
-                  do: "bg-slate-950 text-white shadow-sm",
-                  else: "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
-                )
-              ]}
-            >
-              <.icon name="hero-squares-2x2" class="h-4 w-4" /> My grids
-              <span class="rounded-full bg-white/15 px-2 py-0.5 text-xs">
-                {@activity_stats.owned_grid_count}
-              </span>
-            </button>
-            <button
-              id="activity-tab-following"
-              type="button"
-              phx-click="set_tab"
-              phx-value-tab="following"
-              class={[
-                "flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-semibold transition sm:flex-none",
-                if(@activity_tab == "following",
-                  do: "bg-slate-950 text-white shadow-sm",
-                  else: "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
-                )
-              ]}
-            >
-              <.icon name="hero-user-group" class="h-4 w-4" /> Following
-              <span class="rounded-full bg-white/15 px-2 py-0.5 text-xs">
-                {@activity_stats.followed_grids + @activity_stats.followed_users}
-              </span>
-            </button>
+        <section id="activity-content" class="mt-10 border-t border-slate-200 pt-6 sm:pt-8">
+          <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-[0.14em] text-cyan-700">
+                Stay in the loop
+              </p>
+              <h2 class="mt-1 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
+                Your activity
+              </h2>
+              <p class="mt-1 max-w-xl text-sm leading-6 text-slate-600">
+                Follow the conversations, grids, and people shaping your thinking.
+              </p>
+            </div>
           </div>
 
-          <div :if={@activity_tab == "feed"} id="activity-filter-list" class="flex flex-wrap gap-2">
-            <%= for filter <- @activity_filters do %>
+          <div class="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div
+              id="activity-tabs"
+              class="inline-flex w-full rounded-lg border border-slate-200 bg-white p-1 sm:w-auto"
+            >
               <button
-                id={"activity-filter-#{filter.id}"}
+                id="activity-tab-feed"
                 type="button"
-                phx-click="set_filter"
-                phx-value-filter={filter.id}
+                phx-click="set_tab"
+                phx-value-tab="feed"
                 class={[
-                  "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold transition",
-                  if(@activity_filter == filter.id,
-                    do: "border-indigo-200 bg-indigo-50 text-indigo-700",
-                    else:
-                      "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-950"
+                  "flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-semibold transition sm:flex-none",
+                  if(@activity_tab == "feed",
+                    do: "bg-cyan-700 text-white",
+                    else: "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
                   )
                 ]}
               >
-                <.icon name={filter.icon} class="h-4 w-4" />
-                <span>{filter.label}</span>
-                <span
-                  :if={filter.new_count > 0}
-                  class="rounded-full bg-indigo-600 px-2 py-0.5 text-[11px] text-white"
-                >
-                  {filter.new_count} new
-                </span>
-                <span class="rounded-full bg-white px-2 py-0.5 text-xs text-slate-500 ring-1 ring-slate-200">
-                  {filter.count}
+                <.icon name="hero-rss" class="h-4 w-4" /> Feed
+                <span class="rounded-full bg-white/15 px-2 py-0.5 text-xs">
+                  {@activity_stats.feed_count}
                 </span>
               </button>
-            <% end %>
+              <button
+                id="activity-tab-my-grids"
+                type="button"
+                phx-click="set_tab"
+                phx-value-tab="my_grids"
+                class={[
+                  "flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-semibold transition sm:flex-none",
+                  if(@activity_tab == "my_grids",
+                    do: "bg-cyan-700 text-white",
+                    else: "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
+                  )
+                ]}
+              >
+                <.icon name="hero-squares-2x2" class="h-4 w-4" /> My grids
+                <span class="rounded-full bg-white/15 px-2 py-0.5 text-xs">
+                  {@activity_stats.owned_grid_count}
+                </span>
+              </button>
+              <button
+                id="activity-tab-following"
+                type="button"
+                phx-click="set_tab"
+                phx-value-tab="following"
+                class={[
+                  "flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-semibold transition sm:flex-none",
+                  if(@activity_tab == "following",
+                    do: "bg-cyan-700 text-white",
+                    else: "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
+                  )
+                ]}
+              >
+                <.icon name="hero-user-group" class="h-4 w-4" /> Following
+                <span class="rounded-full bg-white/15 px-2 py-0.5 text-xs">
+                  {@activity_stats.followed_grids + @activity_stats.followed_users}
+                </span>
+              </button>
+            </div>
+
+            <div
+              :if={@activity_tab == "feed"}
+              id="activity-filter-list"
+              class="flex flex-wrap gap-2 sm:justify-end"
+            >
+              <%= for filter <- @activity_filters do %>
+                <button
+                  id={"activity-filter-#{filter.id}"}
+                  type="button"
+                  phx-click="set_filter"
+                  phx-value-filter={filter.id}
+                  class={[
+                    "inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-semibold transition",
+                    if(@activity_filter == filter.id,
+                      do: "border-cyan-200 bg-cyan-50 text-cyan-700",
+                      else:
+                        "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-950"
+                    )
+                  ]}
+                >
+                  <.icon name={filter.icon} class="h-4 w-4" />
+                  <span>{filter.label}</span>
+                  <span
+                    :if={filter.new_count > 0}
+                    class="rounded-full bg-cyan-700 px-2 py-0.5 text-[11px] text-white"
+                  >
+                    {filter.new_count} new
+                  </span>
+                  <span class="rounded-full bg-white px-2 py-0.5 text-xs text-slate-500 ring-1 ring-slate-200">
+                    {filter.count}
+                  </span>
+                </button>
+              <% end %>
+            </div>
           </div>
-        </div>
 
-        <main class="mt-5">
-          <section :if={@activity_tab == "feed"} id="activity-feed-panel">
-            <%= if @activity_feed_items == [] do %>
-              <div
-                id="activity-feed-empty"
-                class="rounded-lg border border-slate-200 bg-white p-10 text-center shadow-sm"
-              >
-                <.icon name="hero-bell-alert" class="mx-auto h-10 w-10 text-slate-300" />
-                <h2 class="mt-3 text-base font-semibold text-slate-950">
-                  {empty_state_title(@activity_filter)}
-                </h2>
-                <p class="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-                  {empty_state_body(@activity_filter)}
-                </p>
-              </div>
-            <% else %>
-              <ol id="activity-stream" class="space-y-3">
-                <%= for item <- @activity_feed_items do %>
-                  <li
-                    id={"activity-item-#{item.id}"}
-                    class={[
-                      "relative overflow-hidden rounded-lg border border-l-4 border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md",
-                      item_accent_class(item),
-                      unseen_item?(item) && "ring-1 ring-indigo-100"
-                    ]}
-                  >
-                    <div class="flex items-start gap-3">
-                      <div class={[
-                        "mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
-                        item_icon_tone_class(item)
-                      ]}>
-                        <.icon name={item.icon} class="h-5 w-5" />
-                      </div>
-
-                      <div class="min-w-0 flex-1">
-                        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                          <div class="min-w-0">
-                            <div class="flex flex-wrap items-center gap-2 text-xs font-semibold">
-                              <span class="text-slate-500">{item_source_label(item)}</span>
-                              <span
-                                :if={unseen_item?(item)}
-                                class="rounded-full bg-indigo-600 px-2 py-0.5 text-[11px] text-white"
-                              >
-                                New
-                              </span>
-                              <span class="text-slate-400">{activity_time(item.occurred_at)}</span>
-                            </div>
-
-                            <p class="mt-1 text-sm font-semibold leading-6 text-slate-950">
-                              {item.title}
-                            </p>
-
-                            <.link
-                              :if={item.path && item.body}
-                              navigate={item.path}
-                              class="mt-2 inline-flex max-w-full items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
-                            >
-                              <.icon name="hero-squares-2x2" class="h-3.5 w-3.5 shrink-0" />
-                              <span class="truncate">{item.body}</span>
-                            </.link>
-
-                            <p :if={node_context(item)} class="mt-2 text-xs text-slate-500">
-                              {node_context(item)}
-                            </p>
-
-                            <p class="mt-2 text-xs font-medium text-slate-400">
-                              {item_detail(item)}
-                            </p>
-                          </div>
-
-                          <.link
-                            :if={item.path}
-                            navigate={item.path}
-                            class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
-                          >
-                            {item.action_label} <.icon name="hero-arrow-right" class="h-3.5 w-3.5" />
-                          </.link>
-                        </div>
-                      </div>
-                    </div>
-                  </li>
-                <% end %>
-              </ol>
-            <% end %>
-          </section>
-
-          <section :if={@activity_tab == "my_grids"} id="activity-my-grids-panel">
-            <%= if @owned_grid_items == [] do %>
-              <div
-                id="activity-my-grids-empty"
-                class="rounded-lg border border-slate-200 bg-white p-10 text-center shadow-sm"
-              >
-                <.icon name="hero-squares-2x2" class="mx-auto h-10 w-10 text-slate-300" />
-                <h2 class="mt-3 text-base font-semibold text-slate-950">
-                  No updates on your grids yet
-                </h2>
-                <p class="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-                  Share a grid or invite someone into a discussion to create movement here.
-                </p>
-              </div>
-            <% else %>
-              <ol id="owned-grid-updates" class="grid gap-3">
-                <%= for item <- @owned_grid_items do %>
-                  <li
-                    id={"activity-item-#{item.id}"}
-                    class={[
-                      "rounded-lg border border-l-4 border-slate-200 bg-white p-4 shadow-sm",
-                      item_accent_class(item)
-                    ]}
-                  >
-                    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div class="min-w-0">
-                        <div class="flex flex-wrap items-center gap-2 text-xs font-semibold">
-                          <span class="text-amber-700">{item_source_label(item)}</span>
-                          <span class="rounded-full bg-amber-50 px-2 py-0.5 text-amber-700 ring-1 ring-amber-100">
-                            {update_count_label(item.count)}
-                          </span>
-                          <span class="text-slate-400">{activity_time(item.occurred_at)}</span>
-                        </div>
-                        <h2 class="mt-1 text-base font-semibold leading-6 text-slate-950">
-                          {item.graph.title}
-                        </h2>
-                        <p class="mt-1 text-sm text-slate-500">{item_detail(item)}</p>
-                      </div>
-
-                      <.link
-                        :if={item.path}
-                        navigate={item.path}
-                        class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
-                      >
-                        {item.action_label} <.icon name="hero-arrow-right" class="h-3.5 w-3.5" />
-                      </.link>
-                    </div>
-
-                    <ol :if={item_preview_logs(item) != []} class="mt-3 grid gap-2">
-                      <%= for log <- item_preview_logs(item) do %>
-                        <li
-                          id={"activity-log-#{log.id}"}
-                          class="flex items-start gap-2 rounded-md bg-slate-50 px-3 py-2"
-                        >
-                          <.icon
-                            name={action_icon(log)}
-                            class="mt-0.5 h-4 w-4 shrink-0 text-slate-400"
-                          />
-                          <div class="min-w-0">
-                            <p class="text-xs font-medium leading-5 text-slate-700">
-                              {GridActivity.display_message(log)}
-                            </p>
-                            <p :if={node_label(log)} class="text-xs text-slate-500">
-                              {node_label(log)}
-                            </p>
-                          </div>
-                        </li>
-                      <% end %>
-                    </ol>
-                  </li>
-                <% end %>
-              </ol>
-            <% end %>
-          </section>
-
-          <section :if={@activity_tab == "following"} id="activity-following-panel">
-            <%= if @follows == [] do %>
-              <div
-                id="activity-following-empty"
-                class="rounded-lg border border-slate-200 bg-white p-10 text-center shadow-sm"
-              >
-                <.icon name="hero-user-group" class="mx-auto h-10 w-10 text-slate-300" />
-                <h2 class="mt-3 text-base font-semibold text-slate-950">
-                  You are not following anything yet
-                </h2>
-                <p class="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-                  Follow public grids or profiles to build a useful activity feed.
-                </p>
-              </div>
-            <% else %>
-              <div
-                id="activity-following-list"
-                class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
-              >
-                <div class="border-b border-slate-100 px-4 py-3">
-                  <h2 class="text-sm font-semibold text-slate-950">Grids and people you follow</h2>
-                  <p class="mt-1 text-xs text-slate-500">
-                    Manage what appears in your feed.
+          <main class="mt-4">
+            <section :if={@activity_tab == "feed"} id="activity-feed-panel">
+              <%= if @activity_feed_items == [] do %>
+                <div
+                  id="activity-feed-empty"
+                  class="rounded-lg border border-slate-200 bg-white p-10 text-center"
+                >
+                  <.icon name="hero-bell-alert" class="mx-auto h-10 w-10 text-slate-300" />
+                  <h2 class="mt-3 text-base font-semibold text-slate-950">
+                    {empty_state_title(@activity_filter)}
+                  </h2>
+                  <p class="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
+                    {empty_state_body(@activity_filter)}
                   </p>
                 </div>
-
-                <ol>
-                  <%= for follow <- @follows do %>
-                    <% path = follow_path(follow) %>
+              <% else %>
+                <ol
+                  id="activity-stream"
+                  class="overflow-hidden rounded-xl border border-slate-200 bg-white"
+                >
+                  <%= for item <- @activity_feed_items do %>
                     <li
-                      id={"activity-follow-#{follow.id}"}
-                      class="flex flex-col gap-3 border-b border-slate-100 px-4 py-3 last:border-b-0 sm:flex-row sm:items-center sm:justify-between"
+                      id={"activity-item-#{item.id}"}
+                      class={[
+                        "group relative border-b border-slate-100 border-l-4 p-3 transition last:border-b-0 hover:bg-slate-50/70 sm:p-4",
+                        item_accent_class(item),
+                        unseen_item?(item) && "ring-1 ring-indigo-100"
+                      ]}
                     >
-                      <div class="flex min-w-0 items-start gap-3">
+                      <div class="flex items-start gap-2.5">
                         <div class={[
-                          "mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
-                          follow_icon_tone_class(follow)
+                          "mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
+                          item_icon_tone_class(item)
                         ]}>
-                          <.icon name={follow_icon(follow)} class="h-5 w-5" />
+                          <.icon name={item.icon} class="h-5 w-5" />
                         </div>
 
-                        <div class="min-w-0">
-                          <p class="text-sm font-semibold leading-6 text-slate-950">
-                            {follow_label(follow)}
-                          </p>
-                          <p class="text-xs font-medium text-slate-500">
-                            {follow_type_label(follow)} · Followed {activity_time(follow.inserted_at)}
-                          </p>
+                        <div class="min-w-0 flex-1">
+                          <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                            <div class="min-w-0">
+                              <div class="flex flex-wrap items-center gap-2 text-xs font-semibold">
+                                <span class="text-slate-600">{item_source_label(item)}</span>
+                                <span
+                                  :if={unseen_item?(item)}
+                                  class="rounded-full bg-indigo-600 px-2 py-0.5 text-[11px] text-white"
+                                >
+                                  New
+                                </span>
+                                <span class="text-slate-400">
+                                  · {activity_time(item.occurred_at)}
+                                </span>
+                              </div>
+
+                              <p class="mt-0.5 text-sm font-semibold leading-5 text-slate-950">
+                                {item.title}
+                              </p>
+
+                              <.link
+                                :if={item.path && item.body}
+                                navigate={item.path}
+                                class="mt-1.5 inline-flex max-w-full items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+                              >
+                                <.icon name="hero-squares-2x2" class="h-3.5 w-3.5 shrink-0" />
+                                <span class="truncate">{item.body}</span>
+                              </.link>
+
+                              <p :if={node_context(item)} class="mt-1 text-xs text-slate-500">
+                                {node_context(item)}
+                              </p>
+
+                              <p class="mt-1 text-xs font-medium text-slate-400">
+                                {item_detail(item)}
+                              </p>
+                            </div>
+
+                            <.link
+                              :if={item.path}
+                              navigate={item.path}
+                              class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition group-hover:border-indigo-200 group-hover:text-indigo-700 hover:bg-indigo-50"
+                            >
+                              {item.action_label}
+                              <.icon name="hero-arrow-right" class="h-3.5 w-3.5" />
+                            </.link>
+                          </div>
                         </div>
-                      </div>
-
-                      <div class="flex shrink-0 items-center gap-2">
-                        <.link
-                          :if={path}
-                          navigate={path}
-                          class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
-                        >
-                          Open <.icon name="hero-arrow-right" class="h-3.5 w-3.5" />
-                        </.link>
-
-                        <button
-                          id={"activity-unfollow-#{follow.id}"}
-                          type="button"
-                          phx-click="unfollow"
-                          phx-value-follow-id={follow.id}
-                          class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50"
-                        >
-                          <.icon name="hero-x-mark" class="h-3.5 w-3.5" /> Unfollow
-                        </button>
                       </div>
                     </li>
                   <% end %>
                 </ol>
-              </div>
-            <% end %>
-          </section>
-        </main>
+              <% end %>
+            </section>
+
+            <section :if={@activity_tab == "my_grids"} id="activity-my-grids-panel">
+              <%= if @owned_grid_items == [] do %>
+                <div
+                  id="activity-my-grids-empty"
+                  class="rounded-lg border border-slate-200 bg-white p-10 text-center"
+                >
+                  <.icon name="hero-squares-2x2" class="mx-auto h-10 w-10 text-slate-300" />
+                  <h2 class="mt-3 text-base font-semibold text-slate-950">
+                    No updates on your grids yet
+                  </h2>
+                  <p class="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
+                    Share a grid or invite someone into a discussion to create movement here.
+                  </p>
+                </div>
+              <% else %>
+                <ol
+                  id="owned-grid-updates"
+                  class="overflow-hidden rounded-xl border border-slate-200 bg-white"
+                >
+                  <%= for item <- @owned_grid_items do %>
+                    <li
+                      id={"activity-item-#{item.id}"}
+                      class={[
+                        "group relative border-b border-slate-100 p-3 transition last:border-b-0 hover:bg-slate-50/70 sm:p-4",
+                        item_accent_class(item)
+                      ]}
+                    >
+                      <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                        <div class="flex min-w-0 gap-2.5">
+                          <div class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-600 ring-1 ring-amber-100">
+                            <.icon name="hero-pencil-square" class="h-5 w-5" />
+                          </div>
+                          <div class="min-w-0">
+                            <div class="flex flex-wrap items-center gap-2 text-xs font-semibold">
+                              <span class="text-amber-700">{item_source_label(item)}</span>
+                              <span class="rounded-full bg-amber-50 px-2 py-0.5 text-amber-700 ring-1 ring-amber-100">
+                                {update_count_label(item.count)}
+                              </span>
+                              <span class="text-slate-400">{activity_time(item.occurred_at)}</span>
+                            </div>
+                            <h2 class="mt-0.5 text-base font-semibold leading-5 text-slate-950">
+                              {item.graph.title}
+                            </h2>
+                            <p class="mt-0.5 text-sm text-slate-500">{item_detail(item)}</p>
+                          </div>
+                        </div>
+
+                        <.link
+                          :if={item.path}
+                          navigate={item.path}
+                          class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition group-hover:border-indigo-200 group-hover:text-indigo-700 hover:bg-indigo-50"
+                        >
+                          {item.action_label} <.icon name="hero-arrow-right" class="h-3.5 w-3.5" />
+                        </.link>
+                      </div>
+
+                      <ol
+                        :if={item_preview_logs(item) != []}
+                        class="mt-3 grid gap-1.5 border-t border-slate-100 pt-2.5 sm:ml-11"
+                      >
+                        <%= for log <- item_preview_logs(item) do %>
+                          <li
+                            id={"activity-log-#{log.id}"}
+                            class="flex items-start gap-2 rounded-lg border border-slate-100 bg-slate-50/80 px-3 py-2.5 transition hover:border-indigo-100 hover:bg-indigo-50/50"
+                          >
+                            <.icon
+                              name={action_icon(log)}
+                              class="mt-0.5 h-4 w-4 shrink-0 text-slate-400"
+                            />
+                            <div class="min-w-0">
+                              <p class="text-xs font-medium leading-5 text-slate-700">
+                                {GridActivity.display_message(log)}
+                              </p>
+                              <p :if={node_label(log)} class="text-xs text-slate-500">
+                                {node_label(log)}
+                              </p>
+                            </div>
+                          </li>
+                        <% end %>
+                      </ol>
+                    </li>
+                  <% end %>
+                </ol>
+              <% end %>
+            </section>
+
+            <section :if={@activity_tab == "following"} id="activity-following-panel">
+              <%= if @follows == [] do %>
+                <div
+                  id="activity-following-empty"
+                  class="rounded-lg border border-slate-200 bg-white p-10 text-center"
+                >
+                  <.icon name="hero-user-group" class="mx-auto h-10 w-10 text-slate-300" />
+                  <h2 class="mt-3 text-base font-semibold text-slate-950">
+                    You are not following anything yet
+                  </h2>
+                  <p class="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
+                    Follow public grids or profiles to build a useful activity feed.
+                  </p>
+                </div>
+              <% else %>
+                <div
+                  id="activity-following-list"
+                  class="overflow-hidden rounded-lg border border-slate-200 bg-white"
+                >
+                  <div class="border-b border-slate-100 px-4 py-3">
+                    <h2 class="text-sm font-semibold text-slate-950">Grids and people you follow</h2>
+                    <p class="mt-1 text-xs text-slate-500">
+                      Manage what appears in your feed.
+                    </p>
+                  </div>
+
+                  <ol>
+                    <%= for follow <- @follows do %>
+                      <% path = follow_path(follow) %>
+                      <li
+                        id={"activity-follow-#{follow.id}"}
+                        class="flex flex-col gap-3 border-b border-slate-100 px-4 py-3 last:border-b-0 sm:flex-row sm:items-center sm:justify-between"
+                      >
+                        <div class="flex min-w-0 items-start gap-3">
+                          <div class={[
+                            "mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
+                            follow_icon_tone_class(follow)
+                          ]}>
+                            <.icon name={follow_icon(follow)} class="h-5 w-5" />
+                          </div>
+
+                          <div class="min-w-0">
+                            <p class="text-sm font-semibold leading-6 text-slate-950">
+                              {follow_label(follow)}
+                            </p>
+                            <p class="text-xs font-medium text-slate-500">
+                              {follow_type_label(follow)} · Followed {activity_time(
+                                follow.inserted_at
+                              )}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div class="flex shrink-0 items-center gap-2">
+                          <.link
+                            :if={path}
+                            navigate={path}
+                            class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+                          >
+                            Open <.icon name="hero-arrow-right" class="h-3.5 w-3.5" />
+                          </.link>
+
+                          <button
+                            id={"activity-unfollow-#{follow.id}"}
+                            type="button"
+                            phx-click="unfollow"
+                            phx-value-follow-id={follow.id}
+                            class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50"
+                          >
+                            <.icon name="hero-x-mark" class="h-3.5 w-3.5" /> Unfollow
+                          </button>
+                        </div>
+                      </li>
+                    <% end %>
+                  </ol>
+                </div>
+              <% end %>
+            </section>
+          </main>
+        </section>
       </div>
     </div>
     """
