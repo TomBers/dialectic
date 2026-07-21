@@ -47,7 +47,7 @@ defmodule DialecticWeb.HomeLive do
        featured_grids: [],
        quick_tags: [],
        page_description:
-         "Some ideas deserve deeper exploration. RationalGrid helps you map the territory of an idea, test it critically, remember what you learn, develop it over time, and share the path with others."
+         "RationalGrid helps people turn difficult questions into clear, connected understanding they can test, revisit, and share."
      )}
   end
 
@@ -314,11 +314,11 @@ defmodule DialecticWeb.HomeLive do
 
             <div class="mx-auto flex w-full max-w-6xl flex-col items-center px-4 py-20 text-center sm:px-6 sm:py-24">
               <h1 class="max-w-5xl text-balance text-5xl font-semibold leading-[0.94] text-white drop-shadow-[0_6px_24px_rgba(0,0,0,0.42)] sm:text-7xl lg:text-8xl">
-                Some ideas deserve deeper exploration.
+                Turn complex questions into clear, connected thinking.
               </h1>
               <p class="mt-6 max-w-2xl text-pretty text-base leading-7 text-slate-100 drop-shadow-[0_4px_18px_rgba(0,0,0,0.45)] sm:text-xl sm:leading-8">
-                RationalGrid helps you map the territory of an idea, test it critically, remember
-                what you learn, develop it over time, and share the path with others.
+                RationalGrid gives you a clearer way to understand difficult ideas, test what matters,
+                and build knowledge you can return to and share.
               </p>
             </div>
             <.link
@@ -351,11 +351,10 @@ defmodule DialecticWeb.HomeLive do
                   <span class="h-1.5 w-1.5 rounded-full bg-teal-300"></span> Start here
                 </p>
                 <h2 class="mt-4 max-w-xl text-3xl font-semibold leading-tight text-white sm:text-4xl">
-                  What do you want to understand?
+                  Get clarity on what matters.
                 </h2>
                 <p class="mt-3 max-w-lg text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">
-                  Type a question or topic. We’ll turn it into connected ideas you can read,
-                  test, and develop.
+                  Turn a question into a clear, connected view you can trust and build on.
                 </p>
               </div>
 
@@ -399,9 +398,9 @@ defmodule DialecticWeb.HomeLive do
                     1
                   </span>
                   <div>
-                    <p class="font-semibold text-white">Ask a question</p>
+                    <p class="font-semibold text-white">A clearer starting point</p>
                     <p class="mt-0.5 leading-5">
-                      Start with a question, topic, quote, or copied answer.
+                      Bring any question, idea, or source into one focused workspace.
                     </p>
                   </div>
                 </div>
@@ -410,9 +409,9 @@ defmodule DialecticWeb.HomeLive do
                     2
                   </span>
                   <div>
-                    <p class="font-semibold text-white">Choose your level</p>
+                    <p class="font-semibold text-white">The right level of depth</p>
                     <p class="mt-0.5 leading-5">
-                      After you continue, choose simple, high-school, university, or expert depth.
+                      Get an explanation that fits your context, from accessible to expert.
                     </p>
                   </div>
                 </div>
@@ -421,9 +420,9 @@ defmodule DialecticWeb.HomeLive do
                     3
                   </span>
                   <div>
-                    <p class="font-semibold text-white">Explore the map</p>
+                    <p class="font-semibold text-white">Understanding that lasts</p>
                     <p class="mt-0.5 leading-5">
-                      Read the response, branch from any point, and save what matters.
+                      Keep the reasoning visible so you can revisit, test, and share it.
                     </p>
                   </div>
                 </div>
@@ -448,30 +447,28 @@ defmodule DialecticWeb.HomeLive do
                     <.icon name="hero-sparkles" class="h-3.5 w-3.5" /> See it in action
                   </div>
                   <h2 class="mt-3 text-2xl font-semibold text-white sm:text-3xl">
-                    Watch one inquiry become a grid.
+                    See the difference a connected view makes.
                   </h2>
                   <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-300">
-                    A grid keeps the answer, the branches, and the next questions together so you
-                    can keep developing the work after the first response.
+                    Keep the answer, context, and next steps together instead of losing useful
+                    thinking in a chat.
                   </p>
                 </div>
                 <div class="mt-5 grid gap-3 text-xs font-medium text-slate-200 sm:grid-cols-2 lg:grid-cols-5">
                   <div class="flex items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-3 leading-5">
-                    <.icon name="hero-map" class="h-4 w-4 text-sky-200" /> Explore the territory
+                    <.icon name="hero-map" class="h-4 w-4 text-sky-200" /> See the bigger picture
                   </div>
                   <div class="flex items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-3 leading-5">
-                    <.icon name="hero-scale" class="h-4 w-4 text-teal-200" /> Test critically
+                    <.icon name="hero-scale" class="h-4 w-4 text-teal-200" /> Think with confidence
                   </div>
                   <div class="flex items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-3 leading-5">
-                    <.icon name="hero-squares-plus" class="h-4 w-4 text-amber-200" />
-                    Branch and develop
+                    <.icon name="hero-squares-plus" class="h-4 w-4 text-amber-200" /> Develop ideas
                   </div>
                   <div class="flex items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-3 leading-5">
-                    <.icon name="hero-bookmark" class="h-4 w-4 text-indigo-200" />
-                    Remember what matters
+                    <.icon name="hero-bookmark" class="h-4 w-4 text-indigo-200" /> Keep what matters
                   </div>
                   <div class="flex items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-3 leading-5">
-                    <.icon name="hero-share" class="h-4 w-4 text-rose-200" /> Share the path
+                    <.icon name="hero-share" class="h-4 w-4 text-rose-200" /> Share understanding
                   </div>
                 </div>
               </div>
@@ -484,19 +481,12 @@ defmodule DialecticWeb.HomeLive do
                         <.icon name="hero-play" class="h-3.5 w-3.5" /> Watch RationalGrid
                       </div>
                       <h2 class="mt-3 text-2xl font-semibold text-slate-950">
-                        A reference you can keep questioning.
+                        See the clarity for yourself.
                       </h2>
                     </div>
 
                     <div class="rounded-2xl border border-slate-900/10 bg-slate-950 p-3 shadow-sm sm:p-4">
-                      <a
-                        id="home-example-video"
-                        href="https://www.youtube.com/@RationalGrid"
-                        target="_blank"
-                        rel="noreferrer"
-                        class="group block w-full text-left"
-                        aria-label="Watch RationalGrid videos on YouTube (opens in a new tab)"
-                      >
+                      <div id="home-example-video" class="group block w-full">
                         <div class="mb-3 flex items-start justify-between gap-3">
                           <div>
                             <p class="text-[11px] font-semibold uppercase tracking-normal text-sky-200/80">
@@ -506,34 +496,40 @@ defmodule DialecticWeb.HomeLive do
                               See RationalGrid in action
                             </p>
                           </div>
-                          <span class="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-medium text-white/85 transition group-hover:border-sky-300/40 group-hover:bg-white/15 group-hover:text-white">
+                          <.link
+                            href="https://www.youtube.com/watch?v=pIP87Z203QQ"
+                            target="_blank"
+                            rel="noreferrer"
+                            class="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-medium text-white/85 transition hover:border-sky-300/40 hover:bg-white/15 hover:text-white"
+                          >
                             <.icon name="hero-play" class="h-4 w-4" /> Watch on YouTube
-                          </span>
+                          </.link>
                         </div>
 
-                        <div class="relative overflow-hidden border border-white/10 bg-slate-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-                          <video
-                            autoplay={true}
-                            muted={true}
-                            loop={true}
-                            playsinline={true}
-                            preload="metadata"
-                            class="aspect-[16/9] w-full object-cover transition duration-300 group-hover:scale-[1.015]"
-                            aria-label="Animated RationalGrid branching preview"
-                          >
-                            <source src={~p"/images/FractalBranchingTree.mp4"} type="video/mp4" />
-                          </video>
-                          <span class="absolute inset-0 flex items-center justify-center bg-slate-950/20 transition group-hover:bg-slate-950/5">
+                        <a
+                          href="https://youtu.be/pIP87Z203QQ"
+                          target="_blank"
+                          rel="noreferrer"
+                          class="relative block overflow-hidden border border-white/10 bg-slate-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]"
+                          aria-label="Watch the RationalGrid product demonstration on YouTube (opens in a new tab)"
+                        >
+                          <img
+                            src="https://i.ytimg.com/vi/pIP87Z203QQ/hqdefault.jpg"
+                            alt="RationalGrid product demonstration video thumbnail"
+                            loading="lazy"
+                            class="aspect-[16/9] w-full object-cover transition duration-300 hover:scale-[1.015]"
+                          />
+                          <span class="absolute inset-0 flex items-center justify-center bg-slate-950/25 transition hover:bg-slate-950/10">
                             <span class="inline-flex h-16 w-16 items-center justify-center rounded-full bg-white/90 text-slate-950 shadow-xl">
                               <.icon name="hero-play" class="h-7 w-7" />
                             </span>
                           </span>
-                        </div>
-                      </a>
+                        </a>
+                      </div>
 
                       <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
                         <p class="text-sm leading-6 text-slate-300">
-                          Watch demonstrations, walkthroughs, and new RationalGrid use cases.
+                          See how RationalGrid turns a question into a workspace you can revisit and share.
                         </p>
                         <.link
                           href="https://www.youtube.com/@RationalGrid"
@@ -833,10 +829,10 @@ defmodule DialecticWeb.HomeLive do
                     Community grids
                   </p>
                   <h2 class="mt-2 text-2xl font-semibold text-slate-950 sm:text-3xl">
-                    Start from questions other people are exploring.
+                    Learn from questions already being explored.
                   </h2>
                   <p class="mt-2 text-sm leading-6 text-slate-600">
-                    Open a public grid, follow its branches, and add your own perspective. The full community catalogue is always one click away.
+                    Find useful starting points, see how others think through a topic, and carry the best ideas into your own work.
                   </p>
                 </div>
                 <.link
@@ -849,7 +845,7 @@ defmodule DialecticWeb.HomeLive do
 
               <%= if @graphs == [] do %>
                 <div class="mt-5 border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-600">
-                  Community grids will appear here as people start exploring.
+                  Community examples will appear here as more people share useful thinking.
                 </div>
               <% else %>
                 <div id="home-community-grid-list" class="mt-5 grid gap-4 md:grid-cols-3">
@@ -1191,7 +1187,9 @@ defmodule DialecticWeb.HomeLive do
               <img src={~p"/images/favicon.webp"} alt="RationalGrid" class="h-8 w-8 rounded-lg" />
               <div>
                 <p class="text-sm font-semibold text-white">RationalGrid</p>
-                <p class="text-xs text-slate-400">Make your thinking easier to explore.</p>
+                <p class="text-xs text-slate-400">
+                  Turn difficult questions into shared understanding.
+                </p>
               </div>
             </div>
             <nav

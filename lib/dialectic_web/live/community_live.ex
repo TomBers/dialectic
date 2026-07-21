@@ -61,10 +61,10 @@ defmodule DialecticWeb.CommunityLive do
               Community
             </p>
             <h1 class="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
-              Explore ideas people are developing together.
+              Explore ideas worth building on.
             </h1>
             <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">
-              Browse partner collections, editor-curated grids, and the latest public questions. Open any grid to follow its branches or start your own.
+              Find clear starting points, discover useful perspectives, and take the ideas that matter into your own work.
             </p>
           </div>
           <div class="flex flex-wrap gap-2">
