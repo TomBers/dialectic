@@ -190,15 +190,16 @@ defmodule DialecticWeb.CommunityLive do
                   No grids match that search yet. Try another question or browse all grids.
                 </div>
               <% else %>
-                <div id="community-grid-list" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                <div
+                  id="community-grid-list"
+                  class="divide-y divide-slate-200 overflow-hidden rounded-2xl border border-slate-200 bg-white"
+                >
                   <%= for {graph, _count, author_username} <- @graphs do %>
-                    <.grid_card
+                    <.community_grid_row
                       graph={graph}
                       author_name={author_username}
                       author_marker="@"
                       id={graph_dom_id(graph, "community-grid")}
-                      label="Community grid"
-                      tag_limit={4}
                     />
                   <% end %>
                 </div>
@@ -256,6 +257,7 @@ defmodule DialecticWeb.CommunityLive do
               author_name={item.author_name}
               author_marker="@"
               id={@id_prefix <> "-" <> (item.graph.slug || "t-" <> Integer.to_string(:erlang.phash2(item.graph.title || "")))}
+              variant={:community}
               label={@card_label}
               tag_limit={3}
             />
@@ -263,6 +265,89 @@ defmodule DialecticWeb.CommunityLive do
         </div>
       </div>
     </section>
+    """
+  end
+
+  attr :id, :string, required: true
+  attr :graph, :map, required: true
+  attr :author_name, :string, default: nil
+  attr :author_marker, :string, default: ""
+
+  defp community_grid_row(assigns) do
+    assigns =
+      assigns
+      |> assign(:title, Map.get(assigns.graph, :title) || "Untitled grid")
+      |> assign(:tags, assigns.graph |> Map.get(:tags, []) |> Enum.take(3))
+      |> assign(:node_count, graph_node_count(assigns.graph))
+      |> assign(:icon_theme, icon_theme(assigns.graph))
+
+    ~H"""
+    <article
+      id={@id}
+      class="group grid gap-4 px-4 py-4 transition hover:bg-slate-50 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-5"
+    >
+      <div class="flex min-w-0 items-start gap-4">
+        <div class={[
+          "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br shadow-sm ring-1 sm:h-14 sm:w-20",
+          @icon_theme
+        ]}>
+          <.icon name="hero-squares-2x2" class="h-6 w-6 sm:h-7 sm:w-7" />
+        </div>
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <.link
+              navigate={graph_path(@graph)}
+              class="text-base font-semibold leading-6 text-slate-950 transition group-hover:text-teal-700"
+            >
+              {@title}
+            </.link>
+            <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+              Community grid
+            </span>
+          </div>
+          <%= if is_binary(@author_name) and String.trim(@author_name) != "" do %>
+            <.link
+              navigate={~p"/u/#{@author_name}"}
+              class="mt-1 inline-flex text-xs font-medium text-teal-700 hover:text-teal-900"
+            >
+              by {@author_marker}{@author_name}
+            </.link>
+          <% end %>
+          <p class="mt-1 line-clamp-2 text-sm leading-5 text-slate-600">
+            {preview_sentence(@graph)}
+          </p>
+          <div class="mt-2 flex flex-wrap items-center gap-1.5">
+            <%= if @tags == [] do %>
+              <span class="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
+                Untagged
+              </span>
+            <% else %>
+              <span
+                :for={tag <- @tags}
+                class={[
+                  "rounded-md px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset",
+                  tag_pill_classes(tag)
+                ]}
+              >
+                #{tag}
+              </span>
+            <% end %>
+          </div>
+        </div>
+      </div>
+      <div class="flex items-center justify-between gap-4 border-t border-slate-100 pt-3 sm:flex-col sm:items-end sm:border-t-0 sm:pt-0">
+        <span class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500">
+          <.icon name="hero-squares-2x2" class="h-3.5 w-3.5 text-slate-400" />
+          {@node_count} ideas
+        </span>
+        <.link
+          navigate={graph_path(@graph)}
+          class="inline-flex items-center gap-1.5 rounded-full bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-teal-700"
+        >
+          View grid <.icon name="hero-arrow-up-right" class="h-3.5 w-3.5" />
+        </.link>
+      </div>
+    </article>
     """
   end
 
@@ -308,6 +393,46 @@ defmodule DialecticWeb.CommunityLive do
   defp graph_dom_id(graph, prefix) do
     suffix = graph.slug || Integer.to_string(:erlang.phash2(graph.title || "graph"))
     prefix <> "-" <> suffix
+  end
+
+  defp graph_node_count(%{node_count: count}) when is_integer(count), do: count
+
+  defp graph_node_count(graph) do
+    nodes =
+      (Map.get(graph, :data) || %{})
+      |> then(fn data -> Map.get(data, "nodes") || Map.get(data, :nodes) || [] end)
+
+    if is_list(nodes) do
+      Enum.count(nodes, fn node ->
+        Map.get(node, "compound", Map.get(node, :compound, false)) != true
+      end)
+    else
+      0
+    end
+  end
+
+  defp icon_theme(graph) do
+    tags = Map.get(graph, :tags, []) || []
+
+    tags
+    |> List.first()
+    |> to_string()
+    |> String.downcase()
+    |> then(fn tag ->
+      cond do
+        String.contains?(tag, ["science", "technology", "physics"]) ->
+          "from-sky-50 via-cyan-50 to-teal-100 text-sky-700 ring-sky-200/80"
+
+        String.contains?(tag, ["history", "politics", "society"]) ->
+          "from-amber-50 via-orange-50 to-rose-100 text-amber-700 ring-amber-200/80"
+
+        String.contains?(tag, ["mind", "psychology", "philosophy"]) ->
+          "from-indigo-50 via-violet-50 to-fuchsia-100 text-indigo-700 ring-indigo-200/80"
+
+        true ->
+          "from-teal-50 via-cyan-50 to-indigo-100 text-teal-700 ring-teal-200/80"
+      end
+    end)
   end
 
   defp partner_pills(items) do

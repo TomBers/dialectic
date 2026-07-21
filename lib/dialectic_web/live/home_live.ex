@@ -442,7 +442,7 @@ defmodule DialecticWeb.HomeLive do
             class="order-3 w-full border-y border-slate-800 bg-[linear-gradient(180deg,#020617_0%,#050816_58%,#0f172a_100%)]"
           >
             <div class="mx-auto w-full max-w-6xl px-4 py-7 sm:px-6 sm:py-8">
-              <div class="mb-5 max-w-3xl">
+              <div class="mb-6">
                 <div class="max-w-3xl">
                   <div class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-normal text-sky-100">
                     <.icon name="hero-sparkles" class="h-3.5 w-3.5" /> See it in action
@@ -455,25 +455,22 @@ defmodule DialecticWeb.HomeLive do
                     can keep developing the work after the first response.
                   </p>
                 </div>
-                <div
-                  hidden
-                  class="mt-4 flex gap-2 overflow-x-auto pb-1 text-xs font-medium text-slate-200 sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0 lg:grid-cols-5"
-                >
-                  <div class="inline-flex min-w-max items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-2 sm:min-w-0">
+                <div class="mt-5 grid gap-3 text-xs font-medium text-slate-200 sm:grid-cols-2 lg:grid-cols-5">
+                  <div class="flex items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-3 leading-5">
                     <.icon name="hero-map" class="h-4 w-4 text-sky-200" /> Explore the territory
                   </div>
-                  <div class="inline-flex min-w-max items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-2 sm:min-w-0">
+                  <div class="flex items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-3 leading-5">
                     <.icon name="hero-scale" class="h-4 w-4 text-teal-200" /> Test critically
                   </div>
-                  <div class="inline-flex min-w-max items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-2 sm:min-w-0">
+                  <div class="flex items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-3 leading-5">
                     <.icon name="hero-squares-plus" class="h-4 w-4 text-amber-200" />
                     Branch and develop
                   </div>
-                  <div class="inline-flex min-w-max items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-2 sm:min-w-0">
+                  <div class="flex items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-3 leading-5">
                     <.icon name="hero-bookmark" class="h-4 w-4 text-indigo-200" />
                     Remember what matters
                   </div>
-                  <div class="inline-flex min-w-max items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-2 sm:min-w-0">
+                  <div class="flex items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-3 leading-5">
                     <.icon name="hero-share" class="h-4 w-4 text-rose-200" /> Share the path
                   </div>
                 </div>
