@@ -354,7 +354,8 @@ defmodule DialecticWeb.HomeLive do
                   Get clarity on what matters.
                 </h2>
                 <p class="mt-3 max-w-lg text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">
-                  Turn a question into a clear, connected view you can trust and build on.
+                  A grid is a collection of connected questions and answers. Start with one question,
+                  then branch into as many follow-ups as you need—each one keeps the context above it.
                 </p>
               </div>
 
@@ -398,7 +399,7 @@ defmodule DialecticWeb.HomeLive do
                     1
                   </span>
                   <div>
-                    <p class="font-semibold text-white">A clearer starting point</p>
+                    <p class="font-semibold text-white">Start with a question</p>
                     <p class="mt-0.5 leading-5">
                       Bring any question, idea, or source into one focused workspace.
                     </p>
@@ -409,9 +410,9 @@ defmodule DialecticWeb.HomeLive do
                     2
                   </span>
                   <div>
-                    <p class="font-semibold text-white">The right level of depth</p>
+                    <p class="font-semibold text-white">Branch into follow-ups</p>
                     <p class="mt-0.5 leading-5">
-                      Get an explanation that fits your context, from accessible to expert.
+                      Ask as many questions as you need from any idea in the grid.
                     </p>
                   </div>
                 </div>
@@ -420,9 +421,9 @@ defmodule DialecticWeb.HomeLive do
                     3
                   </span>
                   <div>
-                    <p class="font-semibold text-white">Understanding that lasts</p>
+                    <p class="font-semibold text-white">Keep the context</p>
                     <p class="mt-0.5 leading-5">
-                      Keep the reasoning visible so you can revisit, test, and share it.
+                      Each answer keeps its parent’s context, so the whole thread stays connected.
                     </p>
                   </div>
                 </div>
@@ -496,35 +497,19 @@ defmodule DialecticWeb.HomeLive do
                               See RationalGrid in action
                             </p>
                           </div>
-                          <.link
-                            href="https://www.youtube.com/watch?v=pIP87Z203QQ"
-                            target="_blank"
-                            rel="noreferrer"
-                            class="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-medium text-white/85 transition hover:border-sky-300/40 hover:bg-white/15 hover:text-white"
+                          <iframe
+                            width="560"
+                            height="315"
+                            src="https://www.youtube-nocookie.com/embed/pIP87Z203QQ?si=buYmIvAsOtwoA4SG&amp;controls=0"
+                            referrerpolicy="no-referrer-when-downgrade"
+                            title="YouTube video player"
+                            frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            referrerpolicy="strict-origin-when-cross-origin"
+                            allowfullscreen
                           >
-                            <.icon name="hero-play" class="h-4 w-4" /> Watch on YouTube
-                          </.link>
+                          </iframe>
                         </div>
-
-                        <a
-                          href="https://youtu.be/pIP87Z203QQ"
-                          target="_blank"
-                          rel="noreferrer"
-                          class="relative block overflow-hidden border border-white/10 bg-slate-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]"
-                          aria-label="Watch the RationalGrid product demonstration on YouTube (opens in a new tab)"
-                        >
-                          <img
-                            src="https://i.ytimg.com/vi/pIP87Z203QQ/hqdefault.jpg"
-                            alt="RationalGrid product demonstration video thumbnail"
-                            loading="lazy"
-                            class="aspect-[16/9] w-full object-cover transition duration-300 hover:scale-[1.015]"
-                          />
-                          <span class="absolute inset-0 flex items-center justify-center bg-slate-950/25 transition hover:bg-slate-950/10">
-                            <span class="inline-flex h-16 w-16 items-center justify-center rounded-full bg-white/90 text-slate-950 shadow-xl">
-                              <.icon name="hero-play" class="h-7 w-7" />
-                            </span>
-                          </span>
-                        </a>
                       </div>
 
                       <div class="mt-3 flex flex-wrap items-center justify-between gap-3">

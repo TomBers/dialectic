@@ -104,6 +104,19 @@ defmodule DialecticWeb.HomeLiveTest do
            )
   end
 
+  test "explains how questions branch within a grid", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/")
+
+    assert has_element?(
+             view,
+             "#start-here",
+             "A grid is a collection of connected questions and answers."
+           )
+
+    assert has_element?(view, "#home-start-steps", "Branch into follow-ups")
+    assert has_element?(view, "#home-start-steps", "Each answer keeps its parent’s context")
+  end
+
   test "logged in users see profile entry in the header without a settings link", %{conn: conn} do
     user = user_fixture()
     {:ok, user} = Accounts.update_user_profile(user, %{username: "headerprofile"})
