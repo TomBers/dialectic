@@ -345,23 +345,23 @@ defmodule DialecticWeb.HomeLive do
             <div class="absolute inset-x-0 top-0 -z-10 h-px bg-[linear-gradient(90deg,rgba(45,212,191,0),rgba(45,212,191,0.65),rgba(251,191,36,0.45),rgba(56,189,248,0))]">
             </div>
 
-            <div class="mx-auto grid w-full max-w-6xl gap-6 px-4 py-10 sm:px-6 sm:py-12 lg:grid-cols-[minmax(0,0.65fr)_minmax(420px,0.78fr)] lg:grid-rows-[auto_auto] lg:items-center lg:py-14">
-              <div class="order-1 max-w-xl lg:col-start-1 lg:row-start-1">
+            <div class="mx-auto flex w-full max-w-4xl flex-col items-center px-4 py-10 text-center sm:px-6 sm:py-12 lg:py-14">
+              <div class="flex max-w-3xl flex-col items-center">
                 <p class="inline-flex w-fit items-center gap-2 rounded-full border border-teal-300/25 bg-teal-300/10 px-3 py-1 text-xs font-semibold uppercase tracking-normal text-teal-100">
                   <span class="h-1.5 w-1.5 rounded-full bg-teal-300"></span> Start here
                 </p>
-                <h2 class="mt-4 max-w-xl text-3xl font-semibold leading-tight text-white sm:text-4xl">
-                  Get clarity on what matters.
+                <h2 class="mt-4 text-3xl font-semibold leading-tight text-white sm:text-4xl">
+                  What would you like to understand?
                 </h2>
-                <p class="mt-3 max-w-lg text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">
-                  A grid is a collection of connected questions and answers. Start with one question,
-                  then branch into as many follow-ups as you need—each one keeps the context above it.
+                <p class="mt-3 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">
+                  Start with one question, then branch into as many follow-ups as you need. Each answer
+                  keeps the context above it.
                 </p>
               </div>
 
               <div
                 id="home-start-panel"
-                class="relative order-2 rounded-[1.65rem] bg-[linear-gradient(135deg,rgba(45,212,191,0.95),rgba(255,255,255,0.92)_38%,rgba(251,191,36,0.9)_72%,rgba(56,189,248,0.95))] p-[1px] shadow-[0_34px_100px_-50px_rgba(20,184,166,0.9)] lg:col-start-2 lg:row-span-2 lg:row-start-1"
+                class="relative mt-7 w-full max-w-3xl rounded-[1.65rem] bg-[linear-gradient(135deg,rgba(45,212,191,0.95),rgba(255,255,255,0.92)_38%,rgba(251,191,36,0.9)_72%,rgba(56,189,248,0.95))] p-[1px] shadow-[0_34px_100px_-50px_rgba(20,184,166,0.9)] sm:mt-8"
               >
                 <div class="relative overflow-hidden rounded-[calc(1.65rem-1px)] bg-white p-3 ring-1 ring-white/80 sm:p-4">
                   <div
@@ -369,11 +369,11 @@ defmodule DialecticWeb.HomeLive do
                     aria-hidden="true"
                   >
                   </div>
-                  <div class="mb-3 flex items-center justify-between gap-3 px-1">
+                  <div class="mb-3 flex items-center justify-center gap-3 px-1">
                     <div>
                       <p class="inline-flex items-center gap-1.5 rounded-full bg-slate-950 px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-normal text-white shadow-sm">
                         <.icon name="hero-sparkles" class="h-3.5 w-3.5 text-amber-300" />
-                        1 · Ask your question
+                        Start a new grid
                       </p>
                     </div>
                   </div>
@@ -392,35 +392,35 @@ defmodule DialecticWeb.HomeLive do
 
               <div
                 id="home-start-steps"
-                class="order-3 grid max-w-xl gap-2 text-sm text-slate-300 lg:col-start-1 lg:row-start-2"
+                class="mt-6 grid w-full max-w-3xl gap-3 text-sm text-slate-300 sm:grid-cols-3"
               >
-                <div class="flex gap-3 border-l border-teal-300/50 bg-white/[0.05] px-3 py-2.5 ring-1 ring-white/10">
-                  <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center bg-teal-300/15 text-xs font-semibold text-teal-100 ring-1 ring-teal-200/25">
+                <div class="flex flex-col items-center border border-teal-300/20 bg-white/[0.05] px-3 py-3 ring-1 ring-white/10">
+                  <span class="flex h-6 w-6 shrink-0 items-center justify-center bg-teal-300/15 text-xs font-semibold text-teal-100 ring-1 ring-teal-200/25">
                     1
                   </span>
-                  <div>
+                  <div class="mt-2">
                     <p class="font-semibold text-white">Start with a question</p>
                     <p class="mt-0.5 leading-5">
                       Bring any question, idea, or source into one focused workspace.
                     </p>
                   </div>
                 </div>
-                <div class="flex gap-3 border-l border-amber-300/50 bg-white/[0.05] px-3 py-2.5 ring-1 ring-white/10">
-                  <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center bg-amber-300/15 text-xs font-semibold text-amber-100 ring-1 ring-amber-200/25">
+                <div class="flex flex-col items-center border border-amber-300/20 bg-white/[0.05] px-3 py-3 ring-1 ring-white/10">
+                  <span class="flex h-6 w-6 shrink-0 items-center justify-center bg-amber-300/15 text-xs font-semibold text-amber-100 ring-1 ring-amber-200/25">
                     2
                   </span>
-                  <div>
+                  <div class="mt-2">
                     <p class="font-semibold text-white">Branch into follow-ups</p>
                     <p class="mt-0.5 leading-5">
                       Ask as many questions as you need from any idea in the grid.
                     </p>
                   </div>
                 </div>
-                <div class="flex gap-3 border-l border-sky-300/50 bg-white/[0.05] px-3 py-2.5 ring-1 ring-white/10">
-                  <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center bg-sky-300/15 text-xs font-semibold text-sky-100 ring-1 ring-sky-200/25">
+                <div class="flex flex-col items-center border border-sky-300/20 bg-white/[0.05] px-3 py-3 ring-1 ring-white/10">
+                  <span class="flex h-6 w-6 shrink-0 items-center justify-center bg-sky-300/15 text-xs font-semibold text-sky-100 ring-1 ring-sky-200/25">
                     3
                   </span>
-                  <div>
+                  <div class="mt-2">
                     <p class="font-semibold text-white">Keep the context</p>
                     <p class="mt-0.5 leading-5">
                       Each answer keeps its parent’s context, so the whole thread stays connected.
@@ -429,7 +429,7 @@ defmodule DialecticWeb.HomeLive do
                 </div>
                 <.link
                   navigate={~p"/intro/how"}
-                  class="mt-1 inline-flex w-fit items-center gap-2 text-sm font-semibold text-teal-200 underline decoration-teal-300/50 underline-offset-4 transition hover:text-white hover:decoration-teal-200"
+                  class="col-span-full mt-1 inline-flex w-fit items-center justify-self-center gap-2 text-sm font-semibold text-teal-200 underline decoration-teal-300/50 underline-offset-4 transition hover:text-white hover:decoration-teal-200"
                 >
                   Read the quick guide <.icon name="hero-arrow-up-right" class="h-4 w-4" />
                 </.link>
@@ -806,7 +806,7 @@ defmodule DialecticWeb.HomeLive do
             </div>
           </section>
 
-          <section id="home-community-grids" class="order-2 w-full border-b border-slate-200 bg-white">
+          <section id="home-community-grids" class="order-4 w-full border-b border-slate-200 bg-white">
             <div class="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
               <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div class="max-w-2xl">
