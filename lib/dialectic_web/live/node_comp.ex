@@ -238,14 +238,15 @@ defmodule DialecticWeb.NodeComp do
                     >
                       <div
                         :if={!GraphHelpers.origin_branching_disabled?(@node)}
-                        class="not-prose mb-4 mt-1 flex items-center gap-1.5 px-0.5 text-[11px] leading-4 text-slate-500"
+                        class="not-prose mb-5 mt-3 flex items-center gap-3 border-l-4 border-teal-400 bg-slate-50 px-3 py-2.5 text-sm leading-5 text-slate-700 shadow-sm ring-1 ring-slate-200/80"
                       >
-                        <span class="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-amber-600/80">
-                          <.icon name="hero-cursor-arrow-rays" class="h-3.5 w-3.5" />
+                        <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-teal-50 text-teal-700 ring-1 ring-teal-200">
+                          <.icon name="hero-cursor-arrow-rays" class="h-4 w-4" />
                         </span>
-                        <p class="min-w-0">
-                          <span class="font-medium text-slate-700">
-                            Select a word or phrase to open a focused branch.
+                        <p class="min-w-0 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                          <span class="font-semibold text-slate-900">Branch from the text</span>
+                          <span class="text-slate-600">
+                            Select a phrase to ask a focused follow-up question.
                           </span>
                         </p>
                       </div>
