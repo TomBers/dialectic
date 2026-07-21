@@ -21,6 +21,7 @@ defmodule DialecticWeb.NewIdeaFormComp do
         "Ask a question or name a topic"
       end)
       |> assign_new(:submit_label, fn -> "Next" end)
+      |> assign_new(:autofocus, fn -> false end)
       |> assign_new(:selected_mode, fn -> "high_school" end)
       |> assign_new(:show_level_prompt, fn -> false end)
       |> assign_new(:content, fn %{form: form} ->
@@ -100,6 +101,8 @@ defmodule DialecticWeb.NewIdeaFormComp do
               ]}
               autocomplete="off"
               required
+              autofocus={@autofocus}
+              phx-mounted={@autofocus && JS.focus()}
             >{@content}</textarea>
             <%= if !@show_level_prompt do %>
               <div class="absolute right-2 top-2 bottom-2 hidden w-24 items-start justify-center sm:flex">
@@ -131,8 +134,8 @@ defmodule DialecticWeb.NewIdeaFormComp do
 
           <%= if !@show_level_prompt do %>
             <div class="flex flex-col gap-1 px-1 text-xs text-slate-600 sm:flex-row sm:items-center sm:justify-between">
-              <p>Step 1 of 2: start with what you want to understand.</p>
-              <p class="hidden sm:block">You’ll choose the answer level next.</p>
+              <p>Step 1 of 2: enter your starting point.</p>
+              <p class="hidden sm:block">Next: choose how detailed the answer should be.</p>
             </div>
           <% end %>
         </div>
