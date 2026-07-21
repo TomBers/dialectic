@@ -288,7 +288,7 @@ defmodule DialecticWeb.HomeLive do
             </div>
           </div>
         <% end %>
-        <div class="relative z-10 pb-4 sm:pb-5">
+        <div class="relative z-10 flex flex-col pb-4 sm:pb-5">
           <section
             id="home-video-hero"
             class="relative isolate flex min-h-[78svh] w-full items-center overflow-hidden border-b border-slate-900 bg-slate-950 text-white sm:min-h-[82svh]"
@@ -427,29 +427,38 @@ defmodule DialecticWeb.HomeLive do
                     </p>
                   </div>
                 </div>
+                <.link
+                  navigate={~p"/intro/how"}
+                  class="mt-1 inline-flex w-fit items-center gap-2 text-sm font-semibold text-teal-200 underline decoration-teal-300/50 underline-offset-4 transition hover:text-white hover:decoration-teal-200"
+                >
+                  Read the quick guide <.icon name="hero-arrow-up-right" class="h-4 w-4" />
+                </.link>
               </div>
             </div>
           </section>
 
           <section
             id="home-product-preview"
-            class="w-full border-y border-slate-800 bg-[linear-gradient(180deg,#020617_0%,#050816_58%,#0f172a_100%)]"
+            class="order-3 w-full border-y border-slate-800 bg-[linear-gradient(180deg,#020617_0%,#050816_58%,#0f172a_100%)]"
           >
             <div class="mx-auto w-full max-w-6xl px-4 py-7 sm:px-6 sm:py-8">
               <div class="mb-5 max-w-3xl">
                 <div class="max-w-3xl">
                   <div class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-normal text-sky-100">
-                    <.icon name="hero-sparkles" class="h-3.5 w-3.5" /> The proof
+                    <.icon name="hero-sparkles" class="h-3.5 w-3.5" /> See it in action
                   </div>
                   <h2 class="mt-3 text-2xl font-semibold text-white sm:text-3xl">
-                    See how one inquiry becomes a grid.
+                    Watch one inquiry become a grid.
                   </h2>
                   <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-300">
-                    A grid keeps the answer, the branches, and the next questions together so the
-                    work can keep developing after the first AI response.
+                    A grid keeps the answer, the branches, and the next questions together so you
+                    can keep developing the work after the first response.
                   </p>
                 </div>
-                <div class="mt-4 flex gap-2 overflow-x-auto pb-1 text-xs font-medium text-slate-200 sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0 lg:grid-cols-5">
+                <div
+                  hidden
+                  class="mt-4 flex gap-2 overflow-x-auto pb-1 text-xs font-medium text-slate-200 sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0 lg:grid-cols-5"
+                >
                   <div class="inline-flex min-w-max items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-2 sm:min-w-0">
                     <.icon name="hero-map" class="h-4 w-4 text-sky-200" /> Explore the territory
                   </div>
@@ -544,7 +553,10 @@ defmodule DialecticWeb.HomeLive do
                 </div>
 
                 <%= if @editor_pick_grids != [] do %>
-                  <div class="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-4 ring-1 ring-white/5 sm:p-5">
+                  <div
+                    hidden
+                    class="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-4 ring-1 ring-white/5 sm:p-5"
+                  >
                     <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                       <div>
                         <div class="inline-flex items-center gap-2 rounded-full border border-amber-200/20 bg-amber-300/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-normal text-amber-100">
@@ -593,7 +605,7 @@ defmodule DialecticWeb.HomeLive do
             </div>
           </section>
 
-          <section id="home-use-cases" class="w-full border-b border-slate-200 bg-white">
+          <section hidden id="home-use-cases" class="w-full border-b border-slate-200 bg-white">
             <div class="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
               <div class="max-w-3xl">
                 <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">
@@ -629,6 +641,7 @@ defmodule DialecticWeb.HomeLive do
           </section>
 
           <section
+            hidden
             id="home-profile-section"
             class="w-full border-b border-slate-200 bg-[linear-gradient(135deg,#ffffff_0%,#f8fafc_44%,#ecfeff_100%)]"
           >
@@ -815,7 +828,71 @@ defmodule DialecticWeb.HomeLive do
             </div>
           </section>
 
-          <div class="mx-auto max-w-6xl px-4 pt-5 sm:px-6 sm:pt-6">
+          <section id="home-community-grids" class="order-2 w-full border-b border-slate-200 bg-white">
+            <div class="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+              <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                <div class="max-w-2xl">
+                  <p class="text-xs font-semibold uppercase tracking-wide text-indigo-700">
+                    Community grids
+                  </p>
+                  <h2 class="mt-2 text-2xl font-semibold text-slate-950 sm:text-3xl">
+                    Start from questions other people are exploring.
+                  </h2>
+                  <p class="mt-2 text-sm leading-6 text-slate-600">
+                    Open a public grid, follow its branches, and add your own perspective. The full community catalogue is always one click away.
+                  </p>
+                </div>
+                <.link
+                  navigate={~p"/community"}
+                  class="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-slate-400 hover:bg-slate-50"
+                >
+                  See all community grids <.icon name="hero-arrow-right" class="h-4 w-4" />
+                </.link>
+              </div>
+
+              <%= if @graphs == [] do %>
+                <div class="mt-5 border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-600">
+                  Community grids will appear here as people start exploring.
+                </div>
+              <% else %>
+                <div id="home-community-grid-list" class="mt-5 grid gap-4 md:grid-cols-3">
+                  <%= for {graph, _count, author_username} <- Enum.take(@graphs, 3) do %>
+                    <.grid_card
+                      graph={graph}
+                      author_name={author_username}
+                      author_marker="@"
+                      id={graph_dom_id(graph, "home-community-grid")}
+                      variant={:compact}
+                      label="Community grid"
+                      tag_limit={3}
+                    />
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          </section>
+
+          <section hidden id="home-explore" class="w-full border-t border-slate-200 bg-white">
+            <div class="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+              <div class="max-w-2xl">
+                <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">Explore</p>
+                <h2 class="mt-2 text-2xl font-semibold text-slate-950">
+                  See what other people are thinking about.
+                </h2>
+                <p class="mt-2 text-sm leading-6 text-slate-600">
+                  Browse public grids for questions to follow, challenge, or use as a starting point for your own.
+                </p>
+              </div>
+              <.link
+                navigate={~p"/gallery"}
+                class="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+              >
+                Browse the gallery <.icon name="hero-arrow-right" class="h-4 w-4" />
+              </.link>
+            </div>
+          </section>
+
+          <div hidden class="mx-auto max-w-6xl px-4 pt-5 sm:px-6 sm:pt-6">
             <div class="flex flex-col items-stretch gap-4 sm:gap-5">
               <.modal id="home-example-grid-modal" class="border-indigo-100/90">
                 <div class="space-y-5">
@@ -1111,6 +1188,65 @@ defmodule DialecticWeb.HomeLive do
             </div>
           </div>
         </div>
+        <footer id="home-footer" class="mt-2 border-t border-slate-800 bg-slate-950 text-slate-300">
+          <div class="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 py-7 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <div class="flex items-center gap-3">
+              <img src={~p"/images/favicon.webp"} alt="RationalGrid" class="h-8 w-8 rounded-lg" />
+              <div>
+                <p class="text-sm font-semibold text-white">RationalGrid</p>
+                <p class="text-xs text-slate-400">Make your thinking easier to explore.</p>
+              </div>
+            </div>
+            <nav
+              aria-label="Homepage footer"
+              class="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm"
+            >
+              <.link navigate={~p"/intro/how"} class="transition hover:text-white">Guide</.link>
+              <.link navigate={~p"/about"} class="transition hover:text-white">About</.link>
+              <.link navigate={~p"/community"} class="transition hover:text-white">Community</.link>
+              <.link
+                href="https://www.youtube.com/@RationalGrid"
+                target="_blank"
+                rel="noreferrer"
+                class="inline-flex items-center gap-1.5 text-sky-300 transition hover:text-white"
+              >
+                <.icon name="hero-play-circle" class="h-4 w-4" /> YouTube
+              </.link>
+              <.link
+                href="https://github.com/TomBers/dialectic"
+                target="_blank"
+                rel="noreferrer"
+                class="transition hover:text-white"
+              >
+                GitHub
+              </.link>
+              <.link
+                href="https://x.com/rationalgridai"
+                target="_blank"
+                rel="noreferrer"
+                class="transition hover:text-white"
+              >
+                X
+              </.link>
+              <.link
+                href="https://www.instagram.com/rationalgrid.ai/"
+                target="_blank"
+                rel="noreferrer"
+                class="transition hover:text-white"
+              >
+                Instagram
+              </.link>
+              <.link
+                href="https://www.linkedin.com/company/rationalgrid-ai/"
+                target="_blank"
+                rel="noreferrer"
+                class="transition hover:text-white"
+              >
+                LinkedIn
+              </.link>
+            </nav>
+          </div>
+        </footer>
       </div>
     </div>
     """
