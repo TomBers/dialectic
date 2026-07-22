@@ -54,6 +54,7 @@ const AutoExpandTextareaHook = {
 
     // Initial adjustment in case there's pre-filled content
     this.adjustHeight();
+
   },
 
   updated() {

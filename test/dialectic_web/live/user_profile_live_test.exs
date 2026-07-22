@@ -368,10 +368,10 @@ defmodule DialecticWeb.UserProfileLiveTest do
         |> log_in_user(user)
         |> live(~p"/u/highlightprofile")
 
-      assert html =~ "Thinking library"
-      assert html =~ "Noted ideas"
+      assert html =~ "Bookmarks and notes"
+      assert html =~ "Bookmarked ideas"
       assert has_element?(lv, "#profile-noted-note-#{note.id}")
-      assert html =~ "Highlights"
+      assert html =~ "Quotes and notes"
       refute html =~ "My Notes"
       assert has_element?(lv, "#profile-highlight-#{highlight.id}")
       assert render(lv) =~ "This is a saved quote."

@@ -122,6 +122,20 @@
             <span class="hidden sm:inline">About</span>
           </.link>
           <.link
+            href={~p"/community"}
+            class={[
+              "inline-flex items-center gap-1 rounded-full px-2 py-1 font-semibold text-white transition",
+              if(active_path == "/community",
+                do: "bg-white/24 text-white shadow-sm",
+                else:
+                  "hover:bg-white/22 hover:text-white hover:ring-1 hover:ring-white/35 hover:shadow-[0_6px_14px_rgba(24,16,88,0.24)]"
+              )
+            ]}
+          >
+            <.icon name="hero-user-group" class="h-3.5 w-3.5" />
+            <span class="hidden sm:inline">Community</span>
+          </.link>
+          <.link
             href={~p"/gallery"}
             class={[
               "inline-flex items-center gap-1 rounded-full px-2 py-1 font-semibold text-white transition",
@@ -136,7 +150,7 @@
             <span class="hidden sm:inline">Gallery</span>
           </.link>
           <.link
-            href={~p"/"}
+            href={~p"/?focus=grid#start-here"}
             class="inline-flex items-center gap-1 rounded-full bg-white/18 px-2.5 py-1 font-semibold text-white ring-1 ring-white/24 transition hover:bg-white/32 hover:ring-white/40 hover:shadow-[0_6px_14px_rgba(24,16,88,0.24)]"
           >
             <span>+ New Grid</span>

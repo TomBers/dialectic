@@ -21,6 +21,7 @@ defmodule DialecticWeb.NewIdeaFormComp do
         "Ask a question or name a topic"
       end)
       |> assign_new(:submit_label, fn -> "Next" end)
+      |> assign_new(:autofocus, fn -> false end)
       |> assign_new(:selected_mode, fn -> "high_school" end)
       |> assign_new(:show_level_prompt, fn -> false end)
       |> assign_new(:content, fn %{form: form} ->
@@ -100,6 +101,8 @@ defmodule DialecticWeb.NewIdeaFormComp do
               ]}
               autocomplete="off"
               required
+              autofocus={@autofocus}
+              phx-mounted={@autofocus && JS.focus()}
             >{@content}</textarea>
             <%= if !@show_level_prompt do %>
               <div class="absolute right-2 top-2 bottom-2 hidden w-24 items-start justify-center sm:flex">
@@ -131,8 +134,8 @@ defmodule DialecticWeb.NewIdeaFormComp do
 
           <%= if !@show_level_prompt do %>
             <div class="flex flex-col gap-1 px-1 text-xs text-slate-600 sm:flex-row sm:items-center sm:justify-between">
-              <p>Step 1 of 2: start with what you want to understand.</p>
-              <p class="hidden sm:block">You’ll choose the answer level next.</p>
+              <p>Step 1 of 2: enter your starting point.</p>
+              <p class="hidden sm:block">Next: choose how detailed the answer should be.</p>
             </div>
           <% end %>
         </div>
@@ -148,10 +151,10 @@ defmodule DialecticWeb.NewIdeaFormComp do
                   Step 2 of 2
                 </p>
                 <p class="text-sm font-semibold text-slate-900">
-                  Choose how detailed the first answers should be.
+                  Choose the language and depth for your first answers.
                 </p>
                 <p class="text-xs text-slate-600">
-                  Start simple, or begin closer to expert depth. You can change this later.
+                  This controls how technical the explanation sounds and which sources it draws on—not how difficult your question is. You can change it later.
                 </p>
               </div>
               <button
@@ -166,22 +169,32 @@ defmodule DialecticWeb.NewIdeaFormComp do
 
             <div class="mt-3 w-full sm:w-auto">
               <div class="mx-auto flex w-full rounded-xl border border-indigo-200 bg-white/80 p-0.5 shadow-inner sm:inline-flex sm:w-auto">
-                <%= for {mode, label} <- [{"simple", "Simple"}, {"high_school", "High School"}, {"university", "University"}, {"expert", "Expert"}] do %>
+                <%= for {mode, label, description} <- [
+                  {"simple", "Simple", "Plain language, everyday examples, and metaphors."},
+                  {"high_school", "High School", "Clear concepts with a little subject vocabulary."},
+                  {"university", "University", "More precise terminology and broader context."},
+                  {"expert", "Expert", "Technical terms, nuance, and more primary material."}
+                ] do %>
                   <button
                     type="button"
                     phx-click="select_mode"
                     phx-value-mode={mode}
                     phx-target={@myself}
                     class={[
-                      "flex-1 rounded-lg px-2.5 py-1.5 text-center text-xs font-medium transition-colors duration-150 sm:flex-initial sm:px-3 sm:py-1.5",
-                      if @selected_mode == mode do
-                        "border border-slate-900 bg-slate-900 text-white shadow-sm"
-                      else
-                        "text-slate-600 hover:bg-white hover:text-slate-900 active:bg-white"
-                      end
+                      "group flex flex-1 flex-col items-center rounded-lg px-2 py-2 text-center transition-colors duration-150 sm:flex-initial sm:px-3 sm:py-2",
+                      if(@selected_mode == mode,
+                        do: "border border-slate-900 bg-slate-900 text-white shadow-sm",
+                        else: "text-slate-600 hover:bg-white hover:text-slate-900 active:bg-white"
+                      )
                     ]}
                   >
-                    {label}
+                    <span class="text-xs font-semibold">{label}</span>
+                    <span class={[
+                      "mt-0.5 hidden max-w-40 text-[10px] leading-4 sm:block",
+                      if(@selected_mode == mode, do: "text-slate-300", else: "text-slate-500")
+                    ]}>
+                      {description}
+                    </span>
                   </button>
                 <% end %>
               </div>

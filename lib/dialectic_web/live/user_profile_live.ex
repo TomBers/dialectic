@@ -730,7 +730,7 @@ defmodule DialecticWeb.UserProfileLive do
                 </p>
                 <%= if @is_own_profile? do %>
                   <.link
-                    navigate={~p"/"}
+                    navigate={~p"/?focus=grid#start-here"}
                     class={[
                       "mt-4 inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold shadow-sm transition",
                       theme_button_class(@theme)
@@ -779,10 +779,10 @@ defmodule DialecticWeb.UserProfileLive do
             <div class="flex flex-col gap-3 border-b border-white/10 p-5 sm:flex-row sm:items-end sm:justify-between sm:p-6">
               <div>
                 <p class="text-xs font-semibold uppercase text-cyan-200">
-                  Saved attention
+                  Your saved thinking
                 </p>
                 <h2 class="mt-1 text-3xl font-semibold text-white">
-                  Thinking library
+                  Bookmarks and notes
                 </h2>
               </div>
             </div>
@@ -796,7 +796,7 @@ defmodule DialecticWeb.UserProfileLive do
                     </span>
                     <div>
                       <h3 class="text-base font-semibold tracking-tight text-slate-950">
-                        Noted ideas
+                        Bookmarked ideas
                         <span class={[
                           "ml-2 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
                           theme_tag_class(@theme)
@@ -805,7 +805,7 @@ defmodule DialecticWeb.UserProfileLive do
                         </span>
                       </h3>
                       <p class="mt-1 text-sm leading-5 text-slate-500">
-                        Nodes worth returning to.
+                        Keep useful nodes close and add your own notes.
                       </p>
                     </div>
                   </div>
@@ -822,7 +822,7 @@ defmodule DialecticWeb.UserProfileLive do
                         class={"mx-auto mb-3 h-10 w-10 " <> theme_subtext_class(@theme)}
                       />
                       <p class={["text-sm", theme_subtext_class(@theme)]}>
-                        No noted ideas yet. Use the node note control to save ideas here.
+                        Bookmark a useful node and add a note to begin your personal collection.
                       </p>
                     </div>
                   <% else %>
@@ -858,7 +858,7 @@ defmodule DialecticWeb.UserProfileLive do
                     </span>
                     <div>
                       <h3 class="text-base font-semibold tracking-tight text-slate-950">
-                        Highlights
+                        Quotes and notes
                         <span class={[
                           "ml-2 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
                           theme_tag_class(@theme)
@@ -867,7 +867,7 @@ defmodule DialecticWeb.UserProfileLive do
                         </span>
                       </h3>
                       <p class="mt-1 text-sm leading-5 text-slate-500">
-                        Sentence-level quotes and annotations.
+                        Save passages and capture why they matter to you.
                       </p>
                     </div>
                   </div>
@@ -884,7 +884,7 @@ defmodule DialecticWeb.UserProfileLive do
                         class={"mx-auto mb-3 h-10 w-10 " <> theme_subtext_class(@theme)}
                       />
                       <p class={["text-sm", theme_subtext_class(@theme)]}>
-                        No highlights yet. Select a quote in a grid to save it here.
+                        Select a useful passage in any grid, then save it with your own note.
                       </p>
                     </div>
                   <% else %>

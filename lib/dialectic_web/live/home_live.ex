@@ -39,6 +39,7 @@ defmodule DialecticWeb.HomeLive do
        prompt_mode: prompt_mode,
        ask_question: true,
        graph_id: nil,
+       focus_new_grid: params["focus"] == "grid",
        preview_seed: home_preview_seed(),
        curated_grids: [],
        all_curated_grids: [],
@@ -46,7 +47,7 @@ defmodule DialecticWeb.HomeLive do
        featured_grids: [],
        quick_tags: [],
        page_description:
-         "Some ideas deserve deeper exploration. RationalGrid helps you map the territory of an idea, test it critically, remember what you learn, develop it over time, and share the path with others."
+         "RationalGrid helps people turn difficult questions into clear, connected understanding they can test, revisit, and share."
      )}
   end
 
@@ -287,7 +288,7 @@ defmodule DialecticWeb.HomeLive do
             </div>
           </div>
         <% end %>
-        <div class="relative z-10 pb-4 sm:pb-5">
+        <div class="relative z-10 flex flex-col pb-4 sm:pb-5">
           <section
             id="home-video-hero"
             class="relative isolate flex min-h-[78svh] w-full items-center overflow-hidden border-b border-slate-900 bg-slate-950 text-white sm:min-h-[82svh]"
@@ -312,15 +313,12 @@ defmodule DialecticWeb.HomeLive do
             </div>
 
             <div class="mx-auto flex w-full max-w-6xl flex-col items-center px-4 py-20 text-center sm:px-6 sm:py-24">
-              <p class="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-normal text-white/85 shadow-sm backdrop-blur">
-                <span class="h-1.5 w-1.5 rounded-full bg-teal-300"></span> RationalGrid
-              </p>
-              <h1 class="mt-6 max-w-5xl text-balance text-5xl font-semibold leading-[0.94] text-white drop-shadow-[0_6px_24px_rgba(0,0,0,0.42)] sm:text-7xl lg:text-8xl">
-                Some ideas deserve deeper exploration.
+              <h1 class="max-w-5xl text-balance text-5xl font-semibold leading-[0.94] text-white drop-shadow-[0_6px_24px_rgba(0,0,0,0.42)] sm:text-7xl lg:text-8xl">
+                Turn complex questions into clear, connected thinking.
               </h1>
               <p class="mt-6 max-w-2xl text-pretty text-base leading-7 text-slate-100 drop-shadow-[0_4px_18px_rgba(0,0,0,0.45)] sm:text-xl sm:leading-8">
-                RationalGrid helps you map the territory of an idea, test it critically, remember
-                what you learn, develop it over time, and share the path with others.
+                RationalGrid gives you a clearer way to understand difficult ideas, test what matters,
+                and build knowledge you can return to and share.
               </p>
             </div>
             <.link
@@ -347,23 +345,23 @@ defmodule DialecticWeb.HomeLive do
             <div class="absolute inset-x-0 top-0 -z-10 h-px bg-[linear-gradient(90deg,rgba(45,212,191,0),rgba(45,212,191,0.65),rgba(251,191,36,0.45),rgba(56,189,248,0))]">
             </div>
 
-            <div class="mx-auto grid w-full max-w-6xl gap-6 px-4 py-10 sm:px-6 sm:py-12 lg:grid-cols-[minmax(0,0.65fr)_minmax(420px,0.78fr)] lg:grid-rows-[auto_auto] lg:items-center lg:py-14">
-              <div class="order-1 max-w-xl lg:col-start-1 lg:row-start-1">
+            <div class="mx-auto flex w-full max-w-4xl flex-col items-center px-4 py-10 text-center sm:px-6 sm:py-12 lg:py-14">
+              <div class="flex max-w-3xl flex-col items-center">
                 <p class="inline-flex w-fit items-center gap-2 rounded-full border border-teal-300/25 bg-teal-300/10 px-3 py-1 text-xs font-semibold uppercase tracking-normal text-teal-100">
                   <span class="h-1.5 w-1.5 rounded-full bg-teal-300"></span> Start here
                 </p>
-                <h2 class="mt-4 max-w-xl text-3xl font-semibold leading-tight text-white sm:text-4xl">
-                  Start with something worth keeping.
+                <h2 class="mt-4 text-3xl font-semibold leading-tight text-white sm:text-4xl">
+                  What would you like to understand?
                 </h2>
-                <p class="mt-3 max-w-lg text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">
-                  Ask a question, paste an answer, or name an idea. RationalGrid turns one
-                  thought into a grid you can return to, question, and share.
+                <p class="mt-3 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">
+                  Start with one question, then branch into as many follow-ups as you need. Each answer
+                  keeps the context above it.
                 </p>
               </div>
 
               <div
                 id="home-start-panel"
-                class="relative order-2 rounded-[1.65rem] bg-[linear-gradient(135deg,rgba(45,212,191,0.95),rgba(255,255,255,0.92)_38%,rgba(251,191,36,0.9)_72%,rgba(56,189,248,0.95))] p-[1px] shadow-[0_34px_100px_-50px_rgba(20,184,166,0.9)] lg:col-start-2 lg:row-span-2 lg:row-start-1"
+                class="relative mt-7 w-full max-w-3xl rounded-[1.65rem] bg-[linear-gradient(135deg,rgba(45,212,191,0.95),rgba(255,255,255,0.92)_38%,rgba(251,191,36,0.9)_72%,rgba(56,189,248,0.95))] p-[1px] shadow-[0_34px_100px_-50px_rgba(20,184,166,0.9)] sm:mt-8"
               >
                 <div class="relative overflow-hidden rounded-[calc(1.65rem-1px)] bg-white p-3 ring-1 ring-white/80 sm:p-4">
                   <div
@@ -371,11 +369,11 @@ defmodule DialecticWeb.HomeLive do
                     aria-hidden="true"
                   >
                   </div>
-                  <div class="mb-3 flex items-center justify-between gap-3 px-1">
+                  <div class="mb-3 flex items-center justify-center gap-3 px-1">
                     <div>
                       <p class="inline-flex items-center gap-1.5 rounded-full bg-slate-950 px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-normal text-white shadow-sm">
                         <.icon name="hero-sparkles" class="h-3.5 w-3.5 text-amber-300" />
-                        Create a grid
+                        Start a new grid
                       </p>
                     </div>
                   </div>
@@ -384,7 +382,9 @@ defmodule DialecticWeb.HomeLive do
                       module={DialecticWeb.NewIdeaFormComp}
                       id="new-idea-form"
                       form={@form}
-                      placeholder="What should we explore?"
+                      placeholder="What do you want to understand?"
+                      submit_label="Continue"
+                      autofocus={@focus_new_grid}
                     />
                   </div>
                 </div>
@@ -392,80 +392,84 @@ defmodule DialecticWeb.HomeLive do
 
               <div
                 id="home-start-steps"
-                class="order-3 grid max-w-xl gap-2 text-sm text-slate-300 lg:col-start-1 lg:row-start-2"
+                class="mt-6 grid w-full max-w-3xl gap-3 text-sm text-slate-300 sm:grid-cols-3"
               >
-                <div class="flex gap-3 border-l border-teal-300/50 bg-white/[0.05] px-3 py-2.5 ring-1 ring-white/10">
-                  <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center bg-teal-300/15 text-xs font-semibold text-teal-100 ring-1 ring-teal-200/25">
+                <div class="flex flex-col items-center border border-teal-300/20 bg-white/[0.05] px-3 py-3 ring-1 ring-white/10">
+                  <span class="flex h-6 w-6 shrink-0 items-center justify-center bg-teal-300/15 text-xs font-semibold text-teal-100 ring-1 ring-teal-200/25">
                     1
                   </span>
-                  <div>
-                    <p class="font-semibold text-white">Start anywhere</p>
+                  <div class="mt-2">
+                    <p class="font-semibold text-white">Start with a question</p>
                     <p class="mt-0.5 leading-5">
-                      Use a question, a copied AI answer, a quote, or a rough topic.
+                      Bring any question, idea, or source into one focused workspace.
                     </p>
                   </div>
                 </div>
-                <div class="flex gap-3 border-l border-amber-300/50 bg-white/[0.05] px-3 py-2.5 ring-1 ring-white/10">
-                  <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center bg-amber-300/15 text-xs font-semibold text-amber-100 ring-1 ring-amber-200/25">
+                <div class="flex flex-col items-center border border-amber-300/20 bg-white/[0.05] px-3 py-3 ring-1 ring-white/10">
+                  <span class="flex h-6 w-6 shrink-0 items-center justify-center bg-amber-300/15 text-xs font-semibold text-amber-100 ring-1 ring-amber-200/25">
                     2
                   </span>
-                  <div>
-                    <p class="font-semibold text-white">Choose the depth</p>
+                  <div class="mt-2">
+                    <p class="font-semibold text-white">Branch into follow-ups</p>
                     <p class="mt-0.5 leading-5">
-                      Pick simple, high-school, university, or expert answers next.
+                      Ask as many questions as you need from any idea in the grid.
                     </p>
                   </div>
                 </div>
-                <div class="flex gap-3 border-l border-sky-300/50 bg-white/[0.05] px-3 py-2.5 ring-1 ring-white/10">
-                  <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center bg-sky-300/15 text-xs font-semibold text-sky-100 ring-1 ring-sky-200/25">
+                <div class="flex flex-col items-center border border-sky-300/20 bg-white/[0.05] px-3 py-3 ring-1 ring-white/10">
+                  <span class="flex h-6 w-6 shrink-0 items-center justify-center bg-sky-300/15 text-xs font-semibold text-sky-100 ring-1 ring-sky-200/25">
                     3
                   </span>
-                  <div>
-                    <p class="font-semibold text-white">Get a reusable grid</p>
+                  <div class="mt-2">
+                    <p class="font-semibold text-white">Keep the context</p>
                     <p class="mt-0.5 leading-5">
-                      Keep the answer, branch from any point, and share the map later.
+                      Each answer keeps its parent’s context, so the whole thread stays connected.
                     </p>
                   </div>
                 </div>
+                <.link
+                  navigate={~p"/intro/how"}
+                  class="col-span-full mt-1 inline-flex w-fit items-center justify-self-center gap-2 text-sm font-semibold text-teal-200 underline decoration-teal-300/50 underline-offset-4 transition hover:text-white hover:decoration-teal-200"
+                >
+                  Read the quick guide <.icon name="hero-arrow-up-right" class="h-4 w-4" />
+                </.link>
               </div>
             </div>
           </section>
 
           <section
             id="home-product-preview"
-            class="w-full border-y border-slate-800 bg-[linear-gradient(180deg,#020617_0%,#050816_58%,#0f172a_100%)]"
+            class="order-3 w-full border-y border-slate-800 bg-[linear-gradient(180deg,#020617_0%,#050816_58%,#0f172a_100%)]"
           >
             <div class="mx-auto w-full max-w-6xl px-4 py-7 sm:px-6 sm:py-8">
-              <div class="mb-5 max-w-3xl">
+              <div class="mb-6">
                 <div class="max-w-3xl">
                   <div class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-normal text-sky-100">
-                    <.icon name="hero-sparkles" class="h-3.5 w-3.5" /> The proof
+                    <.icon name="hero-sparkles" class="h-3.5 w-3.5" /> See it in action
                   </div>
                   <h2 class="mt-3 text-2xl font-semibold text-white sm:text-3xl">
-                    See how one inquiry becomes a grid.
+                    See the difference a connected view makes.
                   </h2>
                   <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-300">
-                    A grid keeps the answer, the branches, and the next questions together so the
-                    work can keep developing after the first AI response.
+                    Keep the answer, context, and next steps together instead of losing useful
+                    thinking in a chat.
                   </p>
                 </div>
-                <div class="mt-4 flex gap-2 overflow-x-auto pb-1 text-xs font-medium text-slate-200 sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0 lg:grid-cols-5">
-                  <div class="inline-flex min-w-max items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-2 sm:min-w-0">
-                    <.icon name="hero-map" class="h-4 w-4 text-sky-200" /> Explore the territory
+                <div class="mt-5 grid gap-3 text-xs font-medium text-slate-200 sm:grid-cols-2 lg:grid-cols-5">
+                  <div class="flex items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-3 leading-5">
+                    <.icon name="hero-map" class="h-4 w-4 text-sky-200" /> See the bigger picture
                   </div>
-                  <div class="inline-flex min-w-max items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-2 sm:min-w-0">
-                    <.icon name="hero-scale" class="h-4 w-4 text-teal-200" /> Test critically
+                  <div class="flex items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-3 leading-5">
+                    <.icon name="hero-scale" class="h-4 w-4 text-teal-200" /> Think with confidence
                   </div>
-                  <div class="inline-flex min-w-max items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-2 sm:min-w-0">
-                    <.icon name="hero-squares-plus" class="h-4 w-4 text-amber-200" />
-                    Branch and develop
+                  <div class="flex items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-3 leading-5">
+                    <.icon name="hero-squares-plus" class="h-4 w-4 text-amber-200" /> Develop ideas
                   </div>
-                  <div class="inline-flex min-w-max items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-2 sm:min-w-0">
-                    <.icon name="hero-bookmark" class="h-4 w-4 text-indigo-200" />
-                    Remember what matters
+                  <div class="flex items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-3 leading-5">
+                    <.icon name="hero-bookmark" class="h-4 w-4 text-indigo-200" /> Keep what matters
                   </div>
-                  <div class="inline-flex min-w-max items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-2 sm:min-w-0">
-                    <.icon name="hero-share" class="h-4 w-4 text-rose-200" /> Share the path
+                  <div class="flex items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-3 leading-5">
+                    <.icon name="hero-share" class="h-4 w-4 text-rose-200" /> Share understanding
                   </div>
                 </div>
               </div>
@@ -473,58 +477,33 @@ defmodule DialecticWeb.HomeLive do
               <div class="grid gap-4">
                 <div class="overflow-hidden rounded-2xl border border-white/10 bg-white px-4 py-4 shadow-[0_18px_44px_rgba(0,0,0,0.22)] sm:px-5 sm:py-5 lg:h-full">
                   <div class="flex h-full flex-col gap-4">
-                    <div class="max-w-2xl">
-                      <div class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-normal text-slate-600">
-                        <.icon name="hero-eye" class="h-3.5 w-3.5" /> Live example
-                      </div>
-                      <h2 class="mt-3 text-2xl font-semibold text-slate-950">
-                        A reference you can keep questioning.
-                      </h2>
-                    </div>
-
                     <div class="rounded-2xl border border-slate-900/10 bg-slate-950 p-3 shadow-sm sm:p-4">
-                      <button
-                        id="home-example-grid-preview"
-                        type="button"
-                        phx-click={show_modal("home-example-grid-modal")}
-                        class="group block w-full text-left"
-                        aria-label="Expand the Happiness grid example"
-                      >
-                        <div class="mb-3 flex items-start justify-between gap-3">
-                          <div>
-                            <p class="text-[11px] font-semibold uppercase tracking-normal text-sky-200/80">
-                              Example grid
-                            </p>
-                            <p class="mt-1 text-base font-semibold text-white sm:text-lg">
-                              Happiness
-                            </p>
-                          </div>
-                          <span class="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-medium text-white/85 transition group-hover:border-sky-300/40 group-hover:bg-white/15 group-hover:text-white">
-                            <.icon name="hero-magnifying-glass-plus" class="h-4 w-4" />
-                            Click to expand
-                          </span>
-                        </div>
-
-                        <div class="overflow-hidden border border-white/10 bg-slate-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-                          <img
-                            src={~p"/images/guide/grid-workspace.webp"}
-                            alt="Preview of the Happiness grid workspace by TomBers84"
-                            class="aspect-[16/9] w-full object-contain object-center transition duration-300 group-hover:scale-[1.015]"
-                            loading="lazy"
-                          />
-                        </div>
-                      </button>
+                      <div id="home-example-video" class="group block w-full">
+                        <iframe
+                          class="aspect-video w-full rounded-xl"
+                          src="https://www.youtube.com/embed/nZOqbspGPfY?si=iOZEER4hWd31G157"
+                          title="RationalGrid product video"
+                          loading="lazy"
+                          frameborder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          referrerpolicy="strict-origin-when-cross-origin"
+                          allowfullscreen
+                        >
+                        </iframe>
+                      </div>
 
                       <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
                         <p class="text-sm leading-6 text-slate-300">
-                          See how one topic becomes a shared trail of answers, questions, and new directions.
+                          See how RationalGrid turns a question into a workspace you can revisit and share.
                         </p>
                         <.link
-                          navigate={~p"/g/happiness-da4f7e"}
+                          href="https://www.youtube.com/@RationalGrid"
+                          target="_blank"
+                          rel="noopener noreferrer"
                           class="inline-flex items-center gap-2 rounded-full border border-sky-300/35 bg-sky-400/10 px-4 py-2 text-sm font-medium text-sky-100 transition hover:border-sky-200/60 hover:bg-sky-400/15"
                         >
                           <.icon name="hero-arrow-top-right-on-square" class="h-4 w-4" />
-                          Open live example
+                          Visit the YouTube channel
                         </.link>
                       </div>
                     </div>
@@ -532,7 +511,10 @@ defmodule DialecticWeb.HomeLive do
                 </div>
 
                 <%= if @editor_pick_grids != [] do %>
-                  <div class="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-4 ring-1 ring-white/5 sm:p-5">
+                  <div
+                    hidden
+                    class="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-4 ring-1 ring-white/5 sm:p-5"
+                  >
                     <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                       <div>
                         <div class="inline-flex items-center gap-2 rounded-full border border-amber-200/20 bg-amber-300/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-normal text-amber-100">
@@ -581,48 +563,322 @@ defmodule DialecticWeb.HomeLive do
             </div>
           </section>
 
-          <section
-            id="home-profile-section"
-            class="w-full border-b border-slate-200 bg-[linear-gradient(135deg,#ffffff_0%,#f8fafc_44%,#ecfeff_100%)]"
-          >
-            <div class="mx-auto grid w-full max-w-6xl gap-6 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-[minmax(0,0.92fr)_minmax(360px,0.72fr)] lg:items-center">
-              <div>
-                <div class="inline-flex items-center gap-2 rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-normal text-teal-800">
-                  <.icon name="hero-user-group" class="h-3.5 w-3.5" /> Profiles and follows
-                </div>
-                <h2 class="mt-3 max-w-2xl text-3xl font-semibold text-slate-950 sm:text-4xl">
-                  Turn your learning into a public good.
-                </h2>
-                <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-700 sm:text-base sm:leading-7">
-                  Your grids, highlights, and followed ideas become a public trail people can
-                  learn from, return to, and build on with their own questions.
+          <section hidden id="home-use-cases" class="w-full border-b border-slate-200 bg-white">
+            <div class="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
+              <div class="max-w-3xl">
+                <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">
+                  Industries and use cases
                 </p>
+                <h2 class="mt-2 text-3xl font-semibold text-slate-950 sm:text-4xl">
+                  A clearer workspace for consequential questions.
+                </h2>
+                <p class="mt-3 text-base leading-7 text-slate-600">
+                  Use a grid wherever a single answer is not enough and the reasoning needs to remain visible.
+                </p>
+              </div>
+              <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <%= for {icon, title, copy, accent} <- [
+                  {"hero-academic-cap", "Education", "Build study maps, compare interpretations, and turn research into reusable learning paths.", "text-teal-700 bg-teal-50 ring-teal-200"},
+                  {"hero-building-office-2", "Organisations", "Explore strategy, policy, and change while keeping assumptions and objections in view.", "text-sky-700 bg-sky-50 ring-sky-200"},
+                  {"hero-beaker", "Research", "Organise evidence, competing explanations, open questions, and promising next investigations.", "text-indigo-700 bg-indigo-50 ring-indigo-200"},
+                  {"hero-scale", "Public decisions", "Make trade-offs legible across policy, ethics, communities, and civic debate.", "text-amber-700 bg-amber-50 ring-amber-200"}
+                ] do %>
+                  <article class="border border-slate-200 bg-slate-50/60 p-5 shadow-sm">
+                    <span class={[
+                      "inline-flex h-10 w-10 items-center justify-center rounded-xl ring-1",
+                      accent
+                    ]}>
+                      <.icon name={icon} class="h-5 w-5" />
+                    </span>
+                    <h3 class="mt-4 text-base font-semibold text-slate-950">{title}</h3>
+                    <p class="mt-2 text-sm leading-6 text-slate-600">{copy}</p>
+                  </article>
+                <% end %>
+              </div>
+            </div>
+          </section>
 
-                <div class="mt-5 grid gap-3 sm:grid-cols-3">
-                  <div class="border border-slate-200 bg-white p-3 shadow-sm">
-                    <.icon name="hero-identification" class="h-5 w-5 text-teal-700" />
-                    <p class="mt-2 text-sm font-semibold text-slate-950">Personal library</p>
-                    <p class="mt-1 text-sm leading-5 text-slate-600">
-                      Public grids and highlights become entry points others can build from.
+          <section id="home-community-profiles" class="order-5 w-full">
+            <div>
+              <section
+                id="home-profile-section"
+                class="w-full border-b border-slate-200 bg-[linear-gradient(135deg,#ffffff_0%,#f8fafc_44%,#ecfeff_100%)]"
+              >
+                <div class="mx-auto grid w-full max-w-6xl gap-6 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-[minmax(0,0.92fr)_minmax(360px,0.72fr)] lg:items-center">
+                  <div>
+                    <div class="inline-flex items-center gap-2 rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-normal text-teal-800">
+                      <.icon name="hero-user-group" class="h-3.5 w-3.5" /> Profiles and follows
+                    </div>
+                    <h2 class="mt-3 max-w-2xl text-3xl font-semibold text-slate-950 sm:text-4xl">
+                      Turn your learning into a public good.
+                    </h2>
+                    <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-700 sm:text-base sm:leading-7">
+                      Your grids, highlights, and followed ideas become a public trail people can
+                      learn from, return to, and build on with their own questions.
+                    </p>
+
+                    <div hidden class="mt-5 grid gap-3 sm:grid-cols-3">
+                      <div class="border border-slate-200 bg-white p-3 shadow-sm">
+                        <.icon name="hero-identification" class="h-5 w-5 text-teal-700" />
+                        <p class="mt-2 text-sm font-semibold text-slate-950">Personal library</p>
+                        <p class="mt-1 text-sm leading-5 text-slate-600">
+                          Public grids and highlights become entry points others can build from.
+                        </p>
+                      </div>
+                      <div class="border border-slate-200 bg-white p-3 shadow-sm">
+                        <.icon name="hero-user-plus" class="h-5 w-5 text-indigo-700" />
+                        <p class="mt-2 text-sm font-semibold text-slate-950">Follow thinkers</p>
+                        <p class="mt-1 text-sm leading-5 text-slate-600">
+                          Follow profiles, then ask new questions from the ideas they uncover.
+                        </p>
+                      </div>
+                      <div class="border border-slate-200 bg-white p-3 shadow-sm">
+                        <.icon name="hero-plus-circle" class="h-5 w-5 text-amber-700" />
+                        <p class="mt-2 text-sm font-semibold text-slate-950">Shared contribution</p>
+                        <p class="mt-1 text-sm leading-5 text-slate-600">
+                          Every profile, grid, node, and highlight has a URL for adding context.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div class="mt-5 flex flex-col gap-2 sm:flex-row">
+                      <%= if @current_user do %>
+                        <.link
+                          navigate={~p"/u/#{User.effective_username(@current_user)}"}
+                          class="inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+                        >
+                          <.icon name="hero-user-circle" class="h-4 w-4" /> View my profile
+                        </.link>
+                      <% else %>
+                        <.link
+                          navigate={~p"/users/register"}
+                          class="inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+                        >
+                          <.icon name="hero-user-plus" class="h-4 w-4" /> Create your profile
+                        </.link>
+                      <% end %>
+                      <.link
+                        navigate={~p"/community"}
+                        class="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-slate-400 hover:bg-slate-50"
+                      >
+                        <.icon name="hero-magnifying-glass" class="h-4 w-4" /> Explore public grids
+                      </.link>
+                    </div>
+                  </div>
+
+                  <div class="overflow-hidden rounded-[1.75rem] border border-slate-900/10 bg-slate-950 text-white shadow-[0_28px_90px_-54px_rgba(15,23,42,0.95)]">
+                    <div class="relative h-24 overflow-hidden border-b border-white/10 bg-orange-500">
+                      <img
+                        src={~p"/images/profile-banners/flat-mountains.svg"}
+                        alt=""
+                        class="absolute inset-0 h-full w-full object-cover"
+                        aria-hidden="true"
+                      />
+                    </div>
+                    <div class="px-4 pb-4">
+                      <div class="mt-4 flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                          <img
+                            src={~p"/images/tom.webp"}
+                            alt="TomBers's avatar"
+                            class="h-16 w-16 rounded-full border-4 border-white bg-slate-950 object-cover shadow-2xl shadow-slate-950/35"
+                          />
+                          <div class="min-w-0">
+                            <p class="text-2xl font-semibold tracking-tight text-white">TomBers</p>
+                            <p class="text-sm font-semibold text-slate-300">Makes MuDG</p>
+                          </div>
+                        </div>
+                        <span class="inline-flex items-center gap-1 rounded-xl border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white">
+                          <.icon name="hero-user-plus" class="h-3.5 w-3.5" /> Follow
+                        </span>
+                      </div>
+
+                      <p class="mt-4 rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-sm font-medium leading-5 text-slate-100">
+                        You’ll find thinking on Philosophy, Sociology, and History here, spread across
+                        127 public grids.
+                      </p>
+
+                      <div class="mt-4 grid grid-cols-3 divide-x divide-white/10 rounded-xl border border-white/10 bg-white/10 text-center">
+                        <div class="px-2 py-3">
+                          <p class="text-xl font-semibold text-white">127</p>
+                          <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-300">
+                            grids
+                          </p>
+                        </div>
+                        <div class="px-2 py-3">
+                          <p class="text-xl font-semibold text-white">1425</p>
+                          <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-300">
+                            ideas
+                          </p>
+                        </div>
+                        <div class="px-2 py-3">
+                          <p class="text-xl font-semibold text-white">2</p>
+                          <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-300">
+                            followers
+                          </p>
+                        </div>
+                      </div>
+
+                      <div hidden class="mt-4 flex flex-wrap gap-1.5 border-b border-white/10 pb-4">
+                        <span class="rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
+                          Philosophy
+                        </span>
+                        <span class="rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
+                          Sociology
+                        </span>
+                        <span class="rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
+                          History
+                        </span>
+                        <span class="rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
+                          Ethics
+                        </span>
+                        <span class="rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
+                          Psychology
+                        </span>
+                      </div>
+
+                      <div hidden class="mt-4 space-y-2">
+                        <div class="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.06] p-3 shadow-sm">
+                          <span class="mt-0.5 inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-teal-300/15 text-teal-100 ring-1 ring-teal-200/20">
+                            <.icon name="hero-squares-2x2" class="h-4 w-4" />
+                          </span>
+                          <div>
+                            <p class="text-sm font-semibold text-white">
+                              What is the collective subconscious?
+                            </p>
+                            <p class="mt-0.5 text-sm leading-5 text-slate-300">
+                              A public deep dive followers can question, extend, and build on.
+                            </p>
+                            <p class="mt-1 text-xs font-medium text-teal-200">
+                              /g/what-is-the-collective-subconscious-637e9a
+                            </p>
+                          </div>
+                        </div>
+
+                        <div class="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.06] p-3 shadow-sm">
+                          <span class="mt-0.5 inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-amber-300/15 text-amber-100 ring-1 ring-amber-200/20">
+                            <.icon name="hero-pencil-square" class="h-4 w-4" />
+                          </span>
+                          <div>
+                            <p class="text-sm font-semibold text-white">Highlighted a passage</p>
+                            <p class="mt-0.5 text-sm leading-5 text-slate-300">
+                              Saved a quote so others can add context, objections, or next steps.
+                            </p>
+                            <p class="mt-1 text-xs font-medium text-amber-200">
+                              unique highlight URL
+                            </p>
+                          </div>
+                        </div>
+
+                        <div class="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.06] p-3 shadow-sm">
+                          <span class="mt-0.5 inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-indigo-300/15 text-indigo-100 ring-1 ring-indigo-200/20">
+                            <.icon name="hero-user-plus" class="h-4 w-4" />
+                          </span>
+                          <div>
+                            <p class="text-sm font-semibold text-white">People can follow along</p>
+                            <p class="mt-0.5 text-sm leading-5 text-slate-300">
+                              Followers see activity and contribute their own questions from your trail.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </section>
+
+          <section id="home-community-grids" class="order-4 w-full border-b border-slate-200 bg-white">
+            <div class="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+              <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                <div class="max-w-2xl">
+                  <p class="text-xs font-semibold uppercase tracking-wide text-indigo-700">
+                    Community grids
+                  </p>
+                  <h2 class="mt-2 text-2xl font-semibold text-slate-950 sm:text-3xl">
+                    Learn from questions already being explored.
+                  </h2>
+                  <p class="mt-2 text-sm leading-6 text-slate-600">
+                    Find useful starting points, see how others think through a topic, and carry the best ideas into your own work.
+                  </p>
+                </div>
+                <.link
+                  navigate={~p"/community"}
+                  class="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-slate-400 hover:bg-slate-50"
+                >
+                  See all community grids <.icon name="hero-arrow-right" class="h-4 w-4" />
+                </.link>
+              </div>
+
+              <%= if @graphs == [] do %>
+                <div class="mt-5 border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-600">
+                  Community examples will appear here as more people share useful thinking.
+                </div>
+              <% else %>
+                <div id="home-community-grid-list" class="mt-5 grid gap-4 md:grid-cols-3">
+                  <%= for {graph, _count, author_username} <- Enum.take(@graphs, 3) do %>
+                    <.grid_card
+                      graph={graph}
+                      author_name={author_username}
+                      author_marker="@"
+                      id={graph_dom_id(graph, "home-community-grid")}
+                      variant={:compact}
+                      label="Community grid"
+                      tag_limit={3}
+                    />
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          </section>
+
+          <section
+            hidden
+            id="home-community-profiles-old"
+            class="w-full border-b border-slate-200 bg-slate-50"
+          >
+            <div class="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+              <div class="rounded-2xl border border-teal-200/80 bg-[linear-gradient(135deg,#f0fdfa_0%,#ffffff_55%,#eef2ff_100%)] p-5 shadow-sm sm:p-6">
+                <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                  <div class="max-w-2xl">
+                    <p class="inline-flex items-center gap-2 rounded-full border border-teal-200 bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-teal-800">
+                      <.icon name="hero-user-group" class="h-3.5 w-3.5" /> Public profiles
+                    </p>
+                    <h2 class="mt-3 text-2xl font-semibold text-slate-950 sm:text-3xl">
+                      Let your thinking become part of the community.
+                    </h2>
+                    <p class="mt-2 text-sm leading-6 text-slate-600 sm:text-base">
+                      Your profile brings together the public grids and ideas you want to share, so other people can follow your trail and build on it.
                     </p>
                   </div>
-                  <div class="border border-slate-200 bg-white p-3 shadow-sm">
-                    <.icon name="hero-user-plus" class="h-5 w-5 text-indigo-700" />
-                    <p class="mt-2 text-sm font-semibold text-slate-950">Follow thinkers</p>
-                    <p class="mt-1 text-sm leading-5 text-slate-600">
-                      Follow profiles, then ask new questions from the ideas they uncover.
-                    </p>
-                  </div>
-                  <div class="border border-slate-200 bg-white p-3 shadow-sm">
-                    <.icon name="hero-plus-circle" class="h-5 w-5 text-amber-700" />
-                    <p class="mt-2 text-sm font-semibold text-slate-950">Shared contribution</p>
-                    <p class="mt-1 text-sm leading-5 text-slate-600">
-                      Every profile, grid, node, and highlight has a URL for adding context.
-                    </p>
+
+                  <div class="grid gap-2 text-sm text-slate-700 sm:grid-cols-3 lg:w-[34rem]">
+                    <div class="rounded-xl border border-white bg-white/80 p-3 shadow-sm">
+                      <.icon name="hero-squares-2x2" class="h-5 w-5 text-teal-700" />
+                      <p class="mt-2 font-semibold text-slate-950">Share your grids</p>
+                      <p class="mt-1 text-xs leading-5 text-slate-600">
+                        Make useful questions easy to find.
+                      </p>
+                    </div>
+                    <div class="rounded-xl border border-white bg-white/80 p-3 shadow-sm">
+                      <.icon name="hero-user-plus" class="h-5 w-5 text-indigo-700" />
+                      <p class="mt-2 font-semibold text-slate-950">Find thinkers</p>
+                      <p class="mt-1 text-xs leading-5 text-slate-600">
+                        Follow people whose ideas help you learn.
+                      </p>
+                    </div>
+                    <div class="rounded-xl border border-white bg-white/80 p-3 shadow-sm">
+                      <.icon name="hero-link" class="h-5 w-5 text-amber-700" />
+                      <p class="mt-2 font-semibold text-slate-950">Keep a trail</p>
+                      <p class="mt-1 text-xs leading-5 text-slate-600">
+                        Give every idea a place to grow.
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                <div class="mt-5 flex flex-col gap-2 sm:flex-row">
+                <div class="mt-5">
                   <%= if @current_user do %>
                     <.link
                       navigate={~p"/u/#{User.effective_username(@current_user)}"}
@@ -638,137 +894,32 @@ defmodule DialecticWeb.HomeLive do
                       <.icon name="hero-user-plus" class="h-4 w-4" /> Create your profile
                     </.link>
                   <% end %>
-                  <.link
-                    href="#explore"
-                    class="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-slate-400 hover:bg-slate-50"
-                  >
-                    <.icon name="hero-magnifying-glass" class="h-4 w-4" /> Explore public grids
-                  </.link>
-                </div>
-              </div>
-
-              <div class="overflow-hidden rounded-[1.75rem] border border-slate-900/10 bg-slate-950 text-white shadow-[0_28px_90px_-54px_rgba(15,23,42,0.95)]">
-                <div class="relative h-24 overflow-hidden border-b border-white/10 bg-orange-500">
-                  <img
-                    src={~p"/images/profile-banners/flat-mountains.svg"}
-                    alt=""
-                    class="absolute inset-0 h-full w-full object-cover"
-                    aria-hidden="true"
-                  />
-                </div>
-                <div class="px-4 pb-4">
-                  <div class="mt-4 flex items-center justify-between gap-3">
-                    <div class="flex items-center gap-3">
-                      <img
-                        src={~p"/images/tom.webp"}
-                        alt="TomBers's avatar"
-                        class="h-16 w-16 rounded-full border-4 border-white bg-slate-950 object-cover shadow-2xl shadow-slate-950/35"
-                      />
-                      <div class="min-w-0">
-                        <p class="text-2xl font-semibold tracking-tight text-white">TomBers</p>
-                        <p class="text-sm font-semibold text-slate-300">Makes MuDG</p>
-                      </div>
-                    </div>
-                    <span class="inline-flex items-center gap-1 rounded-xl border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white">
-                      <.icon name="hero-user-plus" class="h-3.5 w-3.5" /> Follow
-                    </span>
-                  </div>
-
-                  <p class="mt-4 rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-sm font-medium leading-5 text-slate-100">
-                    You’ll find thinking on Philosophy, Sociology, and History here, spread across
-                    127 public grids.
-                  </p>
-
-                  <div class="mt-4 grid grid-cols-3 divide-x divide-white/10 rounded-xl border border-white/10 bg-white/10 text-center">
-                    <div class="px-2 py-3">
-                      <p class="text-xl font-semibold text-white">127</p>
-                      <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-300">
-                        grids
-                      </p>
-                    </div>
-                    <div class="px-2 py-3">
-                      <p class="text-xl font-semibold text-white">1425</p>
-                      <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-300">
-                        ideas
-                      </p>
-                    </div>
-                    <div class="px-2 py-3">
-                      <p class="text-xl font-semibold text-white">2</p>
-                      <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-300">
-                        followers
-                      </p>
-                    </div>
-                  </div>
-
-                  <div class="mt-4 flex flex-wrap gap-1.5 border-b border-white/10 pb-4">
-                    <span class="rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
-                      Philosophy
-                    </span>
-                    <span class="rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
-                      Sociology
-                    </span>
-                    <span class="rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
-                      History
-                    </span>
-                    <span class="rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
-                      Ethics
-                    </span>
-                    <span class="rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
-                      Psychology
-                    </span>
-                  </div>
-
-                  <div class="mt-4 space-y-2">
-                    <div class="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.06] p-3 shadow-sm">
-                      <span class="mt-0.5 inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-teal-300/15 text-teal-100 ring-1 ring-teal-200/20">
-                        <.icon name="hero-squares-2x2" class="h-4 w-4" />
-                      </span>
-                      <div>
-                        <p class="text-sm font-semibold text-white">
-                          What is the collective subconscious?
-                        </p>
-                        <p class="mt-0.5 text-sm leading-5 text-slate-300">
-                          A public deep dive followers can question, extend, and build on.
-                        </p>
-                        <p class="mt-1 text-xs font-medium text-teal-200">
-                          /g/what-is-the-collective-subconscious-637e9a
-                        </p>
-                      </div>
-                    </div>
-
-                    <div class="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.06] p-3 shadow-sm">
-                      <span class="mt-0.5 inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-amber-300/15 text-amber-100 ring-1 ring-amber-200/20">
-                        <.icon name="hero-pencil-square" class="h-4 w-4" />
-                      </span>
-                      <div>
-                        <p class="text-sm font-semibold text-white">Highlighted a passage</p>
-                        <p class="mt-0.5 text-sm leading-5 text-slate-300">
-                          Saved a quote so others can add context, objections, or next steps.
-                        </p>
-                        <p class="mt-1 text-xs font-medium text-amber-200">
-                          unique highlight URL
-                        </p>
-                      </div>
-                    </div>
-
-                    <div class="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.06] p-3 shadow-sm">
-                      <span class="mt-0.5 inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-indigo-300/15 text-indigo-100 ring-1 ring-indigo-200/20">
-                        <.icon name="hero-user-plus" class="h-4 w-4" />
-                      </span>
-                      <div>
-                        <p class="text-sm font-semibold text-white">People can follow along</p>
-                        <p class="mt-0.5 text-sm leading-5 text-slate-300">
-                          Followers see activity and contribute their own questions from your trail.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
           </section>
 
-          <div class="mx-auto max-w-6xl px-4 pt-5 sm:px-6 sm:pt-6">
+          <section hidden id="home-explore" class="w-full border-t border-slate-200 bg-white">
+            <div class="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+              <div class="max-w-2xl">
+                <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">Explore</p>
+                <h2 class="mt-2 text-2xl font-semibold text-slate-950">
+                  See what other people are thinking about.
+                </h2>
+                <p class="mt-2 text-sm leading-6 text-slate-600">
+                  Browse public grids for questions to follow, challenge, or use as a starting point for your own.
+                </p>
+              </div>
+              <.link
+                navigate={~p"/gallery"}
+                class="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+              >
+                Browse the gallery <.icon name="hero-arrow-right" class="h-4 w-4" />
+              </.link>
+            </div>
+          </section>
+
+          <div hidden class="mx-auto max-w-6xl px-4 pt-5 sm:px-6 sm:pt-6">
             <div class="flex flex-col items-stretch gap-4 sm:gap-5">
               <.modal id="home-example-grid-modal" class="border-indigo-100/90">
                 <div class="space-y-5">
@@ -1036,7 +1187,7 @@ defmodule DialecticWeb.HomeLive do
                         </svg>
                       </a>
                       <a
-                        href="https://www.instagram.com/rationalgrid/"
+                        href="https://www.instagram.com/rationalgrid.ai/"
                         target="_blank"
                         rel="noopener noreferrer"
                         class="text-white/70 hover:text-white transition-colors"
@@ -1064,6 +1215,125 @@ defmodule DialecticWeb.HomeLive do
             </div>
           </div>
         </div>
+        <section
+          hidden
+          id="home-community-profiles-replacement"
+          class="w-full border-y border-slate-200 bg-[linear-gradient(135deg,#ffffff_0%,#f0fdfa_55%,#eef2ff_100%)]"
+        >
+          <div class="mx-auto grid w-full max-w-6xl gap-6 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.7fr)] lg:items-center">
+            <div>
+              <p class="inline-flex items-center gap-2 rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-teal-800">
+                <.icon name="hero-user-group" class="h-3.5 w-3.5" /> Public profiles
+              </p>
+              <h2 class="mt-3 text-2xl font-semibold text-slate-950 sm:text-3xl">
+                Make your thinking easier to follow.
+              </h2>
+              <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+                A public profile brings your shared grids together, so people can discover your ideas and build on them.
+              </p>
+              <div class="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium text-slate-700">
+                <span class="inline-flex items-center gap-1.5">
+                  <.icon name="hero-squares-2x2" class="h-4 w-4 text-teal-700" /> Share grids
+                </span>
+                <span class="inline-flex items-center gap-1.5">
+                  <.icon name="hero-user-plus" class="h-4 w-4 text-indigo-700" /> Follow thinkers
+                </span>
+                <span class="inline-flex items-center gap-1.5">
+                  <.icon name="hero-link" class="h-4 w-4 text-amber-700" /> Keep a trail
+                </span>
+              </div>
+            </div>
+
+            <div class="rounded-2xl border border-slate-900/10 bg-slate-950 p-4 text-white shadow-[0_20px_55px_-35px_rgba(15,23,42,0.9)]">
+              <div class="flex items-center gap-3">
+                <span class="flex h-11 w-11 items-center justify-center rounded-full bg-teal-300/15 text-teal-100 ring-1 ring-teal-200/25">
+                  <.icon name="hero-user-circle" class="h-6 w-6" />
+                </span>
+                <div>
+                  <p class="font-semibold">Your public trail</p>
+                  <p class="text-xs text-slate-300">Grids, ideas, and highlights in one place.</p>
+                </div>
+              </div>
+              <%= if @current_user do %>
+                <.link
+                  navigate={~p"/u/#{User.effective_username(@current_user)}"}
+                  class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-teal-50"
+                >
+                  View my profile <.icon name="hero-arrow-right" class="h-4 w-4" />
+                </.link>
+              <% else %>
+                <.link
+                  navigate={~p"/users/register"}
+                  class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-teal-50"
+                >
+                  Create your profile <.icon name="hero-arrow-right" class="h-4 w-4" />
+                </.link>
+              <% end %>
+            </div>
+          </div>
+        </section>
+
+        <footer id="home-footer" class="mt-2 border-t border-slate-800 bg-slate-950 text-slate-300">
+          <div class="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 py-7 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <div class="flex items-center gap-3">
+              <img src={~p"/images/favicon.webp"} alt="RationalGrid" class="h-8 w-8 rounded-lg" />
+              <div>
+                <p class="text-sm font-semibold text-white">RationalGrid</p>
+                <p class="text-xs text-slate-400">
+                  Turn difficult questions into shared understanding.
+                </p>
+              </div>
+            </div>
+            <nav
+              aria-label="Homepage footer"
+              class="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm"
+            >
+              <.link navigate={~p"/intro/how"} class="transition hover:text-white">Guide</.link>
+              <.link navigate={~p"/about"} class="transition hover:text-white">About</.link>
+              <.link navigate={~p"/community"} class="transition hover:text-white">Community</.link>
+              <.link
+                href="https://www.youtube.com/@RationalGrid"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-1.5 text-sky-300 transition hover:text-white"
+              >
+                <.icon name="hero-play-circle" class="h-4 w-4" /> YouTube
+              </.link>
+              <.link
+                href="https://github.com/TomBers/dialectic"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="transition hover:text-white"
+              >
+                GitHub
+              </.link>
+              <.link
+                href="https://x.com/rationalgridai"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="transition hover:text-white"
+              >
+                X
+              </.link>
+              <.link
+                href="https://www.instagram.com/rationalgrid.ai/"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="transition hover:text-white"
+              >
+                Instagram
+              </.link>
+              <.link
+                href="https://www.linkedin.com/company/rationalgrid-ai/"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="transition hover:text-white"
+              >
+                LinkedIn
+              </.link>
+            </nav>
+          </div>
+        </footer>
       </div>
     </div>
     """

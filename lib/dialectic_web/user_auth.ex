@@ -6,10 +6,10 @@ defmodule DialecticWeb.UserAuth do
 
   alias Dialectic.Accounts
 
-  # Make the remember me cookie valid for 60 days.
+  # Make the remember me cookie valid for 180 days.
   # If you want bump or reduce this value, also change
   # the token expiry itself in UserToken.
-  @max_age 60 * 60 * 24 * 60
+  @max_age 60 * 60 * 24 * 180
   @remember_me_cookie "_dialectic_web_user_remember_me"
   @remember_me_options [sign: true, max_age: @max_age, same_site: "Lax"]
 
