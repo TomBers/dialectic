@@ -483,6 +483,7 @@ defmodule DialecticWeb.HomeLive do
                           class="aspect-video w-full rounded-xl"
                           src="https://www.youtube.com/embed/nZOqbspGPfY?si=iOZEER4hWd31G157"
                           title="RationalGrid product video"
+                          loading="lazy"
                           frameborder="0"
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                           referrerpolicy="strict-origin-when-cross-origin"
@@ -498,7 +499,7 @@ defmodule DialecticWeb.HomeLive do
                         <.link
                           href="https://www.youtube.com/@RationalGrid"
                           target="_blank"
-                          rel="noreferrer"
+                          rel="noopener noreferrer"
                           class="inline-flex items-center gap-2 rounded-full border border-sky-300/35 bg-sky-400/10 px-4 py-2 text-sm font-medium text-sky-100 transition hover:border-sky-200/60 hover:bg-sky-400/15"
                         >
                           <.icon name="hero-arrow-top-right-on-square" class="h-4 w-4" />
@@ -1293,7 +1294,7 @@ defmodule DialecticWeb.HomeLive do
               <.link
                 href="https://www.youtube.com/@RationalGrid"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 class="inline-flex items-center gap-1.5 text-sky-300 transition hover:text-white"
               >
                 <.icon name="hero-play-circle" class="h-4 w-4" /> YouTube
@@ -1301,7 +1302,7 @@ defmodule DialecticWeb.HomeLive do
               <.link
                 href="https://github.com/TomBers/dialectic"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 class="transition hover:text-white"
               >
                 GitHub
@@ -1309,7 +1310,7 @@ defmodule DialecticWeb.HomeLive do
               <.link
                 href="https://x.com/rationalgridai"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 class="transition hover:text-white"
               >
                 X
@@ -1317,7 +1318,7 @@ defmodule DialecticWeb.HomeLive do
               <.link
                 href="https://www.instagram.com/rationalgrid.ai/"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 class="transition hover:text-white"
               >
                 Instagram
@@ -1325,7 +1326,7 @@ defmodule DialecticWeb.HomeLive do
               <.link
                 href="https://www.linkedin.com/company/rationalgrid-ai/"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 class="transition hover:text-white"
               >
                 LinkedIn

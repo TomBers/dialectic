@@ -197,11 +197,11 @@ defmodule DialecticWeb.AboutLive do
           </div>
           <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <%= for {name, role, image} <- [
-              {"Tom Berman", "Founder and developer", "/images/tom.webp"},
-              {"Maya Darmon", "Philosophy and reasoning lead", "/images/maya.webp"},
-              {"Martin Loat", "Advisor", "/images/martin.webp"},
-              {"Peter Worley", "Advisor", "/images/pete.webp"},
-              {"Alexandra Konoplyanik", "Advisor", "/images/alex.webp"}
+              {"Tom Berman", "Founder and developer", ~p"/images/tom.webp"},
+              {"Maya Darmon", "Philosophy and reasoning lead", ~p"/images/maya.webp"},
+              {"Martin Loat", "Advisor", ~p"/images/martin.webp"},
+              {"Peter Worley", "Advisor", ~p"/images/pete.webp"},
+              {"Alexandra Konoplyanik", "Advisor", ~p"/images/alex.webp"}
             ] do %>
               <article class="rounded-2xl bg-white p-4 text-center shadow-sm ring-1 ring-slate-200">
                 <img

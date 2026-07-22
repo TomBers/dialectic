@@ -7,6 +7,7 @@ defmodule DialecticWeb.CommunityLive do
   on_mount {DialecticWeb.UserAuth, :mount_current_user}
 
   @limit 12
+  @tag_limit 30
 
   @impl true
   def mount(_params, _session, socket) do
@@ -37,7 +38,7 @@ defmodule DialecticWeb.CommunityLive do
        active_tag: tag,
        active_category: category,
        graphs: fetch_graphs(search_term, tag, category),
-       popular_tags: Graphs.list_all_tags(),
+       popular_tags: Graphs.list_popular_tags(@tag_limit),
        curated_grids: Graphs.list_curated_grids("curated", 20),
        featured_grids: Graphs.list_curated_grids("featured", 20),
        page_title: page_title(search_term, tag, category)
@@ -121,7 +122,7 @@ defmodule DialecticWeb.CommunityLive do
                   <p class="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">
                     Discover community grids
                   </p>
-                  <h2 class="mt-2 text-2xl font-semibold sm:text-3xl">
+                  <h2 id="community-results-heading" class="mt-2 text-2xl font-semibold sm:text-3xl">
                     <%= cond do %>
                       <% @active_tag -> %>
                         Ideas tagged with "{@active_tag}"
