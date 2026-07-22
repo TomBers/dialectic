@@ -477,39 +477,21 @@ defmodule DialecticWeb.HomeLive do
               <div class="grid gap-4">
                 <div class="overflow-hidden rounded-2xl border border-white/10 bg-white px-4 py-4 shadow-[0_18px_44px_rgba(0,0,0,0.22)] sm:px-5 sm:py-5 lg:h-full">
                   <div class="flex h-full flex-col gap-4">
-                    <div class="max-w-2xl">
-                      <div class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-normal text-slate-600">
-                        <.icon name="hero-play" class="h-3.5 w-3.5" /> Watch RationalGrid
-                      </div>
-                      <h2 class="mt-3 text-2xl font-semibold text-slate-950">
-                        See the clarity for yourself.
-                      </h2>
-                    </div>
+
 
                     <div class="rounded-2xl border border-slate-900/10 bg-slate-950 p-3 shadow-sm sm:p-4">
                       <div id="home-example-video" class="group block w-full">
-                        <div class="mb-3 flex items-start justify-between gap-3">
-                          <div>
-                            <p class="text-[11px] font-semibold uppercase tracking-normal text-sky-200/80">
-                              Product video
-                            </p>
-                            <p class="mt-1 text-base font-semibold text-white sm:text-lg">
-                              See RationalGrid in action
-                            </p>
-                          </div>
-                          <iframe
-                            width="560"
-                            height="315"
-                            src="https://www.youtube-nocookie.com/embed/pIP87Z203QQ?si=buYmIvAsOtwoA4SG&amp;controls=0"
-                            referrerpolicy="no-referrer-when-downgrade"
-                            title="YouTube video player"
-                            frameborder="0"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                            referrerpolicy="strict-origin-when-cross-origin"
-                            allowfullscreen
-                          >
-                          </iframe>
-                        </div>
+
+                        <iframe
+                          class="aspect-video w-full rounded-xl"
+                          src="https://www.youtube.com/embed/nZOqbspGPfY?si=iOZEER4hWd31G157"
+                          title="RationalGrid product video"
+                          frameborder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          referrerpolicy="strict-origin-when-cross-origin"
+                          allowfullscreen
+                        >
+                        </iframe>
                       </div>
 
                       <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
