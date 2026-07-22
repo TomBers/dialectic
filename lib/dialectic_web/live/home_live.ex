@@ -616,7 +616,7 @@ defmodule DialecticWeb.HomeLive do
                       learn from, return to, and build on with their own questions.
                     </p>
 
-                    <div class="mt-5 grid gap-3 sm:grid-cols-3">
+                    <div hidden class="mt-5 grid gap-3 sm:grid-cols-3">
                       <div class="border border-slate-200 bg-white p-3 shadow-sm">
                         <.icon name="hero-identification" class="h-5 w-5 text-teal-700" />
                         <p class="mt-2 text-sm font-semibold text-slate-950">Personal library</p>
@@ -657,7 +657,7 @@ defmodule DialecticWeb.HomeLive do
                         </.link>
                       <% end %>
                       <.link
-                        href="#explore"
+                        navigate={~p"/community"}
                         class="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-slate-400 hover:bg-slate-50"
                       >
                         <.icon name="hero-magnifying-glass" class="h-4 w-4" /> Explore public grids
@@ -718,7 +718,7 @@ defmodule DialecticWeb.HomeLive do
                         </div>
                       </div>
 
-                      <div class="mt-4 flex flex-wrap gap-1.5 border-b border-white/10 pb-4">
+                      <div hidden class="mt-4 flex flex-wrap gap-1.5 border-b border-white/10 pb-4">
                         <span class="rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
                           Philosophy
                         </span>
@@ -736,7 +736,7 @@ defmodule DialecticWeb.HomeLive do
                         </span>
                       </div>
 
-                      <div class="mt-4 space-y-2">
+                      <div hidden class="mt-4 space-y-2">
                         <div class="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.06] p-3 shadow-sm">
                           <span class="mt-0.5 inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-teal-300/15 text-teal-100 ring-1 ring-teal-200/20">
                             <.icon name="hero-squares-2x2" class="h-4 w-4" />

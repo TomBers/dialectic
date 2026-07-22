@@ -37,7 +37,7 @@ defmodule DialecticWeb.CommunityLive do
        active_tag: tag,
        active_category: category,
        graphs: fetch_graphs(search_term, tag, category),
-       popular_tags: Graphs.list_popular_tags(),
+       popular_tags: Graphs.list_all_tags(),
        curated_grids: Graphs.list_curated_grids("curated", 20),
        featured_grids: Graphs.list_curated_grids("featured", 20),
        page_title: page_title(search_term, tag, category)
@@ -119,7 +119,7 @@ defmodule DialecticWeb.CommunityLive do
               <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>
                   <p class="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">
-                    Community-built
+                    Discover community grids
                   </p>
                   <h2 class="mt-2 text-2xl font-semibold sm:text-3xl">
                     <%= cond do %>
@@ -132,9 +132,12 @@ defmodule DialecticWeb.CommunityLive do
                       <% @search_term != "" -> %>
                         Search results for "{@search_term}"
                       <% true -> %>
-                        Latest community grids
+                        Find a useful starting point
                     <% end %>
                   </h2>
+                  <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
+                    Search public grids by question, or browse by depth and topic to find an idea worth opening.
+                  </p>
                 </div>
                 <form
                   phx-change="search"
@@ -150,44 +153,59 @@ defmodule DialecticWeb.CommunityLive do
                     name="search"
                     value={@search_term}
                     phx-debounce="300"
-                    placeholder="Search community grids..."
+                    placeholder="Search by question or topic..."
                     class="h-11 w-full rounded-full border border-white/60 bg-white px-10 pr-4 text-sm text-slate-900 placeholder:text-slate-500 shadow-sm focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-200"
                     autocomplete="off"
                   />
                 </form>
               </div>
 
-              <div class="mt-4 flex flex-wrap gap-2">
-                <.link
-                  patch={~p"/community"}
-                  class={category_class(!@active_category && !@active_tag && @search_term == "")}
-                >
-                  All grids
-                </.link>
-                <.link
-                  patch={~p"/community?category=deep_dives"}
-                  class={category_class(@active_category == "deep_dives")}
-                >
-                  Deep dives
-                </.link>
-                <.link
-                  patch={~p"/community?category=seedlings"}
-                  class={category_class(@active_category == "seedlings")}
-                >
-                  Seedlings
-                </.link>
-                <%= for %{tag: tag, count: count} <- display_popular_tags(@popular_tags, 6) do %>
-                  <.link patch={~p"/community?tag=#{tag}"} class={category_class(@active_tag == tag)}>
-                    #{tag} <span class="text-[10px] opacity-70">{count}</span>
+              <div class="mt-5">
+                <p class="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/60">
+                  Browse by format or topic
+                </p>
+                <div class="flex flex-wrap gap-2">
+                  <.link
+                    patch={~p"/community"}
+                    class={category_class(!@active_category && !@active_tag && @search_term == "")}
+                  >
+                    Community picks
                   </.link>
-                <% end %>
+                  <.link
+                    patch={~p"/community?category=deep_dives"}
+                    class={category_class(@active_category == "deep_dives")}
+                  >
+                    Deep dives
+                  </.link>
+                  <.link
+                    patch={~p"/community?category=seedlings"}
+                    class={category_class(@active_category == "seedlings")}
+                  >
+                    Seedlings
+                  </.link>
+                </div>
+                <div class="mt-3 max-h-36 overflow-y-auto rounded-2xl border border-white/10 bg-black/10 p-2">
+                  <p class="px-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/50">
+                    Topics from public grids
+                  </p>
+                  <div class="flex flex-wrap gap-2">
+                    <%= for %{tag: tag, count: count} <- display_popular_tags(@popular_tags, :all) do %>
+                      <.link
+                        patch={~p"/community?tag=#{tag}"}
+                        class={category_class(@active_tag == tag)}
+                      >
+                        #{tag} <span class="text-[10px] opacity-70">{count}</span>
+                      </.link>
+                    <% end %>
+                  </div>
+                </div>
               </div>
             </div>
 
             <div class="bg-slate-50/70 p-4 sm:p-5">
               <%= if @graphs == [] do %>
                 <div class="border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-600">
-                  No grids match that search yet. Try another question or browse all grids.
+                  No grids match that search yet. Try a broader question or browse by topic above.
                 </div>
               <% else %>
                 <div
@@ -379,7 +397,7 @@ defmodule DialecticWeb.CommunityLive do
     end)
     |> Map.values()
     |> Enum.sort_by(fn item -> {-item.count, String.downcase(item.tag)} end)
-    |> Enum.take(limit)
+    |> then(fn topics -> if limit == :all, do: topics, else: Enum.take(topics, limit) end)
   end
 
   defp category_class(true),
