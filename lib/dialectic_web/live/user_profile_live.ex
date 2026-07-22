@@ -730,7 +730,7 @@ defmodule DialecticWeb.UserProfileLive do
                 </p>
                 <%= if @is_own_profile? do %>
                   <.link
-                    navigate={~p"/"}
+                    navigate={~p"/?focus=grid#start-here"}
                     class={[
                       "mt-4 inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold shadow-sm transition",
                       theme_button_class(@theme)
