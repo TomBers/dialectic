@@ -797,10 +797,10 @@ defmodule DialecticWeb.HomeLive do
                     Community grids
                   </p>
                   <h2 class="mt-2 text-2xl font-semibold text-slate-950 sm:text-3xl">
-                    Learn from questions already being explored.
+                    Explore, expand, and challenge ideas together.
                   </h2>
                   <p class="mt-2 text-sm leading-6 text-slate-600">
-                    Find useful starting points, see how others think through a topic, and carry the best ideas into your own work.
+                    Treat these as living starting points: follow the questions, test the reasoning, and add your own branches to help the thinking grow.
                   </p>
                 </div>
                 <.link

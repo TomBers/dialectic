@@ -8,7 +8,12 @@ defmodule DialecticWeb.CommunityLiveTest do
       {:ok, view, _html} = live(conn, ~p"/community")
 
       assert has_element?(view, "#community-search")
-      assert has_element?(view, "#community-results-heading", "Find a useful starting point")
+
+      assert has_element?(
+               view,
+               "#community-results-heading",
+               "Find an idea to explore and extend"
+             )
 
       render_patch(view, ~p"/community?category=deep_dives")
       assert has_element?(view, "#community-results-heading", "Deep dives")

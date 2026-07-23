@@ -60,10 +60,10 @@ defmodule DialecticWeb.CommunityLive do
               Community
             </p>
             <h1 class="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
-              Explore ideas worth building on.
+              Explore, expand, and challenge ideas together.
             </h1>
             <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">
-              Find clear starting points, discover useful perspectives, and take the ideas that matter into your own work.
+              Browse living questions from the community, test the reasoning, and add your own branches to help each idea grow.
             </p>
           </div>
           <div class="flex flex-wrap gap-2">
@@ -118,11 +118,11 @@ defmodule DialecticWeb.CommunityLive do
                       <% @search_term != "" -> %>
                         Search results for "{@search_term}"
                       <% true -> %>
-                        Find a useful starting point
+                        Find an idea to explore and extend
                     <% end %>
                   </h2>
                   <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
-                    Search public grids by question, or browse by depth and topic to find an idea worth opening.
+                    Search by question, browse by topic, and find a living thread of ideas to test, challenge, and build on.
                   </p>
                 </div>
                 <form
@@ -228,8 +228,9 @@ defmodule DialecticWeb.CommunityLive do
       )
 
     ~H"""
-    <section class="overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-gradient-to-br shadow-sm {@section_class}">
-      <div class="border-b border-slate-200/80 bg-white/70 px-5 py-4 sm:px-6">
+    <section class="overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white shadow-sm">
+      <div class="h-1 bg-[linear-gradient(90deg,#0f766e_0%,#f59e0b_48%,#4f46e5_100%)]"></div>
+      <div class="border-b border-slate-200/80 bg-slate-50/80 px-5 py-4 sm:px-6">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div class="flex items-center gap-3">
             <span class={[
@@ -255,7 +256,7 @@ defmodule DialecticWeb.CommunityLive do
           </div>
         </div>
       </div>
-      <div class="p-4 sm:p-5">
+      <div class="bg-slate-50/40 p-4 sm:p-5">
         <div id={"#{@id_prefix}-grids-list"} class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <%= for item <- @items do %>
             <.grid_card
@@ -295,13 +296,16 @@ defmodule DialecticWeb.CommunityLive do
       class="group grid gap-4 px-4 py-4 transition hover:bg-slate-50 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-5"
     >
       <div class="flex min-w-0 items-start gap-3 sm:gap-4">
-        <span class="w-6 shrink-0 pt-3 text-right text-sm font-semibold tabular-nums text-slate-400">
-          {@number}
-        </span>
         <div class={[
-          "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br shadow-sm ring-1 sm:h-14 sm:w-20",
+          "relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br shadow-sm ring-1 sm:h-14 sm:w-20",
           @icon_theme
         ]}>
+          <span
+            aria-label={"Result #{@number}"}
+            class="absolute left-1.5 top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-white/90 px-1 text-[11px] font-bold tabular-nums text-slate-700 shadow-sm ring-1 ring-slate-900/10"
+          >
+            {@number}
+          </span>
           <.icon name="hero-squares-2x2" class="h-6 w-6 sm:h-7 sm:w-7" />
         </div>
         <div class="min-w-0">
