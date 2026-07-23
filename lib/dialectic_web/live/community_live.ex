@@ -21,7 +21,6 @@ defmodule DialecticWeb.CommunityLive do
        active_category: nil,
        graphs: [],
        popular_tags: [],
-       curated_grids: [],
        featured_grids: []
      )}
   end
@@ -39,7 +38,6 @@ defmodule DialecticWeb.CommunityLive do
        active_category: category,
        graphs: fetch_graphs(search_term, tag, category),
        popular_tags: Graphs.list_popular_tags(@tag_limit),
-       curated_grids: Graphs.list_curated_grids("curated", 20),
        featured_grids: Graphs.list_curated_grids("featured", 20),
        page_title: page_title(search_term, tag, category)
      )}
@@ -95,19 +93,6 @@ defmodule DialecticWeb.CommunityLive do
               id_prefix="community-featured"
               section_class="from-indigo-50 via-white to-teal-50"
               icon_wrap_class="bg-indigo-100 text-indigo-700 ring-indigo-200"
-            />
-          <% end %>
-
-          <%= if @curated_grids != [] do %>
-            <.curated_grid_section
-              items={@curated_grids}
-              icon="hero-star"
-              icon_class="text-amber-500"
-              title="Curated grids"
-              pills={[]}
-              id_prefix="community-curated"
-              section_class="from-amber-50 via-white to-orange-50"
-              icon_wrap_class="bg-amber-100 text-amber-700 ring-amber-200"
             />
           <% end %>
 
@@ -170,7 +155,7 @@ defmodule DialecticWeb.CommunityLive do
                     patch={~p"/community"}
                     class={category_class(!@active_category && !@active_tag && @search_term == "")}
                   >
-                    Community picks
+                    Most recent
                   </.link>
                   <.link
                     patch={~p"/community?category=deep_dives"}
@@ -213,11 +198,13 @@ defmodule DialecticWeb.CommunityLive do
                   id="community-grid-list"
                   class="divide-y divide-slate-200 overflow-hidden rounded-2xl border border-slate-200 bg-white"
                 >
-                  <%= for {graph, _count, author_username} <- @graphs do %>
+                  <%= for {{graph, _count, author_username}, index} <- Enum.with_index(@graphs, 1) do %>
                     <.community_grid_row
                       graph={graph}
                       author_name={author_username}
                       author_marker="@"
+                      number={index}
+                      selected_tag={@active_tag}
                       id={graph_dom_id(graph, "community-grid")}
                     />
                   <% end %>
@@ -291,12 +278,14 @@ defmodule DialecticWeb.CommunityLive do
   attr :graph, :map, required: true
   attr :author_name, :string, default: nil
   attr :author_marker, :string, default: ""
+  attr :number, :integer, required: true
+  attr :selected_tag, :string, default: nil
 
   defp community_grid_row(assigns) do
     assigns =
       assigns
       |> assign(:title, Map.get(assigns.graph, :title) || "Untitled grid")
-      |> assign(:tags, assigns.graph |> Map.get(:tags, []) |> Enum.take(3))
+      |> assign(:tags, visible_tags(assigns.graph, assigns.selected_tag))
       |> assign(:node_count, graph_node_count(assigns.graph))
       |> assign(:icon_theme, icon_theme(assigns.graph))
 
@@ -305,7 +294,10 @@ defmodule DialecticWeb.CommunityLive do
       id={@id}
       class="group grid gap-4 px-4 py-4 transition hover:bg-slate-50 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-5"
     >
-      <div class="flex min-w-0 items-start gap-4">
+      <div class="flex min-w-0 items-start gap-3 sm:gap-4">
+        <span class="w-6 shrink-0 pt-3 text-right text-sm font-semibold tabular-nums text-slate-400">
+          {@number}
+        </span>
         <div class={[
           "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br shadow-sm ring-1 sm:h-14 sm:w-20",
           @icon_theme
@@ -370,10 +362,21 @@ defmodule DialecticWeb.CommunityLive do
     """
   end
 
+  defp visible_tags(graph, selected_tag) do
+    tags = Map.get(graph, :tags, []) || []
+
+    case Enum.find(tags, fn tag ->
+           selected_tag && String.downcase(tag) == String.downcase(selected_tag)
+         end) do
+      nil -> Enum.take(tags, 3)
+      matching_tag -> [matching_tag | Enum.reject(tags, &(&1 == matching_tag))] |> Enum.take(3)
+    end
+  end
+
   defp fetch_graphs(search_term, tag, category) do
     cond do
       is_binary(tag) and tag != "" ->
-        Graphs.list_graphs_by_tag(tag, @limit)
+        Graphs.list_graphs_by_tag(tag, nil)
         |> Enum.map(fn {g, username} -> {g, 0, username} end)
 
       category == "deep_dives" ->

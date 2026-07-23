@@ -181,8 +181,9 @@ defmodule Dialectic.DbActions.Graphs do
         left_join: author in Dialectic.Accounts.User,
         on: author.id == g.user_id,
         order_by: [desc: g.updated_at],
-        limit: ^limit,
         select: {g, author.username}
+
+    query = if limit, do: from(q in query, limit: ^limit), else: query
 
     Repo.all(query)
   end
@@ -197,9 +198,9 @@ defmodule Dialectic.DbActions.Graphs do
 
     query =
       from t in subquery(tags_query),
-        group_by: t.tag,
+        group_by: fragment("lower(?)", t.tag),
         order_by: [desc: count(t.tag)],
-        select: {t.tag, count(t.tag)}
+        select: {min(t.tag), count(t.tag)}
 
     query = if is_integer(limit), do: from(t in query, limit: ^limit), else: query
 
@@ -222,12 +223,18 @@ defmodule Dialectic.DbActions.Graphs do
         where: g.is_published == true,
         where: g.is_public == true,
         where: g.is_deleted == false or is_nil(g.is_deleted),
-        where: ^tag in g.tags,
+        where:
+          fragment(
+            "EXISTS (SELECT 1 FROM unnest(?) AS graph_tag(value) WHERE lower(value) = lower(?))",
+            g.tags,
+            ^tag
+          ),
         left_join: author in Dialectic.Accounts.User,
         on: author.id == g.user_id,
         order_by: [desc: g.updated_at],
-        limit: ^limit,
         select: {g, author.username}
+
+    query = if limit, do: from(q in query, limit: ^limit), else: query
 
     Repo.all(query)
   end
