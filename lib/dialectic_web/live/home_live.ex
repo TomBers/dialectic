@@ -64,11 +64,11 @@ defmodule DialecticWeb.HomeLive do
     all_curated_grids = Graphs.list_curated_grids("curated", 20)
     all_featured_grids = Graphs.list_curated_grids("featured", 20)
 
-    curated_grids = preview_curated_grids(all_curated_grids, 4, socket.assigns.preview_seed)
+    curated_grids = preview_curated_grids(all_curated_grids, 3, socket.assigns.preview_seed)
     editor_pick_grids = editor_pick_grids(all_curated_grids, 2)
 
     featured_grids =
-      preview_curated_grids(all_featured_grids, 3, socket.assigns.preview_seed)
+      home_featured_grids(all_featured_grids, curated_grids, socket.assigns.preview_seed)
 
     {:noreply,
      assign(socket,
@@ -797,10 +797,10 @@ defmodule DialecticWeb.HomeLive do
                     Community grids
                   </p>
                   <h2 class="mt-2 text-2xl font-semibold text-slate-950 sm:text-3xl">
-                    Learn from questions already being explored.
+                    Explore, expand, and challenge ideas together.
                   </h2>
                   <p class="mt-2 text-sm leading-6 text-slate-600">
-                    Find useful starting points, see how others think through a topic, and carry the best ideas into your own work.
+                    Treat these as living starting points: follow the questions, test the reasoning, and add your own branches to help the thinking grow.
                   </p>
                 </div>
                 <.link
@@ -811,20 +811,20 @@ defmodule DialecticWeb.HomeLive do
                 </.link>
               </div>
 
-              <%= if @graphs == [] do %>
+              <%= if @curated_grids == [] do %>
                 <div class="mt-5 border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-600">
                   Community examples will appear here as more people share useful thinking.
                 </div>
               <% else %>
                 <div id="home-community-grid-list" class="mt-5 grid gap-4 md:grid-cols-3">
-                  <%= for {graph, _count, author_username} <- Enum.take(@graphs, 3) do %>
+                  <%= for item <- @curated_grids do %>
                     <.grid_card
-                      graph={graph}
-                      author_name={author_username}
+                      graph={item.graph}
+                      author_name={item.author_name}
                       author_marker="@"
-                      id={graph_dom_id(graph, "home-community-grid")}
+                      id={graph_dom_id(item.graph, "home-community-grid")}
                       variant={:compact}
-                      label="Community grid"
+                      label="Curated grid"
                       tag_limit={3}
                     />
                   <% end %>
@@ -1388,7 +1388,7 @@ defmodule DialecticWeb.HomeLive do
                 author_name={item.author_name}
                 author_marker="@"
                 id={@id_prefix <> "-" <> (item.graph.slug || "t-" <> Integer.to_string(:erlang.phash2(item.graph.title || "")))}
-                label={@card_label}
+                label={Map.get(item, :card_label, @card_label)}
                 tag_limit={3}
               />
             <% end %>
@@ -1400,7 +1400,7 @@ defmodule DialecticWeb.HomeLive do
   end
 
   defp home_preview_seed do
-    DateTime.utc_now() |> DateTime.to_unix(:second) |> div(60)
+    System.unique_integer([:positive])
   end
 
   defp preview_curated_grids(items, count, seed) do
@@ -1421,6 +1421,18 @@ defmodule DialecticWeb.HomeLive do
   end
 
   defp preview_key(item), do: item.graph.slug || item.graph.title || ""
+
+  defp home_featured_grids(featured, curated, seed) do
+    featured = preview_curated_grids(featured, 2, seed)
+
+    case {featured, curated} do
+      {featured, [curated_grid | _]} when length(featured) >= 2 ->
+        Enum.take(featured, 2) ++ [Map.put(curated_grid, :card_label, "Curated grid")]
+
+      {featured, curated} ->
+        preview_curated_grids(featured ++ curated, 3, seed)
+    end
+  end
 
   defp editor_pick_grids(items, limit) do
     items = items || []
