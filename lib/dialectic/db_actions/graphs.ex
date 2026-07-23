@@ -183,7 +183,7 @@ defmodule Dialectic.DbActions.Graphs do
         order_by: [desc: g.updated_at],
         select: {g, author.username}
 
-    query = if limit, do: from(q in query, limit: ^limit), else: query
+    query = if is_integer(limit), do: from(q in query, limit: ^limit), else: query
 
     Repo.all(query)
   end
@@ -234,7 +234,7 @@ defmodule Dialectic.DbActions.Graphs do
         order_by: [desc: g.updated_at],
         select: {g, author.username}
 
-    query = if limit, do: from(q in query, limit: ^limit), else: query
+    query = if is_integer(limit), do: from(q in query, limit: ^limit), else: query
 
     Repo.all(query)
   end
