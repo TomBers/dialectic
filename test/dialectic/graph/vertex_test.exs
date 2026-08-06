@@ -71,6 +71,27 @@ defmodule Dialectic.Graph.VertexTest do
       assert Vertex.build_context(target, graph, 2) == "Cccc\n\nDddd"
     end
 
+    test "sorts numeric vertex IDs numerically at every traversal depth", %{graph: graph} do
+      two = add_vertex(graph, "2", "Second", "answer")
+      ten = add_vertex(graph, "10", "Tenth", "answer")
+      nested = add_vertex(graph, "20", "Nested", "answer")
+      nested_target = add_vertex(graph, "30", "Nested target", "answer")
+      direct_target = add_vertex(graph, "40", "Direct target", "answer")
+
+      add_edges(graph, [
+        {ten.id, nested.id},
+        {two.id, nested.id},
+        {nested.id, nested_target.id},
+        {ten.id, direct_target.id},
+        {two.id, direct_target.id}
+      ])
+
+      assert Vertex.build_context(nested_target, graph, 5_000) ==
+               "Second\n\nTenth\n\nNested"
+
+      assert Vertex.build_context(direct_target, graph, 5_000) == "Second\n\nTenth"
+    end
+
     test "deduplicates shared history reached through a question", %{graph: graph} do
       origin = add_vertex(graph, "origin", "Shared framing", "origin")
       first_answer = add_vertex(graph, "first-answer", "First answer", "answer")

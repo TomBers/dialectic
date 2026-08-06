@@ -285,7 +285,7 @@ defmodule Dialectic.Workers.LLMWorker do
                 graph,
                 to_node,
                 live_view_topic,
-                "Google stopped this response because its safety filter was triggered. Try rephrasing the question."
+                "We stopped this response because its safety filter was triggered. Try rephrasing the question."
               )
 
               {:discard, :content_filter}

@@ -158,7 +158,7 @@ defmodule Dialectic.Graph.Vertex do
   def collect_parents(graph, vertex, allowed_parent) do
     graph
     |> :digraph.in_neighbours(vertex)
-    |> Enum.sort()
+    |> Enum.sort_by(&vertex_sort_key/1)
     |> Enum.reduce({[], MapSet.new()}, fn parent_id, {result, visited} ->
       collect_parent(graph, parent_id, allowed_parent, result, visited)
     end)
@@ -184,7 +184,7 @@ defmodule Dialectic.Graph.Vertex do
             {result, visited} =
               graph
               |> :digraph.in_neighbours(node_id)
-              |> Enum.sort()
+              |> Enum.sort_by(&vertex_sort_key/1)
               |> Enum.reduce({result, visited}, fn parent_id, {result, visited} ->
                 collect_parent(graph, parent_id, allowed_parent, result, visited)
               end)
@@ -199,6 +199,17 @@ defmodule Dialectic.Graph.Vertex do
       end
     end
   end
+
+  defp vertex_sort_key(id) when is_integer(id), do: {0, id, Integer.to_string(id)}
+
+  defp vertex_sort_key(id) when is_binary(id) do
+    case Integer.parse(id) do
+      {number, ""} -> {0, number, id}
+      _non_numeric -> {1, 0, id}
+    end
+  end
+
+  defp vertex_sort_key(id), do: {2, 0, inspect(id)}
 
   def find_leaf_nodes(graph) do
     :digraph.vertices(graph)
