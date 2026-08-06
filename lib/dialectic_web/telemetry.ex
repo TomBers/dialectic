@@ -1,6 +1,11 @@
 defmodule DialecticWeb.Telemetry do
   use Supervisor
+
+  import Ecto.Query
   import Telemetry.Metrics
+
+  alias Dialectic.Repo
+  alias Dialectic.Workers.LLMWorker
 
   def start_link(arg) do
     Supervisor.start_link(__MODULE__, arg, name: __MODULE__)
@@ -51,6 +56,22 @@ defmodule DialecticWeb.Telemetry do
         unit: {:native, :millisecond}
       ),
 
+      # LLM Metrics
+      summary("dialectic.llm.queue_wait.duration",
+        tags: [:provider, :outcome],
+        unit: {:native, :millisecond}
+      ),
+      summary("dialectic.llm.time_to_first_token.duration",
+        tags: [:provider, :outcome],
+        unit: {:native, :millisecond}
+      ),
+      summary("dialectic.llm.job.duration",
+        tags: [:provider, :outcome],
+        unit: {:native, :millisecond}
+      ),
+      last_value("dialectic.llm.queue.queued"),
+      last_value("dialectic.llm.queue.executing"),
+
       # Database Metrics
       summary("dialectic.repo.query.total_time",
         unit: {:native, :millisecond},
@@ -82,11 +103,48 @@ defmodule DialecticWeb.Telemetry do
     ]
   end
 
-  defp periodic_measurements do
-    [
-      # A module, function and arguments to be invoked periodically.
-      # This function must call :telemetry.execute/3 and a metric must be added above.
-      # {DialecticWeb, :count_users, []}
-    ]
+  def measure_llm_queue do
+    worker = Oban.Worker.to_string(LLMWorker)
+    states = queue_states()
+
+    counts =
+      Repo.all(
+        from job in Oban.Job,
+          where: job.worker == ^worker and job.state in ^states,
+          group_by: job.state,
+          select: {job.state, count(job.id)}
+      )
+      |> Map.new()
+
+    queued =
+      Enum.sum([
+        Map.get(counts, "available", 0),
+        Map.get(counts, "scheduled", 0),
+        Map.get(counts, "retryable", 0)
+      ])
+
+    emit_llm_queue_depth(queued, Map.get(counts, "executing", 0))
+  rescue
+    error ->
+      require Logger
+      Logger.warning("Unable to measure LLM queue depth: #{Exception.message(error)}")
+      :ok
+  catch
+    :exit, _reason -> :ok
   end
+
+  def emit_llm_queue_depth(queued, executing)
+      when is_integer(queued) and queued >= 0 and is_integer(executing) and executing >= 0 do
+    :telemetry.execute(
+      [:dialectic, :llm, :queue],
+      %{queued: queued, executing: executing},
+      %{}
+    )
+  end
+
+  defp periodic_measurements do
+    [{__MODULE__, :measure_llm_queue, []}]
+  end
+
+  defp queue_states, do: ["available", "scheduled", "executing", "retryable"]
 end

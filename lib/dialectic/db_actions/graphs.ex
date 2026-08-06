@@ -122,7 +122,8 @@ defmodule Dialectic.DbActions.Graphs do
   end
 
   def all_graphs_with_notes(search_term \\ "", opts \\ []) do
-    search_pattern = "%#{String.trim(search_term)}%"
+    search_term = String.trim(search_term)
+    search_pattern = "%#{search_term}%"
     limit = Keyword.get(opts, :limit)
 
     query =
@@ -130,14 +131,24 @@ defmodule Dialectic.DbActions.Graphs do
         where: g.is_published == true,
         where: g.is_public == true,
         where: g.is_deleted == false or is_nil(g.is_deleted),
-        where: ilike(g.title, ^search_pattern),
-        where:
-          fragment(
-            "COALESCE(CASE WHEN jsonb_typeof(?->'nodes') = 'array' THEN jsonb_array_length(?->'nodes') ELSE 0 END, 0) >= ?",
-            g.data,
-            g.data,
-            ^@min_node_count
-          ),
+        where: ilike(g.title, ^search_pattern)
+
+    query =
+      if search_term == "" do
+        from g in query,
+          where:
+            fragment(
+              "COALESCE(CASE WHEN jsonb_typeof(?->'nodes') = 'array' THEN jsonb_array_length(?->'nodes') ELSE 0 END, 0) >= ?",
+              g.data,
+              g.data,
+              ^@min_node_count
+            )
+      else
+        query
+      end
+
+    query =
+      from g in query,
         left_join: n in assoc(g, :notes),
         left_join: author in Dialectic.Accounts.User,
         on: author.id == g.user_id,
@@ -388,27 +399,30 @@ defmodule Dialectic.DbActions.Graphs do
   end
 
   @doc """
-  Saves the graph only if the provided snapshot timestamp is newer than or equal to
-  the current stored row's updated_at.
+  Saves graph data only when the snapshot revision is newer than the stored revision.
 
-  Returns:
-  - {:ok, :updated} if the row was updated
-  - {:error, :stale} if the DB has a newer row (update skipped) or graph doesn't exist
-  - {:error, :invalid_timestamp} if ts can't be parsed
+  Timestamp strings from jobs created before data revisions were introduced are
+  converted to microsecond revisions for backwards compatibility.
   """
+  def save_graph_if_newer(title, data, revision) when is_integer(revision) do
+    updated_at = DateTime.utc_now() |> DateTime.truncate(:second)
+
+    {count, _} =
+      from(g in Graph,
+        where: g.title == ^title and g.data_revision < ^revision
+      )
+      |> Repo.update_all(set: [data: data, data_revision: revision, updated_at: updated_at])
+
+    if count == 1 do
+      {:ok, :updated}
+    else
+      {:error, :stale}
+    end
+  end
+
   def save_graph_if_newer(title, data, iso_ts) when is_binary(iso_ts) do
     with {:ok, ts, _offset} <- DateTime.from_iso8601(iso_ts) do
-      {count, _} =
-        from(g in Graph,
-          where: g.title == ^title and (is_nil(g.updated_at) or g.updated_at <= ^ts)
-        )
-        |> Repo.update_all(set: [data: data, updated_at: ts])
-
-      if count == 1 do
-        {:ok, :updated}
-      else
-        {:error, :stale}
-      end
+      save_graph_if_newer(title, data, DateTime.to_unix(ts, :microsecond))
     else
       _ -> {:error, :invalid_timestamp}
     end

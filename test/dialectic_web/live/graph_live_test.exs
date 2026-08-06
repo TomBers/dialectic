@@ -79,6 +79,17 @@ defmodule DialecticWeb.GraphLiveTest do
   end
 
   describe "mount/3" do
+    test "keeps a stable anonymous LLM actor in the signed browser session", %{conn: conn} do
+      first_conn = get(conn, ~p"/")
+      actor_id = get_session(first_conn, :llm_actor_id)
+
+      second_conn = first_conn |> recycle() |> get(~p"/")
+
+      assert is_binary(actor_id)
+      assert actor_id != ""
+      assert get_session(second_conn, :llm_actor_id) == actor_id
+    end
+
     test "assigns necessary values on mount with a current user", %{conn: conn} do
       {:ok, view, _html} = setup_live(conn)
       state = :sys.get_state(view.pid)
@@ -86,6 +97,8 @@ defmodule DialecticWeb.GraphLiveTest do
 
       assert socket.assigns.graph_id == @graph_id
       assert socket.assigns.user == "tester@example.com"
+      assert is_binary(socket.assigns.llm_actor_id)
+      assert socket.assigns.llm_actor_id != ""
     end
 
     test "shows a persistent reader switch for the current node", %{conn: conn} do
@@ -167,6 +180,76 @@ defmodule DialecticWeb.GraphLiveTest do
     end
   end
 
+  describe "explore admission" do
+    test "shows the server-side explore selection limit", %{conn: conn} do
+      {:ok, view, _html} = setup_live_for_graph(conn, "Explore Limit UI")
+
+      render_click(view, "open_explore_modal", %{"items" => ["A", "B", "C", "D"]})
+
+      assert has_element?(view, "#explore-modal")
+      assert has_element?(view, "#explore-selection-form")
+      assert has_element?(view, "#explore-selection-limit", "Select up to 3 points")
+    end
+
+    test "rejects branch lists above the explore limit before creating nodes", %{conn: conn} do
+      {:ok, view, _html} = setup_live_for_graph(conn, "Explore Branch Limit")
+      graph_id = :sys.get_state(view.pid).socket.assigns.graph_id
+      {_graph_struct, graph_before} = GraphManager.get_graph(graph_id)
+      vertex_count_before = length(:digraph.vertices(graph_before))
+
+      render_click(view, "branch_list", %{"items" => ["A", "B", "C", "D"]})
+
+      {_graph_struct, graph_after} = GraphManager.get_graph(graph_id)
+      assert length(:digraph.vertices(graph_after)) == vertex_count_before
+      assert has_element?(view, "#flash-error", "Choose up to 3 points at a time")
+    end
+
+    test "keeps the explore modal open when too many points are submitted", %{conn: conn} do
+      {:ok, view, _html} = setup_live_for_graph(conn, "Explore Modal Limit")
+      graph_id = :sys.get_state(view.pid).socket.assigns.graph_id
+      items = ["A", "B", "C", "D"]
+
+      render_click(view, "open_explore_modal", %{"items" => items})
+      {_graph_struct, graph_before} = GraphManager.get_graph(graph_id)
+      vertex_count_before = length(:digraph.vertices(graph_before))
+
+      view
+      |> element("#explore-selection-form")
+      |> render_submit(%{
+        "items" => %{"A" => "on", "B" => "on", "C" => "on", "D" => "on"}
+      })
+
+      {_graph_struct, graph_after} = GraphManager.get_graph(graph_id)
+      assert length(:digraph.vertices(graph_after)) == vertex_count_before
+      assert has_element?(view, "#explore-modal")
+      assert has_element?(view, "#flash-error", "Choose up to 3 points at a time")
+    end
+
+    test "accepts exactly three explore points", %{conn: conn} do
+      {:ok, view, _html} = setup_live_for_graph(conn, "Explore Boundary")
+      graph_id = :sys.get_state(view.pid).socket.assigns.graph_id
+
+      render_click(view, "open_explore_modal", %{"items" => ["A", "B", "C", "D"]})
+      {_graph_struct, graph_before} = GraphManager.get_graph(graph_id)
+      vertex_count_before = length(:digraph.vertices(graph_before))
+
+      view
+      |> element("#explore-selection-form")
+      |> render_submit(%{
+        "items" => %{
+          "A" => ["false", "true"],
+          "B" => ["false", "true"],
+          "C" => ["false", "true"],
+          "D" => ["false"]
+        }
+      })
+
+      {_graph_struct, graph_after} = GraphManager.get_graph(graph_id)
+      assert length(:digraph.vertices(graph_after)) == vertex_count_before + 3
+      refute has_element?(view, "#explore-modal")
+    end
+  end
+
   describe "selection actions" do
     test "pros/cons creates thesis and antithesis children for the selected text", %{conn: conn} do
       {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data())
@@ -228,6 +311,116 @@ defmodule DialecticWeb.GraphLiveTest do
       assert Enum.all?(linked_node_ids, fn node_id ->
                Enum.any?(selected_text_branch_children, &(&1.id == node_id))
              end)
+    end
+
+    test "explain uses the selection event node when the current node is stale", %{conn: conn} do
+      {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data())
+      assigns = :sys.get_state(view.pid).socket.assigns
+      graph_id = assigns.graph_id
+
+      assert assigns.node.id == "1"
+
+      send(view.pid, {
+        :selection_action,
+        %{
+          action: :explain,
+          selected_text: "synaptic tagging",
+          node_id: "2",
+          offsets: %{"start" => 29, "end" => 45},
+          highlight: nil
+        }
+      })
+
+      :sys.get_state(view.pid)
+
+      event_node = GraphManager.find_node_by_id(graph_id, "2")
+      stale_node = GraphManager.find_node_by_id(graph_id, "1")
+
+      question_node =
+        Enum.find(event_node.children, fn child ->
+          child.class == "question" and child.content == "Please explain: synaptic tagging"
+        end)
+
+      assert question_node
+      assert question_node.source_text == "synaptic tagging"
+
+      refute Enum.any?(stale_node.children, fn child ->
+               child.content == "Please explain: synaptic tagging"
+             end)
+    end
+
+    test "custom question uses the selection event node when the current node is stale", %{
+      conn: conn
+    } do
+      {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data())
+      assigns = :sys.get_state(view.pid).socket.assigns
+      graph_id = assigns.graph_id
+      question = "Why does synaptic tagging matter here?"
+
+      assert assigns.node.id == "1"
+
+      send(view.pid, {
+        :selection_action,
+        %{
+          action: :ask_question,
+          selected_text: "synaptic tagging",
+          node_id: "2",
+          offsets: %{"start" => 29, "end" => 45},
+          highlight: nil,
+          question: question
+        }
+      })
+
+      :sys.get_state(view.pid)
+
+      event_node = GraphManager.find_node_by_id(graph_id, "2")
+      stale_node = GraphManager.find_node_by_id(graph_id, "1")
+
+      question_node =
+        Enum.find(event_node.children, fn child ->
+          child.class == "question" and child.content == question
+        end)
+
+      assert question_node
+      assert question_node.source_text == "synaptic tagging"
+      refute Enum.any?(stale_node.children, &(&1.content == question))
+    end
+
+    test "missing selection event nodes fail gracefully", %{conn: conn} do
+      {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data())
+      graph_id = :sys.get_state(view.pid).socket.assigns.graph_id
+      vertex_count = length(GraphManager.vertices(graph_id))
+
+      send(view.pid, {
+        :selection_action,
+        %{
+          action: :explain,
+          selected_text: "missing text",
+          node_id: "missing-node",
+          offsets: %{"start" => 0, "end" => 12},
+          highlight: nil
+        }
+      })
+
+      :sys.get_state(view.pid)
+
+      send(view.pid, {
+        :selection_action,
+        %{
+          action: :ask_question,
+          selected_text: "missing text",
+          node_id: "missing-node",
+          offsets: %{"start" => 0, "end" => 12},
+          highlight: nil,
+          question: "Where did it go?"
+        }
+      })
+
+      :sys.get_state(view.pid)
+
+      assert Process.alive?(view.pid)
+      assert length(GraphManager.vertices(graph_id)) == vertex_count
+      assert has_element?(view, "#flash-error", "Node not found")
     end
   end
 

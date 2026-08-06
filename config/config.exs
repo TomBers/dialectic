@@ -21,8 +21,13 @@ config :dialectic, Oban,
   ],
   repo: Dialectic.Repo,
   plugins: [
-    {Oban.Plugins.Lifeline, rescue_after: :timer.minutes(15)}
+    {Oban.Plugins.Lifeline, rescue_after: :timer.minutes(15)},
+    {Oban.Plugins.Pruner, max_age: 604_800, interval: :timer.minutes(1)}
   ]
+
+config :dialectic, :llm_admission,
+  max_active_per_actor: 3,
+  max_requests_per_minute: 10
 
 config :dialectic,
   ecto_repos: [Dialectic.Repo],

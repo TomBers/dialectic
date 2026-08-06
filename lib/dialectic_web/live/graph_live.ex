@@ -44,6 +44,7 @@ defmodule DialecticWeb.GraphLive do
                               "regenerate"
                             ] ++ @critical_thinking_operations
   @structural_graph_operations ["delete" | @node_creation_operations]
+  @max_explore_items 3
   use DialecticWeb.GraphStreaming, preload_highlight_links: true
 
   alias Dialectic.Graph.{Vertex, GraphActions, Siblings}
@@ -133,9 +134,10 @@ defmodule DialecticWeb.GraphLive do
   end
 
   @impl true
-  def mount(%{"graph_name" => graph_id_uri} = params, _session, socket) do
+  def mount(%{"graph_name" => graph_id_uri} = params, session, socket) do
     graph_id = URI.decode(graph_id_uri)
     user = UserUtils.current_identity(socket.assigns)
+    socket = assign(socket, :llm_actor_id, session["llm_actor_id"] || "graph:#{graph_id}")
 
     case fetch_graph(socket.assigns[:current_user], graph_id, params) do
       {:ok, {graph_struct, _}, graph_db} ->
@@ -513,25 +515,35 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("branch_list", %{"items" => items}, socket) do
-    if !socket.assigns.can_edit do
-      {:noreply, socket |> put_flash(:error, "This graph is locked")}
-    else
-      last_result =
-        Enum.reduce(items, nil, fn item, _acc ->
-          GraphActions.answer_selection(
-            graph_action_params(socket, socket.assigns.node),
-            "Please explain: #{item}",
-            "explain"
-          )
-        end)
+    items = items |> normalize_explore_selected() |> Enum.uniq()
 
-      case last_result do
-        node when is_map(node) ->
-          update_graph(socket, {nil, node}, "explain")
+    cond do
+      !socket.assigns.can_edit ->
+        {:noreply, socket |> put_flash(:error, "This graph is locked")}
 
-        _ ->
-          {:noreply, socket}
-      end
+      items == [] ->
+        {:noreply, socket |> put_flash(:error, "Please select at least one point")}
+
+      length(items) > @max_explore_items ->
+        {:noreply, put_explore_limit_flash(socket)}
+
+      true ->
+        last_result =
+          Enum.reduce(items, nil, fn item, _acc ->
+            GraphActions.answer_selection(
+              graph_action_params(socket, socket.assigns.node),
+              "Please explain: #{item}",
+              "explain"
+            )
+          end)
+
+        case last_result do
+          node when is_map(node) ->
+            update_graph(socket, {nil, node}, "explain")
+
+          _ ->
+            {:noreply, socket}
+        end
     end
   end
 
@@ -553,34 +565,39 @@ defmodule DialecticWeb.GraphLive do
     if !socket.assigns.can_edit do
       {:noreply, socket |> put_flash(:error, "This graph is locked")}
     else
-      selected = normalize_explore_selected(params)
+      selected = params |> normalize_explore_selected() |> Enum.uniq()
 
-      if selected == [] do
-        {:noreply, socket |> put_flash(:error, "Please select at least one point")}
-      else
-        last_result =
-          Enum.reduce(selected, nil, fn item, _acc ->
-            GraphActions.answer_selection(
-              graph_action_params(socket, socket.assigns.node),
-              "Please explain: #{item}",
-              "explain"
-            )
-          end)
+      cond do
+        selected == [] ->
+          {:noreply, socket |> put_flash(:error, "Please select at least one point")}
 
-        case last_result do
-          nil ->
-            {:noreply, socket}
+        length(selected) > @max_explore_items ->
+          {:noreply, put_explore_limit_flash(socket)}
 
-          node ->
-            {:noreply, updated_socket} = update_graph(socket, {nil, node}, "explain")
+        true ->
+          last_result =
+            Enum.reduce(selected, nil, fn item, _acc ->
+              GraphActions.answer_selection(
+                graph_action_params(socket, socket.assigns.node),
+                "Please explain: #{item}",
+                "explain"
+              )
+            end)
 
-            {:noreply,
-             assign(updated_socket,
-               show_explore_modal: false,
-               explore_items: [],
-               explore_selected: []
-             )}
-        end
+          case last_result do
+            nil ->
+              {:noreply, socket}
+
+            node ->
+              {:noreply, updated_socket} = update_graph(socket, {nil, node}, "explain")
+
+              {:noreply,
+               assign(updated_socket,
+                 show_explore_modal: false,
+                 explore_items: [],
+                 explore_selected: []
+               )}
+          end
       end
     end
   end
@@ -1509,11 +1526,9 @@ defmodule DialecticWeb.GraphLive do
       "[GraphLive] stream_error node_id=#{inspect(node_id)} current=#{inspect(socket.assigns.node && Map.get(socket.assigns.node, :id))} error=#{inspect(error)}"
     end)
 
-    # This is the streamed LLM response into a node
-    # TODO - broadcast to all users??? - only want to update the node that is being worked on, just rerender the others
-    updated_vertex = GraphManager.update_vertex(socket.assigns.graph_id, node_id, error)
+    updated_vertex = GraphManager.find_node_by_id(socket.assigns.graph_id, node_id)
 
-    if socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
+    if updated_vertex && socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
       label = NodeTitleHelper.extract_node_title(updated_vertex)
 
       socket =
@@ -1536,36 +1551,29 @@ defmodule DialecticWeb.GraphLive do
          _params,
          socket
        ) do
-    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
+    case GraphActions.find_node(socket.assigns.graph_id, node_id) do
+      nil ->
+        {:noreply, put_flash(socket, :error, "Node not found")}
 
-    if highlight do
-      # Create the question/answer sequence
-      {_graph, answer_node} =
-        GraphActions.ask_and_answer(
-          graph_action_params(socket, socket.assigns.node),
-          "Please explain: #{selected_text}",
-          minimal_context: true,
-          source_text: selected_text
-        )
+      parent_node ->
+        highlight =
+          existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
 
-      # Link the highlight to the answer node using new link system
-      if answer_node do
-        Highlights.add_link(highlight.id, answer_node.id, "explain")
-      end
+        graph_result =
+          GraphActions.ask_and_answer(
+            graph_action_params(socket, parent_node),
+            "Please explain: #{selected_text}",
+            minimal_context: true,
+            source_text: selected_text
+          )
 
-      update_graph(socket, {nil, answer_node}, "explain")
-    else
-      # If highlight creation fails, still create the nodes
-      update_graph(
-        socket,
-        GraphActions.ask_and_answer(
-          graph_action_params(socket, socket.assigns.node),
-          "Please explain: #{selected_text}",
-          minimal_context: true,
-          source_text: selected_text
-        ),
-        "explain"
-      )
+        {_graph, answer_node} = graph_result
+
+        if highlight && answer_node do
+          Highlights.add_link(highlight.id, answer_node.id, "explain")
+        end
+
+        update_graph(socket, graph_result, "explain")
     end
   end
 
@@ -1669,34 +1677,28 @@ defmodule DialecticWeb.GraphLive do
          %{question: question_text},
          socket
        ) do
-    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
+    case GraphActions.find_node(socket.assigns.graph_id, node_id) do
+      nil ->
+        {:noreply, put_flash(socket, :error, "Node not found")}
 
-    if highlight do
-      # Create the question/answer sequence
-      {_graph, answer_node} =
-        GraphActions.ask_about_selection(
-          graph_action_params(socket, socket.assigns.node),
-          "#{question_text}\n\nRegarding: \"#{selected_text}\"",
-          selected_text
-        )
+      parent_node ->
+        highlight =
+          existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
 
-      # Link the highlight to the answer node using new link system
-      if answer_node do
-        Highlights.add_link(highlight.id, answer_node.id, "question")
-      end
+        graph_result =
+          GraphActions.ask_about_selection(
+            graph_action_params(socket, parent_node),
+            question_text,
+            selected_text
+          )
 
-      update_graph(socket, {nil, answer_node}, "selection_question")
-    else
-      # If highlight creation fails, still create the nodes
-      update_graph(
-        socket,
-        GraphActions.ask_about_selection(
-          graph_action_params(socket, socket.assigns.node),
-          "#{question_text}\n\nRegarding: \"#{selected_text}\"",
-          selected_text
-        ),
-        "selection_question"
-      )
+        {_graph, answer_node} = graph_result
+
+        if highlight && answer_node do
+          Highlights.add_link(highlight.id, answer_node.id, "question")
+        end
+
+        update_graph(socket, graph_result, "selection_question")
     end
   end
 
@@ -1884,6 +1886,10 @@ defmodule DialecticWeb.GraphLive do
       not Map.get(vertex_data, :deleted, false)
   end
 
+  defp put_explore_limit_flash(socket) do
+    put_flash(socket, :error, "Choose up to #{@max_explore_items} points at a time.")
+  end
+
   defp normalize_explore_selected(params) do
     cond do
       is_list(params) ->
@@ -1897,11 +1903,22 @@ defmodule DialecticWeb.GraphLive do
 
       is_map(params) and is_map(Map.get(params, "items")) ->
         params["items"]
-        |> Enum.flat_map(fn {k, v} ->
+        |> Enum.flat_map(fn {key, value} ->
           cond do
-            v in ["on", "true", "1"] -> [k]
-            is_binary(v) -> [v]
-            true -> []
+            is_list(value) ->
+              if Enum.any?(value, &checked_checkbox_value?/1), do: [key], else: []
+
+            checked_checkbox_value?(value) ->
+              [key]
+
+            value in ["false", "off", "0", ""] ->
+              []
+
+            is_binary(value) ->
+              [value]
+
+            true ->
+              []
           end
         end)
 
@@ -1909,6 +1926,8 @@ defmodule DialecticWeb.GraphLive do
         []
     end
   end
+
+  defp checked_checkbox_value?(value), do: value in ["on", "true", "1", true, 1]
 
   # =========================================================================
   # Critical Thinking Tools - Helper Functions
@@ -2335,6 +2354,8 @@ defmodule DialecticWeb.GraphLive do
       show_explore_modal: false,
       explore_items: [],
       explore_selected: [],
+      explore_form: to_form(%{}, as: :explore),
+      max_explore_items: @max_explore_items,
       show_start_stream_modal: false,
       show_help_modal: false,
       show_share_modal: false,

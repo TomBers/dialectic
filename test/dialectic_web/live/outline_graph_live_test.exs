@@ -733,8 +733,13 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
            )
 
     assert has_element?(view, "#reader-selection-actions-hook[phx-hook='SelectionActions']")
-    assert has_element?(view, "#selection-actions button[phx-click='highlight_only']")
-    refute has_element?(view, "#selection-actions button[phx-click='explain']")
+
+    assert has_element?(
+             view,
+             "#selection-actions button[data-selection-action='highlight_only']"
+           )
+
+    refute has_element?(view, "#selection-actions button[data-selection-action='explain']")
 
     assert_push_event(view, "highlights_loaded", %{
       highlights: [%{node_id: "5", links: [%{node_id: "3", link_type: "explain"}]}]

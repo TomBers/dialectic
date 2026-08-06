@@ -11,8 +11,13 @@ defmodule DialecticWeb.HomeLive do
   on_mount {DialecticWeb.UserAuth, :mount_current_user}
 
   @impl true
-  def mount(params, _session, socket) do
-    socket = assign(socket, :loading_graph, nil)
+  def mount(params, session, socket) do
+    socket =
+      assign(socket,
+        loading_graph: nil,
+        llm_actor_id: session["llm_actor_id"] || "home:#{socket.id}"
+      )
+
     if connected?(socket), do: Phoenix.PubSub.subscribe(Dialectic.PubSub, "graphs")
 
     user = UserUtils.current_identity(socket.assigns)
@@ -202,7 +207,7 @@ defmodule DialecticWeb.HomeLive do
      )}
   end
 
-  defp create_graph_task(title, answer, prompt_mode, current_user, parent_pid) do
+  defp create_graph_task(title, answer, prompt_mode, current_user, actor_id, parent_pid) do
     mode_str = prompt_mode || "university"
 
     mode =
@@ -222,6 +227,7 @@ defmodule DialecticWeb.HomeLive do
     Dialectic.Graph.Creator.create(answer, current_user, user_identity,
       mode: mode,
       title: title,
+      actor_id: actor_id,
       progress_callback: fn status -> send(parent_pid, {:graph_creation_update, status}) end
     )
   end
@@ -243,11 +249,12 @@ defmodule DialecticWeb.HomeLive do
             parent_pid = self()
             prompt_mode = socket.assigns[:prompt_mode]
             current_user = socket.assigns[:current_user]
+            actor_id = socket.assigns.llm_actor_id
 
             socket
             |> assign(:loading_graph, %{title: title, status: "Initializing...", steps: []})
             |> start_async(:create_graph_flow, fn ->
-              create_graph_task(title, answer, prompt_mode, current_user, parent_pid)
+              create_graph_task(title, answer, prompt_mode, current_user, actor_id, parent_pid)
             end)
 
           existing_graph ->

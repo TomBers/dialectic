@@ -1,6 +1,11 @@
 defmodule GraphManagerTest do
   use DialecticWeb.ConnCase, async: false
+
+  import Ecto.Query
+
+  alias Dialectic.DbActions.DbWorker
   alias Dialectic.Graph.Vertex
+  alias Dialectic.Repo
   alias Dialectic.Responses.LlmInterface
 
   @graph_id "TestGraph"
@@ -63,6 +68,11 @@ defmodule GraphManagerTest do
         Process.sleep(10)
         wait_until_unregistered(graph_id, attempts - 1)
     end
+  end
+
+  defp snapshot_jobs do
+    worker = Oban.Worker.to_string(DbWorker)
+    Repo.all(from job in Oban.Job, where: job.worker == ^worker)
   end
 
   describe "process management" do
@@ -241,6 +251,7 @@ defmodule GraphManagerTest do
       # TODO - How to test the streaming function?
       assert child.content == ""
       assert child.class == "child_class"
+      assert child.prompt_kind == "child_class"
       assert child.user == @test_user
 
       # Verify edge exists
@@ -253,6 +264,36 @@ defmodule GraphManagerTest do
       {_, v1, v2, _} = :digraph.edge(updated_graph, edge)
       assert v1 == parent.id
       assert v2 == child.id
+    end
+
+    test "add_child preserves the default save and can explicitly skip it", %{graph: _} do
+      parent =
+        GraphManager.add_node(@graph_id, %Vertex{
+          content: "parent",
+          class: "origin",
+          user: @test_user
+        })
+
+      GraphManager.add_child(
+        @graph_id,
+        [parent],
+        fn _ -> :ok end,
+        "answer",
+        @test_user,
+        save: false
+      )
+
+      assert snapshot_jobs() == []
+
+      GraphManager.add_child(
+        @graph_id,
+        [parent],
+        fn _ -> :ok end,
+        "answer",
+        @test_user
+      )
+
+      assert [_job] = snapshot_jobs()
     end
 
     test "reset_graph clears all vertices and edges", %{graph: _} do

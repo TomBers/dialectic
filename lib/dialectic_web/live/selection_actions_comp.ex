@@ -21,6 +21,15 @@ defmodule DialecticWeb.SelectionActionsComp do
     "what_if" => :what_if
   }
 
+  @selection_actions Map.merge(@critical_tool_actions, %{
+                       "explain" => :explain,
+                       "highlight_only" => :highlight_only,
+                       "pros_cons" => :pros_cons,
+                       "related_ideas" => :related_ideas,
+                       "ask_question" => :ask_question,
+                       "comment" => :comment
+                     })
+
   @critical_tool_sections [
     %{
       title: "Understand",
@@ -104,151 +113,60 @@ defmodule DialecticWeb.SelectionActionsComp do
   ]
 
   @impl true
-  def mount(socket) do
-    {:ok,
-     socket
-     |> assign(
-       visible: false,
-       selected_text: nil,
-       node_id: nil,
-       offsets: nil,
-       highlight: nil,
-       links: [],
-       ask_question: true,
-       advanced_tools_open: false
-     )}
-  end
+  def mount(socket), do: {:ok, socket}
 
   @impl true
   def update(assigns, socket) do
-    {:ok,
-     socket
-     |> assign(assigns)
-     |> assign_new(:visible, fn -> false end)
-     |> assign_new(:highlight_only, fn -> false end)}
+    {:ok, socket |> assign(assigns) |> assign_new(:highlight_only, fn -> false end)}
   end
 
   @impl true
-  def handle_event("show", params, socket) do
-    %{
-      "selectedText" => selected_text,
-      "nodeId" => node_id,
-      "offsets" => offsets
-    } = params
-
-    # Query existing highlight for this selection
-    {highlight, links} =
-      case Highlights.get_highlight_for_selection(
-             socket.assigns.graph_id,
-             node_id,
-             offsets["start"],
-             offsets["end"]
-           ) do
-        nil -> {nil, []}
-        h -> {h, h.links}
-      end
-
-    {:noreply,
-     socket
-     |> assign(
-       visible: true,
-       selected_text: selected_text,
-       node_id: node_id,
-       offsets: offsets,
-       highlight: highlight,
-       links: links
-     )}
-  end
-
-  @impl true
-  def handle_event("close", _params, socket) do
-    {:noreply, assign(socket, visible: false)}
-  end
-
-  @impl true
-  def handle_event("explain", _params, socket) do
-    send_action_to_parent(socket, :explain)
-    {:noreply, assign(socket, visible: false)}
-  end
-
-  @impl true
-  def handle_event("highlight_only", _params, socket) do
-    send_action_to_parent(socket, :highlight_only)
-    {:noreply, assign(socket, visible: false)}
-  end
-
-  @impl true
-  def handle_event("pros_cons", _params, socket) do
-    send_action_to_parent(socket, :pros_cons)
-    {:noreply, assign(socket, visible: false)}
-  end
-
-  @impl true
-  def handle_event("related_ideas", _params, socket) do
-    send_action_to_parent(socket, :related_ideas)
-    {:noreply, assign(socket, visible: false)}
-  end
-
-  @impl true
-  def handle_event("toggle_ask_question", _params, socket) do
-    {:noreply, update(socket, :ask_question, &(!&1))}
-  end
-
-  @impl true
-  def handle_event("toggle_advanced_tools", _params, socket) do
-    {:noreply, update(socket, :advanced_tools_open, &(!&1))}
-  end
-
-  @impl true
-  def handle_event("critical_tool", %{"tool" => tool}, socket) do
-    case Map.fetch(@critical_tool_actions, tool) do
-      {:ok, action} ->
-        send_action_to_parent(socket, action)
-        {:noreply, assign(socket, visible: false)}
-
-      :error ->
-        {:noreply, socket}
-    end
-  end
-
-  @impl true
-  def handle_event("submit_input", %{"question" => content}, socket) do
-    if socket.assigns.ask_question do
-      send_action_to_parent(socket, :ask_question, %{question: content})
-    else
-      send_action_to_parent(socket, :comment, %{comment: content})
-    end
-
-    {:noreply, assign(socket, visible: false)}
-  end
-
-  defp send_action_to_parent(socket, action, extra_params \\ %{}) do
-    params =
-      Map.merge(
+  def handle_event(
+        "action",
         %{
-          action: action,
-          selected_text: socket.assigns.selected_text,
-          node_id: socket.assigns.node_id,
-          offsets: socket.assigns.offsets,
-          highlight: socket.assigns.highlight
-        },
-        extra_params
+          "action" => action_key,
+          "selectedText" => selected_text,
+          "nodeId" => node_id,
+          "offsets" => %{"start" => start_offset, "end" => end_offset} = offsets
+        } = params,
+        socket
       )
+      when is_binary(selected_text) and selected_text != "" and is_binary(node_id) and
+             is_integer(start_offset) and is_integer(end_offset) and start_offset < end_offset do
+    with {:ok, action} <- Map.fetch(@selection_actions, action_key),
+         {:ok, extra_params} <- action_input(action, params) do
+      highlight =
+        Highlights.get_highlight_for_selection(
+          socket.assigns.graph_id,
+          node_id,
+          start_offset,
+          end_offset
+        )
 
-    send(self(), {:selection_action, params})
+      selection_params = %{
+        action: action,
+        selected_text: selected_text,
+        node_id: node_id,
+        offsets: offsets,
+        highlight: highlight
+      }
+
+      send(self(), {:selection_action, Map.merge(selection_params, extra_params)})
+    end
+
+    {:noreply, socket}
   end
 
-  defp has_link_type?(links, type) do
-    Enum.any?(links, fn link -> link.link_type == type end)
-  end
+  def handle_event("action", _params, socket), do: {:noreply, socket}
 
-  defp count_link_type(links, type) do
-    Enum.count(links, fn link -> link.link_type == type end)
-  end
+  defp action_input(:ask_question, %{"input" => input}) when is_binary(input),
+    do: {:ok, %{question: input}}
 
-  defp has_pros_or_cons?(links) do
-    has_link_type?(links, "pro") || has_link_type?(links, "con")
-  end
+  defp action_input(:comment, %{"input" => input}) when is_binary(input),
+    do: {:ok, %{comment: input}}
+
+  defp action_input(action, _params) when action in [:ask_question, :comment], do: :error
+  defp action_input(_action, _params), do: {:ok, %{}}
 
   @impl true
   def render(assigns) do
@@ -256,15 +174,10 @@ defmodule DialecticWeb.SelectionActionsComp do
       assign(assigns, critical_tool_sections: @critical_tool_sections)
 
     ~H"""
-    <div id={@id}>
-      <div
-        id={"selection-actions-modal-#{@id}"}
-        class={if @visible, do: "", else: "hidden"}
-        phx-target={@myself}
-      >
+    <div id={@id} data-can-edit={to_string(@can_edit)}>
+      <div id={"selection-actions-modal-#{@id}"} class="hidden" phx-update="ignore" aria-hidden="true">
         <div
-          phx-click="close"
-          phx-target={@myself}
+          data-selection-close
           class="fixed inset-0 z-[999] bg-slate-950/45 backdrop-blur-sm transition-opacity duration-200"
         >
         </div>
@@ -276,8 +189,7 @@ defmodule DialecticWeb.SelectionActionsComp do
               </span>
               <button
                 type="button"
-                phx-click="close"
-                phx-target={@myself}
+                data-selection-close
                 class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-700"
                 aria-label="Close selection actions"
               >
@@ -289,8 +201,10 @@ defmodule DialecticWeb.SelectionActionsComp do
               <div class="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600">
                 Selected text
               </div>
-              <div class="max-h-24 overflow-y-auto text-[0.95rem] font-medium leading-6 text-slate-900">
-                "{@selected_text}"
+              <div
+                data-selection-text
+                class="max-h-24 overflow-y-auto text-[0.95rem] font-medium leading-6 text-slate-900"
+              >
               </div>
             </div>
 
@@ -301,14 +215,10 @@ defmodule DialecticWeb.SelectionActionsComp do
               <%= if !@highlight_only do %>
                 <button
                   type="button"
-                  phx-click="explain"
-                  phx-target={@myself}
-                  disabled={!@can_edit || has_link_type?(@links, "explain")}
-                  title={
-                    if has_link_type?(@links, "explain"),
-                      do: "Explanation already exists for this text",
-                      else: "Create an AI explanation"
-                  }
+                  data-selection-action="explain"
+                  data-disable-if-links="explain"
+                  disabled={!@can_edit}
+                  title="Create an AI explanation"
                   class="group flex min-h-[96px] flex-col items-start justify-between rounded-2xl border-2 border-slate-200 bg-white px-3.5 py-3 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-[0_12px_24px_rgba(15,23,42,0.08)] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <span class="w-full space-y-1">
@@ -316,13 +226,7 @@ defmodule DialecticWeb.SelectionActionsComp do
                       <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-sky-500 text-white shadow-sm ring-4 ring-white/70">
                         <.icon name="hero-question-mark-circle" class="h-4.5 w-4.5" />
                       </span>
-                      <span>
-                        <%= if has_link_type?(@links, "explain") do %>
-                          View Explanation
-                        <% else %>
-                          Explain
-                        <% end %>
-                      </span>
+                      <span>Explain</span>
                     </span>
                     <span class="block whitespace-nowrap text-[12px] leading-4 text-slate-600">
                       Ask AI to unpack this phrase.
@@ -340,14 +244,10 @@ defmodule DialecticWeb.SelectionActionsComp do
 
               <button
                 type="button"
-                phx-click="highlight_only"
-                phx-target={@myself}
-                disabled={!@can_edit || !is_nil(@highlight)}
-                title={
-                  if !is_nil(@highlight),
-                    do: "Highlight already exists for this selection",
-                    else: "Save this text selection as a highlight"
-                }
+                data-selection-action="highlight_only"
+                data-disable-if-highlight="true"
+                disabled={!@can_edit}
+                title="Save this text selection as a highlight"
                 class="group flex min-h-[96px] flex-col items-start justify-between rounded-2xl border-2 border-slate-200 bg-white px-3.5 py-3 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-[0_12px_24px_rgba(15,23,42,0.08)] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-100 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <span class="w-full space-y-1">
@@ -373,14 +273,10 @@ defmodule DialecticWeb.SelectionActionsComp do
               <%= if !@highlight_only do %>
                 <button
                   type="button"
-                  phx-click="pros_cons"
-                  phx-target={@myself}
-                  disabled={!@can_edit || has_pros_or_cons?(@links)}
-                  title={
-                    if has_pros_or_cons?(@links),
-                      do: "Pros/Cons already exist for this text",
-                      else: "Analyze pros and cons"
-                  }
+                  data-selection-action="pros_cons"
+                  data-disable-if-links="pro,con"
+                  disabled={!@can_edit}
+                  title="Analyze pros and cons"
                   class="group flex min-h-[96px] flex-col items-start justify-between rounded-2xl border-2 border-slate-200 bg-white px-3.5 py-3 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-[0_12px_24px_rgba(15,23,42,0.08)] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <span class="w-full space-y-1">
@@ -388,13 +284,7 @@ defmodule DialecticWeb.SelectionActionsComp do
                       <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-sm ring-4 ring-white/70">
                         <.icon name="hero-scale" class="h-4.5 w-4.5" />
                       </span>
-                      <span>
-                        <%= if has_pros_or_cons?(@links) do %>
-                          View Pros/Cons
-                        <% else %>
-                          Pros & Cons
-                        <% end %>
-                      </span>
+                      <span>Pros & Cons</span>
                     </span>
                     <span class="block whitespace-nowrap text-[12px] leading-4 text-slate-600">
                       Test the strongest case for and against it.
@@ -411,14 +301,10 @@ defmodule DialecticWeb.SelectionActionsComp do
 
                 <button
                   type="button"
-                  phx-click="related_ideas"
-                  phx-target={@myself}
-                  disabled={!@can_edit || has_link_type?(@links, "related_idea")}
-                  title={
-                    if has_link_type?(@links, "related_idea"),
-                      do: "Related ideas already exist for this text",
-                      else: "Find related ideas"
-                  }
+                  data-selection-action="related_ideas"
+                  data-disable-if-links="related_idea"
+                  disabled={!@can_edit}
+                  title="Find related ideas"
                   class="group flex min-h-[96px] flex-col items-start justify-between rounded-2xl border-2 border-slate-200 bg-white px-3.5 py-3 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-orange-300 hover:shadow-[0_12px_24px_rgba(15,23,42,0.08)] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <span class="w-full space-y-1">
@@ -426,17 +312,7 @@ defmodule DialecticWeb.SelectionActionsComp do
                       <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-orange-500 text-white shadow-sm ring-4 ring-white/70">
                         <.icon name="hero-light-bulb" class="h-4.5 w-4.5" />
                       </span>
-                      <span>
-                        <%= if has_link_type?(@links, "related_idea") do %>
-                          <%= if count_link_type(@links, "related_idea") > 1 do %>
-                            View Ideas ({count_link_type(@links, "related_idea")})
-                          <% else %>
-                            View Related Idea
-                          <% end %>
-                        <% else %>
-                          Related Ideas
-                        <% end %>
-                      </span>
+                      <span>Related Ideas</span>
                     </span>
                     <span class="block whitespace-nowrap text-[12px] leading-4 text-slate-600">
                       Pull in adjacent comparisons and next angles.
@@ -458,8 +334,8 @@ defmodule DialecticWeb.SelectionActionsComp do
                 <button
                   type="button"
                   id={"selection-advanced-tools-toggle-#{@id}"}
-                  phx-click="toggle_advanced_tools"
-                  phx-target={@myself}
+                  data-selection-advanced-toggle
+                  aria-expanded="false"
                   class="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-slate-50"
                 >
                   <span>
@@ -470,116 +346,93 @@ defmodule DialecticWeb.SelectionActionsComp do
                       A toolkit for better understanding ideas, stress-testing them, and exploring where they lead.
                     </span>
                   </span>
-                  <.icon
-                    name="hero-chevron-down"
-                    class={
-                      "h-4 w-4 text-slate-500 transition-transform" <>
-                        if(@advanced_tools_open, do: " rotate-180", else: "")
-                    }
-                  />
+                  <.icon name="hero-chevron-down" class="h-4 w-4 text-slate-500 transition-transform" />
                 </button>
 
-                <%= if @advanced_tools_open do %>
-                  <div class="space-y-4 border-t border-slate-200 bg-slate-50/70 px-3 py-3">
-                    <div :for={section <- @critical_tool_sections} class="space-y-2">
-                      <div class="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                        {section.title}
-                      </div>
-                      <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                        <button
-                          :for={tool <- section.tools}
-                          type="button"
-                          id={"selection-tool-#{@id}-#{tool.key}"}
-                          phx-click="critical_tool"
-                          phx-value-tool={tool.key}
-                          phx-target={@myself}
-                          disabled={!@can_edit || has_link_type?(@links, tool.key)}
-                          title={tool.title}
-                          class={[
-                            "group flex min-h-[86px] flex-col items-start justify-between rounded-2xl px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50",
-                            ColUtils.advanced_tool_surface_class(tool.key)
-                          ]}
-                        >
-                          <span class="space-y-1">
-                            <span class={[
-                              "inline-flex h-8 w-8 items-center justify-center rounded-xl ring-1 ring-white/70",
-                              ColUtils.advanced_tool_icon_class(tool.key)
-                            ]}>
-                              <.icon name={tool.icon} class="h-4 w-4" />
-                            </span>
-                            <span class="block text-sm font-semibold leading-4 text-slate-900">
-                              {tool.label}
-                            </span>
-                            <span class="block text-[11px] leading-4 text-slate-500">
-                              {tool.blurb}
-                            </span>
-                          </span>
+                <div
+                  data-selection-advanced-tools
+                  class="hidden space-y-4 border-t border-slate-200 bg-slate-50/70 px-3 py-3"
+                >
+                  <div :for={section <- @critical_tool_sections} class="space-y-2">
+                    <div class="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      {section.title}
+                    </div>
+                    <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                      <button
+                        :for={tool <- section.tools}
+                        type="button"
+                        id={"selection-tool-#{@id}-#{tool.key}"}
+                        data-selection-action={tool.key}
+                        data-disable-if-links={tool.key}
+                        disabled={!@can_edit}
+                        title={tool.title}
+                        class={[
+                          "group flex min-h-[86px] flex-col items-start justify-between rounded-2xl px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50",
+                          ColUtils.advanced_tool_surface_class(tool.key)
+                        ]}
+                      >
+                        <span class="space-y-1">
                           <span class={[
-                            "mt-2 text-[10px] font-semibold uppercase tracking-[0.12em]",
-                            ColUtils.advanced_tool_text_class(tool.key)
+                            "inline-flex h-8 w-8 items-center justify-center rounded-xl ring-1 ring-white/70",
+                            ColUtils.advanced_tool_icon_class(tool.key)
                           ]}>
-                            <%= if has_link_type?(@links, tool.key) do %>
-                              Added
-                            <% else %>
-                              Use this
-                            <% end %>
+                            <.icon name={tool.icon} class="h-4 w-4" />
                           </span>
-                        </button>
-                      </div>
+                          <span class="block text-sm font-semibold leading-4 text-slate-900">
+                            {tool.label}
+                          </span>
+                          <span class="block text-[11px] leading-4 text-slate-500">
+                            {tool.blurb}
+                          </span>
+                        </span>
+                        <span class={[
+                          "mt-2 text-[10px] font-semibold uppercase tracking-[0.12em]",
+                          ColUtils.advanced_tool_text_class(tool.key)
+                        ]}>
+                          Use this
+                        </span>
+                      </button>
                     </div>
                   </div>
-                <% end %>
+                </div>
               </div>
 
               <div class="mt-3 rounded-2xl border border-slate-200 bg-slate-50/85 p-3 shadow-sm">
-                <form phx-submit="submit_input" phx-target={@myself} class="flex flex-col gap-2.5">
+                <form
+                  id={"selection-input-form-#{@id}"}
+                  data-selection-input-form
+                  class="flex flex-col gap-2.5"
+                >
                   <div class="flex items-center justify-between gap-3">
                     <div>
-                      <label class="text-sm font-semibold text-slate-800">
-                        <%= if @ask_question do %>
-                          Ask a custom question
-                        <% else %>
-                          Add a comment
-                        <% end %>
+                      <label
+                        for={"selection-question-input-#{@id}"}
+                        data-selection-input-label
+                        class="text-sm font-semibold text-slate-800"
+                      >
+                        Ask a custom question
                       </label>
-                      <p class="mt-0.5 text-[11px] leading-4 text-slate-500">
-                        <%= if @ask_question do %>
-                          Use the selected text as the context for a more specific answer.
-                        <% else %>
-                          Save your own interpretation directly against this excerpt.
-                        <% end %>
+                      <p
+                        data-selection-input-description
+                        class="mt-0.5 text-[11px] leading-4 text-slate-500"
+                      >
+                        Use the selected text as the context for a more specific answer.
                       </p>
                     </div>
 
                     <div class="inline-flex rounded-full border border-slate-200 bg-white p-1 shadow-sm">
                       <button
                         type="button"
-                        phx-click="toggle_ask_question"
-                        phx-target={@myself}
-                        class={[
-                          "rounded-full px-3 py-1 text-xs font-semibold transition-all",
-                          if @ask_question do
-                            "bg-indigo-500 text-white shadow-sm"
-                          else
-                            "text-slate-600 hover:text-slate-900"
-                          end
-                        ]}
+                        data-selection-mode="ask_question"
+                        class="rounded-full bg-indigo-500 px-3 py-1 text-xs font-semibold text-white shadow-sm transition-all"
                         title="Get an AI-generated response"
                       >
                         Ask
                       </button>
                       <button
                         type="button"
-                        phx-click="toggle_ask_question"
-                        phx-target={@myself}
-                        class={[
-                          "rounded-full px-3 py-1 text-xs font-semibold transition-all",
-                          if !@ask_question do
-                            "bg-emerald-500 text-white shadow-sm"
-                          else
-                            "text-slate-600 hover:text-slate-900"
-                          end
-                        ]}
+                        data-selection-mode="comment"
+                        class="rounded-full px-3 py-1 text-xs font-semibold text-slate-600 transition-all hover:text-slate-900"
                         title="Add your own thought directly"
                       >
                         Comment
@@ -590,52 +443,38 @@ defmodule DialecticWeb.SelectionActionsComp do
                   <div class="flex items-start gap-2">
                     <textarea
                       name="question"
+                      data-selection-input
                       rows="1"
                       phx-hook="AutoExpandTextarea"
                       id={"selection-question-input-#{@id}"}
                       class="min-h-[2.5rem] max-h-[7rem] flex-1 resize-none rounded-2xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
-                      placeholder={
-                        if @ask_question,
-                          do: "What do you want to know about this exact wording?",
-                          else: "Add your thought about this selection..."
-                      }
+                      placeholder="What do you want to know about this exact wording?"
                       autocomplete="off"
                       disabled={!@can_edit}
                     ></textarea>
                     <button
                       type="submit"
+                      data-selection-input-submit
                       disabled={!@can_edit}
-                      class={[
-                        "self-start whitespace-nowrap rounded-2xl px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50",
-                        if(@ask_question,
-                          do:
-                            "bg-gradient-to-r from-indigo-500 to-sky-500 hover:shadow-[0_12px_24px_rgba(79,70,229,0.24)]",
-                          else:
-                            "bg-gradient-to-r from-emerald-500 to-teal-500 hover:shadow-[0_12px_24px_rgba(16,185,129,0.24)]"
-                        )
-                      ]}
+                      class="self-start whitespace-nowrap rounded-2xl bg-gradient-to-r from-indigo-500 to-sky-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(79,70,229,0.24)] disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      <%= if @ask_question do %>
-                        Ask
-                      <% else %>
-                        Post
-                      <% end %>
+                      Ask
                     </button>
                   </div>
 
                   <div class="flex items-center justify-between gap-3 text-[11px] text-slate-500">
                     <span>Press Enter to submit • Escape to close</span>
                     <div class="flex flex-wrap justify-end gap-2">
-                      <%= if count_link_type(@links, "question") > 0 do %>
-                        <span class="rounded-full bg-indigo-50 px-2.5 py-1 font-medium text-indigo-700 ring-1 ring-indigo-200">
-                          {count_link_type(@links, "question")} question(s)
-                        </span>
-                      <% end %>
-                      <%= if count_link_type(@links, "comment") > 0 do %>
-                        <span class="rounded-full bg-emerald-50 px-2.5 py-1 font-medium text-emerald-700 ring-1 ring-emerald-200">
-                          {count_link_type(@links, "comment")} comment(s)
-                        </span>
-                      <% end %>
+                      <span
+                        data-selection-question-count
+                        class="hidden rounded-full bg-indigo-50 px-2.5 py-1 font-medium text-indigo-700 ring-1 ring-indigo-200"
+                      >
+                      </span>
+                      <span
+                        data-selection-comment-count
+                        class="hidden rounded-full bg-emerald-50 px-2.5 py-1 font-medium text-emerald-700 ring-1 ring-emerald-200"
+                      >
+                      </span>
                     </div>
                   </div>
                 </form>

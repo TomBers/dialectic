@@ -126,6 +126,16 @@ defmodule Dialectic.Responses.LlmInterface do
     ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
   end
 
+  @doc false
+  @spec gen_initial_response(map(), map(), String.t(), String.t()) :: request_result()
+  def gen_initial_response(node, child, graph_id, live_view_topic) do
+    context = GraphManager.build_context(graph_id, node)
+    instruction = Prompts.initial_explainer(context, node.content || "")
+    system_prompt = get_system_prompt(graph_id)
+    log_prompt("initial_explainer", graph_id, system_prompt, instruction)
+    ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
+  end
+
   @doc """
   Generate a response with minimal context for selected text explanations.
 
@@ -142,26 +152,16 @@ defmodule Dialectic.Responses.LlmInterface do
   """
   @spec gen_response_minimal_context(map(), map(), String.t(), String.t()) :: request_result()
   def gen_response_minimal_context(node, child, graph_id, live_view_topic) do
-    # Build minimal context - only the immediate parent node
-    context =
-      case node.parents do
-        [parent_id | _] ->
-          case GraphManager.find_node_by_id(graph_id, parent_id) do
-            nil -> ""
-            parent -> parent.content || ""
-          end
+    context = immediate_parent_content(graph_id, node, Map.get(node, :source_text))
 
-        _ ->
-          ""
+    instruction =
+      case selection_request(node) do
+        {:explain, selection} ->
+          Prompts.selection(context, selection)
+
+        {:custom_question, selection, question} ->
+          Prompts.selection_question(context, selection, question)
       end
-
-    # Extract the selected text from the question node
-    selection =
-      node.content
-      |> String.replace(~r/^Please explain:\s*/, "")
-      |> String.trim()
-
-    instruction = Prompts.selection(context, selection)
 
     system_prompt = get_system_prompt(graph_id)
     log_prompt("selection_minimal", graph_id, system_prompt, instruction)
@@ -184,7 +184,8 @@ defmodule Dialectic.Responses.LlmInterface do
   @spec gen_selection_response(map(), map(), String.t(), String.t(), String.t()) ::
           request_result()
   def gen_selection_response(node, child, graph_id, selection, live_view_topic) do
-    context = GraphManager.build_context(graph_id, node)
+    selection = strip_explain_command(selection)
+    context = selection_context(graph_id, node, selection)
 
     instruction = Prompts.selection(context, selection)
 
@@ -294,12 +295,14 @@ defmodule Dialectic.Responses.LlmInterface do
   @spec gen_related_ideas(map(), map(), String.t(), String.t(), String.t() | nil) ::
           request_result()
   def gen_related_ideas(node, child, graph_id, live_view_topic, content_override \\ nil) do
-    base = GraphManager.build_context(graph_id, node)
-
     context =
-      [base, to_string(node.content || "")]
-      |> Enum.reject(&(&1 == ""))
-      |> Enum.join("\n\n")
+      if content_override do
+        selection_context(graph_id, node, content_override)
+      else
+        [GraphManager.build_context(graph_id, node), to_string(node.content || "")]
+        |> Enum.reject(&(&1 == ""))
+        |> Enum.join("\n\n")
+      end
 
     instruction =
       if content_override do
@@ -363,17 +366,79 @@ defmodule Dialectic.Responses.LlmInterface do
     base_context = GraphManager.build_context(graph_id, node)
 
     if content_override do
-      # Selection-targeted tools should analyze the selected text while retaining
-      # both the surrounding graph context and the containing node text as the Foundation.
-      context =
-        [base_context, node.content || ""]
-        |> Enum.reject(&(&1 == ""))
-        |> Enum.join("\n\n")
-
-      {context, content_override}
+      {join_context(selection_window(node.content, content_override), base_context),
+       content_override}
     else
       {base_context, node.content || ""}
     end
+  end
+
+  defp selection_context(graph_id, node, selection) do
+    local_context = selection_window(node.content, selection)
+    join_context(local_context, GraphManager.build_context(graph_id, node))
+  end
+
+  defp immediate_parent_content(graph_id, node, selection) do
+    case Map.get(node, :parents, []) do
+      [parent | _] when is_map(parent) ->
+        selection_window(Map.get(parent, :content), selection)
+
+      [parent_id | _] ->
+        case GraphManager.find_node_by_id(graph_id, parent_id) do
+          nil -> ""
+          parent -> selection_window(parent.content, selection)
+        end
+
+      _ ->
+        ""
+    end
+  end
+
+  defp selection_window(content, selection) when is_binary(content) and is_binary(selection) do
+    case String.split(content, selection, parts: 2) do
+      [before, after_text] ->
+        before = String.slice(before, max(String.length(before) - 450, 0), 450)
+        after_text = String.slice(after_text, 0, 450)
+        before <> selection <> after_text
+
+      [_content_without_selection] ->
+        String.slice(content, 0, 1_000)
+    end
+  end
+
+  defp selection_window(content, _selection), do: to_string(content || "")
+
+  defp join_context(local_content, ancestor_context) do
+    [to_string(local_content || ""), ancestor_context]
+    |> Enum.reject(&(&1 == ""))
+    |> Enum.join("\n\n")
+  end
+
+  defp selection_request(node) do
+    content = node.content || ""
+    source_text = Map.get(node, :source_text) || ""
+
+    case Map.get(node, :prompt_kind) do
+      "selection_explain_question" ->
+        {:explain, source_text}
+
+      "selection_question_input" ->
+        {:custom_question, source_text, content}
+
+      _legacy ->
+        if String.starts_with?(content, "Please explain:") do
+          {:explain, strip_explain_command(content)}
+        else
+          {:custom_question, source_text, content}
+        end
+    end
+  end
+
+  defp strip_explain_command(content) do
+    content
+    |> to_string()
+    |> String.replace(~r/^Please explain:\s*/, "")
+    |> String.trim()
   end
 
   @spec get_system_prompt(String.t()) :: String.t()

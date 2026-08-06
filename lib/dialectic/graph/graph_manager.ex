@@ -104,51 +104,59 @@ defmodule GraphManager do
     path = graph_struct.title
     Logger.info("Shutting Down GraphManager for: #{path}, reason: #{inspect(reason)}")
 
-    # Synchronously save graph data before termination
-    # This ensures data is persisted even during application shutdown
-    try do
-      json = Serialise.graph_to_json(graph)
-      # Use synchronous save for immediate persistence
-      case Dialectic.DbActions.Graphs.save_graph(path, json) do
-        {:ok, _} ->
-          Logger.info("Successfully saved graph #{path} during shutdown")
+    unless Application.get_env(:dialectic, :sync_tasks_for_testing, false) do
+      try do
+        json = Serialise.graph_to_json(graph)
+        revision = next_data_revision(graph_struct)
 
-        {:error, reason} ->
-          Logger.error("Failed to save graph #{path} during shutdown: #{inspect(reason)}")
+        case Dialectic.DbActions.Graphs.save_graph_if_newer(path, json, revision) do
+          {:ok, :updated} ->
+            Logger.info("Successfully saved graph #{path} during shutdown")
+
+          {:error, :stale} ->
+            Logger.info("Skipped stale shutdown snapshot for #{path}")
+
+          {:error, reason} ->
+            Logger.error("Failed to save graph #{path} during shutdown: #{inspect(reason)}")
+        end
+      rescue
+        error ->
+          Logger.error(
+            "Exception saving graph #{path} during shutdown: #{Exception.format(:error, error, __STACKTRACE__)}"
+          )
       end
-    rescue
-      error ->
-        Logger.error(
-          "Exception saving graph #{path} during shutdown: #{Exception.format(:error, error, __STACKTRACE__)}"
-        )
     end
 
     :ok
   end
 
-  def save_graph_to_db(path, graph) do
+  defp persist_graph(path, json, revision) do
     Logger.info("Queuing Save: " <> path)
-    ts = DateTime.utc_now() |> DateTime.to_iso8601()
-    json = Serialise.graph_to_json(graph)
-    Dialectic.DbActions.DbWorker.save_snapshot(path, json, ts)
+    Dialectic.DbActions.DbWorker.save_snapshot(path, json, revision)
   end
 
-  defp persist_graph(path, graph) do
-    if Application.get_env(:dialectic, :sync_tasks_for_testing, false) do
-      save_graph_to_db(path, graph)
-    else
-      Task.Supervisor.start_child(Dialectic.TaskSupervisor, fn ->
-        save_graph_to_db(path, graph)
-      end)
-    end
+  defp next_data_revision(graph_struct) do
+    max(System.system_time(:microsecond), (graph_struct.data_revision || 0) + 1)
   end
 
   def handle_call(:get_graph, _from, {graph_struct, graph}) do
     {:reply, {graph_struct, graph}, {graph_struct, graph}}
   end
 
-  def handle_call({:update_graph_struct, updated_graph_struct}, _from, {_graph_struct, graph}) do
-    updated_graph_struct = %{updated_graph_struct | data: Serialise.graph_to_json(graph)}
+  def handle_call(
+        {:update_graph_struct, updated_graph_struct},
+        _from,
+        {current_graph_struct, graph}
+      ) do
+    data_revision =
+      max(updated_graph_struct.data_revision || 0, current_graph_struct.data_revision || 0)
+
+    updated_graph_struct = %{
+      updated_graph_struct
+      | data: Serialise.graph_to_json(graph),
+        data_revision: data_revision
+    }
+
     {:reply, :ok, {updated_graph_struct, graph}}
   end
 
@@ -280,7 +288,10 @@ defmodule GraphManager do
   end
 
   def handle_call({:save_graph, path}, _from, {graph_struct, graph}) do
-    result = persist_graph(path, graph)
+    json = Serialise.graph_to_json(graph)
+    revision = next_data_revision(graph_struct)
+    result = persist_graph(path, json, revision)
+    graph_struct = %{graph_struct | data: json, data_revision: revision}
 
     {:reply, result, {graph_struct, graph}}
   end
@@ -561,20 +572,30 @@ defmodule GraphManager do
       add_node(
         graph_id,
         Map.merge(
-          %Vertex{content: content, class: class, user: user, parent: parent_group},
+          %Vertex{
+            content: content,
+            class: class,
+            user: user,
+            parent: parent_group,
+            prompt_kind: class
+          },
           node_fields
         )
       )
 
-    # Stream response to the Node using supervised task
+    result = add_edges(graph_id, node, parents)
+
+    # Ensure the structural edge exists before generation can update or persist the child.
     if Application.get_env(:dialectic, :sync_tasks_for_testing, false) do
-      llm_fn.(node)
+      llm_fn.(result)
     else
-      Task.Supervisor.start_child(Dialectic.TaskSupervisor, fn -> llm_fn.(node) end)
+      Task.Supervisor.start_child(Dialectic.TaskSupervisor, fn -> llm_fn.(result) end)
     end
 
-    result = add_edges(graph_id, node, parents)
-    save_graph(graph_id)
+    if Keyword.get(opts, :save, true) do
+      save_graph(graph_id)
+    end
+
     result
   end
 
@@ -623,7 +644,7 @@ defmodule GraphManager do
   end
 
   def save_graph(path) do
-    GenServer.call(via_tuple(path), {:save_graph, path})
+    GenServer.call(via_tuple(path), {:save_graph, path}, 30_000)
   end
 
   def create_group(path, group_title, child_ids) do

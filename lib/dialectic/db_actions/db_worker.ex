@@ -2,54 +2,43 @@ defmodule Dialectic.DbActions.DbWorker do
   @moduledoc """
   Oban worker for persisting graph snapshots to the database.
 
-  Uses Oban uniqueness to debounce rapid save requests. If multiple saves
-  for the same graph are queued within a short window, they will be
-  coalesced into a single queued job. With the current uniqueness
-  configuration, the first queued job is kept and later duplicate inserts are
-  rejected, which prevents unnecessary database writes when multiple
-  operations trigger saves in quick succession (e.g., ask_and_answer
-  creating question + answer nodes).
+  Uses Oban uniqueness to debounce rapid save requests.
   """
 
   use Oban.Worker,
     queue: :db_write,
     max_attempts: 5,
-    # Debounce: only one job per graph_id within 2 seconds
-    # Include executing and retryable states to ensure ongoing jobs also
-    # prevent duplicate inserts, maximizing the debounce effect.
+    replace: [
+      available: [:args],
+      scheduled: [:args],
+      retryable: [:args]
+    ],
     unique: [
       period: 2,
       keys: [:id],
-      states: [:available, :scheduled, :executing, :retryable]
+      states: [:available, :scheduled, :retryable]
     ]
 
   require Logger
 
-  def perform(%Oban.Job{args: %{"id" => id, "data" => data} = args}) do
-    ts = Map.get(args, "ts")
+  def perform(%Oban.Job{args: %{"id" => id, "data" => data, "revision" => revision}})
+      when is_integer(revision) do
+    persist_if_newer(id, data, revision)
+  end
 
-    case ts do
-      ts when is_binary(ts) ->
-        Logger.info("Persisting graph snapshot for #{id} (ts=#{ts})")
+  # Backwards compatibility for timestamped jobs queued before data revisions.
+  def perform(%Oban.Job{args: %{"id" => id, "data" => data, "ts" => ts}})
+      when is_binary(ts) do
+    persist_if_newer(id, data, ts)
+  end
 
-        case Dialectic.DbActions.Graphs.save_graph_if_newer(id, data, ts) do
-          {:ok, :updated} ->
-            :ok
+  def perform(%Oban.Job{args: %{"id" => id, "data" => data}}) do
+    Logger.info("Persisting legacy graph snapshot for #{id} without a revision")
 
-          {:error, :stale} ->
-            Logger.info("Skipped stale snapshot for #{id} (ts=#{ts})")
-            :ok
-
-          _ ->
-            Logger.info("Falling back to unconditional save for #{id}")
-            Dialectic.DbActions.Graphs.save_graph(id, data)
-            :ok
-        end
-
-      _ ->
-        Logger.info("Persisting graph snapshot for #{id} (no ts)")
-        Dialectic.DbActions.Graphs.save_graph(id, data)
-        :ok
+    case Dialectic.DbActions.Graphs.save_graph_if_newer(id, data, 1) do
+      {:ok, :updated} -> :ok
+      {:error, :stale} -> :ok
+      {:error, reason} -> {:error, reason}
     end
   end
 
@@ -64,17 +53,13 @@ defmodule Dialectic.DbActions.DbWorker do
   Queue a graph snapshot for persistence.
 
   Multiple calls for the same graph within the debounce window (2 seconds)
-  will be coalesced into a single database write. Note that the first job's
-  data will be used (uniqueness prevents insertion of duplicates), so callers
-  should ensure the most important save happens first, or accept that rapid
-  saves will use slightly stale data (which is fine since the timestamp check
-  in save_graph_if_newer provides additional protection).
+  will be coalesced into a single database write.
   """
-  def save_snapshot(path, data, ts) do
+  def save_snapshot(path, data, revision) when is_integer(revision) do
     args = %{
       "id" => path,
       "data" => data,
-      "ts" => ts
+      "revision" => revision
     }
 
     create_job(args)
@@ -84,5 +69,24 @@ defmodule Dialectic.DbActions.DbWorker do
     args
     |> new()
     |> Oban.insert()
+  end
+
+  defp persist_if_newer(id, data, revision) do
+    Logger.info("Persisting graph snapshot for #{id} (revision=#{revision})")
+
+    case Dialectic.DbActions.Graphs.save_graph_if_newer(id, data, revision) do
+      {:ok, :updated} ->
+        :ok
+
+      {:error, :stale} ->
+        Logger.info("Skipped stale snapshot for #{id} (revision=#{revision})")
+        :ok
+
+      {:error, :invalid_timestamp} ->
+        {:discard, :invalid_snapshot_timestamp}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
   end
 end

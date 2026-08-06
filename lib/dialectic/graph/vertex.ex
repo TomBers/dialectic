@@ -1,7 +1,8 @@
 defmodule Dialectic.Graph.Vertex do
   require Logger
 
-  @derive {Jason.Encoder, only: [:id, :content, :class, :user, :noted_by, :deleted, :source_text]}
+  @derive {Jason.Encoder,
+           only: [:id, :content, :class, :user, :noted_by, :deleted, :source_text, :prompt_kind]}
   @valid_classes [
     "thesis",
     "antithesis",
@@ -14,6 +15,7 @@ defmodule Dialectic.Graph.Vertex do
     "question",
     "origin",
     "ideas",
+    "explain",
     # Cluster 1 — Core Inquiry Moves
     "clarify",
     "assumptions",
@@ -38,7 +40,8 @@ defmodule Dialectic.Graph.Vertex do
             noted_by: [],
             deleted: false,
             compound: false,
-            source_text: nil
+            source_text: nil,
+            prompt_kind: nil
 
   # Add a function to validate the class
   def validate_class(class) when class in @valid_classes, do: {:ok, class}
@@ -58,7 +61,8 @@ defmodule Dialectic.Graph.Vertex do
       noted_by: vertex.noted_by,
       deleted: vertex.deleted,
       compound: vertex.compound,
-      source_text: source_text_value
+      source_text: source_text_value,
+      prompt_kind: vertex.prompt_kind
     }
   end
 
@@ -77,7 +81,8 @@ defmodule Dialectic.Graph.Vertex do
       noted_by: data["noted_by"],
       deleted: data["deleted"],
       compound: data["compound"],
-      source_text: source_text_value
+      source_text: source_text_value,
+      prompt_kind: data["prompt_kind"]
     }
   end
 
@@ -120,7 +125,6 @@ defmodule Dialectic.Graph.Vertex do
     context =
       collect_parents(graph, node.id, allowed_parent)
       |> Enum.map(&add_node_context(&1, graph))
-      |> Enum.reverse()
       |> enforce_limit(limit)
       |> Enum.join("\n\n")
 
@@ -152,61 +156,60 @@ defmodule Dialectic.Graph.Vertex do
   end
 
   def collect_parents(graph, vertex, allowed_parent) do
-    # Start BFS from the given vertex's parents
-    initial_parents = :digraph.in_neighbours(graph, vertex)
-    bfs_parents(graph, initial_parents, MapSet.new(), [], allowed_parent)
+    graph
+    |> :digraph.in_neighbours(vertex)
+    |> Enum.sort_by(&vertex_sort_key/1)
+    |> Enum.reduce({[], MapSet.new()}, fn parent_id, {result, visited} ->
+      collect_parent(graph, parent_id, allowed_parent, result, visited)
+    end)
+    |> elem(0)
   end
 
-  def collect_parents(graph, vertex) do
-    # Default behavior: no group scoping when parent is not specified
-    collect_parents(graph, vertex, nil)
-  end
+  def collect_parents(graph, vertex), do: collect_parents(graph, vertex, nil)
 
-  # BFS implementation to collect ancestors without duplicates
-  # Returns list in BFS order (closest ancestors first)
-  defp bfs_parents(_graph, [], _visited, result, _allowed_parent), do: Enum.reverse(result)
-
-  defp bfs_parents(graph, [current_id | rest_queue], visited, result, allowed_parent) do
-    if MapSet.member?(visited, current_id) do
-      bfs_parents(graph, rest_queue, visited, result, allowed_parent)
+  defp collect_parent(graph, node_id, allowed_parent, result, visited) do
+    if MapSet.member?(visited, node_id) do
+      {result, visited}
     else
-      new_visited = MapSet.put(visited, current_id)
+      visited = MapSet.put(visited, node_id)
 
-      case :digraph.vertex(graph, current_id) do
-        {^current_id, label} ->
+      case :digraph.vertex(graph, node_id) do
+        {^node_id, label} ->
           parent_group = Map.get(label, :parent)
-          is_compound = Map.get(label, :compound, false)
-          is_question = Map.get(label, :class) == "question"
+          compound? = Map.get(label, :compound, false)
+          question? = Map.get(label, :class) == "question"
+          within_group? = is_nil(allowed_parent) or parent_group == allowed_parent
 
-          # Check validity
-          valid? =
-            not is_compound and
-              not is_question and
-              (is_nil(allowed_parent) or parent_group == allowed_parent)
-
-          if valid? do
-            # It's a valid context node. Add to result.
-            # And add its parents to queue for further traversal.
-            parents = :digraph.in_neighbours(graph, current_id)
-            # Append new parents to end of queue for BFS
-            queue =
-              Enum.reduce(parents, :queue.from_list(rest_queue), fn parent, acc ->
-                :queue.in(parent, acc)
+          if not compound? and within_group? do
+            {result, visited} =
+              graph
+              |> :digraph.in_neighbours(node_id)
+              |> Enum.sort_by(&vertex_sort_key/1)
+              |> Enum.reduce({result, visited}, fn parent_id, {result, visited} ->
+                collect_parent(graph, parent_id, allowed_parent, result, visited)
               end)
 
-            new_queue = :queue.to_list(queue)
-
-            bfs_parents(graph, new_queue, new_visited, [current_id | result], allowed_parent)
+            if question?, do: {result, visited}, else: {result ++ [node_id], visited}
           else
-            # Invalid node (stop traversal on this branch)
-            bfs_parents(graph, rest_queue, new_visited, result, allowed_parent)
+            {result, visited}
           end
 
         _ ->
-          bfs_parents(graph, rest_queue, new_visited, result, allowed_parent)
+          {result, visited}
       end
     end
   end
+
+  defp vertex_sort_key(id) when is_integer(id), do: {0, id, Integer.to_string(id)}
+
+  defp vertex_sort_key(id) when is_binary(id) do
+    case Integer.parse(id) do
+      {number, ""} -> {0, number, id}
+      _non_numeric -> {1, 0, id}
+    end
+  end
+
+  defp vertex_sort_key(id), do: {2, 0, inspect(id)}
 
   def find_leaf_nodes(graph) do
     :digraph.vertices(graph)
