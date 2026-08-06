@@ -32,7 +32,8 @@ defmodule Dialectic.Inspiration.Generator do
     # Use a faster model for inspiration generation
     opts = [
       system_prompt: system_prompt,
-      model: "gemini-2.5-flash-lite"
+      provider: :google,
+      model: "gemini-3.5-flash-lite"
     ]
 
     case Dialectic.LLM.Generator.generate(preferences_prompt, opts) do

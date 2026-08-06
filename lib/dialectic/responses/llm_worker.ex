@@ -42,6 +42,18 @@ defmodule Dialectic.Workers.LLMWorker do
   # -- Oban Perform Callback ----------------------------------------------------
 
   @impl Oban.Worker
+  def backoff(%Oban.Job{
+        unsaved_error: %{
+          reason: %ReqLLM.Error.API.Stream{
+            cause: %Finch.Error{reason: :connection_closed}
+          }
+        }
+      }),
+      do: 1
+
+  def backoff(job), do: Oban.Worker.backoff(job)
+
+  @impl Oban.Worker
   def perform(%Oban.Job{
         id: job_id,
         attempt: attempt,

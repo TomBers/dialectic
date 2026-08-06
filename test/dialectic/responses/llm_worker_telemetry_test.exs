@@ -27,6 +27,22 @@ defmodule Dialectic.Responses.LLMWorkerTelemetryTest do
     on_exit(fn -> :telemetry.detach(handler_id) end)
   end
 
+  test "retries closed streaming connections after one second" do
+    stream_error = %ReqLLM.Error.API.Stream{
+      reason: "Stream failed",
+      cause: %Finch.Error{reason: :connection_closed}
+    }
+
+    job = %Oban.Job{
+      attempt: 1,
+      max_attempts: 3,
+      unsaved_error: %{kind: :error, reason: stream_error, stacktrace: []}
+    }
+
+    assert LLMWorker.backoff(job) == 1
+    assert LLMWorker.backoff(%Oban.Job{attempt: 1, max_attempts: 3}) >= 15
+  end
+
   test "calculates queue wait from DateTime microseconds in native units" do
     inserted_at = ~U[2026-08-06 12:00:00.123456Z]
     wait_microseconds = 1_234_567
