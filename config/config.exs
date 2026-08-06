@@ -24,6 +24,10 @@ config :dialectic, Oban,
     {Oban.Plugins.Lifeline, rescue_after: :timer.minutes(15)}
   ]
 
+config :dialectic, :llm_admission,
+  max_active_per_actor: 3,
+  max_requests_per_minute: 10
+
 config :dialectic,
   ecto_repos: [Dialectic.Repo],
   generators: [timestamp_type: :utc_datetime],

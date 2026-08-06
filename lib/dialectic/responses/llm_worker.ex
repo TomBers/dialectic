@@ -33,6 +33,9 @@ defmodule Dialectic.Workers.LLMWorker do
   alias Dialectic.Responses.{PromptsStructured, ModeServer}
 
   @buffer_size 50
+  @queue_wait_event [:dialectic, :llm, :queue_wait]
+  @time_to_first_token_event [:dialectic, :llm, :time_to_first_token]
+  @job_event [:dialectic, :llm, :job]
 
   # -- Oban Perform Callback ----------------------------------------------------
 
@@ -41,6 +44,7 @@ defmodule Dialectic.Workers.LLMWorker do
         id: job_id,
         attempt: attempt,
         max_attempts: max_attempts,
+        inserted_at: inserted_at,
         args:
           %{
             "question" => _question,
@@ -49,17 +53,53 @@ defmodule Dialectic.Workers.LLMWorker do
             "live_view_topic" => live_view_topic
           } = args
       }) do
-    Logger.metadata(oban_job_id: job_id, oban_attempt: attempt)
+    job_started_at = System.monotonic_time()
+    queue_duration = queue_wait_duration(inserted_at, System.system_time(:microsecond))
+    provider_mod = select_provider(args)
+    provider = provider_mod.id()
 
-    Logger.debug(fn ->
-      "[LLMWorker] Starting job_id=#{job_id} attempt=#{attempt} graph=#{inspect(graph)} node=#{inspect(to_node)}"
-    end)
+    try do
+      Logger.metadata(oban_job_id: job_id, oban_attempt: attempt)
 
-    # Ensure the graph is loaded
+      Logger.debug(fn ->
+        "[LLMWorker] Starting job_id=#{job_id} attempt=#{attempt} graph=#{inspect(graph)} node=#{inspect(to_node)}"
+      end)
+
+      {result, outcome} =
+        perform_job(
+          job_id,
+          job_started_at,
+          attempt,
+          max_attempts,
+          args,
+          graph,
+          to_node,
+          live_view_topic,
+          provider_mod
+        )
+
+      emit_completion_telemetry(job_started_at, queue_duration, provider, outcome)
+      result
+    catch
+      kind, reason ->
+        emit_completion_telemetry(job_started_at, queue_duration, provider, :exception)
+        :erlang.raise(kind, reason, __STACKTRACE__)
+    end
+  end
+
+  defp perform_job(
+         job_id,
+         job_started_at,
+         attempt,
+         max_attempts,
+         args,
+         graph,
+         to_node,
+         live_view_topic,
+         provider_mod
+       ) do
     GraphManager.get_graph(graph)
 
-    # Check if node already has content (another job may have completed)
-    # This prevents duplicate jobs from overwriting each other's work
     existing_node = GraphManager.find_node_by_id(graph, to_node)
     existing_content = existing_node && Map.get(existing_node, :content, "")
 
@@ -68,40 +108,40 @@ defmodule Dialectic.Workers.LLMWorker do
         "[LLMWorker] SKIPPING job_id=#{job_id} - node #{to_node} already has content (#{byte_size(existing_content)} bytes). Another job likely completed first."
       end)
 
-      # Return :ok to mark job as complete without doing work
-      :ok
+      {:ok, :skipped}
     else
-      # Clear content for fresh start (idempotency for retries)
       GraphManager.set_node_content(graph, to_node, "")
-      start_time = System.monotonic_time(:millisecond)
 
-      do_llm_request(
-        job_id,
-        start_time,
-        attempt,
-        max_attempts,
-        args,
-        graph,
-        to_node,
-        live_view_topic
-      )
+      result =
+        do_llm_request(
+          job_id,
+          job_started_at,
+          attempt,
+          max_attempts,
+          args,
+          graph,
+          to_node,
+          live_view_topic,
+          provider_mod
+        )
+
+      {result, outcome_for_result(result)}
     end
   end
 
   # Extracted LLM request logic to separate function for clarity
   defp do_llm_request(
          job_id,
-         start_time,
+         job_started_at,
          attempt,
          max_attempts,
          args,
          graph,
          to_node,
-         live_view_topic
+         live_view_topic,
+         provider_mod
        ) do
     question = Map.get(args, "question", "")
-
-    provider_mod = select_provider(args)
 
     # Validate configuration early to surface clear messages
     {api_key_ok?, api_key_val} =
@@ -145,6 +185,7 @@ defmodule Dialectic.Workers.LLMWorker do
       {connect_timeout, receive_timeout} = Dialectic.LLM.Provider.timeouts(provider_mod)
       finch_name = Dialectic.LLM.Provider.finch_name(provider_mod)
       provider_options = provider_mod.provider_options()
+      request_started_at = System.monotonic_time()
 
       case ReqLLM.stream_text(
              model_spec,
@@ -177,7 +218,9 @@ defmodule Dialectic.Workers.LLMWorker do
               # Log time-to-first-token (TTFT) on first chunk
               ttft_logged? =
                 if not ttft_logged? and byte_size(chunk) > 0 do
-                  ttft_ms = System.monotonic_time(:millisecond) - start_time
+                  ttft_duration = elapsed_duration(request_started_at)
+                  emit_time_to_first_token(ttft_duration, provider_mod.id())
+                  ttft_ms = duration_in_milliseconds(ttft_duration)
                   Logger.info("[LLMWorker] job_id=#{job_id} TTFT=#{ttft_ms}ms")
                   true
                 else
@@ -225,7 +268,10 @@ defmodule Dialectic.Workers.LLMWorker do
               final_full_text = append_fallback_follow_ups(final_full_text, instruction)
               Utils.set_node_content(graph, to_node, final_full_text, live_view_topic)
 
-              total_ms = System.monotonic_time(:millisecond) - start_time
+              total_ms =
+                job_started_at
+                |> elapsed_duration()
+                |> duration_in_milliseconds()
 
               Logger.warning(
                 "[LLMWorker] job_id=#{job_id} completed without required follow-ups; appended fallback follow-up questions total=#{total_ms}ms bytes=#{byte_size(final_full_text)} finish_reason=#{inspect(finish_reason)}"
@@ -235,7 +281,10 @@ defmodule Dialectic.Workers.LLMWorker do
               :ok
 
             true ->
-              total_ms = System.monotonic_time(:millisecond) - start_time
+              total_ms =
+                job_started_at
+                |> elapsed_duration()
+                |> duration_in_milliseconds()
 
               Logger.info(
                 "[LLMWorker] job_id=#{job_id} completed total=#{total_ms}ms bytes=#{byte_size(final_full_text)} finish_reason=#{inspect(finish_reason)}"
@@ -270,7 +319,65 @@ defmodule Dialectic.Workers.LLMWorker do
     end
   end
 
-  # Note: Exceptions in do_llm_request will propagate up to perform/1
+  def queue_wait_duration(%DateTime{} = inserted_at, started_at_microsecond)
+      when is_integer(started_at_microsecond) do
+    wait_microseconds =
+      max(started_at_microsecond - DateTime.to_unix(inserted_at, :microsecond), 0)
+
+    System.convert_time_unit(wait_microseconds, :microsecond, :native)
+  end
+
+  def queue_wait_duration(_inserted_at, _started_at_microsecond), do: nil
+
+  def emit_time_to_first_token(duration, provider)
+      when is_integer(duration) and duration >= 0 do
+    :telemetry.execute(
+      @time_to_first_token_event,
+      %{duration: duration},
+      %{provider: provider, outcome: :success}
+    )
+  end
+
+  def emit_queue_wait(duration, provider, outcome)
+      when is_integer(duration) and duration >= 0 do
+    :telemetry.execute(
+      @queue_wait_event,
+      %{duration: duration},
+      %{provider: provider, outcome: outcome}
+    )
+  end
+
+  def emit_job_duration(duration, provider, outcome)
+      when is_integer(duration) and duration >= 0 do
+    :telemetry.execute(
+      @job_event,
+      %{duration: duration},
+      %{provider: provider, outcome: outcome}
+    )
+  end
+
+  defp emit_completion_telemetry(job_started_at, queue_duration, provider, outcome) do
+    job_duration = elapsed_duration(job_started_at)
+
+    if is_integer(queue_duration) do
+      emit_queue_wait(queue_duration, provider, outcome)
+    end
+
+    emit_job_duration(job_duration, provider, outcome)
+  end
+
+  defp elapsed_duration(started_at) do
+    max(System.monotonic_time() - started_at, 0)
+  end
+
+  defp duration_in_milliseconds(duration) do
+    System.convert_time_unit(duration, :native, :millisecond)
+  end
+
+  defp outcome_for_result(:ok), do: :success
+  defp outcome_for_result({:discard, _reason}), do: :discard
+  defp outcome_for_result({:error, _reason}), do: :error
+  defp outcome_for_result(_result), do: :unknown
 
   defp incomplete_finish?(finish_reason) do
     finish_reason in [:length, :incomplete, :cancelled, :error, :content_filter]

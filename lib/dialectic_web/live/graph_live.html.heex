@@ -475,8 +475,8 @@
         show
       >
         <h2 class="text-xl font-semibold mb-2">Review points to expand</h2>
-        <p class="text-sm text-gray-600 mb-3">
-          Select the points you want to expand. You can uncheck any you want to skip.
+        <p id="explore-selection-limit" class="text-sm text-gray-600 mb-3">
+          Select up to {@max_explore_items} points to expand.
         </p>
 
         <div>
@@ -485,7 +485,7 @@
               No points detected yet for this box.
             </div>
           <% end %>
-          <form phx-submit="submit_explore_modal">
+          <form id="explore-selection-form" phx-submit="submit_explore_modal">
             <div class="max-h-64 overflow-y-auto border rounded-md p-2 mb-3">
               <%= for item <- @explore_items do %>
                 <label class="flex items-start gap-2 py-1">

@@ -574,7 +574,11 @@ defmodule GraphManager do
     end
 
     result = add_edges(graph_id, node, parents)
-    save_graph(graph_id)
+
+    if Keyword.get(opts, :save, true) do
+      save_graph(graph_id)
+    end
+
     result
   end
 

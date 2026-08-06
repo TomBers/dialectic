@@ -51,6 +51,20 @@ defmodule DialecticWeb.Telemetry do
         unit: {:native, :millisecond}
       ),
 
+      # LLM Metrics
+      summary("dialectic.llm.queue_wait.duration",
+        tags: [:provider, :outcome],
+        unit: {:native, :millisecond}
+      ),
+      summary("dialectic.llm.time_to_first_token.duration",
+        tags: [:provider, :outcome],
+        unit: {:native, :millisecond}
+      ),
+      summary("dialectic.llm.job.duration",
+        tags: [:provider, :outcome],
+        unit: {:native, :millisecond}
+      ),
+
       # Database Metrics
       summary("dialectic.repo.query.total_time",
         unit: {:native, :millisecond},

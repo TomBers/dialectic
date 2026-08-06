@@ -44,6 +44,7 @@ defmodule DialecticWeb.GraphLive do
                               "regenerate"
                             ] ++ @critical_thinking_operations
   @structural_graph_operations ["delete" | @node_creation_operations]
+  @max_explore_items 3
   use DialecticWeb.GraphStreaming, preload_highlight_links: true
 
   alias Dialectic.Graph.{Vertex, GraphActions, Siblings}
@@ -513,25 +514,30 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("branch_list", %{"items" => items}, socket) do
-    if !socket.assigns.can_edit do
-      {:noreply, socket |> put_flash(:error, "This graph is locked")}
-    else
-      last_result =
-        Enum.reduce(items, nil, fn item, _acc ->
-          GraphActions.answer_selection(
-            graph_action_params(socket, socket.assigns.node),
-            "Please explain: #{item}",
-            "explain"
-          )
-        end)
+    cond do
+      !socket.assigns.can_edit ->
+        {:noreply, socket |> put_flash(:error, "This graph is locked")}
 
-      case last_result do
-        node when is_map(node) ->
-          update_graph(socket, {nil, node}, "explain")
+      length(items) > @max_explore_items ->
+        {:noreply, put_explore_limit_flash(socket)}
 
-        _ ->
-          {:noreply, socket}
-      end
+      true ->
+        last_result =
+          Enum.reduce(items, nil, fn item, _acc ->
+            GraphActions.answer_selection(
+              graph_action_params(socket, socket.assigns.node),
+              "Please explain: #{item}",
+              "explain"
+            )
+          end)
+
+        case last_result do
+          node when is_map(node) ->
+            update_graph(socket, {nil, node}, "explain")
+
+          _ ->
+            {:noreply, socket}
+        end
     end
   end
 
@@ -553,34 +559,39 @@ defmodule DialecticWeb.GraphLive do
     if !socket.assigns.can_edit do
       {:noreply, socket |> put_flash(:error, "This graph is locked")}
     else
-      selected = normalize_explore_selected(params)
+      selected = params |> normalize_explore_selected() |> Enum.uniq()
 
-      if selected == [] do
-        {:noreply, socket |> put_flash(:error, "Please select at least one point")}
-      else
-        last_result =
-          Enum.reduce(selected, nil, fn item, _acc ->
-            GraphActions.answer_selection(
-              graph_action_params(socket, socket.assigns.node),
-              "Please explain: #{item}",
-              "explain"
-            )
-          end)
+      cond do
+        selected == [] ->
+          {:noreply, socket |> put_flash(:error, "Please select at least one point")}
 
-        case last_result do
-          nil ->
-            {:noreply, socket}
+        length(selected) > @max_explore_items ->
+          {:noreply, put_explore_limit_flash(socket)}
 
-          node ->
-            {:noreply, updated_socket} = update_graph(socket, {nil, node}, "explain")
+        true ->
+          last_result =
+            Enum.reduce(selected, nil, fn item, _acc ->
+              GraphActions.answer_selection(
+                graph_action_params(socket, socket.assigns.node),
+                "Please explain: #{item}",
+                "explain"
+              )
+            end)
 
-            {:noreply,
-             assign(updated_socket,
-               show_explore_modal: false,
-               explore_items: [],
-               explore_selected: []
-             )}
-        end
+          case last_result do
+            nil ->
+              {:noreply, socket}
+
+            node ->
+              {:noreply, updated_socket} = update_graph(socket, {nil, node}, "explain")
+
+              {:noreply,
+               assign(updated_socket,
+                 show_explore_modal: false,
+                 explore_items: [],
+                 explore_selected: []
+               )}
+          end
       end
     end
   end
@@ -1884,6 +1895,10 @@ defmodule DialecticWeb.GraphLive do
       not Map.get(vertex_data, :deleted, false)
   end
 
+  defp put_explore_limit_flash(socket) do
+    put_flash(socket, :error, "Choose up to #{@max_explore_items} points at a time.")
+  end
+
   defp normalize_explore_selected(params) do
     cond do
       is_list(params) ->
@@ -2335,6 +2350,7 @@ defmodule DialecticWeb.GraphLive do
       show_explore_modal: false,
       explore_items: [],
       explore_selected: [],
+      max_explore_items: @max_explore_items,
       show_start_stream_modal: false,
       show_help_modal: false,
       show_share_modal: false,

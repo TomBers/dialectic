@@ -1,7 +1,12 @@
 defmodule Dialectic.Graph.IntegrationGraphActionsTest do
   use DialecticWeb.ConnCase, async: false
+
+  import Ecto.Query
+
+  alias Dialectic.DbActions.DbWorker
   alias Dialectic.Graph.GraphActions
   alias Dialectic.Graph.Vertex
+  alias Dialectic.Repo
 
   @graph_id "TestGraph"
   @test_user "Bob"
@@ -15,6 +20,11 @@ defmodule Dialectic.Graph.IntegrationGraphActionsTest do
   end
 
   def graph_param(node), do: {@graph_id, node, @test_user, nil}
+
+  defp snapshot_jobs do
+    worker = Oban.Worker.to_string(DbWorker)
+    Repo.all(from job in Oban.Job, where: job.worker == ^worker)
+  end
 
   def inital_qa() do
     node = GraphActions.create_new_node(@test_user)
@@ -86,6 +96,39 @@ defmodule Dialectic.Graph.IntegrationGraphActionsTest do
 
     assert question_node.class == "user"
     assert answer_node.class == "answer"
+  end
+
+  test "ask_and_answer batches question and answer into one graph snapshot", %{graph: _} do
+    root =
+      GraphManager.add_node(@graph_id, %Vertex{
+        content: "Root",
+        class: "origin",
+        user: @test_user
+      })
+
+    graph_manager = :global.whereis_name({:graph, @graph_id})
+    :erlang.trace(graph_manager, true, [:receive])
+
+    assert {nil, answer_node} =
+             GraphActions.ask_and_answer(graph_param(root), "What follows from this?")
+
+    :erlang.trace(graph_manager, false, [:receive])
+
+    assert answer_node.class == "answer"
+
+    assert_receive {:trace, ^graph_manager, :receive,
+                    {:"$gen_call", _from, {:save_graph, @graph_id}}}
+
+    refute_receive {:trace, ^graph_manager, :receive,
+                    {:"$gen_call", _from, {:save_graph, @graph_id}}}
+
+    assert [job] = snapshot_jobs()
+    snapshot = job.args["data"]
+
+    assert snapshot["nodes"] |> Enum.map(& &1["class"]) |> Enum.sort() ==
+             ["answer", "origin", "question"]
+
+    assert length(snapshot["edges"]) == 2
   end
 
   test "branch creates thesis and antithesis nodes", %{graph: _} do

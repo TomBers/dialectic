@@ -412,7 +412,7 @@ defmodule Dialectic.Graph.GraphActions do
         fn _ -> question_text end,
         "question",
         user,
-        child_opts
+        Keyword.put(child_opts, :save, false)
       )
 
     answer_node =

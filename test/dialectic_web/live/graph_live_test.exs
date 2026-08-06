@@ -167,6 +167,50 @@ defmodule DialecticWeb.GraphLiveTest do
     end
   end
 
+  describe "explore admission" do
+    test "shows the server-side explore selection limit", %{conn: conn} do
+      {:ok, view, _html} = setup_live_for_graph(conn, "Explore Limit UI")
+
+      render_click(view, "open_explore_modal", %{"items" => ["A", "B", "C", "D"]})
+
+      assert has_element?(view, "#explore-modal")
+      assert has_element?(view, "#explore-selection-form")
+      assert has_element?(view, "#explore-selection-limit", "Select up to 3 points")
+    end
+
+    test "rejects branch lists above the explore limit before creating nodes", %{conn: conn} do
+      {:ok, view, _html} = setup_live_for_graph(conn, "Explore Branch Limit")
+      graph_id = :sys.get_state(view.pid).socket.assigns.graph_id
+      {_graph_struct, graph_before} = GraphManager.get_graph(graph_id)
+      vertex_count_before = length(:digraph.vertices(graph_before))
+
+      render_click(view, "branch_list", %{"items" => ["A", "B", "C", "D"]})
+
+      {_graph_struct, graph_after} = GraphManager.get_graph(graph_id)
+      assert length(:digraph.vertices(graph_after)) == vertex_count_before
+      assert has_element?(view, "#flash-error", "Choose up to 3 points at a time")
+    end
+
+    test "keeps the explore modal open when too many points are submitted", %{conn: conn} do
+      {:ok, view, _html} = setup_live_for_graph(conn, "Explore Modal Limit")
+      graph_id = :sys.get_state(view.pid).socket.assigns.graph_id
+      items = ["A", "B", "C", "D"]
+
+      render_click(view, "open_explore_modal", %{"items" => items})
+      {_graph_struct, graph_before} = GraphManager.get_graph(graph_id)
+      vertex_count_before = length(:digraph.vertices(graph_before))
+
+      render_click(view, "submit_explore_modal", %{
+        "items" => %{"A" => "on", "B" => "on", "C" => "on", "D" => "on"}
+      })
+
+      {_graph_struct, graph_after} = GraphManager.get_graph(graph_id)
+      assert length(:digraph.vertices(graph_after)) == vertex_count_before
+      assert has_element?(view, "#explore-modal")
+      assert has_element?(view, "#flash-error", "Choose up to 3 points at a time")
+    end
+  end
+
   describe "selection actions" do
     test "pros/cons creates thesis and antithesis children for the selected text", %{conn: conn} do
       {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data())
