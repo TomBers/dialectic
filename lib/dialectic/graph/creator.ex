@@ -67,7 +67,15 @@ defmodule Dialectic.Graph.Creator do
           queue_streaming_response(title, updated_origin, answer_node, mode, actor_id)
 
         unless match?({:ok, _job}, queue_result) do
-          GraphManager.set_node_content(title, answer_node.id, queue_error_message(queue_result))
+          current_answer = GraphManager.find_node_by_id(title, answer_node.id)
+
+          if current_answer && current_answer.content == "" do
+            GraphManager.set_node_content(
+              title,
+              answer_node.id,
+              queue_error_message(queue_result)
+            )
+          end
         end
 
         callback.("Finalizing...")

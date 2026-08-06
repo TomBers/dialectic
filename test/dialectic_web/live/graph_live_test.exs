@@ -79,6 +79,17 @@ defmodule DialecticWeb.GraphLiveTest do
   end
 
   describe "mount/3" do
+    test "keeps a stable anonymous LLM actor in the signed browser session", %{conn: conn} do
+      first_conn = get(conn, ~p"/")
+      actor_id = get_session(first_conn, :llm_actor_id)
+
+      second_conn = first_conn |> recycle() |> get(~p"/")
+
+      assert is_binary(actor_id)
+      assert actor_id != ""
+      assert get_session(second_conn, :llm_actor_id) == actor_id
+    end
+
     test "assigns necessary values on mount with a current user", %{conn: conn} do
       {:ok, view, _html} = setup_live(conn)
       state = :sys.get_state(view.pid)
@@ -218,13 +229,15 @@ defmodule DialecticWeb.GraphLiveTest do
       {:ok, view, _html} = setup_live_for_graph(conn, "Explore Boundary")
       graph_id = :sys.get_state(view.pid).socket.assigns.graph_id
 
-      render_click(view, "open_explore_modal", %{"items" => ["A", "B", "C"]})
+      render_click(view, "open_explore_modal", %{"items" => ["A", "B", "C", "D"]})
       {_graph_struct, graph_before} = GraphManager.get_graph(graph_id)
       vertex_count_before = length(:digraph.vertices(graph_before))
 
       view
       |> element("#explore-selection-form")
-      |> render_submit(%{"items" => %{"A" => "on", "B" => "on", "C" => "on"}})
+      |> render_submit(%{
+        "items" => %{"A" => "true", "B" => "true", "C" => "true", "D" => "false"}
+      })
 
       {_graph_struct, graph_after} = GraphManager.get_graph(graph_id)
       assert length(:digraph.vertices(graph_after)) == vertex_count_before + 3

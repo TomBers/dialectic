@@ -129,6 +129,33 @@ defmodule Dialectic.Responses.RequestQueueWorkerTest do
       assert llm_job_count() == 2
     end
 
+    test "reports queued and executing job counts from Oban" do
+      actor_key = "metrics-#{System.unique_integer([:positive])}"
+      topic = "topic-#{System.unique_integer([:positive])}"
+
+      assert {:ok, _job} = RequestQueue.run_llm(llm_params(actor_key, topic, "metrics-node-1"))
+      assert {:ok, _job} = RequestQueue.run_llm(llm_params(actor_key, topic, "metrics-node-2"))
+
+      handler_id = {__MODULE__, self(), make_ref()}
+
+      :ok =
+        :telemetry.attach(
+          handler_id,
+          [:dialectic, :llm, :queue],
+          fn event, measurements, metadata, pid ->
+            send(pid, {:queue_telemetry, event, measurements, metadata})
+          end,
+          self()
+        )
+
+      on_exit(fn -> :telemetry.detach(handler_id) end)
+
+      assert :ok = DialecticWeb.Telemetry.measure_llm_queue()
+
+      assert_receive {:queue_telemetry, [:dialectic, :llm, :queue], %{queued: 2, executing: 0},
+                      %{}}
+    end
+
     test "duplicate jobs remain idempotent when the actor is at the active limit" do
       Application.put_env(:dialectic, :llm_admission,
         max_active_per_actor: 1,

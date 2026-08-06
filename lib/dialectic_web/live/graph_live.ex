@@ -1526,12 +1526,9 @@ defmodule DialecticWeb.GraphLive do
       "[GraphLive] stream_error node_id=#{inspect(node_id)} current=#{inspect(socket.assigns.node && Map.get(socket.assigns.node, :id))} error=#{inspect(error)}"
     end)
 
-    # This is the streamed LLM response into a node
-    # TODO - broadcast to all users??? - only want to update the node that is being worked on, just rerender the others
-    updated_vertex = GraphManager.update_vertex(socket.assigns.graph_id, node_id, error)
-    GraphManager.save_graph(socket.assigns.graph_id)
+    updated_vertex = GraphManager.find_node_by_id(socket.assigns.graph_id, node_id)
 
-    if socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
+    if updated_vertex && socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
       label = NodeTitleHelper.extract_node_title(updated_vertex)
 
       socket =
@@ -1922,6 +1919,7 @@ defmodule DialecticWeb.GraphLive do
         |> Enum.flat_map(fn {k, v} ->
           cond do
             v in ["on", "true", "1"] -> [k]
+            v in ["false", "off", "0", ""] -> []
             is_binary(v) -> [v]
             true -> []
           end

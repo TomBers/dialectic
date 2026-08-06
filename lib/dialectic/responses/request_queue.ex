@@ -290,6 +290,11 @@ defmodule Dialectic.Responses.RequestQueue do
       "[RequestQueue] LLM request rejected for graph=#{inspect(params.graph)} node=#{inspect(params.to_node)}: #{message}"
     )
 
+    if GraphManager.exists?(params.graph) do
+      GraphManager.set_node_content(params.graph, params.to_node, message)
+      GraphManager.save_graph(params.graph)
+    end
+
     Phoenix.PubSub.broadcast(
       Dialectic.PubSub,
       params.live_view_topic,

@@ -64,6 +64,26 @@ defmodule Dialectic.DbActions.DbWorkerTest do
     assert %{data: %{"version" => 2}, data_revision: 2} = Repo.get!(graph.__struct__, graph.title)
   end
 
+  test "does not let unrevisioned legacy jobs overwrite revisioned data" do
+    graph =
+      GraphFixtures.insert_graph(%{
+        title: "legacy-unrevisioned-#{System.unique_integer([:positive])}",
+        data: %{"version" => 0}
+      })
+
+    assert :ok =
+             DbWorker.perform(%Oban.Job{
+               args: %{"id" => graph.title, "data" => %{"version" => 2}, "revision" => 2}
+             })
+
+    assert :ok =
+             DbWorker.perform(%Oban.Job{
+               args: %{"id" => graph.title, "data" => %{"version" => 1}}
+             })
+
+    assert %{data: %{"version" => 2}, data_revision: 2} = Repo.get!(graph.__struct__, graph.title)
+  end
+
   test "converts legacy timestamped jobs into ordered revisions" do
     graph =
       GraphFixtures.insert_graph(%{

@@ -162,11 +162,11 @@ defmodule Dialectic.Workers.LLMWorker do
       end
 
     if not api_key_ok? do
-      Phoenix.PubSub.broadcast(
-        Dialectic.PubSub,
+      persist_stream_error(
+        graph,
+        to_node,
         live_view_topic,
-        {:stream_error, "#{provider_label(provider_mod)} API key not configured", :node_id,
-         to_node}
+        "#{provider_label(provider_mod)} API key not configured"
       )
 
       {:discard, :missing_api_key}
@@ -316,11 +316,7 @@ defmodule Dialectic.Workers.LLMWorker do
                 _ -> "#{provider_label(provider_mod)} request error: #{inspect(err)}"
               end
 
-            Phoenix.PubSub.broadcast(
-              Dialectic.PubSub,
-              live_view_topic,
-              {:stream_error, reason_msg, :node_id, to_node}
-            )
+            persist_stream_error(graph, to_node, live_view_topic, reason_msg)
           end
 
           Logger.error("#{provider_label(provider_mod)} request error: #{inspect(err)}")
@@ -472,6 +468,23 @@ defmodule Dialectic.Workers.LLMWorker do
   defp get_system_prompt(graph_id) do
     mode = ModeServer.get_mode(graph_id)
     PromptsStructured.system_preamble(mode)
+  end
+
+  defp persist_stream_error(graph, to_node, live_view_topic, message) do
+    GraphManager.set_node_content(graph, to_node, message)
+    GraphManager.save_graph(graph)
+
+    Phoenix.PubSub.broadcast(
+      Dialectic.PubSub,
+      live_view_topic,
+      {:stream_error, message, :node_id, to_node}
+    )
+
+    Phoenix.PubSub.broadcast(
+      Dialectic.PubSub,
+      live_view_topic,
+      {:llm_request_complete, to_node}
+    )
   end
 
   defp finalize(graph, to_node, live_view_topic) do

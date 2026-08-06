@@ -34,7 +34,12 @@ defmodule Dialectic.DbActions.DbWorker do
 
   def perform(%Oban.Job{args: %{"id" => id, "data" => data}}) do
     Logger.info("Persisting legacy graph snapshot for #{id} without a revision")
-    Dialectic.DbActions.Graphs.save_graph(id, data)
+
+    case Dialectic.DbActions.Graphs.save_graph_if_newer(id, data, 1) do
+      {:ok, :updated} -> :ok
+      {:error, :stale} -> :ok
+      {:error, reason} -> {:error, reason}
+    end
   end
 
   # Backwards compatibility: handle legacy jobs without embedded snapshot
