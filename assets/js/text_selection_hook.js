@@ -3,6 +3,7 @@ import HighlightUtils from "./highlight_utils.js";
 const textSelectionHook = {
   mounted() {
     this.handleSelection = this.handleSelection.bind(this);
+    this.handleSelectionStart = this.handleSelectionStart.bind(this);
     this.handleHighlightClick = this.handleHighlightClick.bind(this);
     this.handleLinkIconClick = this.handleLinkIconClick.bind(this);
     this.renderHighlightsForNode = this.renderHighlightsForNode.bind(this);
@@ -14,6 +15,7 @@ const textSelectionHook = {
       this.closeHighlightsDrawerOnMobile.bind(this);
     this.highlightsOnly = this.el.dataset.highlightsOnly === "true";
     this.highlightScrollRetryTimer = null;
+    this.selectionStartedHere = false;
 
     // Get node ID from data attribute
     this.nodeId = this.el.dataset.nodeId;
@@ -36,8 +38,10 @@ const textSelectionHook = {
     );
 
     if (!this.highlightsOnly) {
-      this.el.addEventListener("mouseup", this.handleSelection);
-      this.el.addEventListener("touchend", this.handleSelection);
+      this.el.addEventListener("mousedown", this.handleSelectionStart);
+      this.el.addEventListener("touchstart", this.handleSelectionStart);
+      document.addEventListener("mouseup", this.handleSelection);
+      document.addEventListener("touchend", this.handleSelection);
     }
 
     // When the Markdown hook finishes rendering, re-apply highlights from cache
@@ -83,8 +87,10 @@ const textSelectionHook = {
     );
 
     if (!this.highlightsOnly) {
-      this.el.removeEventListener("mouseup", this.handleSelection);
-      this.el.removeEventListener("touchend", this.handleSelection);
+      this.el.removeEventListener("mousedown", this.handleSelectionStart);
+      this.el.removeEventListener("touchstart", this.handleSelectionStart);
+      document.removeEventListener("mouseup", this.handleSelection);
+      document.removeEventListener("touchend", this.handleSelection);
     }
   },
 
@@ -124,6 +130,17 @@ const textSelectionHook = {
   },
 
   handleHighlightClick(event) {
+    const selection = window.getSelection();
+    if (
+      selection &&
+      !selection.isCollapsed &&
+      this.isSelectionInComponent(selection)
+    ) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
     // Check if the clicked element is a highlight with a linked node
     const highlightSpan = event.target.closest(
       ".highlight-span.has-linked-node",
@@ -334,63 +351,49 @@ const textSelectionHook = {
 
   // ── Text selection handling ─────────────────────────────────────────
 
+  handleSelectionStart(event) {
+    this.selectionStartedHere =
+      !event.target.closest(".highlight-link-icon") &&
+      !event.target.closest(".highlight-links-container");
+  },
+
   handleSelection(event) {
+    if (!this.selectionStartedHere) return;
+    this.selectionStartedHere = false;
+
     if (this.el.dataset.streaming === "true") {
       return;
     }
 
-    // Add small delay to ensure selection is properly registered
-    setTimeout(() => {
-      // IMPORTANT: Only handle events that originated within THIS hook's container
-      // This prevents multiple hook instances from interfering with each other
-      if (!this.el.contains(event.target)) {
-        return; // Event didn't happen in this hook's container, ignore it
-      }
+    const selection = window.getSelection();
 
-      // Ignore clicks on highlight link icons to prevent modal from reopening
-      if (
-        event.target.closest(".highlight-link-icon") ||
-        event.target.closest(".highlight-links-container")
-      ) {
-        return;
-      }
+    if (
+      !selection ||
+      selection.isCollapsed ||
+      !this.isSelectionInComponent(selection)
+    ) {
+      return;
+    }
 
-      const selection = window.getSelection();
+    const selectedText = selection.toString().trim();
+    if (selectedText.length === 0 || !this.isClosestSelectionContainer()) return;
 
-      // Check if selection is empty or not within this component
-      if (selection.isCollapsed || !this.isSelectionInComponent(selection)) {
-        return;
-      }
+    const mdContainer = this.el.querySelector(
+      '[phx-hook="Markdown"][data-body-only="true"]',
+    );
+    const capturedOffsets = mdContainer
+      ? this.getSelectionOffsets(mdContainer)
+      : null;
 
-      const selectedText = selection.toString().trim();
-      if (selectedText.length === 0) {
-        return;
-      }
-
-      // If we're not the closest container to the selection, don't show our button
-      if (!this.isClosestSelectionContainer()) {
-        return;
-      }
-
-      // Capture offsets for highlight creation
-      const mdContainer = this.el.querySelector(
-        '[phx-hook="Markdown"][data-body-only="true"]',
-      );
-      const capturedOffsets = mdContainer
-        ? this.getSelectionOffsets(mdContainer)
-        : null;
-
-      // Dispatch custom event to show modal (client-side only, no server round trip)
-      window.dispatchEvent(
-        new CustomEvent("selection:show", {
-          detail: {
-            selectedText: selectedText,
-            nodeId: this.nodeId,
-            offsets: capturedOffsets,
-          },
-        }),
-      );
-    }, 10);
+    window.dispatchEvent(
+      new CustomEvent("selection:show", {
+        detail: {
+          selectedText,
+          nodeId: this.nodeId,
+          offsets: capturedOffsets,
+        },
+      }),
+    );
   },
 
   isSelectionInComponent(selection) {
