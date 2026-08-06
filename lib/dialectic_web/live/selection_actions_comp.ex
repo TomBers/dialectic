@@ -174,7 +174,7 @@ defmodule DialecticWeb.SelectionActionsComp do
       assign(assigns, critical_tool_sections: @critical_tool_sections)
 
     ~H"""
-    <div id={@id}>
+    <div id={@id} data-can-edit={to_string(@can_edit)}>
       <div id={"selection-actions-modal-#{@id}"} class="hidden" phx-update="ignore" aria-hidden="true">
         <div
           data-selection-close
@@ -217,7 +217,6 @@ defmodule DialecticWeb.SelectionActionsComp do
                   type="button"
                   data-selection-action="explain"
                   data-disable-if-links="explain"
-                  data-base-disabled={to_string(!@can_edit)}
                   disabled={!@can_edit}
                   title="Create an AI explanation"
                   class="group flex min-h-[96px] flex-col items-start justify-between rounded-2xl border-2 border-slate-200 bg-white px-3.5 py-3 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-[0_12px_24px_rgba(15,23,42,0.08)] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100 disabled:cursor-not-allowed disabled:opacity-50"
@@ -247,7 +246,6 @@ defmodule DialecticWeb.SelectionActionsComp do
                 type="button"
                 data-selection-action="highlight_only"
                 data-disable-if-highlight="true"
-                data-base-disabled={to_string(!@can_edit)}
                 disabled={!@can_edit}
                 title="Save this text selection as a highlight"
                 class="group flex min-h-[96px] flex-col items-start justify-between rounded-2xl border-2 border-slate-200 bg-white px-3.5 py-3 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-[0_12px_24px_rgba(15,23,42,0.08)] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-100 disabled:cursor-not-allowed disabled:opacity-50"
@@ -277,7 +275,6 @@ defmodule DialecticWeb.SelectionActionsComp do
                   type="button"
                   data-selection-action="pros_cons"
                   data-disable-if-links="pro,con"
-                  data-base-disabled={to_string(!@can_edit)}
                   disabled={!@can_edit}
                   title="Analyze pros and cons"
                   class="group flex min-h-[96px] flex-col items-start justify-between rounded-2xl border-2 border-slate-200 bg-white px-3.5 py-3 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-[0_12px_24px_rgba(15,23,42,0.08)] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
@@ -306,7 +303,6 @@ defmodule DialecticWeb.SelectionActionsComp do
                   type="button"
                   data-selection-action="related_ideas"
                   data-disable-if-links="related_idea"
-                  data-base-disabled={to_string(!@can_edit)}
                   disabled={!@can_edit}
                   title="Find related ideas"
                   class="group flex min-h-[96px] flex-col items-start justify-between rounded-2xl border-2 border-slate-200 bg-white px-3.5 py-3 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-orange-300 hover:shadow-[0_12px_24px_rgba(15,23,42,0.08)] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:opacity-50"
@@ -368,7 +364,6 @@ defmodule DialecticWeb.SelectionActionsComp do
                         id={"selection-tool-#{@id}-#{tool.key}"}
                         data-selection-action={tool.key}
                         data-disable-if-links={tool.key}
-                        data-base-disabled={to_string(!@can_edit)}
                         disabled={!@can_edit}
                         title={tool.title}
                         class={[

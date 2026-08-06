@@ -8,10 +8,7 @@ const SelectionActionsHook = {
     this.handleClick = this.handleClick.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
 
-    this.componentEl = this.el.firstElementChild;
-    this.modalEl = this.componentEl?.querySelector(
-      '[id^="selection-actions-modal-"]',
-    );
+    this.refreshElements();
     this.selectionData = null;
     this.inputMode = ASK_MODE;
 
@@ -42,11 +39,36 @@ const SelectionActionsHook = {
       return;
     }
 
+    this.refreshElements();
     this.selectionData = { selectedText, nodeId, offsets };
     this.populateSelectedText(selectedText);
-    this.syncExistingHighlightState();
     this.resetClientControls();
+    this.syncCanEditState();
+    this.syncExistingHighlightState();
     this.showModal();
+  },
+
+  refreshElements() {
+    this.componentEl = this.el.firstElementChild;
+    this.modalEl = this.componentEl?.querySelector(
+      '[id^="selection-actions-modal-"]',
+    );
+  },
+
+  canEdit() {
+    return this.componentEl?.dataset.canEdit === "true";
+  },
+
+  syncCanEditState() {
+    const disabled = !this.canEdit();
+
+    this.modalEl
+      ?.querySelectorAll(
+        "[data-selection-input], [data-selection-input-submit], [data-selection-mode]",
+      )
+      .forEach((control) => {
+        control.disabled = disabled;
+      });
   },
 
   populateSelectedText(selectedText) {
@@ -81,9 +103,8 @@ const SelectionActionsHook = {
         const blockedByHighlight =
           button.dataset.disableIfHighlight === "true" && !!highlight;
         const blockedByLink = blockedLinks.some((type) => linkTypes.has(type));
-        const baseDisabled = button.dataset.baseDisabled === "true";
 
-        button.disabled = baseDisabled || blockedByHighlight || blockedByLink;
+        button.disabled = !this.canEdit() || blockedByHighlight || blockedByLink;
       });
 
     this.syncLinkCount("question", links);

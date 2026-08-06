@@ -1916,12 +1916,22 @@ defmodule DialecticWeb.GraphLive do
 
       is_map(params) and is_map(Map.get(params, "items")) ->
         params["items"]
-        |> Enum.flat_map(fn {k, v} ->
+        |> Enum.flat_map(fn {key, value} ->
           cond do
-            v in ["on", "true", "1"] -> [k]
-            v in ["false", "off", "0", ""] -> []
-            is_binary(v) -> [v]
-            true -> []
+            is_list(value) ->
+              if Enum.any?(value, &checked_checkbox_value?/1), do: [key], else: []
+
+            checked_checkbox_value?(value) ->
+              [key]
+
+            value in ["false", "off", "0", ""] ->
+              []
+
+            is_binary(value) ->
+              [value]
+
+            true ->
+              []
           end
         end)
 
@@ -1929,6 +1939,8 @@ defmodule DialecticWeb.GraphLive do
         []
     end
   end
+
+  defp checked_checkbox_value?(value), do: value in ["on", "true", "1", true, 1]
 
   # =========================================================================
   # Critical Thinking Tools - Helper Functions

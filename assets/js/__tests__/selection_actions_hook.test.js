@@ -6,15 +6,17 @@ let hook;
 function mountHook() {
   document.body.innerHTML = `
     <div id="selection-actions-hook">
-      <div id="selection-actions">
+      <div id="selection-actions" data-can-edit="true">
         <div id="selection-actions-modal-selection-actions" class="hidden" aria-hidden="true">
           <div data-selection-text></div>
           <button
             type="button"
             data-selection-action="highlight_only"
             data-disable-if-highlight="true"
-            data-base-disabled="false"
           >Highlight</button>
+          <textarea data-selection-input></textarea>
+          <button type="button" data-selection-mode="ask_question">Ask mode</button>
+          <button type="submit" data-selection-input-submit>Ask</button>
           <button type="button" data-selection-close>Close</button>
         </div>
       </div>
@@ -82,6 +84,34 @@ describe("SelectionActionsHook", () => {
       },
     );
     expect(instance.modalEl.classList.contains("hidden")).toBe(true);
+  });
+
+  it("refreshes editability from the patched component root on every open", () => {
+    const instance = mountHook();
+    const action = instance.modalEl.querySelector("[data-selection-action]");
+    const input = instance.modalEl.querySelector("[data-selection-input]");
+    const submit = instance.modalEl.querySelector("[data-selection-input-submit]");
+
+    showSelection();
+    expect(action.disabled).toBe(false);
+    expect(input.disabled).toBe(false);
+    expect(submit.disabled).toBe(false);
+
+    instance.closeModal();
+    instance.componentEl.dataset.canEdit = "false";
+    showSelection();
+
+    expect(action.disabled).toBe(true);
+    expect(input.disabled).toBe(true);
+    expect(submit.disabled).toBe(true);
+
+    instance.closeModal();
+    instance.componentEl.dataset.canEdit = "true";
+    showSelection();
+
+    expect(action.disabled).toBe(false);
+    expect(input.disabled).toBe(false);
+    expect(submit.disabled).toBe(false);
   });
 
   it("disables highlighting when the exact selection is already cached", () => {

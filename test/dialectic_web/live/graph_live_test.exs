@@ -236,7 +236,12 @@ defmodule DialecticWeb.GraphLiveTest do
       view
       |> element("#explore-selection-form")
       |> render_submit(%{
-        "items" => %{"A" => "true", "B" => "true", "C" => "true", "D" => "false"}
+        "items" => %{
+          "A" => ["false", "true"],
+          "B" => ["false", "true"],
+          "C" => ["false", "true"],
+          "D" => ["false"]
+        }
       })
 
       {_graph_struct, graph_after} = GraphManager.get_graph(graph_id)
