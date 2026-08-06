@@ -86,6 +86,8 @@ defmodule DialecticWeb.GraphLiveTest do
 
       assert socket.assigns.graph_id == @graph_id
       assert socket.assigns.user == "tester@example.com"
+      assert is_binary(socket.assigns.llm_actor_id)
+      assert socket.assigns.llm_actor_id != ""
     end
 
     test "shows a persistent reader switch for the current node", %{conn: conn} do
@@ -200,7 +202,9 @@ defmodule DialecticWeb.GraphLiveTest do
       {_graph_struct, graph_before} = GraphManager.get_graph(graph_id)
       vertex_count_before = length(:digraph.vertices(graph_before))
 
-      render_click(view, "submit_explore_modal", %{
+      view
+      |> element("#explore-selection-form")
+      |> render_submit(%{
         "items" => %{"A" => "on", "B" => "on", "C" => "on", "D" => "on"}
       })
 
@@ -208,6 +212,23 @@ defmodule DialecticWeb.GraphLiveTest do
       assert length(:digraph.vertices(graph_after)) == vertex_count_before
       assert has_element?(view, "#explore-modal")
       assert has_element?(view, "#flash-error", "Choose up to 3 points at a time")
+    end
+
+    test "accepts exactly three explore points", %{conn: conn} do
+      {:ok, view, _html} = setup_live_for_graph(conn, "Explore Boundary")
+      graph_id = :sys.get_state(view.pid).socket.assigns.graph_id
+
+      render_click(view, "open_explore_modal", %{"items" => ["A", "B", "C"]})
+      {_graph_struct, graph_before} = GraphManager.get_graph(graph_id)
+      vertex_count_before = length(:digraph.vertices(graph_before))
+
+      view
+      |> element("#explore-selection-form")
+      |> render_submit(%{"items" => %{"A" => "on", "B" => "on", "C" => "on"}})
+
+      {_graph_struct, graph_after} = GraphManager.get_graph(graph_id)
+      assert length(:digraph.vertices(graph_after)) == vertex_count_before + 3
+      refute has_element?(view, "#explore-modal")
     end
   end
 

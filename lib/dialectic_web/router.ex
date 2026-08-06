@@ -6,6 +6,7 @@ defmodule DialecticWeb.Router do
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
+    plug :ensure_llm_actor_id
     plug :fetch_live_flash
     plug :put_root_layout, html: {DialecticWeb.Layouts, :root}
     plug :protect_from_forgery
@@ -167,6 +168,17 @@ defmodule DialecticWeb.Router do
       on_mount: [{DialecticWeb.UserAuth, :mount_current_user}] do
       live "/users/confirm/:token", UserConfirmationLive, :edit
       live "/users/confirm", UserConfirmationInstructionsLive, :new
+    end
+  end
+
+  defp ensure_llm_actor_id(conn, _opts) do
+    case get_session(conn, :llm_actor_id) do
+      actor_id when is_binary(actor_id) and actor_id != "" ->
+        conn
+
+      _missing ->
+        actor_id = :crypto.strong_rand_bytes(18) |> Base.url_encode64(padding: false)
+        put_session(conn, :llm_actor_id, actor_id)
     end
   end
 end

@@ -50,6 +50,33 @@ defmodule Dialectic.Responses.RequestQueueWorkerTest do
       assert is_binary(job.args["actor_key"])
       refute job.args["actor_key"] =~ "reader@example.com"
     end
+
+    test "uses the stable anonymous session actor instead of the PubSub topic" do
+      actor_id = "session-#{System.unique_integer([:positive])}"
+
+      RequestQueue.add(
+        "First",
+        "SYSTEM",
+        %Dialectic.Graph.Vertex{id: "anonymous-1", user: "anonymous"},
+        "GraphX",
+        {"topic-one", actor_id}
+      )
+
+      RequestQueue.add(
+        "Second",
+        "SYSTEM",
+        %Dialectic.Graph.Vertex{id: "anonymous-2", user: "anonymous"},
+        "GraphY",
+        {"topic-two", actor_id}
+      )
+
+      worker = Oban.Worker.to_string(LocalWorker)
+      jobs = Repo.all(from job in Oban.Job, where: job.worker == ^worker, order_by: job.id)
+
+      assert [first_job, second_job] = jobs
+      assert first_job.args["actor_key"] == second_job.args["actor_key"]
+      refute first_job.args["actor_key"] =~ actor_id
+    end
   end
 
   describe "RequestQueue.run_llm/1 admission controls" do

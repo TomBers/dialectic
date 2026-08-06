@@ -140,8 +140,9 @@ defmodule Dialectic.Responses.RequestQueue do
     end
   end
 
-  defp build_params(instruction, system_prompt, to_node, graph, live_view_topic) do
+  defp build_params(instruction, system_prompt, to_node, graph, request_context) do
     node_id = if is_map(to_node), do: to_node.id, else: to_node
+    {live_view_topic, anonymous_actor_id} = split_request_context(request_context)
 
     %{
       instruction: instruction,
@@ -151,23 +152,35 @@ defmodule Dialectic.Responses.RequestQueue do
       graph: graph,
       module: nil,
       live_view_topic: live_view_topic,
-      actor_key: actor_key(to_node, live_view_topic)
+      actor_key: actor_key(to_node, graph, anonymous_actor_id)
     }
   end
 
   defp ensure_actor_key(params) do
     Map.put_new_lazy(params, :actor_key, fn ->
-      actor_key(nil, Map.get(params, :live_view_topic, "unknown"))
+      actor_key(nil, Map.get(params, :graph, "unknown"), nil)
     end)
   end
 
-  defp actor_key(%{user: user}, _live_view_topic)
+  defp split_request_context({live_view_topic, anonymous_actor_id})
+       when is_binary(live_view_topic) do
+    {live_view_topic, anonymous_actor_id}
+  end
+
+  defp split_request_context(live_view_topic), do: {live_view_topic, nil}
+
+  defp actor_key(%{user: user}, _graph, _anonymous_actor_id)
        when is_binary(user) and user not in ["", "anonymous"] do
     hash_actor("user:#{user}")
   end
 
-  defp actor_key(_to_node, live_view_topic) do
-    hash_actor("topic:#{live_view_topic}")
+  defp actor_key(_to_node, _graph, anonymous_actor_id)
+       when is_binary(anonymous_actor_id) and anonymous_actor_id != "" do
+    hash_actor("anonymous:#{anonymous_actor_id}")
+  end
+
+  defp actor_key(_to_node, graph, _anonymous_actor_id) do
+    hash_actor("graph:#{graph}")
   end
 
   defp hash_actor(actor) do
@@ -238,8 +251,15 @@ defmodule Dialectic.Responses.RequestQueue do
            @rate_window_ms,
            max_requests_per_minute()
          ) do
-      {:allow, _count} -> false
-      {:deny, _limit} -> true
+      {:allow, _count} ->
+        false
+
+      {:deny, _limit} ->
+        true
+
+      {:error, reason} ->
+        Logger.error("[RequestQueue] Rate limiter unavailable: #{inspect(reason)}")
+        false
     end
   end
 

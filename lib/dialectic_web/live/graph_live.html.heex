@@ -485,7 +485,7 @@
               No points detected yet for this box.
             </div>
           <% end %>
-          <form id="explore-selection-form" phx-submit="submit_explore_modal">
+          <.form for={@explore_form} id="explore-selection-form" phx-submit="submit_explore_modal">
             <div class="max-h-64 overflow-y-auto border rounded-md p-2 mb-3">
               <%= for item <- @explore_items do %>
                 <label class="flex items-start gap-2 py-1">
@@ -520,7 +520,7 @@
                 Expand selected
               </button>
             </div>
-          </form>
+          </.form>
         </div>
       </.modal>
     </div>

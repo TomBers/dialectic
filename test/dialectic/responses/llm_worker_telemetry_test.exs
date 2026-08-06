@@ -7,7 +7,8 @@ defmodule Dialectic.Responses.LLMWorkerTelemetryTest do
   @events [
     [:dialectic, :llm, :queue_wait],
     [:dialectic, :llm, :time_to_first_token],
-    [:dialectic, :llm, :job]
+    [:dialectic, :llm, :job],
+    [:dialectic, :llm, :queue]
   ]
 
   setup do
@@ -38,10 +39,20 @@ defmodule Dialectic.Responses.LLMWorkerTelemetryTest do
     assert LLMWorker.queue_wait_duration(nil, started_at) == nil
   end
 
+  test "uses the retry schedule as the queue-wait reference after the first attempt" do
+    inserted_at = ~U[2026-08-06 12:00:00.000000Z]
+    scheduled_at = ~U[2026-08-06 12:01:00.000000Z]
+
+    assert LLMWorker.queue_reference_time(1, inserted_at, scheduled_at) == inserted_at
+    assert LLMWorker.queue_reference_time(2, inserted_at, scheduled_at) == scheduled_at
+    assert LLMWorker.queue_reference_time(2, inserted_at, nil) == inserted_at
+  end
+
   test "emits low-cardinality timing event metadata without request identifiers" do
     LLMWorker.emit_queue_wait(11, :openai, :error)
     LLMWorker.emit_time_to_first_token(22, :google)
     LLMWorker.emit_job_duration(33, :openai, :discard)
+    WebTelemetry.emit_llm_queue_depth(4, 2)
 
     assert_receive {:telemetry_event, [:dialectic, :llm, :queue_wait], %{duration: 11},
                     %{provider: :openai, outcome: :error}}
@@ -51,6 +62,8 @@ defmodule Dialectic.Responses.LLMWorkerTelemetryTest do
 
     assert_receive {:telemetry_event, [:dialectic, :llm, :job], %{duration: 33},
                     %{provider: :openai, outcome: :discard}}
+
+    assert_receive {:telemetry_event, [:dialectic, :llm, :queue], %{queued: 4, executing: 2}, %{}}
   end
 
   test "registers all LLM timing summaries with native-to-millisecond conversion" do
@@ -66,6 +79,13 @@ defmodule Dialectic.Responses.LLMWorkerTelemetryTest do
       assert %Telemetry.Metrics.Summary{} = metric
       assert metric.tags == [:provider, :outcome]
       assert metric.unit == :millisecond
+    end
+
+    for name <- [
+          [:dialectic, :llm, :queue, :queued],
+          [:dialectic, :llm, :queue, :executing]
+        ] do
+      assert %Telemetry.Metrics.LastValue{} = Enum.find(metrics, &(&1.name == name))
     end
   end
 end

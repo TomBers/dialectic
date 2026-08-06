@@ -10,7 +10,7 @@ defmodule Dialectic.Graph.Creator do
   require Logger
   alias Dialectic.DbActions.Graphs
   alias GraphManager
-  alias Dialectic.Graph.{Vertex, Serialise}
+  alias Dialectic.Graph.Vertex
   alias Dialectic.Responses.{ModeServer, Prompts, PromptsStructured, RequestQueue}
 
   @doc """
@@ -33,17 +33,18 @@ defmodule Dialectic.Graph.Creator do
     callback = Keyword.get(opts, :progress_callback, fn _ -> :ok end)
     title = Keyword.get(opts, :title) || Graphs.sanitize_title(question)
     mode = Keyword.get(opts, :mode, :university)
+    actor_id = Keyword.get(opts, :actor_id)
 
     callback.("Creating grid structure...")
 
     if Graphs.get_graph_by_title(title) do
       {:ok, title}
     else
-      do_create(title, question, user, user_identity, mode, callback)
+      do_create(title, question, user, user_identity, mode, actor_id, callback)
     end
   end
 
-  defp do_create(title, question, user, user_identity, mode, callback) do
+  defp do_create(title, question, user, user_identity, mode, actor_id, callback) do
     case Graphs.create_new_graph(title, user, Atom.to_string(mode)) do
       {:ok, _} ->
         ModeServer.set_mode(title, mode)
@@ -62,21 +63,24 @@ defmodule Dialectic.Graph.Creator do
         # Create the empty answer node connected to origin
         answer_node = create_answer_node_struct(title, updated_origin, user_identity)
 
-        # Queue async streaming LLM request (instead of waiting synchronously)
-        queue_streaming_response(title, updated_origin, answer_node, mode)
+        queue_result =
+          queue_streaming_response(title, updated_origin, answer_node, mode, actor_id)
 
-        # Save the graph immediately so user can be redirected
+        unless match?({:ok, _job}, queue_result) do
+          GraphManager.set_node_content(title, answer_node.id, queue_error_message(queue_result))
+        end
+
         callback.("Finalizing...")
-        {_graph_struct, graph} = GraphManager.get_graph(title)
-        json = Serialise.graph_to_json(graph)
 
-        case Graphs.save_graph(title, json) do
-          {:ok, _} ->
-            Logger.info("Successfully saved graph #{title} after creation, LLM streaming queued")
+        case GraphManager.save_graph(title) do
+          {:ok, _job} ->
+            Logger.info("Successfully queued graph #{title} for persistence after creation")
             {:ok, title}
 
           {:error, save_reason} ->
-            Logger.error("Failed to save graph #{title} after creation: #{inspect(save_reason)}")
+            Logger.error(
+              "Failed to queue graph #{title} for persistence: #{inspect(save_reason)}"
+            )
 
             {:error, :save_failed}
         end
@@ -91,6 +95,18 @@ defmodule Dialectic.Graph.Creator do
     GraphManager.set_node_content(title, node.id, new_content)
     # Explicitly return the updated node struct
     GraphManager.find_node_by_id(title, node.id)
+  end
+
+  defp queue_error_message({:error, :too_many_active_requests}) do
+    "AI generation is busy with your other requests. Please regenerate this answer shortly."
+  end
+
+  defp queue_error_message({:error, :rate_limited}) do
+    "AI generation was requested too quickly. Please regenerate this answer in a minute."
+  end
+
+  defp queue_error_message(_queue_result) do
+    "AI generation could not be queued. Please regenerate this answer shortly."
   end
 
   defp create_answer_node_struct(title, parent, user_identity) do
@@ -112,7 +128,7 @@ defmodule Dialectic.Graph.Creator do
   This uses the same streaming infrastructure as follow-up questions,
   allowing the response to stream in real-time on the graph page.
   """
-  def queue_streaming_response(title, origin_node, answer_node, mode) do
+  def queue_streaming_response(title, origin_node, answer_node, mode, actor_id \\ nil) do
     context = GraphManager.build_context(title, origin_node)
     instruction = Prompts.initial_explainer(context, origin_node.content)
     system_prompt = PromptsStructured.system_preamble(mode)
@@ -128,7 +144,7 @@ defmodule Dialectic.Graph.Creator do
            system_prompt,
            answer_node,
            title,
-           live_view_topic
+           {live_view_topic, actor_id}
          ) do
       {:ok, job} ->
         Logger.debug(

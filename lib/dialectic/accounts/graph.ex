@@ -6,6 +6,7 @@ defmodule Dialectic.Accounts.Graph do
 
   schema "graphs" do
     field :data, :map
+    field :data_revision, :integer, default: 0
     field :is_public, :boolean
     field :is_published, :boolean
     field :is_deleted, :boolean

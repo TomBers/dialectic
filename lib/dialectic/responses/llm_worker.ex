@@ -45,6 +45,7 @@ defmodule Dialectic.Workers.LLMWorker do
         attempt: attempt,
         max_attempts: max_attempts,
         inserted_at: inserted_at,
+        scheduled_at: scheduled_at,
         args:
           %{
             "question" => _question,
@@ -54,9 +55,18 @@ defmodule Dialectic.Workers.LLMWorker do
           } = args
       }) do
     job_started_at = System.monotonic_time()
-    queue_duration = queue_wait_duration(inserted_at, System.system_time(:microsecond))
+    queue_started_at = queue_reference_time(attempt, inserted_at, scheduled_at)
+    queue_duration = queue_wait_duration(queue_started_at, System.system_time(:microsecond))
     provider_mod = select_provider(args)
     provider = provider_mod.id()
+
+    if is_integer(queue_duration) do
+      emit_queue_wait(queue_duration, provider, :started)
+
+      Logger.info(
+        "[LLMWorker] job_id=#{job_id} queue_wait=#{duration_in_milliseconds(queue_duration)}ms provider=#{provider}"
+      )
+    end
 
     try do
       Logger.metadata(oban_job_id: job_id, oban_attempt: attempt)
@@ -78,11 +88,11 @@ defmodule Dialectic.Workers.LLMWorker do
           provider_mod
         )
 
-      emit_completion_telemetry(job_started_at, queue_duration, provider, outcome)
+      emit_completion_telemetry(job_started_at, provider, outcome)
       result
     catch
       kind, reason ->
-        emit_completion_telemetry(job_started_at, queue_duration, provider, :exception)
+        emit_completion_telemetry(job_started_at, provider, :exception)
         :erlang.raise(kind, reason, __STACKTRACE__)
     end
   end
@@ -319,6 +329,12 @@ defmodule Dialectic.Workers.LLMWorker do
     end
   end
 
+  def queue_reference_time(attempt, _inserted_at, %DateTime{} = scheduled_at)
+      when attempt > 1,
+      do: scheduled_at
+
+  def queue_reference_time(_attempt, inserted_at, _scheduled_at), do: inserted_at
+
   def queue_wait_duration(%DateTime{} = inserted_at, started_at_microsecond)
       when is_integer(started_at_microsecond) do
     wait_microseconds =
@@ -356,14 +372,8 @@ defmodule Dialectic.Workers.LLMWorker do
     )
   end
 
-  defp emit_completion_telemetry(job_started_at, queue_duration, provider, outcome) do
-    job_duration = elapsed_duration(job_started_at)
-
-    if is_integer(queue_duration) do
-      emit_queue_wait(queue_duration, provider, outcome)
-    end
-
-    emit_job_duration(job_duration, provider, outcome)
+  defp emit_completion_telemetry(job_started_at, provider, outcome) do
+    emit_job_duration(elapsed_duration(job_started_at), provider, outcome)
   end
 
   defp elapsed_duration(started_at) do

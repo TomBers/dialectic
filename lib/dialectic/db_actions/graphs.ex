@@ -388,27 +388,30 @@ defmodule Dialectic.DbActions.Graphs do
   end
 
   @doc """
-  Saves the graph only if the provided snapshot timestamp is newer than or equal to
-  the current stored row's updated_at.
+  Saves graph data only when the snapshot revision is newer than the stored revision.
 
-  Returns:
-  - {:ok, :updated} if the row was updated
-  - {:error, :stale} if the DB has a newer row (update skipped) or graph doesn't exist
-  - {:error, :invalid_timestamp} if ts can't be parsed
+  Timestamp strings from jobs created before data revisions were introduced are
+  converted to microsecond revisions for backwards compatibility.
   """
+  def save_graph_if_newer(title, data, revision) when is_integer(revision) do
+    updated_at = DateTime.utc_now() |> DateTime.truncate(:second)
+
+    {count, _} =
+      from(g in Graph,
+        where: g.title == ^title and g.data_revision < ^revision
+      )
+      |> Repo.update_all(set: [data: data, data_revision: revision, updated_at: updated_at])
+
+    if count == 1 do
+      {:ok, :updated}
+    else
+      {:error, :stale}
+    end
+  end
+
   def save_graph_if_newer(title, data, iso_ts) when is_binary(iso_ts) do
     with {:ok, ts, _offset} <- DateTime.from_iso8601(iso_ts) do
-      {count, _} =
-        from(g in Graph,
-          where: g.title == ^title and (is_nil(g.updated_at) or g.updated_at <= ^ts)
-        )
-        |> Repo.update_all(set: [data: data, updated_at: ts])
-
-      if count == 1 do
-        {:ok, :updated}
-      else
-        {:error, :stale}
-      end
+      save_graph_if_newer(title, data, DateTime.to_unix(ts, :microsecond))
     else
       _ -> {:error, :invalid_timestamp}
     end

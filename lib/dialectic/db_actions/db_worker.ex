@@ -21,32 +21,20 @@ defmodule Dialectic.DbActions.DbWorker do
 
   require Logger
 
-  def perform(%Oban.Job{args: %{"id" => id, "data" => data} = args}) do
-    ts = Map.get(args, "ts")
+  def perform(%Oban.Job{args: %{"id" => id, "data" => data, "revision" => revision}})
+      when is_integer(revision) do
+    persist_if_newer(id, data, revision)
+  end
 
-    case ts do
-      ts when is_binary(ts) ->
-        Logger.info("Persisting graph snapshot for #{id} (ts=#{ts})")
+  # Backwards compatibility for timestamped jobs queued before data revisions.
+  def perform(%Oban.Job{args: %{"id" => id, "data" => data, "ts" => ts}})
+      when is_binary(ts) do
+    persist_if_newer(id, data, ts)
+  end
 
-        case Dialectic.DbActions.Graphs.save_graph_if_newer(id, data, ts) do
-          {:ok, :updated} ->
-            :ok
-
-          {:error, :stale} ->
-            Logger.info("Skipped stale snapshot for #{id} (ts=#{ts})")
-            :ok
-
-          _ ->
-            Logger.info("Falling back to unconditional save for #{id}")
-            Dialectic.DbActions.Graphs.save_graph(id, data)
-            :ok
-        end
-
-      _ ->
-        Logger.info("Persisting graph snapshot for #{id} (no ts)")
-        Dialectic.DbActions.Graphs.save_graph(id, data)
-        :ok
-    end
+  def perform(%Oban.Job{args: %{"id" => id, "data" => data}}) do
+    Logger.info("Persisting legacy graph snapshot for #{id} without a revision")
+    Dialectic.DbActions.Graphs.save_graph(id, data)
   end
 
   # Backwards compatibility: handle legacy jobs without embedded snapshot
@@ -62,11 +50,11 @@ defmodule Dialectic.DbActions.DbWorker do
   Multiple calls for the same graph within the debounce window (2 seconds)
   will be coalesced into a single database write.
   """
-  def save_snapshot(path, data, ts) do
+  def save_snapshot(path, data, revision) when is_integer(revision) do
     args = %{
       "id" => path,
       "data" => data,
-      "ts" => ts
+      "revision" => revision
     }
 
     create_job(args)
@@ -76,5 +64,24 @@ defmodule Dialectic.DbActions.DbWorker do
     args
     |> new()
     |> Oban.insert()
+  end
+
+  defp persist_if_newer(id, data, revision) do
+    Logger.info("Persisting graph snapshot for #{id} (revision=#{revision})")
+
+    case Dialectic.DbActions.Graphs.save_graph_if_newer(id, data, revision) do
+      {:ok, :updated} ->
+        :ok
+
+      {:error, :stale} ->
+        Logger.info("Skipped stale snapshot for #{id} (revision=#{revision})")
+        :ok
+
+      {:error, :invalid_timestamp} ->
+        {:discard, :invalid_snapshot_timestamp}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
   end
 end

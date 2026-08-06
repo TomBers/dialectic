@@ -134,9 +134,10 @@ defmodule DialecticWeb.GraphLive do
   end
 
   @impl true
-  def mount(%{"graph_name" => graph_id_uri} = params, _session, socket) do
+  def mount(%{"graph_name" => graph_id_uri} = params, session, socket) do
     graph_id = URI.decode(graph_id_uri)
     user = UserUtils.current_identity(socket.assigns)
+    socket = assign(socket, :llm_actor_id, session["llm_actor_id"] || "graph:#{graph_id}")
 
     case fetch_graph(socket.assigns[:current_user], graph_id, params) do
       {:ok, {graph_struct, _}, graph_db} ->
@@ -514,9 +515,14 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("branch_list", %{"items" => items}, socket) do
+    items = items |> normalize_explore_selected() |> Enum.uniq()
+
     cond do
       !socket.assigns.can_edit ->
         {:noreply, socket |> put_flash(:error, "This graph is locked")}
+
+      items == [] ->
+        {:noreply, socket |> put_flash(:error, "Please select at least one point")}
 
       length(items) > @max_explore_items ->
         {:noreply, put_explore_limit_flash(socket)}
@@ -1523,6 +1529,7 @@ defmodule DialecticWeb.GraphLive do
     # This is the streamed LLM response into a node
     # TODO - broadcast to all users??? - only want to update the node that is being worked on, just rerender the others
     updated_vertex = GraphManager.update_vertex(socket.assigns.graph_id, node_id, error)
+    GraphManager.save_graph(socket.assigns.graph_id)
 
     if socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
       label = NodeTitleHelper.extract_node_title(updated_vertex)
@@ -2350,6 +2357,7 @@ defmodule DialecticWeb.GraphLive do
       show_explore_modal: false,
       explore_items: [],
       explore_selected: [],
+      explore_form: to_form(%{}, as: :explore),
       max_explore_items: @max_explore_items,
       show_start_stream_modal: false,
       show_help_modal: false,
