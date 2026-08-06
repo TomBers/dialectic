@@ -251,6 +251,7 @@ defmodule GraphManagerTest do
       # TODO - How to test the streaming function?
       assert child.content == ""
       assert child.class == "child_class"
+      assert child.prompt_kind == "child_class"
       assert child.user == @test_user
 
       # Verify edge exists

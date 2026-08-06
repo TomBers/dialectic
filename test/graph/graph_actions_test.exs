@@ -7,6 +7,8 @@ defmodule Dialectic.Graph.IntegrationGraphActionsTest do
   alias Dialectic.Graph.GraphActions
   alias Dialectic.Graph.Vertex
   alias Dialectic.Repo
+  alias Dialectic.Responses.Prompts
+  alias Dialectic.Workers.LocalWorker
 
   @graph_id "TestGraph"
   @test_user "Bob"
@@ -115,6 +117,8 @@ defmodule Dialectic.Graph.IntegrationGraphActionsTest do
     :erlang.trace(graph_manager, false, [:receive])
 
     assert answer_node.class == "answer"
+    assert answer_node.prompt_kind == "answer"
+    assert List.first(answer_node.parents).prompt_kind == "question"
 
     assert_receive {:trace, ^graph_manager, :receive,
                     {:"$gen_call", _from, {:save_graph, @graph_id}}}
@@ -129,6 +133,29 @@ defmodule Dialectic.Graph.IntegrationGraphActionsTest do
              ["answer", "origin", "question"]
 
     assert length(snapshot["edges"]) == 2
+  end
+
+  test "selected questions retain explicit prompt provenance", %{graph: _} do
+    root =
+      GraphManager.add_node(@graph_id, %Vertex{
+        content: "Containing passage",
+        class: "answer",
+        user: @test_user
+      })
+
+    assert {nil, answer_node} =
+             GraphActions.ask_about_selection(
+               graph_param(root),
+               "Please explain: why does this matter?",
+               "selected phrase"
+             )
+
+    question_node = List.first(answer_node.parents)
+
+    assert question_node.prompt_kind == "selection_question_input"
+    assert question_node.source_text == "selected phrase"
+    assert answer_node.prompt_kind == "selection_question"
+    assert answer_node.source_text == "selected phrase"
   end
 
   test "branch creates thesis and antithesis nodes", %{graph: _} do
@@ -146,6 +173,78 @@ defmodule Dialectic.Graph.IntegrationGraphActionsTest do
 
     assert thesis_node.class == "thesis"
     assert antithesis_node.class == "antithesis"
+  end
+
+  test "regenerating a legacy initial answer infers and preserves its prompt contract", %{
+    graph: _
+  } do
+    origin =
+      GraphManager.add_node(@graph_id, %Vertex{
+        content: "Why does justice matter?",
+        class: "origin",
+        user: @test_user
+      })
+
+    assert origin.id == "1"
+
+    stuck_answer =
+      GraphManager.add_node(@graph_id, %Vertex{
+        content: "",
+        class: "answer",
+        user: @test_user
+      })
+
+    GraphManager.add_edges(@graph_id, stuck_answer, [origin])
+
+    assert {:ok, regenerated_node} =
+             GraphActions.regenerate_node(graph_param(stuck_answer), stuck_answer.id)
+
+    assert regenerated_node.prompt_kind == "initial_explainer"
+
+    worker = Oban.Worker.to_string(LocalWorker)
+    llm_job = Repo.one!(from job in Oban.Job, where: job.worker == ^worker)
+
+    assert llm_job.args["question"] ==
+             Prompts.initial_explainer("", origin.content)
+  end
+
+  test "legacy answers under secondary origins remain ordinary explanations", %{graph: _} do
+    canonical_origin =
+      GraphManager.add_node(@graph_id, %Vertex{
+        content: "Canonical root",
+        class: "origin",
+        user: @test_user
+      })
+
+    assert canonical_origin.id == "1"
+
+    secondary_origin =
+      GraphManager.add_node(@graph_id, %Vertex{
+        content: "A secondary line of inquiry",
+        class: "origin",
+        user: @test_user
+      })
+
+    refute secondary_origin.id == "1"
+
+    stuck_answer =
+      GraphManager.add_node(@graph_id, %Vertex{
+        content: "",
+        class: "answer",
+        user: @test_user
+      })
+
+    GraphManager.add_edges(@graph_id, stuck_answer, [secondary_origin])
+
+    assert {:ok, regenerated_node} =
+             GraphActions.regenerate_node(graph_param(stuck_answer), stuck_answer.id)
+
+    assert regenerated_node.prompt_kind == "answer"
+
+    worker = Oban.Worker.to_string(LocalWorker)
+    llm_job = Repo.one!(from job in Oban.Job, where: job.worker == ^worker)
+
+    assert llm_job.args["question"] == Prompts.explain("", secondary_origin.content)
   end
 
   test "selected-text branch stores source_text and preserves it when regenerated", %{graph: _} do

@@ -122,7 +122,8 @@ defmodule Dialectic.Graph.Creator do
       content: "",
       class: "answer",
       user: user_identity,
-      parent: nil
+      parent: nil,
+      prompt_kind: "initial_explainer"
     }
 
     node = GraphManager.add_node(title, vertex)

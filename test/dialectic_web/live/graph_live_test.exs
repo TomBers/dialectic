@@ -312,6 +312,116 @@ defmodule DialecticWeb.GraphLiveTest do
                Enum.any?(selected_text_branch_children, &(&1.id == node_id))
              end)
     end
+
+    test "explain uses the selection event node when the current node is stale", %{conn: conn} do
+      {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data())
+      assigns = :sys.get_state(view.pid).socket.assigns
+      graph_id = assigns.graph_id
+
+      assert assigns.node.id == "1"
+
+      send(view.pid, {
+        :selection_action,
+        %{
+          action: :explain,
+          selected_text: "synaptic tagging",
+          node_id: "2",
+          offsets: %{"start" => 29, "end" => 45},
+          highlight: nil
+        }
+      })
+
+      :sys.get_state(view.pid)
+
+      event_node = GraphManager.find_node_by_id(graph_id, "2")
+      stale_node = GraphManager.find_node_by_id(graph_id, "1")
+
+      question_node =
+        Enum.find(event_node.children, fn child ->
+          child.class == "question" and child.content == "Please explain: synaptic tagging"
+        end)
+
+      assert question_node
+      assert question_node.source_text == "synaptic tagging"
+
+      refute Enum.any?(stale_node.children, fn child ->
+               child.content == "Please explain: synaptic tagging"
+             end)
+    end
+
+    test "custom question uses the selection event node when the current node is stale", %{
+      conn: conn
+    } do
+      {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data())
+      assigns = :sys.get_state(view.pid).socket.assigns
+      graph_id = assigns.graph_id
+      question = "Why does synaptic tagging matter here?"
+
+      assert assigns.node.id == "1"
+
+      send(view.pid, {
+        :selection_action,
+        %{
+          action: :ask_question,
+          selected_text: "synaptic tagging",
+          node_id: "2",
+          offsets: %{"start" => 29, "end" => 45},
+          highlight: nil,
+          question: question
+        }
+      })
+
+      :sys.get_state(view.pid)
+
+      event_node = GraphManager.find_node_by_id(graph_id, "2")
+      stale_node = GraphManager.find_node_by_id(graph_id, "1")
+
+      question_node =
+        Enum.find(event_node.children, fn child ->
+          child.class == "question" and child.content == question
+        end)
+
+      assert question_node
+      assert question_node.source_text == "synaptic tagging"
+      refute Enum.any?(stale_node.children, &(&1.content == question))
+    end
+
+    test "missing selection event nodes fail gracefully", %{conn: conn} do
+      {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data())
+      graph_id = :sys.get_state(view.pid).socket.assigns.graph_id
+      vertex_count = length(GraphManager.vertices(graph_id))
+
+      send(view.pid, {
+        :selection_action,
+        %{
+          action: :explain,
+          selected_text: "missing text",
+          node_id: "missing-node",
+          offsets: %{"start" => 0, "end" => 12},
+          highlight: nil
+        }
+      })
+
+      :sys.get_state(view.pid)
+
+      send(view.pid, {
+        :selection_action,
+        %{
+          action: :ask_question,
+          selected_text: "missing text",
+          node_id: "missing-node",
+          offsets: %{"start" => 0, "end" => 12},
+          highlight: nil,
+          question: "Where did it go?"
+        }
+      })
+
+      :sys.get_state(view.pid)
+
+      assert Process.alive?(view.pid)
+      assert length(GraphManager.vertices(graph_id)) == vertex_count
+      assert has_element?(view, "#flash-error", "Node not found")
+    end
   end
 
   describe "search" do

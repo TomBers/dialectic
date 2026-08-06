@@ -572,19 +572,25 @@ defmodule GraphManager do
       add_node(
         graph_id,
         Map.merge(
-          %Vertex{content: content, class: class, user: user, parent: parent_group},
+          %Vertex{
+            content: content,
+            class: class,
+            user: user,
+            parent: parent_group,
+            prompt_kind: class
+          },
           node_fields
         )
       )
 
-    # Stream response to the Node using supervised task
-    if Application.get_env(:dialectic, :sync_tasks_for_testing, false) do
-      llm_fn.(node)
-    else
-      Task.Supervisor.start_child(Dialectic.TaskSupervisor, fn -> llm_fn.(node) end)
-    end
-
     result = add_edges(graph_id, node, parents)
+
+    # Ensure the structural edge exists before generation can update or persist the child.
+    if Application.get_env(:dialectic, :sync_tasks_for_testing, false) do
+      llm_fn.(result)
+    else
+      Task.Supervisor.start_child(Dialectic.TaskSupervisor, fn -> llm_fn.(result) end)
+    end
 
     if Keyword.get(opts, :save, true) do
       save_graph(graph_id)

@@ -1551,36 +1551,29 @@ defmodule DialecticWeb.GraphLive do
          _params,
          socket
        ) do
-    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
+    case GraphActions.find_node(socket.assigns.graph_id, node_id) do
+      nil ->
+        {:noreply, put_flash(socket, :error, "Node not found")}
 
-    if highlight do
-      # Create the question/answer sequence
-      {_graph, answer_node} =
-        GraphActions.ask_and_answer(
-          graph_action_params(socket, socket.assigns.node),
-          "Please explain: #{selected_text}",
-          minimal_context: true,
-          source_text: selected_text
-        )
+      parent_node ->
+        highlight =
+          existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
 
-      # Link the highlight to the answer node using new link system
-      if answer_node do
-        Highlights.add_link(highlight.id, answer_node.id, "explain")
-      end
+        graph_result =
+          GraphActions.ask_and_answer(
+            graph_action_params(socket, parent_node),
+            "Please explain: #{selected_text}",
+            minimal_context: true,
+            source_text: selected_text
+          )
 
-      update_graph(socket, {nil, answer_node}, "explain")
-    else
-      # If highlight creation fails, still create the nodes
-      update_graph(
-        socket,
-        GraphActions.ask_and_answer(
-          graph_action_params(socket, socket.assigns.node),
-          "Please explain: #{selected_text}",
-          minimal_context: true,
-          source_text: selected_text
-        ),
-        "explain"
-      )
+        {_graph, answer_node} = graph_result
+
+        if highlight && answer_node do
+          Highlights.add_link(highlight.id, answer_node.id, "explain")
+        end
+
+        update_graph(socket, graph_result, "explain")
     end
   end
 
@@ -1684,34 +1677,28 @@ defmodule DialecticWeb.GraphLive do
          %{question: question_text},
          socket
        ) do
-    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
+    case GraphActions.find_node(socket.assigns.graph_id, node_id) do
+      nil ->
+        {:noreply, put_flash(socket, :error, "Node not found")}
 
-    if highlight do
-      # Create the question/answer sequence
-      {_graph, answer_node} =
-        GraphActions.ask_about_selection(
-          graph_action_params(socket, socket.assigns.node),
-          "#{question_text}\n\nRegarding: \"#{selected_text}\"",
-          selected_text
-        )
+      parent_node ->
+        highlight =
+          existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
 
-      # Link the highlight to the answer node using new link system
-      if answer_node do
-        Highlights.add_link(highlight.id, answer_node.id, "question")
-      end
+        graph_result =
+          GraphActions.ask_about_selection(
+            graph_action_params(socket, parent_node),
+            question_text,
+            selected_text
+          )
 
-      update_graph(socket, {nil, answer_node}, "selection_question")
-    else
-      # If highlight creation fails, still create the nodes
-      update_graph(
-        socket,
-        GraphActions.ask_about_selection(
-          graph_action_params(socket, socket.assigns.node),
-          "#{question_text}\n\nRegarding: \"#{selected_text}\"",
-          selected_text
-        ),
-        "selection_question"
-      )
+        {_graph, answer_node} = graph_result
+
+        if highlight && answer_node do
+          Highlights.add_link(highlight.id, answer_node.id, "question")
+        end
+
+        update_graph(socket, graph_result, "selection_question")
     end
   end
 

@@ -402,7 +402,10 @@ defmodule Dialectic.Graph.GraphActions do
   def ask_and_answer({graph_id, node, user, live_view_topic}, question_text, opts \\ []) do
     minimal_context = Keyword.get(opts, :minimal_context, false)
     source_text = opts |> Keyword.get(:source_text) |> normalize_source_text()
-    child_opts = source_text_opts(source_text)
+    question_prompt_kind = if minimal_context, do: "selection_explain_question", else: "question"
+    answer_prompt_kind = if minimal_context, do: "selection_explain", else: "answer"
+    question_opts = source_text_opts(source_text, question_prompt_kind)
+    answer_opts = source_text_opts(source_text, answer_prompt_kind)
 
     # Use a 'question' node for follow-up questions
     question_node =
@@ -412,7 +415,7 @@ defmodule Dialectic.Graph.GraphActions do
         fn _ -> question_text end,
         "question",
         user,
-        Keyword.put(child_opts, :save, false)
+        Keyword.put(question_opts, :save, false)
       )
 
     answer_node =
@@ -428,7 +431,7 @@ defmodule Dialectic.Graph.GraphActions do
         end,
         "answer",
         user,
-        child_opts
+        answer_opts
       )
 
     {nil, answer_node}
@@ -454,7 +457,8 @@ defmodule Dialectic.Graph.GraphActions do
         question_text,
         selected_text
       ) do
-    child_opts = source_text_opts(selected_text)
+    question_opts = source_text_opts(selected_text, "selection_question_input")
+    answer_opts = source_text_opts(selected_text, "selection_question")
 
     # Create question node with both the question and the selected text context
     question_node =
@@ -464,7 +468,7 @@ defmodule Dialectic.Graph.GraphActions do
         fn _ -> question_text end,
         "question",
         user,
-        child_opts
+        question_opts
       )
 
     # Generate answer with minimal context (focused on the selection)
@@ -477,17 +481,23 @@ defmodule Dialectic.Graph.GraphActions do
         end,
         "answer",
         user,
-        child_opts
+        answer_opts
       )
 
     {nil, answer_node}
   end
 
-  defp source_text_opts(source_text) do
-    case normalize_source_text(source_text) do
-      nil -> []
-      text -> [fields: %{source_text: text}]
-    end
+  defp source_text_opts(source_text, prompt_kind \\ nil) do
+    fields =
+      case normalize_source_text(source_text) do
+        nil -> %{}
+        text -> %{source_text: text}
+      end
+
+    fields =
+      if is_binary(prompt_kind), do: Map.put(fields, :prompt_kind, prompt_kind), else: fields
+
+    if map_size(fields) == 0, do: [], else: [fields: fields]
   end
 
   defp normalize_source_text(source_text) when is_binary(source_text) do
@@ -588,10 +598,55 @@ defmodule Dialectic.Graph.GraphActions do
   # Dispatches to the appropriate function based on node type
   defp regenerate_by_type(stuck_node, graph_id, parents, user, live_view_topic) do
     parent = List.first(parents)
-    source_text = node_source_text(stuck_node) || node_source_text(parent)
-    source_text_opts = source_text_opts(source_text)
+    prompt_kind = Map.get(stuck_node, :prompt_kind)
 
-    case stuck_node.class do
+    source_text =
+      node_source_text(stuck_node) ||
+        if(is_nil(prompt_kind), do: node_source_text(parent), else: nil)
+
+    source_text_opts = source_text_opts(source_text, prompt_kind)
+
+    if initial_answer?(stuck_node, parent, parents) do
+      GraphManager.add_child(
+        graph_id,
+        [parent],
+        fn n -> LlmInterface.gen_initial_response(parent, n, graph_id, live_view_topic) end,
+        "answer",
+        user,
+        source_text_opts(source_text, "initial_explainer")
+      )
+    else
+      regenerate_by_class(
+        stuck_node.class,
+        graph_id,
+        parent,
+        parents,
+        user,
+        live_view_topic,
+        source_text,
+        source_text_opts
+      )
+    end
+  end
+
+  defp initial_answer?(stuck_node, parent, parents) do
+    stuck_node.class == "answer" and
+      (Map.get(stuck_node, :prompt_kind) == "initial_explainer" or
+         (is_nil(Map.get(stuck_node, :prompt_kind)) and length(parents) == 1 and
+            Map.get(parent, :class) == "origin" and Map.get(parent, :id) == "1"))
+  end
+
+  defp regenerate_by_class(
+         class,
+         graph_id,
+         parent,
+         parents,
+         user,
+         live_view_topic,
+         source_text,
+         source_text_opts
+       ) do
+    case class do
       "thesis" ->
         GraphManager.add_child(
           graph_id,
