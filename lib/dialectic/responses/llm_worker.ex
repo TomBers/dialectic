@@ -32,7 +32,9 @@ defmodule Dialectic.Workers.LLMWorker do
   alias Dialectic.Responses.Utils
   alias Dialectic.Responses.{PromptsStructured, ModeServer}
 
-  @buffer_size 50
+  @buffer_size 200
+  @stream_flush_min_interval_ms 100
+  @stream_flush_max_interval_ms 500
   @queue_wait_event [:dialectic, :llm, :queue_wait]
   @time_to_first_token_event [:dialectic, :llm, :time_to_first_token]
   @job_event [:dialectic, :llm, :job]
@@ -113,7 +115,7 @@ defmodule Dialectic.Workers.LLMWorker do
     existing_node = GraphManager.find_node_by_id(graph, to_node)
     existing_content = existing_node && Map.get(existing_node, :content, "")
 
-    if is_binary(existing_content) and byte_size(existing_content) > 50 do
+    if skip_existing_response?(attempt, existing_content) do
       Logger.warning(fn ->
         "[LLMWorker] SKIPPING job_id=#{job_id} - node #{to_node} already has content (#{byte_size(existing_content)} bytes). Another job likely completed first."
       end)
@@ -126,14 +128,21 @@ defmodule Dialectic.Workers.LLMWorker do
         do_llm_request(
           job_id,
           job_started_at,
-          attempt,
-          max_attempts,
           args,
           graph,
           to_node,
           live_view_topic,
           provider_mod
         )
+
+      if attempt >= max_attempts and match?({:error, _reason}, result) do
+        persist_stream_error(
+          graph,
+          to_node,
+          live_view_topic,
+          terminal_error_message(provider_mod, result)
+        )
+      end
 
       {result, outcome_for_result(result)}
     end
@@ -143,8 +152,6 @@ defmodule Dialectic.Workers.LLMWorker do
   defp do_llm_request(
          job_id,
          job_started_at,
-         attempt,
-         max_attempts,
          args,
          graph,
          to_node,
@@ -212,50 +219,52 @@ defmodule Dialectic.Workers.LLMWorker do
           # We accumulate the *full* response text in the worker to ensure
           # we can safely overwrite the node content (bullet-proofing against
           # lost partial updates or GraphManager restarts).
-          # Track timing: {full_text, buffer, first_token_logged?}
-          {final_full_text, final_buf, _} =
-            Enum.reduce(ReqLLM.StreamResponse.tokens(stream_resp), {"", "", false}, fn token,
-                                                                                       {full_text,
-                                                                                        buf,
-                                                                                        ttft_logged?} ->
-              chunk =
-                case token do
-                  t when is_binary(t) -> t
-                  t when is_list(t) -> IO.iodata_to_binary(t)
-                  t -> to_string(t)
-                end
+          flush_started_at = System.monotonic_time(:millisecond)
 
-              # Log time-to-first-token (TTFT) on first chunk
-              ttft_logged? =
-                if not ttft_logged? and byte_size(chunk) > 0 do
-                  ttft_duration = elapsed_duration(request_started_at)
-                  emit_time_to_first_token(ttft_duration, provider_mod.id())
-                  ttft_ms = duration_in_milliseconds(ttft_duration)
-                  Logger.info("[LLMWorker] job_id=#{job_id} TTFT=#{ttft_ms}ms")
-                  true
+          {final_full_text, final_buf, _, _last_flush_at, stream_updates} =
+            Enum.reduce(
+              ReqLLM.StreamResponse.tokens(stream_resp),
+              {"", "", false, flush_started_at, 0},
+              fn token, {full_text, buf, ttft_logged?, last_flush_at, stream_updates} ->
+                chunk =
+                  case token do
+                    t when is_binary(t) -> t
+                    t when is_list(t) -> IO.iodata_to_binary(t)
+                    t -> to_string(t)
+                  end
+
+                ttft_logged? =
+                  if not ttft_logged? and byte_size(chunk) > 0 do
+                    ttft_duration = elapsed_duration(request_started_at)
+                    emit_time_to_first_token(ttft_duration, provider_mod.id())
+                    ttft_ms = duration_in_milliseconds(ttft_duration)
+                    Logger.info("[LLMWorker] job_id=#{job_id} TTFT=#{ttft_ms}ms")
+                    true
+                  else
+                    ttft_logged?
+                  end
+
+                new_full_text = full_text <> chunk
+                new_buf = buf <> chunk
+                now = System.monotonic_time(:millisecond)
+                elapsed_ms = now - last_flush_at
+
+                if should_flush_stream?(full_text == "", byte_size(new_buf), elapsed_ms) do
+                  Utils.set_node_content(graph, to_node, new_full_text, live_view_topic)
+                  {new_full_text, "", ttft_logged?, now, stream_updates + 1}
                 else
-                  ttft_logged?
+                  {new_full_text, new_buf, ttft_logged?, last_flush_at, stream_updates}
                 end
-
-              new_full_text = full_text <> chunk
-              new_buf = buf <> chunk
-
-              # Buffer to reduce broadcast frequency (fixing markdown glitches and excessive DOM updates).
-              # Flush if > @buffer_size chars or contains newline.
-              # ALSO: Always flush the very first chunk (full_text was empty) to improve TTFT.
-              if full_text == "" or byte_size(new_buf) > @buffer_size or
-                   String.contains?(new_buf, "\n") do
-                Utils.set_node_content(graph, to_node, new_full_text, live_view_topic)
-                {new_full_text, "", ttft_logged?}
-              else
-                {new_full_text, new_buf, ttft_logged?}
               end
-            end)
+            )
 
-          # Flush remaining buffer (ensure final state matches full accumulation)
-          if final_buf != "" do
-            Utils.set_node_content(graph, to_node, final_full_text, live_view_topic)
-          end
+          stream_updates =
+            if final_buf != "" do
+              Utils.set_node_content(graph, to_node, final_full_text, live_view_topic)
+              stream_updates + 1
+            else
+              stream_updates
+            end
 
           finish_reason = ReqLLM.StreamResponse.finish_reason(stream_resp)
 
@@ -267,9 +276,23 @@ defmodule Dialectic.Workers.LLMWorker do
 
               {:error, :empty_stream}
 
+            finish_reason == :content_filter ->
+              Logger.warning(
+                "[LLMWorker] job_id=#{job_id} stopped by content filter bytes=#{byte_size(final_full_text)} updates=#{stream_updates}"
+              )
+
+              persist_stream_error(
+                graph,
+                to_node,
+                live_view_topic,
+                "Google stopped this response because its safety filter was triggered. Try rephrasing the question."
+              )
+
+              {:discard, :content_filter}
+
             incomplete_finish?(finish_reason) ->
               Logger.warning(
-                "[LLMWorker] job_id=#{job_id} stopped before completion finish_reason=#{inspect(finish_reason)} bytes=#{byte_size(final_full_text)}"
+                "[LLMWorker] job_id=#{job_id} stopped before completion finish_reason=#{inspect(finish_reason)} bytes=#{byte_size(final_full_text)} updates=#{stream_updates}"
               )
 
               {:error, {:incomplete_stream, finish_reason}}
@@ -283,8 +306,10 @@ defmodule Dialectic.Workers.LLMWorker do
                 |> elapsed_duration()
                 |> duration_in_milliseconds()
 
+              stream_updates = stream_updates + 1
+
               Logger.warning(
-                "[LLMWorker] job_id=#{job_id} completed without required follow-ups; appended fallback follow-up questions total=#{total_ms}ms bytes=#{byte_size(final_full_text)} finish_reason=#{inspect(finish_reason)}"
+                "[LLMWorker] job_id=#{job_id} completed without required follow-ups; appended fallback follow-up questions total=#{total_ms}ms bytes=#{byte_size(final_full_text)} updates=#{stream_updates} finish_reason=#{inspect(finish_reason)}"
               )
 
               finalize(graph, to_node, live_view_topic)
@@ -297,7 +322,7 @@ defmodule Dialectic.Workers.LLMWorker do
                 |> duration_in_milliseconds()
 
               Logger.info(
-                "[LLMWorker] job_id=#{job_id} completed total=#{total_ms}ms bytes=#{byte_size(final_full_text)} finish_reason=#{inspect(finish_reason)}"
+                "[LLMWorker] job_id=#{job_id} completed total=#{total_ms}ms bytes=#{byte_size(final_full_text)} updates=#{stream_updates} finish_reason=#{inspect(finish_reason)}"
               )
 
               finalize(graph, to_node, live_view_topic)
@@ -305,24 +330,19 @@ defmodule Dialectic.Workers.LLMWorker do
           end
 
         {:error, err} ->
-          # Only broadcast an error to the UI on the final attempt; let Oban retry transiently.
-          final? = attempt >= max_attempts
-
-          if final? do
-            reason_msg =
-              case err do
-                %Mint.TransportError{reason: r} -> "Network error (transport): #{inspect(r)}"
-                :empty_stream -> "Model returned an empty stream"
-                _ -> "#{provider_label(provider_mod)} request error: #{inspect(err)}"
-              end
-
-            persist_stream_error(graph, to_node, live_view_topic, reason_msg)
-          end
-
           Logger.error("#{provider_label(provider_mod)} request error: #{inspect(err)}")
           {:error, err}
       end
     end
+  end
+
+  def skip_existing_response?(1, content) when is_binary(content), do: byte_size(content) > 50
+  def skip_existing_response?(_attempt, _content), do: false
+
+  def should_flush_stream?(first_chunk?, buffered_bytes, elapsed_ms) do
+    first_chunk? or
+      (buffered_bytes >= @buffer_size and elapsed_ms >= @stream_flush_min_interval_ms) or
+      elapsed_ms >= @stream_flush_max_interval_ms
   end
 
   def queue_reference_time(attempt, _inserted_at, %DateTime{} = scheduled_at)
@@ -468,6 +488,22 @@ defmodule Dialectic.Workers.LLMWorker do
   defp get_system_prompt(graph_id) do
     mode = ModeServer.get_mode(graph_id)
     PromptsStructured.system_preamble(mode)
+  end
+
+  defp terminal_error_message(_provider_mod, {:error, :empty_stream}) do
+    "The model returned an empty response. Please try again."
+  end
+
+  defp terminal_error_message(provider_mod, {:error, {:incomplete_stream, reason}}) do
+    "#{provider_label(provider_mod)} stopped before completing the response (#{reason}). Please try again."
+  end
+
+  defp terminal_error_message(_provider_mod, {:error, %Mint.TransportError{reason: reason}}) do
+    "Network error while generating the response: #{inspect(reason)}"
+  end
+
+  defp terminal_error_message(provider_mod, {:error, reason}) do
+    "#{provider_label(provider_mod)} request error: #{inspect(reason)}"
   end
 
   defp persist_stream_error(graph, to_node, live_view_topic, message) do

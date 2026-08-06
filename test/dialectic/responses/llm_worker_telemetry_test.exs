@@ -39,6 +39,22 @@ defmodule Dialectic.Responses.LLMWorkerTelemetryTest do
     assert LLMWorker.queue_wait_duration(nil, started_at) == nil
   end
 
+  test "retries partial responses instead of treating them as completed duplicates" do
+    partial_response = String.duplicate("partial", 10)
+
+    assert LLMWorker.skip_existing_response?(1, partial_response)
+    refute LLMWorker.skip_existing_response?(2, partial_response)
+    refute LLMWorker.skip_existing_response?(1, "short")
+  end
+
+  test "batches stream updates while flushing the first chunk immediately" do
+    assert LLMWorker.should_flush_stream?(true, 1, 0)
+    refute LLMWorker.should_flush_stream?(false, 199, 499)
+    refute LLMWorker.should_flush_stream?(false, 200, 99)
+    assert LLMWorker.should_flush_stream?(false, 200, 100)
+    assert LLMWorker.should_flush_stream?(false, 1, 500)
+  end
+
   test "uses the retry schedule as the queue-wait reference after the first attempt" do
     inserted_at = ~U[2026-08-06 12:00:00.000000Z]
     scheduled_at = ~U[2026-08-06 12:01:00.000000Z]

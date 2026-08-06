@@ -118,6 +118,8 @@ defmodule Dialectic.Responses.Prompts do
       - Vivid real-world examples, case studies, or analogies that make the concept click
       - Unexpected connections to other fields or ideas
       - Different perspectives or frameworks, especially ones that create productive tension
+
+      Aim for 250-350 words. Prioritize the strongest new insights rather than covering every possible angle.
       """,
       citation_encouragement(),
       anti_repetition_footer()

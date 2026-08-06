@@ -153,6 +153,13 @@ defmodule Dialectic.Responses.PromptsTest do
       assert result =~ topic
     end
 
+    test "targets a shorter response for faster graph exploration" do
+      result = Prompts.explain("Background", "Ethics")
+
+      assert result =~ "Aim for 250-350 words"
+      assert result =~ "Prioritize the strongest new insights"
+    end
+
     test "emphasizes adding new insights" do
       context = "Background"
       topic = "Ethics"

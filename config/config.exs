@@ -21,7 +21,8 @@ config :dialectic, Oban,
   ],
   repo: Dialectic.Repo,
   plugins: [
-    {Oban.Plugins.Lifeline, rescue_after: :timer.minutes(15)}
+    {Oban.Plugins.Lifeline, rescue_after: :timer.minutes(15)},
+    {Oban.Plugins.Pruner, max_age: 604_800, interval: :timer.minutes(1)}
   ]
 
 config :dialectic, :llm_admission,
