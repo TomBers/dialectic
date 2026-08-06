@@ -189,6 +189,22 @@ defmodule Dialectic.DbActions.GraphsTest do
       assert only_one == [{pub_title1, 0}]
     end
 
+    test "explicit title search includes matching grids below the recent-feed node minimum" do
+      title = unique_title("Freud and the unconscious")
+      insert_graph_with_nodes!(title, node_count: 1)
+
+      recent_titles =
+        Graphs.all_graphs_with_notes("")
+        |> Enum.map(fn {graph, _count, _author} -> graph.title end)
+
+      search_titles =
+        Graphs.all_graphs_with_notes("Freud")
+        |> Enum.map(fn {graph, _count, _author} -> graph.title end)
+
+      refute title in recent_titles
+      assert title in search_titles
+    end
+
     test "excludes private graphs" do
       public_title = unique_title("public-graph")
       private_title = unique_title("private-graph")

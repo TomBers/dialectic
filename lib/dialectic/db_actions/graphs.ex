@@ -122,7 +122,8 @@ defmodule Dialectic.DbActions.Graphs do
   end
 
   def all_graphs_with_notes(search_term \\ "", opts \\ []) do
-    search_pattern = "%#{String.trim(search_term)}%"
+    search_term = String.trim(search_term)
+    search_pattern = "%#{search_term}%"
     limit = Keyword.get(opts, :limit)
 
     query =
@@ -130,14 +131,24 @@ defmodule Dialectic.DbActions.Graphs do
         where: g.is_published == true,
         where: g.is_public == true,
         where: g.is_deleted == false or is_nil(g.is_deleted),
-        where: ilike(g.title, ^search_pattern),
-        where:
-          fragment(
-            "COALESCE(CASE WHEN jsonb_typeof(?->'nodes') = 'array' THEN jsonb_array_length(?->'nodes') ELSE 0 END, 0) >= ?",
-            g.data,
-            g.data,
-            ^@min_node_count
-          ),
+        where: ilike(g.title, ^search_pattern)
+
+    query =
+      if search_term == "" do
+        from g in query,
+          where:
+            fragment(
+              "COALESCE(CASE WHEN jsonb_typeof(?->'nodes') = 'array' THEN jsonb_array_length(?->'nodes') ELSE 0 END, 0) >= ?",
+              g.data,
+              g.data,
+              ^@min_node_count
+            )
+      else
+        query
+      end
+
+    query =
+      from g in query,
         left_join: n in assoc(g, :notes),
         left_join: author in Dialectic.Accounts.User,
         on: author.id == g.user_id,
