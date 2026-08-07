@@ -3,51 +3,79 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
   alias Dialectic.Responses.PromptsStructured
 
   describe "system_preamble/1" do
-    test "returns expert persona" do
+    test "returns expert-level complexity" do
       prompt = PromptsStructured.system_preamble(:expert)
       assert prompt =~ "SYSTEM"
       assert prompt =~ "Persona: A world-class subject matter expert"
       assert prompt =~ "highly technical, rigorous, and nuanced analysis"
+      assert prompt =~ "Complexity level: Expert"
+      assert prompt =~ "Technical terms, nuance, and more primary material"
+      assert prompt =~ "Assume advanced subject knowledge"
+      assert prompt =~ "formalism, models, and methodological detail"
+      assert prompt =~ "roughly 350-600 words"
     end
 
-    test "returns simple persona" do
+    test "returns simple-level complexity" do
       prompt = PromptsStructured.system_preamble(:simple)
       assert prompt =~ "SYSTEM"
 
       assert prompt =~
                "Persona: A patient explainer using plain, concrete language for a curious non-specialist, without condescension"
+
+      assert prompt =~ "Complexity level: Simple"
+      assert prompt =~ "Plain language, everyday examples, and metaphors"
+      assert prompt =~ "Assume no prior subject knowledge"
+      assert prompt =~ "common words and short, direct sentences"
+      assert prompt =~ "roughly 150-250 words"
     end
 
-    test "returns high_school persona" do
+    test "returns high-school-level complexity" do
       prompt = PromptsStructured.system_preamble(:high_school)
       assert prompt =~ "SYSTEM"
 
       assert prompt =~
                "Persona: A clear teacher aiming to explain concepts to a high school student"
+
+      assert prompt =~ "Complexity level: High School"
+      assert prompt =~ "Clear concepts with a little subject vocabulary"
+      assert prompt =~ "broad high-school education but no specialist coursework"
+      assert prompt =~ "define each unfamiliar term on first use"
+      assert prompt =~ "roughly 200-350 words"
     end
 
-    test "returns university persona (default)" do
+    test "returns university-level complexity by default" do
       prompt = PromptsStructured.system_preamble()
       assert prompt =~ "SYSTEM"
 
       assert prompt =~
                "Persona: A precise lecturer aiming to provide a university level introduction"
+
+      assert prompt =~ "Complexity level: University"
+      assert prompt =~ "More precise terminology and broader context"
+      assert prompt =~ "educated reader who is new to this specific field"
+      assert prompt =~ "broad consensus from live debate"
+      assert prompt =~ "roughly 250-500 words"
     end
 
-    test "returns university persona for :university mode" do
+    test "returns university-level complexity for :university mode" do
       prompt = PromptsStructured.system_preamble(:university)
       assert prompt =~ "SYSTEM"
 
       assert prompt =~
                "Persona: A precise lecturer aiming to provide a university level introduction"
+
+      assert prompt =~ "Complexity level: University"
     end
 
-    test "returns university persona for unknown mode" do
+    test "returns university-level complexity for unknown mode" do
       prompt = PromptsStructured.system_preamble(:unknown)
       assert prompt =~ "SYSTEM"
 
       assert prompt =~
                "Persona: A precise lecturer aiming to provide a university level introduction"
+
+      assert prompt =~ "Complexity level: University"
+      assert prompt =~ "More precise terminology and broader context"
     end
 
     test "includes common structure" do
