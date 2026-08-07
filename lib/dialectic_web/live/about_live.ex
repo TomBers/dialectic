@@ -71,131 +71,141 @@ defmodule DialecticWeb.AboutLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="min-h-screen bg-slate-50 text-slate-900">
-      <section class="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-teal-950 text-white">
-        <div class="mx-auto max-w-5xl px-6 py-16 sm:py-24">
-          <div class="max-w-3xl">
-            <p class="text-sm font-semibold uppercase tracking-[0.18em] text-teal-200">
+    <div class="min-h-screen bg-[#f4f1e9] text-slate-950">
+      <header class="border-b border-stone-300 bg-white">
+        <div class="mx-auto grid max-w-6xl gap-8 px-5 py-14 sm:px-8 sm:py-20 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-end">
+          <div class="max-w-4xl">
+            <p class="border-l-2 border-teal-700 pl-3 text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
               About RationalGrid
             </p>
-            <h1 class="mt-4 text-4xl font-semibold tracking-tight sm:text-6xl">
-              Better questions deserve somewhere to go.
+            <h1 class="mt-5 font-serif text-5xl font-semibold leading-[1.02] tracking-tight sm:text-7xl">
+              Questions rarely end with the first answer.
             </h1>
-            <p class="mt-5 max-w-2xl text-lg leading-8 text-slate-300">
-              RationalGrid turns AI conversations into visual, shareable trails of questions, answers, evidence, and new directions.
+            <p class="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
+              RationalGrid keeps the route from one question to the next visible: the answers,
+              objections, evidence, comments, and sources remain attached to the branch that produced them.
             </p>
-            <div class="mt-8 flex flex-wrap gap-3">
+          </div>
+          <div class="border-t border-slate-400 pt-4">
+            <p class="text-sm leading-6 text-slate-600">
+              Open access, not-for-profit, and built in public by a small team.
+            </p>
+            <div class="mt-4 flex flex-wrap gap-4 text-sm font-semibold">
               <.link
                 navigate={~p"/"}
-                class="inline-flex items-center gap-2 rounded-xl bg-teal-300 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-200"
+                class="border-b border-slate-500 pb-0.5 hover:border-teal-700 hover:text-teal-800"
               >
-                <.icon name="hero-sparkles" class="h-4 w-4" /> Start a grid
+                Start a grid
               </.link>
               <.link
                 navigate={~p"/intro/how"}
-                class="inline-flex items-center gap-2 rounded-xl bg-white/10 px-5 py-3 text-sm font-semibold text-white ring-1 ring-white/25 transition hover:bg-white/20"
+                class="border-b border-slate-500 pb-0.5 hover:border-teal-700 hover:text-teal-800"
               >
-                <.icon name="hero-book-open" class="h-4 w-4" /> Read the guide
+                Read the guide
               </.link>
             </div>
           </div>
         </div>
-      </section>
+      </header>
 
-      <main class="mx-auto max-w-5xl px-6 py-12 sm:py-16">
-        <div class="grid gap-4 md:grid-cols-2">
-          <section class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">
-            <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">What is it?</p>
-            <h2 class="mt-2 text-2xl font-semibold tracking-tight">
-              A workspace for thinking in public.
-            </h2>
-            <p class="mt-3 leading-7 text-slate-600">
-              A grid keeps the shape of an inquiry visible, so you can follow branches, revisit ideas, and invite others into the same context.
-            </p>
-          </section>
-          <section class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">
-            <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">
-              Why does it exist?
-            </p>
-            <h2 class="mt-2 text-2xl font-semibold tracking-tight">
-              Because useful thinking should not disappear.
-            </h2>
-            <p class="mt-3 leading-7 text-slate-600">
-              Chat is excellent for a quick answer. RationalGrid helps you keep the questions, trade-offs, sources, and insights that come after it.
-            </p>
-          </section>
-          <section class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">
-            <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">
-              How does it work?
-            </p>
-            <ol class="mt-3 space-y-3 text-slate-700">
-              <li class="flex gap-3">
-                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-teal-100 text-xs font-bold text-teal-800">
-                  1
-                </span>
-                <span>Start with a question, idea, or copied answer.</span>
-              </li>
-              <li class="flex gap-3">
-                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-teal-100 text-xs font-bold text-teal-800">
-                  2
-                </span>
-                <span>Branch into explanations, objections, evidence, and next questions.</span>
-              </li>
-              <li class="flex gap-3">
-                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-teal-100 text-xs font-bold text-teal-800">
-                  3
-                </span>
-                <span>Save, share, and keep developing the map.</span>
-              </li>
-            </ol>
-          </section>
-          <section class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">
-            <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">Who is it for?</p>
-            <h2 class="mt-2 text-2xl font-semibold tracking-tight">
-              Anyone working through a question.
-            </h2>
-            <p class="mt-3 leading-7 text-slate-600">
-              Students, researchers, teams, educators, and curious people can use it to make complex topics easier to explore together.
-            </p>
-          </section>
-        </div>
+      <main class="mx-auto max-w-6xl px-5 py-12 sm:px-8 sm:py-16">
+        <section aria-labelledby="about-plain-heading">
+          <div class="grid border border-stone-300 bg-white md:grid-cols-2">
+            <article class="border-b border-stone-300 p-6 sm:p-8 md:border-r">
+              <p class="font-mono text-xs font-bold text-teal-800">01 / WHAT</p>
+              <h2 id="about-plain-heading" class="mt-3 font-serif text-3xl font-semibold">
+                A map of an inquiry.
+              </h2>
+              <p class="mt-3 leading-7 text-slate-600">
+                Every box is a question, an answer, a comment, or a reference. The lines show what
+                prompted what, even after the conversation becomes large.
+              </p>
+            </article>
+            <article class="border-b border-stone-300 p-6 sm:p-8">
+              <p class="font-mono text-xs font-bold text-teal-800">02 / WHY</p>
+              <h2 class="mt-3 font-serif text-3xl font-semibold">Chat hides its own history.</h2>
+              <p class="mt-3 leading-7 text-slate-600">
+                A useful claim can disappear hundreds of messages above. A grid keeps the relevant
+                context beside the claim and makes alternate routes easy to compare.
+              </p>
+            </article>
+            <article class="border-b border-stone-300 p-6 sm:p-8 md:border-b-0 md:border-r">
+              <p class="font-mono text-xs font-bold text-teal-800">03 / HOW</p>
+              <h2 class="mt-3 font-serif text-3xl font-semibold">Branch deliberately.</h2>
+              <ol class="mt-4 divide-y divide-stone-200 border-y border-stone-200 text-sm text-slate-700">
+                <li class="grid grid-cols-[2rem_1fr] gap-3 py-3">
+                  <span class="font-mono text-teal-800">1</span>
+                  <span>Start with a question, idea, or source.</span>
+                </li>
+                <li class="grid grid-cols-[2rem_1fr] gap-3 py-3">
+                  <span class="font-mono text-teal-800">2</span>
+                  <span>Ask from the precise answer or phrase you want to test.</span>
+                </li>
+                <li class="grid grid-cols-[2rem_1fr] gap-3 py-3">
+                  <span class="font-mono text-teal-800">3</span>
+                  <span>Read, edit, present, or share the resulting path.</span>
+                </li>
+              </ol>
+            </article>
+            <article class="p-6 sm:p-8">
+              <p class="font-mono text-xs font-bold text-teal-800">04 / WHO</p>
+              <h2 class="mt-3 font-serif text-3xl font-semibold">People doing sustained thinking.</h2>
+              <p class="mt-3 leading-7 text-slate-600">
+                Students, researchers, educators, teams, and independent learners use grids when
+                one answer is not enough and the route through the subject matters.
+              </p>
+            </article>
+          </div>
+        </section>
 
-        <section class="mt-10 rounded-2xl border border-teal-200 bg-teal-50 p-6 sm:p-8">
-          <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">Is it free?</p>
-          <h2 class="mt-2 text-2xl font-semibold tracking-tight">
-            Yes. RationalGrid is open access and not-for-profit.
-          </h2>
-          <p class="mt-3 max-w-3xl leading-7 text-slate-700">
-            The project is open source and built to make better shared thinking available to more people.
-          </p>
-          <div class="mt-5 flex flex-wrap gap-4 text-sm font-semibold">
+        <section class="mt-10 grid gap-6 border border-slate-700 bg-slate-950 p-6 text-white sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:p-8">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-300">
+              Open access
+            </p>
+            <h2 class="mt-2 font-serif text-3xl font-semibold">
+              Free to use. Open source. Not-for-profit.
+            </h2>
+            <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-300">
+              The project is built to make shared reasoning inspectable and reusable.
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-4 text-sm font-semibold">
             <a
               href="https://github.com/TomBers/dialectic"
               target="_blank"
               rel="noopener noreferrer"
-              class="inline-flex items-center gap-1.5 text-teal-800 hover:underline"
+              class="border-b border-slate-400 pb-0.5 hover:border-teal-300 hover:text-teal-200"
             >
-              <.icon name="hero-code-bracket" class="h-4 w-4" /> View the source
+              View the source
             </a>
             <a
               href={@contact_mailto}
-              class="inline-flex items-center gap-1.5 text-teal-800 hover:underline"
+              class="border-b border-slate-400 pb-0.5 hover:border-teal-300 hover:text-teal-200"
             >
-              <.icon name="hero-envelope" class="h-4 w-4" /> Contact us
+              Contact us
             </a>
           </div>
         </section>
 
-        <section class="mt-10" aria-labelledby="about-team-heading">
-          <div class="mb-6 max-w-2xl">
-            <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">
-              Who is behind it?
+        <section class="mt-12" aria-labelledby="about-team-heading">
+          <div class="grid gap-5 border-b border-slate-400 pb-5 sm:grid-cols-[minmax(0,1fr)_18rem] sm:items-end">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
+                People behind the project
+              </p>
+              <h2
+                id="about-team-heading"
+                class="mt-2 font-serif text-4xl font-semibold tracking-tight"
+              >
+                A small working team.
+              </h2>
+            </div>
+            <p class="text-sm leading-6 text-slate-600">
+              Product, philosophy, reasoning, education, and independent advice.
             </p>
-            <h2 id="about-team-heading" class="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
-              A small team building a better way to think together.
-            </h2>
           </div>
-          <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <div class="mt-6 grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 lg:grid-cols-5">
             <%= for {name, role, image} <- [
               {"Tom Berman", "Founder and developer", ~p"/images/tom.webp"},
               {"Maya Darmon", "Philosophy and reasoning lead", ~p"/images/maya.webp"},
@@ -203,91 +213,71 @@ defmodule DialecticWeb.AboutLive do
               {"Peter Worley", "Advisor", ~p"/images/pete.webp"},
               {"Alexandra Konoplyanik", "Advisor", ~p"/images/alex.webp"}
             ] do %>
-              <article class="rounded-2xl bg-white p-4 text-center shadow-sm ring-1 ring-slate-200">
-                <img
-                  src={image}
-                  alt={name}
-                  class="mx-auto h-20 w-20 rounded-full object-cover ring-4 ring-teal-50"
-                />
-                <h3 class="mt-3 text-sm font-semibold text-slate-950">{name}</h3>
+              <article class="border-t border-slate-400 pt-4">
+                <img src={image} alt={name} class="h-20 w-20 rounded-full object-cover" />
+                <h3 class="mt-3 font-serif text-lg font-semibold text-slate-950">{name}</h3>
                 <p class="mt-1 text-xs leading-5 text-slate-500">{role}</p>
               </article>
             <% end %>
           </div>
         </section>
 
-        <section
-          id="feedback"
-          class="mt-10 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8"
-        >
-          <div class="max-w-2xl">
-            <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">
-              What should we improve?
-            </p>
-            <h2 class="mt-2 text-2xl font-semibold tracking-tight">
-              Tell us what would make RationalGrid more useful.
-            </h2>
-          </div>
-          <%= if @feedback_submitted do %>
-            <div class="mt-6 rounded-xl bg-emerald-50 p-5 text-emerald-800 ring-1 ring-emerald-200">
-              <h3 class="font-semibold">Thank you!</h3>
-              <p class="mt-1 text-sm">
-                Your feedback has been submitted. We really appreciate you taking the time.
+        <section id="feedback" class="mt-12 border border-stone-300 bg-white p-6 sm:p-8">
+          <div class="grid gap-5 border-b border-stone-300 pb-5 sm:grid-cols-[minmax(0,1fr)_18rem] sm:items-end">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
+                Feedback
               </p>
+              <h2 class="mt-2 font-serif text-3xl font-semibold">
+                What would make RationalGrid more useful?
+              </h2>
+            </div>
+            <p class="text-sm leading-6 text-slate-600">
+              Tell us what worked, where you became lost, or what you expected to happen next.
+            </p>
+          </div>
+
+          <%= if @feedback_submitted do %>
+            <div class="mt-6 border-l-4 border-emerald-600 bg-emerald-50 p-5 text-emerald-900">
+              <h3 class="font-semibold">Thank you!</h3>
+              <p class="mt-1 text-sm">Your feedback has been submitted.</p>
             </div>
           <% else %>
             <.form
               for={@feedback_form}
               id="feedback-form"
               phx-submit="submit_feedback"
-              class="mt-6 space-y-4"
+              class="mt-6 space-y-5"
             >
-              <div>
-                <label for="feedback_text" class="block text-sm font-semibold text-slate-700">
-                  Your feedback <span class="text-rose-500">*</span>
-                </label>
-                <textarea
-                  id="feedback_text"
-                  name="feedback[feedback]"
-                  rows="4"
-                  required
-                  placeholder="What’s working? What could be clearer?"
-                  class="mt-1.5 block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
-                >{@feedback_form[:feedback].value}</textarea>
-              </div>
-              <div class="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label for="feedback_name" class="block text-sm font-semibold text-slate-700">
-                    Name <span class="font-normal text-slate-400">(optional)</span>
-                  </label>
-                  <input
-                    id="feedback_name"
-                    name="feedback[name]"
-                    value={@feedback_form[:name].value}
-                    class="mt-1.5 block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
-                  />
-                </div>
-                <div>
-                  <label for="feedback_email" class="block text-sm font-semibold text-slate-700">
-                    Email <span class="font-normal text-slate-400">(optional)</span>
-                  </label>
-                  <input
-                    id="feedback_email"
-                    type="email"
-                    name="feedback[email]"
-                    value={@feedback_form[:email].value}
-                    class="mt-1.5 block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
-                  />
-                </div>
+              <.input
+                field={@feedback_form[:feedback]}
+                type="textarea"
+                label="Your feedback"
+                rows="5"
+                required
+                placeholder="What worked? What could be clearer?"
+                class="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-950 shadow-sm focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-100"
+              />
+              <div class="grid gap-5 sm:grid-cols-2">
+                <.input
+                  field={@feedback_form[:name]}
+                  label="Name (optional)"
+                  class="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-950 shadow-sm focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-100"
+                />
+                <.input
+                  field={@feedback_form[:email]}
+                  type="email"
+                  label="Email (optional)"
+                  class="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-950 shadow-sm focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-100"
+                />
               </div>
               <button
                 type="submit"
                 disabled={@feedback_submitting}
-                class="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                class="inline-flex items-center gap-2 rounded-md bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <.icon name="hero-paper-airplane" class="h-4 w-4" /> {if @feedback_submitting,
-                  do: "Sending…",
-                  else: "Send feedback"}
+                {if @feedback_submitting, do: "Sending…", else: "Send feedback"}
+                <.icon name="hero-arrow-right" class="h-4 w-4" />
               </button>
             </.form>
           <% end %>

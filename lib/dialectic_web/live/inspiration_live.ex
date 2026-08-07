@@ -8,6 +8,12 @@ defmodule DialecticWeb.InspirationLive do
     {:ok,
      socket
      |> assign(:page_title, "Question Inspiration")
+     |> assign(
+       :preference_form,
+       to_form(%{"reality" => "50", "timeframe" => "50", "depth" => "50"},
+         as: :preferences
+       )
+     )
      |> assign(:reality, 50)
      |> assign(:timeframe, 50)
      |> assign(:depth, 50)
@@ -16,9 +22,10 @@ defmodule DialecticWeb.InspirationLive do
   end
 
   @impl true
-  def handle_event("update_preferences", params, socket) do
+  def handle_event("update_preferences", %{"preferences" => params}, socket) do
     socket =
       socket
+      |> assign(:preference_form, to_form(params, as: :preferences))
       |> assign(:reality, parse_slider_value(params["reality"], 50))
       |> assign(:timeframe, parse_slider_value(params["timeframe"], 50))
       |> assign(:depth, parse_slider_value(params["depth"], 50))
@@ -122,132 +129,173 @@ defmodule DialecticWeb.InspirationLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="h-[calc(100vh-2.5rem)] overflow-hidden flex flex-col bg-white">
-      <div class="flex-1 min-h-0 flex flex-col md:flex-row">
-        <!-- Left Panel: Controls -->
-        <div class="w-full md:w-2/5 flex flex-col bg-white border-r border-gray-200 overflow-y-auto z-10 shadow-lg md:shadow-none">
-          <div class="p-6">
-            <.header class="mb-8">
-              Find Your Question
-              <:subtitle>
-                Adjust the sliders to discover questions that match your curiosity.
-              </:subtitle>
-            </.header>
+    <div class="flex h-[calc(100vh-2.5rem)] min-h-[42rem] flex-col overflow-hidden bg-[#f4f1e9] text-slate-950">
+      <div class="flex min-h-0 flex-1 flex-col md:flex-row">
+        <aside class="z-10 flex w-full flex-col overflow-y-auto border-b border-stone-300 bg-white md:w-[38%] md:border-b-0 md:border-r">
+          <div class="p-5 sm:p-7 lg:p-9">
+            <p class="border-l-2 border-teal-700 pl-3 text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
+              Question finder
+            </p>
+            <h1 class="mt-5 font-serif text-4xl font-semibold tracking-tight sm:text-5xl">
+              Find a question worth following.
+            </h1>
+            <p class="mt-4 max-w-xl text-sm leading-6 text-slate-600">
+              Set three boundaries. RationalGrid will suggest five concrete starting points, each
+              ready to open as a branching grid.
+            </p>
 
-            <form phx-change="update_preferences" class="space-y-8">
-              <div class="space-y-6">
+            <.form
+              for={@preference_form}
+              id="inspiration-preferences-form"
+              phx-change="update_preferences"
+              class="mt-9"
+            >
+              <div class="divide-y divide-stone-300 border-y border-stone-300">
                 <.slider
+                  field={@preference_form[:reality]}
                   label="Reality"
-                  name="reality"
                   value={@reality}
-                  left_label="Pure Fiction"
-                  right_label="Reality-Grounded"
+                  left_label="Pure fiction"
+                  right_label="Reality-grounded"
                 />
 
                 <.slider
+                  field={@preference_form[:timeframe]}
                   label="Timeframe"
-                  name="timeframe"
                   value={@timeframe}
                   left_label="Past"
                   right_label="Future"
                 />
 
                 <.slider
+                  field={@preference_form[:depth]}
                   label="Depth"
-                  name="depth"
                   value={@depth}
                   left_label="Beginner"
                   right_label="Expert"
                 />
               </div>
 
-              <div class="pt-4 sticky bottom-0 bg-white pb-4 border-t border-gray-100 mt-8">
-                <button
-                  type="button"
-                  phx-click="generate_prompt"
-                  class="w-full justify-center inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-fuchsia-500 via-rose-500 to-amber-500 px-5 py-3 text-white text-lg font-semibold shadow-md hover:shadow-lg hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-300 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={@loading}
-                >
-                  {if @loading, do: "Generating...", else: "Generate Questions"}
-                </button>
+              <button
+                id="inspiration-generate-button"
+                type="button"
+                phx-click="generate_prompt"
+                class="mt-7 inline-flex w-full items-center justify-between rounded-md bg-slate-950 px-5 py-3 text-base font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-700 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={@loading}
+              >
+                <span>{if @loading, do: "Finding questions…", else: "Find five questions"}</span>
+                <.icon name="hero-arrow-right" class="h-5 w-5" />
+              </button>
+            </.form>
+          </div>
+        </aside>
+
+        <main class="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+          <div class="flex items-end justify-between gap-5 border-b border-stone-300 bg-[#f4f1e9] px-5 py-5 sm:px-8 lg:px-10">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
+                Starting points
+              </p>
+              <h2 class="mt-1 font-serif text-3xl font-semibold tracking-tight">
+                Questions shaped by your choices
+              </h2>
+            </div>
+            <span class="hidden font-mono text-xs text-slate-500 sm:block">01 → 05</span>
+          </div>
+
+          <div class="flex-1 overflow-y-auto px-5 py-7 sm:px-8 lg:px-10 lg:py-9">
+            <div
+              :if={@loading}
+              class="mx-auto max-w-3xl border-l-4 border-teal-700 bg-white p-6 shadow-sm"
+            >
+              <div class="flex items-center gap-3">
+                <.icon name="hero-arrow-path" class="h-5 w-5 animate-spin text-teal-800" />
+                <p class="font-serif text-xl font-semibold">Looking for useful starting points…</p>
               </div>
-            </form>
-          </div>
-        </div>
-        
-    <!-- Right Panel: Results -->
-        <div class="flex-1 flex flex-col bg-gray-50 overflow-hidden relative">
-          <div class="absolute inset-0 opacity-5 bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23000000\' fill-opacity=\'1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]">
-          </div>
-
-          <div class="relative flex-1 overflow-y-auto p-6 md:p-12">
-            <h3 class="text-2xl font-medium text-gray-900 mb-8 flex items-center gap-3">
-              <.icon name="hero-sparkles" class="w-8 h-8 text-blue-500" /> Your Generated Questions
-            </h3>
-
-            <div :if={@loading} class="flex flex-col items-center justify-center h-64 text-gray-500">
-              <.icon name="hero-arrow-path" class="w-12 h-12 animate-spin text-blue-500 mb-4" />
-              <p class="text-lg">Consulting the oracle...</p>
+              <p class="mt-2 text-sm leading-6 text-slate-600">
+                The suggestions will keep the limits you set while leaving room for more than one answer.
+              </p>
             </div>
 
             <div
               :if={!@loading and @questions == []}
-              class="flex flex-col items-center justify-center h-64 text-gray-400"
+              class="mx-auto grid max-w-3xl gap-0 border border-stone-300 bg-white sm:grid-cols-[minmax(0,1fr)_12rem]"
             >
-              <.icon name="hero-adjustments-horizontal" class="w-16 h-16 mb-4 opacity-50" />
-              <p class="text-lg font-medium">Adjust preferences on the left and click Generate</p>
-            </div>
-
-            <div :if={!@loading and @questions != []} class="grid gap-4 max-w-3xl mx-auto">
-              <div
-                :for={question <- @questions}
-                class="group relative bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:border-blue-300 hover:shadow-md transition-all cursor-pointer transform hover:-translate-y-1"
-                phx-click={JS.push("select_question", value: %{question: question})}
-              >
-                <div class="flex justify-between items-start gap-4">
-                  <p class="text-lg text-gray-800 font-medium leading-relaxed">{question}</p>
-                  <div class="shrink-0 rounded-full bg-blue-50 p-2 text-blue-600 group-hover:bg-blue-100 transition-colors">
-                    <.icon name="hero-arrow-right" class="w-5 h-5" />
-                  </div>
+              <div class="p-6 sm:p-8">
+                <p class="font-serif text-2xl font-semibold">No generated filler yet.</p>
+                <p class="mt-3 text-sm leading-6 text-slate-600">
+                  Move the controls to describe the territory, then ask for five questions. Selecting
+                  one opens it directly in the new-grid form.
+                </p>
+              </div>
+              <div class="hidden border-l border-stone-300 p-6 sm:block" aria-hidden="true">
+                <div class="border-l-4 border-sky-500 bg-stone-50 px-3 py-2 text-xs font-semibold">
+                  Question
+                </div>
+                <div class="ml-6 h-5 w-px bg-slate-400"></div>
+                <div class="border-l-4 border-emerald-600 bg-stone-50 px-3 py-2 text-xs font-semibold">
+                  Answer
+                </div>
+                <div class="ml-6 h-5 w-px bg-slate-400"></div>
+                <div class="border-l-4 border-amber-500 bg-stone-50 px-3 py-2 text-xs font-semibold">
+                  Follow-up
                 </div>
               </div>
             </div>
+
+            <div :if={!@loading and @questions != []} class="mx-auto max-w-3xl">
+              <button
+                :for={{question, index} <- Enum.with_index(@questions, 1)}
+                type="button"
+                class="group grid w-full grid-cols-[2.5rem_1fr_auto] items-start gap-3 border-b border-slate-300 bg-transparent py-5 text-left transition hover:border-teal-700 hover:bg-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-700"
+                phx-click={JS.push("select_question", value: %{question: question})}
+              >
+                <span class="pt-1 font-mono text-xs font-bold text-teal-800">
+                  {index |> Integer.to_string() |> String.pad_leading(2, "0")}
+                </span>
+                <span class="font-serif text-xl font-semibold leading-7 text-slate-900">
+                  {question}
+                </span>
+                <.icon
+                  name="hero-arrow-right"
+                  class="mt-1 h-5 w-5 text-slate-400 transition group-hover:translate-x-1 group-hover:text-teal-800"
+                />
+              </button>
+            </div>
           </div>
-        </div>
+        </main>
       </div>
     </div>
     """
   end
 
+  attr :field, Phoenix.HTML.FormField, required: true
   attr :label, :string, required: true
-  attr :name, :string, required: true
   attr :value, :integer, required: true
   attr :left_label, :string, required: true
   attr :right_label, :string, required: true
 
   def slider(assigns) do
     ~H"""
-    <div class="space-y-3 pt-2">
-      <div class="flex justify-between items-end mb-2">
-        <label for={@name} class="block text-base font-semibold text-gray-800 tracking-tight">
-          {@label}
-        </label>
+    <div class="py-6">
+      <div class="flex items-baseline justify-between gap-4">
+        <label for={@field.id} class="text-sm font-semibold text-slate-900">{@label}</label>
+        <span class="font-mono text-xs text-slate-500">{@value}</span>
       </div>
-      <div class="relative h-6 flex items-center">
-        <div class="absolute w-full h-2 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded-full">
-        </div>
+      <div class="relative mt-4 flex h-6 items-center">
+        <div class="absolute h-1 w-full bg-stone-300"></div>
         <input
           type="range"
-          id={@name}
+          id={@field.id}
           min="0"
           max="100"
           value={@value}
-          name={@name}
-          class="relative w-full h-2 appearance-none bg-transparent cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-indigo-600 [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-110 focus:outline-none focus:ring-0"
+          name={@field.name}
+          class="relative h-2 w-full cursor-pointer appearance-none bg-transparent focus:outline-none focus:ring-0 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-sm [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-slate-950 [&::-webkit-slider-thumb]:bg-teal-300 [&::-webkit-slider-thumb]:shadow-sm"
           phx-debounce="200"
         />
       </div>
-      <div class="flex justify-between text-xs font-medium text-gray-500 uppercase tracking-wider">
+      <div class="mt-1 flex justify-between text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
         <span>{@left_label}</span>
         <span>{@right_label}</span>
       </div>

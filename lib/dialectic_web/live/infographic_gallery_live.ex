@@ -57,114 +57,110 @@ defmodule DialecticWeb.InfographicGalleryLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
-      <div class="max-w-7xl mx-auto">
-        <%!-- Header --%>
-        <div class="text-center mb-12">
-          <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            Infographic Gallery
-          </h1>
-          <p class="text-lg text-gray-600 dark:text-gray-300">
-            Visual explorations of complex ideas through RationalGrid knowledge maps
+    <div class="min-h-screen bg-[#f4f1e9] text-slate-950">
+      <header class="border-b border-stone-300 bg-white">
+        <div class="mx-auto grid max-w-7xl gap-6 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-end lg:px-10">
+          <div class="max-w-4xl">
+            <p class="border-l-2 border-teal-700 pl-3 text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
+              Drawn from public grids
+            </p>
+            <h1 class="mt-5 font-serif text-5xl font-semibold tracking-tight sm:text-6xl">
+              Infographic Gallery
+            </h1>
+            <p class="mt-4 max-w-2xl text-lg leading-8 text-slate-600">
+              Visual explorations of complex ideas, made from the questions and branches inside
+              RationalGrid knowledge maps.
+            </p>
+          </div>
+          <p class="border-t border-slate-300 pt-4 text-sm leading-6 text-slate-600">
+            Open an image to inspect it at full size, or continue into the live grid to follow the
+            underlying conversation.
           </p>
         </div>
+      </header>
 
-        <%!-- Gallery Grid --%>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
-          <button
-            :for={infographic <- @infographics}
-            type="button"
-            class="group relative rounded-lg shadow-lg overflow-hidden transition-shadow duration-300 hover:shadow-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 cursor-pointer aspect-[4/3]"
-            phx-click="open_infographic"
-            phx-value-id={infographic.id}
-            role="button"
-            tabindex="0"
-            aria-label={"View #{infographic.title} infographic"}
-          >
-            <%!-- Image --%>
-            <img
-              src={infographic.image_path}
-              alt={infographic.title}
-              class="w-full h-full object-contain bg-gray-100 dark:bg-gray-900"
-            />
-
-            <%!-- Overlay --%>
-            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity duration-300 pointer-events-none">
-              <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
-                <h3 class="text-xl font-semibold mb-2">
+      <main class="mx-auto max-w-7xl px-5 py-10 sm:px-8 sm:py-14 lg:px-10">
+        <div id="infographic-gallery-list" class="grid gap-x-8 gap-y-12 md:grid-cols-2">
+          <article :for={{infographic, index} <- Enum.with_index(@infographics, 1)}>
+            <button
+              type="button"
+              class="group block w-full border border-stone-300 bg-white p-2 text-left shadow-sm transition hover:border-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-700 focus:ring-offset-4 focus:ring-offset-[#f4f1e9]"
+              phx-click="open_infographic"
+              phx-value-id={infographic.id}
+              role="button"
+              tabindex="0"
+              aria-label={"View #{infographic.title} infographic"}
+            >
+              <img
+                src={infographic.image_path}
+                alt={infographic.title}
+                class="aspect-[4/3] w-full bg-stone-100 object-contain"
+              />
+            </button>
+            <div class="mt-4 grid grid-cols-[2.5rem_1fr] gap-3 border-t border-slate-400 pt-3">
+              <span class="font-mono text-xs font-bold text-teal-800">
+                {index |> Integer.to_string() |> String.pad_leading(2, "0")}
+              </span>
+              <div>
+                <h2 class="font-serif text-2xl font-semibold tracking-tight">
                   {infographic.title}
-                </h3>
-                <p class="text-white/90 text-sm mb-4">
-                  {infographic.description}
-                </p>
-                <div class="flex items-center gap-4">
-                  <span class="inline-flex items-center text-white font-medium text-sm pointer-events-auto">
-                    <.link
-                      navigate={~p"/g/#{infographic.graph_slug}"}
-                      class="hover:text-blue-300"
-                      tabindex="-1"
-                    >
-                      Explore Grid <.icon name="hero-arrow-right" class="w-4 h-4 ml-1 inline" />
-                    </.link>
-                  </span>
-                  <span class="inline-flex items-center text-white/80 font-medium text-sm">
-                    <.icon name="hero-magnifying-glass-plus" class="w-4 h-4 mr-1" />
-                    <span>Click to zoom</span>
-                  </span>
+                </h2>
+                <p class="mt-2 text-sm leading-6 text-slate-600">{infographic.description}</p>
+                <div class="mt-3 flex flex-wrap gap-4 text-sm font-semibold">
+                  <button
+                    type="button"
+                    phx-click={JS.push("open_infographic", value: %{id: infographic.id})}
+                    class="border-b border-slate-500 pb-0.5 text-slate-900 transition hover:border-teal-700 hover:text-teal-800"
+                  >
+                    View full size
+                  </button>
+                  <.link
+                    navigate={~p"/g/#{infographic.graph_slug}"}
+                    class="inline-flex items-center gap-1 border-b border-slate-500 pb-0.5 text-slate-900 transition hover:border-teal-700 hover:text-teal-800"
+                  >
+                    Explore Grid <.icon name="hero-arrow-right" class="h-4 w-4" />
+                  </.link>
                 </div>
               </div>
             </div>
-
-            <%!-- Title badge always visible --%>
-            <div class="absolute top-4 left-4 bg-white/95 dark:bg-gray-900/95 px-3 py-1.5 rounded-lg shadow-lg group-hover:opacity-0 group-focus:opacity-0 transition-opacity duration-300 pointer-events-none">
-              <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
-                {infographic.title}
-              </h3>
-            </div>
-          </button>
+          </article>
         </div>
 
         <section
           id="gallery-infographic-cta"
-          class="mt-10 rounded-2xl border border-blue-200 bg-white/80 p-5 shadow-sm backdrop-blur dark:border-blue-900/60 dark:bg-gray-900/70 sm:flex sm:items-center sm:justify-between sm:gap-6"
+          class="mt-14 grid gap-6 border border-slate-700 bg-slate-950 p-6 text-white sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:p-8"
         >
-          <div class="flex items-start gap-3">
-            <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
-              <.icon name="hero-envelope" class="h-5 w-5" />
-            </span>
-            <div>
-              <h2 class="text-base font-semibold text-gray-950 dark:text-white">
-                Want an infographic for your idea?
-              </h2>
-              <p class="mt-1 text-sm leading-6 text-gray-600 dark:text-gray-300">
-                Contact us and we can talk about turning a RationalGrid map into a shareable visual.
-              </p>
-            </div>
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-300">
+              Commission a visual
+            </p>
+            <h2 class="mt-2 font-serif text-3xl font-semibold">
+              Want an infographic for your idea?
+            </h2>
+            <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
+              Contact us and we can talk about turning a RationalGrid map into a shareable visual.
+            </p>
           </div>
-
           <a
             href={@contact_mailto}
             id="gallery-infographic-contact-link"
-            class="mt-4 inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 sm:mt-0"
+            class="inline-flex items-center justify-center gap-2 rounded-md bg-teal-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-teal-200"
           >
-            Contact us <.icon name="hero-arrow-right" class="ml-2 h-4 w-4" />
+            Contact us <.icon name="hero-arrow-right" class="h-4 w-4" />
           </a>
         </section>
 
-        <%!-- Back to Home --%>
-        <div class="text-center mt-12">
+        <div class="mt-10">
           <.link
             navigate={~p"/"}
-            class="inline-flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
+            class="inline-flex items-center gap-2 border-b border-slate-500 pb-1 text-sm font-semibold text-slate-800 transition hover:border-teal-700 hover:text-teal-800"
           >
-            <.icon name="hero-arrow-left" class="w-4 h-4 mr-2" />
-            <span>Back to Home</span>
+            <.icon name="hero-arrow-left" class="h-4 w-4" /> Back to Home
           </.link>
         </div>
-      </div>
+      </main>
     </div>
 
-    <%!-- Zoom Modal --%>
     <%= if @selected_infographic do %>
       <div
         id="infographic-modal"
@@ -174,62 +170,53 @@ defmodule DialecticWeb.InfographicGalleryLive do
         phx-window-keydown="close_modal"
         phx-key="escape"
       >
-        <%!-- Backdrop --%>
-        <div
-          class="fixed inset-0 bg-black bg-opacity-75 transition-opacity"
-          phx-click="close_modal"
-          aria-hidden="true"
-        >
-        </div>
+        <div class="fixed inset-0 bg-slate-950/90" phx-click="close_modal" aria-hidden="true"></div>
 
-        <%!-- Modal Content --%>
-        <div class="flex min-h-screen items-start justify-center p-4 pt-12 sm:pt-14">
+        <div class="relative flex min-h-screen items-start justify-center p-4 pt-12 sm:pt-16">
           <.focus_wrap id="infographic-modal-focus-wrap" class="w-full max-w-7xl">
             <div
               id="infographic-modal-content"
-              class="relative w-full bg-white dark:bg-gray-800 rounded-lg shadow-2xl"
+              class="relative w-full border border-slate-700 bg-white shadow-2xl"
               role="dialog"
               aria-modal="true"
               aria-labelledby="infographic-modal-title"
               aria-describedby="infographic-modal-description"
               tabindex="-1"
             >
-              <%!-- Close Button --%>
               <button
                 type="button"
                 phx-click="close_modal"
                 aria-label="Close infographic zoom view"
-                class="absolute top-4 right-4 z-10 p-2 rounded-full bg-gray-800 bg-opacity-50 hover:bg-opacity-75 text-white transition-all focus:outline-none focus:ring-2 focus:ring-white"
+                class="absolute right-3 top-3 z-10 inline-flex h-10 w-10 items-center justify-center rounded-md bg-slate-950 text-white shadow-lg transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-300"
               >
-                <.icon name="hero-x-mark" class="w-6 h-6" />
+                <.icon name="hero-x-mark" class="h-5 w-5" />
               </button>
 
-              <%!-- Image --%>
-              <div class="p-4">
+              <div class="bg-stone-100 p-3 sm:p-5">
                 <img
                   src={@selected_infographic.image_path}
                   alt={@selected_infographic.title}
-                  class="w-full h-auto rounded"
+                  class="mx-auto h-auto w-full"
                 />
               </div>
 
-              <%!-- Info --%>
-              <div class="p-6 border-t border-gray-200 dark:border-gray-700">
-                <h2
-                  id="infographic-modal-title"
-                  class="text-2xl font-bold text-gray-900 dark:text-white mb-2"
-                >
-                  {@selected_infographic.title}
-                </h2>
-                <p id="infographic-modal-description" class="text-gray-600 dark:text-gray-300 mb-4">
-                  {@selected_infographic.description}
-                </p>
+              <div class="grid gap-5 border-t border-stone-300 p-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end sm:p-6">
+                <div>
+                  <h2
+                    id="infographic-modal-title"
+                    class="font-serif text-3xl font-semibold text-slate-950"
+                  >
+                    {@selected_infographic.title}
+                  </h2>
+                  <p id="infographic-modal-description" class="mt-2 text-sm leading-6 text-slate-600">
+                    {@selected_infographic.description}
+                  </p>
+                </div>
                 <.link
                   navigate={~p"/g/#{@selected_infographic.graph_slug}"}
-                  class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  class="inline-flex items-center justify-center gap-2 rounded-md bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
                 >
-                  <span>Explore Interactive Grid</span>
-                  <.icon name="hero-arrow-right" class="w-4 h-4 ml-2" />
+                  Explore Interactive Grid <.icon name="hero-arrow-right" class="h-4 w-4" />
                 </.link>
               </div>
             </div>

@@ -1,37 +1,41 @@
-<div class="min-h-screen bg-slate-50 text-slate-900">
-  <section class="border-b border-slate-900 bg-gradient-to-br from-slate-950 via-slate-900 to-teal-950 text-white">
-    <div class="mx-auto max-w-5xl px-4 py-16 sm:px-6 sm:py-24">
-      <p class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-teal-100 ring-1 ring-white/20">
-        <.icon name="hero-book-open" class="h-3.5 w-3.5" /> How RationalGrid works
+<div class="min-h-screen bg-[#f4f1e9] text-slate-950">
+  <section class="border-b border-stone-300 bg-white">
+    <div class="mx-auto max-w-6xl px-5 py-14 sm:px-8 sm:py-20">
+      <p class="border-l-2 border-teal-700 pl-3 text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
+        How RationalGrid works
       </p>
-      <h1 class="mt-5 max-w-4xl text-4xl font-semibold tracking-tight text-white sm:text-6xl">
-        From one question to a map you can keep testing.
+      <h1 class="mt-5 max-w-4xl font-serif text-5xl font-semibold leading-[1.02] tracking-tight sm:text-7xl">
+        One question becomes a map of what followed.
       </h1>
-      <p class="mt-5 max-w-2xl text-lg leading-8 text-slate-300">
-        RationalGrid turns an AI answer into a visual trail: read the response, choose a branch, test the reasoning, add your perspective, and save what matters.
+      <p class="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
+        Read the first response, choose a precise point to question, and keep every later answer
+        attached to the context that produced it.
       </p>
       <div class="mt-8 flex flex-wrap gap-3">
         <a
           href="/?focus=grid#start-here"
-          class="inline-flex items-center gap-2 rounded-xl bg-teal-300 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-200"
+          class="inline-flex items-center gap-2 rounded-md bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
         >
-          <.icon name="hero-sparkles" class="h-4 w-4" /> Start a grid
+          Start a grid <.icon name="hero-arrow-right" class="h-4 w-4" />
         </a>
         <a
           href="#guide-flow"
-          class="inline-flex items-center gap-2 rounded-xl bg-white/10 px-5 py-3 text-sm font-semibold text-white ring-1 ring-white/25 transition hover:bg-white/20"
+          class="inline-flex items-center gap-2 border-b border-slate-500 px-1 py-2 text-sm font-semibold text-slate-900 transition hover:border-teal-700 hover:text-teal-800"
         >
-          <.icon name="hero-arrow-down" class="h-4 w-4" /> Follow the flow
+          Follow the flow <.icon name="hero-arrow-down" class="h-4 w-4" />
         </a>
       </div>
     </div>
   </section>
 
-  <main class="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-14">
+  <main class="mx-auto max-w-6xl px-5 py-10 sm:px-8 sm:py-14">
     <section id="guide-flow" aria-labelledby="guide-flow-heading">
       <div class="max-w-3xl">
         <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">The core loop</p>
-        <h2 id="guide-flow-heading" class="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
+        <h2
+          id="guide-flow-heading"
+          class="mt-2 font-serif text-4xl font-semibold tracking-tight sm:text-5xl"
+        >
           What happens inside a grid?
         </h2>
         <p class="mt-3 leading-7 text-slate-600">
@@ -49,8 +53,8 @@
           {"4", "Test", "Challenge claims and assumptions."},
           {"5", "Keep", "Save, share, and return later."}
         ] do %>
-          <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-teal-100 text-sm font-bold text-teal-800">
+          <div class="border-t-4 border-teal-700 bg-white p-4 shadow-sm">
+            <span class="font-mono text-xs font-bold text-teal-800">
               {number}
             </span>
             <h3 class="mt-3 text-base font-semibold text-slate-950">{title}</h3>
@@ -63,7 +67,7 @@
     <section class="mt-12" aria-labelledby="guide-ask-heading">
       <div class="max-w-3xl">
         <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">Step 1 · Ask</p>
-        <h2 id="guide-ask-heading" class="mt-2 text-3xl font-semibold tracking-tight">
+        <h2 id="guide-ask-heading" class="mt-2 font-serif text-4xl font-semibold tracking-tight">
           What would you like to explore?
         </h2>
         <p class="mt-3 leading-7 text-slate-600">
@@ -81,7 +85,7 @@
         ] do %>
           <a
             href={"/?#{URI.encode_query(%{"initial_prompt" => prompt, "focus" => "grid"})}#start-here"}
-            class="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-teal-300 hover:shadow-md"
+            class="group border border-stone-300 border-l-4 border-l-teal-700 bg-white p-5 shadow-sm transition hover:border-slate-500"
           >
             <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">{category}</p>
             <p class="mt-2 text-sm font-semibold leading-6 text-slate-950 group-hover:text-teal-800">
@@ -93,7 +97,7 @@
           </a>
         <% end %>
       </div>
-      <div class="mt-5 rounded-2xl border border-teal-200 bg-teal-50 p-5 sm:flex sm:items-center sm:justify-between sm:gap-5">
+      <div class="mt-5 border border-stone-300 bg-white p-5 sm:flex sm:items-center sm:justify-between sm:gap-5">
         <div>
           <p class="text-sm font-semibold text-teal-950">Have your own question?</p>
           <p class="mt-1 text-sm text-teal-900">
@@ -102,7 +106,7 @@
         </div>
         <a
           href="/?focus=grid#start-here"
-          class="mt-4 inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 sm:mt-0"
+          class="mt-4 inline-flex shrink-0 items-center justify-center gap-2 rounded-md bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 sm:mt-0"
         >
           <.icon name="hero-plus" class="h-4 w-4" /> Open new question form
         </a>
@@ -113,11 +117,11 @@
       class="mt-12 grid gap-6 lg:grid-cols-[1.1fr,0.9fr] lg:items-center"
       aria-labelledby="guide-response-heading"
     >
-      <figure class="order-2 overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 p-3 shadow-sm lg:order-1">
+      <figure class="order-2 overflow-hidden border border-slate-300 bg-slate-950 p-3 shadow-sm lg:order-1">
         <img
           src="/images/guide/grid-workspace.webp"
           alt="RationalGrid workspace showing a connected response map"
-          class="w-full rounded-xl"
+          class="w-full"
           loading="lazy"
         />
         <figcaption class="px-2 pt-3 text-xs text-slate-300">
@@ -126,7 +130,10 @@
       </figure>
       <div class="order-1 lg:order-2">
         <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">Step 2 · See</p>
-        <h2 id="guide-response-heading" class="mt-2 text-3xl font-semibold tracking-tight">
+        <h2
+          id="guide-response-heading"
+          class="mt-2 font-serif text-4xl font-semibold tracking-tight"
+        >
           Read the response as a map, not a wall of text.
         </h2>
         <p class="mt-3 leading-7 text-slate-600">
@@ -158,7 +165,10 @@
     <section class="mt-12" aria-labelledby="guide-branch-heading">
       <div class="max-w-3xl">
         <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">Step 3 · Branch</p>
-        <h2 id="guide-branch-heading" class="mt-2 text-3xl font-semibold tracking-tight">
+        <h2
+          id="guide-branch-heading"
+          class="mt-2 font-serif text-4xl font-semibold tracking-tight"
+        >
           Choose how to go deeper.
         </h2>
         <p class="mt-3 leading-7 text-slate-600">
@@ -166,28 +176,28 @@
         </p>
       </div>
       <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <article class="border-t-4 border-sky-600 bg-white p-5 shadow-sm">
           <.icon name="hero-question-mark-circle" class="h-5 w-5 text-sky-600" />
           <h3 class="mt-3 text-base font-semibold">Ask AI</h3>
           <p class="mt-2 text-sm leading-6 text-slate-600">
             Generate a new answer from the selected node.
           </p>
         </article>
-        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <article class="border-t-4 border-teal-600 bg-white p-5 shadow-sm">
           <.icon name="hero-chat-bubble-bottom-center-text" class="h-5 w-5 text-teal-600" />
           <h3 class="mt-3 text-base font-semibold">Comment</h3>
           <p class="mt-2 text-sm leading-6 text-slate-600">
             Add your claim, objection, example, or question.
           </p>
         </article>
-        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <article class="border-t-4 border-amber-600 bg-white p-5 shadow-sm">
           <.icon name="hero-cursor-arrow-rays" class="h-5 w-5 text-amber-600" />
           <h3 class="mt-3 text-base font-semibold">Select a phrase</h3>
           <p class="mt-2 text-sm leading-6 text-slate-600">
             Open focused actions for one sentence or idea.
           </p>
         </article>
-        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <article class="border-t-4 border-indigo-600 bg-white p-5 shadow-sm">
           <.icon name="hero-squares-plus" class="h-5 w-5 text-indigo-600" />
           <h3 class="mt-3 text-base font-semibold">Related ideas</h3>
           <p class="mt-2 text-sm leading-6 text-slate-600">
@@ -198,12 +208,12 @@
     </section>
 
     <section
-      class="mt-12 rounded-2xl bg-slate-950 p-6 text-white shadow-sm sm:p-8"
+      class="mt-12 border border-slate-700 bg-slate-950 p-6 text-white shadow-sm sm:p-8"
       aria-labelledby="guide-test-heading"
     >
       <div class="max-w-3xl">
         <p class="text-xs font-semibold uppercase tracking-wide text-teal-300">Step 4 · Test</p>
-        <h2 id="guide-test-heading" class="mt-2 text-3xl font-semibold tracking-tight">
+        <h2 id="guide-test-heading" class="mt-2 font-serif text-4xl font-semibold tracking-tight">
           Use critical-thinking tools to interrogate the response.
         </h2>
         <p class="mt-3 leading-7 text-slate-300">
@@ -222,7 +232,7 @@
           {"hero-eye-slash", "Blind spots", "What are we missing?", "Find overlooked constraints."},
           {"hero-question-mark-circle", "What if", "What could change?", "Explore alternative scenarios."}
         ] do %>
-          <article class="rounded-xl border border-white/10 bg-white/[0.06] p-4">
+          <article class="border-l-2 border-teal-300 bg-white/[0.06] p-4">
             <.icon name={icon} class="h-5 w-5 text-teal-300" />
             <h3 class="mt-3 text-sm font-semibold">{title}</h3>
             <p class="mt-0.5 text-xs font-medium text-teal-200">{question}</p>
@@ -240,21 +250,21 @@
         <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">
           Step 5 · Keep and share
         </p>
-        <h2 id="guide-keep-heading" class="mt-2 text-3xl font-semibold tracking-tight">
+        <h2 id="guide-keep-heading" class="mt-2 font-serif text-4xl font-semibold tracking-tight">
           Turn good thinking into something reusable.
         </h2>
         <p class="mt-3 leading-7 text-slate-600">
           Bookmark useful nodes, highlight passages, add notes, and share one link to the same map. Use Doc or Present view when you want to guide someone through the result.
         </p>
         <div class="mt-5 grid gap-3 sm:grid-cols-2">
-          <div class="rounded-xl border border-slate-200 bg-white p-4">
+          <div class="border-t-2 border-amber-600 bg-white p-4">
             <.icon name="hero-bookmark" class="h-5 w-5 text-amber-600" />
             <h3 class="mt-2 text-sm font-semibold">Save attention</h3>
             <p class="mt-1 text-xs leading-5 text-slate-600">
               Keep nodes and quotes worth returning to.
             </p>
           </div>
-          <div class="rounded-xl border border-slate-200 bg-white p-4">
+          <div class="border-t-2 border-teal-700 bg-white p-4">
             <.icon name="hero-share" class="h-5 w-5 text-teal-700" />
             <h3 class="mt-2 text-sm font-semibold">Share the path</h3>
             <p class="mt-1 text-xs leading-5 text-slate-600">
@@ -263,11 +273,11 @@
           </div>
         </div>
       </div>
-      <figure class="overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 p-3 shadow-sm">
+      <figure class="overflow-hidden border border-slate-300 bg-slate-950 p-3 shadow-sm">
         <img
           src="/images/guide/grid-dense-example.webp"
           alt="A large RationalGrid map with many connected branches"
-          class="w-full rounded-xl"
+          class="w-full"
           loading="lazy"
         />
         <figcaption class="px-2 pt-3 text-xs text-slate-300">
@@ -276,11 +286,11 @@
       </figure>
     </section>
 
-    <section class="mt-12 rounded-2xl border border-teal-200 bg-teal-50 p-6 sm:p-8">
+    <section class="mt-12 border border-stone-300 border-l-4 border-l-teal-700 bg-white p-6 sm:p-8">
       <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">
         Ready to try the loop?
       </p>
-      <h2 class="mt-2 text-3xl font-semibold tracking-tight">
+      <h2 class="mt-2 font-serif text-4xl font-semibold tracking-tight">
         Ask a question, then follow the next useful move.
       </h2>
       <p class="mt-3 max-w-2xl leading-7 text-slate-700">
@@ -289,13 +299,13 @@
       <div class="mt-5 flex flex-wrap gap-3">
         <a
           href="/?focus=grid#start-here"
-          class="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+          class="inline-flex items-center gap-2 rounded-md bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
         >
           <.icon name="hero-plus" class="h-4 w-4" /> Create a grid
         </a>
         <a
           href="/about"
-          class="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-teal-800 ring-1 ring-teal-200 transition hover:bg-teal-100"
+          class="inline-flex items-center gap-2 rounded-md border border-stone-300 bg-white px-5 py-3 text-sm font-semibold text-teal-800 transition hover:border-teal-700"
         >
           <.icon name="hero-information-circle" class="h-4 w-4" /> About RationalGrid
         </a>

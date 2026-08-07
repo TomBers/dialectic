@@ -140,33 +140,33 @@ defmodule DialecticWeb.CommunityLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="min-h-screen bg-slate-100 text-slate-900">
+    <div class="min-h-screen bg-[#f4f1e9] text-slate-950">
       <div class="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         <header
           id="community-page-header"
-          class="mb-5 flex flex-col gap-4 rounded-3xl bg-slate-950 px-5 py-4 text-white shadow-lg sm:px-6 sm:py-5 lg:flex-row lg:items-center lg:justify-between"
+          class="mb-6 flex flex-col gap-5 border border-stone-300 border-l-4 border-l-teal-700 bg-white px-5 py-5 shadow-sm sm:px-7 sm:py-6 lg:flex-row lg:items-end lg:justify-between"
         >
           <div class="max-w-3xl">
-            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-teal-300">
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
               Community
             </p>
-            <h1 class="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
-              Explore, expand, and challenge ideas together.
+            <h1 class="mt-2 font-serif text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
+              Find a public question and inspect how it grew.
             </h1>
-            <p class="mt-2 max-w-2xl text-sm leading-5 text-slate-300">
-              Browse living questions from the community, test the reasoning, and add your own branches to help each idea grow.
+            <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+              Open a grid to read its branches, check the reasoning, or continue from a precise point in the conversation.
             </p>
           </div>
           <div class="flex flex-wrap gap-2">
             <.link
               navigate={~p"/?focus=grid#start-here"}
-              class="inline-flex items-center gap-2 rounded-full bg-teal-300 px-3.5 py-2 text-sm font-semibold text-slate-950 transition hover:bg-teal-200"
+              class="inline-flex items-center gap-2 rounded-md bg-slate-950 px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
             >
               <.icon name="hero-plus" class="h-4 w-4" /> Create a grid
             </.link>
             <.link
               navigate={~p"/intro/how"}
-              class="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-white/15"
+              class="inline-flex items-center gap-2 border-b border-slate-500 px-1 py-2 text-sm font-semibold text-slate-800 transition hover:border-teal-700 hover:text-teal-800"
             >
               <.icon name="hero-book-open" class="h-4 w-4" /> Read the guide
             </.link>
@@ -189,10 +189,10 @@ defmodule DialecticWeb.CommunityLive do
 
           <section
             id="community-search"
-            class="overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white shadow-sm"
+            class="overflow-hidden border border-stone-300 bg-white shadow-sm"
           >
-            <div class="h-1 bg-[linear-gradient(90deg,#0f766e_0%,#f59e0b_48%,#4f46e5_100%)]"></div>
-            <div class="bg-[linear-gradient(135deg,#0f172a_0%,#134e4a_54%,#7c2d12_100%)] p-5 text-white sm:p-7">
+            <div class="h-1 bg-teal-700"></div>
+            <div class="bg-slate-950 p-5 text-white sm:p-7">
               <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>
                   <p class="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">
@@ -213,7 +213,7 @@ defmodule DialecticWeb.CommunityLive do
                     <% end %>
                   </h2>
                   <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
-                    Search by question, browse by topic, and find a living thread of ideas to test, challenge, and build on.
+                    Search by question or topic, then open the actual route through the answers.
                   </p>
                 </div>
                 <form
@@ -231,7 +231,7 @@ defmodule DialecticWeb.CommunityLive do
                     value={@search_term}
                     phx-debounce="300"
                     placeholder="Search by question or topic..."
-                    class="h-11 w-full rounded-full border border-white/60 bg-white px-10 pr-4 text-sm text-slate-900 placeholder:text-slate-500 shadow-sm focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-200"
+                    class="h-11 w-full rounded-md border border-white/60 bg-white px-10 pr-4 text-sm text-slate-900 placeholder:text-slate-500 shadow-sm focus:border-teal-300 focus:outline-none focus:ring-2 focus:ring-teal-200"
                     autocomplete="off"
                   />
                 </form>
@@ -261,7 +261,7 @@ defmodule DialecticWeb.CommunityLive do
                     Seedlings
                   </.link>
                 </div>
-                <div class="mt-3 max-h-36 overflow-y-auto rounded-2xl border border-white/10 bg-black/10 p-2">
+                <div class="mt-3 max-h-36 overflow-y-auto border border-white/15 bg-black/10 p-2">
                   <p class="px-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/50">
                     Topics from public grids
                   </p>
@@ -287,7 +287,7 @@ defmodule DialecticWeb.CommunityLive do
               <% else %>
                 <div
                   id="community-grid-list"
-                  class="divide-y divide-slate-200 overflow-hidden rounded-2xl border border-slate-200 bg-white"
+                  class="divide-y divide-slate-200 overflow-hidden border border-slate-200 bg-white"
                 >
                   <%= for {{graph, _count, author_username}, index} <- Enum.with_index(@graphs, 1) do %>
                     <.community_grid_row
@@ -323,14 +323,14 @@ defmodule DialecticWeb.CommunityLive do
     ~H"""
     <section
       id={"#{@id_prefix}-section"}
-      class="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm"
+      class="overflow-hidden border border-stone-300 bg-white shadow-sm"
     >
-      <div class="h-1 bg-[linear-gradient(90deg,#0f766e_0%,#f59e0b_48%,#4f46e5_100%)]"></div>
+      <div class="h-1 bg-teal-700"></div>
       <div class="border-b border-slate-200/80 bg-slate-50/80 px-4 py-3 sm:px-5">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div class="flex items-center gap-2.5">
             <span class={[
-              "inline-flex h-8 w-8 items-center justify-center rounded-xl ring-1",
+              "inline-flex h-8 w-8 items-center justify-center border",
               @icon_wrap_class
             ]}>
               <.icon name={@icon} class={"h-4 w-4 " <> @icon_class} />
@@ -345,7 +345,7 @@ defmodule DialecticWeb.CommunityLive do
           <div :if={@pills != []} class="flex flex-wrap gap-1.5">
             <span
               :for={pill <- @pills}
-              class="rounded-full border border-indigo-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-700"
+              class="border-l border-slate-400 pl-2 text-[11px] font-medium text-slate-700"
             >
               {pill}
             </span>

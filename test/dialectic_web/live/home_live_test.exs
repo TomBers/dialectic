@@ -104,7 +104,7 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(
              view,
              "#home-profile-section",
-             "Turn your learning into a public good."
+             "Publish a trail others can follow."
            )
 
     assert has_element?(
