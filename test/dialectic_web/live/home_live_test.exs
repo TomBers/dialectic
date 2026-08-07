@@ -86,6 +86,16 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(view, "#featured-#{graph.slug}", "Partner grid")
   end
 
+  test "emphasizes the community grid library action", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/")
+
+    assert has_element?(
+             view,
+             ~s(#home-community-grids-link[href="/community"]),
+             "Explore all community grids"
+           )
+  end
+
   test "renders the profile promotion section for visitors", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/")
 

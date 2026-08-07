@@ -197,6 +197,18 @@ defmodule DialecticWeb.GridCardComp do
         "relative z-30 pointer-events-auto inline-flex items-center gap-1.5 rounded-full bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition group-hover:bg-teal-700 group-hover:shadow-md hover:bg-teal-800",
       open_text: "View grid"
     },
+    community_compact: %{
+      card: "min-h-[18rem] rounded-xl",
+      header: "h-20 p-3",
+      body: "flex flex-1 flex-col p-3",
+      title: "line-clamp-2 text-sm leading-5",
+      preview: "mt-1.5 line-clamp-1 min-h-5 text-xs leading-5 text-slate-600",
+      tag_container: "mt-2.5 flex min-h-7 flex-wrap content-start gap-1",
+      footer: "mt-auto flex items-center justify-between gap-2 border-t border-slate-100 pt-2.5",
+      open_link:
+        "relative z-30 pointer-events-auto inline-flex items-center gap-1 rounded-full bg-slate-950 px-2.5 py-1.5 text-[11px] font-semibold text-white shadow-sm transition group-hover:bg-teal-700 hover:bg-teal-800",
+      open_text: "View grid"
+    },
     default: %{
       card: "min-h-72 rounded-2xl",
       header: "h-24 p-4",
