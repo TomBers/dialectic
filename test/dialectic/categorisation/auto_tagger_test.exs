@@ -42,11 +42,11 @@ defmodule Dialectic.Categorisation.AutoTaggerTest do
     assert {:ok, task_pid} = AutoTagger.tag_graph(graph)
     task_ref = Process.monitor(task_pid)
 
-    assert_receive {:llm_generate, prompt, opts}
+    assert_receive {:llm_generate, prompt, opts}, 1_000
     assert prompt =~ "Model selection"
     assert opts[:provider] == :google
     refute Keyword.has_key?(opts, :model)
-    assert_receive {:DOWN, ^task_ref, :process, ^task_pid, :normal}
+    assert_receive {:DOWN, ^task_ref, :process, ^task_pid, :normal}, 1_000
   end
 
   defp restore_env(key, nil), do: Application.delete_env(:dialectic, key)

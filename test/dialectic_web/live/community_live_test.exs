@@ -58,6 +58,14 @@ defmodule DialecticWeb.CommunityLiveTest do
 
       assert has_element?(view, button_selector <> "[disabled]", "Generating...")
 
+      send(view.pid, {:tag_generation_timeout, graph.title})
+      assert has_element?(view, button_selector, "Generate tags")
+      refute has_element?(view, button_selector <> "[disabled]")
+
+      view
+      |> element(button_selector)
+      |> render_click()
+
       send(view.pid, {:tags_updated, graph.title, ["Philosophy"]})
       refute has_element?(view, button_selector)
     end
