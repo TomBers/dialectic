@@ -22,6 +22,7 @@ defmodule DialecticWeb.NewIdeaFormComp do
       end)
       |> assign_new(:submit_label, fn -> "Next" end)
       |> assign_new(:autofocus, fn -> false end)
+      |> assign_new(:minimal, fn -> false end)
       |> assign_new(:selected_mode, fn -> "high_school" end)
       |> assign_new(:show_level_prompt, fn -> false end)
       |> assign_new(:content, fn %{form: form} ->
@@ -132,7 +133,7 @@ defmodule DialecticWeb.NewIdeaFormComp do
             </div>
           <% end %>
 
-          <%= if !@show_level_prompt do %>
+          <%= if !@show_level_prompt and !@minimal do %>
             <div class="flex flex-col gap-1 px-1 text-xs text-slate-600 sm:flex-row sm:items-center sm:justify-between">
               <p>Step 1 of 2: enter your starting point.</p>
               <p class="hidden sm:block">Next: choose how detailed the answer should be.</p>
@@ -151,9 +152,12 @@ defmodule DialecticWeb.NewIdeaFormComp do
                   Step 2 of 2
                 </p>
                 <p class="text-sm font-semibold text-slate-900">
-                  Choose the language and depth for your first answers.
+                  {if(@minimal,
+                    do: "Choose an answer depth.",
+                    else: "Choose the language and depth for your first answers."
+                  )}
                 </p>
-                <p class="text-xs text-slate-600">
+                <p :if={!@minimal} class="text-xs text-slate-600">
                   This controls how technical the explanation sounds and which sources it draws on—not how difficult your question is. You can change it later.
                 </p>
               </div>
@@ -177,6 +181,7 @@ defmodule DialecticWeb.NewIdeaFormComp do
                 ] do %>
                   <button
                     type="button"
+                    id={"new-idea-mode-#{mode}"}
                     phx-click="select_mode"
                     phx-value-mode={mode}
                     phx-target={@myself}

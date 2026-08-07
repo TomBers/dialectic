@@ -112,13 +112,27 @@ defmodule DialecticWeb.HomeLiveTest do
            )
   end
 
-  test "explains how questions branch within a grid", %{conn: conn} do
+  test "renders a minimal start section", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/")
 
-    assert has_element?(view, "#start-here", "What would you like to understand?")
+    assert has_element?(view, "#start-here h2", "What do you want to understand?")
+    assert has_element?(view, "#home-start-panel #new-idea-form")
+    refute has_element?(view, "#home-start-steps")
+    refute has_element?(view, "#start-here", "Step 1 of 2")
+    refute has_element?(view, ~s(#start-here a[href="/intro/how"]))
+  end
 
-    assert has_element?(view, "#home-start-steps", "Branch into follow-ups")
-    assert has_element?(view, "#home-start-steps", "Each answer keeps its parent’s context")
+  test "explains each answer depth in the start form", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/")
+
+    view
+    |> form("#new-idea-form", vertex: %{content: "Why do habits persist?"})
+    |> render_submit()
+
+    assert has_element?(view, "#new-idea-mode-simple", "Plain language, everyday examples")
+    assert has_element?(view, "#new-idea-mode-high_school", "Clear concepts")
+    assert has_element?(view, "#new-idea-mode-university", "More precise terminology")
+    assert has_element?(view, "#new-idea-mode-expert", "Technical terms")
   end
 
   test "logged in users see profile entry in the header without a settings link", %{conn: conn} do

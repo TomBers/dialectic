@@ -291,64 +291,30 @@ defmodule DialecticWeb.HomeLive do
       </section>
 
       <section id="start-here" class="border-b border-stone-300 bg-[#f4f1e9]">
-        <div class="mx-auto grid w-full max-w-7xl gap-10 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[minmax(18rem,0.72fr)_minmax(0,1.28fr)] lg:px-10">
-          <div>
+        <div class="mx-auto w-full max-w-3xl px-5 py-12 sm:px-8 sm:py-16">
+          <div class="text-center">
             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">Start here</p>
-            <h2 class="mt-3 max-w-xl font-serif text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
-              Begin with the question that will not fit in a chat box.
+            <h2 class="mt-3 font-serif text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
+              What do you want to understand?
             </h2>
-            <p class="mt-4 max-w-lg text-base leading-7 text-slate-700">
-              The first answer becomes a map. Select any part of it to ask a follow-up, test an
-              assumption, add a comment, or attach a source.
+            <p class="mx-auto mt-3 max-w-xl text-base leading-7 text-slate-600">
+              Your first answer becomes a map you can explore.
             </p>
-            <.link
-              navigate={~p"/intro/how"}
-              class="mt-6 inline-flex items-center gap-2 border-b border-slate-500 pb-1 text-sm font-semibold text-slate-900 transition hover:border-teal-700 hover:text-teal-800"
-            >
-              How a grid works <.icon name="hero-arrow-right" class="h-4 w-4" />
-            </.link>
           </div>
 
-          <div>
-            <div
-              id="home-start-panel"
-              class="border border-stone-300 border-l-4 border-l-teal-700 bg-white p-4 shadow-sm sm:p-6"
-            >
-              <div class="mb-4 flex items-baseline justify-between gap-4 border-b border-stone-200 pb-3">
-                <h3 class="font-serif text-xl font-semibold text-slate-950">
-                  What would you like to understand?
-                </h3>
-                <span class="text-xs font-medium text-slate-500">About two minutes</span>
-              </div>
-              <.live_component
-                module={DialecticWeb.NewIdeaFormComp}
-                id="new-idea-form"
-                form={@form}
-                placeholder="What do you want to understand?"
-                submit_label="Continue"
-                autofocus={@focus_new_grid}
-              />
-            </div>
-
-            <div id="home-start-steps" class="mt-7 grid gap-4 text-sm sm:grid-cols-3">
-              <article class="border-t-4 border-sky-500 pt-3">
-                <span class="font-mono text-xs font-bold text-sky-800">01</span>
-                <h3 class="mt-1 font-semibold text-slate-950">Start with a question</h3>
-                <p class="mt-1 leading-5 text-slate-600">Bring a question, idea, or source.</p>
-              </article>
-              <article class="border-t-4 border-emerald-600 pt-3">
-                <span class="font-mono text-xs font-bold text-emerald-800">02</span>
-                <h3 class="mt-1 font-semibold text-slate-950">Branch into follow-ups</h3>
-                <p class="mt-1 leading-5 text-slate-600">Ask from any point in the answer.</p>
-              </article>
-              <article class="border-t-4 border-amber-500 pt-3">
-                <span class="font-mono text-xs font-bold text-amber-800">03</span>
-                <h3 class="mt-1 font-semibold text-slate-950">Keep the context</h3>
-                <p class="mt-1 leading-5 text-slate-600">
-                  Each answer keeps its parent’s context.
-                </p>
-              </article>
-            </div>
+          <div
+            id="home-start-panel"
+            class="mt-7 border border-stone-300 bg-white p-4 shadow-sm sm:p-6"
+          >
+            <.live_component
+              module={DialecticWeb.NewIdeaFormComp}
+              id="new-idea-form"
+              form={@form}
+              placeholder="Ask a question or name a topic"
+              submit_label="Continue"
+              autofocus={@focus_new_grid}
+              minimal={true}
+            />
           </div>
         </div>
       </section>
