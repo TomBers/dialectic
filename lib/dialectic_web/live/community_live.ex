@@ -11,6 +11,8 @@ defmodule DialecticWeb.CommunityLive do
 
   @impl true
   def mount(_params, _session, socket) do
+    if connected?(socket), do: Phoenix.PubSub.subscribe(Dialectic.PubSub, "graphs")
+
     {:ok,
      assign(socket,
        page_title: "Community Grids",
@@ -21,7 +23,8 @@ defmodule DialecticWeb.CommunityLive do
        active_category: nil,
        graphs: [],
        popular_tags: [],
-       featured_grids: []
+       featured_grids: [],
+       generating_tags: MapSet.new()
      )}
   end
 
@@ -47,6 +50,59 @@ defmodule DialecticWeb.CommunityLive do
   def handle_event("search", %{"search" => term}, socket) do
     params = if term == "", do: %{}, else: %{"search" => term}
     {:noreply, push_patch(socket, to: ~p"/community?#{params}")}
+  end
+
+  def handle_event("generate_tags", %{"identifier" => identifier}, socket) do
+    graph = Graphs.get_graph_by_slug_or_title(identifier)
+
+    cond do
+      not admin?(socket.assigns.current_user) ->
+        {:noreply, put_flash(socket, :error, "Only admins can generate tags")}
+
+      is_nil(graph) ->
+        {:noreply, put_flash(socket, :error, "Grid not found")}
+
+      tagged?(graph) ->
+        {:noreply, socket}
+
+      true ->
+        auto_tagger =
+          Application.get_env(
+            :dialectic,
+            :auto_tagger_module,
+            Dialectic.Categorisation.AutoTagger
+          )
+
+        case auto_tagger.tag_graph(graph) do
+          :ok ->
+            {:noreply, mark_tags_generating(socket, graph.title)}
+
+          {:ok, _pid} ->
+            {:noreply, mark_tags_generating(socket, graph.title)}
+
+          _error ->
+            {:noreply, put_flash(socket, :error, "Could not start tag generation")}
+        end
+    end
+  end
+
+  @impl true
+  def handle_info({:tags_updated, title, tags}, socket) do
+    graphs =
+      Enum.map(socket.assigns.graphs, fn {graph, count, username} ->
+        if graph.title == title do
+          {Map.put(graph, :tags, tags), count, username}
+        else
+          {graph, count, username}
+        end
+      end)
+
+    {:noreply,
+     assign(socket,
+       graphs: graphs,
+       popular_tags: Graphs.list_popular_tags(@tag_limit),
+       generating_tags: MapSet.delete(socket.assigns.generating_tags, title)
+     )}
   end
 
   @impl true
@@ -208,6 +264,8 @@ defmodule DialecticWeb.CommunityLive do
                       author_marker="@"
                       number={index}
                       selected_tag={@active_tag}
+                      can_generate_tags={admin?(@current_user)}
+                      generating_tags={@generating_tags}
                       id={graph_dom_id(graph, "community-grid")}
                     />
                   <% end %>
@@ -287,6 +345,8 @@ defmodule DialecticWeb.CommunityLive do
   attr :author_marker, :string, default: ""
   attr :number, :integer, required: true
   attr :selected_tag, :string, default: nil
+  attr :can_generate_tags, :boolean, default: false
+  attr :generating_tags, :any, required: true
 
   defp community_grid_row(assigns) do
     assigns =
@@ -295,6 +355,7 @@ defmodule DialecticWeb.CommunityLive do
       |> assign(:tags, visible_tags(assigns.graph, assigns.selected_tag))
       |> assign(:node_count, graph_node_count(assigns.graph))
       |> assign(:icon_theme, icon_theme(assigns.graph))
+      |> assign(:generating_tags?, MapSet.member?(assigns.generating_tags, assigns.graph.title))
 
     ~H"""
     <article
@@ -342,6 +403,21 @@ defmodule DialecticWeb.CommunityLive do
               <span class="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
                 Untagged
               </span>
+              <button
+                :if={@can_generate_tags}
+                id={@id <> "-generate-tags"}
+                type="button"
+                phx-click="generate_tags"
+                phx-value-identifier={@graph.slug || @graph.title}
+                disabled={@generating_tags?}
+                class="inline-flex items-center gap-1 rounded-md bg-teal-50 px-2 py-0.5 text-[11px] font-semibold text-teal-700 ring-1 ring-inset ring-teal-200 transition hover:bg-teal-100 disabled:cursor-wait disabled:opacity-60"
+              >
+                <.icon
+                  name={if(@generating_tags?, do: "hero-arrow-path", else: "hero-sparkles")}
+                  class={tag_generation_icon_class(@generating_tags?)}
+                />
+                {if(@generating_tags?, do: "Generating...", else: "Generate tags")}
+              </button>
             <% else %>
               <span
                 :for={tag <- @tags}
@@ -371,6 +447,19 @@ defmodule DialecticWeb.CommunityLive do
     </article>
     """
   end
+
+  defp mark_tags_generating(socket, title) do
+    assign(socket, :generating_tags, MapSet.put(socket.assigns.generating_tags, title))
+  end
+
+  defp tag_generation_icon_class(true), do: "h-3 w-3 animate-spin"
+  defp tag_generation_icon_class(false), do: "h-3 w-3"
+
+  defp admin?(%{is_admin: true}), do: true
+  defp admin?(_user), do: false
+
+  defp tagged?(%{tags: tags}) when is_list(tags), do: tags != []
+  defp tagged?(_graph), do: false
 
   defp visible_tags(graph, selected_tag) do
     tags = Map.get(graph, :tags, []) || []

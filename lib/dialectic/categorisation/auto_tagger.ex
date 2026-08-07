@@ -42,14 +42,19 @@ defmodule Dialectic.Categorisation.AutoTagger do
       #{content}
       """
 
-      # Use a faster model
       opts = [
         system_prompt: system_prompt,
-        provider: :google,
-        model: "gemini-3.5-flash-lite"
+        provider: :google
       ]
 
-      case Dialectic.LLM.Generator.generate(user_prompt, opts) do
+      generator =
+        Application.get_env(
+          :dialectic,
+          :llm_generator_module,
+          Dialectic.LLM.Generator
+        )
+
+      case generator.generate(user_prompt, opts) do
         {:ok, text} ->
           case parse_tags(text) do
             {:ok, tags} ->
