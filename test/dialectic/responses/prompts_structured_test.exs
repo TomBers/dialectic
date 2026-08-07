@@ -53,7 +53,9 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
     test "includes common structure" do
       prompt = PromptsStructured.system_preamble(:expert)
       assert prompt =~ "Markdown output contract"
-      assert prompt =~ "Output ONLY valid CommonMark"
+      assert prompt =~ "Output ONLY valid GitHub Flavored Markdown (GFM)"
+      assert prompt =~ "Tables are welcome"
+      refute prompt =~ "Forbidden: tables"
       assert prompt =~ "Style for structured mode"
       assert prompt =~ "Graph-based exploration context"
     end
@@ -79,7 +81,8 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
 
       assert prompt =~ "Prefer accurate paraphrase"
       assert prompt =~ "locator such as page, section, chapter"
-      assert prompt =~ "bibliographic lead without a guessed URL"
+      assert prompt =~ "Verify every linked destination through available search grounding"
+      assert prompt =~ "omit the URL"
     end
 
     test "keeps source-integrity rules consistent across reading levels" do

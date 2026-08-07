@@ -37,13 +37,10 @@ defmodule Dialectic.LLM.Generator do
     ctx = ReqLLM.Context.new(messages)
 
     # Prepare options
-    {connect_timeout, receive_timeout} = Provider.timeouts(provider_mod)
+    {_connect_timeout, receive_timeout} = Provider.timeouts(provider_mod)
     provider_options = provider_mod.provider_options()
 
-    req_http_options = [connect_options: [timeout: connect_timeout]]
-
-    req_http_options =
-      Keyword.merge(req_http_options, Application.get_env(:dialectic, :llm_req_options, []))
+    req_http_options = Application.get_env(:dialectic, :llm_req_options, [])
 
     req_http_options =
       case Provider.api_key(provider_mod) do
@@ -75,16 +72,15 @@ defmodule Dialectic.LLM.Generator do
   end
 
   defp default_provider_id do
-    case System.get_env("LLM_PROVIDER") do
-      "google" -> :google
-      "gemini" -> :google
-      _ -> :openai
+    case System.get_env("LLM_PROVIDER") |> to_string() |> String.trim() |> String.downcase() do
+      "openai" -> :openai
+      _ -> :google
     end
   end
 
   defp get_provider_module(:google), do: Dialectic.LLM.Providers.Google
   defp get_provider_module(:openai), do: Dialectic.LLM.Providers.OpenAI
-  defp get_provider_module(_), do: Dialectic.LLM.Providers.OpenAI
+  defp get_provider_module(_), do: Dialectic.LLM.Providers.Google
 
   defp extract_text(%ReqLLM.Response{} = resp), do: ReqLLM.Response.text(resp)
   defp extract_text(text) when is_binary(text), do: text

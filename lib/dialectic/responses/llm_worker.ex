@@ -10,7 +10,7 @@ defmodule Dialectic.Workers.LLMWorker do
   Provider selection:
     - Prefer the job arg `"provider"` if present (e.g. "google", "openai").
     - Otherwise, use `System.get_env("LLM_PROVIDER")`.
-    - Defaults to OpenAI.
+    - Defaults to Google Gemini.
 
   Expected job args:
     - "question" (string)
@@ -211,7 +211,7 @@ defmodule Dialectic.Workers.LLMWorker do
           ReqLLM.Context.user(instruction)
         ])
 
-      {connect_timeout, receive_timeout} = Dialectic.LLM.Provider.timeouts(provider_mod)
+      {_connect_timeout, receive_timeout} = Dialectic.LLM.Provider.timeouts(provider_mod)
       finch_name = Dialectic.LLM.Provider.finch_name(provider_mod)
       provider_options = provider_mod.provider_options()
       request_started_at = System.monotonic_time()
@@ -223,7 +223,6 @@ defmodule Dialectic.Workers.LLMWorker do
              finch_name: finch_name,
              max_tokens: 4096,
              provider_options: provider_options,
-             req_http_options: [connect_options: [timeout: connect_timeout]],
              receive_timeout: receive_timeout
            ) do
         {:ok, stream_resp} ->
@@ -546,13 +545,13 @@ defmodule Dialectic.Workers.LLMWorker do
     )
   end
 
-  # Prefer arg "provider" (string), else env LLM_PROVIDER, else default :openai
+  # Prefer arg "provider" (string), else env LLM_PROVIDER, else default to Gemini
   defp select_provider(%{"provider" => p}) when is_binary(p), do: provider_module_from_string(p)
 
   defp select_provider(_args) do
     case System.get_env("LLM_PROVIDER") do
-      nil -> Dialectic.LLM.Providers.OpenAI
-      "" -> Dialectic.LLM.Providers.OpenAI
+      nil -> Dialectic.LLM.Providers.Google
+      "" -> Dialectic.LLM.Providers.Google
       p when is_binary(p) -> provider_module_from_string(p)
     end
   end
@@ -563,7 +562,7 @@ defmodule Dialectic.Workers.LLMWorker do
       "gemini" -> Dialectic.LLM.Providers.Google
       "openai" -> Dialectic.LLM.Providers.OpenAI
       # Fallback
-      _ -> Dialectic.LLM.Providers.OpenAI
+      _ -> Dialectic.LLM.Providers.Google
     end
   end
 

@@ -89,7 +89,7 @@ defmodule Dialectic.Application do
       Logger.info("Running in production mode - validating API keys")
 
       # Check which LLM provider is configured
-      provider = System.get_env("LLM_PROVIDER") || "openai"
+      provider = System.get_env("LLM_PROVIDER") || "gemini"
       Logger.info("LLM Provider: #{provider}")
 
       case String.downcase(provider) do
@@ -100,7 +100,7 @@ defmodule Dialectic.Application do
           validate_key("OPENAI_API_KEY", "OpenAI")
 
         _ ->
-          validate_key("OPENAI_API_KEY", "OpenAI (default)")
+          validate_key("GOOGLE_API_KEY", "Google/Gemini (default)")
       end
     else
       Logger.info("Running in development mode - skipping API key validation")
@@ -172,14 +172,17 @@ defmodule Dialectic.Application do
     Process.sleep(500)
 
     # Determine which provider to warm up based on config
-    provider = System.get_env("LLM_PROVIDER") || "openai"
+    provider = System.get_env("LLM_PROVIDER") || "gemini"
 
     case String.downcase(provider) do
       p when p in ["google", "gemini"] ->
         warm_up_gemini_connection()
 
-      _ ->
+      "openai" ->
         warm_up_openai_connection()
+
+      _ ->
+        warm_up_gemini_connection()
     end
   end
 
