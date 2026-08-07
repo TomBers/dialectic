@@ -8,9 +8,12 @@ defmodule DialecticWeb.CommunityLive do
 
   @limit 12
   @tag_limit 30
+  @tag_generation_timeout_ms :timer.minutes(6)
 
   @impl true
   def mount(_params, _session, socket) do
+    if connected?(socket), do: Phoenix.PubSub.subscribe(Dialectic.PubSub, "graphs")
+
     {:ok,
      assign(socket,
        page_title: "Community Grids",
@@ -21,7 +24,9 @@ defmodule DialecticWeb.CommunityLive do
        active_category: nil,
        graphs: [],
        popular_tags: [],
-       featured_grids: []
+       featured_grids: [],
+       generating_tags: MapSet.new(),
+       tag_generation_jobs: %{}
      )}
   end
 
@@ -47,6 +52,89 @@ defmodule DialecticWeb.CommunityLive do
   def handle_event("search", %{"search" => term}, socket) do
     params = if term == "", do: %{}, else: %{"search" => term}
     {:noreply, push_patch(socket, to: ~p"/community?#{params}")}
+  end
+
+  def handle_event("generate_tags", %{"identifier" => identifier}, socket) do
+    if admin?(socket.assigns.current_user) do
+      graph = Graphs.get_graph_by_slug_or_title(identifier)
+
+      cond do
+        is_nil(graph) ->
+          {:noreply, put_flash(socket, :error, "Grid not found")}
+
+        tagged?(graph) ->
+          {:noreply, socket}
+
+        true ->
+          auto_tagger =
+            Application.get_env(
+              :dialectic,
+              :auto_tagger_module,
+              Dialectic.Categorisation.AutoTagger
+            )
+
+          case auto_tagger.tag_graph(graph) do
+            :ok ->
+              {:noreply, mark_tags_generating(socket, graph.title, nil)}
+
+            {:ok, pid} ->
+              {:noreply, mark_tags_generating(socket, graph.title, pid)}
+
+            _error ->
+              {:noreply, put_flash(socket, :error, "Could not start tag generation")}
+          end
+      end
+    else
+      {:noreply, put_flash(socket, :error, "Only admins can generate tags")}
+    end
+  end
+
+  @impl true
+  def handle_info({:tags_updated, title, tags}, socket) do
+    graphs =
+      Enum.map(socket.assigns.graphs, fn {graph, count, username} ->
+        if graph.title == title do
+          {Map.put(graph, :tags, tags), count, username}
+        else
+          {graph, count, username}
+        end
+      end)
+
+    socket = clear_tag_generation(socket, title)
+
+    {:noreply,
+     assign(socket,
+       graphs: graphs,
+       popular_tags: Graphs.list_popular_tags(@tag_limit)
+     )}
+  end
+
+  def handle_info({:DOWN, monitor_ref, :process, _pid, reason}, socket) do
+    case job_for_monitor(socket.assigns.tag_generation_jobs, monitor_ref) do
+      nil ->
+        {:noreply, socket}
+
+      {title, _job} when reason == :normal ->
+        jobs = put_in(socket.assigns.tag_generation_jobs[title].monitor_ref, nil)
+        {:noreply, assign(socket, :tag_generation_jobs, jobs)}
+
+      {title, _job} ->
+        {:noreply,
+         socket
+         |> clear_tag_generation(title)
+         |> put_flash(:error, "Tag generation stopped unexpectedly")}
+    end
+  end
+
+  def handle_info({:tag_generation_timeout, title}, socket) do
+    if MapSet.member?(socket.assigns.generating_tags, title) do
+      {:noreply,
+       socket
+       |> clear_tag_generation(title)
+       |> put_flash(:error, "Tag generation timed out. Please try again.")}
+    else
+      {:noreply, socket}
+    end
   end
 
   @impl true
@@ -208,6 +296,8 @@ defmodule DialecticWeb.CommunityLive do
                       author_marker="@"
                       number={index}
                       selected_tag={@active_tag}
+                      can_generate_tags={admin?(@current_user)}
+                      generating_tags={@generating_tags}
                       id={graph_dom_id(graph, "community-grid")}
                     />
                   <% end %>
@@ -287,6 +377,8 @@ defmodule DialecticWeb.CommunityLive do
   attr :author_marker, :string, default: ""
   attr :number, :integer, required: true
   attr :selected_tag, :string, default: nil
+  attr :can_generate_tags, :boolean, default: false
+  attr :generating_tags, :any, required: true
 
   defp community_grid_row(assigns) do
     assigns =
@@ -295,6 +387,7 @@ defmodule DialecticWeb.CommunityLive do
       |> assign(:tags, visible_tags(assigns.graph, assigns.selected_tag))
       |> assign(:node_count, graph_node_count(assigns.graph))
       |> assign(:icon_theme, icon_theme(assigns.graph))
+      |> assign(:generating_tags?, MapSet.member?(assigns.generating_tags, assigns.graph.title))
 
     ~H"""
     <article
@@ -342,6 +435,21 @@ defmodule DialecticWeb.CommunityLive do
               <span class="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
                 Untagged
               </span>
+              <button
+                :if={@can_generate_tags}
+                id={@id <> "-generate-tags"}
+                type="button"
+                phx-click="generate_tags"
+                phx-value-identifier={@graph.slug || @graph.title}
+                disabled={@generating_tags?}
+                class="inline-flex items-center gap-1 rounded-md bg-teal-50 px-2 py-0.5 text-[11px] font-semibold text-teal-700 ring-1 ring-inset ring-teal-200 transition hover:bg-teal-100 disabled:cursor-wait disabled:opacity-60"
+              >
+                <.icon
+                  name={if(@generating_tags?, do: "hero-arrow-path", else: "hero-sparkles")}
+                  class={tag_generation_icon_class(@generating_tags?)}
+                />
+                {if(@generating_tags?, do: "Generating...", else: "Generate tags")}
+              </button>
             <% else %>
               <span
                 :for={tag <- @tags}
@@ -371,6 +479,49 @@ defmodule DialecticWeb.CommunityLive do
     </article>
     """
   end
+
+  defp mark_tags_generating(socket, title, pid) do
+    monitor_ref = if is_pid(pid), do: Process.monitor(pid)
+
+    timer_ref =
+      Process.send_after(self(), {:tag_generation_timeout, title}, @tag_generation_timeout_ms)
+
+    assign(socket,
+      generating_tags: MapSet.put(socket.assigns.generating_tags, title),
+      tag_generation_jobs:
+        Map.put(socket.assigns.tag_generation_jobs, title, %{
+          monitor_ref: monitor_ref,
+          timer_ref: timer_ref
+        })
+    )
+  end
+
+  defp clear_tag_generation(socket, title) do
+    {job, jobs} = Map.pop(socket.assigns.tag_generation_jobs, title)
+
+    if job do
+      if job.monitor_ref, do: Process.demonitor(job.monitor_ref, [:flush])
+      Process.cancel_timer(job.timer_ref)
+    end
+
+    assign(socket,
+      generating_tags: MapSet.delete(socket.assigns.generating_tags, title),
+      tag_generation_jobs: jobs
+    )
+  end
+
+  defp job_for_monitor(jobs, monitor_ref) do
+    Enum.find(jobs, fn {_title, job} -> job.monitor_ref == monitor_ref end)
+  end
+
+  defp tag_generation_icon_class(true), do: "h-3 w-3 animate-spin"
+  defp tag_generation_icon_class(false), do: "h-3 w-3"
+
+  defp admin?(%{is_admin: true}), do: true
+  defp admin?(_user), do: false
+
+  defp tagged?(%{tags: tags}) when is_list(tags), do: tags != []
+  defp tagged?(_graph), do: false
 
   defp visible_tags(graph, selected_tag) do
     tags = Map.get(graph, :tags, []) || []
