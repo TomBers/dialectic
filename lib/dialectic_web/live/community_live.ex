@@ -53,36 +53,39 @@ defmodule DialecticWeb.CommunityLive do
   def render(assigns) do
     ~H"""
     <div class="min-h-screen bg-slate-100 text-slate-900">
-      <div class="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
-        <header class="mb-7 flex flex-col gap-5 rounded-[1.75rem] bg-slate-950 px-5 py-6 text-white shadow-xl sm:px-7 sm:py-8 lg:flex-row lg:items-end lg:justify-between">
+      <div class="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+        <header
+          id="community-page-header"
+          class="mb-5 flex flex-col gap-4 rounded-3xl bg-slate-950 px-5 py-4 text-white shadow-lg sm:px-6 sm:py-5 lg:flex-row lg:items-center lg:justify-between"
+        >
           <div class="max-w-3xl">
             <p class="text-xs font-semibold uppercase tracking-[0.18em] text-teal-300">
               Community
             </p>
-            <h1 class="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
+            <h1 class="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
               Explore, expand, and challenge ideas together.
             </h1>
-            <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">
+            <p class="mt-2 max-w-2xl text-sm leading-5 text-slate-300">
               Browse living questions from the community, test the reasoning, and add your own branches to help each idea grow.
             </p>
           </div>
           <div class="flex flex-wrap gap-2">
             <.link
               navigate={~p"/?focus=grid#start-here"}
-              class="inline-flex items-center gap-2 rounded-full bg-teal-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-teal-200"
+              class="inline-flex items-center gap-2 rounded-full bg-teal-300 px-3.5 py-2 text-sm font-semibold text-slate-950 transition hover:bg-teal-200"
             >
               <.icon name="hero-plus" class="h-4 w-4" /> Create a grid
             </.link>
             <.link
               navigate={~p"/intro/how"}
-              class="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/15"
+              class="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-white/15"
             >
               <.icon name="hero-book-open" class="h-4 w-4" /> Read the guide
             </.link>
           </div>
         </header>
 
-        <div class="space-y-6">
+        <div class="space-y-5">
           <%= if @featured_grids != [] do %>
             <.curated_grid_section
               items={@featured_grids}
@@ -228,22 +231,25 @@ defmodule DialecticWeb.CommunityLive do
       )
 
     ~H"""
-    <section class="overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white shadow-sm">
+    <section
+      id={"#{@id_prefix}-section"}
+      class="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm"
+    >
       <div class="h-1 bg-[linear-gradient(90deg,#0f766e_0%,#f59e0b_48%,#4f46e5_100%)]"></div>
-      <div class="border-b border-slate-200/80 bg-slate-50/80 px-5 py-4 sm:px-6">
+      <div class="border-b border-slate-200/80 bg-slate-50/80 px-4 py-3 sm:px-5">
         <div class="flex flex-wrap items-center justify-between gap-3">
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2.5">
             <span class={[
-              "inline-flex h-10 w-10 items-center justify-center rounded-2xl ring-1",
+              "inline-flex h-8 w-8 items-center justify-center rounded-xl ring-1",
               @icon_wrap_class
             ]}>
-              <.icon name={@icon} class={"h-5 w-5 " <> @icon_class} />
+              <.icon name={@icon} class={"h-4 w-4 " <> @icon_class} />
             </span>
             <div>
               <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                 Curated
               </p>
-              <h2 class="text-xl font-semibold tracking-tight text-slate-950">{@title}</h2>
+              <h2 class="text-lg font-semibold tracking-tight text-slate-950">{@title}</h2>
             </div>
           </div>
           <div :if={@pills != []} class="flex flex-wrap gap-1.5">
@@ -256,15 +262,15 @@ defmodule DialecticWeb.CommunityLive do
           </div>
         </div>
       </div>
-      <div class="bg-slate-50/40 p-4 sm:p-5">
-        <div id={"#{@id_prefix}-grids-list"} class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div class="bg-slate-50/40 p-3 sm:p-4">
+        <div id={"#{@id_prefix}-grids-list"} class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           <%= for item <- @items do %>
             <.grid_card
               graph={item.graph}
               author_name={item.author_name}
               author_marker="@"
               id={@id_prefix <> "-" <> (item.graph.slug || "t-" <> Integer.to_string(:erlang.phash2(item.graph.title || "")))}
-              variant={:community}
+              variant={:community_compact}
               label={@card_label}
               tag_limit={3}
             />

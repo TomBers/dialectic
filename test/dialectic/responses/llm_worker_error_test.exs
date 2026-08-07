@@ -7,16 +7,15 @@ defmodule Dialectic.Responses.LLMWorkerErrorTest do
   alias Dialectic.GraphFixtures
   alias Dialectic.Workers.LLMWorker
 
-  test "persists a terminal stream error without a LiveView subscriber" do
-    previous_api_key = System.get_env("OPENAI_API_KEY")
-    System.delete_env("OPENAI_API_KEY")
+  test "defaults to Gemini and persists a terminal stream error without a LiveView subscriber" do
+    previous_api_key = System.get_env("GOOGLE_API_KEY")
+    previous_provider = System.get_env("LLM_PROVIDER")
+    System.delete_env("GOOGLE_API_KEY")
+    System.delete_env("LLM_PROVIDER")
 
     on_exit(fn ->
-      if previous_api_key do
-        System.put_env("OPENAI_API_KEY", previous_api_key)
-      else
-        System.delete_env("OPENAI_API_KEY")
-      end
+      restore_env("GOOGLE_API_KEY", previous_api_key)
+      restore_env("LLM_PROVIDER", previous_provider)
     end)
 
     graph =
@@ -46,13 +45,12 @@ defmodule Dialectic.Responses.LLMWorkerErrorTest do
                  "question" => "Explain",
                  "to_node" => answer_node.id,
                  "graph" => graph.title,
-                 "live_view_topic" => "no-subscriber-topic",
-                 "provider" => "openai"
+                 "live_view_topic" => "no-subscriber-topic"
                }
              })
 
     assert GraphManager.find_node_by_id(graph.title, answer_node.id).content ==
-             "OpenAI API key not configured"
+             "Google API key not configured"
 
     worker = Oban.Worker.to_string(DbWorker)
     snapshot_job = Repo.one!(from job in Oban.Job, where: job.worker == ^worker)
@@ -61,7 +59,10 @@ defmodule Dialectic.Responses.LLMWorkerErrorTest do
     persisted_graph = Repo.get!(Graph, graph.title)
 
     assert Enum.any?(persisted_graph.data["nodes"], fn node ->
-             node["id"] == answer_node.id and node["content"] == "OpenAI API key not configured"
+             node["id"] == answer_node.id and node["content"] == "Google API key not configured"
            end)
   end
+
+  defp restore_env(name, nil), do: System.delete_env(name)
+  defp restore_env(name, value), do: System.put_env(name, value)
 end

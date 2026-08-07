@@ -7,7 +7,7 @@ defmodule Dialectic.Responses.Prompts do
   or `PromptsCreative.system_preamble/0`). By unifying task prompts here,
   only the system message varies across modes.
 
-  Each public function returns a Markdown string (restricted CommonMark subset).
+  Each public function returns a GitHub Flavored Markdown string.
 
   ## Design Principles
 
@@ -126,7 +126,7 @@ defmodule Dialectic.Responses.Prompts do
 
   defp citation_encouragement do
     """
-    **Source references:** When externally checkable claims matter, use a small number of high-quality sources that genuinely support them. Prefer primary sources and accurate paraphrase; provide enough bibliographic detail for follow-up.
+    **Source references:** When externally checkable claims matter, use a small number of high-quality sources that genuinely support them. Prefer primary sources and accurate paraphrase. Include a link only when its exact destination has been verified through available search grounding; otherwise provide bibliographic details without a URL.
     """
   end
 

@@ -2,13 +2,11 @@ defmodule Dialectic.LLM.Providers.Google do
   @moduledoc """
   Google (Gemini) provider for the `Dialectic.LLM.Provider` behaviour.
 
-  Simplified configuration:
-  - Required: GEMINI_API_KEY
-  - Hardcoded model: "gemini-2.0-flash-lite"
-  - provider_options: []
-
-  Note: We intentionally keep this minimal to reduce surface area. Add environment-driven
-  configuration only when you need it.
+  Default Gemini provider configuration:
+  - Required: `GOOGLE_API_KEY`
+  - Model: `gemini-3.6-flash`
+  - Minimal thinking for lower latency
+  - Google Search grounding for current, verifiable sources and links
   """
 
   @behaviour Dialectic.LLM.Provider
@@ -30,6 +28,9 @@ defmodule Dialectic.LLM.Providers.Google do
 
   @impl true
   def provider_options do
-    [google_thinking_level: "MINIMAL"]
+    [
+      google_thinking_level: "MINIMAL",
+      google_grounding: %{enable: true}
+    ]
   end
 end

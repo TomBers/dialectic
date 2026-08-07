@@ -20,6 +20,57 @@ defmodule Dialectic.Responses.PromptsStructured do
           "A precise lecturer aiming to provide a university level introduction to the topic."
       end
 
+    complexity_guidelines =
+      case mode do
+        :expert ->
+          """
+          Complexity level: Expert
+          Goal: Technical terms, nuance, and more primary material.
+          - Assume advanced subject knowledge. Do not reteach fundamentals unless they are necessary to the argument.
+          - Use field-specific terminology, formalism, models, and methodological detail when they improve precision.
+          - Prioritize analytical depth: surface assumptions, boundary conditions, uncertainty, tradeoffs, and second-order implications.
+          - Evaluate evidence quality and methods, engage the strongest objections, and identify unresolved scholarly or professional debates.
+          - Prefer primary literature and authoritative technical material over introductory summaries.
+          - Follow any task-specific length instruction. Otherwise, aim for roughly 350-600 words.
+          """
+
+        :simple ->
+          """
+          Complexity level: Simple
+          Goal: Plain language, everyday examples, and metaphors.
+          - Assume no prior subject knowledge.
+          - Use common words and short, direct sentences. Avoid jargon; when a technical term is unavoidable, explain it immediately in plain language.
+          - Explain one idea at a time with concrete everyday examples, analogies, or metaphors.
+          - Focus on the central takeaway instead of exhaustive detail or layers of caveats. State essential uncertainty plainly.
+          - Use short paragraphs and simple lists that are easy to scan.
+          - Follow any task-specific length instruction. Otherwise, aim for roughly 150-250 words.
+          """
+
+        :high_school ->
+          """
+          Complexity level: High School
+          Goal: Clear concepts with a little subject vocabulary.
+          - Assume a broad high-school education but no specialist coursework in the topic.
+          - Introduce a small amount of useful subject vocabulary and define each unfamiliar term on first use.
+          - Explain cause and effect clearly, using familiar examples before moving to abstract ideas.
+          - Include meaningful nuance or a competing perspective, but avoid specialist methodological detail unless the question requires it.
+          - Keep the structure clear enough for a motivated student to follow independently.
+          - Follow any task-specific length instruction. Otherwise, aim for roughly 200-350 words.
+          """
+
+        _ ->
+          """
+          Complexity level: University
+          Goal: More precise terminology and broader context.
+          - Assume an educated reader who is new to this specific field.
+          - Use precise disciplinary terminology, defining specialized terms concisely on first use.
+          - Explain relevant mechanisms, evidence, assumptions, historical or theoretical context, and practical implications.
+          - Distinguish broad consensus from live debate and compare serious competing interpretations when relevant.
+          - Connect the topic to broader frameworks or adjacent fields without losing focus.
+          - Follow any task-specific length instruction. Otherwise, aim for roughly 250-500 words.
+          """
+      end
+
     citation_guidelines =
       case mode do
         :expert ->
@@ -64,7 +115,7 @@ defmodule Dialectic.Responses.PromptsStructured do
     - Clearly distinguish documented fact, interpretation, inference, and speculation. Label hypothetical examples as hypothetical, not documented evidence.
     - Never invent or guess quotes, sources, study details (including methods or findings), publication details, or URLs. Prefer accurate paraphrase.
     - Quote directly only when confident of the exact wording and able to provide a locator such as page, section, chapter, or stable passage reference.
-    - If bibliographic details or a link are uncertain, provide only a qualified bibliographic lead without a guessed URL and state what needs verification.
+    - Verify every linked destination through available search grounding and use the exact grounded URL. If search grounding does not verify a link, omit the URL and provide only a qualified bibliographic lead that states what needs verification.
     """
 
     """
@@ -72,25 +123,21 @@ defmodule Dialectic.Responses.PromptsStructured do
 
     Persona: #{persona}
 
-    Markdown output contract (restricted CommonMark subset)
-    - Output ONLY valid CommonMark using this subset:
-    - Start with a concise title using Heading 1 (#)
-    - Headings (#, ##, ###)
-    - Paragraphs
-    - Bulleted lists (- )
-    - Numbered lists (1., 2., 3.)
-    - Bold (**text**) and italic (*text*)
-    - Blockquotes (> ) only for direct quotes that satisfy the source-integrity contract
-    - Inline links ([text](url)) to reference primary sources, articles, or supportive material
-    - Forbidden: tables, inline HTML, images, code, footnotes, custom extensions.
+    #{complexity_guidelines}
+    Markdown output contract
+    - Output ONLY valid GitHub Flavored Markdown (GFM).
+    - Start with a concise title using Heading 1 (#).
+    - Choose the Markdown structure that communicates the answer most clearly. The renderer supports headings, paragraphs, emphasis, links, blockquotes, ordered and unordered lists, task lists, tables, strikethrough, inline code, fenced code blocks, and mathematical notation.
+    - Tables are welcome when they make comparisons or structured data clearer.
+    - Use blockquotes for direct quotes only when they satisfy the source-integrity contract.
 
     Style for structured mode
     - Clear, engaging, and well-reasoned.
     - When useful, open with a well-supported fact, a focused question, or a clearly identified example that leads directly into the substance.
     - Define key terms briefly when they first appear.
-    - Use concrete examples, vivid illustrations, and real-world anecdotes to make abstract ideas tangible and memorable.
+    - Use concrete examples, vivid illustrations, and real-world anecdotes when they suit the selected complexity level.
     - Stick to the user's scope; avoid digressions.
-    - Try and keep the response concise and focused, aim for a maximum of 500 words.
+    - Keep the response concise and focused within the selected complexity level and any task-specific length instruction.
 
     #{source_integrity_contract}
     #{citation_guidelines}

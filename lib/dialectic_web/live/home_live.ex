@@ -796,34 +796,65 @@ defmodule DialecticWeb.HomeLive do
             </div>
           </section>
 
-          <section id="home-community-grids" class="order-4 w-full border-b border-slate-200 bg-white">
-            <div class="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-              <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <section
+            id="home-community-grids"
+            class="order-4 w-full border-b border-slate-200 bg-slate-50"
+          >
+            <div class="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
+              <div class="relative isolate overflow-hidden rounded-[2rem] bg-slate-950 px-5 py-7 text-white shadow-[0_28px_80px_-48px_rgba(15,23,42,0.95)] sm:px-8 sm:py-9 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(20rem,0.62fr)] lg:items-center lg:gap-10 lg:px-10">
+                <div class="absolute -left-20 -top-24 -z-10 h-64 w-64 rounded-full bg-indigo-500/25 blur-3xl">
+                </div>
+                <div class="absolute -bottom-32 right-10 -z-10 h-72 w-72 rounded-full bg-teal-400/20 blur-3xl">
+                </div>
+
                 <div class="max-w-2xl">
-                  <p class="text-xs font-semibold uppercase tracking-wide text-indigo-700">
-                    Community grids
+                  <p class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-teal-200">
+                    <.icon name="hero-user-group" class="h-3.5 w-3.5" /> Community grid library
                   </p>
-                  <h2 class="mt-2 text-2xl font-semibold text-slate-950 sm:text-3xl">
-                    Explore, expand, and challenge ideas together.
+                  <h2 class="mt-4 text-3xl font-semibold leading-tight text-white sm:text-4xl">
+                    See how other people are thinking.
                   </h2>
-                  <p class="mt-2 text-sm leading-6 text-slate-600">
-                    Treat these as living starting points: follow the questions, test the reasoning, and add your own branches to help the thinking grow.
+                  <p class="mt-3 max-w-xl text-sm leading-6 text-slate-300 sm:text-base sm:leading-7">
+                    Browse public grids, follow their reasoning, and branch any idea into a question of your own.
                   </p>
                 </div>
+
                 <.link
+                  id="home-community-grids-link"
                   navigate={~p"/community"}
-                  class="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-slate-400 hover:bg-slate-50"
+                  class="group mt-6 flex w-full items-center justify-between gap-5 rounded-2xl bg-teal-300 p-5 text-left text-slate-950 shadow-[0_18px_45px_-24px_rgba(45,212,191,0.9)] ring-1 ring-white/20 transition hover:bg-teal-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-teal-100/60 lg:mt-0"
                 >
-                  See all community grids <.icon name="hero-arrow-right" class="h-4 w-4" />
+                  <span>
+                    <span class="block text-xs font-bold uppercase tracking-wide text-teal-900/70">
+                      Start exploring
+                    </span>
+                    <span class="mt-1 block text-lg font-bold sm:text-xl">
+                      Explore all community grids
+                    </span>
+                    <span class="mt-1 block text-sm font-medium text-teal-950/70">
+                      Discover public questions and ideas
+                    </span>
+                  </span>
+                  <span class="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-slate-950 text-white shadow-lg transition group-hover:translate-x-1">
+                    <.icon name="hero-arrow-right" class="h-5 w-5" />
+                  </span>
                 </.link>
               </div>
 
               <%= if @curated_grids == [] do %>
-                <div class="mt-5 border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-600">
+                <div class="mt-6 border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
                   Community examples will appear here as more people share useful thinking.
                 </div>
               <% else %>
-                <div id="home-community-grid-list" class="mt-5 grid gap-4 md:grid-cols-3">
+                <div class="mt-7 flex items-center justify-between gap-4">
+                  <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-600">
+                    A few grids to start with
+                  </h3>
+                  <span class="hidden text-sm text-slate-500 sm:inline">
+                    Selected from the community
+                  </span>
+                </div>
+                <div id="home-community-grid-list" class="mt-3 grid gap-4 md:grid-cols-3">
                   <%= for item <- @curated_grids do %>
                     <.grid_card
                       graph={item.graph}

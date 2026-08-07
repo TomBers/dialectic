@@ -1554,8 +1554,8 @@ button[type="submit"]:active {
     font-style: normal;
 }
 
-/* Attribution lines inside blockquotes (e.g., "— Author, *Work*") */
-.selection-content blockquote p:last-child em:only-child,
+/* Attribution lines identified by the Markdown hook (e.g., "*— Author, Work*") */
+.selection-content blockquote .quote-attribution,
 .selection-content blockquote footer,
 .selection-content blockquote cite {
     display: block;
@@ -1565,6 +1565,15 @@ button[type="submit"]:active {
     font-weight: 600;
     color: #4338ca; /* indigo-700 */
     letter-spacing: 0.01em;
+}
+
+.selection-content blockquote .quote-attribution > em {
+    display: inline;
+    margin: 0;
+    color: inherit;
+    font-size: inherit;
+    font-style: inherit;
+    font-weight: inherit;
 }
 
 /* Nested blockquotes (rare, but handle gracefully) */

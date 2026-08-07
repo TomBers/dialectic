@@ -342,6 +342,24 @@ export function enhanceFollowUpQuestions(root, askQuestion) {
   });
 }
 
+export function enhanceBlockquoteAttributions(root) {
+  const paragraphs = root.querySelectorAll("blockquote > p:last-child");
+
+  paragraphs.forEach((paragraph) => {
+    const meaningfulNodes = Array.from(paragraph.childNodes).filter(
+      (node) => node.nodeType !== 3 || node.textContent.trim() !== "",
+    );
+
+    if (meaningfulNodes.length !== 1) return;
+
+    const emphasis = meaningfulNodes[0];
+    if (emphasis.nodeType !== 1 || emphasis.tagName !== "EM") return;
+    if (!/^[—–-]\s*\S/.test(emphasis.textContent.trim())) return;
+
+    paragraph.classList.add("quote-attribution");
+  });
+}
+
 /**
  * Retrieves markdown source from:
  * - data-md attribute (highest priority)
@@ -443,6 +461,7 @@ function renderMdInto(el, askQuestion) {
 
   // Enhance anchors for safety/UX
   enhanceLinks(el);
+  enhanceBlockquoteAttributions(el);
 
   if (enhanceFollowUpQuestionsEnabled) {
     enhanceFollowUpQuestions(el, askQuestion);
