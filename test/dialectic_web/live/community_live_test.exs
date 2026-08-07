@@ -53,6 +53,12 @@ defmodule DialecticWeb.CommunityLiveTest do
 
       assert has_element?(view, "#community-featured-section", "Partner grids")
       assert has_element?(view, "#community-featured-grids-list > :nth-child(4)")
+
+      refute has_element?(
+               view,
+               ~s(#community-featured-grids-list [data-role="grid-card-badge"])
+             )
+
       refute has_element?(view, "#community-curated-section")
       refute has_element?(view, "#community-featured-#{curated_graph.slug}")
 

@@ -76,6 +76,7 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(view, "#home-curated-grids-list")
     assert has_element?(view, "#home-curated-grids-list > :nth-child(3)")
     refute has_element?(view, "#home-curated-grids-list > :nth-child(4)")
+    refute has_element?(view, ~s(#home-curated-grids-list [data-role="grid-card-badge"]))
     refute has_element?(view, "#home-curated-#{partner_graph.slug}")
     refute has_element?(view, "#home-community-grid-list")
 

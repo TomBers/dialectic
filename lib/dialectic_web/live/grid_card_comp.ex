@@ -200,6 +200,7 @@ defmodule DialecticWeb.GridCardComp do
   attr :author_marker, :string, default: ""
   attr :featured_index, :integer, default: 0
   attr :label, :string, default: nil
+  attr :show_badge, :boolean, default: true
   attr :show_visibility, :boolean, default: false
   attr :tag_limit, :integer, default: 4
   attr :variant, :atom, default: :profile
@@ -222,11 +223,18 @@ defmodule DialecticWeb.GridCardComp do
     <article id={@id} class={card_class(@variant, @featured_index)} style={@border_style}>
       <div class="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[calc(0.5rem-2px)] bg-white">
         <div class={card_body_class(@variant, @featured_index)}>
-          <div class="mb-3.5 flex items-center justify-between gap-3">
-            <span class={[
-              "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ring-1 ring-inset",
-              card_badge_class(@primary_tag)
-            ]}>
+          <div class={[
+            "mb-3.5 flex items-center gap-3",
+            if(@show_badge, do: "justify-between", else: "justify-end")
+          ]}>
+            <span
+              :if={@show_badge}
+              data-role="grid-card-badge"
+              class={[
+                "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ring-1 ring-inset",
+                card_badge_class(@primary_tag)
+              ]}
+            >
               <.icon name={exploration_icon(@node_count)} class="h-3.5 w-3.5" />
               {@label || exploration_label(@node_count)}
             </span>

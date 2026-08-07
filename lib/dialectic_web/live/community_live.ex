@@ -177,13 +177,9 @@ defmodule DialecticWeb.CommunityLive do
           <%= if @featured_grids != [] do %>
             <.curated_grid_section
               items={@featured_grids}
-              icon="hero-users"
-              icon_class="text-slate-700"
               title="Partner grids"
               pills={partner_pills(@featured_grids)}
               id_prefix="community-featured"
-              section_class=""
-              icon_wrap_class="border-slate-300 text-slate-700"
             />
           <% end %>
 
@@ -312,13 +308,7 @@ defmodule DialecticWeb.CommunityLive do
   end
 
   defp curated_grid_section(assigns) do
-    assigns =
-      assigns
-      |> assign_new(:pills, fn -> [] end)
-      |> assign(
-        :card_label,
-        if(assigns.title == "Partner grids", do: "Partner grid", else: "Curated grid")
-      )
+    assigns = assign_new(assigns, :pills, fn -> [] end)
 
     ~H"""
     <section
@@ -328,20 +318,7 @@ defmodule DialecticWeb.CommunityLive do
       <div class="h-1 bg-teal-700"></div>
       <div class="border-b border-slate-200/80 bg-slate-50/80 px-4 py-3 sm:px-5">
         <div class="flex flex-wrap items-center justify-between gap-3">
-          <div class="flex items-center gap-2.5">
-            <span class={[
-              "inline-flex h-8 w-8 items-center justify-center border",
-              @icon_wrap_class
-            ]}>
-              <.icon name={@icon} class={"h-4 w-4 " <> @icon_class} />
-            </span>
-            <div>
-              <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                Partners
-              </p>
-              <h2 class="text-lg font-semibold tracking-tight text-slate-950">{@title}</h2>
-            </div>
-          </div>
+          <h2 class="text-lg font-semibold tracking-tight text-slate-950">{@title}</h2>
           <div :if={@pills != []} class="flex flex-wrap gap-1.5">
             <span
               :for={pill <- @pills}
@@ -361,7 +338,7 @@ defmodule DialecticWeb.CommunityLive do
               author_marker="@"
               id={@id_prefix <> "-" <> (item.graph.slug || "t-" <> Integer.to_string(:erlang.phash2(item.graph.title || "")))}
               variant={:community_compact}
-              label={@card_label}
+              show_badge={false}
               tag_limit={3}
             />
           <% end %>
