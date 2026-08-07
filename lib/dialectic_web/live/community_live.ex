@@ -18,7 +18,7 @@ defmodule DialecticWeb.CommunityLive do
      assign(socket,
        page_title: "Community Grids",
        page_description:
-         "Explore community-built RationalGrids, curated questions, and partner collections.",
+         "Explore community-built RationalGrids, public questions, and partner collections.",
        search_term: "",
        active_tag: nil,
        active_category: nil,
@@ -178,12 +178,12 @@ defmodule DialecticWeb.CommunityLive do
             <.curated_grid_section
               items={@featured_grids}
               icon="hero-users"
-              icon_class="text-indigo-500"
+              icon_class="text-slate-700"
               title="Partner grids"
               pills={partner_pills(@featured_grids)}
               id_prefix="community-featured"
-              section_class="from-indigo-50 via-white to-teal-50"
-              icon_wrap_class="bg-indigo-100 text-indigo-700 ring-indigo-200"
+              section_class=""
+              icon_wrap_class="border-slate-300 text-slate-700"
             />
           <% end %>
 
@@ -337,7 +337,7 @@ defmodule DialecticWeb.CommunityLive do
             </span>
             <div>
               <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                Curated
+                Partners
               </p>
               <h2 class="text-lg font-semibold tracking-tight text-slate-950">{@title}</h2>
             </div>

@@ -15,6 +15,52 @@ defmodule DialecticWeb.CommunityLiveTest do
   end
 
   describe "community page" do
+    test "shows partner grids without a curated collection", %{conn: conn} do
+      unique = System.unique_integer([:positive])
+
+      graphs =
+        for position <- 0..3 do
+          graph =
+            Dialectic.GraphFixtures.insert_graph(%{
+              title: "Community Partner Grid #{unique} #{position}",
+              slug: "community-partner-grid-#{unique}-#{position}"
+            })
+
+          {:ok, _curated_grid} =
+            Graphs.add_curated_grid(%{
+              graph_title: graph.title,
+              section: "featured",
+              position: position
+            })
+
+          graph
+        end
+
+      curated_graph =
+        Dialectic.GraphFixtures.insert_graph(%{
+          title: "Community Curated Grid #{unique}",
+          slug: "community-curated-grid-#{unique}"
+        })
+
+      {:ok, _curated_grid} =
+        Graphs.add_curated_grid(%{
+          graph_title: curated_graph.title,
+          section: "curated",
+          position: 0
+        })
+
+      {:ok, view, _html} = live(conn, ~p"/community")
+
+      assert has_element?(view, "#community-featured-section", "Partner grids")
+      assert has_element?(view, "#community-featured-grids-list > :nth-child(4)")
+      refute has_element?(view, "#community-curated-section")
+      refute has_element?(view, "#community-featured-#{curated_graph.slug}")
+
+      for graph <- graphs do
+        assert has_element?(view, "#community-featured-#{graph.slug}")
+      end
+    end
+
     test "mounts and filters by category and search", %{conn: conn} do
       {:ok, view, _html} = live(conn, ~p"/community")
 

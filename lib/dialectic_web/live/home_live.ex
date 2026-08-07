@@ -18,8 +18,6 @@ defmodule DialecticWeb.HomeLive do
         llm_actor_id: session["llm_actor_id"] || "home:#{socket.id}"
       )
 
-    if connected?(socket), do: Phoenix.PubSub.subscribe(Dialectic.PubSub, "graphs")
-
     user = UserUtils.current_identity(socket.assigns)
     initial_content = params["initial_prompt"]
 
@@ -32,13 +30,7 @@ defmodule DialecticWeb.HomeLive do
     {:ok,
      assign(socket,
        og_image: DialecticWeb.Endpoint.url() <> ~p"/images/graph_live.webp",
-       search_term: "",
-       active_tag: nil,
-       active_category: nil,
-       graphs: [],
-       popular_tags: [],
-       limit: 12,
-       generating: MapSet.new(),
+       page_title: "RationalGrid",
        user: user,
        form: to_form(changeset),
        prompt_mode: prompt_mode,
@@ -47,80 +39,24 @@ defmodule DialecticWeb.HomeLive do
        focus_new_grid: params["focus"] == "grid",
        preview_seed: home_preview_seed(),
        curated_grids: [],
-       all_curated_grids: [],
-       editor_pick_grids: [],
-       featured_grids: [],
-       quick_tags: [],
        page_description:
          "Ask a question, map the answer, and challenge any branch while keeping its original context with RationalGrid."
      )}
   end
 
   @impl true
-  def handle_params(params, _url, socket) do
-    search_term = Map.get(params, "search", "")
-    tag = Map.get(params, "tag")
-    category = Map.get(params, "category")
-    limit = 12
+  def handle_params(_params, _url, socket) do
+    curated_grids =
+      Graphs.list_curated_grids("curated", 20)
+      |> preview_curated_grids(3, socket.assigns.preview_seed)
 
-    graphs = fetch_graphs(search_term, tag, category, limit)
-    popular_tags = Graphs.list_popular_tags()
-    # Fetch more items than needed to have a pool for randomization
-    all_curated_grids = Graphs.list_curated_grids("curated", 20)
-    all_featured_grids = Graphs.list_curated_grids("featured", 20)
-
-    curated_grids = preview_curated_grids(all_curated_grids, 3, socket.assigns.preview_seed)
-    editor_pick_grids = editor_pick_grids(all_curated_grids, 2)
-
-    featured_grids =
-      home_featured_grids(all_featured_grids, curated_grids, socket.assigns.preview_seed)
-
-    {:noreply,
-     assign(socket,
-       search_term: search_term,
-       active_tag: tag,
-       active_category: category,
-       graphs: graphs,
-       popular_tags: popular_tags,
-       curated_grids: curated_grids,
-       all_curated_grids: all_curated_grids,
-       editor_pick_grids: editor_pick_grids,
-       featured_grids: featured_grids,
-       page_title: page_title(search_term, tag, category)
-     )}
-  end
-
-  @impl true
-  def handle_event("search", %{"search" => term}, socket) do
-    # For live search, we update the URL params which triggers handle_params
-    # We maintain existing category filters if present? Usually search clears category filters
-    # or works within them. Let's make search global for now (clears other filters).
-    params =
-      if term == "" do
-        %{}
-      else
-        %{"search" => term}
-      end
-
-    {:noreply, push_patch(socket, to: ~p"/?#{params}")}
+    {:noreply, assign(socket, :curated_grids, curated_grids)}
   end
 
   @impl true
   def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}} = params, socket) do
     mode_param = Map.get(params, "mode")
     {:noreply, submit_new_grid(socket, answer, mode_param)}
-  end
-
-  @impl true
-  def handle_event("generate_tags", %{"title" => title}, socket) do
-    case Graphs.get_graph_by_title(title) do
-      nil ->
-        {:noreply, put_flash(socket, :error, "Grid not found")}
-
-      graph ->
-        Dialectic.Categorisation.AutoTagger.tag_graph(graph)
-        {:noreply, assign(socket, generating: MapSet.put(socket.assigns.generating, title))}
-    end
   end
 
   @impl true
@@ -184,27 +120,6 @@ defmodule DialecticWeb.HomeLive do
     else
       {:noreply, socket}
     end
-  end
-
-  @impl true
-  def handle_info({:tags_updated, title, tags}, socket) do
-    graphs =
-      Enum.map(socket.assigns.graphs, fn {g, c, username} ->
-        if g.title == title do
-          {Map.put(g, :tags, tags), c, username}
-        else
-          {g, c, username}
-        end
-      end)
-
-    popular_tags = Graphs.list_popular_tags()
-
-    {:noreply,
-     assign(socket,
-       graphs: graphs,
-       popular_tags: popular_tags,
-       generating: MapSet.delete(socket.assigns.generating, title)
-     )}
   end
 
   defp create_graph_task(title, answer, prompt_mode, current_user, actor_id, parent_pid) do
@@ -489,14 +404,10 @@ defmodule DialecticWeb.HomeLive do
           <div class="flex flex-col gap-5 border-b border-slate-300 pb-6 sm:flex-row sm:items-end sm:justify-between">
             <div class="max-w-3xl">
               <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
-                Public grids
+                Selected grids
               </p>
               <h2 class="mt-3 font-serif text-4xl font-semibold tracking-tight sm:text-5xl">
-                <%= if @search_term != "" do %>
-                  Results for “{@search_term}”
-                <% else %>
-                  Read a grid before you make one.
-                <% end %>
+                Read a grid before you make one.
               </h2>
               <p class="mt-3 max-w-2xl text-base leading-7 text-slate-600">
                 These are real lines of inquiry. Open one, inspect the branches, and continue from
@@ -512,64 +423,19 @@ defmodule DialecticWeb.HomeLive do
             </.link>
           </div>
 
-          <%= if @featured_grids != [] do %>
+          <%= if @curated_grids != [] do %>
             <section id="curated" class="mt-8">
               <.curated_grid_section
-                items={@featured_grids}
-                icon="hero-users"
-                icon_class="text-teal-800"
-                title="Partner grids"
-                pills={partner_pills(@featured_grids)}
-                id_prefix="featured"
+                items={@curated_grids}
+                icon="hero-star"
+                icon_class="text-slate-700"
+                title="Curated grids"
+                pills={[]}
+                id_prefix="home-curated"
                 section_class=""
-                icon_wrap_class="border-teal-700 text-teal-800"
+                icon_wrap_class="border-slate-300 text-slate-700"
               />
             </section>
-          <% end %>
-
-          <%= if @graphs == [] do %>
-            <div class="mt-8 border border-dashed border-slate-300 bg-stone-50 p-8 text-sm text-slate-600">
-              No public grids match this search yet.
-            </div>
-          <% else %>
-            <div id="home-graph-card-list" class="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-              <%= for {graph, _count, username} <- @graphs do %>
-                <.grid_card
-                  graph={graph}
-                  author_name={username}
-                  author_marker="@"
-                  id={graph_dom_id(graph, "home-card-graph")}
-                  variant={:compact}
-                  tag_limit={3}
-                />
-              <% end %>
-            </div>
-          <% end %>
-
-          <%= if @curated_grids != [] do %>
-            <div class="mt-10 border-t border-slate-300 pt-6">
-              <div class="flex items-baseline justify-between gap-4">
-                <h3 class="font-serif text-2xl font-semibold text-slate-950">
-                  Three useful starting points
-                </h3>
-                <span class="hidden text-sm text-slate-500 sm:inline">
-                  Selected from the community
-                </span>
-              </div>
-              <div id="home-community-grid-list" class="mt-4 grid gap-5 md:grid-cols-3">
-                <%= for item <- @curated_grids do %>
-                  <.grid_card
-                    graph={item.graph}
-                    author_name={item.author_name}
-                    author_marker="@"
-                    id={graph_dom_id(item.graph, "home-community-grid")}
-                    variant={:compact}
-                    label="Curated grid"
-                    tag_limit={3}
-                  />
-                <% end %>
-              </div>
-            </div>
           <% end %>
         </div>
       </section>
@@ -688,7 +554,7 @@ defmodule DialecticWeb.HomeLive do
     assigns =
       assigns
       |> assign_new(:pills, fn -> [] end)
-      |> assign(:card_label, curated_card_label(assigns.title))
+      |> assign(:card_label, "Curated grid")
 
     ~H"""
     <section class="w-full min-w-0 border border-slate-300 bg-[#f4f1e9]">
@@ -729,7 +595,7 @@ defmodule DialecticWeb.HomeLive do
                 author_name={item.author_name}
                 author_marker="@"
                 id={@id_prefix <> "-" <> (item.graph.slug || "t-" <> Integer.to_string(:erlang.phash2(item.graph.title || "")))}
-                label={Map.get(item, :card_label, @card_label)}
+                label={@card_label}
                 tag_limit={3}
               />
             <% end %>
@@ -762,92 +628,4 @@ defmodule DialecticWeb.HomeLive do
   end
 
   defp preview_key(item), do: item.graph.slug || item.graph.title || ""
-
-  defp home_featured_grids(featured, curated, seed) do
-    featured = preview_curated_grids(featured, 2, seed)
-
-    case {featured, curated} do
-      {featured, [curated_grid | _]} when length(featured) >= 2 ->
-        Enum.take(featured, 2) ++ [Map.put(curated_grid, :card_label, "Curated grid")]
-
-      {featured, curated} ->
-        preview_curated_grids(featured ++ curated, 3, seed)
-    end
-  end
-
-  defp editor_pick_grids(items, limit) do
-    items = items || []
-    {deep_dives, other_grids} = Enum.split_with(items, &(home_graph_node_count(&1.graph) >= 20))
-
-    (deep_dives ++ other_grids)
-    |> Enum.take(limit)
-  end
-
-  defp home_graph_node_count(%{node_count: count}) when is_integer(count), do: count
-
-  defp home_graph_node_count(graph) do
-    nodes =
-      (Map.get(graph, :data) || %{})
-      |> then(fn data -> Map.get(data, "nodes") || Map.get(data, :nodes) || [] end)
-
-    if is_list(nodes) do
-      Enum.count(nodes, fn node ->
-        compound? = Map.get(node, "compound", Map.get(node, :compound, false))
-        compound? != true
-      end)
-    else
-      0
-    end
-  end
-
-  defp curated_card_label("Partner grids"), do: "Partner grid"
-  defp curated_card_label(_title), do: "Curated grid"
-
-  defp partner_pills(items) do
-    items
-    |> Enum.map(&Map.get(&1, :author_name))
-    |> Enum.filter(&author_visible?/1)
-    |> Enum.uniq_by(&(String.trim(&1) |> String.downcase()))
-  end
-
-  defp author_visible?(author_name) when is_binary(author_name) do
-    normalized = author_name |> String.trim() |> String.downcase()
-    normalized != "" and normalized not in ["anonymous", "anon", "-"]
-  end
-
-  defp author_visible?(_), do: false
-
-  defp fetch_graphs(search_term, tag, category, limit) do
-    cond do
-      is_binary(tag) && tag != "" ->
-        Dialectic.DbActions.Graphs.list_graphs_by_tag(tag, limit)
-        |> Enum.map(fn {g, username} -> {g, 0, username} end)
-
-      category == "deep_dives" ->
-        Dialectic.DbActions.Graphs.list_deep_dives(limit)
-        |> Enum.map(fn {g, username} -> {g, 0, username} end)
-
-      category == "seedlings" ->
-        Dialectic.DbActions.Graphs.list_seedlings(limit)
-        |> Enum.map(fn {g, username} -> {g, 0, username} end)
-
-      true ->
-        Dialectic.DbActions.Graphs.all_graphs_with_notes(search_term, limit: limit)
-    end
-  end
-
-  defp graph_dom_id(graph, prefix) do
-    suffix = graph.slug || Integer.to_string(:erlang.phash2(graph.title || "graph"))
-    prefix <> "-" <> suffix
-  end
-
-  defp page_title(search, tag, category) do
-    cond do
-      is_binary(tag) and tag != "" -> "Tagged: #{tag}"
-      category == "deep_dives" -> "Deep Dives"
-      category == "seedlings" -> "Seedlings"
-      is_binary(search) and search != "" -> "Search: #{search}"
-      true -> "RationalGrid"
-    end
-  end
 end

@@ -7,72 +7,64 @@ defmodule DialecticWeb.HomeLiveTest do
   import Dialectic.AccountsFixtures
   import Phoenix.LiveViewTest
 
-  test "renders graph cards in the main homepage list", %{conn: conn} do
-    graph =
-      insert_graph(%{
-        title: "Mobile Home Grid",
-        tags: ["Mobile", "UX", "Design"],
-        data: %{
-          "nodes" => [
-            %{
-              "id" => "1",
-              "content" => "Start",
-              "class" => "origin",
-              "deleted" => false,
-              "compound" => false
-            },
-            %{
-              "id" => "2",
-              "content" => "Question",
-              "class" => "question",
-              "deleted" => false,
-              "compound" => false
-            },
-            %{
-              "id" => "3",
-              "content" => "Answer",
-              "class" => "answer",
-              "deleted" => false,
-              "compound" => false
-            },
-            %{
-              "id" => "4",
-              "content" => "Detail",
-              "class" => "detail",
-              "deleted" => false,
-              "compound" => false
-            }
-          ],
-          "edges" => [
-            %{"data" => %{"id" => "1_2", "source" => "1", "target" => "2"}},
-            %{"data" => %{"id" => "2_3", "source" => "2", "target" => "3"}},
-            %{"data" => %{"id" => "3_4", "source" => "3", "target" => "4"}}
-          ]
-        }
-      })
-
-    {:ok, view, _html} = live(conn, ~p"/?search=Mobile Home Grid")
-
-    assert has_element?(view, "#popular-grids")
-    assert has_element?(view, "#home-graph-card-list")
-    assert has_element?(view, "#home-card-graph-#{graph.slug}")
-    assert has_element?(view, "#home-card-graph-#{graph.slug} a", graph.title)
-    assert has_element?(view, "#home-card-graph-#{graph.slug} a[aria-label]")
-    refute has_element?(view, ~s([data-tw-container="Home graph list"]))
-  end
-
-  test "renders partner grids as shared cards", %{conn: conn} do
+  test "ignores graph search and filter parameters", %{conn: conn} do
     unique = System.unique_integer([:positive])
 
-    graph =
+    curated_graph =
       insert_graph(%{
-        title: "Featured Partner Grid #{unique}",
-        slug: "featured-partner-grid-#{unique}"
+        title: "Always Visible Curated Grid #{unique}",
+        slug: "always-visible-curated-grid-#{unique}"
       })
 
     {:ok, _curated_grid} =
       Graphs.add_curated_grid(%{
-        graph_title: graph.title,
+        graph_title: curated_graph.title,
+        section: "curated",
+        position: 0
+      })
+
+    {:ok, view, _html} =
+      live(conn, ~p"/?search=missing&tag=unrelated&category=deep_dives")
+
+    assert has_element?(view, "#popular-grids")
+    assert has_element?(view, "#home-curated-#{curated_graph.slug}")
+    assert has_element?(view, "#popular-grids", "Read a grid before you make one.")
+    refute has_element?(view, ~s(#popular-grids input[name="search"]))
+    refute has_element?(view, ~s(#popular-grids a[href*="tag="]))
+    refute has_element?(view, ~s(#popular-grids a[href*="category="]))
+    refute has_element?(view, "#popular-grids", "Results for")
+  end
+
+  test "renders three curated grids without partner grids", %{conn: conn} do
+    unique = System.unique_integer([:positive])
+
+    graphs =
+      for position <- 0..3 do
+        graph =
+          insert_graph(%{
+            title: "Curated Grid #{unique} #{position}",
+            slug: "curated-grid-#{unique}-#{position}"
+          })
+
+        {:ok, _curated_grid} =
+          Graphs.add_curated_grid(%{
+            graph_title: graph.title,
+            section: "curated",
+            position: position
+          })
+
+        graph
+      end
+
+    partner_graph =
+      insert_graph(%{
+        title: "Partner Grid #{unique}",
+        slug: "partner-grid-#{unique}"
+      })
+
+    {:ok, _curated_grid} =
+      Graphs.add_curated_grid(%{
+        graph_title: partner_graph.title,
         section: "featured",
         position: 0
       })
@@ -80,10 +72,16 @@ defmodule DialecticWeb.HomeLiveTest do
     {:ok, view, _html} = live(conn, ~p"/")
 
     assert has_element?(view, "#curated")
-    assert has_element?(view, "#featured-grids-list")
-    assert has_element?(view, "#featured-#{graph.slug}")
-    assert has_element?(view, "#featured-#{graph.slug} a", graph.title)
-    assert has_element?(view, "#featured-#{graph.slug}", "Partner grid")
+    assert has_element?(view, "#curated", "Curated grids")
+    assert has_element?(view, "#home-curated-grids-list")
+    assert has_element?(view, "#home-curated-grids-list > :nth-child(3)")
+    refute has_element?(view, "#home-curated-grids-list > :nth-child(4)")
+    refute has_element?(view, "#home-curated-#{partner_graph.slug}")
+    refute has_element?(view, "#home-community-grid-list")
+
+    assert Enum.any?(graphs, fn graph ->
+             has_element?(view, "#home-curated-#{graph.slug}")
+           end)
   end
 
   test "emphasizes the community grid library action", %{conn: conn} do
