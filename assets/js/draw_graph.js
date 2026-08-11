@@ -139,7 +139,12 @@ const constrainViewport = (cy, container) => {
   return true;
 };
 
-const fitVisibleGraph = (cy, padding) => {
+const fitVisibleGraph = (
+  cy,
+  container,
+  padding,
+  { focusNodeId = null, minZoom = 0 } = {},
+) => {
   if (!cy || (typeof cy.destroyed === "function" && cy.destroyed())) {
     return false;
   }
@@ -148,6 +153,32 @@ const fitVisibleGraph = (cy, padding) => {
   if (!visibleNodes || visibleNodes.length === 0) return false;
 
   cy.fit(visibleNodes, padding);
+
+  if (minZoom > 0 && cy.zoom() < minZoom) {
+    const visibleLeafNodes = visibleNodes.filter(
+      (candidate) => !candidate.isParent(),
+    );
+    const requestedFocus = focusNodeId
+      ? cy.getElementById(String(focusNodeId))
+      : null;
+    const focusNode =
+      requestedFocus && requestedFocus.length > 0 && requestedFocus.visible()
+        ? requestedFocus
+        : visibleLeafNodes.first();
+
+    if (focusNode && focusNode.length > 0) {
+      const readableZoom = Math.min(minZoom, cy.maxZoom());
+      const viewport = getVisibleViewport(container);
+      const position = focusNode.position();
+
+      cy.zoom(readableZoom);
+      cy.pan({
+        x: viewport.left + viewport.width / 2 - position.x * readableZoom,
+        y: viewport.top + viewport.height / 2 - position.y * readableZoom,
+      });
+    }
+  }
+
   return true;
 };
 
@@ -362,7 +393,16 @@ export function draw_graph(
       initialGraphFitted = true;
       requestAnimationFrame(() => {
         if (!cy || (typeof cy.destroyed === "function" && cy.destroyed())) return;
-        fitVisibleGraph(cy, initialFitPadding);
+        const readabilitySettings = layoutConfig.readabilitySettings || {};
+        const minInitialZoom =
+          viewMode === "compact"
+            ? readabilitySettings.compactMinInitialZoom || 0.78
+            : readabilitySettings.spacedMinInitialZoom || 0.75;
+
+        fitVisibleGraph(cy, container, initialFitPadding, {
+          focusNodeId: node,
+          minZoom: minInitialZoom,
+        });
         scheduleViewportClamp({ immediate: true });
         refreshResponsiveLabelStyles({ immediate: true });
         notifyInitialLayoutReady();

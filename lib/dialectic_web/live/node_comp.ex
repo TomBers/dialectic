@@ -238,17 +238,30 @@ defmodule DialecticWeb.NodeComp do
                     >
                       <div
                         :if={!GraphHelpers.origin_branching_disabled?(@node)}
-                        class="not-prose mb-4 mt-2.5 flex items-center gap-2.5 rounded-lg border border-slate-200/80 bg-slate-50/65 px-3 py-2 text-[13px] leading-5 text-slate-600"
+                        id={"branch-from-text-hint-#{@node.id}"}
+                        phx-hook="DismissibleHint"
+                        data-dismiss-key="rg:dismissed:branch-from-text:v1"
+                        class="not-prose relative mb-5 mt-3 overflow-hidden rounded-xl border border-teal-200/90 bg-gradient-to-r from-teal-50 via-white to-amber-50/80 p-3.5 pr-11 shadow-[0_14px_32px_-24px_rgba(15,118,110,0.9)] ring-1 ring-teal-100/70"
+                        hidden
                       >
-                        <span class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-white/80 text-teal-700 ring-1 ring-slate-200/80">
-                          <.icon name="hero-cursor-arrow-rays" class="h-3.5 w-3.5" />
-                        </span>
-                        <p class="min-w-0 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                          <span class="font-medium text-slate-700">Branch from the text</span>
-                          <span class="text-slate-500">
-                            Select a phrase to ask a focused follow-up question.
+                        <div class="flex items-center gap-2.5">
+                          <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-teal-700 text-white shadow-sm ring-1 ring-teal-800/10">
+                            <.icon name="hero-cursor-arrow-rays" class="h-3.5 w-3.5" />
                           </span>
-                        </p>
+                          <p class="min-w-0 text-sm font-semibold leading-5 text-slate-800">
+                            Select a phrase to ask about it.
+                          </p>
+                        </div>
+                        <button
+                          id={"branch-from-text-hint-dismiss-#{@node.id}"}
+                          type="button"
+                          data-dismiss-hint
+                          class="absolute right-2.5 top-2.5 inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-500 transition hover:bg-white/90 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+                          aria-label="Dismiss selection tip"
+                          title="Dismiss tip"
+                        >
+                          <.icon name="hero-x-mark" class="h-4 w-4" />
+                        </button>
                       </div>
 
                       <div

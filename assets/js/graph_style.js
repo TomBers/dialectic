@@ -187,14 +187,26 @@ const cols = {
 };
 
 const cutoff = 140;
-const SPACED_NODE_WIDTH = 300;
-const SPACED_NODE_TEXT_PADDING = 28;
+const SPACED_NODE_WIDTH = 312;
+const SPACED_NODE_TEXT_PADDING = 32;
 const MAIN_GROUP_TITLE_MIN_RENDERED_WIDTH = 280;
 const MAIN_GROUP_TITLE_MAX_RENDERED_WIDTH = 960;
 const MAIN_GROUP_TITLE_RENDERED_MARGIN = 96;
 const GRAPH_LABEL_FONT_FAMILY =
   'InterVariable, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 const GRAPH_GROUP_LABEL_FONT_FAMILY = GRAPH_LABEL_FONT_FAMILY;
+
+const mixWithWhite = (hexColor, whiteRatio) => {
+  const normalized = String(hexColor || "").replace("#", "");
+  if (!/^[0-9a-f]{6}$/i.test(normalized)) return hexColor;
+
+  const mixedChannels = [0, 2, 4].map((offset) => {
+    const channel = Number.parseInt(normalized.slice(offset, offset + 2), 16);
+    return Math.round(channel + (255 - channel) * whiteRatio);
+  });
+
+  return `rgb(${mixedChannels.join(", ")})`;
+};
 
 export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
   const isCompact = viewMode === "compact";
@@ -223,7 +235,7 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
           const measureText = content.replace(/\u200B/g, "");
 
           if (!isCompact) {
-            const charWidth = 8.2;
+            const charWidth = 8.6;
             const textWidth = SPACED_NODE_WIDTH - SPACED_NODE_TEXT_PADDING;
             const approxCharsPerLine = Math.max(
               16,
@@ -237,8 +249,8 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
             }
             const bulletCount = (measureText.match(/•/g) || []).length;
             const bulletExtra = bulletCount * 6;
-            const lineHeight = 22;
-            const basePadding = 24;
+            const lineHeight = 23;
+            const basePadding = 28;
             const computed = basePadding + lines * lineHeight + bulletExtra;
             return Math.max(44, computed);
           }
@@ -275,7 +287,7 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
         },
         "min-width": isCompact ? 50 : 72,
         "min-height": isCompact ? 22 : 44,
-        padding: isCompact ? "4px" : "12px",
+        padding: isCompact ? "4px" : "14px",
         "text-wrap": "wrap",
         "text-max-width": (n) => {
           if (!isCompact) return SPACED_NODE_WIDTH - SPACED_NODE_TEXT_PADDING;
@@ -290,35 +302,34 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
 
         /* font & layout --------------------------------------------------- */
         "font-family": GRAPH_LABEL_FONT_FAMILY,
-        "font-size": isCompact ? 10 : 15,
-        "font-weight": isCompact ? 400 : 500,
+        "font-size": isCompact ? 10 : 16,
+        "font-weight": "normal",
         "text-halign": "center",
         "text-valign": "center",
         "text-justification": isCompact ? "center" : "left",
-        "line-height": isCompact ? 1.2 : 1.45,
+        "line-height": isCompact ? 1.2 : 1.4,
 
         /* aesthetics ------------------------------------------------------ */
         shape: "roundrectangle",
-        "corner-radius": isCompact ? 9 : 16,
-        "border-width": isCompact ? 1 : 1.75,
+        "corner-radius": isCompact ? 9 : 14,
+        "border-width": isCompact ? 1 : 1.5,
         "border-color": "#cbd5e1",
         "background-color": "#fffdf8",
         "background-opacity": 0.98,
         color: "#1f2937",
-        "text-outline-width": isCompact ? 0 : 1,
-        "text-outline-color": "rgba(255,255,255,0.62)",
-        "text-outline-opacity": isCompact ? 0 : 0.65,
+        "text-outline-width": 0,
+        "text-outline-opacity": 0,
 
         /* drop shadow via ghost — gives nodes a floating-card feel */
         ghost: "yes",
-        "ghost-offset-x": isCompact ? 1 : 2,
-        "ghost-offset-y": isCompact ? 2 : 4,
-        "ghost-opacity": isCompact ? 0.08 : 0.14,
-        "shadow-blur": isCompact ? 8 : 18,
+        "ghost-offset-x": isCompact ? 1 : 1,
+        "ghost-offset-y": isCompact ? 2 : 3,
+        "ghost-opacity": isCompact ? 0.06 : 0.08,
+        "shadow-blur": isCompact ? 8 : 14,
         "shadow-color": "#0f172a",
-        "shadow-opacity": isCompact ? 0.08 : 0.12,
+        "shadow-opacity": isCompact ? 0.06 : 0.09,
         "shadow-offset-x": 0,
-        "shadow-offset-y": isCompact ? 1 : 5,
+        "shadow-offset-y": isCompact ? 1 : 3,
 
         /* smooth transitions for hover / select state changes */
         "transition-property":
@@ -352,8 +363,8 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
           return dir === "BT" ? -10 : 10;
         },
         "font-family": GRAPH_GROUP_LABEL_FONT_FAMILY,
-        "font-size": isCompact ? 10 : 11,
-        "font-weight": 600,
+        "font-size": isCompact ? 10 : 12,
+        "font-weight": "bold",
         "text-transform": "uppercase",
         color: "#475569",
         "text-outline-width": 0,
@@ -382,7 +393,7 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
       selector: 'node[compound][id = "Main"]',
       style: {
         "font-size": isCompact ? 13 : 18,
-        "font-weight": 700,
+        "font-weight": "bold",
         "text-transform": "none",
         "text-wrap": "wrap",
         "text-max-width": (n) => getMainGroupTitleMaxWidth(n, isCompact),
@@ -457,7 +468,7 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
         "text-margin-x": 0,
         "font-family": GRAPH_GROUP_LABEL_FONT_FAMILY,
         "font-size": isCompact ? 10 : 12,
-        "font-weight": 600,
+        "font-weight": "bold",
         "text-transform": "uppercase",
         "text-wrap": "ellipsis",
         "text-max-width": (n) => {
@@ -471,16 +482,16 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
     {
       selector: "edge",
       style: {
-        width: isCompact ? 0.9 : 1.25,
-        "line-color": "#94a3b8",
+        width: isCompact ? 1 : 1.4,
+        "line-color": "#64748b",
         "edge-distances": "node-position",
         "curve-style": "bezier",
-        "target-arrow-shape": "vee",
-        "target-arrow-color": "#94a3b8",
-        "arrow-scale": isCompact ? 0.55 : 0.72,
+        "target-arrow-shape": "triangle",
+        "target-arrow-color": "#64748b",
+        "arrow-scale": isCompact ? 0.58 : 0.76,
         "control-point-step-size": isCompact ? 28 : 46,
         "control-point-weight": 0.5,
-        opacity: 0.42,
+        opacity: 0.5,
         /* smooth transition so hover fade-in feels polished */
         "transition-property": "line-color target-arrow-color width opacity",
         "transition-duration": "150ms",
@@ -542,11 +553,11 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
   base_style.push({
     selector: "edge.selected-edge",
     style: {
-      width: isCompact ? 1.8 : 2.4,
+      width: isCompact ? 1.9 : 2.8,
       "line-color": "#0f766e",
       "target-arrow-color": "#0f766e",
-      "arrow-scale": isCompact ? 0.62 : 0.86,
-      opacity: 0.86,
+      "arrow-scale": isCompact ? 0.66 : 0.94,
+      opacity: 0.96,
       "z-index": 9996,
     },
   });
@@ -556,10 +567,10 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
       selector: `node.${nodeType}`, // ← has the class
       style: {
         "border-color": cols[nodeType].border,
-        "background-color": cols[nodeType].background,
+        "background-color": mixWithWhite(cols[nodeType].background, 0.72),
         "border-width": isCompact ? 1.5 : 2,
         "border-opacity": 1,
-        color: cols[nodeType].text,
+        color: defaultNodeStyle.text,
       },
     });
 
@@ -567,12 +578,14 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
     base_style.push({
       selector: `node.${nodeType}.node-hover`,
       style: {
-        "background-color":
+        "background-color": mixWithWhite(
           cols[nodeType].hoverBackground || cols[nodeType].background,
+          0.5,
+        ),
         "border-color": cols[nodeType].hoverBorder || cols[nodeType].border,
         "border-width": isCompact ? 2.25 : 3,
         "border-style": "solid",
-        color: cols[nodeType].text, // keep dark text on hover
+        color: defaultNodeStyle.text,
         "underlay-color": cols[nodeType].hoverBorder || cols[nodeType].border,
         "underlay-opacity": 0.14,
         "underlay-padding": isCompact ? 8 : 12,
@@ -586,11 +599,14 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
     base_style.push({
       selector: `node.${nodeType}.selected`,
       style: {
-        "background-color": cols[nodeType].selectedBackground,
+        "background-color": mixWithWhite(
+          cols[nodeType].selectedBackground,
+          0.38,
+        ),
         "border-color": cols[nodeType].selectedBorder,
         "border-width": isCompact ? 3 : 4,
         "border-style": "solid",
-        color: cols[nodeType].selectedText,
+        color: defaultNodeStyle.selectedText,
         /* wide halo well outside the border so it reads as a glow, not a second border */
         "underlay-color": cols[nodeType].selectedBorder,
         "underlay-opacity": 0.2,
@@ -699,7 +715,7 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
       "border-style": "solid",
       "background-color": "#fffefc",
       "font-size": isCompact ? 10 : 16,
-      "font-weight": isCompact ? 500 : 575,
+      "font-weight": isCompact ? "normal" : "bold",
       color: "#1e293b",
       "line-height": isCompact ? 1.2 : 1.3,
       "ghost-opacity": 0.12,
