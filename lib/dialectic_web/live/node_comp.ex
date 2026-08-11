@@ -146,7 +146,7 @@ defmodule DialecticWeb.NodeComp do
                     <% origin_meta? =
                       GraphHelpers.origin_branching_disabled?(@node) && is_map(@graph_struct) %>
                     <h3 class={[
-                      "mt-0 flex items-start justify-between gap-4 leading-tight tracking-tight text-gray-900",
+                      "mt-0 flex items-start justify-between gap-4 font-serif leading-[1.15] tracking-tight text-gray-900",
                       node_title_size_class(@node),
                       if(origin_meta?,
                         do: "mb-2 pb-0",
@@ -238,14 +238,14 @@ defmodule DialecticWeb.NodeComp do
                     >
                       <div
                         :if={!GraphHelpers.origin_branching_disabled?(@node)}
-                        class="not-prose mb-5 mt-3 flex items-center gap-3 border-l-4 border-teal-400 bg-slate-50 px-3 py-2.5 text-sm leading-5 text-slate-700 shadow-sm ring-1 ring-slate-200/80"
+                        class="not-prose mb-4 mt-2.5 flex items-center gap-2.5 rounded-lg border border-slate-200/80 bg-slate-50/65 px-3 py-2 text-[13px] leading-5 text-slate-600"
                       >
-                        <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-teal-50 text-teal-700 ring-1 ring-teal-200">
-                          <.icon name="hero-cursor-arrow-rays" class="h-4 w-4" />
+                        <span class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-white/80 text-teal-700 ring-1 ring-slate-200/80">
+                          <.icon name="hero-cursor-arrow-rays" class="h-3.5 w-3.5" />
                         </span>
                         <p class="min-w-0 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                          <span class="font-semibold text-slate-900">Branch from the text</span>
-                          <span class="text-slate-600">
+                          <span class="font-medium text-slate-700">Branch from the text</span>
+                          <span class="text-slate-500">
                             Select a phrase to ask a focused follow-up question.
                           </span>
                         </p>

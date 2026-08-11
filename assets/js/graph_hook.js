@@ -286,6 +286,20 @@ const graphHook = {
     const container =
       this.el.querySelector(`#${div}`) || document.getElementById(div);
 
+    container.dataset.graphReady = "false";
+    container.setAttribute("aria-busy", "true");
+
+    const markInitialGraphReady = () => {
+      if (this._graphReadyFallbackTimer) {
+        clearTimeout(this._graphReadyFallbackTimer);
+        this._graphReadyFallbackTimer = null;
+      }
+
+      if (!container.isConnected) return;
+      container.dataset.graphReady = "true";
+      container.removeAttribute("aria-busy");
+    };
+
     // Get view mode from localStorage or default to "spaced"
     const viewMode = localStorage.getItem("graph_view_mode") || "spaced";
     const graphDirection = localStorage.getItem("graph_direction") || "TB";
@@ -296,8 +310,11 @@ const graphHook = {
         : this._parseGraphElements(graph);
     const initialDrawOptions =
       initialPresentationMode === "presenting" && initialPresentationIds.length > 0
-        ? { skipInitialLayout: true }
-        : {};
+        ? {
+            skipInitialLayout: true,
+            onInitialLayoutReady: markInitialGraphReady,
+          }
+        : { onInitialLayoutReady: markInitialGraphReady };
 
     this.cy = draw_graph(
       container,
@@ -308,6 +325,8 @@ const graphHook = {
       graphId,
       initialDrawOptions,
     );
+
+    this._graphReadyFallbackTimer = setTimeout(markInitialGraphReady, 1600);
 
     // Track view mode and direction for detecting changes
     this._lastViewMode = viewMode;
@@ -2367,6 +2386,10 @@ const graphHook = {
     if (this._zoomToastTimer) {
       clearTimeout(this._zoomToastTimer);
       this._zoomToastTimer = null;
+    }
+    if (this._graphReadyFallbackTimer) {
+      clearTimeout(this._graphReadyFallbackTimer);
+      this._graphReadyFallbackTimer = null;
     }
     if (this._zoomToast && this._zoomToast.parentNode) {
       this._zoomToast.parentNode.removeChild(this._zoomToast);

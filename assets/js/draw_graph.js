@@ -332,6 +332,22 @@ export function draw_graph(
     requestAnimationFrame(runClamp);
   };
 
+  let initialLayoutReadyNotified = false;
+  const notifyInitialLayoutReady = () => {
+    if (
+      initialLayoutReadyNotified ||
+      typeof options.onInitialLayoutReady !== "function"
+    ) {
+      return;
+    }
+
+    initialLayoutReadyNotified = true;
+    requestAnimationFrame(() => {
+      if (!cy || (typeof cy.destroyed === "function" && cy.destroyed())) return;
+      options.onInitialLayoutReady();
+    });
+  };
+
   // Track layout running to avoid pre-layout panning/centering flicker
   let initialGraphFitted = options.skipInitialLayout === true;
   cy.on("layoutstart", () => {
@@ -347,8 +363,9 @@ export function draw_graph(
       requestAnimationFrame(() => {
         if (!cy || (typeof cy.destroyed === "function" && cy.destroyed())) return;
         fitVisibleGraph(cy, initialFitPadding);
-        scheduleViewportClamp({ immediate: hadPendingClamp });
-        refreshResponsiveLabelStyles();
+        scheduleViewportClamp({ immediate: true });
+        refreshResponsiveLabelStyles({ immediate: true });
+        notifyInitialLayoutReady();
       });
       return;
     }
@@ -362,7 +379,9 @@ export function draw_graph(
   // Presentation mode can opt out and provide explicit coordinates.
   if (options.skipInitialLayout === true) {
     requestAnimationFrame(() => {
-      scheduleViewportClamp();
+      scheduleViewportClamp({ immediate: true });
+      refreshResponsiveLabelStyles({ immediate: true });
+      notifyInitialLayoutReady();
     });
   } else {
     cy.layout(layoutOptions).run();

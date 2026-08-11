@@ -5,7 +5,7 @@
   style="height: calc(100vh - 2.5rem); height: calc(100dvh - 2.5rem);"
   data-graph-id={@graph_id}
   data-reading-density="comfortable"
-  data-reading-font="serif"
+  data-reading-font="sans"
 >
   <.login_required_modal id="reader-login-modal" show={@show_login_modal} />
 
@@ -304,7 +304,7 @@
                   )
                 ]}
               >
-                <div class="max-w-3xl">
+                <div class="max-w-[68ch]">
                   <div class="flex flex-wrap items-center gap-2 text-[13px] font-medium text-slate-500 sm:text-sm">
                     <span>{if index == 0, do: "Current node", else: "Then"}</span>
                     <span class="h-1 w-1 rounded-full bg-slate-300"></span>
@@ -316,7 +316,7 @@
                     </span>
                   </div>
                   <h2 class={[
-                    "mt-3 text-balance font-serif font-semibold leading-[1.08] tracking-tight text-slate-950",
+                    "mt-3 text-balance font-serif font-semibold leading-[1.15] tracking-tight text-slate-950",
                     if(index == 0,
                       do: "text-[1.65rem] sm:text-[1.95rem]",
                       else: "text-[1.28rem] sm:text-[1.6rem]"
@@ -334,13 +334,13 @@
                   <%= if String.trim(reading_node.body_content || "") != "" do %>
                     <div
                       id={"reading-highlight-#{reading_node.id}"}
-                      class="mt-6 max-w-3xl sm:mt-8"
+                      class="mt-6 max-w-[68ch] sm:mt-8"
                       phx-hook="TextSelectionHook"
                       data-node-id={reading_node.id}
                       data-mudg-id={@graph_id}
                       data-highlights-only="false"
                     >
-                      <article class="prose prose-slate max-w-none font-serif prose-headings:font-serif prose-headings:tracking-tight prose-p:leading-7 prose-li:leading-7 prose-p:text-slate-800 prose-li:text-slate-700 prose-a:break-words prose-blockquote:border-slate-200 prose-blockquote:text-slate-600 sm:prose-lg sm:prose-p:leading-8 sm:prose-li:leading-8">
+                      <article class="outline-reader-prose prose prose-slate max-w-none prose-headings:font-serif prose-headings:tracking-tight prose-a:break-words">
                         <div
                           phx-hook="Markdown"
                           id={"outline-markdown-body-#{reading_node.id}"}
