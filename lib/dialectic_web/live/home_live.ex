@@ -40,7 +40,7 @@ defmodule DialecticWeb.HomeLive do
        preview_seed: home_preview_seed(),
        curated_grids: [],
        page_description:
-         "Ask a question, map the answer, and challenge any branch while keeping its original context with RationalGrid."
+         "Map questions, answers, challenges, and sources in one connected workspace."
      )}
   end
 
@@ -216,7 +216,7 @@ defmodule DialecticWeb.HomeLive do
           phx-hook="VideoPlayback"
           phx-update="ignore"
           data-playback-rate="4.5"
-          class="absolute inset-0 -z-20 h-full w-full object-cover opacity-35"
+          class="absolute inset-0 -z-20 h-full w-full object-cover opacity-55 saturate-[1.15]"
           autoplay={true}
           muted={true}
           playsinline={true}
@@ -225,21 +225,63 @@ defmodule DialecticWeb.HomeLive do
         >
           <source src={~p"/images/FractalBranchingTree.mp4"} type="video/mp4" />
         </video>
-        <div class="absolute inset-0 -z-10 bg-slate-950/70"></div>
+        <div class="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(2,6,23,0.94)_0%,rgba(2,6,23,0.72)_48%,rgba(2,6,23,0.54)_100%)]">
+        </div>
+        <div
+          aria-hidden="true"
+          class="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_78%_24%,rgba(99,102,241,0.25),transparent_30%),radial-gradient(circle_at_18%_90%,rgba(20,184,166,0.20),transparent_34%),radial-gradient(circle_at_92%_86%,rgba(245,158,11,0.12),transparent_24%)]"
+        >
+        </div>
+        <div
+          aria-hidden="true"
+          class="absolute inset-x-0 bottom-0 h-1 bg-[linear-gradient(90deg,#2dd4bf_0%,#818cf8_52%,#fbbf24_100%)]"
+        >
+        </div>
 
         <div class="mx-auto grid min-h-[72svh] w-full max-w-7xl items-center gap-12 px-5 py-16 sm:min-h-[78svh] sm:px-8 lg:grid-cols-[minmax(0,1.12fr)_minmax(22rem,0.72fr)] lg:px-10">
           <div class="max-w-4xl">
             <p class="border-l-2 border-teal-300 pl-3 text-xs font-semibold uppercase tracking-[0.2em] text-teal-200">
-              A branching workspace for questions
+              RationalGrid
             </p>
             <h1 class="mt-6 text-balance font-serif text-5xl font-semibold leading-[0.98] tracking-tight text-white sm:text-7xl lg:text-[5.4rem]">
-              Ask a question. Map the answer. Challenge any branch.
+              Think beyond the first answer.
             </h1>
-            <p class="mt-6 max-w-2xl text-pretty text-base leading-7 text-slate-200 sm:text-xl sm:leading-8">
-              RationalGrid keeps every question, answer, objection, and source in one visible map—so
-              you can see how the thinking developed and choose where to go next.
-            </p>
-            <div class="mt-8 flex flex-wrap items-center gap-3">
+            <dl
+              id="home-value-summary"
+              class="mt-7 grid max-w-3xl border-y border-white/15 text-sm sm:grid-cols-3"
+            >
+              <div id="home-what" class="py-3 sm:pr-4">
+                <dt class="text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-300">
+                  What
+                </dt>
+                <dd class="mt-1 leading-5 text-slate-200">
+                  A visual workspace for connected questions and answers.
+                </dd>
+              </div>
+              <div
+                id="home-why"
+                class="border-t border-white/15 py-3 sm:border-l sm:border-t-0 sm:px-4"
+              >
+                <dt class="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-300">
+                  Why
+                </dt>
+                <dd class="mt-1 leading-5 text-slate-200">
+                  See context, test assumptions, and keep useful paths.
+                </dd>
+              </div>
+              <div
+                id="home-how"
+                class="border-t border-white/15 py-3 sm:border-l sm:border-t-0 sm:pl-4"
+              >
+                <dt class="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-300">
+                  How
+                </dt>
+                <dd class="mt-1 leading-5 text-slate-200">
+                  Ask one question, then branch from any answer.
+                </dd>
+              </div>
+            </dl>
+            <div class="mt-7 flex flex-wrap items-center gap-3">
               <.link
                 href="#start-here"
                 class="inline-flex items-center gap-2 rounded-md bg-teal-300 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-200"
@@ -256,8 +298,10 @@ defmodule DialecticWeb.HomeLive do
           </div>
 
           <div class="hidden lg:block" aria-hidden="true">
-            <div class="mx-auto max-w-md">
-              <div class="border-l-4 border-sky-400 bg-slate-900/90 px-5 py-4 shadow-xl">
+            <div class="relative mx-auto max-w-md">
+              <div class="absolute -inset-12 -z-10 bg-[radial-gradient(circle,rgba(45,212,191,0.13),transparent_62%)] blur-2xl">
+              </div>
+              <div class="border border-white/10 border-l-4 border-l-sky-400 bg-slate-900/80 px-5 py-4 shadow-2xl backdrop-blur-sm">
                 <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-sky-300">Question</p>
                 <p class="mt-1 font-serif text-xl text-white">
                   What makes an explanation convincing?
@@ -267,13 +311,13 @@ defmodule DialecticWeb.HomeLive do
               <div class="relative grid grid-cols-2 gap-8 border-t border-slate-500 pt-9">
                 <div class="absolute left-1/4 top-0 h-9 w-px bg-slate-500"></div>
                 <div class="absolute right-1/4 top-0 h-9 w-px bg-slate-500"></div>
-                <div class="border-l-4 border-emerald-400 bg-slate-900/90 px-4 py-3">
+                <div class="border border-white/10 border-l-4 border-l-emerald-400 bg-slate-900/80 px-4 py-3 backdrop-blur-sm">
                   <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-300">
                     Answer
                   </p>
                   <p class="mt-1 text-sm font-medium text-white">Evidence and inference</p>
                 </div>
-                <div class="border-l-4 border-amber-400 bg-slate-900/90 px-4 py-3">
+                <div class="border border-white/10 border-l-4 border-l-amber-400 bg-slate-900/80 px-4 py-3 backdrop-blur-sm">
                   <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-300">
                     Challenge
                   </p>
@@ -281,7 +325,7 @@ defmodule DialecticWeb.HomeLive do
                 </div>
               </div>
               <div class="ml-auto mr-[12%] h-9 w-px bg-slate-500"></div>
-              <div class="ml-auto w-[58%] border-l-4 border-violet-400 bg-slate-900/90 px-4 py-3">
+              <div class="ml-auto w-[58%] border border-white/10 border-l-4 border-l-violet-400 bg-slate-900/80 px-4 py-3 backdrop-blur-sm">
                 <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-300">Source</p>
                 <p class="mt-1 text-sm font-medium text-white">Keep the evidence attached</p>
               </div>
@@ -290,60 +334,76 @@ defmodule DialecticWeb.HomeLive do
         </div>
       </section>
 
-      <section id="start-here" class="border-b border-stone-300 bg-[#f4f1e9]">
+      <section
+        id="start-here"
+        class="relative isolate overflow-hidden border-b border-stone-300 bg-[#f4f1e9]"
+      >
+        <div
+          aria-hidden="true"
+          class="absolute -left-28 top-10 -z-10 h-64 w-64 rounded-full bg-teal-200/35 blur-3xl"
+        >
+        </div>
+        <div
+          aria-hidden="true"
+          class="absolute -right-28 bottom-0 -z-10 h-64 w-64 rounded-full bg-amber-200/35 blur-3xl"
+        >
+        </div>
         <div class="mx-auto w-full max-w-3xl px-5 py-12 sm:px-8 sm:py-16">
           <div class="text-center">
-            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">Start here</p>
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">Try it</p>
             <h2 class="mt-3 font-serif text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
-              What do you want to understand?
+              Ask your first question.
             </h2>
-            <p class="mx-auto mt-3 max-w-xl text-base leading-7 text-slate-600">
-              Your first answer becomes a map you can explore.
-            </p>
           </div>
 
           <div
             id="home-start-panel"
-            class="mt-7 border border-stone-300 bg-white p-4 shadow-sm sm:p-6"
+            class="mt-7 rounded-xl bg-[linear-gradient(120deg,#2dd4bf_0%,#818cf8_52%,#fbbf24_100%)] p-[1px] shadow-[0_24px_60px_-38px_rgba(15,23,42,0.55)]"
           >
-            <.live_component
-              module={DialecticWeb.NewIdeaFormComp}
-              id="new-idea-form"
-              form={@form}
-              placeholder="Ask a question or name a topic"
-              submit_label="Continue"
-              autofocus={@focus_new_grid}
-              minimal={true}
-            />
+            <div class="rounded-[calc(0.75rem-1px)] bg-white p-4 sm:p-6">
+              <.live_component
+                module={DialecticWeb.NewIdeaFormComp}
+                id="new-idea-form"
+                form={@form}
+                placeholder="Ask a question or name a topic"
+                submit_label="Continue"
+                autofocus={@focus_new_grid}
+                minimal={true}
+              />
+            </div>
           </div>
         </div>
       </section>
 
-      <section id="home-product-preview" class="border-b border-slate-700 bg-slate-950 text-white">
+      <section
+        id="home-product-preview"
+        class="relative isolate overflow-hidden border-b border-slate-700 bg-slate-950 text-white"
+      >
+        <div
+          aria-hidden="true"
+          class="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_82%_48%,rgba(56,189,248,0.12),transparent_34%),radial-gradient(circle_at_8%_88%,rgba(139,92,246,0.10),transparent_28%)]"
+        >
+        </div>
         <div class="mx-auto grid w-full max-w-7xl gap-10 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[minmax(20rem,0.72fr)_minmax(0,1.28fr)] lg:items-center lg:px-10">
           <div>
             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-300">
-              One workspace, three views
+              See it work
             </p>
             <h2 class="mt-3 font-serif text-4xl font-semibold tracking-tight sm:text-5xl">
-              Read the thread. Edit the map. Present the path.
+              Read. Branch. Present.
             </h2>
-            <p class="mt-4 text-base leading-7 text-slate-300">
-              The structure stays intact as you move between a focused reader, the full branching
-              canvas, and a guided presentation.
-            </p>
             <dl class="mt-7 divide-y divide-slate-700 border-y border-slate-700 text-sm">
               <div class="grid grid-cols-[4.5rem_1fr] gap-4 py-3">
                 <dt class="font-semibold text-sky-300">Read</dt>
-                <dd class="text-slate-300">Follow one chain without losing the wider outline.</dd>
+                <dd class="text-slate-300">Follow one line without losing the map.</dd>
               </div>
               <div class="grid grid-cols-[4.5rem_1fr] gap-4 py-3">
-                <dt class="font-semibold text-emerald-300">Edit</dt>
-                <dd class="text-slate-300">Open any node and branch from that exact context.</dd>
+                <dt class="font-semibold text-emerald-300">Branch</dt>
+                <dd class="text-slate-300">Question any answer from its exact context.</dd>
               </div>
               <div class="grid grid-cols-[4.5rem_1fr] gap-4 py-3">
                 <dt class="font-semibold text-amber-300">Present</dt>
-                <dd class="text-slate-300">Choose a route through the grid for someone else.</dd>
+                <dd class="text-slate-300">Guide someone through the path that matters.</dd>
               </div>
             </dl>
           </div>
@@ -365,55 +425,66 @@ defmodule DialecticWeb.HomeLive do
         </div>
       </section>
 
-      <section id="popular-grids" class="border-b border-stone-300 bg-white">
+      <section
+        id="popular-grids"
+        class="relative isolate overflow-hidden border-b border-stone-300 bg-[#fbfaf6]"
+      >
+        <div
+          aria-hidden="true"
+          class="absolute inset-x-0 top-0 -z-10 h-44 bg-[linear-gradient(180deg,rgba(45,212,191,0.08),transparent)]"
+        >
+        </div>
         <div class="mx-auto w-full max-w-7xl px-5 py-12 sm:px-8 sm:py-16 lg:px-10">
           <div class="flex flex-col gap-5 border-b border-slate-300 pb-6 sm:flex-row sm:items-end sm:justify-between">
             <div class="max-w-3xl">
               <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
-                Selected grids
+                Curated grids
               </p>
               <h2 class="mt-3 font-serif text-4xl font-semibold tracking-tight sm:text-5xl">
-                Read a grid before you make one.
+                See how a question grows.
               </h2>
-              <p class="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-                These are real lines of inquiry. Open one, inspect the branches, and continue from
-                the point that interests you.
-              </p>
             </div>
             <.link
               id="home-community-grids-link"
               navigate={~p"/community"}
               class="inline-flex shrink-0 items-center gap-2 rounded-md bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
             >
-              Explore all community grids <.icon name="hero-arrow-right" class="h-4 w-4" />
+              Browse community <.icon name="hero-arrow-right" class="h-4 w-4" />
             </.link>
           </div>
 
           <%= if @curated_grids != [] do %>
             <section id="curated" class="mt-8">
-              <.curated_grid_section
-                items={@curated_grids}
-                title="Curated grids"
-                pills={[]}
-                id_prefix="home-curated"
-              />
+              <.curated_grid_section items={@curated_grids} id_prefix="home-curated" />
             </section>
           <% end %>
         </div>
       </section>
 
-      <section id="home-profile-section" class="border-b border-slate-700 bg-slate-900 text-white">
+      <section
+        id="home-profile-section"
+        class="relative isolate overflow-hidden border-b border-slate-700 bg-slate-900 text-white"
+      >
+        <div
+          aria-hidden="true"
+          class="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_18%_12%,rgba(20,184,166,0.15),transparent_32%),radial-gradient(circle_at_88%_76%,rgba(245,158,11,0.10),transparent_25%)]"
+        >
+        </div>
+        <div
+          aria-hidden="true"
+          class="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,#2dd4bf_0%,#818cf8_52%,#fbbf24_100%)]"
+        >
+        </div>
         <div class="mx-auto grid w-full max-w-7xl gap-10 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[minmax(0,0.9fr)_minmax(22rem,0.65fr)] lg:items-center lg:px-10">
           <div>
             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-300">
-              Public profiles
+              Share your work
             </p>
             <h2 class="mt-3 max-w-2xl font-serif text-4xl font-semibold tracking-tight sm:text-5xl">
-              Publish a trail others can follow.
+              Publish your thinking.
             </h2>
             <p class="mt-4 max-w-2xl text-base leading-7 text-slate-300">
-              A profile collects your public grids, highlights, and topics. Other people can inspect
-              your reasoning, follow your work, or start a new branch from it.
+              Bring your public grids and topics together in one place.
             </p>
             <div class="mt-7 flex flex-wrap gap-3">
               <%= if @current_user do %>
@@ -431,12 +502,6 @@ defmodule DialecticWeb.HomeLive do
                   <.icon name="hero-user-plus" class="h-4 w-4" /> Create your profile
                 </.link>
               <% end %>
-              <.link
-                navigate={~p"/community"}
-                class="inline-flex items-center gap-2 border-b border-slate-400 px-1 py-2 text-sm font-semibold text-white transition hover:border-teal-300 hover:text-teal-200"
-              >
-                Browse people and grids <.icon name="hero-arrow-right" class="h-4 w-4" />
-              </.link>
             </div>
           </div>
 
@@ -458,7 +523,7 @@ defmodule DialecticWeb.HomeLive do
                 />
                 <div>
                   <p class="font-serif text-2xl font-semibold">TomBers</p>
-                  <p class="text-sm text-slate-400">Makes MuDG</p>
+                  <p class="text-sm text-slate-400">Makes RationalGrid.ai</p>
                 </div>
               </div>
               <p class="mt-5 border-l-2 border-teal-300 pl-3 text-sm leading-6 text-slate-300">
@@ -513,38 +578,20 @@ defmodule DialecticWeb.HomeLive do
   end
 
   defp curated_grid_section(assigns) do
-    assigns = assign_new(assigns, :pills, fn -> [] end)
-
     ~H"""
-    <section class="w-full min-w-0 border border-slate-300 bg-[#f4f1e9]">
-      <div class="h-full">
-        <div class="p-4 sm:p-5">
-          <div class="mb-5 flex flex-col gap-3 border-b border-slate-300 pb-4 sm:flex-row sm:items-center sm:justify-between">
-            <h2 class="text-lg font-semibold tracking-tight text-slate-950">{@title}</h2>
-            <%= if @pills != [] do %>
-              <div class="flex flex-wrap gap-1.5 sm:justify-end">
-                <span
-                  :for={pill <- @pills}
-                  class="inline-flex items-center border-l border-slate-400 pl-2 text-[11px] font-medium text-slate-600"
-                >
-                  {pill}
-                </span>
-              </div>
-            <% end %>
-          </div>
-          <div id={"#{@id_prefix}-grids-list"} class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            <%= for item <- @items do %>
-              <.grid_card
-                graph={item.graph}
-                author_name={item.author_name}
-                author_marker="@"
-                id={@id_prefix <> "-" <> (item.graph.slug || "t-" <> Integer.to_string(:erlang.phash2(item.graph.title || "")))}
-                show_badge={false}
-                tag_limit={3}
-              />
-            <% end %>
-          </div>
-        </div>
+    <section class="w-full min-w-0">
+      <div id={"#{@id_prefix}-grids-list"} class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <%= for item <- @items do %>
+          <.grid_card
+            graph={item.graph}
+            author_name={item.author_name}
+            author_marker="@"
+            id={@id_prefix <> "-" <> (item.graph.slug || "t-" <> Integer.to_string(:erlang.phash2(item.graph.title || "")))}
+            variant={:curated}
+            show_badge={false}
+            tag_limit={3}
+          />
+        <% end %>
       </div>
     </section>
     """

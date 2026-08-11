@@ -219,6 +219,89 @@ defmodule DialecticWeb.GridCardComp do
       |> assign(:border_style, card_border_style(tags))
       |> assign(:title, graph_title(assigns.graph))
 
+    if assigns.variant in [:curated, :partner] do
+      editorial_grid_card(assigns)
+    else
+      standard_grid_card(assigns)
+    end
+  end
+
+  defp editorial_grid_card(assigns) do
+    assigns =
+      assign(assigns, :editorial_role, Atom.to_string(assigns.variant) <> "-grid-card")
+
+    ~H"""
+    <article
+      id={@id}
+      data-role={@editorial_role}
+      class="group relative flex min-h-[20rem] flex-col overflow-hidden border border-stone-300 bg-white shadow-[0_12px_32px_-26px_rgba(15,23,42,0.7)] transition duration-200 hover:-translate-y-0.5 hover:border-slate-400 hover:shadow-[0_22px_42px_-26px_rgba(15,23,42,0.55)] focus-within:border-slate-400 focus-within:shadow-[0_22px_42px_-26px_rgba(15,23,42,0.55)]"
+    >
+      <div aria-hidden="true" class="h-1.5 shrink-0" style={@border_style}></div>
+      <div class="flex flex-1 flex-col p-5 sm:p-6">
+        <div class="flex items-center justify-between gap-4 border-b border-stone-200 pb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+          <span>{@label || exploration_label(@node_count)}</span>
+          <span class="shrink-0">{graph_updated_label(@graph)}</span>
+        </div>
+
+        <div class="pt-5">
+          <.link
+            navigate={graph_path(@graph)}
+            class="block text-balance font-serif text-[1.7rem] font-semibold leading-[1.12] tracking-tight text-slate-950 transition group-hover:text-teal-800 hover:text-teal-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-300 focus-visible:ring-offset-4"
+          >
+            {@title}
+          </.link>
+
+          <.link
+            :if={author_visible?(@author_name)}
+            navigate={~p"/u/#{@author_name}"}
+            class="mt-3 inline-flex text-xs font-medium text-slate-500 transition hover:text-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-300"
+          >
+            {author_text(@author_name, @author_marker)}
+          </.link>
+        </div>
+
+        <div class="mt-6 flex flex-wrap gap-x-4 gap-y-2">
+          <%= if @tags == [] do %>
+            <span class="text-xs font-medium text-slate-500">Untagged</span>
+          <% else %>
+            <%= for tag <- @tags do %>
+              <span class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600">
+                <span
+                  aria-hidden="true"
+                  class="h-1.5 w-1.5 shrink-0 rounded-full"
+                  style={"background-color: " <> tag_color(tag)}
+                >
+                </span>
+                {tag}
+              </span>
+            <% end %>
+          <% end %>
+        </div>
+
+        <div class="mt-auto pt-6">
+          <div class="flex items-center justify-between gap-4 border-t border-stone-200 pt-4">
+            <span class="text-xs text-slate-500">
+              <strong class="font-semibold text-slate-800">{@node_count}</strong> connected ideas
+            </span>
+            <.link
+              navigate={graph_path(@graph)}
+              class="inline-flex items-center gap-1.5 text-xs font-semibold text-teal-800 transition hover:text-teal-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-300"
+              aria-label={"Read " <> @title}
+            >
+              Read grid
+              <.icon
+                name="hero-arrow-right"
+                class="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
+              />
+            </.link>
+          </div>
+        </div>
+      </div>
+    </article>
+    """
+  end
+
+  defp standard_grid_card(assigns) do
     ~H"""
     <article id={@id} class={card_class(@variant, @featured_index)} style={@border_style}>
       <div class="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[calc(0.5rem-2px)] bg-white">

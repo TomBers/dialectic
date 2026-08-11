@@ -178,7 +178,6 @@ defmodule DialecticWeb.CommunityLive do
             <.curated_grid_section
               items={@featured_grids}
               title="Partner grids"
-              pills={partner_pills(@featured_grids)}
               id_prefix="community-featured"
             />
           <% end %>
@@ -311,38 +310,37 @@ defmodule DialecticWeb.CommunityLive do
     assigns = assign_new(assigns, :pills, fn -> [] end)
 
     ~H"""
-    <section
-      id={"#{@id_prefix}-section"}
-      class="overflow-hidden border border-stone-300 bg-white shadow-sm"
-    >
-      <div class="h-1 bg-teal-700"></div>
-      <div class="border-b border-slate-200/80 bg-slate-50/80 px-4 py-3 sm:px-5">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <h2 class="text-lg font-semibold tracking-tight text-slate-950">{@title}</h2>
-          <div :if={@pills != []} class="flex flex-wrap gap-1.5">
-            <span
-              :for={pill <- @pills}
-              class="border-l border-slate-400 pl-2 text-[11px] font-medium text-slate-700"
-            >
-              {pill}
-            </span>
-          </div>
+    <section id={"#{@id_prefix}-section"} class="w-full min-w-0 py-2">
+      <div class="mb-5 flex items-center gap-4">
+        <h2 class="shrink-0 text-sm font-semibold uppercase tracking-[0.16em] text-slate-700">
+          {@title}
+        </h2>
+        <div
+          aria-hidden="true"
+          class="h-px flex-1 bg-[linear-gradient(90deg,#2dd4bf_0%,#818cf8_52%,#fbbf24_100%)]"
+        >
+        </div>
+        <div :if={@pills != []} class="flex flex-wrap gap-1.5">
+          <span
+            :for={pill <- @pills}
+            class="border-l border-slate-400 pl-2 text-[11px] font-medium text-slate-700"
+          >
+            {pill}
+          </span>
         </div>
       </div>
-      <div class="bg-slate-50/40 p-3 sm:p-4">
-        <div id={"#{@id_prefix}-grids-list"} class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          <%= for item <- @items do %>
-            <.grid_card
-              graph={item.graph}
-              author_name={item.author_name}
-              author_marker="@"
-              id={@id_prefix <> "-" <> (item.graph.slug || "t-" <> Integer.to_string(:erlang.phash2(item.graph.title || "")))}
-              variant={:community_compact}
-              show_badge={false}
-              tag_limit={3}
-            />
-          <% end %>
-        </div>
+      <div id={"#{@id_prefix}-grids-list"} class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <%= for item <- @items do %>
+          <.grid_card
+            graph={item.graph}
+            author_name={item.author_name}
+            author_marker="@"
+            id={@id_prefix <> "-" <> (item.graph.slug || "t-" <> Integer.to_string(:erlang.phash2(item.graph.title || "")))}
+            variant={:partner}
+            show_badge={false}
+            tag_limit={3}
+          />
+        <% end %>
       </div>
     </section>
     """
@@ -593,13 +591,6 @@ defmodule DialecticWeb.CommunityLive do
           "from-teal-50 via-cyan-50 to-indigo-100 text-teal-700 ring-teal-200/80"
       end
     end)
-  end
-
-  defp partner_pills(items) do
-    items
-    |> Enum.map(&Map.get(&1, :author_name))
-    |> Enum.filter(fn name -> is_binary(name) and String.trim(name) != "" end)
-    |> Enum.uniq()
   end
 
   defp page_title(search, tag, category) do

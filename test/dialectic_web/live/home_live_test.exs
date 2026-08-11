@@ -28,7 +28,7 @@ defmodule DialecticWeb.HomeLiveTest do
 
     assert has_element?(view, "#popular-grids")
     assert has_element?(view, "#home-curated-#{curated_graph.slug}")
-    assert has_element?(view, "#popular-grids", "Read a grid before you make one.")
+    assert has_element?(view, "#popular-grids", "See how a question grows.")
     refute has_element?(view, ~s(#popular-grids input[name="search"]))
     refute has_element?(view, ~s(#popular-grids a[href*="tag="]))
     refute has_element?(view, ~s(#popular-grids a[href*="category="]))
@@ -72,8 +72,9 @@ defmodule DialecticWeb.HomeLiveTest do
     {:ok, view, _html} = live(conn, ~p"/")
 
     assert has_element?(view, "#curated")
-    assert has_element?(view, "#curated", "Curated grids")
+    assert has_element?(view, "#popular-grids", "Curated grids")
     assert has_element?(view, "#home-curated-grids-list")
+    assert has_element?(view, ~s(#home-curated-grids-list [data-role="curated-grid-card"]))
     assert has_element?(view, "#home-curated-grids-list > :nth-child(3)")
     refute has_element?(view, "#home-curated-grids-list > :nth-child(4)")
     refute has_element?(view, ~s(#home-curated-grids-list [data-role="grid-card-badge"]))
@@ -91,7 +92,7 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(
              view,
              ~s(#home-community-grids-link[href="/community"]),
-             "Explore all community grids"
+             "Browse community"
            )
   end
 
@@ -103,7 +104,7 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(
              view,
              "#home-profile-section",
-             "Publish a trail others can follow."
+             "Publish your thinking."
            )
 
     assert has_element?(
@@ -116,11 +117,19 @@ defmodule DialecticWeb.HomeLiveTest do
   test "renders a minimal start section", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/")
 
-    assert has_element?(view, "#start-here h2", "What do you want to understand?")
+    assert has_element?(view, "#start-here h2", "Ask your first question.")
     assert has_element?(view, "#home-start-panel #new-idea-form")
     refute has_element?(view, "#home-start-steps")
     refute has_element?(view, "#start-here", "Step 1 of 2")
     refute has_element?(view, ~s(#start-here a[href="/intro/how"]))
+  end
+
+  test "summarizes what RationalGrid is, why it helps, and how it works", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/")
+
+    assert has_element?(view, "#home-what", "A visual workspace")
+    assert has_element?(view, "#home-why", "See context")
+    assert has_element?(view, "#home-how", "Ask one question")
   end
 
   test "explains each answer depth in the start form", %{conn: conn} do
