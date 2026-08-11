@@ -5,13 +5,14 @@
         How RationalGrid works
       </p>
       <h1 class="mt-5 max-w-4xl font-serif text-5xl font-semibold leading-[1.02] tracking-tight sm:text-7xl">
-        One question becomes a map of what followed.
+        Turn one question into a map of ideas you can examine and share.
       </h1>
       <p class="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-        Ask, read, then branch from the exact idea you want to explore.
+        Use AI to explore, critical thinking tools to challenge, and the grid to preserve what is worth keeping.
       </p>
       <div class="mt-8 flex flex-wrap gap-3">
         <a
+          id="guide-start-grid-link"
           href="/?focus=grid#start-here"
           class="inline-flex items-center gap-2 rounded-md bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
         >
@@ -41,13 +42,14 @@
           Each question branches from an existing idea and keeps its context. You choose what to explore next.
         </p>
       </div>
-      <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
         <%= for {number, title, copy} <- [
           {"1", "Ask", "Name the question or topic."},
-          {"2", "See", "Read the generated response."},
-          {"3", "Branch", "Choose a node and go deeper."},
-          {"4", "Test", "Challenge claims and assumptions."},
-          {"5", "Keep", "Save, share, and return later."}
+          {"2", "Read", "Follow the response in context."},
+          {"3", "Branch", "Ask AI or add your contribution."},
+          {"4", "Examine", "Use critical thinking tools."},
+          {"5", "Keep", "Star nodes and save passages."},
+          {"6", "Share", "Edit together or publish."}
         ] do %>
           <div class="border-t-4 border-teal-700 bg-white p-4 shadow-sm">
             <span class="font-mono text-xs font-bold text-teal-800">
@@ -101,6 +103,7 @@
           </p>
         </div>
         <a
+          id="guide-own-question-link"
           href="/?focus=grid#start-here"
           class="mt-4 inline-flex shrink-0 items-center justify-center gap-2 rounded-md bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 sm:mt-0"
         >
@@ -125,12 +128,12 @@
         </figcaption>
       </figure>
       <div class="order-1 lg:order-2">
-        <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">Step 2 · See</p>
+        <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">Step 2 · Read</p>
         <h2
           id="guide-response-heading"
           class="mt-2 font-serif text-4xl font-semibold tracking-tight"
         >
-          Read the answer as a map.
+          Read each answer in context.
         </h2>
         <p class="mt-3 leading-7 text-slate-600">
           Select a node to read it, follow its links, or branch from that point.
@@ -151,7 +154,7 @@
           <li class="flex gap-3">
             <.icon name="hero-magnifying-glass" class="mt-1 h-4 w-4 shrink-0 text-teal-700" />
             <span>
-              <strong>Use reader view</strong> for a linear pass.
+              <strong>Switch to Read</strong> for a linear pass.
             </span>
           </li>
         </ul>
@@ -176,7 +179,7 @@
           <.icon name="hero-question-mark-circle" class="h-5 w-5 text-sky-600" />
           <h3 class="mt-3 text-base font-semibold">Ask AI</h3>
           <p class="mt-2 text-sm leading-6 text-slate-600">
-            Generate a new answer from the selected node.
+            Generate a response connected to the selected node.
           </p>
         </article>
         <article class="border-t-4 border-teal-600 bg-white p-5 shadow-sm">
@@ -195,7 +198,7 @@
         </article>
         <article class="border-t-4 border-indigo-600 bg-white p-5 shadow-sm">
           <.icon name="hero-squares-plus" class="h-5 w-5 text-indigo-600" />
-          <h3 class="mt-3 text-base font-semibold">Related ideas</h3>
+          <h3 class="mt-3 text-base font-semibold">Find related ideas</h3>
           <p class="mt-2 text-sm leading-6 text-slate-600">
             Explore nearby concepts and adjacent directions.
           </p>
@@ -205,12 +208,17 @@
 
     <section
       class="mt-12 border border-slate-700 bg-slate-950 p-6 text-white shadow-sm sm:p-8"
-      aria-labelledby="guide-test-heading"
+      aria-labelledby="guide-examine-heading"
     >
       <div class="max-w-3xl">
-        <p class="text-xs font-semibold uppercase tracking-wide text-teal-300">Step 4 · Test</p>
-        <h2 id="guide-test-heading" class="mt-2 font-serif text-4xl font-semibold tracking-tight">
-          Test the answer.
+        <p class="text-xs font-semibold uppercase tracking-wide text-teal-300">
+          Step 4 · Examine
+        </p>
+        <h2
+          id="guide-examine-heading"
+          class="mt-2 font-serif text-4xl font-semibold tracking-tight"
+        >
+          Examine the idea.
         </h2>
         <p class="mt-3 leading-7 text-slate-300">
           Select a node or passage, then choose the challenge you need.
@@ -239,35 +247,43 @@
     </section>
 
     <section
+      id="guide-saved-thinking"
       class="mt-12 grid gap-6 lg:grid-cols-[0.9fr,1.1fr] lg:items-center"
       aria-labelledby="guide-keep-heading"
     >
       <div>
         <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">
-          Step 5 · Keep and share
+          Step 5 · Keep
         </p>
         <h2 id="guide-keep-heading" class="mt-2 font-serif text-4xl font-semibold tracking-tight">
-          Keep and share useful paths.
+          Build a trail back to useful ideas.
         </h2>
         <p class="mt-3 leading-7 text-slate-600">
-          Bookmark nodes, highlight passages, add notes, or share the map. Use Doc or Present view to guide others.
+          Save whole nodes or exact passages as you read. Your profile keeps them together so you can return with their context intact.
         </p>
-        <div class="mt-5 grid gap-3 sm:grid-cols-2">
-          <div class="border-t-2 border-amber-600 bg-white p-4">
-            <.icon name="hero-bookmark" class="h-5 w-5 text-amber-600" />
-            <h3 class="mt-2 text-sm font-semibold">Save attention</h3>
+        <div class="mt-5 grid gap-3">
+          <div id="guide-star-nodes" class="border-t-2 border-amber-600 bg-white p-4">
+            <.icon name="hero-star" class="h-5 w-5 text-amber-600" />
+            <h3 class="mt-2 text-sm font-semibold">Star a node</h3>
             <p class="mt-1 text-xs leading-5 text-slate-600">
-              Keep nodes and quotes worth returning to.
+              Select the star beside a node title. It appears under
+              <strong>Bookmarked ideas</strong>
+              on your profile, where you can add a note and jump back.
             </p>
           </div>
-          <div class="border-t-2 border-teal-700 bg-white p-4">
-            <.icon name="hero-share" class="h-5 w-5 text-teal-700" />
-            <h3 class="mt-2 text-sm font-semibold">Share the path</h3>
+          <div id="guide-save-highlights" class="border-t-2 border-indigo-600 bg-white p-4">
+            <.icon name="hero-bookmark-square" class="h-5 w-5 text-indigo-600" />
+            <h3 class="mt-2 text-sm font-semibold">Highlight a passage</h3>
             <p class="mt-1 text-xs leading-5 text-slate-600">
-              Give others the same context and entry point.
+              Select text and choose <strong>Save as a highlight</strong>. The quote, source, and any note are stored under
+              <strong>Quotes and notes</strong>
+              on your profile.
             </p>
           </div>
         </div>
+        <p class="mt-3 text-xs leading-5 text-slate-500">
+          Bookmarks and highlights are part of your private saved-thinking view, not your public profile.
+        </p>
       </div>
       <figure class="overflow-hidden border border-slate-300 bg-slate-950 p-3 shadow-sm">
         <img
@@ -280,6 +296,69 @@
           The structure stays clear as the grid grows.
         </figcaption>
       </figure>
+    </section>
+
+    <section
+      id="guide-collaborate"
+      class="mt-12 border border-stone-300 bg-white p-6 shadow-sm sm:p-8"
+      aria-labelledby="guide-collaborate-heading"
+    >
+      <div class="max-w-3xl">
+        <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">
+          Step 6 · Share
+        </p>
+        <h2
+          id="guide-collaborate-heading"
+          class="mt-2 font-serif text-4xl font-semibold tracking-tight"
+        >
+          Work together live, then choose what becomes public.
+        </h2>
+        <p class="mt-3 leading-7 text-slate-600">
+          A grid is a shared workspace, not a finished screenshot. Send its URL so other people can follow the context and extend it with you.
+        </p>
+      </div>
+
+      <div class="mt-6 grid gap-px overflow-hidden border border-stone-300 bg-stone-300 lg:grid-cols-3">
+        <article id="guide-live-editing" class="bg-[#f8f6f0] p-5">
+          <.icon name="hero-users" class="h-5 w-5 text-emerald-700" />
+          <h3 class="mt-3 text-base font-semibold text-slate-950">Edit together by URL</h3>
+          <p class="mt-2 text-sm leading-6 text-slate-600">
+            Open <strong>Share</strong>, copy the grid URL, and keep <strong>Editing</strong>
+            set to <strong>Editable</strong>. People with access can branch and comment in the same live grid. Set it to
+            <strong>Locked</strong>
+            when you want view-only access.
+          </p>
+        </article>
+
+        <article id="guide-grid-visibility" class="bg-[#f8f6f0] p-5">
+          <.icon name="hero-lock-closed" class="h-5 w-5 text-sky-700" />
+          <h3 class="mt-3 text-base font-semibold text-slate-950">Choose public or private</h3>
+          <p class="mt-2 text-sm leading-6 text-slate-600">
+            Under <strong>Settings → Collaboration</strong>, set <strong>Visibility</strong>
+            to <strong>Public</strong>
+            or <strong>Private</strong>. Public grids are open to anyone; private share links contain a secure access token, so send them only to people you trust.
+          </p>
+        </article>
+
+        <article id="guide-public-profile" class="bg-[#f8f6f0] p-5">
+          <.icon name="hero-identification" class="h-5 w-5 text-indigo-700" />
+          <h3 class="mt-3 text-base font-semibold text-slate-950">
+            Publish through your profile
+          </h3>
+          <p class="mt-2 text-sm leading-6 text-slate-600">
+            Your username gives you a public profile with your bio and public grids. Share it as a growing record of your work. Private grids stay off that page, and saved thinking remains visible only to you.
+          </p>
+        </article>
+      </div>
+
+      <p id="guide-shared-paths" class="mt-5 flex gap-2 text-sm leading-6 text-slate-600">
+        <.icon name="hero-link" class="mt-1 h-4 w-4 shrink-0 text-teal-700" />
+        <span>
+          Share the whole grid or link directly to the current node. Use <strong>Read</strong>
+          or <strong>Present</strong>
+          when you want to guide someone through a path.
+        </span>
+      </p>
     </section>
 
     <section class="mt-12 border border-stone-300 border-l-4 border-l-teal-700 bg-white p-6 sm:p-8">

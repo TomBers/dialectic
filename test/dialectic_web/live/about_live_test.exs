@@ -13,9 +13,21 @@ defmodule DialecticWeb.AboutLiveTest do
 
   describe "about page" do
     test "renders the about page", %{conn: conn} do
-      {:ok, _view, html} = live(conn, ~p"/about")
+      {:ok, view, html} = live(conn, ~p"/about")
 
       assert html =~ "About RationalGrid"
+      assert has_element?(view, "#about-connected-knowledge", "A living map of inquiry.")
+
+      assert has_element?(
+               view,
+               "#about-deeper-understanding",
+               "Critical thinking stays close."
+             )
+
+      assert has_element?(view, "#about-shared-progress", "Shared paths prevent repetition.")
+      assert has_element?(view, "#about-public-ideas", "Ideas become reusable.")
+      assert has_element?(view, "#about-ai-artifacts", "AI explores. The grid is what lasts.")
+      assert has_element?(view, ~s(#about-start-grid-link[href="/?focus=grid#start-here"]))
     end
 
     test "shows error when submitting blank feedback", %{conn: conn} do

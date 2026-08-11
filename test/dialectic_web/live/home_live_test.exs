@@ -28,7 +28,7 @@ defmodule DialecticWeb.HomeLiveTest do
 
     assert has_element?(view, "#popular-grids")
     assert has_element?(view, "#home-curated-#{curated_graph.slug}")
-    assert has_element?(view, "#popular-grids", "See how a question grows.")
+    assert has_element?(view, "#popular-grids", "Build on good thinking.")
     refute has_element?(view, ~s(#popular-grids input[name="search"]))
     refute has_element?(view, ~s(#popular-grids a[href*="tag="]))
     refute has_element?(view, ~s(#popular-grids a[href*="category="]))
@@ -104,7 +104,7 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(
              view,
              "#home-profile-section",
-             "Publish your thinking."
+             "Share ideas people can build on."
            )
 
     assert has_element?(
@@ -127,9 +127,27 @@ defmodule DialecticWeb.HomeLiveTest do
   test "summarizes what RationalGrid is, why it helps, and how it works", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/")
 
-    assert has_element?(view, "#home-what", "A visual workspace")
-    assert has_element?(view, "#home-why", "See context")
-    assert has_element?(view, "#home-how", "Ask one question")
+    assert has_element?(
+             view,
+             "#home-hero-title",
+             "Understand difficult questions without losing the thread."
+           )
+
+    assert has_element?(view, "#home-video-hero", "preserve useful paths")
+    assert has_element?(view, "#home-what", "A live, social map")
+    assert has_element?(view, "#home-why", "Go deeper")
+    assert has_element?(view, "#home-how", "examine, connect, and publish ideas")
+  end
+
+  test "highlights outcomes and persistent AI artifacts", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/")
+
+    assert has_element?(view, "#home-outcomes", "Understanding that compounds.")
+    assert has_element?(view, "#home-outcome-understanding", "Deeper understanding")
+    assert has_element?(view, "#home-outcome-tools", "find counterexamples")
+    assert has_element?(view, "#home-outcome-collaboration", "Fewer rabbit holes")
+    assert has_element?(view, "#home-outcome-public", "Ideas made public")
+    assert has_element?(view, "#home-ai-artifacts", "AI that leaves something behind.")
   end
 
   test "explains each answer depth in the start form", %{conn: conn} do
