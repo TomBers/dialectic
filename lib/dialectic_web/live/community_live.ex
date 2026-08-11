@@ -283,12 +283,10 @@ defmodule DialecticWeb.CommunityLive do
                   id="community-grid-list"
                   class="divide-y divide-slate-200 overflow-hidden border border-slate-200 bg-white"
                 >
-                  <%= for {{graph, _count, author_username}, index} <- Enum.with_index(@graphs, 1) do %>
+                  <%= for {graph, _count, author_username} <- @graphs do %>
                     <.community_grid_row
                       graph={graph}
                       author_name={author_username}
-                      author_marker="@"
-                      number={index}
                       selected_tag={@active_tag}
                       can_generate_tags={admin?(@current_user)}
                       generating_tags={@generating_tags}
@@ -348,106 +346,100 @@ defmodule DialecticWeb.CommunityLive do
   attr :id, :string, required: true
   attr :graph, :map, required: true
   attr :author_name, :string, default: nil
-  attr :author_marker, :string, default: ""
-  attr :number, :integer, required: true
   attr :selected_tag, :string, default: nil
   attr :can_generate_tags, :boolean, default: false
   attr :generating_tags, :any, required: true
 
   defp community_grid_row(assigns) do
+    tags = visible_tags(assigns.graph, assigns.selected_tag)
+
     assigns =
       assigns
-      |> assign(:title, Map.get(assigns.graph, :title) || "Untitled grid")
-      |> assign(:tags, visible_tags(assigns.graph, assigns.selected_tag))
+      |> assign(:title, display_title(assigns.graph))
+      |> assign(:tags, tags)
       |> assign(:node_count, graph_node_count(assigns.graph))
-      |> assign(:icon_theme, icon_theme(assigns.graph))
+      |> assign(:accent_style, row_accent_style(tags))
       |> assign(:generating_tags?, MapSet.member?(assigns.generating_tags, assigns.graph.title))
 
     ~H"""
     <article
       id={@id}
-      class="group grid gap-4 px-4 py-4 transition hover:bg-slate-50 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-5"
+      data-role="community-grid-row"
+      class="group relative grid gap-5 px-5 py-5 pl-6 transition hover:bg-[#fbfaf6] sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-6 sm:pl-7"
     >
-      <div class="flex min-w-0 items-start gap-3 sm:gap-4">
-        <div class={[
-          "relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br shadow-sm ring-1 sm:h-14 sm:w-20",
-          @icon_theme
-        ]}>
-          <span
-            aria-label={"Result #{@number}"}
-            class="absolute left-1.5 top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-white/90 px-1 text-[11px] font-bold tabular-nums text-slate-700 shadow-sm ring-1 ring-slate-900/10"
-          >
-            {@number}
-          </span>
-          <.icon name="hero-squares-2x2" class="h-6 w-6 sm:h-7 sm:w-7" />
-        </div>
-        <div class="min-w-0">
-          <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <.link
-              navigate={graph_path(@graph)}
-              class="text-base font-semibold leading-6 text-slate-950 transition group-hover:text-teal-700"
-            >
-              {@title}
-            </.link>
-            <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-              Community grid
-            </span>
-          </div>
+      <div aria-hidden="true" class="absolute inset-y-0 left-0 w-1" style={@accent_style}></div>
+      <div class="min-w-0">
+        <.link
+          navigate={graph_path(@graph)}
+          class="text-balance font-serif text-xl font-semibold leading-7 tracking-tight text-slate-950 transition group-hover:text-teal-800 hover:text-teal-900 sm:text-2xl"
+        >
+          {@title}
+        </.link>
+
+        <div
+          data-role="community-grid-meta"
+          class="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500"
+        >
           <%= if is_binary(@author_name) and String.trim(@author_name) != "" do %>
             <.link
               navigate={~p"/u/#{@author_name}"}
-              class="mt-1 inline-flex text-xs font-medium text-teal-700 hover:text-teal-900"
+              class="font-medium text-slate-600 transition hover:text-teal-800"
             >
-              by {@author_marker}{@author_name}
+              by @{@author_name}
             </.link>
+            <span aria-hidden="true">·</span>
           <% end %>
-          <p class="mt-1 line-clamp-2 text-sm leading-5 text-slate-600">
-            {preview_sentence(@graph)}
-          </p>
-          <div class="mt-2 flex flex-wrap items-center gap-1.5">
-            <%= if @tags == [] do %>
-              <span class="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
-                Untagged
-              </span>
-              <button
-                :if={@can_generate_tags}
-                id={@id <> "-generate-tags"}
-                type="button"
-                phx-click="generate_tags"
-                phx-value-identifier={@graph.slug || @graph.title}
-                disabled={@generating_tags?}
-                class="inline-flex items-center gap-1 rounded-md bg-teal-50 px-2 py-0.5 text-[11px] font-semibold text-teal-700 ring-1 ring-inset ring-teal-200 transition hover:bg-teal-100 disabled:cursor-wait disabled:opacity-60"
-              >
-                <.icon
-                  name={if(@generating_tags?, do: "hero-arrow-path", else: "hero-sparkles")}
-                  class={tag_generation_icon_class(@generating_tags?)}
-                />
-                {if(@generating_tags?, do: "Generating...", else: "Generate tags")}
-              </button>
-            <% else %>
+          <span>{updated_label(@graph)}</span>
+          <span aria-hidden="true">·</span>
+          <span>{idea_count_label(@node_count)}</span>
+        </div>
+
+        <div class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+          <%= if @tags == [] do %>
+            <span class="text-xs font-medium text-slate-500">Untagged</span>
+            <button
+              :if={@can_generate_tags}
+              id={@id <> "-generate-tags"}
+              type="button"
+              phx-click="generate_tags"
+              phx-value-identifier={@graph.slug || @graph.title}
+              disabled={@generating_tags?}
+              class="inline-flex items-center gap-1 text-xs font-semibold text-teal-700 transition hover:text-teal-900 disabled:cursor-wait disabled:opacity-60"
+            >
+              <.icon
+                name={if(@generating_tags?, do: "hero-arrow-path", else: "hero-sparkles")}
+                class={tag_generation_icon_class(@generating_tags?)}
+              />
+              {if(@generating_tags?, do: "Generating...", else: "Generate tags")}
+            </button>
+          <% else %>
+            <span
+              :for={tag <- @tags}
+              class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600"
+            >
               <span
-                :for={tag <- @tags}
-                class={[
-                  "rounded-md px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset",
-                  tag_pill_classes(tag)
-                ]}
+                aria-hidden="true"
+                class="h-1.5 w-1.5 shrink-0 rounded-full"
+                style={"background-color: " <> tag_color_hex(tag)}
               >
-                #{tag}
               </span>
-            <% end %>
-          </div>
+              {tag}
+            </span>
+          <% end %>
         </div>
       </div>
-      <div class="flex items-center justify-between gap-4 border-t border-slate-100 pt-3 sm:flex-col sm:items-end sm:border-t-0 sm:pt-0">
-        <span class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500">
-          <.icon name="hero-squares-2x2" class="h-3.5 w-3.5 text-slate-400" />
-          {@node_count} ideas
-        </span>
+
+      <div class="flex items-center border-t border-stone-200 pt-4 sm:border-t-0 sm:pt-0">
         <.link
           navigate={graph_path(@graph)}
-          class="inline-flex items-center gap-1.5 rounded-full bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-teal-700"
+          class="inline-flex items-center gap-1.5 text-xs font-semibold text-teal-800 transition hover:text-teal-950"
+          aria-label={"Read " <> @title}
         >
-          View grid <.icon name="hero-arrow-up-right" class="h-3.5 w-3.5" />
+          Read grid
+          <.icon
+            name="hero-arrow-right"
+            class="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
+          />
         </.link>
       </div>
     </article>
@@ -568,28 +560,29 @@ defmodule DialecticWeb.CommunityLive do
     end
   end
 
-  defp icon_theme(graph) do
-    tags = Map.get(graph, :tags, []) || []
+  defp idea_count_label(1), do: "1 idea"
+  defp idea_count_label(count), do: "#{count} ideas"
 
-    tags
-    |> List.first()
-    |> to_string()
-    |> String.downcase()
-    |> then(fn tag ->
-      cond do
-        String.contains?(tag, ["science", "technology", "physics"]) ->
-          "from-sky-50 via-cyan-50 to-teal-100 text-sky-700 ring-sky-200/80"
+  defp display_title(graph) do
+    title = Map.get(graph, :title) || "Untitled grid"
 
-        String.contains?(tag, ["history", "politics", "society"]) ->
-          "from-amber-50 via-orange-50 to-rose-100 text-amber-700 ring-amber-200/80"
+    case String.next_grapheme(title) do
+      {first, rest} -> String.upcase(first) <> rest
+      nil -> "Untitled grid"
+    end
+  end
 
-        String.contains?(tag, ["mind", "psychology", "philosophy"]) ->
-          "from-indigo-50 via-violet-50 to-fuchsia-100 text-indigo-700 ring-indigo-200/80"
+  defp row_accent_style(tags) do
+    colors = tags |> Enum.map(&tag_color_hex/1) |> Enum.uniq()
 
-        true ->
-          "from-teal-50 via-cyan-50 to-indigo-100 text-teal-700 ring-teal-200/80"
+    gradient_colors =
+      case colors do
+        [] -> [tag_color_hex(""), "#cbd5e1"]
+        [color] -> [color, "#cbd5e1"]
+        colors -> colors
       end
-    end)
+
+    "background-image: linear-gradient(180deg, #{Enum.join(gradient_colors, ", ")});"
   end
 
   defp page_title(search, tag, category) do

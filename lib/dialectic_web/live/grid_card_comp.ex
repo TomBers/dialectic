@@ -428,6 +428,8 @@ defmodule DialecticWeb.GridCardComp do
   def preview_sentence(graph), do: graph_preview_sentence(graph, graph_node_count(graph))
 
   def tag_pill_classes(tag), do: tag_pill_class(tag)
+  def tag_color_hex(tag), do: tag_color(tag)
+  def updated_label(graph), do: graph_updated_label(graph)
 
   defp editorial_card_class(:featured, 0) do
     [editorial_card_base_class(), "lg:col-span-6"]

@@ -139,6 +139,18 @@ defmodule DialecticWeb.CommunityLiveTest do
       refute has_element?(view, "#community-grid-#{graph.slug}-generate-tags")
     end
 
+    test "capitalizes the first character of displayed grid titles", %{conn: conn} do
+      graph =
+        Dialectic.GraphFixtures.insert_graph(%{
+          title: "tell me about gorillas #{System.unique_integer([:positive])}",
+          slug: "lowercase-community-title-#{System.unique_integer([:positive])}"
+        })
+
+      {:ok, view, _html} = live(conn, ~p"/community?search=#{graph.title}")
+
+      assert has_element?(view, "#community-grid-#{graph.slug}", "Tell me about gorillas")
+    end
+
     test "finds a small grid by title when it is also browsable by topic", %{conn: conn} do
       title = "Freud and the unconscious #{System.unique_integer([:positive])}"
       slug = Graphs.generate_unique_slug(title)
@@ -173,7 +185,10 @@ defmodule DialecticWeb.CommunityLiveTest do
 
       {:ok, view, _html} = live(conn, ~p"/community?tag=psychology")
       selector = "#community-grid-#{graph.slug}"
-      assert has_element?(view, selector)
+      assert has_element?(view, selector <> ~s([data-role="community-grid-row"]))
+      assert has_element?(view, selector <> " [data-role=community-grid-meta]", "1 idea")
+      assert has_element?(view, selector <> " a", "Read grid")
+      refute has_element?(view, selector <> ~s( [aria-label^="Result "]))
 
       render_patch(view, ~p"/community?search=Freud")
 
