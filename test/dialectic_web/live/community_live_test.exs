@@ -80,7 +80,7 @@ defmodule DialecticWeb.CommunityLiveTest do
       assert has_element?(
                view,
                "#community-results-heading",
-               "Find an idea to explore and extend"
+               "Find a question to explore"
              )
 
       render_patch(view, ~p"/community?category=deep_dives")

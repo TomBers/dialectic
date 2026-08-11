@@ -11,7 +11,7 @@ defmodule DialecticWeb.AboutLive do
      |> assign(:contact_mailto, "mailto:hello@rationalgrid.ai")
      |> assign(
        :page_description,
-       "RationalGrid is a not-for-profit learning platform for turning questions into shared, reusable thinking."
+       "RationalGrid is a not-for-profit, open-source workspace for connected questions and answers."
      )
      |> assign(
        :feedback_form,
@@ -79,11 +79,10 @@ defmodule DialecticWeb.AboutLive do
               About RationalGrid
             </p>
             <h1 class="mt-5 font-serif text-5xl font-semibold leading-[1.02] tracking-tight sm:text-7xl">
-              Questions rarely end with the first answer.
+              Keep the path from question to answer.
             </h1>
             <p class="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-              RationalGrid keeps the route from one question to the next visible: the answers,
-              objections, evidence, comments, and sources remain attached to the branch that produced them.
+              Answers, objections, evidence, and sources stay attached to the branch that produced them.
             </p>
           </div>
           <div class="border-t border-slate-400 pt-4">
@@ -117,16 +116,14 @@ defmodule DialecticWeb.AboutLive do
                 A map of an inquiry.
               </h2>
               <p class="mt-3 leading-7 text-slate-600">
-                Every box is a question, an answer, a comment, or a reference. The lines show what
-                prompted what, even after the conversation becomes large.
+                Each box holds a question, answer, comment, or source. Lines preserve the context.
               </p>
             </article>
             <article class="border-b border-stone-300 p-6 sm:p-8">
               <p class="font-mono text-xs font-bold text-teal-800">02 / WHY</p>
-              <h2 class="mt-3 font-serif text-3xl font-semibold">Chat hides its own history.</h2>
+              <h2 class="mt-3 font-serif text-3xl font-semibold">Chat loses context.</h2>
               <p class="mt-3 leading-7 text-slate-600">
-                A useful claim can disappear hundreds of messages above. A grid keeps the relevant
-                context beside the claim and makes alternate routes easy to compare.
+                Important claims disappear in long threads. A grid keeps related ideas together and makes alternatives easy to compare.
               </p>
             </article>
             <article class="border-b border-stone-300 p-6 sm:p-8 md:border-b-0 md:border-r">
@@ -135,11 +132,11 @@ defmodule DialecticWeb.AboutLive do
               <ol class="mt-4 divide-y divide-stone-200 border-y border-stone-200 text-sm text-slate-700">
                 <li class="grid grid-cols-[2rem_1fr] gap-3 py-3">
                   <span class="font-mono text-teal-800">1</span>
-                  <span>Start with a question, idea, or source.</span>
+                  <span>Start with a question or source.</span>
                 </li>
                 <li class="grid grid-cols-[2rem_1fr] gap-3 py-3">
                   <span class="font-mono text-teal-800">2</span>
-                  <span>Ask from the precise answer or phrase you want to test.</span>
+                  <span>Branch from the exact idea you want to test.</span>
                 </li>
                 <li class="grid grid-cols-[2rem_1fr] gap-3 py-3">
                   <span class="font-mono text-teal-800">3</span>
@@ -149,10 +146,9 @@ defmodule DialecticWeb.AboutLive do
             </article>
             <article class="p-6 sm:p-8">
               <p class="font-mono text-xs font-bold text-teal-800">04 / WHO</p>
-              <h2 class="mt-3 font-serif text-3xl font-semibold">People doing sustained thinking.</h2>
+              <h2 class="mt-3 font-serif text-3xl font-semibold">For sustained thinking.</h2>
               <p class="mt-3 leading-7 text-slate-600">
-                Students, researchers, educators, teams, and independent learners use grids when
-                one answer is not enough and the route through the subject matters.
+                For students, researchers, educators, teams, and independent learners who need more than one answer.
               </p>
             </article>
           </div>
@@ -167,7 +163,7 @@ defmodule DialecticWeb.AboutLive do
               Free to use. Open source. Not-for-profit.
             </h2>
             <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-300">
-              The project is built to make shared reasoning inspectable and reusable.
+              Shared reasoning should be inspectable and reusable.
             </p>
           </div>
           <div class="flex flex-wrap gap-4 text-sm font-semibold">
@@ -202,7 +198,7 @@ defmodule DialecticWeb.AboutLive do
               </h2>
             </div>
             <p class="text-sm leading-6 text-slate-600">
-              Product, philosophy, reasoning, education, and independent advice.
+              Product, philosophy, education, and independent advice.
             </p>
           </div>
           <div class="mt-6 grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 lg:grid-cols-5">
@@ -233,7 +229,7 @@ defmodule DialecticWeb.AboutLive do
               </h2>
             </div>
             <p class="text-sm leading-6 text-slate-600">
-              Tell us what worked, where you became lost, or what you expected to happen next.
+              Tell us what worked, what was unclear, or what you expected next.
             </p>
           </div>
 

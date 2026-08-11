@@ -52,12 +52,15 @@ const PresentationHook = {
    */
   _setSiteHeaderVisible(visible) {
     const header = document.getElementById("userHeader");
+    const spacer = document.getElementById("userHeaderSpacer");
     if (!header) return;
 
     if (visible) {
       header.style.display = "";
+      if (spacer) spacer.style.display = "";
     } else {
       header.style.display = "none";
+      if (spacer) spacer.style.display = "none";
     }
   },
 };

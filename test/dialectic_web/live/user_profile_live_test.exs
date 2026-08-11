@@ -181,15 +181,16 @@ defmodule DialecticWeb.UserProfileLiveTest do
         nodes: Enum.map(1..22, fn id -> %{"id" => Integer.to_string(id), "label" => "Node"} end)
       )
 
-      {:ok, _lv, html} = live(conn, ~p"/u/starthere")
+      {:ok, lv, html} = live(conn, ~p"/u/starthere")
 
       assert html =~ "Start here"
       assert html =~ "Entry points"
       assert html =~ "Deep Question"
       assert html =~ "Deep dive"
-      assert html =~ "22 ideas"
       assert html =~ "find thinking on"
       assert html =~ "public grids"
+      assert has_element?(lv, ~s([data-role="featured-grid-card"]), "connected ideas")
+      assert has_element?(lv, ~s([data-role="featured-grid-card"] strong), "22")
     end
   end
 

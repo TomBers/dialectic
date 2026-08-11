@@ -219,10 +219,10 @@ defmodule DialecticWeb.GridCardComp do
       |> assign(:border_style, card_border_style(tags))
       |> assign(:title, graph_title(assigns.graph))
 
-    if assigns.variant in [:curated, :partner] do
-      editorial_grid_card(assigns)
-    else
+    if assigns.variant in [:compact, :community, :community_compact] do
       standard_grid_card(assigns)
+    else
+      editorial_grid_card(assigns)
     end
   end
 
@@ -234,13 +234,20 @@ defmodule DialecticWeb.GridCardComp do
     <article
       id={@id}
       data-role={@editorial_role}
-      class="group relative flex min-h-[20rem] flex-col overflow-hidden border border-stone-300 bg-white shadow-[0_12px_32px_-26px_rgba(15,23,42,0.7)] transition duration-200 hover:-translate-y-0.5 hover:border-slate-400 hover:shadow-[0_22px_42px_-26px_rgba(15,23,42,0.55)] focus-within:border-slate-400 focus-within:shadow-[0_22px_42px_-26px_rgba(15,23,42,0.55)]"
+      class={editorial_card_class(@variant, @featured_index)}
     >
       <div aria-hidden="true" class="h-1.5 shrink-0" style={@border_style}></div>
       <div class="flex flex-1 flex-col p-5 sm:p-6">
         <div class="flex items-center justify-between gap-4 border-b border-stone-200 pb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
           <span>{@label || exploration_label(@node_count)}</span>
-          <span class="shrink-0">{graph_updated_label(@graph)}</span>
+          <%= if @show_visibility do %>
+            <span class="inline-flex shrink-0 items-center gap-1.5">
+              <.icon name={grid_visibility_icon(@graph)} class="h-3.5 w-3.5" />
+              {grid_visibility_label(@graph)}
+            </span>
+          <% else %>
+            <span class="shrink-0">{graph_updated_label(@graph)}</span>
+          <% end %>
         </div>
 
         <div class="pt-5">
@@ -283,17 +290,22 @@ defmodule DialecticWeb.GridCardComp do
             <span class="text-xs text-slate-500">
               <strong class="font-semibold text-slate-800">{@node_count}</strong> connected ideas
             </span>
-            <.link
-              navigate={graph_path(@graph)}
-              class="inline-flex items-center gap-1.5 text-xs font-semibold text-teal-800 transition hover:text-teal-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-300"
-              aria-label={"Read " <> @title}
-            >
-              Read grid
-              <.icon
-                name="hero-arrow-right"
-                class="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
-              />
-            </.link>
+            <div class="flex items-center gap-2">
+              <.link
+                navigate={graph_path(@graph)}
+                class="inline-flex items-center gap-1.5 text-xs font-semibold text-teal-800 transition hover:text-teal-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-300"
+                aria-label={"Read " <> @title}
+              >
+                Read grid
+                <.icon
+                  name="hero-arrow-right"
+                  class="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
+                />
+              </.link>
+              <%= if @action != [] do %>
+                {render_slot(@action)}
+              <% end %>
+            </div>
           </div>
         </div>
       </div>
@@ -417,6 +429,20 @@ defmodule DialecticWeb.GridCardComp do
 
   def tag_pill_classes(tag), do: tag_pill_class(tag)
 
+  defp editorial_card_class(:featured, 0) do
+    [editorial_card_base_class(), "lg:col-span-6"]
+  end
+
+  defp editorial_card_class(:featured, _index) do
+    [editorial_card_base_class(), "lg:col-span-3"]
+  end
+
+  defp editorial_card_class(_variant, _index), do: editorial_card_base_class()
+
+  defp editorial_card_base_class do
+    "group relative flex min-h-[20rem] flex-col overflow-hidden border border-stone-300 bg-white shadow-[0_12px_32px_-26px_rgba(15,23,42,0.7)] transition duration-200 hover:-translate-y-0.5 hover:border-slate-400 hover:shadow-[0_22px_42px_-26px_rgba(15,23,42,0.55)] focus-within:border-slate-400 focus-within:shadow-[0_22px_42px_-26px_rgba(15,23,42,0.55)]"
+  end
+
   defp card_class(variant, index) do
     [
       card_base_class(),
@@ -505,6 +531,7 @@ defmodule DialecticWeb.GridCardComp do
 
   defp footer_meta_text(_variant, node_count, _graph), do: "#{node_count} ideas"
 
+  defp author_text(author_name, marker) when marker in [nil, "", "by"], do: "by " <> author_name
   defp author_text(author_name, marker), do: "by " <> marker <> author_name
 
   defp author_visible?(author_name) when is_binary(author_name) do

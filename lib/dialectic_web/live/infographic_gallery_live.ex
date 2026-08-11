@@ -9,28 +9,28 @@ defmodule DialecticWeb.InfographicGalleryLive do
         image_path: "/images/infographics/Consciousness_in_AI.jpg",
         title: "Consciousness in AI",
         graph_slug: "consciousness-in-ai",
-        description: "Exploring the philosophical questions around AI consciousness"
+        description: "Questions around machine consciousness."
       },
       %{
         id: "utopia",
         image_path: "/images/infographics/Utopia.jpg",
         title: "Utopia",
         graph_slug: "utopia",
-        description: "An exploration of utopian ideals and their implications"
+        description: "Utopian ideals and their consequences."
       },
       %{
         id: "collective_subconscious",
         image_path: "/images/infographics/collective_subconscious.jpg",
         title: "Collective Subconscious",
         graph_slug: "collective-subconscious",
-        description: "Investigating the concept of shared unconscious knowledge"
+        description: "Shared unconscious knowledge."
       },
       %{
         id: "morality_of_ai_for_lesson_planning",
         image_path: "/images/infographics/morality_of_ai_for_lesson_planning.jpg",
         title: "Morality of AI for Lesson Planning",
         graph_slug: "morality-of-ai-for-lesson-planning",
-        description: "Ethical considerations in using AI for educational planning"
+        description: "Ethics of AI-assisted lesson planning."
       }
     ]
 
@@ -62,19 +62,17 @@ defmodule DialecticWeb.InfographicGalleryLive do
         <div class="mx-auto grid max-w-7xl gap-6 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-end lg:px-10">
           <div class="max-w-4xl">
             <p class="border-l-2 border-teal-700 pl-3 text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
-              Drawn from public grids
+              From public grids
             </p>
             <h1 class="mt-5 font-serif text-5xl font-semibold tracking-tight sm:text-6xl">
               Infographic Gallery
             </h1>
             <p class="mt-4 max-w-2xl text-lg leading-8 text-slate-600">
-              Visual explorations of complex ideas, made from the questions and branches inside
-              RationalGrid knowledge maps.
+              Complex ideas, drawn from RationalGrid maps.
             </p>
           </div>
           <p class="border-t border-slate-300 pt-4 text-sm leading-6 text-slate-600">
-            Open an image to inspect it at full size, or continue into the live grid to follow the
-            underlying conversation.
+            Open an image, or follow its source grid.
           </p>
         </div>
       </header>
@@ -118,7 +116,7 @@ defmodule DialecticWeb.InfographicGalleryLive do
                     navigate={~p"/g/#{infographic.graph_slug}"}
                     class="inline-flex items-center gap-1 border-b border-slate-500 pb-0.5 text-slate-900 transition hover:border-teal-700 hover:text-teal-800"
                   >
-                    Explore Grid <.icon name="hero-arrow-right" class="h-4 w-4" />
+                    Explore grid <.icon name="hero-arrow-right" class="h-4 w-4" />
                   </.link>
                 </div>
               </div>
@@ -132,13 +130,13 @@ defmodule DialecticWeb.InfographicGalleryLive do
         >
           <div>
             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-300">
-              Commission a visual
+              Request an infographic
             </p>
             <h2 class="mt-2 font-serif text-3xl font-semibold">
-              Want an infographic for your idea?
+              Turn a grid into a visual.
             </h2>
             <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
-              Contact us and we can talk about turning a RationalGrid map into a shareable visual.
+              Contact us about a shareable infographic.
             </p>
           </div>
           <a
@@ -155,7 +153,7 @@ defmodule DialecticWeb.InfographicGalleryLive do
             navigate={~p"/"}
             class="inline-flex items-center gap-2 border-b border-slate-500 pb-1 text-sm font-semibold text-slate-800 transition hover:border-teal-700 hover:text-teal-800"
           >
-            <.icon name="hero-arrow-left" class="h-4 w-4" /> Back to Home
+            <.icon name="hero-arrow-left" class="h-4 w-4" /> Back to home
           </.link>
         </div>
       </main>
@@ -216,7 +214,7 @@ defmodule DialecticWeb.InfographicGalleryLive do
                   navigate={~p"/g/#{@selected_infographic.graph_slug}"}
                   class="inline-flex items-center justify-center gap-2 rounded-md bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
                 >
-                  Explore Interactive Grid <.icon name="hero-arrow-right" class="h-4 w-4" />
+                  Explore grid <.icon name="hero-arrow-right" class="h-4 w-4" />
                 </.link>
               </div>
             </div>

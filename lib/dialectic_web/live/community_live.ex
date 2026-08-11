@@ -17,8 +17,7 @@ defmodule DialecticWeb.CommunityLive do
     {:ok,
      assign(socket,
        page_title: "Community Grids",
-       page_description:
-         "Explore community-built RationalGrids, public questions, and partner collections.",
+       page_description: "Browse public and partner grids built with RationalGrid.",
        search_term: "",
        active_tag: nil,
        active_category: nil,
@@ -151,10 +150,10 @@ defmodule DialecticWeb.CommunityLive do
               Community
             </p>
             <h1 class="mt-2 font-serif text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
-              Find a public question and inspect how it grew.
+              Explore public grids.
             </h1>
             <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-              Open a grid to read its branches, check the reasoning, or continue from a precise point in the conversation.
+              Read the branches, test the reasoning, or continue from any idea.
             </p>
           </div>
           <div class="flex flex-wrap gap-2">
@@ -168,7 +167,7 @@ defmodule DialecticWeb.CommunityLive do
               navigate={~p"/intro/how"}
               class="inline-flex items-center gap-2 border-b border-slate-500 px-1 py-2 text-sm font-semibold text-slate-800 transition hover:border-teal-700 hover:text-teal-800"
             >
-              <.icon name="hero-book-open" class="h-4 w-4" /> Read the guide
+              <.icon name="hero-book-open" class="h-4 w-4" /> How it works
             </.link>
           </div>
         </header>
@@ -191,7 +190,7 @@ defmodule DialecticWeb.CommunityLive do
               <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>
                   <p class="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">
-                    Discover community grids
+                    Community library
                   </p>
                   <h2 id="community-results-heading" class="mt-2 text-2xl font-semibold sm:text-3xl">
                     <%= cond do %>
@@ -204,11 +203,11 @@ defmodule DialecticWeb.CommunityLive do
                       <% @search_term != "" -> %>
                         Search results for "{@search_term}"
                       <% true -> %>
-                        Find an idea to explore and extend
+                        Find a question to explore
                     <% end %>
                   </h2>
                   <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
-                    Search by question or topic, then open the actual route through the answers.
+                    Search by question or topic.
                   </p>
                 </div>
                 <form
@@ -234,7 +233,7 @@ defmodule DialecticWeb.CommunityLive do
 
               <div class="mt-5">
                 <p class="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/60">
-                  Browse by format or topic
+                  Filter by format or topic
                 </p>
                 <div class="flex flex-wrap gap-2">
                   <.link
@@ -258,7 +257,7 @@ defmodule DialecticWeb.CommunityLive do
                 </div>
                 <div class="mt-3 max-h-36 overflow-y-auto border border-white/15 bg-black/10 p-2">
                   <p class="px-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/50">
-                    Topics from public grids
+                    Topics
                   </p>
                   <div class="flex flex-wrap gap-2">
                     <%= for %{tag: tag, count: count} <- display_popular_tags(@popular_tags, :all) do %>
@@ -277,7 +276,7 @@ defmodule DialecticWeb.CommunityLive do
             <div class="bg-slate-50/70 p-4 sm:p-5">
               <%= if @graphs == [] do %>
                 <div class="border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-600">
-                  No grids match that search yet. Try a broader question or browse by topic above.
+                  No grids found. Try a broader search or another topic.
                 </div>
               <% else %>
                 <div
