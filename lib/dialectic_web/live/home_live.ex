@@ -257,12 +257,23 @@ defmodule DialecticWeb.HomeLive do
                 Map your first question <.icon name="hero-arrow-down" class="h-4 w-4" />
               </.link>
               <.link
-                navigate={~p"/g/what-is-the-collective-subconscious-637e9a"}
+                href="#popular-grids"
                 class="inline-flex items-center gap-2 border-b border-slate-400 px-1 py-2 text-sm font-semibold text-white transition hover:border-teal-300 hover:text-teal-200"
               >
-                See a finished grid <.icon name="hero-arrow-up-right" class="h-4 w-4" />
+                Browse curated grids <.icon name="hero-arrow-down" class="h-4 w-4" />
               </.link>
             </div>
+            <.link
+              id="home-ai-scepticism-link"
+              navigate={~p"/intro/ai"}
+              class="group mt-4 inline-flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-400 transition hover:text-slate-200"
+            >
+              <span class="font-semibold text-slate-200 group-hover:text-teal-200">
+                Sceptical about AI?
+              </span>
+              <span>See where it helps—and where it can go wrong.</span>
+              <.icon name="hero-arrow-right" class="h-4 w-4 transition group-hover:translate-x-0.5" />
+            </.link>
           </div>
 
           <div class="hidden lg:block" aria-hidden="true">
@@ -590,7 +601,7 @@ defmodule DialecticWeb.HomeLive do
             <.link
               id="home-community-grids-link"
               navigate={~p"/community"}
-              class="group inline-flex shrink-0 items-center gap-2 rounded-md bg-teal-700 px-5 py-3 text-sm font-semibold text-white shadow-[0_16px_32px_-20px_rgba(15,118,110,0.9)] ring-1 ring-teal-800/10 transition hover:-translate-y-0.5 hover:bg-teal-600 hover:shadow-[0_20px_36px_-20px_rgba(15,118,110,0.95)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+              class="group inline-flex shrink-0 items-center gap-2 rounded-md bg-teal-300 px-6 py-3.5 text-base font-semibold text-slate-950 shadow-[0_18px_36px_-18px_rgba(13,148,136,0.8)] ring-1 ring-teal-500/30 transition hover:-translate-y-0.5 hover:bg-teal-200 hover:shadow-[0_22px_40px_-18px_rgba(13,148,136,0.9)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
             >
               Browse community
               <.icon

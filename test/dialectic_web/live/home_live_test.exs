@@ -135,7 +135,20 @@ defmodule DialecticWeb.HomeLiveTest do
 
     assert has_element?(view, "#home-video-hero", "notes, highlights, and saved paths")
     assert has_element?(view, "#home-video-hero", "Map your first question")
-    assert has_element?(view, "#home-video-hero", "See a finished grid")
+
+    assert has_element?(
+             view,
+             ~s(#home-video-hero a[href="#popular-grids"]),
+             "Browse curated grids"
+           )
+
+    assert has_element?(
+             view,
+             ~s(#home-ai-scepticism-link[href="/intro/ai"]),
+             "Sceptical about AI?"
+           )
+
+    assert has_element?(view, "#home-ai-scepticism-link", "where it can go wrong")
     refute has_element?(view, "#home-value-summary")
   end
 
