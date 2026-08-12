@@ -24,11 +24,12 @@ defmodule DialecticWeb.InfographicGalleryLiveTest do
       assert html =~ "/images/infographics/morality_of_ai_for_lesson_planning.jpg"
     end
 
-    test "gallery cards are keyboard accessible", %{conn: conn} do
-      {:ok, _view, html} = live(conn, ~p"/gallery")
+    test "gallery cards use native button semantics", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/gallery")
 
-      assert html =~ ~s(role="button")
-      assert html =~ ~s(tabindex="0")
+      assert has_element?(view, "button[phx-click='open_infographic']")
+      refute has_element?(view, "button[phx-click='open_infographic'][role]")
+      refute has_element?(view, "button[phx-click='open_infographic'][tabindex]")
     end
 
     test "opens modal when clicking an infographic", %{conn: conn} do

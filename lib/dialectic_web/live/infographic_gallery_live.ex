@@ -85,8 +85,6 @@ defmodule DialecticWeb.InfographicGalleryLive do
               class="group block w-full border border-stone-300 bg-white p-2 text-left shadow-sm transition hover:border-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-700 focus:ring-offset-4 focus:ring-offset-[#f4f1e9]"
               phx-click="open_infographic"
               phx-value-id={infographic.id}
-              role="button"
-              tabindex="0"
               aria-label={"View #{infographic.title} infographic"}
             >
               <img

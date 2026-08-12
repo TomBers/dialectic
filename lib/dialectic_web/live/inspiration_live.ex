@@ -22,7 +22,13 @@ defmodule DialecticWeb.InspirationLive do
   end
 
   @impl true
-  def handle_event("update_preferences", %{"preferences" => params}, socket) do
+  def handle_event("update_preferences", params, socket) do
+    params =
+      case params do
+        %{"preferences" => preferences} when is_map(preferences) -> preferences
+        params -> params
+      end
+
     socket =
       socket
       |> assign(:preference_form, to_form(params, as: :preferences))
