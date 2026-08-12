@@ -367,7 +367,7 @@ defmodule DialecticWeb.HomeLive do
         <div class="mx-auto w-full max-w-7xl px-5 py-12 sm:px-8 sm:py-16 lg:px-10">
           <div class="grid gap-6 border-b border-slate-300 pb-8 lg:grid-cols-[minmax(0,0.82fr)_minmax(22rem,1.18fr)] lg:items-end">
             <div>
-              <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
+              <p class="inline-block border-l-2 border-teal-500 pl-3 text-sm font-bold uppercase tracking-[0.14em] text-teal-900">
                 Tools for exploration
               </p>
               <h2
@@ -441,7 +441,7 @@ defmodule DialecticWeb.HomeLive do
         <div class="mx-auto w-full max-w-7xl px-5 py-12 sm:px-8 sm:py-16 lg:px-10">
           <div class="grid gap-5 border-b border-slate-300 pb-7 lg:grid-cols-[minmax(0,0.82fr)_minmax(22rem,1.18fr)] lg:items-end">
             <div>
-              <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
+              <p class="inline-block border-l-2 border-teal-500 pl-3 text-sm font-bold uppercase tracking-[0.14em] text-teal-900">
                 Tools for recall
               </p>
               <h2
@@ -513,7 +513,7 @@ defmodule DialecticWeb.HomeLive do
         </div>
         <div class="mx-auto grid w-full max-w-7xl gap-10 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[minmax(20rem,0.72fr)_minmax(0,1.28fr)] lg:items-center lg:px-10">
           <div id="home-learning-loop">
-            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-300">
+            <p class="inline-block border-l-2 border-teal-300 pl-3 text-sm font-bold uppercase tracking-[0.14em] text-teal-200">
               Explore + recall
             </p>
             <h2 class="mt-3 font-serif text-4xl font-semibold tracking-tight sm:text-5xl">
@@ -591,7 +591,7 @@ defmodule DialecticWeb.HomeLive do
         <div class="mx-auto w-full max-w-7xl px-5 py-12 sm:px-8 sm:py-16 lg:px-10">
           <div class="flex flex-col gap-5 border-b border-slate-300 pb-6 sm:flex-row sm:items-end sm:justify-between">
             <div class="max-w-3xl">
-              <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
+              <p class="inline-block border-l-2 border-teal-500 pl-3 text-sm font-bold uppercase tracking-[0.14em] text-teal-900">
                 Curated grids
               </p>
               <h2 class="mt-3 font-serif text-4xl font-semibold tracking-tight sm:text-5xl">
