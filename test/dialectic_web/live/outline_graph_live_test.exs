@@ -442,6 +442,8 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(view, "#reading-node-3")
     assert has_element?(view, "#outline-end-state")
     assert has_element?(view, "#branch-compare-card-4")
+    assert has_element?(view, "#branch-compare-card-4", "Switch to this path")
+    refute has_element?(view, "#branch-compare-card-4", "Read instead")
     refute has_element?(view, "#branch-compare-card-3")
     refute has_element?(view, "#outline-next-choices")
   end
@@ -459,6 +461,7 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(view, "#outline-next-choices")
     assert has_element?(view, "#next-choice-3")
     assert has_element?(view, "#next-choice-4")
+    assert has_element?(view, "#next-choice-3", "Continue along this path")
     refute has_element?(view, "#outline-branch-compare")
     refute has_element?(view, "#outline-end-state")
   end
