@@ -542,6 +542,13 @@ defmodule DialecticWeb.HomeLive do
               <span class="font-semibold text-white">The grid connects the two:</span>
               every question and note stays in place, ready to revisit or share.
             </p>
+            <.link
+              id="home-ai-exploration-link"
+              navigate={~p"/intro/ai"}
+              class="mt-5 inline-flex items-center gap-2 border-b border-slate-500 pb-1 text-sm font-semibold text-white transition hover:border-teal-300 hover:text-teal-200"
+            >
+              Why use AI for exploration? <.icon name="hero-arrow-right" class="h-4 w-4" />
+            </.link>
           </div>
 
           <div class="border border-slate-700 bg-black p-2 shadow-2xl sm:p-3">
@@ -699,6 +706,7 @@ defmodule DialecticWeb.HomeLive do
           </div>
           <nav aria-label="Homepage footer" class="flex flex-wrap gap-x-5 gap-y-2 text-sm">
             <.link navigate={~p"/intro/how"} class="hover:text-white">Guide</.link>
+            <.link navigate={~p"/intro/ai"} class="hover:text-white">AI and exploration</.link>
             <.link navigate={~p"/about"} class="hover:text-white">About</.link>
             <.link navigate={~p"/community"} class="hover:text-white">Community</.link>
             <.link navigate={~p"/gallery"} class="hover:text-white">Gallery</.link>

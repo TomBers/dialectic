@@ -162,6 +162,12 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(view, "#home-learning-explore", "branch from any word or passage")
     assert has_element?(view, "#home-learning-recall", "star useful ideas")
     assert has_element?(view, "#home-learning-bridge", "every question and note stays in place")
+
+    assert has_element?(
+             view,
+             ~s(#home-ai-exploration-link[href="/intro/ai"]),
+             "Why use AI for exploration?"
+           )
   end
 
   test "shows practical tools for different audiences and shared work", %{conn: conn} do

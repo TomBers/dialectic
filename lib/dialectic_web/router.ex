@@ -71,6 +71,7 @@ defmodule DialecticWeb.Router do
     post "/conversation", PageController, :create
     # get "/intro/what", PageController, :what
     get "/intro/how", PageController, :guide
+    get "/intro/ai", PageController, :ai_exploration
 
     live "/inspiration", InspirationLive
     live "/about", AboutLive

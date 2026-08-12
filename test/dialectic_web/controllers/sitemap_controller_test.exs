@@ -36,6 +36,7 @@ defmodule DialecticWeb.SitemapControllerTest do
       body = conn.resp_body
       assert body =~ "#{base_url}/"
       assert body =~ "#{base_url}/intro/how"
+      assert body =~ "#{base_url}/intro/ai"
       assert body =~ "#{base_url}/inspiration"
     end
 

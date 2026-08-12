@@ -24,6 +24,12 @@ defmodule DialecticWeb.AboutLiveTest do
                "AI helps you explore. The grid helps you remember."
              )
 
+      assert has_element?(
+               view,
+               ~s(#about-ai-exploration-link[href="/intro/ai"]),
+               "Read about AI and exploration"
+             )
+
       assert has_element?(view, "#about-audiences", "Who is it for?")
       assert has_element?(view, "#about-audience-students", "Students and lifelong learners")
       assert has_element?(view, "#about-audience-teachers", "Teachers and tutors")

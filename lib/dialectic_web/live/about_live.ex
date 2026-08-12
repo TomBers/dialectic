@@ -123,6 +123,13 @@ defmodule DialecticWeb.AboutLive do
             <p class="mt-3 max-w-3xl text-sm leading-6 text-slate-300">
               AI can suggest answers, questions, and new directions. You choose what to save, check, connect, and share. Each box holds an idea or source, and the lines show how they connect. The result is a useful map, not another chat lost in your history.
             </p>
+            <.link
+              id="about-ai-exploration-link"
+              navigate={~p"/intro/ai"}
+              class="mt-4 inline-flex items-center gap-2 border-b border-slate-500 pb-1 text-sm font-semibold text-white transition hover:border-teal-300 hover:text-teal-200"
+            >
+              Read about AI and exploration <.icon name="hero-arrow-right" class="h-4 w-4" />
+            </.link>
           </div>
           <div class="border-t border-slate-700 pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-amber-300">

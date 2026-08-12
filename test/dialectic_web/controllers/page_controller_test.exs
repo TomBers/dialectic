@@ -47,4 +47,23 @@ defmodule DialecticWeb.PageControllerTest do
     assert html =~ ~s(id="guide-start-grid-link")
     assert html =~ ~s(href="/?focus=grid#start-here")
   end
+
+  test "AI exploration page balances benefits with common objections", %{conn: conn} do
+    conn = get(conn, ~p"/intro/ai")
+
+    html = html_response(conn, 200)
+
+    assert html =~ ~s(id="ai-exploration-hero")
+    assert html =~ "Use AI to open a question—not close it."
+    assert html =~ ~s(id="ai-exploration-benefits")
+    assert html =~ ~s(id="ai-exploration-objections")
+    assert html =~ ~s(id="ai-objection-wrong")
+    assert html =~ ~s(id="ai-objection-passive")
+    assert html =~ ~s(id="ai-objection-bias")
+    assert html =~ ~s(id="ai-objection-uncertainty")
+    assert html =~ ~s(id="ai-objection-ownership")
+    assert html =~ ~s(id="ai-objection-costs")
+    assert html =~ ~s(id="ai-exploration-roles")
+    assert html =~ ~s(id="ai-exploration-start-link")
+  end
 end
