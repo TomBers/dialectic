@@ -129,7 +129,7 @@ defmodule DialecticWeb.AboutLive do
                 Critical thinking stays close.
               </h2>
               <p class="mt-3 leading-7 text-slate-600">
-                Clarify terms, test assumptions, compare strong alternatives, and trace implications from the exact claim at hand.
+                Clarify terms, examine assumptions, compare strong alternatives, and trace implications from the exact claim at hand.
               </p>
             </article>
             <article

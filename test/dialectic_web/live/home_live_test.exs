@@ -130,24 +130,45 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(
              view,
              "#home-hero-title",
-             "Understand difficult questions without losing the thread."
+             "Turn AI answers into understanding you can keep."
            )
 
-    assert has_element?(view, "#home-video-hero", "preserve useful paths")
-    assert has_element?(view, "#home-what", "A live, social map")
-    assert has_element?(view, "#home-why", "Go deeper")
-    assert has_element?(view, "#home-how", "examine, connect, and publish ideas")
+    assert has_element?(view, "#home-video-hero", "one visual workspace")
+    assert has_element?(view, "#home-what", "not just a scroll of answers")
+    assert has_element?(view, "#home-why", "return with the full context")
+    assert has_element?(view, "#home-how", "Share one URL")
+    assert has_element?(view, "#home-video-hero", "Map your first question")
+    assert has_element?(view, "#home-video-hero", "See a finished grid")
   end
 
   test "highlights outcomes and persistent AI artifacts", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/")
 
     assert has_element?(view, "#home-outcomes", "Understanding that compounds.")
-    assert has_element?(view, "#home-outcome-understanding", "Deeper understanding")
+    assert has_element?(view, "#home-outcomes", "useful work can be revisited")
+    assert has_element?(view, "#home-outcome-understanding", "beyond the first plausible answer")
     assert has_element?(view, "#home-outcome-tools", "find counterexamples")
     assert has_element?(view, "#home-outcome-collaboration", "Fewer rabbit holes")
     assert has_element?(view, "#home-outcome-public", "Ideas made public")
     assert has_element?(view, "#home-ai-artifacts", "AI that leaves something behind.")
+  end
+
+  test "shows practical tools for different audiences and shared work", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/")
+
+    assert has_element?(view, "#home-practical-tools", "Make the grid work for its audience.")
+
+    assert has_element?(
+             view,
+             "#home-feature-levels",
+             "Simple, High School, University, or Expert"
+           )
+
+    assert has_element?(view, "#home-feature-translation", "Translate any node")
+    assert has_element?(view, "#home-feature-export", "Download Markdown")
+    assert has_element?(view, "#home-feature-contributions", "useful for teachers and teams")
+    assert has_element?(view, "#home-feature-following", "Activity feed")
+    assert has_element?(view, "#home-feature-focused-inquiry", "share its own URL")
   end
 
   test "explains each answer depth in the start form", %{conn: conn} do

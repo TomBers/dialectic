@@ -28,12 +28,20 @@ defmodule DialecticWeb.PageControllerTest do
     assert html =~ "Step 2 · Read"
     assert html =~ "Step 4 · Examine"
     assert html =~ ~s(id="guide-examine-heading")
+    assert html =~ ~s(id="guide-flow-step-ask")
+    assert html =~ ~s(id="guide-flow-step-share")
     assert html =~ ~s(id="guide-shared-paths")
     assert html =~ ~s(id="guide-star-nodes")
     assert html =~ ~s(id="guide-save-highlights")
     assert html =~ ~s(id="guide-live-editing")
     assert html =~ ~s(id="guide-grid-visibility")
     assert html =~ ~s(id="guide-public-profile")
+    assert html =~ ~s(id="guide-explanation-level")
+    assert html =~ ~s(id="guide-translate-node")
+    assert html =~ ~s(id="guide-export-grid")
+    assert html =~ ~s(id="guide-contribution-history")
+    assert html =~ ~s(id="guide-follow-updates")
+    assert html =~ ~s(id="guide-focused-sharing")
     assert html =~ "Bookmarked ideas"
     assert html =~ "Save as a highlight"
     assert html =~ "Edit together by URL"
