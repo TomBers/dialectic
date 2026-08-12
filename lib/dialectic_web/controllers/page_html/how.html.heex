@@ -5,10 +5,10 @@
         How RationalGrid works
       </p>
       <h1 class="mt-5 max-w-4xl font-serif text-5xl font-semibold leading-[1.02] tracking-tight sm:text-7xl">
-        Turn one question into a map of ideas you can examine and share.
+        Turn one question into a map of ideas you can explore and share.
       </h1>
       <p class="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-        Use AI to explore, critical thinking tools to challenge, and the grid to preserve what is worth keeping.
+        Use AI to explore. Check ideas from more than one side. Keep what matters in the grid.
       </p>
       <div class="mt-8 flex flex-wrap gap-3">
         <a
@@ -58,17 +58,17 @@
           </h2>
         </div>
         <p class="max-w-xl leading-7 text-slate-300 lg:justify-self-end">
-          Each question branches from an existing idea and keeps its context. You choose what to explore next.
+          Each question starts from an idea already in the grid, so the link stays clear. You choose what to explore next.
         </p>
       </div>
 
       <ol class="mt-8 grid overflow-hidden border border-white/15 bg-white/10 sm:grid-cols-2 lg:grid-cols-6">
         <%= for {number, slug, title, copy, tone} <- [
           {"1", "ask", "Ask", "Name the question or topic.", "border-sky-300/40 bg-sky-300/10 text-sky-200"},
-          {"2", "read", "Read", "Follow the response in context.", "border-cyan-300/40 bg-cyan-300/10 text-cyan-200"},
-          {"3", "branch", "Branch", "Ask AI or add your contribution.", "border-violet-300/40 bg-violet-300/10 text-violet-200"},
-          {"4", "examine", "Examine", "Use critical thinking tools.", "border-rose-300/40 bg-rose-300/10 text-rose-200"},
-          {"5", "keep", "Keep", "Star nodes and save passages.", "border-amber-300/40 bg-amber-300/10 text-amber-200"},
+          {"2", "read", "Read", "See the answer and what led to it.", "border-cyan-300/40 bg-cyan-300/10 text-cyan-200"},
+          {"3", "branch", "Branch", "Ask AI or add your own idea.", "border-violet-300/40 bg-violet-300/10 text-violet-200"},
+          {"4", "examine", "Examine", "Check the idea from more than one side.", "border-rose-300/40 bg-rose-300/10 text-rose-200"},
+          {"5", "keep", "Keep", "Star ideas and save passages.", "border-amber-300/40 bg-amber-300/10 text-amber-200"},
           {"6", "share", "Share", "Edit together or publish.", "border-emerald-300/40 bg-emerald-300/10 text-emerald-200"}
         ] do %>
           <li
@@ -108,12 +108,12 @@
       </div>
       <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <%= for {label, category, prompt} <- [
-          {"Should cities expand digital surveillance in public spaces?", "Trade-offs", "Should cities expand digital surveillance in public spaces, and what are the trade-offs?"},
-          {"How do recommendation algorithms shape what people see?", "Systems", "How do recommendation algorithms shape what people see online?"},
-          {"What makes a good team decision?", "Organisations", "What makes a good team decision, and which biases get in the way?"},
-          {"What are the strongest arguments for universal basic income?", "Policy", "What are the strongest arguments for and against universal basic income?"},
-          {"Is eating meat ethically defensible?", "Ethics", "Is eating meat ethically defensible, and what are the strongest arguments on each side?"},
-          {"Which concerns about AI adoption hold up?", "Technology", "What are the strongest objections to AI adoption, and which concerns matter most?"}
+          {"Should cities use more cameras in public spaces?", "Choices", "Should cities use more cameras in public spaces, and what are the benefits and risks?"},
+          {"How do websites decide what people see?", "Technology", "How do websites decide what people see online?"},
+          {"What makes a good team decision?", "Teams", "What makes a good team decision, and which common mistakes get in the way?"},
+          {"Would a basic income help everyone?", "Government", "What are the strongest reasons for and against giving everyone a basic income?"},
+          {"Is it wrong to eat meat?", "Ethics", "Is it wrong to eat meat, and what are the strongest reasons on each side?"},
+          {"What should concern us as AI becomes more common?", "Technology", "What should concern us most as AI becomes more common?"}
         ] do %>
           <a
             href={"/?#{URI.encode_query(%{"initial_prompt" => prompt, "focus" => "grid"})}#start-here"}
@@ -170,7 +170,7 @@
           loading="lazy"
         />
         <figcaption class="px-2 pt-3 text-xs text-slate-300">
-          A response becomes a set of connected nodes you can read and revisit.
+          An answer becomes a set of connected ideas you can read and revisit.
         </figcaption>
       </figure>
       <div class="order-1 lg:order-2">
@@ -179,34 +179,34 @@
           id="guide-response-heading"
           class="mt-2 font-serif text-4xl font-semibold tracking-tight"
         >
-          Read each answer in context.
+          Read each answer beside what led to it.
         </h2>
         <p class="mt-3 leading-7 text-slate-600">
-          Select a node to read it, follow its links, or branch from that point.
+          Choose an idea to read it, follow its links, or open a new branch from that point.
         </p>
         <ul class="mt-5 space-y-3 text-sm leading-6 text-slate-700">
           <li class="flex gap-3">
             <.icon name="hero-cursor-arrow-rays" class="mt-1 h-4 w-4 shrink-0 text-teal-700" />
             <span>
-              <strong>Select a node</strong> to read it.
+              <strong>Select an idea</strong> to read it.
             </span>
           </li>
           <li class="flex gap-3">
             <.icon name="hero-document-text" class="mt-1 h-4 w-4 shrink-0 text-teal-700" />
             <span>
-              <strong>Check its context</strong> before branching.
+              <strong>Check what came before</strong> before opening a new branch.
             </span>
           </li>
           <li class="flex gap-3">
             <.icon name="hero-magnifying-glass" class="mt-1 h-4 w-4 shrink-0 text-teal-700" />
             <span>
-              <strong>Switch to Read</strong> for a linear pass.
+              <strong>Switch to Read</strong> to follow one clear path.
             </span>
           </li>
           <li id="guide-translate-node" class="flex gap-3">
             <.icon name="hero-language" class="mt-1 h-4 w-4 shrink-0 text-teal-700" />
             <span>
-              <strong>Translate the current node</strong> under Settings → Translate.
+              <strong>Translate the current idea</strong> under Settings → Translate.
             </span>
           </li>
         </ul>
@@ -223,7 +223,7 @@
           Choose how to go deeper.
         </h2>
         <p class="mt-3 leading-7 text-slate-600">
-          Branch from the idea you are reading. Ask AI or add the next contribution yourself.
+          Start from the idea you are reading. Ask AI or add the next step yourself.
         </p>
       </div>
       <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -231,14 +231,14 @@
           <.icon name="hero-question-mark-circle" class="h-5 w-5 text-sky-600" />
           <h3 class="mt-3 text-base font-semibold">Ask AI</h3>
           <p class="mt-2 text-sm leading-6 text-slate-600">
-            Generate a response connected to the selected node.
+            Create an answer connected to the idea you selected.
           </p>
         </article>
         <article class="border-t-4 border-teal-600 bg-white p-5 shadow-sm">
           <.icon name="hero-chat-bubble-bottom-center-text" class="h-5 w-5 text-teal-600" />
           <h3 class="mt-3 text-base font-semibold">Comment</h3>
           <p class="mt-2 text-sm leading-6 text-slate-600">
-            Add your claim, objection, example, or question.
+            Add your own point, concern, example, or question.
           </p>
         </article>
         <article class="border-t-4 border-amber-600 bg-white p-5 shadow-sm">
@@ -252,7 +252,7 @@
           <.icon name="hero-squares-plus" class="h-5 w-5 text-indigo-600" />
           <h3 class="mt-3 text-base font-semibold">Find related ideas</h3>
           <p class="mt-2 text-sm leading-6 text-slate-600">
-            Explore nearby concepts and adjacent directions.
+            Explore nearby topics and new directions.
           </p>
         </article>
       </div>
@@ -273,20 +273,20 @@
           Examine the idea.
         </h2>
         <p class="mt-3 leading-7 text-slate-300">
-          Select a node or passage, then choose the challenge you need.
+          Select an idea or passage, then choose how you want to check it.
         </p>
       </div>
       <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <%= for {icon, title, question, copy} <- [
-          {"hero-light-bulb", "Clarify terms", "What do we mean?", "Expose ambiguity and boundaries."},
-          {"hero-cube-transparent", "Assumptions", "What has to be true?", "Reveal hidden premises."},
-          {"hero-user", "Source check", "Says who?", "Question authority and evidence."},
-          {"hero-star", "Steel man", "What is the strongest version?", "Build the fairest argument."},
-          {"hero-x-mark", "Counterexample", "Is that always true?", "Find cases that challenge the claim."},
-          {"hero-users", "Other perspectives", "Who disagrees?", "Explore opposing viewpoints."},
-          {"hero-arrow-trending-up", "Implications", "If true, then what?", "Trace likely consequences."},
-          {"hero-eye-slash", "Blind spots", "What are we missing?", "Find overlooked constraints."},
-          {"hero-question-mark-circle", "What if", "What could change?", "Explore alternative scenarios."}
+          {"hero-light-bulb", "Clarify terms", "What do we mean?", "Spot words that could mean different things."},
+          {"hero-cube-transparent", "Assumptions", "What has to be true?", "Find what the idea takes for granted."},
+          {"hero-user", "Source check", "Says who?", "Check who said it and what proof they give."},
+          {"hero-star", "Steel man", "What is the strongest version?", "Build the fairest case for the idea."},
+          {"hero-x-mark", "Test", "Is that always true?", "Look for examples that do not fit."},
+          {"hero-users", "Other perspectives", "Who disagrees?", "See how other people might view it."},
+          {"hero-arrow-trending-up", "Implications", "If true, then what?", "See what might happen if it is true."},
+          {"hero-eye-slash", "Blind spots", "What are we missing?", "Find facts or limits that were missed."},
+          {"hero-question-mark-circle", "What if", "What could change?", "Try the idea in a different situation."}
         ] do %>
           <article class="border-l-2 border-teal-300 bg-white/[0.06] p-4">
             <.icon name={icon} class="h-5 w-5 text-teal-300" />
@@ -311,15 +311,14 @@
           Build a trail back to useful ideas.
         </h2>
         <p class="mt-3 leading-7 text-slate-600">
-          Save whole nodes or exact passages as you read. Your profile keeps them together so you can return with their context intact.
+          Save whole ideas or exact passages as you read. Your profile keeps them together so you can return and see the original text.
         </p>
         <div class="mt-5 grid gap-3">
           <div id="guide-star-nodes" class="border-t-2 border-amber-600 bg-white p-4">
             <.icon name="hero-star" class="h-5 w-5 text-amber-600" />
-            <h3 class="mt-2 text-sm font-semibold">Star a node</h3>
+            <h3 class="mt-2 text-sm font-semibold">Star an idea</h3>
             <p class="mt-1 text-xs leading-5 text-slate-600">
-              Select the star beside a node title. It appears under
-              <strong>Bookmarked ideas</strong>
+              Select the star beside an idea. It appears under <strong>Bookmarked ideas</strong>
               on your profile, where you can add a note and jump back.
             </p>
           </div>
@@ -336,12 +335,12 @@
             <.icon name="hero-arrow-down-tray" class="h-5 w-5 text-sky-700" />
             <h3 class="mt-2 text-sm font-semibold">Export the grid</h3>
             <p class="mt-1 text-xs leading-5 text-slate-600">
-              Under <strong>Settings → Export</strong>, download Markdown for further note-taking, a PNG snapshot, or JSON for other tools.
+              Under <strong>Settings → Export</strong>, download the grid for your notes, as an image to share, or as data for other tools.
             </p>
           </div>
         </div>
         <p class="mt-3 text-xs leading-5 text-slate-500">
-          Bookmarks and highlights are part of your private saved-thinking view, not your public profile.
+          Bookmarks and highlights stay private. They do not appear on your public profile.
         </p>
       </div>
       <figure class="overflow-hidden border border-slate-300 bg-slate-950 p-3 shadow-sm">
@@ -373,16 +372,16 @@
           Work together live, then choose what becomes public.
         </h2>
         <p class="mt-3 leading-7 text-slate-600">
-          A grid is a shared workspace, not a finished screenshot. Send its URL so other people can follow the context and extend it with you.
+          A grid is a shared workspace, not a finished image. Send its link so other people can see what came before and add to it with you.
         </p>
       </div>
 
       <div class="mt-6 grid gap-px overflow-hidden border border-stone-300 bg-stone-300 lg:grid-cols-3">
         <article id="guide-live-editing" class="bg-[#f8f6f0] p-5">
           <.icon name="hero-users" class="h-5 w-5 text-emerald-700" />
-          <h3 class="mt-3 text-base font-semibold text-slate-950">Edit together by URL</h3>
+          <h3 class="mt-3 text-base font-semibold text-slate-950">Edit together with a link</h3>
           <p class="mt-2 text-sm leading-6 text-slate-600">
-            Open <strong>Share</strong>, copy the grid URL, and keep <strong>Editing</strong>
+            Open <strong>Share</strong>, copy the grid link, and keep <strong>Editing</strong>
             set to <strong>Editable</strong>. People with access can branch and comment in the same live grid. Set it to
             <strong>Locked</strong>
             when you want view-only access.
@@ -395,7 +394,7 @@
           <p class="mt-2 text-sm leading-6 text-slate-600">
             Under <strong>Settings → Collaboration</strong>, set <strong>Visibility</strong>
             to <strong>Public</strong>
-            or <strong>Private</strong>. Public grids are open to anyone; private share links contain a secure access token, so send them only to people you trust.
+            or <strong>Private</strong>. Anyone can open a public grid. Send a private link only to people you trust.
           </p>
         </article>
 
@@ -405,7 +404,7 @@
             Publish through your profile
           </h3>
           <p class="mt-2 text-sm leading-6 text-slate-600">
-            Your username gives you a public profile with your bio and public grids. Share it as a growing record of your work. Private grids stay off that page, and saved thinking remains visible only to you.
+            Your public profile shows your bio and public grids. Share it as a growing record of your work. Private grids and saved ideas remain visible only to you.
           </p>
         </article>
 
@@ -414,7 +413,7 @@
           <h3 class="mt-3 text-base font-semibold text-slate-950">See who added what</h3>
           <p class="mt-2 text-sm leading-6 text-slate-600">
             Open <strong>Settings → Activity</strong>
-            to see the contributor behind each question, branch, comment, and critical-thinking action. Teachers and teams get a clear record of individual participation.
+            to see who added each question, branch, comment, or check. This helps teachers and teams see each person's work.
           </p>
         </article>
 
@@ -423,9 +422,8 @@
           <h3 class="mt-3 text-base font-semibold text-slate-950">Follow future updates</h3>
           <p class="mt-2 text-sm leading-6 text-slate-600">
             Select <strong>Follow</strong>
-            at the top of a public grid. New contributions appear in your
-            <strong>Activity</strong>
-            feed; use its <strong>Following</strong>
+            at the top of a public grid. New changes appear in <strong>Activity</strong>. Use the
+            <strong>Following</strong>
             tab to manage the grids and people you follow.
           </p>
         </article>
@@ -436,7 +434,7 @@
             Share or question exact text
           </h3>
           <p class="mt-2 text-sm leading-6 text-slate-600">
-            Select a word or passage to save it as a highlight with its own share URL, or ask about a technical term, book, or topic while preserving the surrounding context.
+            Select a word or passage to save it with its own link. You can also ask about an unfamiliar word, book, or topic. The full passage stays attached to your question.
           </p>
         </article>
       </div>
@@ -444,7 +442,7 @@
       <p id="guide-shared-paths" class="mt-5 flex gap-2 text-sm leading-6 text-slate-600">
         <.icon name="hero-link" class="mt-1 h-4 w-4 shrink-0 text-teal-700" />
         <span>
-          Share the whole grid or link directly to the current node. Use <strong>Read</strong>
+          Share the whole grid or link directly to the current idea. Use <strong>Read</strong>
           or <strong>Present</strong>
           when you want to guide someone through a path.
         </span>

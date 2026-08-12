@@ -11,7 +11,7 @@ defmodule DialecticWeb.AboutLive do
      |> assign(:contact_mailto, "mailto:hello@rationalgrid.ai")
      |> assign(
        :page_description,
-       "RationalGrid is an open-source workspace for building deeper understanding with AI, critical thinking tools, and shared, persistent grids."
+       "RationalGrid is an open-source workspace for exploring ideas with AI, thinking clearly, and sharing grids that last."
      )
      |> assign(
        :feedback_form,
@@ -82,12 +82,12 @@ defmodule DialecticWeb.AboutLive do
               Build understanding others can extend.
             </h1>
             <p class="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-              Turn questions, AI-assisted exploration, challenges, and sources into persistent maps that stay open to scrutiny and collaboration.
+              Turn questions, AI answers, challenges, and sources into a clear map that other people can check and build on.
             </p>
           </div>
           <div class="border-t border-slate-400 pt-4">
             <p class="text-sm leading-6 text-slate-600">
-              Open access, not-for-profit, and built in public by a small team.
+              Free to use, not-for-profit, and built in public by a small team.
             </p>
             <div class="mt-4 flex flex-wrap gap-4 text-sm font-semibold">
               <.link
@@ -109,64 +109,19 @@ defmodule DialecticWeb.AboutLive do
       </header>
 
       <main class="mx-auto max-w-6xl px-5 py-12 sm:px-8 sm:py-16">
-        <section aria-labelledby="about-plain-heading">
-          <div class="grid border border-stone-300 bg-white md:grid-cols-2">
-            <article
-              id="about-connected-knowledge"
-              class="border-b border-stone-300 p-6 sm:p-8 md:border-r"
-            >
-              <p class="font-mono text-xs font-bold text-teal-800">01 / CONNECT</p>
-              <h2 id="about-plain-heading" class="mt-3 font-serif text-3xl font-semibold">
-                A living map of inquiry.
-              </h2>
-              <p class="mt-3 leading-7 text-slate-600">
-                Each box holds a question, answer, comment, or source. Lines preserve the context.
-              </p>
-            </article>
-            <article id="about-deeper-understanding" class="border-b border-stone-300 p-6 sm:p-8">
-              <p class="font-mono text-xs font-bold text-teal-800">02 / UNDERSTAND</p>
-              <h2 class="mt-3 font-serif text-3xl font-semibold">
-                Critical thinking stays close.
-              </h2>
-              <p class="mt-3 leading-7 text-slate-600">
-                Clarify terms, examine assumptions, compare strong alternatives, and trace implications from the exact claim at hand.
-              </p>
-            </article>
-            <article
-              id="about-shared-progress"
-              class="border-b border-stone-300 p-6 sm:p-8 md:border-b-0 md:border-r"
-            >
-              <p class="font-mono text-xs font-bold text-teal-800">03 / COLLABORATE</p>
-              <h2 class="mt-3 font-serif text-3xl font-semibold">
-                Shared paths prevent repetition.
-              </h2>
-              <p class="mt-3 leading-7 text-slate-600">
-                Grids show what has been explored, where branches ended, and what remains open—so people build from context instead of repeating the same rabbit holes.
-              </p>
-            </article>
-            <article id="about-public-ideas" class="p-6 sm:p-8">
-              <p class="font-mono text-xs font-bold text-teal-800">04 / PUBLISH</p>
-              <h2 class="mt-3 font-serif text-3xl font-semibold">Ideas become reusable.</h2>
-              <p class="mt-3 leading-7 text-slate-600">
-                Publish grids and themes on your profile so others can discover your work, follow its reasoning, and share it.
-              </p>
-            </article>
-          </div>
-        </section>
-
         <section
           id="about-ai-artifacts"
-          class="mt-10 grid gap-8 border border-slate-700 bg-slate-950 p-6 text-white sm:p-8 lg:grid-cols-[minmax(0,1fr)_20rem]"
+          class="grid gap-8 border border-slate-700 bg-slate-950 p-6 text-white sm:p-8 lg:grid-cols-[minmax(0,1fr)_20rem]"
         >
           <div>
             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-300">
-              AI and persistent artifacts
+              Explore + recall
             </p>
             <h2 class="mt-2 font-serif text-3xl font-semibold">
-              AI explores. The grid is what lasts.
+              AI helps you explore. The grid helps you remember.
             </h2>
             <p class="mt-3 max-w-3xl text-sm leading-6 text-slate-300">
-              AI can propose explanations, challenges, and new directions. You decide what to keep, test, connect, and publish as a navigable artifact—not a chat buried in history.
+              AI can suggest answers, questions, and new directions. You choose what to save, check, connect, and share. Each box holds an idea or source, and the lines show how they connect. The result is a useful map, not another chat lost in your history.
             </p>
           </div>
           <div class="border-t border-slate-700 pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
@@ -174,7 +129,7 @@ defmodule DialecticWeb.AboutLive do
               Open by design
             </p>
             <p class="mt-2 text-sm leading-6 text-slate-300">
-              Free to use, open source, and not-for-profit. Shared reasoning should be inspectable and reusable.
+              Free to use, open source, and not-for-profit. Shared thinking should be easy to check and use again.
             </p>
             <div class="mt-4 flex flex-wrap gap-4 text-sm font-semibold">
               <a
@@ -192,6 +147,102 @@ defmodule DialecticWeb.AboutLive do
                 Contact us
               </a>
             </div>
+          </div>
+        </section>
+
+        <section id="about-audiences" class="mt-12" aria-labelledby="about-audiences-heading">
+          <div class="grid gap-5 border-b border-slate-400 pb-5 sm:grid-cols-[minmax(0,1fr)_22rem] sm:items-end">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
+                RationalGrid for…
+              </p>
+              <h2
+                id="about-audiences-heading"
+                class="mt-2 font-serif text-4xl font-semibold tracking-tight"
+              >
+                Who is it for?
+              </h2>
+            </div>
+            <p class="text-sm leading-6 text-slate-600">
+              For anyone who wants to explore an idea, remember what they find, and share the path with others.
+            </p>
+          </div>
+
+          <div class="divide-y divide-stone-300 border-b border-stone-300">
+            <article
+              id="about-audience-students"
+              class="grid gap-2 py-5 sm:grid-cols-[2.5rem_16rem_1fr] sm:items-baseline lg:grid-cols-[2.5rem_20rem_1fr]"
+            >
+              <p class="font-mono text-xs font-bold text-sky-700">01</p>
+              <h3 class="font-serif text-xl font-semibold">Students and lifelong learners</h3>
+              <p class="max-w-2xl text-sm leading-6 text-slate-600">
+                Explore a subject at the right level, save useful passages, and return before an essay, exam, or project.
+              </p>
+            </article>
+            <article
+              id="about-audience-teachers"
+              class="grid gap-2 py-5 sm:grid-cols-[2.5rem_16rem_1fr] sm:items-baseline lg:grid-cols-[2.5rem_20rem_1fr]"
+            >
+              <p class="font-mono text-xs font-bold text-indigo-700">02</p>
+              <h3 class="font-serif text-xl font-semibold">Teachers and tutors</h3>
+              <p class="max-w-2xl text-sm leading-6 text-slate-600">
+                Set the explanation level, share a grid with a class, and see how each person added to it.
+              </p>
+            </article>
+            <article
+              id="about-audience-researchers-writers"
+              class="grid gap-2 py-5 sm:grid-cols-[2.5rem_16rem_1fr] sm:items-baseline lg:grid-cols-[2.5rem_20rem_1fr]"
+            >
+              <p class="font-mono text-xs font-bold text-rose-700">03</p>
+              <h3 class="font-serif text-xl font-semibold">
+                Researchers, journalists, and writers
+              </h3>
+              <p class="max-w-2xl text-sm leading-6 text-slate-600">
+                Keep questions, sources, and arguments connected while you research a topic or plan a piece of writing.
+              </p>
+            </article>
+            <article
+              id="about-audience-debate-organisers"
+              class="grid gap-2 py-5 sm:grid-cols-[2.5rem_16rem_1fr] sm:items-baseline lg:grid-cols-[2.5rem_20rem_1fr]"
+            >
+              <p class="font-mono text-xs font-bold text-violet-700">04</p>
+              <h3 class="font-serif text-xl font-semibold">Debate and discussion organisers</h3>
+              <p class="max-w-2xl text-sm leading-6 text-slate-600">
+                Map the strongest case on each side, attach sources, and keep the discussion focused.
+              </p>
+            </article>
+            <article
+              id="about-audience-teams"
+              class="grid gap-2 py-5 sm:grid-cols-[2.5rem_16rem_1fr] sm:items-baseline lg:grid-cols-[2.5rem_20rem_1fr]"
+            >
+              <p class="font-mono text-xs font-bold text-emerald-700">05</p>
+              <h3 class="font-serif text-xl font-semibold">Teams and decision-makers</h3>
+              <p class="max-w-2xl text-sm leading-6 text-slate-600">
+                Compare options, test assumptions, and keep a shared record of why a decision was made.
+              </p>
+            </article>
+            <article
+              id="about-audience-book-clubs"
+              class="grid gap-2 py-5 sm:grid-cols-[2.5rem_16rem_1fr] sm:items-baseline lg:grid-cols-[2.5rem_20rem_1fr]"
+            >
+              <p class="font-mono text-xs font-bold text-amber-700">06</p>
+              <h3 class="font-serif text-xl font-semibold">Book clubs and study groups</h3>
+              <p class="max-w-2xl text-sm leading-6 text-slate-600">
+                Ask questions from an exact passage, share highlights, and explore difficult ideas together.
+              </p>
+            </article>
+            <article
+              id="about-audience-critical-thinkers"
+              class="grid gap-2 py-5 sm:grid-cols-[2.5rem_16rem_1fr] sm:items-baseline lg:grid-cols-[2.5rem_20rem_1fr]"
+            >
+              <p class="font-mono text-xs font-bold text-teal-700">07</p>
+              <h3 class="font-serif text-xl font-semibold">
+                Philosophers and critical thinkers
+              </h3>
+              <p class="max-w-2xl text-sm leading-6 text-slate-600">
+                Define key words, question assumptions, compare views, and see what follows from an idea.
+              </p>
+            </article>
           </div>
         </section>
 

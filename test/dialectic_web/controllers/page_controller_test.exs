@@ -23,8 +23,7 @@ defmodule DialecticWeb.PageControllerTest do
 
     html = html_response(conn, 200)
 
-    assert html =~ "Turn one question into a map of ideas you can examine and share."
-    assert html =~ "critical thinking tools"
+    assert html =~ "Turn one question into a map of ideas you can explore and share."
     assert html =~ "Step 2 · Read"
     assert html =~ "Step 4 · Examine"
     assert html =~ ~s(id="guide-examine-heading")
@@ -44,7 +43,7 @@ defmodule DialecticWeb.PageControllerTest do
     assert html =~ ~s(id="guide-focused-sharing")
     assert html =~ "Bookmarked ideas"
     assert html =~ "Save as a highlight"
-    assert html =~ "Edit together by URL"
+    assert html =~ "Edit together with a link"
     assert html =~ ~s(id="guide-start-grid-link")
     assert html =~ ~s(href="/?focus=grid#start-here")
   end
