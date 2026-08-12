@@ -124,7 +124,7 @@ defmodule DialecticWeb.HomeLiveTest do
     refute has_element?(view, ~s(#start-here a[href="/intro/how"]))
   end
 
-  test "summarizes what RationalGrid is, why it helps, and how it works", %{conn: conn} do
+  test "renders a focused benefit-led hero", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/")
 
     assert has_element?(
@@ -134,11 +134,9 @@ defmodule DialecticWeb.HomeLiveTest do
            )
 
     assert has_element?(view, "#home-video-hero", "one visual workspace")
-    assert has_element?(view, "#home-what", "not just a scroll of answers")
-    assert has_element?(view, "#home-why", "return with the full context")
-    assert has_element?(view, "#home-how", "Share one URL")
     assert has_element?(view, "#home-video-hero", "Map your first question")
     assert has_element?(view, "#home-video-hero", "See a finished grid")
+    refute has_element?(view, "#home-value-summary")
   end
 
   test "highlights outcomes and persistent AI artifacts", %{conn: conn} do
@@ -169,6 +167,16 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(view, "#home-feature-contributions", "useful for teachers and teams")
     assert has_element?(view, "#home-feature-following", "Activity feed")
     assert has_element?(view, "#home-feature-focused-inquiry", "share its own URL")
+
+    assert has_element?(
+             view,
+             "#home-practical-tools article:nth-child(2)#home-feature-focused-inquiry"
+           )
+
+    assert has_element?(
+             view,
+             "#home-practical-tools article:nth-child(6)#home-feature-translation"
+           )
   end
 
   test "explains each answer depth in the start form", %{conn: conn} do

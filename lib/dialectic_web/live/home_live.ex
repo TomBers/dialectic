@@ -240,53 +240,15 @@ defmodule DialecticWeb.HomeLive do
 
         <div class="mx-auto grid min-h-[72svh] w-full max-w-7xl items-center gap-12 px-5 py-16 sm:min-h-[78svh] sm:px-8 lg:grid-cols-[minmax(0,1.12fr)_minmax(22rem,0.72fr)] lg:px-10">
           <div class="max-w-4xl">
-            <p class="border-l-2 border-teal-300 pl-3 text-xs font-semibold uppercase tracking-[0.2em] text-teal-200">
-              RationalGrid
-            </p>
             <h1
               id="home-hero-title"
-              class="mt-6 text-balance font-serif text-5xl font-semibold leading-[0.98] tracking-tight text-white sm:text-7xl lg:text-[5.4rem]"
+              class="text-balance font-serif text-5xl font-semibold leading-[0.98] tracking-tight text-white sm:text-7xl lg:text-[5.4rem]"
             >
               Turn AI answers into understanding you can keep.
             </h1>
             <p class="mt-5 max-w-2xl text-balance text-lg leading-8 text-slate-200 sm:text-xl">
-              RationalGrid keeps questions, evidence, objections, and sources connected in one visual workspace. Return later, share the URL, and build on it with other people.
+              Keeps questions, evidence, objections, and sources connected in one visual workspace. Return later, share the URL, and build on it with other people.
             </p>
-            <dl
-              id="home-value-summary"
-              class="mt-6 grid max-w-3xl border-y border-white/15 text-sm sm:grid-cols-3"
-            >
-              <div id="home-what" class="py-3 sm:pr-4">
-                <dt class="text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-300">
-                  See the reasoning
-                </dt>
-                <dd class="mt-1 leading-5 text-slate-200">
-                  See how claims, evidence, and objections connect—not just a scroll of answers.
-                </dd>
-              </div>
-              <div
-                id="home-why"
-                class="border-t border-white/15 py-3 sm:border-l sm:border-t-0 sm:px-4"
-              >
-                <dt class="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-300">
-                  Pick up where you left off
-                </dt>
-                <dd class="mt-1 leading-5 text-slate-200">
-                  Save useful nodes and passages, then return with the full context.
-                </dd>
-              </div>
-              <div
-                id="home-how"
-                class="border-t border-white/15 py-3 sm:border-l sm:border-t-0 sm:pl-4"
-              >
-                <dt class="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-300">
-                  Build together
-                </dt>
-                <dd class="mt-1 leading-5 text-slate-200">
-                  Share one URL and explore the same live grid instead of repeating the work.
-                </dd>
-              </div>
-            </dl>
             <div class="mt-7 flex flex-wrap items-center gap-3">
               <.link
                 href="#start-here"
@@ -474,56 +436,68 @@ defmodule DialecticWeb.HomeLive do
 
           <div class="mt-8 grid gap-x-8 gap-y-7 sm:grid-cols-2 lg:grid-cols-3">
             <article id="home-feature-levels" class="border-t-2 border-indigo-500 pt-4">
-              <.icon name="hero-adjustments-horizontal" class="h-5 w-5 text-indigo-700" />
-              <h3 class="mt-3 text-base font-semibold text-slate-950">
-                Match the explanation level
-              </h3>
+              <div class="flex items-center gap-2.5">
+                <.icon name="hero-adjustments-horizontal" class="h-5 w-5 shrink-0 text-indigo-700" />
+                <h3 class="text-base font-semibold text-slate-950">
+                  Match the explanation level
+                </h3>
+              </div>
               <p class="mt-2 text-sm leading-6 text-slate-600">
                 Set each grid to Simple, High School, University, or Expert so new answers use the right language and depth.
               </p>
             </article>
 
-            <article id="home-feature-translation" class="border-t-2 border-orange-500 pt-4">
-              <.icon name="hero-language" class="h-5 w-5 text-orange-700" />
-              <h3 class="mt-3 text-base font-semibold text-slate-950">Translate any node</h3>
+            <article id="home-feature-focused-inquiry" class="border-t-2 border-rose-500 pt-4">
+              <div class="flex items-center gap-2.5">
+                <.icon name="hero-cursor-arrow-rays" class="h-5 w-5 shrink-0 text-rose-700" />
+                <h3 class="text-base font-semibold text-slate-950">
+                  Question any word or passage
+                </h3>
+              </div>
               <p class="mt-2 text-sm leading-6 text-slate-600">
-                Open the selected node in another language without translating the whole grid.
+                Highlight exact text and share its own URL, or ask about a technical term, book, or topic while keeping the surrounding context attached.
               </p>
             </article>
 
             <article id="home-feature-export" class="border-t-2 border-sky-500 pt-4">
-              <.icon name="hero-arrow-down-tray" class="h-5 w-5 text-sky-700" />
-              <h3 class="mt-3 text-base font-semibold text-slate-950">
-                Export for further notes
-              </h3>
+              <div class="flex items-center gap-2.5">
+                <.icon name="hero-arrow-down-tray" class="h-5 w-5 shrink-0 text-sky-700" />
+                <h3 class="text-base font-semibold text-slate-950">
+                  Export for further notes
+                </h3>
+              </div>
               <p class="mt-2 text-sm leading-6 text-slate-600">
                 Download Markdown for your notes, a PNG to share, or JSON for other tools.
               </p>
             </article>
 
             <article id="home-feature-contributions" class="border-t-2 border-emerald-500 pt-4">
-              <.icon name="hero-user-group" class="h-5 w-5 text-emerald-700" />
-              <h3 class="mt-3 text-base font-semibold text-slate-950">See who added what</h3>
+              <div class="flex items-center gap-2.5">
+                <.icon name="hero-user-group" class="h-5 w-5 shrink-0 text-emerald-700" />
+                <h3 class="text-base font-semibold text-slate-950">See who added what</h3>
+              </div>
               <p class="mt-2 text-sm leading-6 text-slate-600">
                 A named activity history records questions, branches, comments, and other contributions—useful for teachers and teams.
               </p>
             </article>
 
             <article id="home-feature-following" class="border-t-2 border-amber-500 pt-4">
-              <.icon name="hero-bell" class="h-5 w-5 text-amber-700" />
-              <h3 class="mt-3 text-base font-semibold text-slate-950">Follow new activity</h3>
+              <div class="flex items-center gap-2.5">
+                <.icon name="hero-bell" class="h-5 w-5 shrink-0 text-amber-700" />
+                <h3 class="text-base font-semibold text-slate-950">Follow new activity</h3>
+              </div>
               <p class="mt-2 text-sm leading-6 text-slate-600">
                 Follow a public grid and its updates appear in your Activity feed.
               </p>
             </article>
 
-            <article id="home-feature-focused-inquiry" class="border-t-2 border-rose-500 pt-4">
-              <.icon name="hero-cursor-arrow-rays" class="h-5 w-5 text-rose-700" />
-              <h3 class="mt-3 text-base font-semibold text-slate-950">
-                Question any word or passage
-              </h3>
+            <article id="home-feature-translation" class="border-t-2 border-orange-500 pt-4">
+              <div class="flex items-center gap-2.5">
+                <.icon name="hero-language" class="h-5 w-5 shrink-0 text-orange-700" />
+                <h3 class="text-base font-semibold text-slate-950">Translate any node</h3>
+              </div>
               <p class="mt-2 text-sm leading-6 text-slate-600">
-                Highlight exact text and share its own URL, or ask about a technical term, book, or topic while keeping the surrounding context attached.
+                Open the selected node in another language without translating the whole grid.
               </p>
             </article>
           </div>
