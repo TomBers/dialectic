@@ -28,7 +28,7 @@ defmodule DialecticWeb.HomeLiveTest do
 
     assert has_element?(view, "#popular-grids")
     assert has_element?(view, "#home-curated-#{curated_graph.slug}")
-    assert has_element?(view, "#popular-grids", "See what other people noticed.")
+    assert has_element?(view, "#popular-grids", "See what other people explored.")
     refute has_element?(view, ~s(#popular-grids input[name="search"]))
     refute has_element?(view, ~s(#popular-grids a[href*="tag="]))
     refute has_element?(view, ~s(#popular-grids a[href*="category="]))
@@ -136,7 +136,8 @@ defmodule DialecticWeb.HomeLiveTest do
              "For questions that matter, make up your own mind."
            )
 
-    assert has_element?(view, "#home-video-hero", "keep the reasoning behind your view")
+    assert has_element?(view, "#home-video-hero", "Explore with AI to discover new information")
+    assert has_element?(view, "#home-video-hero", "keep, find, and share what matters")
     assert has_element?(view, "#home-video-hero", "Explore a question")
 
     assert has_element?(view, ~s(#home-about-link[href="/about"]), "Why RationalGrid?")
@@ -169,7 +170,7 @@ defmodule DialecticWeb.HomeLiveTest do
              "Read the guide"
            )
 
-    assert has_element?(view, "#popular-grids", "See what other people noticed.")
+    assert has_element?(view, "#popular-grids", "See what other people explored.")
   end
 
   test "explains each answer depth in the start form", %{conn: conn} do

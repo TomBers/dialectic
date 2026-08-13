@@ -246,7 +246,7 @@ defmodule DialecticWeb.HomeLive do
               For questions that matter, make up your own mind.
             </h1>
             <p class="mt-5 max-w-2xl text-balance text-lg leading-8 text-slate-200 sm:text-xl">
-              Compare views, trace claims to sources, and keep the reasoning behind your view.
+              Explore with AI to discover new information, then keep, find, and share what matters.
             </p>
             <div class="mt-7 flex flex-wrap items-center gap-3">
               <.link
