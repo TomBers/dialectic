@@ -173,16 +173,12 @@
           </thead>
           <tbody class="divide-y divide-stone-300 text-sm leading-6">
             <%= for {feature, chat, grid} <- [
-              {"Get a quick answer", "Excellent for a fast answer, draft, or summary.", "Useful, but not the main reason to choose a grid."},
-              {"Follow several paths", "Open more chats or keep adding to one long thread.", "Branch from any idea and explore each path without losing the others."},
-              {"See how ideas connect", "The work mainly stays in conversations and documents.", "A visual map keeps the question, answers, evidence, and links in view."},
-              {"Ground claims in sources", "You can ask for sources, though a fluent answer can still blur evidence and interpretation.", "Prompts ask for primary sources, original research, official records, or strong reviews that fit the claim."},
-              {"Bring ideas together", "Ask for a comparison or synthesis in another prompt.", "Select any two nodes and create a synthesis that keeps both paths attached."},
-              {"Return and remember", "Search for and reread earlier conversations.", "Star nodes, save highlights, and return to the exact point that mattered."},
-              {"Share a precise idea", "Share a conversation, project, or finished artifact.", "Share the whole grid, one node, or an exact highlighted passage by URL."},
-              {"Guide an audience", "Draft an outline or presentation content.", "Choose nodes, order them as slides, and share a guided path through the live grid."},
-              {"Explore with other people", "Collaboration depends on the chat product and workspace.", "Edit together, see what other people questioned or chose to emphasise, follow updates, and track each contribution."},
-              {"Learn from public work", "A shared chat mainly shows one conversation.", "Public grids can reveal unfamiliar ideas and other people's questions; question or extend any part."}
+              {"Get a quick answer", "Usually the simpler choice.", "Useful, but not the main reason to choose a grid."},
+              {"Get unstuck", "Ask another question or start a new chat.", "Ask from the exact sticking point, use a critical-thinking tool, or branch without losing context."},
+              {"Explore connected paths", "Keep extending one thread or open several chats.", "Branch, compare, and synthesise ideas while their links and evidence stay visible."},
+              {"Check the evidence", "Ask for sources, then check how well they support the answer.", "Prompts ask for primary research, official records, or strong reviews that fit each claim."},
+              {"Keep and return", "Search for and reread earlier chats.", "Save highlights, notes, and useful nodes, then return to the exact point."},
+              {"Share and build together", "Share a conversation or workspace.", "Share a grid, node, or highlighted passage; edit together, track contributions, and follow public work."}
             ] do %>
               <tr>
                 <th

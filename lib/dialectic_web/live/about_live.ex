@@ -132,10 +132,11 @@ defmodule DialecticWeb.AboutLive do
             <div id="about-outcomes" class="mt-5 divide-y divide-stone-300 border-y border-stone-300">
               <%= for {number, id, title, copy, tone} <- [
                 {"01", "whole-question", "See the whole question", "Put the first answer beside its context and alternatives.", "text-sky-700"},
-                {"02", "certainty", "Question what sounds certain", "Separate evidence from confidence or repetition.", "text-violet-700"},
-                {"03", "reasons", "Decide with reasons", "Know what led you to your view.", "text-emerald-700"},
-                {"04", "disagreement", "Disagree more usefully", "Find where the real disagreement lies.", "text-rose-700"},
-                {"05", "revision", "Change your mind well", "Add new evidence without starting over.", "text-amber-700"}
+                {"02", "unstuck", "Get unstuck", "Ask for another explanation, example, or direction.", "text-teal-700"},
+                {"03", "certainty", "Question what sounds certain", "Separate evidence from confidence or repetition.", "text-violet-700"},
+                {"04", "reasons", "Decide with reasons", "Know what led you to your view.", "text-emerald-700"},
+                {"05", "disagreement", "Disagree more usefully", "Find where the real disagreement lies.", "text-rose-700"},
+                {"06", "revision", "Change your mind well", "Add new evidence without starting over.", "text-amber-700"}
               ] do %>
                 <article
                   id={"about-outcome-#{id}"}
@@ -212,7 +213,7 @@ defmodule DialecticWeb.AboutLive do
               </h2>
             </div>
             <p class="text-sm leading-6 text-slate-600">
-              Open new paths quickly, then keep enough of the trail to return, check, or share it.
+              Open new paths quickly, then keep enough of the trail to return, check, or share it. The built-in critical-thinking tools were developed in collaboration with Philosophy for All and Peter Worley.
             </p>
           </div>
 
@@ -230,6 +231,7 @@ defmodule DialecticWeb.AboutLive do
                   {"question", "hero-cursor-arrow-rays", "Question any part", "Ask about a word, passage, person, book, or whole idea."},
                   {"level", "hero-adjustments-horizontal", "Match the explanation level", "Choose Simple, High School, University, or Expert."},
                   {"branches", "hero-squares-2x2", "Explore in any direction", "Keep definitions, arguments, and examples in separate branches."},
+                  {"critical-thinking", "hero-light-bulb", "Use critical-thinking tools", "Clarify terms, test assumptions, strengthen arguments, and uncover blind spots."},
                   {"views", "hero-arrows-right-left", "Compare other views", "Find missing interpretations, then compare their evidence."},
                   {"sources", "hero-document-magnifying-glass", "Follow claims to sources", "Ask for primary research, official records, and strong reviews. Important claims still need checking."}
                 ] do %>

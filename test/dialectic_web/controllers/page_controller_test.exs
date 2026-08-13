@@ -31,6 +31,10 @@ defmodule DialecticWeb.PageControllerTest do
     assert html =~ "Step 2 · Read"
     assert html =~ "Step 4 · Examine"
     assert html =~ ~s(id="guide-examine-heading")
+    assert html =~ ~s(id="guide-critical-thinking-collaboration")
+    assert html =~ "More than a list of AI prompts."
+    assert html =~ "Philosophy for All and philosopher and educator Peter Worley"
+    assert html =~ "the final judgement remains yours"
     assert html =~ ~s(id="guide-flow-step-ask")
     assert html =~ ~s(id="guide-flow-step-share")
     assert html =~ ~s(id="guide-shared-paths")
@@ -77,10 +81,14 @@ defmodule DialecticWeb.PageControllerTest do
     assert html =~ ~s(id="ai-chat-assistants")
     assert html =~ ~s(id="ai-rationalgrid-branches")
     assert html =~ ~s(id="ai-chat-comparison-takeaway")
-    assert html =~ "Select any two nodes and create a synthesis"
-    assert html =~ "Choose nodes, order them as slides"
-    assert html =~ "Learn from public work"
-    assert html =~ "other people questioned or chose to emphasise"
+    assert html =~ "Get unstuck"
+    assert html =~ "exact sticking point"
+    assert html =~ "Explore connected paths"
+    assert html =~ "Branch, compare, and synthesise ideas"
+    assert html =~ "Check the evidence"
+    assert html =~ "Keep and return"
+    assert html =~ "Share and build together"
+    assert html =~ "track contributions, and follow public work"
     assert html =~ ~s(id="ai-exploration-objections")
     assert html =~ ~s(id="ai-objection-wrong")
     assert html =~ ~s(id="ai-objection-passive")

@@ -21,6 +21,8 @@ defmodule DialecticWeb.AboutLiveTest do
       assert has_element?(view, "#about-purpose", "Some questions deserve more than one answer.")
       assert has_element?(view, "#about-purpose", "meaning, belief, identity, doubt")
       assert has_element?(view, "#about-outcome-whole-question", "See the whole question")
+      assert has_element?(view, "#about-outcome-unstuck", "Get unstuck")
+      assert has_element?(view, "#about-outcome-unstuck", "another explanation, example")
       assert has_element?(view, "#about-outcome-certainty", "Question what sounds certain")
       assert has_element?(view, "#about-outcome-reasons", "Decide with reasons")
       assert has_element?(view, "#about-outcome-disagreement", "Disagree more usefully")
@@ -39,9 +41,17 @@ defmodule DialecticWeb.AboutLiveTest do
              )
 
       assert has_element?(view, "#about-tools", "Explore freely. Keep what matters.")
+      assert has_element?(view, "#about-tools", "Philosophy for All and Peter Worley")
       assert has_element?(view, "#about-explore-question", "Question any part")
       assert has_element?(view, "#about-explore-level", "Simple, High School, University")
       assert has_element?(view, "#about-explore-branches", "separate branches")
+
+      assert has_element?(
+               view,
+               "#about-explore-critical-thinking",
+               "test assumptions, strengthen arguments"
+             )
+
       assert has_element?(view, "#about-explore-views", "compare their evidence")
       assert has_element?(view, "#about-explore-sources", "primary research")
       assert has_element?(view, "#about-recall-highlights", "shareable link")
