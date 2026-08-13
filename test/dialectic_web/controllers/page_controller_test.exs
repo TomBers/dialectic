@@ -24,6 +24,10 @@ defmodule DialecticWeb.PageControllerTest do
     html = html_response(conn, 200)
 
     assert html =~ "Turn one question into a map of ideas you can explore and share."
+    assert html =~ ~s(id="guide-hero")
+    assert html =~ "when the first answer is not quite enough"
+    assert html =~ "What makes a life feel meaningful?"
+    assert html =~ ~s(id="guide-new-grid-privacy")
     assert html =~ "Step 2 · Read"
     assert html =~ "Step 4 · Examine"
     assert html =~ ~s(id="guide-examine-heading")
@@ -37,13 +41,20 @@ defmodule DialecticWeb.PageControllerTest do
     assert html =~ ~s(id="guide-public-profile")
     assert html =~ ~s(id="guide-explanation-level")
     assert html =~ ~s(id="guide-translate-node")
+    assert html =~ ~s(id="guide-search-grid")
+    assert html =~ ~s(id="guide-group-grid")
+    assert html =~ ~s(id="guide-create-synthesis")
+    assert html =~ ~s(id="guide-evidence-grounding")
+    assert html =~ "primary material and original research"
+    assert html =~ ~s(id="guide-echo-chambers")
+    assert html =~ ~s(id="guide-present-grid")
     assert html =~ ~s(id="guide-export-grid")
     assert html =~ ~s(id="guide-contribution-history")
     assert html =~ ~s(id="guide-follow-updates")
     assert html =~ ~s(id="guide-focused-sharing")
     assert html =~ "Bookmarked ideas"
     assert html =~ "Save as a highlight"
-    assert html =~ "Edit together with a link"
+    assert html =~ "Edit and talk together live"
     assert html =~ ~s(id="guide-start-grid-link")
     assert html =~ ~s(href="/?focus=grid#start-here")
   end
@@ -55,17 +66,26 @@ defmodule DialecticWeb.PageControllerTest do
 
     assert html =~ ~s(id="ai-exploration-hero")
     assert html =~ "Use AI to open a question—not close it."
+    assert html =~ "deserves your confidence"
+    assert html =~ "basic or awkward to raise"
     assert html =~ ~s(id="ai-exploration-benefits")
+    assert html =~ ~s(id="ai-benefit-evidence")
+    assert html =~ "primary sources, original research, official records"
     assert html =~ ~s(id="ai-exploration-chat-comparison")
     assert html =~ "Why not just use ChatGPT or Claude?"
     assert html =~ ~s(id="ai-chat-feature-table")
     assert html =~ ~s(id="ai-chat-assistants")
     assert html =~ ~s(id="ai-rationalgrid-branches")
     assert html =~ ~s(id="ai-chat-comparison-takeaway")
+    assert html =~ "Select any two nodes and create a synthesis"
+    assert html =~ "Choose nodes, order them as slides"
+    assert html =~ "Learn from public work"
+    assert html =~ "other people questioned or chose to emphasise"
     assert html =~ ~s(id="ai-exploration-objections")
     assert html =~ ~s(id="ai-objection-wrong")
     assert html =~ ~s(id="ai-objection-passive")
     assert html =~ ~s(id="ai-objection-bias")
+    assert html =~ "It can repeat an echo chamber."
     assert html =~ ~s(id="ai-objection-uncertainty")
     assert html =~ ~s(id="ai-objection-ownership")
     assert html =~ ~s(id="ai-objection-costs")

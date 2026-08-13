@@ -28,7 +28,7 @@ defmodule DialecticWeb.HomeLiveTest do
 
     assert has_element?(view, "#popular-grids")
     assert has_element?(view, "#home-curated-#{curated_graph.slug}")
-    assert has_element?(view, "#popular-grids", "Build on good thinking.")
+    assert has_element?(view, "#popular-grids", "See what other people noticed.")
     refute has_element?(view, ~s(#popular-grids input[name="search"]))
     refute has_element?(view, ~s(#popular-grids a[href*="tag="]))
     refute has_element?(view, ~s(#popular-grids a[href*="category="]))
@@ -104,7 +104,7 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(
              view,
              "#home-profile-section",
-             "Share ideas people can build on."
+             "Show your thinking."
            )
 
     assert has_element?(
@@ -117,7 +117,7 @@ defmodule DialecticWeb.HomeLiveTest do
   test "renders a minimal start section", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/")
 
-    assert has_element?(view, "#start-here h2", "Ask your first question.")
+    assert has_element?(view, "#start-here h2", "Start with a question.")
     assert has_element?(view, "#home-start-panel #new-idea-form")
     refute has_element?(view, "#home-start-steps")
     refute has_element?(view, "#start-here", "Step 1 of 2")
@@ -130,11 +130,11 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(
              view,
              "#home-hero-title",
-             "Explore with AI. Remember what you learn."
+             "For questions that matter, make up your own mind."
            )
 
-    assert has_element?(view, "#home-video-hero", "notes, highlights, and saved paths")
-    assert has_element?(view, "#home-video-hero", "Map your first question")
+    assert has_element?(view, "#home-video-hero", "keep the reasoning behind your view")
+    assert has_element?(view, "#home-video-hero", "Explore a question")
 
     assert has_element?(
              view,
@@ -149,37 +149,49 @@ defmodule DialecticWeb.HomeLiveTest do
            )
 
     assert has_element?(view, "#home-ai-scepticism-link", "where it can go wrong")
+    assert has_element?(view, "#home-why-understanding", "Know what you think—and why.")
+    assert has_element?(view, "#home-understanding-world", "See the whole question")
+    assert has_element?(view, "#home-understanding-independence", "Question what sounds certain")
+    assert has_element?(view, "#home-understanding-judgement", "Decide with reasons")
+    assert has_element?(view, "#home-understanding-conversation", "Disagree more usefully")
+    assert has_element?(view, "#home-understanding-life", "Change your mind well")
+    assert has_element?(view, "#home-meaning-questions", "meaning, belief, identity")
+    assert has_element?(view, "#home-public-grid-note", "public by default")
     refute has_element?(view, "#home-value-summary")
   end
 
   test "separates tools for exploration from tools for recall", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/")
 
-    assert has_element?(view, "#home-exploration-tools", "Explore without losing the thread.")
+    assert has_element?(view, "#home-exploration-tools", "Follow the question wherever it leads.")
     assert has_element?(view, "#home-exploration-tools #home-feature-focused-inquiry")
     assert has_element?(view, "#home-exploration-tools #home-feature-levels")
     assert has_element?(view, "#home-exploration-tools #home-feature-critical-thinking")
+    assert has_element?(view, "#home-evidence-grounding", "Follow claims to sources.")
 
     assert has_element?(
              view,
              "#home-exploration-tools #home-feature-nonlinear-exploration"
            )
 
-    assert has_element?(view, "#home-recall-tools", "Return without starting again.")
+    assert has_element?(view, "#home-recall-tools", "Keep the thinking, not just the answer.")
     assert has_element?(view, "#home-recall-tools #home-feature-highlights")
     assert has_element?(view, "#home-recall-tools #home-feature-stars")
     assert has_element?(view, "#home-recall-tools #home-feature-export")
     assert has_element?(view, "#home-recall-tools #home-feature-shared-record")
 
-    assert has_element?(view, "#home-learning-loop", "Learning needs both.")
-    assert has_element?(view, "#home-learning-explore", "branch from any word or passage")
-    assert has_element?(view, "#home-learning-recall", "star useful ideas")
-    assert has_element?(view, "#home-learning-bridge", "every question and note stays in place")
+    assert has_element?(view, "#home-learning-loop", "Explore. Keep. Reconsider.")
+
+    assert has_element?(
+             view,
+             ~s(#home-guide-link[href="/intro/how"]),
+             "Read the guide"
+           )
 
     assert has_element?(
              view,
              ~s(#home-ai-exploration-link[href="/intro/ai"]),
-             "Why use AI for exploration?"
+             "AI and exploration"
            )
   end
 
@@ -193,12 +205,29 @@ defmodule DialecticWeb.HomeLiveTest do
            )
 
     assert has_element?(view, "#home-feature-nonlinear-exploration", "Explore in any direction")
-    assert has_element?(view, "#home-feature-nonlinear-exploration", "one long page of text")
-    assert has_element?(view, "#home-feature-export", "Download the grid for your notes")
-    assert has_element?(view, "#home-feature-shared-record", "see who added each part")
-    assert has_element?(view, "#home-feature-shared-record", "Activity")
-    assert has_element?(view, "#home-feature-highlights", "Each gets its own link")
-    assert has_element?(view, "#home-feature-stars", "easy to find")
+    assert has_element?(view, "#home-feature-nonlinear-exploration", "own branch")
+    assert has_element?(view, "#home-feature-critical-thinking", "outside the echo chamber")
+
+    assert has_element?(
+             view,
+             "#home-evidence-grounding",
+             "primary sources, research, official records"
+           )
+
+    assert has_element?(view, "#home-evidence-grounding", "AI can still be wrong")
+    assert has_element?(view, "#home-community-learning", "Find unfamiliar ideas")
+    assert has_element?(view, "#home-community-learning", "question or extend")
+
+    assert has_element?(
+             view,
+             "#home-feature-critical-thinking",
+             "compare the evidence behind them"
+           )
+
+    assert has_element?(view, "#home-feature-export", "Download the grid for notes")
+    assert has_element?(view, "#home-feature-shared-record", "see who added what")
+    assert has_element?(view, "#home-feature-highlights", "shareable link")
+    assert has_element?(view, "#home-feature-stars", "quick return")
   end
 
   test "explains each answer depth in the start form", %{conn: conn} do

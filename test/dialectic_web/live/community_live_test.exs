@@ -75,6 +75,8 @@ defmodule DialecticWeb.CommunityLiveTest do
     test "mounts and filters by category and search", %{conn: conn} do
       {:ok, view, _html} = live(conn, ~p"/community")
 
+      assert has_element?(view, "#community-page-header", "questions, branches, and sources")
+      assert has_element?(view, "#community-page-header", "question any part")
       assert has_element?(view, "#community-search")
 
       assert has_element?(

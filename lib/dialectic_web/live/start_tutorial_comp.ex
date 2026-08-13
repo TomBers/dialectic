@@ -45,12 +45,14 @@ defmodule DialecticWeb.StartTutorialComp do
             — save nodes for later revision, open the linear reader, or share your graph.
           </li>
           <li>
-            <span class="font-semibold">Related · Pro/Con · Blend · Explore · Delete</span>
-            — generate related ideas, weigh pros and cons, blend nodes, explore all points, or remove a node.
+            <span class="font-semibold">
+              Test both sides · Connect another idea · Find related ideas
+            </span>
+            — compare arguments, create a synthesis, or open nearby directions.
           </li>
           <li>
             <span class="font-semibold">Settings</span>
-            — change the graph layout, review highlights, and use tools like Translate.
+            — set the response level, manage groups, review activity, export, or translate.
           </li>
         </ul>
 
@@ -77,7 +79,7 @@ defmodule DialecticWeb.StartTutorialComp do
             <li>Drag to pan, scroll or pinch to zoom.</li>
             <li>Click any node to center it.</li>
             <li>Use keyboard controls to move between nodes.</li>
-            <li>The toolbar groups are separated by a vertical divider for quick scanning.</li>
+            <li>Use Search or press ⌘K when the grid grows.</li>
             <li>Star and highlight key ideas to build your revision trail.</li>
             <li>Find Translate options inside the Settings panel.</li>
           </ul>

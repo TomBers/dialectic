@@ -40,7 +40,7 @@ defmodule DialecticWeb.HomeLive do
        preview_seed: home_preview_seed(),
        curated_grids: [],
        page_description:
-         "Turn AI answers into understanding you can keep. Connect questions, evidence, objections, and sources in a workspace you can revisit and share."
+         "For questions that matter, compare views, trace claims to sources, and keep your reasoning in a grid you can revisit and share."
      )}
   end
 
@@ -244,17 +244,17 @@ defmodule DialecticWeb.HomeLive do
               id="home-hero-title"
               class="text-balance font-serif text-5xl font-semibold leading-[0.98] tracking-tight text-white sm:text-7xl lg:text-[5.4rem]"
             >
-              Explore with AI. Remember what you learn.
+              For questions that matter, make up your own mind.
             </h1>
             <p class="mt-5 max-w-2xl text-balance text-lg leading-8 text-slate-200 sm:text-xl">
-              RationalGrid brings fast AI exploration together with notes, highlights, and saved paths. Discover an idea, keep everything connected, and return when you need it.
+              Compare views, trace claims to sources, and keep the reasoning behind your view.
             </p>
             <div class="mt-7 flex flex-wrap items-center gap-3">
               <.link
                 href="#start-here"
                 class="inline-flex items-center gap-2 rounded-md bg-teal-300 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-200"
               >
-                Map your first question <.icon name="hero-arrow-down" class="h-4 w-4" />
+                Explore a question <.icon name="hero-arrow-down" class="h-4 w-4" />
               </.link>
               <.link
                 href="#popular-grids"
@@ -331,7 +331,7 @@ defmodule DialecticWeb.HomeLive do
           <div class="text-center">
             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">Try it</p>
             <h2 class="mt-3 font-serif text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
-              Ask your first question.
+              Start with a question.
             </h2>
           </div>
 
@@ -349,7 +349,51 @@ defmodule DialecticWeb.HomeLive do
                 autofocus={@focus_new_grid}
                 minimal={true}
               />
+              <p id="home-public-grid-note" class="mt-3 text-xs leading-5 text-slate-500">
+                New grids are public by default. Leave out personal or sensitive information; you can change visibility later under Settings.
+              </p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="home-why-understanding"
+        class="border-b border-stone-300 bg-white"
+        aria-labelledby="home-why-understanding-heading"
+      >
+        <div class="mx-auto grid w-full max-w-7xl gap-10 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[minmax(18rem,0.7fr)_minmax(0,1.3fr)] lg:px-10">
+          <div class="max-w-xl">
+            <p class="inline-block border-l-2 border-teal-500 pl-3 text-sm font-bold uppercase tracking-[0.14em] text-teal-900">
+              Why look further?
+            </p>
+            <h2
+              id="home-why-understanding-heading"
+              class="mt-3 font-serif text-4xl font-semibold tracking-tight sm:text-5xl"
+            >
+              Know what you think—and why.
+            </h2>
+            <p id="home-meaning-questions" class="mt-4 text-base leading-7 text-slate-600">
+              Difficult questions—about meaning, belief, identity, or public life—rarely have one useful answer. See the evidence and alternatives before deciding.
+            </p>
+          </div>
+
+          <div class="divide-y divide-stone-300 border-y border-stone-300">
+            <%= for {number, id, title, tone} <- [
+              {"01", "world", "See the whole question", "text-sky-700"},
+              {"02", "independence", "Question what sounds certain", "text-violet-700"},
+              {"03", "judgement", "Decide with reasons", "text-emerald-700"},
+              {"04", "conversation", "Disagree more usefully", "text-rose-700"},
+              {"05", "life", "Change your mind well", "text-amber-700"}
+            ] do %>
+              <article
+                id={"home-understanding-#{id}"}
+                class="grid grid-cols-[2.5rem_1fr] items-baseline gap-2 py-5"
+              >
+                <p class={["font-mono text-xs font-bold", tone]}>{number}</p>
+                <h3 class="font-serif text-xl font-semibold text-slate-950">{title}</h3>
+              </article>
+            <% end %>
           </div>
         </div>
       </section>
@@ -374,11 +418,11 @@ defmodule DialecticWeb.HomeLive do
                 id="home-exploration-tools-heading"
                 class="mt-3 font-serif text-4xl font-semibold tracking-tight sm:text-5xl"
               >
-                Explore without losing the thread.
+                Follow the question wherever it leads.
               </h2>
             </div>
             <p class="max-w-2xl text-lg leading-8 text-slate-700 lg:justify-self-end">
-              Ask from any point, change the level, challenge an idea, or follow a new branch. Every path stays connected to the question that opened it.
+              Question any word, challenge an answer, or follow a branch without losing the context.
             </p>
           </div>
 
@@ -386,10 +430,10 @@ defmodule DialecticWeb.HomeLive do
             <article id="home-feature-focused-inquiry" class="border-t-2 border-rose-500 pt-4">
               <div class="flex items-center gap-2.5">
                 <.icon name="hero-cursor-arrow-rays" class="h-5 w-5 shrink-0 text-rose-700" />
-                <h3 class="text-base font-semibold text-slate-950">Ask about anything</h3>
+                <h3 class="text-base font-semibold text-slate-950">Question any part</h3>
               </div>
               <p class="mt-2 max-w-xl text-sm leading-6 text-slate-600">
-                Start from a whole idea or select a single word, passage, or book. The original text stays connected to your question.
+                Ask about a word, passage, person, book, or whole idea.
               </p>
             </article>
 
@@ -401,17 +445,19 @@ defmodule DialecticWeb.HomeLive do
                 </h3>
               </div>
               <p class="mt-2 max-w-xl text-sm leading-6 text-slate-600">
-                Choose Simple, High School, University, or Expert so every new answer uses the right language and depth.
+                Choose Simple, High School, University, or Expert.
               </p>
             </article>
 
             <article id="home-feature-critical-thinking" class="border-t-2 border-violet-500 pt-4">
               <div class="flex items-center gap-2.5">
                 <.icon name="hero-arrows-right-left" class="h-5 w-5 shrink-0 text-violet-700" />
-                <h3 class="text-base font-semibold text-slate-950">Examine the idea</h3>
+                <h3 class="text-base font-semibold text-slate-950">
+                  Look outside the echo chamber
+                </h3>
               </div>
               <p class="mt-2 max-w-xl text-sm leading-6 text-slate-600">
-                Define key words, ask for evidence, look for exceptions, and compare the strongest case for each side.
+                Find missing views, then compare the evidence behind them.
               </p>
             </article>
 
@@ -426,9 +472,34 @@ defmodule DialecticWeb.HomeLive do
                 </h3>
               </div>
               <p class="mt-2 max-w-xl text-sm leading-6 text-slate-600">
-                Hold many ideas, definitions, and branches without producing one long page of text. Open what matters and drill down wherever curiosity leads.
+                Keep each definition, argument, and example in its own branch.
               </p>
             </article>
+          </div>
+
+          <div
+            id="home-evidence-grounding"
+            class="mt-9 grid gap-4 border border-stone-300 border-l-4 border-l-sky-600 bg-white p-5 sm:p-6 lg:grid-cols-[minmax(15rem,0.65fr)_minmax(0,1.35fr)] lg:items-center"
+          >
+            <div class="flex items-center gap-3">
+              <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-50 text-sky-700 ring-1 ring-sky-200">
+                <.icon name="hero-document-magnifying-glass" class="h-5 w-5" />
+              </span>
+              <h3 class="font-serif text-2xl font-semibold text-slate-950">
+                Follow claims to sources.
+              </h3>
+            </div>
+            <div>
+              <p class="text-sm leading-6 text-slate-600">
+                Ask for primary sources, research, official records, and strong reviews. AI can still be wrong: check important claims.
+              </p>
+              <.link
+                navigate={~p"/intro/ai"}
+                class="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-teal-800 hover:text-teal-950"
+              >
+                How RationalGrid uses AI <.icon name="hero-arrow-right" class="h-3.5 w-3.5" />
+              </.link>
+            </div>
           </div>
         </div>
       </section>
@@ -448,11 +519,11 @@ defmodule DialecticWeb.HomeLive do
                 id="home-recall-tools-heading"
                 class="mt-3 font-serif text-4xl font-semibold tracking-tight sm:text-5xl"
               >
-                Return without starting again.
+                Keep the thinking, not just the answer.
               </h2>
             </div>
             <p class="max-w-2xl text-lg leading-8 text-slate-700 lg:justify-self-end">
-              Highlights, stars, downloads, and updates turn useful work into something you can find and build on later.
+              Save the evidence, passages, and ideas you may want to revisit.
             </p>
           </div>
 
@@ -463,7 +534,7 @@ defmodule DialecticWeb.HomeLive do
                 <h3 class="text-base font-semibold text-slate-950">Highlight what matters</h3>
               </div>
               <p class="mt-2 max-w-xl text-sm leading-6 text-slate-600">
-                Save exact passages to your profile. Each gets its own link, while the original text stays with it.
+                Save exact passages with their source and shareable link.
               </p>
             </article>
 
@@ -473,7 +544,7 @@ defmodule DialecticWeb.HomeLive do
                 <h3 class="text-base font-semibold text-slate-950">Star useful ideas</h3>
               </div>
               <p class="mt-2 max-w-xl text-sm leading-6 text-slate-600">
-                Mark the ideas you want to revisit so the strongest parts of a large grid remain easy to find.
+                Mark useful ideas for a quick return.
               </p>
             </article>
 
@@ -485,7 +556,7 @@ defmodule DialecticWeb.HomeLive do
                 </h3>
               </div>
               <p class="mt-2 max-w-xl text-sm leading-6 text-slate-600">
-                Download the grid for your notes, as an image to share, or as data for other tools.
+                Download the grid for notes, sharing, or other tools.
               </p>
             </article>
 
@@ -495,7 +566,7 @@ defmodule DialecticWeb.HomeLive do
                 <h3 class="text-base font-semibold text-slate-950">Keep a shared record</h3>
               </div>
               <p class="mt-2 max-w-xl text-sm leading-6 text-slate-600">
-                Share or publish the grid, follow changes in Activity, and see who added each part.
+                Publish, follow changes, and see who added what.
               </p>
             </article>
           </div>
@@ -514,52 +585,30 @@ defmodule DialecticWeb.HomeLive do
         <div class="mx-auto grid w-full max-w-7xl gap-10 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[minmax(20rem,0.72fr)_minmax(0,1.28fr)] lg:items-center lg:px-10">
           <div id="home-learning-loop">
             <p class="inline-block border-l-2 border-teal-300 pl-3 text-sm font-bold uppercase tracking-[0.14em] text-teal-200">
-              Explore + recall
+              See it in use
             </p>
             <h2 class="mt-3 font-serif text-4xl font-semibold tracking-tight sm:text-5xl">
-              Learning needs both.
+              Explore. Keep. Reconsider.
             </h2>
             <p class="mt-4 max-w-xl text-base leading-7 text-slate-300">
-              AI is great at opening new paths. Notes help you keep and revisit what matters. RationalGrid brings them together in one fast, visual loop.
+              Questions, sources, and notes stay connected as your view develops.
             </p>
-            <dl class="mt-7 grid gap-px overflow-hidden border border-slate-700 bg-slate-700 sm:grid-cols-2">
-              <div id="home-learning-explore" class="bg-slate-950 p-5">
-                <dt class="flex items-center gap-2 text-sm font-semibold text-sky-300">
-                  <span class="flex h-6 w-6 items-center justify-center rounded-full border border-sky-400/50 text-[10px] font-bold">
-                    01
-                  </span>
-                  Explore
-                </dt>
-                <dd class="mt-3 text-sm leading-6 text-slate-300">
-                  Ask AI to explain or challenge an idea, compare views, and branch from any word or passage.
-                </dd>
-              </div>
-              <div id="home-learning-recall" class="bg-slate-950 p-5">
-                <dt class="flex items-center gap-2 text-sm font-semibold text-amber-300">
-                  <span class="flex h-6 w-6 items-center justify-center rounded-full border border-amber-400/50 text-[10px] font-bold">
-                    02
-                  </span>
-                  Recall
-                </dt>
-                <dd class="mt-3 text-sm leading-6 text-slate-300">
-                  Highlight passages, add notes, star useful ideas, and return to the full path later.
-                </dd>
-              </div>
-            </dl>
-            <p
-              id="home-learning-bridge"
-              class="mt-4 border-l-2 border-teal-300 pl-4 text-sm leading-6 text-slate-300"
-            >
-              <span class="font-semibold text-white">The grid connects the two:</span>
-              every question and note stays in place, ready to revisit or share.
-            </p>
-            <.link
-              id="home-ai-exploration-link"
-              navigate={~p"/intro/ai"}
-              class="mt-5 inline-flex items-center gap-2 border-b border-slate-500 pb-1 text-sm font-semibold text-white transition hover:border-teal-300 hover:text-teal-200"
-            >
-              Why use AI for exploration? <.icon name="hero-arrow-right" class="h-4 w-4" />
-            </.link>
+            <div class="mt-5 flex flex-wrap gap-x-5 gap-y-3">
+              <.link
+                id="home-guide-link"
+                navigate={~p"/intro/how"}
+                class="inline-flex items-center gap-2 border-b border-slate-500 pb-1 text-sm font-semibold text-white transition hover:border-teal-300 hover:text-teal-200"
+              >
+                Read the guide <.icon name="hero-arrow-right" class="h-4 w-4" />
+              </.link>
+              <.link
+                id="home-ai-exploration-link"
+                navigate={~p"/intro/ai"}
+                class="inline-flex items-center gap-2 border-b border-slate-500 pb-1 text-sm font-semibold text-white transition hover:border-teal-300 hover:text-teal-200"
+              >
+                AI and exploration <.icon name="hero-arrow-right" class="h-4 w-4" />
+              </.link>
+            </div>
           </div>
 
           <div class="border border-slate-700 bg-black p-2 shadow-2xl sm:p-3">
@@ -595,8 +644,11 @@ defmodule DialecticWeb.HomeLive do
                 Curated grids
               </p>
               <h2 class="mt-3 font-serif text-4xl font-semibold tracking-tight sm:text-5xl">
-                Build on good thinking.
+                See what other people noticed.
               </h2>
+              <p id="home-community-learning" class="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+                Find unfamiliar ideas, then question or extend any part.
+              </p>
             </div>
             <.link
               id="home-community-grids-link"
@@ -636,13 +688,13 @@ defmodule DialecticWeb.HomeLive do
         <div class="mx-auto grid w-full max-w-7xl gap-10 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[minmax(0,0.9fr)_minmax(22rem,0.65fr)] lg:items-center lg:px-10">
           <div>
             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-300">
-              Public knowledge
+              Public thinking
             </p>
             <h2 class="mt-3 max-w-2xl font-serif text-4xl font-semibold tracking-tight sm:text-5xl">
-              Share ideas people can build on.
+              Show your thinking.
             </h2>
             <p class="mt-4 max-w-2xl text-base leading-7 text-slate-300">
-              Your profile keeps your public questions, grids, and themes in one place so other people can find, discuss, and build on them.
+              Collect public grids in a profile others can follow and challenge.
             </p>
             <div class="mt-7 flex flex-wrap gap-3">
               <%= if @current_user do %>
@@ -712,7 +764,7 @@ defmodule DialecticWeb.HomeLive do
             <img src={~p"/images/favicon.webp"} alt="RationalGrid" class="h-7 w-7" />
             <div>
               <p class="font-semibold text-white">RationalGrid</p>
-              <p class="text-xs text-slate-500">Questions stay connected to what came before.</p>
+              <p class="text-xs text-slate-500">Questions, evidence, and reasoning—connected.</p>
             </div>
           </div>
           <nav aria-label="Homepage footer" class="flex flex-wrap gap-x-5 gap-y-2 text-sm">

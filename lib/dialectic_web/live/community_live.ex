@@ -153,7 +153,7 @@ defmodule DialecticWeb.CommunityLive do
               Explore public grids.
             </h1>
             <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-              Read the branches, test the reasoning, or continue from any idea.
+              See the questions, branches, and sources other people thought worth following. Discover unfamiliar ideas, question any part, or take the enquiry in a direction they missed.
             </p>
           </div>
           <div class="flex flex-wrap gap-2">

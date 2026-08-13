@@ -17,6 +17,9 @@ defmodule DialecticWeb.AboutLiveTest do
 
       assert html =~ "About RationalGrid"
       refute has_element?(view, "#about-connected-knowledge")
+      assert has_element?(view, "#about-purpose", "It helps to know what you think.")
+      assert has_element?(view, "#about-purpose", "ancient Greek philosophy")
+      assert has_element?(view, "#about-purpose", "meaning, belief, identity, doubt")
 
       assert has_element?(
                view,

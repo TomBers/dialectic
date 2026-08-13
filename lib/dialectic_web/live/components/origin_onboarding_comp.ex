@@ -40,7 +40,7 @@ defmodule DialecticWeb.OriginOnboardingComp do
           icon="hero-scale"
           icon_classes="bg-violet-50 text-violet-600 ring-violet-100"
           title="Compare and connect"
-          text="Try Pro / Con, Related, or Blend when you want the map to branch."
+          text="Try Test both sides, Find related ideas, or Connect another idea when you want the map to branch."
         />
 
         <.guide_item

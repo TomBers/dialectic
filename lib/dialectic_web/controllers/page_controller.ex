@@ -184,7 +184,7 @@ defmodule DialecticWeb.PageController do
     render(conn, :how,
       page_title: "Guide to RationalGrid",
       page_description:
-        "Learn how to use AI and critical thinking tools to build a persistent, shareable map from one question."
+        "Use AI and critical thinking tools to compare views, work out what you think, keep the useful parts, and share the path."
     )
   end
 
@@ -192,7 +192,7 @@ defmodule DialecticWeb.PageController do
     render(conn, :ai_exploration,
       page_title: "AI for Topic Exploration",
       page_description:
-        "Learn where AI helps with topic exploration, where it can go wrong, and how RationalGrid keeps people in control."
+        "Use AI to find questions and compare views. Learn where it helps, where it can go wrong, and how RationalGrid keeps people in control."
     )
   end
 end

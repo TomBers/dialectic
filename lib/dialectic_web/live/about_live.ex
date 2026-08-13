@@ -11,7 +11,7 @@ defmodule DialecticWeb.AboutLive do
      |> assign(:contact_mailto, "mailto:hello@rationalgrid.ai")
      |> assign(
        :page_description,
-       "RationalGrid is an open-source workspace for exploring ideas with AI, thinking clearly, and sharing grids that last."
+       "RationalGrid helps people compare views, work out what they think, and build knowledge together in persistent, shareable maps."
      )
      |> assign(
        :feedback_form,
@@ -82,7 +82,7 @@ defmodule DialecticWeb.AboutLive do
               Build understanding others can extend.
             </h1>
             <p class="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-              Turn questions, AI answers, challenges, and sources into a clear map that other people can check and build on.
+              Look at a question from several sides, keep the useful parts, and share a path that other people can check and extend.
             </p>
           </div>
           <div class="border-t border-slate-400 pt-4">
@@ -110,8 +110,37 @@ defmodule DialecticWeb.AboutLive do
 
       <main class="mx-auto max-w-6xl px-5 py-12 sm:px-8 sm:py-16">
         <section
+          id="about-purpose"
+          class="grid gap-7 border-b border-slate-400 pb-10 lg:grid-cols-[minmax(18rem,0.7fr)_minmax(0,1.3fr)]"
+          aria-labelledby="about-purpose-heading"
+        >
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
+              Why look more closely?
+            </p>
+            <h2
+              id="about-purpose-heading"
+              class="mt-2 font-serif text-4xl font-semibold tracking-tight"
+            >
+              It helps to know what you think.
+            </h2>
+          </div>
+          <div class="space-y-4 text-base leading-7 text-slate-600">
+            <p>
+              In much of ancient Greek philosophy, the point was practical: work out what is true, what matters, and how to live.
+            </p>
+            <p>
+              RationalGrid borrows a little from that tradition, without claiming to make anyone wise. It simply gives you a place to look at a question from several sides, keep the useful bits, and arrive at a view you can explain.
+            </p>
+            <p>
+              That includes questions about meaning, belief, identity, doubt, and relationships—the sort that can matter a great deal without fitting comfortably into ordinary conversation. You do not need a polished view before you begin.
+            </p>
+          </div>
+        </section>
+
+        <section
           id="about-ai-artifacts"
-          class="grid gap-8 border border-slate-700 bg-slate-950 p-6 text-white sm:p-8 lg:grid-cols-[minmax(0,1fr)_20rem]"
+          class="mt-12 grid gap-8 border border-slate-700 bg-slate-950 p-6 text-white sm:p-8 lg:grid-cols-[minmax(0,1fr)_20rem]"
         >
           <div>
             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-300">
