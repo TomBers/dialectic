@@ -79,10 +79,10 @@ defmodule DialecticWeb.AboutLive do
               About RationalGrid
             </p>
             <h1 class="mt-5 font-serif text-5xl font-semibold leading-[1.02] tracking-tight sm:text-7xl">
-              Build understanding others can extend.
+              Know what you think—and show how you got there.
             </h1>
             <p class="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-              Look at a question from several sides, keep the useful parts, and share a path that other people can check and extend.
+              Compare views, trace claims to sources, and keep the path open for you or others to question.
             </p>
           </div>
           <div class="border-t border-slate-400 pt-4">
@@ -116,25 +116,37 @@ defmodule DialecticWeb.AboutLive do
         >
           <div>
             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
-              Why look more closely?
+              Why RationalGrid?
             </p>
             <h2
               id="about-purpose-heading"
               class="mt-2 font-serif text-4xl font-semibold tracking-tight"
             >
-              It helps to know what you think.
+              Some questions deserve more than one answer.
             </h2>
           </div>
-          <div class="space-y-4 text-base leading-7 text-slate-600">
-            <p>
-              In much of ancient Greek philosophy, the point was practical: work out what is true, what matters, and how to live.
+          <div>
+            <p class="text-base leading-7 text-slate-600">
+              Questions about meaning, belief, identity, doubt, relationships, or public life rarely have one useful answer. You do not need a polished view before you begin.
             </p>
-            <p>
-              RationalGrid borrows a little from that tradition, without claiming to make anyone wise. It simply gives you a place to look at a question from several sides, keep the useful bits, and arrive at a view you can explain.
-            </p>
-            <p>
-              That includes questions about meaning, belief, identity, doubt, and relationships—the sort that can matter a great deal without fitting comfortably into ordinary conversation. You do not need a polished view before you begin.
-            </p>
+            <div id="about-outcomes" class="mt-5 divide-y divide-stone-300 border-y border-stone-300">
+              <%= for {number, id, title, copy, tone} <- [
+                {"01", "whole-question", "See the whole question", "Put the first answer beside its context and alternatives.", "text-sky-700"},
+                {"02", "certainty", "Question what sounds certain", "Separate evidence from confidence or repetition.", "text-violet-700"},
+                {"03", "reasons", "Decide with reasons", "Know what led you to your view.", "text-emerald-700"},
+                {"04", "disagreement", "Disagree more usefully", "Find where the real disagreement lies.", "text-rose-700"},
+                {"05", "revision", "Change your mind well", "Add new evidence without starting over.", "text-amber-700"}
+              ] do %>
+                <article
+                  id={"about-outcome-#{id}"}
+                  class="grid gap-1 py-4 sm:grid-cols-[2.5rem_13rem_1fr] sm:items-baseline"
+                >
+                  <p class={["font-mono text-xs font-bold", tone]}>{number}</p>
+                  <h3 class="font-serif text-lg font-semibold text-slate-950">{title}</h3>
+                  <p class="text-sm leading-6 text-slate-600">{copy}</p>
+                </article>
+              <% end %>
+            </div>
           </div>
         </section>
 
@@ -183,6 +195,97 @@ defmodule DialecticWeb.AboutLive do
                 Contact us
               </a>
             </div>
+          </div>
+        </section>
+
+        <section id="about-tools" class="mt-12" aria-labelledby="about-tools-heading">
+          <div class="grid gap-5 border-b border-slate-400 pb-5 sm:grid-cols-[minmax(0,1fr)_22rem] sm:items-end">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
+                What you can do
+              </p>
+              <h2
+                id="about-tools-heading"
+                class="mt-2 font-serif text-4xl font-semibold tracking-tight"
+              >
+                Explore freely. Keep what matters.
+              </h2>
+            </div>
+            <p class="text-sm leading-6 text-slate-600">
+              Open new paths quickly, then keep enough of the trail to return, check, or share it.
+            </p>
+          </div>
+
+          <div class="mt-6 grid gap-6 lg:grid-cols-2">
+            <article
+              id="about-exploration-tools"
+              class="border border-stone-300 border-t-4 border-t-violet-600 bg-white p-5 sm:p-6"
+            >
+              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-violet-700">
+                Tools for exploration
+              </p>
+              <h3 class="mt-2 font-serif text-3xl font-semibold">Follow the question.</h3>
+              <ul class="mt-5 divide-y divide-stone-200 border-y border-stone-200">
+                <%= for {id, icon, title, copy} <- [
+                  {"question", "hero-cursor-arrow-rays", "Question any part", "Ask about a word, passage, person, book, or whole idea."},
+                  {"level", "hero-adjustments-horizontal", "Match the explanation level", "Choose Simple, High School, University, or Expert."},
+                  {"branches", "hero-squares-2x2", "Explore in any direction", "Keep definitions, arguments, and examples in separate branches."},
+                  {"views", "hero-arrows-right-left", "Compare other views", "Find missing interpretations, then compare their evidence."},
+                  {"sources", "hero-document-magnifying-glass", "Follow claims to sources", "Ask for primary research, official records, and strong reviews. Important claims still need checking."}
+                ] do %>
+                  <li id={"about-explore-#{id}"} class="grid grid-cols-[1.5rem_1fr] gap-3 py-3">
+                    <.icon name={icon} class="mt-0.5 h-5 w-5 text-violet-700" />
+                    <div>
+                      <h4 class="text-sm font-semibold text-slate-950">{title}</h4>
+                      <p class="mt-1 text-xs leading-5 text-slate-600">{copy}</p>
+                    </div>
+                  </li>
+                <% end %>
+              </ul>
+            </article>
+
+            <article
+              id="about-recall-tools"
+              class="border border-stone-300 border-t-4 border-t-amber-600 bg-white p-5 sm:p-6"
+            >
+              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
+                Tools for recall
+              </p>
+              <h3 class="mt-2 font-serif text-3xl font-semibold">Keep the thinking.</h3>
+              <ul class="mt-5 divide-y divide-stone-200 border-y border-stone-200">
+                <%= for {id, icon, title, copy} <- [
+                  {"highlights", "hero-bookmark", "Highlight passages", "Save exact text with its source and shareable link."},
+                  {"stars", "hero-star", "Star useful ideas", "Mark the parts you want to find again."},
+                  {"export", "hero-arrow-down-tray", "Export the grid", "Download it for notes, sharing, or other tools."},
+                  {"shared", "hero-user-group", "Keep a shared record", "Publish, follow changes, and see who added what."},
+                  {"profile", "hero-identification", "Show your thinking", "Collect public grids in a profile others can follow and challenge."}
+                ] do %>
+                  <li id={"about-recall-#{id}"} class="grid grid-cols-[1.5rem_1fr] gap-3 py-3">
+                    <.icon name={icon} class="mt-0.5 h-5 w-5 text-amber-700" />
+                    <div>
+                      <h4 class="text-sm font-semibold text-slate-950">{title}</h4>
+                      <p class="mt-1 text-xs leading-5 text-slate-600">{copy}</p>
+                    </div>
+                  </li>
+                <% end %>
+              </ul>
+            </article>
+          </div>
+
+          <div class="mt-5 flex flex-wrap gap-4 text-sm font-semibold">
+            <.link
+              id="about-tools-guide-link"
+              navigate={~p"/intro/how"}
+              class="inline-flex items-center gap-1.5 border-b border-slate-500 pb-0.5 hover:border-teal-700 hover:text-teal-800"
+            >
+              See how the tools work <.icon name="hero-arrow-right" class="h-4 w-4" />
+            </.link>
+            <.link
+              navigate={~p"/intro/ai"}
+              class="inline-flex items-center gap-1.5 border-b border-slate-500 pb-0.5 hover:border-teal-700 hover:text-teal-800"
+            >
+              AI and source limits <.icon name="hero-arrow-right" class="h-4 w-4" />
+            </.link>
           </div>
         </section>
 

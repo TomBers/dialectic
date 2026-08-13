@@ -17,9 +17,14 @@ defmodule DialecticWeb.AboutLiveTest do
 
       assert html =~ "About RationalGrid"
       refute has_element?(view, "#about-connected-knowledge")
-      assert has_element?(view, "#about-purpose", "It helps to know what you think.")
-      assert has_element?(view, "#about-purpose", "ancient Greek philosophy")
+      assert has_element?(view, "#about-hero", "Know what you think—and show how you got there.")
+      assert has_element?(view, "#about-purpose", "Some questions deserve more than one answer.")
       assert has_element?(view, "#about-purpose", "meaning, belief, identity, doubt")
+      assert has_element?(view, "#about-outcome-whole-question", "See the whole question")
+      assert has_element?(view, "#about-outcome-certainty", "Question what sounds certain")
+      assert has_element?(view, "#about-outcome-reasons", "Decide with reasons")
+      assert has_element?(view, "#about-outcome-disagreement", "Disagree more usefully")
+      assert has_element?(view, "#about-outcome-revision", "Change your mind well")
 
       assert has_element?(
                view,
@@ -31,6 +36,24 @@ defmodule DialecticWeb.AboutLiveTest do
                view,
                ~s(#about-ai-exploration-link[href="/intro/ai"]),
                "Read about AI and exploration"
+             )
+
+      assert has_element?(view, "#about-tools", "Explore freely. Keep what matters.")
+      assert has_element?(view, "#about-explore-question", "Question any part")
+      assert has_element?(view, "#about-explore-level", "Simple, High School, University")
+      assert has_element?(view, "#about-explore-branches", "separate branches")
+      assert has_element?(view, "#about-explore-views", "compare their evidence")
+      assert has_element?(view, "#about-explore-sources", "primary research")
+      assert has_element?(view, "#about-recall-highlights", "shareable link")
+      assert has_element?(view, "#about-recall-stars", "find again")
+      assert has_element?(view, "#about-recall-export", "other tools")
+      assert has_element?(view, "#about-recall-shared", "see who added what")
+      assert has_element?(view, "#about-recall-profile", "others can follow and challenge")
+
+      assert has_element?(
+               view,
+               ~s(#about-tools-guide-link[href="/intro/how"]),
+               "See how the tools work"
              )
 
       assert has_element?(view, "#about-audiences", "Who is it for?")

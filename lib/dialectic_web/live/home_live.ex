@@ -1,6 +1,5 @@
 defmodule DialecticWeb.HomeLive do
   use DialecticWeb, :live_view
-  alias Dialectic.Accounts.User
   alias Dialectic.DbActions.Graphs
   alias Dialectic.Graph.GraphActions
   alias Dialectic.Graph.Vertex
@@ -257,10 +256,11 @@ defmodule DialecticWeb.HomeLive do
                 Explore a question <.icon name="hero-arrow-down" class="h-4 w-4" />
               </.link>
               <.link
-                href="#popular-grids"
+                id="home-about-link"
+                navigate={~p"/about"}
                 class="inline-flex items-center gap-2 border-b border-slate-400 px-1 py-2 text-sm font-semibold text-white transition hover:border-teal-300 hover:text-teal-200"
               >
-                Browse curated grids <.icon name="hero-arrow-down" class="h-4 w-4" />
+                Why RationalGrid? <.icon name="hero-arrow-right" class="h-4 w-4" />
               </.link>
             </div>
             <.link
@@ -358,222 +358,6 @@ defmodule DialecticWeb.HomeLive do
       </section>
 
       <section
-        id="home-why-understanding"
-        class="border-b border-stone-300 bg-white"
-        aria-labelledby="home-why-understanding-heading"
-      >
-        <div class="mx-auto grid w-full max-w-7xl gap-10 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[minmax(18rem,0.7fr)_minmax(0,1.3fr)] lg:px-10">
-          <div class="max-w-xl">
-            <p class="inline-block border-l-2 border-teal-500 pl-3 text-sm font-bold uppercase tracking-[0.14em] text-teal-900">
-              Why look further?
-            </p>
-            <h2
-              id="home-why-understanding-heading"
-              class="mt-3 font-serif text-4xl font-semibold tracking-tight sm:text-5xl"
-            >
-              Know what you think—and why.
-            </h2>
-            <p id="home-meaning-questions" class="mt-4 text-base leading-7 text-slate-600">
-              Difficult questions—about meaning, belief, identity, or public life—rarely have one useful answer. See the evidence and alternatives before deciding.
-            </p>
-          </div>
-
-          <div class="divide-y divide-stone-300 border-y border-stone-300">
-            <%= for {number, id, title, tone} <- [
-              {"01", "world", "See the whole question", "text-sky-700"},
-              {"02", "independence", "Question what sounds certain", "text-violet-700"},
-              {"03", "judgement", "Decide with reasons", "text-emerald-700"},
-              {"04", "conversation", "Disagree more usefully", "text-rose-700"},
-              {"05", "life", "Change your mind well", "text-amber-700"}
-            ] do %>
-              <article
-                id={"home-understanding-#{id}"}
-                class="grid grid-cols-[2.5rem_1fr] items-baseline gap-2 py-5"
-              >
-                <p class={["font-mono text-xs font-bold", tone]}>{number}</p>
-                <h3 class="font-serif text-xl font-semibold text-slate-950">{title}</h3>
-              </article>
-            <% end %>
-          </div>
-        </div>
-      </section>
-
-      <section
-        id="home-exploration-tools"
-        class="relative isolate overflow-hidden border-b border-stone-300 bg-[#fbfaf6]"
-        aria-labelledby="home-exploration-tools-heading"
-      >
-        <div
-          aria-hidden="true"
-          class="absolute inset-x-0 top-0 -z-10 h-56 bg-[linear-gradient(180deg,rgba(45,212,191,0.08),transparent)]"
-        >
-        </div>
-        <div class="mx-auto w-full max-w-7xl px-5 py-12 sm:px-8 sm:py-16 lg:px-10">
-          <div class="grid gap-6 border-b border-slate-300 pb-8 lg:grid-cols-[minmax(0,0.82fr)_minmax(22rem,1.18fr)] lg:items-end">
-            <div>
-              <p class="inline-block border-l-2 border-teal-500 pl-3 text-sm font-bold uppercase tracking-[0.14em] text-teal-900">
-                Tools for exploration
-              </p>
-              <h2
-                id="home-exploration-tools-heading"
-                class="mt-3 font-serif text-4xl font-semibold tracking-tight sm:text-5xl"
-              >
-                Follow the question wherever it leads.
-              </h2>
-            </div>
-            <p class="max-w-2xl text-lg leading-8 text-slate-700 lg:justify-self-end">
-              Question any word, challenge an answer, or follow a branch without losing the context.
-            </p>
-          </div>
-
-          <div class="mt-8 grid gap-x-8 gap-y-7 md:grid-cols-2">
-            <article id="home-feature-focused-inquiry" class="border-t-2 border-rose-500 pt-4">
-              <div class="flex items-center gap-2.5">
-                <.icon name="hero-cursor-arrow-rays" class="h-5 w-5 shrink-0 text-rose-700" />
-                <h3 class="text-base font-semibold text-slate-950">Question any part</h3>
-              </div>
-              <p class="mt-2 max-w-xl text-sm leading-6 text-slate-600">
-                Ask about a word, passage, person, book, or whole idea.
-              </p>
-            </article>
-
-            <article id="home-feature-levels" class="border-t-2 border-indigo-500 pt-4">
-              <div class="flex items-center gap-2.5">
-                <.icon name="hero-adjustments-horizontal" class="h-5 w-5 shrink-0 text-indigo-700" />
-                <h3 class="text-base font-semibold text-slate-950">
-                  Match the explanation level
-                </h3>
-              </div>
-              <p class="mt-2 max-w-xl text-sm leading-6 text-slate-600">
-                Choose Simple, High School, University, or Expert.
-              </p>
-            </article>
-
-            <article id="home-feature-critical-thinking" class="border-t-2 border-violet-500 pt-4">
-              <div class="flex items-center gap-2.5">
-                <.icon name="hero-arrows-right-left" class="h-5 w-5 shrink-0 text-violet-700" />
-                <h3 class="text-base font-semibold text-slate-950">
-                  Look outside the echo chamber
-                </h3>
-              </div>
-              <p class="mt-2 max-w-xl text-sm leading-6 text-slate-600">
-                Find missing views, then compare the evidence behind them.
-              </p>
-            </article>
-
-            <article
-              id="home-feature-nonlinear-exploration"
-              class="border-t-2 border-emerald-500 pt-4"
-            >
-              <div class="flex items-center gap-2.5">
-                <.icon name="hero-squares-2x2" class="h-5 w-5 shrink-0 text-emerald-700" />
-                <h3 class="text-base font-semibold text-slate-950">
-                  Explore in any direction
-                </h3>
-              </div>
-              <p class="mt-2 max-w-xl text-sm leading-6 text-slate-600">
-                Keep each definition, argument, and example in its own branch.
-              </p>
-            </article>
-          </div>
-
-          <div
-            id="home-evidence-grounding"
-            class="mt-9 grid gap-4 border border-stone-300 border-l-4 border-l-sky-600 bg-white p-5 sm:p-6 lg:grid-cols-[minmax(15rem,0.65fr)_minmax(0,1.35fr)] lg:items-center"
-          >
-            <div class="flex items-center gap-3">
-              <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-50 text-sky-700 ring-1 ring-sky-200">
-                <.icon name="hero-document-magnifying-glass" class="h-5 w-5" />
-              </span>
-              <h3 class="font-serif text-2xl font-semibold text-slate-950">
-                Follow claims to sources.
-              </h3>
-            </div>
-            <div>
-              <p class="text-sm leading-6 text-slate-600">
-                Ask for primary sources, research, official records, and strong reviews. AI can still be wrong: check important claims.
-              </p>
-              <.link
-                navigate={~p"/intro/ai"}
-                class="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-teal-800 hover:text-teal-950"
-              >
-                How RationalGrid uses AI <.icon name="hero-arrow-right" class="h-3.5 w-3.5" />
-              </.link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section
-        id="home-recall-tools"
-        class="border-b border-stone-300 bg-white"
-        aria-labelledby="home-recall-tools-heading"
-      >
-        <div class="mx-auto w-full max-w-7xl px-5 py-12 sm:px-8 sm:py-16 lg:px-10">
-          <div class="grid gap-5 border-b border-slate-300 pb-7 lg:grid-cols-[minmax(0,0.82fr)_minmax(22rem,1.18fr)] lg:items-end">
-            <div>
-              <p class="inline-block border-l-2 border-teal-500 pl-3 text-sm font-bold uppercase tracking-[0.14em] text-teal-900">
-                Tools for recall
-              </p>
-              <h2
-                id="home-recall-tools-heading"
-                class="mt-3 font-serif text-4xl font-semibold tracking-tight sm:text-5xl"
-              >
-                Keep the thinking, not just the answer.
-              </h2>
-            </div>
-            <p class="max-w-2xl text-lg leading-8 text-slate-700 lg:justify-self-end">
-              Save the evidence, passages, and ideas you may want to revisit.
-            </p>
-          </div>
-
-          <div class="mt-8 grid gap-x-8 gap-y-7 md:grid-cols-2">
-            <article id="home-feature-highlights" class="border-t-2 border-rose-500 pt-4">
-              <div class="flex items-center gap-2.5">
-                <.icon name="hero-bookmark" class="h-5 w-5 shrink-0 text-rose-700" />
-                <h3 class="text-base font-semibold text-slate-950">Highlight what matters</h3>
-              </div>
-              <p class="mt-2 max-w-xl text-sm leading-6 text-slate-600">
-                Save exact passages with their source and shareable link.
-              </p>
-            </article>
-
-            <article id="home-feature-stars" class="border-t-2 border-amber-500 pt-4">
-              <div class="flex items-center gap-2.5">
-                <.icon name="hero-star" class="h-5 w-5 shrink-0 text-amber-700" />
-                <h3 class="text-base font-semibold text-slate-950">Star useful ideas</h3>
-              </div>
-              <p class="mt-2 max-w-xl text-sm leading-6 text-slate-600">
-                Mark useful ideas for a quick return.
-              </p>
-            </article>
-
-            <article id="home-feature-export" class="border-t-2 border-sky-500 pt-4">
-              <div class="flex items-center gap-2.5">
-                <.icon name="hero-arrow-down-tray" class="h-5 w-5 shrink-0 text-sky-700" />
-                <h3 class="text-base font-semibold text-slate-950">
-                  Export for further notes
-                </h3>
-              </div>
-              <p class="mt-2 max-w-xl text-sm leading-6 text-slate-600">
-                Download the grid for notes, sharing, or other tools.
-              </p>
-            </article>
-
-            <article id="home-feature-shared-record" class="border-t-2 border-emerald-500 pt-4">
-              <div class="flex items-center gap-2.5">
-                <.icon name="hero-user-group" class="h-5 w-5 shrink-0 text-emerald-700" />
-                <h3 class="text-base font-semibold text-slate-950">Keep a shared record</h3>
-              </div>
-              <p class="mt-2 max-w-xl text-sm leading-6 text-slate-600">
-                Publish, follow changes, and see who added what.
-              </p>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      <section
         id="home-product-preview"
         class="relative isolate overflow-hidden border-b border-slate-700 bg-slate-950 text-white"
       >
@@ -595,18 +379,18 @@ defmodule DialecticWeb.HomeLive do
             </p>
             <div class="mt-5 flex flex-wrap gap-x-5 gap-y-3">
               <.link
+                id="home-features-link"
+                navigate={~p"/about"}
+                class="inline-flex items-center gap-2 border-b border-slate-500 pb-1 text-sm font-semibold text-white transition hover:border-teal-300 hover:text-teal-200"
+              >
+                Explore all features <.icon name="hero-arrow-right" class="h-4 w-4" />
+              </.link>
+              <.link
                 id="home-guide-link"
                 navigate={~p"/intro/how"}
                 class="inline-flex items-center gap-2 border-b border-slate-500 pb-1 text-sm font-semibold text-white transition hover:border-teal-300 hover:text-teal-200"
               >
                 Read the guide <.icon name="hero-arrow-right" class="h-4 w-4" />
-              </.link>
-              <.link
-                id="home-ai-exploration-link"
-                navigate={~p"/intro/ai"}
-                class="inline-flex items-center gap-2 border-b border-slate-500 pb-1 text-sm font-semibold text-white transition hover:border-teal-300 hover:text-teal-200"
-              >
-                AI and exploration <.icon name="hero-arrow-right" class="h-4 w-4" />
               </.link>
             </div>
           </div>
@@ -644,7 +428,7 @@ defmodule DialecticWeb.HomeLive do
                 Curated grids
               </p>
               <h2 class="mt-3 font-serif text-4xl font-semibold tracking-tight sm:text-5xl">
-                See what other people noticed.
+                See what other people explored.
               </h2>
               <p id="home-community-learning" class="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
                 Find unfamiliar ideas, then question or extend any part.
@@ -668,93 +452,6 @@ defmodule DialecticWeb.HomeLive do
               <.curated_grid_section items={@curated_grids} id_prefix="home-curated" />
             </section>
           <% end %>
-        </div>
-      </section>
-
-      <section
-        id="home-profile-section"
-        class="relative isolate overflow-hidden border-b border-slate-700 bg-slate-900 text-white"
-      >
-        <div
-          aria-hidden="true"
-          class="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_18%_12%,rgba(20,184,166,0.15),transparent_32%),radial-gradient(circle_at_88%_76%,rgba(245,158,11,0.10),transparent_25%)]"
-        >
-        </div>
-        <div
-          aria-hidden="true"
-          class="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,#2dd4bf_0%,#818cf8_52%,#fbbf24_100%)]"
-        >
-        </div>
-        <div class="mx-auto grid w-full max-w-7xl gap-10 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[minmax(0,0.9fr)_minmax(22rem,0.65fr)] lg:items-center lg:px-10">
-          <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-300">
-              Public thinking
-            </p>
-            <h2 class="mt-3 max-w-2xl font-serif text-4xl font-semibold tracking-tight sm:text-5xl">
-              Show your thinking.
-            </h2>
-            <p class="mt-4 max-w-2xl text-base leading-7 text-slate-300">
-              Collect public grids in a profile others can follow and challenge.
-            </p>
-            <div class="mt-7 flex flex-wrap gap-3">
-              <%= if @current_user do %>
-                <.link
-                  navigate={~p"/u/#{User.effective_username(@current_user)}"}
-                  class="inline-flex items-center gap-2 rounded-md bg-teal-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-teal-200"
-                >
-                  <.icon name="hero-user-circle" class="h-4 w-4" /> View my profile
-                </.link>
-              <% else %>
-                <.link
-                  navigate={~p"/users/register"}
-                  class="inline-flex items-center gap-2 rounded-md bg-teal-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-teal-200"
-                >
-                  <.icon name="hero-user-plus" class="h-4 w-4" /> Create your profile
-                </.link>
-              <% end %>
-            </div>
-          </div>
-
-          <div class="border border-slate-600 bg-slate-950">
-            <div class="h-20 overflow-hidden border-b border-slate-700 bg-orange-500">
-              <img
-                src={~p"/images/profile-banners/flat-mountains.svg"}
-                alt=""
-                class="h-full w-full object-cover"
-                aria-hidden="true"
-              />
-            </div>
-            <div class="p-5">
-              <div class="flex items-center gap-3">
-                <img
-                  src={~p"/images/tom.webp"}
-                  alt="TomBers's avatar"
-                  class="h-14 w-14 rounded-full border-2 border-white object-cover"
-                />
-                <div>
-                  <p class="font-serif text-2xl font-semibold">TomBers</p>
-                  <p class="text-sm text-slate-400">Makes RationalGrid.ai</p>
-                </div>
-              </div>
-              <p class="mt-5 border-l-2 border-teal-300 pl-3 text-sm leading-6 text-slate-300">
-                Philosophy, Sociology, and History across 127 public grids.
-              </p>
-              <div class="mt-5 grid grid-cols-3 border-y border-slate-700 py-3 text-center">
-                <div>
-                  <p class="text-xl font-semibold">127</p>
-                  <p class="text-[10px] uppercase tracking-[0.16em] text-slate-400">grids</p>
-                </div>
-                <div class="border-x border-slate-700">
-                  <p class="text-xl font-semibold">1425</p>
-                  <p class="text-[10px] uppercase tracking-[0.16em] text-slate-400">ideas</p>
-                </div>
-                <div>
-                  <p class="text-xl font-semibold">2</p>
-                  <p class="text-[10px] uppercase tracking-[0.16em] text-slate-400">followers</p>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 

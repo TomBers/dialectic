@@ -96,22 +96,25 @@ defmodule DialecticWeb.HomeLiveTest do
            )
   end
 
-  test "renders the profile promotion section for visitors", %{conn: conn} do
+  test "keeps explanatory detail off the homepage and links to About", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/")
 
-    assert has_element?(view, "#home-profile-section")
-
     assert has_element?(
              view,
-             "#home-profile-section",
-             "Show your thinking."
+             ~s(#home-about-link[href="/about"]),
+             "Why RationalGrid?"
            )
 
     assert has_element?(
              view,
-             ~s(#home-profile-section a[href="/users/register"]),
-             "Create your profile"
+             ~s(#home-features-link[href="/about"]),
+             "Explore all features"
            )
+
+    refute has_element?(view, "#home-why-understanding")
+    refute has_element?(view, "#home-exploration-tools")
+    refute has_element?(view, "#home-recall-tools")
+    refute has_element?(view, "#home-profile-section")
   end
 
   test "renders a minimal start section", %{conn: conn} do
@@ -136,11 +139,7 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(view, "#home-video-hero", "keep the reasoning behind your view")
     assert has_element?(view, "#home-video-hero", "Explore a question")
 
-    assert has_element?(
-             view,
-             ~s(#home-video-hero a[href="#popular-grids"]),
-             "Browse curated grids"
-           )
+    assert has_element?(view, ~s(#home-about-link[href="/about"]), "Why RationalGrid?")
 
     assert has_element?(
              view,
@@ -149,38 +148,20 @@ defmodule DialecticWeb.HomeLiveTest do
            )
 
     assert has_element?(view, "#home-ai-scepticism-link", "where it can go wrong")
-    assert has_element?(view, "#home-why-understanding", "Know what you think—and why.")
-    assert has_element?(view, "#home-understanding-world", "See the whole question")
-    assert has_element?(view, "#home-understanding-independence", "Question what sounds certain")
-    assert has_element?(view, "#home-understanding-judgement", "Decide with reasons")
-    assert has_element?(view, "#home-understanding-conversation", "Disagree more usefully")
-    assert has_element?(view, "#home-understanding-life", "Change your mind well")
-    assert has_element?(view, "#home-meaning-questions", "meaning, belief, identity")
     assert has_element?(view, "#home-public-grid-note", "public by default")
     refute has_element?(view, "#home-value-summary")
   end
 
-  test "separates tools for exploration from tools for recall", %{conn: conn} do
+  test "shows the product briefly and links to the detailed pages", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/")
 
-    assert has_element?(view, "#home-exploration-tools", "Follow the question wherever it leads.")
-    assert has_element?(view, "#home-exploration-tools #home-feature-focused-inquiry")
-    assert has_element?(view, "#home-exploration-tools #home-feature-levels")
-    assert has_element?(view, "#home-exploration-tools #home-feature-critical-thinking")
-    assert has_element?(view, "#home-evidence-grounding", "Follow claims to sources.")
+    assert has_element?(view, "#home-learning-loop", "Explore. Keep. Reconsider.")
 
     assert has_element?(
              view,
-             "#home-exploration-tools #home-feature-nonlinear-exploration"
+             ~s(#home-features-link[href="/about"]),
+             "Explore all features"
            )
-
-    assert has_element?(view, "#home-recall-tools", "Keep the thinking, not just the answer.")
-    assert has_element?(view, "#home-recall-tools #home-feature-highlights")
-    assert has_element?(view, "#home-recall-tools #home-feature-stars")
-    assert has_element?(view, "#home-recall-tools #home-feature-export")
-    assert has_element?(view, "#home-recall-tools #home-feature-shared-record")
-
-    assert has_element?(view, "#home-learning-loop", "Explore. Keep. Reconsider.")
 
     assert has_element?(
              view,
@@ -188,46 +169,7 @@ defmodule DialecticWeb.HomeLiveTest do
              "Read the guide"
            )
 
-    assert has_element?(
-             view,
-             ~s(#home-ai-exploration-link[href="/intro/ai"]),
-             "AI and exploration"
-           )
-  end
-
-  test "shows practical tools for different audiences and shared work", %{conn: conn} do
-    {:ok, view, _html} = live(conn, ~p"/")
-
-    assert has_element?(
-             view,
-             "#home-feature-levels",
-             "Simple, High School, University, or Expert"
-           )
-
-    assert has_element?(view, "#home-feature-nonlinear-exploration", "Explore in any direction")
-    assert has_element?(view, "#home-feature-nonlinear-exploration", "own branch")
-    assert has_element?(view, "#home-feature-critical-thinking", "outside the echo chamber")
-
-    assert has_element?(
-             view,
-             "#home-evidence-grounding",
-             "primary sources, research, official records"
-           )
-
-    assert has_element?(view, "#home-evidence-grounding", "AI can still be wrong")
-    assert has_element?(view, "#home-community-learning", "Find unfamiliar ideas")
-    assert has_element?(view, "#home-community-learning", "question or extend")
-
-    assert has_element?(
-             view,
-             "#home-feature-critical-thinking",
-             "compare the evidence behind them"
-           )
-
-    assert has_element?(view, "#home-feature-export", "Download the grid for notes")
-    assert has_element?(view, "#home-feature-shared-record", "see who added what")
-    assert has_element?(view, "#home-feature-highlights", "shareable link")
-    assert has_element?(view, "#home-feature-stars", "quick return")
+    assert has_element?(view, "#popular-grids", "See what other people noticed.")
   end
 
   test "explains each answer depth in the start form", %{conn: conn} do
