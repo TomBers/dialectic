@@ -56,6 +56,12 @@ defmodule DialecticWeb.PageControllerTest do
     assert html =~ ~s(id="ai-exploration-hero")
     assert html =~ "Use AI to open a question—not close it."
     assert html =~ ~s(id="ai-exploration-benefits")
+    assert html =~ ~s(id="ai-exploration-chat-comparison")
+    assert html =~ "Why not just use ChatGPT or Claude?"
+    assert html =~ ~s(id="ai-chat-feature-table")
+    assert html =~ ~s(id="ai-chat-assistants")
+    assert html =~ ~s(id="ai-rationalgrid-branches")
+    assert html =~ ~s(id="ai-chat-comparison-takeaway")
     assert html =~ ~s(id="ai-exploration-objections")
     assert html =~ ~s(id="ai-objection-wrong")
     assert html =~ ~s(id="ai-objection-passive")

@@ -102,6 +102,104 @@
     </section>
 
     <section
+      id="ai-exploration-chat-comparison"
+      class="mt-14 border-y border-stone-300 py-10"
+      aria-labelledby="ai-exploration-chat-comparison-heading"
+    >
+      <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-end">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
+            Chat or grid?
+          </p>
+          <h2
+            id="ai-exploration-chat-comparison-heading"
+            class="mt-2 font-serif text-4xl font-semibold tracking-tight sm:text-5xl"
+          >
+            Why not just use ChatGPT or Claude?
+          </h2>
+        </div>
+        <p class="text-sm leading-6 text-slate-600">
+          You can—and sometimes should. A chat assistant is often the simpler tool for a quick answer, a draft, or a short conversation.
+        </p>
+      </div>
+
+      <div class="mt-7 overflow-x-auto border border-stone-300 bg-white">
+        <table id="ai-chat-feature-table" class="w-full min-w-[48rem] border-collapse text-left">
+          <caption class="sr-only">
+            A comparison of ChatGPT or Claude with RationalGrid for topic exploration
+          </caption>
+          <thead>
+            <tr class="border-b border-stone-300">
+              <th
+                scope="col"
+                class="w-[24%] bg-stone-100 px-5 py-4 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600"
+              >
+                What you need
+              </th>
+              <th id="ai-chat-assistants" scope="col" class="w-[34%] bg-stone-100 px-5 py-4">
+                <span class="flex items-center gap-2 text-sm font-semibold text-slate-800">
+                  <.icon name="hero-chat-bubble-left-right" class="h-5 w-5 text-sky-700" />
+                  ChatGPT or Claude
+                </span>
+              </th>
+              <th
+                id="ai-rationalgrid-branches"
+                scope="col"
+                class="w-[42%] bg-teal-950 px-5 py-4 text-white"
+              >
+                <span class="flex items-center gap-2 text-sm font-semibold">
+                  <.icon name="hero-share" class="h-5 w-5 text-teal-300" /> RationalGrid
+                </span>
+                <span class="mt-1 block text-xs font-medium text-teal-200">
+                  Built for exploration that lasts
+                </span>
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-stone-300 text-sm leading-6">
+            <%= for {feature, chat, grid} <- [
+              {"Get a quick answer", "Excellent for a fast answer, draft, or summary.", "Useful, but not the main reason to choose a grid."},
+              {"Follow several paths", "Open more chats or keep adding to one long thread.", "Branch from any idea and explore each path without losing the others."},
+              {"See how ideas connect", "The work mainly stays in conversations and documents.", "A visual map keeps the question, answers, evidence, and links in view."},
+              {"Return and remember", "Search for and reread earlier conversations.", "Star nodes, save highlights, and return to the exact point that mattered."},
+              {"Share a precise idea", "Share a conversation, project, or finished artifact.", "Share the whole grid, one node, or an exact highlighted passage by URL."},
+              {"Explore with other people", "Collaboration depends on the chat product and workspace.", "Edit a grid together, follow updates, and see what each person added."}
+            ] do %>
+              <tr>
+                <th
+                  scope="row"
+                  class="bg-[#f8f6f0] px-5 py-4 align-top font-semibold text-slate-900"
+                >
+                  {feature}
+                </th>
+                <td class="px-5 py-4 align-top text-slate-600">{chat}</td>
+                <td class="bg-teal-50 px-5 py-4 align-top font-medium text-slate-800">
+                  <span class="flex gap-2.5">
+                    <.icon name="hero-check-circle" class="mt-0.5 h-5 w-5 shrink-0 text-teal-700" />
+                    <span>{grid}</span>
+                  </span>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <div
+        id="ai-chat-comparison-takeaway"
+        class="mt-6 flex gap-3 border-l-2 border-teal-700 pl-4"
+      >
+        <.icon
+          name="hero-arrow-path-rounded-square"
+          class="mt-0.5 h-5 w-5 shrink-0 text-teal-700"
+        />
+        <p class="max-w-3xl text-sm font-medium leading-6 text-slate-800">
+          Use chat when the answer is the output. Use a grid when the path matters too—so you can return to it, check it, and build on it with other people.
+        </p>
+      </div>
+    </section>
+
+    <section
       id="ai-exploration-objections"
       class="mt-14 border border-slate-700 bg-slate-950 p-6 text-white sm:p-8"
       aria-labelledby="ai-exploration-objections-heading"
