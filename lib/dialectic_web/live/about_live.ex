@@ -132,7 +132,7 @@ defmodule DialecticWeb.AboutLive do
             <div id="about-outcomes" class="mt-5 divide-y divide-stone-300 border-y border-stone-300">
               <%= for {number, id, title, copy, tone} <- [
                 {"01", "whole-question", "See the whole question", "Put the first answer beside its context and alternatives.", "text-sky-700"},
-                {"02", "unstuck", "Get unstuck", "Ask for another explanation, example, or direction.", "text-teal-700"},
+                {"02", "unstuck", "Get unstuck", "Use the built-in critical-thinking tools to find another explanation, example, or direction.", "text-teal-700"},
                 {"03", "certainty", "Question what sounds certain", "Separate evidence from confidence or repetition.", "text-violet-700"},
                 {"04", "reasons", "Decide with reasons", "Know what led you to your view.", "text-emerald-700"},
                 {"05", "disagreement", "Disagree more usefully", "Find where the real disagreement lies.", "text-rose-700"},
@@ -144,7 +144,18 @@ defmodule DialecticWeb.AboutLive do
                 >
                   <p class={["font-mono text-xs font-bold", tone]}>{number}</p>
                   <h3 class="font-serif text-lg font-semibold text-slate-950">{title}</h3>
-                  <p class="text-sm leading-6 text-slate-600">{copy}</p>
+                  <div>
+                    <p class="text-sm leading-6 text-slate-600">{copy}</p>
+                    <.link
+                      :if={id == "unstuck"}
+                      id="about-unstuck-tools-link"
+                      href={~p"/intro/how#guide-critical-thinking-tools"}
+                      class="mt-1 inline-flex items-center gap-1.5 text-xs font-semibold text-teal-800 hover:text-teal-950"
+                    >
+                      See the critical-thinking tools in the Guide
+                      <.icon name="hero-arrow-up-right" class="h-3.5 w-3.5" />
+                    </.link>
+                  </div>
                 </article>
               <% end %>
             </div>

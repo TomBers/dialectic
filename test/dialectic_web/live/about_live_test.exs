@@ -22,7 +22,14 @@ defmodule DialecticWeb.AboutLiveTest do
       assert has_element?(view, "#about-purpose", "meaning, belief, identity, doubt")
       assert has_element?(view, "#about-outcome-whole-question", "See the whole question")
       assert has_element?(view, "#about-outcome-unstuck", "Get unstuck")
-      assert has_element?(view, "#about-outcome-unstuck", "another explanation, example")
+      assert has_element?(view, "#about-outcome-unstuck", "built-in critical-thinking tools")
+
+      assert has_element?(
+               view,
+               ~s(#about-unstuck-tools-link[href="/intro/how#guide-critical-thinking-tools"]),
+               "See the critical-thinking tools in the Guide"
+             )
+
       assert has_element?(view, "#about-outcome-certainty", "Question what sounds certain")
       assert has_element?(view, "#about-outcome-reasons", "Decide with reasons")
       assert has_element?(view, "#about-outcome-disagreement", "Disagree more usefully")

@@ -30,7 +30,9 @@ defmodule DialecticWeb.PageControllerTest do
     assert html =~ ~s(id="guide-new-grid-privacy")
     assert html =~ "Step 2 · Read"
     assert html =~ "Step 4 · Examine"
+    assert html =~ ~s(id="guide-critical-thinking-tools")
     assert html =~ ~s(id="guide-examine-heading")
+    assert html =~ "Use the critical-thinking tools."
     assert html =~ ~s(id="guide-critical-thinking-collaboration")
     assert html =~ "More than a list of AI prompts."
     assert html =~ "Philosophy for All and philosopher and educator Peter Worley"
