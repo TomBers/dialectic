@@ -82,10 +82,25 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
       prompt = PromptsStructured.system_preamble(:expert)
       assert prompt =~ "Markdown output contract"
       assert prompt =~ "Output ONLY valid GitHub Flavored Markdown (GFM)"
-      assert prompt =~ "Tables are welcome"
-      refute prompt =~ "Forbidden: tables"
+      assert prompt =~ "Use the least formatting needed for clear understanding"
+      assert prompt =~ "Use a table only for a genuine comparison"
+      refute prompt =~ "Tables are welcome"
       assert prompt =~ "Style for structured mode"
       assert prompt =~ "Graph-based exploration context"
+    end
+
+    test "discourages decorative and redundant formatting across reading levels" do
+      for mode <- [:expert, :university, :high_school, :simple] do
+        prompt = PromptsStructured.system_preamble(mode)
+
+        assert prompt =~ "Every formatting device must add information"
+        assert prompt =~ "Do not use ASCII-art diagrams, box-drawing characters"
+        assert prompt =~ "plain-text arrow diagrams"
+        assert prompt =~ "ornamental separators such as ◆"
+        assert prompt =~ "Express a simple sequence or cycle in one sentence"
+        assert prompt =~ "Use fenced code blocks only for literal code, data, or syntax"
+        assert prompt =~ "Never put ordinary prose or a conceptual diagram in a code block"
+      end
     end
 
     test "includes the global epistemic and source-integrity contract" do

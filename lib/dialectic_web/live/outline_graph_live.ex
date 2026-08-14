@@ -313,7 +313,7 @@ defmodule DialecticWeb.OutlineGraphLive do
     highlights = Highlights.list_highlights_with_links(mudg_id: graph_db.title)
     base_url = DialecticWeb.Endpoint.url()
     canonical = canonical_graph_url(graph_db)
-    description = reader_description(graph_db)
+    description = reader_description(graph_db, graph)
 
     json_ld =
       Jason.encode!(%{
@@ -323,6 +323,7 @@ defmodule DialecticWeb.OutlineGraphLive do
         "headline" => graph_db.title,
         "description" => description,
         "url" => canonical,
+        "mainEntityOfPage" => %{"@type" => "WebPage", "@id" => canonical},
         "image" => base_url <> ~p"/images/graph_live.webp",
         "dateModified" => DateTime.to_iso8601(graph_db.updated_at),
         "datePublished" => DateTime.to_iso8601(graph_db.inserted_at),
@@ -332,6 +333,7 @@ defmodule DialecticWeb.OutlineGraphLive do
           "url" => base_url
         },
         "keywords" => graph_db.tags || [],
+        "inLanguage" => "en",
         "isAccessibleForFree" => true
       })
 
@@ -370,6 +372,7 @@ defmodule DialecticWeb.OutlineGraphLive do
       highlights: highlights,
       page_title: graph_db.title,
       page_description: description,
+      default_page_description: description,
       canonical_url: canonical,
       og_type: "article",
       og_image: base_url <> ~p"/images/graph_live.webp",
@@ -386,8 +389,23 @@ defmodule DialecticWeb.OutlineGraphLive do
     DialecticWeb.Endpoint.url() <> "/g/#{URI.encode(graph.title)}"
   end
 
-  defp reader_description(graph_db) do
-    "Explore \"#{graph_db.title}\" on RationalGrid. Read the main thread in order and follow nearby branches when the argument splits."
+  defp reader_description(graph_db, graph) do
+    summary =
+      graph
+      |> ThreadedConv.prepare_conversation()
+      |> Enum.filter(&visible_node?/1)
+      |> Enum.find_value(fn node ->
+        body = node |> node_body_content() |> sanitize_preview_text()
+        if String.length(body) >= 40, do: body
+      end)
+
+    case summary do
+      nil ->
+        "Explore \"#{graph_db.title}\" on RationalGrid. Follow the main thread and compare its branches."
+
+      body ->
+        truncate_description("#{graph_db.title}: #{body}", 160)
+    end
   end
 
   defp assign_share_metadata(socket, %{id: _id} = highlight) do
@@ -405,7 +423,7 @@ defmodule DialecticWeb.OutlineGraphLive do
   defp assign_share_metadata(socket, _highlight) do
     graph = socket.assigns.graph_struct
     canonical = canonical_graph_url(graph)
-    description = reader_description(graph)
+    description = socket.assigns.default_page_description
     base_url = DialecticWeb.Endpoint.url()
 
     assign(socket,
@@ -883,6 +901,19 @@ defmodule DialecticWeb.OutlineGraphLive do
     |> String.replace(~r/[#*_`~\[\]\(\)>!\-]/, "")
     |> String.replace(~r/\s+/, " ")
     |> String.trim()
+  end
+
+  defp truncate_description(text, limit) do
+    if String.length(text) <= limit do
+      text
+    else
+      text
+      |> String.slice(0, limit + 1)
+      |> String.split()
+      |> Enum.drop(-1)
+      |> Enum.join(" ")
+      |> Kernel.<>("…")
+    end
   end
 
   defp pluralize(1, singular, _plural), do: singular

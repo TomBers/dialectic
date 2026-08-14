@@ -127,8 +127,11 @@ defmodule Dialectic.Responses.PromptsStructured do
     Markdown output contract
     - Output ONLY valid GitHub Flavored Markdown (GFM).
     - Start with a concise title using Heading 1 (#).
-    - Choose the Markdown structure that communicates the answer most clearly. The renderer supports headings, paragraphs, emphasis, links, blockquotes, ordered and unordered lists, task lists, tables, strikethrough, inline code, fenced code blocks, and mathematical notation.
-    - Tables are welcome when they make comparisons or structured data clearer.
+    - Use the least formatting needed for clear understanding. Prefer a short paragraph or compact list when it communicates the relationship directly.
+    - Every formatting device must add information rather than restate nearby prose in another shape.
+    - Use a table only for a genuine comparison across consistent attributes or for structured data that is materially easier to scan in rows and columns. Do not repeat a preceding explanation as a table.
+    - Do not use ASCII-art diagrams, box-drawing characters, plain-text arrow diagrams, or ornamental separators such as ◆ between ordinary sections. Express a simple sequence or cycle in one sentence or a short numbered list.
+    - Use fenced code blocks only for literal code, data, or syntax whose whitespace must be preserved. Never put ordinary prose or a conceptual diagram in a code block.
     - Use blockquotes for direct quotes only when they satisfy the source-integrity contract.
 
     Style for structured mode
