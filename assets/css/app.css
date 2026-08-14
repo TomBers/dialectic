@@ -1442,6 +1442,11 @@ button[type="submit"]:active {
     color: #475569;
 }
 
+#outline-layout .outline-reader-prose [phx-hook="Markdown"] :where(pre),
+#graph-layout .selection-content [phx-hook="Markdown"] :where(pre) {
+    display: none;
+}
+
 /* Node content readability inside selection-content */
 #graph-layout [data-role="node-content"] > h3 {
     font-family: var(--rg-read-font-family-serif);
